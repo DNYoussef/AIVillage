@@ -26,16 +26,16 @@ source venv/bin/activate  # On Windows, use venv\Scripts\activate
 pip install -r requirements.txt
 
 4. Set up environment variables:
-Create a `.env` file in the root directory and add the following variables:
-`OPENAI_API_KEY`={{your_openai_api_key}}
-`NEO4J_URI`={{your_neo4j_uri}}
-`NEO4J_USER`={{your_neo4j_username}}
-`NEO4J_PASSWORD`={{your_neo4j_password}}
+- Create a `.env` file in the root directory and add the following variables:
+- `OPENAI_API_KEY`={{your_openai_api_key}}
+- `NEO4J_URI`={{your_neo4j_uri}}
+- `NEO4J_USER`={{your_neo4j_username}}
+- `NEO4J_PASSWORD`={{your_neo4j_password}}
 
 ## Usage
 
 1. Start the AI Village server:
-python main.py
+`python main.py`
 
 2. The server will start running on `http://localhost:8000`. You can now use the following endpoints:
 
