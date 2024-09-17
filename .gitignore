@@ -1,0 +1,44 @@
+# Python-related
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+new_env/
+venv/
+*.venv
+env/
+ENV/
+
+# IDE-related
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS-related
+.DS_Store
+Thumbs.db
+
+# Project-specific
+.env
+*.log
+*.db
+*.sqlite3
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Model files (if you don't want to track large model files)
+*.pt
+*.pth
+*.onnx
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
