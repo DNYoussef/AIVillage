@@ -1,0 +1,6 @@
+FROM scratch
+
+MERGE deepseek-coder-v2:lite WEIGHT 0.6
+MERGE storm:latest WEIGHT 0.4
+PARAMETER stop                           "User:"
+stop                           "Assistant:"

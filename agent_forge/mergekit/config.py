@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class ModelReference(BaseModel):
     name: str
+    path: Optional[str] = None
 
 class MergeKitConfig(BaseModel):
     merge_method: str
