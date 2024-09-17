@@ -1,8 +1,8 @@
 import click
 import yaml
-from mergekit.config import MergeKitConfig
-from mergekit.merger import MergeKitMerger
-from mergekit.utils import load_models, save_model
+from agent_forge.mergekit.config import MergeKitConfig
+from agent_forge.mergekit.merger import MergeKitMerger
+from agent_forge.mergekit.utils import load_models, save_model
 
 @click.command()
 @click.argument("config_file")

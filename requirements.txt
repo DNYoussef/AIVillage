@@ -15,9 +15,11 @@ community==1.0.0b1
 python-dotenv==1.0.0
 redis==4.5.5
 aiofiles==23.1.0
-pydantic
 neo4j
 qdrant-client
 numpy
 pytest
 pytest-asyncio
+click
+pyyaml
+ollama

@@ -1,0 +1,6 @@
+merge_method: linear
+models:
+  - name: "deepseek-coder-v2:lite"
+  - name: "storm:latest"
+parameters:
+  weights: [0.6, 0.4]
