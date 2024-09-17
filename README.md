@@ -61,3 +61,69 @@ Contributions to AI Village are welcome! Please refer to CONTRIBUTING.md for gui
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for detail
+
+
+
+## Model Mergers
+
+AI Village includes functionality for merging language models using the MergeKit library. This allows you to combine different models to create a new, potentially more powerful model.
+
+### Available Mergers
+
+1. **Simple Merger**: Combines two or more models using a simple averaging technique.
+2. **Weighted Merger**: Merges models with custom weights assigned to each input model.
+3. **Task-Specific Merger**: Optimizes the merged model for specific tasks by adjusting layer contributions.
+
+### Usage
+
+To use the model mergers, follow these steps:
+
+1. Navigate to the `agent_forge` directory:
+   ```
+   cd agent_forge
+   ```
+
+2. Run the merger script with the desired configuration:
+   ```
+   python main.py --config configs/merge_config.yaml
+   ```
+
+3. The merged model will be saved in the `./merged_model` directory by default.
+
+### Configuration
+
+Merger configurations are specified in YAML files located in the `configs/` directory. You can create custom configurations by modifying existing files or creating new ones.
+
+Example configuration (`configs/merge_config.yaml`):
+
+```yaml
+base_model: ollama:llama2
+models_to_merge:
+  - name: ollama:llama2
+    weight: 0.7
+  - name: ollama:codellama
+    weight: 0.3
+merge_method: weighted
+output_path: ./merged_model
+```
+
+### Commands
+
+- To list available models:
+  ```
+  python main.py --list-models
+  ```
+
+- To merge models using a specific configuration:
+  ```
+  python main.py --config configs/your_config.yaml
+  ```
+
+- To specify a custom output path:
+  ```
+  python main.py --config configs/your_config.yaml --output ./custom_output
+  ```
+
+For more detailed information on model merging and advanced configurations, please refer to the `docs/model_merging.md` file.
+
+
