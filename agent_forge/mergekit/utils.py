@@ -1,11 +1,16 @@
 import requests
 import json
-from typing import List
-from .config import ModelReference
+from typing import List, Optional
+from pydantic import BaseModel
 import os
 import re
+import subprocess
 
 BASE_URL = "http://localhost:11434/api"
+
+class ModelReference(BaseModel):
+    name: str
+    path: Optional[str] = None
 
 def load_models(model_references: List[ModelReference]):
     models = []
@@ -21,7 +26,8 @@ def load_models(model_references: List[ModelReference]):
     return models
 
 def save_model(merged_model, path: str):
-    print(f"Merged model metadata: {merged_model['name']}, {merged_model['modelfile']}")
+    print(f"Merged model metadata: {merged_model['name']}")
+    print(f"Modelfile content:\n{merged_model['modelfile']}")
     print(f"Saving model to: {path}")
     
     # Ensure the path exists
@@ -32,26 +38,31 @@ def save_model(merged_model, path: str):
     if sanitized_name != merged_model['name']:
         print(f"Warning: Model name sanitized from '{merged_model['name']}' to '{sanitized_name}'")
     
-    # Print sanitized name for debugging
-    print(f"Attempting to create model with name: '{sanitized_name}'")
+    # Save the modelfile content to a file
+    modelfile_path = os.path.join(path, f"{sanitized_name}.modelfile")
+    with open(modelfile_path, "w") as f:
+        f.write(merged_model['modelfile'])
     
+    print(f"Modelfile saved as: {modelfile_path}")
+    
+    # Attempt to create the model using the Ollama CLI
     try:
-        # Create the new model using the Ollama API
-        create_result = _create_model(sanitized_name, merged_model['modelfile'])
-
-        # Save the modelfile content to a file
-        modelfile_path = os.path.join(path, f"{sanitized_name}.modelfile")
-        with open(modelfile_path, "w") as f:
-            f.write(merged_model['modelfile'])
+        result = subprocess.run(["ollama", "create", sanitized_name, "-f", modelfile_path], capture_output=True, text=True, check=True)
+        print(f"Model {sanitized_name} successfully created using CLI")
+        print(f"CLI Output: {result.stdout}")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to create model using CLI: {e}")
+        print(f"CLI Error Output: {e.stderr}")
         
-        print(f"Model {sanitized_name} successfully saved to {path}")
-        print(f"Modelfile saved as: {modelfile_path}")
-        return create_result
-    except Exception as e:
-        print(f"Error saving model: {str(e)}")
-        print("Modelfile content:")
-        print(merged_model['modelfile'])
+        # Print the contents of the modelfile for debugging
+        print("Contents of the modelfile:")
+        with open(modelfile_path, 'r') as f:
+            print(f.read())
+        
         return None
+    
+    print(f"Model {sanitized_name} successfully saved to {path}")
+    return True
 
 def _get_model_info(model_name):
     response = requests.post(f"{BASE_URL}/show", json={"name": model_name})

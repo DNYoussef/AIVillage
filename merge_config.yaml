@@ -1,6 +1,8 @@
 merge_method: linear
 models:
-  - name: "ollama:deepseek-coder-v2:lite"
-  - name: "ollama:storm:latest"
+  - name: ollama:llama3.1:latest
+  - name: ollama:deepseek-coder-v2:latest
 parameters:
-  weights: [0.6, 0.4]
+  weights:
+    - 0.6
+    - 0.4
