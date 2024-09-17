@@ -18,7 +18,6 @@ def load_models(model_references: List[ModelReference]):
         if ref.name.startswith("ollama:"):
             model_name = ref.name.split(":", 1)[1]
             model_info = _get_model_info(model_name)
-            # Add the name to the model_info dictionary
             model_info['name'] = model_name
             models.append(model_info)
         else:
@@ -30,35 +29,29 @@ def save_model(merged_model, path: str):
     print(f"Modelfile content:\n{merged_model['modelfile']}")
     print(f"Saving model to: {path}")
     
-    # Ensure the path exists
     os.makedirs(path, exist_ok=True)
     
-    # Sanitize the model name
     sanitized_name = re.sub(r'[^a-zA-Z0-9_-]', '_', merged_model['name'])
     if sanitized_name != merged_model['name']:
         print(f"Warning: Model name sanitized from '{merged_model['name']}' to '{sanitized_name}'")
     
-    # Save the modelfile content to a file
     modelfile_path = os.path.join(path, f"{sanitized_name}.modelfile")
     with open(modelfile_path, "w") as f:
         f.write(merged_model['modelfile'])
     
     print(f"Modelfile saved as: {modelfile_path}")
     
-    # Attempt to create the model using the Ollama CLI
     try:
-        result = subprocess.run(["ollama", "create", sanitized_name, "-f", modelfile_path], capture_output=True, text=True, check=True)
+        result = subprocess.run(["ollama", "create", sanitized_name, "-f", modelfile_path], 
+                                capture_output=True, text=True, check=True)
         print(f"Model {sanitized_name} successfully created using CLI")
         print(f"CLI Output: {result.stdout}")
     except subprocess.CalledProcessError as e:
         print(f"Failed to create model using CLI: {e}")
         print(f"CLI Error Output: {e.stderr}")
-        
-        # Print the contents of the modelfile for debugging
         print("Contents of the modelfile:")
         with open(modelfile_path, 'r') as f:
             print(f.read())
-        
         return None
     
     print(f"Model {sanitized_name} successfully saved to {path}")
