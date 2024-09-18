@@ -1,62 +1,44 @@
 import click
 import yaml
 import traceback
-import logging
 from agent_forge.mergekit.config import MergeKitConfig
 from agent_forge.mergekit.merger import MergeKitMerger
-from agent_forge.mergekit.utils import load_models, save_model, generate_text, validate_merge_config
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+from agent_forge.mergekit.utils import load_models, save_model
 
 @click.command()
-@click.argument("config_file")
-@click.argument("out_path")
-@click.option("--verbose", is_flag=True, help="Enable verbose logging")
-def main(config_file: str, out_path: str, verbose: bool):
-    if verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-
+@click.argument("config", type=click.Path(exists=True))
+@click.argument("output", type=click.Path())
+def main(config: str, output: str):
     try:
-        print(f"Loading configuration from {config_file}")
-        with open(config_file, "r") as f:
+        click.echo(f"Loading configuration from {config}")
+        with open(config, "r") as f:
             config_dict = yaml.safe_load(f)
         
-        print("Configuration:")
-        print(yaml.dump(config_dict, default_flow_style=False))
+        click.echo("Configuration:")
+        click.echo(yaml.dump(config_dict, default_flow_style=False))
         
-        print("Creating MergeKitConfig")
-        config = MergeKitConfig(**config_dict)
+        click.echo("Creating MergeKitConfig")
+        merge_config = MergeKitConfig(**config_dict)
         
-        print("Validating merge configuration")
-        validate_merge_config(config)
+        click.echo("Initializing MergeKitMerger")
+        merger = MergeKitMerger(merge_config)
         
-        print("Initializing MergeKitMerger")
-        merger = MergeKitMerger(config)
+        click.echo("Loading models")
+        models = load_models(merge_config.models)
         
-        print("Loading models")
-        models = load_models(config.models)
-        
-        print("Merging models")
+        click.echo("Merging models")
         merged_model = merger.merge(models)
         
-        print(f"Saving merged model to {out_path}")
-        save_model(merged_model, out_path)
+        click.echo(f"Saving merged model to {output}")
+        save_result = save_model(merged_model, output)
         
-        print("Model merging completed successfully")
-        
-        if verbose:
-            print("Generating sample text with merged model")
-            sample_text = generate_text(merged_model['name'], "Hello, how are you?")
-            print(f"Sample generated text: {sample_text}")
-
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        if verbose:
-            print("Traceback:")
-            print(traceback.format_exc())
+        if save_result:
+            click.echo(f"Model successfully merged and saved to {output}")
         else:
-            print("Run with --verbose for full traceback.")
-
+            click.echo("Failed to save the merged model")
+    except Exception as e:
+        click.echo(f"An error occurred: {str(e)}")
+        click.echo("Traceback:")
+        click.echo(traceback.format_exc())
 if __name__ == "__main__":
     main()

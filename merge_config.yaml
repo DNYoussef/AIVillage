@@ -1,4 +1,4 @@
-merge_method: linear
+merge_method: slerp
 models:
   - name: ollama:llama3.1:latest
   - name: ollama:codellama:latest
@@ -6,3 +6,4 @@ parameters:
   weights:
     - 0.6
     - 0.4
+custom_dir: C:\Users\17175\Desktop\AI_Models
