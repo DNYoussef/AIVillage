@@ -29,6 +29,18 @@ class MergeKitMerger:
         self.custom_dir = config.custom_dir if hasattr(config, 'custom_dir') else "C:\\Users\\17175\\Desktop\\AI_Models"
         self.ollama_api_url = "http://localhost:11434/api"
 
+    def validate_ollama_model(self, model_name: str) -> bool:
+        try:
+            response = requests.post(
+                f"{self.ollama_api_url}/generate",
+                json={"model": model_name, "prompt": "Test prompt", "max_tokens": 1}
+            )
+            return response.status_code == 200
+        except Exception as e:
+            logger.error(f"Error validating Ollama model: {str(e)}")
+            return False
+
+
     def merge(self, models: List[Dict]) -> Dict:
         logger.info("Starting model merger")
         try:
@@ -43,9 +55,11 @@ class MergeKitMerger:
             elif self.config.merge_method == "ps_dfs":
                 ps_model = self._ps_merge(models)
                 merged_model = self._dfs_merge([ps_model] + models)
+            elif self.config.merge_method == "frankenmerge":
+                merged_model = self._frankenmerge(models)
             else:
                 raise NotImplementedError(f"Merge method {self.config.merge_method} not implemented")
-            
+
             logger.info("Model merging completed successfully")
             return merged_model
         except Exception as e:
@@ -68,10 +82,10 @@ class MergeKitMerger:
         population_size = evolutionary_params.get("population_size", 20)
 
         optimizer = CMA(mean=np.zeros(len(models)), sigma=1.0, population_size=population_size)
-        
+
         best_weights = None
         best_score = float('-inf')
-        
+
         for _ in range(generations):
             solutions = []
             for _ in range(optimizer.population_size):
@@ -79,13 +93,13 @@ class MergeKitMerger:
                 merged_weights, merged_metadata = self._load_and_merge_weights(models, weights, self._linear_interpolation)
                 score = self._evaluate_model(merged_weights, merged_metadata)
                 solutions.append((weights, -score))  # Negative because CMA-ES minimizes
-                
+
                 if score > best_score:
                     best_score = score
                     best_weights = weights
-            
+
             optimizer.tell(solutions)
-        
+
         merged_weights, merged_metadata = self._load_and_merge_weights(models, best_weights, self._linear_interpolation)
         return self._save_and_create_model(merged_weights, merged_metadata, models)
 
@@ -97,12 +111,12 @@ class MergeKitMerger:
         M = sum(len(model['model'].state_dict()) for model in models)
         I = np.ones(M * 3)  # 3 repetitions as mentioned in the paper
         W = np.eye(M)
-        
+
         optimizer = CMA(mean=np.concatenate([I, W.flatten()]), sigma=0.1, population_size=population_size)
-        
+
         best_solution = None
         best_score = float('-inf')
-        
+
         for _ in range(generations):
             solutions = []
             for _ in range(optimizer.population_size):
@@ -111,13 +125,13 @@ class MergeKitMerger:
                 merged_model = self._create_dfs_model(models, I, W)
                 score = self._evaluate_model(merged_model)
                 solutions.append((solution, -score))  # Negative because CMA-ES minimizes
-                
+
                 if score > best_score:
                     best_score = score
                     best_solution = solution
-            
+
             optimizer.tell(solutions)
-        
+
         I, W = best_solution[:M*3], best_solution[M*3:].reshape(M, M)
         return self._create_dfs_model(models, I, W)
 
@@ -127,7 +141,9 @@ class MergeKitMerger:
         for i, model in enumerate(models):
             model_path = self._find_model_file(model['name'])
             if not model_path:
-                raise FileNotFoundError(f"Model file not found for: {model['name']}")
+                model_path = self._download_model(model['name'])
+            if not model_path:
+                raise FileNotFoundError(f"Model file not found and could not be downloaded for: {model['name']}")
 
             reader = GGUFReader(model_path)
             reader.read()
@@ -145,37 +161,64 @@ class MergeKitMerger:
 
         return merged_weights, merged_metadata
 
+    def _model_exists_in_ollama(self, model_name: str) -> bool:
+        try:
+            response = requests.post(f"{self.ollama_api_url}/show", json={"name": model_name})
+            return response.status_code == 200
+        except requests.RequestException:
+            return False
+
     def _get_ollama_model_path(self, model_name: str) -> str:
         try:
             response = requests.post(f"{self.ollama_api_url}/show", json={"name": model_name})
-            if response.status_code == 200:
-                model_info = response.json()
-                if isinstance(model_info, dict):
-                    return model_info.get('modelfile', {}).get('from', '')
-                else:
-                    logger.warning(f"Unexpected response format from Ollama API for {model_name}")
+            response.raise_for_status()
+            model_info = response.json()
+            
+            if isinstance(model_info, dict):
+                return model_info.get('modelfile', {}).get('from', '')
+            elif isinstance(model_info, str):
+                # If the response is a string, it might be the direct path
+                return model_info
             else:
-                logger.warning(f"Failed to get model info from Ollama API for {model_name}. Status code: {response.status_code}")
+                logger.warning(f"Unexpected response format from Ollama API for {model_name}: {type(model_info)}")
+                return ""
+        except requests.RequestException as e:
+            logger.error(f"Error querying Ollama API for {model_name}: {str(e)}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON response for {model_name}: {str(e)}")
         except Exception as e:
-            logger.error(f"Error querying Ollama API: {str(e)}")
+            logger.error(f"Unexpected error in _get_ollama_model_path for {model_name}: {str(e)}")
+        
         return ""
 
     def _find_model_file(self, model_name: str) -> str:
         ollama_path = self._get_ollama_model_path(model_name)
-        if ollama_path and os.path.exists(ollama_path):
-            logger.info(f"Found model file via Ollama API at: {ollama_path}")
-            return ollama_path
+        if ollama_path:
+            if os.path.exists(ollama_path):
+                logger.info(f"Found model file via Ollama API at: {ollama_path}")
+                return ollama_path
+            else:
+                logger.warning(f"Path returned by Ollama API does not exist: {ollama_path}")
 
         possible_locations = [
             self.ollama_dir,
             os.path.join(self.ollama_dir, "blobs"),
             os.path.join(self.ollama_dir, model_name),
             self.custom_dir,
-            os.path.join(self.custom_dir, model_name)
+            os.path.join(self.custom_dir, model_name),
+            "/usr/share/ollama/models",  # Common location on Linux systems
+            "C:\\Program Files\\Ollama\\models"  # Possible location on Windows
         ]
 
         extensions = ['.gguf', '.bin', '.model', '']
-        name_formats = [model_name, model_name.replace(':', '_'), model_name.split(':')[0]]
+        name_formats = [
+            model_name, 
+            model_name.replace(':', '_'), 
+            model_name.split(':')[0],
+            model_name.lower(),
+            model_name.lower().replace(':', '_'),
+            model_name.lower().split(':')[0]
+        ]
 
         for location in possible_locations:
             for name_format in name_formats:
@@ -192,6 +235,17 @@ class MergeKitMerger:
                 for ext in extensions:
                     logger.error(f"  {os.path.join(location, f'{name_format}{ext}')}")
         return ""
+
+    def _download_model(self, model_name: str) -> str:
+        try:
+            logger.info(f"Attempting to download model: {model_name}")
+            response = requests.post(f"{self.ollama_api_url}/pull", json={"name": model_name})
+            response.raise_for_status()
+            logger.info(f"Successfully downloaded model: {model_name}")
+            return self._find_model_file(model_name)
+        except requests.RequestException as e:
+            logger.error(f"Error downloading model: {str(e)}")
+            return ""
 
     def _linear_interpolation(self, tensor1, tensor2, weight1, weight2):
         return tensor1 * weight1 + tensor2 * weight2
@@ -231,12 +285,17 @@ class MergeKitMerger:
 
     def _create_ollama_model(self, model_path: str, model_name: str) -> None:
         modelfile_content = self._create_ollama_modelfile(model_path, model_name)
-        modelfile_path = os.path.join(self.ollama_dir, f"{model_name}.modelfile")
-        
-        with open(modelfile_path, 'w') as f:
-            f.write(modelfile_content)
-
-        os.system(f"ollama create {model_name} -f {modelfile_path}")
+        try:
+            response = requests.post(
+                f"{self.ollama_api_url}/create",
+                json={"name": model_name, "modelfile": modelfile_content}
+            )
+            response.raise_for_status()
+            logger.info(f"Successfully created Ollama model: {model_name}")
+        except requests.RequestException as e:
+            logger.error(f"Failed to create Ollama model: {str(e)}")
+        finally:
+            self._cleanup_temp_files(model_name)
 
     def _evaluate_model(self, model: Dict) -> float:
         model_name = model['name']
@@ -244,12 +303,10 @@ class MergeKitMerger:
             prompt = "Hello, are you working?"
             response = requests.post(
                 f"{self.ollama_api_url}/generate",
-                json={"model": model_name, "prompt": prompt}
+                json={"model": model_name, "prompt": prompt},
+                stream=True
             )
-            
-            if response.status_code != 200:
-                logger.error(f"Error in API call: {response.text}")
-                return float('-inf')
+            response.raise_for_status()
 
             full_response = ""
             for line in response.iter_lines():
@@ -262,15 +319,21 @@ class MergeKitMerger:
             coherence_score = self._check_coherence(full_response)
             return coherence_score
 
-        except Exception as e:
+        except requests.RequestException as e:
             logger.error(f"Error during model evaluation: {str(e)}")
-            return float('-inf')  # Return worst possible score if evaluation fails
+            return float('-inf')
+    # Return worst possible score if evaluation fails
+    def _cleanup_temp_files(self, model_name: str):
+        temp_modelfile = os.path.join(self.ollama_dir, f"{model_name}.modelfile")
+        if os.path.exists(temp_modelfile):
+            os.remove(temp_modelfile)
+        # Add any other temporary files that need cleaning up
 
     def _check_coherence(self, response: str) -> float:
         words = response.split()
         if len(words) < 2:
             return 0.0
-        
+
         if "hello are you working" in response.lower():
             unique_words = set(words) - {"hello", "are", "you", "working"}
             if len(unique_words) < 2:
@@ -278,7 +341,7 @@ class MergeKitMerger:
 
         uniqueness = len(set(words)) / len(words)
         length_score = min(len(words) / 10, 1.0)
-        
+
         return uniqueness * length_score
 
     def _validate_modelfile(self, modelfile: str) -> bool:
@@ -318,44 +381,23 @@ class MergeKitMerger:
         total = sum(weights)
         return [w / total for w in weights]
 
-    def validate_merged_model(self, model_path: str) -> bool:
-        logger.info(f"Validating merged model at {model_path}")
-
-        if not os.path.exists(model_path):
-            logger.error(f"Model file does not exist at {model_path}")
+    def validate_merged_model(self, model_name: str) -> bool:
+        logger.info(f"Validating merged model: {model_name}")
+        
+        if not self._model_exists_in_ollama(model_name):
+            logger.error(f"Model {model_name} does not exist in Ollama")
             return False
 
         try:
-            reader = GGUFReader(model_path)
-            reader.read()
-
-            required_metadata = ['general.name', 'general.architecture', 'general.file_type']
-            for key in required_metadata:
-                if key not in reader.metadata:
-                    logger.error(f"Missing required metadata: {key}")
-                    return False
-
-            expected_tensors = ['token_embd.weight', 'output.weight']
-            for tensor_name in expected_tensors:
-                if tensor_name not in reader.tensors:
-                    logger.error(f"Missing expected tensor: {tensor_name}")
-                    return False
-
-            vocab_size = reader.metadata.get('general.vocab_size')
-            if vocab_size is not None:
-                vocab_size = int(vocab_size)
-                if reader.tensors['token_embd.weight'].shape[0] != vocab_size:
-                    logger.error(f"Inconsistent vocab size in token_embd.weight")
-                    return False
-                if reader.tensors['output.weight'].shape[0] != vocab_size:
-                    logger.error(f"Inconsistent vocab size in output.weight")
-                    return False
-
-            logger.info("Model validation passed successfully")
+            response = requests.post(
+                f"{self.ollama_api_url}/generate",
+                json={"model": model_name, "prompt": "Test prompt", "max_tokens": 1}
+            )
+            response.raise_for_status()
+            logger.info(f"Model {model_name} validation passed successfully")
             return True
-
-        except Exception as e:
-            logger.error(f"Error during model validation: {str(e)}")
+        except requests.RequestException as e:
+            logger.error(f"Error validating model {model_name}: {str(e)}")
             return False
 
     def _create_dfs_model(self, models: List[Dict], I: np.ndarray, W: np.ndarray) -> Dict:
@@ -424,12 +466,16 @@ class MergeKitMerger:
         return {name: base_weights[name] + combined_task_vector[name] for name in base_weights}
 
     def _frankenmerge(self, models: List[Dict]) -> Dict:
-        # Implement Frankenmerge (stacking different layers from multiple models)
+        logger.info("Starting Frankenmerge")
         merged_weights = {}
         merged_metadata = {}
 
         for i, model in enumerate(models):
-            reader = GGUFReader(self._find_model_file(model['name']))
+            model_path = self._find_model_file(model['name'])
+            if not model_path:
+                raise FileNotFoundError(f"Model file not found for: {model['name']}")
+
+            reader = GGUFReader(model_path)
             reader.read()
 
             if i == 0:
@@ -440,4 +486,5 @@ class MergeKitMerger:
                 if layer_num == -1 or layer_num % len(models) == i:
                     merged_weights[name] = tensor
 
+        logger.info("Frankenmerge completed successfully")
         return self._save_and_create_model(merged_weights, merged_metadata, models)
