@@ -1,5 +1,8 @@
 import struct
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 class GGUFReader:
     def __init__(self, file_path):
@@ -8,17 +11,21 @@ class GGUFReader:
         self.tensors = {}
 
     def read(self):
+        logger.info(f"Reading GGUF file: {self.file_path}")
         with open(self.file_path, 'rb') as f:
             # Read magic number and version
             magic = f.read(4)
             if magic != b'GGUF':
+                logger.error(f"Invalid GGUF file: {self.file_path}")
                 raise ValueError("Not a valid GGUF file")
             
             version = struct.unpack('<I', f.read(4))[0]
+            logger.debug(f"GGUF version: {version}")
             
             # Read metadata
             n_tensors = struct.unpack('<Q', f.read(8))[0]
             n_kv = struct.unpack('<Q', f.read(8))[0]
+            logger.debug(f"Number of tensors: {n_tensors}, Number of metadata key-value pairs: {n_kv}")
             
             for _ in range(n_kv):
                 key_length = struct.unpack('<Q', f.read(8))[0]
@@ -43,6 +50,7 @@ class GGUFReader:
                     'dtype': dtype,
                     'offset': offset
                 }
+        logger.info(f"Successfully read GGUF file: {self.file_path}")
 
     def _read_value(self, f, value_type):
         if value_type == 0:  # uint8
@@ -65,10 +73,12 @@ class GGUFReader:
             length = struct.unpack('<Q', f.read(8))[0]
             return f.read(length).decode('utf-8')
         else:
+            logger.warning(f"Unsupported value type: {value_type}")
             raise ValueError(f"Unsupported value type: {value_type}")
 
     def get_tensor(self, name):
         if name not in self.tensors:
+            logger.error(f"Tensor {name} not found")
             raise KeyError(f"Tensor {name} not found")
         
         tensor_info = self.tensors[name]
@@ -89,6 +99,7 @@ class GGUFReader:
             7: np.bool_,
         }
         return dtype_map.get(gguf_dtype, np.float32)  # Default to float32 if unknown
+
 class GGUFWriter:
     def __init__(self, file_path):
         self.file_path = file_path
@@ -102,6 +113,7 @@ class GGUFWriter:
         self.tensors[name] = tensor
 
     def write(self):
+        logger.info(f"Writing GGUF file: {self.file_path}")
         with open(self.file_path, 'wb') as f:
             # Write magic number and version
             f.write(b'GGUF')
@@ -135,6 +147,7 @@ class GGUFWriter:
             # Write tensor data
             for tensor in self.tensors.values():
                 tensor.tofile(f)
+        logger.info(f"Successfully wrote GGUF file: {self.file_path}")
 
     def _write_value(self, f, value):
         if isinstance(value, (int, np.integer)):
@@ -152,6 +165,7 @@ class GGUFWriter:
             f.write(struct.pack('<Q', len(encoded)))
             f.write(encoded)
         else:
+            logger.error(f"Unsupported value type: {type(value)}")
             raise ValueError(f"Unsupported value type: {type(value)}")
 
     def _get_gguf_dtype(self, numpy_dtype):
