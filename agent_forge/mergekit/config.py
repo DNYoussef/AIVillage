@@ -9,6 +9,7 @@ class MergeKitConfig(BaseModel):
     merge_method: str
     models: List[ModelReference]
     parameters: Optional[dict] = None
+    custom_dir: Optional[str] = None
 
     class Config:
         extra = "allow"
