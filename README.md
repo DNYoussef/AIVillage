@@ -1,6 +1,22 @@
 # AI Village
+ AI Village
 
-AI Village is an advanced Retrieval-Augmented Generation (RAG) system that combines vector and graph-based storage with active learning and planning capabilities. It's designed to provide intelligent responses to queries by leveraging a comprehensive knowledge base.
+AI Village is a collaborative, self-improving multi-agent system designed for advanced research and problem-solving.
+
+## Components
+
+- **King**: Central coordinator and task manager
+- **Sage**: Data miner and knowledge synthesizer
+- **Magi**: AI scientist for coding, iterating, and conducting experiments
+- "Agent Forge" : a system to build future agents from the model level up
+
+## Key Features
+
+- Open research capabilities
+- Hypothesis generation and validation
+- Experiment design and execution
+- Collaborative analysis and brainstorming
+- Integration with HypeRAG for advanced Retrieval-Augmented Generation (RAG) system that combines vector and graph-based storage with active learning and planning capabilities. It's designed to provide intelligent responses to queries by leveraging a comprehensive knowledge base.
 
 ## Features
 
@@ -48,19 +64,6 @@ pip install -r requirements.txt
 ## Documentation
 
 For more detailed information about the AI Village architecture, usage, and API reference, please refer to the documents in the `docs/` directory.
-
-## Testing
-
-Run the test suite using pytest:
-pytest tests/
-
-## Contributing
-
-Contributions to AI Village are welcome! Please refer to CONTRIBUTING.md for guidelines on how to contribute to this project.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for detail
 
 
 
