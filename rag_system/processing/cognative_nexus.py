@@ -2,8 +2,21 @@
 
 from typing import Dict, Any, List
 from ..core.agent_interface import AgentInterface
+from ..processing.reasoning_engine import ReasoningEngine
+from ..processing.self_referential_query_processor import SelfReferentialQueryProcessor
 
 class CognitiveNexus:
+    def __init__(self, reasoning_engine: ReasoningEngine, self_ref_processor: SelfReferentialQueryProcessor):
+        self.reasoning_engine = reasoning_engine
+        self.self_ref_processor = self_ref_processor
+
+    async def process(self, query: str, context: Dict[str, Any]):
+        if self._is_self_referential(query):
+            return await self.self_ref_processor.process_self_query(query)
+        else:
+            # Use the reasoning engine for non-self-referential queries
+            return await self.reasoning_engine.reason(query, context)
+
     async def integrate(self, query: str, constructed_knowledge: Dict[str, Any], final_plan: Dict[str, Any], retrieval_history: List[Dict[str, Any]], agent: AgentInterface) -> str:
         prompt = f"""
         Cognitive Integration Task:
@@ -50,6 +63,10 @@ class CognitiveNexus:
         """
 
         return await agent.generate(prompt)
+
+    def _is_self_referential(self, query: str) -> bool:
+        # Implement logic to detect self-referential queries
+        return query.strip().upper().startswith("SELF:")
 
     def _format_plan(self, plan: Dict[str, Any]) -> str:
         # Convert the plan dictionary into a formatted string
