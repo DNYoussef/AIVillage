@@ -1,0 +1,20 @@
+graph TD
+    A[Mixed Task Training] --> B[Sleep and Dream Cycles]
+    B --> C[Evaluation for Overfitting and Plateauing]
+    C --> D{Overfitting Detected?}
+    D -->|Yes| E[Apply FastGROK Algorithm]
+    D -->|No| F[Continue Training]
+    E --> F
+    F --> G{Grokking and Second Plateau Achieved?}
+    G -->|No| A
+    G -->|Yes| H[Self-Modeling]
+    H --> I[Curriculum Level Advancement]
+    I --> J[Integrate New Synthetic Data and Reflection Analysis]
+    J --> A
+
+    subgraph "Mixed Task Training"
+    A1[Agent Specialty Tasks]
+    A2[RAG System Integration Tasks]
+    A3[Inter-agent Interaction Tasks]
+    end
+

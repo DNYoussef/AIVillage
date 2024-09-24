@@ -1,0 +1,29 @@
+graph TD
+    A[Start: Select Specialized Models] --> B[Evolution and Merge Pipeline]
+    B --> C[Apply Quiet-STaR]
+    C --> D[1.58-bit Quantization]
+    D --> E[Training]
+    E --> F[Prompt Engineering]
+    F --> G[Prompt Baking]
+    G --> H[Hyper-compression]
+    H --> I[Tool & Memory Integration]
+    I --> J[ADAS Process]
+    J --> K[Final Agent Deployment]
+
+    subgraph "Evolution and Merge Pipeline"
+    B1[Initial Evaluation]
+    B2[Create Merged Models]
+    B3[Evolution Cycle]
+    B4[Final Model Selection]
+    B1 --> B2 --> B3 --> B4
+    B3 -->|Repeat up to 5 times| B3
+    end
+
+    subgraph "ADAS Process"
+    J1[Meta-model Builds Framework]
+    J2[Task Attempts and Grading]
+    J3[Architecture Improvement]
+    J1 --> J2 --> J3
+    J3 -->|Repeat until optimized| J1
+    end
+

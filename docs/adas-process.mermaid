@@ -1,0 +1,11 @@
+graph TD
+    A[Integrated Model] --> B[Meta-model Builds Framework]
+    B --> C[New Model + Architecture]
+    C --> D[Task Attempts]
+    D --> E[Grading]
+    E --> F[Report to Meta-model]
+    F --> G{Diminishing Returns?}
+    G -->|No| H[Meta-model Improves Architecture]
+    H --> C
+    G -->|Yes| I[Final Optimized Agent]
+

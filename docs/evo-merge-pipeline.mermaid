@@ -1,0 +1,37 @@
+graph TD
+    A[Start: 3 Initial Models] --> B[Initial Evaluation]
+    B --> C[Create 8 Merged Models]
+    C --> D[Evaluate Merged Models]
+    D --> E[Enter Evolution Cycle]
+    E --> F[Run 50 Generations of Evolution]
+    F --> G[Select Champion Model]
+    G --> H[Create 3 New Merged Models]
+    H --> I[Create 8 Mutated Models]
+    I --> J[Evaluate New Models]
+    J --> K{Early Stopping?}
+    K -->|No| L{5 Cycles Completed?}
+    L -->|No| E
+    L -->|Yes| M[Final Evaluation]
+    K -->|Yes| M
+    M --> N[Select Top-Performing Model]
+    N --> O[End: Final Model]
+
+    subgraph "Evaluation Metrics"
+    Z1[CodeEvaluator]
+    Z2[MathEvaluator]
+    Z3[MultilingualEvaluator]
+    Z4[StructuredDataEvaluator]
+    end
+    B -.-> Z1
+    D -.-> Z1
+    J -.-> Z1
+    M -.-> Z1
+
+    subgraph "Merge Techniques"
+    Y1[Linear/SLERP]
+    Y2[TIES/DARE]
+    Y3[Frankenmerge/DFS]
+    end
+    C -.-> Y1
+    H -.-> Y1
+

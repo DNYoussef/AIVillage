@@ -1,0 +1,18 @@
+graph TD
+    A[Trained Model] --> B[Iterate Prompts]
+    B --> C[Test on Simulated Data]
+    C --> D{Optimal Prompt Found?}
+    D -->|No| B
+    D -->|Yes| E[Prompt Baking]
+    E --> F[Baked Model]
+
+    subgraph "Prompt Testing"
+    G[Tool Use]
+    H[RAG Integration]
+    I[Inter-agent Interaction]
+    end
+
+    G --> C
+    H --> C
+    I --> C
+
