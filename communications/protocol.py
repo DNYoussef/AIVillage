@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, List, Callable, Any, Optional
+from typing import Awaitable, Dict, List, Callable, Any, Optional
 from .message import Message, MessageType, Priority
 from .queue import MessageQueue
 from ..utils.exceptions import AIVillageException

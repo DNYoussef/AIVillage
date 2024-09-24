@@ -3,20 +3,20 @@ from .problem_analyzer import ProblemAnalyzer
 from .plan_generator import PlanGenerator
 from ..communication.protocol import StandardCommunicationProtocol
 from ..utils.exceptions import AIVillageException
+from ..utils.ai_provider import AIProvider
 
 class DecisionMaker:
-    def __init__(self, communication_protocol: StandardCommunicationProtocol, rag_system):
+    def __init__(self, communication_protocol: StandardCommunicationProtocol, rag_system, ai_provider: AIProvider):
         self.communication_protocol = communication_protocol
         self.rag_system = rag_system
         self.problem_analyzer = ProblemAnalyzer(communication_protocol)
-        self.plan_generator = PlanGenerator()
+        self.plan_generator = PlanGenerator(ai_provider)
+        self.ai_provider = ai_provider
 
     async def make_decision(self, task: str) -> Dict[str, Any]:
         try:
-            # Check RAG system for similar past tasks
+            # Steps 1-2: RAG check and Problem Analysis
             rag_info = await self.rag_system.query(task)
-            
-            # Problem exploration and analysis
             problem_analysis = await self.problem_analyzer.analyze(task, rag_info)
             
             # Determine and rank success criteria
@@ -71,8 +71,25 @@ class DecisionMaker:
         return list(itertools.product(*outcomes.values()))
 
     async def _generate_alternatives(self, problem_analysis: Dict[str, Any]) -> List[str]:
-        prompt = f"Given the following problem analysis: {problem_analysis}, generate a list of potential solutions or alternatives. Output the alternatives as a JSON list of strings."
-        return await self.ai_provider.generate_structured_response(prompt)
+      king_alternatives = await self.ai_provider.generate_structured_response(
+          f"Given the problem analysis: {problem_analysis}, generate 3 potential solutions. Output as a JSON list of strings."
+      )
+      
+      all_alternatives = king_alternatives.copy()
+      
+      agents = await self.communication_protocol.get_all_agents()
+      for agent in agents:
+          agent_alternatives_request = Message(
+              type=MessageType.QUERY,
+              sender="King",
+              receiver=agent,
+              content={"action": "generate_alternatives", "problem_analysis": problem_analysis}
+          )
+          response = await self.communication_protocol.send_and_wait(agent_alternatives_request)
+          all_alternatives.extend(response.content["alternatives"])
+      
+      # Remove duplicates while preserving order
+      return list(dict.fromkeys(all_alternatives))
 
     async def _rank_alternatives(self, alternatives: List[str], utility_chart: Dict[str, float]) -> List[Dict[str, Any]]:
         ranked_alternatives = []

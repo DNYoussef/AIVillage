@@ -1,5 +1,6 @@
 # rag_system/core/config.py
 
+from datetime import timedelta
 from pydantic import BaseSettings, Field
 
 class RAGConfig(BaseSettings):
@@ -17,6 +18,20 @@ class RAGConfig(BaseSettings):
     
     MAX_RESULTS: int = Field(10, description="Maximum number of results to return")
     
+    # New configuration options
+    TEMPORAL_GRANULARITY: timedelta = Field(timedelta(hours=1), description="Granularity for temporal features")
+    UNCERTAINTY_THRESHOLD: float = Field(0.1, description="Threshold for uncertainty handling")
+
+    # Additional configuration for satisfactory results
+    MIN_SATISFACTORY_RESULTS: int = Field(5, description="Minimum number of results to consider satisfactory")
+    HIGH_SCORE_THRESHOLD: float = Field(0.8, description="Threshold for high-scoring results")
+    MIN_HIGH_SCORE_RESULTS: int = Field(3, description="Minimum number of high-scoring results")
+    MIN_DIVERSE_SOURCES: int = Field(2, description="Minimum number of diverse sources")
+
+    # Configuration for vector and graph retrieval
+    VECTOR_TOP_K: int = Field(20, description="Number of top results to retrieve from vector store")
+    GRAPH_TOP_K: int = Field(20, description="Number of top results to retrieve from graph store")
+
 class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
