@@ -1,0 +1,80 @@
+# Explanation of Agent Forge Process Charts
+
+## 1. Corrected Training Loop
+
+This chart illustrates the training process for an individual model within the Agent Forge system.
+
+Key components:
+- Mixed Task Training: Includes agent specialty tasks, RAG system integration, and inter-agent interaction tasks.
+- Sleep and Dream Cycles: Periods for knowledge consolidation and creative exploration.
+- Evaluation for Overfitting and Plateauing: Checks the model's performance and learning progress.
+- FastGROK Algorithm: Applied if overfitting is detected to accelerate learning.
+- Self-Modeling: Allows the model to understand its newly acquired capabilities.
+- Curriculum Level Advancement: Progresses to more complex training as the model improves.
+
+The loop ensures continuous improvement, with mechanisms to prevent overfitting and promote efficient learning. It integrates various task types and uses advanced techniques like the FastGROK algorithm to optimize the training process.
+
+## 2. Evolution and Merge Pipeline
+
+This chart shows the process of combining and evolving multiple specialized models into a single, more capable model.
+
+Key steps:
+1. Start with 3 initial specialized models
+2. Perform initial evaluation
+3. Create 8 merged models using various techniques
+4. Enter an evolution cycle (repeating up to 5 times):
+   - Run 50 generations of evolution
+   - Select champion model
+   - Create new merged and mutated models
+5. Perform final evaluation and select the top-performing model
+
+The chart also highlights the use of different evaluation metrics (Code, Math, Multilingual, Structured Data) and merge techniques (Linear/SLERP, TIES/DARE, Frankenmerge/DFS).
+
+This pipeline is crucial for creating a foundation model that combines the strengths of multiple specialized models.
+
+## 3. Prompt Engineering and Baking
+
+This chart outlines the process of developing and integrating optimal prompts into the model.
+
+Key steps:
+1. Start with a trained model
+2. Iterate through different prompts
+3. Test prompts on simulated data
+4. If an optimal prompt is found, proceed to prompt baking
+5. If not, continue iterating
+
+The chart emphasizes testing prompts for tool use, RAG integration, and inter-agent interaction.
+
+Prompt baking is a crucial step in the Agent Forge process, allowing the model to internalize effective prompts for better performance.
+
+## 4. ADAS Process
+
+The Automatic Discovery of Agentic Space (ADAS) process is shown in this chart. It's a method for optimizing the model's architecture and capabilities.
+
+Key steps:
+1. Start with an integrated model
+2. Use a meta-model to build a framework around the main model
+3. Attempt tasks and grade performance
+4. Report results to the meta-model
+5. If there's room for improvement, the meta-model adjusts the architecture
+6. This process repeats until diminishing returns are observed
+
+The ADAS process is crucial for fine-tuning the model's architecture to best suit its intended tasks and environment.
+
+## 5. Comprehensive Agent Forge Process
+
+This chart provides an overview of the entire Agent Forge process, showing how all the previous components fit together.
+
+Key stages:
+1. Select specialized models
+2. Apply the Evolution and Merge Pipeline
+3. Apply Quiet-STaR
+4. Perform 1.58-bit Quantization
+5. Conduct Training
+6. Engage in Prompt Engineering and Baking
+7. Apply Hyper-compression
+8. Integrate Tools and Memory
+9. Undergo the ADAS Process
+10. Deploy the Final Agent
+
+This chart illustrates the full journey from initial specialized models to a fully optimized, deployment-ready AI agent. It shows how each step builds upon the previous ones, creating a sophisticated agent through a series of refinement and optimization processes.
