@@ -1,16 +1,15 @@
 import os
+from venv import logger
 import torch
 import numpy as np
+import random
 from typing import List, Dict, Tuple, Optional, Union
 import logging
 from pydantic import BaseModel, Field
 from abc import ABC, abstractmethod
-from transformers import AutoModel, AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from scipy.stats import special_ortho_group
 from torch.nn.functional import cosine_similarity
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class ModelReference(BaseModel):
     name: str
@@ -21,9 +20,14 @@ class MergeConfig(BaseModel):
     models: List[ModelReference]
     parameters: Dict[str, any] = Field(default_factory=dict)
     custom_dir: str = Field(default="./merged_models")
-    evolutionary_params: Optional[Dict[str, any]] = None
     ps_techniques: List[str] = ["linear"]
     dfs_techniques: List[str] = []
+
+class EvolutionConfig(BaseModel):
+    population_size: int = 8
+    num_generations: int = 50
+    mutation_rate: float = 0.1
+    tournament_size: int = 3
 
 class MergeTechnique(ABC):
     @abstractmethod
@@ -224,56 +228,146 @@ class AdvancedModelMerger:
             logger.error(f"Error during model evaluation: {str(e)}")
             return float('-inf')  # Return worst possible score if evaluation fails
 
-def create_merged_models(initial_models: List[ModelReference]) -> List[str]:
-    merge_combinations = [
-        ["linear", "ties", "frankenmerge"],
-        ["linear", "ties", "dfs"],
-        ["linear", "dare", "frankenmerge"],
-        ["linear", "dare", "dfs"],
-        ["slerp", "ties", "frankenmerge"],
-        ["slerp", "ties", "dfs"],
-        ["slerp", "dare", "frankenmerge"],
-        ["slerp", "dare", "dfs"]
-    ]
+class EvolutionaryMerger:
+    def __init__(self, initial_models: List[ModelReference], merge_config: MergeConfig, evolution_config: EvolutionConfig):
+        self.initial_models = initial_models
+        self.merge_config = merge_config
+        self.evolution_config = evolution_config
+        self.merger = AdvancedModelMerger(merge_config)
 
-    merged_models = []
-    for techniques in merge_combinations:
-        config = MergeConfig(
-            merge_method="ps_dfs",
-            models=initial_models,
-            parameters={
-                "linear": {"weights": [1/3, 1/3, 1/3]},
-                "slerp": {"t": 0.5},
-                "ties": {"threshold": 0.1},
-                "dare": {"threshold": 0.1, "amplification": 2.0},
-                "frankenmerge": {},
-                "dfs": {"I": torch.ones(len(initial_models)), "W": torch.eye(len(initial_models))}
-            },
-            ps_techniques=techniques[:2],
-            dfs_techniques=[techniques[2]]
-        )
-        merger = AdvancedModelMerger(config)
-        try:
-            merged_model_path = merger.merge()
-            merged_models.append(merged_model_path)
-            logger.info(f"Successfully created merged model: {merged_model_path}")
-        except Exception as e:
-            logger.error(f"Failed to create merged model with techniques {techniques}: {str(e)}")
-    
-    return merged_models
+    def create_merged_models(self) -> List[str]:
+        merge_combinations = [
+            ["linear", "ties", "frankenmerge"],
+            ["linear", "ties", "dfs"],
+            ["linear", "dare", "frankenmerge"],
+            ["linear", "dare", "dfs"],
+            ["slerp", "ties", "frankenmerge"],
+            ["slerp", "ties", "dfs"],
+            ["slerp", "dare", "frankenmerge"],
+            ["slerp", "dare", "dfs"]
+        ]
 
-# Usage example
-if __name__ == "__main__":
+        merged_models = []
+        for techniques in merge_combinations:
+            self.merge_config.ps_techniques = techniques[:2]
+            self.merge_config.dfs_techniques = [techniques[2]]
+            try:
+                merged_model_path = self.merger.merge()
+                merged_models.append(merged_model_path)
+                logger.info(f"Successfully created merged model: {merged_model_path}")
+            except Exception as e:
+                logger.error(f"Failed to create merged model with techniques {techniques}: {str(e)}")
+        
+        return merged_models
+
+    def mutate_model(self, model_path: str) -> str:
+        model = AutoModelForCausalLM.from_pretrained(model_path)
+        
+        with torch.no_grad():
+            for param in model.parameters():
+                mutation = torch.randn_like(param) * self.evolution_config.mutation_rate
+                param.add_(mutation)
+        
+        new_path = f"{model_path}_mutated_{random.randint(1000, 9999)}"
+        model.save_pretrained(new_path)
+        return new_path
+
+    def tournament_selection(self, population: List[str], scores: List[float]) -> str:
+        tournament = random.sample(list(zip(population, scores)), self.evolution_config.tournament_size)
+        return max(tournament, key=lambda x: x[1])[0]
+
+    def evolve(self) -> str:
+        population = self.create_merged_models()
+
+        for generation in range(self.evolution_config.num_generations):
+            logger.info(f"Generation {generation + 1}")
+
+            # Evaluate population
+            scores = [self.merger.evaluate_model(model) for model in population]
+
+            # Select top performers
+            top_models = sorted(zip(population, scores), key=lambda x: x[1], reverse=True)[:2]
+
+            # Create new population
+            new_population = [model for model, _ in top_models]
+
+            # Mutate top performers
+            for _ in range(3):
+                for model, _ in top_models:
+                    new_population.append(self.mutate_model(model))
+
+            # Merge lower performers
+            lower_performers = [model for model in population if model not in [m for m, _ in top_models]]
+            merged_config = MergeConfig(
+                merge_method="ps_dfs",
+                models=[ModelReference(name=f"model_{i}", path=model) for i, model in enumerate(lower_performers[:3])],
+                parameters=self.merge_config.parameters,
+                ps_techniques=["linear", "ties"],
+                dfs_techniques=["frankenmerge"]
+            )
+            merger = AdvancedModelMerger(merged_config)
+            merged_model_1 = merger.merge()
+
+            merged_config.models = [ModelReference(name=f"model_{i}", path=model) for i, model in enumerate(lower_performers[3:])]
+            merged_model_2 = merger.merge()
+
+            new_population.extend([merged_model_1, merged_model_2])
+
+            # Update population
+            population = new_population
+
+            logger.info(f"Best score in generation {generation + 1}: {max(scores)}")
+
+        # Final evaluation
+        final_scores = [self.merger.evaluate_model(model) for model in population]
+        best_model = population[final_scores.index(max(final_scores))]
+
+        return best_model
+
+def main():
+    # Set up logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    # Define initial models
     initial_models = [
         ModelReference(name="gpt2", path="gpt2"),
         ModelReference(name="gpt2-medium", path="gpt2-medium"),
         ModelReference(name="gpt2-large", path="gpt2-large")
     ]
 
-    merged_models = create_merged_models(initial_models)
-    print(f"Created {len(merged_models)} merged models")
-    for model_path in merged_models:
-        print(f"Merged model saved at: {model_path}")
-        merger = AdvancedModelMerger(MergeConfig(merge_method="", models=[]))  # Dummy config for evaluation
-        score = merger.evaluate_model(model_path)
-        print(f"Model coherence score: {score}")
+    # Create merge configuration
+    merge_config = MergeConfig(
+        merge_method="ps_dfs",
+        models=initial_models,
+        parameters={
+            "linear": {"weights": [1/3, 1/3, 1/3]},
+            "slerp": {"t": 0.5},
+            "ties": {"threshold": 0.1},
+            "dare": {"threshold": 0.1, "amplification": 2.0},
+            "frankenmerge": {},
+            "dfs": {"I": torch.ones(len(initial_models)), "W": torch.eye(len(initial_models))}
+        }
+    )
+
+    # Create evolution configuration
+    evolution_config = EvolutionConfig(
+        population_size=8,
+        num_generations=50,
+        mutation_rate=0.1,
+        tournament_size=3
+    )
+
+    # Create evolutionary merger
+    evolutionary_merger = EvolutionaryMerger(initial_models, merge_config, evolution_config)
+
+    # Run evolution
+    best_model = evolutionary_merger.evolve()
+
+    # Print results
+    logger.info(f"Best model after evolution: {best_model}")
+    final_score = evolutionary_merger.merger.evaluate_model(best_model)
+    logger.info(f"Final score: {final_score}")
+
+if __name__ == "__main__":
+    main()
