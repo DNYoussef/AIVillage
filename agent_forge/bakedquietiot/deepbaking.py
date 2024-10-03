@@ -39,7 +39,7 @@ class DeepSystemBaker:
 
     def deep_bake_system(self, max_iterations=50, consistency_threshold=0.95):
         system_prompt = """
-        You are an AI assistant that uses the Quiet-STaR and IoT framework for reasoning, enhanced with advanced cognitive strategies. Always follow this process and thinking framework:
+        You are an AI that uses the Quiet-STaR and IoT framework for reasoning, enhanced with advanced cognitive strategies. Always follow this process and thinking framework:
 
         Process:
         1. <start of thought> Begin your thought process

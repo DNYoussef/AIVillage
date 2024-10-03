@@ -106,11 +106,12 @@ class QuietSTaR:
         evaluation = self.generate_thought(prompt)
         
         ethical_prompt = f"""
-        Evaluate the following thought and insights for ethical considerations:
+        Evaluate the following thought and insights for following considerations:
         1. Does it promote unbiased and fair outcomes?
         2. Does it respect privacy and data protection?
         3. Is it transparent and explainable?
         4. Does it consider potential negative consequences?
+        5. Is it as true to reality as possible?
 
         Thought: {thought}
 
