@@ -1,0 +1,219 @@
+Overview of the Communications System
+The communications system provides a standardized protocol for agents to send and receive messages within the village. It enables:
+
+Private Communication: Agents can send messages directly to specific agents.
+Group Communication: Agents can broadcast messages to groups or all agents.
+Priority Handling: Messages have priorities (LOW to CRITICAL) that affect delivery order.
+Asynchronous Processing: Uses asyncio for non-blocking message handling.
+Subscription Model: Agents subscribe to receive messages addressed to them.
+Components Breakdown
+1. message.py
+Purpose: Defines the Message class and related enums for message types and priorities.
+
+MessageType Enum: Specifies the type of message.
+
+Values: TASK, QUERY, RESPONSE, UPDATE, COMMAND, BULK_UPDATE, PROJECT_UPDATE, SYSTEM_STATUS_UPDATE, CONFIG_UPDATE.
+Priority Enum: Specifies the priority level of messages.
+
+Values: LOW, MEDIUM, HIGH, CRITICAL.
+Message Class: Represents a message with the following fields:
+
+id: Unique identifier (UUID).
+type: Type of the message (MessageType).
+sender: ID of the sending agent.
+receiver: ID of the receiving agent or group.
+content: Dictionary containing message content.
+priority: Priority level (Priority).
+timestamp: Time when the message was created.
+parent_id: (Optional) ID of the parent message, used for threading.
+metadata: Additional metadata.
+Methods:
+
+with_updated_content(new_content): Returns a new Message with updated content.
+with_updated_priority(new_priority): Returns a new Message with updated priority.
+2. queue.py
+Purpose: Implements the MessageQueue class for managing message queuing based on priority.
+
+MessageQueue Class:
+Maintains separate queues (deque) for each priority level.
+Methods:
+enqueue(message): Adds a message to the appropriate priority queue.
+dequeue(): Retrieves the next message from the highest priority non-empty queue.
+is_empty(): Checks if all queues are empty.
+get_messages_by_priority(priority): Returns a list of messages for a specific priority.
+get_all_messages(): Returns all messages in order of priority.
+3. protocol.py
+Purpose: Defines the StandardCommunicationProtocol class, managing message sending, receiving, and agent subscriptions.
+
+StandardCommunicationProtocol Class:
+Attributes:
+message_queue: Instance of MessageQueue.
+subscribers: Dictionary mapping agent IDs to lists of callback functions.
+Methods:
+send_message(message):
+Enqueues the message.
+Notifies subscribers if the receiver is registered.
+_notify_subscribers(message):
+Internal method to call subscriber callbacks.
+get_next_message():
+Retrieves the next message from the queue.
+subscribe(agent_id, callback):
+Agents register to receive messages addressed to them.
+unsubscribe(agent_id, callback):
+Agents can remove their subscription.
+query(sender, receiver, query, priority):
+Sends a QUERY message and waits for a RESPONSE.
+Uses _wait_for_response() internally.
+_wait_for_response(query_id, timeout):
+Waits asynchronously for a response message.
+broadcast(sender, message_type, content, priority):
+Sends a message to all agents or subscribers.
+get_message_history(agent_id, message_type):
+Retrieves messages sent to or from an agent.
+process_messages(handler):
+Continuously processes messages using a handler function.
+4. __init__.py
+Exports the main classes and enums for easy importing:
+StandardCommunicationProtocol, Message, MessageType, Priority, MessageQueue.
+How Communication Works in the Village
+Private Communication Between Agents
+Sending a Message:
+
+An agent creates a Message object with the receiver's ID.
+Uses send_message() to send the message via the protocol.
+Receiving a Message:
+
+Agents subscribe to the protocol with their ID and a callback function.
+When a message arrives for them, the callback is invoked.
+Example:
+
+# Agent A sending a private message to Agent B
+
+# Create the message
+message = Message(
+    type=MessageType.QUERY,
+    sender='agent_a',
+    receiver='agent_b',
+    content={'question': 'Can you provide the latest data analysis?'},
+    priority=Priority.MEDIUM
+)
+
+await protocol.send_message(message)
+
+# Agent B subscribes to receive messages
+def agent_b_callback(message):
+    # Process the message
+    pass
+
+protocol.subscribe('agent_b', agent_b_callback)
+Group Communication
+Group Identification:
+
+Groups are identified by a unique ID (string).
+Agents can subscribe to group IDs to receive group messages.
+Sending Group Messages:
+
+Set the receiver field to the group ID.
+All agents subscribed to that group receive the message.
+Example:
+
+# Agents forming a group
+group_id = 'research_team'
+protocol.subscribe(group_id, agent_callback)
+
+# Sending a message to the group
+message = Message(
+    type=MessageType.UPDATE,
+    sender='agent_leader',
+    receiver=group_id,
+    content={'update': 'Meeting at 2 PM'},
+    priority=Priority.HIGH
+)
+await protocol.send_message(message)
+Forming Small Groups
+Dynamic Group Formation:
+Agents decide on a temporary group ID.
+Used for ad-hoc collaborations or tasks.
+Subscriptions can be added or removed as needed.
+Example:
+
+# Forming a small group for a task
+small_group_id = 'task_force_1'
+protocol.subscribe(small_group_id, agent_callback)
+
+# Sending messages within the small group
+message = Message(
+    type=MessageType.TASK,
+    sender='agent_leader',
+    receiver=small_group_id,
+    content={'task_details': 'Gather intelligence on subject X'},
+    priority=Priority.CRITICAL
+)
+await protocol.send_message(message)
+Broadcasting Messages
+Broadcast to All Agents:
+Use the broadcast() method.
+Each subscribed agent receives the message.
+Example:
+
+# Sending a system-wide announcement
+await protocol.broadcast(
+    sender='system_admin',
+    message_type=MessageType.SYSTEM_STATUS_UPDATE,
+    content={'message': 'System maintenance scheduled at midnight'},
+    priority=Priority.HIGH
+)
+Message Sending and Receiving Process
+Sending a Message
+Create a Message: Instantiate the Message class with appropriate fields.
+Send the Message: Use await protocol.send_message(message) to send.
+Receiving a Message
+Subscribe to the Protocol: Use protocol.subscribe(agent_id, callback).
+Implement Callback: Define a function to process incoming messages.
+Process Messages: The protocol invokes the callback when a message is received.
+Example Callback:
+
+async def agent_callback(message):
+    if message.type == MessageType.QUERY:
+        # Process query and possibly send a response
+        response = Message(
+            type=MessageType.RESPONSE,
+            sender='agent_b',
+            receiver=message.sender,
+            content={'answer': 'Here is the data you requested'},
+            parent_id=message.id
+        )
+        await protocol.send_message(response)
+What a Model Needs to Do
+To Send a Command
+Initialize Protocol: Ensure access to a StandardCommunicationProtocol instance.
+Create a Message: Define the message with the appropriate type, receiver, and content.
+Send the Message: Use await protocol.send_message(message).
+Example:
+
+# Model sending a command to Agent C
+message = Message(
+    type=MessageType.COMMAND,
+    sender='agent_model',
+    receiver='agent_c',
+    content={'command': 'Start data processing'},
+    priority=Priority.HIGH
+)
+await protocol.send_message(message)
+To Receive Messages
+Subscribe to Protocol: Use protocol.subscribe(agent_id, callback).
+Define Callback: Implement logic to handle different message types.
+Expectations:
+
+Asynchronous Handling: Models should support asyncio for non-blocking operations.
+Message Structure: Messages contain content as a dictionary; models need to parse this to extract necessary information.
+Response Handling: For queries, models should be prepared to send responses with parent_id set to the original message's id.
+Integration into the Village of Agents
+Communication Backbone: The communications/ system acts as the backbone for inter-agent communication within the village.
+Collaboration Enablement: Supports collaboration through group messaging and broadcasts.
+Flexible Messaging: Agents can dynamically form groups, send private messages, and manage priorities.
+Extensibility: New message types and protocols can be added to support additional functionalities.
+Conclusion
+The communications system provides a robust and flexible framework for agents to interact.
+Agents can communicate privately, in groups, or across the entire system using standardized messages.
+Models need to handle asynchronous communication, create and parse messages, and implement callbacks to participate effectively.
