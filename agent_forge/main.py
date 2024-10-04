@@ -1,38 +1,111 @@
 import click
 import yaml
 import traceback
-from agent_forge.mergekit.config import MergeKitConfig
-from agent_forge.mergekit.merger import MergeKitMerger
-from agent_forge.mergekit.utils import load_models, save_model, generate_text
+import os
+import torch
+import wandb
+
+from agent_forge.evomerge.config import MergeConfig
+from agent_forge.evomerge.merger import AdvancedModelMerger
+from agent_forge.bakedquietiot.deepbaking import DeepSystemBaker
+from agent_forge.model_compression.bitlinearization import BitNetModel
+from agent_forge.model_compression.hyperparameter_compression import stream_compress_model
+from agent_forge.training.training import EnhancedQuietSTaR, CognitiveTrainingPipeline
 
 @click.command()
 @click.argument("config_file")
-@click.argument("out_path")
-def main(config_file: str, out_path: str):
+@click.argument("output_dir")
+def main(config_file: str, output_dir: str):
     try:
+        # Setup wandb
+        wandb.login()
+        wandb.init(
+            project="agent_forge",
+            name="agent_forge_run",
+            config={
+                "config_file": config_file,
+            }
+        )
+
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
+
         print(f"Loading configuration from {config_file}")
         with open(config_file, "r") as f:
             config_dict = yaml.safe_load(f)
-        
+
         print("Configuration:")
         print(yaml.dump(config_dict, default_flow_style=False))
-        
-        print("Creating MergeKitConfig")
-        config = MergeKitConfig(**config_dict)
-        
-        print("Initializing MergeKitMerger")
-        merger = MergeKitMerger(config)
-        
-        print("Loading models")
-        models = load_models(config.models)
-        
+
+        # Step 1: Merge Models using evomerge
+        print("Creating MergeConfig")
+        config = MergeConfig(**config_dict)
+
+        print("Initializing AdvancedModelMerger")
+        merger = AdvancedModelMerger(config)
+
         print("Merging models")
-        merged_model = merger.merge(models)
-        
-        print(f"Saving merged model to {out_path}")
-        save_model(merged_model, out_path)
-        
-        print("Model merging completed successfully")
+        merged_model_path = merger.merge()
+        print(f"Merged model saved to: {merged_model_path}")
+
+        # Log merging step
+        wandb.log({"step": "model_merging", "merged_model_path": merged_model_path})
+
+        # Step 2: Apply enhancements using bakedquietiot
+        print("Initializing DeepSystemBaker")
+        baker = DeepSystemBaker(merged_model_path)
+        print("Deep baking the model")
+        baker.deep_bake_system()
+        baked_model_path = "deep_baked_model"
+        print(f"Deep baked model saved to: {baked_model_path}")
+
+        # Log deep baking step
+        wandb.log({"step": "deep_baking", "baked_model_path": baked_model_path})
+
+        # Step 3: Compress the model using model_compression
+        print("Loading the deep baked model for compression")
+        from transformers import AutoModelForCausalLM
+        model = AutoModelForCausalLM.from_pretrained(baked_model_path)
+        print("Converting model to BitNetModel")
+        bitnet_model = BitNetModel(model)
+
+        print("Compressing the model")
+        compressed_model = stream_compress_model(bitnet_model.model)
+        compressed_model_path = os.path.join(output_dir, "compressed_model.pt")
+        torch.save(compressed_model, compressed_model_path)
+        print(f"Compressed model saved to: {compressed_model_path}")
+
+        # Log compression step
+        compressed_model_size = os.path.getsize(compressed_model_path) / (1024 * 1024)
+        wandb.log({"step": "model_compression", "compressed_model_size_MB": compressed_model_size})
+
+        # Step 4: Train the new smaller model using training
+        print("Initializing EnhancedQuietSTaR for training")
+        enhanced_model = EnhancedQuietSTaR(baked_model_path)
+
+        print("Setting up training pipeline")
+        # Replace the following placeholders with your actual data loaders
+        train_data = []  # Your training data
+        val_data = []    # Your validation data
+
+        pipeline = CognitiveTrainingPipeline(enhanced_model, train_data, val_data, num_epochs=50)
+        print("Training the model")
+        trained_model = pipeline.train()
+
+        print("Saving the trained model")
+        trained_model_path = os.path.join(output_dir, "trained_model")
+        enhanced_model.model.save_pretrained(trained_model_path)
+        enhanced_model.tokenizer.save_pretrained(trained_model_path)
+        print(f"Trained model saved to: {trained_model_path}")
+
+        # Log training completion
+        wandb.log({"step": "model_training", "trained_model_path": trained_model_path})
+
+        # Finish wandb run
+        wandb.finish()
+
+        print("Process completed successfully")
+
     except Exception as e:
         print(f"An error occurred: {str(e)}")
         print("Traceback:")

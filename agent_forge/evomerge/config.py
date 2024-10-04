@@ -4,7 +4,8 @@ from pydantic import BaseModel, Field
 class ModelReference(BaseModel):
     name: str
     path: str  # Hugging Face model ID or local path
-class MergeKitConfig(BaseModel):
+
+class MergeConfig(BaseModel):
     merge_method: str
     models: List[ModelReference]
     parameters: Dict[str, any] = Field(default_factory=dict)
