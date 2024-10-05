@@ -2,10 +2,15 @@
 
 from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime
+
+from neo4j import Query
+from torch import K
 from ..core.config import RAGConfig
 from ..core.structures import RetrievalResult, RetrievalPlan
 from .vector_store import VectorStore
 from .graph_store import GraphStore
+from ..core.agent_interface import AgentInterface
+from ..utils.graph_utils import distance_sensitive_linearization
 
 class HybridRetriever:
     def __init__(self, config: RAGConfig):
@@ -23,37 +28,53 @@ class HybridRetriever:
         # Retrieve from vector and graph stores
         vector_results = await self.vector_store.retrieve(query_vector, k, timestamp)
         graph_results = await self.graph_store.retrieve(refined_query, k, timestamp)
-        
+
         # Combine results
         combined_results = self._combine_results(vector_results, graph_results)
-        
+
         # Apply UPO
         upo_results = self._apply_upo(combined_results, refined_query)
-        
+
+        # Apply causal retrieval
+        causal_results = self._causal_retrieval(refined_query, upo_results)
+
         # Final reranking using the agent, incorporating background knowledge
-        final_results = await agent.rerank(refined_query, upo_results, k, background_knowledge)
+        final_results = await agent.rerank(refined_query, causal_results, k, background_knowledge)
 
         return final_results
 
     def _combine_results(self, vector_results: List[RetrievalResult], graph_results: List[RetrievalResult]) -> List[RetrievalResult]:
         combined = vector_results + graph_results
         return sorted(combined, key=lambda x: x.score, reverse=True)[:self.config.MAX_RESULTS]
-        
+
     def _apply_upo(self, results: List[RetrievalResult], query: str) -> List[RetrievalResult]:
         for result in results:
             # Adjust score based on uncertainty
             certainty = 1 - result.uncertainty
             result.score *= certainty
-            
+
             # Apply time decay
             time_diff = (datetime.now() - result.timestamp).total_seconds()
             decay_factor = 1 / (1 + time_diff / self.config.TEMPORAL_GRANULARITY.total_seconds())
             result.score *= decay_factor
-        
-            # You could add more sophisticated relevance measures here
-            # For example, using embedding similarity or more advanced NLP techniques
+
         # Re-sort results based on the new scores
         return sorted(results, key=lambda x: x.score, reverse=True)
+
+    def _causal_retrieval(self, query: str, initial_results: List[RetrievalResult]) -> List[RetrievalResult]:
+        causal_scores = {}
+        for result in initial_results:
+            causal_score = 0
+            for edge in self.graph_store.causal_edges.values():
+                if edge.source == result.id:
+                    causal_score += edge.strength
+            causal_scores[result.id] = causal_score
+
+        # Combine original scores with causal scores
+        for result in initial_results:
+            result.score = 0.7 * result.score + 0.3 * causal_scores.get(result.id, 0)
+
+        return sorted(initial_results, key=lambda x: x.score, reverse=True)
 
     async def active_retrieve(self, query: str, query_vector: List[float], k: int, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
         initial_results = await self.retrieve(query, query_vector, k, timestamp)
@@ -84,7 +105,7 @@ class HybridRetriever:
         # Combine old and new results, removing duplicates and re-ranking
         combined = old_results + new_results
         deduplicated = self._remove_duplicates(combined)
-        return self._apply_upo(deduplicated, original_query)
+        return self._apply_upo(deduplicated, Query)
 
     def _remove_duplicates(self, results: List[RetrievalResult]) -> List[RetrievalResult]:
         # Remove duplicate results, keeping the one with the highest score
@@ -121,7 +142,14 @@ class HybridRetriever:
         elif plan.strategy == "uncertainty":
             filtered_results.sort(key=lambda x: x.uncertainty)
 
-        return filtered_results[:k]  # Return top k results after applying the plan
+        # Apply distance-sensitive linearization
+        graph = self.graph_store.get_graph()  # Assuming we have a method to get the graph structure
+        linearized_nodes = distance_sensitive_linearization(graph, plan.query)
+
+        # Reorder filtered_results based on linearized_nodes order
+        filtered_results.sort(key=lambda x: linearized_nodes.index(x.id) if x.id in linearized_nodes else float('inf'))
+
+        return filtered_results[:K]  # Return top k results after applying the plan
 
     async def generate_plan(self, query: str) -> RetrievalPlan:
         # Implement plan generation logic
