@@ -57,3 +57,20 @@ class DefaultReasoningEngine:
             )
 
         return adjusted_knowledge
+    
+    def _causal_inference(self, query: str, constructed_knowledge: Dict[str, Any]) -> str:
+        causal_chain = []
+        current_node = query
+        while current_node:
+            strongest_edge = max(
+                [edge for edge in self.graph_store.causal_edges.values() if edge.source == current_node],
+                key=lambda e: e.strength,
+                default=None
+            )
+            if strongest_edge:
+                causal_chain.append(f"{strongest_edge.source} causes {strongest_edge.target} with strength {strongest_edge.strength}")
+                current_node = strongest_edge.target
+            else:
+                break
+
+        return "Causal chain: " + " -> ".join(causal_chain)
