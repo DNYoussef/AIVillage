@@ -2,25 +2,25 @@ import asyncio
 import json
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass, field
-from ..utils.ai_provider import AIProvider
-from ..utils.exceptions import AIVillageException
-from ..utils.visualization import create_plan_tree_visualization
-from ..utils.persistence import save_plan_to_file, load_plan_from_file
 import networkx as nx
 import matplotlib.pyplot as plt
+
+# Assume these are implemented in separate files
+from king_agent import KingAgent, KingAgentConfig
+from exceptions import AIVillageException, PlanningException, ModelInteractionException
 
 @dataclass
 class Node:
     name: str
     description: str
     prerequisites: List['Node'] = field(default_factory=list)
-    probability: float = 1.0
+    probability: float = 0.5  # 0 to 1
     tasks: List[Dict[str, Any]] = field(default_factory=list)
     failure_modes: List[Dict[str, Any]] = field(default_factory=list)
-    antifragility_score: float = 0.0
-    xanatos_factor: float = 0.0
+    antifragility_score: float = 0.0  # -10 to 10
+    xanatos_factor: float = 0.0  # -10 to 10
     xanatos_gambits: List[Dict[str, Any]] = field(default_factory=list)
-    expected_utility: float = 0.0
+    expected_utility: float = 0.0  # -10 to 10
 
 @dataclass
 class PlanConfig:
@@ -29,8 +29,8 @@ class PlanConfig:
     parallelization: bool = True
 
 class PlanGenerator:
-    def __init__(self, ai_provider: AIProvider, config: PlanConfig = PlanConfig()):
-        self.ai_provider = ai_provider
+    def __init__(self, king_agent: KingAgent = None, config: PlanConfig = PlanConfig()):
+        self.king_agent = king_agent or KingAgent()
         self.config = config
 
     async def generate_plan(self, goal: str, problem_analysis: Dict[str, Any]) -> Dict[str, Any]:
@@ -74,11 +74,14 @@ class PlanGenerator:
 
             return {**plan_data, 'visualization': visualization}
         except Exception as e:
-            raise AIVillageException(f"Error in plan generation: {str(e)}")
+            raise PlanningException(f"Error in plan generation: {str(e)}")
 
     async def _get_current_resources(self) -> Dict[str, Any]:
         prompt = "List the current resources, position, and tools available for the AI Village project. Output as a JSON dictionary with keys 'resources', 'position', and 'tools'."
-        return await self.ai_provider.generate_structured_response(prompt)
+        try:
+            return await self.king_agent.generate_structured_response(prompt)
+        except Exception as e:
+            raise ModelInteractionException(f"Error getting current resources: {str(e)}")
 
     async def _create_plan_tree(self, goal: str, current_resources: Dict[str, Any]) -> Node:
         root = Node(name=goal, description=f"Achieve: {goal}")
@@ -197,16 +200,23 @@ class PlanGenerator:
         Failure Modes: {node.failure_modes}
 
         Consider:
-        1. How could this step benefit from stress or failure?
+        1. How could this step benefit or suffer from stress or failure?
         2. What learning opportunities are present in potential failures?
         3. How adaptable is this step to unexpected changes?
 
+        Rate the antifragility on a scale from -10 to 10, where:
+        - -10 is extremely fragile (breaks easily under stress)
+        - 0 is robust (withstands stress but doesn't improve)
+        - 10 is highly antifragile (gets stronger under stress)
+
         Output a JSON with keys:
-        - 'antifragility_score': a float from 0.0 to 10.0, where 10.0 is highly antifragile
+        - 'antifragility_score': a float from -10.0 to 10.0
         - 'reasoning': a string explaining the score
+        - 'improvement_suggestions': a list of suggestions to increase antifragility
         """
         result = await self.ai_provider.generate_structured_response(prompt)
         node.antifragility_score = result['antifragility_score']
+        return result
 
     async def _develop_xanatos_gambits(self, node: Node):
         prompt = f"""
@@ -219,9 +229,15 @@ class PlanGenerator:
         For each failure mode, develop an alternative path that turns the apparent failure into a success.
         Consider how these alternative paths might synergize with each other or with the original plan.
 
+        Rate the Xanatos factor on a scale from -10 to 10, where:
+        - -10: The plan backfires completely
+        - 0: Neutral outcome regardless of success or failure
+        - 10: The plan succeeds spectacularly regardless of apparent success or failure
+
         Output a JSON with keys:
-        - 'xanatos_factor': a float from 0.0 to 10.0, representing how well the step is protected by Xanatos Gambits
+        - 'xanatos_factor': a float from -10.0 to 10.0
         - 'gambits': a list of dictionaries, each with keys 'failure_mode', 'alternative_path', and 'synergy_description'
+        - 'reasoning': a string explaining the Xanatos factor score
         """
         result = await self.ai_provider.generate_structured_response(prompt)
         node.xanatos_factor = result['xanatos_factor']
@@ -266,9 +282,36 @@ class PlanGenerator:
         return node
 
     def _calculate_expected_utility(self, node: Node) -> float:
-        success_utility = node.probability * 10  # Assuming max utility of 10 for success
-        failure_utility = sum((1 - f['probability']) * (f['impact'] + node.antifragility_score + node.xanatos_factor) for f in node.failure_modes)
-        return success_utility + failure_utility
+        success_utility = node.probability * 10  # Max success utility is 10
+
+        failure_utilities = []
+        for f in node.failure_modes:
+            impact = f['impact']  # Already -10 to 10
+            antifragility = node.antifragility_score  # -10 to 10
+            xanatos = node.xanatos_factor  # -10 to 10
+            
+            # Calculate a weighted sum, giving more weight to positive factors
+            weighted_sum = (
+                max(0, impact) * 1.5 + 
+                min(0, impact) * 0.5 +
+                max(0, antifragility) * 1.5 + 
+                min(0, antifragility) * 0.5 +
+                max(0, xanatos) * 1.5 + 
+                min(0, xanatos) * 0.5
+            ) / 4.5  # Normalize by sum of weights
+
+            # Adjust for the probability of this failure mode not occurring
+            failure_utility = (1 - f['probability']) * weighted_sum
+            failure_utilities.append(failure_utility)
+
+        # Take the average of failure utilities
+        avg_failure_utility = sum(failure_utilities) / len(failure_utilities) if failure_utilities else 0
+
+        # Combine success and failure utilities
+        total_utility = (success_utility + avg_failure_utility) / 2
+
+        # Ensure the result is within the -10 to 10 range
+        return max(min(total_utility, 10), -10)
 
     def _calculate_success_likelihood(self, node: Node) -> float:
         if not node.prerequisites:
@@ -320,7 +363,13 @@ class PlanGenerator:
             'total_tasks': 0,
             'average_antifragility': 0,
             'average_xanatos_factor': 0,
-            'overall_expected_utility': 0
+            'overall_expected_utility': 0,
+            'fragile_nodes': 0,
+            'robust_nodes': 0,
+            'antifragile_nodes': 0,
+            'negative_xanatos_nodes': 0,
+            'neutral_xanatos_nodes': 0,
+            'positive_xanatos_nodes': 0,
         }
 
         def traverse(node: Node):
@@ -330,6 +379,20 @@ class PlanGenerator:
             metrics['average_xanatos_factor'] += node.xanatos_factor
             metrics['overall_expected_utility'] += node.expected_utility
 
+            if node.antifragility_score < -3:
+                metrics['fragile_nodes'] += 1
+            elif node.antifragility_score > 3:
+                metrics['antifragile_nodes'] += 1
+            else:
+                metrics['robust_nodes'] += 1
+
+            if node.xanatos_factor < -3:
+                metrics['negative_xanatos_nodes'] += 1
+            elif node.xanatos_factor > 3:
+                metrics['positive_xanatos_nodes'] += 1
+            else:
+                metrics['neutral_xanatos_nodes'] += 1
+
             for prereq in node.prerequisites:
                 traverse(prereq)
 
@@ -338,6 +401,7 @@ class PlanGenerator:
         if metrics['total_nodes'] > 0:
             metrics['average_antifragility'] /= metrics['total_nodes']
             metrics['average_xanatos_factor'] /= metrics['total_nodes']
+            metrics['overall_expected_utility'] /= metrics['total_nodes']
 
         return metrics
 
@@ -355,29 +419,33 @@ class PlanGenerator:
             'prerequisites': [self._tree_to_dict(prereq) for prereq in node.prerequisites]
         }
 
-    def _dict_to_tree(self, node_dict: Dict[str, Any]) -> Node:
-        node = Node(
-            name=node_dict['name'],
-            description=node_dict['description'],
-            probability=node_dict['probability'],
-            tasks=node_dict['tasks'],
-            failure_modes=node_dict['failure_modes'],
-            antifragility_score=node_dict['antifragility_score'],
-            xanatos_factor=node_dict['xanatos_factor'],
-            xanatos_gambits=node_dict['xanatos_gambits'],
-            expected_utility=node_dict['expected_utility']
-        )
-        node.prerequisites = [self._dict_to_tree(prereq) for prereq in node_dict['prerequisites']]
-        return node
-
     def _create_plan_visualization(self, plan_tree: Node) -> str:
         G = nx.DiGraph()
         
         def add_nodes(node: Node, parent=None):
+            # Determine node color based on antifragility
+            if node.antifragility_score < -3:
+                anti_color = 'red'
+            elif node.antifragility_score > 3:
+                anti_color = 'green'
+            else:
+                anti_color = 'yellow'
+            
+            # Determine node shape based on Xanatos factor
+            if node.xanatos_factor < -3:
+                shape = 's'  # square
+            elif node.xanatos_factor > 3:
+                shape = '^'  # triangle up
+            else:
+                shape = 'o'  # circle
+            
             G.add_node(node.name, 
                        description=node.description, 
                        antifragility=node.antifragility_score,
-                       xanatos_factor=node.xanatos_factor)
+                       xanatos_factor=node.xanatos_factor,
+                       expected_utility=node.expected_utility,
+                       color=anti_color,
+                       shape=shape)
             if parent:
                 G.add_edge(parent.name, node.name)
             for prereq in node.prerequisites:
@@ -387,21 +455,28 @@ class PlanGenerator:
         
         pos = nx.spring_layout(G)
         plt.figure(figsize=(20, 20))
-        nx.draw(G, pos, with_labels=True, node_color='lightblue', 
-                node_size=3000, font_size=8, font_weight='bold')
+        node_colors = [G.nodes[node]['color'] for node in G.nodes()]
+        node_shapes = [G.nodes[node]['shape'] for node in G.nodes()]
+        
+        for shape in set(node_shapes):
+            node_list = [node for node in G.nodes() if G.nodes[node]['shape'] == shape]
+            nx.draw_networkx_nodes(G, pos, nodelist=node_list, node_color=[G.nodes[node]['color'] for node in node_list], 
+                                   node_shape=shape, node_size=3000)
+        
+        nx.draw_networkx_edges(G, pos)
+        nx.draw_networkx_labels(G, pos, {node: node for node in G.nodes()}, font_size=8, font_weight='bold')
         
         node_labels = nx.get_node_attributes(G, 'description')
-        nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=6)
+        pos_attrs = {}
+        for node, coords in pos.items():
+            pos_attrs[node] = (coords[0], coords[1] + 0.08)
+        nx.draw_networkx_labels(G, pos_attrs, labels=node_labels, font_size=6)
         
-        edge_labels = nx.get_edge_attributes(G, 'weight')
-        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
-        
-        plt.title("Plan Tree Visualization")
+        plt.title("Plan Tree Visualization\nColors: Red (Fragile), Yellow (Robust), Green (Antifragile)\nShapes: Square (Negative Xanatos), Circle (Neutral Xanatos), Triangle (Positive Xanatos)")
         plt.axis('off')
         
-        # Save the plot to a file and return the filename
         filename = 'plan_visualization.png'
-        plt.savefig(filename)
+        plt.savefig(filename, dpi=300, bbox_inches='tight')
         plt.close()
         
         return filename
@@ -432,8 +507,8 @@ class PlanGenerator:
                             "description": "Updated task description",
                             "acceptance_criteria": "Updated acceptance criteria"
                         }}],
-                        "antifragility_score": 0.0 to 10.0,
-                        "xanatos_factor": 0.0 to 10.0
+                        "antifragility_score": -10.0 to 10.0,
+                        "xanatos_factor": -10.0 to 10.0
                     }}
                 }}
             ],
@@ -443,8 +518,8 @@ class PlanGenerator:
                     "description": "New node description",
                     "parent_node": "Name of the parent node",
                     "tasks": [...],
-                    "antifragility_score": 0.0 to 10.0,
-                    "xanatos_factor": 0.0 to 10.0
+                    "antifragility_score": -10.0 to 10.0,
+                    "xanatos_factor": -10.0 to 10.0
                 }}
             ]
         }}
@@ -495,7 +570,22 @@ class PlanGenerator:
         node.antifragility_score = updates.get('antifragility_score', node.antifragility_score)
         node.xanatos_factor = updates.get('xanatos_factor', node.xanatos_factor)
 
-# Utility functions (assumed to be in separate files)
+    def _dict_to_tree(self, node_dict: Dict[str, Any]) -> Node:
+        node = Node(
+            name=node_dict['name'],
+            description=node_dict['description'],
+            probability=node_dict['probability'],
+            tasks=node_dict['tasks'],
+            failure_modes=node_dict['failure_modes'],
+            antifragility_score=node_dict['antifragility_score'],
+            xanatos_factor=node_dict['xanatos_factor'],
+            xanatos_gambits=node_dict['xanatos_gambits'],
+            expected_utility=node_dict['expected_utility']
+        )
+        node.prerequisites = [self._dict_to_tree(prereq) for prereq in node_dict['prerequisites']]
+        return node
+
+# Utility functions
 
 def save_plan_to_file(plan_data: Dict[str, Any], filename: str):
     with open(filename, 'w') as f:
