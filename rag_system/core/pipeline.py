@@ -1,20 +1,18 @@
-# rag_system/core/pipeline.py
-
 from typing import List, Dict, Any, Tuple
-from .config import RAGConfig
-from ..retrieval.hybrid_retriever import HybridRetriever
-from ..processing.knowledge_constructor import DefaultKnowledgeConstructor
-from ..processing.reasoning_engine import DefaultReasoningEngine
-from ..utils.embedding import DefaultEmbeddingModel
-from ..active_rag.active_hybrid_retriever import ActiveHybridRetriever
-from ..active_rag.latent_space_activator import LatentSpaceActivator
-from ..plan_rag.planning_aware_retriever import PlanningAwareRetriever
-from ..plan_rag.iterative_query_manager import IterativeQueryManager
-from ..processing.cognitive_nexus import CognitiveNexus
-from ..core.agent_interface import AgentInterface
-from ..core.structures import RetrievalResult
-from ..processing.self_referential_query_processor import SelfReferentialQueryProcessor
-from ..tracking.knowledge_evolution_tracker import KnowledgeEvolutionTracker
+from rag_system.config import RAGConfig
+from rag_system.retrieval.hybrid_retriever import HybridRetriever
+from rag_system.processing.knowledge_constructor import DefaultKnowledgeConstructor
+from rag_system.processing.reasoning_engine import DefaultReasoningEngine
+from rag_system.utils.embedding import DefaultEmbeddingModel
+from rag_system.active_rag.active_hybrid_retriever import ActiveHybridRetriever
+from rag_system.active_rag.latent_space_activator import LatentSpaceActivator
+from rag_system.plan_rag.planning_aware_retriever import PlanningAwareRetriever
+from rag_system.plan_rag.iterative_query_manager import IterativeQueryManager
+from rag_system.processing.cognitive_nexus import CognitiveNexus
+from rag_system.core.agent_interface import AgentInterface
+from rag_system.core.structures import RetrievalResult
+from rag_system.processing.self_referential_query_processor import SelfReferentialQueryProcessor
+from rag_system.tracking.knowledge_evolution_tracker import KnowledgeEvolutionTracker
 import datetime
 
 class RAGPipeline:

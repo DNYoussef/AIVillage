@@ -8,35 +8,36 @@ from tqdm import tqdm
 
 from grokfast import GrokFast
 from sleep_and_dream import SleepNet, DreamNet
-from bitlinearization import quantize_weights, quantize_activations
+from agent_forge.model_compression.bitlinearization import quantize_weights, quantize_activations
 
 class CodingTask:
     def __init__(self, description: str, difficulty: int):
         self.description = description
         self.difficulty = difficulty
 
-    def generate_coding_tasks(num_tasks: int, avg_difficulty: int) -> List[CodingTask]:
-      task_generator = AutoModelForCausalLM.from_pretrained("gpt2-large").to("cuda")
-      task_tokenizer = AutoTokenizer.from_pretrained("gpt2-large")
+    @staticmethod
+    def generate_coding_tasks(num_tasks: int, avg_difficulty: int) -> List['CodingTask']:
+        task_generator = AutoModelForCausalLM.from_pretrained("gpt2-large").to("cuda")
+        task_tokenizer = AutoTokenizer.from_pretrained("gpt2-large")
 
-      tasks = []
-      for _ in range(num_tasks):
-          prompt = f"Create a coding task with difficulty level {avg_difficulty}/100. Include a clear problem description."
-          input_ids = task_tokenizer.encode(prompt, return_tensors="pt").to("cuda")
-          
-          with torch.no_grad():
-              output = task_generator.generate(
-                  input_ids,
-                  max_length=200,
-                  num_return_sequences=1,
-                  temperature=0.7
-              )
-          
-          task_description = task_tokenizer.decode(output[0], skip_special_tokens=True)
-          tasks.append(CodingTask(description=task_description, difficulty=avg_difficulty))
+        tasks = []
+        for _ in range(num_tasks):
+            prompt = f"Create a coding task with difficulty level {avg_difficulty}/100. Include a clear problem description."
+            input_ids = task_tokenizer.encode(prompt, return_tensors="pt").to("cuda")
 
-      return tasks
-    
+            with torch.no_grad():
+                output = task_generator.generate(
+                    input_ids,
+                    max_length=200,
+                    num_return_sequences=1,
+                    temperature=0.7
+                )
+
+            task_description = task_tokenizer.decode(output[0], skip_special_tokens=True)
+            tasks.append(CodingTask(description=task_description, difficulty=avg_difficulty))
+
+        return tasks
+        
 class SelfModelingLoop:
     def __init__(self, model_name: str, device: str = "cuda" if torch.cuda.is_available() else "cpu"):
         self.device = device
@@ -109,7 +110,7 @@ class SelfModelingLoop:
         return loss.item(), accuracy
 
     def self_modeling_cycle(self, curriculum_level: int, num_cycles: int = 100):
-        tasks = generate_coding_tasks(1000, self.avg_difficulty)
+        tasks = CodingTask.generate_coding_tasks(1000, self.avg_difficulty)
 
         temperature_ranges = [
             (0.0, 0.05),
@@ -179,7 +180,7 @@ class SelfModelingLoop:
         # Placeholder for model evaluation
         # You should implement a proper evaluation method based on your specific requirements
         return random.random()
-    
+        
 def main():
     model_name = "bert-base-uncased"  # You can change this to any suitable model
     self_modeling = SelfModelingLoop(model_name)

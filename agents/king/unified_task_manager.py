@@ -1,13 +1,14 @@
 from typing import List, Dict, Any, Optional
 from collections import deque
 import asyncio
-from .task_management.task import Task, TaskStatus
-from .task_management.workflow import Workflow
-from ..communication.protocol import StandardCommunicationProtocol, Message, MessageType, Priority
+import uuid
+from agents.king.task_management.task import Task, TaskStatus
+from agents.king.task_management.workflow import Workflow
+from communications.protocol import StandardCommunicationProtocol, Message, MessageType, Priority
 from langroid.agent.task import Task as LangroidTask
 from langroid.agent.chat_agent import ChatAgent
-from ..utils.exceptions import AIVillageException
-from ..utils.logger import logger
+from agents.king.utils.exceptions import AIVillageException
+from agents.king.utils.logger import logger
 
 class UnifiedTaskManager:
     def __init__(self, communication_protocol: StandardCommunicationProtocol):
