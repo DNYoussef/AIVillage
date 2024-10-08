@@ -1,9 +1,9 @@
 import click
 import yaml
 import traceback
-from agent_forge.mergekit.config import MergeKitConfig
-from agent_forge.mergekit.merger import MergeKitMerger
-from agent_forge.mergekit.utils import load_models, save_model
+from agent_forge.evomerge.config import MergeKitConfig
+from agent_forge.evomerge.merger import MergeKitMerger
+from agent_forge.evomerge.utils import load_models, save_model
 
 @click.command()
 @click.argument("config", type=click.Path(exists=True))

@@ -6,6 +6,12 @@ from neo4j import GraphDatabase
 from ..core.config import RAGConfig
 from ..core.structures import BayesianNode, RetrievalResult
 
+class CausalEdge:
+    def __init__(self, source: str, target: str, strength: float):
+        self.source = source
+        self.target = target
+        self.strength = strength
+
 class GraphStore:
     def __init__(self, config: RAGConfig):
         self.config = config
@@ -24,12 +30,20 @@ class GraphStore:
         MERGE (n:Node {id: $id})
         CREATE (n)-[:VERSION {timestamp: $timestamp}]->(v:NodeVersion $props)
         """
-        tx.run(query, id=node.id, timestamp=node.timestamp, props={
+        tx.run(query, id=node.id, timestamp=node.timestamp.isoformat(), props={
             'content': node.content,
             'probability': node.probability,
             'uncertainty': node.uncertainty,
-            'version': node.version
+            'version': node.version,
+            'context_note': node.context_note
         })
+
+    def add_causal_edge(self, edge: CausalEdge):
+        self.causal_edges[(edge.source, edge.target)] = edge
+
+    def update_causal_strength(self, source: str, target: str, new_strength: float):
+        if (source, target) in self.causal_edges:
+            self.causal_edges[(source, target)].strength = new_strength
 
     async def retrieve(self, query: str, k: int, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
         with self.driver.session() as session:
@@ -76,10 +90,16 @@ class GraphStore:
             )
             for record in result
         ]
-
+    def update_causal_strength(self, source: str, target: str, observed_probability: float):
+        edge = self.causal_edges.get((source, target))
+        if edge:
+            learning_rate = 0.1
+            edge.strength = (1 - learning_rate) * edge.strength + learning_rate * observed_probability
+    
     def close(self):
         self.driver.close()
 
     async def get_snapshot(self, timestamp: datetime) -> Dict[str, Any]:
         # Implement logic to return a snapshot of the graph store at the given timestamp
         pass
+
