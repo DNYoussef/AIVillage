@@ -7,7 +7,7 @@ from agents.king.task_management.workflow import Workflow
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType, Priority
 from langroid.agent.task import Task as LangroidTask
 from langroid.agent.chat_agent import ChatAgent
-from agents.king.utils.exceptions import AIVillageException
+from exceptions import AIVillageException
 from agents.king.utils.logger import logger
 
 class UnifiedTaskManager:

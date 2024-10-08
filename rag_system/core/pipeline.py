@@ -1,5 +1,5 @@
 from typing import List, Dict, Any, Tuple
-from rag_system.config import RAGConfig
+from rag_system.core.config import RAGConfig
 from rag_system.retrieval.hybrid_retriever import HybridRetriever
 from rag_system.processing.knowledge_constructor import DefaultKnowledgeConstructor
 from rag_system.processing.reasoning_engine import DefaultReasoningEngine
