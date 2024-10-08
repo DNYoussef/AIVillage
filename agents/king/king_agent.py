@@ -1,10 +1,12 @@
-# king_agent.py
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from langroid.agent.base import Agent, AgentState
-from langroid.agent.chat_agent import ChatAgent
-from langroid.language_models.openai_gpt import OpenAIGPTConfig, OpenAIGPT
-from langroid.utils.configuration import Settings
-from langroid.utils.logging import setup_logger
+from agents.langroid.agent.base import Agent, AgentState
+from agents.langroid.agent.chat_agent import ChatAgent
+from agents.langroid.language_models.openai_gpt import OpenAIGPTConfig, OpenAIGPT
+from agents.langroid.utils.configuration import Settings
+from agents.langroid.utils.logging import setup_logger
 from typing import Dict, Any, List
 
 logger = setup_logger()
