@@ -1,6 +1,6 @@
 from .config import Configuration, ModelReference, MergeSettings, EvolutionSettings, create_default_config
 from .merger import AdvancedModelMerger
-from .evolutionary_tournament import EvolutionaryMerger, run_evolutionary_tournament
+from .evolutionary_tournament import EvolutionaryTournament, run_evolutionary_tournament
 from .utils import (
     load_models,
     save_model,
@@ -21,7 +21,7 @@ __all__ = [
     "EvolutionSettings",
     "create_default_config",
     "AdvancedModelMerger",
-    "EvolutionaryMerger",
+    "EvolutionaryTournament",
     "run_evolutionary_tournament",
     "load_models",
     "save_model",

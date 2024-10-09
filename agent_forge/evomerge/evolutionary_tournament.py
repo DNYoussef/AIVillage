@@ -11,7 +11,7 @@ from .visualization import plot_fitness_over_generations
 
 logger = logging.getLogger(__name__)
 
-class EvolutionaryMerger:
+class EvolutionaryTournament:
     def __init__(self, config: Configuration):
         self.config = config
         self.merger = AdvancedModelMerger(config)
@@ -128,8 +128,8 @@ class EvolutionaryMerger:
         return best_model
 
 def run_evolutionary_tournament(config: Configuration) -> str:
-    evolutionary_merger = EvolutionaryMerger(config)
-    best_model = evolutionary_merger.evolve()
+    evolutionary_tournament = EvolutionaryTournament(config)
+    best_model = evolutionary_tournament.evolve()
     
     logger.info(f"Best model after evolution: {best_model}")
     final_score = evaluate_model(best_model)

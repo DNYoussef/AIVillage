@@ -7,7 +7,7 @@ class ModelReference(BaseModel):
 
 class MergeSettings(BaseModel):
     merge_method: str
-    parameters: Dict[str, Union[float, List[float], Dict[str, float]]] = Field(default_factory=dict)
+    parameters: Dict[str, Union[float, List[float], Dict[str, Union[float, List[float]]]]] = Field(default_factory=dict)
     custom_dir: str = Field(default="./merged_models")
     ps_techniques: List[str] = ["linear"]
     dfs_techniques: List[str] = []

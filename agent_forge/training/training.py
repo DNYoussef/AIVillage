@@ -10,7 +10,7 @@ from typing import List, Dict, Tuple, Any
 from dataclasses import dataclass
 import sqlite3
 import random
-from grokfast import GrokFast
+from .grokfast import GrokFastTask
 
 # Utility function for 1.58-bit quantization
 def quantize_weights(weights):
@@ -494,7 +494,7 @@ class TrainingTask(Task):
         dpo_model = CodePreferenceModel(input_size=4, hidden_size=64)
         dpo_trainer = DPOTrainer(dpo_model, learning_rate=hyperparameters["dpo_learning_rate"], beta=hyperparameters["dpo_beta"])
         
-        grokfast = None
+        grokfast_task = None
         best_val_performance = float('-inf')
         overfitting_detected = False
         grokfast_activated = False
@@ -586,8 +586,8 @@ class TrainingTask(Task):
                 non_preferred_tensor = code_state_to_tensor(non_preferred)
                 loss = dpo_trainer.train_step(preferred_tensor, non_preferred_tensor)
 
-                if grokfast:
-                    grokfast.filter_gradients()
+                if grokfast_task:
+                    await grokfast_task.filter_gradients()
 
             training_tasks = new_training_tasks
             print(f"Tasks remaining: {len(training_tasks)}")
@@ -606,7 +606,7 @@ class TrainingTask(Task):
             if patience_counter >= patience:
                 if not overfitting_detected:
                     print("Overfitting detected. Activating GrokFast.")
-                    grokfast = GrokFast(dpo_model, method='EMA', lamb=2.0, alpha=0.98)
+                    grokfast_task = GrokFastTask(self.agent, dpo_model, method='EMA', lamb=2.0, alpha=0.98)
                     overfitting_detected = True
                     grokfast_activated = True
                     patience_counter = 0  # Reset patience counter
@@ -622,7 +622,7 @@ class TrainingTask(Task):
                 else:
                     print("Training complete. No groking observed.")
                     break
-            
+
             if not training_tasks:
                 print("All tasks completed successfully!")
                 break
@@ -737,3 +737,4 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
+

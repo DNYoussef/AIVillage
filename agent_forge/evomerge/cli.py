@@ -5,7 +5,7 @@ from .config import create_default_config, Configuration, ModelReference
 from .evolutionary_tournament import run_evolutionary_tournament
 from .utils import generate_text, evaluate_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
+from .. import AgentForge
 def generate_config_interactive():
     config = {}
     config['merge_method'] = input("Enter merge method (ps/dfs/ps_dfs): ")
@@ -67,12 +67,17 @@ def main():
 
     if args.run:
         print("Running evolutionary tournament...")
-        best_model_path = run_evolutionary_tournament(config)
+        agent_forge = AgentForge(model_name=config.models[0].path)  # Use the first model for RAGPromptBaker
+        best_model_path = agent_forge.run_full_agent_forge_process()
         print(f"Best model saved at: {best_model_path}")
         
         print("\nEvaluating best model:")
         evaluation_result = evaluate_model(best_model_path)
-        print(f"Evaluation result: {evaluation_result}")
+        print(f"Overall score: {evaluation_result['overall_score']:.2f}")
+        print("\nDetailed results:")
+        for task, result in evaluation_result['results'].items():
+            print(f"\n{task} Task:")
+            print(result)
 
         print("\nGenerating sample text:")
         model = AutoModelForCausalLM.from_pretrained(best_model_path)
@@ -83,7 +88,11 @@ def main():
     elif args.evaluate:
         print(f"Evaluating model at {args.evaluate}")
         evaluation_result = evaluate_model(args.evaluate)
-        print(f"Evaluation result: {evaluation_result}")
+        print(f"Overall score: {evaluation_result['overall_score']:.2f}")
+        print("\nDetailed results:")
+        for task, result in evaluation_result['results'].items():
+            print(f"\n{task} Task:")
+            print(result)
 
     elif args.generate:
         print(f"Generating text using model at {args.generate}")
@@ -97,3 +106,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

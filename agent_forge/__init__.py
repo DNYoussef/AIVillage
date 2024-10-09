@@ -1,28 +1,26 @@
-from agent_forge.evomerge.evolutionary_tournament import EvolutionaryTournament
-from agent_forge.training.training import Trainer
-from agent_forge.tool_baking.rag_prompt_baker import RAGPromptBaker
-# from agent_forge.adas.adas_process import ADASProcess  # Module not found in project structure
+from . import evomerge
+from .training.training import TrainingTask
+from . import tool_baking
+# from . import adas  # Module not found in project structure
 
 __all__ = [
     "AgentForge",
-    "EvolutionaryTournament",
-    "Trainer",
-    "RAGPromptBaker",
-    # "ADASProcess",
 ]
 
 class AgentForge:
-    def __init__(self):
-        self.evolution_tournament = EvolutionaryTournament()
-        self.trainer = Trainer()
-        self.prompt_baker = RAGPromptBaker()
-        # self.adas_process = ADASProcess()  # Commented out since module doesn't exist
+    def __init__(self, model_name="gpt2"):
+        config = evomerge.create_default_config()
+        self.evolution_tournament = evomerge.EvolutionaryTournament(config)
+        self.training_task = TrainingTask(None)  # Note: We're passing None as the agent, you might need to adjust this
+        self.prompt_baker = tool_baking.RAGPromptBaker(model_name)
+        # self.adas_process = adas.ADASProcess()  # Commented out since module doesn't exist
 
     def run_evolution_tournament(self):
-        self.evolution_tournament.run()
+        return self.evolution_tournament.evolve()
 
     def run_training(self):
-        self.trainer.start_training()
+        # You might need to adjust this method to work with TrainingTask
+        pass
 
     def run_prompt_baking(self):
         self.prompt_baker.bake_prompts()
@@ -31,10 +29,12 @@ class AgentForge:
     #     self.adas_process.run()
 
     def run_full_agent_forge_process(self):
-        self.run_evolution_tournament()
+        best_model = self.run_evolution_tournament()
         self.run_training()
         self.run_prompt_baking()
         # self.run_adas_process()
         print("Agent Forge process completed.")
+        return best_model
 
-agent_forge = AgentForge()
+# Don't create an instance here, let it be created when needed
+# agent_forge = AgentForge()

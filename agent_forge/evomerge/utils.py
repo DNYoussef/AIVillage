@@ -73,36 +73,53 @@ def generate_text(model: torch.nn.Module, tokenizer: AutoTokenizer, prompt: str,
         logger.error(f"Error during text generation: {str(e)}")
         raise EvoMergeException(f"Error generating text: {str(e)}")
 
-
-def parallel_evaluate_models(model_paths: List[str], max_workers: int = None) -> List[Dict[str, Union[float, str]]]:
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        return list(executor.map(evaluate_model, model_paths))
+def evaluate_model(model_path: str) -> Dict[str, Union[float, str]]:
     try:
         model = AutoModelForCausalLM.from_pretrained(model_path)
         tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-        prompts = [
-            "The capital of France is",
-            "The theory of relativity was proposed by",
-            "The largest planet in our solar system is"
+        tasks = [
+            {
+                "name": "Coding",
+                "prompt": "Implement the Ackermann function in Python. The function should take two non-negative integers m and n as input and return the result of A(m, n).",
+                "max_tokens": 300,
+            },
+            {
+                "name": "Mathematics",
+                "prompt": "Prove that e (Euler's number) is irrational using its continued fraction representation. Provide a step-by-step explanation.",
+                "max_tokens": 500,
+            },
+            {
+                "name": "Writing",
+                "prompt": "Compose a sonnet in iambic pentameter that incorporates themes from quantum physics. Ensure that the poem follows the traditional sonnet structure and rhyme scheme.",
+                "max_tokens": 200,
+            }
         ]
 
-        total_perplexity = 0
-        for prompt in prompts:
-            inputs = tokenizer(prompt, return_tensors="pt")
+        results = {}
+        for task in tasks:
+            inputs = tokenizer(task["prompt"], return_tensors="pt")
             with torch.no_grad():
-                outputs = model(**inputs, labels=inputs["input_ids"])
-                loss = outputs.loss
-                perplexity = torch.exp(loss)
-                total_perplexity += perplexity.item()
+                outputs = model.generate(**inputs, max_new_tokens=task["max_tokens"], num_return_sequences=1)
+                generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+                results[task["name"]] = generated_text
 
-        avg_perplexity = total_perplexity / len(prompts)
-        coherence_score = 1 / avg_perplexity  # Lower perplexity means higher coherence
-        return {"overall_score": coherence_score, "perplexity": avg_perplexity}
+        # For simplicity, we'll use the length of the generated text as a proxy for performance
+        # In a real-world scenario, you'd want to use more sophisticated metrics or human evaluation
+        overall_score = sum(len(text.split()) for text in results.values()) / len(tasks)
+
+        return {
+            "overall_score": overall_score,
+            "results": results
+        }
 
     except Exception as e:
         logger.error(f"Error during model evaluation: {str(e)}")
         raise EvoMergeException(f"Error evaluating model: {str(e)}")
+
+def parallel_evaluate_models(model_paths: List[str], max_workers: int = None) -> List[Dict[str, Union[float, str]]]:
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        return list(executor.map(evaluate_model, model_paths))
 
 def setup_gpu_if_available():
     if torch.cuda.is_available():
