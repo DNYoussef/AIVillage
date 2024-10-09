@@ -2,17 +2,13 @@
 
 import logging
 import random
-from typing import List, Dict
+from typing import List, Dict, Union
 from pydantic import BaseModel, Field
 
-from merger import AdvancedModelMerger, MergeConfig, ModelReference
+from .config import MergeConfig, EvolutionConfig, ModelReference
+from .merger import AdvancedModelMerger
 
 logger = logging.getLogger(__name__)
-
-class EvolutionConfig(BaseModel):
-    population_size: int = 8
-    num_generations: int = 50
-    mutation_rate: float = 0.1
 
 class EvolutionaryMerger:
     def __init__(self, base_model: ModelReference, tasks: List[str], merge_config: MergeConfig, evolution_config: EvolutionConfig):
@@ -30,23 +26,38 @@ class EvolutionaryMerger:
         return expert_models
 
     def _fine_tune_model(self, base_model: ModelReference, task: str) -> ModelReference:
-        # Implement fine-tuning logic here
+        # TODO: Implement actual fine-tuning logic here
+        logger.warning("Fine-tuning is not implemented. Using a placeholder.")
         fine_tuned_model = ModelReference(
             name=f"{base_model.name}_finetuned_{task}",
-            path=f"{base_model.path}_finetuned_{task}",
-            size=base_model.size
+            path=f"{base_model.path}_finetuned_{task}"
         )
         return fine_tuned_model
 
     def evolve(self) -> str:
         expert_models = self.create_expert_models()
         population = self.merger.create_merged_models(expert_models)
+        best_score = float('-inf')
+        generations_without_improvement = 0
 
         for generation in range(self.evolution_config.num_generations):
             logger.info(f"Generation {generation + 1}")
 
             scores = self._evaluate_population(population)
             
+            # Check for improvement
+            current_best_score = max(scores)
+            if current_best_score > best_score:
+                best_score = current_best_score
+                generations_without_improvement = 0
+            else:
+                generations_without_improvement += 1
+
+            # Early stopping
+            if generations_without_improvement >= self.evolution_config.early_stopping_generations:
+                logger.info(f"Early stopping triggered after {generation + 1} generations")
+                break
+
             top_performers = self._select_top_performers(population, scores, 2)
             merged_models = self._merge_lower_performers(population, top_performers)
             mutated_models = self._mutate_top_performers(top_performers)
@@ -54,7 +65,6 @@ class EvolutionaryMerger:
             new_population = mutated_models + merged_models
             population = new_population
 
-            best_score = max(scores)
             logger.info(f"Best score in generation {generation + 1}: {best_score}")
 
         final_scores = self._evaluate_population(population)
@@ -68,8 +78,8 @@ class EvolutionaryMerger:
     def _merge_lower_performers(self, population: List[str], top_performers: List[str]) -> List[str]:
         lower_performers = [model for model in population if model not in top_performers]
         
-        group1 = lower_performers[:3]
-        group2 = lower_performers[3:]
+        group1 = lower_performers[:len(lower_performers)//2]
+        group2 = lower_performers[len(lower_performers)//2:]
         
         merged_model1 = self._merge_models(group1)
         merged_model2 = self._merge_models(group2)
@@ -113,11 +123,11 @@ def run_evolutionary_tournament(base_model: ModelReference, tasks: List[str], me
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     
-    base_model = ModelReference(name="palm-2-it", path="path/to/palm-2-it", size=64e9)
+    base_model = ModelReference(name="gpt2", path="gpt2")
     tasks = ["task1", "task2", "task3"]  # Define your specific tasks here
 
     merge_config = MergeConfig(
-        merge_method="adaptive",
+        merge_method="ps_dfs",
         models=[],  # This will be filled by create_expert_models
         parameters={
             "linear": {"weights": [1/3, 1/3, 1/3]},
@@ -130,7 +140,9 @@ if __name__ == "__main__":
     evolution_config = EvolutionConfig(
         population_size=8,
         num_generations=50,
-        mutation_rate=0.1
+        mutation_rate=0.1,
+        tournament_size=3,
+        early_stopping_generations=10
     )
 
     best_model = run_evolutionary_tournament(base_model, tasks, merge_config, evolution_config)

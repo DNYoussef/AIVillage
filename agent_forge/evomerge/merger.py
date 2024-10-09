@@ -1,33 +1,17 @@
 import os
-from venv import logger
 import torch
 import numpy as np
 import random
-from typing import List, Dict, Tuple, Optional, Union
+from typing import List, Dict, Union
 import logging
 from pydantic import BaseModel, Field
 from abc import ABC, abstractmethod
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from scipy.stats import special_ortho_group
 from torch.nn.functional import cosine_similarity
 
-class ModelReference(BaseModel):
-    name: str
-    path: str  # Hugging Face model ID or local path
+from .config import MergeConfig, EvolutionConfig, ModelReference
 
-class MergeConfig(BaseModel):
-    merge_method: str
-    models: List[ModelReference]
-    parameters: Dict[str, any] = Field(default_factory=dict)
-    custom_dir: str = Field(default="./merged_models")
-    ps_techniques: List[str] = ["linear"]
-    dfs_techniques: List[str] = []
-
-class EvolutionConfig(BaseModel):
-    population_size: int = 8
-    num_generations: int = 50
-    mutation_rate: float = 0.1
-    tournament_size: int = 3
+logger = logging.getLogger(__name__)
 
 class MergeTechnique(ABC):
     @abstractmethod
@@ -200,7 +184,7 @@ class AdvancedModelMerger:
         tokenizer.save_pretrained(merged_model_path)
         return merged_model_path
 
-    def evaluate_model(self, model_path: str) -> float:
+    def evaluate_model(self, model_path: str) -> Dict[str, Union[float, str]]:
         try:
             model = AutoModelForCausalLM.from_pretrained(model_path)
             tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -222,11 +206,11 @@ class AdvancedModelMerger:
 
             avg_perplexity = total_perplexity / len(prompts)
             coherence_score = 1 / avg_perplexity  # Lower perplexity means higher coherence
-            return coherence_score
+            return {"overall_score": coherence_score, "perplexity": avg_perplexity}
 
         except Exception as e:
             logger.error(f"Error during model evaluation: {str(e)}")
-            return float('-inf')  # Return worst possible score if evaluation fails
+            return {"overall_score": float('-inf'), "error": str(e)}
 
 class EvolutionaryMerger:
     def __init__(self, initial_models: List[ModelReference], merge_config: MergeConfig, evolution_config: EvolutionConfig):
@@ -278,12 +262,27 @@ class EvolutionaryMerger:
 
     def evolve(self) -> str:
         population = self.create_merged_models()
+        best_score = float('-inf')
+        generations_without_improvement = 0
 
         for generation in range(self.evolution_config.num_generations):
             logger.info(f"Generation {generation + 1}")
 
             # Evaluate population
-            scores = [self.merger.evaluate_model(model) for model in population]
+            scores = [self.merger.evaluate_model(model)["overall_score"] for model in population]
+
+            # Check for improvement
+            current_best_score = max(scores)
+            if current_best_score > best_score:
+                best_score = current_best_score
+                generations_without_improvement = 0
+            else:
+                generations_without_improvement += 1
+
+            # Early stopping
+            if generations_without_improvement >= self.evolution_config.early_stopping_generations:
+                logger.info(f"Early stopping triggered after {generation + 1} generations")
+                break
 
             # Select top performers
             top_models = sorted(zip(population, scores), key=lambda x: x[1], reverse=True)[:2]
@@ -319,7 +318,7 @@ class EvolutionaryMerger:
             logger.info(f"Best score in generation {generation + 1}: {max(scores)}")
 
         # Final evaluation
-        final_scores = [self.merger.evaluate_model(model) for model in population]
+        final_scores = [self.merger.evaluate_model(model)["overall_score"] for model in population]
         best_model = population[final_scores.index(max(final_scores))]
 
         return best_model
@@ -355,7 +354,8 @@ def main():
         population_size=8,
         num_generations=50,
         mutation_rate=0.1,
-        tournament_size=3
+        tournament_size=3,
+        early_stopping_generations=10
     )
 
     # Create evolutionary merger
