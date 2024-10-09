@@ -9,6 +9,10 @@ from torch.nn.functional import cosine_similarity
 
 logger = logging.getLogger(__name__)
 
+class EvoMergeException(Exception):
+    """Custom exception class for EvoMerge errors."""
+    pass
+
 class ModelReference(BaseModel):
     name: str
     path: str
@@ -30,7 +34,7 @@ def load_models(model_references: List[ModelReference]) -> List[torch.nn.Module]
             models.append(model)
         except Exception as e:
             logger.error(f"Failed to load model {model_ref.name}: {str(e)}")
-            raise
+            raise EvoMergeException(f"Error loading model {model_ref.name}: {str(e)}")
     return models
 
 def save_model(model: torch.nn.Module, path: str) -> None:
@@ -42,21 +46,21 @@ def save_model(model: torch.nn.Module, path: str) -> None:
         tokenizer.save_pretrained(path)
     except Exception as e:
         logger.error(f"Failed to save model: {str(e)}")
-        raise
+        raise EvoMergeException(f"Error saving model: {str(e)}")
 
 def validate_merge_config(config: MergeConfig) -> None:
     logger.info("Validating merge configuration")
     if config.merge_method not in ["ps", "dfs", "ps_dfs"]:
         logger.error(f"Invalid merge method: {config.merge_method}")
-        raise ValueError(f"Invalid merge method. Choose from: ps, dfs, ps_dfs")
+        raise EvoMergeException(f"Invalid merge method. Choose from: ps, dfs, ps_dfs")
     if len(config.models) < 2:
         logger.error("At least two models are required for merging")
-        raise ValueError("At least two models are required for merging")
+        raise EvoMergeException("At least two models are required for merging")
     valid_techniques = ["linear", "slerp", "ties", "dare", "task_arithmetic", "frankenmerge", "dfs"]
     for technique in config.ps_techniques + config.dfs_techniques:
         if technique not in valid_techniques:
             logger.error(f"Invalid technique: {technique}")
-            raise ValueError(f"Invalid technique: {technique}. Choose from: {', '.join(valid_techniques)}")
+            raise EvoMergeException(f"Invalid technique: {technique}. Choose from: {', '.join(valid_techniques)}")
     logger.info("Merge configuration is valid")
 
 def generate_text(model: torch.nn.Module, tokenizer: AutoTokenizer, prompt: str, max_length: int = 100) -> str:
@@ -66,7 +70,7 @@ def generate_text(model: torch.nn.Module, tokenizer: AutoTokenizer, prompt: str,
         return tokenizer.decode(outputs[0], skip_special_tokens=True)
     except Exception as e:
         logger.error(f"Error during text generation: {str(e)}")
-        return ""
+        raise EvoMergeException(f"Error generating text: {str(e)}")
 
 def evaluate_model(model_path: str) -> Dict[str, Union[float, str]]:
     try:
@@ -94,7 +98,7 @@ def evaluate_model(model_path: str) -> Dict[str, Union[float, str]]:
 
     except Exception as e:
         logger.error(f"Error during model evaluation: {str(e)}")
-        return {"overall_score": float('-inf'), "error": str(e)}
+        raise EvoMergeException(f"Error evaluating model: {str(e)}")
 
 def setup_gpu_if_available():
     if torch.cuda.is_available():
