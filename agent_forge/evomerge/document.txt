@@ -105,6 +105,7 @@ EvoMerge is a system designed to merge multiple language models using evolutiona
 7. Logging:
    The system uses Python's logging module to provide detailed logs of the merging and evolutionary processes. Log levels can be adjusted as needed.
 
+
 8. Testing:
    a. Unit Tests (test_evomerge.py):
       Run these tests to ensure individual components are functioning correctly.
@@ -129,26 +130,51 @@ EvoMerge is a system designed to merge multiple language models using evolutiona
     - Running the evolutionary tournament
     - Evaluating a merged model
     - Generating text using a merged model
+    - Specifying initial models using Hugging Face model IDs or local paths
 
     Usage examples:
-    a. Run the evolutionary tournament:
+    a. Run the evolutionary tournament with default models:
        ```
        python -m agent_forge.evomerge.cli --run
        ```
 
-    b. Evaluate a merged model:
+    b. Run the evolutionary tournament with custom models from Hugging Face:
+       ```
+       python -m agent_forge.evomerge.cli --run --model1 bert-base-uncased --model2 roberta-base --model3 distilbert-base-uncased
+       ```
+
+    c. Evaluate a merged model:
        ```
        python -m agent_forge.evomerge.cli --evaluate path/to/merged/model
        ```
 
-    c. Generate text using a merged model:
+    d. Generate text using a merged model:
        ```
        python -m agent_forge.evomerge.cli --generate path/to/merged/model --prompt "Your prompt here"
        ```
 
-    d. Use a custom configuration file:
+    e. Use a custom configuration file:
        ```
        python -m agent_forge.evomerge.cli --config path/to/config.json --run
        ```
 
-Note: Ensure you have sufficient computational resources, especially GPU memory, as merging and evaluating large language models can be computationally intensive.
+11. Using Hugging Face Model Links:
+    The CLI now supports direct input of Hugging Face model links for the initial 3 models. This makes it easier to experiment with different model combinations without modifying the code. Here's how you can use this feature:
+
+    a. Specify one or more models using their Hugging Face model IDs:
+       ```
+       python -m agent_forge.evomerge.cli --run --model1 bert-base-uncased --model2 roberta-base --model3 distilbert-base-uncased
+       ```
+
+    b. You can mix and match Hugging Face model IDs with local paths:
+       ```
+       python -m agent_forge.evomerge.cli --run --model1 bert-base-uncased --model2 /path/to/local/model --model3 distilbert-base-uncased
+       ```
+
+    c. If you specify fewer than three models, the system will use the default models to fill in the gaps. For example:
+       ```
+       python -m agent_forge.evomerge.cli --run --model1 bert-base-uncased --model2 roberta-base
+       ```
+       This will use bert-base-uncased and roberta-base as the first two models, and the third model will be the default one from the configuration.
+
+Note: Ensure you have sufficient computational resources, especially GPU memory, as merging and evaluating large language models can be computationally intensive. When using Hugging Face model links, make sure you have a stable internet connection to download the models.

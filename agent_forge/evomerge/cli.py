@@ -12,6 +12,9 @@ def main():
     parser.add_argument("--evaluate", type=str, help="Evaluate a merged model at the given path")
     parser.add_argument("--generate", type=str, help="Generate text using a merged model at the given path")
     parser.add_argument("--prompt", type=str, default="The capital of France is", help="Prompt for text generation")
+    parser.add_argument("--model1", type=str, help="Hugging Face model ID or path for the first model")
+    parser.add_argument("--model2", type=str, help="Hugging Face model ID or path for the second model")
+    parser.add_argument("--model3", type=str, help="Hugging Face model ID or path for the third model")
     args = parser.parse_args()
 
     if args.config:
@@ -20,6 +23,22 @@ def main():
         config = Configuration(**config_dict)
     else:
         config = create_default_config()
+
+    # Update the configuration with the provided models
+    if args.model1 or args.model2 or args.model3:
+        new_models = []
+        if args.model1:
+            new_models.append(ModelReference(name="model1", path=args.model1))
+        if args.model2:
+            new_models.append(ModelReference(name="model2", path=args.model2))
+        if args.model3:
+            new_models.append(ModelReference(name="model3", path=args.model3))
+        
+        if len(new_models) < 2:
+            print("Error: At least two models must be provided for merging.")
+            return
+        
+        config.models = new_models
 
     if args.run:
         print("Running evolutionary tournament...")
