@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import AutoModel, AutoModelForMaskedLM, AutoModelForCausalLM
+from langroid import Task, ChatAgent, ChatAgentConfig
 
 class TernaryQuantizer(torch.autograd.Function):
     @staticmethod
@@ -144,8 +145,34 @@ class DreamNet(nn.Module):
             x = dream_block(x)
         return self.output_layer(x)
 
-# Usage example:
-# sleepnet_cv = SleepNet(input_size=768, output_size=num_classes, num_sleep_blocks=3, model_type='vit-base')
-# dreamnet_cv = DreamNet(input_size=768, output_size=num_classes, num_dream_blocks=3, model_type='mae-base')
-# sleepnet_nlp = SleepNet(input_size=768, output_size=num_classes, num_sleep_blocks=3, model_type='roberta-base')
-# dreamnet_nlp = DreamNet(input_size=768, output_size=num_classes, num_dream_blocks=3, model_type='xlnet-base')
+class SleepAndDreamTask(Task):
+    def __init__(self, agent: ChatAgent, input_size: int, output_size: int, num_sleep_blocks: int, num_dream_blocks: int):
+        super().__init__(agent)
+        self.sleep_net = SleepNet(input_size, output_size, num_sleep_blocks)
+        self.dream_net = DreamNet(input_size, output_size, num_dream_blocks)
+
+    async def run(self, input_data: torch.Tensor) -> torch.Tensor:
+        sleep_output = self.sleep_net(input_data)
+        dream_output = self.dream_net(sleep_output)
+        return dream_output
+
+# Usage example
+if __name__ == "__main__":
+    import asyncio
+    from langroid.language_models.openai_gpt import OpenAIGPTConfig
+
+    async def main():
+        config = ChatAgentConfig(
+            name="SleepAndDreamAgent",
+            llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
+        )
+        agent = ChatAgent(config)
+        task = SleepAndDreamTask(agent, input_size=768, output_size=768, num_sleep_blocks=3, num_dream_blocks=3)
+        
+        # Example input tensor
+        input_data = torch.randn(1, 768)
+        
+        result = await task.run(input_data)
+        print("Sleep and Dream process completed. Output shape:", result.shape)
+
+    asyncio.run(main())

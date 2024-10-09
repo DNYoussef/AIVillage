@@ -1,22 +1,32 @@
-# agent_forge/adas/technique_archive.py
+from langroid.agent.tool_message import ToolMessage
+
+class AgentTechnique(ToolMessage):
+    request: str = "apply_technique"
+    purpose: str = "Apply a specific AI technique"
+    thought: str
+    name: str
+    code: str
+
+    def handle(self):
+        # This method would be implemented to actually apply the technique
+        pass
 
 PROMPT_TECHNIQUE_ARCHIVE = [
-    {
-        "thought": "Zero-shot prompting provides direct instructions without examples, allowing for quick task performance without prior demonstrations. This approach leverages the model's pre-trained knowledge to generalize to new tasks.",
-        "name": "Zero-Shot Prompting",
-        "code": """
-def forward(self, taskInfo):
+    AgentTechnique(
+        thought="Zero-shot prompting provides direct instructions without examples, allowing for quick task performance without prior demonstrations. This approach leverages the model's pre-trained knowledge to generalize to new tasks.",
+        name="Zero-Shot Prompting",
+        code="""
+async def run(self):
     instruction = "Based on the given task, provide a direct answer without any additional examples or explanation."
-    zero_shot_agent = LLMAgentBase(['answer'], 'Zero-Shot Agent')
-    answer = zero_shot_agent([taskInfo], instruction)[0]
-    return answer
+    response = await self.agent.llm_response(instruction)
+    return response.content
 """
-    },
-    {
-        "thought": "Few-shot prompting includes a small number of examples before the main task, enabling the model to learn from demonstrations. This technique can improve performance with minimal example overhead.",
-        "name": "Few-Shot Prompting",
-        "code": """
-def forward(self, taskInfo):
+    ),
+    AgentTechnique(
+        thought="Few-shot prompting includes a small number of examples before the main task, enabling the model to learn from demonstrations. This technique can improve performance with minimal example overhead.",
+        name="Few-Shot Prompting",
+        code="""
+async def run(self):
     few_shot_examples = [
         {"input": "Example input 1", "output": "Example output 1"},
         {"input": "Example input 2", "output": "Example output 2"},
@@ -26,11 +36,10 @@ def forward(self, taskInfo):
         instruction += f"Input: {example['input']}\\nOutput: {example['output']}\\n\\n"
     instruction += "Now, solve the following task:"
     
-    few_shot_agent = LLMAgentBase(['answer'], 'Few-Shot Agent')
-    answer = few_shot_agent([taskInfo, Info('examples', 'ADAS', str(few_shot_examples), 0)], instruction)[0]
-    return answer
+    response = await self.agent.llm_response(instruction)
+    return response.content
 """
-    },
+    ),
     {
         "thought": "Chain-of-Thought (CoT) prompting encourages the model to show its reasoning steps, enhancing problem-solving capabilities for complex tasks that require multi-step reasoning.",
         "name": "Chain-of-Thought",

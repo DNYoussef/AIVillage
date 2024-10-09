@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from typing import Dict, Any
+from langroid import Task, ChatAgent, ChatAgentConfig
 
 class TernaryQuantizer(torch.autograd.Function):
     @staticmethod
@@ -68,87 +69,111 @@ def calculate_model_size(model: nn.Module) -> float:
             param_size += param.nelement() * param.element_size()
     return param_size / (1024 * 1024)  # Size in MB
 
-def fine_tune(model: nn.Module, train_loader: torch.utils.data.DataLoader, 
-              val_loader: torch.utils.data.DataLoader, epochs: int = 5, 
-              lr: float = 1e-4) -> Dict[str, Any]:
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-    criterion = nn.CrossEntropyLoss()
-    scheduler = torch.optim.CosineAnnealingLR(optimizer, T_max=epochs)
-    
-    best_acc = 0
-    history = {'train_loss': [], 'val_acc': []}
-    
-    for epoch in range(epochs):
-        model.train()
-        train_loss = 0
-        for batch in train_loader:
-            inputs, targets = batch
-            optimizer.zero_grad()
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
-            loss.backward()
-            optimizer.step()
-            train_loss += loss.item()
-            
-            # Re-quantize weights after each update
-            for module in model.modules():
-                if isinstance(module, BitLinear):
-                    module.quantize_weight()
+class BitlinearizationTask(Task):
+    def __init__(self, agent: ChatAgent, model: nn.Module):
+        super().__init__(agent)
+        self.model = model
+
+    async def fine_tune(self, train_loader: torch.utils.data.DataLoader, 
+                        val_loader: torch.utils.data.DataLoader, epochs: int = 5, 
+                        lr: float = 1e-4) -> Dict[str, Any]:
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
+        criterion = nn.CrossEntropyLoss()
+        scheduler = torch.optim.CosineAnnealingLR(optimizer, T_max=epochs)
         
-        train_loss /= len(train_loader)
-        history['train_loss'].append(train_loss)
+        best_acc = 0
+        history = {'train_loss': [], 'val_acc': []}
         
-        model.eval()
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            for batch in val_loader:
+        for epoch in range(epochs):
+            self.model.train()
+            train_loss = 0
+            for batch in train_loader:
                 inputs, targets = batch
-                outputs = model(inputs)
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += predicted.eq(targets).sum().item()
+                optimizer.zero_grad()
+                outputs = self.model(inputs)
+                loss = criterion(outputs, targets)
+                loss.backward()
+                optimizer.step()
+                train_loss += loss.item()
+                
+                # Re-quantize weights after each update
+                for module in self.model.modules():
+                    if isinstance(module, BitLinear):
+                        module.quantize_weight()
+            
+            train_loss /= len(train_loader)
+            history['train_loss'].append(train_loss)
+            
+            self.model.eval()
+            correct = 0
+            total = 0
+            with torch.no_grad():
+                for batch in val_loader:
+                    inputs, targets = batch
+                    outputs = self.model(inputs)
+                    _, predicted = outputs.max(1)
+                    total += targets.size(0)
+                    correct += predicted.eq(targets).sum().item()
+            
+            accuracy = correct / total
+            history['val_acc'].append(accuracy)
+            
+            if accuracy > best_acc:
+                best_acc = accuracy
+                best_model = self.model.state_dict()
+            
+            await self.agent.llm_response(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Val Accuracy: {accuracy:.4f}")
+            scheduler.step()
         
-        accuracy = correct / total
-        history['val_acc'].append(accuracy)
+        return {'best_model': best_model, 'best_acc': best_acc, 'history': history}
+
+    async def run(self, train_loader: torch.utils.data.DataLoader, 
+                  val_loader: torch.utils.data.DataLoader, epochs: int = 5, 
+                  lr: float = 1e-4) -> Dict[str, Any]:
+        bitnet_model = BitNetModel(self.model)
         
-        if accuracy > best_acc:
-            best_acc = accuracy
-            best_model = model.state_dict()
+        original_size = calculate_model_size(self.model)
+        bitnet_size = calculate_model_size(bitnet_model)
         
-        print(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Val Accuracy: {accuracy:.4f}")
-        scheduler.step()
-    
-    return {'best_model': best_model, 'best_acc': best_acc, 'history': history}
+        await self.agent.llm_response(f"Original model size: {original_size:.2f} MB")
+        await self.agent.llm_response(f"BitNet model size: {bitnet_size:.2f} MB")
+        
+        results = await self.fine_tune(bitnet_model, train_loader, val_loader, epochs, lr)
+        
+        await self.agent.llm_response(f"Best validation accuracy: {results['best_acc']:.4f}")
+        
+        return results
 
 # Example usage
-def main():
-    # Assuming you have a pretrained model and data loaders
-    pretrained_model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=True)
-    
-    # Convert to 1.58-bit model
-    bitnet_model = BitNetModel(pretrained_model)
-    
-    # Print model sizes
-    print(f"Original model size: {calculate_model_size(pretrained_model):.2f} MB")
-    print(f"BitNet model size: {calculate_model_size(bitnet_model):.2f} MB")
-    
-    # Create dummy data loaders (replace with your actual data)
-    train_loader = torch.utils.data.DataLoader(
-        torch.randn(1000, 3, 224, 224),
-        batch_size=32,
-        shuffle=True
-    )
-    val_loader = torch.utils.data.DataLoader(
-        torch.randn(200, 3, 224, 224),
-        batch_size=32,
-        shuffle=False
-    )
-    
-    # Fine-tune the model
-    results = fine_tune(bitnet_model, train_loader, val_loader, epochs=5)
-    
-    print(f"Best validation accuracy: {results['best_acc']:.4f}")
-
 if __name__ == "__main__":
-    main()
+    import asyncio
+    from langroid.language_models.openai_gpt import OpenAIGPTConfig
+
+    async def main():
+        config = ChatAgentConfig(
+            name="BitlinearizationAgent",
+            llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
+        )
+        agent = ChatAgent(config)
+        
+        # Assuming you have a pretrained model and data loaders
+        pretrained_model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=True)
+        
+        # Create dummy data loaders (replace with your actual data)
+        train_loader = torch.utils.data.DataLoader(
+            torch.randn(1000, 3, 224, 224),
+            batch_size=32,
+            shuffle=True
+        )
+        val_loader = torch.utils.data.DataLoader(
+            torch.randn(200, 3, 224, 224),
+            batch_size=32,
+            shuffle=False
+        )
+        
+        task = BitlinearizationTask(agent, pretrained_model)
+        results = await task.run(train_loader, val_loader)
+        
+        print(f"Best validation accuracy: {results['best_acc']:.4f}")
+
+    asyncio.run(main())

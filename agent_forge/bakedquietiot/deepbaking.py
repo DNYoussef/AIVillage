@@ -1,9 +1,11 @@
 import torch
 import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from langroid import Task, ChatAgent, ChatAgentConfig
 
-class DeepSystemBaker:
-    def __init__(self, model_name: str, device: str = "cuda" if torch.cuda.is_available() else "cpu"):
+class DeepSystemBakerTask(Task):
+    def __init__(self, agent: ChatAgent, model_name: str, device: str = "cuda" if torch.cuda.is_available() else "cpu"):
+        super().__init__(agent)
         self.device = device
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -37,7 +39,7 @@ class DeepSystemBaker:
         self.tokenizer.add_special_tokens(special_tokens_dict)
         self.model.resize_token_embeddings(len(self.tokenizer))
 
-    def deep_bake_system(self, max_iterations=50, consistency_threshold=0.95):
+    async def deep_bake_system(self, max_iterations=50, consistency_threshold=0.95):
         system_prompt = """
         You are an AI that uses the Quiet-STaR and IoT framework for reasoning, enhanced with advanced cognitive strategies. Always follow this process and thinking framework:
 
@@ -95,8 +97,8 @@ class DeepSystemBaker:
         
         for i in range(max_iterations):
             print(f"Iteration {i+1}/{max_iterations}")
-            self.bake(system_prompt)
-            consistency = self.evaluate_consistency()
+            await self.bake(system_prompt)
+            consistency = await self.evaluate_consistency()
             print(f"Current consistency: {consistency:.2f}")
             if consistency >= consistency_threshold:
                 print(f"Reached consistency threshold after {i+1} iterations.")
@@ -105,7 +107,7 @@ class DeepSystemBaker:
         self.model.save_pretrained("deep_baked_model")
         self.tokenizer.save_pretrained("deep_baked_model")
 
-    def bake(self, prompt):
+    async def bake(self, prompt):
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
             outputs = self.model(**inputs)
@@ -116,7 +118,7 @@ class DeepSystemBaker:
         optimizer.step()
         optimizer.zero_grad()
 
-    def evaluate_consistency(self, num_samples=10):
+    async def evaluate_consistency(self, num_samples=10):
         test_prompts = [
             "Explain the concept of artificial intelligence.",
             "What are the ethical implications of autonomous vehicles?",
@@ -127,18 +129,18 @@ class DeepSystemBaker:
         
         total_score = 0
         for prompt in test_prompts[:num_samples]:
-            response = self.generate_response(prompt)
-            score = self.score_response(response)
+            response = await self.generate_response(prompt)
+            score = await self.score_response(response)
             total_score += score
         
         return total_score / num_samples
 
-    def generate_response(self, prompt):
+    async def generate_response(self, prompt):
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         outputs = self.model.generate(**inputs, max_length=500, num_return_sequences=1, do_sample=True)
         return self.tokenizer.decode(outputs[0], skip_special_tokens=False)
 
-    def score_response(self, response):
+    async def score_response(self, response):
         expected_structure = self.special_tokens
         
         score = 0
@@ -156,6 +158,23 @@ class DeepSystemBaker:
         
         return score / (2 * len(expected_structure))  # Normalize to [0, 1]
 
+    async def run(self, max_iterations=50, consistency_threshold=0.95):
+        await self.deep_bake_system(max_iterations, consistency_threshold)
+        return "Deep baking completed successfully"
+
+# Usage example
 if __name__ == "__main__":
-    baker = DeepSystemBaker("mistralai/Mistral-7B-v0.1")
-    baker.deep_bake_system()
+    import asyncio
+    from langroid.language_models.openai_gpt import OpenAIGPTConfig
+
+    async def main():
+        config = ChatAgentConfig(
+            name="DeepSystemBaker",
+            llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
+        )
+        agent = ChatAgent(config)
+        task = DeepSystemBakerTask(agent, "mistralai/Mistral-7B-v0.1")
+        result = await task.run()
+        print(result)
+
+    asyncio.run(main())

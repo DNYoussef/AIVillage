@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from langroid import Task, ChatAgent, ChatAgentConfig
 
 class TalkHead(nn.Module):
     def __init__(self, hidden_size):
@@ -11,8 +12,9 @@ class TalkHead(nn.Module):
     def forward(self, x):
         return self.activation(self.dense(x))
 
-class QuietSTaR:
-    def __init__(self, model_path="deep_baked_model"):
+class QuietSTaRTask(Task):
+    def __init__(self, agent: ChatAgent, model_path="deep_baked_model"):
+        super().__init__(agent)
         self.model = AutoModelForCausalLM.from_pretrained(model_path)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.model.eval()
@@ -28,7 +30,7 @@ class QuietSTaR:
             "paradox_resolution"
         ]
 
-    def generate_thought(self, input_text, temperature=0.5):
+    async def generate_thought(self, input_text, temperature=0.5):
         prompt = f"{input_text}\n\nApply the following cognitive strategies:\n"
         for strategy in self.cognitive_strategies:
             prompt += f"<{strategy}>\n"
@@ -56,7 +58,7 @@ class QuietSTaR:
             'hidden_states': outputs.hidden_states
         }
 
-    def extract_strategy_insights(self, thought):
+    async def extract_strategy_insights(self, thought):
         insights = {}
         for strategy in self.cognitive_strategies:
             start_tag = f"<{strategy}>"
@@ -69,41 +71,41 @@ class QuietSTaR:
                 insights[strategy] = "No specific insight found."
         return insights
 
-    def iot_process(self, input_text, max_iterations=5):
+    async def iot_process(self, input_text, max_iterations=5):
         thought = {'text': input_text, 'hidden_states': None}
         for _ in range(max_iterations):
-            thought = self.generate_thought(thought['text'])
-            insights = self.extract_strategy_insights(thought['text'])
-            critique = self.generate_critique(thought['text'], insights, temperature=0.2)
-            alternatives = self.generate_alternatives(thought['text'], insights, temperature=0.8)
-            evaluation = self.self_evaluate(thought['text'], insights)
-            thought = self.revise(thought['text'], critique['text'], alternatives['text'], evaluation['text'], insights)
+            thought = await self.generate_thought(thought['text'])
+            insights = await self.extract_strategy_insights(thought['text'])
+            critique = await self.generate_critique(thought['text'], insights, temperature=0.2)
+            alternatives = await self.generate_alternatives(thought['text'], insights, temperature=0.8)
+            evaluation = await self.self_evaluate(thought['text'], insights)
+            thought = await self.revise(thought['text'], critique['text'], alternatives['text'], evaluation['text'], insights)
             
             if "<ready to answer>" in thought['text']:
                 break
         
         return thought, insights
 
-    def generate_critique(self, thought, insights, temperature=0.2):
+    async def generate_critique(self, thought, insights, temperature=0.2):
         prompt = f"Critique the following thought and insights:\n{thought}\n\nInsights:\n"
         for strategy, insight in insights.items():
             prompt += f"{strategy}: {insight}\n"
         prompt += "\nCritique:"
-        return self.generate_thought(prompt, temperature)
+        return await self.generate_thought(prompt, temperature)
 
-    def generate_alternatives(self, thought, insights, temperature=0.8):
+    async def generate_alternatives(self, thought, insights, temperature=0.8):
         prompt = f"Generate alternative perspectives for:\n{thought}\n\nConsider these insights:\n"
         for strategy, insight in insights.items():
             prompt += f"{strategy}: {insight}\n"
         prompt += "\nAlternatives:"
-        return self.generate_thought(prompt, temperature)
+        return await self.generate_thought(prompt, temperature)
 
-    def self_evaluate(self, thought, insights):
+    async def self_evaluate(self, thought, insights):
         prompt = f"Self-evaluate the following thought and insights:\n{thought}\n\nInsights:\n"
         for strategy, insight in insights.items():
             prompt += f"{strategy}: {insight}\n"
         prompt += "\nEvaluation:"
-        evaluation = self.generate_thought(prompt)
+        evaluation = await self.generate_thought(prompt)
         
         ethical_prompt = f"""
         Evaluate the following thought and insights for following considerations:
@@ -120,12 +122,12 @@ class QuietSTaR:
         for strategy, insight in insights.items():
             ethical_prompt += f"{strategy}: {insight}\n"
         ethical_prompt += "\nEthical evaluation:"
-        ethical_evaluation = self.generate_thought(ethical_prompt)
+        ethical_evaluation = await self.generate_thought(ethical_prompt)
         
         combined_evaluation = f"{evaluation['text']}\n\nEthical considerations:\n{ethical_evaluation['text']}"
         return {'text': combined_evaluation, 'hidden_states': evaluation['hidden_states']}
 
-    def revise(self, thought, critique, alternatives, evaluation, insights):
+    async def revise(self, thought, critique, alternatives, evaluation, insights):
         prompt = f"""
         Original thought: {thought}
         Critique: {critique}
@@ -137,12 +139,12 @@ class QuietSTaR:
         for strategy, insight in insights.items():
             prompt += f"{strategy}: {insight}\n"
         prompt += "\nRevised thought:"
-        return self.generate_thought(prompt)
+        return await self.generate_thought(prompt)
 
-    def generate_base_output(self, input_text):
-        return self.generate_thought(input_text)
+    async def generate_base_output(self, input_text):
+        return await self.generate_thought(input_text)
 
-    def mix_thought_with_base_output(self, base_output, thought):
+    async def mix_thought_with_base_output(self, base_output, thought):
         base_hidden = base_output['hidden_states'][-1][-1]
         thought_hidden = thought['hidden_states'][-1][-1]
         
@@ -166,7 +168,7 @@ class QuietSTaR:
         
         return self.tokenizer.decode(mixed_output[0], skip_special_tokens=False)
 
-    def format_output(self, output, insights):
+    async def format_output(self, output, insights):
         sections = [
             "Initial Thought",
             "Critique",
@@ -181,11 +183,11 @@ class QuietSTaR:
             if section in self.cognitive_strategies:
                 content = insights.get(section, "No insight available.")
             else:
-                content = self.extract_section(output, section)
+                content = await self.extract_section(output, section)
             formatted_output += f"## {section.replace('_', ' ').title()}\n{content}\n\n"
         return formatted_output
 
-    def extract_section(self, output, section):
+    async def extract_section(self, output, section):
         start_tag = f"<{section.lower().replace(' ', '_')}>"
         end_tag = f"</{section.lower().replace(' ', '_')}>"
         start = output.find(start_tag)
@@ -194,7 +196,7 @@ class QuietSTaR:
             return output[start+len(start_tag):end].strip()
         return "Section not found."
 
-    def evaluate_insight_quality(self, insights):
+    async def evaluate_insight_quality(self, insights):
         quality_scores = {}
         for strategy, insight in insights.items():
             score = min(10, len(insight) / 20)  # 0-10 score based on length
@@ -203,22 +205,37 @@ class QuietSTaR:
             quality_scores[strategy] = min(10, score) / 10  # Normalize to 0-1
         return quality_scores
 
-    def process_query(self, input_text):
-        base_output = self.generate_base_output(input_text)
-        thought, insights = self.iot_process(input_text)
-        final_output = self.mix_thought_with_base_output(base_output, thought)
-        formatted_output = self.format_output(final_output, insights)
+    async def process_query(self, input_text):
+        base_output = await self.generate_base_output(input_text)
+        thought, insights = await self.iot_process(input_text)
+        final_output = await self.mix_thought_with_base_output(base_output, thought)
+        formatted_output = await self.format_output(final_output, insights)
         
-        insight_quality = self.evaluate_insight_quality(insights)
+        insight_quality = await self.evaluate_insight_quality(insights)
         formatted_output += "\n## Insight Quality Scores\n"
         for strategy, score in insight_quality.items():
             formatted_output += f"{strategy.replace('_', ' ').title()}: {score:.2f}\n"
         
         return formatted_output
 
+    async def run(self, input_text):
+        return await self.process_query(input_text)
+
+# Usage example
 if __name__ == "__main__":
-    quiet_star = QuietSTaR("deep_baked_model")
-    test_prompt = "Analyze the potential impact of artificial general intelligence on society, considering both short-term and long-term consequences."
-    result = quiet_star.process_query(test_prompt)
-    print("\nEnhanced QuietSTaR Output:")
-    print(result)
+    import asyncio
+    from langroid.language_models.openai_gpt import OpenAIGPTConfig
+
+    async def main():
+        config = ChatAgentConfig(
+            name="QuietSTaR",
+            llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
+        )
+        agent = ChatAgent(config)
+        task = QuietSTaRTask(agent, "deep_baked_model")
+        test_prompt = "Analyze the potential impact of artificial general intelligence on society, considering both short-term and long-term consequences."
+        result = await task.run(test_prompt)
+        print("\nEnhanced QuietSTaR Output:")
+        print(result)
+
+    asyncio.run(main())

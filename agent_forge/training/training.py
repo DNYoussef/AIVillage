@@ -3,7 +3,9 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
-import langroid as lr
+from langroid import ChatAgent, ChatAgentConfig, Task
+from langroid.agent.tool_message import ToolMessage
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from typing import List, Dict, Tuple, Any
 from dataclasses import dataclass
 import sqlite3
@@ -15,7 +17,7 @@ def quantize_weights(weights):
     rand = torch.rand_like(weights)
     return torch.sign(weights) * (rand < torch.abs(weights)).float()
 
-class CodingTask(lr.agent.ToolMessage):
+class CodingTask(ToolMessage):
     request: str = "coding_task"
     purpose: str = "Present a coding task to be solved"
     task_description: str
@@ -38,8 +40,8 @@ class MCTSNode:
         self.visits = 0
         self.value = 0.0
 
-class EnhancedMagiAgent(lr.ChatAgent):
-    def __init__(self, config: lr.ChatAgentConfig):
+class EnhancedMagiAgent(ChatAgent):
+    def __init__(self, config: ChatAgentConfig):
         super().__init__(config)
         self.enable_message(CodingTask)
         self.cognitive_strategies = [
@@ -47,13 +49,13 @@ class EnhancedMagiAgent(lr.ChatAgent):
             "probabilistic_thinking", "rapid_iteration", "paradox_resolution"
         ]
 
-    def coding_task(self, task: CodingTask) -> Tuple[str, str, str]:
-        thoughts = self.generate_thoughts(task)
-        response = self.llm_response(f"Explain your approach to solving this task: {task.task_description}")
-        code = self.llm_response(f"Write code to solve this task: {task.task_description}")
+    async def coding_task(self, task: CodingTask) -> Tuple[str, str, str]:
+        thoughts = await self.generate_thoughts(task)
+        response = await self.llm_response(f"Explain your approach to solving this task: {task.task_description}")
+        code = await self.llm_response(f"Write code to solve this task: {task.task_description}")
         return thoughts, response.content, code.content
 
-    def generate_thoughts(self, task: CodingTask) -> str:
+    async def generate_thoughts(self, task: CodingTask) -> str:
         prompt = f"""
         Apply the following cognitive strategies to solve this coding task:
         {', '.join(self.cognitive_strategies)}
@@ -65,21 +67,24 @@ class EnhancedMagiAgent(lr.ChatAgent):
         [Your thought process here]
         <end of thought>
         """
-        return self.llm_response(prompt).content
+        response = await self.llm_response(prompt)
+        return response.content
 
-    def mcts_action(self, state: CodeState) -> str:
+    async def mcts_action(self, state: CodeState) -> str:
         if not state.thoughts:
-            return self.generate_thoughts(state.task)
+            return await self.generate_thoughts(state.task)
         elif not state.response:
-            return self.llm_response(f"Explain your approach to solving this task: {state.task.task_description}").content
+            response = await self.llm_response(f"Explain your approach to solving this task: {state.task.task_description}")
+            return response.content
         else:
-            return self.llm_response(f"Write or improve the code to solve this task: {state.task.task_description}\nCurrent code: {state.code}").content
+            response = await self.llm_response(f"Write or improve the code to solve this task: {state.task.task_description}\nCurrent code: {state.code}")
+            return response.content
 
-class EnhancedSupervisorAgent(lr.ChatAgent):
-    def __init__(self, config: lr.ChatAgentConfig):
+class EnhancedSupervisorAgent(ChatAgent):
+    def __init__(self, config: ChatAgentConfig):
         super().__init__(config)
 
-    def create_initial_test(self) -> List[CodingTask]:
+    async def create_initial_test(self) -> List[CodingTask]:
         tasks = []
         for i in range(1, 101):
             prompt = f"""
@@ -90,7 +95,7 @@ class EnhancedSupervisorAgent(lr.ChatAgent):
             3. The difficulty level ({i})
             Format the output as: 'Description: <description>\nExpected Result: <result>\nDifficulty: {i}'
             """
-            response = self.llm_response(prompt)
+            response = await self.llm_response(prompt)
             parts = response.content.split('\n')
             tasks.append(CodingTask(
                 task_description=parts[0].split(': ', 1)[1],
@@ -99,7 +104,7 @@ class EnhancedSupervisorAgent(lr.ChatAgent):
             ))
         return tasks
 
-    def grade_attempt(self, task: CodingTask, thoughts: str, response: str, code: str) -> Tuple[int, int, int, bool]:
+    async def grade_attempt(self, task: CodingTask, thoughts: str, response: str, code: str) -> Tuple[int, int, int, bool]:
         grading_prompt = f"""
         Grade the following coding attempt for the task:
         Task: {task.task_description}
@@ -118,12 +123,12 @@ class EnhancedSupervisorAgent(lr.ChatAgent):
         
         Return only these four values separated by commas.
         """
-        grades = self.llm_response(grading_prompt)
+        grades = await self.llm_response(grading_prompt)
         thought_grade, response_grade, code_grade, success = grades.content.split(',')
         return int(thought_grade), int(response_grade), int(code_grade), success.strip().lower() == 'true'
 
-    def grade_mcts_state(self, state: CodeState) -> Tuple[int, int, int, bool]:
-        return self.grade_attempt(state.task, state.thoughts, state.response, state.code)
+    async def grade_mcts_state(self, state: CodeState) -> Tuple[int, int, int, bool]:
+        return await self.grade_attempt(state.task, state.thoughts, state.response, state.code)
 
     def determine_competence_level(self, results: List[Tuple[CodingTask, bool]]) -> int:
         sorted_results = sorted(results, key=lambda x: x[0].difficulty)
@@ -132,25 +137,25 @@ class EnhancedSupervisorAgent(lr.ChatAgent):
                 return task.difficulty - 1
         return 100  # If all tasks were successful
 
-    def create_training_tasks(self, competence_level: int) -> List[CodingTask]:
+    async def create_training_tasks(self, competence_level: int) -> List[CodingTask]:
         tasks = []
         for _ in range(500):
             difficulty = random.randint(max(1, competence_level - 10), competence_level)
             prompt = f"Create a coding task with difficulty {difficulty}/100. Include description and expected result."
-            response = self.llm_response(prompt)
+            response = await self.llm_response(prompt)
             description, expected_result = response.content.split('\nExpected Result:')
             tasks.append(CodingTask(task_description=description.strip(), expected_result=expected_result.strip(), difficulty=difficulty))
         
         for _ in range(500):
             difficulty = random.randint(competence_level + 1, min(100, competence_level + 20))
             prompt = f"Create a coding task with difficulty {difficulty}/100. Include description and expected result."
-            response = self.llm_response(prompt)
+            response = await self.llm_response(prompt)
             description, expected_result = response.content.split('\nExpected Result:')
             tasks.append(CodingTask(task_description=description.strip(), expected_result=expected_result.strip(), difficulty=difficulty))
         
         return tasks
 
-    def reword_task(self, task: CodingTask) -> CodingTask:
+    async def reword_task(self, task: CodingTask) -> CodingTask:
         prompt = f"""
         Reword the following coding task without changing its difficulty or core concept:
         {task.task_description}
@@ -158,39 +163,37 @@ class EnhancedSupervisorAgent(lr.ChatAgent):
         
         Provide the reworded task in the same format.
         """
-        response = self.llm_response(prompt)
+        response = await self.llm_response(prompt)
         description, expected_result = response.content.split('\nExpected Result:')
         return CodingTask(task_description=description.strip(), expected_result=expected_result.strip(), difficulty=task.difficulty)
 
-    def compute_reward(self, thoughts: str, code: str, task: CodingTask) -> float:
-        reasoning_score = self.analyze_reasoning(thoughts)
-        output_score = self.score_output(code, task.expected_result)
-        insight_creativity_score = self.grade_insight_creativity(thoughts)
+    async def compute_reward(self, thoughts: str, code: str, task: CodingTask) -> float:
+        reasoning_score = await self.analyze_reasoning(thoughts)
+        output_score = await self.score_output(code, task.expected_result)
+        insight_creativity_score = await self.grade_insight_creativity(thoughts)
         
         total_reward = reasoning_score + output_score + insight_creativity_score
         return total_reward / 3  # Normalize to [0, 1]
 
-    def analyze_reasoning(self, thoughts: str) -> float:
+    async def analyze_reasoning(self, thoughts: str) -> float:
         strategies_used = sum(1 for strategy in EnhancedMagiAgent(self.config).cognitive_strategies if f"<{strategy}>" in thoughts)
         return strategies_used / len(EnhancedMagiAgent(self.config).cognitive_strategies)
 
-    def score_output(self, code: str, expected_result: str) -> float:
-        similarity = self.llm_response(f"On a scale of 0 to 1, how similar is this code's output likely to be to the expected result?\nCode: {code}\nExpected Result: {expected_result}").content
-        return float(similarity)
+    async def score_output(self, code: str, expected_result: str) -> float:
+        response = await self.llm_response(f"On a scale of 0 to 1, how similar is this code's output likely to be to the expected result?\nCode: {code}\nExpected Result: {expected_result}")
+        return float(response.content)
 
-    def grade_insight_creativity(self, thoughts: str) -> float:
+    async def grade_insight_creativity(self, thoughts: str) -> float:
         prompt = f"""
         On a scale of 0 to 1, rate the insight and creativity of these thoughts:
         {thoughts}
         Consider factors like novel connections, unique perspectives, and creative problem-solving approaches.
         """
-        grade = self.llm_response(prompt).content
-        return float(grade)
-class AIFeedback:
-    def __init__(self, llm_config: lr.language_models.LLMConfig):
-        self.llm = lr.language_models.LanguageModel.create(llm_config)
+        grade = await self.llm_response(prompt)
+        return float(grade.content)
 
-    def evaluate_code(self, task: CodingTask, code: str) -> float:
+class AIFeedbackTask(Task):
+    async def evaluate_code(self, task: CodingTask, code: str) -> float:
         prompt = f"""
         Evaluate the following code for the given task:
         
@@ -210,14 +213,14 @@ class AIFeedback:
         Return only the numeric score.
         """
         
-        response = self.llm.chat([lr.language_models.LLMMessage(content=prompt, role="user")])
+        response = await self.agent.llm_response(prompt)
         try:
-            score = float(response.message.strip())
+            score = float(response.content.strip())
             return max(0.0, min(1.0, score))  # Ensure the score is between 0 and 1
         except ValueError:
-            print(f"Error parsing AI feedback score: {response.message}")
+            print(f"Error parsing AI feedback score: {response.content}")
             return 0.0  # Return 0 if we can't parse the score
-        
+
 class CodePreferenceModel(nn.Module):
     def __init__(self, input_size, hidden_size):
         super().__init__()
@@ -262,9 +265,9 @@ class DPOTrainer:
         
         return loss.item()
 
-class HyperparameterOptimizer:
-    def __init__(self, llm_config: lr.language_models.LLMConfig):
-        self.llm = lr.language_models.LanguageModel.create(llm_config)
+class HyperparameterOptimizationTask(Task):
+    def __init__(self, agent: ChatAgent):
+        super().__init__(agent)
         self.current_hyperparameters = {
             "mcts_iterations": 100,
             "exploration_weight": 1.0,
@@ -274,7 +277,7 @@ class HyperparameterOptimizer:
         }
         self.performance_history = []
 
-    def suggest_hyperparameters(self, performance_metric: float, grok_detected: bool) -> Dict[str, Any]:
+    async def suggest_hyperparameters(self, performance_metric: float, grok_detected: bool) -> Dict[str, Any]:
         self.performance_history.append((self.current_hyperparameters.copy(), performance_metric, grok_detected))
         
         prompt = f"""
@@ -298,10 +301,10 @@ class HyperparameterOptimizer:
         Explain your reasoning for each suggested change.
         """
 
-        response = self.llm.chat([lr.language_models.LLMMessage(content=prompt, role="user")])
+        response = await self.agent.llm_response(prompt)
         
         suggested_hyperparameters = {}
-        for line in response.message.strip().split('\n'):
+        for line in response.content.strip().split('\n'):
             if ':' in line:
                 key, value = line.split(':')
                 key = key.strip()
@@ -395,8 +398,8 @@ def uct_select_child(node: MCTSNode, exploration_weight: float = 1.0) -> MCTSNod
     
     return max(node.children, key=uct_value)
 
-def expand(node: MCTSNode, magi_agent: EnhancedMagiAgent) -> MCTSNode:
-    new_action = magi_agent.mcts_action(node.state)
+async def expand(node: MCTSNode, magi_agent: EnhancedMagiAgent) -> MCTSNode:
+    new_action = await magi_agent.mcts_action(node.state)
     new_state = CodeState(
         node.state.task,
         code=node.state.code + new_action if node.state.response else node.state.code,
@@ -407,9 +410,9 @@ def expand(node: MCTSNode, magi_agent: EnhancedMagiAgent) -> MCTSNode:
     node.children.append(child)
     return child
 
-def simulate(node: MCTSNode, supervisor_agent: EnhancedSupervisorAgent, ai_feedback: AIFeedback, ai_feedback_weight: float) -> float:
-    thought_grade, response_grade, code_grade, success = supervisor_agent.grade_mcts_state(node.state)
-    ai_score = ai_feedback.evaluate_code(node.state.task, node.state.code)
+async def simulate(node: MCTSNode, supervisor_agent: EnhancedSupervisorAgent, ai_feedback_task: AIFeedbackTask, ai_feedback_weight: float) -> float:
+    thought_grade, response_grade, code_grade, success = await supervisor_agent.grade_mcts_state(node.state)
+    ai_score = await ai_feedback_task.evaluate_code(node.state.task, node.state.code)
     return (thought_grade + response_grade + code_grade) / 30.0 * (1 - ai_feedback_weight) + ai_score * ai_feedback_weight
 
 def backpropagate(node: MCTSNode, reward: float):
@@ -418,11 +421,11 @@ def backpropagate(node: MCTSNode, reward: float):
         node.value += reward
         node = node.parent
 
-def mcts_code_generation(
+async def mcts_code_generation(
     root_state: CodeState, 
     magi_agent: EnhancedMagiAgent, 
     supervisor_agent: EnhancedSupervisorAgent, 
-    ai_feedback: AIFeedback, 
+    ai_feedback_task: AIFeedbackTask, 
     iterations: int, 
     exploration_weight: float,
     ai_feedback_weight: float,
@@ -439,10 +442,10 @@ def mcts_code_generation(
         
         # Expansion
         if node.visits > 0 and not node.state.code:
-            node = expand(node, magi_agent)
+            node = await expand(node, magi_agent)
         
         # Simulation
-        reward = simulate(node, supervisor_agent, ai_feedback, ai_feedback_weight)
+        reward = await simulate(node, supervisor_agent, ai_feedback_task, ai_feedback_weight)
         
         # Backpropagation
         backpropagate(node, reward)
@@ -483,239 +486,244 @@ def code_state_to_tensor(state: CodeState) -> torch.Tensor:
         state.task.difficulty
     ], dtype=torch.float32)
 
-def run_training_loop(magi_agent: EnhancedMagiAgent, supervisor_agent: EnhancedSupervisorAgent, hyperparameters: Dict[str, Any]) -> Tuple[float, bool]:
-    ai_feedback = AIFeedback(magi_agent.config.llm)
-    data_pipeline = DataCollectionPipeline("magi_training.db")
-    
-    dpo_model = CodePreferenceModel(input_size=4, hidden_size=64)
-    dpo_trainer = DPOTrainer(dpo_model, learning_rate=hyperparameters["dpo_learning_rate"], beta=hyperparameters["dpo_beta"])
-    
-    grokfast = None
-    best_val_performance = float('-inf')
-    overfitting_detected = False
-    grokfast_activated = False
-    patience = hyperparameters.get("patience", 5)
-    patience_counter = 0
-    grok_threshold = hyperparameters.get("grok_threshold", 0.1)
-    grok_detected = False
+class TrainingTask(Task):
+    async def run_training_loop(self, magi_agent: EnhancedMagiAgent, supervisor_agent: EnhancedSupervisorAgent, hyperparameters: Dict[str, Any]) -> Tuple[float, bool]:
+        ai_feedback_task = AIFeedbackTask(self.agent)
+        data_pipeline = DataCollectionPipeline("magi_training.db")
+        
+        dpo_model = CodePreferenceModel(input_size=4, hidden_size=64)
+        dpo_trainer = DPOTrainer(dpo_model, learning_rate=hyperparameters["dpo_learning_rate"], beta=hyperparameters["dpo_beta"])
+        
+        grokfast = None
+        best_val_performance = float('-inf')
+        overfitting_detected = False
+        grokfast_activated = False
+        patience = hyperparameters.get("patience", 5)
+        patience_counter = 0
+        grok_threshold = hyperparameters.get("grok_threshold", 0.1)
+        grok_detected = False
 
-    # Create initial test
-    initial_test = supervisor_agent.create_initial_test()
-    
-    # Evaluate Magi's current competence
-    test_results = []
-    for task in initial_test:
-        task_id = data_pipeline.store_task(task)
-        initial_state = CodeState(task)
-        trajectory = []
-        final_state = mcts_code_generation(
-            initial_state, 
-            magi_agent, 
-            supervisor_agent, 
-            ai_feedback, 
-            iterations=hyperparameters["mcts_iterations"],
-            exploration_weight=hyperparameters["exploration_weight"],
-            ai_feedback_weight=hyperparameters["ai_feedback_weight"],
-            trajectory=trajectory
-        )
-        _, _, _, success = supervisor_agent.grade_mcts_state(final_state)
-        test_results.append((task, success))
+        # Create initial test
+        initial_test = await supervisor_agent.create_initial_test()
         
-        # Store the trajectory
-        data_pipeline.store_trajectory(task_id, trajectory)
-    
-    competence_level = supervisor_agent.determine_competence_level(test_results)
-    print(f"Magi's initial competence level: {competence_level}/100")
-    
-    # Create training tasks
-    training_tasks = supervisor_agent.create_training_tasks(competence_level)
-    
-    # Training loop
-    max_rounds = 20
-    total_success = 0
-    total_tasks = 0
-    for round in range(max_rounds):
-        print(f"Starting training round {round + 1}/{max_rounds}")
-        new_training_tasks = []
-        
-        all_trajectories = []
-        for task in training_tasks:
+        # Evaluate Magi's current competence
+        test_results = []
+        for task in initial_test:
             task_id = data_pipeline.store_task(task)
             initial_state = CodeState(task)
             trajectory = []
-            final_state = mcts_code_generation(
+            final_state = await mcts_code_generation(
                 initial_state, 
                 magi_agent, 
                 supervisor_agent, 
-                ai_feedback, 
+                ai_feedback_task, 
                 iterations=hyperparameters["mcts_iterations"],
                 exploration_weight=hyperparameters["exploration_weight"],
                 ai_feedback_weight=hyperparameters["ai_feedback_weight"],
                 trajectory=trajectory
             )
-            thought_grade, response_grade, code_grade, success = supervisor_agent.grade_mcts_state(final_state)
+            _, _, _, success = await supervisor_agent.grade_mcts_state(final_state)
+            test_results.append((task, success))
             
             # Store the trajectory
             data_pipeline.store_trajectory(task_id, trajectory)
-            all_trajectories.extend([(step, step.reward) for step in trajectory])
+        
+        competence_level = supervisor_agent.determine_competence_level(test_results)
+        print(f"Magi's initial competence level: {competence_level}/100")
+        
+        # Create training tasks
+        training_tasks = await supervisor_agent.create_training_tasks(competence_level)
+        
+        # Training loop
+        max_rounds = 20
+        total_success = 0
+        total_tasks = 0
+        for round in range(max_rounds):
+            print(f"Starting training round {round + 1}/{max_rounds}")
+            new_training_tasks = []
             
-            if success:
-                total_success += 1
-                task.success_count += 1
-                if task.success_count < 5:
-                    new_task = supervisor_agent.reword_task(task)
-                    new_task.success_count = task.success_count
-                    new_training_tasks.append(new_task)
-            else:
-                task.success_count = 0
-                feedback = f"Grades: Thinking ({thought_grade}/10), Response ({response_grade}/10), Code ({code_grade}/10). "
-                feedback += supervisor_agent.llm_response(f"Explain why this attempt failed and how to improve: {final_state.thoughts}\n{final_state.response}\n{final_state.code}").content
-                task.feedback = feedback
-                new_training_tasks.append(task)
-            
-            total_tasks += 1
-        
-        # Train DPO model
-        preference_pairs = create_preference_pairs(all_trajectories)
-        for preferred, non_preferred in preference_pairs:
-            preferred_tensor = code_state_to_tensor(preferred)
-            non_preferred_tensor = code_state_to_tensor(non_preferred)
-            loss = dpo_trainer.train_step(preferred_tensor, non_preferred_tensor)
-
-            if grokfast:
-                grokfast.filter_gradients()
-
-        training_tasks = new_training_tasks
-        print(f"Tasks remaining: {len(training_tasks)}")
-        
-        # Validation step
-        val_performance = evaluate_model(magi_agent, supervisor_agent, hyperparameters)
-        print(f"Validation performance: {val_performance:.4f}")
-        
-        if val_performance > best_val_performance:
-            best_val_performance = val_performance
-            torch.save(dpo_model.state_dict(), f"best_model_round_{round+1}.pth")
-            patience_counter = 0
-        else:
-            patience_counter += 1
-
-        if patience_counter >= patience:
-            if not overfitting_detected:
-                print("Overfitting detected. Activating GrokFast.")
-                grokfast = GrokFast(dpo_model, method='EMA', lamb=2.0, alpha=0.98)
-                overfitting_detected = True
-                grokfast_activated = True
-                patience_counter = 0  # Reset patience counter
-            elif grokfast_activated:
-                # Check for the "second spike" indicating groking
-                if val_performance > best_val_performance * (1 + grok_threshold):
-                    print("Groking detected! Significant performance improvement observed.")
-                    best_val_performance = val_performance
-                    patience_counter = 0  # Reset patience counter
-                    grok_detected = True
+            all_trajectories = []
+            for task in training_tasks:
+                task_id = data_pipeline.store_task(task)
+                initial_state = CodeState(task)
+                trajectory = []
+                final_state = await mcts_code_generation(
+                    initial_state, 
+                    magi_agent, 
+                    supervisor_agent, 
+                    ai_feedback_task, 
+                    iterations=hyperparameters["mcts_iterations"],
+                    exploration_weight=hyperparameters["exploration_weight"],
+                    ai_feedback_weight=hyperparameters["ai_feedback_weight"],
+                    trajectory=trajectory
+                )
+                thought_grade, response_grade, code_grade, success = await supervisor_agent.grade_mcts_state(final_state)
+                
+                # Store the trajectory
+                data_pipeline.store_trajectory(task_id, trajectory)
+                all_trajectories.extend([(step, step.reward) for step in trajectory])
+                
+                if success:
+                    total_success += 1
+                    task.success_count += 1
+                    if task.success_count < 5:
+                        new_task = await supervisor_agent.reword_task(task)
+                        new_task.success_count = task.success_count
+                        new_training_tasks.append(new_task)
                 else:
-                    print("No significant improvement. Continuing training with GrokFast.")
+                    task.success_count = 0
+                    feedback = f"Grades: Thinking ({thought_grade}/10), Response ({response_grade}/10), Code ({code_grade}/10). "
+                    feedback += (await supervisor_agent.llm_response(f"Explain why this attempt failed and how to improve: {final_state.thoughts}\n{final_state.response}\n{final_state.code}")).content
+                    task.feedback = feedback
+                    new_training_tasks.append(task)
+                
+                total_tasks += 1
+            
+            # Train DPO model
+            preference_pairs = create_preference_pairs(all_trajectories)
+            for preferred, non_preferred in preference_pairs:
+                preferred_tensor = code_state_to_tensor(preferred)
+                non_preferred_tensor = code_state_to_tensor(non_preferred)
+                loss = dpo_trainer.train_step(preferred_tensor, non_preferred_tensor)
+
+                if grokfast:
+                    grokfast.filter_gradients()
+
+            training_tasks = new_training_tasks
+            print(f"Tasks remaining: {len(training_tasks)}")
+            
+            # Validation step
+            val_performance = await self.evaluate_model(magi_agent, supervisor_agent, hyperparameters)
+            print(f"Validation performance: {val_performance:.4f}")
+            
+            if val_performance > best_val_performance:
+                best_val_performance = val_performance
+                torch.save(dpo_model.state_dict(), f"best_model_round_{round+1}.pth")
+                patience_counter = 0
             else:
-                print("Training complete. No groking observed.")
+                patience_counter += 1
+
+            if patience_counter >= patience:
+                if not overfitting_detected:
+                    print("Overfitting detected. Activating GrokFast.")
+                    grokfast = GrokFast(dpo_model, method='EMA', lamb=2.0, alpha=0.98)
+                    overfitting_detected = True
+                    grokfast_activated = True
+                    patience_counter = 0  # Reset patience counter
+                elif grokfast_activated:
+                    # Check for the "second spike" indicating groking
+                    if val_performance > best_val_performance * (1 + grok_threshold):
+                        print("Groking detected! Significant performance improvement observed.")
+                        best_val_performance = val_performance
+                        patience_counter = 0  # Reset patience counter
+                        grok_detected = True
+                    else:
+                        print("No significant improvement. Continuing training with GrokFast.")
+                else:
+                    print("Training complete. No groking observed.")
+                    break
+            
+            if not training_tasks:
+                print("All tasks completed successfully!")
                 break
         
-        if not training_tasks:
-            print("All tasks completed successfully!")
-            break
-    
-    print(f"Training completed after {round + 1} rounds.")
-    print(f"Final validation performance: {best_val_performance:.4f}")
-    
-    return best_val_performance, grok_detected
-
-def evaluate_model(magi_agent: EnhancedMagiAgent, supervisor_agent: EnhancedSupervisorAgent, hyperparameters: Dict[str, Any]) -> float:
-    validation_tasks = supervisor_agent.create_training_tasks(50)  # Create 50 validation tasks
-    total_reward = 0
-    
-    for task in validation_tasks:
-        initial_state = CodeState(task)
-        trajectory = []
-        final_state = mcts_code_generation(
-            initial_state, 
-            magi_agent, 
-            supervisor_agent, 
-            AIFeedback(magi_agent.config.llm), 
-            iterations=hyperparameters["mcts_iterations"],
-            exploration_weight=hyperparameters["exploration_weight"],
-            ai_feedback_weight=hyperparameters["ai_feedback_weight"],
-            trajectory=trajectory
-        )
-        reward = supervisor_agent.compute_reward(final_state.thoughts, final_state.code, task)
-        total_reward += reward
-    
-    return total_reward / len(validation_tasks)
-
-def run_training_loop_with_optimization(magi_agent: EnhancedMagiAgent, supervisor_agent: EnhancedSupervisorAgent, optimization_rounds: int = 10):
-    hyperparameter_optimizer = HyperparameterOptimizer(magi_agent.config.llm)
-    
-    best_performance = float('-inf')
-    best_hyperparameters = None
-    grok_detected = False
-
-    for optimization_round in range(optimization_rounds):
-        print(f"Starting optimization round {optimization_round + 1}")
+        print(f"Training completed after {round + 1} rounds.")
+        print(f"Final validation performance: {best_val_performance:.4f}")
         
-        # Get current hyperparameters
-        hyperparameters = hyperparameter_optimizer.current_hyperparameters
+        return best_val_performance, grok_detected
+
+    async def evaluate_model(self, magi_agent: EnhancedMagiAgent, supervisor_agent: EnhancedSupervisorAgent, hyperparameters: Dict[str, Any]) -> float:
+        validation_tasks = await supervisor_agent.create_training_tasks(50)  # Create 50 validation tasks
+        total_reward = 0
         
-        # Run the training loop with current hyperparameters
-        performance_metric, grok_occurred = run_training_loop(magi_agent, supervisor_agent, hyperparameters)
+        for task in validation_tasks:
+            initial_state = CodeState(task)
+            trajectory = []
+            final_state = await mcts_code_generation(
+                initial_state, 
+                magi_agent, 
+                supervisor_agent, 
+                AIFeedbackTask(self.agent), 
+                iterations=hyperparameters["mcts_iterations"],
+                exploration_weight=hyperparameters["exploration_weight"],
+                ai_feedback_weight=hyperparameters["ai_feedback_weight"],
+                trajectory=trajectory
+            )
+            reward = await supervisor_agent.compute_reward(final_state.thoughts, final_state.code, task)
+            total_reward += reward
         
-        print(f"Performance metric: {performance_metric}")
-        if grok_occurred:
-            print("Groking detected in this round!")
-            grok_detected = True
+        return total_reward / len(validation_tasks)
 
-        if performance_metric > best_performance:
-            best_performance = performance_metric
-            best_hyperparameters = hyperparameters.copy()
+class OptimizationTask(Task):
+    async def run_training_loop_with_optimization(self, magi_agent: EnhancedMagiAgent, supervisor_agent: EnhancedSupervisorAgent, optimization_rounds: int = 10):
+        hyperparameter_optimization_task = HyperparameterOptimizationTask(self.agent)
+        training_task = TrainingTask(self.agent)
         
-       # Suggest new hyperparameters based on performance and grok occurrence
-        new_hyperparameters = hyperparameter_optimizer.suggest_hyperparameters(performance_metric, grok_detected)
-        
-        print(f"New suggested hyperparameters: {new_hyperparameters}")
+        best_performance = float('-inf')
+        best_hyperparameters = None
+        grok_detected = False
 
-        if grok_detected:
-            # If groking occurred, we might want to explore these hyperparameters more thoroughly
-            for _ in range(3):  # Run a few more times with these hyperparameters
-                performance_metric, _ = run_training_loop(magi_agent, supervisor_agent, hyperparameters)
-                if performance_metric > best_performance:
-                    best_performance = performance_metric
-                    best_hyperparameters = hyperparameters.copy()
+        for optimization_round in range(optimization_rounds):
+            print(f"Starting optimization round {optimization_round + 1}")
+            
+            # Get current hyperparameters
+            hyperparameters = hyperparameter_optimization_task.current_hyperparameters
+            
+            # Run the training loop with current hyperparameters
+            performance_metric, grok_occurred = await training_task.run_training_loop(magi_agent, supervisor_agent, hyperparameters)
+            
+            print(f"Performance metric: {performance_metric}")
+            if grok_occurred:
+                print("Groking detected in this round!")
+                grok_detected = True
 
-    print(f"Best performance: {best_performance}")
-    print(f"Best hyperparameters: {best_hyperparameters}")
-    print(f"Groking detected: {grok_detected}")
+            if performance_metric > best_performance:
+                best_performance = performance_metric
+                best_hyperparameters = hyperparameters.copy()
+            
+            # Suggest new hyperparameters based on performance and grok occurrence
+            new_hyperparameters = await hyperparameter_optimization_task.suggest_hyperparameters(performance_metric, grok_detected)
+            
+            print(f"New suggested hyperparameters: {new_hyperparameters}")
 
-    return best_hyperparameters, grok_detected
+            if grok_detected:
+                # If groking occurred, we might want to explore these hyperparameters more thoroughly
+                for _ in range(3):  # Run a few more times with these hyperparameters
+                    performance_metric, _ = await training_task.run_training_loop(magi_agent, supervisor_agent, hyperparameters)
+                    if performance_metric > best_performance:
+                        best_performance = performance_metric
+                        best_hyperparameters = hyperparameters.copy()
 
-def main():
-    magi_config = lr.ChatAgentConfig(
+        print(f"Best performance: {best_performance}")
+        print(f"Best hyperparameters: {best_hyperparameters}")
+        print(f"Groking detected: {grok_detected}")
+
+        return best_hyperparameters, grok_detected
+
+async def main():
+    magi_config = ChatAgentConfig(
         name="Magi",
-        llm=lr.language_models.OpenAIGPTConfig(
-            chat_model=lr.language_models.OpenAIChatModel.GPT4,
+        llm=OpenAIGPTConfig(
+            chat_model="gpt-4",
         ),
     )
     magi_agent = EnhancedMagiAgent(magi_config)
     
-    supervisor_config = lr.ChatAgentConfig(
+    supervisor_config = ChatAgentConfig(
         name="Supervisor",
-        llm=lr.language_models.OpenAIGPTConfig(
-            chat_model=lr.language_models.OpenAIChatModel.GPT4,
+        llm=OpenAIGPTConfig(
+            chat_model="gpt-4",
         ),
     )
     supervisor_agent = EnhancedSupervisorAgent(supervisor_config)
     
-    best_hyperparameters, grok_detected = run_training_loop_with_optimization(magi_agent, supervisor_agent)
+    optimization_task = OptimizationTask(magi_agent)
+    best_hyperparameters, grok_detected = await optimization_task.run_training_loop_with_optimization(magi_agent, supervisor_agent)
     
     # Final run with best hyperparameters
     print("Running final training loop with best hyperparameters")
-    final_performance, _ = run_training_loop(magi_agent, supervisor_agent, best_hyperparameters)
+    training_task = TrainingTask(magi_agent)
+    final_performance, _ = await training_task.run_training_loop(magi_agent, supervisor_agent, best_hyperparameters)
     print(f"Final performance: {final_performance}")
 
     # Save the final model
@@ -727,4 +735,5 @@ def main():
     # including learning curves, task success rates, and examples of solved tasks.
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())

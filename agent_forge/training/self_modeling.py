@@ -5,8 +5,10 @@ from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoModelForCausal
 from typing import List, Tuple
 import random
 from tqdm import tqdm
+from langroid import Task, ChatAgent, ChatAgentConfig
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
-from grokfast import GrokFast
+from grokfast import GrokFastTask
 from sleep_and_dream import SleepNet, DreamNet
 from agent_forge.model_compression.bitlinearization import quantize_weights, quantize_activations
 
@@ -15,37 +17,25 @@ class CodingTask:
         self.description = description
         self.difficulty = difficulty
 
-    @staticmethod
-    def generate_coding_tasks(num_tasks: int, avg_difficulty: int) -> List['CodingTask']:
-        task_generator = AutoModelForCausalLM.from_pretrained("gpt2-large").to("cuda")
-        task_tokenizer = AutoTokenizer.from_pretrained("gpt2-large")
-
+class CodingTaskGenerationTask(Task):
+    async def generate_coding_tasks(self, num_tasks: int, avg_difficulty: int) -> List[CodingTask]:
         tasks = []
         for _ in range(num_tasks):
             prompt = f"Create a coding task with difficulty level {avg_difficulty}/100. Include a clear problem description."
-            input_ids = task_tokenizer.encode(prompt, return_tensors="pt").to("cuda")
-
-            with torch.no_grad():
-                output = task_generator.generate(
-                    input_ids,
-                    max_length=200,
-                    num_return_sequences=1,
-                    temperature=0.7
-                )
-
-            task_description = task_tokenizer.decode(output[0], skip_special_tokens=True)
+            response = await self.agent.llm_response(prompt)
+            task_description = response.content
             tasks.append(CodingTask(description=task_description, difficulty=avg_difficulty))
-
         return tasks
-        
-class SelfModelingLoop:
-    def __init__(self, model_name: str, device: str = "cuda" if torch.cuda.is_available() else "cpu"):
+
+class SelfModelingTask(Task):
+    def __init__(self, agent: ChatAgent, model_name: str, device: str = "cuda" if torch.cuda.is_available() else "cpu"):
+        super().__init__(agent)
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForMaskedLM.from_pretrained(model_name).to(self.device)
         self.sleep_net = SleepNet(input_size=self.model.config.hidden_size, output_size=self.model.config.hidden_size, num_sleep_blocks=3)
         self.dream_net = DreamNet(input_size=self.model.config.hidden_size, output_size=self.model.config.hidden_size, num_dream_blocks=3)
-        self.grokfast = GrokFast(self.model)
+        self.grokfast_task = GrokFastTask(agent, self.model)
         self.avg_difficulty = 50  # Start with an average difficulty of 50
         
         # Quantize the initial model weights
@@ -56,7 +46,7 @@ class SelfModelingLoop:
             for param in self.model.parameters():
                 param.data = quantize_weights(param.data)
 
-    def generate_text(self, prompt: str, temperature: float) -> str:
+    async def generate_text(self, prompt: str, temperature: float) -> str:
         input_ids = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
             output = self.model.generate(
@@ -83,7 +73,7 @@ class SelfModelingLoop:
 
         return input_ids, labels, mask_indices
 
-    def train_step(self, input_ids: torch.Tensor, labels: torch.Tensor, mask_indices: List[int]) -> Tuple[float, float]:
+    async def train_step(self, input_ids: torch.Tensor, labels: torch.Tensor, mask_indices: List[int]) -> Tuple[float, float]:
         outputs = self.model(input_ids=input_ids, labels=labels)
         loss = outputs.loss
         loss.backward()
@@ -109,8 +99,9 @@ class SelfModelingLoop:
 
         return loss.item(), accuracy
 
-    def self_modeling_cycle(self, curriculum_level: int, num_cycles: int = 100):
-        tasks = CodingTask.generate_coding_tasks(1000, self.avg_difficulty)
+    async def self_modeling_cycle(self, curriculum_level: int, num_cycles: int = 100):
+        task_generation = CodingTaskGenerationTask(self.agent)
+        tasks = await task_generation.generate_coding_tasks(1000, self.avg_difficulty)
 
         temperature_ranges = [
             (0.0, 0.05),
@@ -137,7 +128,7 @@ class SelfModelingLoop:
                 for temp_range in temperature_ranges:
                     temperature = random.uniform(*temp_range)
                     original_prompt = f"You are an AI model solving a coding task. The task is: {task.description}"
-                    generated_text = self.generate_text(original_prompt, temperature)
+                    generated_text = await self.generate_text(original_prompt, temperature)
 
                     self_modeling_prompt = f"""I am an AI model engaging in self-modeling. 
                     In the past, I generated the following text based on this coding task: "{task.description}"
@@ -149,12 +140,12 @@ class SelfModelingLoop:
                     self_modeling_input = self.tokenizer.encode(self_modeling_prompt, return_tensors="pt").to(self.device)
                     self.model(input_ids=self_modeling_input)  # Inform the model about the self-modeling task
 
-                    loss, accuracy = self.train_step(input_ids, labels, mask_indices)
+                    loss, accuracy = await self.train_step(input_ids, labels, mask_indices)
 
                     print(f"Cycle {cycle}, Task Difficulty {task.difficulty}, Temperature {temperature:.2f}, Loss: {loss:.4f}, Accuracy: {accuracy:.2f}")
 
                     if cycle > 50 and loss < 0.01:  # Simple overfitting detection
-                        self.grokfast.filter_gradients()
+                        await self.grokfast_task.filter_gradients()
 
                     if cycle % 10 == 0:
                         with torch.no_grad():
@@ -164,27 +155,40 @@ class SelfModelingLoop:
                             update = 0.01 * dream_output.mean(dim=1)
                             self.model.base_model.encoder.embed_tokens.weight.data += quantize_weights(update)
 
-    def evolve_across_curriculum(self, num_levels: int = 10):
+    async def evolve_across_curriculum(self, num_levels: int = 10):
         for level in range(1, num_levels + 1):
             print(f"Starting curriculum level {level}")
-            self.self_modeling_cycle(curriculum_level=level)
+            await self.self_modeling_cycle(curriculum_level=level)
 
-            eval_score = self.evaluate_model()
+            eval_score = await self.evaluate_model()
             print(f"Evaluation score after level {level}: {eval_score:.4f}")
 
             self.avg_difficulty = max(1, min(100, int(self.avg_difficulty + (eval_score - 0.5) * 10)))
 
             torch.save(self.model.state_dict(), f"self_model_checkpoint_level_{level}.pth")
 
-    def evaluate_model(self):
+    async def evaluate_model(self):
         # Placeholder for model evaluation
         # You should implement a proper evaluation method based on your specific requirements
         return random.random()
-        
-def main():
-    model_name = "bert-base-uncased"  # You can change this to any suitable model
-    self_modeling = SelfModelingLoop(model_name)
-    self_modeling.evolve_across_curriculum()
 
+    async def run(self):
+        await self.evolve_across_curriculum()
+        return "Self-modeling completed successfully"
+
+# Usage example
 if __name__ == "__main__":
-    main()
+    import asyncio
+
+    async def main():
+        config = ChatAgentConfig(
+            name="SelfModelingAgent",
+            llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
+        )
+        agent = ChatAgent(config)
+        model_name = "bert-base-uncased"  # You can change this to any suitable model
+        task = SelfModelingTask(agent, model_name)
+        result = await task.run()
+        print(result)
+
+    asyncio.run(main())

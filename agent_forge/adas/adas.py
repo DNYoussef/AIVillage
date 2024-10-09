@@ -1,29 +1,31 @@
-import torch
 import random
 from typing import List, Dict, Any
-from collections import namedtuple
-
-from utils import random_id, format_arc_data, eval_solution, list_to_string, bootstrap_confidence_interval
-import openai
-
-# Assuming these are defined elsewhere as per the provided code
-from llm_utils import LLMAgentBase, Info, get_json_response_from_gpt
+from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
+from langroid.agent.task import Task
+from langroid.agent.tool_message import ToolMessage
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
 from .technique_archive import PROMPT_TECHNIQUE_ARCHIVE
 
-class ADAS:
+class ADASTask(Task):
     def __init__(self, task_description: str):
+        config = ChatAgentConfig(
+            name="ADAS",
+            system_message="You are an expert machine learning researcher designing agentic systems.",
+            llm=OpenAIGPTConfig(model="gpt-4")
+        )
+        agent = ChatAgent(config)
+        super().__init__(agent)
         self.task_description = task_description
-        self.archive = PROMPT_TECHNIQUE_ARCHIVE 
-        self.meta_agent = LLMAgentBase(['thought', 'name', 'code'], 'Meta Agent', model='gpt-4-0613')
+        self.archive = PROMPT_TECHNIQUE_ARCHIVE
         self.best_agent = None
         self.best_performance = float('-inf')
 
     def generate_prompt(self, archive: List[Dict]) -> str:
         archive_str = ",\n".join([str(agent) for agent in archive])
         
-        prompt = f"""
-        You are an expert machine learning researcher designing agentic systems. Your objective is to create an optimal agent for the following task:
+        return f"""
+        Your objective is to create an optimal agent for the following task:
 
         {self.task_description}
 
@@ -37,21 +39,21 @@ class ADAS:
         - name: A name for your proposed agent architecture
         - code: The complete Python code for the forward() function of your agent
 
-        Ensure your code uses the provided LLMAgentBase class and follows the correct structure.
+        Ensure your code uses the Langroid ChatAgent class and follows the correct structure.
         """
-        return prompt
 
     def create_new_agent(self) -> Dict[str, Any]:
         prompt = self.generate_prompt(self.archive)
-        response = self.meta_agent([Info('task', 'ADAS', self.task_description, 0)], prompt)
-        return response[0].content
+        response = self.agent.llm_response(prompt)
+        return response.content
 
     def evaluate_agent(self, agent: Dict[str, Any]) -> float:
         # This is a placeholder. In a real scenario, you'd implement actual evaluation logic here.
         # It might involve running the agent on a set of tasks and measuring performance.
         return random.random()  # Placeholder random performance
 
-    def evolve(self, num_iterations: int):
+    async def run(self):
+        num_iterations = 10  # You can adjust this or make it a parameter
         for i in range(num_iterations):
             print(f"Iteration {i+1}/{num_iterations}")
             
@@ -68,44 +70,21 @@ class ADAS:
         print(f"Evolution complete. Best agent performance: {self.best_performance}")
         return self.best_agent
 
-class AgentArchitecture:
-    def __init__(self, examples: List[Dict], test_input: List[List[int]]):
-        self.examples = examples
-        self.test_input = test_input
-    
-    def run_examples_and_get_feedback(self, code):
-        # Implement logic to run code on examples and get feedback
-        pass
+class AgentTechnique(ToolMessage):
+    request: str = "apply_technique"
+    purpose: str = "Apply a specific AI technique"
+    technique_name: str
+    code: str
 
-    def get_test_output_from_code(self, code):
-        # Implement logic to run code on test input and get output
-        pass
-
-    def forward(self, taskInfo):
-        # This will be replaced by the generated agent code
+    def handle(self):
+        # This method would be implemented to actually apply the technique
         pass
 
 # Example usage
 if __name__ == "__main__":
     task_description = "Design an agent that can solve abstract reasoning tasks in the ARC challenge."
-    
-    initial_archive = [
-        {
-            "thought": "Chain-of-Thought reasoning allows for step-by-step problem solving.",
-            "name": "Chain-of-Thought",
-            "code": """
-def forward(self, taskInfo):
-    instruction = "Think through this step-by-step and then solve the task."
-    cot_agent = LLMAgentBase(['thinking', 'answer'], 'Chain-of-Thought Agent')
-    thinking, answer = cot_agent([taskInfo], instruction)
-    return answer
-"""
-        },
-        # Add other initial techniques from your archive here
-    ]
-
-    adas = ADAS(task_description, initial_archive)
-    best_agent = adas.evolve(num_iterations=10)
+    adas_task = ADASTask(task_description)
+    best_agent = adas_task.run()
     
     print("Best Agent:")
     print(best_agent)
