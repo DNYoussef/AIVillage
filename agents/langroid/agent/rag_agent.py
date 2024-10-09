@@ -1,6 +1,3 @@
-
-# agents/langroid/agent/rag_agent.py
-
 import asyncio
 from typing import Dict, Any
 from core.config import RAGConfig
@@ -23,8 +20,6 @@ class RAGAgent:
         """
         Add a new document to the RAG system.
         """
-        # Assuming there's a DocumentManager class as per the RAG system
-        from data_management.document_manager import DocumentManager
+        from rag_system.data_managment.document_manager import DocumentManager
         manager = DocumentManager(self.config)
         await manager.add_document(content, filename)
-
