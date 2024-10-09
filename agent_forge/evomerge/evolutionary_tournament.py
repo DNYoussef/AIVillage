@@ -6,7 +6,8 @@ from transformers import AutoModelForCausalLM
 
 from .config import Configuration, ModelReference
 from .merger import AdvancedModelMerger
-from .utils import evaluate_model, MERGE_TECHNIQUES
+from .utils import evaluate_model, parallel_evaluate_models, MERGE_TECHNIQUES
+from .visualization import plot_fitness_over_generations
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +15,7 @@ class EvolutionaryMerger:
     def __init__(self, config: Configuration):
         self.config = config
         self.merger = AdvancedModelMerger(config)
+        self.fitness_scores = []
 
     def create_merged_models(self) -> List[str]:
         merge_combinations = [
@@ -65,7 +67,11 @@ class EvolutionaryMerger:
             logger.info(f"Generation {generation + 1}")
 
             # Evaluate population
-            scores = [evaluate_model(model)["overall_score"] for model in population]
+            scores = parallel_evaluate_models([model for model in population])
+            scores = [score["overall_score"] for score in scores]
+
+            # Store the best score for this generation
+            self.fitness_scores.append(max(scores))
 
             # Check for improvement
             current_best_score = max(scores)
@@ -111,8 +117,12 @@ class EvolutionaryMerger:
 
             logger.info(f"Best score in generation {generation + 1}: {max(scores)}")
 
+        # Plot fitness over generations
+        plot_fitness_over_generations(self.fitness_scores, 'fitness_plot.png')
+
         # Final evaluation
-        final_scores = [evaluate_model(model)["overall_score"] for model in population]
+        final_scores = parallel_evaluate_models([model for model in population])
+        final_scores = [score["overall_score"] for score in final_scores]
         best_model = population[final_scores.index(max(final_scores))]
 
         return best_model

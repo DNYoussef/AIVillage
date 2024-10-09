@@ -1,9 +1,20 @@
 import argparse
 import json
+import logging
 from .config import create_default_config, Configuration, ModelReference
 from .evolutionary_tournament import run_evolutionary_tournament
 from .utils import generate_text, evaluate_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+def generate_config_interactive():
+    config = {}
+    config['merge_method'] = input("Enter merge method (ps/dfs/ps_dfs): ")
+    config['num_generations'] = int(input("Enter number of generations: "))
+    config['population_size'] = int(input("Enter population size: "))
+    config['mutation_rate'] = float(input("Enter mutation rate (0-1): "))
+    config['tournament_size'] = int(input("Enter tournament size: "))
+    config['early_stopping_generations'] = int(input("Enter early stopping generations: "))
+    return config
 
 def main():
     parser = argparse.ArgumentParser(description="EvoMerge: Evolutionary Model Merging System")
@@ -15,7 +26,21 @@ def main():
     parser.add_argument("--model1", type=str, help="Hugging Face model ID or path for the first model")
     parser.add_argument("--model2", type=str, help="Hugging Face model ID or path for the second model")
     parser.add_argument("--model3", type=str, help="Hugging Face model ID or path for the third model")
+    parser.add_argument("--generate-config", action="store_true", help="Generate a configuration file interactively")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
+
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
+    if args.generate_config:
+        config = generate_config_interactive()
+        with open('evomerge_config.json', 'w') as f:
+            json.dump(config, f, indent=2)
+        print("Configuration file generated: evomerge_config.json")
+        return
 
     if args.config:
         with open(args.config, 'r') as f:

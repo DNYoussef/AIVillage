@@ -1,7 +1,7 @@
 EvoMerge: Evolutionary Model Merging System
 
 1. Overview:
-EvoMerge is a system designed to merge multiple language models using evolutionary algorithms. It starts with 3 initial models, creates a population of 8 merged models, and then uses tournament selection to evolve towards a single, optimized final model.
+EvoMerge is an advanced system designed to merge multiple language models using evolutionary algorithms. It starts with initial models, creates a population of merged models, and uses tournament selection to evolve towards a single, optimized final model.
 
 2. System Components:
    a. Configuration (config.py)
@@ -12,18 +12,20 @@ EvoMerge is a system designed to merge multiple language models using evolutiona
    f. Integration Tests (integration_tests.py)
    g. Performance Benchmarks (benchmarks.py)
    h. Command-line Interface (cli.py)
+   i. Visualization (visualization.py)
+   j. Logging Configuration (logging_config.py)
 
 3. How the System Works:
    a. Initial Setup:
       - Define the configuration using the Configuration class in config.py.
-      - Specify the three initial models using ModelReference objects.
+      - Specify the initial models using ModelReference objects.
 
    b. Creating the Initial Population:
-      - The EvolutionaryMerger class in evolutionary_tournament.py creates the initial population of 8 models.
+      - The EvolutionaryMerger class creates the initial population of merged models.
       - It uses different combinations of merge techniques to create diverse merged models.
 
    c. Evolutionary Process:
-      - The evolve() method in EvolutionaryMerger runs the evolutionary algorithm.
+      - The evolve() method runs the evolutionary algorithm.
       - For each generation:
         i. Evaluate all models in the population.
         ii. Select top performers using tournament selection.
@@ -33,148 +35,95 @@ EvoMerge is a system designed to merge multiple language models using evolutiona
    d. Final Model Selection:
       - After the evolutionary process, the best-performing model is selected as the final output.
 
-4. API Reference:
+4. Key Features:
+   a. Flexible model merging techniques (Parameter Sharing, Deep Fusion, and combinations)
+   b. Evolutionary optimization of merged models
+   c. Parallel model evaluation for improved performance
+   d. Visualization of fitness progression and benchmark results
+   e. Comprehensive CLI for easy interaction
+   f. Integration with Hugging Face models
+   g. GPU support for accelerated computations
+   h. Customizable configuration for merge and evolution settings
 
-   a. Configuration (config.py):
-      - ModelReference: Represents a model with a name and path.
-      - MergeSettings: Contains settings for the merge process.
-      - EvolutionSettings: Contains settings for the evolutionary process.
-      - Configuration: Combines ModelReference, MergeSettings, and EvolutionSettings.
-      - create_default_config(): Creates a default configuration.
+5. Usage:
+   a. Command-line Interface:
+      - Run evolutionary tournament: python -m agent_forge.evomerge.cli --run
+      - Evaluate a merged model: python -m agent_forge.evomerge.cli --evaluate <model_path>
+      - Generate text: python -m agent_forge.evomerge.cli --generate <model_path> --prompt "Your prompt here"
+      - Generate config interactively: python -m agent_forge.evomerge.cli --generate-config
+      - Use custom models: python -m agent_forge.evomerge.cli --run --model1 <model1_path> --model2 <model2_path> --model3 <model3_path>
 
-   b. Model Merger (merger.py):
-      - AdvancedModelMerger: Class for merging models.
-        Methods:
-        - merge(): Performs the model merging process.
-        - _ps_merge(): Performs parameter-sharing merge.
-        - _dfs_merge(): Performs deep fusion merge.
+   b. Programmatic Usage:
+      from agent_forge.evomerge import create_default_config, run_evolutionary_tournament
+      
+      config = create_default_config()
+      best_model = run_evolutionary_tournament(config)
 
-   c. Evolutionary Tournament (evolutionary_tournament.py):
-      - EvolutionaryMerger: Class for running the evolutionary process.
-        Methods:
-        - create_merged_models(): Creates the initial population of merged models.
-        - mutate_model(): Applies mutation to a model.
-        - tournament_selection(): Selects the best model from a tournament.
-        - evolve(): Runs the evolutionary process.
-      - run_evolutionary_tournament(): Function to run the entire evolutionary tournament.
+      # Use the best model
+      from transformers import AutoModelForCausalLM, AutoTokenizer
 
-   d. Utility Functions (utils.py):
-      - load_models(): Loads models from given references.
-      - save_model(): Saves a merged model.
-      - validate_merge_config(): Validates the merge configuration.
-      - generate_text(): Generates text using a given model.
-      - evaluate_model(): Evaluates a model's performance.
-      - setup_gpu_if_available(): Sets up GPU if available.
-      - clean_up_models(): Removes temporary model files.
-      - MERGE_TECHNIQUES: Dictionary of merge technique functions.
+      model = AutoModelForCausalLM.from_pretrained(best_model)
+      tokenizer = AutoTokenizer.from_pretrained(best_model)
 
-5. Usage Example:
+      # Generate text with the merged model
+      prompt = "Once upon a time"
+      generated_text = generate_text(model, tokenizer, prompt, max_length=100)
+      print(generated_text)
 
-   from evomerge.config import create_default_config
-   from evomerge.evolutionary_tournament import run_evolutionary_tournament
+6. Configuration:
+   The system uses a Configuration object (defined in config.py) that includes:
+   - ModelReference: Specifies name and path for each model
+   - MergeSettings: Defines merge method, techniques, and parameters
+   - EvolutionSettings: Sets population size, generations, mutation rate, etc.
 
-   # Create a default configuration
-   config = create_default_config()
+7. Merge Techniques:
+   - Parameter Sharing (PS): linear, slerp, ties, dare, task_arithmetic
+   - Deep Fusion (DFS): frankenmerge, dfs
+   - Combined: ps_dfs
 
-   # Customize the configuration if needed
-   config.models = [
-       ModelReference(name="model1", path="path/to/model1"),
-       ModelReference(name="model2", path="path/to/model2"),
-       ModelReference(name="model3", path="path/to/model3")
-   ]
-   config.merge_settings.merge_method = "ps_dfs"
-   config.evolution_settings.num_generations = 100
-
-   # Run the evolutionary tournament
-   best_model = run_evolutionary_tournament(config)
-
-   # Use the best model
-   from transformers import AutoModelForCausalLM, AutoTokenizer
-
-   model = AutoModelForCausalLM.from_pretrained(best_model)
-   tokenizer = AutoTokenizer.from_pretrained(best_model)
-
-   # Generate text with the merged model
-   prompt = "Once upon a time"
-   generated_text = generate_text(model, tokenizer, prompt, max_length=100)
-   print(generated_text)
-
-6. Error Handling:
-   The system uses a custom EvoMergeException for error handling. All major functions include try-except blocks to catch and log errors, providing informative error messages.
-
-7. Logging:
-   The system uses Python's logging module to provide detailed logs of the merging and evolutionary processes. Log levels can be adjusted as needed.
-
-
-8. Testing:
-   a. Unit Tests (test_evomerge.py):
-      Run these tests to ensure individual components are functioning correctly.
-
-   b. Integration Tests (integration_tests.py):
-      These tests exercise the entire system end-to-end, including model merging, evolutionary tournament, and text generation.
-
-9. Performance Benchmarks (benchmarks.py):
-   The benchmarks module provides tools to measure the performance of the merging and evolutionary processes. It tracks:
-   - Time taken for operations
-   - Memory usage
-   - GPU usage (if available)
-   - Model evaluation results
-
+8. Evaluation and Benchmarking:
+   - Model evaluation based on perplexity and coherence scores
+   - Parallel evaluation for improved performance
+   - Comprehensive benchmarking of merge and evolution processes
+   
    To run benchmarks:
    ```
    python -m agent_forge.evomerge.benchmarks
    ```
 
-10. Command-line Interface (cli.py):
-    The CLI provides an easy way to use the EvoMerge system without writing code. It supports the following operations:
-    - Running the evolutionary tournament
-    - Evaluating a merged model
-    - Generating text using a merged model
-    - Specifying initial models using Hugging Face model IDs or local paths
+9. Visualization:
+   - Fitness progression over generations
+   - Benchmark comparisons between models
+   - HTML report generation for detailed results
 
-    Usage examples:
-    a. Run the evolutionary tournament with default models:
-       ```
-       python -m agent_forge.evomerge.cli --run
-       ```
+10. Testing:
+    a. Unit Tests (test_evomerge.py)
+    b. Integration Tests (integration_tests.py)
 
-    b. Run the evolutionary tournament with custom models from Hugging Face:
+11. Logging:
+    - Configurable logging with file rotation (logging_config.py)
+
+12. GPU Support:
+    - Automatic GPU detection and utilization when available
+
+13. Error Handling:
+    - Custom EvoMergeException for specific error scenarios
+
+14. Using Hugging Face Model Links:
+    The CLI supports direct input of Hugging Face model links for the initial models:
+    
+    a. Specify models using their Hugging Face model IDs:
        ```
        python -m agent_forge.evomerge.cli --run --model1 bert-base-uncased --model2 roberta-base --model3 distilbert-base-uncased
        ```
 
-    c. Evaluate a merged model:
-       ```
-       python -m agent_forge.evomerge.cli --evaluate path/to/merged/model
-       ```
-
-    d. Generate text using a merged model:
-       ```
-       python -m agent_forge.evomerge.cli --generate path/to/merged/model --prompt "Your prompt here"
-       ```
-
-    e. Use a custom configuration file:
-       ```
-       python -m agent_forge.evomerge.cli --config path/to/config.json --run
-       ```
-
-11. Using Hugging Face Model Links:
-    The CLI now supports direct input of Hugging Face model links for the initial 3 models. This makes it easier to experiment with different model combinations without modifying the code. Here's how you can use this feature:
-
-    a. Specify one or more models using their Hugging Face model IDs:
-       ```
-       python -m agent_forge.evomerge.cli --run --model1 bert-base-uncased --model2 roberta-base --model3 distilbert-base-uncased
-       ```
-
-    b. You can mix and match Hugging Face model IDs with local paths:
+    b. Mix and match Hugging Face model IDs with local paths:
        ```
        python -m agent_forge.evomerge.cli --run --model1 bert-base-uncased --model2 /path/to/local/model --model3 distilbert-base-uncased
        ```
 
-    c. If you specify fewer than three models, the system will use the default models to fill in the gaps. For example:
-       ```
-       python -m agent_forge.evomerge.cli --run --model1 bert-base-uncased --model2 roberta-base
-       ```
-       This will use bert-base-uncased and roberta-base as the first two models, and the third model will be the default one from the configuration.
+    c. If fewer than three models are specified, the system will use default models to fill in the gaps.
 
-Note: Ensure you have sufficient computational resources, especially GPU memory, as merging and evaluating large language models can be computationally intensive. When using Hugging Face model links, make sure you have a stable internet connection to download the models.
+For detailed API references and advanced usage, refer to the individual module docstrings and comments within the source code.
+
+Note: Ensure you have sufficient computational resources, especially when working with large language models. GPU acceleration is recommended for optimal performance. When using Hugging Face model links, make sure you have a stable internet connection to download the models.

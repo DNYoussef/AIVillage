@@ -4,7 +4,8 @@ import torch
 from .config import create_default_config
 from .evolutionary_tournament import run_evolutionary_tournament
 from .merger import AdvancedModelMerger
-from .utils import load_models, evaluate_model
+from .utils import load_models, parallel_evaluate_models
+from .visualization import plot_benchmark_comparison, generate_html_report
 
 def benchmark_merger(config):
     merger = AdvancedModelMerger(config)
@@ -21,7 +22,7 @@ def benchmark_merger(config):
     time_taken = end_time - start_time
     memory_used = end_memory - start_memory
 
-    evaluation_result = evaluate_model(merged_model_path)
+    evaluation_result = parallel_evaluate_models([merged_model_path])[0]
 
     return {
         "time_taken": time_taken,
@@ -41,7 +42,7 @@ def benchmark_evolutionary_tournament(config):
     time_taken = end_time - start_time
     memory_used = end_memory - start_memory
 
-    evaluation_result = evaluate_model(best_model_path)
+    evaluation_result = parallel_evaluate_models([best_model_path])[0]
 
     return {
         "time_taken": time_taken,
@@ -82,6 +83,15 @@ def run_benchmarks():
 
         print(f"GPU operation time: {end_time - start_time:.2f} seconds")
         print(f"GPU memory used: {(end_memory - start_memory) / (1024 * 1024):.2f} MB")
+
+    # Generate visualizations
+    benchmark_data = [
+        {"model": "Merger", "score": merger_results['evaluation_result']['overall_score'], "time": merger_results['time_taken'], "memory": merger_results['memory_used'] / (1024 * 1024)},
+        {"model": "Evolutionary", "score": tournament_results['evaluation_result']['overall_score'], "time": tournament_results['time_taken'], "memory": tournament_results['memory_used'] / (1024 * 1024)}
+    ]
+
+    plot_benchmark_comparison(benchmark_data, 'benchmark_comparison.png')
+    generate_html_report(benchmark_data, 'benchmark_report.html')
 
 if __name__ == "__main__":
     run_benchmarks()

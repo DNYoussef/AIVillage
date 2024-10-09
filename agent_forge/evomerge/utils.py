@@ -6,6 +6,7 @@ from typing import List, Dict, Union, Callable
 from pydantic import BaseModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from torch.nn.functional import cosine_similarity
+from concurrent.futures import ProcessPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,10 @@ def generate_text(model: torch.nn.Module, tokenizer: AutoTokenizer, prompt: str,
         logger.error(f"Error during text generation: {str(e)}")
         raise EvoMergeException(f"Error generating text: {str(e)}")
 
-def evaluate_model(model_path: str) -> Dict[str, Union[float, str]]:
+
+def parallel_evaluate_models(model_paths: List[str], max_workers: int = None) -> List[Dict[str, Union[float, str]]]:
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        return list(executor.map(evaluate_model, model_paths))
     try:
         model = AutoModelForCausalLM.from_pretrained(model_path)
         tokenizer = AutoTokenizer.from_pretrained(model_path)

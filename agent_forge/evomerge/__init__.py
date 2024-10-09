@@ -8,8 +8,11 @@ from .utils import (
     evaluate_model,
     setup_gpu_if_available,
     clean_up_models,
-    MERGE_TECHNIQUES
+    MERGE_TECHNIQUES,
+    parallel_evaluate_models
 )
+from .visualization import plot_fitness_over_generations, plot_benchmark_comparison, generate_html_report
+from .logging_config import setup_logging
 
 __all__ = [
     "Configuration",
@@ -26,5 +29,10 @@ __all__ = [
     "evaluate_model",
     "setup_gpu_if_available",
     "clean_up_models",
-    "MERGE_TECHNIQUES"
+    "MERGE_TECHNIQUES",
+    "parallel_evaluate_models",
+    "plot_fitness_over_generations",
+    "plot_benchmark_comparison",
+    "generate_html_report",
+    "setup_logging"
 ]
