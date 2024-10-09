@@ -9,6 +9,9 @@ EvoMerge is a system designed to merge multiple language models using evolutiona
    c. Evolutionary Tournament (evolutionary_tournament.py)
    d. Utility Functions (utils.py)
    e. GGUF Utilities (gguf_utils.py)
+   f. Integration Tests (integration_tests.py)
+   g. Performance Benchmarks (benchmarks.py)
+   h. Command-line Interface (cli.py)
 
 3. How the System Works:
    a. Initial Setup:
@@ -103,6 +106,49 @@ EvoMerge is a system designed to merge multiple language models using evolutiona
    The system uses Python's logging module to provide detailed logs of the merging and evolutionary processes. Log levels can be adjusted as needed.
 
 8. Testing:
-   Unit tests are provided in test_evomerge.py. Run these tests to ensure the system is functioning correctly after any modifications.
+   a. Unit Tests (test_evomerge.py):
+      Run these tests to ensure individual components are functioning correctly.
+
+   b. Integration Tests (integration_tests.py):
+      These tests exercise the entire system end-to-end, including model merging, evolutionary tournament, and text generation.
+
+9. Performance Benchmarks (benchmarks.py):
+   The benchmarks module provides tools to measure the performance of the merging and evolutionary processes. It tracks:
+   - Time taken for operations
+   - Memory usage
+   - GPU usage (if available)
+   - Model evaluation results
+
+   To run benchmarks:
+   ```
+   python -m agent_forge.evomerge.benchmarks
+   ```
+
+10. Command-line Interface (cli.py):
+    The CLI provides an easy way to use the EvoMerge system without writing code. It supports the following operations:
+    - Running the evolutionary tournament
+    - Evaluating a merged model
+    - Generating text using a merged model
+
+    Usage examples:
+    a. Run the evolutionary tournament:
+       ```
+       python -m agent_forge.evomerge.cli --run
+       ```
+
+    b. Evaluate a merged model:
+       ```
+       python -m agent_forge.evomerge.cli --evaluate path/to/merged/model
+       ```
+
+    c. Generate text using a merged model:
+       ```
+       python -m agent_forge.evomerge.cli --generate path/to/merged/model --prompt "Your prompt here"
+       ```
+
+    d. Use a custom configuration file:
+       ```
+       python -m agent_forge.evomerge.cli --config path/to/config.json --run
+       ```
 
 Note: Ensure you have sufficient computational resources, especially GPU memory, as merging and evaluating large language models can be computationally intensive.
