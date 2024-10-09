@@ -1,7 +1,7 @@
 EvoMerge: Evolutionary Model Merging System
 
 1. Overview:
-EvoMerge is an advanced system designed to merge multiple language models using evolutionary algorithms. It starts with initial models, creates a population of merged models, and uses tournament selection to evolve towards a single, optimized final model.
+EvoMerge is an advanced system designed to merge multiple language models using evolutionary algorithms. It starts with initial models, creates a population of merged models, and uses tournament selection to evolve towards a single, optimized final model. The system now includes parallel processing for improved performance, enhanced visualization capabilities, and a more robust logging system.
 
 2. System Components:
    a. Configuration (config.py)
@@ -27,7 +27,7 @@ EvoMerge is an advanced system designed to merge multiple language models using 
    c. Evolutionary Process:
       - The evolve() method runs the evolutionary algorithm.
       - For each generation:
-        i. Evaluate all models in the population.
+        i. Evaluate all models in the population using parallel processing for improved performance.
         ii. Select top performers using tournament selection.
         iii. Create new population through mutation and merging of lower performers.
       - This process continues for a specified number of generations or until early stopping criteria are met.
@@ -40,20 +40,35 @@ EvoMerge is an advanced system designed to merge multiple language models using 
    b. Evolutionary optimization of merged models
    c. Parallel model evaluation for improved performance
    d. Visualization of fitness progression and benchmark results
-   e. Comprehensive CLI for easy interaction
+   e. Comprehensive CLI for easy interaction, including interactive config generation
    f. Integration with Hugging Face models
    g. GPU support for accelerated computations
    h. Customizable configuration for merge and evolution settings
+   i. Enhanced logging system with file rotation for better debugging in production environments
 
-5. Usage:
+5. Installation and Setup:
+   a. Clone the repository:
+      ```
+      git clone https://github.com/your-repo/evomerge.git
+      cd evomerge
+      ```
+   b. Install dependencies:
+      ```
+      pip install -r requirements.txt
+      ```
+   c. Ensure you have PyTorch installed with CUDA support for GPU acceleration (optional but recommended).
+
+6. Usage:
    a. Command-line Interface:
       - Run evolutionary tournament: python -m agent_forge.evomerge.cli --run
       - Evaluate a merged model: python -m agent_forge.evomerge.cli --evaluate <model_path>
       - Generate text: python -m agent_forge.evomerge.cli --generate <model_path> --prompt "Your prompt here"
       - Generate config interactively: python -m agent_forge.evomerge.cli --generate-config
       - Use custom models: python -m agent_forge.evomerge.cli --run --model1 <model1_path> --model2 <model2_path> --model3 <model3_path>
+      - Run in verbose mode: Add --verbose to any command for detailed output
 
    b. Programmatic Usage:
+      ```python
       from agent_forge.evomerge import create_default_config, run_evolutionary_tournament
       
       config = create_default_config()
@@ -69,19 +84,25 @@ EvoMerge is an advanced system designed to merge multiple language models using 
       prompt = "Once upon a time"
       generated_text = generate_text(model, tokenizer, prompt, max_length=100)
       print(generated_text)
+      ```
 
-6. Configuration:
+7. Configuration:
    The system uses a Configuration object (defined in config.py) that includes:
    - ModelReference: Specifies name and path for each model
    - MergeSettings: Defines merge method, techniques, and parameters
    - EvolutionSettings: Sets population size, generations, mutation rate, etc.
 
-7. Merge Techniques:
+   To generate a configuration file interactively:
+   ```
+   python -m agent_forge.evomerge.cli --generate-config
+   ```
+
+8. Merge Techniques:
    - Parameter Sharing (PS): linear, slerp, ties, dare, task_arithmetic
    - Deep Fusion (DFS): frankenmerge, dfs
    - Combined: ps_dfs
 
-8. Evaluation and Benchmarking:
+9. Evaluation and Benchmarking:
    - Model evaluation based on perplexity and coherence scores
    - Parallel evaluation for improved performance
    - Comprehensive benchmarking of merge and evolution processes
@@ -91,25 +112,40 @@ EvoMerge is an advanced system designed to merge multiple language models using 
    python -m agent_forge.evomerge.benchmarks
    ```
 
-9. Visualization:
-   - Fitness progression over generations
-   - Benchmark comparisons between models
-   - HTML report generation for detailed results
+10. Visualization:
+    - Fitness progression over generations (plot saved as 'fitness_plot.png')
+    - Benchmark comparisons between models (plot saved as 'benchmark_comparison.png')
+    - HTML report generation for detailed results (saved as 'benchmark_report.html')
 
-10. Testing:
-    a. Unit Tests (test_evomerge.py)
-    b. Integration Tests (integration_tests.py)
+    Visualizations are automatically generated during the evolutionary process and benchmarking.
 
-11. Logging:
+11. Testing:
+    a. Unit Tests (test_evomerge.py):
+       ```
+       python -m unittest test_evomerge.py
+       ```
+    b. Integration Tests (integration_tests.py):
+       ```
+       python -m unittest integration_tests.py
+       ```
+
+12. Logging:
     - Configurable logging with file rotation (logging_config.py)
+    - Logs are saved to 'evomerge.log' by default
+    - Use the --verbose flag in CLI commands for more detailed console output
 
-12. GPU Support:
+13. GPU Support:
     - Automatic GPU detection and utilization when available
+    - To check GPU usage:
+      ```
+      python -m agent_forge.evomerge.benchmarks
+      ```
 
-13. Error Handling:
+14. Error Handling:
     - Custom EvoMergeException for specific error scenarios
+    - Detailed error messages are logged for debugging
 
-14. Using Hugging Face Model Links:
+15. Using Hugging Face Model Links:
     The CLI supports direct input of Hugging Face model links for the initial models:
     
     a. Specify models using their Hugging Face model IDs:
@@ -123,6 +159,29 @@ EvoMerge is an advanced system designed to merge multiple language models using 
        ```
 
     c. If fewer than three models are specified, the system will use default models to fill in the gaps.
+
+16. GGUF Utilities:
+    - The gguf_utils.py module provides functions for reading and writing GGUF (GPT-Generated Unified Format) files.
+    - These utilities can be used for advanced model manipulation and storage optimization.
+
+17. Parallel Processing:
+    - Model evaluation is now parallelized using Python's multiprocessing library.
+    - The number of parallel processes is automatically set based on available CPU cores.
+    - To adjust the number of workers:
+      ```python
+      from agent_forge.evomerge.utils import parallel_evaluate_models
+      results = parallel_evaluate_models(model_paths, max_workers=4)
+      ```
+
+18. Advanced Usage:
+    - To add a new merge technique, implement the function in utils.py and add it to the MERGE_TECHNIQUES dictionary.
+    - Custom evaluation metrics can be added by modifying the evaluate_model function in utils.py.
+    - For large-scale experiments, consider using a distributed computing framework and modify the evolutionary_tournament.py accordingly.
+
+19. Troubleshooting:
+    - If you encounter CUDA out of memory errors, try reducing the population size or using smaller models.
+    - For debugging, use the --verbose flag and check the log files.
+    - Ensure all dependencies are correctly installed and up to date.
 
 For detailed API references and advanced usage, refer to the individual module docstrings and comments within the source code.
 
