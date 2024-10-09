@@ -1,0 +1,77 @@
+EvoMerge: Evolutionary Model Merging System
+
+Overview:
+EvoMerge is a system designed to merge multiple language models using evolutionary algorithms. It starts with 3 initial models, creates a population of 8 merged models, and then uses tournament selection to evolve towards a single, optimized final model.
+
+System Components:
+1. Configuration (config.py)
+2. Model Merger (merger.py)
+3. Evolutionary Tournament (evolutionary_tournament.py)
+4. Utility Functions (utils.py)
+5. GGUF Utilities (gguf_utils.py)
+
+How the System Works:
+
+1. Initial Setup:
+   - Define the configuration using the Configuration class in config.py.
+   - Specify the three initial models using ModelReference objects.
+
+2. Creating the Initial Population:
+   - The EvolutionaryMerger class in evolutionary_tournament.py creates the initial population of 8 models.
+   - It uses different combinations of merge techniques (linear, slerp, ties, dare, frankenmerge, dfs) to create diverse merged models.
+
+3. Evolutionary Process:
+   - The evolve() method in EvolutionaryMerger runs the evolutionary algorithm.
+   - For each generation:
+     a. Evaluate all models in the population.
+     b. Select top performers using tournament selection.
+     c. Create new population through mutation and merging of lower performers.
+   - This process continues for a specified number of generations or until early stopping criteria are met.
+
+4. Final Model Selection:
+   - After the evolutionary process, the best-performing model is selected as the final output.
+
+How to Upload and Use the Original 3 Models:
+
+1. Prepare Your Models:
+   - Ensure you have three pre-trained language models you want to merge.
+   - These could be different versions of the same model (e.g., GPT-2 small, medium, large) or different models entirely.
+
+2. Update the Configuration:
+   - Open the config.py file.
+   - In the create_default_config() function, update the ModelReference objects in the 'models' list:
+
+     models=[
+         ModelReference(name="model1_name", path="path/to/model1"),
+         ModelReference(name="model2_name", path="path/to/model2"),
+         ModelReference(name="model3_name", path="path/to/model3")
+     ]
+
+   - The 'path' can be either a local directory containing the model files or a Hugging Face model identifier.
+
+3. Run the System:
+   - Create a new Python script or use the existing main function in merger.py.
+   - Import the necessary components:
+
+     from evomerge.config import create_default_config
+     from evomerge.evolutionary_tournament import run_evolutionary_tournament
+
+   - Create the configuration and run the tournament:
+
+     config = create_default_config()
+     best_model = run_evolutionary_tournament(config)
+
+   - This will start the process of creating the initial population, running the evolutionary tournament, and producing the final merged model.
+
+4. Accessing the Final Model:
+   - The run_evolutionary_tournament function returns the path to the best model.
+   - You can load this model using the Hugging Face Transformers library:
+
+     from transformers import AutoModelForCausalLM, AutoTokenizer
+
+     model = AutoModelForCausalLM.from_pretrained(best_model)
+     tokenizer = AutoTokenizer.from_pretrained(best_model)
+
+   - Now you can use this merged model for various natural language processing tasks.
+
+Note: Ensure you have sufficient computational resources, especially GPU memory, as merging and evaluating large language models can be computationally intensive.

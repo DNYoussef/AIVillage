@@ -1,9 +1,11 @@
 import logging
 import os
 import torch
-from typing import List, Dict, Union
+import numpy as np
+from typing import List, Dict, Union, Callable
 from pydantic import BaseModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from torch.nn.functional import cosine_similarity
 
 logger = logging.getLogger(__name__)
 
@@ -111,3 +113,88 @@ def clean_up_models(model_paths: List[str]):
                 os.remove(path)
         except Exception as e:
             logger.warning(f"Failed to remove model {path}: {str(e)}")
+
+# Merge Techniques
+
+def linear_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
+    merged_weights = {}
+    for key in weights:
+        merged_weights[key] = torch.sum(weights[key] * torch.tensor(kwargs.get("weights", [1/len(weights[key])] * len(weights[key]))).unsqueeze(-1).unsqueeze(-1), dim=0)
+    return merged_weights
+
+def slerp_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
+    merged_weights = {}
+    for key in weights:
+        t = kwargs.get("t", 0.5)
+        w1, w2 = weights[key][0], weights[key][1]
+        omega = torch.arccos(torch.clamp(cosine_similarity(w1.flatten(), w2.flatten(), dim=0), -1, 1))
+        so = torch.sin(omega)
+        merged_weights[key] = (torch.sin((1.0-t)*omega) / so).unsqueeze(-1).unsqueeze(-1) * w1 + \
+                              (torch.sin(t*omega) / so).unsqueeze(-1).unsqueeze(-1) * w2
+    return merged_weights
+
+def ties_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
+    threshold = kwargs.get("threshold", 0.1)
+    merged_weights = {}
+    for key in weights:
+        tensor = weights[key]
+        abs_tensor = torch.abs(tensor)
+        mask = abs_tensor > threshold
+        merged_weights[key] = torch.where(mask, tensor, torch.zeros_like(tensor))
+    return merged_weights
+
+def dare_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
+    threshold = kwargs.get("threshold", 0.1)
+    amplification = kwargs.get("amplification", 2.0)
+    merged_weights = {}
+    for key in weights:
+        tensor = weights[key]
+        abs_diff = torch.abs(tensor)
+        mask = abs_diff > threshold
+        merged_weights[key] = torch.where(mask, tensor * amplification, torch.zeros_like(tensor))
+    return merged_weights
+
+def task_arithmetic_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
+    base_weights = kwargs.get("base_weights", {})
+    task_weights = kwargs.get("task_weights", [])
+    merged_weights = {}
+    for key in base_weights:
+        task_vectors = [task_weight[key] - base_weights[key] for task_weight in task_weights]
+        combined_task_vector = sum(task_vectors)
+        merged_weights[key] = base_weights[key] + combined_task_vector
+    return merged_weights
+
+def frankenmerge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
+    models = kwargs.get("models", [])
+    merged_weights = {}
+    for i, (name, tensor) in enumerate(weights.items()):
+        layer_num = int(name.split('.')[1]) if '.' in name else -1
+        if layer_num == -1 or layer_num % len(models) == i:
+            merged_weights[name] = tensor[i]
+    return merged_weights
+
+def dfs_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
+    models = kwargs.get("models", [])
+    I = kwargs.get("I", torch.ones(len(weights)))
+    W = kwargs.get("W", torch.eye(len(weights), len(models)))
+    merged_weights = {}
+    layer_index = 0
+    for name, tensor in weights.items():
+        if any(layer_type in name for layer_type in ['layer', 'block', 'transformer']):
+            if I[layer_index] > 0:
+                merged_weights[name] = torch.sum(tensor * W[layer_index].unsqueeze(1).unsqueeze(2), dim=0)
+            layer_index += 1
+        else:
+            merged_weights[name] = tensor[0]
+    return merged_weights
+
+# Merge technique mapping
+MERGE_TECHNIQUES: Dict[str, Callable] = {
+    "linear": linear_merge,
+    "slerp": slerp_merge,
+    "ties": ties_merge,
+    "dare": dare_merge,
+    "task_arithmetic": task_arithmetic_merge,
+    "frankenmerge": frankenmerge,
+    "dfs": dfs_merge
+}
