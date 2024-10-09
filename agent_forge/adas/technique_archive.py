@@ -187,22 +187,6 @@ def forward(self, taskInfo):
 """
     },
     {
-        "thought": "Role Prompting assigns a specific role to the AI, potentially improving task-specific outputs by leveraging persona-based reasoning.",
-        "name": "Role Prompting",
-        "code": """
-def forward(self, taskInfo):
-    role_selection_agent = LLMAgentBase(['role'], 'Role Selection Agent')
-    role_instruction = "Based on the task, select the most appropriate role from: Mathematician, Physicist, Computer Scientist, or General Problem Solver."
-    selected_role = role_selection_agent([taskInfo], role_instruction)[0].content
-
-    solving_agent = LLMAgentBase(['thinking', 'answer'], 'Role-based Solving Agent')
-    solve_instruction = f"As a {selected_role}, approach this task step-by-step and provide your answer."
-    thinking, answer = solving_agent([taskInfo, Info('role', 'ADAS', selected_role, 0)], solve_instruction)
-
-    return answer
-"""
-    },
-    {
         "thought": "Emotion Prompting incorporates emotional phrases to potentially improve performance on benchmarks by leveraging psychological relevance.",
         "name": "Emotion Prompting",
         "code": """
