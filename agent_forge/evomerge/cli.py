@@ -2,127 +2,100 @@ import argparse
 import json
 import logging
 import os
+import sys
+from tqdm import tqdm
 from .config import create_default_config, Configuration, ModelReference
-from .evolutionary_tournament import run_evolutionary_tournament
-from .utils import generate_text, evaluate_model
+from .merger import AdvancedModelMerger
+from .utils import load_models
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from .. import AgentForge
-
-def generate_config_interactive():
-    config = {}
-    config['merge_method'] = input("Enter merge method (ps/dfs/ps_dfs): ")
-    config['num_generations'] = int(input("Enter number of generations: "))
-    config['population_size'] = int(input("Enter population size: "))
-    config['mutation_rate'] = float(input("Enter mutation rate (0-1): "))
-    config['tournament_size'] = int(input("Enter tournament size: "))
-    config['early_stopping_generations'] = int(input("Enter early stopping generations: "))
-    return config
 
 def is_local_path(path):
     path = os.path.expanduser(path)
     path = os.path.normpath(path)
     return os.path.isdir(path)
 
+def download_and_merge_models(model_paths, verbose=False):
+    logger = logging.getLogger(__name__)
+    logger.info("Starting model download and merge process")
+
+    config = create_default_config()
+    config.models = [ModelReference(name=f"model{i+1}", path=path) for i, path in enumerate(model_paths)]
+
+    logger.info("Loading models")
+    models = load_models(config.models)
+    logger.info(f"Loaded {len(models)} models successfully")
+
+    merger = AdvancedModelMerger(config)
+    
+    merge_combinations = [
+        ["linear", "ties", "frankenmerge"],
+        ["linear", "ties", "dfs"],
+        ["linear", "dare", "frankenmerge"],
+        ["linear", "dare", "dfs"],
+        ["slerp", "ties", "frankenmerge"],
+        ["slerp", "ties", "dfs"],
+        ["slerp", "dare", "frankenmerge"],
+        ["slerp", "dare", "dfs"]
+    ]
+
+    merged_models = []
+    for i, techniques in enumerate(tqdm(merge_combinations, desc="Creating merged models")):
+        logger.info(f"Creating merged model {i+1} with techniques: {techniques}")
+        config.merge_settings.ps_techniques = techniques[:2]
+        config.merge_settings.dfs_techniques = [techniques[2]]
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                merged_model_path = merger.merge()
+                merged_models.append(merged_model_path)
+                logger.info(f"Successfully created merged model: {merged_model_path}")
+                break
+            except Exception as e:
+                logger.error(f"Attempt {attempt + 1} failed to create merged model with techniques {techniques}: {str(e)}")
+                if attempt == max_retries - 1:
+                    logger.error(f"Failed to create merged model after {max_retries} attempts")
+
+    logger.info(f"Created {len(merged_models)} merged models")
+    return merged_models
+
 def main():
+    print("Starting main function")  # Debug print
     try:
         parser = argparse.ArgumentParser(description="EvoMerge: Evolutionary Model Merging System")
-        parser.add_argument("--config", type=str, help="Path to a JSON configuration file")
-        parser.add_argument("--run", action="store_true", help="Run the evolutionary tournament")
-        parser.add_argument("--evaluate", type=str, help="Evaluate a merged model at the given path")
-        parser.add_argument("--generate", type=str, help="Generate text using a merged model at the given path")
-        parser.add_argument("--prompt", type=str, default="The capital of France is", help="Prompt for text generation")
-        parser.add_argument("--model1", type=str, help="Local path or Hugging Face model ID for the first model")
-        parser.add_argument("--model2", type=str, help="Local path or Hugging Face model ID for the second model")
+        parser.add_argument("--download-and-merge", action="store_true", help="Download models and create 8 merged models")
+        parser.add_argument("--model1", type=str, required=True, help="Local path or Hugging Face model ID for the first model")
+        parser.add_argument("--model2", type=str, required=True, help="Local path or Hugging Face model ID for the second model")
         parser.add_argument("--model3", type=str, help="Local path or Hugging Face model ID for the third model")
-        parser.add_argument("--generate-config", action="store_true", help="Generate a configuration file interactively")
         parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
         args = parser.parse_args()
 
-        if args.verbose:
-            logging.basicConfig(level=logging.DEBUG)
-        else:
-            logging.basicConfig(level=logging.INFO)
-
+        print("Setting up logging")  # Debug print
+        logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
+                            format='%(asctime)s - %(levelname)s - %(message)s',
+                            stream=sys.stdout)  # Ensure logging to stdout
         logger = logging.getLogger(__name__)
 
-        if args.generate_config:
-            config = generate_config_interactive()
-            with open('evomerge_config.json', 'w') as f:
-                json.dump(config, f, indent=2)
-            print("Configuration file generated: evomerge_config.json")
-            return
+        logger.info("Starting EvoMerge CLI")
 
-        if args.config:
-            with open(args.config, 'r') as f:
-                config_dict = json.load(f)
-            config = Configuration(**config_dict)
+        if args.download_and_merge:
+            model_paths = [args.model1, args.model2]
+            if args.model3:
+                model_paths.append(args.model3)
+            
+            merged_models = download_and_merge_models(model_paths, args.verbose)
+            logger.info(f"Created {len(merged_models)} merged models:")
+            for model_path in merged_models:
+                logger.info(model_path)
         else:
-            config = create_default_config()
-
-        # Update the configuration with the provided models
-        if args.model1 or args.model2 or args.model3:
-            new_models = []
-            for i, model_path in enumerate([args.model1, args.model2, args.model3], start=1):
-                if model_path:
-                    if not is_local_path(model_path) and not model_path.startswith('Qwen/'):
-                        model_path = f"Qwen/{model_path}"
-                    new_models.append(ModelReference(name=f"model{i}", path=model_path))
-            
-            if len(new_models) < 2:
-                logger.error("Error: At least two models must be provided for merging.")
-                return
-            
-            config.models = new_models
-
-        if args.run:
-            logger.info("Running evolutionary tournament...")
-            
-            # Print model configurations
-            for i, model_ref in enumerate(config.models):
-                logger.info(f"Loading model {i+1}: {model_ref.path}")
-                model = AutoModelForCausalLM.from_pretrained(model_ref.path)
-                logger.info(f"Model {i+1} configuration:")
-                logger.info(json.dumps(model.config.to_dict(), indent=2))
-            
-            agent_forge = AgentForge(model_name=config.models[0].path)  # Use the first model for RAGPromptBaker
-            best_model_path = agent_forge.run_full_agent_forge_process()
-            logger.info(f"Best model saved at: {best_model_path}")
-            
-            logger.info("\nEvaluating best model:")
-            evaluation_result = evaluate_model(best_model_path)
-            logger.info(f"Overall score: {evaluation_result['overall_score']:.2f}")
-            logger.info("\nDetailed results:")
-            for task, result in evaluation_result['results'].items():
-                logger.info(f"\n{task} Task:")
-                logger.info(result)
-
-            logger.info("\nGenerating sample text:")
-            model = AutoModelForCausalLM.from_pretrained(best_model_path)
-            tokenizer = AutoTokenizer.from_pretrained(best_model_path)
-            generated_text = generate_text(model, tokenizer, args.prompt)
-            logger.info(f"Generated text: {generated_text}")
-
-        elif args.evaluate:
-            logger.info(f"Evaluating model at {args.evaluate}")
-            evaluation_result = evaluate_model(args.evaluate)
-            logger.info(f"Overall score: {evaluation_result['overall_score']:.2f}")
-            logger.info("\nDetailed results:")
-            for task, result in evaluation_result['results'].items():
-                logger.info(f"\n{task} Task:")
-                logger.info(result)
-
-        elif args.generate:
-            logger.info(f"Generating text using model at {args.generate}")
-            model = AutoModelForCausalLM.from_pretrained(args.generate)
-            tokenizer = AutoTokenizer.from_pretrained(args.generate)
-            generated_text = generate_text(model, tokenizer, args.prompt)
-            logger.info(f"Generated text: {generated_text}")
-
-        else:
+            logger.info("No action specified. Use --download-and-merge to download models and create merged models.")
             parser.print_help()
+
+        logger.info("EvoMerge CLI completed successfully")
+
     except Exception as e:
-        logger.error(f"An error occurred: {e}", exc_info=True)
         print(f"An error occurred: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()
