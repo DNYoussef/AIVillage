@@ -13,6 +13,7 @@ venv/
 *.venv
 env/
 ENV/
+evomenrge_env/
 
 # IDE-related
 .vscode/
