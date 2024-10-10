@@ -66,22 +66,23 @@ class AdvancedModelMerger:
         base_model = models[0]
         for key in base_model.state_dict().keys():
             tensors = []
-            for model in models:
+            for i, model in enumerate(models):
                 if key in model.state_dict():
                     tensor = model.state_dict()[key]
                     if tensor.shape != base_model.state_dict()[key].shape:
-                        logger.warning(f"Shape mismatch for {key}: {tensor.shape} vs {base_model.state_dict()[key].shape}")
+                        logger.warning(f"Shape mismatch for {key}: Model {i} has shape {tensor.shape}, base model has shape {base_model.state_dict()[key].shape}")
                         tensor = self._resize_tensor(tensor, base_model.state_dict()[key].shape)
                     tensors.append(tensor)
                 else:
-                    logger.warning(f"Key {key} not found in one of the models. Using zeros.")
+                    logger.warning(f"Key {key} not found in model {i}. Using zeros.")
                     tensors.append(torch.zeros_like(base_model.state_dict()[key]))
             weights[key] = torch.stack(tensors)
         return weights
 
     def _resize_tensor(self, tensor: torch.Tensor, target_shape: torch.Size) -> torch.Tensor:
         if len(tensor.shape) != len(target_shape):
-            raise ValueError(f"Cannot resize tensor with shape {tensor.shape} to {target_shape}")
+            logger.error(f"Cannot resize tensor with shape {tensor.shape} to {target_shape}: Dimension mismatch")
+            raise ValueError(f"Cannot resize tensor with shape {tensor.shape} to {target_shape}: Dimension mismatch")
         
         result = torch.zeros(target_shape, dtype=tensor.dtype, device=tensor.device)
         for dim in range(len(tensor.shape)):

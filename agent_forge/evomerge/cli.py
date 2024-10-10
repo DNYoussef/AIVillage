@@ -19,6 +19,8 @@ def generate_config_interactive():
     return config
 
 def is_local_path(path):
+    path = os.path.expanduser(path)
+    path = os.path.normpath(path)
     return os.path.isdir(path)
 
 def main():
@@ -61,7 +63,8 @@ def main():
         new_models = []
         for i, model_path in enumerate([args.model1, args.model2, args.model3], start=1):
             if model_path:
-                model_path = model_path if is_local_path(model_path) else f"Qwen/{model_path}"
+                if not is_local_path(model_path) and not model_path.startswith('Qwen/'):
+                    model_path = f"Qwen/{model_path}"
                 new_models.append(ModelReference(name=f"model{i}", path=model_path))
         
         if len(new_models) < 2:
@@ -72,6 +75,14 @@ def main():
 
     if args.run:
         logger.info("Running evolutionary tournament...")
+        
+        # Print model configurations
+        for i, model_ref in enumerate(config.models):
+            logger.info(f"Loading model {i+1}: {model_ref.path}")
+            model = AutoModelForCausalLM.from_pretrained(model_ref.path)
+            logger.info(f"Model {i+1} configuration:")
+            logger.info(json.dumps(model.config.to_dict(), indent=2))
+        
         agent_forge = AgentForge(model_name=config.models[0].path)  # Use the first model for RAGPromptBaker
         best_model_path = agent_forge.run_full_agent_forge_process()
         logger.info(f"Best model saved at: {best_model_path}")
