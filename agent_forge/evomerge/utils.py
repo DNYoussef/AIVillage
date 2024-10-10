@@ -2,11 +2,15 @@ import logging
 import os
 import torch
 import numpy as np
+import psutil
+import shutil
 from typing import List, Dict, Union, Callable
 from pydantic import BaseModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from torch.nn.functional import cosine_similarity
 from concurrent.futures import ProcessPoolExecutor
+import multiprocessing
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -26,16 +30,87 @@ class MergeConfig(BaseModel):
     ps_techniques: List[str]
     dfs_techniques: List[str]
 
+def check_system_resources(model_paths: List[str]):
+    total_model_size = 0
+    for path in model_paths:
+        if os.path.exists(path):
+            total_model_size += sum(os.path.getsize(os.path.join(path, f)) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)))
+    
+    if total_model_size > 0:
+        free_disk_space = shutil.disk_usage(os.path.dirname(next(path for path in model_paths if os.path.exists(path)))).free
+    else:
+        free_disk_space = shutil.disk_usage(".").free
+    
+    available_ram = psutil.virtual_memory().available
+
+    logger.info(f"Total model size: {total_model_size / (1024**3):.2f} GB")
+    logger.info(f"Free disk space: {free_disk_space / (1024**3):.2f} GB")
+    logger.info(f"Available RAM: {available_ram / (1024**3):.2f} GB")
+
+    if total_model_size > free_disk_space:
+        logger.warning("Not enough disk space to store merged models!")
+    if total_model_size > available_ram:
+        logger.warning("Available RAM might not be sufficient to load all models simultaneously!")
+
+def load_single_model(model_ref: ModelReference) -> torch.nn.Module:
+    logger.info(f"Starting to load model: {model_ref.name}")
+    try:
+        logger.debug(f"Initializing AutoModelForCausalLM for {model_ref.name}")
+        logger.debug(f"Model path: {model_ref.path}")
+        
+        model = AutoModelForCausalLM.from_pretrained(
+            model_ref.path,
+            device_map="auto",
+            load_in_8bit=True,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True
+        )
+        logger.info(f"Successfully loaded model: {model_ref.name}")
+        return model
+    except Exception as e:
+        logger.error(f"Error loading model {model_ref.name}: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise
+
+def load_model_process(model_ref, queue):
+    try:
+        model = load_single_model(model_ref)
+        queue.put(("success", model))
+    except Exception as e:
+        queue.put(("error", str(e), traceback.format_exc()))
+
+def load_model_with_timeout(model_ref: ModelReference, timeout: int = 1200) -> torch.nn.Module:
+    queue = multiprocessing.Queue()
+    process = multiprocessing.Process(target=load_model_process, args=(model_ref, queue))
+    process.start()
+    process.join(timeout)
+    if process.is_alive():
+        process.terminate()
+        process.join()
+        raise EvoMergeException(f"Timeout occurred while loading model {model_ref.name}")
+    if not queue.empty():
+        result = queue.get()
+        if result[0] == "error":
+            logger.error(f"Error loading model {model_ref.name}: {result[1]}")
+            logger.error(f"Traceback: {result[2]}")
+            raise EvoMergeException(f"Failed to load model {model_ref.name}: {result[1]}")
+        return result[1]
+    raise EvoMergeException(f"Failed to load model {model_ref.name}: Unknown error")
+
 def load_models(model_references: List[ModelReference]) -> List[torch.nn.Module]:
+    model_paths = [ref.path for ref in model_references]
+    check_system_resources(model_paths)
+    
     models = []
     for model_ref in model_references:
-        logger.info(f"Loading model: {model_ref.name}")
         try:
-            model = AutoModelForCausalLM.from_pretrained(model_ref.path)
+            logger.info(f"Attempting to load model: {model_ref.name}")
+            model = load_model_with_timeout(model_ref)
             models.append(model)
-        except Exception as e:
+            logger.info(f"Successfully loaded model: {model_ref.name}")
+        except EvoMergeException as e:
             logger.error(f"Failed to load model {model_ref.name}: {str(e)}")
-            raise EvoMergeException(f"Error loading model {model_ref.name}: {str(e)}")
+            raise
     return models
 
 def save_model(model: torch.nn.Module, path: str) -> None:
@@ -223,3 +298,7 @@ MERGE_TECHNIQUES: Dict[str, Callable] = {
     "frankenmerge": frankenmerge,
     "dfs": dfs_merge
 }
+
+
+
+

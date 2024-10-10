@@ -6,8 +6,9 @@ import sys
 from tqdm import tqdm
 from .config import create_default_config, Configuration, ModelReference
 from .merger import AdvancedModelMerger
-from .utils import load_models
+from .utils import load_models, EvoMergeException, check_system_resources
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from .logging_config import setup_logging
 
 def is_local_path(path):
     path = os.path.expanduser(path)
@@ -21,9 +22,27 @@ def download_and_merge_models(model_paths, verbose=False):
     config = create_default_config()
     config.models = [ModelReference(name=f"model{i+1}", path=path) for i, path in enumerate(model_paths)]
 
+    # Log model paths
+    for model_ref in config.models:
+        logger.info(f"Model {model_ref.name} path: {model_ref.path}")
+        if os.path.exists(model_ref.path):
+            logger.info(f"Path exists for {model_ref.name}")
+            logger.info(f"Contents of {model_ref.path}:")
+            for item in os.listdir(model_ref.path):
+                logger.info(f"  {item}")
+        else:
+            logger.warning(f"Path does not exist for {model_ref.name}")
+
+    # Check system resources before loading models
+    check_system_resources(model_paths)
+
     logger.info("Loading models")
-    models = load_models(config.models)
-    logger.info(f"Loaded {len(models)} models successfully")
+    try:
+        models = load_models(config.models)
+        logger.info(f"Loaded {len(models)} models successfully")
+    except EvoMergeException as e:
+        logger.error(f"Failed to load models: {str(e)}")
+        return []
 
     merger = AdvancedModelMerger(config)
     
@@ -70,10 +89,8 @@ def main():
         args = parser.parse_args()
 
         print("Setting up logging")  # Debug print
-        logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
-                            format='%(asctime)s - %(levelname)s - %(message)s',
-                            stream=sys.stdout)  # Ensure logging to stdout
-        logger = logging.getLogger(__name__)
+        logger = setup_logging(log_file='evomerge.log')
+        logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
         logger.info("Starting EvoMerge CLI")
 
@@ -82,6 +99,7 @@ def main():
             if args.model3:
                 model_paths.append(args.model3)
             
+            logger.info(f"Model paths: {model_paths}")
             merged_models = download_and_merge_models(model_paths, args.verbose)
             logger.info(f"Created {len(merged_models)} merged models:")
             for model_path in merged_models:
@@ -93,6 +111,7 @@ def main():
         logger.info("EvoMerge CLI completed successfully")
 
     except Exception as e:
+        logger.exception(f"An error occurred: {e}")
         print(f"An error occurred: {e}")
         import traceback
         traceback.print_exc()
