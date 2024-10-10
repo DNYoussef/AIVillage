@@ -8,12 +8,13 @@ build/
 *.egg
 
 # Virtual environment
+evomenrge_env/
 new_env/
 venv/
 *.venv
 env/
 ENV/
-evomenrge_env/
+
 
 # IDE-related
 .vscode/
