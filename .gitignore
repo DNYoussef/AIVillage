@@ -8,13 +8,15 @@ build/
 *.egg
 
 # Virtual environment
-evomenrge_env/
+evomerge_env/
 new_env/
 venv/
 *.venv
 env/
 ENV/
 
+# Environment variables 
+.env
 
 # IDE-related
 .vscode/
@@ -27,7 +29,6 @@ ENV/
 Thumbs.db
 
 # Project-specific
-.env
 *.log
 *.db
 *.sqlite3
