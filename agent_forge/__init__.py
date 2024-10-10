@@ -23,7 +23,8 @@ class AgentForge:
         pass
 
     def run_prompt_baking(self):
-        self.prompt_baker.bake_prompts()
+        self.prompt_baker.load_model()  # Explicitly load the model
+        self.prompt_baker.bake_prompts(tool_baking.get_rag_prompts())
 
     # def run_adas_process(self):
     #     self.adas_process.run()

@@ -1,17 +1,39 @@
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from typing import List
+from tqdm import tqdm
 
 class RAGPromptBaker:
     def __init__(self, model_name: str, device: str = "cuda" if torch.cuda.is_available() else "cpu"):
         self.device = device
-        self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model_name = model_name
+        self.tokenizer = None
+        self.model = None
+        
+    def load_model(self):
+        try:
+            print(f"Loading tokenizer for {self.model_name}...")
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            
+            print(f"Loading model {self.model_name}. This may take a while for large models...")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                device_map="auto",
+                torch_dtype=torch.float16,
+                low_cpu_mem_usage=True
+            )
+            print(f"Model {self.model_name} loaded successfully.")
+        except Exception as e:
+            print(f"Error loading model: {str(e)}")
+            raise
 
     def bake_prompts(self, prompts: List[str], num_iterations: int = 1000, lr: float = 1e-5):
+        if self.model is None:
+            self.load_model()
+        
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=lr)
         
-        for iteration in range(num_iterations):
+        for iteration in tqdm(range(num_iterations), desc="Baking prompts"):
             total_loss = 0
             for prompt in prompts:
                 inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
@@ -30,6 +52,8 @@ class RAGPromptBaker:
         print("Prompt baking completed.")
 
     def save_model(self, path: str):
+        if self.model is None:
+            raise ValueError("Model hasn't been loaded or trained yet.")
         self.model.save_pretrained(path)
         self.tokenizer.save_pretrained(path)
         print(f"Model saved to {path}")

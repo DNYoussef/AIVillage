@@ -63,9 +63,38 @@ class AdvancedModelMerger:
 
     def _get_model_weights(self, models: List[torch.nn.Module]) -> Dict[str, torch.Tensor]:
         weights = {}
-        for key in models[0].state_dict().keys():
-            weights[key] = torch.stack([model.state_dict()[key] for model in models])
+        base_model = models[0]
+        for key in base_model.state_dict().keys():
+            tensors = []
+            for model in models:
+                if key in model.state_dict():
+                    tensor = model.state_dict()[key]
+                    if tensor.shape != base_model.state_dict()[key].shape:
+                        logger.warning(f"Shape mismatch for {key}: {tensor.shape} vs {base_model.state_dict()[key].shape}")
+                        tensor = self._resize_tensor(tensor, base_model.state_dict()[key].shape)
+                    tensors.append(tensor)
+                else:
+                    logger.warning(f"Key {key} not found in one of the models. Using zeros.")
+                    tensors.append(torch.zeros_like(base_model.state_dict()[key]))
+            weights[key] = torch.stack(tensors)
         return weights
+
+    def _resize_tensor(self, tensor: torch.Tensor, target_shape: torch.Size) -> torch.Tensor:
+        if len(tensor.shape) != len(target_shape):
+            raise ValueError(f"Cannot resize tensor with shape {tensor.shape} to {target_shape}")
+        
+        result = torch.zeros(target_shape, dtype=tensor.dtype, device=tensor.device)
+        for dim in range(len(tensor.shape)):
+            if tensor.shape[dim] > target_shape[dim]:
+                indices = torch.randperm(tensor.shape[dim])[:target_shape[dim]]
+                tensor = tensor.index_select(dim, indices)
+            elif tensor.shape[dim] < target_shape[dim]:
+                pad_size = target_shape[dim] - tensor.shape[dim]
+                pad_dims = [0] * (2 * len(tensor.shape))
+                pad_dims[2 * dim + 1] = pad_size
+                tensor = torch.nn.functional.pad(tensor, pad_dims)
+        result.copy_(tensor)
+        return result
 
     def _save_merged_model(self, model: torch.nn.Module) -> str:
         merged_model_name = f"merged_{self.config.merge_settings.merge_method}_{'_'.join([m.name for m in self.config.models])}"

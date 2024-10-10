@@ -60,6 +60,10 @@ class EvolutionaryTournament:
 
     def evolve(self) -> str:
         population = self.create_merged_models()
+        if not population:
+            logger.error("Failed to create any merged models. Aborting evolution.")
+            return None
+
         best_score = float('-inf')
         generations_without_improvement = 0
 
@@ -68,7 +72,11 @@ class EvolutionaryTournament:
 
             # Evaluate population
             scores = parallel_evaluate_models([model for model in population])
-            scores = [score["overall_score"] for score in scores]
+            scores = [score["overall_score"] for score in scores if score is not None]
+
+            if not scores:
+                logger.error(f"All model evaluations failed in generation {generation + 1}. Skipping this generation.")
+                continue
 
             # Store the best score for this generation
             self.fitness_scores.append(max(scores))
@@ -99,18 +107,20 @@ class EvolutionaryTournament:
 
             # Merge lower performers
             lower_performers = [model for model in population if model not in [m for m, _ in top_models]]
-            merged_config = Configuration(
-                models=[ModelReference(name=f"model_{i}", path=model) for i, model in enumerate(lower_performers[:3])],
-                merge_settings=self.config.merge_settings,
-                evolution_settings=self.config.evolution_settings
-            )
-            merger = AdvancedModelMerger(merged_config)
-            merged_model_1 = merger.merge()
+            if len(lower_performers) >= 3:
+                merged_config = Configuration(
+                    models=[ModelReference(name=f"model_{i}", path=model) for i, model in enumerate(lower_performers[:3])],
+                    merge_settings=self.config.merge_settings,
+                    evolution_settings=self.config.evolution_settings
+                )
+                merger = AdvancedModelMerger(merged_config)
+                merged_model_1 = merger.merge()
+                new_population.append(merged_model_1)
 
-            merged_config.models = [ModelReference(name=f"model_{i}", path=model) for i, model in enumerate(lower_performers[3:])]
-            merged_model_2 = merger.merge()
-
-            new_population.extend([merged_model_1, merged_model_2])
+            if len(lower_performers) >= 6:
+                merged_config.models = [ModelReference(name=f"model_{i}", path=model) for i, model in enumerate(lower_performers[3:6])]
+                merged_model_2 = merger.merge()
+                new_population.append(merged_model_2)
 
             # Update population
             population = new_population
@@ -122,7 +132,12 @@ class EvolutionaryTournament:
 
         # Final evaluation
         final_scores = parallel_evaluate_models([model for model in population])
-        final_scores = [score["overall_score"] for score in final_scores]
+        final_scores = [score["overall_score"] for score in final_scores if score is not None]
+        
+        if not final_scores:
+            logger.error("All final model evaluations failed. Returning the last model in the population.")
+            return population[-1]
+
         best_model = population[final_scores.index(max(final_scores))]
 
         return best_model
@@ -131,9 +146,12 @@ def run_evolutionary_tournament(config: Configuration) -> str:
     evolutionary_tournament = EvolutionaryTournament(config)
     best_model = evolutionary_tournament.evolve()
     
-    logger.info(f"Best model after evolution: {best_model}")
-    final_score = evaluate_model(best_model)
-    logger.info(f"Final scores: {final_score}")
+    if best_model:
+        logger.info(f"Best model after evolution: {best_model}")
+        final_score = evaluate_model(best_model)
+        logger.info(f"Final scores: {final_score}")
+    else:
+        logger.error("Evolutionary tournament failed to produce a best model.")
     
     return best_model
 
