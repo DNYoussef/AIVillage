@@ -78,7 +78,7 @@ def load_model_process(model_ref, queue):
     except Exception as e:
         queue.put(("error", str(e), traceback.format_exc()))
 
-def load_model_with_timeout(model_ref: ModelReference, timeout: int = 3600) -> torch.nn.Module:
+def load_model_with_timeout(model_ref: ModelReference, timeout: int = 7200) -> torch.nn.Module:
     queue = multiprocessing.Queue()
     process = multiprocessing.Process(target=load_model_process, args=(model_ref, queue))
     process.start()
