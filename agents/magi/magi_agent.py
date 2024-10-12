@@ -1,38 +1,35 @@
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from ..agent import Agent
+from ...communications.protocol import StandardCommunicationProtocol
 
-from agents.langroid.agent.base import Agent, AgentState
-from agents.langroid.agent.chat_agent import ChatAgent
-from agents.langroid.language_models.openai_gpt import OpenAIGPTConfig, OpenAIGPT
-from agents.langroid.utils.configuration import Settings
-from agents.langroid.utils.logging import setup_logger
-from typing import Dict, Any, List
-
-logger = setup_logger()
-
-class MagiAgentConfig(OpenAIGPTConfig):
-    model_name: str = "gpt-4"
-    temperature: float = 0.7
-    max_tokens: int = 1000
-
-class MagiAgent(ChatAgent):
-    def __init__(self, config: MagiAgentConfig = MagiAgentConfig()):
+class MagiAgent(Agent):
+    def __init__(self, communication_protocol: StandardCommunicationProtocol):
         super().__init__(
             name="Magi",
-            system_prompt=(
-                "You are the Magi, a specialized AI agent responsible for technical analysis "
-                "and providing expert insights in the AI Village project. Your role is to evaluate "
-                "technical details and support the King agent with in-depth knowledge."
+            model="gpt-4o-mini",
+            instructions=(
+                "You are Magi, an AI agent specializing in coding and software development. "
+                "Your role is to write, test, and maintain the codebase for the AI Village."
             ),
-            llm=OpenAIGPT(config),
-            state=AgentState(name="Magi")
+            tools=[self.analyze_code, self.write_tests, self.refactor, self.generate_docs]
         )
+        self.communication_protocol = communication_protocol
 
-    async def analyze_technical_details(self, data: Dict[str, Any]):
-        """Analyze technical data and provide detailed insights."""
-        prompt = f"Analyze the following technical data and provide insights:\n\n{data}"
-        response = await self.llm.agenerate_chat([{"role": "user", "content": prompt}])
-        return {"technical_analysis": response.content}
+    async def analyze_code(self, code: str) -> str:
+        """Analyze given code to understand its structure and functionality."""
+        # TODO: Implement code analysis
+        pass
 
-    # Add more methods as needed for specific tasks
+    async def write_tests(self, code: str) -> str:  
+        """Generate test cases for given code."""
+        # TODO: Implement test generation
+        pass
+
+    async def refactor(self, code: str) -> str:
+        """Refactor given code to improve quality and maintainability."""
+        # TODO: Implement refactoring
+        pass
+
+    async def generate_docs(self, code: str) -> str:
+        """Generate documentation for given code."""
+        # TODO: Implement doc generation
+        pass

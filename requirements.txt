@@ -32,4 +32,6 @@ tokenizers>=0.19.1
 tqdm>=4.66.5
 nltk>3.8.1
 llama.cpp
-maes 
+maes
+gpt-researcher>=1.0.0
+scrapegraphai>=1.0.0

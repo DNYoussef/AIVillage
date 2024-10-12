@@ -393,7 +393,7 @@ As the curriculum progresses through the 10 levels, the following aspects should
 - Refine data generation techniques based on the model's learning progress
 - Adapt curriculum and synthetic data complexity as the model demonstrates "grokking" behavior
 
-By following this guide, the Agent Forge process can create a rich, diverse, and increasingly challenging learning environment for the AI agents. The careful integration of organic and synthetic data, coupled with the progressive curriculum structure, aims to produce agents with robust reasoning skills, adaptability, and deep understanding across various domains.
+By following this guide,the Agent Forge process can create a rich, diverse, and increasingly challenging learning environment for the AI agents. The careful integration of organic and synthetic data, coupled with the progressive curriculum structure, aims to produce agents with robust reasoning skills, adaptability, and deep understanding across various domains.
 
 Full Training Loop in Super Detail:
 5.13 KB • 103 extracted lines

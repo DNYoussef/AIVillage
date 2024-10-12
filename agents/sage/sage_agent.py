@@ -1,38 +1,42 @@
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from ..agent import Agent
+from ...communications.protocol import StandardCommunicationProtocol
+from scrapegraphai.graphs import SmartScraperGraph, SearchGraph
+from gpt_researcher import GPTResearcher
 
-from agents.langroid.agent.base import Agent, AgentState
-from agents.langroid.agent.chat_agent import ChatAgent
-from agents.langroid.language_models.openai_gpt import OpenAIGPTConfig, OpenAIGPT
-from agents.langroid.utils.configuration import Settings
-from agents.langroid.utils.logging import setup_logger
-from typing import Dict, Any, List
-
-logger = setup_logger()
-
-class SageAgentConfig(OpenAIGPTConfig):
-    model_name: str = "gpt-4"
-    temperature: float = 0.7
-    max_tokens: int = 1000
-
-class SageAgent(ChatAgent):
-    def __init__(self, config: SageAgentConfig = SageAgentConfig()):
+class SageAgent(Agent):
+    def __init__(self, communication_protocol: StandardCommunicationProtocol):
         super().__init__(
             name="Sage",
-            system_prompt=(
-                "You are the Sage, an AI agent providing wisdom and high-level guidance "
-                "in the AI Village project. Your role is to offer strategic advice and "
-                "contextual understanding to support other agents."
+            model="gpt-4o-mini",
+            instructions=(
+                "You are Sage, an AI agent specializing in information gathering and research. "
+                "Your role is to find, extract, and synthesize relevant data to support the AI Village."
             ),
-            llm=OpenAIGPT(config),
-            state=AgentState(name="Sage")
+            tools=[self.web_search, self.query_knowledge_base]
         )
+        self.communication_protocol = communication_protocol
+        self.knowledge_base = {}  # TODO: Implement proper knowledge base
 
-    async def provide_guidance(self, context: Dict[str, Any]):
-        """Provide high-level guidance based on the given context."""
-        prompt = f"Given the following context, provide strategic advice:\n\n{context}"
-        response = await self.llm.agenerate_chat([{"role": "user", "content": prompt}])
-        return {"guidance": response.content}
+    async def web_search(self, query: str) -> str:
+        """Perform a web search using Scrapegraph-ai and gpt-researcher."""
+        # Use SearchGraph for multi-page search
+        search_graph = SearchGraph(query)
+        search_results = search_graph.run()
 
-    # Add more methods as needed for specific tasks
+        # Use GPTResearcher to summarize search results
+        researcher = GPTResearcher(query=query, report_type="research_report")
+        researcher.data = search_results
+        summary = await researcher.write_report()
+
+        # Store search results and summary in knowledge base
+        self.knowledge_base[query] = {"search_results": search_results, "summary": summary}
+
+        return summary
+
+    async def query_knowledge_base(self, query: str) -> str:
+        """Query the internal knowledge base for relevant information."""
+        # TODO: Implement fuzzy matching and relevance scoring
+        if query in self.knowledge_base:
+            return self.knowledge_base[query]["summary"]
+        else:
+            return "No relevant information found in knowledge base."
