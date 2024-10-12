@@ -11,6 +11,7 @@ from torch.nn.functional import cosine_similarity
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing
 import traceback
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -55,15 +56,14 @@ def check_system_resources(model_paths: List[str]):
 def load_single_model(model_ref: ModelReference) -> torch.nn.Module:
     logger.info(f"Starting to load model: {model_ref.name}")
     try:
-        logger.debug(f"Initializing AutoModelForCausalLM for {model_ref.name}")
-        logger.debug(f"Model path: {model_ref.path}")
-        
+        logger.info(f"Downloading model {model_ref.name} from {model_ref.path}")
         model = AutoModelForCausalLM.from_pretrained(
             model_ref.path,
             device_map="auto",
             torch_dtype=torch.float16,
             low_cpu_mem_usage=True
         )
+        logger.info(f"Successfully downloaded model: {model_ref.name}")
         logger.info(f"Successfully loaded model: {model_ref.name}")
         return model
     except Exception as e:
@@ -93,6 +93,7 @@ def load_model_with_timeout(model_ref: ModelReference, timeout: int = 7200) -> t
             logger.error(f"Error loading model {model_ref.name}: {result[1]}")
             logger.error(f"Traceback: {result[2]}")
             raise EvoMergeException(f"Failed to load model {model_ref.name}: {result[1]}")
+        logger.info(f"Successfully loaded model {model_ref.name} within timeout")
         return result[1]
     raise EvoMergeException(f"Failed to load model {model_ref.name}: Unknown error")
 
@@ -101,7 +102,7 @@ def load_models(model_references: List[ModelReference]) -> List[torch.nn.Module]
     check_system_resources(model_paths)
     
     models = []
-    for model_ref in model_references:
+    for model_ref in tqdm(model_references, desc="Loading models"):
         try:
             logger.info(f"Attempting to load model: {model_ref.name}")
             model = load_model_with_timeout(model_ref)

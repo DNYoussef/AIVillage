@@ -1,9 +1,7 @@
-...
+from communications.protocol import StandardCommunicationProtocol
 from .king.king_agent import king_agent
-from .sage.sage_agent import sage_agent
+from .sage.sage_agent import sage_agent  
 from .magi.magi_agent import magi_agent
-
-...
 
 def main():
     communication_protocol = StandardCommunicationProtocol()
