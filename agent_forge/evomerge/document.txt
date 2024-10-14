@@ -160,6 +160,13 @@ EvoMerge is an advanced system designed to merge multiple language models using 
 
     c. If fewer than three models are specified, the system will use default models to fill in the gaps.
 
+    d. The CLI now includes a --use-cli flag to download models using the Hugging Face CLI before merging. This can be useful for ensuring the latest versions of the models are used and to avoid potential issues with the Transformers library's automatic downloading.
+
+    e. On Windows systems, you may encounter permissions issues related to symlink creation when using the Hugging Face CLI. To resolve this, you can either:
+       - Enable Developer Mode (https://docs.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development)
+       - Run the script as an administrator
+       - Disable symlink creation by setting the environment variable HF_HUB_DISABLE_SYMLINKS_WARNING to any value before running the CLI command
+
 16. GGUF Utilities:
     - The gguf_utils.py module provides functions for reading and writing GGUF (GPT-Generated Unified Format) files.
     - These utilities can be used for advanced model manipulation and storage optimization.
@@ -182,6 +189,7 @@ EvoMerge is an advanced system designed to merge multiple language models using 
     - If you encounter CUDA out of memory errors, try reducing the population size or using smaller models.
     - For debugging, use the --verbose flag and check the log files.
     - Ensure all dependencies are correctly installed and up to date.
+    - If you experience issues with model downloading using the Hugging Face CLI, try the solutions mentioned in section 15e.
 
 For detailed API references and advanced usage, refer to the individual module docstrings and comments within the source code.
 

@@ -18,8 +18,7 @@ def is_local_path(path):
 
 def download_model_with_cli(model_path):
     try:
-        subprocess.run(["huggingface-cli", "login"], check=True)
-        subprocess.run(["huggingface-cli", "repo", "download", model_path], check=True)
+        subprocess.run(["huggingface-cli", "download", model_path], check=True)
     except subprocess.CalledProcessError as e:
         raise EvoMergeException(f"Failed to download model {model_path} using Hugging Face CLI: {str(e)}")
 
