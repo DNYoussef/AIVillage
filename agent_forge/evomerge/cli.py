@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import subprocess
 from tqdm import tqdm
 from .config import create_default_config, Configuration, ModelReference
 from .merger import AdvancedModelMerger
@@ -15,12 +16,24 @@ def is_local_path(path):
     path = os.path.normpath(path)
     return os.path.isdir(path)
 
-def download_and_merge_models(model_paths, verbose=False):
+def download_model_with_cli(model_path):
+    try:
+        subprocess.run(["huggingface-cli", "login"], check=True)
+        subprocess.run(["huggingface-cli", "repo", "download", model_path], check=True)
+    except subprocess.CalledProcessError as e:
+        raise EvoMergeException(f"Failed to download model {model_path} using Hugging Face CLI: {str(e)}")
+
+def download_and_merge_models(model_paths, use_cli=False, verbose=False):
     logger = logging.getLogger(__name__)
     logger.info(f"Attempting to download and merge models: {model_paths}")
 
     config = create_default_config()
     config.models = [ModelReference(name=f"model{i+1}", path=path) for i, path in enumerate(model_paths)]
+
+    if use_cli:
+        for model_ref in config.models:
+            logger.info(f"Downloading model {model_ref.name} using Hugging Face CLI")
+            download_model_with_cli(model_ref.path)
 
     # Log model paths
     for model_ref in config.models:
@@ -85,6 +98,7 @@ def main():
         parser.add_argument("--model1", type=str, required=True, help="Local path or Hugging Face model ID for the first model")
         parser.add_argument("--model2", type=str, required=True, help="Local path or Hugging Face model ID for the second model")
         parser.add_argument("--model3", type=str, help="Local path or Hugging Face model ID for the third model")
+        parser.add_argument("--use-cli", action="store_true", help="Use Hugging Face CLI to download models")
         parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
         args = parser.parse_args()
 
@@ -100,7 +114,7 @@ def main():
                 model_paths.append(args.model3)
             
             logger.info(f"Model paths: {model_paths}")
-            merged_models = download_and_merge_models(model_paths, args.verbose)
+            merged_models = download_and_merge_models(model_paths, args.use_cli, args.verbose)
             logger.info(f"Created {len(merged_models)} merged models:")
             for model_path in merged_models:
                 logger.info(model_path)
@@ -118,4 +132,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
