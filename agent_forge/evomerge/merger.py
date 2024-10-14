@@ -19,7 +19,7 @@ class AdvancedModelMerger:
         self.config = config
 
     def merge(self) -> str:
-        logger.info("Starting advanced model merger process")
+        logger.info("Starting model merging process")
         try:
             models = load_models(self.config.models)
 
@@ -121,3 +121,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

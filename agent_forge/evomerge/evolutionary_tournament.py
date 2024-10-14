@@ -68,7 +68,7 @@ class EvolutionaryTournament:
         generations_without_improvement = 0
 
         for generation in range(self.config.evolution_settings.num_generations):
-            logger.info(f"Generation {generation + 1}")
+            logger.info(f"Starting generation {generation + 1}")
 
             # Evaluate population
             scores = parallel_evaluate_models([model for model in population])

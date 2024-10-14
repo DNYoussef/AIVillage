@@ -56,14 +56,14 @@ def check_system_resources(model_paths: List[str]):
 def load_single_model(model_ref: ModelReference) -> torch.nn.Module:
     logger.info(f"Starting to load model: {model_ref.name}")
     try:
-        logger.info(f"Downloading model {model_ref.name} from {model_ref.path}")
+        logger.info(f"Starting to download model {model_ref.name} from {model_ref.path}")
         model = AutoModelForCausalLM.from_pretrained(
             model_ref.path,
             device_map="auto",
             torch_dtype=torch.float16,
             low_cpu_mem_usage=True
         )
-        logger.info(f"Successfully downloaded model: {model_ref.name}")
+        logger.info(f"Successfully downloaded model {model_ref.name}")
         logger.info(f"Successfully loaded model: {model_ref.name}")
         return model
     except Exception as e:
@@ -86,6 +86,7 @@ def load_model_with_timeout(model_ref: ModelReference, timeout: int = 7200) -> t
     if process.is_alive():
         process.terminate()
         process.join()
+        logger.error(f"Timeout occurred while loading model {model_ref.name}")
         raise EvoMergeException(f"Timeout occurred while loading model {model_ref.name}")
     if not queue.empty():
         result = queue.get()
@@ -298,3 +299,4 @@ MERGE_TECHNIQUES: Dict[str, Callable] = {
     "frankenmerge": frankenmerge,
     "dfs": dfs_merge
 }
+

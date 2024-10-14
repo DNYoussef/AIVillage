@@ -17,7 +17,7 @@ def is_local_path(path):
 
 def download_and_merge_models(model_paths, verbose=False):
     logger = logging.getLogger(__name__)
-    logger.info("Starting model download and merge process")
+    logger.info(f"Attempting to download and merge models: {model_paths}")
 
     config = create_default_config()
     config.models = [ModelReference(name=f"model{i+1}", path=path) for i, path in enumerate(model_paths)]
@@ -74,7 +74,7 @@ def download_and_merge_models(model_paths, verbose=False):
                 if attempt == max_retries - 1:
                     logger.error(f"Failed to create merged model after {max_retries} attempts")
 
-    logger.info(f"Created {len(merged_models)} merged models")
+    logger.info(f"Finished downloading and merging models. Created {len(merged_models)} merged models.")
     return merged_models
 
 def main():
@@ -118,3 +118,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
