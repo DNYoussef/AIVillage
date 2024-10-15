@@ -22,6 +22,10 @@ def download_model_with_cli(model_path):
     except subprocess.CalledProcessError as e:
         raise EvoMergeException(f"Failed to download model {model_path} using Hugging Face CLI: {str(e)}")
 
+def model_exists_in_cache(model_path):
+    cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "hub", f"models--{model_path.replace('/', '--')}")
+    return os.path.exists(cache_dir)
+
 def download_and_merge_models(model_paths, use_cli=False, verbose=False):
     logger = logging.getLogger(__name__)
     logger.info(f"Attempting to download and merge models: {model_paths}")
@@ -31,8 +35,14 @@ def download_and_merge_models(model_paths, use_cli=False, verbose=False):
 
     if use_cli:
         for model_ref in config.models:
-            logger.info(f"Downloading model {model_ref.name} using Hugging Face CLI")
-            download_model_with_cli(model_ref.path)
+            if not model_exists_in_cache(model_ref.path):
+                logger.info(f"Downloading model {model_ref.name} using Hugging Face CLI")
+                download_model_with_cli(model_ref.path)
+            else:
+                logger.info(f"Model {model_ref.name} already exists in cache, skipping download")
+            
+            # Update the model path to point to the downloaded snapshot directory
+            model_ref.path = os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "hub", f"models--{model_ref.path.replace('/', '--')}", "snapshots")
 
     # Log model paths
     for model_ref in config.models:
@@ -131,3 +141,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

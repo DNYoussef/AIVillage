@@ -56,14 +56,18 @@ def check_system_resources(model_paths: List[str]):
 def load_single_model(model_ref: ModelReference) -> torch.nn.Module:
     logger.info(f"Starting to load model: {model_ref.name}")
     try:
-        logger.info(f"Starting to download model {model_ref.name} from {model_ref.path}")
+        # Get the latest snapshot directory
+        snapshot_dirs = [d for d in os.listdir(model_ref.path) if os.path.isdir(os.path.join(model_ref.path, d))]
+        latest_snapshot_dir = max(snapshot_dirs, key=lambda d: os.path.getctime(os.path.join(model_ref.path, d)))
+        model_path = os.path.join(model_ref.path, latest_snapshot_dir)
+        
+        logger.info(f"Loading model {model_ref.name} from {model_path}")
         model = AutoModelForCausalLM.from_pretrained(
-            model_ref.path,
+            model_path,
             device_map="auto",
             torch_dtype=torch.float16,
             low_cpu_mem_usage=True
         )
-        logger.info(f"Successfully downloaded model {model_ref.name}")
         logger.info(f"Successfully loaded model: {model_ref.name}")
         return model
     except Exception as e:
@@ -299,4 +303,3 @@ MERGE_TECHNIQUES: Dict[str, Callable] = {
     "frankenmerge": frankenmerge,
     "dfs": dfs_merge
 }
-
