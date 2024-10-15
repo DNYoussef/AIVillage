@@ -1,63 +1,63 @@
 # AI Village
 
-AI Village is a collaborative, self-improving multi-agent system designed for advanced research and problem-solving.
 
-## Components
 
-- **King**: Central coordinator and task manager
-- **Sage**: Data miner and knowledge synthesizer
-- **Magi**: AI scientist for coding, iterating, and conducting experiments
-- **Agent Forge**: A system to build future agents from the model level up
+## Populating the RAG System with Academic Papers
 
-## Key Features
+To provide your AI Village with a starting base of information, you can manually feed academic papers into the RAG system. Follow these steps to add several dozen papers:
 
-- Open research capabilities
-- Hypothesis generation and validation
-- Experiment design and execution
-- Collaborative analysis and brainstorming
-- Integration with HypeRAG for advanced Retrieval-Augmented Generation (RAG)
+1. Prepare your academic papers:
+   - Ensure your papers are in a readable format (PDF, TXT, or DOCX).
+   - Organize the papers in a single directory for easy access.
 
-## RAG System
-
-The RAG (Retrieval-Augmented Generation) system is an advanced component of AI Village that combines vector and graph-based storage with active learning and planning capabilities. It's designed to provide intelligent responses to queries by leveraging a comprehensive knowledge base.
-
-### Features
-
-- Hybrid storage system with vector and graph components
-- Active learning for query refinement
-- Planning-aware retrieval for optimized search strategies
-- Community-aware search within the knowledge graph
-- Integration with multiple AI agents (King, Sage, Magi)
-- Flexible pipeline for query processing and knowledge management
-- Built on top of the Langroid framework for enhanced AI capabilities
-
-### Recent Enhancements
-
-- Improved error handling with adaptive and Learn Then Test (LTT) approaches
-- Enhanced veracity extrapolation with batch processing capabilities
-- Uncertainty-aware reasoning throughout the pipeline
-- Better integration of the knowledge graph and veracity extrapolation
-- Added uncertainty analysis functionality for improved confidence assessment
-- Modular structure for easier maintenance and future extensions
-
-### Key Components
-
-- EnhancedRAGPipeline: Main pipeline for query processing
-- HybridRetriever: Combines vector and graph-based retrieval
-- UncertaintyAwareReasoningEngine: Handles reasoning with uncertainty
-- VeracityExtrapolator: Assesses and extrapolates the truthfulness of information
-- KnowledgeTracker and KnowledgeEvolutionTracker: Monitor and track changes in the knowledge base
-- ErrorRateController: Manages and adapts error rates during processing
-
-## Installation
-
-1. Clone the repository:
+2. Start the AI Village server if it's not already running:
    ```
-   git clone https://github.com/your-username/ai-village.git
-   cd ai-village
+   python main.py
    ```
 
-2. Create a virtual environment and activate it:
+3. Use the `/upload` endpoint to add each paper to the knowledge base:
+   - For each paper, send a POST request to `http://localhost:8000/upload`
+   - Use a tool like curl, Postman, or a custom script to automate this process
+
+   Example using curl:
+   ```
+   curl -X POST -H "Content-Type: multipart/form-data" -F "file=@/path/to/paper.pdf" http://localhost:8000/upload
+   ```
+
+   Example using Python with requests library:
+   ```python
+   import requests
+   import os
+
+   papers_directory = "/path/to/papers_directory"
+   
+   for filename in os.listdir(papers_directory):
+       file_path = os.path.join(papers_directory, filename)
+       with open(file_path, 'rb') as file:
+           files = {'file': (filename, file)}
+           response = requests.post('http://localhost:8000/upload', files=files)
+       print(f"Uploaded {filename}: {response.status_code}")
+   ```
+
+4. Monitor the upload process:
+   - Check the server logs for any errors or warnings during the upload process.
+   - Ensure that each paper is successfully processed and added to the knowledge base.
+
+5. Verify the integration:
+   - After uploading the papers, you can test the system by sending queries related to the content of the uploaded papers.
+   - Use the `/query` endpoint to ask questions and verify that the system can retrieve and use the information from the uploaded papers.
+
+   Example query:
+   ```
+   curl -X POST -H "Content-Type: application/json" -d '{"query": "Summarize the key findings from the papers on AI ethics"}' http://localhost:8000/query
+   ```
+
+6. Fine-tune and optimize:
+   - Based on the query results, you may need to adjust the RAG system parameters or preprocessing steps to improve information retrieval and synthesis from the uploaded papers.
+   - Consider updating the `configs/rag_config.yaml` file to optimize the RAG system for academic paper processing.
+
+By following these steps, you can manually feed several dozen academic papers into your RAG system, providing a rich starting base of information for your AI Village. This will enhance the system's ability to answer queries and perform tasks related to the content of these papers.
+
    ```
    python -m venv venv
    source venv/bin/activate  # On Windows, use venv\Scripts\activate
