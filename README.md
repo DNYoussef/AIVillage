@@ -1,5 +1,4 @@
 # AI Village
- AI Village
 
 AI Village is a collaborative, self-improving multi-agent system designed for advanced research and problem-solving.
 
@@ -8,7 +7,7 @@ AI Village is a collaborative, self-improving multi-agent system designed for ad
 - **King**: Central coordinator and task manager
 - **Sage**: Data miner and knowledge synthesizer
 - **Magi**: AI scientist for coding, iterating, and conducting experiments
-- "Agent Forge" : a system to build future agents from the model level up
+- **Agent Forge**: A system to build future agents from the model level up
 
 ## Key Features
 
@@ -16,56 +15,86 @@ AI Village is a collaborative, self-improving multi-agent system designed for ad
 - Hypothesis generation and validation
 - Experiment design and execution
 - Collaborative analysis and brainstorming
-- Integration with HypeRAG for advanced Retrieval-Augmented Generation (RAG) system that combines vector and graph-based storage with active learning and planning capabilities. It's designed to provide intelligent responses to queries by leveraging a comprehensive knowledge base.
+- Integration with HypeRAG for advanced Retrieval-Augmented Generation (RAG)
 
-## Features
+## RAG System
 
-- Hybrid RAG system with vector and graph storage
+The RAG (Retrieval-Augmented Generation) system is an advanced component of AI Village that combines vector and graph-based storage with active learning and planning capabilities. It's designed to provide intelligent responses to queries by leveraging a comprehensive knowledge base.
+
+### Features
+
+- Hybrid storage system with vector and graph components
 - Active learning for query refinement
 - Planning-aware retrieval for optimized search strategies
 - Community-aware search within the knowledge graph
-- Integration with multiple AI agents (Archive, King, Sage, Magi)
+- Integration with multiple AI agents (King, Sage, Magi)
 - Flexible pipeline for query processing and knowledge management
 - Built on top of the Langroid framework for enhanced AI capabilities
+
+### Recent Enhancements
+
+- Improved error handling with adaptive and Learn Then Test (LTT) approaches
+- Enhanced veracity extrapolation with batch processing capabilities
+- Uncertainty-aware reasoning throughout the pipeline
+- Better integration of the knowledge graph and veracity extrapolation
+- Added uncertainty analysis functionality for improved confidence assessment
+- Modular structure for easier maintenance and future extensions
+
+### Key Components
+
+- EnhancedRAGPipeline: Main pipeline for query processing
+- HybridRetriever: Combines vector and graph-based retrieval
+- UncertaintyAwareReasoningEngine: Handles reasoning with uncertainty
+- VeracityExtrapolator: Assesses and extrapolates the truthfulness of information
+- KnowledgeTracker and KnowledgeEvolutionTracker: Monitor and track changes in the knowledge base
+- ErrorRateController: Manages and adapts error rates during processing
 
 ## Installation
 
 1. Clone the repository:
-git clone https://github.com/your-username/ai-village.git
-cd ai-village
+   ```
+   git clone https://github.com/your-username/ai-village.git
+   cd ai-village
+   ```
 
 2. Create a virtual environment and activate it:
-python -m venv venv
-source venv/bin/activate  # On Windows, use venv\Scripts\activate
+   ```
+   python -m venv venv
+   source venv/bin/activate  # On Windows, use venv\Scripts\activate
+   ```
 
 3. Install the required packages:
-pip install -r requirements.txt
+   ```
+   pip install -r requirements.txt
+   ```
 
 4. Set up environment variables:
-- Create a `.env` file in the root directory and add the following variables:
-- `OPENAI_API_KEY`={{your_openai_api_key}}
-- `NEO4J_URI`={{your_neo4j_uri}}
-- `NEO4J_USER`={{your_neo4j_username}}
-- `NEO4J_PASSWORD`={{your_neo4j_password}}
+   - Create a `.env` file in the root directory and add the following variables:
+     ```
+     OPENAI_API_KEY=your_openai_api_key
+     NEO4J_URI=your_neo4j_uri
+     NEO4J_USER=your_neo4j_username
+     NEO4J_PASSWORD=your_neo4j_password
+     ```
 
 ## Usage
 
 1. Start the AI Village server:
-`python main.py`
+   ```
+   python main.py
+   ```
 
 2. The server will start running on `http://localhost:8000`. You can now use the following endpoints:
 
-- POST `/query`: Send a query to the AI Village
-- POST `/upload`: Upload a file to populate the knowledge base
-- POST `/import_open_researcher`: Import data from the Open Researcher project
+   - POST `/query`: Send a query to the AI Village
+   - POST `/upload`: Upload a file to populate the knowledge base
+   - POST `/import_open_researcher`: Import data from the Open Researcher project
 
 3. Use a tool like curl or Postman to interact with the API, or integrate it into your application.
 
 ## Documentation
 
 For more detailed information about the AI Village architecture, usage, and API reference, please refer to the documents in the `docs/` directory.
-
-
 
 ## Model Mergers
 

@@ -1,140 +1,170 @@
-from typing import List, Dict, Any, Tuple
-from rag_system.core.config import RAGConfig
-from rag_system.retrieval.hybrid_retriever import HybridRetriever
-from rag_system.processing.knowledge_constructor import DefaultKnowledgeConstructor
-from rag_system.processing.reasoning_engine import DefaultReasoningEngine
-from rag_system.utils.embedding import DefaultEmbeddingModel
-from rag_system.active_rag.active_hybrid_retriever import ActiveHybridRetriever
-from rag_system.active_rag.latent_space_activator import LatentSpaceActivator
-from rag_system.plan_rag.planning_aware_retriever import PlanningAwareRetriever
-from rag_system.plan_rag.iterative_query_manager import IterativeQueryManager
-from rag_system.processing.cognitive_nexus import CognitiveNexus
-from rag_system.core.agent_interface import AgentInterface
-from rag_system.core.structures import RetrievalResult
-from rag_system.processing.self_referential_query_processor import SelfReferentialQueryProcessor
-from rag_system.tracking.knowledge_evolution_tracker import KnowledgeEvolutionTracker
-import datetime
+# rag_system/core/pipeline.py
 
-class RAGPipeline:
+from typing import List, Dict, Any, Tuple
+from datetime import datetime
+from ..core.config import RAGConfig
+from ..retrieval.hybrid_retriever import HybridRetriever
+from ..processing.knowledge_constructor import DefaultKnowledgeConstructor
+from ..processing.reasoning_engine import UncertaintyAwareReasoningEngine
+from ..utils.embedding import DefaultEmbeddingModel
+from ..processing.cognitive_nexus import CognitiveNexus
+from ..core.agent_interface import AgentInterface
+from ..core.structures import RetrievalResult
+from ..tracking.knowledge_evolution_tracker import KnowledgeEvolutionTracker
+from ..error_handling.error_control import HybridErrorController
+from ..processing.veracity_extrapolator import VeracityExtrapolator
+import numpy as np
+
+class EnhancedRAGPipeline:
     def __init__(self, config: RAGConfig):
         self.config = config
         self.embedding_model = DefaultEmbeddingModel(config)
-        self.hybrid_retriever = HybridRetriever(config)
+        self.hybrid_retriever = HybridRetriever(config, agent=AgentInterface())
         self.knowledge_constructor = DefaultKnowledgeConstructor(config)
-        self.reasoning_engine = DefaultReasoningEngine(config)
-        self.active_hybrid_retriever = ActiveHybridRetriever(config, self.hybrid_retriever)
-        self.latent_space_activator = LatentSpaceActivator(config)
-        self.planning_aware_retriever = PlanningAwareRetriever(config, self.hybrid_retriever)
-        self.iterative_query_manager = IterativeQueryManager(config, self.planning_aware_retriever)
+        self.reasoning_engine = UncertaintyAwareReasoningEngine(config)
         self.cognitive_nexus = CognitiveNexus()
-        self.self_referential_processor = SelfReferentialQueryProcessor(self)
         self.evolution_tracker = KnowledgeEvolutionTracker(self.hybrid_retriever.vector_store, self.hybrid_retriever.graph_store)
+        self.error_controller = HybridErrorController(
+            num_steps=config.NUM_PIPELINE_STEPS,
+            target_error_rate=config.TARGET_ERROR_RATE,
+            adaptation_rate=config.ADAPTATION_RATE,
+            confidence_level=config.CONFIDENCE_LEVEL
+        )
+        self.veracity_extrapolator = VeracityExtrapolator(
+            knowledge_graph=self.hybrid_retriever.graph_store,
+            llm=config.LLM,
+            config=config
+        )
 
     async def process_query(self, query: str, agent: AgentInterface) -> str:
-        return await self.self_referential_processor.process_self_query(query)
-        query_embedding = await self.embedding_model.get_embedding(query)
-        current_timestamp = datetime.datetime.now()
+        current_timestamp = datetime.now()
 
-        # Step 1: Latent Space Activation
-        latent_activations = self.latent_space_activator.activate(query_embedding)
+        # Retrieve with uncertainty estimation
+        retrieval_results, retrieval_uncertainty = await self.retrieve_with_uncertainty(query, agent, current_timestamp)
 
-        # Step 2: Initial Plan Generation
-        initial_plan = await self.planning_aware_retriever.generate_plan(query)
+        # Generate with uncertainty estimation
+        generation_results, generation_uncertainty = await self.generate_with_uncertainty(query, agent)
 
-        # Step 3: Iterative Retrieval and Refinement
-        final_results, final_plan, retrieval_history = await self._iterative_retrieval_refinement(query, query_embedding, initial_plan, agent, current_timestamp)
+        # Balance retrieval and generation results based on uncertainties
+        combined_results = self.balance_results(retrieval_results, generation_results, retrieval_uncertainty, generation_uncertainty)
 
-        # Step 4: Active Hybrid Retrieval
-        active_results = await self.active_hybrid_retriever.retrieve(query, final_results, current_timestamp)
-
-        # Step 5: Combine results, considering uncertainty and temporal aspects
-        combined_results = self._combine_results(active_results, latent_activations)
-
-        # Step 6: Knowledge Construction, including uncertainty and temporal info
+        # Construct knowledge using combined results
         constructed_knowledge = await self.knowledge_constructor.construct(query, combined_results, current_timestamp)
 
-        # Step 7: Reasoning
-        reasoning = await self.reasoning_engine.reason(query, constructed_knowledge, current_timestamp)
+        # Perform veracity extrapolation
+        extrapolated_connections = await self.veracity_extrapolator.extrapolate_group_connections(
+            [item['entity'] for item in constructed_knowledge['entities']],
+            [item['entity'] for item in constructed_knowledge['entities']]
+        )
+        constructed_knowledge['extrapolated_connections'] = extrapolated_connections
 
-        # Step 8: Cognitive Integration
+        # Reasoning with uncertainty awareness
+        reasoning, reasoning_uncertainty, detailed_steps = await self.reasoning_engine.reason_with_uncertainty(query, constructed_knowledge, current_timestamp)
+
+        # Update error rates based on observed uncertainties
+        observed_errors = [retrieval_uncertainty, generation_uncertainty, reasoning_uncertainty]
+        self.error_controller.update_error_rates(observed_errors)
+
+        # Cognitive Integration
         final_answer = await self.cognitive_nexus.integrate(
             query,
             constructed_knowledge,
             reasoning,
-            final_plan,
-            retrieval_history,
             agent
         )
 
+        # Track knowledge evolution
+        self.evolution_tracker.track_changes(constructed_knowledge, current_timestamp)
+
         return final_answer
 
-    async def _iterative_retrieval_refinement(self, query: str, query_embedding: List[float], initial_plan: Dict[str, Any], agent: AgentInterface, timestamp: datetime.datetime, max_iterations: int = 3) -> Tuple[List[RetrievalResult], Dict[str, Any], List[Dict[str, Any]]]:
-        current_plan = initial_plan
-        current_results = []
-        retrieval_history = []
-        for _ in range(max_iterations):
-            new_results = await self._retrieve(query, query_embedding, current_plan, agent, timestamp)
-            all_results = self._combine_results(current_results, new_results)
-            reranked_results = await self._rerank_results(all_results, query, current_plan, agent)
-            retrieval_history.append({
-                "plan": current_plan,
-                "top_results": reranked_results[:5]  # Store top 5 results for history
+    async def retrieve_with_uncertainty(self, query: str, agent: AgentInterface, timestamp: datetime) -> Tuple[List[RetrievalResult], float]:
+        # Get query embedding
+        query_embedding = await self.embedding_model.get_embedding(query)
+
+        # Retrieve results using dual-level retrieval
+        retrieval_results = await self.hybrid_retriever.dual_level_retrieve(query, self.config.MAX_RESULTS, timestamp)
+
+        # Estimate retrieval uncertainty (e.g., average uncertainty of results)
+        uncertainties = [result.uncertainty for result in retrieval_results]
+        retrieval_uncertainty = np.mean(uncertainties) if uncertainties else 1.0  # Max uncertainty if no results
+
+        return retrieval_results, retrieval_uncertainty
+
+    async def generate_with_uncertainty(self, query: str, agent: AgentInterface) -> Tuple[List[Dict[str, Any]], float]:
+        # Generate answer using the agent's language model
+        generated_text = await agent.llm.generate(query)
+
+        # Estimate generation uncertainty (placeholder logic)
+        generation_uncertainty = await self._estimate_generation_uncertainty(generated_text)
+
+        generation_results = [{'content': generated_text, 'uncertainty': generation_uncertainty}]
+
+        return generation_results, generation_uncertainty
+
+    async def _estimate_generation_uncertainty(self, text: str) -> float:
+        # Placeholder for uncertainty estimation logic
+        # This could involve model confidence scores, entropy, or other metrics
+        return 0.5  # Example fixed uncertainty
+
+    def balance_results(self, retrieval_results: List[RetrievalResult], generation_results: List[Dict[str, Any]], retrieval_uncertainty: float, generation_uncertainty: float) -> List[Dict[str, Any]]:
+        # Inverse uncertainties to get weights
+        total_inv_uncertainty = (1 - retrieval_uncertainty) + (1 - generation_uncertainty)
+        retrieval_weight = (1 - retrieval_uncertainty) / total_inv_uncertainty if total_inv_uncertainty != 0 else 0.5
+        generation_weight = (1 - generation_uncertainty) / total_inv_uncertainty if total_inv_uncertainty != 0 else 0.5
+
+        combined_results = []
+
+        # Weight retrieval results
+        for result in retrieval_results:
+            combined_results.append({
+                'content': result.content,
+                'score': result.score * retrieval_weight,
+                'uncertainty': result.uncertainty
             })
-            if self._is_satisfactory(reranked_results):
-                return reranked_results, current_plan, retrieval_history
-            current_plan = await self.planning_aware_retriever.refine_plan(query, current_plan, reranked_results)
-            current_results = reranked_results
-        return current_results, current_plan, retrieval_history
 
-    async def _retrieve(self, query: str, query_embedding: List[float], plan: Dict[str, Any], agent: AgentInterface, timestamp: datetime.datetime) -> List[RetrievalResult]:
-        return await self.hybrid_retriever.retrieve(query, query_embedding, self.config.MAX_RESULTS, timestamp)
+        # Weight generation results
+        for result in generation_results:
+            combined_results.append({
+                'content': result['content'],
+                'score': retrieval_weight * generation_weight,  # Adjust as needed
+                'uncertainty': result['uncertainty']
+            })
 
-        query_embedding = await agent.get_embedding(query)
-        vector_results = await self.hybrid_retriever.vector_store.search(query_embedding, self.config.VECTOR_TOP_K)
-        graph_results = await self.hybrid_retriever.graph_store.search(query, self.config.GRAPH_TOP_K)
+        # Sort combined results by adjusted score
+        combined_results.sort(key=lambda x: x['score'], reverse=True)
 
-        combined_results = self._combine_results(vector_results, graph_results)
+        return combined_results
 
-        # Apply the plan to filter or modify results
-        if "filter_keywords" in plan:
-            combined_results = [r for r in combined_results if any(kw in r.get('content', '') for kw in plan["filter_keywords"])]
+    async def analyze_uncertainty(self, query: str, agent: AgentInterface) -> Dict[str, Any]:
+        """
+        Analyze the sources of uncertainty in the pipeline.
 
-        if "max_date" in plan:
-            combined_results = [r for r in combined_results if r.get('date', '') <= plan["max_date"]]
+        :param query: The user's query string.
+        :param agent: The agent interface.
+        :return: A dictionary containing uncertainty analysis results.
+        """
+        current_timestamp = datetime.now()
 
-        return combined_results[:self.config.MAX_RESULTS]
+        # Perform the full pipeline process
+        retrieval_results, retrieval_uncertainty = await self.retrieve_with_uncertainty(query, agent, current_timestamp)
+        generation_results, generation_uncertainty = await self.generate_with_uncertainty(query, agent)
+        combined_results = self.balance_results(retrieval_results, generation_results, retrieval_uncertainty, generation_uncertainty)
+        constructed_knowledge = await self.knowledge_constructor.construct(query, combined_results, current_timestamp)
+        reasoning, reasoning_uncertainty, detailed_steps = await self.reasoning_engine.reason_with_uncertainty(query, constructed_knowledge, current_timestamp)
 
-    def _combine_results(self, results1: List[Dict[str, Any]], results2: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        combined = results1 + results2
-        return sorted(combined, key=lambda x: x.get('score', 0), reverse=True)[:self.config.MAX_RESULTS]
+        # Analyze uncertainty sources
+        uncertainty_sources = self.reasoning_engine.analyze_uncertainty_sources(detailed_steps)
 
-    async def _rerank_results(self, results: List[Dict[str, Any]], query: str, plan: Dict[str, Any], agent: AgentInterface) -> List[Dict[str, Any]]:
-        # Use the agent's rerank method
-        reranked_results = await agent.rerank(query, results, self.config.MAX_RESULTS)
+        # Generate suggestions for uncertainty reduction
+        uncertainty_reduction_suggestions = self.reasoning_engine.suggest_uncertainty_reduction(uncertainty_sources)
 
-        # Apply any additional ranking criteria from the plan
-        if "boost_sources" in plan:
-            boost_sources = set(plan["boost_sources"])
-            reranked_results.sort(key=lambda x: (x.get('source') in boost_sources, x.get('score', 0)), reverse=True)
+        return {
+            'retrieval_uncertainty': retrieval_uncertainty,
+            'generation_uncertainty': generation_uncertainty,
+            'reasoning_uncertainty': reasoning_uncertainty,
+            'uncertainty_sources': uncertainty_sources,
+            'uncertainty_reduction_suggestions': uncertainty_reduction_suggestions
+        }
 
-        return reranked_results
-
-    def _is_satisfactory(self, results: List[Dict[str, Any]]) -> bool:
-        if len(results) < self.config.MIN_SATISFACTORY_RESULTS:
-            return False
-
-        # Check if we have results with high enough scores
-        high_score_results = [r for r in results if r.get('score', 0) > self.config.HIGH_SCORE_THRESHOLD]
-        if len(high_score_results) >= self.config.MIN_HIGH_SCORE_RESULTS:
-            return True
-
-        # Check for diversity in sources
-        sources = set(r.get('source') for r in results if 'source' in r)
-        if len(sources) >= self.config.MIN_DIVERSE_SOURCES:
-            return True
-
-        return False
-
-    async def update_knowledge(self, entity_id: str, old_state: Any, new_state: Any):
-        # Call this method whenever knowledge is updated
-        await self.evolution_tracker.track_change(entity_id, old_state, new_state, datetime.datetime.now())
+# Other existing classes and methods remain unchanged

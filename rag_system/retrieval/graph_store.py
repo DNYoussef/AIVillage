@@ -1,6 +1,6 @@
 # rag_system/retrieval/graph_store.py
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime
 from neo4j import GraphDatabase
 from ..core.config import RAGConfig
@@ -19,6 +19,7 @@ class GraphStore:
             config.NEO4J_URI,
             auth=(config.NEO4J_USER, config.NEO4J_PASSWORD)
         )
+        self.llm = config.LLM  # Assuming the config has an LLM instance
 
     async def add_node(self, node: BayesianNode):
         with self.driver.session() as session:
@@ -90,6 +91,7 @@ class GraphStore:
             )
             for record in result
         ]
+
     def update_causal_strength(self, source: str, target: str, observed_probability: float):
         edge = self.causal_edges.get((source, target))
         if edge:
@@ -103,3 +105,29 @@ class GraphStore:
         # Implement logic to return a snapshot of the graph store at the given timestamp
         pass
 
+    async def beam_search(self, query: str, beam_width: int, max_depth: int) -> List[Tuple[List[str], float]]:
+        initial_entities = await self.get_initial_entities(query)
+        beams = [[entity] for entity in initial_entities]
+
+        for _ in range(max_depth):
+            candidates = []
+            for beam in beams:
+                neighbors = await self.get_neighbors(beam[-1])
+                for neighbor in neighbors:
+                    new_beam = beam + [neighbor]
+                    score = await self.llm.score_path(query, new_beam)
+                    candidates.append((new_beam, score))
+            
+            beams = sorted(candidates, key=lambda x: x[1], reverse=True)[:beam_width]
+
+        return beams
+
+    async def get_initial_entities(self, query: str) -> List[str]:
+        # Implement logic to get initial entities based on the query
+        # This could involve a simple keyword search or more advanced NLP techniques
+        pass
+
+    async def get_neighbors(self, entity: str) -> List[str]:
+        # Implement logic to get neighboring entities in the graph
+        # This could involve a Cypher query to Neo4j
+        pass
