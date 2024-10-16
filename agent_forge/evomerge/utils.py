@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import psutil
 import shutil
-from typing import List, Dict, Union, Callable
+from typing import List, Dict, Union, Callable, Tuple
 from pydantic import BaseModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from torch.nn.functional import cosine_similarity
@@ -80,25 +80,26 @@ def clean_up_models(model_paths: List[str]):
             logger.warning(f"Failed to remove model {path}: {str(e)}")
             logger.warning("This is not a critical error, but you may want to manually remove the file or directory.")
 
-
-
-def load_models(model_references: List[ModelReference]) -> List[torch.nn.Module]:
-    logger.info("Starting to load models")
+def load_models(model_references: List[ModelReference]) -> Tuple[List[torch.nn.Module], List[AutoTokenizer]]:
+    logger.info("Starting to load models and tokenizers")
     models = []
-    for model_ref in tqdm(model_references, desc="Loading models"):
+    tokenizers = []
+    for model_ref in tqdm(model_references, desc="Loading models and tokenizers"):
         try:
-            logger.info(f"Loading model: {model_ref.name}")
+            logger.info(f"Loading model and tokenizer: {model_ref.name}")
             model = AutoModelForCausalLM.from_pretrained(
                 model_ref.path,
                 device_map="auto",
                 torch_dtype=torch.float16,
                 low_cpu_mem_usage=True
             )
+            tokenizer = AutoTokenizer.from_pretrained(model_ref.path)
             models.append(model)
-            logger.info(f"Successfully loaded model: {model_ref.name}")
+            tokenizers.append(tokenizer)
+            logger.info(f"Successfully loaded model and tokenizer: {model_ref.name}")
         except Exception as e:
-            logger.error(f"Failed to load model {model_ref.name}: {str(e)}")
-    return models
+            logger.error(f"Failed to load model or tokenizer {model_ref.name}: {str(e)}")
+    return models, tokenizers
 
 def save_model(model: torch.nn.Module, path: str) -> None:
     logger.info(f"Saving merged model to: {path}")
