@@ -7,7 +7,8 @@ import subprocess
 from tqdm import tqdm
 from .config import create_default_config, Configuration, ModelReference
 from .merger import AdvancedModelMerger
-from .utils import load_models, EvoMergeException, check_system_resources
+from .model_loading import load_models
+from .utils import EvoMergeException, check_system_resources
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from .logging_config import setup_logging
 
@@ -26,6 +27,23 @@ def model_exists_in_cache(model_path):
     cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "hub", f"models--{model_path.replace('/', '--')}")
     return os.path.exists(cache_dir)
 
+def find_model_files(path):
+    logger = logging.getLogger(__name__)
+    logger.info(f"Searching for model files in: {path}")
+    required_files = ['config.json', 'tokenizer.json']
+    model_files = ['pytorch_model.bin', 'model.safetensors']
+    
+    for root, _, files in os.walk(path):
+        logger.info(f"Checking directory: {root}")
+        logger.info(f"Files in directory: {files}")
+        
+        if all(file in files for file in required_files) and any(file in files for file in model_files):
+            logger.info(f"Found all required files in: {root}")
+            return root
+    
+    logger.warning(f"Could not find all required files in: {path}")
+    return None
+
 def download_and_merge_models(model_paths, use_cli=False, verbose=False):
     logger = logging.getLogger(__name__)
     logger.info(f"Attempting to download and merge models: {model_paths}")
@@ -41,8 +59,14 @@ def download_and_merge_models(model_paths, use_cli=False, verbose=False):
             else:
                 logger.info(f"Model {model_ref.name} already exists in cache, skipping download")
             
-            # Update the model path to point to the downloaded snapshot directory
-            model_ref.path = os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "hub", f"models--{model_ref.path.replace('/', '--')}", "snapshots")
+            # Update the model path to point to the downloaded directory
+            cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "hub", f"models--{model_ref.path.replace('/', '--')}")
+            model_files_dir = find_model_files(cache_dir)
+            if model_files_dir:
+                model_ref.path = model_files_dir
+                logger.info(f"Updated model path for {model_ref.name}: {model_ref.path}")
+            else:
+                raise EvoMergeException(f"Could not find model files for {model_ref.name}")
 
     # Log model paths
     for model_ref in config.models:
@@ -53,7 +77,8 @@ def download_and_merge_models(model_paths, use_cli=False, verbose=False):
             for item in os.listdir(model_ref.path):
                 logger.info(f"  {item}")
         else:
-            logger.warning(f"Path does not exist for {model_ref.name}")
+            logger.error(f"Path does not exist for {model_ref.name}")
+            raise EvoMergeException(f"Model path does not exist: {model_ref.path}")
 
     # Check system resources before loading models
     check_system_resources([model_ref.path for model_ref in config.models])
@@ -145,3 +170,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

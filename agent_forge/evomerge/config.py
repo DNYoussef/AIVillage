@@ -1,9 +1,16 @@
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 from pydantic import BaseModel, Field, validator
+import os
+
+class ModelDomain(BaseModel):
+    name: str
+    architecture: str
+    task_type: str
 
 class ModelReference(BaseModel):
     name: str
-    path: str  # Hugging Face model ID or local path
+    path: str
+    domain: Optional[ModelDomain] = None
 
 class MergeSettings(BaseModel):
     merge_method: str
@@ -11,6 +18,10 @@ class MergeSettings(BaseModel):
     custom_dir: str = Field(default="./merged_models")
     ps_techniques: List[str] = ["linear"]
     dfs_techniques: List[str] = []
+    use_8bit: bool = Field(default=False)
+    use_4bit: bool = Field(default=False)
+    cross_domain_strategy: str = Field(default="adapter")
+    instruction_tuning_preservation: str = Field(default="max", description="Strategy for preserving instruction tuning: 'max' or 'mean'")
 
     @validator('merge_method')
     def validate_merge_method(cls, v):
@@ -27,12 +38,28 @@ class MergeSettings(BaseModel):
                 raise ValueError(f"Invalid technique: {technique}. Choose from: {', '.join(valid_techniques)}")
         return v
 
+    @validator('custom_dir')
+    def validate_custom_dir(cls, v):
+        if not os.path.exists(v):
+            os.makedirs(v, exist_ok=True)
+        return v
+
+    @validator('cross_domain_strategy')
+    def validate_cross_domain_strategy(cls, v):
+        valid_strategies = ["adapter", "embedding_only", "full"]
+        if v not in valid_strategies:
+            raise ValueError(f"Invalid cross-domain strategy. Choose from: {', '.join(valid_strategies)}")
+        return v
+
 class EvolutionSettings(BaseModel):
     population_size: int = Field(default=8, ge=2)
     num_generations: int = Field(default=50, ge=1)
     mutation_rate: float = Field(default=0.1, ge=0, le=1)
     tournament_size: int = Field(default=3, ge=2)
     early_stopping_generations: int = Field(default=10, ge=1)
+    use_cma_es: bool = Field(default=False)
+    adaptive_mutation: bool = Field(default=True)
+    objectives: List[str] = Field(default=["overall_score", "perplexity"])
 
     @validator('tournament_size')
     def validate_tournament_size(cls, v, values):
@@ -40,20 +67,26 @@ class EvolutionSettings(BaseModel):
             raise ValueError("Tournament size must be less than or equal to population size")
         return v
 
+    @validator('objectives')
+    def validate_objectives(cls, v):
+        valid_objectives = ["overall_score", "perplexity", "accuracy", "coherence"]
+        for obj in v:
+            if obj not in valid_objectives:
+                raise ValueError(f"Invalid objective: {obj}. Choose from: {', '.join(valid_objectives)}")
+        return v
+
 class Configuration(BaseModel):
     models: List[ModelReference]
     merge_settings: MergeSettings
     evolution_settings: EvolutionSettings
-
-    class Config:
-        extra = "allow"
+    target_domain: Optional[ModelDomain] = None
 
 def create_default_config() -> Configuration:
     return Configuration(
         models=[
-            ModelReference(name="model1", path="placeholder_path_1"),
-            ModelReference(name="model2", path="placeholder_path_2"),
-            ModelReference(name="model3", path="placeholder_path_3")
+            ModelReference(name="Qwen2.5-1.5B-Instruct", path="Qwen/Qwen2.5-1.5B-Instruct"),
+            ModelReference(name="Qwen2.5-Coder-1.5B-Instruct", path="Qwen/Qwen2.5-Coder-1.5B-Instruct"),
+            ModelReference(name="Qwen2.5-Math-1.5B-Instruct", path="Qwen/Qwen2.5-Math-1.5B-Instruct")
         ],
         merge_settings=MergeSettings(
             merge_method="ps_dfs",
@@ -64,9 +97,16 @@ def create_default_config() -> Configuration:
                 "dare": {"threshold": 0.1, "amplification": 2.0},
             },
             ps_techniques=["linear", "ties"],
-            dfs_techniques=["frankenmerge"]
+            dfs_techniques=["frankenmerge"],
+            use_8bit=False,
+            use_4bit=False,
+            cross_domain_strategy="adapter"
         ),
-        evolution_settings=EvolutionSettings()
+        evolution_settings=EvolutionSettings(
+            use_cma_es=False,
+            adaptive_mutation=True,
+            objectives=["overall_score", "perplexity"]
+        )
     )
 
 if __name__ == "__main__":

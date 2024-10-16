@@ -4,7 +4,7 @@ import torch
 from .config import create_default_config
 from .evolutionary_tournament import run_evolutionary_tournament
 from .merger import AdvancedModelMerger
-from .utils import load_models, parallel_evaluate_models
+from .utils import load_models, parallel_evaluate_models, evaluate_model
 from .visualization import plot_benchmark_comparison, generate_html_report
 
 def benchmark_merger(config):
@@ -22,7 +22,7 @@ def benchmark_merger(config):
     time_taken = end_time - start_time
     memory_used = end_memory - start_memory
 
-    evaluation_result = parallel_evaluate_models([merged_model_path])[0]
+    evaluation_result = evaluate_model(merged_model_path)
 
     return {
         "time_taken": time_taken,
@@ -42,7 +42,7 @@ def benchmark_evolutionary_tournament(config):
     time_taken = end_time - start_time
     memory_used = end_memory - start_memory
 
-    evaluation_result = parallel_evaluate_models([best_model_path])[0]
+    evaluation_result = evaluate_model(best_model_path)
 
     return {
         "time_taken": time_taken,

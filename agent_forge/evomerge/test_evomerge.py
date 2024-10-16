@@ -3,17 +3,16 @@ import torch
 from .config import Configuration, ModelReference, MergeSettings, EvolutionSettings
 from .utils import (
     EvoMergeException,
-    load_models,
-    save_model,
     validate_merge_config,
     generate_text,
-    evaluate_model,
     setup_gpu_if_available,
-    clean_up_models,
-    MERGE_TECHNIQUES
+    clean_up_models
 )
+from .model_loading import load_models, save_model
+from .evaluation import evaluate_model
+from .merge_techniques import MERGE_TECHNIQUES
 from .merger import AdvancedModelMerger
-from .evolutionary_tournament import EvolutionaryMerger, run_evolutionary_tournament
+from .evolutionary_tournament import EvolutionaryTournament, run_evolutionary_tournament
 
 class TestEvoMerge(unittest.TestCase):
     def setUp(self):
@@ -69,9 +68,9 @@ class TestEvoMerge(unittest.TestCase):
         merged_model_path = merger.merge()
         self.assertTrue(merged_model_path.startswith(self.config.merge_settings.custom_dir))
 
-    def test_evolutionary_merger(self):
-        evolutionary_merger = EvolutionaryMerger(self.config)
-        best_model = evolutionary_merger.evolve()
+    def test_evolutionary_tournament(self):
+        evolutionary_tournament = EvolutionaryTournament(self.config)
+        best_model = evolutionary_tournament.evolve()
         self.assertIsInstance(best_model, str)
         self.assertTrue(best_model.startswith(self.config.merge_settings.custom_dir))
 

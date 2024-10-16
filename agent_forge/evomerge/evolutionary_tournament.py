@@ -1,13 +1,16 @@
 import logging
 import random
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Tuple
 import torch
+import numpy as np
 from transformers import AutoModelForCausalLM
 
 from .config import Configuration, ModelReference
 from .merger import AdvancedModelMerger
-from .utils import evaluate_model, parallel_evaluate_models, MERGE_TECHNIQUES
-from .visualization import plot_fitness_over_generations
+from .evaluation import evaluate_model, parallel_evaluate_models
+from .merge_techniques import MERGE_TECHNIQUES
+from .multi_objective import nsga2_select
+from .visualization import plot_fitness_over_generations, plot_pareto_front
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +144,7 @@ class EvolutionaryTournament:
         best_model = population[final_scores.index(max(final_scores))]
 
         return best_model
-
+    
 def run_evolutionary_tournament(config: Configuration) -> str:
     evolutionary_tournament = EvolutionaryTournament(config)
     best_model = evolutionary_tournament.evolve()
@@ -162,3 +165,4 @@ if __name__ == "__main__":
 
     config = create_default_config()
     best_model = run_evolutionary_tournament(config)
+

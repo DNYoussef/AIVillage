@@ -2,7 +2,8 @@ import unittest
 import time
 from .config import create_default_config
 from .evolutionary_tournament import run_evolutionary_tournament
-from .utils import generate_text, evaluate_model, clean_up_models
+from .utils import generate_text, clean_up_models
+from .evaluation import evaluate_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 class TestEvoMergeIntegration(unittest.TestCase):
