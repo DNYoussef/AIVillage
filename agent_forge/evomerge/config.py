@@ -51,9 +51,9 @@ class Configuration(BaseModel):
 def create_default_config() -> Configuration:
     return Configuration(
         models=[
-            ModelReference(name="gpt2", path="gpt2"),
-            ModelReference(name="gpt2-medium", path="gpt2-medium"),
-            ModelReference(name="gpt2-large", path="gpt2-large")
+            ModelReference(name="model1", path="placeholder_path_1"),
+            ModelReference(name="model2", path="placeholder_path_2"),
+            ModelReference(name="model3", path="placeholder_path_3")
         ],
         merge_settings=MergeSettings(
             merge_method="ps_dfs",
