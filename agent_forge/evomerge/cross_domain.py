@@ -1,58 +1,44 @@
-from typing import Dict
 import torch
-from transformers import AutoModel, AutoTokenizer
-from pydantic import BaseModel
+from typing import List
+from .config import MergeSettings, ModelDomain
 
-class ModelDomain(BaseModel):
-    name: str
-    architecture: str
-    task_type: str
-
-def get_model_domain(model_path: str) -> ModelDomain:
+def get_model_domain(model: torch.nn.Module) -> ModelDomain:
     """
     Detect the domain of a model based on its architecture and task type.
     """
-    model = AutoModel.from_pretrained(model_path)
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    
-    # Detect architecture
-    architecture = type(model).__name__
-    
-    # Detect task type (this is a simplified example)
-    if hasattr(model, 'lm_head'):
-        task_type = 'language_modeling'
-    elif hasattr(model, 'classifier'):
-        task_type = 'classification'
-    else:
-        task_type = 'unknown'
-    
-    return ModelDomain(
-        name=model_path.split('/')[-1],
-        architecture=architecture,
-        task_type=task_type
-    )
+    # Implement logic to determine the domain of a model
+    # This is a placeholder implementation
+    return ModelDomain(name="unknown", architecture="unknown", task_type="unknown")
 
-def evaluate_cross_domain_model(model: torch.nn.Module, tokenizer: AutoTokenizer, target_domain: ModelDomain) -> Dict[str, float]:
+def evaluate_cross_domain_model(model: torch.nn.Module, tokenizer, target_domain: ModelDomain) -> dict[str, float]:
     """
     Evaluate a cross-domain merged model on tasks specific to the target domain.
     """
-    results = {}
-    
-    if target_domain.task_type == 'language_modeling':
-        results['perplexity'] = evaluate_perplexity(model, tokenizer)
-    elif target_domain.task_type == 'classification':
-        results['accuracy'] = evaluate_classification(model, tokenizer)
-    
-    # Add more domain-specific evaluations as needed
-    
-    return results
-
-def evaluate_perplexity(model: torch.nn.Module, tokenizer: AutoTokenizer) -> float:
-    # Implement perplexity evaluation
+    # Implement evaluation logic for cross-domain models
     # This is a placeholder implementation
-    return 0.0
+    return {"accuracy": 0.0, "perplexity": float('inf')}
 
-def evaluate_classification(model: torch.nn.Module, tokenizer: AutoTokenizer) -> float:
-    # Implement classification evaluation
+def merge_cross_domain_models(models: List[torch.nn.Module], merge_settings: MergeSettings) -> torch.nn.Module:
+    """
+    Merge models from different domains.
+
+    Args:
+        models (List[torch.nn.Module]): List of models to merge.
+        merge_settings (MergeSettings): Settings for the merging process.
+
+    Returns:
+        torch.nn.Module: The merged model.
+    """
+    # Implement the logic for merging cross-domain models
     # This is a placeholder implementation
-    return 0.0
+    base_model = models[0]
+    
+    # Example: Simple parameter averaging
+    with torch.no_grad():
+        for name, param in base_model.named_parameters():
+            merged_param = torch.stack([model.state_dict()[name] for model in models]).mean(dim=0)
+            param.copy_(merged_param)
+    
+    return base_model
+
+# Add any other necessary functions for cross-domain operations

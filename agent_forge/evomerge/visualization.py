@@ -1,12 +1,10 @@
 import matplotlib.pyplot as plt
+import numpy as np
+from typing import List, Dict
 import seaborn as sns
 import pandas as pd
-import numpy as np
-import logging
 
-logger = logging.getLogger(__name__)
-
-def plot_fitness_over_generations(fitness_scores, output_path):
+def plot_fitness_over_generations(fitness_scores: List[float], output_path: str):
     plt.figure(figsize=(10, 6))
     plt.plot(fitness_scores)
     plt.title('Fitness Over Generations')
@@ -15,15 +13,51 @@ def plot_fitness_over_generations(fitness_scores, output_path):
     plt.savefig(output_path)
     plt.close()
 
-def plot_benchmark_comparison(benchmark_results, output_path):
-    df = pd.DataFrame(benchmark_results)
+def plot_pareto_front(scores: List[Dict[str, float]], pareto_front_indices: List[int], objectives: List[str], output_path: str):
+    if len(objectives) != 2:
+        raise ValueError("Pareto front visualization is only supported for 2 objectives")
+
+    plt.figure(figsize=(10, 6))
+    x = [scores[i][objectives[0]] for i in range(len(scores))]
+    y = [scores[i][objectives[1]] for i in range(len(scores))]
+    plt.scatter(x, y, c='blue', label='All solutions')
     
-    plt.figure(figsize=(12, 6))
-    sns.barplot(x='model', y='score', data=df)
-    plt.title('Model Performance Comparison')
-    plt.xlabel('Model')
-    plt.ylabel('Performance Score')
-    plt.xticks(rotation=45)
+    pareto_x = [scores[i][objectives[0]] for i in pareto_front_indices]
+    pareto_y = [scores[i][objectives[1]] for i in pareto_front_indices]
+    plt.scatter(pareto_x, pareto_y, c='red', label='Pareto front')
+    
+    plt.title('Pareto Front')
+    plt.xlabel(objectives[0])
+    plt.ylabel(objectives[1])
+    plt.legend()
+    plt.savefig(output_path)
+    plt.close()
+
+def plot_evolution_progress(all_generation_scores: List[List[Dict[str, float]]], objectives: List[str], objective_types: List[str], output_path: str):
+    num_generations = len(all_generation_scores)
+    num_objectives = len(objectives)
+
+    fig, axes = plt.subplots(num_objectives, 1, figsize=(10, 5 * num_objectives), sharex=True)
+    if num_objectives == 1:
+        axes = [axes]
+
+    for i, (objective, obj_type) in enumerate(zip(objectives, objective_types)):
+        best_scores = []
+        avg_scores = []
+        for gen_scores in all_generation_scores:
+            scores = [score[objective] for score in gen_scores]
+            best_score = max(scores) if obj_type == 'maximize' else min(scores)
+            avg_score = np.mean(scores)
+            best_scores.append(best_score)
+            avg_scores.append(avg_score)
+
+        axes[i].plot(range(num_generations), best_scores, label='Best')
+        axes[i].plot(range(num_generations), avg_scores, label='Average')
+        axes[i].set_title(f'{objective} Progress')
+        axes[i].set_ylabel('Score')
+        axes[i].legend()
+
+    axes[-1].set_xlabel('Generation')
     plt.tight_layout()
     plt.savefig(output_path)
     plt.close()
@@ -69,24 +103,15 @@ def generate_html_report(benchmark_results, output_path):
     with open(output_path, 'w') as f:
         f.write(html_content)
 
-def plot_pareto_front(objectives, objective_names, output_path):
-    if len(objective_names) == 2:
-        plt.figure(figsize=(10, 6))
-        plt.scatter([obj[0] for obj in objectives], [obj[1] for obj in objectives])
-        plt.title('Pareto Front')
-        plt.xlabel(objective_names[0])
-        plt.ylabel(objective_names[1])
-        plt.savefig(output_path)
-        plt.close()
-    elif len(objective_names) == 3:
-        fig = plt.figure(figsize=(10, 6))
-        ax = fig.add_subplot(111, projection='3d')
-        ax.scatter([obj[0] for obj in objectives], [obj[1] for obj in objectives], [obj[2] for obj in objectives])
-        ax.set_xlabel(objective_names[0])
-        ax.set_ylabel(objective_names[1])
-        ax.set_zlabel(objective_names[2])
-        plt.title('Pareto Front')
-        plt.savefig(output_path)
-        plt.close()
-    else:
-        logger.warning(f"Cannot visualize Pareto front for {len(objective_names)} objectives. Skipping visualization.")
+def plot_benchmark_comparison(benchmark_results, output_path):
+    df = pd.DataFrame(benchmark_results)
+    
+    plt.figure(figsize=(12, 6))
+    sns.barplot(x='model', y='score', data=df)
+    plt.title('Model Performance Comparison')
+    plt.xlabel('Model')
+    plt.ylabel('Performance Score')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
