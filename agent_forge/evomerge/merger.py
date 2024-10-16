@@ -3,6 +3,7 @@ import torch
 import logging
 from typing import List, Dict, Union
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import shutil
 
 from .config import Configuration
 from .utils import (
@@ -21,6 +22,12 @@ class AdvancedModelMerger:
     def merge(self) -> str:
         logger.info("Starting model merging process")
         try:
+            # Check available disk space
+            free_space = shutil.disk_usage(self.config.merge_settings.custom_dir).free
+            required_space = sum(os.path.getsize(model.path) for model in self.config.models) * 2  # Estimate 2x the size of input models
+            if free_space < required_space:
+                raise ValueError(f"Not enough disk space. Required: {required_space / (1024**3):.2f} GB, Available: {free_space / (1024**3):.2f} GB")
+
             models = load_models(self.config.models)
 
             if self.config.merge_settings.merge_method == "ps":

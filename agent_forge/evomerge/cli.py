@@ -56,7 +56,7 @@ def download_and_merge_models(model_paths, use_cli=False, verbose=False):
             logger.warning(f"Path does not exist for {model_ref.name}")
 
     # Check system resources before loading models
-    check_system_resources(model_paths)
+    check_system_resources([model_ref.path for model_ref in config.models])
 
     logger.info("Loading models")
     try:
@@ -64,6 +64,10 @@ def download_and_merge_models(model_paths, use_cli=False, verbose=False):
         logger.info(f"Loaded {len(models)} models successfully")
     except EvoMergeException as e:
         logger.error(f"Failed to load models: {str(e)}")
+        return []
+
+    if not models:
+        logger.error("No models were successfully loaded. Aborting merge process.")
         return []
 
     merger = AdvancedModelMerger(config)
@@ -141,4 +145,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

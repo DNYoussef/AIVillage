@@ -35,7 +35,8 @@ def check_system_resources(model_paths: List[str]):
     total_model_size = 0
     for path in model_paths:
         if os.path.exists(path):
-            total_model_size += sum(os.path.getsize(os.path.join(path, f)) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)))
+            for root, dirs, files in os.walk(path):
+                total_model_size += sum(os.path.getsize(os.path.join(root, file)) for file in files)
     
     if total_model_size > 0:
         free_disk_space = shutil.disk_usage(os.path.dirname(next(path for path in model_paths if os.path.exists(path)))).free
@@ -62,6 +63,11 @@ def load_single_model(model_ref: ModelReference) -> torch.nn.Module:
         model_path = os.path.join(model_ref.path, latest_snapshot_dir)
         
         logger.info(f"Loading model {model_ref.name} from {model_path}")
+        logger.info("Initializing tokenizer...")
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
+        logger.info("Tokenizer initialized successfully")
+        
+        logger.info("Initializing model...")
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
             device_map="auto",
@@ -82,25 +88,35 @@ def load_model_process(model_ref, queue):
     except Exception as e:
         queue.put(("error", str(e), traceback.format_exc()))
 
-def load_model_with_timeout(model_ref: ModelReference, timeout: int = 7200) -> torch.nn.Module:
-    queue = multiprocessing.Queue()
-    process = multiprocessing.Process(target=load_model_process, args=(model_ref, queue))
-    process.start()
-    process.join(timeout)
-    if process.is_alive():
-        process.terminate()
-        process.join()
-        logger.error(f"Timeout occurred while loading model {model_ref.name}")
-        raise EvoMergeException(f"Timeout occurred while loading model {model_ref.name}")
-    if not queue.empty():
-        result = queue.get()
-        if result[0] == "error":
-            logger.error(f"Error loading model {model_ref.name}: {result[1]}")
-            logger.error(f"Traceback: {result[2]}")
-            raise EvoMergeException(f"Failed to load model {model_ref.name}: {result[1]}")
-        logger.info(f"Successfully loaded model {model_ref.name} within timeout")
-        return result[1]
-    raise EvoMergeException(f"Failed to load model {model_ref.name}: Unknown error")
+def load_model_with_timeout(model_ref: ModelReference, timeout: int = 1800, max_retries: int = 3) -> torch.nn.Module:
+    for attempt in range(max_retries):
+        logger.info(f"Attempt {attempt + 1} to load model: {model_ref.name}")
+        queue = multiprocessing.Queue()
+        process = multiprocessing.Process(target=load_model_process, args=(model_ref, queue))
+        process.start()
+        logger.info(f"Started loading process for model: {model_ref.name}")
+        for _ in range(timeout):
+            if not process.is_alive():
+                break
+            if not queue.empty():
+                result = queue.get()
+                if result[0] == "success":
+                    logger.info(f"Successfully loaded model {model_ref.name}")
+                    return result[1]
+                else:
+                    logger.error(f"Error loading model {model_ref.name}: {result[1]}")
+                    logger.error(f"Traceback: {result[2]}")
+                    break
+            process.join(1)
+            logger.info(f"Still loading model {model_ref.name}...")
+        if process.is_alive():
+            logger.error(f"Timeout occurred while loading model {model_ref.name}")
+            process.terminate()
+            process.join()
+        if attempt == max_retries - 1:
+            raise EvoMergeException(f"Failed to load model {model_ref.name} after {max_retries} attempts")
+        logger.info(f"Retrying to load model: {model_ref.name}")
+    raise EvoMergeException(f"Failed to load model {model_ref.name} after {max_retries} attempts")
 
 def load_models(model_references: List[ModelReference]) -> List[torch.nn.Module]:
     model_paths = [ref.path for ref in model_references]
@@ -115,7 +131,7 @@ def load_models(model_references: List[ModelReference]) -> List[torch.nn.Module]
             logger.info(f"Successfully loaded model: {model_ref.name}")
         except EvoMergeException as e:
             logger.error(f"Failed to load model {model_ref.name}: {str(e)}")
-            raise
+            logger.error("Continuing to load other models...")
     return models
 
 def save_model(model: torch.nn.Module, path: str) -> None:
@@ -224,7 +240,11 @@ def clean_up_models(model_paths: List[str]):
 def linear_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
     merged_weights = {}
     for key in weights:
-        merged_weights[key] = torch.sum(weights[key] * torch.tensor(kwargs.get("weights", [1/len(weights[key])] * len(weights[key]))).unsqueeze(-1).unsqueeze(-1), dim=0)
+        if 'weights' in kwargs:
+            w = torch.tensor(kwargs['weights'])
+        else:
+            w = torch.ones(len(weights[key])) / len(weights[key])
+        merged_weights[key] = torch.sum(weights[key] * w.unsqueeze(-1).unsqueeze(-1), dim=0)
     return merged_weights
 
 def slerp_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
