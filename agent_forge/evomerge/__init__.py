@@ -8,9 +8,9 @@ from .utils import (
     evaluate_model,
     setup_gpu_if_available,
     clean_up_models,
-    MERGE_TECHNIQUES,
     parallel_evaluate_models
 )
+from .merge_techniques import MERGE_TECHNIQUES
 from .visualization import (
     plot_fitness_over_generations,
     plot_pareto_front,

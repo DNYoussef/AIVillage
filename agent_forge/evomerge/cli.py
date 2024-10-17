@@ -7,12 +7,19 @@ from .merger import AdvancedModelMerger
 from .utils import load_models, EvoMergeException, check_system_resources
 from .logging_config import setup_logging
 
-def download_and_merge_models(model_paths, use_cli=False, verbose=False):
+def download_and_merge_models(model_paths, merge_techniques, weight_mask_rate, use_weight_rescale, mask_strategy, use_cli=False, verbose=False):
     logger = logging.getLogger(__name__)
     logger.info(f"Attempting to download and merge models: {model_paths}")
 
     config = create_default_config()
     config.models = [ModelReference(name=f"model{i+1}", path=path) for i, path in enumerate(model_paths)]
+
+    # Update merge settings
+    config.merge_settings.ps_techniques = merge_techniques[:2]
+    config.merge_settings.dfs_techniques = [merge_techniques[2]]
+    config.merge_settings.weight_mask_rate = weight_mask_rate
+    config.merge_settings.use_weight_rescale = use_weight_rescale
+    config.merge_settings.mask_strategy = mask_strategy
 
     # Check system resources before loading models
     check_system_resources([model_ref.path for model_ref in config.models])
@@ -31,43 +38,34 @@ def download_and_merge_models(model_paths, use_cli=False, verbose=False):
 
     merger = AdvancedModelMerger(config)
     
-    merge_combinations = [
-        ["linear", "ties", "frankenmerge"],
-        ["linear", "ties", "dfs"],
-        ["linear", "dare", "frankenmerge"],
-        ["linear", "dare", "dfs"],
-        ["slerp", "ties", "frankenmerge"],
-        ["slerp", "ties", "dfs"],
-        ["slerp", "dare", "frankenmerge"],
-        ["slerp", "dare", "dfs"]
-    ]
-
     merged_models = []
-    for i, techniques in enumerate(tqdm(merge_combinations, desc="Creating merged models")):
-        logger.info(f"Creating merged model {i+1} with techniques: {techniques}")
-        config.merge_settings.ps_techniques = techniques[:2]
-        config.merge_settings.dfs_techniques = [techniques[2]]
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                merged_model_path = merger.merge()
-                merged_models.append(merged_model_path)
-                logger.info(f"Successfully created merged model: {merged_model_path}")
-                break
-            except Exception as e:
-                logger.error(f"Attempt {attempt + 1} failed to create merged model with techniques {techniques}: {str(e)}")
-                if attempt == max_retries - 1:
-                    logger.error(f"Failed to create merged model after {max_retries} attempts")
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            merged_model_path = merger.merge()
+            merged_models.append(merged_model_path)
+            logger.info(f"Successfully created merged model: {merged_model_path}")
+            break
+        except Exception as e:
+            logger.error(f"Attempt {attempt + 1} failed to create merged model: {str(e)}")
+            if attempt == max_retries - 1:
+                logger.error(f"Failed to create merged model after {max_retries} attempts")
 
     logger.info(f"Finished downloading and merging models. Created {len(merged_models)} merged models.")
     return merged_models
 
 def main():
     parser = argparse.ArgumentParser(description="EvoMerge: Evolutionary Model Merging System")
-    parser.add_argument("--download-and-merge", action="store_true", help="Download models and create 8 merged models")
+    parser.add_argument("--download-and-merge", action="store_true", help="Download models and create merged model")
     parser.add_argument("--model1", type=str, required=True, help="Hugging Face model ID for the first model")
     parser.add_argument("--model2", type=str, required=True, help="Hugging Face model ID for the second model")
     parser.add_argument("--model3", type=str, help="Hugging Face model ID for the third model")
+    parser.add_argument("--ps-technique1", type=str, default="linear", choices=["linear", "slerp", "ties", "dare"], help="First parameter space merging technique")
+    parser.add_argument("--ps-technique2", type=str, default="ties", choices=["linear", "slerp", "ties", "dare"], help="Second parameter space merging technique")
+    parser.add_argument("--dfs-technique", type=str, default="frankenmerge", choices=["frankenmerge", "dfs"], help="Deep fusion space merging technique")
+    parser.add_argument("--weight-mask-rate", type=float, default=0.0, help="Weight mask rate (0.0 to 1.0)")
+    parser.add_argument("--use-weight-rescale", action="store_true", help="Use weight rescaling")
+    parser.add_argument("--mask-strategy", type=str, default="random", choices=["random", "magnitude"], help="Mask strategy")
     parser.add_argument("--use-cli", action="store_true", help="Use Hugging Face CLI to download models")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
@@ -82,8 +80,23 @@ def main():
         if args.model3:
             model_paths.append(args.model3)
         
+        merge_techniques = [args.ps_technique1, args.ps_technique2, args.dfs_technique]
+        
         logger.info(f"Model paths: {model_paths}")
-        merged_models = download_and_merge_models(model_paths, args.use_cli, args.verbose)
+        logger.info(f"Merge techniques: {merge_techniques}")
+        logger.info(f"Weight mask rate: {args.weight_mask_rate}")
+        logger.info(f"Use weight rescale: {args.use_weight_rescale}")
+        logger.info(f"Mask strategy: {args.mask_strategy}")
+        
+        merged_models = download_and_merge_models(
+            model_paths, 
+            merge_techniques, 
+            args.weight_mask_rate, 
+            args.use_weight_rescale, 
+            args.mask_strategy,
+            args.use_cli, 
+            args.verbose
+        )
         logger.info(f"Created {len(merged_models)} merged models:")
         for model_path in merged_models:
             logger.info(model_path)

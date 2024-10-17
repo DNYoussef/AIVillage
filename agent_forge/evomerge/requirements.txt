@@ -3,7 +3,7 @@ torch>=1.9.0
 transformers>=4.11.0
 pydantic>=1.8.2
 accelerate>=0.26.0
-bitsandbytes
+bitsandbytes>=0.37.0
 
 # Data manipulation and analysis
 numpy>=1.24.3
@@ -22,9 +22,16 @@ pytest>=6.2.0
 # Performance monitoring
 psutil>=5.8.0
 
+# Logging
+tqdm>=4.62.0
+
 # Optional: For GPU support
 # Note: The specific CUDA version should match your system's CUDA installation
 # cudatoolkit
 
 # Optional: For distributed computing (if implemented in the future)
 # ray>=1.0.0
+
+# New dependencies for EvoMerge
+scikit-learn>=0.24.0  # For TIES and DARE implementations
+networkx>=2.5  # For graph-based operations in cross-domain merging

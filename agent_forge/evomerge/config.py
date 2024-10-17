@@ -22,6 +22,9 @@ class MergeSettings(BaseModel):
     use_4bit: bool = Field(default=False)
     cross_domain_strategy: str = Field(default="adapter")
     instruction_tuning_preservation: str = Field(default="max", description="Strategy for preserving instruction tuning: 'max' or 'mean'")
+    weight_mask_rate: float = Field(default=0.0, ge=0.0, le=1.0)
+    use_weight_rescale: bool = Field(default=True)
+    mask_strategy: str = Field(default="random")
 
     @validator('merge_method')
     def validate_merge_method(cls, v):
@@ -49,6 +52,13 @@ class MergeSettings(BaseModel):
         valid_strategies = ["adapter", "embedding_only", "full"]
         if v not in valid_strategies:
             raise ValueError(f"Invalid cross-domain strategy. Choose from: {', '.join(valid_strategies)}")
+        return v
+
+    @validator('mask_strategy')
+    def validate_mask_strategy(cls, v):
+        valid_strategies = ["random", "magnitude"]
+        if v not in valid_strategies:
+            raise ValueError(f"Invalid mask strategy. Choose from: {', '.join(valid_strategies)}")
         return v
 
 class EvolutionSettings(BaseModel):
@@ -100,7 +110,10 @@ def create_default_config() -> Configuration:
             dfs_techniques=["frankenmerge"],
             use_8bit=False,
             use_4bit=False,
-            cross_domain_strategy="adapter"
+            cross_domain_strategy="adapter",
+            weight_mask_rate=0.0,
+            use_weight_rescale=True,
+            mask_strategy="random"
         ),
         evolution_settings=EvolutionSettings(
             use_cma_es=False,

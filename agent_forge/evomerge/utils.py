@@ -13,6 +13,9 @@ import multiprocessing
 import traceback
 from tqdm import tqdm
 
+from .mask_weights_utils import mask_input_with_mask_rate
+from .task_vector import TaskVector
+
 logger = logging.getLogger(__name__)
 
 class EvoMergeException(Exception):
@@ -114,7 +117,7 @@ def save_model(model: torch.nn.Module, path: str) -> None:
 
 def generate_text(model: torch.nn.Module, tokenizer: AutoTokenizer, prompt: str, max_length: int = 100) -> str:
     try:
-        inputs = tokenizer(prompt, return_tensors="pt")
+        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
         outputs = model.generate(**inputs, max_length=max_length)
         return tokenizer.decode(outputs[0], skip_special_tokens=True)
     except Exception as e:
@@ -142,90 +145,56 @@ def parallel_evaluate_models(model_paths: List[str], max_workers: int = None) ->
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         return list(executor.map(evaluate_model, model_paths))
 
-# Merge Techniques
-def linear_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
-    merged_weights = {}
-    for key in weights:
-        if 'weights' in kwargs:
-            w = torch.tensor(kwargs['weights'])
-        else:
-            w = torch.ones(len(weights[key])) / len(weights[key])
-        merged_weights[key] = torch.sum(weights[key] * w.unsqueeze(-1).unsqueeze(-1), dim=0)
-    return merged_weights
+def mask_model_weights(finetuned_model: torch.nn.Module, pretrained_model: torch.nn.Module, exclude_param_names_regex: list, 
+                       weight_format: str, weight_mask_rate: float, use_weight_rescale: bool, mask_strategy: str) -> Dict[str, torch.Tensor]:
+    """
+    Mask model weights based on the specified parameters.
+    
+    :param finetuned_model: The finetuned model
+    :param pretrained_model: The pretrained model
+    :param exclude_param_names_regex: List of regex patterns for parameter names to exclude
+    :param weight_format: Format of weights to be masked ("finetuned_weight" or "delta_weight")
+    :param weight_mask_rate: Rate of weights to mask
+    :param use_weight_rescale: Whether to rescale weights after masking
+    :param mask_strategy: Strategy for masking ("random" or "magnitude")
+    :return: Dictionary of masked parameters
+    """
+    if weight_format == "finetuned_weight":
+        param_dict = {param_name: param_value for param_name, param_value in finetuned_model.named_parameters()}
+        param_names_to_merge = get_param_names_to_merge(input_param_names=list(param_dict.keys()), exclude_param_names_regex=exclude_param_names_regex)
+        model_param_dict = {param_name: param_dict[param_name] for param_name in param_names_to_merge}
+    else:
+        assert weight_format == "delta_weight", f"Unsupported weight_format: {weight_format}"
+        task_vector = TaskVector(pretrained_model=pretrained_model, finetuned_model=finetuned_model, exclude_param_names_regex=exclude_param_names_regex)
+        model_param_dict = task_vector.task_vector_param_dict
 
+    with torch.no_grad():
+        masked_param_dict = {}
+        for param_name, param_value in tqdm(model_param_dict.items(), desc="Masking weights"):
+            masked_param_dict[param_name] = mask_input_with_mask_rate(
+                input_tensor=param_value,
+                mask_rate=weight_mask_rate,
+                use_rescale=use_weight_rescale,
+                mask_strategy=mask_strategy
+            )
 
-def slerp_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
-    merged_weights = {}
-    for key in weights:
-        t = kwargs.get("t", 0.5)
-        w1, w2 = weights[key][0], weights[key][1]
-        omega = torch.arccos(torch.clamp(cosine_similarity(w1.flatten(), w2.flatten(), dim=0), -1, 1))
-        so = torch.sin(omega)
-        merged_weights[key] = (torch.sin((1.0-t)*omega) / so).unsqueeze(-1).unsqueeze(-1) * w1 + \
-                              (torch.sin(t*omega) / so).unsqueeze(-1).unsqueeze(-1) * w2
-    return merged_weights
+        if weight_format == "delta_weight":
+            new_task_vector = TaskVector(task_vector_param_dict=masked_param_dict)
+            masked_param_dict = new_task_vector.combine_with_pretrained_model(pretrained_model=pretrained_model, scaling_coefficient=1.0)
 
-def ties_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
-    threshold = kwargs.get("threshold", 0.1)
-    merged_weights = {}
-    for key in weights:
-        tensor = weights[key]
-        abs_tensor = torch.abs(tensor)
-        mask = abs_tensor > threshold
-        merged_weights[key] = torch.where(mask, tensor, torch.zeros_like(tensor))
-    return merged_weights
+    return masked_param_dict
 
-def dare_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
-    threshold = kwargs.get("threshold", 0.1)
-    amplification = kwargs.get("amplification", 2.0)
-    merged_weights = {}
-    for key in weights:
-        tensor = weights[key]
-        abs_diff = torch.abs(tensor)
-        mask = abs_diff > threshold
-        merged_weights[key] = torch.where(mask, tensor * amplification, torch.zeros_like(tensor))
-    return merged_weights
-
-def task_arithmetic_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
-    base_weights = kwargs.get("base_weights", {})
-    task_weights = kwargs.get("task_weights", [])
-    merged_weights = {}
-    for key in base_weights:
-        task_vectors = [task_weight[key] - base_weights[key] for task_weight in task_weights]
-        combined_task_vector = sum(task_vectors)
-        merged_weights[key] = base_weights[key] + combined_task_vector
-    return merged_weights
-
-def frankenmerge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
-    models = kwargs.get("models", [])
-    merged_weights = {}
-    for i, (name, tensor) in enumerate(weights.items()):
-        layer_num = int(name.split('.')[1]) if '.' in name else -1
-        if layer_num == -1 or layer_num % len(models) == i:
-            merged_weights[name] = tensor[i]
-    return merged_weights
-
-def dfs_merge(weights: Dict[str, torch.Tensor], **kwargs) -> Dict[str, torch.Tensor]:
-    models = kwargs.get("models", [])
-    I = kwargs.get("I", torch.ones(len(weights)))
-    W = kwargs.get("W", torch.eye(len(weights), len(models)))
-    merged_weights = {}
-    layer_index = 0
-    for name, tensor in weights.items():
-        if any(layer_type in name for layer_type in ['layer', 'block', 'transformer']):
-            if I[layer_index] > 0:
-                merged_weights[name] = torch.sum(tensor * W[layer_index].unsqueeze(1).unsqueeze(2), dim=0)
-            layer_index += 1
-        else:
-            merged_weights[name] = tensor[0]
-    return merged_weights
-
-MERGE_TECHNIQUES = {
-    "linear": linear_merge,
-    "slerp": slerp_merge,
-    "ties": ties_merge,
-    "dare": dare_merge,
-    "task_arithmetic": task_arithmetic_merge,
-    "frankenmerge": frankenmerge,
-    "dfs": dfs_merge
-}
+def get_param_names_to_merge(input_param_names: List[str], exclude_param_names_regex: List[str]) -> List[str]:
+    """
+    Get the list of parameter names to merge, excluding those that match the given regex patterns.
+    
+    :param input_param_names: List of all parameter names
+    :param exclude_param_names_regex: List of regex patterns for parameter names to exclude
+    :return: List of parameter names to merge
+    """
+    import re
+    param_names_to_merge = []
+    for param_name in input_param_names:
+        if not any(re.match(regex, param_name) for regex in exclude_param_names_regex):
+            param_names_to_merge.append(param_name)
+    return param_names_to_merge

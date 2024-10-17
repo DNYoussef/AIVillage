@@ -1,5 +1,8 @@
 import torch
 from typing import Dict, List
+import logging
+
+logger = logging.getLogger(__name__)
 
 def linear_merge(merged_state_dict: Dict[str, torch.Tensor], models: List[torch.nn.Module], **kwargs) -> Dict[str, torch.Tensor]:
     weights = kwargs.get('weights', torch.ones(len(models)) / len(models))
@@ -32,6 +35,7 @@ def slerp_merge(merged_state_dict: Dict[str, torch.Tensor], models: List[torch.n
 def ties_merge(merged_state_dict: Dict[str, torch.Tensor], models: List[torch.nn.Module], **kwargs) -> Dict[str, torch.Tensor]:
     threshold = kwargs.get("threshold", 0.1)
     device = next(models[0].parameters()).device
+    logger.info(f"Performing TIES merge with threshold {threshold}")
     for key in models[0].state_dict().keys():
         tensors = []
         for model in models:
@@ -49,6 +53,7 @@ def dare_merge(merged_state_dict: Dict[str, torch.Tensor], models: List[torch.nn
     threshold = kwargs.get("threshold", 0.1)
     amplification = kwargs.get("amplification", 2.0)
     device = next(models[0].parameters()).device
+    logger.info(f"Performing DARE merge with threshold {threshold} and amplification {amplification}")
     for key in models[0].state_dict().keys():
         tensors = []
         for model in models:

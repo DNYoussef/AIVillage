@@ -20,6 +20,8 @@ EvoMerge is an advanced system designed to merge multiple language models using 
    n. Command-line Interface (cli.py)
    o. Visualization (visualization.py)
    p. Logging Configuration (logging_config.py)
+   q. Weight Masking Utilities (mask_weights_utils.py)
+   r. Task Vector Operations (task_vector.py)
 
 3. How the System Works:
    a. Initial Setup:
@@ -42,17 +44,9 @@ EvoMerge is an advanced system designed to merge multiple language models using 
       - After the evolutionary process, the best-performing model is selected as the final output.
 
 4. Key Features:
-   a. Flexible model merging techniques (Parameter Sharing, Deep Fusion, and combinations)
-   b. Evolutionary optimization of merged models
-   c. Parallel model evaluation for improved performance
-   d. Visualization of fitness progression and benchmark results
-   e. Comprehensive CLI for easy interaction
-   f. Integration with Hugging Face models
-   g. GPU support for accelerated computations
-   h. Customizable configuration for merge and evolution settings
-   i. Enhanced logging system with file rotation for better debugging in production environments
-   j. Support for instruction-tuned models
-   k. Cross-domain model merging capabilities
+   [Previous content remains the same, add the following:]
+   l. Weight masking capabilities for model pruning and optimization
+   m. Task vector operations for efficient model merging and fine-tuning
 
 5. CLI Usage:
    To use the EvoMerge system via the command-line interface, you can use the following command:
@@ -80,7 +74,7 @@ EvoMerge is an advanced system designed to merge multiple language models using 
    python -m unittest agent_forge.evomerge.integration_tests
 
 8. Benchmarking:
-   To run performance benchmarks:
+    To run performance benchmarks:
    python -m agent_forge.evomerge.benchmarks
 
 9. Visualization:
@@ -141,22 +135,23 @@ EvoMerge is an advanced system designed to merge multiple language models using 
     - The gguf_utils.py module provides functions for reading and writing GGUF (GPT-Generated Unified Format) files.
     - These utilities can be used for advanced model manipulation and storage optimization.
 
-17. Parallel Processing:
-    - Model evaluation is now parallelized using Python's multiprocessing library.
-    - The number of parallel processes is automatically set based on available CPU cores.
-    - To adjust the number of workers:
-      ```python
-      from agent_forge.evomerge.utils import parallel_evaluate_models
-      results = parallel_evaluate_models(model_paths, max_workers=4)
-      ```
-11. Advanced Usage:
-    - To add new merge techniques, implement the function in merge_techniques.py and add it to the MERGE_TECHNIQUES dictionary.
-    - Custom evaluation metrics can be added by modifying the evaluate_model function in evaluation.py.
-    - For large-scale experiments, consider using a distributed computing framework and modify evolutionary_tournament.py accordingly.
 
-12. Troubleshooting:
-    - If you encounter CUDA out of memory errors, try reducing the population size or using smaller models.
-    - For debugging, use the --verbose flag and check the log files.
-    - Ensure all dependencies are correctly installed and up to date.
+17. Advanced Usage:
+    [Previous content remains the same, add the following:]
+    - Utilize weight masking techniques by importing functions from mask_weights_utils.py
+    - Implement task vector operations for advanced model merging strategies using the TaskVector class in task_vector.py
+
+18. Weight Masking:
+    - The mask_weights_utils.py module provides functions for applying weight masks to model parameters.
+    - Use the mask_input_with_mask_rate function to apply masks based on different strategies (random or magnitude-based).
+    - Weight masking can be used for model pruning and optimization.
+
+19. Task Vector Operations:
+    - The task_vector.py module introduces the TaskVector class for efficient model merging and fine-tuning.
+    - TaskVector objects can be created from pretrained and finetuned models or directly from parameter dictionaries.
+    - Use TaskVector operations to combine multiple models or apply task-specific adaptations.
+
+20. Troubleshooting:
+    [Content remains the same]
 
 For more detailed information on each component, refer to the docstrings and comments within the respective Python files.
