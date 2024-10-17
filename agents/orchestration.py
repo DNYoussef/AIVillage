@@ -3,8 +3,7 @@ import asyncio
 from langroid.agent.task import Task
 from langroid.vector_store.base import VectorStore
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from agents.agent import Agent, AgentConfig
-from agents.self_evolving_system import SelfEvolvingSystem
+from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig, create_agent, SelfEvolvingSystem
 
 async def get_next_task() -> Dict[str, Any]:
     """
@@ -21,12 +20,12 @@ async def process_result(result: Dict[str, Any]):
     """
     print(f"Processing result: {result}")
 
-def initialize_agents(vector_store: VectorStore) -> List[Agent]:
+def initialize_agents(vector_store: VectorStore) -> List[UnifiedBaseAgent]:
     """
     Initialize and return a list of agents with their configurations.
     """
     agent_configs = [
-        AgentConfig(
+        UnifiedAgentConfig(
             name="King",
             description="Coordinator agent",
             capabilities=["coordination", "decision_making"],
@@ -34,7 +33,7 @@ def initialize_agents(vector_store: VectorStore) -> List[Agent]:
             model="gpt-4",
             instructions="You are the King agent, responsible for coordination and decision making."
         ),
-        AgentConfig(
+        UnifiedAgentConfig(
             name="Sage",
             description="Research agent",
             capabilities=["research", "analysis"],
@@ -42,7 +41,7 @@ def initialize_agents(vector_store: VectorStore) -> List[Agent]:
             model="gpt-4",
             instructions="You are the Sage agent, responsible for research and analysis."
         ),
-        AgentConfig(
+        UnifiedAgentConfig(
             name="Magi",
             description="Development agent",
             capabilities=["coding", "debugging"],
@@ -52,7 +51,7 @@ def initialize_agents(vector_store: VectorStore) -> List[Agent]:
         )
     ]
     
-    return [Agent(config) for config in agent_configs]
+    return [create_agent(config.name, config) for config in agent_configs]
 
 async def run_task(self_evolving_system: SelfEvolvingSystem, task_data: Dict[str, Any]):
     """

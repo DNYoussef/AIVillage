@@ -1,14 +1,10 @@
-from .agent import Agent, AgentConfig
+from .unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig, create_agent, SelfEvolvingSystem
 from .orchestration import main
-from .self_evolving_system import SelfEvolvingSystem
-from .communication import protocol
-from .utils import exceptions
 
 __all__ = [
-    "Agent",
-    "AgentConfig",
-    "main",
+    "UnifiedBaseAgent",
+    "UnifiedAgentConfig",
+    "create_agent",
     "SelfEvolvingSystem",
-    "protocol",
-    "exceptions"
+    "main"
 ]

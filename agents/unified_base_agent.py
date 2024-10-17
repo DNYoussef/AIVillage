@@ -1,12 +1,80 @@
 import random
 import numpy as np
-from typing import Dict, Any, List
+from typing import List, Dict, Any, Optional, Callable
+from pydantic import BaseModel, Field
+from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
 from langroid.agent.task import Task
-from agents.agent import Agent
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from langroid.vector_store.base import VectorStore
 from sklearn.linear_model import LogisticRegression
 from types import SimpleNamespace
+
+class UnifiedAgentConfig(ChatAgentConfig):
+    name: str = Field(..., description="The name of the agent")
+    description: str = Field(..., description="A brief description of the agent's purpose")
+    capabilities: List[str] = Field(default_factory=list, description="List of agent capabilities")
+    vector_store: Optional[VectorStore] = Field(None, description="Vector store for the agent")
+    model: str = Field(..., description="The language model to be used by the agent")
+    instructions: str = Field(..., description="Instructions for the agent's behavior")
+
+class UnifiedBaseAgent(ChatAgent):
+    """
+    A comprehensive base agent class that can be easily extended for various agent types.
+    """
+    def __init__(self, config: UnifiedAgentConfig):
+        super().__init__(config)
+        self.name = config.name
+        self.description = config.description
+        self.capabilities = config.capabilities
+        self.vector_store = config.vector_store
+        self.model = config.model
+        self.instructions = config.instructions
+        self.tools: List[Callable] = []
+
+    async def execute_task(self, task: Task) -> Dict[str, Any]:
+        """
+        Execute a given task. This method should be implemented by subclasses.
+        """
+        raise NotImplementedError("Subclasses must implement execute_task method")
+
+    async def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process an incoming message by creating a task and executing it.
+        """
+        task = Task(self, message['content'])
+        return await self.execute_task(task)
+
+    def add_capability(self, capability: str):
+        """
+        Add a new capability to the agent.
+        """
+        if capability not in self.capabilities:
+            self.capabilities.append(capability)
+
+    def remove_capability(self, capability: str):
+        """
+        Remove a capability from the agent.
+        """
+        if capability in self.capabilities:
+            self.capabilities.remove(capability)
+
+    def add_tool(self, tool: Callable):
+        """
+        Add a new tool to the agent.
+        """
+        self.tools.append(tool)
+
+    @property
+    def info(self) -> Dict[str, Any]:
+        """
+        Return a dictionary containing information about the agent.
+        """
+        return {
+            "name": self.name,
+            "description": self.description,
+            "capabilities": self.capabilities,
+            "model": self.model
+        }
 
 class QualityAssurance:
     def __init__(self, upo_threshold: float = 0.7):
@@ -138,7 +206,7 @@ class MCTSConfig:
         self.simulation_depth = 10
 
 class SelfEvolvingSystem:
-    def __init__(self, agents: List[Agent], vector_store: VectorStore):
+    def __init__(self, agents: List[UnifiedBaseAgent], vector_store: VectorStore):
         self.agents = agents
         self.quality_assurance = QualityAssurance()
         self.prompt_baker = PromptBaker(vector_store)
@@ -179,7 +247,7 @@ class SelfEvolvingSystem:
         self.quality_assurance.upo_threshold = await self.optimize_upo_threshold()
         print("System-wide evolution complete.")
 
-    async def evolve_agent(self, agent: Agent):
+    async def evolve_agent(self, agent: UnifiedBaseAgent):
         print(f"Evolving agent: {agent.name}")
         performance = await self.analyze_agent_performance(agent)
         new_capabilities = await self.generate_new_capabilities(agent, performance)
@@ -187,13 +255,13 @@ class SelfEvolvingSystem:
             agent.add_capability(capability)
         print(f"Agent {agent.name} evolution complete. New capabilities: {new_capabilities}")
 
-    async def analyze_agent_performance(self, agent: Agent) -> Dict[str, float]:
+    async def analyze_agent_performance(self, agent: UnifiedBaseAgent) -> Dict[str, float]:
         print(f"Analyzing performance of agent: {agent.name}")
         performance = {capability: random.uniform(0.4, 1.0) for capability in agent.capabilities}
         print(f"Performance analysis for {agent.name}: {performance}")
         return performance
 
-    async def generate_new_capabilities(self, agent: Agent, performance: Dict[str, float]) -> List[str]:
+    async def generate_new_capabilities(self, agent: UnifiedBaseAgent, performance: Dict[str, float]) -> List[str]:
         print(f"Generating new capabilities for agent: {agent.name}")
         low_performing = [cap for cap, score in performance.items() if score < 0.6]
         prompt = f"Agent {agent.name} is underperforming in {', '.join(low_performing)}. Suggest 2-3 new capabilities to improve performance."
@@ -239,3 +307,28 @@ class SelfEvolvingSystem:
         self.recent_decisions.append((features, outcome))
         if len(self.recent_decisions) > 1000:
             self.recent_decisions.pop(0)
+
+def create_agent(agent_type: str, config: UnifiedAgentConfig) -> UnifiedBaseAgent:
+    """
+    Factory function to create different types of agents.
+    """
+    return UnifiedBaseAgent(config)
+
+# Example usage
+if __name__ == "__main__":
+    vector_store = VectorStore()  # Placeholder, implement actual VectorStore
+    
+    agent_config = UnifiedAgentConfig(
+        name="ExampleAgent",
+        description="An example agent",
+        capabilities=["general_task"],
+        vector_store=vector_store,
+        model="gpt-4",
+        instructions="You are an example agent capable of handling general tasks."
+    )
+    
+    agent = create_agent("ExampleAgent", agent_config)
+    
+    self_evolving_system = SelfEvolvingSystem([agent], vector_store)
+    
+    # Use the self_evolving_system to process tasks and evolve the system
