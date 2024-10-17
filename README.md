@@ -158,3 +158,36 @@ python cli.py --download-and-merge --model1 gpt2 --model2 distilgpt2 --ps-techni
 This command will merge the GPT-2 and DistilGPT-2 models using SLERP and DARE for parameter space merging, Frankenmerge for deep fusion space merging, and apply weight masking with a rate of 0.1 using the magnitude-based strategy.
 
 For more detailed information on model merging and advanced configurations, please refer to the `docs/model_merging.md` file.
+
+## King Agent
+
+The King Agent is a sophisticated AI system designed to coordinate and manage multiple AI agents in the AI Village project. It uses advanced decision-making processes, task routing, and management techniques to efficiently handle complex tasks and workflows.
+
+### Key Features
+
+1. **Monte Carlo Tree Search (MCTS) for Workflow Optimization**: The King Agent uses MCTS to generate and optimize workflows for complex tasks.
+
+2. **Incentive-Based Agent Management**: An incentive model is implemented to motivate and manage multiple agents effectively.
+
+3. **Intelligent Task Routing**: The King Agent uses a preference-based approach to route tasks to the most appropriate agents.
+
+4. **Hierarchical Sub-Goal Generation**: The system can break down complex tasks into manageable sub-goals, improving overall task completion efficiency.
+
+5. **Continuous Learning and Adaptation**: The King Agent implements a feedback loop to continuously improve its decision-making and task allocation processes.
+
+### Components
+
+- **KingCoordinator**: The central component that manages interactions between different parts of the system.
+- **UnifiedTaskManager**: Responsible for creating, assigning, and managing tasks across different agents.
+- **DecisionMaker**: Makes complex decisions using various AI techniques, including MCTS.
+- **AgentRouter**: Efficiently routes tasks to the most appropriate agents based on their capabilities and past performance.
+
+For more detailed information about the King Agent, its components, and usage, please refer to the `agents/king/README.md` file.
+
+## Contributing
+
+Contributions to the AI Village project are welcome. Please ensure that your code adheres to the project's coding standards and is accompanied by appropriate tests and documentation.
+
+## License
+
+[Add your license information here]

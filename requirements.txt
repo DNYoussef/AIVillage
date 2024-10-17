@@ -35,3 +35,8 @@ llama.cpp
 maes
 gpt-researcher>=1.0.0
 scrapegraphai>=1.0.0
+# New dependencies for King Agent and related components
+mcts>=1.0.0  # For Monte Carlo Tree Search
+gym>=0.21.0  # For reinforcement learning environments (used in MCTS)
+scipy>=1.7.3  # For scientific computing (used in various components)
+matplotlib>=3.5.1  # For visualization (if needed)

@@ -1,18 +1,24 @@
 from typing import List, Dict, Any
 from ..communication.protocol import StandardCommunicationProtocol, Message, MessageType
 from ..utils.exceptions import AIVillageException
+from .seal_enhanced_planner import SEALEnhancedPlanGenerator
 
 class ProblemAnalyzer:
     def __init__(self, communication_protocol: StandardCommunicationProtocol, king_coordinator):
         self.communication_protocol = communication_protocol
         self.king_coordinator = king_coordinator
+        self.enhanced_plan_generator = SEALEnhancedPlanGenerator()
 
     async def analyze(self, task: str, rag_info: Dict[str, Any]) -> Dict[str, Any]:
         try:
             agent_analyses = await self._collect_agent_analyses(task)
             critiqued_analyses = await self._collect_critiqued_analyses(agent_analyses)
             revised_analyses = await self._collect_revised_analyses(critiqued_analyses)
-            final_analysis = await self._create_final_analysis(revised_analyses, rag_info)
+            
+            # Generate enhanced plan
+            enhanced_plan = await self.enhanced_plan_generator.generate_enhanced_plan(task, rag_info)
+            
+            final_analysis = await self._create_final_analysis(revised_analyses, rag_info, enhanced_plan)
             return final_analysis
         except Exception as e:
             raise AIVillageException(f"Error in problem analysis: {str(e)}")
@@ -62,9 +68,21 @@ class ProblemAnalyzer:
             revised_analyses.append({"agent": analysis["agent"], "revised_analysis": response.content["revised_analysis"]})
         return revised_analyses
     
-    async def _create_final_analysis(self, revised_analyses: List[Dict[str, Any]], rag_info: Dict[str, Any]) -> Dict[str, Any]:
+    async def _create_final_analysis(self, revised_analyses: List[Dict[str, Any]], rag_info: Dict[str, Any], enhanced_plan: Dict[str, Any]) -> Dict[str, Any]:
         try:
             final_analysis = await self.king_coordinator.create_final_analysis(revised_analyses, rag_info)
+            final_analysis['enhanced_plan'] = enhanced_plan
             return final_analysis
         except Exception as e:
             raise AIVillageException(f"Error in creating final analysis: {str(e)}")
+
+    async def update_models(self, task: Dict[str, Any], result: Dict[str, Any]):
+        await self.enhanced_plan_generator.update(task, result)
+
+    def save_models(self, path: str):
+        self.enhanced_plan_generator.save(path)
+
+    def load_models(self, path: str):
+        self.enhanced_plan_generator.load(path)
+
+

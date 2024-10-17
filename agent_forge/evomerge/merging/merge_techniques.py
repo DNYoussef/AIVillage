@@ -16,11 +16,15 @@ def linear_merge(merged_state_dict: Dict[str, torch.Tensor], models: List[torch.
             # Initialize merged_param as an empty list to collect chunks
             merged_chunks = []
 
-            # Check for meta tensors before chunking
+            # Check for meta tensors
             meta_tensors = [model.state_dict()[key] for model in models if model.state_dict()[key].is_meta]
-            if not meta_tensors:
+            if meta_tensors:
+                # If meta tensors are found, create an empty tensor of the correct shape
+                param_shape = models[0].state_dict()[key].shape
+                merged_param = torch.empty(param_shape, device='cpu')
+            else:
                 numel = models[0].state_dict()[key].numel()
-                param_shape = models[0].state_dict()[key].shape  # Correctly assign param_shape
+                param_shape = models[0].state_dict()[key].shape
                 for i in range(0, numel, chunk_size):
                     chunk_params = []
                     for model in models:
@@ -34,10 +38,6 @@ def linear_merge(merged_state_dict: Dict[str, torch.Tensor], models: List[torch.
 
                 merged_param = torch.cat(merged_chunks)
                 del merged_chunks
-            else:
-                # If any meta tensors are found, create an empty tensor of the correct shape
-                param_shape = models[0].state_dict()[key].shape
-                merged_param = torch.empty(param_shape, device='cpu')
 
             # Reshape merged_param to the original parameter shape
             merged_state_dict[key] = merged_param.view(param_shape)
@@ -250,34 +250,24 @@ def dfs_merge(merged_state_dict: Dict[str, torch.Tensor], models: List[torch.nn.
 
     return merged_state_dict
 
-def frankenmerge(merged_state_dict: Dict[str, torch.Tensor], models: List[torch.nn.Module], **kwargs) -> Dict[str, torch.Tensor]:
-    device = torch.device('cpu')
-    chunk_size = kwargs.get('chunk_size', 1000000)
-
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        for idx, (name, tensor) in enumerate(models[0].state_dict().items()):
-            param_shape = tensor.shape
-            numel = tensor.numel()
-
-            meta_tensors = [tensor for tensor in [model.state_dict()[name] for model in models] if tensor.is_meta]
-            if not meta_tensors:
-                merged_chunks = []
-                for i in range(0, numel, chunk_size):
-                    # Select the chunk from the appropriate model
-                    model_idx = idx % len(models)
-                    chunk = models[model_idx].state_dict()[name].flatten()[i:i+chunk_size].to(device)
-                    merged_chunks.append(chunk.cpu())
-
-                    del chunk
-
-                merged_param = torch.cat(merged_chunks)
-                del merged_chunks
-            else:
-                merged_param = torch.empty(param_shape, device='cpu')
-
-            merged_state_dict[name] = merged_param.view(param_shape)
-
-    return merged_state_dict
+def frankenmerge(merged_model, models, **kwargs):
+    merged_state_dict = {}
+    for name, param in merged_model.named_parameters():
+        param_shape = param.shape
+        merged_param = torch.zeros_like(param)
+        for i, model in enumerate(models):
+            if name in model.state_dict():
+                merged_param += model.state_dict()[name]
+        merged_param /= len(models)
+        merged_state_dict[name] = merged_param.view(param_shape)
+    
+    # Create a new state dict with only the compatible parameters
+    compatible_state_dict = {k: v for k, v in merged_state_dict.items() if k in merged_model.state_dict()}
+    
+    # Load the compatible state dict into the model
+    merged_model.load_state_dict(compatible_state_dict, strict=False)
+    
+    return merged_model
 
 MERGE_TECHNIQUES = {
     "linear": linear_merge,
@@ -288,3 +278,6 @@ MERGE_TECHNIQUES = {
     "frankenmerge": frankenmerge,
     "dfs": dfs_merge,
 }
+
+
+
