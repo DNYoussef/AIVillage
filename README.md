@@ -4,7 +4,7 @@ This project implements a multi-agent AI system using Langroid, featuring a self
 
 ## System Components
 
-1. Base Agent: A foundational agent class built on Langroid's ChatAgent.
+1. Agent: A comprehensive agent class that combines features from the previous Agent and BaseAgent classes, built on Langroid's ChatAgent.
 2. Specialized Agents:
    - King Agent: Coordinates tasks and manages other agents.
    - Sage Agent: Handles research and analysis tasks.
@@ -27,6 +27,7 @@ The self-evolving system is the core of the AI Village's continuous improvement 
 5. Decision-Making Layer: Utilizes advanced AI techniques for making informed decisions based on tasks and context.
 
 The system periodically evolves by updating agent capabilities, refining decision-making processes, and optimizing its overall architecture.
+
 
 ## Setup
 
@@ -65,9 +66,19 @@ This will start the AI Village system, initializing all agents and the self-evol
 
 To add new capabilities or agents:
 
-1. Create a new agent class inheriting from `BaseAgent`
+1. Create a new agent class inheriting from `Agent`
 2. Implement the `execute_task` method for the new agent
 3. Add the new agent to the `SelfEvolvingSystem` in `orchestration.py`
+
+## Recent Refactoring
+
+The agent system has recently undergone a refactoring process to improve modularity and reduce redundancy. Key changes include:
+
+1. Consolidation of the `Agent` and `BaseAgent` classes into a single, more comprehensive `Agent` class.
+2. Updates to the `orchestration.py` file to use the new `Agent` class and improve its structure.
+3. Refactoring of the `self_evolving_system.py` file to work with the new `Agent` class and improve overall structure and readability.
+
+These changes have made the code more modular, easier to maintain, and more consistent across the system. The self-evolving system now works with a unified `Agent` class, which should make it easier to add new agent types or modify existing ones in the future.
 
 ## Future Improvements
 
@@ -265,4 +276,5 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 ## License
 
 This project is licensed under the MIT License.
+
 

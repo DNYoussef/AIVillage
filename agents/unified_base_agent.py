@@ -1,13 +1,16 @@
 import random
 import numpy as np
-from typing import List, Dict, Any, Optional, Callable
+from typing import List, Dict, Any, Optional, Callable, Tuple
 from pydantic import BaseModel, Field
 from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
-from langroid.agent.task import Task
+from langroid.agent.task import Task as LangroidTask
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from langroid.vector_store.base import VectorStore
 from sklearn.linear_model import LogisticRegression
 from types import SimpleNamespace
+from rag_system.core.agent_interface import AgentInterface
+from rag_system.core.pipeline import RAGPipeline
+from rag_system.core.config import RAGConfig
 
 class UnifiedAgentConfig(ChatAgentConfig):
     name: str = Field(..., description="The name of the agent")
@@ -17,7 +20,7 @@ class UnifiedAgentConfig(ChatAgentConfig):
     model: str = Field(..., description="The language model to be used by the agent")
     instructions: str = Field(..., description="Instructions for the agent's behavior")
 
-class UnifiedBaseAgent(ChatAgent):
+class UnifiedBaseAgent(ChatAgent, AgentInterface):
     """
     A comprehensive base agent class that can be easily extended for various agent types.
     """
@@ -30,8 +33,10 @@ class UnifiedBaseAgent(ChatAgent):
         self.model = config.model
         self.instructions = config.instructions
         self.tools: List[Callable] = []
+        self.rag_config = RAGConfig()
+        self.rag_pipeline = RAGPipeline(self.rag_config)
 
-    async def execute_task(self, task: Task) -> Dict[str, Any]:
+    async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
         """
         Execute a given task. This method should be implemented by subclasses.
         """
@@ -41,7 +46,7 @@ class UnifiedBaseAgent(ChatAgent):
         """
         Process an incoming message by creating a task and executing it.
         """
-        task = Task(self, message['content'])
+        task = LangroidTask(self, message['content'])
         return await self.execute_task(task)
 
     def add_capability(self, capability: str):
@@ -76,20 +81,89 @@ class UnifiedBaseAgent(ChatAgent):
             "model": self.model
         }
 
+    # Implement AgentInterface methods
+
+    async def generate(self, prompt: str) -> str:
+        """
+        Generate a response using the agent's language model.
+        """
+        return await self.llm.generate(prompt)
+
+    async def get_embedding(self, text: str) -> List[float]:
+        """
+        Get the embedding for the given text.
+        """
+        return await self.rag_pipeline.get_embedding(text)
+
+    async def rerank(self, query: str, results: List[Dict[str, Any]], k: int) -> List[Dict[str, Any]]:
+        """
+        Rerank the given results based on the query.
+        """
+        return await self.rag_pipeline.rerank(query, results, k)
+
+    async def introspect(self) -> Dict[str, Any]:
+        """
+        Return the agent's internal state.
+        """
+        return self.info
+
+    async def communicate(self, message: str, recipient: 'AgentInterface') -> str:
+        """
+        Communicate with another agent.
+        """
+        response = await recipient.generate(f"Message from {self.name}: {message}")
+        return f"Sent: {message}, Received: {response}"
+
+    async def activate_latent_space(self, query: str) -> Tuple[str, str]:
+        """
+        Activate the agent's latent space for the given query.
+        """
+        activation_prompt = f"""
+        Given the following query, provide:
+        1. All relevant background knowledge you have about the topic.
+        2. A refined version of the query that incorporates this background knowledge.
+
+        Original query: {query}
+
+        Background Knowledge:
+        """
+
+        response = await self.generate(activation_prompt)
+        
+        # Split the response into background knowledge and refined query
+        parts = response.split("Refined Query:")
+        background_knowledge = parts[0].strip()
+        refined_query = parts[1].strip() if len(parts) > 1 else query
+
+        return background_knowledge, refined_query
+
+    async def query_rag(self, query: str) -> Dict[str, Any]:
+        """
+        Submit a query to the RAG system and receive a structured response.
+        """
+        result = await self.rag_pipeline.process_query(query)
+        return result
+
+    async def add_document(self, content: str, filename: str):
+        """
+        Add a new document to the RAG system.
+        """
+        await self.rag_pipeline.add_document(content, filename)
+
 class QualityAssurance:
     def __init__(self, upo_threshold: float = 0.7):
         self.upo_threshold = upo_threshold
 
-    def check_task_safety(self, task: Task) -> bool:
+    def check_task_safety(self, task: LangroidTask) -> bool:
         uncertainty = self.estimate_uncertainty(task)
         return uncertainty < self.upo_threshold
 
-    def estimate_uncertainty(self, task: Task) -> float:
+    def estimate_uncertainty(self, task: LangroidTask) -> float:
         n_samples = 100
         predictions = [self.predict(task) for _ in range(n_samples)]
         return np.std(predictions)
 
-    def predict(self, task: Task) -> float:
+    def predict(self, task: LangroidTask) -> float:
         return random.random()
 
     async def get_recent_safety_checks(self) -> List[Any]:
@@ -112,15 +186,15 @@ class ContinuousLearner:
     def __init__(self, vector_store: VectorStore):
         self.vector_store = vector_store
 
-    async def update(self, task: Task, result: Any):
+    async def update(self, task: LangroidTask, result: Any):
         learned_info = self.extract_learning(task, result)
         await self.vector_store.add_texts([learned_info])
 
-    def extract_learning(self, task: Task, result: Any) -> str:
+    def extract_learning(self, task: LangroidTask, result: Any) -> str:
         task_type = task.type if hasattr(task, 'type') else 'unknown'
         return f"LEARNED: Task '{task_type}' with content '{task.content}' resulted in '{result}'. PARAMS: {self.extract_params(task, result)}"
 
-    def extract_params(self, task: Task, result: Any) -> Dict[str, Any]:
+    def extract_params(self, task: LangroidTask, result: Any) -> Dict[str, Any]:
         params = {
             'task_type': task.type if hasattr(task, 'type') else 'unknown',
             'content_length': len(task.content),
@@ -155,7 +229,7 @@ class DecisionMaker:
     def __init__(self):
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
 
-    async def make_decision(self, task: Task, context: str) -> Any:
+    async def make_decision(self, task: LangroidTask, context: str) -> Any:
         mcts_result = self.monte_carlo_tree_search(task, context)
         dpo_result = await self.direct_preference_optimization(task, context)
         
@@ -169,22 +243,22 @@ class DecisionMaker:
         decision = await self.llm.complete(decision_prompt)
         return decision.text
 
-    def monte_carlo_tree_search(self, task: Task, context: str) -> str:
+    def monte_carlo_tree_search(self, task: LangroidTask, context: str) -> str:
         options = ["Option A", "Option B", "Option C"]
         scores = [self.simulate(task, context, option) for option in options]
         best_option = options[np.argmax(scores)]
         return f"MCTS suggests: {best_option}"
 
-    def simulate(self, task: Task, context: str, option: str) -> float:
+    def simulate(self, task: LangroidTask, context: str, option: str) -> float:
         return random.random()
 
-    async def direct_preference_optimization(self, task: Task, context: str) -> str:
+    async def direct_preference_optimization(self, task: LangroidTask, context: str) -> str:
         options = ["Approach X", "Approach Y", "Approach Z"]
         preferences = await self.get_preferences(task, context, options)
         best_approach = max(preferences, key=preferences.get)
         return f"DPO suggests: {best_approach}"
 
-    async def get_preferences(self, task: Task, context: str, options: List[str]) -> Dict[str, float]:
+    async def get_preferences(self, task: LangroidTask, context: str, options: List[str]) -> Dict[str, float]:
         prompt = f"""
         Task: {task.content}
         Context: {context}
@@ -217,7 +291,7 @@ class SelfEvolvingSystem:
         self.dpo = LogisticRegression()
         self.recent_decisions = []
 
-    async def process_task(self, task: Task) -> Dict[str, Any]:
+    async def process_task(self, task: LangroidTask) -> Dict[str, Any]:
         if not self.quality_assurance.check_task_safety(task):
             return {"error": "Task deemed unsafe"}
 

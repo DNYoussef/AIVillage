@@ -1,23 +1,12 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import Mock, patch
+from agents.unified_base_agent import UnifiedBaseAgent as Agent
 from agents.king.king_agent import KingAgent
-from agents.agent import Agent, AgentConfig  # Updated import
-from langroid.agent.task import Task
-from agents.utils.exceptions import AIVillageException
-from agents.communication.protocol import StandardCommunicationProtocol
 
-class TestKingAgentIntegration(unittest.TestCase):
+class TestIntegration(unittest.TestCase):
     def setUp(self):
-        config = AgentConfig(  # Changed from BaseAgentConfig to AgentConfig
-            name="TestKing",
-            description="Test King Agent",
-            capabilities=["test"],
-            vector_store=None,
-            model="gpt-4",  # Added model parameter
-            instructions="You are a test King Agent"  # Added instructions parameter
-        )
-        self.king_agent = KingAgent(config)
-        self.communication_protocol = StandardCommunicationProtocol()
+        self.mock_vector_store = Mock()
+        self.king_agent = KingAgent(self.mock_vector_store)
 
     @patch('agents.king.king_agent.KingAgent.route_task')
     async def test_execute_task_routing(self, mock_route_task):
