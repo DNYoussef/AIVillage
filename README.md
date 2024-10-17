@@ -1,5 +1,80 @@
-# AI Village
+# AI Village Self-Improving System
 
+This project implements a multi-agent AI system using Langroid, featuring a self-evolving architecture for continuous improvement and adaptation.
+
+## System Components
+
+1. Base Agent: A foundational agent class built on Langroid's ChatAgent.
+2. Specialized Agents:
+   - King Agent: Coordinates tasks and manages other agents.
+   - Sage Agent: Handles research and analysis tasks.
+   - Magi Agent: Focuses on development and coding tasks.
+3. Self-Evolving System: Implements multi-layer improvement mechanisms:
+   - Quality Assurance: Ensures task safety and stability using Uncertainty-enhanced Preference Optimization (UPO).
+   - Prompt Baking: Efficiently incorporates new knowledge using Low-Rank Adaptation (LoRA) techniques.
+   - Continuous Learning: Rapidly integrates new experiences using Self-Educated Learning for Function PARaMeterization (SELF-PARAM).
+   - SAGE Framework: Enables recursive self-improvement through assistant-checker-reviser cycle.
+   - Decision Making: Utilizes advanced algorithms (MCTS and DPO) for effective choices.
+
+## Self-Evolving System
+
+The self-evolving system is the core of the AI Village's continuous improvement capabilities. It consists of several interconnected layers:
+
+1. Quality Assurance Layer: Uses Monte Carlo dropout for uncertainty estimation to ensure task safety.
+2. Foundational Layer (Prompt Baking): Encodes and integrates new knowledge efficiently into the system's knowledge base.
+3. Continuous Learning Layer: Extracts valuable information from tasks and results to update the system's capabilities.
+4. Agent Architecture Layer (SAGE Framework): Implements a self-aware generative engine for response generation, evaluation, and revision.
+5. Decision-Making Layer: Utilizes advanced AI techniques for making informed decisions based on tasks and context.
+
+The system periodically evolves by updating agent capabilities, refining decision-making processes, and optimizing its overall architecture.
+
+## Setup
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/ai-village.git
+   cd ai-village
+   ```
+
+2. Create and activate a virtual environment:
+   ```
+   python -m venv venv
+   source venv/bin/activate  # On Windows, use venv\Scripts\activate
+   ```
+
+3. Install the required packages:
+   ```
+   pip install -r requirements.txt
+   ```
+
+4. Set up environment variables:
+   - Create a `.env` file in the project root
+   - Add your OpenAI API key: `OPENAI_API_KEY=your_api_key_here`
+
+## Running the System
+
+Execute the main script:
+
+```
+python agents/orchestration.py
+```
+
+This will start the AI Village system, initializing all agents and the self-evolving components.
+
+## Extending the System
+
+To add new capabilities or agents:
+
+1. Create a new agent class inheriting from `BaseAgent`
+2. Implement the `execute_task` method for the new agent
+3. Add the new agent to the `SelfEvolvingSystem` in `orchestration.py`
+
+## Future Improvements
+
+1. Implement a concrete VectorStore for efficient knowledge storage and retrieval.
+2. Develop more sophisticated task generation and result processing mechanisms.
+3. Implement proper error handling and logging throughout the system.
+4. Enhance the evolution mechanisms to include more advanced techniques like neural architecture search.
 ## Populating the RAG System with Academic Papers
 
 To provide your AI Village with a starting base of information, you can manually feed academic papers into the RAG system. Follow these steps to add several dozen papers:
@@ -183,11 +258,11 @@ The King Agent is a sophisticated AI system designed to coordinate and manage mu
 - **AgentRouter**: Efficiently routes tasks to the most appropriate agents based on their capabilities and past performance.
 
 For more detailed information about the King Agent, its components, and usage, please refer to the `agents/king/README.md` file.
-
 ## Contributing
 
-Contributions to the AI Village project are welcome. Please ensure that your code adheres to the project's coding standards and is accompanied by appropriate tests and documentation.
+Contributions are welcome! Please fork the repository and submit a pull request with your changes.
 
 ## License
 
-[Add your license information here]
+This project is licensed under the MIT License.
+

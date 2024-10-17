@@ -1,42 +1,33 @@
-from ..agent import Agent
-from ...communications.protocol import StandardCommunicationProtocol
-from scrapegraphai.graphs import SmartScraperGraph, SearchGraph
-from gpt_researcher import GPTResearcher
+from typing import List, Dict, Any
+from agents.base_agent import BaseAgent, BaseAgentConfig
+from langroid.agent.task import Task
 
-class SageAgent(Agent):
-    def __init__(self, communication_protocol: StandardCommunicationProtocol):
-        super().__init__(
-            name="Sage",
-            model="gpt-4o-mini",
-            instructions=(
-                "You are Sage, an AI agent specializing in information gathering and research. "
-                "Your role is to find, extract, and synthesize relevant data to support the AI Village."
-            ),
-            tools=[self.web_search, self.query_knowledge_base]
-        )
-        self.communication_protocol = communication_protocol
-        self.knowledge_base = {}  # TODO: Implement proper knowledge base
+class SageAgentConfig(BaseAgentConfig):
+    research_capabilities: List[str] = ["web_search", "data_analysis", "information_synthesis"]
 
-    async def web_search(self, query: str) -> str:
-        """Perform a web search using Scrapegraph-ai and gpt-researcher."""
-        # Use SearchGraph for multi-page search
-        search_graph = SearchGraph(query)
-        search_results = search_graph.run()
+class SageAgent(BaseAgent):
+    def __init__(self, config: SageAgentConfig):
+        super().__init__(config)
+        self.research_capabilities = config.research_capabilities
 
-        # Use GPTResearcher to summarize search results
-        researcher = GPTResearcher(query=query, report_type="research_report")
-        researcher.data = search_results
-        summary = await researcher.write_report()
-
-        # Store search results and summary in knowledge base
-        self.knowledge_base[query] = {"search_results": search_results, "summary": summary}
-
-        return summary
-
-    async def query_knowledge_base(self, query: str) -> str:
-        """Query the internal knowledge base for relevant information."""
-        # TODO: Implement fuzzy matching and relevance scoring
-        if query in self.knowledge_base:
-            return self.knowledge_base[query]["summary"]
+    async def execute_task(self, task: Task) -> Dict[str, Any]:
+        if task.type == "research":
+            return await self.conduct_research(task)
+        elif task.type == "analyze":
+            return await self.analyze_data(task)
+        elif task.type == "synthesize":
+            return await self.synthesize_information(task)
         else:
-            return "No relevant information found in knowledge base."
+            return await super().execute_task(task)
+
+    async def conduct_research(self, task: Task) -> Dict[str, Any]:
+        # Implement research logic
+        pass
+
+    async def analyze_data(self, task: Task) -> Dict[str, Any]:
+        # Implement data analysis logic
+        pass
+
+    async def synthesize_information(self, task: Task) -> Dict[str, Any]:
+        # Implement information synthesis logic
+        pass

@@ -1,35 +1,33 @@
-from ..agent import Agent
-from ...communications.protocol import StandardCommunicationProtocol
+from typing import List, Dict, Any
+from agents.base_agent import BaseAgent, BaseAgentConfig
+from langroid.agent.task import Task
 
-class MagiAgent(Agent):
-    def __init__(self, communication_protocol: StandardCommunicationProtocol):
-        super().__init__(
-            name="Magi",
-            model="gpt-4o-mini",
-            instructions=(
-                "You are Magi, an AI agent specializing in coding and software development. "
-                "Your role is to write, test, and maintain the codebase for the AI Village."
-            ),
-            tools=[self.analyze_code, self.write_tests, self.refactor, self.generate_docs]
-        )
-        self.communication_protocol = communication_protocol
+class MagiAgentConfig(BaseAgentConfig):
+    development_capabilities: List[str] = ["coding", "debugging", "code_review"]
 
-    async def analyze_code(self, code: str) -> str:
-        """Analyze given code to understand its structure and functionality."""
-        # TODO: Implement code analysis
+class MagiAgent(BaseAgent):
+    def __init__(self, config: MagiAgentConfig):
+        super().__init__(config)
+        self.development_capabilities = config.development_capabilities
+
+    async def execute_task(self, task: Task) -> Dict[str, Any]:
+        if task.type == "code":
+            return await self.write_code(task)
+        elif task.type == "debug":
+            return await self.debug_code(task)
+        elif task.type == "review":
+            return await self.review_code(task)
+        else:
+            return await super().execute_task(task)
+
+    async def write_code(self, task: Task) -> Dict[str, Any]:
+        # Implement code writing logic
         pass
 
-    async def write_tests(self, code: str) -> str:  
-        """Generate test cases for given code."""
-        # TODO: Implement test generation
+    async def debug_code(self, task: Task) -> Dict[str, Any]:
+        # Implement debugging logic
         pass
 
-    async def refactor(self, code: str) -> str:
-        """Refactor given code to improve quality and maintainability."""
-        # TODO: Implement refactoring
-        pass
-
-    async def generate_docs(self, code: str) -> str:
-        """Generate documentation for given code."""
-        # TODO: Implement doc generation
+    async def review_code(self, task: Task) -> Dict[str, Any]:
+        # Implement code review logic
         pass
