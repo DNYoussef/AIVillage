@@ -7,7 +7,7 @@ from .merger import AdvancedModelMerger
 from .utils import load_models, EvoMergeException, check_system_resources
 from .logging_config import setup_logging
 
-def download_and_merge_models(model_paths, merge_techniques, weight_mask_rate, use_weight_rescale, mask_strategy, use_cli=False, verbose=False):
+def download_and_merge_models(model_paths, merge_techniques, weight_mask_rate, use_weight_rescale, mask_strategy, use_disk_based_merge, chunk_size, use_cli=False, verbose=False):
     logger = logging.getLogger(__name__)
     logger.info(f"Attempting to download and merge models: {model_paths}")
 
@@ -20,6 +20,8 @@ def download_and_merge_models(model_paths, merge_techniques, weight_mask_rate, u
     config.merge_settings.weight_mask_rate = weight_mask_rate
     config.merge_settings.use_weight_rescale = use_weight_rescale
     config.merge_settings.mask_strategy = mask_strategy
+    config.merge_settings.use_disk_based_merge = use_disk_based_merge
+    config.merge_settings.chunk_size = chunk_size
 
     # Check system resources before loading models
     check_system_resources([model_ref.path for model_ref in config.models])
@@ -66,6 +68,8 @@ def main():
     parser.add_argument("--weight-mask-rate", type=float, default=0.0, help="Weight mask rate (0.0 to 1.0)")
     parser.add_argument("--use-weight-rescale", action="store_true", help="Use weight rescaling")
     parser.add_argument("--mask-strategy", type=str, default="random", choices=["random", "magnitude"], help="Mask strategy")
+    parser.add_argument("--use-disk-based-merge", action="store_true", help="Use disk-based merging to save RAM")
+    parser.add_argument("--chunk-size", type=int, default=1000000, help="Chunk size for disk-based operations")
     parser.add_argument("--use-cli", action="store_true", help="Use Hugging Face CLI to download models")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
@@ -87,6 +91,8 @@ def main():
         logger.info(f"Weight mask rate: {args.weight_mask_rate}")
         logger.info(f"Use weight rescale: {args.use_weight_rescale}")
         logger.info(f"Mask strategy: {args.mask_strategy}")
+        logger.info(f"Use disk-based merge: {args.use_disk_based_merge}")
+        logger.info(f"Chunk size: {args.chunk_size}")
         
         merged_models = download_and_merge_models(
             model_paths, 
@@ -94,6 +100,8 @@ def main():
             args.weight_mask_rate, 
             args.use_weight_rescale, 
             args.mask_strategy,
+            args.use_disk_based_merge,
+            args.chunk_size,
             args.use_cli, 
             args.verbose
         )

@@ -96,10 +96,20 @@ class AdvancedModelMerger:
     def _ps_merge(self, models: List[torch.nn.Module]) -> torch.nn.Module:
         logger.info("Performing parameter space merge")
         merged_state_dict = {}
+        chunk_size = 1000000  # Adjust based on available memory
+
         for technique in self.config.merge_settings.ps_techniques:
-            if technique not in MERGE_TECHNIQUES:
-                raise ValueError(f"Unknown merge technique: {technique}")
-            merged_state_dict = MERGE_TECHNIQUES[technique](merged_state_dict, models, **self.config.merge_settings.parameters.get(technique, {}))
+            for name, _ in models[0].named_parameters():
+                merged_param = None
+                for i in range(0, models[0].state_dict()[name].numel(), chunk_size):
+                    chunk_params = [model.state_dict()[name].flatten()[i:i+chunk_size] for model in models]
+                    merged_chunk = MERGE_TECHNIQUES[technique](chunk_params, **self.config.merge_settings.parameters.get(technique, {}))
+                    if merged_param is None:
+                        merged_param = merged_chunk
+                    else:
+                        merged_param = torch.cat([merged_param, merged_chunk])
+                
+                merged_state_dict[name] = merged_param.reshape(models[0].state_dict()[name].shape)
         
         merged_model = type(models[0])(**models[0].config.to_dict())
         merged_model.load_state_dict(merged_state_dict)

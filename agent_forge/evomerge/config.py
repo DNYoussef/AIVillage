@@ -25,6 +25,8 @@ class MergeSettings(BaseModel):
     weight_mask_rate: float = Field(default=0.0, ge=0.0, le=1.0)
     use_weight_rescale: bool = Field(default=True)
     mask_strategy: str = Field(default="random")
+    use_disk_based_merge: bool = Field(default=True)
+    chunk_size: int = Field(default=1000000)
 
     @validator('merge_method')
     def validate_merge_method(cls, v):
@@ -113,7 +115,9 @@ def create_default_config() -> Configuration:
             cross_domain_strategy="adapter",
             weight_mask_rate=0.0,
             use_weight_rescale=True,
-            mask_strategy="random"
+            mask_strategy="random",
+            use_disk_based_merge=True,
+            chunk_size=1000000
         ),
         evolution_settings=EvolutionSettings(
             use_cma_es=False,
