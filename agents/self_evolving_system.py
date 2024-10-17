@@ -2,8 +2,7 @@ import random
 import numpy as np
 from typing import Dict, Any, List
 from langroid.agent.task import Task
-from agents.base_agent import BaseAgent
-from langroid.utils.configuration import Settings
+from agents.agent import Agent
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from langroid.vector_store.base import VectorStore
 from sklearn.linear_model import LogisticRegression
@@ -18,18 +17,14 @@ class QualityAssurance:
         return uncertainty < self.upo_threshold
 
     def estimate_uncertainty(self, task: Task) -> float:
-        # Implement Monte Carlo dropout for uncertainty estimation
         n_samples = 100
         predictions = [self.predict(task) for _ in range(n_samples)]
         return np.std(predictions)
 
     def predict(self, task: Task) -> float:
-        # Simulated prediction function
         return random.random()
 
     async def get_recent_safety_checks(self) -> List[Any]:
-        # This method would retrieve recent safety checks
-        # For simplicity, we're returning a simulated list
         return [SimpleNamespace(safety_score=random.uniform(0.5, 1.0)) for _ in range(100)]
 
 class PromptBaker:
@@ -41,8 +36,6 @@ class PromptBaker:
         await self.vector_store.add_texts([encoded_knowledge])
 
     def encode_knowledge(self, knowledge: str) -> str:
-        # Implement LoRA-like encoding
-        # This is a simplified version; in practice, you'd use a more sophisticated encoding method
         tokens = knowledge.split()
         encoded = ' '.join([f"TOKEN_{token.upper()}" for token in tokens])
         return f"ENCODED: {encoded}"
@@ -56,12 +49,10 @@ class ContinuousLearner:
         await self.vector_store.add_texts([learned_info])
 
     def extract_learning(self, task: Task, result: Any) -> str:
-        # Implement SELF-PARAM logic
         task_type = task.type if hasattr(task, 'type') else 'unknown'
         return f"LEARNED: Task '{task_type}' with content '{task.content}' resulted in '{result}'. PARAMS: {self.extract_params(task, result)}"
 
     def extract_params(self, task: Task, result: Any) -> Dict[str, Any]:
-        # Extract parameters that could be useful for future tasks
         params = {
             'task_type': task.type if hasattr(task, 'type') else 'unknown',
             'content_length': len(task.content),
@@ -97,7 +88,6 @@ class DecisionMaker:
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
 
     async def make_decision(self, task: Task, context: str) -> Any:
-        # Implement Agent Q (MCTS and DPO) logic
         mcts_result = self.monte_carlo_tree_search(task, context)
         dpo_result = await self.direct_preference_optimization(task, context)
         
@@ -112,19 +102,15 @@ class DecisionMaker:
         return decision.text
 
     def monte_carlo_tree_search(self, task: Task, context: str) -> str:
-        # Simplified MCTS implementation
-        # In a real scenario, this would be a much more complex algorithm
         options = ["Option A", "Option B", "Option C"]
         scores = [self.simulate(task, context, option) for option in options]
         best_option = options[np.argmax(scores)]
         return f"MCTS suggests: {best_option}"
 
     def simulate(self, task: Task, context: str, option: str) -> float:
-        # Simplified simulation for MCTS
         return random.random()
 
     async def direct_preference_optimization(self, task: Task, context: str) -> str:
-        # Simplified DPO implementation
         options = ["Approach X", "Approach Y", "Approach Z"]
         preferences = await self.get_preferences(task, context, options)
         best_approach = max(preferences, key=preferences.get)
@@ -138,7 +124,6 @@ class DecisionMaker:
         Assign a preference score (0-1) to each option based on its suitability for the task and context.
         """
         response = await self.llm.complete(prompt)
-        # Parsing the response to extract preferences (assuming the model returns a formatted list of scores)
         lines = response.text.split('\n')
         preferences = {}
         for line in lines:
@@ -153,15 +138,15 @@ class MCTSConfig:
         self.simulation_depth = 10
 
 class SelfEvolvingSystem:
-    def __init__(self, agents: List[BaseAgent], vector_store: VectorStore):
+    def __init__(self, agents: List[Agent], vector_store: VectorStore):
         self.agents = agents
         self.quality_assurance = QualityAssurance()
         self.prompt_baker = PromptBaker(vector_store)
         self.continuous_learner = ContinuousLearner(vector_store)
         self.sage_framework = SAGEFramework()
         self.decision_maker = DecisionMaker()
-        self.mcts = MCTSConfig()  # Assuming we have an MCTS configuration class
-        self.dpo = LogisticRegression()  # Using logistic regression as a simple DPO model
+        self.mcts = MCTSConfig()
+        self.dpo = LogisticRegression()
         self.recent_decisions = []
 
     async def process_task(self, task: Task) -> Dict[str, Any]:
@@ -174,7 +159,6 @@ class SelfEvolvingSystem:
                 await self.continuous_learner.update(task, result)
                 return result
 
-        # If no agent can handle the task, use the SAGE framework
         user_input = task.content
         assistant_response = await self.sage_framework.assistant_response(user_input)
         evaluation = await self.sage_framework.checker_evaluate(assistant_response)
@@ -195,7 +179,7 @@ class SelfEvolvingSystem:
         self.quality_assurance.upo_threshold = await self.optimize_upo_threshold()
         print("System-wide evolution complete.")
 
-    async def evolve_agent(self, agent: BaseAgent):
+    async def evolve_agent(self, agent: Agent):
         print(f"Evolving agent: {agent.name}")
         performance = await self.analyze_agent_performance(agent)
         new_capabilities = await self.generate_new_capabilities(agent, performance)
@@ -203,15 +187,13 @@ class SelfEvolvingSystem:
             agent.add_capability(capability)
         print(f"Agent {agent.name} evolution complete. New capabilities: {new_capabilities}")
 
-    async def analyze_agent_performance(self, agent: BaseAgent) -> Dict[str, float]:
+    async def analyze_agent_performance(self, agent: Agent) -> Dict[str, float]:
         print(f"Analyzing performance of agent: {agent.name}")
-        # In a real implementation, we would analyze the agent's past tasks and results
-        # For this example, we're simulating performance scores
         performance = {capability: random.uniform(0.4, 1.0) for capability in agent.capabilities}
         print(f"Performance analysis for {agent.name}: {performance}")
         return performance
 
-    async def generate_new_capabilities(self, agent: BaseAgent, performance: Dict[str, float]) -> List[str]:
+    async def generate_new_capabilities(self, agent: Agent, performance: Dict[str, float]) -> List[str]:
         print(f"Generating new capabilities for agent: {agent.name}")
         low_performing = [cap for cap, score in performance.items() if score < 0.6]
         prompt = f"Agent {agent.name} is underperforming in {', '.join(low_performing)}. Suggest 2-3 new capabilities to improve performance."
@@ -222,25 +204,19 @@ class SelfEvolvingSystem:
 
     async def evolve_decision_maker(self):
         print("Evolving decision maker...")
-        
-        # Update MCTS parameters
-        self.mcts.exploration_weight *= 1.05  # Increase exploration
-        self.mcts.simulation_depth += 1  # Increase simulation depth
+        self.mcts.exploration_weight *= 1.05
+        self.mcts.simulation_depth += 1
 
-        # Update DPO algorithm
         recent_decisions = self.get_recent_decisions()
         if recent_decisions:
-            X = np.array([d[0] for d in recent_decisions])  # Features
-            y = np.array([d[1] for d in recent_decisions])  # Outcomes
-                
-            # Retrain the DPO model
+            X = np.array([d[0] for d in recent_decisions])
+            y = np.array([d[1] for d in recent_decisions])
             self.dpo.fit(X, y)
 
         print("Decision maker evolution complete.")
 
     async def optimize_upo_threshold(self) -> float:
         print("Optimizing UPO threshold...")
-        
         safety_checks = await self.quality_assurance.get_recent_safety_checks()
         
         if safety_checks:
@@ -257,11 +233,9 @@ class SelfEvolvingSystem:
         return new_threshold
 
     def get_recent_decisions(self) -> List[tuple]:
-        # This method would retrieve recent decisions and their outcomes
-        # For simplicity, we're returning a simulated list
         return [(np.random.rand(5), random.choice([0, 1])) for _ in range(100)]
 
     async def add_decision(self, features: np.array, outcome: int):
         self.recent_decisions.append((features, outcome))
-        if len(self.recent_decisions) > 1000:  # Keep only the last 1000 decisions
+        if len(self.recent_decisions) > 1000:
             self.recent_decisions.pop(0)

@@ -4,6 +4,15 @@ from agents.king.decision_maker import DecisionMaker
 from agents.king.mcts import MCTS
 from agents.utils.exceptions import AIVillageException
 from agents.communication.protocol import Message, MessageType
+from agents.agent import Agent  # Add this import
+
+# Rest of the file remains unchanged
+import pytest
+from unittest.mock import AsyncMock, MagicMock
+from agents.king.decision_maker import DecisionMaker
+from agents.king.mcts import MCTS
+from agents.utils.exceptions import AIVillageException
+from agents.communication.protocol import Message, MessageType
 
 @pytest.fixture
 def decision_maker():
@@ -106,5 +115,3 @@ async def test_generate_alternatives(decision_maker):
 
 if __name__ == "__main__":
     pytest.main()
-
-

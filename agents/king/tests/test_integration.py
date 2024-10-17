@@ -1,19 +1,20 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from agents.king.king_agent import KingAgent
-from agents.base_agent import BaseAgentConfig
+from agents.agent import Agent, AgentConfig  # Updated import
 from langroid.agent.task import Task
 from agents.utils.exceptions import AIVillageException
 from agents.communication.protocol import StandardCommunicationProtocol
 
 class TestKingAgentIntegration(unittest.TestCase):
     def setUp(self):
-        config = BaseAgentConfig(
+        config = AgentConfig(  # Changed from BaseAgentConfig to AgentConfig
             name="TestKing",
             description="Test King Agent",
             capabilities=["test"],
             vector_store=None,
-            llm=None
+            model="gpt-4",  # Added model parameter
+            instructions="You are a test King Agent"  # Added instructions parameter
         )
         self.king_agent = KingAgent(config)
         self.communication_protocol = StandardCommunicationProtocol()
