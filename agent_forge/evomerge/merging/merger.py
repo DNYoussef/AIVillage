@@ -5,13 +5,13 @@ from typing import List, Dict, Union, Tuple
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import shutil
 
-from .config import Configuration, ModelReference
-from .utils import load_models, save_model, evaluate_model, check_system_resources, EvoMergeException, clean_up_models
-from .merging.merge_techniques import MERGE_TECHNIQUES
-from .instruction_tuning import is_instruction_tuned_model, merge_instruction_tuned_models
-from .cross_domain import get_model_domain, merge_cross_domain_models
-from .model_tracker import model_tracker
-from .utils import mask_model_weights
+from ..config import Configuration, ModelReference
+from ..utils import load_models, save_model, evaluate_model, check_system_resources, EvoMergeException, clean_up_models
+from .merge_techniques import MERGE_TECHNIQUES
+from ..instruction_tuning import is_instruction_tuned_model, merge_instruction_tuned_models
+from ..cross_domain import get_model_domain, merge_cross_domain_models
+from ..model_tracker import model_tracker
+from ..utils import mask_model_weights
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +110,7 @@ class AdvancedModelMerger:
                         merged_param = torch.cat([merged_param, merged_chunk])
                 
                 merged_state_dict[name] = merged_param.reshape(models[0].state_dict()[name].shape)
-        
+
         merged_model = type(models[0])(**models[0].config.to_dict())
         merged_model.load_state_dict(merged_state_dict)
         return merged_model
@@ -162,7 +162,7 @@ class AdvancedModelMerger:
 
 if __name__ == "__main__":
     # For testing purposes
-    from .config import create_default_config
+    from ..config import create_default_config
     
     config = create_default_config()
     merger = AdvancedModelMerger(config)

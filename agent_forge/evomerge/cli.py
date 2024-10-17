@@ -3,7 +3,7 @@ import logging
 import os
 from tqdm import tqdm
 from .config import create_default_config, Configuration, ModelReference
-from .merger import AdvancedModelMerger
+from .merging.merger import AdvancedModelMerger
 from .utils import load_models, EvoMergeException, check_system_resources
 from .logging_config import setup_logging
 

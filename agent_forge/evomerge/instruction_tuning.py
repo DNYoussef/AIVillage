@@ -4,7 +4,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, TextDataset, DataC
 from torch.utils.data import DataLoader
 from .utils import EvoMergeException
 from .config import MergeSettings
-from .merge_techniques import MERGE_TECHNIQUES
+from .merging.merge_techniques import MERGE_TECHNIQUES
 
 def is_instruction_tuned_model(model: torch.nn.Module, tokenizer: AutoTokenizer) -> bool:
     """

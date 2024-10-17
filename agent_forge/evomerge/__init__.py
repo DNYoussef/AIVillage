@@ -1,5 +1,5 @@
 from .config import Configuration, ModelReference, MergeSettings, EvolutionSettings, create_default_config
-from .merger import AdvancedModelMerger
+from .merging.merger import AdvancedModelMerger
 from .evolutionary_tournament import EvolutionaryTournament, run_evolutionary_tournament
 from .utils import (
     load_models,
@@ -10,7 +10,7 @@ from .utils import (
     clean_up_models,
     parallel_evaluate_models
 )
-from .merge_techniques import MERGE_TECHNIQUES
+from .merging.merge_techniques import MERGE_TECHNIQUES
 from .visualization import (
     plot_fitness_over_generations,
     plot_pareto_front,

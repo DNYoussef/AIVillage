@@ -14,9 +14,9 @@ import argparse
 from datetime import datetime
 
 from .config import Configuration, ModelReference
-from .merger import AdvancedModelMerger
+from .merging.merger import AdvancedModelMerger
 from .evaluation import evaluate_model
-from .merge_techniques import MERGE_TECHNIQUES
+from .merging.merge_techniques import MERGE_TECHNIQUES
 from .multi_objective import nsga2_select, calculate_pareto_front
 from .visualization import plot_fitness_over_generations, plot_pareto_front, plot_evolution_progress
 from .utils import EvoMergeException, clean_up_models, parallel_evaluate_models

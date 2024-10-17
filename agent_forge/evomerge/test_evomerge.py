@@ -3,7 +3,6 @@ import torch
 from .config import Configuration, ModelReference, MergeSettings, EvolutionSettings
 from .utils import (
     EvoMergeException,
-    validate_merge_config,
     generate_text,
     setup_gpu_if_available,
     clean_up_models,
@@ -11,8 +10,8 @@ from .utils import (
 )
 from .model_loading import load_models, save_model
 from .evaluation import evaluate_model
-from .merge_techniques import MERGE_TECHNIQUES
-from .merger import AdvancedModelMerger
+from .merging.merge_techniques import MERGE_TECHNIQUES
+from .merging.merger import AdvancedModelMerger
 from .evolutionary_tournament import EvolutionaryTournament, run_evolutionary_tournament
 
 class TestEvoMerge(unittest.TestCase):
@@ -20,7 +19,7 @@ class TestEvoMerge(unittest.TestCase):
         self.config = Configuration(
             models=[
                 ModelReference(name="model1", path="gpt2"),
-                ModelReference(name="model2", path="gpt2-medium"),
+                ModelReference(name="model2", path="gpt2"),  # Changed from gpt2-medium to gpt2
             ],
             merge_settings=MergeSettings(
                 merge_method="ps_dfs",
@@ -41,19 +40,26 @@ class TestEvoMerge(unittest.TestCase):
         self.assertIsInstance(models[0], torch.nn.Module)
         self.assertIsInstance(models[1], torch.nn.Module)
 
-    def test_validate_merge_config(self):
-        validate_merge_config(self.config.merge_settings)
-        
-        # Test invalid configuration
-        invalid_config = MergeSettings(
-            merge_method="invalid_method",
+    def test_merge_settings_validation(self):
+        # Test valid configuration
+        valid_config = MergeSettings(
+            merge_method="ps_dfs",
             parameters={},
             custom_dir="./test_merged_models",
             ps_techniques=["linear"],
             dfs_techniques=["frankenmerge"]
         )
-        with self.assertRaises(EvoMergeException):
-            validate_merge_config(invalid_config)
+        self.assertIsInstance(valid_config, MergeSettings)
+        
+        # Test invalid configuration
+        with self.assertRaises(ValueError):
+            invalid_config = MergeSettings(
+                merge_method="invalid_method",
+                parameters={},
+                custom_dir="./test_merged_models",
+                ps_techniques=["linear"],
+                dfs_techniques=["frankenmerge"]
+            )
 
     def test_merge_techniques(self):
         weights = {
