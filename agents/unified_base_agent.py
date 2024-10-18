@@ -2,17 +2,17 @@ import random
 import numpy as np
 from typing import List, Dict, Any, Optional, Callable, Tuple
 from pydantic import BaseModel, Field
-from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
-from langroid.agent.task import Task as LangroidTask
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
+from agents.utils.task import Task as LangroidTask
+from agents.language_models.openai_gpt import OpenAIGPTConfig
 from langroid.vector_store.base import VectorStore
 from sklearn.linear_model import LogisticRegression
 from types import SimpleNamespace
 from rag_system.core.agent_interface import AgentInterface
 from rag_system.core.pipeline import RAGPipeline
 from rag_system.core.config import RAGConfig
+from agents.communication.protocol import StandardCommunicationProtocol, Message, MessageType, Priority
 
-class UnifiedAgentConfig(ChatAgentConfig):
+class UnifiedAgentConfig(BaseModel):
     name: str = Field(..., description="The name of the agent")
     description: str = Field(..., description="A brief description of the agent's purpose")
     capabilities: List[str] = Field(default_factory=list, description="List of agent capabilities")
@@ -20,12 +20,11 @@ class UnifiedAgentConfig(ChatAgentConfig):
     model: str = Field(..., description="The language model to be used by the agent")
     instructions: str = Field(..., description="Instructions for the agent's behavior")
 
-class UnifiedBaseAgent(ChatAgent, AgentInterface):
+class UnifiedBaseAgent(AgentInterface):
     """
     A comprehensive base agent class that can be easily extended for various agent types.
     """
-    def __init__(self, config: UnifiedAgentConfig):
-        super().__init__(config)
+    def __init__(self, config: UnifiedAgentConfig, communication_protocol: StandardCommunicationProtocol):
         self.name = config.name
         self.description = config.description
         self.capabilities = config.capabilities
@@ -35,6 +34,9 @@ class UnifiedBaseAgent(ChatAgent, AgentInterface):
         self.tools: List[Callable] = []
         self.rag_config = RAGConfig()
         self.rag_pipeline = RAGPipeline(self.rag_config)
+        self.communication_protocol = communication_protocol
+        self.communication_protocol.subscribe(self.name, self.handle_message)
+        self.llm = OpenAIGPTConfig(chat_model=self.model).create()
 
     async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
         """
@@ -48,6 +50,21 @@ class UnifiedBaseAgent(ChatAgent, AgentInterface):
         """
         task = LangroidTask(self, message['content'])
         return await self.execute_task(task)
+
+    async def handle_message(self, message: Message):
+        """
+        Handle incoming messages from the communication protocol.
+        """
+        if message.type == MessageType.TASK:
+            result = await self.process_message(message.content)
+            response = Message(
+                type=MessageType.RESPONSE,
+                sender=self.name,
+                receiver=message.sender,
+                content=result,
+                parent_id=message.id
+            )
+            await self.communication_protocol.send_message(response)
 
     def add_capability(self, capability: str):
         """
@@ -87,7 +104,8 @@ class UnifiedBaseAgent(ChatAgent, AgentInterface):
         """
         Generate a response using the agent's language model.
         """
-        return await self.llm.generate(prompt)
+        response = await self.llm.complete(prompt)
+        return response.text
 
     async def get_embedding(self, text: str) -> List[float]:
         """
@@ -107,11 +125,18 @@ class UnifiedBaseAgent(ChatAgent, AgentInterface):
         """
         return self.info
 
-    async def communicate(self, message: str, recipient: 'AgentInterface') -> str:
+    async def communicate(self, message: str, recipient: str) -> str:
         """
-        Communicate with another agent.
+        Communicate with another agent using the communication protocol.
         """
-        response = await recipient.generate(f"Message from {self.name}: {message}")
+        query_message = Message(
+            type=MessageType.QUERY,
+            sender=self.name,
+            receiver=recipient,
+            content={"message": message},
+            priority=Priority.MEDIUM
+        )
+        response = await self.communication_protocol.query(self.name, recipient, query_message.content)
         return f"Sent: {message}, Received: {response}"
 
     async def activate_latent_space(self, query: str) -> Tuple[str, str]:
@@ -382,15 +407,16 @@ class SelfEvolvingSystem:
         if len(self.recent_decisions) > 1000:
             self.recent_decisions.pop(0)
 
-def create_agent(agent_type: str, config: UnifiedAgentConfig) -> UnifiedBaseAgent:
+def create_agent(agent_type: str, config: UnifiedAgentConfig, communication_protocol: StandardCommunicationProtocol) -> UnifiedBaseAgent:
     """
     Factory function to create different types of agents.
     """
-    return UnifiedBaseAgent(config)
+    return UnifiedBaseAgent(config, communication_protocol)
 
 # Example usage
 if __name__ == "__main__":
     vector_store = VectorStore()  # Placeholder, implement actual VectorStore
+    communication_protocol = StandardCommunicationProtocol()
     
     agent_config = UnifiedAgentConfig(
         name="ExampleAgent",
@@ -401,7 +427,7 @@ if __name__ == "__main__":
         instructions="You are an example agent capable of handling general tasks."
     )
     
-    agent = create_agent("ExampleAgent", agent_config)
+    agent = create_agent("ExampleAgent", agent_config, communication_protocol)
     
     self_evolving_system = SelfEvolvingSystem([agent], vector_store)
     

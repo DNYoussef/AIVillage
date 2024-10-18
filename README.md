@@ -1,18 +1,18 @@
 # AI Village Self-Improving System
 
-This project implements a multi-agent AI system using Langroid, featuring a self-evolving architecture for continuous improvement and adaptation.
+This project implements a multi-agent AI system featuring a self-evolving architecture for continuous improvement and adaptation.
 
 ## System Components
 
-1. Agent: A comprehensive agent class that combines features from the previous Agent and BaseAgent classes, built on Langroid's ChatAgent.
+1. UnifiedBaseAgent: A comprehensive base agent class that combines features from previous agent implementations.
 2. Specialized Agents:
-   - King Agent: Coordinates tasks and manages other agents.
-   - Sage Agent: Handles research and analysis tasks.
-   - Magi Agent: Focuses on development and coding tasks.
+   - KingAgent: Coordinates tasks and manages other agents.
+   - SageAgent: Handles research and analysis tasks.
+   - MagiAgent: Focuses on development and coding tasks.
 3. Self-Evolving System: Implements multi-layer improvement mechanisms:
    - Quality Assurance: Ensures task safety and stability using Uncertainty-enhanced Preference Optimization (UPO).
-   - Prompt Baking: Efficiently incorporates new knowledge using Low-Rank Adaptation (LoRA) techniques.
-   - Continuous Learning: Rapidly integrates new experiences using Self-Educated Learning for Function PARaMeterization (SELF-PARAM).
+   - Prompt Baking: Efficiently incorporates new knowledge.
+   - Continuous Learning: Rapidly integrates new experiences.
    - SAGE Framework: Enables recursive self-improvement through assistant-checker-reviser cycle.
    - Decision Making: Utilizes advanced algorithms (MCTS and DPO) for effective choices.
 
@@ -20,14 +20,13 @@ This project implements a multi-agent AI system using Langroid, featuring a self
 
 The self-evolving system is the core of the AI Village's continuous improvement capabilities. It consists of several interconnected layers:
 
-1. Quality Assurance Layer: Uses Monte Carlo dropout for uncertainty estimation to ensure task safety.
+1. Quality Assurance Layer: Uses uncertainty estimation to ensure task safety.
 2. Foundational Layer (Prompt Baking): Encodes and integrates new knowledge efficiently into the system's knowledge base.
 3. Continuous Learning Layer: Extracts valuable information from tasks and results to update the system's capabilities.
 4. Agent Architecture Layer (SAGE Framework): Implements a self-aware generative engine for response generation, evaluation, and revision.
 5. Decision-Making Layer: Utilizes advanced AI techniques for making informed decisions based on tasks and context.
 
 The system periodically evolves by updating agent capabilities, refining decision-making processes, and optimizing its overall architecture.
-
 
 ## Setup
 
@@ -66,26 +65,22 @@ This will start the AI Village system, initializing all agents and the self-evol
 
 To add new capabilities or agents:
 
-1. Create a new agent class inheriting from `Agent`
+1. Create a new agent class inheriting from `UnifiedBaseAgent`
 2. Implement the `execute_task` method for the new agent
 3. Add the new agent to the `SelfEvolvingSystem` in `orchestration.py`
 
-## Recent Refactoring
+## Recent Updates
 
-The agent system has recently undergone a refactoring process to improve modularity and reduce redundancy. Key changes include:
+The agent system has recently undergone significant updates to improve modularity, reduce redundancy, and incorporate a self-evolving system. Key changes include:
 
-1. Consolidation of the `Agent` and `BaseAgent` classes into a single, more comprehensive `Agent` class.
-2. Updates to the `orchestration.py` file to use the new `Agent` class and improve its structure.
-3. Refactoring of the `self_evolving_system.py` file to work with the new `Agent` class and improve overall structure and readability.
+1. Introduction of the `UnifiedBaseAgent` class, which serves as the foundation for all specialized agents.
+2. Implementation of the `SelfEvolvingSystem` class, which manages the continuous improvement of agents.
+3. Integration of the self-evolving system into all specialized agents (KingAgent, SageAgent, MagiAgent).
+4. Removal of the `langroid` folder, with its functionality now integrated into the main agent structure.
+5. Updates to the `orchestration.py` file to use the new agent classes and self-evolving system.
 
-These changes have made the code more modular, easier to maintain, and more consistent across the system. The self-evolving system now works with a unified `Agent` class, which should make it easier to add new agent types or modify existing ones in the future.
+These changes have made the code more modular, easier to maintain, and more consistent across the system. The self-evolving system now works with all agents, which should make it easier to add new agent types or modify existing ones in the future.
 
-## Future Improvements
-
-1. Implement a concrete VectorStore for efficient knowledge storage and retrieval.
-2. Develop more sophisticated task generation and result processing mechanisms.
-3. Implement proper error handling and logging throughout the system.
-4. Enhance the evolution mechanisms to include more advanced techniques like neural architecture search.
 ## Populating the RAG System with Academic Papers
 
 To provide your AI Village with a starting base of information, you can manually feed academic papers into the RAG system. Follow these steps to add several dozen papers:
@@ -307,5 +302,12 @@ result = await king_agent.execute_task(task_message)
 ```
 
 For more detailed information about the King Agent, its components, and usage, please refer to the `agents/king/README.md` file and the `agents/king/demo.py` script for a working example.
+
+## Future Improvements
+
+1. Implement a concrete VectorStore for efficient knowledge storage and retrieval.
+2. Develop more sophisticated task generation and result processing mechanisms.
+3. Implement proper error handling and logging throughout the system.
+4. Enhance the evolution mechanisms to include more advanced techniques like neural architecture search.
 
 [... Keep the rest of the existing content ...]
