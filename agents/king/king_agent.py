@@ -1,13 +1,60 @@
 from typing import List, Dict, Any, Tuple
-from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig, SelfEvolvingSystem
+from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
 from agents.utils.task import Task as LangroidTask
 from .coordinator import KingCoordinator
 from .decision_maker import DecisionMaker
 from .problem_analyzer import ProblemAnalyzer
 from .unified_task_manager import UnifiedTaskManager
 from agents.communication.protocol import StandardCommunicationProtocol, Message, MessageType
-from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.core.config import RAGConfig
 from langroid.vector_store.base import VectorStore
+import random
+
+class SelfEvolvingSystem:
+    def __init__(self, agent):
+        self.agent = agent
+        self.evolution_rate = 0.1
+        self.mutation_rate = 0.01
+        self.learning_rate = 0.001
+        self.performance_history = []
+
+    async def evolve(self):
+        # Implement evolution logic here
+        if random.random() < self.evolution_rate:
+            await self._mutate()
+        await self._adapt()
+
+    async def _mutate(self):
+        # Implement mutation logic
+        if random.random() < self.mutation_rate:
+            # Mutate a random capability
+            if self.agent.coordinator_capabilities:
+                capability = random.choice(self.agent.coordinator_capabilities)
+                new_capability = await self.agent.generate(f"Suggest an improvement or variation of the capability: {capability}")
+                self.agent.coordinator_capabilities.append(new_capability)
+
+    async def _adapt(self):
+        # Implement adaptation logic based on performance history
+        if len(self.performance_history) > 10:
+            avg_performance = sum(self.performance_history[-10:]) / 10
+            if avg_performance > 0.8:
+                self.evolution_rate *= 0.9
+                self.mutation_rate *= 0.9
+            else:
+                self.evolution_rate *= 1.1
+                self.mutation_rate *= 1.1
+
+    async def update_hyperparameters(self, new_evolution_rate: float, new_mutation_rate: float, new_learning_rate: float):
+        self.evolution_rate = new_evolution_rate
+        self.mutation_rate = new_mutation_rate
+        self.learning_rate = new_learning_rate
+
+    async def process_task(self, task: LangroidTask) -> Dict[str, Any]:
+        result = await self.agent.execute_task(task)
+        performance = result.get('performance', 0.5)  # Assume a default performance metric
+        self.performance_history.append(performance)
+        return result
 
 class KingAgentConfig(UnifiedAgentConfig):
     coordinator_capabilities: List[str] = [
@@ -19,52 +66,47 @@ class KingAgentConfig(UnifiedAgentConfig):
     ]
 
 class KingAgent(UnifiedBaseAgent):
-    def __init__(self, config: KingAgentConfig, communication_protocol: StandardCommunicationProtocol, rag_system: RAGSystem, vector_store: VectorStore):
+    def __init__(self, config: KingAgentConfig, communication_protocol: StandardCommunicationProtocol, rag_config: RAGConfig, vector_store: VectorStore):
         super().__init__(config, communication_protocol)
         self.coordinator_capabilities = config.coordinator_capabilities
-        self.rag_system = rag_system
-        self.coordinator = KingCoordinator(communication_protocol, rag_system, self)
-        self.decision_maker = DecisionMaker(communication_protocol, rag_system, self)
+        self.rag_system = EnhancedRAGPipeline(rag_config)
+        self.vector_store = vector_store
+        self.coordinator = KingCoordinator(communication_protocol, self.rag_system, self)
+        self.decision_maker = DecisionMaker(communication_protocol, self.rag_system, self)
         self.problem_analyzer = ProblemAnalyzer(communication_protocol, self)
         self.task_manager = UnifiedTaskManager(communication_protocol, len(self.coordinator.agents), 10)
-        self.self_evolving_system = SelfEvolvingSystem([self], vector_store)
+        self.self_evolving_system = SelfEvolvingSystem(self)
 
     async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
-        if task.type == "route_task":
-            return await self.route_task(task)
-        elif task.type == "make_decision":
-            return await self.make_decision(task)
-        elif task.type == "manage_agents":
-            return await self.manage_agents(task)
-        elif task.type == "analyze_problem":
-            return await self.analyze_problem(task)
-        elif task.type == "manage_task":
-            return await self.manage_task(task)
+        if task.type in self.coordinator_capabilities:
+            return await getattr(self, f"handle_{task.type}")(task)
         else:
             return await super().execute_task(task)
 
-    async def route_task(self, task: LangroidTask) -> Dict[str, Any]:
+    async def handle_task_routing(self, task: LangroidTask) -> Dict[str, Any]:
         return await self.coordinator.handle_task_message(task)
 
-    async def make_decision(self, task: LangroidTask) -> Dict[str, Any]:
+    async def handle_decision_making(self, task: LangroidTask) -> Dict[str, Any]:
         return await self.decision_maker.make_decision(task.content)
 
-    async def manage_agents(self, task: LangroidTask) -> Dict[str, Any]:
-        if task.content.get('action') == 'add':
+    async def handle_agent_management(self, task: LangroidTask) -> Dict[str, Any]:
+        action = task.content.get('action')
+        if action == 'add':
             await self.coordinator.add_agent(task.content['agent_name'], task.content['agent_instance'])
-        elif task.content.get('action') == 'remove':
+        elif action == 'remove':
             await self.coordinator.remove_agent(task.content['agent_name'])
-        return {"status": "success", "message": f"Agent {task.content['action']}ed successfully"}
+        return {"status": "success", "message": f"Agent {action}ed successfully"}
 
-    async def analyze_problem(self, task: LangroidTask) -> Dict[str, Any]:
+    async def handle_problem_analysis(self, task: LangroidTask) -> Dict[str, Any]:
         rag_info = await self.rag_system.process_query(task.content)
         return await self.problem_analyzer.analyze(task.content, rag_info)
 
-    async def manage_task(self, task: LangroidTask) -> Dict[str, Any]:
-        if task.content.get('action') == 'create':
+    async def handle_task_management(self, task: LangroidTask) -> Dict[str, Any]:
+        action = task.content.get('action')
+        if action == 'create':
             new_task = await self.task_manager.create_task(task.content['description'], task.content['agent'])
             return {"task_id": new_task.id}
-        elif task.content.get('action') == 'complete':
+        elif action == 'complete':
             await self.task_manager.complete_task(task.content['task_id'], task.content['result'])
             return {"status": "success"}
         else:
@@ -124,11 +166,14 @@ class KingAgent(UnifiedBaseAgent):
     async def evolve(self):
         await self.self_evolving_system.evolve()
 
+    async def update_evolution_parameters(self, evolution_rate: float, mutation_rate: float, learning_rate: float):
+        await self.self_evolving_system.update_hyperparameters(evolution_rate, mutation_rate, learning_rate)
+
 # Example usage
 if __name__ == "__main__":
     vector_store = VectorStore()  # Placeholder, implement actual VectorStore
     communication_protocol = StandardCommunicationProtocol()
-    rag_system = RAGSystem()  # Placeholder, implement actual RAGSystem
+    rag_config = RAGConfig()
     
     king_config = KingAgentConfig(
         name="KingAgent",
@@ -139,6 +184,6 @@ if __name__ == "__main__":
         instructions="You are a King agent capable of coordinating tasks, making decisions, and managing other agents."
     )
     
-    king_agent = KingAgent(king_config, communication_protocol, rag_system, vector_store)
+    king_agent = KingAgent(king_config, communication_protocol, rag_config, vector_store)
     
     # Use the king_agent to process tasks and evolve

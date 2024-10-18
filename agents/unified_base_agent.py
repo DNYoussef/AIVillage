@@ -31,7 +31,7 @@ class UnifiedBaseAgent(AgentInterface):
         self.vector_store = config.vector_store
         self.model = config.model
         self.instructions = config.instructions
-        self.tools: List[Callable] = []
+        self.tools: Dict[str, Callable] = {}
         self.rag_config = RAGConfig()
         self.rag_pipeline = RAGPipeline(self.rag_config)
         self.communication_protocol = communication_protocol
@@ -40,9 +40,20 @@ class UnifiedBaseAgent(AgentInterface):
 
     async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
         """
-        Execute a given task. This method should be implemented by subclasses.
+        Execute a given task with support for dynamic agent swapping.
         """
-        raise NotImplementedError("Subclasses must implement execute_task method")
+        result = await self._process_task(task)
+        if isinstance(result, UnifiedBaseAgent):
+            # Handoff to another agent
+            return await result.execute_task(task)
+        return result
+
+    async def _process_task(self, task: LangroidTask) -> Dict[str, Any]:
+        """
+        Process the task and return the result or a handoff to another agent.
+        This method should be implemented by subclasses.
+        """
+        raise NotImplementedError("Subclasses must implement _process_task method")
 
     async def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -80,11 +91,24 @@ class UnifiedBaseAgent(AgentInterface):
         if capability in self.capabilities:
             self.capabilities.remove(capability)
 
-    def add_tool(self, tool: Callable):
+    def add_tool(self, name: str, tool: Callable):
         """
         Add a new tool to the agent.
         """
-        self.tools.append(tool)
+        self.tools[name] = tool
+
+    def remove_tool(self, name: str):
+        """
+        Remove a tool from the agent.
+        """
+        if name in self.tools:
+            del self.tools[name]
+
+    def get_tool(self, name: str) -> Optional[Callable]:
+        """
+        Get a tool by name.
+        """
+        return self.tools.get(name)
 
     @property
     def info(self) -> Dict[str, Any]:
@@ -95,7 +119,8 @@ class UnifiedBaseAgent(AgentInterface):
             "name": self.name,
             "description": self.description,
             "capabilities": self.capabilities,
-            "model": self.model
+            "model": self.model,
+            "tools": list(self.tools.keys())
         }
 
     # Implement AgentInterface methods
@@ -174,6 +199,22 @@ class UnifiedBaseAgent(AgentInterface):
         Add a new document to the RAG system.
         """
         await self.rag_pipeline.add_document(content, filename)
+
+    def create_handoff(self, target_agent: 'UnifiedBaseAgent'):
+        """
+        Create a handoff function to transfer control to another agent.
+        """
+        def handoff():
+            return target_agent
+        self.add_tool(f"transfer_to_{target_agent.name}", handoff)
+
+    async def update_instructions(self, new_instructions: str):
+        """
+        Update the agent's instructions dynamically.
+        """
+        self.instructions = new_instructions
+        # Optionally, you could add logic here to re-initialize the agent with the new instructions
+        # For example, updating the language model's system message
 
 class QualityAssurance:
     def __init__(self, upo_threshold: float = 0.7):
@@ -406,6 +447,33 @@ class SelfEvolvingSystem:
         self.recent_decisions.append((features, outcome))
         if len(self.recent_decisions) > 1000:
             self.recent_decisions.pop(0)
+
+def create_agent(agent_type: str, config: UnifiedAgentConfig, communication_protocol: StandardCommunicationProtocol) -> UnifiedBaseAgent:
+    """
+    Factory function to create different types of agents.
+    """
+    return UnifiedBaseAgent(config, communication_protocol)
+
+# Example usage
+if __name__ == "__main__":
+    vector_store = VectorStore()  # Placeholder, implement actual VectorStore
+    communication_protocol = StandardCommunicationProtocol()
+    
+    agent_config = UnifiedAgentConfig(
+        name="ExampleAgent",
+        description="An example agent",
+        capabilities=["general_task"],
+        vector_store=vector_store,
+        model="gpt-4",
+        instructions="You are an example agent capable of handling general tasks."
+    )
+    
+    agent = create_agent("ExampleAgent", agent_config, communication_protocol)
+    
+    self_evolving_system = SelfEvolvingSystem([agent], vector_store)
+    
+    # Use the self_evolving_system to process tasks and evolve the system
+
 
 def create_agent(agent_type: str, config: UnifiedAgentConfig, communication_protocol: StandardCommunicationProtocol) -> UnifiedBaseAgent:
     """
