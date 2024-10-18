@@ -40,32 +40,32 @@ async def run(self):
     return response.content
 """
     ),
-    {
-        "thought": "Chain-of-Thought (CoT) prompting encourages the model to show its reasoning steps, enhancing problem-solving capabilities for complex tasks that require multi-step reasoning.",
-        "name": "Chain-of-Thought",
-        "code": """
+    AgentTechnique(
+        thought="Chain-of-Thought (CoT) prompting encourages the model to show its reasoning steps, enhancing problem-solving capabilities for complex tasks that require multi-step reasoning.",
+        name="Chain-of-Thought",
+        code="""
 def forward(self, taskInfo):
     instruction = "Think through this step-by-step:\\n1. Understand the question\\n2. Identify key information\\n3. Reason through the problem\\n4. Formulate your answer\\nNow, solve the task."
     cot_agent = LLMAgentBase(['thinking', 'answer'], 'Chain-of-Thought Agent')
     thinking, answer = cot_agent([taskInfo], instruction)
     return answer
 """
-    },
-    {
-        "thought": "Zero-Shot Chain-of-Thought adds a thought-inducing phrase to prompt step-by-step reasoning without examples, improving reasoning capabilities in a zero-shot setting.",
-        "name": "Zero-Shot Chain-of-Thought",
-        "code": """
+    ),
+    AgentTechnique(
+        thought="Zero-Shot Chain-of-Thought adds a thought-inducing phrase to prompt step-by-step reasoning without examples, improving reasoning capabilities in a zero-shot setting.",
+        name="Zero-Shot Chain-of-Thought",
+        code="""
 def forward(self, taskInfo):
     instruction = "Let's approach this step-by-step:\\n1. Understand the question\\n2. Identify key information\\n3. Reason through the problem\\n4. Formulate your answer\\nNow, solve the task."
     zero_shot_cot_agent = LLMAgentBase(['thinking', 'answer'], 'Zero-Shot CoT Agent')
     thinking, answer = zero_shot_cot_agent([taskInfo], instruction)
     return answer
 """
-    },
-    {
-        "thought": "Self-Consistency generates multiple Chain-of-Thought paths and selects the majority answer, increasing answer reliability through an ensemble method.",
-        "name": "Self-Consistency",
-        "code": """
+    ),
+    AgentTechnique(
+        thought="Self-Consistency generates multiple Chain-of-Thought paths and selects the majority answer, increasing answer reliability through an ensemble method.",
+        name="Self-Consistency",
+        code="""
 def forward(self, taskInfo):
     instruction = "Solve the given task using step-by-step reasoning. Provide your final answer at the end."
     cot_agent = LLMAgentBase(['thinking', 'answer'], 'CoT Agent', temperature=0.7)
@@ -81,11 +81,11 @@ def forward(self, taskInfo):
     
     return Info('answer', 'Self-Consistency Agent', most_common_answer, 0)
 """
-    },
-    {
-        "thought": "Least-to-Most Prompting breaks complex problems into simpler sub-problems, solving them sequentially. This approach helps in handling complex tasks more effectively by decomposing them into manageable parts.",
-        "name": "Least-to-Most Prompting",
-        "code": """
+    ),
+    AgentTechnique(
+        thought="Least-to-Most Prompting breaks complex problems into simpler sub-problems, solving them sequentially. This approach helps in handling complex tasks more effectively by decomposing them into manageable parts.",
+        name="Least-to-Most Prompting",
+        code="""
 def forward(self, taskInfo):
     decomposition_agent = LLMAgentBase(['sub_tasks'], 'Decomposition Agent')
     solving_agent = LLMAgentBase(['thinking', 'answer'], 'Solving Agent')
@@ -101,11 +101,11 @@ def forward(self, taskInfo):
     
     return answer  # The last answer is the solution to the most complex sub-task, i.e., the original task
 """
-    },
-    {
-        "thought": "Tree-of-Thoughts creates a tree-like search of multiple reasoning paths, improving search and planning capabilities for complex problem-solving.",
-        "name": "Tree-of-Thoughts",
-        "code": """
+    ),
+    AgentTechnique(
+        thought="Tree-of-Thoughts creates a tree-like search of multiple reasoning paths, improving search and planning capabilities for complex problem-solving.",
+        name="Tree-of-Thoughts",
+        code="""
 def forward(self, taskInfo):
     def expand_node(node, depth):
         if depth == 0:
@@ -152,11 +152,11 @@ def forward(self, taskInfo):
 
     return Info('answer', 'Tree-of-Thoughts Agent', best_answer, 0)
 """
-    },
-    {
-        "thought": "Program-of-Thoughts generates programming code as reasoning steps, excelling in mathematical and programming tasks by leveraging code-based reasoning.",
-        "name": "Program-of-Thoughts",
-        "code": """
+    ),
+    AgentTechnique(
+        thought="Program-of-Thoughts generates programming code as reasoning steps, excelling in mathematical and programming tasks by leveraging code-based reasoning.",
+        name="Program-of-Thoughts",
+        code="""
 def forward(self, taskInfo):
     code_generation_agent = LLMAgentBase(['code'], 'Code Generation Agent')
     execution_agent = LLMAgentBase(['result'], 'Code Execution Agent')
@@ -173,11 +173,11 @@ def forward(self, taskInfo):
     
     return answer
 """
-    },
-    {
-        "thought": "Prompt Chaining uses multiple prompts in succession to handle complex multi-step tasks, allowing for a more structured approach to problem-solving.",
-        "name": "Prompt Chaining",
-        "code": """
+    ),
+    AgentTechnique(
+        thought="Prompt Chaining uses multiple prompts in succession to handle complex multi-step tasks, allowing for a more structured approach to problem-solving.",
+        name="Prompt Chaining",
+        code="""
 def forward(self, taskInfo):
     chain = [
         ('understand', "Understand and restate the given task."),
@@ -194,11 +194,11 @@ def forward(self, taskInfo):
     
     return context[-1]  # The last result is the final answer
 """
-    },
-    {
-        "thought": "Emotion Prompting incorporates emotional phrases to potentially improve performance on benchmarks by leveraging psychological relevance.",
-        "name": "Emotion Prompting",
-        "code": """
+    ),
+    AgentTechnique(
+        thought="Emotion Prompting incorporates emotional phrases to potentially improve performance on benchmarks by leveraging psychological relevance.",
+        name="Emotion Prompting",
+        code="""
 def forward(self, taskInfo):
     emotion_agent = LLMAgentBase(['emotion'], 'Emotion Selection Agent')
     solving_agent = LLMAgentBase(['thinking', 'answer'], 'Emotional Solving Agent')
@@ -211,11 +211,11 @@ def forward(self, taskInfo):
     
     return answer
 """
-    },
-    {
-        "thought": "Self-Ask prompts the model to ask and answer follow-up questions, improving problem decomposition and solving through self-questioning.",
-        "name": "Self-Ask",
-        "code": """
+    ),
+    AgentTechnique(
+        thought="Self-Ask prompts the model to ask and answer follow-up questions, improving problem decomposition and solving through self-questioning.",
+        name="Self-Ask",
+        code="""
 def forward(self, taskInfo):
     question_agent = LLMAgentBase(['question'], 'Question Agent')
     answer_agent = LLMAgentBase(['answer'], 'Answer Agent')
@@ -241,11 +241,11 @@ def forward(self, taskInfo):
     
     return final_answer
 """
-    },
-    {
-        "thought": "Contrastive Chain-of-Thought includes both correct and incorrect explanations to enhance reasoning by showing what not to do, leveraging contrast learning.",
-        "name": "Contrastive Chain-of-Thought",
-        "code": """
+    ),
+    AgentTechnique(
+        thought="Contrastive Chain-of-Thought includes both correct and incorrect explanations to enhance reasoning by showing what not to do, leveraging contrast learning.",
+        name="Contrastive Chain-of-Thought",
+        code="""
 def forward(self, taskInfo):
     cot_agent = LLMAgentBase(['correct_thinking', 'incorrect_thinking'], 'CoT Generation Agent')
     contrast_agent = LLMAgentBase(['analysis', 'answer'], 'Contrast Analysis Agent')
@@ -258,11 +258,11 @@ def forward(self, taskInfo):
     
     return answer
 """
-    },
-    {
-        "thought": "Memory-of-Thought uses unlabeled data to build Few-Shot Chain-of-Thought prompts, improving performance on various reasoning tasks through dynamic example retrieval.",
-        "name": "Memory-of-Thought",
-        "code": """
+    ),
+    AgentTechnique(
+        thought="Memory-of-Thought uses unlabeled data to build Few-Shot Chain-of-Thought prompts, improving performance on various reasoning tasks through dynamic example retrieval.",
+        name="Memory-of-Thought",
+        code="""
 def forward(self, taskInfo):
     memory_bank = [...]  # Assume this is a large list of unlabeled examples
     
@@ -277,5 +277,111 @@ def forward(self, taskInfo):
     
     return answer
 """
-    },
+    ),
+    AgentTechnique(
+        thought="Choice Annealing gradually narrows down a large set of initial ideas to a final, refined solution. It starts with high randomness and gradually reduces it while refining ideas, useful for open-ended problems or creative tasks.",
+        name="Choice Annealing",
+        code="""
+async def run(self):
+    annealing_module = self.agent.create_sub_agent(['ideas'], 'Annealing Module')
+    
+    temperature = 1.0
+    num_ideas = 20
+    final_plan = []
+
+    while temperature > 0.05 and len(final_plan) < 20:
+        if len(final_plan) == 0:
+            instruction = f"Generate {num_ideas} diverse initial ideas for solving this problem."
+        else:
+            instruction = f"Consider the previous ideas and assessment. Generate {num_ideas} ideas that expand on parts {len(final_plan)+1} to {min(len(final_plan)+3, 20)} of the plan."
+
+        ideas = await annealing_module.llm_response(instruction, temperature=temperature)
+        ideas = ideas.content.split('\\n')
+
+        assessment_instruction = "Critique these ideas, find the best parts, consolidate them, and write a final assessment."
+        assessment = await annealing_module.llm_response(assessment_instruction, temperature=temperature)
+
+        final_plan.append(assessment.content)
+        temperature -= 0.05
+        num_ideas -= 1
+
+    return '\\n'.join(final_plan)
+"""
+    ),
+    AgentTechnique(
+        thought="Evolutionary I-beam Tournament evolves and refines ideas through cycles of mutation, selection, and recombination. It's useful when you have an initial solution or idea that you want to improve upon through iterative refinement and combination of features.",
+        name="Evolutionary I-beam Tournament",
+        code="""
+async def run(self):
+    evolution_module = self.agent.create_sub_agent(['ideas'], 'Evolution Module')
+    test_module = self.agent.create_sub_agent(['scores'], 'Test Module')
+
+    initial_idea = self.task
+    population_size = 8
+    num_generations = 5
+
+    for generation in range(num_generations):
+        if generation == 0:
+            instruction = f"Mutate the initial idea into {population_size} different permutations."
+            population_response = await evolution_module.llm_response(instruction)
+            population = population_response.content.split('\\n')
+        else:
+            # Mutate winners
+            winner_mutations = []
+            for winner in winners:
+                instruction = f"Mutate this idea into 3 new variants: {winner}"
+                mutations_response = await evolution_module.llm_response(instruction)
+                mutations = mutations_response.content.split('\\n')
+                winner_mutations.extend(mutations)
+
+            # Recombine losers
+            loser_recombination_instruction = "Analyze these ideas and combine them in a unique way to create 2 new permutations that synergize their best qualities:"
+            loser_recombinations_response = await evolution_module.llm_response(loser_recombination_instruction + '\\n' + '\\n'.join(losers))
+            loser_recombinations = loser_recombinations_response.content.split('\\n')
+
+            population = winner_mutations + loser_recombinations
+
+        # Test ideas
+        test_instruction = "Score each of these ideas from 1-10 based on their potential to solve the problem."
+        scores_response = await test_module.llm_response(test_instruction + '\\n' + '\\n'.join(population))
+        scores = scores_response.content.split('\\n')
+
+        # Select winners and losers
+        sorted_population = sorted(zip(population, scores), key=lambda x: float(x[1]), reverse=True)
+        winners = [idea for idea, _ in sorted_population[:2]]
+        losers = [idea for idea, _ in sorted_population[2:]]
+
+    return winners[0]  # Return the best idea
+"""
+    ),
+        AgentTechnique(
+        thought="Exploration Module alternates between conservative and creative thinking to explore an idea space thoroughly. It's useful for brainstorming sessions or when you need to generate a range of ideas that balance practicality and creativity.",
+        name="Exploration Module",
+        code="""
+async def run(self):
+    explore_module = self.agent.create_sub_agent(['ideas'], 'Explore Module')
+    critique_module = self.agent.create_sub_agent(['critique'], 'Critique Module')
+
+    temperature = 0.05
+    ideas = []
+
+    for i in range(5):  # 5 iterations to get 10 ideas
+        if i == 0:
+            instruction = "Generate the most conservative small step towards exploring this idea."
+        else:
+            instruction = f"Using the previous critique as context, generate 2 ideas to explore this concept."
+
+        new_ideas_response = await explore_module.llm_response(instruction, temperature=temperature)
+        new_ideas = new_ideas_response.content.split('\\n')
+        ideas.extend(new_ideas)
+
+        critique_temp = 1 - temperature
+        critique_instruction = "Act as an enthusiastic and creative critic. Think bigger and offer ways to move forward dynamically."
+        critique_response = await critique_module.llm_response(critique_instruction + '\\n' + '\\n'.join(new_ideas), temperature=critique_temp)
+
+        temperature = min(temperature + 0.1, 0.5)
+
+    return '\\n'.join(ideas)
+"""
+    ),
 ]

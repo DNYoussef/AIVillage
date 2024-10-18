@@ -49,12 +49,15 @@ class DecisionMaker:
         
         decision = response.text
         alternatives = await self._generate_alternatives({"content": content, "rag_info": rag_info})
-        evaluated_alternatives = await self._evaluate_alternatives(alternatives, [
+        
+        ranked_criteria = [
             {"criterion": "eudaimonia", "weight": 0.4},
             {"criterion": "curiosity", "weight": 0.2},
             {"criterion": "protection", "weight": 0.3},
             {"criterion": "self_preservation", "weight": 0.1}
-        ])
+        ]
+        
+        evaluated_alternatives = await self._evaluate_alternatives(alternatives, ranked_criteria)
         
         best_alternative = evaluated_alternatives[0]['alternative']
         
@@ -138,6 +141,38 @@ class DecisionMaker:
         return list(dict.fromkeys(all_alternatives))
 
     async def _evaluate_alternatives(self, alternatives: List[str], ranked_criteria: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        evaluated_alternatives = []
+        for alt in alternatives:
+            alt_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(alt)
+            eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(alt_vector)
+            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(alt_vector)
+            
+            total_score = sum(
+                criterion['weight'] * (eudaimonia_score if criterion['criterion'] == 'eudaimonia' else rule_compliance)
+                for criterion in ranked_criteria
+            )
+            
+            evaluated_alternatives.append({'alternative': alt, 'score': total_score})
+        
+        return sorted(evaluated_alternatives, key=lambda x: x['score'], reverse=True)
+    async def _evaluate_alternatives(self, alternatives: List[str], ranked_criteria: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        evaluated_alternatives = []
+        for alt in alternatives:
+            alt_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(alt)
+            eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(alt_vector)
+            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(alt_vector)
+
+            total_score = sum(
+                criterion['weight'] * (eudaimonia_score if criterion['criterion'] == 'eudaimonia' else rule_compliance)
+                for criterion in ranked_criteria
+            )
+
+            evaluated_alternatives.append({'alternative': alt, 'score': total_score})
+
+        return sorted(evaluated_alternatives, key=lambda x: x['score'], reverse=True)
+
+
+    async def _evaluate_alternatives(self, alternatives: List[str], ranked_criteria: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         outcomes = await self._simplify_outcomes(ranked_criteria)
         utility_chart = await self._create_utility_chart(outcomes)
         prob_trees = await self._determine_probabilities(alternatives, outcomes)
@@ -156,14 +191,14 @@ class DecisionMaker:
             alt_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(alt)
             eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(alt_vector)
             rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(alt_vector)
-            
+
             total_score = sum(
                 criterion['weight'] * (eudaimonia_score if criterion['criterion'] == 'eudaimonia' else rule_compliance)
                 for criterion in ranked_criteria
             )
-            
+
             evaluated_alternatives.append({'alternative': alt, 'score': total_score})
-        
+
         return sorted(evaluated_alternatives, key=lambda x: x['score'], reverse=True)
 
     async def _create_implementation_plan(self, plan: Dict[str, Any]) -> Dict[str, Any]:
