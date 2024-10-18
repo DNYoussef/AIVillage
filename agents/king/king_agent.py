@@ -7,10 +7,12 @@ from .problem_analyzer import ProblemAnalyzer
 from .unified_task_manager import UnifiedTaskManager
 from .quality_assurance_layer import QualityAssuranceLayer
 from .continuous_learner import ContinuousLearner
+from .subgoal_generator import SubGoalGenerator
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.core.config import RAGConfig
 from langroid.vector_store.base import VectorStore
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
 import random
 import logging
 
@@ -114,6 +116,7 @@ class KingAgent(UnifiedBaseAgent):
         self.decision_maker = DecisionMaker(communication_protocol, self.rag_system, self, self.quality_assurance_layer)
         self.problem_analyzer = ProblemAnalyzer(communication_protocol, self, self.quality_assurance_layer)
         self.task_manager = UnifiedTaskManager(communication_protocol, len(self.coordinator.agents), 10)
+        self.subgoal_generator = SubGoalGenerator(OpenAIGPTConfig(chat_model="gpt-4"))
 
     async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
         is_safe, metrics = self.quality_assurance_layer.check_task_safety(task)
@@ -123,12 +126,62 @@ class KingAgent(UnifiedBaseAgent):
         if task.type in self.coordinator_capabilities:
             result = await getattr(self, f"handle_{task.type}")(task)
         else:
-            result = await super().execute_task(task)
+            # Check if the task is complex and needs to be broken down into subgoals
+            if await self._is_complex_task(task):
+                result = await self._execute_with_subgoals(task)
+            else:
+                result = await super().execute_task(task)
 
         # Update embeddings based on task result
         await self.continuous_learner.update_embeddings(task, result)
 
         return result
+
+    async def _is_complex_task(self, task: LangroidTask) -> bool:
+        # Implement logic to determine if a task is complex and needs subgoals
+        # This could be based on task length, presence of multiple steps, etc.
+        complexity_threshold = 100  # Example threshold
+        return len(task.content) > complexity_threshold
+
+    async def _execute_with_subgoals(self, task: LangroidTask) -> Dict[str, Any]:
+        context = await self._gather_task_context(task)
+        subgoals = await self.subgoal_generator.generate_subgoals(task.content, context)
+        
+        results = []
+        for subgoal in subgoals:
+            subtask = LangroidTask(self, subgoal)
+            subtask_result = await self.execute_task(subtask)
+            results.append(subtask_result)
+        
+        # Combine and summarize results from subgoals
+        final_result = await self._summarize_subgoal_results(task, subgoals, results)
+        return final_result
+
+    async def _gather_task_context(self, task: LangroidTask) -> Dict[str, Any]:
+        # Gather relevant context for the task, such as agent capabilities, current state, etc.
+        return {
+            "agent_capabilities": self.coordinator_capabilities,
+            "available_agents": self.coordinator.get_available_agents(),
+            "rag_info": await self.rag_system.process_query(task.content)
+        }
+
+    async def _summarize_subgoal_results(self, original_task: LangroidTask, subgoals: List[str], results: List[Dict[str, Any]]) -> Dict[str, Any]:
+        summary_prompt = f"""
+        Original task: {original_task.content}
+
+        Subgoals and their results:
+        {self._format_subgoals_and_results(subgoals, results)}
+
+        Please provide a comprehensive summary of the results, addressing the original task.
+        """
+        summary = await self.llm.complete(summary_prompt)
+        return {"summary": summary.text, "subgoal_results": results}
+
+    def _format_subgoals_and_results(self, subgoals: List[str], results: List[Dict[str, Any]]) -> str:
+        formatted = ""
+        for subgoal, result in zip(subgoals, results):
+            formatted += f"Subgoal: {subgoal}\nResult: {result}\n\n"
+        return formatted
 
     async def handle_task_routing(self, task: LangroidTask) -> Dict[str, Any]:
         return await self.coordinator.handle_task_message(task)
@@ -230,7 +283,8 @@ class KingAgent(UnifiedBaseAgent):
             "task_manager_info": await self.task_manager.introspect(),
             "quality_assurance_info": self.quality_assurance_layer.get_info(),
             "foundational_layer_info": "Active",
-            "continuous_learning_layer_info": "Active"
+            "continuous_learning_layer_info": "Active",
+            "subgoal_generator_info": "Active"
         }
 
 # Example usage
@@ -251,3 +305,4 @@ if __name__ == "__main__":
     king_agent = KingAgent(king_config, communication_protocol, rag_config, vector_store)
     
     # Use the king_agent to process tasks and evolve
+
