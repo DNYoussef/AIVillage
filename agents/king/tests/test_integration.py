@@ -1,94 +1,125 @@
 import unittest
-from unittest.mock import Mock, patch, AsyncMock
-from agents.unified_base_agent import UnifiedBaseAgent as Agent
-from agents.king.king_agent import KingAgent, KingAgentConfig
-from agents.king.coordinator import KingCoordinator
+import asyncio
+from unittest.mock import Mock, patch
+from agents.king.quality_assurance_layer import QualityAssuranceLayer
 from agents.king.decision_maker import DecisionMaker
 from agents.king.problem_analyzer import ProblemAnalyzer
-from agents.king.unified_task_manager import UnifiedTaskManager
-from communications.protocol import StandardCommunicationProtocol, Message, MessageType
-from agents.utils.exceptions import AIVillageException
-from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
+from agents.king.continuous_learner import ContinuousLearner
+from agents.king.king_agent import KingAgent, KingAgentConfig
+from agents.utils.task import Task as LangroidTask
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from communications.protocol import StandardCommunicationProtocol
+from langroid.vector_store.base import VectorStore
 
-class TestIntegration(unittest.TestCase):
-    def setUp(self):
-        self.mock_communication_protocol = AsyncMock(spec=StandardCommunicationProtocol)
-        self.mock_rag_system = AsyncMock(spec=RAGSystem)
-        self.config = KingAgentConfig(name="TestKing", description="Test King Agent", model="gpt-4")
-        self.king_agent = KingAgent(self.config, self.mock_communication_protocol, self.mock_rag_system)
+class TestIntegration(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.communication_protocol = Mock(spec=StandardCommunicationProtocol)
+        self.rag_system = Mock(spec=EnhancedRAGPipeline)
+        self.vector_store = Mock(spec=VectorStore)
+        self.rag_config = Mock()
+        
+        self.king_config = KingAgentConfig(
+            name="TestKingAgent",
+            description="Test King Agent",
+            capabilities=["task_routing", "decision_making", "agent_management", "problem_analysis", "task_management"],
+            vector_store=self.vector_store,
+            model="gpt-4",
+            instructions="You are a test King agent."
+        )
+        
+        self.king_agent = KingAgent(self.king_config, self.communication_protocol, self.rag_config, self.vector_store)
 
-    @patch('agents.king.coordinator.KingCoordinator.handle_task_message')
-    async def test_execute_task_routing(self, mock_handle_task_message):
-        mock_handle_task_message.return_value = {"result": "Task routed"}
-        task = Mock()
-        task.type = "route_task"
-        task.content = {"description": "Test task"}
+    @patch('agents.king.quality_assurance_layer.EudaimoniaTriangulator.get_embedding')
+    async def test_end_to_end_decision_making(self, mock_get_embedding):
+        # Mock the embedding function to return a fixed vector
+        mock_get_embedding.return_value = [0.1] * 768
+
+        # Set up the mocks
+        self.rag_system.process_query.return_value = {"rag_info": "Test RAG info"}
+        self.king_agent.agent.generate_structured_response.return_value = ["Alternative 1", "Alternative 2"]
+        self.communication_protocol.send_and_wait.return_value.content = {"analysis": "Test analysis"}
+        self.king_agent.llm.complete.return_value.text = "Test decision"
+
+        # Create a test task
+        task_content = "Make a decision about AI safety measures"
+        task = LangroidTask(None, task_content)
+
+        # Execute the task
         result = await self.king_agent.execute_task(task)
-        self.assertEqual(result, {"result": "Task routed"})
-        mock_handle_task_message.assert_called_once_with(task)
 
-    async def test_communication_protocol(self):
-        test_message = Message(type=MessageType.TASK, sender="TestSender", receiver="TestReceiver", content={"description": "Test message"})
-        await self.mock_communication_protocol.send_message(test_message)
-        self.mock_communication_protocol.send_message.assert_called_once_with(test_message)
+        # Assertions
+        self.assertIn('decision', result)
+        self.assertIn('eudaimonia_score', result)
+        self.assertIn('rule_compliance', result)
+        self.assertIn('rag_info', result)
+        self.assertIn('best_alternative', result)
+        self.assertIn('implementation_plan', result)
 
-    def test_ai_village_exception(self):
-        with self.assertRaises(AIVillageException):
-            raise AIVillageException("Test exception")
+    @patch('agents.king.quality_assurance_layer.EudaimoniaTriangulator.get_embedding')
+    async def test_continuous_learning(self, mock_get_embedding):
+        # Mock the embedding function to return a fixed vector
+        mock_get_embedding.return_value = [0.1] * 768
 
-    @patch('agents.king.decision_maker.DecisionMaker.make_decision')
-    async def test_decision_maker_integration(self, mock_make_decision):
-        mock_make_decision.return_value = {"decision": "Test decision"}
-        task = Mock()
-        task.type = "make_decision"
-        task.content = "Test decision task"
-        result = await self.king_agent.execute_task(task)
-        self.assertEqual(result, {"decision": "Test decision"})
-        mock_make_decision.assert_called_once_with("Test decision task")
+        # Create a test task
+        task_content = "Implement a new AI feature"
+        task = LangroidTask(None, task_content)
 
-    @patch('agents.king.problem_analyzer.ProblemAnalyzer.analyze')
-    async def test_problem_analyzer_integration(self, mock_analyze):
-        mock_analyze.return_value = {"analysis": "Test analysis"}
-        task = Mock()
-        task.type = "analyze_problem"
-        task.content = "Test problem"
-        result = await self.king_agent.execute_task(task)
-        self.assertEqual(result, {"analysis": "Test analysis"})
-        mock_analyze.assert_called_once_with("Test problem", {})
+        # Execute the task multiple times
+        for _ in range(5):
+            result = await self.king_agent.execute_task(task)
+            self.assertIn('decision', result)
 
-    @patch('agents.king.unified_task_manager.UnifiedTaskManager.create_task')
-    async def test_task_manager_integration(self, mock_create_task):
-        mock_create_task.return_value = Mock(id="test_task_id")
-        task = Mock()
-        task.type = "manage_task"
-        task.content = {"action": "create", "description": "Test task", "agent": "test_agent"}
-        result = await self.king_agent.execute_task(task)
-        self.assertEqual(result, {"task_id": "test_task_id"})
-        mock_create_task.assert_called_once_with("Test task", "test_agent")
+        # Provide feedback
+        feedback = [
+            {"task_content": "Implement a new AI feature", "performance": 0.8},
+            {"task_content": "Optimize AI algorithm", "performance": 0.9},
+        ]
+        await self.king_agent.learn_from_feedback(feedback)
 
-    @patch('agents.king.coordinator.KingCoordinator.add_agent')
-    async def test_add_agent(self, mock_add_agent):
-        mock_agent = Mock()
-        await self.king_agent.coordinator.add_agent("test_agent", mock_agent)
-        mock_add_agent.assert_called_once_with("test_agent", mock_agent)
+        # Check if the continuous learner's learning rate has been adjusted
+        self.assertNotEqual(self.king_agent.continuous_learner.learning_rate, 0.01)  # 0.01 is the default value
 
-    @patch('rag_system.core.pipeline.EnhancedRAGPipeline.process_query')
-    async def test_rag_system_integration(self, mock_process_query):
-        mock_process_query.return_value = {"rag_result": "Test RAG result"}
-        task = Mock()
-        task.type = "analyze_problem"
-        task.content = "Test problem"
-        await self.king_agent.execute_task(task)
-        mock_process_query.assert_called_once_with("Test problem")
+    @patch('agents.king.quality_assurance_layer.EudaimoniaTriangulator.get_embedding')
+    async def test_evolve(self, mock_get_embedding):
+        # Mock the embedding function to return a fixed vector
+        mock_get_embedding.return_value = [0.1] * 768
 
-    async def test_introspection(self):
-        introspection_result = await self.king_agent.introspect()
-        self.assertIn("coordinator_capabilities", introspection_result)
-        self.assertIn("coordinator_info", introspection_result)
-        self.assertIn("decision_maker_info", introspection_result)
-        self.assertIn("problem_analyzer_info", introspection_result)
-        self.assertIn("task_manager_info", introspection_result)
+        # Evolve the agent
+        await self.king_agent.evolve()
+
+        # Check if the evolution process has occurred
+        self.assertGreater(len(self.king_agent.task_manager.get_performance_history()), 0)
+
+    async def test_save_and_load_models(self):
+        # Mock the save and load methods
+        self.king_agent.coordinator.save_models = Mock()
+        self.king_agent.decision_maker.save_models = Mock()
+        self.king_agent.problem_analyzer.save_models = Mock()
+        self.king_agent.task_manager.save_models = Mock()
+
+        self.king_agent.coordinator.load_models = Mock()
+        self.king_agent.decision_maker.load_models = Mock()
+        self.king_agent.problem_analyzer.load_models = Mock()
+        self.king_agent.task_manager.load_models = Mock()
+
+        # Save models
+        path = "/test/path"
+        self.king_agent.save_models(path)
+
+        # Assert that save methods were called
+        self.king_agent.coordinator.save_models.assert_called_once_with(f"{path}/coordinator")
+        self.king_agent.decision_maker.save_models.assert_called_once_with(f"{path}/decision_maker")
+        self.king_agent.problem_analyzer.save_models.assert_called_once_with(f"{path}/problem_analyzer")
+        self.king_agent.task_manager.save_models.assert_called_once_with(f"{path}/task_manager")
+
+        # Load models
+        self.king_agent.load_models(path)
+
+        # Assert that load methods were called
+        self.king_agent.coordinator.load_models.assert_called_once_with(f"{path}/coordinator")
+        self.king_agent.decision_maker.load_models.assert_called_once_with(f"{path}/decision_maker")
+        self.king_agent.problem_analyzer.load_models.assert_called_once_with(f"{path}/problem_analyzer")
+        self.king_agent.task_manager.load_models.assert_called_once_with(f"{path}/task_manager")
 
 if __name__ == '__main__':
     unittest.main()
-

@@ -21,9 +21,6 @@ class UnifiedAgentConfig(BaseModel):
     instructions: str = Field(..., description="Instructions for the agent's behavior")
 
 class UnifiedBaseAgent(AgentInterface):
-    """
-    A comprehensive base agent class that can be easily extended for various agent types.
-    """
     def __init__(self, config: UnifiedAgentConfig, communication_protocol: StandardCommunicationProtocol):
         self.name = config.name
         self.description = config.description
@@ -38,15 +35,34 @@ class UnifiedBaseAgent(AgentInterface):
         self.communication_protocol.subscribe(self.name, self.handle_message)
         self.llm = OpenAIGPTConfig(chat_model=self.model).create()
 
+        # Initialize new layers
+        self.quality_assurance_layer = QualityAssuranceLayer()
+        self.foundational_layer = FoundationalLayer(self.vector_store)
+        self.continuous_learning_layer = ContinuousLearningLayer(self.vector_store)
+        self.agent_architecture_layer = AgentArchitectureLayer()
+        self.decision_making_layer = DecisionMakingLayer()
+
     async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
-        """
-        Execute a given task with support for dynamic agent swapping.
-        """
+        # Quality Assurance Layer check
+        if not self.quality_assurance_layer.check_task_safety(task):
+            return {"error": "Task deemed unsafe"}
+
+        # Foundational Layer processing
+        task = await self.foundational_layer.process_task(task)
+
+        # Use existing processing logic
         result = await self._process_task(task)
-        if isinstance(result, UnifiedBaseAgent):
-            # Handoff to another agent
-            return await result.execute_task(task)
-        return result
+
+        # Agent Architecture Layer processing
+        result = await self.agent_architecture_layer.process_result(result)
+
+        # Decision Making Layer processing
+        decision = await self.decision_making_layer.make_decision(task, result)
+
+        # Continuous Learning Layer update
+        await self.continuous_learning_layer.update(task, decision)
+
+        return {"result": decision}
 
     async def _process_task(self, task: LangroidTask) -> Dict[str, Any]:
         """
@@ -56,16 +72,10 @@ class UnifiedBaseAgent(AgentInterface):
         raise NotImplementedError("Subclasses must implement _process_task method")
 
     async def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Process an incoming message by creating a task and executing it.
-        """
         task = LangroidTask(self, message['content'])
         return await self.execute_task(task)
 
     async def handle_message(self, message: Message):
-        """
-        Handle incoming messages from the communication protocol.
-        """
         if message.type == MessageType.TASK:
             result = await self.process_message(message.content)
             response = Message(
@@ -78,43 +88,25 @@ class UnifiedBaseAgent(AgentInterface):
             await self.communication_protocol.send_message(response)
 
     def add_capability(self, capability: str):
-        """
-        Add a new capability to the agent.
-        """
         if capability not in self.capabilities:
             self.capabilities.append(capability)
 
     def remove_capability(self, capability: str):
-        """
-        Remove a capability from the agent.
-        """
         if capability in self.capabilities:
             self.capabilities.remove(capability)
 
     def add_tool(self, name: str, tool: Callable):
-        """
-        Add a new tool to the agent.
-        """
         self.tools[name] = tool
 
     def remove_tool(self, name: str):
-        """
-        Remove a tool from the agent.
-        """
         if name in self.tools:
             del self.tools[name]
 
     def get_tool(self, name: str) -> Optional[Callable]:
-        """
-        Get a tool by name.
-        """
         return self.tools.get(name)
 
     @property
     def info(self) -> Dict[str, Any]:
-        """
-        Return a dictionary containing information about the agent.
-        """
         return {
             "name": self.name,
             "description": self.description,
@@ -216,7 +208,18 @@ class UnifiedBaseAgent(AgentInterface):
         # Optionally, you could add logic here to re-initialize the agent with the new instructions
         # For example, updating the language model's system message
 
-class QualityAssurance:
+    async def evolve(self):
+        print(f"Evolving agent: {self.name}")
+        await self.quality_assurance_layer.evolve()
+        await self.foundational_layer.evolve()
+        await self.continuous_learning_layer.evolve()
+        await self.agent_architecture_layer.evolve()
+        await self.decision_making_layer.evolve()
+        print(f"Agent {self.name} evolution complete.")
+
+# New layer implementations
+
+class QualityAssuranceLayer:
     def __init__(self, upo_threshold: float = 0.7):
         self.upo_threshold = upo_threshold
 
@@ -225,77 +228,76 @@ class QualityAssurance:
         return uncertainty < self.upo_threshold
 
     def estimate_uncertainty(self, task: LangroidTask) -> float:
-        n_samples = 100
-        predictions = [self.predict(task) for _ in range(n_samples)]
-        return np.std(predictions)
+        # Implement UPO (Uncertainty-enhanced Preference Optimization)
+        return random.random()  # Placeholder implementation
 
-    def predict(self, task: LangroidTask) -> float:
-        return random.random()
+    async def evolve(self):
+        self.upo_threshold = max(0.5, min(0.9, self.upo_threshold * (1 + (random.random() - 0.5) * 0.1)))
 
-    async def get_recent_safety_checks(self) -> List[Any]:
-        return [SimpleNamespace(safety_score=random.uniform(0.5, 1.0)) for _ in range(100)]
-
-class PromptBaker:
+class FoundationalLayer:
     def __init__(self, vector_store: VectorStore):
         self.vector_store = vector_store
 
-    async def bake_knowledge(self, new_knowledge: str):
-        encoded_knowledge = self.encode_knowledge(new_knowledge)
-        await self.vector_store.add_texts([encoded_knowledge])
+    async def process_task(self, task: LangroidTask) -> LangroidTask:
+        baked_knowledge = await self.bake_knowledge(task.content)
+        task.content = f"{task.content}\nBaked Knowledge: {baked_knowledge}"
+        return task
 
-    def encode_knowledge(self, knowledge: str) -> str:
-        tokens = knowledge.split()
-        encoded = ' '.join([f"TOKEN_{token.upper()}" for token in tokens])
-        return f"ENCODED: {encoded}"
+    async def bake_knowledge(self, content: str) -> str:
+        # Implement Prompt Baking mechanism
+        return f"Baked: {content}"
 
-class ContinuousLearner:
+    async def evolve(self):
+        # Implement evolution logic for Foundational Layer
+        pass
+
+class ContinuousLearningLayer:
     def __init__(self, vector_store: VectorStore):
         self.vector_store = vector_store
 
     async def update(self, task: LangroidTask, result: Any):
+        # Implement SELF-PARAM (rapid parameter updating)
         learned_info = self.extract_learning(task, result)
         await self.vector_store.add_texts([learned_info])
 
     def extract_learning(self, task: LangroidTask, result: Any) -> str:
-        task_type = task.type if hasattr(task, 'type') else 'unknown'
-        return f"LEARNED: Task '{task_type}' with content '{task.content}' resulted in '{result}'. PARAMS: {self.extract_params(task, result)}"
+        return f"Learned: Task '{task.content}' resulted in '{result}'"
 
-    def extract_params(self, task: LangroidTask, result: Any) -> Dict[str, Any]:
-        params = {
-            'task_type': task.type if hasattr(task, 'type') else 'unknown',
-            'content_length': len(task.content),
-            'result_type': type(result).__name__,
-        }
-        if isinstance(result, dict):
-            params.update({f'result_{k}': v for k, v in result.items()})
-        return params
+    async def evolve(self):
+        # Implement evolution logic for Continuous Learning Layer
+        pass
 
-class SAGEFramework:
+class AgentArchitectureLayer:
     def __init__(self):
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
 
-    async def assistant_response(self, user_input: str) -> str:
-        response = await self.llm.complete(user_input)
-        return response.text
+    async def process_result(self, result: Any) -> Any:
+        # Implement SAGE framework (Self-Aware Generative Engine)
+        evaluation = await self.evaluate_result(result)
+        if evaluation["quality"] < 0.9:
+            result = await self.revise_result(result, evaluation)
+        return result
 
-    async def checker_evaluate(self, response: str) -> Dict[str, Any]:
-        evaluation_prompt = f"Evaluate the following response: '{response}'. Provide a quality score between 0 and 1, and suggest improvements."
+    async def evaluate_result(self, result: Any) -> Dict[str, Any]:
+        evaluation_prompt = f"Evaluate the following result: '{result}'. Provide a quality score between 0 and 1."
         evaluation = await self.llm.complete(evaluation_prompt)
-        lines = evaluation.text.split('\n')
-        quality = float(lines[0]) if lines and lines[0].replace('.', '').isdigit() else 0.5
-        improvements = lines[1:] if len(lines) > 1 else []
-        return {"quality": quality, "improvements": improvements}
+        return {"quality": float(evaluation.text)}
 
-    async def assistant_revise(self, response: str, feedback: Dict[str, Any]) -> str:
-        revision_prompt = f"Revise the following response: '{response}'. Consider these improvements: {feedback['improvements']}"
+    async def revise_result(self, result: Any, evaluation: Dict[str, Any]) -> Any:
+        revision_prompt = f"Revise the following result to improve its quality: '{result}'"
         revision = await self.llm.complete(revision_prompt)
         return revision.text
 
-class DecisionMaker:
+    async def evolve(self):
+        # Implement evolution logic for Agent Architecture Layer
+        pass
+
+class DecisionMakingLayer:
     def __init__(self):
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
 
-    async def make_decision(self, task: LangroidTask, context: str) -> Any:
+    async def make_decision(self, task: LangroidTask, context: Any) -> Any:
+        # Implement Agent Q (Monte Carlo Tree Search and Direct Preference Optimization)
         mcts_result = self.monte_carlo_tree_search(task, context)
         dpo_result = await self.direct_preference_optimization(task, context)
         
@@ -317,6 +319,10 @@ class DecisionMaker:
 
     def simulate(self, task: LangroidTask, context: str, option: str) -> float:
         return random.random()
+
+    async def direct_preference_optimization(self, task: LangroidTask, context: Any) -> str:
+        # Implement DPO logic
+        return "DPO placeholder result"
 
     async def direct_preference_optimization(self, task: LangroidTask, context: str) -> str:
         options = ["Approach X", "Approach Y", "Approach Z"]
@@ -346,45 +352,19 @@ class MCTSConfig:
         self.simulation_depth = 10
 
 class SelfEvolvingSystem:
-    def __init__(self, agents: List[UnifiedBaseAgent], vector_store: VectorStore):
+    def __init__(self, agents: List[UnifiedBaseAgent]):
         self.agents = agents
-        self.quality_assurance = QualityAssurance()
-        self.prompt_baker = PromptBaker(vector_store)
-        self.continuous_learner = ContinuousLearner(vector_store)
-        self.sage_framework = SAGEFramework()
-        self.decision_maker = DecisionMaker()
-        self.mcts = MCTSConfig()
-        self.dpo = LogisticRegression()
-        self.recent_decisions = []
 
     async def process_task(self, task: LangroidTask) -> Dict[str, Any]:
-        if not self.quality_assurance.check_task_safety(task):
-            return {"error": "Task deemed unsafe"}
-
         for agent in self.agents:
             if task.type in agent.capabilities:
-                result = await agent.execute_task(task)
-                await self.continuous_learner.update(task, result)
-                return result
-
-        user_input = task.content
-        assistant_response = await self.sage_framework.assistant_response(user_input)
-        evaluation = await self.sage_framework.checker_evaluate(assistant_response)
-        if evaluation["quality"] < 0.9:
-            assistant_response = await self.sage_framework.assistant_revise(assistant_response, evaluation)
-
-        decision = await self.decision_maker.make_decision(task, assistant_response)
-        await self.prompt_baker.bake_knowledge(f"Task: {task.content}, Decision: {decision}")
-
-        return {"result": decision}
+                return await agent.execute_task(task)
+        return {"error": "No suitable agent found for the task"}
 
     async def evolve(self):
         print("Starting system-wide evolution...")
         for agent in self.agents:
-            await self.evolve_agent(agent)
-
-        await self.evolve_decision_maker()
-        self.quality_assurance.upo_threshold = await self.optimize_upo_threshold()
+            await agent.evolve()
         print("System-wide evolution complete.")
 
     async def evolve_agent(self, agent: UnifiedBaseAgent):
@@ -454,7 +434,7 @@ def create_agent(agent_type: str, config: UnifiedAgentConfig, communication_prot
     """
     return UnifiedBaseAgent(config, communication_protocol)
 
-# Example usage
+# Example usage (keeping existing example)
 if __name__ == "__main__":
     vector_store = VectorStore()  # Placeholder, implement actual VectorStore
     communication_protocol = StandardCommunicationProtocol()
@@ -500,4 +480,3 @@ if __name__ == "__main__":
     self_evolving_system = SelfEvolvingSystem([agent], vector_store)
     
     # Use the self_evolving_system to process tasks and evolve the system
-

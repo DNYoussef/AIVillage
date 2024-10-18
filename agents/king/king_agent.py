@@ -5,11 +5,16 @@ from .coordinator import KingCoordinator
 from .decision_maker import DecisionMaker
 from .problem_analyzer import ProblemAnalyzer
 from .unified_task_manager import UnifiedTaskManager
+from .quality_assurance_layer import QualityAssuranceLayer
+from .continuous_learner import ContinuousLearner
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.core.config import RAGConfig
 from langroid.vector_store.base import VectorStore
 import random
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SelfEvolvingSystem:
     def __init__(self, agent):
@@ -52,7 +57,7 @@ class SelfEvolvingSystem:
 
     async def process_task(self, task: LangroidTask) -> Dict[str, Any]:
         result = await self.agent.execute_task(task)
-        performance = result.get('performance', 0.5)  # Assume a default performance metric
+        performance = result.get('performance', 0.5)
         self.performance_history.append(performance)
         return result
 
@@ -65,29 +70,72 @@ class KingAgentConfig(UnifiedAgentConfig):
         "task_management"
     ]
 
+class FoundationalLayer:
+    def __init__(self, vector_store: VectorStore):
+        self.vector_store = vector_store
+
+    async def process_task(self, task: LangroidTask) -> LangroidTask:
+        baked_knowledge = await self.bake_knowledge(task.content)
+        task.content = f"{task.content}\nBaked Knowledge: {baked_knowledge}"
+        return task
+
+    async def bake_knowledge(self, content: str) -> str:
+        # Implement Prompt Baking mechanism
+        return f"Baked: {content}"
+
+    async def evolve(self):
+        # Implement evolution logic for Foundational Layer
+        pass
+
+class ContinuousLearningLayer:
+    def __init__(self, vector_store: VectorStore):
+        self.vector_store = vector_store
+
+    async def update(self, task: LangroidTask, result: Any):
+        learned_info = self.extract_learning(task, result)
+        await self.vector_store.add_texts([learned_info])
+
+    def extract_learning(self, task: LangroidTask, result: Any) -> str:
+        return f"Learned: Task '{task.content}' resulted in '{result}'"
+
+    async def evolve(self):
+        # Implement evolution logic for Continuous Learning Layer
+        pass
+
 class KingAgent(UnifiedBaseAgent):
     def __init__(self, config: KingAgentConfig, communication_protocol: StandardCommunicationProtocol, rag_config: RAGConfig, vector_store: VectorStore):
         super().__init__(config, communication_protocol)
         self.coordinator_capabilities = config.coordinator_capabilities
         self.rag_system = EnhancedRAGPipeline(rag_config)
         self.vector_store = vector_store
+        self.quality_assurance_layer = QualityAssuranceLayer()
+        self.continuous_learner = ContinuousLearner(self.quality_assurance_layer)
         self.coordinator = KingCoordinator(communication_protocol, self.rag_system, self)
-        self.decision_maker = DecisionMaker(communication_protocol, self.rag_system, self)
-        self.problem_analyzer = ProblemAnalyzer(communication_protocol, self)
+        self.decision_maker = DecisionMaker(communication_protocol, self.rag_system, self, self.quality_assurance_layer)
+        self.problem_analyzer = ProblemAnalyzer(communication_protocol, self, self.quality_assurance_layer)
         self.task_manager = UnifiedTaskManager(communication_protocol, len(self.coordinator.agents), 10)
-        self.self_evolving_system = SelfEvolvingSystem(self)
 
     async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
+        is_safe, metrics = self.quality_assurance_layer.check_task_safety(task)
+        if not is_safe:
+            return {"error": "Task deemed unsafe", "metrics": metrics}
+
         if task.type in self.coordinator_capabilities:
-            return await getattr(self, f"handle_{task.type}")(task)
+            result = await getattr(self, f"handle_{task.type}")(task)
         else:
-            return await super().execute_task(task)
+            result = await super().execute_task(task)
+
+        # Update embeddings based on task result
+        await self.continuous_learner.update_embeddings(task, result)
+
+        return result
 
     async def handle_task_routing(self, task: LangroidTask) -> Dict[str, Any]:
         return await self.coordinator.handle_task_message(task)
 
     async def handle_decision_making(self, task: LangroidTask) -> Dict[str, Any]:
-        return await self.decision_maker.make_decision(task.content)
+        eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(self.quality_assurance_layer.get_task_embedding(task))
+        return await self.decision_maker.make_decision(task.content, eudaimonia_score)
 
     async def handle_agent_management(self, task: LangroidTask) -> Dict[str, Any]:
         action = task.content.get('action')
@@ -99,7 +147,8 @@ class KingAgent(UnifiedBaseAgent):
 
     async def handle_problem_analysis(self, task: LangroidTask) -> Dict[str, Any]:
         rag_info = await self.rag_system.process_query(task.content)
-        return await self.problem_analyzer.analyze(task.content, rag_info)
+        rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(task)
+        return await self.problem_analyzer.analyze(task.content, rag_info, rule_compliance)
 
     async def handle_task_management(self, task: LangroidTask) -> Dict[str, Any]:
         action = task.content.get('action')
@@ -152,22 +201,37 @@ class KingAgent(UnifiedBaseAgent):
     async def add_document(self, content: str, filename: str):
         await self.rag_system.add_document(content, filename)
 
+    async def evolve(self):
+        await super().evolve()
+        self.continuous_learner.adjust_learning_rate(self.task_manager.get_performance_history())
+        logger.info("King agent evolved")
+
+    async def learn_from_feedback(self, feedback: List[Dict[str, Any]]):
+        await self.continuous_learner.learn_from_feedback(feedback)
+        logger.info(f"Learned from {len(feedback)} feedback items")
+
+    async def save_models(self, path: str):
+        await super().save_models(path)
+        # Add saving logic for continuous learner if needed
+
+    async def load_models(self, path: str):
+        await super().load_models(path)
+        # Add loading logic for continuous learner if needed
+
     async def introspect(self) -> Dict[str, Any]:
         base_info = await super().introspect()
         return {
             **base_info,
+            "continuous_learner_info": self.continuous_learner.get_info(),
             "coordinator_capabilities": self.coordinator_capabilities,
             "coordinator_info": await self.coordinator.introspect(),
             "decision_maker_info": await self.decision_maker.introspect(),
             "problem_analyzer_info": await self.problem_analyzer.introspect(),
-            "task_manager_info": await self.task_manager.introspect()
+            "task_manager_info": await self.task_manager.introspect(),
+            "quality_assurance_info": self.quality_assurance_layer.get_info(),
+            "foundational_layer_info": "Active",
+            "continuous_learning_layer_info": "Active"
         }
-
-    async def evolve(self):
-        await self.self_evolving_system.evolve()
-
-    async def update_evolution_parameters(self, evolution_rate: float, mutation_rate: float, learning_rate: float):
-        await self.self_evolving_system.update_hyperparameters(evolution_rate, mutation_rate, learning_rate)
 
 # Example usage
 if __name__ == "__main__":

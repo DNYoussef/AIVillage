@@ -1,99 +1,98 @@
 import logging
 import itertools
-from typing import List, Dict, Any
+import os
+import json
+from typing import Dict, List, Any
+from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from .problem_analyzer import ProblemAnalyzer
 from .plan_generator import PlanGenerator
-from ..communication.protocol import StandardCommunicationProtocol, Message, MessageType
 from ..utils.exceptions import AIVillageException
 from .mcts import MCTS
-from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
+from .quality_assurance_layer import QualityAssuranceLayer
 
 logger = logging.getLogger(__name__)
 
 class DecisionMaker:
-    def __init__(self, communication_protocol: StandardCommunicationProtocol, rag_system: RAGSystem, king_agent):
+    def __init__(self, communication_protocol: StandardCommunicationProtocol, rag_system: EnhancedRAGPipeline, agent, quality_assurance_layer: QualityAssuranceLayer):
         self.communication_protocol = communication_protocol
         self.rag_system = rag_system
-        self.king_agent = king_agent
-        self.problem_analyzer = ProblemAnalyzer(communication_protocol, king_agent)
-        self.plan_generator = PlanGenerator(king_agent)
+        self.agent = agent
+        self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
+        self.quality_assurance_layer = quality_assurance_layer
         self.mcts = MCTS()
         self.available_agents = []
 
-    async def make_decision(self, task: str) -> Dict[str, Any]:
-        try:
-            logger.info(f"Starting decision-making process for task: {task}")
-            
-            rag_info = await self.rag_system.process_query(task)
-            logger.debug(f"RAG info retrieved: {rag_info}")
-            
-            problem_analysis = await self.problem_analyzer.analyze(task, rag_info)
-            logger.debug(f"Problem analysis completed: {problem_analysis}")
-            
-            criteria = await self._determine_success_criteria(problem_analysis)
-            ranked_criteria = await self._rank_criteria(criteria)
-            logger.debug(f"Ranked criteria: {ranked_criteria}")
-            
-            alternatives = await self._generate_alternatives(problem_analysis)
-            evaluated_alternatives = await self._evaluate_alternatives(alternatives, ranked_criteria)
-            logger.debug(f"Evaluated alternatives: {evaluated_alternatives}")
-            
-            best_alternative = max(evaluated_alternatives, key=lambda x: x['score'])
-            logger.info(f"Best alternative selected: {best_alternative['alternative']}")
-            
-            optimized_workflow = await self.mcts.parallel_search(best_alternative['alternative'], self.problem_analyzer, self.plan_generator)
-            logger.debug(f"Optimized workflow generated: {optimized_workflow}")
-            
-            plan = await self.plan_generator.generate_plan(optimized_workflow, problem_analysis)
-            logger.info(f"Final plan generated: {plan}")
-            
-            best_agent = await self.suggest_best_agent(task, problem_analysis, best_alternative['alternative'])
-            logger.info(f"Best agent suggested: {best_agent}")
-            
-            return {
-                'chosen_alternative': best_alternative['alternative'],
-                'optimized_workflow': optimized_workflow,
-                'plan': plan,
-                'problem_analysis': problem_analysis,
-                'criteria': ranked_criteria,
-                'alternatives': evaluated_alternatives,
-                'suggested_agent': best_agent
-            }
-        except Exception as e:
-            logger.error(f"Error in decision making process: {str(e)}", exc_info=True)
-            raise AIVillageException(f"Error in decision making process: {str(e)}")
+    async def make_decision(self, content: str, eudaimonia_score: float) -> Dict[str, Any]:
+        rag_info = await self.rag_system.process_query(content)
+        
+        task_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(content)
+        rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(task_vector)
+        
+        decision_prompt = f"""
+        Task: {content}
+        RAG Information: {rag_info}
+        Eudaimonia Score: {eudaimonia_score}
+        Rule Compliance: {rule_compliance}
 
-    async def suggest_best_agent(self, task: str, problem_analysis: Dict[str, Any], chosen_alternative: str) -> str:
-        try:
-            prompt = f"Given the task: '{task}', the problem analysis: {problem_analysis}, and the chosen alternative: '{chosen_alternative}', suggest the best agent from the following list to handle this task: {self.available_agents}. Output only the name of the suggested agent."
-            suggested_agent = await self.king_agent.generate(prompt)
-            return suggested_agent.strip()
-        except Exception as e:
-            logger.error(f"Error suggesting best agent: {str(e)}", exc_info=True)
-            raise AIVillageException(f"Error suggesting best agent: {str(e)}")
+        Given the task, the provided information, eudaimonia score, and rule compliance, make a decision that:
+        1. Aligns with the goal of moving all living things towards eudaimonia
+        2. Embraces and encourages curiosity
+        3. Protects the AI village and its inhabitants
+        4. Maintains self-preservation unless it interferes with the above points
+
+        Provide your decision and a brief explanation of how it aligns with these principles.
+        """
+
+        response = await self.llm.complete(decision_prompt)
+        
+        decision = response.text
+        alternatives = await self._generate_alternatives({"content": content, "rag_info": rag_info})
+        evaluated_alternatives = await self._evaluate_alternatives(alternatives, [
+            {"criterion": "eudaimonia", "weight": 0.4},
+            {"criterion": "curiosity", "weight": 0.2},
+            {"criterion": "protection", "weight": 0.3},
+            {"criterion": "self_preservation", "weight": 0.1}
+        ])
+        
+        best_alternative = evaluated_alternatives[0]['alternative']
+        
+        implementation_plan = await self._create_implementation_plan({"decision": decision, "best_alternative": best_alternative})
+        
+        return {
+            "decision": decision,
+            "eudaimonia_score": eudaimonia_score,
+            "rule_compliance": rule_compliance,
+            "rag_info": rag_info,
+            "best_alternative": best_alternative,
+            "implementation_plan": implementation_plan
+        }
 
     async def update_model(self, task: Dict[str, Any], result: Any):
         try:
             logger.info(f"Updating decision maker model with task result: {result}")
-            # Implement model update logic here
-            pass
+            await self.mcts.update(task, result)
+            await self.quality_assurance_layer.update_task_history(task, result.get('performance', 0.5), result.get('uncertainty', 0.5))
         except Exception as e:
             logger.error(f"Error updating decision maker model: {str(e)}", exc_info=True)
             raise AIVillageException(f"Error updating decision maker model: {str(e)}")
 
-    async def update_mcts(self, task: Dict[str, Any], result: Any):
-        try:
-            logger.info(f"Updating MCTS with task result: {result}")
-            await self.mcts.update(task, result)
-        except Exception as e:
-            logger.error(f"Error updating MCTS: {str(e)}", exc_info=True)
-            raise AIVillageException(f"Error updating MCTS: {str(e)}")
-
     async def save_models(self, path: str):
         try:
             logger.info(f"Saving decision maker models to {path}")
-            self.mcts.save(f"{path}/mcts_model.pt")
-            # Save other models if necessary
+            os.makedirs(path, exist_ok=True)
+            self.mcts.save(os.path.join(path, "mcts_model.pt"))
+            self.quality_assurance_layer.save(os.path.join(path, "quality_assurance_layer.json"))
+            
+            # Save other necessary data
+            data = {
+                "available_agents": self.available_agents
+            }
+            with open(os.path.join(path, "decision_maker_data.json"), 'w') as f:
+                json.dump(data, f)
+            
+            logger.info("Decision maker models saved successfully")
         except Exception as e:
             logger.error(f"Error saving decision maker models: {str(e)}", exc_info=True)
             raise AIVillageException(f"Error saving decision maker models: {str(e)}")
@@ -101,8 +100,15 @@ class DecisionMaker:
     async def load_models(self, path: str):
         try:
             logger.info(f"Loading decision maker models from {path}")
-            self.mcts.load(f"{path}/mcts_model.pt")
-            # Load other models if necessary
+            self.mcts.load(os.path.join(path, "mcts_model.pt"))
+            self.quality_assurance_layer = QualityAssuranceLayer.load(os.path.join(path, "quality_assurance_layer.json"))
+            
+            # Load other necessary data
+            with open(os.path.join(path, "decision_maker_data.json"), 'r') as f:
+                data = json.load(f)
+            self.available_agents = data["available_agents"]
+            
+            logger.info("Decision maker models loaded successfully")
         except Exception as e:
             logger.error(f"Error loading decision maker models: {str(e)}", exc_info=True)
             raise AIVillageException(f"Error loading decision maker models: {str(e)}")
@@ -112,7 +118,7 @@ class DecisionMaker:
         logger.info(f"Updated available agents: {self.available_agents}")
 
     async def _generate_alternatives(self, problem_analysis: Dict[str, Any]) -> List[str]:
-        king_alternatives = await self.king_agent.generate_structured_response(
+        king_alternatives = await self.agent.generate_structured_response(
             f"Given the problem analysis: {problem_analysis}, generate 3 potential solutions. Output as a JSON list of strings."
         )
         
@@ -147,23 +153,32 @@ class DecisionMaker:
     async def _calculate_expected_utility(self, alternatives: List[str], prob_trees: Dict[str, Dict[str, float]], utility_chart: Dict[str, float]) -> List[Dict[str, Any]]:
         evaluated_alternatives = []
         for alt in alternatives:
-            probabilities = prob_trees[alt]
-            combinations = self._generate_combinations(probabilities)
-            expected_utility = 0
-            for combo in combinations:
-                prob = 1
-                for i, outcome in enumerate(combo):
-                    criterion = list(probabilities.keys())[i]
-                    prob *= probabilities[criterion][outcome]
-                expected_utility += prob * utility_chart[tuple(combo)]
-            evaluated_alternatives.append({'alternative': alt, 'score': expected_utility})
+            alt_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(alt)
+            eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(alt_vector)
+            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(alt_vector)
+            
+            total_score = sum(
+                criterion['weight'] * (eudaimonia_score if criterion['criterion'] == 'eudaimonia' else rule_compliance)
+                for criterion in ranked_criteria
+            )
+            
+            evaluated_alternatives.append({'alternative': alt, 'score': total_score})
+        
         return sorted(evaluated_alternatives, key=lambda x: x['score'], reverse=True)
 
     async def _create_implementation_plan(self, plan: Dict[str, Any]) -> Dict[str, Any]:
         try:
             logger.info("Creating implementation plan")
-            prompt = f"Given the following plan: {plan}, create an implementation strategy that includes monitoring, feedback analysis, and troubleshooting steps. Output the result as a JSON dictionary with keys 'monitoring', 'feedback_analysis', and 'troubleshooting', each containing a list of steps."
-            implementation_plan = await self.king_agent.generate_structured_response(prompt)
+            prompt = f"""
+            Given the following plan: {plan}, create an implementation strategy that includes:
+            1. Monitoring steps to track progress and alignment with eudaimonia
+            2. Feedback analysis to continuously improve the plan
+            3. Troubleshooting steps to address potential issues
+            4. Adaptive measures to adjust the plan based on new information or changing circumstances
+
+            Output the result as a JSON dictionary with keys 'monitoring', 'feedback_analysis', 'troubleshooting', and 'adaptive_measures', each containing a list of steps.
+            """
+            implementation_plan = await self.agent.generate_structured_response(prompt)
             logger.debug(f"Implementation plan created: {implementation_plan}")
             return implementation_plan
         except Exception as e:
@@ -193,8 +208,16 @@ class DecisionMaker:
 
     async def introspect(self) -> Dict[str, Any]:
         return {
+            "type": "DecisionMaker",
+            "description": "Makes decisions based on task content, RAG information, eudaimonia score, and rule compliance",
             "available_agents": self.available_agents,
-            "mcts_info": self.mcts.introspect(),
-            "problem_analyzer_info": await self.problem_analyzer.introspect(),
-            "plan_generator_info": await self.plan_generator.introspect()
+            "quality_assurance_info": self.quality_assurance_layer.get_info()
         }
+
+    def save_models(self, path: str):
+        # Implement logic to save decision-making models
+        pass
+
+    def load_models(self, path: str):
+        # Implement logic to load decision-making models
+        pass
