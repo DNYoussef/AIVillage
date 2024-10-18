@@ -1,3 +1,4 @@
+import logging
 from typing import List, Dict, Any, Optional
 from collections import deque
 import asyncio
@@ -8,8 +9,9 @@ from communications.protocol import StandardCommunicationProtocol, Message, Mess
 from langroid.agent.task import Task as LangroidTask
 from langroid.agent.chat_agent import ChatAgent
 from exceptions import AIVillageException
-from agents.king.utils.logger import logger
 from .incentive_model import IncentiveModel
+
+logger = logging.getLogger(__name__)
 
 class UnifiedTaskManager:
     def __init__(self, communication_protocol: StandardCommunicationProtocol, num_agents: int, num_actions: int):
@@ -69,6 +71,7 @@ class UnifiedTaskManager:
             agent = task.assigned_agents[0]
             self.incentive_model.update({'assigned_agent': agent, 'task_id': task_id}, result)
             self.update_agent_performance(agent, result)
+            logger.info(f"Completed task: {task_id}")
         except Exception as e:
             logger.error(f"Error completing task {task_id}: {str(e)}")
             raise AIVillageException(f"Error completing task: {str(e)}")
@@ -87,6 +90,7 @@ class UnifiedTaskManager:
             self.agent_performance[agent] = min(current_performance * 1.1, 2.0)  # Cap at 2.0
         else:
             self.agent_performance[agent] = max(current_performance * 0.9, 0.5)  # Floor at 0.5
+        logger.info(f"Updated performance for agent {agent}: {self.agent_performance[agent]}")
 
     async def create_workflow(self, name: str, tasks: List[Task], dependencies: Dict[str, List[str]]) -> Workflow:
         workflow = Workflow(id=str(uuid.uuid4()), name=name, tasks=tasks, dependencies=dependencies)
@@ -98,6 +102,7 @@ class UnifiedTaskManager:
         for task in workflow.tasks:
             if not workflow.dependencies.get(task.id):
                 await self.assign_task(task)
+        logger.info(f"Started execution of workflow: {workflow.id}")
 
     async def get_task_status(self, task_id: str) -> TaskStatus:
         if task_id in self.ongoing_tasks:
@@ -146,7 +151,7 @@ class UnifiedTaskManager:
         self.available_agents = agent_list
         logger.info(f"Updated available agents: {self.available_agents}")
 
-    def save_models(self, path: str):
+    async def save_models(self, path: str):
         try:
             self.incentive_model.save(f"{path}/incentive_model.pt")
             logger.info(f"Saved models to {path}")
@@ -154,10 +159,20 @@ class UnifiedTaskManager:
             logger.error(f"Error saving models: {str(e)}")
             raise AIVillageException(f"Error saving models: {str(e)}")
 
-    def load_models(self, path: str):
+    async def load_models(self, path: str):
         try:
             self.incentive_model.load(f"{path}/incentive_model.pt")
             logger.info(f"Loaded models from {path}")
         except Exception as e:
             logger.error(f"Error loading models: {str(e)}")
             raise AIVillageException(f"Error loading models: {str(e)}")
+
+    async def introspect(self) -> Dict[str, Any]:
+        return {
+            "pending_tasks": len(self.pending_tasks),
+            "ongoing_tasks": len(self.ongoing_tasks),
+            "completed_tasks": len(self.completed_tasks),
+            "workflows": len(self.workflows),
+            "available_agents": self.available_agents,
+            "agent_performance": self.agent_performance
+        }

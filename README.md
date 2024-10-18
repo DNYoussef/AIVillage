@@ -261,20 +261,51 @@ The King Agent is a sophisticated AI system designed to coordinate and manage mu
 
 5. **Continuous Learning and Adaptation**: The King Agent implements a feedback loop to continuously improve its decision-making and task allocation processes.
 
+6. **RAG System Integration**: The King Agent is now integrated with an Enhanced RAG (Retrieval-Augmented Generation) system for improved information retrieval and decision-making.
+
+7. **Robust Error Handling and Logging**: Comprehensive error handling and logging have been implemented throughout the King Agent system for better debugging and monitoring.
+
 ### Components
 
+- **KingAgent**: The main class that integrates all other components and serves as the primary interface for the King Agent system.
 - **KingCoordinator**: The central component that manages interactions between different parts of the system.
 - **UnifiedTaskManager**: Responsible for creating, assigning, and managing tasks across different agents.
-- **DecisionMaker**: Makes complex decisions using various AI techniques, including MCTS.
+- **DecisionMaker**: Makes complex decisions using various AI techniques, including MCTS and RAG-enhanced analysis.
+- **ProblemAnalyzer**: Analyzes tasks and generates comprehensive problem analyses by collaborating with other agents.
 - **AgentRouter**: Efficiently routes tasks to the most appropriate agents based on their capabilities and past performance.
 
-For more detailed information about the King Agent, its components, and usage, please refer to the `agents/king/README.md` file.
-## Contributing
+### Usage
 
-Contributions are welcome! Please fork the repository and submit a pull request with your changes.
+To use the King Agent in your project:
 
-## License
+1. Initialize the KingAgent with the necessary dependencies (communication protocol, RAG system).
+2. Set up your agents and register them with the KingCoordinator.
+3. Send task messages to the KingAgent for processing.
 
-This project is licensed under the MIT License.
+Example:
 
+```python
+from agents.king.king_agent import KingAgent, KingAgentConfig
+from your_communication_protocol import CommunicationProtocol
+from rag_system.core.pipeline import EnhancedRAGPipeline
 
+# Initialize dependencies
+comm_protocol = CommunicationProtocol()
+rag_system = EnhancedRAGPipeline()
+
+# Create KingAgent
+config = KingAgentConfig(name="KingAgent", description="Main coordinator for AI Village", model="gpt-4")
+king_agent = KingAgent(config, comm_protocol, rag_system)
+
+# Register agents
+await king_agent.coordinator.add_agent("sage", SageAgent(comm_protocol))
+await king_agent.coordinator.add_agent("magi", MagiAgent(comm_protocol))
+
+# Send a task message
+task_message = Message(content={"description": "Analyze this dataset"})
+result = await king_agent.execute_task(task_message)
+```
+
+For more detailed information about the King Agent, its components, and usage, please refer to the `agents/king/README.md` file and the `agents/king/demo.py` script for a working example.
+
+[... Keep the rest of the existing content ...]
