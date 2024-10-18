@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Tuple
 from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
 from agents.utils.task import Task as LangroidTask
-from agents.communication.protocol import StandardCommunicationProtocol, Message, MessageType
+from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.core.config import RAGConfig
 from langroid.vector_store.base import VectorStore

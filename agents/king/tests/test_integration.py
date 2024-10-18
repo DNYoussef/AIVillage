@@ -6,7 +6,7 @@ from agents.king.coordinator import KingCoordinator
 from agents.king.decision_maker import DecisionMaker
 from agents.king.problem_analyzer import ProblemAnalyzer
 from agents.king.unified_task_manager import UnifiedTaskManager
-from agents.communication.protocol import StandardCommunicationProtocol, Message, MessageType
+from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from agents.utils.exceptions import AIVillageException
 from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
 
@@ -91,3 +91,4 @@ class TestIntegration(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+

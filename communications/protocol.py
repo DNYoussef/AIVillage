@@ -6,11 +6,25 @@ from ..utils.exceptions import AIVillageException
 from ..utils.logger import logger
 
 class StandardCommunicationProtocol:
+    """Standard communication protocol for AI Village agents."""
+
     def __init__(self):
         self.message_queue = MessageQueue()
         self.subscribers: Dict[str, List[Callable]] = {}
 
+    def subscribe(self, agent_id: str, callback: Callable):
+        """Subscribe an agent to receive messages."""
+        if agent_id not in self.subscribers:
+            self.subscribers[agent_id] = []
+        self.subscribers[agent_id].append(callback)
+
+    def unsubscribe(self, agent_id: str, callback: Callable):
+        """Unsubscribe an agent from receiving messages."""
+        if agent_id in self.subscribers and callback in self.subscribers[agent_id]:
+            self.subscribers[agent_id].remove(callback)
+
     async def send_message(self, message: Message) -> None:
+        """Send a message from one agent to another."""
         self.message_queue.enqueue(message)
         await self._notify_subscribers(message)
 
@@ -24,15 +38,6 @@ class StandardCommunicationProtocol:
 
     async def get_next_message(self) -> Optional[Message]:
         return self.message_queue.dequeue()
-
-    def subscribe(self, agent_id: str, callback: Callable) -> None:
-        if agent_id not in self.subscribers:
-            self.subscribers[agent_id] = []
-        self.subscribers[agent_id].append(callback)
-
-    def unsubscribe(self, agent_id: str, callback: Callable) -> None:
-        if agent_id in self.subscribers and callback in self.subscribers[agent_id]:
-            self.subscribers[agent_id].remove(callback)
 
     async def query(self, sender: str, receiver: str, query: str, priority: Priority = Priority.MEDIUM) -> Message:
         query_message = Message(
@@ -57,7 +62,8 @@ class StandardCommunicationProtocol:
             await asyncio.sleep(0.1)
         raise AIVillageException(f"Timeout waiting for response to query {query_id}")
 
-    async def broadcast(self, sender: str, message_type: MessageType, content: Dict[str, Any], priority: Priority = Priority.MEDIUM) -> None:
+    async def broadcast(self, sender: str, content: Dict[str, Any], message_type: MessageType = MessageType.UPDATE, priority: Priority = Priority.MEDIUM) -> None:
+        """Broadcast a message to all subscribed agents."""
         for receiver in self.subscribers.keys():
             message = Message(
                 type=message_type,

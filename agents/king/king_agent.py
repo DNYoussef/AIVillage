@@ -5,7 +5,7 @@ from .coordinator import KingCoordinator
 from .decision_maker import DecisionMaker
 from .problem_analyzer import ProblemAnalyzer
 from .unified_task_manager import UnifiedTaskManager
-from agents.communication.protocol import StandardCommunicationProtocol, Message, MessageType
+from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.core.config import RAGConfig
 from langroid.vector_store.base import VectorStore

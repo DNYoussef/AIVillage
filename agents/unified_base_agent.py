@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from rag_system.core.agent_interface import AgentInterface
 from rag_system.core.pipeline import RAGPipeline
 from rag_system.core.config import RAGConfig
-from agents.communication.protocol import StandardCommunicationProtocol, Message, MessageType, Priority
+from communications.protocol import StandardCommunicationProtocol, Message, MessageType, Priority
 
 class UnifiedAgentConfig(BaseModel):
     name: str = Field(..., description="The name of the agent")
@@ -500,3 +500,4 @@ if __name__ == "__main__":
     self_evolving_system = SelfEvolvingSystem([agent], vector_store)
     
     # Use the self_evolving_system to process tasks and evolve the system
+

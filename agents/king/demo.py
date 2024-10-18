@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from agents.king.king_agent import KingAgent, KingAgentConfig
-from agents.communication.protocol import StandardCommunicationProtocol, Message, MessageType
+from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
 from agents.sage.sage_agent import SageAgent
 from agents.magi.magi_agent import MagiAgent
