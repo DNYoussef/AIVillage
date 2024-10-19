@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime
 from typing import Dict, Any
 
-from rag_system.core.config import UnifiedConfig
+from rag_system.core.unified_config import unified_config
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 from rag_system.utils.logging import setup_logger
@@ -24,7 +24,7 @@ from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
 logger = setup_logger(__name__)
 
-async def initialize_components(config: UnifiedConfig) -> Dict[str, Any]:
+async def initialize_components() -> Dict[str, Any]:
     vector_store = VectorStore()
     graph_store = GraphStore()
     llm_config = OpenAIGPTConfig(chat_model="gpt-4")
@@ -34,19 +34,19 @@ async def initialize_components(config: UnifiedConfig) -> Dict[str, Any]:
         "embedding_model": BERTEmbeddingModel(),
         "vector_store": vector_store,
         "graph_store": graph_store,
-        "hybrid_retriever": HybridRetriever(config),
-        "reasoning_engine": UncertaintyAwareReasoningEngine(config),
+        "hybrid_retriever": HybridRetriever(unified_config),
+        "reasoning_engine": UncertaintyAwareReasoningEngine(unified_config),
         "cognitive_nexus": CognitiveNexus(),
-        "pipeline": EnhancedRAGPipeline(config),
+        "pipeline": EnhancedRAGPipeline(),
         "communication_protocol": StandardCommunicationProtocol(),
-        "sage_agent": SageAgent(config, StandardCommunicationProtocol(), vector_store),
+        "sage_agent": SageAgent(unified_config, StandardCommunicationProtocol(), vector_store),
         "knowledge_tracker": UnifiedKnowledgeTracker(vector_store, graph_store),
         "exploration_mode": ExplorationMode(graph_store, llm_config, advanced_nlp),
         "advanced_analytics": advanced_analytics,
         "evaluation_framework": ComprehensiveEvaluationFramework(advanced_analytics),
         "advanced_nlp": advanced_nlp
     }
-    
+
     # Initialize evaluation metrics
     components["evaluation_framework"].add_metric("query_processing_time", "Time taken to process a user query")
     components["evaluation_framework"].add_metric("task_processing_time", "Time taken to process an agent task")
@@ -58,7 +58,7 @@ async def initialize_components(config: UnifiedConfig) -> Dict[str, Any]:
     components["evaluation_framework"].add_metric("response_coherence", "Coherence score of the generated response")
     components["evaluation_framework"].add_metric("knowledge_graph_density", "Density of the knowledge graph")
     components["evaluation_framework"].add_metric("system_latency", "Overall system latency")
-    
+
     return components
 
 @error_handler
@@ -82,23 +82,23 @@ async def process_user_query(components: Dict[str, Any], query: str) -> Dict[str
     query_keywords = advanced_nlp.extract_keywords(query)
 
     retrieval_results = await components["hybrid_retriever"].retrieve(prompt.task, k=10)
-    
+
     # Use semantic search to refine retrieval results
     semantic_results = advanced_nlp.semantic_search(query, [r['content'] for r in retrieval_results])
     refined_results = [r for r, s in zip(retrieval_results, semantic_results) if s['similarity'] > 0.5]
-    
+
     # Process the retrieval results using the reasoning engine
     reasoning_result = await components["reasoning_engine"].reason(prompt.to_string(), refined_results)
-    
+
     # Integrate the results using the cognitive nexus
     integrated_result = await components["cognitive_nexus"].integrate(prompt.task, reasoning_result, {})
-    
+
     # Generate a summary of the integrated result
     result_summary = advanced_nlp.generate_summary(str(integrated_result))
-    
+
     end_time = datetime.now()
     processing_time = (end_time - start_time).total_seconds()
-    
+
     logger.info(f"User query result: {integrated_result}")
 
     components["knowledge_tracker"].record_change(
@@ -143,31 +143,34 @@ async def process_user_query(components: Dict[str, Any], query: str) -> Dict[str
 @error_handler
 async def run_creative_exploration(components: Dict[str, Any], start_node: str, end_node: str):
     logger.info(f"Starting creative exploration between '{start_node}' and '{end_node}'")
-    
+
     start_time = datetime.now()
-    
+
     exploration_results = await components["exploration_mode"].creative_exploration(start_node, end_node)
-    
+
     end_time = datetime.now()
     exploration_time = (end_time - start_time).total_seconds()
-    
+
     logger.info(f"Creative exploration completed in {exploration_time:.2f} seconds")
     logger.info(f"Found {len(exploration_results['causal_paths'])} causal paths")
     logger.info(f"Generated {len(exploration_results['new_ideas'])} new ideas")
-    
+
     # Record metrics
     evaluation_framework = components["evaluation_framework"]
     evaluation_framework.record_metric("exploration_time", exploration_time)
     evaluation_framework.record_metric("causal_paths_found", len(exploration_results['causal_paths']))
     evaluation_framework.record_metric("new_ideas_generated", len(exploration_results['new_ideas']))
     evaluation_framework.record_metric("knowledge_graph_density", components["graph_store"].calculate_graph_density())
-    
+
     return exploration_results
 
 async def main():
     try:
-        config = UnifiedConfig()
-        components = await initialize_components(config)
+        # Load configuration
+        config_path = "config/rag_config.json"
+        unified_config.load_config(config_path)
+        
+        components = await initialize_components()
 
         user_query = "What are the key features of the RAG system?"
         query_result = await process_user_query(components, user_query)
