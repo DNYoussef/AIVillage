@@ -1,57 +1,73 @@
-import logging
-from typing import Dict, Any, List
-from ..sage.sage_agent import SageAgent
+from asyncio.log import logger
+from typing import List, Dict, Any
+from agents.unified_base_agent import UnifiedBaseAgent
+from communications.protocol import StandardCommunicationProtocol, Message, MessageType
+from core.config import UnifiedConfig
 from ..magi.magi_agent import MagiAgent
-from .route_llm import AgentRouter
-from ..communication.protocol import StandardCommunicationProtocol, Message, MessageType
-from ..utils.exceptions import AIVillageException
-from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
-from .decision_maker import DecisionMaker
-from .unified_task_manager import UnifiedTaskManager
-from .problem_analyzer import ProblemAnalyzer
-
-logger = logging.getLogger(__name__)
+from ..sage.sage_agent import SageAgent
+from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+from .unified_analytics import UnifiedAnalytics
+import logging
 
 class KingCoordinator:
-    def __init__(self, communication_protocol: StandardCommunicationProtocol, rag_system: RAGSystem, king_agent):
+    def __init__(self, config: UnifiedConfig, communication_protocol: StandardCommunicationProtocol):
+        self.config = config
         self.communication_protocol = communication_protocol
-        self.rag_system = rag_system
-        self.king_agent = king_agent
-        self.agents = {
-            'sage': SageAgent(communication_protocol),
-            'magi': MagiAgent(communication_protocol)
-        }
-        self.router = AgentRouter()
-        self.decision_maker = DecisionMaker(communication_protocol, rag_system, king_agent)
-        self.task_manager = UnifiedTaskManager(communication_protocol, len(self.agents), 10)
-        self.problem_analyzer = ProblemAnalyzer(communication_protocol, self)
-        self.update_agent_list()
+        self.agents: Dict[str, UnifiedBaseAgent] = {}
+        self.task_manager = None  # Initialize this in the setup method
+        self.router = None  # Initialize this in the setup method
+        self.decision_maker = None  # Initialize this in the setup method
+        self.problem_analyzer = None  # Initialize this in the setup method
+        self.king_agent = None  # Initialize this in the setup method
+        self.unified_analytics = UnifiedAnalytics()
 
-    async def handle_task_message(self, message: Message):
-        try:
-            routing_decisions = await self.router.route([message.content['description']])
-            routing_decision, confidence = routing_decisions[0]
-            
-            if routing_decision == 'undecided' or confidence < self.router.confidence_threshold:
-                decision_result = await self.decision_maker.make_decision(message.content['description'])
-                await self._implement_decision(decision_result)
-            else:
-                await self.assign_task_to_agent(routing_decision, message)
-        except Exception as e:
-            logger.error(f"Error in handling task message: {str(e)}")
-            raise AIVillageException(f"Error in handling task message: {str(e)}")
+    def add_agent(self, agent_name: str, agent: UnifiedBaseAgent):
+        self.agents[agent_name] = agent
 
-    async def assign_task_to_agent(self, agent_name: str, message: Message):
-        if agent_name not in self.agents:
-            logger.warning(f"Unknown agent {agent_name}. Falling back to decision maker.")
-            decision_result = await self.decision_maker.make_decision(message.content['description'])
-            await self._implement_decision(decision_result)
-        else:
-            task = await self.task_manager.create_task(
-                message.content['description'],
-                agent_name
+    @error_handler.handle_error
+    async def coordinate_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        start_time = self.unified_analytics.get_current_time()
+        result = await self._delegate_task(task)
+        end_time = self.unified_analytics.get_current_time()
+        execution_time = end_time - start_time
+        
+        self.unified_analytics.record_task_completion(task['id'], execution_time, result.get('success', False))
+        self.unified_analytics.record_metric(f"task_type_{task['type']}_execution_time", execution_time)
+        
+        return result
+
+    @error_handler.handle_error
+    async def _delegate_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        if task['type'] == 'research':
+            sage_agent = next((agent for agent in self.agents.values() if isinstance(agent, SageAgent)), None)
+            if sage_agent:
+                return await sage_agent.execute_task(task)
+        elif task['type'] in ['coding', 'debugging', 'code_review']:
+            magi_agent = next((agent for agent in self.agents.values() if isinstance(agent, MagiAgent)), None)
+            if magi_agent:
+                return await magi_agent.execute_task(task)
+        
+        # If no specific agent is found, delegate to the first available agent
+        if self.agents:
+            return await next(iter(self.agents.values())).execute_task(task)
+        
+        raise ValueError("No suitable agent found for the task")
+
+    async def handle_message(self, message: Message):
+        if message.type == MessageType.TASK:
+            result = await self.coordinate_task(message.content)
+            response = Message(
+                type=MessageType.RESPONSE,
+                sender="KingCoordinator",
+                receiver=message.sender,
+                content=result,
+                parent_id=message.id
             )
-            await self.task_manager.assign_task(task)
+            await self.communication_protocol.send_message(response)
+            await self.task_manager.assign_task(message.content)
+        else:
+            # Handle other message types if needed
+            pass
 
     async def _implement_decision(self, decision_result: Dict[str, Any]):
         try:
@@ -96,6 +112,10 @@ class KingCoordinator:
 
             # Update the King agent
             await self.king_agent.update(task, result)
+
+            # Record analytics
+            self.unified_analytics.record_metric(f"task_type_{task['type']}_success", int(result.get('success', False)))
+            self.unified_analytics.record_metric(f"agent_{task['assigned_agents'][0]}_performance", result.get('performance', 0.5))
 
         except Exception as e:
             logger.error(f"Error processing task completion: {str(e)}")
@@ -159,5 +179,6 @@ class KingCoordinator:
             "router_info": self.router.introspect(),
             "decision_maker_info": await self.decision_maker.introspect(),
             "task_manager_info": await self.task_manager.introspect(),
-            "problem_analyzer_info": await self.problem_analyzer.introspect()
+            "problem_analyzer_info": await self.problem_analyzer.introspect(),
+            "analytics_summary": self.unified_analytics.generate_summary_report()
         }

@@ -329,5 +329,57 @@ These changes have further improved the system's ability to adapt and optimize i
 4. Enhance the evolution mechanisms to include more advanced techniques like neural architecture search.
 5. Further refine the IncentiveModel to incorporate more complex factors and long-term performance trends.
 6. Develop advanced analytics and visualization tools for monitoring agent performance and system efficiency.
+# RAG System
 
+This repository contains an implementation of a Retrieval-Augmented Generation (RAG) system with advanced features and a modular architecture.
 
+## System Architecture
+
+The RAG system consists of the following main components:
+
+1. **UnifiedConfig**: A centralized configuration class that manages settings for all components of the system.
+2. **SageAgent**: An advanced agent capable of processing queries, executing tasks, and managing the RAG pipeline.
+3. **EnhancedRAGPipeline**: The core RAG system that handles retrieval and generation tasks.
+4. **UnifiedKnowledgeTracker**: A component that tracks and manages knowledge changes and evolution.
+5. **ErrorController**: A centralized error handling system for managing and recovering from errors.
+
+## Key Features
+
+- Modular and extensible architecture
+- Unified configuration management
+- Advanced error handling and recovery mechanisms
+- Continuous learning and self-evolution capabilities
+- Integration of multiple research capabilities (web search, data analysis, information synthesis, etc.)
+- Streamlined query processing pipeline
+
+## Getting Started
+
+1. Clone the repository
+2. Install the required dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+3. Run the main script:
+   ```
+   python rag_system/main.py
+   ```
+
+## Running Tests
+
+To run the unit tests and integration tests:
+
+```
+python -m unittest discover tests
+```
+
+## Configuration
+
+The system can be configured by modifying the `UnifiedConfig` class in `rag_system/core/config.py`. This class manages settings for all components of the RAG system.
+
+## Contributing
+
+Please refer to the CONTRIBUTING.md file for guidelines on how to contribute to this project.
+
+## License
+
+[Insert your chosen license here]

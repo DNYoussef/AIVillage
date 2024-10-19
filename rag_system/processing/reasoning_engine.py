@@ -1,88 +1,123 @@
-# rag_system/processing/reasoning_engine.py
-
 import numpy as np
 from typing import Dict, Any, List, Tuple
 from datetime import datetime
-from ..core.config import RAGConfig
+from ..core.config import UnifiedConfig
+from ..core.structures import RetrievalResult
 
 class UncertaintyAwareReasoningEngine:
-    def __init__(self, config: RAGConfig):
+    def __init__(self, config: UnifiedConfig):
         self.config = config
+        self.driver = None  # This should be initialized with a proper database driver
+        self.causal_edges = {}
+        self.llm = None  # This should be initialized with a proper language model
 
-    async def reason(self, query: str, constructed_knowledge: Dict[str, Any], timestamp: datetime) -> Tuple[str, float]:
-        """
-        Perform reasoning on the query using the constructed knowledge, tracking uncertainties.
+    async def reason(self, query: str, retrieved_info: List[RetrievalResult], activated_knowledge: Dict[str, Any]) -> Dict[str, Any]:
+        with self.driver.session() as session:
+            if timestamp:
+                result = session.run(
+                    """
+                        CALL db.index.fulltext.queryNodes("nodeContent", $query) 
+                    YIELD node, score
+                        MATCH (node)-[:VERSION]->(v:NodeVersion)
+                        WHERE v.timestamp <= $timestamp
+                        WITH node, score, v
+                        ORDER BY v.timestamp DESC, score DESC
+                    LIMIT $k
+                        RETURN id(node) as id, v.content as content, score, 
+                            v.uncertainty as uncertainty, v.timestamp as timestamp, 
+                            v.version as version
+                    """,
+                        query=query, timestamp=timestamp, k=k
+                    )
+            else:
+                result = session.run(
+                    """
+                    CALL db.index.fulltext.queryNodes("nodeContent", $query) 
+                    YIELD node, score
+                    MATCH (node)-[:VERSION]->(v:NodeVersion)
+                    WITH node, score, v
+                    ORDER BY v.timestamp DESC, score DESC
+                    LIMIT $k
+                    RETURN id(node) as id, v.content as content, score, 
+                        v.uncertainty as uncertainty, v.timestamp as timestamp, 
+                        v.version as version
+                    """,
+                    query=query, k=k
+                )
 
-        :param query: The user's query.
-        :param constructed_knowledge: The knowledge assembled relevant to the query.
-        :param timestamp: The current timestamp.
-        :return: A tuple containing the reasoning result and the overall uncertainty.
-        """
-        reasoning_steps = []
-        uncertainties = []
-
-        # Generate reasoning steps based on the query and constructed knowledge
-        steps = self._generate_reasoning_steps(query, constructed_knowledge)
-
-        # Execute each reasoning step and estimate uncertainty
-        for step in steps:
-            step_result, step_uncertainty = await self._execute_reasoning_step(step)
-            reasoning_steps.append(step_result)
-            uncertainties.append(step_uncertainty)
-
-        # Calculate overall uncertainty using uncertainty propagation
-        overall_uncertainty = self.propagate_uncertainty(reasoning_steps, uncertainties)
-
-        # Combine reasoning steps into the final reasoning output
-        reasoning = self._combine_reasoning_steps(reasoning_steps)
-
-        return reasoning, overall_uncertainty
-
-    def _generate_reasoning_steps(self, query: str, constructed_knowledge: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Break down the reasoning process into individual steps.
-
-        :param query: The user's query.
-        :param constructed_knowledge: The knowledge assembled relevant to the query.
-        :return: A list of reasoning steps represented as dictionaries.
-        """
-        # Placeholder implementation
-        steps = [
-            {'type': 'interpret_query', 'content': query},
-            {'type': 'analyze_knowledge', 'content': constructed_knowledge},
-            {'type': 'synthesize_answer'}
+        return [
+            RetrievalResult(
+                id=record["id"],
+                content=record["content"],
+                score=record["score"],
+                uncertainty=record["uncertainty"],
+                timestamp=record["timestamp"],
+                version=record["version"]
+            )
+            for record in result
         ]
-        return steps
 
-    async def _execute_reasoning_step(self, step: Dict[str, Any]) -> Tuple[str, float]:
-        """
-        Execute an individual reasoning step and estimate its uncertainty.
+    def update_causal_strength(self, source: str, target: str, observed_probability: float):
+        edge = self.causal_edges.get((source, target))
+        if edge:
+            learning_rate = 0.1
+            edge.strength = (1 - learning_rate) * edge.strength + learning_rate * observed_probability
+    
+    def close(self):
+        self.driver.close()
 
-        :param step: The reasoning step to execute.
-        :return: A tuple containing the step result and its uncertainty estimate.
-        """
-        step_type = step['type']
+    async def get_snapshot(self, timestamp: datetime) -> Dict[str, Any]:
+        # Implement logic to return a snapshot of the graph store at the given timestamp
+        pass
 
-        if step_type == 'interpret_query':
-            # Interpret the query
-            result = f"Interpreted query: {step['content']}"
-            uncertainty = self._estimate_uncertainty(step)
+    async def beam_search(self, query: str, beam_width: int, max_depth: int) -> List[Tuple[List[str], float]]:
+        initial_entities = await self.get_initial_entities(query)
+        beams = [[entity] for entity in initial_entities]
 
-        elif step_type == 'analyze_knowledge':
-            # Analyze the constructed knowledge
-            result = "Analyzed constructed knowledge."
-            uncertainty = self._estimate_uncertainty(step)
+        for _ in range(max_depth):
+            candidates = []
+            for beam in beams:
+                neighbors = await self.get_neighbors(beam[-1])
+                for neighbor in neighbors:
+                    new_beam = beam + [neighbor]
+                    score = await self.llm.score_path(query, new_beam)
+                    candidates.append((new_beam, score))
+            
+            beams = sorted(candidates, key=lambda x: x[1], reverse=True)[:beam_width]
 
-        elif step_type == 'synthesize_answer':
-            # Synthesize the final answer
-            result = "Synthesized final answer."
-            uncertainty = self._estimate_uncertainty(step)
+        return beams
 
-        else:
-            result = "Unknown reasoning step."
-            uncertainty = 1.0  # Maximum uncertainty for unknown steps
+    async def get_initial_entities(self, query: str) -> List[str]:
+        # Implement logic to get initial entities based on the query
+        # This could involve a simple keyword search or more advanced NLP techniques
+        pass
 
-        return result, uncertainty
+    async def get_neighbors(self, entity: str) -> List[str]:
+        # Implement logic to get neighboring entities in the graph
+        # This could involve a Cypher query to Neo4j
+        pass
+
+        reasoning_result = {
+            "query": query,
+            "conclusion": "This is a placeholder conclusion.",
+            "confidence": 0.8,
+            "uncertainty": 0.2,
+            "supporting_evidence": [result.content for result in retrieved_info[:3]],
+            "activated_concepts": list(activated_knowledge.keys())[:5]
+        }
+        return reasoning_result
+
+    def estimate_uncertainty(self, reasoning_result: Dict[str, Any]) -> float:
+        # Implement uncertainty estimation logic
+        # This is a placeholder implementation
+        return 1 - reasoning_result.get("confidence", 0.5)
+
+    def adjust_conclusion(self, reasoning_result: Dict[str, Any], uncertainty: float) -> Dict[str, Any]:
+        # Implement logic to adjust the conclusion based on uncertainty
+        # This is a placeholder implementation
+        if uncertainty > 0.5:
+            reasoning_result["conclusion"] += " (High uncertainty)"
+        return reasoning_result
 
     def _estimate_uncertainty(self, step: Dict[str, Any]) -> float:
         """
@@ -197,3 +232,31 @@ class UncertaintyAwareReasoningEngine:
                 suggestions.append("Refine the answer synthesis process for better accuracy.")
 
         return suggestions
+
+    def _generate_reasoning_steps(self, query: str, constructed_knowledge: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Generate reasoning steps based on the query and constructed knowledge.
+
+        :param query: The user's query.
+        :param constructed_knowledge: The knowledge assembled relevant to the query.
+        :return: A list of reasoning steps.
+        """
+        # Placeholder implementation
+        steps = [
+            {'type': 'interpret_query', 'content': query},
+            {'type': 'analyze_knowledge', 'content': constructed_knowledge},
+            {'type': 'synthesize_answer', 'content': {}}
+        ]
+        return steps
+
+    async def _execute_reasoning_step(self, step: Dict[str, Any]) -> Tuple[str, float]:
+        """
+        Execute a single reasoning step and estimate its uncertainty.
+
+        :param step: The reasoning step to execute.
+        :return: A tuple containing the step result and its uncertainty.
+        """
+        # Placeholder implementation
+        result = f"Executed step: {step['type']}"
+        uncertainty = self._estimate_uncertainty(step)
+        return result, uncertainty

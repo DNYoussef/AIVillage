@@ -1,27 +1,35 @@
+from typing import Dict, Any, List, Optional, Callable, Tuple
+import asyncio
+from dataclasses import dataclass, field
+from datetime import datetime
 import random
 import numpy as np
-from typing import List, Dict, Any, Optional, Callable, Tuple
 from pydantic import BaseModel, Field
 from agents.utils.task import Task as LangroidTask
 from agents.language_models.openai_gpt import OpenAIGPTConfig
 from langroid.vector_store.base import VectorStore
 from sklearn.linear_model import LogisticRegression
 from types import SimpleNamespace
-from rag_system.core.agent_interface import AgentInterface
-from rag_system.core.pipeline import RAGPipeline
-from rag_system.core.config import RAGConfig
+from rag_system.core.config import UnifiedConfig
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.core.structures import RetrievalResult
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType, Priority
 
-class UnifiedAgentConfig(BaseModel):
-    name: str = Field(..., description="The name of the agent")
-    description: str = Field(..., description="A brief description of the agent's purpose")
-    capabilities: List[str] = Field(default_factory=list, description="List of agent capabilities")
-    vector_store: Optional[VectorStore] = Field(None, description="Vector store for the agent")
-    model: str = Field(..., description="The language model to be used by the agent")
-    instructions: str = Field(..., description="Instructions for the agent's behavior")
+@dataclass
+class UnifiedAgentConfig:
+    name: str
+    description: str
+    capabilities: List[str]
+    rag_config: UnifiedConfig
+    vector_store: VectorStore
+    model: str
+    instructions: str
+    extra_params: Dict[str, Any] = field(default_factory=dict)
 
-class UnifiedBaseAgent(AgentInterface):
+class UnifiedBaseAgent:
     def __init__(self, config: UnifiedAgentConfig, communication_protocol: StandardCommunicationProtocol):
+        self.config = config
+        self.rag_pipeline = EnhancedRAGPipeline(config.rag_config)
         self.name = config.name
         self.description = config.description
         self.capabilities = config.capabilities
@@ -29,8 +37,6 @@ class UnifiedBaseAgent(AgentInterface):
         self.model = config.model
         self.instructions = config.instructions
         self.tools: Dict[str, Callable] = {}
-        self.rag_config = RAGConfig()
-        self.rag_pipeline = RAGPipeline(self.rag_config)
         self.communication_protocol = communication_protocol
         self.communication_protocol.subscribe(self.name, self.handle_message)
         self.llm = OpenAIGPTConfig(chat_model=self.model).create()
@@ -345,6 +351,28 @@ class DecisionMakingLayer:
                 option, score = line.split(':')
                 preferences[option.strip()] = float(score.strip())
         return preferences
+
+    async def process_query(self, query: str, timestamp: Optional[datetime] = None) -> Dict[str, Any]:
+        # Implement query processing logic here
+        retrieval_results = await self.rag_pipeline.retrieve(query, timestamp=timestamp)
+        reasoning_result = await self.rag_pipeline.reason(query, retrieval_results)
+        return reasoning_result
+
+    async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        # Implement task execution logic here
+        task_type = task.get('type', 'default')
+        task_content = task.get('content', '')
+        
+        if task_type == 'query':
+            return await self.process_query(task_content)
+        elif task_type == 'analysis':
+            # Implement analysis logic
+            pass
+        elif task_type == 'generation':
+            # Implement generation logic
+            pass
+        else:
+            raise ValueError(f"Unknown task type: {task_type}")
 
 class MCTSConfig:
     def __init__(self):

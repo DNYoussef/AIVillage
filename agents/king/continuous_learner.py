@@ -1,13 +1,15 @@
 import numpy as np
 from typing import Dict, Any, List
+from .analytics.base_analytics import BaseAnalytics
 from .quality_assurance_layer import QualityAssuranceLayer
 from agents.utils.task import Task as LangroidTask
 import logging
 
 logger = logging.getLogger(__name__)
 
-class ContinuousLearner:
+class ContinuousLearner(BaseAnalytics):
     def __init__(self, quality_assurance_layer: QualityAssuranceLayer, learning_rate: float = 0.01):
+        super().__init__()
         self.quality_assurance_layer = quality_assurance_layer
         self.learning_rate = learning_rate
 

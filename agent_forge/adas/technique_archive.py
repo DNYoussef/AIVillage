@@ -1,4 +1,10 @@
-from langroid.agent.tool_message import ToolMessage
+from typing import List, Any
+from pydantic import BaseModel
+
+# Import necessary dependencies (adjust import paths as needed)
+from agent_forge.utils.tool_message import ToolMessage
+from agents.unified_base_agent import UnifiedBaseAgent
+from rag_system.core.config import UnifiedConfig
 
 class AgentTechnique(ToolMessage):
     request: str = "apply_technique"
@@ -11,6 +17,7 @@ class AgentTechnique(ToolMessage):
         # This method would be implemented to actually apply the technique
         pass
 
+# Rest of the PROMPT_TECHNIQUE_ARCHIVE content remains the same
 PROMPT_TECHNIQUE_ARCHIVE = [
     AgentTechnique(
         thought="Zero-shot prompting provides direct instructions without examples, allowing for quick task performance without prior demonstrations. This approach leverages the model's pre-trained knowledge to generalize to new tasks.",
@@ -385,3 +392,58 @@ async def run(self):
 """
     ),
 ]
+
+class ChainOfThought:
+    @staticmethod
+    def apply(prompt: str, intermediate_steps: int = 3) -> str:
+        """
+        Apply the Chain of Thought technique to a given prompt.
+
+        :param prompt: The original prompt
+        :param intermediate_steps: Number of intermediate reasoning steps
+        :return: A modified prompt that encourages step-by-step reasoning
+        """
+        return f"""
+        {prompt}
+
+        Let's approach this step-by-step:
+
+        1. [First step of reasoning]
+        2. [Second step of reasoning]
+        3. [Third step of reasoning]
+
+        Now, based on these steps, let's formulate the final answer.
+        """
+
+class TreeOfThoughts:
+    @staticmethod
+    def apply(prompt: str, branches: int = 3, depth: int = 2) -> List[str]:
+        """
+        Apply the Tree of Thoughts technique to a given prompt.
+
+        :param prompt: The original prompt
+        :param branches: Number of alternative thoughts at each step
+        :param depth: Number of levels in the thought tree
+        :return: A list of prompts representing different paths of reasoning
+        """
+        thought_tree = [prompt]
+        
+        for _ in range(depth):
+            new_level = []
+            for thought in thought_tree:
+                for i in range(branches):
+                    new_thought = f"""
+                    {thought}
+
+                    Let's explore a new line of thinking:
+
+                    [Alternative thought {i+1}]
+
+                    Based on this, we can reason further:
+                    """
+                    new_level.append(new_thought)
+            thought_tree = new_level
+
+        return thought_tree
+
+# Add more advanced reasoning techniques here as needed

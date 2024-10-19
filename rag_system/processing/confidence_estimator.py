@@ -1,23 +1,31 @@
-# rag_system/processing/confidence_estimator.py
+from typing import Any, Dict, List
 
-def estimate_confidence(extrapolation: str) -> float:
-    """
-    Estimate the confidence of the extrapolation result.
+class ConfidenceEstimator:
+    def __init__(self):
+        # Initialize any necessary attributes or models
+        pass
 
-    :param extrapolation: The extrapolated text from the LLM.
-    :return: A confidence score between 0 and 1.
-    """
-    confidence_keywords = {
-        "certain": 1.0,
-        "likely": 0.8,
-        "possible": 0.6,
-        "unlikely": 0.3,
-        "impossible": 0.0
-    }
-    
-    lower_extrapolation = extrapolation.lower()
-    for keyword, score in confidence_keywords.items():
-        if keyword in lower_extrapolation:
-            return score
-    
-    return 0.5  # Default confidence if no keywords are found
+    def estimate_confidence(self, query: str, context: List[Dict[str, Any]], response: str) -> float:
+        """
+        Estimate the confidence of a given response based on the query and context.
+
+        :param query: The original query
+        :param context: A list of context dictionaries used to generate the response
+        :param response: The generated response
+        :return: A confidence score between 0 and 1
+        """
+        # Implement confidence estimation logic here
+        # This is a placeholder implementation
+        return 0.8
+
+    def update_model(self, query: str, context: List[Dict[str, Any]], response: str, human_feedback: float):
+        """
+        Update the confidence estimation model based on human feedback.
+
+        :param query: The original query
+        :param context: A list of context dictionaries used to generate the response
+        :param response: The generated response
+        :param human_feedback: Human-provided confidence score between 0 and 1
+        """
+        # Implement model updating logic here
+        pass

@@ -1,69 +1,44 @@
-# rag_system/retrieval/graph_store.py
-
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple
+import networkx as nx
 from datetime import datetime
-from neo4j import GraphDatabase
-from ..core.config import RAGConfig
-from ..core.structures import BayesianNode, RetrievalResult
-
-class CausalEdge:
-    def __init__(self, source: str, target: str, strength: float):
-        self.source = source
-        self.target = target
-        self.strength = strength
+from ..core.config import UnifiedConfig
+from ..core.structures import RetrievalResult
 
 class GraphStore:
-    def __init__(self, config: RAGConfig):
+    def __init__(self, config: UnifiedConfig):
         self.config = config
-        self.driver = GraphDatabase.driver(
-            config.NEO4J_URI,
-            auth=(config.NEO4J_USER, config.NEO4J_PASSWORD)
-        )
-        self.llm = config.LLM  # Assuming the config has an LLM instance
+        self.graph = nx.Graph()
+        self.driver = None  # This should be initialized with a proper Neo4j driver
+        self.causal_edges = {}
+        self.llm = None  # This should be initialized with a proper language model
 
-    async def add_node(self, node: BayesianNode):
-        with self.driver.session() as session:
-            session.write_transaction(self._create_or_update_node, node)
+    def add_documents(self, documents: List[Dict[str, Any]]):
+        for doc in documents:
+            self.graph.add_node(doc['id'], **doc)
+            # Add edges based on some similarity measure or relationship
+            # This is a placeholder and should be implemented based on your specific needs
+            for other_node in self.graph.nodes:
+                if other_node != doc['id']:
+                    self.graph.add_edge(doc['id'], other_node, weight=0.5)
 
-    @staticmethod
-    def _create_or_update_node(tx, node: BayesianNode):
-        query = """
-        MERGE (n:Node {id: $id})
-        CREATE (n)-[:VERSION {timestamp: $timestamp}]->(v:NodeVersion $props)
-        """
-        tx.run(query, id=node.id, timestamp=node.timestamp.isoformat(), props={
-            'content': node.content,
-            'probability': node.probability,
-            'uncertainty': node.uncertainty,
-            'version': node.version,
-            'context_note': node.context_note
-        })
-
-    def add_causal_edge(self, edge: CausalEdge):
-        self.causal_edges[(edge.source, edge.target)] = edge
-
-    def update_causal_strength(self, source: str, target: str, new_strength: float):
-        if (source, target) in self.causal_edges:
-            self.causal_edges[(source, target)].strength = new_strength
-
-    async def retrieve(self, query: str, k: int, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
+    async def retrieve(self, query: str, k: int, timestamp: datetime = None) -> List[RetrievalResult]:
         with self.driver.session() as session:
             if timestamp:
                 result = session.run(
                     """
-                        CALL db.index.fulltext.queryNodes("nodeContent", $query) 
+                    CALL db.index.fulltext.queryNodes("nodeContent", $query) 
                     YIELD node, score
-                        MATCH (node)-[:VERSION]->(v:NodeVersion)
-                        WHERE v.timestamp <= $timestamp
-                        WITH node, score, v
-                        ORDER BY v.timestamp DESC, score DESC
+                    MATCH (node)-[:VERSION]->(v:NodeVersion)
+                    WHERE v.timestamp <= $timestamp
+                    WITH node, score, v
+                    ORDER BY v.timestamp DESC, score DESC
                     LIMIT $k
-                        RETURN id(node) as id, v.content as content, score, 
-                            v.uncertainty as uncertainty, v.timestamp as timestamp, 
-                            v.version as version
+                    RETURN id(node) as id, v.content as content, score, 
+                        v.uncertainty as uncertainty, v.timestamp as timestamp, 
+                        v.version as version
                     """,
-                        query=query, timestamp=timestamp, k=k
-                    )
+                    query=query, timestamp=timestamp, k=k
+                )
             else:
                 result = session.run(
                     """
@@ -99,7 +74,8 @@ class GraphStore:
             edge.strength = (1 - learning_rate) * edge.strength + learning_rate * observed_probability
     
     def close(self):
-        self.driver.close()
+        if self.driver:
+            self.driver.close()
 
     async def get_snapshot(self, timestamp: datetime) -> Dict[str, Any]:
         # Implement logic to return a snapshot of the graph store at the given timestamp
@@ -131,3 +107,8 @@ class GraphStore:
         # Implement logic to get neighboring entities in the graph
         # This could involve a Cypher query to Neo4j
         pass
+
+    def get_document_by_id(self, doc_id: str) -> Dict[str, Any]:
+        if self.graph.has_node(doc_id):
+            return self.graph.nodes[doc_id]
+        return None

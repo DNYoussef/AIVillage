@@ -1,10 +1,10 @@
-from typing import List, Dict, Any, Tuple
+from typing import Dict, Any, List
 from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
-from agents.utils.task import Task as LangroidTask
+from rag_system.core.config import UnifiedConfig, RAGConfig
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.core.config import RAGConfig
 from langroid.vector_store.base import VectorStore
+from langroid.agent.task import Task as LangroidTask
 import random
 
 class SelfEvolvingSystem:
@@ -55,10 +55,11 @@ class MagiAgentConfig(UnifiedAgentConfig):
 class MagiAgent(UnifiedBaseAgent):
     def __init__(self, config: MagiAgentConfig, communication_protocol: StandardCommunicationProtocol, rag_config: RAGConfig, vector_store: VectorStore):
         super().__init__(config, communication_protocol)
-        self.development_capabilities = config.development_capabilities
+        self.specialized_knowledge = {}  # Initialize specialized knowledge base
         self.rag_system = EnhancedRAGPipeline(rag_config)
         self.vector_store = vector_store
         self.self_evolving_system = SelfEvolvingSystem(self)
+        self.development_capabilities = config.development_capabilities
 
     async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
         if task.type in self.development_capabilities:
@@ -131,3 +132,4 @@ if __name__ == "__main__":
     magi_agent = MagiAgent(magi_config, communication_protocol, rag_config, vector_store)
     
     # Use the magi_agent to process tasks and evolve
+

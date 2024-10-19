@@ -1,11 +1,15 @@
-from typing import List, Dict, Any
 import asyncio
-from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig, create_agent, SelfEvolvingSystem
+from typing import List, Dict, Any
+from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig, SelfEvolvingSystem
+from agents.sage.sage_agent import SageAgent
+from agents.king.king_agent import KingAgent
+from agents.magi.magi_agent import MagiAgent
+from rag_system.core.config import UnifiedConfig
+from communications.protocol import StandardCommunicationProtocol
 from langroid.vector_store.base import VectorStore
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from langroid.agent.task import Task as LangroidTask
 from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.core.config import RAGConfig
 
 class TaskQueue:
     def __init__(self):
@@ -34,38 +38,45 @@ async def process_result(result: Dict[str, Any]):
     """
     print(f"Processing result: {result}")
 
-def initialize_agents(vector_store: VectorStore) -> List[UnifiedBaseAgent]:
+def create_agents(config: UnifiedConfig, communication_protocol: StandardCommunicationProtocol, vector_store: VectorStore) -> List[UnifiedBaseAgent]:
     """
     Initialize and return a list of agents with their configurations.
     """
     agent_configs = [
         UnifiedAgentConfig(
-            name="King",
-            description="Coordinator agent",
-            capabilities=["coordination", "decision_making"],
+            name="KingAgent",
+            description="A decision-making and task delegation agent",
+            capabilities=["decision_making", "task_delegation"],
+            rag_config=config,
             vector_store=vector_store,
             model="gpt-4",
-            instructions="You are the King agent, responsible for coordination and decision making."
+            instructions="You are a decision-making and task delegation agent."
         ),
         UnifiedAgentConfig(
-            name="Sage",
-            description="Research agent",
+            name="SageAgent",
+            description="A research and analysis agent",
             capabilities=["research", "analysis"],
+            rag_config=config,
             vector_store=vector_store,
             model="gpt-4",
-            instructions="You are the Sage agent, responsible for research and analysis."
+            instructions="You are a research and analysis agent."
         ),
         UnifiedAgentConfig(
-            name="Magi",
-            description="Development agent",
-            capabilities=["coding", "debugging"],
+            name="MagiAgent",
+            description="A specialized agent for complex problem-solving",
+            capabilities=["problem_solving", "specialized_knowledge"],
+            rag_config=config,
             vector_store=vector_store,
             model="gpt-4",
-            instructions="You are the Magi agent, responsible for coding and debugging."
+            instructions="You are a specialized agent for complex problem-solving."
         )
     ]
     
-    return [create_agent(config.name, config) for config in agent_configs]
+    return [
+        KingAgent(agent_configs[0], communication_protocol),
+        SageAgent(agent_configs[1], communication_protocol),
+        MagiAgent(agent_configs[2], communication_protocol)
+    ]
 
 async def run_task(self_evolving_system: SelfEvolvingSystem, rag_pipeline: EnhancedRAGPipeline, task_data: Dict[str, Any]):
     """
@@ -79,7 +90,7 @@ async def run_task(self_evolving_system: SelfEvolvingSystem, rag_pipeline: Enhan
     task.type = task_type
     
     # Process the task through the RAG pipeline
-    rag_result = await rag_pipeline.process_query(task_content, self_evolving_system.agents[0])
+    rag_result = await rag_pipeline.process_query(task_content)
     
     # Use the RAG result to inform the self-evolving system's task processing
     task.content = f"{task_content}\nRAG Context: {rag_result}"
@@ -95,22 +106,34 @@ async def run_task(self_evolving_system: SelfEvolvingSystem, rag_pipeline: Enhan
     if task_type == "evolve":
         await self_evolving_system.evolve()
 
+    return combined_result
+
+async def orchestrate_agents(agents: List[UnifiedBaseAgent], task: Dict[str, Any]) -> Dict[str, Any]:
+    king_agent = next(agent for agent in agents if isinstance(agent, KingAgent))
+    result = await king_agent.execute_task(task)
+    return result
+
 async def main():
     """
     Main execution loop for the orchestration system.
     """
+    config = UnifiedConfig()
+    communication_protocol = StandardCommunicationProtocol()
     vector_store = VectorStore()  # This is a placeholder. Implement or use a concrete VectorStore.
-    agents = initialize_agents(vector_store)
-    self_evolving_system = SelfEvolvingSystem(agents, vector_store)
+    agents = create_agents(config, communication_protocol, vector_store)
+    self_evolving_system = SelfEvolvingSystem(agents)
     
-    rag_config = RAGConfig()
-    rag_pipeline = EnhancedRAGPipeline(rag_config)
+    rag_pipeline = EnhancedRAGPipeline(config)
     
     task_queue = TaskQueue()
 
     # Add some initial tasks to the queue
     await task_queue.add_task({"content": "Analyze market trends", "type": "research"})
     await task_queue.add_task({"content": "Debug login functionality", "type": "coding"})
+    await task_queue.add_task({
+        "type": "research",
+        "content": "Analyze the impact of artificial intelligence on job markets in the next decade."
+    })
 
     while True:
         # Get next task from queue or user input
@@ -119,7 +142,12 @@ async def main():
         else:
             task_data = await task_queue.get_next_task()
 
-        await run_task(self_evolving_system, rag_pipeline, task_data)
+        result = await run_task(self_evolving_system, rag_pipeline, task_data)
+        orchestrated_result = await orchestrate_agents(agents, task_data)
+        
+        print(f"Task result: {result}")
+        print(f"Orchestrated result: {orchestrated_result}")
+        
         task_queue.task_done()
 
         # Ask if the user wants to add more tasks or exit
@@ -129,6 +157,8 @@ async def main():
             await task_queue.add_task(new_task)
         elif user_choice.lower() == 'q':
             break
+
+    print("Orchestration complete.")
 
 if __name__ == "__main__":
     asyncio.run(main())

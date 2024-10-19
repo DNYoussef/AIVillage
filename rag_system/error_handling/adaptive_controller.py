@@ -1,30 +1,40 @@
-# rag_system/error_handling/adaptive_controller.py
+from typing import Any, Dict
+from .base_controller import BaseErrorController
 
-from typing import List
-from .base_controller import ErrorRateController
+class AdaptiveErrorController(BaseErrorController):
+    def __init__(self):
+        super().__init__()
+        self.error_count = {}
 
-class AdaptiveErrorRateController(ErrorRateController):
-    def __init__(self, num_steps: int, target_error_rate: float, adaptation_rate: float):
-        """
-        Initialize the AdaptiveErrorRateController.
+    def handle_error(self, error: Exception, context: Dict[str, Any]) -> Dict[str, Any]:
+        error_type = type(error).__name__
+        self.error_count[error_type] = self.error_count.get(error_type, 0) + 1
 
-        :param num_steps: The number of steps in the multi-step process.
-        :param target_error_rate: The overall target error rate for the entire process.
-        :param adaptation_rate: The rate at which to adapt error rates (between 0 and 1).
-        """
-        super().__init__(num_steps, target_error_rate)
-        self.adaptation_rate = adaptation_rate
+        if self.error_count[error_type] > 3:
+            # If we've seen this error more than 3 times, try a different approach
+            return self.advanced_error_handling(error, context)
+        else:
+            # Otherwise, use the basic error handling
+            return self.basic_error_handling(error, context)
 
-    def update_error_rates(self, observed_errors: List[float]):
-        """
-        Update the step error rates based on observed errors using adaptive control.
+    def basic_error_handling(self, error: Exception, context: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "error_type": type(error).__name__,
+            "error_message": str(error),
+            "context": context,
+            "action": "retry",
+        }
 
-        :param observed_errors: A list of observed error rates for each step.
-        """
-        for i, observed_error in enumerate(observed_errors):
-            error_diff = observed_error - self.step_error_rates[i]
-            self.step_error_rates[i] += self.adaptation_rate * error_diff
+    def advanced_error_handling(self, error: Exception, context: Dict[str, Any]) -> Dict[str, Any]:
+        # Implement more sophisticated error handling here
+        # This could involve changing the approach, using a different model, etc.
+        return {
+            "error_type": type(error).__name__,
+            "error_message": str(error),
+            "context": context,
+            "action": "change_approach",
+            "new_approach": "Use a different model or technique",
+        }
 
-        # Renormalize to ensure sum of error rates equals target_error_rate
-        total_error = sum(self.step_error_rates)
-        self.step_error_rates = [rate * self.target_error_rate / total_error for rate in self.step_error_rates]
+    def reset(self):
+        self.error_count.clear()

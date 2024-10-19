@@ -1,94 +1,53 @@
-import asyncio
-from typing import Awaitable, Dict, List, Callable, Any, Optional
+from typing import Dict, Any, Callable, Coroutine, List
+from abc import ABC, abstractmethod
 from .message import Message, MessageType, Priority
-from .queue import MessageQueue
-from ..utils.exceptions import AIVillageException
-from ..utils.logger import logger
+from agents.utils.exceptions import AIVillageException
 
-class StandardCommunicationProtocol:
-    """Standard communication protocol for AI Village agents."""
+class CommunicationProtocol(ABC):
+    @abstractmethod
+    async def send_message(self, message: Message) -> None:
+        pass
 
+    @abstractmethod
+    async def receive_message(self, agent_id: str) -> Message:
+        pass
+
+    @abstractmethod
+    async def query(self, sender: str, receiver: str, content: Dict[str, Any]) -> Any:
+        pass
+
+    @abstractmethod
+    def subscribe(self, agent_id: str, callback: Callable[[Message], Coroutine[Any, Any, None]]) -> None:
+        pass
+
+class StandardCommunicationProtocol(CommunicationProtocol):
     def __init__(self):
-        self.message_queue = MessageQueue()
-        self.subscribers: Dict[str, List[Callable]] = {}
-
-    def subscribe(self, agent_id: str, callback: Callable):
-        """Subscribe an agent to receive messages."""
-        if agent_id not in self.subscribers:
-            self.subscribers[agent_id] = []
-        self.subscribers[agent_id].append(callback)
-
-    def unsubscribe(self, agent_id: str, callback: Callable):
-        """Unsubscribe an agent from receiving messages."""
-        if agent_id in self.subscribers and callback in self.subscribers[agent_id]:
-            self.subscribers[agent_id].remove(callback)
+        self.message_queue: Dict[str, List[Message]] = {}
+        self.subscribers: Dict[str, Callable[[Message], Coroutine[Any, Any, None]]] = {}
 
     async def send_message(self, message: Message) -> None:
-        """Send a message from one agent to another."""
-        self.message_queue.enqueue(message)
-        await self._notify_subscribers(message)
+        if message.receiver not in self.message_queue:
+            self.message_queue[message.receiver] = []
+        self.message_queue[message.receiver].append(message)
 
-    async def _notify_subscribers(self, message: Message) -> None:
         if message.receiver in self.subscribers:
-            for callback in self.subscribers[message.receiver]:
-                try:
-                    await callback(message)
-                except Exception as e:
-                    logger.error(f"Error notifying subscriber for {message.receiver}: {str(e)}")
+            await self.subscribers[message.receiver](message)
 
-    async def get_next_message(self) -> Optional[Message]:
-        return self.message_queue.dequeue()
+    async def receive_message(self, agent_id: str) -> Message:
+        if agent_id not in self.message_queue or not self.message_queue[agent_id]:
+            raise AIVillageException(f"No messages for agent {agent_id}")
+        return self.message_queue[agent_id].pop(0)
 
-    async def query(self, sender: str, receiver: str, query: str, priority: Priority = Priority.MEDIUM) -> Message:
+    async def query(self, sender: str, receiver: str, content: Dict[str, Any]) -> Any:
         query_message = Message(
             type=MessageType.QUERY,
             sender=sender,
             receiver=receiver,
-            content={"query": query},
-            priority=priority
+            content=content
         )
         await self.send_message(query_message)
-        return await self._wait_for_response(query_message.id)
+        response = await self.receive_message(sender)
+        return response.content
 
-    async def _wait_for_response(self, query_id: str, timeout: float = 30.0) -> Message:
-        start_time = asyncio.get_event_loop().time()
-        while asyncio.get_event_loop().time() - start_time < timeout:
-            message = await self.get_next_message()
-            if message and message.type == MessageType.RESPONSE and message.parent_id == query_id:
-                return message
-            elif message:
-                # Re-enqueue messages that don't match our criteria
-                self.message_queue.enqueue(message)
-            await asyncio.sleep(0.1)
-        raise AIVillageException(f"Timeout waiting for response to query {query_id}")
-
-    async def broadcast(self, sender: str, content: Dict[str, Any], message_type: MessageType = MessageType.UPDATE, priority: Priority = Priority.MEDIUM) -> None:
-        """Broadcast a message to all subscribed agents."""
-        for receiver in self.subscribers.keys():
-            message = Message(
-                type=message_type,
-                sender=sender,
-                receiver=receiver,
-                content=content,
-                priority=priority
-            )
-            await self.send_message(message)
-
-    def get_message_history(self, agent_id: str = None, message_type: Optional[MessageType] = None) -> List[Message]:
-        all_messages = self.message_queue.get_all_messages()
-        return [
-            msg for msg in all_messages
-            if (agent_id is None or msg.sender == agent_id or msg.receiver == agent_id)
-            and (message_type is None or msg.type == message_type)
-        ]
-
-    async def process_messages(self, handler: Callable[[Message], Awaitable[None]]) -> None:
-        while True:
-            message = await self.get_next_message()
-            if message:
-                try:
-                    await handler(message)
-                except Exception as e:
-                    logger.error(f"Error processing message: {str(e)}")
-            else:
-                await asyncio.sleep(0.1)
+    def subscribe(self, agent_id: str, callback: Callable[[Message], Coroutine[Any, Any, None]]) -> None:
+        self.subscribers[agent_id] = callback
