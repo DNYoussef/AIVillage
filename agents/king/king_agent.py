@@ -2,7 +2,7 @@ from typing import List, Dict, Any
 from agents.unified_base_agent import UnifiedBaseAgent
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.core.config import UnifiedConfig
+from rag_system.core.unified_config import unified_config
 from rag_system.retrieval.vector_store import VectorStore
 from .coordinator import KingCoordinator
 from .decision_maker import DecisionMaker
@@ -28,12 +28,11 @@ logger = logging.getLogger(__name__)
 class KingAgent(UnifiedBaseAgent):
     def __init__(
         self,
-        config: UnifiedConfig,
         communication_protocol: StandardCommunicationProtocol,
         vector_store: VectorStore
     ):
-        super().__init__(config, communication_protocol)
-        self.rag_system = EnhancedRAGPipeline(config)
+        super().__init__(unified_config, communication_protocol)
+        self.rag_system = EnhancedRAGPipeline()
         self.vector_store = vector_store
         self.coordinator = KingCoordinator(communication_protocol, self.rag_system, self)
         self.decision_maker = DecisionMaker(communication_protocol, self.rag_system, self)
@@ -60,10 +59,10 @@ class KingAgent(UnifiedBaseAgent):
             result = await self.coordinator.coordinate_task(task)
             end_time = self.unified_analytics.get_current_time()
             execution_time = end_time - start_time
-            
+
             self.unified_analytics.record_task_completion(task['id'], execution_time, result.get('success', False))
             self.unified_analytics.update_performance_history(result.get('performance', 0.5))
-            
+
             await self.continuous_learning_layer.update(task, result)
             return result
         except Exception as e:
@@ -117,7 +116,7 @@ class KingAgent(UnifiedBaseAgent):
                         "current_architecture": self.self_evolving_system.current_architecture,
                         "evolution_rate": self.self_evolving_system.evolution_rate,
                         "mutation_rate": self.self_evolving_system.mutation_rate,
-                        "learning_rate": self.self_evolving_system.learning_rate
+                        "learning_rate": self.self_evolving_system.learning_rate,
                     }
                 },
                 "analytics": self.unified_analytics.generate_summary_report()
