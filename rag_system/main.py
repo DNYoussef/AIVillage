@@ -5,7 +5,6 @@ from typing import Dict, Any
 from rag_system.core.unified_config import unified_config
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
-from rag_system.utils.logging import setup_logger
 from rag_system.utils.embedding import BERTEmbeddingModel
 from rag_system.utils.advanced_analytics import AdvancedAnalytics
 from rag_system.utils.standardized_formats import create_standardized_prompt, create_standardized_output, OutputFormat
@@ -15,15 +14,16 @@ from rag_system.processing.advanced_nlp import AdvancedNLP
 from rag_system.core.cognitive_nexus import CognitiveNexus
 from rag_system.core.exploration_mode import ExplorationMode
 from rag_system.evaluation.comprehensive_evaluation import ComprehensiveEvaluationFramework
-from rag_system.error_handling.error_handling import ErrorHandler, error_handler
 from agents.sage.sage_agent import SageAgent
 from communications.protocol import StandardCommunicationProtocol
 from rag_system.retrieval.vector_store import VectorStore
 from rag_system.retrieval.graph_store import GraphStore
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
+from rag_system.utils.error_handling import log_and_handle_errors, setup_logging, RAGSystemError
 
-logger = setup_logger(__name__)
+logger = setup_logging()
 
+@log_and_handle_errors
 async def initialize_components() -> Dict[str, Any]:
     vector_store = VectorStore()
     graph_store = GraphStore()
@@ -61,7 +61,7 @@ async def initialize_components() -> Dict[str, Any]:
 
     return components
 
-@error_handler
+@log_and_handle_errors
 async def process_user_query(components: Dict[str, Any], query: str) -> Dict[str, Any]:
     start_time = datetime.now()
 
@@ -140,7 +140,7 @@ async def process_user_query(components: Dict[str, Any], query: str) -> Dict[str
 
     return output.to_dict()
 
-@error_handler
+@log_and_handle_errors
 async def run_creative_exploration(components: Dict[str, Any], start_node: str, end_node: str):
     logger.info(f"Starting creative exploration between '{start_node}' and '{end_node}'")
 
@@ -164,33 +164,29 @@ async def run_creative_exploration(components: Dict[str, Any], start_node: str, 
 
     return exploration_results
 
+@log_and_handle_errors
 async def main():
-    try:
-        # Load configuration
-        config_path = "config/rag_config.json"
-        unified_config.load_config(config_path)
-        
-        components = await initialize_components()
+    # Load configuration
+    config_path = "config/rag_config.json"
+    unified_config.load_config(config_path)
+    
+    components = await initialize_components()
 
-        user_query = "What are the key features of the RAG system?"
-        query_result = await process_user_query(components, user_query)
-        print(f"Query result: {query_result}")
+    user_query = "What are the key features of the RAG system?"
+    query_result = await process_user_query(components, user_query)
+    print(f"Query result: {query_result}")
 
-        # Run a creative exploration
-        start_node = "artificial_intelligence"
-        end_node = "human_creativity"
-        creative_exploration_result = await run_creative_exploration(components, start_node, end_node)
-        print(f"Creative Exploration result: {creative_exploration_result}")
+    # Run a creative exploration
+    start_node = "artificial_intelligence"
+    end_node = "human_creativity"
+    creative_exploration_result = await run_creative_exploration(components, start_node, end_node)
+    print(f"Creative Exploration result: {creative_exploration_result}")
 
-        # Generate and log evaluation report
-        evaluation_results = components["evaluation_framework"].evaluate_system_performance()
-        components["evaluation_framework"].log_evaluation_results(evaluation_results)
+    # Generate and log evaluation report
+    evaluation_results = components["evaluation_framework"].evaluate_system_performance()
+    components["evaluation_framework"].log_evaluation_results(evaluation_results)
 
-        print(f"Evaluation complete. Check logs for detailed results.")
-
-    except Exception as e:
-        error_result = ErrorHandler.handle_error(e, {"context": "main execution"})
-        print(f"An error occurred: {error_result}")
+    print(f"Evaluation complete. Check logs for detailed results.")
 
 if __name__ == "__main__":
     asyncio.run(main())
