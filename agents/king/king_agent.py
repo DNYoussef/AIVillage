@@ -1,21 +1,17 @@
+import torch
+import torch.nn as nn
 from typing import Dict, Any
 from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.retrieval.vector_store import VectorStore
 from .coordinator import KingCoordinator
-from .planning.reasoning.decision_maker import DecisionMaker
-from .problem_analyzer import ProblemAnalyzer
-from .unified_task_manager import UnifiedTaskManager
+from .planning_and_task_management.unified_planning_and_management import UnifiedPlanningAndManagement
 from .analytics.unified_analytics import UnifiedAnalytics
-from .evolution_manager import EvolutionManager
-from .user_intent_interpreter import UserIntentInterpreter
-from .key_concept_extractor import KeyConceptExtractor
-from .task_planning_agent import TaskPlanningAgent
-from .knowledge_graph_agent import KnowledgeGraphAgent
-from .reasoning_agent import ReasoningAgent
+from .evolution_manager import EvolutionManager, run_evolution_and_optimization
 from .response_generation_agent import ResponseGenerationAgent
-from .dynamic_knowledge_integration_agent import DynamicKnowledgeIntegrationAgent
 from rag_system.utils.error_handling import log_and_handle_errors
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
+from rag_system.core.pipeline import EnhancedRAGPipeline
 
 class KingAgent(UnifiedBaseAgent):
     def __init__(
@@ -26,29 +22,18 @@ class KingAgent(UnifiedBaseAgent):
     ):
         super().__init__(config, communication_protocol)
         self.vector_store = vector_store
-        self.coordinator = KingCoordinator(communication_protocol, self.rag_pipeline, self)
-        self.decision_maker = DecisionMaker(communication_protocol, self.rag_pipeline, self)
-        self.problem_analyzer = ProblemAnalyzer(communication_protocol, self)
-        self.task_manager = UnifiedTaskManager(communication_protocol)
+        self.rag_pipeline = EnhancedRAGPipeline()  # Initialize the RAG pipeline
+        self.coordinator = KingCoordinator(config, communication_protocol)
+        self.unified_planning_and_management = UnifiedPlanningAndManagement(communication_protocol, self.rag_pipeline, self)
         self.unified_analytics = UnifiedAnalytics()
         self.evolution_manager = EvolutionManager()
-        self.user_intent_interpreter = UserIntentInterpreter()
-        self.key_concept_extractor = KeyConceptExtractor()
-        self.task_planning_agent = TaskPlanningAgent()
-        self.knowledge_graph_agent = KnowledgeGraphAgent()
-        self.reasoning_agent = ReasoningAgent()
-        self.response_generation_agent = ResponseGenerationAgent()
-        self.dynamic_knowledge_integration_agent = DynamicKnowledgeIntegrationAgent()
+        llm_config = OpenAIGPTConfig(chat_model="gpt-4")
+        self.response_generation_agent = ResponseGenerationAgent(llm_config)
 
         # Add tools
         self.add_tool("coordinate_task", self.coordinator.coordinate_task)
-        self.add_tool("interpret_user_intent", self.user_intent_interpreter.interpret)
-        self.add_tool("extract_key_concepts", self.key_concept_extractor.extract)
-        self.add_tool("plan_task", self.task_planning_agent.plan)
-        self.add_tool("query_knowledge_graph", self.knowledge_graph_agent.query)
-        self.add_tool("reason", self.reasoning_agent.reason)
-        self.add_tool("generate_response", self.response_generation_agent.generate)
-        self.add_tool("integrate_knowledge", self.dynamic_knowledge_integration_agent.integrate)
+        self.add_tool("plan_task", self.unified_planning_and_management.make_decision)
+        self.add_tool("generate_response", self.response_generation_agent.generate_response)
 
     @log_and_handle_errors
     async def process_message(self, message: Message) -> Any:
@@ -61,11 +46,11 @@ class KingAgent(UnifiedBaseAgent):
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         self.logger.info(f"Executing task: {task}")
         start_time = self.unified_analytics.get_current_time()
-        result = await self.get_tool("coordinate_task")(task)
+        result = await self.unified_planning_and_management.manage_task(task)
         end_time = self.unified_analytics.get_current_time()
         execution_time = end_time - start_time
 
-        self.unified_analytics.record_task_completion(task['id'], execution_time, result.get('success', False))
+        self.unified_analytics.record_task_completion(task.get('id', 'unknown'), execution_time, result.get('success', False))
         self.unified_analytics.update_performance_history(result.get('performance', 0.5))
 
         await self.continuous_learning_layer.update(task, result)
@@ -74,10 +59,8 @@ class KingAgent(UnifiedBaseAgent):
     @log_and_handle_errors
     async def evolve(self):
         await super().evolve()
-        await self.evolution_manager.evolve()
+        await run_evolution_and_optimization(self)
         await self.coordinator.evolve()
-        await self.decision_maker.evolve()
-        await self.problem_analyzer.evolve()
         self.logger.info("KingAgent evolved")
 
     @log_and_handle_errors
@@ -85,10 +68,8 @@ class KingAgent(UnifiedBaseAgent):
         base_status = await super().get_status()
         king_status = {
             "components": {
-                "coordinator": await self.coordinator.get_status(),
-                "decision_maker": await self.decision_maker.get_status(),
-                "problem_analyzer": await self.problem_analyzer.get_status(),
-                "task_manager": await self.task_manager.get_status(),
+                "coordinator": await self.coordinator.introspect(),
+                "unified_planning_and_management": await self.unified_planning_and_management.introspect(),
                 "unified_analytics": self.unified_analytics.get_info(),
                 "evolution_manager": self.evolution_manager.get_info(),
             },
@@ -101,14 +82,62 @@ class KingAgent(UnifiedBaseAgent):
         await super().update_config(new_config)
         # Update configurations of other components as needed
         await self.coordinator.update_config(new_config)
-        await self.decision_maker.update_config(new_config)
-        await self.problem_analyzer.update_config(new_config)
+        # Add other component config updates if necessary
 
     @log_and_handle_errors
     async def shutdown(self) -> None:
         await super().shutdown()
         # Perform cleanup for other components as needed
-        await self.coordinator.shutdown()
-        await self.decision_maker.shutdown()
-        await self.problem_analyzer.shutdown()
+        await self.coordinator.save_models("coordinator_shutdown_backup")
         self.logger.info("KingAgent shut down")
+
+    def create_model_from_architecture(self, architecture: Dict[str, Any]) -> nn.Module:
+        layers = []
+        in_features = architecture['input_size']
+
+        for i in range(architecture['num_layers']):
+            out_features = architecture['hidden_sizes'][i]
+            layers.append(nn.Linear(in_features, out_features))
+            
+            if architecture['activation'] == 'relu':
+                layers.append(nn.ReLU())
+            elif architecture['activation'] == 'tanh':
+                layers.append(nn.Tanh())
+            elif architecture['activation'] == 'sigmoid':
+                layers.append(nn.Sigmoid())
+            
+            if i < architecture['num_layers'] - 1:  # Don't add dropout after the last layer
+                layers.append(nn.Dropout(architecture['dropout_rate']))
+            
+            in_features = out_features
+
+        layers.append(nn.Linear(in_features, architecture['output_size']))
+        
+        return nn.Sequential(*layers)
+
+    @log_and_handle_errors
+    async def update_model_architecture(self, architecture: Dict[str, Any]):
+        self.logger.info(f"Updating model architecture: {architecture}")
+        try:
+            new_model = self.create_model_from_architecture(architecture)
+            await self.unified_planning_and_management.update_model(new_model)
+            await self.response_generation_agent.update_model(new_model)
+            self.current_architecture = architecture
+            self.logger.info("Model architecture updated successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to update model architecture: {str(e)}")
+            raise
+
+    @log_and_handle_errors
+    async def update_hyperparameters(self, hyperparameters: Dict[str, Any]):
+        self.logger.info(f"Updating hyperparameters: {hyperparameters}")
+        try:
+            await self.unified_planning_and_management.update_hyperparameters(hyperparameters)
+            await self.response_generation_agent.update_hyperparameters(hyperparameters)
+            self.current_hyperparameters = hyperparameters
+            self.logger.info("Hyperparameters updated successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to update hyperparameters: {str(e)}")
+            raise
+
+    # ... (rest of the code remains the same)
