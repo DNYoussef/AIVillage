@@ -6,8 +6,7 @@ from core.config import UnifiedConfig
 from ..magi.magi_agent import MagiAgent
 from ..sage.sage_agent import SageAgent
 from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
-from .unified_analytics import UnifiedAnalytics
-import logging
+from .analytics.unified_analytics import UnifiedAnalytics
 
 class KingCoordinator:
     def __init__(self, config: UnifiedConfig, communication_protocol: StandardCommunicationProtocol):

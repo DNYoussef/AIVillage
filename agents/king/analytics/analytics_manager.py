@@ -1,6 +1,6 @@
 import logging
 from typing import Dict, Any, List
-from .analytics.base_analytics import BaseAnalytics
+from .base_analytics import BaseAnalytics
 from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
 
 logger = logging.getLogger(__name__)

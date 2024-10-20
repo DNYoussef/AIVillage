@@ -3,10 +3,10 @@ from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.retrieval.vector_store import VectorStore
 from .coordinator import KingCoordinator
-from .decision_maker import DecisionMaker
+from .planning.reasoning.decision_maker import DecisionMaker
 from .problem_analyzer import ProblemAnalyzer
 from .unified_task_manager import UnifiedTaskManager
-from .unified_analytics import UnifiedAnalytics
+from .analytics.unified_analytics import UnifiedAnalytics
 from .evolution_manager import EvolutionManager
 from .user_intent_interpreter import UserIntentInterpreter
 from .key_concept_extractor import KeyConceptExtractor

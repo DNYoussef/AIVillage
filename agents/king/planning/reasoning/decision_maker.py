@@ -4,13 +4,13 @@ import os
 import json
 from typing import Dict, List, Any
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
-from .problem_analyzer import ProblemAnalyzer
-from .plan_generator import PlanGenerator
-from ..utils.exceptions import AIVillageException
-from .mcts import MCTS
+from ...problem_analyzer import ProblemAnalyzer
+from ...plan_generator import PlanGenerator
+from ....utils.exceptions import AIVillageException
+from ...mcts import MCTS
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from .quality_assurance_layer import QualityAssuranceLayer
+from ...quality_assurance_layer import QualityAssuranceLayer
 
 logger = logging.getLogger(__name__)
 

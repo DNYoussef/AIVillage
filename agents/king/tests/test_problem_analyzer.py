@@ -1,7 +1,7 @@
 import unittest
 import asyncio
 from unittest.mock import Mock, patch
-from agents.king.problem_analyzer import ProblemAnalyzer
+from agents.king.planning.problem_analyzer import ProblemAnalyzer
 from agents.king.quality_assurance_layer import QualityAssuranceLayer
 from agents.utils.task import Task as LangroidTask
 
