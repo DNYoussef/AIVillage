@@ -3,12 +3,14 @@ from typing import Dict, Any, List
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
 import json
+import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
 class ResponseGenerationAgent:
     def __init__(self, llm_config: OpenAIGPTConfig):
         self.llm = llm_config.create()
+        self.model = None
 
     @error_handler.handle_error
     async def generate_response(self, input_data: Dict[str, Any], user_preferences: Dict[str, Any]) -> str:
@@ -84,6 +86,17 @@ class ResponseGenerationAgent:
         return text
 
     @error_handler.handle_error
+    async def update_model(self, new_model: nn.Module):
+        self.model = new_model
+        logger.info("Model updated in ResponseGenerationAgent")
+
+    @error_handler.handle_error
+    async def update_hyperparameters(self, hyperparameters: Dict[str, Any]):
+        # Update hyperparameters if needed
+        # For example, if using a custom language model:
+        # self.llm.update_hyperparameters(hyperparameters)
+        logger.info("Hyperparameters updated in ResponseGenerationAgent")
+
     async def generate_multi_format_response(self, input_data: Dict[str, Any], user_preferences: Dict[str, Any]) -> Dict[str, str]:
         """
         Generate responses in multiple formats based on input data and user preferences.
@@ -202,3 +215,4 @@ if __name__ == "__main__":
         print(json.dumps(result["response_metadata"], indent=2))
 
     asyncio.run(main())
+

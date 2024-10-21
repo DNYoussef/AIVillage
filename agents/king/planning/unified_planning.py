@@ -1,0 +1,389 @@
+import logging
+import os
+import json
+import asyncio
+from typing import Dict, List, Any
+from communications.protocol import StandardCommunicationProtocol, Message, MessageType
+from .reasoning_engine import ReasoningEngine
+from .task_handling import TaskHandler
+from .optimization import Optimizer
+from .routing import Router
+from ..quality_assurance_layer import QualityAssuranceLayer
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
+from ..utils.exceptions import AIVillageException
+import torch.nn as nn
+import networkx as nx
+import matplotlib.pyplot as plt
+import io
+
+logger = logging.getLogger(__name__)
+
+class UnifiedPlanningAndManagement:
+    def __init__(self, communication_protocol: StandardCommunicationProtocol, rag_system: EnhancedRAGPipeline, agent):
+        self.communication_protocol = communication_protocol
+        self.rag_system = rag_system
+        self.agent = agent
+        self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
+        self.quality_assurance_layer = QualityAssuranceLayer()
+        self.reasoning_engine = ReasoningEngine()
+        self.task_handler = TaskHandler()
+        self.optimizer = Optimizer()
+        self.router = Router()
+        self.available_agents = []
+        self.model = None
+
+    async def make_decision(self, content: str) -> Dict[str, Any]:
+        try:
+            rag_info = await self.rag_system.process_query(content)
+            
+            task_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(content)
+            eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(task_vector)
+            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(task_vector)
+            
+            decision_prompt = f"""
+            Task: {content}
+            RAG Information: {rag_info}
+            Eudaimonia Score: {eudaimonia_score}
+            Rule Compliance: {rule_compliance}
+
+            Given the task, the provided information, eudaimonia score, and rule compliance, make a decision that:
+            1. Aligns with the goal of moving all living things towards eudaimonia
+            2. Embraces and encourages curiosity
+            3. Protects the AI village and its inhabitants
+            4. Maintains self-preservation unless it interferes with the above points
+
+            Provide your decision and a brief explanation of how it aligns with these principles.
+            """
+
+            response = await self.llm.complete(decision_prompt)
+            
+            decision = response.text
+            alternatives = await self._generate_alternatives({"content": content, "rag_info": rag_info})
+            
+            ranked_criteria = [
+                {"criterion": "eudaimonia", "weight": 0.4},
+                {"criterion": "curiosity", "weight": 0.2},
+                {"criterion": "protection", "weight": 0.3},
+                {"criterion": "self_preservation", "weight": 0.1}
+            ]
+            
+            evaluated_alternatives = await self._evaluate_alternatives(alternatives, ranked_criteria)
+            
+            best_alternative = evaluated_alternatives[0]['alternative']
+            
+            implementation_plan = await self._create_implementation_plan({"decision": decision, "best_alternative": best_alternative})
+            
+            return {
+                "decision": decision,
+                "eudaimonia_score": eudaimonia_score,
+                "rule_compliance": rule_compliance,
+                "rag_info": rag_info,
+                "best_alternative": best_alternative,
+                "implementation_plan": implementation_plan
+            }
+        except Exception as e:
+            logger.exception(f"Error in make_decision: {str(e)}")
+            raise AIVillageException(f"Error in make_decision: {str(e)}")
+
+    async def manage_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            decision = await self.make_decision(task['description'])
+            plan = await self.reasoning_engine.analyze_and_reason(decision)
+            optimized_plan = await self.optimizer.optimize_plan(plan)
+            routed_task = await self.router.route_task(optimized_plan)
+            execution_result = await self.task_handler.execute_task(routed_task)
+            
+            # Perform post-execution analysis
+            analysis = await self._analyze_execution_result(execution_result, optimized_plan)
+            
+            # Update models based on execution results
+            await self._update_models(task, execution_result, analysis)
+            
+            return {**execution_result, "analysis": analysis}
+        except Exception as e:
+            logger.exception(f"Error in manage_task: {str(e)}")
+            raise AIVillageException(f"Error in manage_task: {str(e)}")
+
+    async def create_and_execute_workflow(self, tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
+        try:
+            workflow = await self.task_handler.create_workflow(tasks)
+            optimized_workflow = await self.optimizer.optimize_workflow(workflow)
+            execution_plan = await self._create_execution_plan(optimized_workflow)
+            results = await self._execute_workflow_in_parallel(execution_plan)
+            
+            # Perform post-execution analysis
+            analysis = await self._analyze_workflow_execution(results, optimized_workflow)
+            
+            # Update models based on workflow execution results
+            await self._update_models_from_workflow(tasks, results, analysis)
+            
+            return {"results": results, "analysis": analysis}
+        except Exception as e:
+            logger.exception(f"Error in create_and_execute_workflow: {str(e)}")
+            raise AIVillageException(f"Error in create_and_execute_workflow: {str(e)}")
+
+    async def _generate_alternatives(self, problem_analysis: Dict[str, Any]) -> List[str]:
+        try:
+            king_alternatives = await self.agent.generate_structured_response(
+                f"Given the problem analysis: {problem_analysis}, generate 3 potential solutions. Output as a JSON list of strings."
+            )
+            
+            all_alternatives = king_alternatives.copy()
+            
+            agent_tasks = []
+            for agent in self.available_agents:
+                agent_alternatives_request = Message(
+                    type=MessageType.QUERY,
+                    sender="King",
+                    receiver=agent,
+                    content={"action": "generate_alternatives", "problem_analysis": problem_analysis}
+                )
+                agent_tasks.append(self.communication_protocol.send_and_wait(agent_alternatives_request))
+            
+            agent_responses = await asyncio.gather(*agent_tasks)
+            for response in agent_responses:
+                all_alternatives.extend(response.content["alternatives"])
+            
+            return list(dict.fromkeys(all_alternatives))
+        except Exception as e:
+            logger.exception(f"Error in _generate_alternatives: {str(e)}")
+            raise AIVillageException(f"Error in _generate_alternatives: {str(e)}")
+
+    async def _evaluate_alternatives(self, alternatives: List[str], ranked_criteria: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        try:
+            evaluated_alternatives = []
+            for alt in alternatives:
+                alt_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(alt)
+                eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(alt_vector)
+                rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(alt_vector)
+                
+                total_score = sum(
+                    criterion['weight'] * (eudaimonia_score if criterion['criterion'] == 'eudaimonia' else rule_compliance)
+                    for criterion in ranked_criteria
+                )
+                
+                evaluated_alternatives.append({'alternative': alt, 'score': total_score})
+            
+            return sorted(evaluated_alternatives, key=lambda x: x['score'], reverse=True)
+        except Exception as e:
+            logger.exception(f"Error in _evaluate_alternatives: {str(e)}")
+            raise AIVillageException(f"Error in _evaluate_alternatives: {str(e)}")
+
+    async def _create_implementation_plan(self, plan: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            logger.info("Creating implementation plan")
+            prompt = f"""
+            Given the following plan: {plan}, create an implementation strategy that includes:
+            1. Monitoring steps to track progress and alignment with eudaimonia
+            2. Feedback analysis to continuously improve the plan
+            3. Troubleshooting steps to address potential issues
+            4. Adaptive measures to adjust the plan based on new information or changing circumstances
+            5. Resource allocation and timeline
+            6. Risk management strategies
+            7. Communication and coordination plans
+
+            Output the result as a JSON dictionary with keys for each of the above sections, each containing a list of steps or strategies.
+            """
+            implementation_plan = await self.agent.generate_structured_response(prompt)
+            logger.debug(f"Implementation plan created: {implementation_plan}")
+            return implementation_plan
+        except Exception as e:
+            logger.exception(f"Error creating implementation plan: {str(e)}")
+            raise AIVillageException(f"Error creating implementation plan: {str(e)}")
+
+    async def _create_execution_plan(self, workflow: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            # Create a directed graph of task dependencies
+            G = nx.DiGraph()
+            for task in workflow['tasks']:
+                G.add_node(task['id'], task=task)
+                for dep in task.get('dependencies', []):
+                    G.add_edge(dep, task['id'])
+            
+            # Topologically sort the graph to get execution order
+            execution_order = list(nx.topological_sort(G))
+            
+            # Group tasks that can be executed in parallel
+            parallel_groups = []
+            while execution_order:
+                group = [execution_order.pop(0)]
+                group.extend([task for task in execution_order if all(dep not in group for dep in G.predecessors(task))])
+                parallel_groups.append(group)
+                execution_order = [task for task in execution_order if task not in group]
+            
+            return {"parallel_groups": parallel_groups, "graph": G}
+        except Exception as e:
+            logger.exception(f"Error in _create_execution_plan: {str(e)}")
+            raise AIVillageException(f"Error in _create_execution_plan: {str(e)}")
+
+    async def _execute_workflow_in_parallel(self, execution_plan: Dict[str, Any]) -> List[Dict[str, Any]]:
+        try:
+            results = []
+            for group in execution_plan['parallel_groups']:
+                group_tasks = [self.task_handler.execute_task(execution_plan['graph'].nodes[task_id]['task']) for task_id in group]
+                group_results = await asyncio.gather(*group_tasks)
+                results.extend(group_results)
+            return results
+        except Exception as e:
+            logger.exception(f"Error in _execute_workflow_in_parallel: {str(e)}")
+            raise AIVillageException(f"Error in _execute_workflow_in_parallel: {str(e)}")
+
+    async def _analyze_execution_result(self, execution_result: Dict[str, Any], optimized_plan: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            prompt = f"""
+            Analyze the following execution result and optimized plan:
+            Execution Result: {json.dumps(execution_result)}
+            Optimized Plan: {json.dumps(optimized_plan)}
+
+            Provide an analysis that includes:
+            1. Whether the execution was successful and why
+            2. Any discrepancies between the plan and the execution
+            3. Unexpected outcomes or challenges
+            4. Lessons learned and areas for improvement
+            5. Recommendations for future similar tasks
+
+            Output the analysis as a JSON dictionary with keys for each of the above points.
+            """
+            analysis = await self.agent.generate_structured_response(prompt)
+            return analysis
+        except Exception as e:
+            logger.exception(f"Error in _analyze_execution_result: {str(e)}")
+            raise AIVillageException(f"Error in _analyze_execution_result: {str(e)}")
+
+    async def _analyze_workflow_execution(self, results: List[Dict[str, Any]], optimized_workflow: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            prompt = f"""
+            Analyze the following workflow execution results and optimized workflow:
+            Execution Results: {json.dumps(results)}
+            Optimized Workflow: {json.dumps(optimized_workflow)}
+
+            Provide an analysis that includes:
+            1. Overall success rate of the workflow
+            2. Performance of individual tasks
+            3. Efficiency of the parallel execution
+            4. Any bottlenecks or areas of improvement
+            5. Unexpected outcomes or challenges
+            6. Lessons learned and recommendations for future workflows
+
+            Output the analysis as a JSON dictionary with keys for each of the above points.
+            """
+            analysis = await self.agent.generate_structured_response(prompt)
+            return analysis
+        except Exception as e:
+            logger.exception(f"Error in _analyze_workflow_execution: {str(e)}")
+            raise AIVillageException(f"Error in _analyze_workflow_execution: {str(e)}")
+
+    async def _update_models(self, task: Dict[str, Any], execution_result: Dict[str, Any], analysis: Dict[str, Any]):
+        try:
+            await self.reasoning_engine.update_model(task, execution_result, analysis)
+            await self.optimizer.update_model(task, execution_result, analysis)
+            await self.router.update_model(task, execution_result, analysis)
+            await self.task_handler.update_model(task, execution_result, analysis)
+            await self.quality_assurance_layer.update_task_history(task, execution_result.get('performance', 0.5), execution_result.get('uncertainty', 0.5))
+        except Exception as e:
+            logger.exception(f"Error in _update_models: {str(e)}")
+            raise AIVillageException(f"Error in _update_models: {str(e)}")
+
+    async def _update_models_from_workflow(self, tasks: List[Dict[str, Any]], results: List[Dict[str, Any]], analysis: Dict[str, Any]):
+        try:
+            for task, result in zip(tasks, results):
+                await self._update_models(task, result, analysis)
+        except Exception as e:
+            logger.exception(f"Error in _update_models_from_workflow: {str(e)}")
+            raise AIVillageException(f"Error in _update_models_from_workflow: {str(e)}")
+
+    async def update_model(self, new_model: nn.Module):
+        try:
+            self.model = new_model
+            # Update the model in other components that might be using it
+            await self.reasoning_engine.update_model(new_model)
+            await self.optimizer.update_model(new_model)
+            await self.router.update_model(new_model)
+            await self.task_handler.update_model(new_model)
+            logger.info("Model updated in UnifiedPlanningAndManagement and its components")
+        except Exception as e:
+            logger.exception(f"Error in update_model: {str(e)}")
+            raise AIVillageException(f"Error in update_model: {str(e)}")
+
+    async def update_hyperparameters(self, hyperparameters: Dict[str, Any]):
+        try:
+            # Update hyperparameters in relevant components
+            await self.optimizer.update_hyperparameters(hyperparameters)
+            await self.reasoning_engine.update_hyperparameters(hyperparameters)
+            await self.router.update_hyperparameters(hyperparameters)
+            await self.task_handler.update_hyperparameters(hyperparameters)
+            logger.info("Hyperparameters updated in UnifiedPlanningAndManagement and its components")
+        except Exception as e:
+            logger.exception(f"Error in update_hyperparameters: {str(e)}")
+            raise AIVillageException(f"Error in update_hyperparameters: {str(e)}")
+
+    async def save_models(self, path: str):
+        try:
+            logger.info(f"Saving unified planning and management models to {path}")
+            os.makedirs(path, exist_ok=True)
+            await self.optimizer.save_models(os.path.join(path, "optimizer"))
+            await self.reasoning_engine.save_models(os.path.join(path, "reasoning_engine"))
+            await self.router.save_models(os.path.join(path, "router"))
+            await self.task_handler.save_models(os.path.join(path, "task_handler"))
+            self.quality_assurance_layer.save(os.path.join(path, "quality_assurance_layer.json"))
+            
+            # Save other necessary data
+            data = {
+                "available_agents": self.available_agents
+            }
+            with open(os.path.join(path, "unified_planning_and_management_data.json"), 'w') as f:
+                json.dump(data, f)
+            
+            logger.info("Unified planning and management models saved successfully")
+        except Exception as e:
+            logger.exception(f"Error saving unified planning and management models: {str(e)}")
+            raise AIVillageException(f"Error saving unified planning and management models: {str(e)}")
+
+    async def load_models(self, path: str):
+        try:
+            logger.info(f"Loading unified planning and management models from {path}")
+            await self.optimizer.load_models(os.path.join(path, "optimizer"))
+            await self.reasoning_engine.load_models(os.path.join(path, "reasoning_engine"))
+            await self.router.load_models(os.path.join(path, "router"))
+            await self.task_handler.load_models(os.path.join(path, "task_handler"))
+            self.quality_assurance_layer = QualityAssuranceLayer.load(os.path.join(path, "quality_assurance_layer.json"))
+            
+            # Load other necessary data
+            with open(os.path.join(path, "unified_planning_and_management_data.json"), 'r') as f:
+                data = json.load(f)
+            self.available_agents = data["available_agents"]
+            
+            logger.info("Unified planning and management models loaded successfully")
+        except Exception as e:
+            logger.exception(f"Error loading unified planning and management models: {str(e)}")
+            raise AIVillageException(f"Error loading unified planning and management models: {str(e)}")
+
+    def update_agent_list(self, agent_list: List[str]):
+        try:
+            self.available_agents = agent_list
+            self.router.update_agent_list(agent_list)
+            logger.info(f"Updated available agents: {self.available_agents}")
+        except Exception as e:
+            logger.exception(f"Error in update_agent_list: {str(e)}")
+            raise AIVillageException(f"Error in update_agent_list: {str(e)}")
+
+    async def introspect(self) -> Dict[str, Any]:
+        try:
+            return {
+                "type": "UnifiedPlanningAndManagement",
+                "description": "Manages decision-making, task planning, and workflow execution",
+                "available_agents": self.available_agents,
+                "quality_assurance_info": self.quality_assurance_layer.get_info(),
+                "reasoning_engine_info": await self.reasoning_engine.introspect(),
+                "task_handler_info": await self.task_handler.introspect(),
+                "optimizer_info": await self.optimizer.introspect(),
+                "router_info": await self.router.introspect()
+            }
+        except Exception as e:
+            logger.exception(f"Error in introspect: {str(e)}")
+            raise AIVillageException(f"Error in introspect: {str(e)}")
+
+if __name__ == "__main__":
+    # This section can be used for testing or running the UnifiedPlanningAndManagement independently
+    pass

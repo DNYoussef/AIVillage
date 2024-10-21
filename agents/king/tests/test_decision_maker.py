@@ -1,17 +1,17 @@
 import unittest
 import asyncio
 from unittest.mock import Mock, patch
-from agents.king.planning.decision_maker import DecisionMaker
+from agents.king.planning_and_task_management.unified_decision_maker import UnifiedDecisionMaker
 from agents.king.quality_assurance_layer import QualityAssuranceLayer
 from agents.utils.task import Task as LangroidTask
 
-class TestDecisionMaker(unittest.IsolatedAsyncioTestCase):
+class TestUnifiedDecisionMaker(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.communication_protocol = Mock()
         self.rag_system = Mock()
         self.agent = Mock()
         self.quality_assurance_layer = Mock(spec=QualityAssuranceLayer)
-        self.decision_maker = DecisionMaker(self.communication_protocol, self.rag_system, self.agent, self.quality_assurance_layer)
+        self.decision_maker = UnifiedDecisionMaker(self.communication_protocol, self.rag_system, self.agent, self.quality_assurance_layer)
 
     async def test_make_decision(self):
         content = "Test decision content"
