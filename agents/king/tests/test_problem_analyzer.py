@@ -1,9 +1,6 @@
 import unittest
-import asyncio
-from unittest.mock import Mock, patch
-from agents.king.planning.problem_analyzer import ProblemAnalyzer
-from agents.king.quality_assurance_layer import QualityAssuranceLayer
-from agents.utils.task import Task as LangroidTask
+from agents.king.task_management import Task
+from agents.king.king_agent import KingAgent, KingAgentConfig
 
 class TestProblemAnalyzer(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):

@@ -2,7 +2,7 @@ import numpy as np
 from typing import Dict, Any, List
 from .analytics.base_analytics import BaseAnalytics
 from .quality_assurance_layer import QualityAssuranceLayer
-from agents.utils.task import Task as LangroidTask
+from agents.king.task_management import Task
 import logging
 
 logger = logging.getLogger(__name__)

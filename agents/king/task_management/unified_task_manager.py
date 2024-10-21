@@ -12,7 +12,7 @@ from agents.utils.exceptions import AIVillageException
 from .incentive_model import IncentiveModel
 from .subgoal_generator import SubGoalGenerator
 from ..analytics.unified_analytics import UnifiedAnalytics
-from ..planning_and_task_management.unified_decision_maker import UnifiedDecisionMaker
+from ..planning.unified_planning_and_decision import UnifiedPlanningAndDecision
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ class Project:
     resources: Dict[str, Any] = field(default_factory=dict)
 
 class UnifiedManagement:
-    def __init__(self, communication_protocol: StandardCommunicationProtocol, decision_maker: UnifiedDecisionMaker, num_agents: int, num_actions: int):
+    def __init__(self, communication_protocol: StandardCommunicationProtocol, decision_maker: UnifiedPlanningAndDecision, num_agents: int, num_actions: int):
         self.communication_protocol = communication_protocol
         self.decision_maker = decision_maker
         self.pending_tasks: deque[Task] = deque()

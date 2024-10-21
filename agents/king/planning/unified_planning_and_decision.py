@@ -1,22 +1,27 @@
 import logging
 import math
 import random
-from typing import List, Dict, Any, Tuple
+import os
+import json
 import asyncio
+from typing import List, Dict, Any, Tuple
 from collections import defaultdict
 import itertools
-import json
-import os
 import networkx as nx
 import matplotlib.pyplot as plt
 import io
 import torch
+import torch.nn as nn
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from .quality_assurance_layer import QualityAssuranceLayer
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from agents.utils.exceptions import AIVillageException
+from .reasoning_engine import ReasoningEngine
+from .task_handling import TaskHandler
+from .optimization import Optimizer
+from .routing import Router
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +33,7 @@ class MCTSNode:
         self.visits = 0
         self.value = 0
 
-class UnifiedDecisionMaker:
+class UnifiedPlanningAndDecision:
     def __init__(self, communication_protocol: StandardCommunicationProtocol, rag_system: EnhancedRAGPipeline, agent, quality_assurance_layer: QualityAssuranceLayer, exploration_weight=1.0, max_depth=10):
         self.communication_protocol = communication_protocol
         self.rag_system = rag_system
@@ -43,6 +48,10 @@ class UnifiedDecisionMaker:
         self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model.to(self.device)
+        self.reasoning_engine = ReasoningEngine()
+        self.task_handler = TaskHandler()
+        self.optimizer = Optimizer()
+        self.router = Router()
 
     async def make_decision(self, content: str, eudaimonia_score: float) -> Dict[str, Any]:
         try:
@@ -112,6 +121,43 @@ class UnifiedDecisionMaker:
             logger.exception(f"Error in plan generation: {str(e)}")
             raise AIVillageException(f"Error in plan generation: {str(e)}")
 
+    async def manage_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            decision = await self.make_decision(task['description'], 0.5)  # Assuming default eudaimonia_score
+            plan = await self.reasoning_engine.analyze_and_reason(decision)
+            optimized_plan = await self.optimizer.optimize_plan(plan)
+            routed_task = await self.router.route_task(optimized_plan)
+            execution_result = await self.task_handler.execute_task(routed_task)
+            
+            # Perform post-execution analysis
+            analysis = await self._analyze_execution_result(execution_result, optimized_plan)
+            
+            # Update models based on execution results
+            await self._update_models(task, execution_result, analysis)
+            
+            return {**execution_result, "analysis": analysis}
+        except Exception as e:
+            logger.exception(f"Error in manage_task: {str(e)}")
+            raise AIVillageException(f"Error in manage_task: {str(e)}")
+
+    async def create_and_execute_workflow(self, tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
+        try:
+            workflow = await self.task_handler.create_workflow(tasks)
+            optimized_workflow = await self.optimizer.optimize_workflow(workflow)
+            execution_plan = await self._create_execution_plan(optimized_workflow)
+            results = await self._execute_workflow_in_parallel(execution_plan)
+            
+            # Perform post-execution analysis
+            analysis = await self._analyze_workflow_execution(results, optimized_workflow)
+            
+            # Update models based on workflow execution results
+            await self._update_models_from_workflow(tasks, results, analysis)
+            
+            return {"results": results, "analysis": analysis}
+        except Exception as e:
+            logger.exception(f"Error in create_and_execute_workflow: {str(e)}")
+            raise AIVillageException(f"Error in create_and_execute_workflow: {str(e)}")
+
     async def mcts_search(self, task, problem_analyzer, plan_generator, iterations=1000):
         root = MCTSNode(task)
 
@@ -173,12 +219,16 @@ class UnifiedDecisionMaker:
 
     async def update_model(self, task: Dict[str, Any], result: Any):
         try:
-            logger.info(f"Updating unified decision maker model with task result: {result}")
+            logger.info(f"Updating unified planning and decision model with task result: {result}")
             await self.mcts_update(task, result)
             await self.quality_assurance_layer.update_task_history(task, result.get('performance', 0.5), result.get('uncertainty', 0.5))
+            await self.reasoning_engine.update_model(task, result)
+            await self.optimizer.update_model(task, result)
+            await self.router.update_model(task, result)
+            await self.task_handler.update_model(task, result)
         except Exception as e:
-            logger.exception(f"Error updating unified decision maker model: {str(e)}")
-            raise AIVillageException(f"Error updating unified decision maker model: {str(e)}") from e
+            logger.exception(f"Error updating unified planning and decision model: {str(e)}")
+            raise AIVillageException(f"Error updating unified planning and decision model: {str(e)}") from e
 
     async def mcts_update(self, task, result):
         self.stats[task]['visits'] += 1
@@ -208,6 +258,7 @@ class UnifiedDecisionMaker:
 
     def update_agent_list(self, agent_list: List[str]):
         self.available_agents = agent_list
+        self.router.update_agent_list(agent_list)
         logger.info(f"Updated available agents: {self.available_agents}")
 
     async def save_models(self, path: str):
@@ -218,13 +269,17 @@ class UnifiedDecisionMaker:
                 json.dump(dict(self.stats), f)
             
             await self.quality_assurance_layer.save(os.path.join(path, "quality_assurance_layer.json"))
+            await self.optimizer.save_models(os.path.join(path, "optimizer"))
+            await self.reasoning_engine.save_models(os.path.join(path, "reasoning_engine"))
+            await self.router.save_models(os.path.join(path, "router"))
+            await self.task_handler.save_models(os.path.join(path, "task_handler"))
             
             data = {
                 "exploration_weight": self.exploration_weight,
                 "max_depth": self.max_depth,
                 "available_agents": self.available_agents
             }
-            with open(os.path.join(path, "unified_decision_maker_data.json"), "w") as f:
+            with open(os.path.join(path, "unified_planning_and_decision_data.json"), "w") as f:
                 json.dump(data, f)
             
             logger.info(f"Models saved successfully to {path}")
@@ -237,9 +292,13 @@ class UnifiedDecisionMaker:
             with open(os.path.join(path, "mcts_stats.json"), "r") as f:
                 self.stats = defaultdict(lambda: {'visits': 0, 'value': 0}, json.load(f))
             
-            await self.quality_assurance_layer.load(os.path.join(path, "quality_assurance_layer.json"))
+            self.quality_assurance_layer = QualityAssuranceLayer.load(os.path.join(path, "quality_assurance_layer.json"))
+            await self.optimizer.load_models(os.path.join(path, "optimizer"))
+            await self.reasoning_engine.load_models(os.path.join(path, "reasoning_engine"))
+            await self.router.load_models(os.path.join(path, "router"))
+            await self.task_handler.load_models(os.path.join(path, "task_handler"))
             
-            with open(os.path.join(path, "unified_decision_maker_data.json"), "r") as f:
+            with open(os.path.join(path, "unified_planning_and_decision_data.json"), "r") as f:
                 data = json.load(f)
                 self.exploration_weight = data["exploration_weight"]
                 self.max_depth = data["max_depth"]
@@ -252,11 +311,15 @@ class UnifiedDecisionMaker:
 
     async def introspect(self) -> Dict[str, Any]:
         return {
-            "type": "UnifiedDecisionMaker",
-            "description": "Makes decisions based on task content, RAG information, eudaimonia score, and rule compliance",
+            "type": "UnifiedPlanningAndDecision",
+            "description": "Manages decision-making, planning, and task execution",
             "available_agents": self.available_agents,
             "quality_assurance_info": self.quality_assurance_layer.get_info(),
-            "mcts_stats": dict(self.stats)
+            "mcts_stats": dict(self.stats),
+            "reasoning_engine_info": await self.reasoning_engine.introspect(),
+            "task_handler_info": await self.task_handler.introspect(),
+            "optimizer_info": await self.optimizer.introspect(),
+            "router_info": await self.router.introspect()
         }
 
     async def _get_current_resources(self) -> Dict[str, Any]:
@@ -566,56 +629,4 @@ class UnifiedDecisionMaker:
         
         nx.draw_networkx_labels(G, pos, {node: node for node in G.nodes()}, font_size=8, font_weight='bold')
         
-        node_labels = nx.get_node_attributes(G, 'description')
-        pos_attrs = {}
-        for node, coords in pos.items():
-            pos_attrs[node] = (coords[0], coords[1] + 0.08)
-        nx.draw_networkx_labels(G, pos_attrs, labels=node_labels, font_size=6)
-        
-        plt.title("Plan Tree Visualization\nColors: Red (Fragile), Yellow (Robust), Green (Antifragile)\nShapes: Square (Negative Xanatos), Circle (Neutral Xanatos), Triangle (Positive Xanatos)")
-        plt.axis('off')
-        
-        buf = io.BytesIO()
-        plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-        buf.seek(0)
-        plt.close()
-        
-        return buf.getvalue()
-
-    def _extract_all_tasks(self, plan_tree: Dict[str, Any]) -> List[Dict[str, Any]]:
-        tasks = []
-        
-        def extract_tasks_recursive(node):
-            tasks.extend(node.get('tasks', []))
-            for sub_goal in node.get('sub_goals', []):
-                extract_tasks_recursive(sub_goal)
-        
-        extract_tasks_recursive(plan_tree)
-        return tasks
-
-    async def _create_implementation_plan(self, plan: Dict[str, Any]) -> Dict[str, Any]:
-        try:
-            prompt = f"""
-            Create an implementation strategy for the following plan:
-            {json.dumps(plan, indent=2)}
-            
-            The implementation strategy should include:
-            1. Monitoring steps to track progress and alignment with eudaimonia
-            2. Feedback analysis to continuously improve the plan
-            3. Troubleshooting steps to address potential issues
-            4. Adaptive measures to adjust the plan based on new information or changing circumstances
-            5. Resource allocation and timeline
-            6. Risk management strategies
-            7. Communication and coordination plans
-            
-            Output the implementation strategy as a JSON dictionary with appropriate keys for each section.
-            """
-            implementation_plan = await self.agent.generate_structured_response(prompt)
-            return implementation_plan
-        except Exception as e:
-            logger.exception(f"Error creating implementation plan: {str(e)}")
-            raise AIVillageException(f"Error creating implementation plan: {str(e)}")
-
-if __name__ == "__main__":
-    # This section can be used for testing or running the UnifiedDecisionMaker independently
-    pass
+        node_labels = nx.get_

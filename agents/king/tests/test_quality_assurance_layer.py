@@ -1,7 +1,7 @@
 import unittest
 import asyncio
-from agents.king.quality_assurance_layer import QualityAssuranceLayer, EudaimoniaTriangulator
-from agents.utils.task import Task as LangroidTask
+from agents.king.task_management import Task
+from agents.king.quality_assurance_layer import QualityAssuranceLayer
 
 class TestQualityAssuranceLayer(unittest.TestCase):
     def setUp(self):

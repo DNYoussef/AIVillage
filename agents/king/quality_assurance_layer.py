@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from typing import List, Dict, Any, Tuple
-from agents.utils.task import Task as LangroidTask
+from agents.king.task_management import Task
 from scipy.spatial.distance import cosine
 from transformers import AutoTokenizer, AutoModel
 import torch
