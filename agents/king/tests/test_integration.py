@@ -93,12 +93,10 @@ class TestIntegration(unittest.IsolatedAsyncioTestCase):
     async def test_save_and_load_models(self):
         # Mock the save and load methods
         self.king_agent.coordinator.save_models = Mock()
-        self.king_agent.decision_maker.save_models = Mock()
         self.king_agent.problem_analyzer.save_models = Mock()
         self.king_agent.task_manager.save_models = Mock()
 
         self.king_agent.coordinator.load_models = Mock()
-        self.king_agent.decision_maker.load_models = Mock()
         self.king_agent.problem_analyzer.load_models = Mock()
         self.king_agent.task_manager.load_models = Mock()
 
@@ -108,7 +106,6 @@ class TestIntegration(unittest.IsolatedAsyncioTestCase):
 
         # Assert that save methods were called
         self.king_agent.coordinator.save_models.assert_called_once_with(f"{path}/coordinator")
-        self.king_agent.decision_maker.save_models.assert_called_once_with(f"{path}/decision_maker")
         self.king_agent.problem_analyzer.save_models.assert_called_once_with(f"{path}/problem_analyzer")
         self.king_agent.task_manager.save_models.assert_called_once_with(f"{path}/task_manager")
 
@@ -117,7 +114,6 @@ class TestIntegration(unittest.IsolatedAsyncioTestCase):
 
         # Assert that load methods were called
         self.king_agent.coordinator.load_models.assert_called_once_with(f"{path}/coordinator")
-        self.king_agent.decision_maker.load_models.assert_called_once_with(f"{path}/decision_maker")
         self.king_agent.problem_analyzer.load_models.assert_called_once_with(f"{path}/problem_analyzer")
         self.king_agent.task_manager.load_models.assert_called_once_with(f"{path}/task_manager")
 
