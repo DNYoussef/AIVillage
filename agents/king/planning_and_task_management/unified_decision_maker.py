@@ -12,8 +12,113 @@ from rag_system.core.pipeline import EnhancedRAGPipeline
 from .quality_assurance_layer import QualityAssuranceLayer
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from agents.utils.exceptions import AIVillageException
+import asyncio
+import json
+from typing import Dict, Any, List, Optional, Tuple
+from dataclasses import dataclass, field
+import networkx as nx
+import matplotlib.pyplot as plt
+import torch
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 logger = logging.getLogger(__name__)
+
+@dataclass
+class Node:
+    name: str
+    description: str
+    prerequisites: List['Node'] = field(default_factory=list)
+    probability: float = 0.5
+    tasks: List[Dict[str, Any]] = field(default_factory=list)
+    failure_modes: List[Dict[str, Any]] = field(default_factory=list)
+    antifragility_score: float = 0.0
+    xanatos_factor: float = 0.0
+    xanatos_gambits: List[Dict[str, Any]] = field(default_factory=list)
+    expected_utility: float = 0.0
+
+@dataclass
+class PlanConfig:
+    success_likelihood_threshold: float = 0.95
+    max_iterations: int = 10
+    parallelization: bool = True
+
+class UnifiedDecisionMaker:
+    def __init__(self, communication_protocol: StandardCommunicationProtocol, rag_system: EnhancedRAGPipeline, agent, quality_assurance_layer: QualityAssuranceLayer):
+        self.communication_protocol = communication_protocol
+        self.rag_system = rag_system
+        self.agent = agent
+        self.quality_assurance_layer = quality_assurance_layer
+        self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
+        self.model = GPT2LMHeadModel.from_pretrained('gpt2')
+        self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model.to(self.device)
+        self.plan_config = PlanConfig()
+        self.available_agents = []
+
+    async def make_decision(self, content: str, eudaimonia_score: float) -> Dict[str, Any]:
+        try:
+            rag_info = await self.rag_system.process_query(content)
+            task_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(content)
+            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(task_vector)
+
+            plan = await self.generate_plan(content, {"content": content, "rag_info": rag_info})
+            
+            decision = plan["decision"]
+            best_alternative = plan["best_alternative"]
+            implementation_plan = await self._create_implementation_plan(plan)
+
+            return {
+                "decision": decision,
+                "eudaimonia_score": eudaimonia_score,
+                "rule_compliance": rule_compliance,
+                "rag_info": rag_info,
+                "best_alternative": best_alternative,
+                "implementation_plan": implementation_plan,
+                "full_plan": plan
+            }
+        except Exception as e:
+            logger.exception(f"Error making decision: {str(e)}")
+            raise AIVillageException(f"Error making decision: {str(e)}") from e
+
+    async def generate_plan(self, goal: str, problem_analysis: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            current_resources = await self._get_current_resources()
+            plan_tree = await self._create_plan_tree(goal, current_resources)
+            await self._extract_tasks(plan_tree)
+            await self._optimize_tasks(plan_tree)
+            
+            success_likelihood = 0
+            iteration = 0
+            while success_likelihood < self.plan_config.success_likelihood_threshold and iteration < self.plan_config.max_iterations:
+                await self._conduct_premortem(plan_tree)
+                await self._assess_antifragility(plan_tree)
+                await self._develop_xanatos_gambits(plan_tree)
+                plan_tree = await self._update_plan(plan_tree)
+                success_likelihood = self._calculate_success_likelihood(plan_tree)
+                iteration += 1
+            
+            gaps = self._identify_capability_gaps(plan_tree, current_resources)
+            checkpoints = await self._plan_checkpoints(self._extract_all_tasks(plan_tree))
+            swot_analysis = await self._perform_swot_analysis(plan_tree, problem_analysis)
+            metrics = self._calculate_plan_metrics(plan_tree)
+
+            plan_data = {
+                'goal': goal,
+                'plan_tree': self._tree_to_dict(plan_tree),
+                'capability_gaps': gaps,
+                'checkpoints': checkpoints,
+                'swot_analysis': swot_analysis,
+                'success_likelihood': success_likelihood,
+                'iterations': iteration,
+                'metrics': metrics
+            }
+
+            visualization = self._create_plan_visualization(plan_tree)
+
+            return {**plan_data, 'visualization': visualization}
+        except Exception as e:
+            raise AIVillageException(f"Error in plan generation: {str(e)}")
 
 class MCTSNode:
     def __init__(self, state, parent=None):
@@ -564,3 +669,695 @@ class UnifiedDecisionMaker:
         criteria = list(probabilities.keys())
         outcomes = [list(probabilities[criterion].keys()) for criterion in criteria]
         return [combo for combo in itertools.product(*outcomes)]
+    
+    async def _get_current_resources(self) -> Dict[str, Any]:
+        prompt = "List the current resources, position, and tools available for the AI Village project. Output as a JSON dictionary with keys 'resources', 'position', and 'tools'."
+        try:
+            return await self.agent.generate_structured_response(prompt)
+        except Exception as e:
+            raise AIVillageException(f"Error getting current resources: {str(e)}")
+
+    async def _create_plan_tree(self, goal: str, current_resources: Dict[str, Any]) -> Node:
+        root = Node(name=goal, description=f"Achieve: {goal}")
+        await self._expand_node(root, current_resources)
+        return root
+
+    async def _expand_node(self, node: Node, current_resources: Dict[str, Any]):
+        if self._is_resource(node.name, current_resources):
+            return
+
+        prompt = f"What are the immediate prerequisites for achieving '{node.name}'? Output as a JSON list of dictionaries, each with 'name' and 'description' keys."
+        prerequisites = await self.agent.generate_structured_response(prompt)
+
+        for prereq in prerequisites:
+            child = Node(name=prereq['name'], description=prereq['description'])
+            node.prerequisites.append(child)
+            await self._expand_node(child, current_resources)
+
+    def _is_resource(self, name: str, resources: Dict[str, Any]) -> bool:
+        return any(name in resource_list for resource_list in resources.values())
+
+    def _create_plan_visualization(self, plan_tree: Node) -> str:
+        G = nx.DiGraph()
+        
+        def add_nodes(node: Node, parent=None):
+            if node.antifragility_score < -3:
+                anti_color = 'red'
+            elif node.antifragility_score > 3:
+                anti_color = 'green'
+            else:
+                anti_color = 'yellow'
+            
+            if node.xanatos_factor < -3:
+                shape = 's'  # square
+            elif node.xanatos_factor > 3:
+                shape = '^'  # triangle up
+            else:
+                shape = 'o'  # circle
+            
+            G.add_node(node.name, 
+                       description=node.description, 
+                       antifragility=node.antifragility_score,
+                       xanatos_factor=node.xanatos_factor,
+                       expected_utility=node.expected_utility,
+                       color=anti_color,
+                       shape=shape)
+            if parent:
+                G.add_edge(parent.name, node.name)
+            for prereq in node.prerequisites:
+                add_nodes(prereq, node)
+        
+        add_nodes(plan_tree)
+        
+        pos = nx.spring_layout(G)
+        plt.figure(figsize=(20, 20))
+        node_colors = [G.nodes[node]['color'] for node in G.nodes()]
+        node_shapes = [G.nodes[node]['shape'] for node in G.nodes()]
+        
+        for shape in set(node_shapes):
+            node_list = [node for node in G.nodes() if G.nodes[node]['shape'] == shape]
+            nx.draw_networkx_nodes(G, pos, nodelist=node_list, node_color=[G.nodes[node]['color'] for node in node_list], 
+                                   node_shape=shape, node_size=3000)
+        
+        nx.draw_networkx_edges(G, pos)
+        nx.draw_networkx_labels(G, pos, {node: node for node in G.nodes()}, font_size=8, font_weight='bold')
+        
+        node_labels = nx.get_node_attributes(G, 'description')
+        pos_attrs = {}
+        for node, coords in pos.items():
+            pos_attrs[node] = (coords[0], coords[1] + 0.08)
+        nx.draw_networkx_labels(G, pos_attrs, labels=node_labels, font_size=6)
+        
+        plt.title("Plan Tree Visualization\nColors: Red (Fragile), Yellow (Robust), Green (Antifragile)\nShapes: Square (Negative Xanatos), Circle (Neutral Xanatos), Triangle (Positive Xanatos)")
+        plt.axis('off')
+        
+        filename = 'plan_visualization.png'
+        plt.savefig(filename, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        return filename
+    
+class SEALEnhancedPlanGenerator:
+    def __init__(self, model_name='gpt2'):
+        self.reverse_tree_planner = PlanGenerator()
+        self.model = GPT2LMHeadModel.from_pretrained(model_name)
+        self.tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model.to(self.device)
+
+    async def generate_enhanced_plan(self, task: str, rag_info: Dict[str, Any]) -> Dict[str, Any]:
+        # First, generate the reverse tree plan
+        initial_plan = await self.reverse_tree_planner.generate_plan(task, rag_info)
+        
+        # Now, enhance each sub-goal in the plan
+        enhanced_plan = await self._enhance_plan(initial_plan, rag_info)
+        
+        return enhanced_plan
+
+    async def _enhance_plan(self, plan: Dict[str, Any], rag_info: Dict[str, Any]) -> Dict[str, Any]:
+        enhanced_plan = {}
+        for key, value in plan.items():
+            if isinstance(value, dict):
+                # This is a sub-goal, enhance it
+                enhanced_sub_goal = await self._enhance_sub_goal(key, value, rag_info)
+                enhanced_plan[key] = await self._enhance_plan(enhanced_sub_goal, rag_info)
+            else:
+                # This is a leaf node (action), keep it as is
+                enhanced_plan[key] = value
+        return enhanced_plan
+
+    async def _enhance_sub_goal(self, sub_goal: str, sub_plan: Dict[str, Any], rag_info: Dict[str, Any]) -> Dict[str, Any]:
+        context = f"Task: {sub_goal}\nExisting Plan: {sub_plan}\nAdditional Info: {rag_info}\nEnhance and expand this sub-goal:"
+        input_ids = self.tokenizer.encode(context, return_tensors='pt').to(self.device)
+        
+        output = self.model.generate(
+            input_ids,
+            max_length=200,
+            num_return_sequences=1,
+            no_repeat_ngram_size=2,
+            do_sample=True,
+            top_k=50,
+            top_p=0.95,
+            temperature=0.7
+        )
+
+        enhanced_text = self.tokenizer.decode(output[0], skip_special_tokens=True)
+        
+        # Parse the enhanced text into a dictionary structure
+        # This is a simplified parsing, you might need a more sophisticated parser
+        enhanced_lines = enhanced_text.split('\n')
+        enhanced_sub_plan = {}
+        for line in enhanced_lines:
+            if ':' in line:
+                key, value = line.split(':', 1)
+                enhanced_sub_plan[key.strip()] = value.strip()
+        
+        # Merge the enhanced sub-plan with the original sub-plan
+        merged_sub_plan = {**sub_plan, **enhanced_sub_plan}
+        
+        return merged_sub_plan
+
+    async def update(self, task: Dict, result: Dict):
+        # Update both the reverse tree planner and the language model
+        await self.reverse_tree_planner.update(task, result)
+        # Fine-tune the language model based on task execution results
+        # This is a placeholder; actual implementation would involve more complex fine-tuning
+        pass
+
+    def save(self, path: str):
+        self.model.save_pretrained(f"{path}/seal_model")
+        self.tokenizer.save_pretrained(f"{path}/seal_tokenizer")
+        # Add logic to save reverse_tree_planner if needed
+
+    def load(self, path: str):
+        self.model = GPT2LMHeadModel.from_pretrained(f"{path}/seal_model")
+        self.tokenizer = GPT2Tokenizer.from_pretrained(f"{path}/seal_tokenizer")
+        self.model.to(self.device)
+        # Add logic to load reverse_tree_planner if needed
+
+     @error_handler.handle_error
+    async def generate_task_plan(self, interpreted_intent: Dict[str, Any], key_concepts: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate a task plan based on the interpreted intent and key concepts.
+
+        Args:
+            interpreted_intent (Dict[str, Any]): The interpreted user intent.
+            key_concepts (Dict[str, Any]): The extracted key concepts.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the generated task plan.
+        """
+        prompt = self._create_task_planning_prompt(interpreted_intent, key_concepts)
+        response = await self.llm.complete(prompt)
+        task_plan = self._parse_task_plan_response(response.text)
+        task_graph = self._build_task_graph(task_plan)
+        return {
+            "plan": task_plan,
+            "graph": task_graph
+        }
+
+    def _create_task_planning_prompt(self, interpreted_intent: Dict[str, Any], key_concepts: Dict[str, Any]) -> str:
+        return f"""
+        Based on the following interpreted user intent and key concepts, generate a detailed task plan:
+
+        Interpreted Intent: {interpreted_intent}
+        Key Concepts: {key_concepts}
+
+        Please provide a structured task plan that includes:
+        1. Main Goal: The overall objective of the plan.
+        2. Sub-tasks: Break down the main goal into smaller, actionable tasks.
+        3. Priority: Assign a priority level (High, Medium, Low) to each task.
+        4. Time Estimate: Provide an estimated time to complete each task.
+        5. Required Resources: List any resources or skills needed for each task.
+        6. Dependencies: Identify any tasks that depend on the completion of others.
+        7. Milestones: Define key milestones or checkpoints in the plan.
+
+        Provide your task plan in a structured JSON format, where each task is an object with properties for priority, time estimate, resources, and dependencies.
+        """
+
+    def _parse_task_plan_response(self, response: str) -> Dict[str, Any]:
+        import json
+        try:
+            return json.loads(response)
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse task plan response: {response}")
+            raise AIVillageException("Failed to parse task plan response")
+
+    def _build_task_graph(self, task_plan: Dict[str, Any]) -> nx.DiGraph:
+        G = nx.DiGraph()
+        for task_id, task_data in task_plan['sub_tasks'].items():
+            G.add_node(task_id, **task_data)
+            for dependency in task_data.get('dependencies', []):
+                G.add_edge(dependency, task_id)
+        return G
+
+    @error_handler.handle_error
+    async def optimize_task_plan(self, task_plan: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Optimize the generated task plan.
+
+        Args:
+            task_plan (Dict[str, Any]): The initial task plan.
+
+        Returns:
+            Dict[str, Any]: An optimized version of the task plan.
+        """
+        prompt = self._create_optimization_prompt(task_plan)
+        response = await self.llm.complete(prompt)
+        optimized_plan = self._parse_task_plan_response(response.text)
+        return optimized_plan
+
+    def _create_optimization_prompt(self, task_plan: Dict[str, Any]) -> str:
+        return f"""
+        Analyze and optimize the following task plan:
+
+        Task Plan: {task_plan}
+
+        Please optimize the task plan considering the following factors:
+        1. Efficiency: Identify any redundant or unnecessary tasks.
+        2. Parallelization: Determine which tasks can be performed concurrently.
+        3. Resource Allocation: Suggest better ways to allocate resources across tasks.
+        4. Time Management: Propose ways to reduce the overall time required.
+        5. Risk Mitigation: Identify potential risks and suggest mitigation strategies.
+
+        Provide your optimized task plan in the same JSON format as the original plan, with additional comments explaining your optimizations.
+        """
+
+    @safe_execute
+    async def process_input(self, interpreted_intent: Dict[str, Any], key_concepts: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process the interpreted intent and key concepts to generate and optimize a task plan.
+
+        Args:
+            interpreted_intent (Dict[str, Any]): The interpreted user intent.
+            key_concepts (Dict[str, Any]): The extracted key concepts.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the original and optimized task plans.
+        """
+        initial_plan = await self.generate_task_plan(interpreted_intent, key_concepts)
+        optimized_plan = await self.optimize_task_plan(initial_plan['plan'])
+        
+        return {
+            "initial_plan": initial_plan['plan'],
+            "optimized_plan": optimized_plan,
+            "task_graph": initial_plan['graph']
+        }
+
+    def visualize_task_graph(self, graph: nx.DiGraph) -> bytes:
+        """
+        Visualize the task graph and return the image as bytes.
+
+        Args:
+            graph (nx.DiGraph): The NetworkX graph of tasks.
+
+        Returns:
+            bytes: The PNG image of the graph visualization as bytes.
+        """
+        plt.figure(figsize=(12, 8))
+        pos = nx.spring_layout(graph)
+        
+        # Draw nodes
+        nx.draw_networkx_nodes(graph, pos, node_size=2000, node_color='lightblue')
+        
+        # Draw edges
+        nx.draw_networkx_edges(graph, pos, edge_color='gray', arrows=True)
+        
+        # Draw labels
+        nx.draw_networkx_labels(graph, pos, font_size=8, font_weight="bold")
+        
+        # Add priority and time estimate as node labels
+        node_labels = {node: f"{data['priority']}\n{data['time_estimate']}" for node, data in graph.nodes(data=True)}
+        pos_attrs = {node: (coord[0], coord[1] - 0.1) for node, coord in pos.items()}
+        nx.draw_networkx_labels(graph, pos_attrs, labels=node_labels, font_size=6)
+        
+        # Save the plot to a bytes buffer
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+        buf.seek(0)
+        plt.close()
+        
+        return buf.getvalue()
+
+# Example usage
+if __name__ == "__main__":
+    import asyncio
+
+    async def main():
+        llm_config = OpenAIGPTConfig(chat_model="gpt-4")
+        planner = TaskPlanningAgent(llm_config)
+        
+        interpreted_intent = {
+            "primary_intent": "Improve team performance",
+            "secondary_intents": ["Enhance productivity", "Develop communication skills"],
+            "key_entities": ["team", "productivity", "communication skills"],
+            "sentiment": "Determined",
+            "urgency": "Medium",
+            "context": "Workplace improvement"
+        }
+        
+        key_concepts = {
+            "team_performance": {
+                "attributes": {"current_level": "moderate", "desired_level": "high"},
+                "relationships": [
+                    {"concept": "productivity", "type": "contributes_to"},
+                    {"concept": "communication_skills", "type": "contributes_to"}
+                ]
+            },
+            "productivity": {
+                "attributes": {"importance": "high", "current_level": "moderate"},
+                "relationships": [
+                    {"concept": "time_management", "type": "improves"},
+                    {"concept": "task_prioritization", "type": "improves"}
+                ]
+            },
+            "communication_skills": {
+                "attributes": {"importance": "high", "current_level": "low"},
+                "relationships": [
+                    {"concept": "team_collaboration", "type": "improves"},
+                    {"concept": "conflict_resolution", "type": "improves"}
+                ]
+            }
+        }
+        
+        result = await planner.process_input(interpreted_intent, key_concepts)
+        
+        print("Initial Task Plan:")
+        print(result["initial_plan"])
+        print("\nOptimized Task Plan:")
+        print(result["optimized_plan"])
+        
+        # Visualize the task graph
+        graph_image = planner.visualize_task_graph(result["task_graph"])
+        with open("task_graph.png", "wb") as f:
+            f.write(graph_image)
+        print("\nTask graph visualization saved as 'task_graph.png'")
+
+    asyncio.run(main())
+
+    import logging
+from typing import List, Dict, Any
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
+
+logger = logging.getLogger(__name__)
+
+class SubGoalGenerator:
+    def __init__(self, llm_config: OpenAIGPTConfig):
+        self.llm = llm_config.create()
+
+    async def generate_subgoals(self, task: str, context: Dict[str, Any]) -> List[str]:
+        """
+        Generate a list of subgoals for a given task.
+
+        Args:
+            task (str): The main task description.
+            context (Dict[str, Any]): Additional context or constraints for the task.
+
+        Returns:
+            List[str]: A list of generated subgoals.
+        """
+        prompt = self._create_prompt(task, context)
+        response = await self.llm.complete(prompt)
+        subgoals = self._parse_response(response.text)
+        return subgoals
+
+    def _create_prompt(self, task: str, context: Dict[str, Any]) -> str:
+        """
+        Create a prompt for the language model to generate subgoals.
+
+        Args:
+            task (str): The main task description.
+            context (Dict[str, Any]): Additional context or constraints for the task.
+
+        Returns:
+            str: The generated prompt.
+        """
+        prompt = f"""
+        Task: {task}
+
+        Context:
+        {self._format_context(context)}
+
+        Given the above task and context, generate a list of specific, actionable subgoals that will help accomplish the main task. Each subgoal should be a clear, concise step towards completing the overall task.
+
+        Please format the subgoals as a numbered list, with each subgoal on a new line.
+
+        Subgoals:
+        """
+        return prompt
+
+    def _format_context(self, context: Dict[str, Any]) -> str:
+        """
+        Format the context dictionary into a string.
+
+        Args:
+            context (Dict[str, Any]): The context dictionary.
+
+        Returns:
+            str: A formatted string representation of the context.
+        """
+        return "\n".join([f"- {key}: {value}" for key, value in context.items()])
+
+    def _parse_response(self, response: str) -> List[str]:
+        """
+        Parse the response from the language model into a list of subgoals.
+
+        Args:
+            response (str): The raw response from the language model.
+
+        Returns:
+            List[str]: A list of parsed subgoals.
+        """
+        lines = response.strip().split("\n")
+        subgoals = [line.split(". ", 1)[-1].strip() for line in lines if line.strip()]
+        return subgoals
+
+    async def refine_subgoals(self, subgoals: List[str], feedback: str) -> List[str]:
+        """
+        Refine the generated subgoals based on feedback.
+
+        Args:
+            subgoals (List[str]): The initial list of subgoals.
+            feedback (str): Feedback on the subgoals.
+
+        Returns:
+            List[str]: A refined list of subgoals.
+        """
+        prompt = f"""
+        Original Subgoals:
+        {self._format_subgoals(subgoals)}
+
+        Feedback: {feedback}
+
+        Based on the above feedback, please refine and improve the subgoals. Ensure that the refined subgoals address the feedback while maintaining clarity and actionability.
+
+        Refined Subgoals:
+        """
+        response = await self.llm.complete(prompt)
+        refined_subgoals = self._parse_response(response.text)
+        return refined_subgoals
+
+    def _format_subgoals(self, subgoals: List[str]) -> str:
+        """
+        Format a list of subgoals into a numbered string.
+
+        Args:
+            subgoals (List[str]): The list of subgoals.
+
+        Returns:
+            str: A formatted string of numbered subgoals.
+        """
+        return "\n".join([f"{i+1}. {subgoal}" for i, subgoal in enumerate(subgoals)])
+import logging
+from typing import Dict, Any, List
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
+from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+import networkx as nx
+import matplotlib.pyplot as plt
+import io
+
+logger = logging.getLogger(__name__)
+
+class TaskPlanningAgent:
+    def __init__(self, llm_config: OpenAIGPTConfig):
+        self.llm = llm_config.create()
+
+    @error_handler.handle_error
+    async def generate_task_plan(self, interpreted_intent: Dict[str, Any], key_concepts: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate a task plan based on the interpreted intent and key concepts.
+
+        Args:
+            interpreted_intent (Dict[str, Any]): The interpreted user intent.
+            key_concepts (Dict[str, Any]): The extracted key concepts.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the generated task plan.
+        """
+        prompt = self._create_task_planning_prompt(interpreted_intent, key_concepts)
+        response = await self.llm.complete(prompt)
+        task_plan = self._parse_task_plan_response(response.text)
+        task_graph = self._build_task_graph(task_plan)
+        return {
+            "plan": task_plan,
+            "graph": task_graph
+        }
+
+    def _create_task_planning_prompt(self, interpreted_intent: Dict[str, Any], key_concepts: Dict[str, Any]) -> str:
+        return f"""
+        Based on the following interpreted user intent and key concepts, generate a detailed task plan:
+
+        Interpreted Intent: {interpreted_intent}
+        Key Concepts: {key_concepts}
+
+        Please provide a structured task plan that includes:
+        1. Main Goal: The overall objective of the plan.
+        2. Sub-tasks: Break down the main goal into smaller, actionable tasks.
+        3. Priority: Assign a priority level (High, Medium, Low) to each task.
+        4. Time Estimate: Provide an estimated time to complete each task.
+        5. Required Resources: List any resources or skills needed for each task.
+        6. Dependencies: Identify any tasks that depend on the completion of others.
+        7. Milestones: Define key milestones or checkpoints in the plan.
+
+        Provide your task plan in a structured JSON format, where each task is an object with properties for priority, time estimate, resources, and dependencies.
+        """
+
+    def _parse_task_plan_response(self, response: str) -> Dict[str, Any]:
+        import json
+        try:
+            return json.loads(response)
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse task plan response: {response}")
+            raise AIVillageException("Failed to parse task plan response")
+
+    def _build_task_graph(self, task_plan: Dict[str, Any]) -> nx.DiGraph:
+        G = nx.DiGraph()
+        for task_id, task_data in task_plan['sub_tasks'].items():
+            G.add_node(task_id, **task_data)
+            for dependency in task_data.get('dependencies', []):
+                G.add_edge(dependency, task_id)
+        return G
+
+    @error_handler.handle_error
+    async def optimize_task_plan(self, task_plan: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Optimize the generated task plan.
+
+        Args:
+            task_plan (Dict[str, Any]): The initial task plan.
+
+        Returns:
+            Dict[str, Any]: An optimized version of the task plan.
+        """
+        prompt = self._create_optimization_prompt(task_plan)
+        response = await self.llm.complete(prompt)
+        optimized_plan = self._parse_task_plan_response(response.text)
+        return optimized_plan
+
+    def _create_optimization_prompt(self, task_plan: Dict[str, Any]) -> str:
+        return f"""
+        Analyze and optimize the following task plan:
+
+        Task Plan: {task_plan}
+
+        Please optimize the task plan considering the following factors:
+        1. Efficiency: Identify any redundant or unnecessary tasks.
+        2. Parallelization: Determine which tasks can be performed concurrently.
+        3. Resource Allocation: Suggest better ways to allocate resources across tasks.
+        4. Time Management: Propose ways to reduce the overall time required.
+        5. Risk Mitigation: Identify potential risks and suggest mitigation strategies.
+
+        Provide your optimized task plan in the same JSON format as the original plan, with additional comments explaining your optimizations.
+        """
+
+    @safe_execute
+    async def process_input(self, interpreted_intent: Dict[str, Any], key_concepts: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process the interpreted intent and key concepts to generate and optimize a task plan.
+
+        Args:
+            interpreted_intent (Dict[str, Any]): The interpreted user intent.
+            key_concepts (Dict[str, Any]): The extracted key concepts.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the original and optimized task plans.
+        """
+        initial_plan = await self.generate_task_plan(interpreted_intent, key_concepts)
+        optimized_plan = await self.optimize_task_plan(initial_plan['plan'])
+        
+        return {
+            "initial_plan": initial_plan['plan'],
+            "optimized_plan": optimized_plan,
+            "task_graph": initial_plan['graph']
+        }
+
+    def visualize_task_graph(self, graph: nx.DiGraph) -> bytes:
+        """
+        Visualize the task graph and return the image as bytes.
+
+        Args:
+            graph (nx.DiGraph): The NetworkX graph of tasks.
+
+        Returns:
+            bytes: The PNG image of the graph visualization as bytes.
+        """
+        plt.figure(figsize=(12, 8))
+        pos = nx.spring_layout(graph)
+        
+        # Draw nodes
+        nx.draw_networkx_nodes(graph, pos, node_size=2000, node_color='lightblue')
+        
+        # Draw edges
+        nx.draw_networkx_edges(graph, pos, edge_color='gray', arrows=True)
+        
+        # Draw labels
+        nx.draw_networkx_labels(graph, pos, font_size=8, font_weight="bold")
+        
+        # Add priority and time estimate as node labels
+        node_labels = {node: f"{data['priority']}\n{data['time_estimate']}" for node, data in graph.nodes(data=True)}
+        pos_attrs = {node: (coord[0], coord[1] - 0.1) for node, coord in pos.items()}
+        nx.draw_networkx_labels(graph, pos_attrs, labels=node_labels, font_size=6)
+        
+        # Save the plot to a bytes buffer
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+        buf.seek(0)
+        plt.close()
+        
+        return buf.getvalue()
+
+# Example usage
+if __name__ == "__main__":
+    import asyncio
+
+    async def main():
+        llm_config = OpenAIGPTConfig(chat_model="gpt-4")
+        planner = TaskPlanningAgent(llm_config)
+        
+        interpreted_intent = {
+            "primary_intent": "Improve team performance",
+            "secondary_intents": ["Enhance productivity", "Develop communication skills"],
+            "key_entities": ["team", "productivity", "communication skills"],
+            "sentiment": "Determined",
+            "urgency": "Medium",
+            "context": "Workplace improvement"
+        }
+        
+        key_concepts = {
+            "team_performance": {
+                "attributes": {"current_level": "moderate", "desired_level": "high"},
+                "relationships": [
+                    {"concept": "productivity", "type": "contributes_to"},
+                    {"concept": "communication_skills", "type": "contributes_to"}
+                ]
+            },
+            "productivity": {
+                "attributes": {"importance": "high", "current_level": "moderate"},
+                "relationships": [
+                    {"concept": "time_management", "type": "improves"},
+                    {"concept": "task_prioritization", "type": "improves"}
+                ]
+            },
+            "communication_skills": {
+                "attributes": {"importance": "high", "current_level": "low"},
+                "relationships": [
+                    {"concept": "team_collaboration", "type": "improves"},
+                    {"concept": "conflict_resolution", "type": "improves"}
+                ]
+            }
+        }
+        
+        result = await planner.process_input(interpreted_intent, key_concepts)
+        
+        print("Initial Task Plan:")
+        print(result["initial_plan"])
+        print("\nOptimized Task Plan:")
+        print(result["optimized_plan"])
+        
+        # Visualize the task graph
+        graph_image = planner.visualize_task_graph(result["task_graph"])
+        with open("task_graph.png", "wb") as f:
+            f.write(graph_image)
+        print("\nTask graph visualization saved as 'task_graph.png'")
+
+    asyncio.run(main())
