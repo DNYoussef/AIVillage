@@ -5,6 +5,10 @@ from transformers import AutoModel, AutoTokenizer, get_linear_schedule_with_warm
 from typing import List, Dict, Tuple
 import logging
 from functools import lru_cache
+import networkx as nx
+from agents.king.planning.unified_planning_and_decision import GraphManager
+from agents.king.task_management.incentive_model import IncentiveModel  # Assuming the path
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +23,6 @@ class AgentRouter(nn.Module):
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = None
         self.classifier = None
-
 
     def initialize_classifier(self, num_agents):
         self.classifier = nn.Linear(self.bert.config.hidden_size, num_agents)
@@ -117,38 +120,76 @@ class AgentRouter(nn.Module):
         self.initialize_classifier(len(self.agent_mapping))
         logger.info(f"Updated agent list. Total agents: {len(self.agent_mapping)}")
 
-import logging
-from typing import Dict, Any
-from .route_llm import RouteLLM
-from ..utils.exceptions import AIVillageException
-
-logger = logging.getLogger(__name__)
 
 class Router:
-    def __init__(self):
+    def __init__(self, graph_manager: GraphManager, incentive_model: IncentiveModel):
         self.route_llm = RouteLLM()
+        self.graph_manager = graph_manager
+        self.incentive_model = incentive_model
 
     async def route_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         try:
             logger.info(f"Routing task: {task}")
-            routed_task = await self.route_llm.route_task(task)
-            return routed_task
+            task_id = task.get('id', f"task_{random.randint(1000,9999)}")
+            agent_nodes = [n for n, d in self.graph_manager.G.nodes(data=True) if d['type'] == 'agent']
+            task_node = task_id
+            self.graph_manager.add_task_node(task_node, {"description": task.get('description', '')})
+            
+            # Calculate edge weights based on IncentiveModel
+            for agent in agent_nodes:
+                incentive = self.incentive_model.calculate_incentive(agent, task_node)
+                self.graph_manager.G.add_edge(agent, task_node, weight=incentive)
+                logger.info(f"Added edge from {agent} to {task_node} with weight {incentive}")
+            
+            # Find optimal path for task routing
+            best_agent, total_weight = self.find_optimal_path(task_node)
+            confidence = 1 / (1 + math.exp(-total_weight))  # Example confidence calculation
+            
+            if confidence < self.graph_manager.G[best_agent][task_node]['weight']:
+                assigned_agent = 'undecided'
+            else:
+                assigned_agent = best_agent
+            
+            result = {
+                "task_id": task_id,
+                "assigned_agent": assigned_agent,
+                "confidence": confidence
+            }
+            
+            # Update graph with task assignment
+            self.graph_manager.G.add_edge(best_agent, task_node, status='assigned')
+            logger.info(f"Task {task_id} assigned to {assigned_agent} with confidence {confidence}")
+            
+            return result
         except Exception as e:
             logger.error(f"Error routing task: {str(e)}", exc_info=True)
             raise AIVillageException(f"Error routing task: {str(e)}")
 
-    async def update_model(self, task: Dict[str, Any], result: Any):
+    def find_optimal_path(self, task_node: str) -> Tuple[str, float]:
         try:
-            logger.info(f"Updating router model with task result: {result}")
-            await self.route_llm.update_model(task, result)
+            # Find the agent with the highest edge weight to the task_node
+            agent_weights = self.graph_manager.G.edges(data=True)
+            agent_weights_filtered = [(u, d['weight']) for u, v, d in agent_weights if v == task_node]
+            if not agent_weights_filtered:
+                return ('undecided', 0.0)
+            best_agent, best_weight = max(agent_weights_filtered, key=lambda x: x[1])
+            return (best_agent, best_weight)
         except Exception as e:
-            logger.error(f"Error updating router model: {str(e)}", exc_info=True)
-            raise AIVillageException(f"Error updating router model: {str(e)}")
+            logger.error(f"Error finding optimal path: {str(e)}", exc_info=True)
+            return ('undecided', 0.0)
 
-    async def save_models(self, path: str):
+    async def calculate_edge_weight(self, agent_id: str, task_id: str) -> float:
+        try:
+            incentive = self.incentive_model.calculate_incentive(agent_id, task_id)
+            return incentive
+        except Exception as e:
+            logger.error(f"Error calculating edge weight: {str(e)}", exc_info=True)
+            return 1.0  # Default weight
+
+    def save_models(self, path: str):
         try:
             logger.info(f"Saving router models to {path}")
-            await self.route_llm.save_model(path)
+            asyncio.create_task(self.route_llm.save_model(path))
         except Exception as e:
             logger.error(f"Error saving router models: {str(e)}", exc_info=True)
             raise AIVillageException(f"Error saving router models: {str(e)}")
@@ -165,5 +206,7 @@ class Router:
         return {
             "type": "Router",
             "description": "Routes tasks to appropriate agents or components",
-            "route_llm_info": str(self.route_llm)
+            "route_llm_info": str(self.route_llm),
+            "graph_manager_nodes": self.graph_manager.G.number_of_nodes(),
+            "graph_manager_edges": self.graph_manager.G.number_of_edges()
         }

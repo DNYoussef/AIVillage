@@ -33,6 +33,45 @@ class MCTSNode:
         self.visits = 0
         self.value = 0
 
+class GraphManager:
+    def __init__(self):
+        self.G = nx.DiGraph()
+
+    def add_agent_node(self, agent_id: str, attributes: Dict[str, Any]):
+        self.G.add_node(agent_id, **attributes, type='agent')
+        logger.info(f"Added agent node: {agent_id} with attributes: {attributes}")
+
+    def add_task_node(self, task_id: str, attributes: Dict[str, Any]):
+        self.G.add_node(task_id, **attributes, type='task')
+        logger.info(f"Added task node: {task_id} with attributes: {attributes}")
+
+    def update_agent_experience(self, agent_id: str, task_id: str, performance: float):
+        if self.G.has_edge(agent_id, task_id):
+            self.G[agent_id][task_id]['weight'] *= (1 + performance)
+            logger.info(f"Updated edge weight between {agent_id} and {task_id} to {self.G[agent_id][task_id]['weight']}")
+        else:
+            self.G.add_edge(agent_id, task_id, weight=performance)
+            logger.info(f"Added edge from {agent_id} to {task_id} with weight {performance}")
+
+    def merge_task_graph(self, task_graph: nx.DiGraph):
+        self.G = nx.compose(self.G, task_graph)
+        logger.info("Merged new task graph into existing agent graph")
+
+    def get_graph(self) -> nx.DiGraph:
+        return self.G
+
+    def visualize_graph(self, filename: str = "agent_task_graph.png"):
+        plt.figure(figsize=(12, 8))
+        pos = nx.spring_layout(self.G)
+        node_colors = ['lightblue' if data['type'] == 'agent' else 'lightgreen' for _, data in self.G.nodes(data=True)]
+        nx.draw(self.G, pos, with_labels=True, node_color=node_colors, node_size=1500, font_size=10, arrows=True)
+        plt.title("Agent and Task Graph Visualization")
+        plt.axis('off')
+        plt.tight_layout()
+        plt.savefig(filename)
+        plt.close()
+        logger.info(f"Graph visualization saved as {filename}")
+
 class UnifiedPlanningAndDecision:
     def __init__(self, communication_protocol: StandardCommunicationProtocol, rag_system: EnhancedRAGPipeline, agent, quality_assurance_layer: QualityAssuranceLayer, exploration_weight=1.0, max_depth=10):
         self.communication_protocol = communication_protocol
@@ -52,6 +91,7 @@ class UnifiedPlanningAndDecision:
         self.task_handler = TaskHandler()
         self.optimizer = Optimizer()
         self.router = Router()
+        self.graph_manager = GraphManager()
 
     async def make_decision(self, content: str, eudaimonia_score: float) -> Dict[str, Any]:
         try:
@@ -59,8 +99,25 @@ class UnifiedPlanningAndDecision:
             task_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(content)
             rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(task_vector)
 
+            # Update agent nodes with new experiences
+            # Assuming 'agent_id' is part of rag_info or another source
+            agent_id = rag_info.get('assigned_agent', 'default_agent')
+            self.graph_manager.update_agent_experience(agent_id, content, eudaimonia_score)
+
+            # Convert King's breakdown into graph nodes
             plan = await self.generate_plan(content, {"content": content, "rag_info": rag_info})
-            
+            self.graph_manager.add_task_node(content, {"description": plan.get("description", "")})
+
+            # Merge new task nodes with existing agent graph
+            # Assuming 'plan_graph' is part of the plan
+            plan_graph = plan.get("plan_tree", {})
+            if plan_graph:
+                nx_plan_graph = self._convert_plan_to_graph(plan_graph)
+                self.graph_manager.merge_task_graph(nx_plan_graph)
+
+            visualization_filename = "agent_task_graph.png"
+            self.graph_manager.visualize_graph(visualization_filename)
+
             decision = plan["decision"]
             best_alternative = plan["best_alternative"]
             implementation_plan = await self._create_implementation_plan(plan)
@@ -72,11 +129,27 @@ class UnifiedPlanningAndDecision:
                 "rag_info": rag_info,
                 "best_alternative": best_alternative,
                 "implementation_plan": implementation_plan,
-                "full_plan": plan
+                "full_plan": plan,
+                "visualization": visualization_filename
             }
         except Exception as e:
             logger.exception(f"Error making decision: {str(e)}")
             raise AIVillageException(f"Error making decision: {str(e)}") from e
+
+    def _convert_plan_to_graph(self, plan_tree: Dict[str, Any]) -> nx.DiGraph:
+        G = nx.DiGraph()
+
+        def add_nodes(node, parent=None):
+            node_id = node.get('name', f"task_{random.randint(1000,9999)}")
+            G.add_node(node_id, description=node.get('description', ''), type='task')
+            if parent:
+                G.add_edge(parent, node_id)
+            for sub_goal in node.get('sub_goals', []):
+                add_nodes(sub_goal, node_id)
+
+        add_nodes(plan_tree)
+        logger.info("Converted plan tree to networkx graph")
+        return G
 
     async def generate_plan(self, goal: str, problem_analysis: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -119,7 +192,7 @@ class UnifiedPlanningAndDecision:
             return {**plan_data, 'visualization': visualization}
         except Exception as e:
             logger.exception(f"Error in plan generation: {str(e)}")
-            raise AIVillageException(f"Error in plan generation: {str(e)}")
+            raise AIVillageException(f"Error in plan generation: {str(e)}") from e
 
     async def manage_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -138,7 +211,7 @@ class UnifiedPlanningAndDecision:
             return {**execution_result, "analysis": analysis}
         except Exception as e:
             logger.exception(f"Error in manage_task: {str(e)}")
-            raise AIVillageException(f"Error in manage_task: {str(e)}")
+            raise AIVillageException(f"Error in manage_task: {str(e)}") from e
 
     async def create_and_execute_workflow(self, tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
         try:
@@ -156,7 +229,7 @@ class UnifiedPlanningAndDecision:
             return {"results": results, "analysis": analysis}
         except Exception as e:
             logger.exception(f"Error in create_and_execute_workflow: {str(e)}")
-            raise AIVillageException(f"Error in create_and_execute_workflow: {str(e)}")
+            raise AIVillageException(f"Error in create_and_execute_workflow: {str(e)}") from e
 
     async def mcts_search(self, task, problem_analyzer, plan_generator, iterations=1000):
         root = MCTSNode(task)
@@ -259,6 +332,7 @@ class UnifiedPlanningAndDecision:
     def update_agent_list(self, agent_list: List[str]):
         self.available_agents = agent_list
         self.router.update_agent_list(agent_list)
+        self.graph_manager.available_agents = agent_list
         logger.info(f"Updated available agents: {self.available_agents}")
 
     async def save_models(self, path: str):
@@ -303,6 +377,7 @@ class UnifiedPlanningAndDecision:
                 self.exploration_weight = data["exploration_weight"]
                 self.max_depth = data["max_depth"]
                 self.available_agents = data["available_agents"]
+                self.graph_manager.available_agents = self.available_agents
             
             logger.info(f"Models loaded successfully from {path}")
         except Exception as e:
@@ -319,7 +394,8 @@ class UnifiedPlanningAndDecision:
             "reasoning_engine_info": await self.reasoning_engine.introspect(),
             "task_handler_info": await self.task_handler.introspect(),
             "optimizer_info": await self.optimizer.introspect(),
-            "router_info": await self.router.introspect()
+            "router_info": await self.router.introspect(),
+            "graph_manager_info": self.graph_manager.get_graph().number_of_nodes()
         }
 
     async def _get_current_resources(self) -> Dict[str, Any]:
@@ -328,7 +404,7 @@ class UnifiedPlanningAndDecision:
             return await self.agent.generate_structured_response(prompt)
         except Exception as e:
             logger.exception(f"Error getting current resources: {str(e)}")
-            raise AIVillageException(f"Error getting current resources: {str(e)}")
+            raise AIVillageException(f"Error getting current resources: {str(e)}") from e
 
     async def _create_plan_tree(self, goal: str, current_resources: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -350,7 +426,7 @@ class UnifiedPlanningAndDecision:
             return plan_tree
         except Exception as e:
             logger.exception(f"Error creating plan tree: {str(e)}")
-            raise AIVillageException(f"Error creating plan tree: {str(e)}")
+            raise AIVillageException(f"Error creating plan tree: {str(e)}") from e
 
     async def _extract_tasks(self, plan_tree: Dict[str, Any]) -> List[Dict[str, Any]]:
         tasks = []
@@ -392,7 +468,7 @@ class UnifiedPlanningAndDecision:
             return plan_tree
         except Exception as e:
             logger.exception(f"Error optimizing tasks: {str(e)}")
-            raise AIVillageException(f"Error optimizing tasks: {str(e)}")
+            raise AIVillageException(f"Error optimizing tasks: {str(e)}") from e
 
     async def _conduct_premortem(self, plan_tree: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -416,7 +492,7 @@ class UnifiedPlanningAndDecision:
             return plan_tree
         except Exception as e:
             logger.exception(f"Error conducting premortem: {str(e)}")
-            raise AIVillageException(f"Error conducting premortem: {str(e)}")
+            raise AIVillageException(f"Error conducting premortem: {str(e)}") from e
 
     async def _assess_antifragility(self, plan_tree: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -444,7 +520,7 @@ class UnifiedPlanningAndDecision:
             return plan_tree
         except Exception as e:
             logger.exception(f"Error assessing antifragility: {str(e)}")
-            raise AIVillageException(f"Error assessing antifragility: {str(e)}")
+            raise AIVillageException(f"Error assessing antifragility: {str(e)}") from e
 
     async def _develop_xanatos_gambits(self, plan_tree: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -471,7 +547,7 @@ class UnifiedPlanningAndDecision:
             return plan_tree
         except Exception as e:
             logger.exception(f"Error developing Xanatos Gambits: {str(e)}")
-            raise AIVillageException(f"Error developing Xanatos Gambits: {str(e)}")
+            raise AIVillageException(f"Error developing Xanatos Gambits: {str(e)}") from e
 
     async def _update_plan(self, plan_tree: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -491,7 +567,7 @@ class UnifiedPlanningAndDecision:
             return updated_plan
         except Exception as e:
             logger.exception(f"Error updating plan: {str(e)}")
-            raise AIVillageException(f"Error updating plan: {str(e)}")
+            raise AIVillageException(f"Error updating plan: {str(e)}") from e
 
     def _calculate_success_likelihood(self, plan_tree: Dict[str, Any]) -> float:
         try:
@@ -543,7 +619,7 @@ class UnifiedPlanningAndDecision:
             return checkpoints
         except Exception as e:
             logger.exception(f"Error planning checkpoints: {str(e)}")
-            raise AIVillageException(f"Error planning checkpoints: {str(e)}")
+            raise AIVillageException(f"Error planning checkpoints: {str(e)}") from e
 
     async def _perform_swot_analysis(self, plan_tree: Dict[str, Any], problem_analysis: Dict[str, Any]) -> Dict[str, List[str]]:
         try:
@@ -566,7 +642,7 @@ class UnifiedPlanningAndDecision:
             return swot_analysis
         except Exception as e:
             logger.exception(f"Error performing SWOT analysis: {str(e)}")
-            raise AIVillageException(f"Error performing SWOT analysis: {str(e)}")
+            raise AIVillageException(f"Error performing SWOT analysis: {str(e)}") from e
 
     def _calculate_plan_metrics(self, plan_tree: Dict[str, Any]) -> Dict[str, Any]:
         try:
@@ -602,11 +678,12 @@ class UnifiedPlanningAndDecision:
         G = nx.DiGraph()
         
         def add_nodes(node, parent=None):
-            node_id = node['name']
+            node_id = node.get('name', f"task_{random.randint(1000,9999)}")
             G.add_node(node_id, 
                        description=node.get('description', ''),
                        antifragility=node.get('antifragility_score', 0),
-                       xanatos_factor=node.get('xanatos_factor', 0))
+                       xanatos_factor=node.get('xanatos_factor', 0),
+                       type=node.get('type', 'task'))
             if parent:
                 G.add_edge(parent, node_id)
             for child in node.get('sub_goals', []):
@@ -621,12 +698,83 @@ class UnifiedPlanningAndDecision:
                        'green' if G.nodes[node]['antifragility'] > 3 else 
                        'yellow' for node in G.nodes()]
         
-        node_shapes = ['s' if G.nodes[node]['xanatos_factor'] < -3 else 
-                       '^' if G.nodes[node]['xanatos_factor'] > 3 else 
-                       'o' for node in G.nodes()]
-        
-        nx.draw(G, pos, node_color=node_colors, node_shape='o', node_size=3000, with_labels=False)
-        
+        nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=3000)
+        nx.draw_networkx_edges(G, pos, arrowstyle='->', arrowsize=20)
         nx.draw_networkx_labels(G, pos, {node: node for node in G.nodes()}, font_size=8, font_weight='bold')
         
-        node_labels = nx.get_
+        plt.title("Agent and Task Plan Visualization")
+        plt.axis('off')
+        plt.tight_layout()
+        visualization_path = "plan_visualization.png"
+        plt.savefig(visualization_path)
+        plt.close()
+        logger.info(f"Plan visualization saved as {visualization_path}")
+        return visualization_path
+
+    def _extract_all_tasks(self, plan_tree: Dict[str, Any]) -> List[Dict[str, Any]]:
+        tasks = []
+        
+        def extract_tasks_recursive(node):
+            if 'tasks' in node:
+                tasks.extend(node['tasks'])
+            for sub_goal in node.get('sub_goals', []):
+                extract_tasks_recursive(sub_goal)
+        
+        extract_tasks_recursive(plan_tree)
+        return tasks
+
+    async def _analyze_execution_result(self, execution_result: Dict[str, Any], optimized_plan: Dict[str, Any]) -> Dict[str, Any]:
+        try:
+            prompt = f"""
+            Analyze the following execution results and the optimized plan:
+            
+            Execution Results: {json.dumps(execution_result, indent=2)}
+            Optimized Plan: {json.dumps(optimized_plan, indent=2)}
+            
+            Provide insights on:
+            1. Success factors
+            2. Areas needing improvement
+            3. Recommendations for future tasks
+            
+            Output the analysis as a JSON dictionary with 'success_factors', 'areas_for_improvement', and 'recommendations' keys.
+            """
+            analysis = await self.agent.generate_structured_response(prompt)
+            return analysis
+        except Exception as e:
+            logger.exception(f"Error analyzing execution result: {str(e)}")
+            raise AIVillageException(f"Error analyzing execution result: {str(e)}") from e
+
+    async def _update_models(self, task: Dict[str, Any], execution_result: Dict[str, Any], analysis: Dict[str, Any]):
+        try:
+            # Update GraphManager with new task and execution results
+            task_id = task.get('id', f"task_{random.randint(1000,9999)}")
+            agent_id = execution_result.get('assigned_agent', 'default_agent')
+            performance = execution_result.get('performance', 0.5)
+            self.graph_manager.update_agent_experience(agent_id, task_id, performance)
+            
+            # Optionally, update task history or other models here
+            await self.quality_assurance_layer.update_task_history(task, performance, execution_result.get('uncertainty', 0.5))
+            
+            # Save updated models if necessary
+            logger.info("Models updated successfully after task execution")
+        except Exception as e:
+            logger.exception(f"Error updating models: {str(e)}")
+            raise AIVillageException(f"Error updating models: {str(e)}") from e
+
+    async def _update_models_from_workflow(self, tasks: List[Dict[str, Any]], results: Dict[str, Any], analysis: Dict[str, Any]):
+        try:
+            for task in tasks:
+                task_id = task.get('id', f"task_{random.randint(1000,9999)}")
+                result = results.get(task_id, {})
+                agent_id = result.get('assigned_agent', 'default_agent')
+                performance = result.get('performance', 0.5)
+                self.graph_manager.update_agent_experience(agent_id, task_id, performance)
+                
+                await self.quality_assurance_layer.update_task_history(task, performance, result.get('uncertainty', 0.5))
+            
+            logger.info("Models updated successfully after workflow execution")
+        except Exception as e:
+            logger.exception(f"Error updating models from workflow: {str(e)}")
+            raise AIVillageException(f"Error updating models from workflow: {str(e)}") from e
+
+    # Additional helper methods would be here...
