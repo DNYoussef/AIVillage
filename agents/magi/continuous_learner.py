@@ -12,6 +12,8 @@ class ContinuousLearner(BaseAnalytics):
         super().__init__()
         self.quality_assurance_layer = quality_assurance_layer
         self.learning_rate = learning_rate
+        self.tool_creation_history: List[Dict[str, Any]] = []
+        self.task_execution_history: List[Dict[str, Any]] = []
 
     async def update_embeddings(self, task: LangroidTask, result: Dict[str, Any]):
         task_embedding = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(task.content)
@@ -60,7 +62,42 @@ class ContinuousLearner(BaseAnalytics):
         
         logger.info(f"Adjusted learning rate to {self.learning_rate}")
 
+    async def learn_from_tool_creation(self, tool_name: str, tool_code: str, tool_description: str, tool_parameters: Dict[str, Any]):
+        self.tool_creation_history.append({
+            "name": tool_name,
+            "code": tool_code,
+            "description": tool_description,
+            "parameters": tool_parameters
+        })
+        logger.info(f"Learned from tool creation: {tool_name}")
+
+    async def learn_from_task_execution(self, task: LangroidTask, result: Dict[str, Any], tools_used: List[str]):
+        self.task_execution_history.append({
+            "task": task.content,
+            "result": result,
+            "tools_used": tools_used
+        })
+        logger.info(f"Learned from task execution: {task.content[:50]}...")
+
+    def extract_tool_creation_insights(self) -> List[str]:
+        # Implement logic to extract insights from tool creation history
+        insights = [
+            "Placeholder insight 1 from tool creation history",
+            "Placeholder insight 2 from tool creation history"
+        ]
+        return insights
+
+    def extract_task_execution_insights(self) -> List[str]:
+        # Implement logic to extract insights from task execution history
+        insights = [
+            "Placeholder insight 1 from task execution history",
+            "Placeholder insight 2 from task execution history"
+        ]
+        return insights
+
     def get_info(self) -> Dict[str, Any]:
         return {
             "learning_rate": self.learning_rate,
+            "tool_creation_insights": self.extract_tool_creation_insights(),
+            "task_execution_insights": self.extract_task_execution_insights()
         }
