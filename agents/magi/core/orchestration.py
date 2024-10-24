@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig, SelfEvolvingSystem
 from agents.sage.sage_agent import SageAgent
 from agents.king.king_agent import KingAgent
-from agents.magi.magi_agent import MagiAgent
+from agents.magi.core.magi_agent import MagiAgent
 from rag_system.core.config import UnifiedConfig
 from communications.protocol import StandardCommunicationProtocol
 from langroid.vector_store.base import VectorStore

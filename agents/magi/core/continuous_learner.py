@@ -2,7 +2,7 @@ import numpy as np
 from typing import Dict, Any, List
 from agents.quality_assurance_layer import QualityAssuranceLayer
 from agents.utils.task import Task as LangroidTask
-from agents.magi.evolution_manager import EvolutionManager
+from agents.magi.core.evolution_manager import EvolutionManager
 import logging
 from scipy import stats
 

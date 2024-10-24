@@ -1,7 +1,7 @@
 import os
 import json
 from typing import Dict, Any
-from agents.magi.tool_version_control import ToolVersionControl
+from agents.magi.tools.tool_version_control import ToolVersionControl
 
 class ToolPersistence:
     def __init__(self, storage_dir: str):

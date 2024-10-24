@@ -1,7 +1,7 @@
 import os
 import tkinter as tk
 from tkinter import ttk, messagebox
-from agents.magi.tool_persistence import ToolPersistence
+from agents.magi.tools.tool_persistence import ToolPersistence
 
 class ToolManagementUI:
     def __init__(self, tool_persistence: ToolPersistence):
