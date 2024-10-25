@@ -1,21 +1,66 @@
+"""Sage Agent package."""
+
 from .sage_agent import SageAgent
-from .config import SageAgentConfig
-from .self_evolving_system import SelfEvolvingSystem
-from .foundational_layer import FoundationalLayer
-from .continuous_learning_layer import ContinuousLearningLayer
-from .query_processing import QueryProcessor
-from .task_execution import TaskExecutor
-from .collaboration import CollaborationManager
-from .research_capabilities import ResearchCapabilities
+from .core.config import SageAgentConfig
+
+# Core components
+from .core import (
+    QueryProcessor,
+    ReasoningAgent,
+    ResponseGenerator,
+    UserIntentInterpreter,
+    CollaborationManager,
+    ContinuousLearningLayer,
+    FoundationalLayer,
+    SelfEvolvingSystem,
+    TaskExecutor
+)
+
+# Knowledge management
+from .knowledge_management import (
+    KnowledgeGraphAgent,
+    DynamicKnowledgeIntegrationAgent,
+    KnowledgeSynthesizer
+)
+
+# RAG management
+from .rag_management.unified_manager import UnifiedRAGManager
+
+# Research capabilities
+from .research import (
+    ResearchCapabilities,
+    WebScraper,
+    OnlineSearchEngine,
+    ReportWriter
+)
 
 __all__ = [
+    # Main components
     "SageAgent",
     "SageAgentConfig",
-    "SelfEvolvingSystem",
-    "FoundationalLayer",
-    "ContinuousLearningLayer",
+    
+    # Core components
     "QueryProcessor",
-    "TaskExecutor",
+    "ReasoningAgent",
+    "ResponseGenerator",
+    "UserIntentInterpreter",
     "CollaborationManager",
-    "ResearchCapabilities"
+    "ContinuousLearningLayer",
+    "FoundationalLayer",
+    "SelfEvolvingSystem",
+    "TaskExecutor",
+    
+    # Knowledge management
+    "KnowledgeGraphAgent",
+    "DynamicKnowledgeIntegrationAgent",
+    "KnowledgeSynthesizer",
+    
+    # RAG management
+    "UnifiedRAGManager",
+    
+    # Research capabilities
+    "ResearchCapabilities",
+    "WebScraper",
+    "OnlineSearchEngine",
+    "ReportWriter"
 ]
