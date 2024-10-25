@@ -26,6 +26,7 @@ from agents.magi.tools.tool_persistence import ToolPersistence
 from agents.magi.tools.tool_creator import ToolCreator
 from agents.magi.tools.tool_management import ToolManager
 from agents.magi.tools.tool_optimization import ToolOptimizer
+from communications.protocol import StandardCommunicationProtocol
 
 logger = get_logger(__name__)
 
