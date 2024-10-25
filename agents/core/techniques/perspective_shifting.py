@@ -1,11 +1,11 @@
 """Perspective Shifting technique implementation."""
 
-from typing import Dict, Any, List, Optional, TypeVar, Generic
+from typing import Dict, Any, List, Optional, TypeVar, Tuple
 from dataclasses import dataclass
 from datetime import datetime
 import numpy as np
 from .base import BaseTechnique, TechniqueResult, TechniqueMetrics
-from ..utils.logging import get_logger
+from agents.core.utils.logging import get_logger  # Updated import path
 
 logger = get_logger(__name__)
 

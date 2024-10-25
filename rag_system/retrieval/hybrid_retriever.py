@@ -1,3 +1,5 @@
+"""Hybrid Retriever implementation."""
+
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 import numpy as np
@@ -16,6 +18,7 @@ class HybridRetriever:
         self.graph_store = GraphStore()
         self.llm = None  # This should be initialized with the appropriate language model
         self.agent = None  # This should be initialized with the appropriate agent
+        self.current_results = []  # Store current results for metrics calculation
 
     async def retrieve(self, query: str, k: int, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
         """
@@ -217,7 +220,7 @@ class HybridRetriever:
         # Calculate weighted average
         avg_relevance = np.mean(relevance_scores)
         coverage_score = coverage_analysis['coverage_score']
-        diversity_score = self._calculate_diversity_metric(results)
+        diversity_score = self._calculate_diversity_metric(self.current_results)  # Use stored results
         
         confidence = (
             relevance_weight * avg_relevance +

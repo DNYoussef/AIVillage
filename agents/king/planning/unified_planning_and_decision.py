@@ -1,29 +1,92 @@
+"""Unified Planning and Decision implementation."""
+
+from typing import Dict, Any, List, Optional
+from datetime import datetime
 import logging
-import math
-import random
+import uuid
 import os
 import json
 import asyncio
-from typing import List, Dict, Any, Tuple
-from collections import defaultdict
-import itertools
+import random
+import math
 import networkx as nx
 import matplotlib.pyplot as plt
-import io
 import torch
-import torch.nn as nn
+from collections import defaultdict
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
-from communications.protocol import StandardCommunicationProtocol, Message, MessageType
-from rag_system.core.pipeline import EnhancedRAGPipeline
-from .quality_assurance_layer import QualityAssuranceLayer
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from agents.utils.exceptions import AIVillageException
-from .reasoning_engine import ReasoningEngine
-from .task_handling import TaskHandler
-from .optimization import Optimizer
-from .routing import Router
 
-logger = logging.getLogger(__name__)
+from ...utils.logging import get_logger
+from ...utils.exceptions import AIVillageException
+from ..quality_assurance.layer import QualityAssuranceLayer
+from ..task.handling import TaskHandler
+from ..routing.router import Router
+from ..reasoning.reasoning_engine import ReasoningEngine
+from ...communication.protocol import StandardCommunicationProtocol
+from ...rag.pipeline import EnhancedRAGPipeline
+from ...language_models.openai_gpt import OpenAIGPTConfig
+
+logger = get_logger(__name__)
+
+class Optimizer:
+    """Optimizer for task and workflow optimization."""
+    
+    def __init__(self):
+        self.model = None
+        self.config = None
+        
+    async def optimize_plan(self, plan: Dict[str, Any]) -> Dict[str, Any]:
+        """Optimize a given plan."""
+        try:
+            # Implement optimization logic here
+            return plan
+        except Exception as e:
+            logger.exception(f"Error optimizing plan: {str(e)}")
+            raise AIVillageException(f"Error optimizing plan: {str(e)}")
+            
+    async def optimize_workflow(self, workflow: Dict[str, Any]) -> Dict[str, Any]:
+        """Optimize a workflow."""
+        try:
+            # Implement workflow optimization logic here
+            return workflow
+        except Exception as e:
+            logger.exception(f"Error optimizing workflow: {str(e)}")
+            raise AIVillageException(f"Error optimizing workflow: {str(e)}")
+            
+    async def update_model(self, task: Dict[str, Any], result: Any):
+        """Update optimization model based on task results."""
+        try:
+            # Implement model update logic here
+            pass
+        except Exception as e:
+            logger.exception(f"Error updating model: {str(e)}")
+            raise AIVillageException(f"Error updating model: {str(e)}")
+            
+    async def save_models(self, path: str):
+        """Save optimization models."""
+        try:
+            # Implement model saving logic here
+            pass
+        except Exception as e:
+            logger.exception(f"Error saving models: {str(e)}")
+            raise AIVillageException(f"Error saving models: {str(e)}")
+            
+    async def load_models(self, path: str):
+        """Load optimization models."""
+        try:
+            # Implement model loading logic here
+            pass
+        except Exception as e:
+            logger.exception(f"Error loading models: {str(e)}")
+            raise AIVillageException(f"Error loading models: {str(e)}")
+            
+    async def introspect(self) -> Dict[str, Any]:
+        """Get optimizer state and configuration."""
+        return {
+            "type": "Optimizer",
+            "description": "Optimizes tasks and workflows",
+            "model_info": str(self.model) if self.model else None,
+            "config": self.config
+        }
 
 class MCTSNode:
     def __init__(self, state, parent=None):
@@ -777,4 +840,235 @@ class UnifiedPlanningAndDecision:
             logger.exception(f"Error updating models from workflow: {str(e)}")
             raise AIVillageException(f"Error updating models from workflow: {str(e)}") from e
 
-    # Additional helper methods would be here...
+    async def optimize_workflow_with_mcts(self, workflow: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Optimize workflow using Monte Carlo Tree Search (MCTS).
+        """
+        try:
+            # Convert workflow to initial state
+            initial_state = self._workflow_to_state(workflow)
+            
+            # Run MCTS search
+            optimized_state = await self.mcts_search(
+                initial_state,
+                self.reasoning_engine,  # Used as problem analyzer
+                self.optimizer,         # Used as plan generator
+                iterations=1000
+            )
+            
+            # Convert optimized state back to workflow
+            optimized_workflow = self._state_to_workflow(optimized_state)
+            
+            # Apply additional optimizations
+            optimized_workflow = await self._apply_workflow_optimizations(optimized_workflow)
+            
+            return optimized_workflow
+        except Exception as e:
+            logger.exception(f"Error optimizing workflow with MCTS: {str(e)}")
+            raise AIVillageException(f"Error optimizing workflow with MCTS: {str(e)}")
+
+    def _workflow_to_state(self, workflow: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert workflow to MCTS state representation."""
+        return {
+            'tasks': workflow.get('tasks', []),
+            'dependencies': workflow.get('dependencies', {}),
+            'resources': workflow.get('resources', {}),
+            'constraints': workflow.get('constraints', {})
+        }
+
+    def _state_to_workflow(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert MCTS state back to workflow representation."""
+        return {
+            'tasks': state.get('tasks', []),
+            'dependencies': state.get('dependencies', {}),
+            'resources': state.get('resources', {}),
+            'constraints': state.get('constraints', {}),
+            'optimization_metadata': {
+                'mcts_visits': self.stats[str(state)]['visits'],
+                'mcts_value': self.stats[str(state)]['value']
+            }
+        }
+
+    async def _apply_workflow_optimizations(self, workflow: Dict[str, Any]) -> Dict[str, Any]:
+        """Apply additional optimizations to the workflow."""
+        try:
+            # Optimize task ordering
+            workflow['tasks'] = await self._optimize_task_order(workflow['tasks'])
+            
+            # Optimize resource allocation
+            workflow['resources'] = await self._optimize_resource_allocation(
+                workflow['tasks'],
+                workflow['resources']
+            )
+            
+            # Generate sub-goals hierarchically
+            workflow['sub_goals'] = await self._generate_hierarchical_subgoals(workflow)
+            
+            return workflow
+        except Exception as e:
+            logger.exception(f"Error applying workflow optimizations: {str(e)}")
+            raise AIVillageException(f"Error applying workflow optimizations: {str(e)}")
+
+    async def _optimize_task_order(self, tasks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Optimize the order of tasks in the workflow."""
+        try:
+            # Create dependency graph
+            G = nx.DiGraph()
+            for task in tasks:
+                G.add_node(task['id'], **task)
+                for dep in task.get('dependencies', []):
+                    G.add_edge(dep, task['id'])
+            
+            # Get optimal ordering using topological sort
+            try:
+                optimal_order = list(nx.topological_sort(G))
+                optimized_tasks = [
+                    next(task for task in tasks if task['id'] == task_id)
+                    for task_id in optimal_order
+                ]
+                return optimized_tasks
+            except nx.NetworkXUnfeasible:
+                logger.warning("Circular dependencies detected, returning original task order")
+                return tasks
+        except Exception as e:
+            logger.exception(f"Error optimizing task order: {str(e)}")
+            return tasks
+
+    async def _optimize_resource_allocation(
+        self,
+        tasks: List[Dict[str, Any]],
+        resources: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Optimize resource allocation for tasks."""
+        try:
+            # Calculate resource requirements
+            total_requirements = {}
+            for task in tasks:
+                for resource, amount in task.get('required_resources', {}).items():
+                    total_requirements[resource] = total_requirements.get(resource, 0) + amount
+            
+            # Adjust resource allocation based on requirements
+            optimized_resources = resources.copy()
+            for resource, required in total_requirements.items():
+                available = optimized_resources.get(resource, 0)
+                if available < required:
+                    # Try to reallocate from less critical tasks
+                    deficit = required - available
+                    optimized_resources[resource] = self._reallocate_resource(
+                        resource, deficit, tasks, optimized_resources
+                    )
+            
+            return optimized_resources
+        except Exception as e:
+            logger.exception(f"Error optimizing resource allocation: {str(e)}")
+            return resources
+
+    def _reallocate_resource(
+        self,
+        resource: str,
+        deficit: float,
+        tasks: List[Dict[str, Any]],
+        resources: Dict[str, Any]
+    ) -> float:
+        """Reallocate resources from less critical tasks."""
+        # Sort tasks by priority (ascending)
+        sorted_tasks = sorted(
+            tasks,
+            key=lambda t: t.get('priority', 0)
+        )
+        
+        available = resources.get(resource, 0)
+        for task in sorted_tasks:
+            if deficit <= 0:
+                break
+            task_usage = task.get('required_resources', {}).get(resource, 0)
+            if task_usage > 0:
+                reduction = min(task_usage * 0.2, deficit)  # Reduce by up to 20%
+                task['required_resources'][resource] -= reduction
+                available += reduction
+                deficit -= reduction
+        
+        return available
+
+    async def _generate_hierarchical_subgoals(self, workflow: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate hierarchical sub-goals for the workflow."""
+        try:
+            tasks = workflow['tasks']
+            
+            # Group tasks by similarity
+            task_groups = await self._group_similar_tasks(tasks)
+            
+            # Generate sub-goals for each group
+            sub_goals = []
+            for group in task_groups:
+                sub_goal = await self._create_sub_goal(group)
+                sub_goals.append(sub_goal)
+            
+            # Organize sub-goals hierarchically
+            hierarchical_goals = self._organize_goals_hierarchically(sub_goals)
+            
+            return hierarchical_goals
+        except Exception as e:
+            logger.exception(f"Error generating hierarchical sub-goals: {str(e)}")
+            return []
+
+    async def _group_similar_tasks(self, tasks: List[Dict[str, Any]]) -> List[List[Dict[str, Any]]]:
+        """Group tasks based on similarity."""
+        # This is a simplified implementation
+        groups = {}
+        for task in tasks:
+            category = task.get('category', 'default')
+            if category not in groups:
+                groups[category] = []
+            groups[category].append(task)
+        return list(groups.values())
+
+    async def _create_sub_goal(self, tasks: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Create a sub-goal for a group of tasks."""
+        return {
+            'id': str(uuid.uuid4()),
+            'description': f"Sub-goal for {len(tasks)} tasks",
+            'tasks': tasks,
+            'estimated_time': sum(task.get('estimated_time', 0) for task in tasks),
+            'priority': max(task.get('priority', 0) for task in tasks)
+        }
+
+    def _organize_goals_hierarchically(self, sub_goals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Organize sub-goals into a hierarchical structure."""
+        # Sort sub-goals by priority (descending)
+        sorted_goals = sorted(
+            sub_goals,
+            key=lambda g: g.get('priority', 0),
+            reverse=True
+        )
+        
+        # Create hierarchy based on priority levels
+        hierarchy = []
+        current_level = []
+        current_priority = None
+        
+        for goal in sorted_goals:
+            priority = goal.get('priority', 0)
+            if current_priority is None:
+                current_priority = priority
+            
+            if priority == current_priority:
+                current_level.append(goal)
+            else:
+                if current_level:
+                    hierarchy.append({
+                        'priority_level': current_priority,
+                        'goals': current_level
+                    })
+                current_level = [goal]
+                current_priority = priority
+        
+        if current_level:
+            hierarchy.append({
+                'priority_level': current_priority,
+                'goals': current_level
+            })
+        
+        return hierarchy
+
+

@@ -1,681 +1,317 @@
-"""MAGI Agent core functionality."""
+"""MAGI Agent implementation."""
 
 from typing import Dict, Any, List, Optional
-import asyncio
 import logging
-import numpy as np
-from queue import PriorityQueue
-from collections import defaultdict
-from dataclasses import dataclass, field
+import asyncio
+import os
+import json
+from datetime import datetime
+
+from ...utils.logging import get_logger
+from ...utils.exceptions import AIVillageException
+from ..utils.task_management import TaskManager
+from ..core.quality_assurance_layer import QualityAssuranceLayer
+from ..core.evolution_manager import EvolutionManager
+from ..core.learning_system import LearningSystem
+from ..core.graph_manager import GraphManager
+from ..core.planning_system import PlanningSystem
+from ..tools.persistence_manager import PersistenceManager
 from ..tools.tool_creator import ToolCreator
-from ..tools.tool_management import ToolManager
-from ..tools.tool_optimization import ToolOptimizer
-from ..tools.reverse_engineer import ReverseEngineer
-from .continuous_learner import ContinuousLearner
-from .evolution_manager import EvolutionManager
-from .quality_assurance_layer import QualityAssuranceLayer
-from .magi_planning import MagiPlanning, GraphManager
-from .knowledge_manager import KnowledgeManager
-from ..tools.tool_persistence import ToolPersistence
-from ..utils.task import Task as LangroidTask
-from communications.protocol import StandardCommunicationProtocol
-from rag_system.core.config import RAGConfig
-from rag_system.core.pipeline import EnhancedRAGPipeline
-from langroid.vector_store.base import VectorStore
+from ..tools.tool_manager import ToolManager
+from ..tools.tool_optimizer import ToolOptimizer
+from ..core.knowledge_manager import KnowledgeManager
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
-@dataclass
-class MagiAgentConfig:
-    """Configuration for MagiAgent."""
-    name: str
-    description: str
-    capabilities: List[str]
-    vector_store: Any
-    model: str
-    instructions: str
-    development_capabilities: List[str] = field(default_factory=list)
-
-class MagiAgent:
-    def __init__(
-        self,
-        config: MagiAgentConfig,
-        communication_protocol: StandardCommunicationProtocol,
-        rag_config: RAGConfig,
-        vector_store: VectorStore,
-    ):
+class MAGIAgent:
+    """
+    MAGI (Multi-Agent General Intelligence) Agent implementation.
+    Coordinates multiple specialized sub-agents and systems for complex task handling.
+    """
+    
+    def __init__(self, config: Dict[str, Any]):
+        """
+        Initialize MAGI Agent with configuration.
+        
+        Args:
+            config: Configuration dictionary for the agent
+        """
         self.config = config
-        self.name = config.name
-        self.description = config.description
-        self.capabilities = config.capabilities + config.development_capabilities
-        self.model = config.model
-        self.instructions = config.instructions
-        self.communication_protocol = communication_protocol
-        self.communication_protocol.subscribe(self.name, self.handle_message)
-        self.vector_store = vector_store
-        self.rag_system = EnhancedRAGPipeline(rag_config)
-        
-        # Initialize core components
-        self.qa_layer = QualityAssuranceLayer()
+        self.task_manager = TaskManager()
+        self.quality_assurance = QualityAssuranceLayer()
         self.evolution_manager = EvolutionManager()
-        self.continuous_learner = ContinuousLearner(self.qa_layer, self.evolution_manager)
+        self.learning_system = LearningSystem()
         self.graph_manager = GraphManager()
-        self.magi_planning = MagiPlanning(communication_protocol, self.qa_layer, self.graph_manager)
+        self.planning_system = PlanningSystem()
+        self.persistence_manager = PersistenceManager()
+        self.tool_creator = ToolCreator()
+        self.tool_manager = ToolManager()
+        self.tool_optimizer = ToolOptimizer()
+        self.knowledge_manager = KnowledgeManager()
         
-        # Initialize tool-related components
-        self.tool_persistence = ToolPersistence("tools_storage")
-        self.tool_creator = ToolCreator(llm=self.model, continuous_learner=self.continuous_learner)
-        self.tool_manager = ToolManager(
-            llm=self.model,
-            tool_persistence=self.tool_persistence,
-            tool_creator=self.tool_creator,
-            continuous_learner=self.continuous_learner
-        )
-        self.tool_optimizer = ToolOptimizer(
-            llm=self.model,
-            tool_persistence=self.tool_persistence,
-            tool_creator=self.tool_creator,
-            continuous_learner=self.continuous_learner
-        )
-        self.reverse_engineer = ReverseEngineer(
-            llm=self.model,
-            continuous_learner=self.continuous_learner
-        )
-        
-        # Initialize knowledge management
-        self.knowledge_manager = KnowledgeManager(
-            llm=self.model,
-            vector_store=self.vector_store
-        )
-        
-        # Initialize state
-        self.tools: Dict[str, Any] = {}
-        self.development_capabilities = config.development_capabilities
-        self.llm = config.model
-        self.task_queue = PriorityQueue()
-        self.monitoring_data = []
-        self.task_history: List[Dict[str, Any]] = []
-        self.tool_usage_count = defaultdict(int)
-        
-        self.load_persisted_tools()
+        logger.info("MAGI Agent initialized with all subsystems")
 
-    async def generate(self, prompt: str) -> str:
-        """Generate text using the language model."""
-        response = await self.llm.complete(prompt)
-        return response.text
-
-    async def evolve(self):
-        """Evolve the agent's capabilities and parameters."""
-        await self.evolution_manager.evolve(self)
-        await self.magi_planning.evolve()
-        await self.continuous_learner.evolve()
-        await self.qa_layer.evolve()
-        logger.info(f"MagiAgent evolved to generation {self.evolution_manager.generation}")
-
-    async def self_reflect(self):
-        """Perform self-reflection and improvement."""
-        await self.enhanced_self_reflection()
-        await self.analyze_long_term_trends()
-        await self.analyze_capabilities()
-        await self.analyze_tool_effectiveness()
-
-    async def handle_message(self, message: Dict[str, Any]):
-        """Handle incoming messages."""
-        if message.get('type') == 'task':
-            task = LangroidTask(self, message['content'])
-            result = await self.execute_task(task)
-            await self.communication_protocol.send_message({
-                'type': 'response',
-                'content': result,
-                'sender': self.name,
-                'receiver': message['sender']
-            })
-
-    async def create_dynamic_tool(
-        self,
-        name: str,
-        code: str,
-        description: str,
-        parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Create a new tool dynamically."""
-        try:
-            # Create tool using ToolCreator
-            tool_data = await self.tool_creator.create_tool(
-                name=name,
-                description=description,
-                parameters=parameters,
-                code=code
-            )
-            
-            # Store tool
-            self.tools[name] = tool_data['function']
-            self.tool_persistence.save_tool(
-                name=name,
-                code=code,
-                description=description,
-                parameters=parameters
-            )
-            
-            return tool_data
-            
-        except Exception as e:
-            logger.error(f"Error creating tool {name}: {e}")
-            raise
-
-    async def reverse_engineer(self, program_path: str) -> Dict[str, Any]:
-        """Perform reverse engineering analysis."""
-        try:
-            # Use ReverseEngineer component
-            return await self.reverse_engineer.analyze_program(program_path)
-        except Exception as e:
-            logger.error(f"Error reverse engineering {program_path}: {e}")
-            raise
-
-    async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
-        # Quality Assurance Layer check
-        is_safe, metrics = self.qa_layer.check_task_safety(task)
-        if not is_safe:
-            logger.warning(f"Task '{task.content}' deemed unsafe: {metrics}")
-            return {"error": "Task deemed unsafe", "metrics": metrics}
-
-        # Process the task through RAG pipeline
-        rag_result = await self.rag_system.process_query(task.content)
-        task.content += f"\nRAG Context: {rag_result}"
-
-        # Use MagiPlanning to generate a plan
-        plan = await self.magi_planning.generate_plan(task.content, {"problem_analysis": rag_result})
-
-        # Execute the plan
-        result = await self.execute_plan(plan)
-
-        # Continuous Learning Layer update
-        await self.continuous_learner.update_embeddings(task, result)
-        await self.continuous_learner.learn_from_task_execution(task, result, list(self.tools.keys()))
-
-        # Adjust learning rate and trigger evolution if needed
-        self.continuous_learner.adjust_learning_rate()
-
-        # Calculate performance metric
-        performance = await self.calculate_performance(task, result)
-
-        # Apply feedback and update task history
-        await self.apply_feedback(task, result, performance)
-
-        return result
-
-    async def calculate_performance(self, task: LangroidTask, result: Dict[str, Any]) -> float:
-        # Implement a more sophisticated performance calculation
-        execution_time = result.get('execution_time', 1.0)
-        output_quality = await self.assess_output_quality(task, result)
-        resource_efficiency = await self.assess_resource_efficiency(result)
-
-        # Combine metrics (you can adjust weights as needed)
-        performance = (
-            0.4 * output_quality +
-            0.3 * (1 / execution_time) +  # Inverse of execution time, faster is better
-            0.3 * resource_efficiency
-        )
-
-        return performance
-
-    async def assess_output_quality(self, task: LangroidTask, result: Dict[str, Any]) -> float:
-        # Implement logic to assess the quality of the output
-        quality_prompt = f"Assess the quality of this output for the given task on a scale of 0 to 1:\n\nTask: {task.content}\n\nOutput: {result.get('output', '')}"
-        quality_assessment = await self.generate(quality_prompt)
-        return float(quality_assessment)
-
-    async def assess_resource_efficiency(self, result: Dict[str, Any]) -> float:
-        # Implement logic to assess resource efficiency
-        return 0.8  # Placeholder value
-
-    async def apply_feedback(self, task: LangroidTask, result: Dict[str, Any], performance: float):
-        # Update task history
-        self.task_history.append({
-            "task": task.content,
-            "result": result,
-            "performance": performance
-        })
-
-        # Update evolution manager
-        await self.evolution_manager.update(task, result, performance)
-
-        # Update graph manager
-        self.graph_manager.update_agent_experience(self.name, task.id, performance)
-
-        # Trigger learning from feedback
-        await self.continuous_learner.learn_from_feedback([{
-            "task_content": task.content,
-            "performance": performance
-        }])
-
-        # Analyze long-term trends
-        await self.analyze_long_term_trends()
-
-    async def analyze_long_term_trends(self):
-        if len(self.task_history) % 50 == 0:  # Analyze every 50 tasks
-            recent_performances = [task['performance'] for task in self.task_history[-50:]]
-            avg_performance = sum(recent_performances) / len(recent_performances)
-            performance_trend = self.calculate_trend(recent_performances)
-
-            logger.info(f"Long-term performance analysis: Average: {avg_performance:.2f}, Trend: {performance_trend}")
-
-            # Adjust learning rate based on performance trend
-            await self.adjust_learning_rate(avg_performance, performance_trend)
-
-            # Analyze capability usage and effectiveness
-            await self.analyze_capabilities()
-
-            # Analyze tool effectiveness
-            await self.analyze_tool_effectiveness()
-
-    async def analyze_capabilities(self):
-        capability_usage = defaultdict(int)
-        capability_performance = defaultdict(list)
-
-        for task in self.task_history[-50:]:
-            for capability in self.capabilities:
-                if capability.lower() in task['task'].lower():
-                    capability_usage[capability] += 1
-                    capability_performance[capability].append(task['performance'])
-
-        for capability, usage in capability_usage.items():
-            avg_performance = sum(capability_performance[capability]) / len(capability_performance[capability])
-            logger.info(f"Capability '{capability}': Usage: {usage}, Avg Performance: {avg_performance:.2f}")
-
-            if usage < 5 and avg_performance < 0.6:
-                await self.refine_capability(capability)
-            elif usage > 10 and avg_performance > 0.8:
-                await self.enhance_capability(capability)
-            elif usage == 0:
-                await self.consider_removing_capability(capability)
-
-        await self.consider_new_capabilities(capability_usage)
-
-    async def analyze_tool_effectiveness(self):
-        tool_usage = defaultdict(int)
-        tool_performance = defaultdict(list)
-
-        for task in self.task_history[-50:]:
-            for tool in task.get('tools_used', []):
-                tool_usage[tool] += 1
-                tool_performance[tool].append(task['performance'])
-
-        for tool, usage in tool_usage.items():
-            avg_performance = sum(tool_performance[tool]) / len(tool_performance[tool])
-            logger.info(f"Tool '{tool}': Usage: {usage}, Avg Performance: {avg_performance:.2f}")
-
-            if usage < 3 and avg_performance < 0.5:
-                await self.tool_manager.consider_removing_tool(tool)
-            elif usage > 10 and avg_performance > 0.8:
-                await self.tool_optimizer.optimize_tool(tool)
-
-        recent_tasks = [task['task'] for task in self.task_history[-50:]]
-        await self.tool_manager.consider_new_tools(tool_usage, recent_tasks)
-
-    async def periodic_maintenance(self):
-        """Perform periodic maintenance tasks to improve MAGI's performance."""
-        await self.evolve()
-        await self.self_reflect()
-        await self.knowledge_manager.optimize_knowledge_base()
-        await self.tool_manager.prune_unused_tools(self.tool_usage_count)
-        logger.info("Completed periodic maintenance")
-
-    async def enhanced_self_reflection(self):
-        recent_tasks = self.task_history[-20:]
-        performance_trend = self.calculate_trend([task['performance'] for task in recent_tasks])
-        
-        reflection_prompt = f"""
-        Perform a comprehensive self-reflection analysis considering the following aspects:
-        1. Performance trend: {performance_trend}
-        2. Most successful strategies: {self.get_top_strategies(recent_tasks)}
-        3. Most challenging task types: {self.get_challenging_tasks(recent_tasks)}
-        4. Most effective tools: {self.get_effective_tools(recent_tasks)}
-        5. Recent experiment results: {self.get_recent_experiment_results()}
-        6. Current knowledge base status: {self.knowledge_manager.get_knowledge_base_status()}
-        7. Capability utilization: {self.get_capability_utilization()}
-
-        Based on this comprehensive analysis:
-        1. What are the key strengths to reinforce?
-        2. What are the main areas for improvement?
-        3. What new capabilities or tools should be developed?
-        4. How can decision-making processes be enhanced?
-        5. What experiments should be prioritized?
-        6. Suggest 3-5 concrete actions to enhance overall performance and adaptability.
+    async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
+        Process a task through the MAGI system.
         
-        reflection = await self.generate(reflection_prompt)
-        logger.info(f"Enhanced self-reflection insights:\n{reflection}")
+        Args:
+            task: Task description and parameters
+            
+        Returns:
+            Task results and metadata
+        """
+        try:
+            # Initial task analysis
+            task_analysis = await self.task_manager.analyze_task(task)
+            
+            # Quality check
+            qa_result = await self.quality_assurance.check_task(task_analysis)
+            if not qa_result['passed']:
+                raise AIVillageException(f"Task failed quality check: {qa_result['reason']}")
+            
+            # Generate execution plan
+            plan = await self.planning_system.create_plan(task_analysis)
+            
+            # Execute plan with continuous monitoring
+            result = await self._execute_plan_with_monitoring(plan)
+            
+            # Post-execution analysis and learning
+            await self._post_execution_processing(task, result)
+            
+            return result
+        except Exception as e:
+            logger.exception(f"Error processing task: {str(e)}")
+            raise AIVillageException(f"Error processing task: {str(e)}")
+
+    async def _execute_plan_with_monitoring(self, plan: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute a plan with continuous monitoring and adaptation.
         
-        await self.implement_reflection_insights(reflection)
+        Args:
+            plan: Execution plan details
+            
+        Returns:
+            Execution results
+        """
+        try:
+            execution_context = await self._prepare_execution_context(plan)
+            
+            while not await self._is_execution_complete(execution_context):
+                # Execute next step
+                step_result = await self._execute_step(execution_context)
+                
+                # Monitor and adapt
+                if await self._needs_adaptation(step_result):
+                    execution_context = await self._adapt_execution(execution_context, step_result)
+                
+                # Update progress
+                execution_context['progress'] = await self._update_progress(execution_context)
+            
+            return await self._finalize_execution(execution_context)
+        except Exception as e:
+            logger.exception(f"Error executing plan: {str(e)}")
+            raise AIVillageException(f"Error executing plan: {str(e)}")
 
-    async def implement_reflection_insights(self, reflection: str):
-        # Parse the reflection and implement suggested actions
-        actions = reflection.split("Suggest 3-5 concrete actions to enhance overall performance and adaptability.")[-1].split("\n")
-        for action in actions:
-            if action.strip():
-                await self.implement_action(action.strip())
-
-    async def implement_action(self, action: str):
-        logger.info(f"Implementing action: {action}")
-        if "create new tool" in action.lower():
-            await self.tool_manager.create_new_tool(action)
-        elif "adjust parameter" in action.lower():
-            await self.adjust_parameter(action)
-        elif "refine strategy" in action.lower():
-            await self.refine_strategy(action.split("refine strategy")[-1].strip())
-        elif "develop new capability" in action.lower():
-            await self.develop_new_capability(action)
-        elif "optimize decision process" in action.lower():
-            await self.optimize_decision_process(action)
-        elif "prioritize experiment" in action.lower():
-            await self.prioritize_experiment(action)
-        else:
-            # For actions that don't fit predefined categories, use a more general approach
-            await self.execute_general_action(action)
-
-    async def develop_new_capability(self, action: str):
-        capability_prompt = f"Design a new capability based on this action: {action}. Provide a name, description, and high-level implementation plan."
-        capability_design = await self.generate(capability_prompt)
-        # Implement logic to add the new capability
-        pass
-
-    async def optimize_decision_process(self, action: str):
-        optimization_prompt = f"Suggest specific improvements to the decision-making process based on this action: {action}. Include changes to algorithms, criteria, or evaluation methods."
-        optimization_plan = await self.generate(optimization_prompt)
-        # Implement logic to update the decision-making process
-        pass
-
-    async def prioritize_experiment(self, action: str):
-        experiment_prompt = f"Design a high-priority experiment based on this action: {action}. Include hypothesis, methodology, and expected outcomes."
-        experiment_design = await self.generate(experiment_prompt)
-        # Implement logic to add the experiment to a priority queue
-        pass
-
-    async def execute_general_action(self, action: str):
-        execution_prompt = f"Provide a step-by-step plan to implement this action: {action}"
-        execution_plan = await self.generate(execution_prompt)
-        # Implement logic to execute the general action plan
-        pass
-
-    def calculate_trend(self, values: List[float]) -> str:
-        """Calculate trend from a list of values."""
-        if len(values) < 2:
-            return "Not enough data"
+    async def _prepare_execution_context(self, plan: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Prepare the execution context for a plan.
         
-        x = np.arange(len(values))
-        y = np.array(values)
-        z = np.polyfit(x, y, 1)
-        slope = z[0]
-        
-        if slope > 0.1:
-            return "Strongly Improving"
-        elif slope > 0.05:
-            return "Improving"
-        elif slope < -0.1:
-            return "Strongly Declining"
-        elif slope < -0.05:
-            return "Declining"
-        else:
-            return "Stable"
-
-    def get_top_strategies(self, recent_tasks: List[Dict[str, Any]]) -> List[str]:
-        """Get most successful strategies from recent tasks."""
-        strategy_performance = defaultdict(list)
-        for task in recent_tasks:
-            if 'strategy' in task:
-                strategy_performance[task['strategy']].append(task['performance'])
-        
-        avg_performance = {
-            strategy: sum(perfs) / len(perfs)
-            for strategy, perfs in strategy_performance.items()
-        }
-        
-        return sorted(
-            avg_performance.keys(),
-            key=lambda x: avg_performance[x],
-            reverse=True
-        )[:3]
-
-    def get_challenging_tasks(self, recent_tasks: List[Dict[str, Any]]) -> List[str]:
-        """Get types of tasks that have been challenging."""
-        task_type_performance = defaultdict(list)
-        for task in recent_tasks:
-            task_type = self._infer_task_type(task['task'])
-            task_type_performance[task_type].append(task['performance'])
-        
-        avg_performance = {
-            task_type: sum(perfs) / len(perfs)
-            for task_type, perfs in task_type_performance.items()
-        }
-        
-        return [
-            task_type for task_type, perf in avg_performance.items()
-            if perf < 0.6
-        ]
-
-    def _infer_task_type(self, task_content: str) -> str:
-        """Infer the type of a task from its content."""
-        if "code" in task_content.lower():
-            return "coding"
-        elif "debug" in task_content.lower():
-            return "debugging"
-        elif "review" in task_content.lower():
-            return "review"
-        else:
-            return "general"
-
-    def get_effective_tools(self, recent_tasks: List[Dict[str, Any]]) -> List[str]:
-        """Get most effective tools from recent tasks."""
-        tool_performance = defaultdict(list)
-        for task in recent_tasks:
-            for tool in task.get('tools_used', []):
-                tool_performance[tool].append(task['performance'])
-        
-        avg_performance = {
-            tool: sum(perfs) / len(perfs)
-            for tool, perfs in tool_performance.items()
-        }
-        
-        return sorted(
-            avg_performance.keys(),
-            key=lambda x: avg_performance[x],
-            reverse=True
-        )[:5]
-
-    def get_recent_experiment_results(self) -> List[Dict[str, Any]]:
-        """Get results from recent experiments."""
-        return [
-            task for task in self.task_history[-10:]
-            if task.get('type') == 'experiment'
-        ]
-
-    def get_capability_utilization(self) -> Dict[str, float]:
-        """Get utilization metrics for each capability."""
-        capability_usage = defaultdict(int)
-        total_tasks = len(self.task_history[-50:])
-        
-        for task in self.task_history[-50:]:
-            for capability in self.capabilities:
-                if capability.lower() in task['task'].lower():
-                    capability_usage[capability] += 1
-        
+        Args:
+            plan: Plan to execute
+            
+        Returns:
+            Execution context
+        """
         return {
-            capability: count / total_tasks
-            for capability, count in capability_usage.items()
+            'plan': plan,
+            'current_step': 0,
+            'results': [],
+            'progress': 0.0,
+            'start_time': datetime.now(),
+            'metrics': {}
         }
 
-    async def adjust_learning_rate(self, avg_performance: float, trend: str):
-        """Adjust learning rate based on performance."""
-        if trend in ["Strongly Improving", "Improving"]:
-            self.continuous_learner.learning_rate *= 0.9
-        elif trend in ["Strongly Declining", "Declining"]:
-            self.continuous_learner.learning_rate *= 1.1
-        
-        # Keep learning rate within reasonable bounds
-        self.continuous_learner.learning_rate = max(
-            0.001,
-            min(0.1, self.continuous_learner.learning_rate)
-        )
-
-    async def refine_capability(self, capability: str):
-        """Refine an underperforming capability."""
-        refinement_prompt = f"""
-        Analyze and suggest improvements for the capability: {capability}
-        
-        Recent performance has been suboptimal. Consider:
-        1. Current implementation weaknesses
-        2. Potential improvements
-        3. Required changes
-        4. Success metrics
+    async def _is_execution_complete(self, context: Dict[str, Any]) -> bool:
         """
-        refinement_plan = await self.generate(refinement_prompt)
-        # Implement refinement plan
-        pass
-
-    async def enhance_capability(self, capability: str):
-        """Enhance a well-performing capability."""
-        enhancement_prompt = f"""
-        Design enhancements for the successful capability: {capability}
+        Check if execution is complete.
         
-        Consider:
-        1. Current strengths
-        2. Potential extensions
-        3. New features
-        4. Integration opportunities
-        """
-        enhancement_plan = await self.generate(enhancement_prompt)
-        # Implement enhancement plan
-        pass
-
-    async def consider_removing_capability(self, capability: str):
-        """Consider removing an unused capability."""
-        analysis_prompt = f"""
-        Analyze the implications of removing capability: {capability}
-        
-        Consider:
-        1. Historical usage
-        2. Dependencies
-        3. Future potential
-        4. Maintenance cost
-        """
-        analysis = await self.generate(analysis_prompt)
-        # Make decision based on analysis
-        pass
-
-    async def consider_new_capabilities(self, capability_usage: Dict[str, int]):
-        """Consider adding new capabilities."""
-        analysis_prompt = f"""
-        Analyze current capabilities and suggest new ones.
-        
-        Current usage:
-        {capability_usage}
-        
-        Consider:
-        1. Missing functionality
-        2. Common patterns
-        3. Future needs
-        4. Integration requirements
-        """
-        suggestions = await self.generate(analysis_prompt)
-        # Implement new capabilities
-        pass
-
-    async def adjust_parameter(self, action: str):
-        """Adjust system parameters based on action."""
-        param_name = action.split("adjust parameter")[-1].strip()
-        if hasattr(self, param_name):
-            adjustment_prompt = f"Suggest optimal value for parameter: {param_name}"
-            new_value = await self.generate(adjustment_prompt)
-            setattr(self, param_name, new_value)
-
-    async def refine_strategy(self, strategy: str):
-        """Refine a strategy based on performance data."""
-        refinement_prompt = f"""
-        Refine strategy: {strategy}
-        
-        Consider:
-        1. Historical performance
-        2. Success patterns
-        3. Failure points
-        4. Optimization opportunities
-        """
-        refinement = await self.generate(refinement_prompt)
-        # Implement refinement
-        pass
-
-    async def execute_plan(self, plan: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute a generated plan."""
-        result = {"steps": []}
-        
-        for step in plan.get('steps', []):
-            step_result = await self._execute_step(step)
-            result["steps"].append(step_result)
+        Args:
+            context: Current execution context
             
-            if not step_result.get('success', False):
-                break
+        Returns:
+            True if execution is complete, False otherwise
+        """
+        return context['current_step'] >= len(context['plan']['steps'])
+
+    async def _execute_step(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute a single step in the plan.
         
-        result["success"] = all(step.get('success', False) for step in result["steps"])
+        Args:
+            context: Current execution context
+            
+        Returns:
+            Step execution results
+        """
+        step = context['plan']['steps'][context['current_step']]
+        result = await self.tool_manager.execute_tool(step['tool'], step['params'])
+        context['current_step'] += 1
+        context['results'].append(result)
         return result
 
-    async def _execute_step(self, step: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute a single step of a plan."""
-        try:
-            if step.get('type') == 'tool':
-                tool = self.tools.get(step['tool'])
-                if tool:
-                    result = await tool(**step.get('parameters', {}))
-                    return {"success": True, "result": result}
-            elif step.get('type') == 'task':
-                result = await self.execute_task(LangroidTask(self, step['content']))
-                return {"success": True, "result": result}
+    async def _needs_adaptation(self, step_result: Dict[str, Any]) -> bool:
+        """
+        Check if execution needs adaptation based on step results.
+        
+        Args:
+            step_result: Results from the last executed step
             
-            return {"success": False, "error": "Invalid step type"}
+        Returns:
+            True if adaptation is needed, False otherwise
+        """
+        return step_result.get('needs_adaptation', False)
+
+    async def _adapt_execution(self, context: Dict[str, Any], step_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Adapt the execution based on monitoring results.
+        
+        Args:
+            context: Current execution context
+            step_result: Results from the last executed step
+            
+        Returns:
+            Updated execution context
+        """
+        adaptation_plan = await self.evolution_manager.generate_adaptation(context, step_result)
+        return await self.evolution_manager.apply_adaptation(context, adaptation_plan)
+
+    async def _update_progress(self, context: Dict[str, Any]) -> float:
+        """
+        Update execution progress.
+        
+        Args:
+            context: Current execution context
+            
+        Returns:
+            Updated progress value
+        """
+        return context['current_step'] / len(context['plan']['steps'])
+
+    async def _finalize_execution(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Finalize execution and prepare results.
+        
+        Args:
+            context: Execution context
+            
+        Returns:
+            Final execution results
+        """
+        return {
+            'success': True,
+            'results': context['results'],
+            'metrics': context['metrics'],
+            'execution_time': (datetime.now() - context['start_time']).total_seconds()
+        }
+
+    async def _post_execution_processing(self, task: Dict[str, Any], result: Dict[str, Any]):
+        """
+        Perform post-execution processing and learning.
+        
+        Args:
+            task: Original task
+            result: Execution results
+        """
+        try:
+            # Update knowledge base
+            await self.knowledge_manager.update_knowledge(task, result)
+            
+            # Learn from execution
+            await self.learning_system.learn_from_execution(task, result)
+            
+            # Optimize tools based on usage
+            await self.tool_optimizer.optimize_tools(self.tool_manager.get_tool_usage_stats())
+            
+            # Persist relevant data
+            await self.persistence_manager.save_execution_data(task, result)
         except Exception as e:
-            return {"success": False, "error": str(e)}
+            logger.exception(f"Error in post-execution processing: {str(e)}")
+            # Don't raise exception here to avoid affecting the main task result
 
-    def load_persisted_tools(self):
-        """Load persisted tools from storage."""
-        tools = self.tool_persistence.load_all_tools()
-        for name, tool_data in tools.items():
-            self.tools[name] = self._create_tool_function(tool_data)
-
-    def _create_tool_function(self, tool_data: Dict[str, Any]) -> Any:
-        """Create a function from tool data."""
-        # Create namespace for function
-        namespace = {}
+    async def save_state(self, path: str):
+        """
+        Save agent state to disk.
         
-        # Execute code in namespace
-        exec(tool_data['code'], namespace)
+        Args:
+            path: Path to save state
+        """
+        try:
+            state = {
+                'config': self.config,
+                'task_manager': await self.task_manager.get_state(),
+                'quality_assurance': await self.quality_assurance.get_state(),
+                'evolution_manager': await self.evolution_manager.get_state(),
+                'learning_system': await self.learning_system.get_state(),
+                'graph_manager': await self.graph_manager.get_state(),
+                'planning_system': await self.planning_system.get_state(),
+                'tool_manager': await self.tool_manager.get_state(),
+                'knowledge_manager': await self.knowledge_manager.get_state()
+            }
+            
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, 'w') as f:
+                json.dump(state, f, indent=2)
+                
+            logger.info(f"Agent state saved to {path}")
+        except Exception as e:
+            logger.exception(f"Error saving agent state: {str(e)}")
+            raise AIVillageException(f"Error saving agent state: {str(e)}")
+
+    async def load_state(self, path: str):
+        """
+        Load agent state from disk.
         
-        # Get function from namespace
-        if tool_data['name'] not in namespace:
-            raise ValueError(f"Function '{tool_data['name']}' not found in code")
+        Args:
+            path: Path to load state from
+        """
+        try:
+            with open(path, 'r') as f:
+                state = json.load(f)
+                
+            self.config = state['config']
+            await self.task_manager.load_state(state['task_manager'])
+            await self.quality_assurance.load_state(state['quality_assurance'])
+            await self.evolution_manager.load_state(state['evolution_manager'])
+            await self.learning_system.load_state(state['learning_system'])
+            await self.graph_manager.load_state(state['graph_manager'])
+            await self.planning_system.load_state(state['planning_system'])
+            await self.tool_manager.load_state(state['tool_manager'])
+            await self.knowledge_manager.load_state(state['knowledge_manager'])
+            
+            logger.info(f"Agent state loaded from {path}")
+        except Exception as e:
+            logger.exception(f"Error loading agent state: {str(e)}")
+            raise AIVillageException(f"Error loading agent state: {str(e)}")
+
+    async def get_status(self) -> Dict[str, Any]:
+        """
+        Get current agent status.
         
-        return namespace[tool_data['name']]
-
-# Example usage
-if __name__ == "__main__":
-    vector_store = VectorStore()  # Placeholder, implement actual VectorStore
-    communication_protocol = StandardCommunicationProtocol()
-    rag_config = RAGConfig()
-    
-    magi_config = MagiAgentConfig(
-        name="MagiAgent",
-        description="A development and coding agent",
-        capabilities=["coding", "debugging", "code_review"],
-        vector_store=vector_store,
-        model="gpt-4",
-        instructions="You are a Magi agent capable of writing, debugging, and reviewing code."
-    )
-    
-    magi_agent = MagiAgent(magi_config, communication_protocol, rag_config, vector_store)
-    
-    # Use the magi_agent to process tasks and perform reverse engineering
-    program_path = "path/to/program"
-    asyncio.run(magi_agent.reverse_engineer(program_path))
-
-    # Perform periodic maintenance
-    asyncio.run(magi_agent.periodic_maintenance())
-
-    print("MagiAgent has been evolved and improved.")
+        Returns:
+            Status information for the agent and all subsystems
+        """
+        try:
+            return {
+                'task_manager': await self.task_manager.get_status(),
+                'quality_assurance': await self.quality_assurance.get_status(),
+                'evolution_manager': await self.evolution_manager.get_status(),
+                'learning_system': await self.learning_system.get_status(),
+                'graph_manager': await self.graph_manager.get_status(),
+                'planning_system': await self.planning_system.get_status(),
+                'tool_manager': await self.tool_manager.get_status(),
+                'knowledge_manager': await self.knowledge_manager.get_status()
+            }
+        except Exception as e:
+            logger.exception(f"Error getting agent status: {str(e)}")
+            raise AIVillageException(f"Error getting agent status: {str(e)}")

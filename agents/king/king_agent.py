@@ -6,7 +6,7 @@ from communications.protocol import StandardCommunicationProtocol, Message, Mess
 from rag_system.retrieval.vector_store import VectorStore
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from .coordinator import KingCoordinator
-from .planning_and_task_management.unified_planning_and_management import UnifiedPlanningAndManagement
+from .planning.unified_planning_and_decision import UnifiedPlanningAndDecision
 from .analytics.unified_analytics import UnifiedAnalytics
 from .evolution_manager import EvolutionManager, run_evolution_and_optimization
 from .response_generation_agent import ResponseGenerationAgent
@@ -24,7 +24,7 @@ class KingAgent(UnifiedBaseAgent):
         self.vector_store = vector_store
         self.rag_pipeline = EnhancedRAGPipeline()
         self.coordinator = KingCoordinator(config, communication_protocol)
-        self.unified_planning_and_management = UnifiedPlanningAndManagement(communication_protocol, self.rag_pipeline, self)
+        self.unified_planning_and_decision = UnifiedPlanningAndDecision(communication_protocol, self.rag_pipeline, self)
         self.unified_analytics = UnifiedAnalytics()
         self.evolution_manager = EvolutionManager()
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
@@ -32,7 +32,7 @@ class KingAgent(UnifiedBaseAgent):
 
         # Add tools
         self.add_tool("coordinate_task", self.coordinator.coordinate_task)
-        self.add_tool("plan_task", self.unified_planning_and_management.make_decision)
+        self.add_tool("plan_task", self.unified_planning_and_decision.make_decision)
         self.add_tool("generate_response", self.response_generation_agent.generate_response)
 
     async def integrate_rag_results(self, query: str, rag_results: List[Dict[str, Any]]) -> Dict[str, Any]:

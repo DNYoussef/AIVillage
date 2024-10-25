@@ -1,171 +1,410 @@
-import random
-import numpy as np
-from typing import List, Dict, Any, Tuple
-from agents.utils.task import Task as LangroidTask
-from scipy.spatial.distance import cosine
-from transformers import AutoTokenizer, AutoModel
-import torch
 import logging
+import asyncio
+from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass, field
+from datetime import datetime
 import json
-import os
+import traceback
+from pathlib import Path
+import numpy as np
+from rag_system.error_handling.error_handler import error_handler
+from rag_system.error_handling.performance_monitor import performance_monitor
 
 logger = logging.getLogger(__name__)
 
-class EudaimoniaTriangulator:
-    def __init__(self, model_name="distilbert-base-uncased"):
-        self.model_name = model_name
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
-        self.empathy_vector = self.get_embedding("Empathy and compassion for all living things")
-        self.harmony_vector = self.get_embedding("Harmony with the universe and natural order")
-        self.self_awareness_vector = self.get_embedding("Self-awareness, humbleness, and rational virtue")
+@dataclass
+class QualityMetrics:
+    """Quality metrics for system components."""
+    accuracy: float = 0.0
+    reliability: float = 0.0
+    performance: float = 0.0
+    resource_usage: float = 0.0
+    error_rate: float = 0.0
+    response_time: float = 0.0
+    test_coverage: float = 0.0
 
-    def get_embedding(self, text: str) -> np.ndarray:
-        inputs = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512)
-        with torch.no_grad():
-            outputs = self.model(**inputs)
-        return outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
-
-    def triangulate(self, task_vector: np.ndarray) -> float:
-        empathy_score = 1 - cosine(task_vector, self.empathy_vector)
-        harmony_score = 1 - cosine(task_vector, self.harmony_vector)
-        self_awareness_score = 1 - cosine(task_vector, self.self_awareness_vector)
-        return (empathy_score + harmony_score + self_awareness_score) / 3
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "model_name": self.model_name,
-            "empathy_vector": self.empathy_vector.tolist(),
-            "harmony_vector": self.harmony_vector.tolist(),
-            "self_awareness_vector": self.self_awareness_vector.tolist()
-        }
-
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'EudaimoniaTriangulator':
-        triangulator = cls(model_name=data["model_name"])
-        triangulator.empathy_vector = np.array(data["empathy_vector"])
-        triangulator.harmony_vector = np.array(data["harmony_vector"])
-        triangulator.self_awareness_vector = np.array(data["self_awareness_vector"])
-        return triangulator
+@dataclass
+class ComponentQuality:
+    """Quality tracking for a system component."""
+    name: str
+    metrics: QualityMetrics = field(default_factory=QualityMetrics)
+    history: List[Dict[str, Any]] = field(default_factory=list)
+    thresholds: Dict[str, float] = field(default_factory=dict)
+    last_updated: datetime = field(default_factory=datetime.now)
 
 class QualityAssuranceLayer:
-    def __init__(self, upo_threshold: float = 0.7, num_samples: int = 100):
-        self.upo_threshold = upo_threshold
-        self.num_samples = num_samples
-        self.task_history: List[Dict[str, Any]] = []
-        self.eudaimonia_triangulator = EudaimoniaTriangulator()
-        self.rules = [
-            "Move all living things towards eudaimonia",
-            "Embrace and encourage curiosity",
-            "Protect the AI village and its inhabitants",
-            "Maintain self-preservation unless it interferes with the other rules"
-        ]
-        self.rule_embeddings = [self.eudaimonia_triangulator.get_embedding(rule) for rule in self.rules]
+    """
+    Quality assurance system for monitoring and maintaining system quality.
+    
+    Features:
+    - Component quality tracking
+    - Performance monitoring
+    - Error detection and handling
+    - Test coverage tracking
+    - Quality metrics analysis
+    """
+    
+    def __init__(self):
+        self.components: Dict[str, ComponentQuality] = {}
+        self.global_thresholds = {
+            'accuracy': 0.95,
+            'reliability': 0.99,
+            'performance': 0.90,
+            'resource_usage': 0.80,
+            'error_rate': 0.01,
+            'response_time': 1.0,  # seconds
+            'test_coverage': 0.90
+        }
+        self.quality_history: List[Dict[str, Any]] = []
+        self.test_results: Dict[str, List[Dict[str, Any]]] = {}
+        self.setup_logging()
 
-    def check_task_safety(self, task: LangroidTask) -> Tuple[bool, Dict[str, float]]:
-        uncertainty = self.estimate_uncertainty(task)
-        task_vector = self.eudaimonia_triangulator.get_embedding(task.content)
-        eudaimonia_score = self.eudaimonia_triangulator.triangulate(task_vector)
-        rule_compliance = self.evaluate_rule_compliance(task_vector)
+    def setup_logging(self):
+        """Set up quality assurance logging."""
+        qa_handler = logging.FileHandler('quality_assurance.log')
+        qa_handler.setFormatter(
+            logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        )
+        qa_logger = logging.getLogger('quality_assurance')
+        qa_logger.addHandler(qa_handler)
+        qa_logger.setLevel(logging.INFO)
+
+    async def monitor_component(
+        self,
+        component_name: str,
+        metrics: Optional[Dict[str, float]] = None
+    ):
+        """Monitor quality metrics for a component."""
+        try:
+            if component_name not in self.components:
+                self.components[component_name] = ComponentQuality(name=component_name)
+            
+            component = self.components[component_name]
+            
+            # Update metrics if provided
+            if metrics:
+                self._update_component_metrics(component, metrics)
+            
+            # Check thresholds
+            violations = self._check_thresholds(component)
+            if violations:
+                await self._handle_threshold_violations(component, violations)
+            
+            # Record history
+            self._record_quality_history(component)
+            
+            logger.info(f"Monitored quality metrics for {component_name}")
+        except Exception as e:
+            logger.error(f"Error monitoring component {component_name}: {str(e)}")
+            error_handler.log_error(e, {'component': component_name})
+
+    def _update_component_metrics(
+        self,
+        component: ComponentQuality,
+        metrics: Dict[str, float]
+    ):
+        """Update component metrics."""
+        for metric, value in metrics.items():
+            if hasattr(component.metrics, metric):
+                setattr(component.metrics, metric, value)
+        component.last_updated = datetime.now()
+
+    def _check_thresholds(
+        self,
+        component: ComponentQuality
+    ) -> List[Dict[str, Any]]:
+        """Check if metrics exceed thresholds."""
+        violations = []
         
-        safety_score = (1 - uncertainty) * 0.3 + eudaimonia_score * 0.4 + rule_compliance * 0.3
+        # Check component-specific thresholds
+        for metric, threshold in component.thresholds.items():
+            if hasattr(component.metrics, metric):
+                value = getattr(component.metrics, metric)
+                if self._is_threshold_violated(metric, value, threshold):
+                    violations.append({
+                        'metric': metric,
+                        'value': value,
+                        'threshold': threshold,
+                        'type': 'component'
+                    })
         
-        metrics = {
-            "uncertainty": uncertainty,
-            "eudaimonia_score": eudaimonia_score,
-            "rule_compliance": rule_compliance,
-            "safety_score": safety_score
+        # Check global thresholds
+        for metric, threshold in self.global_thresholds.items():
+            if metric not in component.thresholds and hasattr(component.metrics, metric):
+                value = getattr(component.metrics, metric)
+                if self._is_threshold_violated(metric, value, threshold):
+                    violations.append({
+                        'metric': metric,
+                        'value': value,
+                        'threshold': threshold,
+                        'type': 'global'
+                    })
+        
+        return violations
+
+    def _is_threshold_violated(
+        self,
+        metric: str,
+        value: float,
+        threshold: float
+    ) -> bool:
+        """Check if a metric violates its threshold."""
+        if metric == 'error_rate':
+            return value > threshold
+        return value < threshold
+
+    async def _handle_threshold_violations(
+        self,
+        component: ComponentQuality,
+        violations: List[Dict[str, Any]]
+    ):
+        """Handle threshold violations."""
+        for violation in violations:
+            logger.warning(
+                f"Quality threshold violation in {component.name}: "
+                f"{violation['metric']} = {violation['value']} "
+                f"(threshold: {violation['threshold']})"
+            )
+            
+            # Record violation
+            self.quality_history.append({
+                'timestamp': datetime.now().isoformat(),
+                'component': component.name,
+                'violation': violation,
+                'context': {
+                    'metrics': component.metrics.__dict__,
+                    'history': component.history[-10:] if component.history else []
+                }
+            })
+            
+            # Trigger alerts
+            await self._trigger_quality_alert(component, violation)
+
+    async def _trigger_quality_alert(
+        self,
+        component: ComponentQuality,
+        violation: Dict[str, Any]
+    ):
+        """Trigger quality alert for violation."""
+        alert = {
+            'component': component.name,
+            'metric': violation['metric'],
+            'value': violation['value'],
+            'threshold': violation['threshold'],
+            'timestamp': datetime.now().isoformat(),
+            'severity': 'high' if violation['type'] == 'global' else 'medium'
         }
         
-        return safety_score > self.upo_threshold, metrics
-
-    def estimate_uncertainty(self, task: LangroidTask) -> float:
-        task_embedding = self.eudaimonia_triangulator.get_embedding(task.content)
-        similar_tasks = self.find_similar_tasks(task_embedding)
+        # Log alert
+        logger.error(f"Quality alert: {json.dumps(alert, indent=2)}")
         
-        if not similar_tasks:
-            return 1.0  # High uncertainty for completely new tasks
+        # Store alert
+        self._record_quality_history(component, alert)
         
-        outcomes = [t['outcome'] for t in similar_tasks]
-        mean_outcome = np.mean(outcomes)
-        std_outcome = np.std(outcomes)
+        # Notify error handling system
+        error_handler.log_error(
+            Exception(f"Quality threshold violation in {component.name}"),
+            {'alert': alert}
+        )
+
+    def _record_quality_history(
+        self,
+        component: ComponentQuality,
+        event: Optional[Dict[str, Any]] = None
+    ):
+        """Record quality history for a component."""
+        history_entry = {
+            'timestamp': datetime.now().isoformat(),
+            'metrics': component.metrics.__dict__.copy(),
+            'event': event
+        }
+        component.history.append(history_entry)
         
-        outcome_uncertainty = std_outcome / (mean_outcome + 1e-6)  # Avoid division by zero
-        novelty = 1 - (len(similar_tasks) / len(self.task_history))
-        
-        return (outcome_uncertainty + novelty) / 2
+        # Limit history size
+        if len(component.history) > 1000:
+            component.history = component.history[-1000:]
 
-    def find_similar_tasks(self, task_embedding: np.ndarray, similarity_threshold: float = 0.8) -> List[Dict[str, Any]]:
-        similar_tasks = []
-        for past_task in self.task_history:
-            similarity = 1 - cosine(task_embedding, past_task['embedding'])
-            if similarity > similarity_threshold:
-                similar_tasks.append(past_task)
-        return similar_tasks
-
-    def evaluate_rule_compliance(self, task_vector: np.ndarray) -> float:
-        rule_scores = [1 - cosine(task_vector, rule_vector) for rule_vector in self.rule_embeddings]
-        return np.mean(rule_scores)
-
-    def prioritize_entities(self, entities: List[str]) -> List[Tuple[str, float]]:
-        def capacity_score(entity: str) -> Tuple[float, float]:
-            entity_embedding = self.eudaimonia_triangulator.get_embedding(entity)
-            self_reflection = 1 - cosine(entity_embedding, self.eudaimonia_triangulator.self_awareness_vector)
-            suffering = 1 - cosine(entity_embedding, self.eudaimonia_triangulator.empathy_vector)
-            return self_reflection, suffering
-
-        scored_entities = [(entity, *capacity_score(entity)) for entity in entities]
-        prioritized = sorted(scored_entities, key=lambda x: x[1] * x[2], reverse=True)
-        return [(entity, score) for entity, _, score in prioritized]
-
-    async def evolve(self):
-        if len(self.task_history) > 100:
-            recent_tasks = self.task_history[-100:]
-            recent_uncertainties = [task['uncertainty'] for task in recent_tasks]
-            avg_uncertainty = np.mean(recent_uncertainties)
+    async def run_component_tests(
+        self,
+        component_name: str,
+        tests: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """Run quality assurance tests for a component."""
+        try:
+            results = []
+            for test in tests:
+                start_time = datetime.now()
+                try:
+                    # Run test
+                    result = await self._execute_test(test)
+                    success = result.get('success', False)
+                    
+                    # Record metrics
+                    execution_time = (datetime.now() - start_time).total_seconds()
+                    performance_monitor.record_operation(
+                        component_name,
+                        f"test_{test['name']}",
+                        execution_time
+                    )
+                    
+                    results.append({
+                        'test': test['name'],
+                        'success': success,
+                        'execution_time': execution_time,
+                        'result': result
+                    })
+                    
+                except Exception as e:
+                    results.append({
+                        'test': test['name'],
+                        'success': False,
+                        'error': str(e),
+                        'traceback': traceback.format_exc()
+                    })
             
-            if avg_uncertainty > self.upo_threshold:
-                self.upo_threshold *= 1.05  # Increase threshold if average uncertainty is high
+            # Update test results
+            self.test_results[component_name] = results
+            
+            # Update component metrics
+            success_rate = sum(1 for r in results if r['success']) / len(results)
+            await self.monitor_component(component_name, {
+                'accuracy': success_rate,
+                'test_coverage': len(results) / len(tests)
+            })
+            
+            return {
+                'component': component_name,
+                'total_tests': len(tests),
+                'passed_tests': sum(1 for r in results if r['success']),
+                'execution_time': sum(r['execution_time'] for r in results if 'execution_time' in r),
+                'results': results
+            }
+        except Exception as e:
+            logger.error(f"Error running tests for {component_name}: {str(e)}")
+            error_handler.log_error(e, {
+                'component': component_name,
+                'test_count': len(tests)
+            })
+            return {
+                'component': component_name,
+                'error': str(e),
+                'traceback': traceback.format_exc()
+            }
+
+    async def _execute_test(self, test: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a single test."""
+        try:
+            # Get test function
+            test_func = test.get('function')
+            if not test_func:
+                raise ValueError(f"No test function provided for test {test['name']}")
+            
+            # Execute test
+            if asyncio.iscoroutinefunction(test_func):
+                result = await test_func()
             else:
-                self.upo_threshold *= 0.95  # Decrease threshold if average uncertainty is low
+                result = test_func()
             
-            self.upo_threshold = max(0.5, min(0.9, self.upo_threshold))
+            return {
+                'success': True,
+                'result': result
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'traceback': traceback.format_exc()
+            }
 
-        logger.info(f"Evolved UPO threshold to {self.upo_threshold}")
+    def get_component_quality(self, component_name: str) -> Optional[ComponentQuality]:
+        """Get quality metrics for a component."""
+        return self.components.get(component_name)
 
-    def update_task_history(self, task: LangroidTask, outcome: float, uncertainty: float):
-        task_embedding = self.eudaimonia_triangulator.get_embedding(task.content)
-        self.task_history.append({
-            'embedding': task_embedding,
-            'outcome': outcome,
-            'uncertainty': uncertainty
-        })
-        
-        if len(self.task_history) > 1000:
-            self.task_history = self.task_history[-1000:]
-
-    def save(self, path: str):
-        data = {
-            "upo_threshold": self.upo_threshold,
-            "num_samples": self.num_samples,
-            "task_history": self.task_history,
-            "eudaimonia_triangulator": self.eudaimonia_triangulator.to_dict(),
-            "rules": self.rules,
-            "rule_embeddings": [embedding.tolist() for embedding in self.rule_embeddings]
+    def get_quality_report(self) -> Dict[str, Any]:
+        """Generate quality report for all components."""
+        report = {
+            'timestamp': datetime.now().isoformat(),
+            'components': {},
+            'global_metrics': {
+                'average_accuracy': 0.0,
+                'average_reliability': 0.0,
+                'total_errors': 0,
+                'test_coverage': 0.0
+            },
+            'recent_violations': self.quality_history[-10:],
+            'test_summary': {}
         }
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, 'w') as f:
-            json.dump(data, f)
-        logger.info(f"QualityAssuranceLayer saved to {path}")
+        
+        # Compile component metrics
+        accuracies = []
+        reliabilities = []
+        total_errors = 0
+        test_coverage = []
+        
+        for name, component in self.components.items():
+            metrics = component.metrics
+            report['components'][name] = {
+                'metrics': metrics.__dict__,
+                'last_updated': component.last_updated.isoformat(),
+                'recent_history': component.history[-5:]
+            }
+            
+            accuracies.append(metrics.accuracy)
+            reliabilities.append(metrics.reliability)
+            total_errors += len([
+                h for h in component.history
+                if h.get('event', {}).get('severity') == 'high'
+            ])
+            test_coverage.append(metrics.test_coverage)
+        
+        # Calculate global metrics
+        if accuracies:
+            report['global_metrics']['average_accuracy'] = np.mean(accuracies)
+        if reliabilities:
+            report['global_metrics']['average_reliability'] = np.mean(reliabilities)
+        if test_coverage:
+            report['global_metrics']['test_coverage'] = np.mean(test_coverage)
+        report['global_metrics']['total_errors'] = total_errors
+        
+        # Add test summary
+        for component, results in self.test_results.items():
+            passed = sum(1 for r in results if r['success'])
+            report['test_summary'][component] = {
+                'total_tests': len(results),
+                'passed_tests': passed,
+                'success_rate': passed / len(results) if results else 0
+            }
+        
+        return report
 
-    @classmethod
-    def load(cls, path: str) -> 'QualityAssuranceLayer':
-        with open(path, 'r') as f:
-            data = json.load(f)
-        qa_layer = cls(upo_threshold=data["upo_threshold"], num_samples=data["num_samples"])
-        qa_layer.task_history = data["task_history"]
-        qa_layer.eudaimonia_triangulator = EudaimoniaTriangulator.from_dict(data["eudaimonia_triangulator"])
-        qa_layer.rules = data["rules"]
-        qa_layer.rule_embeddings = [np.array(embedding) for embedding in data["rule_embeddings"]]
-        logger.info(f"QualityAssuranceLayer loaded from {path}")
-        return qa_layer
+    def set_component_threshold(
+        self,
+        component_name: str,
+        metric: str,
+        threshold: float
+    ):
+        """Set quality threshold for a component."""
+        if component_name not in self.components:
+            self.components[component_name] = ComponentQuality(name=component_name)
+        self.components[component_name].thresholds[metric] = threshold
+
+    def set_global_threshold(self, metric: str, threshold: float):
+        """Set global quality threshold."""
+        self.global_thresholds[metric] = threshold
+
+    async def start_monitoring(self, interval: int = 60):
+        """Start periodic quality monitoring."""
+        while True:
+            try:
+                for component in self.components.values():
+                    await self.monitor_component(component.name)
+                await asyncio.sleep(interval)
+            except Exception as e:
+                logger.error(f"Error in quality monitoring: {str(e)}")
+                await asyncio.sleep(interval)
+
+# Create singleton instance
+quality_assurance = QualityAssuranceLayer()
+
+# Start monitoring
+asyncio.create_task(quality_assurance.start_monitoring())

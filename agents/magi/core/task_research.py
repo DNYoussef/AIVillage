@@ -1,230 +1,201 @@
-"""Task research functionality for MagiAgent."""
+"""Task Research implementation."""
 
-import logging
 from typing import Dict, Any, List, Optional
-from .research_integration import ResearchIntegration
+import logging
+import asyncio
+from datetime import datetime
 
-logger = logging.getLogger(__name__)
+from ...utils.logging import get_logger
+from ...utils.exceptions import AIVillageException
+from ..research.integration import ResearchIntegration
+
+logger = get_logger(__name__)
 
 class TaskResearch:
     """
-    Handles research-based task planning for MagiAgent.
+    Handles research tasks for the MAGI system.
+    Integrates with various research sources and tools.
     """
     
-    def __init__(
-        self,
-        github_token: Optional[str] = None,
-        huggingface_token: Optional[str] = None,
-        llm: Any = None
-    ):
-        self.research_integration = ResearchIntegration(
-            github_token=github_token,
-            huggingface_token=huggingface_token,
-            llm=llm
-        )
-
-    async def plan_task_with_research(
-        self,
-        task: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def __init__(self, config: Dict[str, Any]):
         """
-        Plan task implementation using research.
-
-        :param task: Task description and requirements
-        :return: Implementation plan with resources
+        Initialize TaskResearch with configuration.
+        
+        Args:
+            config: Configuration dictionary
         """
-        # Perform research
-        research_results = await self.research_integration.research_for_task(task)
-        
-        # Analyze implementation approaches
-        implementation_analysis = await self.research_integration.analyze_implementation_approach(
-            task, research_results['research_results'])
-        
-        # Download required resources
-        resources = await self.research_integration.download_resources(
-            research_results['research_results'][0],  # Use first result set
-            research_results['recommendations']
-        )
-        
-        # Generate implementation plan
-        plan = await self._generate_implementation_plan(
-            task,
-            research_results,
-            implementation_analysis,
-            resources
-        )
-        
-        return {
-            'task': task,
-            'research': research_results,
-            'analysis': implementation_analysis,
-            'resources': resources,
-            'plan': plan
-        }
+        self.config = config
+        self.research_integration = ResearchIntegration(config)
+        logger.info("TaskResearch initialized")
 
-    async def _generate_implementation_plan(
-        self,
-        task: Dict[str, Any],
-        research_results: Dict[str, Any],
-        implementation_analysis: Dict[str, Any],
-        resources: Dict[str, str]
-    ) -> Dict[str, Any]:
-        """Generate detailed implementation plan."""
-        plan_prompt = f"""
-        Generate detailed implementation plan:
-        
-        Task: {task}
-        Research Analysis: {research_results['analysis']}
-        Implementation Analysis: {implementation_analysis['analysis']}
-        Available Resources: {list(resources.keys())}
-        
-        Provide:
-        1. Step-by-step implementation steps
-        2. Required tools and resources for each step
-        3. Integration points with downloaded resources
-        4. Testing requirements
-        5. Success criteria
+    async def research_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
+        Perform research for a given task.
         
-        plan_text = await self.research_integration.research_manager.llm.generate(
-            plan_prompt)
+        Args:
+            task: Task description and parameters
             
-        # Parse plan into structured format
-        steps = []
-        tools_needed = set()
-        current_section = None
-        current_step = None
-        
-        for line in plan_text.split('\n'):
-            if 'Step ' in line:
-                if current_step:
-                    steps.append(current_step)
-                current_step = {
-                    'description': line.split('Step ')[1],
-                    'tools': [],
-                    'resources': [],
-                    'tests': []
-                }
-            elif 'Tools:' in line:
-                current_section = 'tools'
-            elif 'Resources:' in line:
-                current_section = 'resources'
-            elif 'Tests:' in line:
-                current_section = 'tests'
-            elif line.strip() and current_step and current_section:
-                if current_section == 'tools':
-                    tool = line.strip()
-                    current_step['tools'].append(tool)
-                    tools_needed.add(tool)
-                elif current_section == 'resources':
-                    current_step['resources'].append(line.strip())
-                elif current_section == 'tests':
-                    current_step['tests'].append(line.strip())
-                    
-        if current_step:
-            steps.append(current_step)
-            
-        return {
-            'steps': steps,
-            'tools_needed': list(tools_needed),
-            'success_criteria': research_results['recommendations']['testing_steps'],
-            'integration_steps': research_results['recommendations']['integration_steps']
-        }
-
-    async def validate_resources(
-        self,
-        resources: Dict[str, str]
-    ) -> Dict[str, Any]:
+        Returns:
+            Research results and findings
         """
-        Validate downloaded resources.
-
-        :param resources: Dictionary of resource paths
-        :return: Validation results
-        """
-        validation_results = {
-            'is_valid': True,
-            'issues': [],
-            'warnings': []
-        }
-        
-        for resource_type, path in resources.items():
-            try:
-                if resource_type.startswith('github/'):
-                    # Validate GitHub repository
-                    validation_results.update(
-                        await self._validate_github_repo(path))
-                elif resource_type.startswith('huggingface/'):
-                    # Validate Hugging Face model
-                    validation_results.update(
-                        await self._validate_huggingface_model(path))
-            except Exception as e:
-                validation_results['is_valid'] = False
-                validation_results['issues'].append(
-                    f"Failed to validate {resource_type}: {str(e)}")
-                
-        return validation_results
-
-    async def _validate_github_repo(self, path: str) -> Dict[str, Any]:
-        """Validate GitHub repository structure and contents."""
-        validation = {
-            'is_valid': True,
-            'issues': [],
-            'warnings': []
-        }
-        
-        # Check basic repository structure
-        required_files = ['README.md', 'requirements.txt', 'setup.py']
-        for file in required_files:
-            if not os.path.exists(os.path.join(path, file)):
-                validation['warnings'].append(f"Missing {file}")
-                
-        # Check for security issues
-        security_issues = await self._check_security_issues(path)
-        if security_issues:
-            validation['issues'].extend(security_issues)
-            validation['is_valid'] = False
+        try:
+            # Extract research requirements
+            requirements = await self._extract_research_requirements(task)
             
-        return validation
+            # Gather information from multiple sources
+            results = await asyncio.gather(
+                self._search_knowledge_base(requirements),
+                self._search_external_sources(requirements),
+                self._analyze_related_tasks(requirements)
+            )
+            
+            # Combine and analyze results
+            combined_results = await self._combine_research_results(results)
+            analysis = await self._analyze_research_results(combined_results)
+            
+            return {
+                'requirements': requirements,
+                'results': combined_results,
+                'analysis': analysis,
+                'timestamp': datetime.now().isoformat()
+            }
+        except Exception as e:
+            logger.exception(f"Error researching task: {str(e)}")
+            raise AIVillageException(f"Error researching task: {str(e)}")
 
-    async def _validate_huggingface_model(self, path: str) -> Dict[str, Any]:
-        """Validate Hugging Face model files and structure."""
-        validation = {
-            'is_valid': True,
-            'issues': [],
-            'warnings': []
-        }
+    async def _extract_research_requirements(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Extract research requirements from task.
         
-        # Check model files
-        required_files = ['config.json', 'pytorch_model.bin']
-        for file in required_files:
-            if not os.path.exists(os.path.join(path, file)):
-                validation['issues'].append(f"Missing required file: {file}")
-                validation['is_valid'] = False
-                
-        return validation
+        Args:
+            task: Task description and parameters
+            
+        Returns:
+            Research requirements
+        """
+        try:
+            return await self.research_integration.extract_requirements(task)
+        except Exception as e:
+            logger.exception(f"Error extracting research requirements: {str(e)}")
+            raise AIVillageException(f"Error extracting research requirements: {str(e)}")
 
-    async def _check_security_issues(self, path: str) -> List[str]:
-        """Check for security issues in code."""
-        issues = []
+    async def _search_knowledge_base(self, requirements: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Search internal knowledge base.
         
-        # Patterns to check for
-        dangerous_patterns = [
-            'os.system(',
-            'subprocess.call(',
-            'eval(',
-            'exec('
-        ]
+        Args:
+            requirements: Research requirements
+            
+        Returns:
+            Knowledge base search results
+        """
+        try:
+            return await self.research_integration.search_knowledge_base(requirements)
+        except Exception as e:
+            logger.exception(f"Error searching knowledge base: {str(e)}")
+            raise AIVillageException(f"Error searching knowledge base: {str(e)}")
+
+    async def _search_external_sources(self, requirements: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Search external information sources.
         
-        # Check all Python files
-        for root, _, files in os.walk(path):
-            for file in files:
-                if file.endswith('.py'):
-                    file_path = os.path.join(root, file)
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                        for pattern in dangerous_patterns:
-                            if pattern in content:
-                                issues.append(
-                                    f"Dangerous pattern {pattern} found in {file}")
-                                
-        return issues
+        Args:
+            requirements: Research requirements
+            
+        Returns:
+            External source search results
+        """
+        try:
+            return await self.research_integration.search_external_sources(requirements)
+        except Exception as e:
+            logger.exception(f"Error searching external sources: {str(e)}")
+            raise AIVillageException(f"Error searching external sources: {str(e)}")
+
+    async def _analyze_related_tasks(self, requirements: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Analyze related tasks and their outcomes.
+        
+        Args:
+            requirements: Research requirements
+            
+        Returns:
+            Related task analysis results
+        """
+        try:
+            return await self.research_integration.analyze_related_tasks(requirements)
+        except Exception as e:
+            logger.exception(f"Error analyzing related tasks: {str(e)}")
+            raise AIVillageException(f"Error analyzing related tasks: {str(e)}")
+
+    async def _combine_research_results(self, results: List[List[Dict[str, Any]]]) -> Dict[str, Any]:
+        """
+        Combine results from different sources.
+        
+        Args:
+            results: List of results from different sources
+            
+        Returns:
+            Combined research results
+        """
+        try:
+            return await self.research_integration.combine_results(results)
+        except Exception as e:
+            logger.exception(f"Error combining research results: {str(e)}")
+            raise AIVillageException(f"Error combining research results: {str(e)}")
+
+    async def _analyze_research_results(self, combined_results: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Analyze combined research results.
+        
+        Args:
+            combined_results: Combined results from all sources
+            
+        Returns:
+            Analysis of research results
+        """
+        try:
+            return await self.research_integration.analyze_results(combined_results)
+        except Exception as e:
+            logger.exception(f"Error analyzing research results: {str(e)}")
+            raise AIVillageException(f"Error analyzing research results: {str(e)}")
+
+    async def get_research_status(self) -> Dict[str, Any]:
+        """
+        Get current research system status.
+        
+        Returns:
+            Status information for the research system
+        """
+        try:
+            return await self.research_integration.get_status()
+        except Exception as e:
+            logger.exception(f"Error getting research status: {str(e)}")
+            raise AIVillageException(f"Error getting research status: {str(e)}")
+
+    async def save_state(self, path: str):
+        """
+        Save research system state.
+        
+        Args:
+            path: Path to save state
+        """
+        try:
+            await self.research_integration.save_state(path)
+            logger.info(f"Research system state saved to {path}")
+        except Exception as e:
+            logger.exception(f"Error saving research system state: {str(e)}")
+            raise AIVillageException(f"Error saving research system state: {str(e)}")
+
+    async def load_state(self, path: str):
+        """
+        Load research system state.
+        
+        Args:
+            path: Path to load state from
+        """
+        try:
+            await self.research_integration.load_state(path)
+            logger.info(f"Research system state loaded from {path}")
+        except Exception as e:
+            logger.exception(f"Error loading research system state: {str(e)}")
+            raise AIVillageException(f"Error loading research system state: {str(e)}")

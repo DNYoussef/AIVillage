@@ -1,77 +1,150 @@
 # rag_system/error_handling/error_control.py
 
 import logging
-from typing import Any, Dict, Optional
-from rag_system.utils.logging import setup_logger
+from typing import Dict, Any, Optional, List
+from dataclasses import dataclass, field
+from datetime import datetime
+import asyncio
+from .error_handler import error_handler, AIVillageException
 
-class ErrorController:
-    def __init__(self):
-        self.logger = setup_logger(__name__)
+logger = logging.getLogger(__name__)
 
-    def handle_error(self, error_message: str, exception: Exception, context: Optional[Dict[str, Any]] = None):
-        """
-        Handle errors in a centralized manner.
-        
-        :param error_message: A descriptive message about the error
-        :param exception: The exception that was raised
-        :param context: Optional dictionary containing contextual information about the error
-        """
-        self.logger.error(f"{error_message}: {str(exception)}")
-        
-        if context:
-            self.logger.error(f"Error context: {context}")
-        
-        # Log the full stack trace
-        self.logger.exception("Full stack trace:")
-        
-        # Implement additional error handling logic here, such as:
-        # - Sending error notifications
-        # - Updating error statistics
-        # - Triggering recovery mechanisms
-        
-        self._attempt_recovery(exception, context)
+@dataclass
+class ErrorControl:
+    """
+    Error control system that manages error thresholds and recovery strategies.
+    """
+    max_retries: int = 3
+    retry_delay: float = 1.0
+    error_thresholds: Dict[str, int] = field(default_factory=lambda: {
+        'CRITICAL': 1,
+        'ERROR': 5,
+        'WARNING': 10
+    })
+    component_thresholds: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    recovery_strategies: Dict[str, callable] = field(default_factory=dict)
+    error_counts: Dict[str, int] = field(default_factory=lambda: {
+        'CRITICAL': 0,
+        'ERROR': 0,
+        'WARNING': 0
+    })
+    component_error_counts: Dict[str, Dict[str, int]] = field(default_factory=dict)
 
-    def _attempt_recovery(self, exception: Exception, context: Optional[Dict[str, Any]] = None):
-        """
-        Attempt to recover from the error based on its type and context.
-        
-        :param exception: The exception that was raised
-        :param context: Optional dictionary containing contextual information about the error
-        """
-        # Implement recovery logic based on the type of exception and context
-        # This is a placeholder and should be expanded based on your specific needs
-        
-        if isinstance(exception, ValueError):
-            self.logger.info("Attempting to recover from ValueError...")
-            # Implement specific recovery logic for ValueError
-        elif isinstance(exception, IOError):
-            self.logger.info("Attempting to recover from IOError...")
-            # Implement specific recovery logic for IOError
+    def __post_init__(self):
+        error_handler.register_error_callback(self.handle_error_callback)
+
+    def handle_error_callback(self, error: Exception, context: Optional[Dict[str, Any]] = None):
+        """Handle error callback from error_handler."""
+        if isinstance(error, AIVillageException):
+            severity = error.severity
+            component = error.component
         else:
-            self.logger.warning("No specific recovery mechanism for this error type.")
+            severity = 'ERROR'
+            component = context.get('component', 'unknown') if context else 'unknown'
 
-    def log_warning(self, warning_message: str, context: Optional[Dict[str, Any]] = None):
-        """
-        Log a warning message with optional context.
+        self.error_counts[severity] = self.error_counts.get(severity, 0) + 1
         
-        :param warning_message: The warning message to log
-        :param context: Optional dictionary containing contextual information about the warning
-        """
-        self.logger.warning(warning_message)
-        
-        if context:
-            self.logger.warning(f"Warning context: {context}")
+        if component not in self.component_error_counts:
+            self.component_error_counts[component] = {}
+        self.component_error_counts[component][severity] = self.component_error_counts[component].get(severity, 0) + 1
 
-    def get_error_statistics(self) -> Dict[str, Any]:
-        """
-        Get statistics about errors that have occurred.
-        
-        :return: A dictionary containing error statistics
-        """
-        # Implement logic to collect and return error statistics
-        # This is a placeholder and should be expanded based on your specific needs
-        return {
-            "total_errors": 0,
-            "errors_by_type": {},
-            "most_common_error": None
+        self.check_thresholds(severity, component)
+
+    def check_thresholds(self, severity: str, component: str):
+        """Check if error thresholds have been exceeded."""
+        # Check global thresholds
+        if self.error_counts[severity] >= self.error_thresholds[severity]:
+            self.trigger_recovery(severity, component)
+
+        # Check component-specific thresholds
+        if component in self.component_thresholds:
+            if self.component_error_counts[component][severity] >= self.component_thresholds[component][severity]:
+                self.trigger_recovery(severity, component)
+
+    def trigger_recovery(self, severity: str, component: str):
+        """Trigger appropriate recovery strategy."""
+        if component in self.recovery_strategies:
+            try:
+                self.recovery_strategies[component](severity)
+            except Exception as e:
+                logger.error(f"Error in recovery strategy for {component}: {str(e)}")
+        else:
+            self.default_recovery(severity, component)
+
+    def default_recovery(self, severity: str, component: str):
+        """Default recovery strategy."""
+        logger.warning(f"No specific recovery strategy for {component}. Using default recovery.")
+        if severity == 'CRITICAL':
+            self.reset_component(component)
+        elif severity == 'ERROR':
+            self.pause_component(component)
+        else:
+            self.log_warning(component)
+
+    def reset_component(self, component: str):
+        """Reset a component to its initial state."""
+        logger.info(f"Resetting component: {component}")
+        # Implementation would depend on component-specific reset logic
+        self.component_error_counts[component] = {
+            'CRITICAL': 0,
+            'ERROR': 0,
+            'WARNING': 0
         }
+
+    def pause_component(self, component: str):
+        """Temporarily pause a component."""
+        logger.info(f"Pausing component: {component}")
+        # Implementation would depend on component-specific pause logic
+
+    def log_warning(self, component: str):
+        """Log a warning about component errors."""
+        logger.warning(f"Multiple warnings in component: {component}")
+
+    def register_recovery_strategy(self, component: str, strategy: callable):
+        """Register a custom recovery strategy for a component."""
+        self.recovery_strategies[component] = strategy
+
+    def set_component_threshold(self, component: str, severity: str, threshold: int):
+        """Set error threshold for a specific component."""
+        if component not in self.component_thresholds:
+            self.component_thresholds[component] = {}
+        self.component_thresholds[component][severity] = threshold
+
+    def get_error_status(self) -> Dict[str, Any]:
+        """Get current error status."""
+        return {
+            'error_counts': dict(self.error_counts),
+            'component_error_counts': {
+                component: dict(counts)
+                for component, counts in self.component_error_counts.items()
+            },
+            'thresholds': {
+                'global': dict(self.error_thresholds),
+                'component': {
+                    component: dict(thresholds)
+                    for component, thresholds in self.component_thresholds.items()
+                }
+            }
+        }
+
+    async def monitor_error_rates(self, interval: int = 60):
+        """Monitor error rates and trigger alerts if necessary."""
+        while True:
+            try:
+                metrics = error_handler.get_error_metrics()
+                for component, errors in metrics['component_errors'].items():
+                    if component in self.component_thresholds:
+                        if errors > self.component_thresholds[component].get('ERROR', float('inf')):
+                            logger.error(f"Error rate threshold exceeded for component: {component}")
+                            self.trigger_recovery('ERROR', component)
+                
+                await asyncio.sleep(interval)
+            except Exception as e:
+                logger.error(f"Error in error rate monitoring: {str(e)}")
+                await asyncio.sleep(interval)
+
+# Create singleton instance
+error_control = ErrorControl()
+
+# Start error rate monitoring
+asyncio.create_task(error_control.monitor_error_rates())

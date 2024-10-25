@@ -1,23 +1,31 @@
+"""Unified Task Manager implementation."""
+
+from typing import Dict, Any, List, Optional
+from datetime import datetime
 import logging
 import os
 import json
 import asyncio
-from typing import Dict, List, Any, Optional
+import time
+import networkx as nx
 from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
 import uuid
-from communications.protocol import StandardCommunicationProtocol, Message, MessageType, Priority
-from agents.utils.exceptions import AIVillageException
-from .incentive_model import IncentiveModel
-from .subgoal_generator import SubGoalGenerator
-from ..analytics.unified_analytics import UnifiedAnalytics
-from ..planning.unified_planning_and_decision import UnifiedPlanningAndDecision, GraphManager
-from networkx import DiGraph
-import time
-import networkx as nx
 
-logger = logging.getLogger(__name__)
+from ...utils.logging import get_logger
+from ...utils.exceptions import AIVillageException
+from ..planning.subgoal_generator import SubGoalGenerator
+from ..planning.unified_planning_and_decision import UnifiedPlanningAndDecision
+from ..task_management.incentive_model import IncentiveModel
+from ..analytics.unified_analytics import UnifiedAnalytics
+from ..planning.optimization import Optimizer
+from communications.protocol import StandardCommunicationProtocol
+from communications.message import Message, MessageType, Priority
+from communications.queue import MessageQueue
+from communications.community_hub import CommunityHub
+
+logger = get_logger(__name__)
 
 class TaskStatus(Enum):
     PENDING = "pending"
@@ -62,7 +70,7 @@ class UnifiedManagement:
     def __init__(self, communication_protocol: StandardCommunicationProtocol, decision_maker: UnifiedPlanningAndDecision, num_agents: int, num_actions: int):
         self.communication_protocol = communication_protocol
         self.decision_maker = decision_maker
-        self.pending_tasks: deque[Task] = deque()
+        self.pending_tasks = MessageQueue()  # Using enhanced MessageQueue
         self.ongoing_tasks: Dict[str, Task] = {}
         self.completed_tasks: List[Task] = []
         self.projects: Dict[str, Project] = {}
@@ -73,14 +81,30 @@ class UnifiedManagement:
         self.unified_analytics = UnifiedAnalytics()
         self.batch_size = 5
         self.graph_manager = self.decision_maker.graph_manager
-        logger.info("UnifiedManagement initialized with GraphManager")
+        self.community_hub = CommunityHub(communication_protocol)  # Initialize CommunityHub
+        logger.info("UnifiedManagement initialized with GraphManager and CommunityHub")
 
     async def create_task(self, description: str, agent: str, priority: int = 1, deadline: Optional[str] = None, project_id: Optional[str] = None) -> Task:
         try:
             task = Task(description=description, assigned_agents=[agent], priority=priority, deadline=deadline)
-            self.pending_tasks.append(task)
-            logger.info(f"Created task: {task.id} for agent: {agent}")
-
+            
+            # Create task message
+            task_message = Message(
+                type=MessageType.TASK,
+                sender="UnifiedManagement",
+                receiver=agent,
+                content={
+                    "task_id": task.id,
+                    "description": description,
+                    "priority": priority,
+                    "deadline": deadline
+                },
+                priority=Priority.MEDIUM if priority <= 1 else Priority.HIGH
+            )
+            
+            # Add to message queue
+            self.pending_tasks.enqueue(task_message)
+            
             # Add task node to graph
             self.graph_manager.add_task_node(task.id, {
                 "description": description,
@@ -93,49 +117,18 @@ class UnifiedManagement:
             if project_id:
                 await self.add_task_to_project(project_id, task.id, {"description": description, "agent": agent})
 
+            # Share task info with community hub
+            await self.community_hub.share_task_info(task.id, {
+                "description": description,
+                "assigned_agent": agent,
+                "priority": priority,
+                "status": task.status.value
+            })
+
             return task
         except Exception as e:
             logger.exception(f"Error creating task: {str(e)}")
             raise AIVillageException(f"Error creating task: {str(e)}")
-
-    async def create_complex_task(self, description: str, context: Dict[str, Any]) -> List[Task]:
-        try:
-            # Use decision maker to get task breakdown
-            breakdown = await self.decision_maker.make_decision(description, eudaimonia_score=0.5)
-            plan_tree = breakdown.get('full_plan', {}).get('plan_tree', {})
-
-            # Convert plan_tree into graph nodes
-            nx_plan_graph = self.graph_manager._convert_plan_to_graph(plan_tree)
-            self.graph_manager.merge_task_graph(nx_plan_graph)
-            self.graph_manager.visualize_graph()
-
-            # Extract tasks from plan_tree
-            tasks = await self._extract_tasks_from_plan(plan_tree)
-
-            # Create tasks and add to pending_tasks
-            created_tasks = []
-            for task_info in tasks:
-                agent = task_info.get('assigned_agent', self.available_agents[0] if self.available_agents else "default_agent")
-                task = await self.create_task(task_info['description'], agent, priority=task_info.get('priority', 1), deadline=task_info.get('deadline'), project_id=task_info.get('project_id'))
-                created_tasks.append(task)
-
-            return created_tasks
-        except Exception as e:
-            logger.exception(f"Error creating complex task: {str(e)}")
-            raise AIVillageException(f"Error creating complex task: {str(e)}")
-
-    async def _extract_tasks_from_plan(self, plan_tree: Dict[str, Any]) -> List[Dict[str, Any]]:
-        tasks = []
-
-        def extract_tasks_recursive(node):
-            if 'tasks' in node:
-                for task in node['tasks']:
-                    tasks.append(task)
-            for sub_goal in node.get('sub_goals', []):
-                extract_tasks_recursive(sub_goal)
-
-        extract_tasks_recursive(plan_tree)
-        return tasks
 
     async def assign_task(self, task: Task):
         try:
@@ -144,11 +137,34 @@ class UnifiedManagement:
             task.assigned_agents = [agent]
             self.ongoing_tasks[task.id] = task.update_status(TaskStatus.IN_PROGRESS)
             incentive = self.incentive_model.calculate_incentive({'assigned_agent': agent, 'task_id': task.id}, self.agent_performance)
-            await self.notify_agent_with_incentive(agent, task, incentive['incentive'])
+            
+            # Create assignment message
+            assignment_message = Message(
+                type=MessageType.TASK,
+                sender="UnifiedManagement",
+                receiver=agent,
+                content={
+                    "task_id": task.id,
+                    "description": task.description,
+                    "incentive": incentive['incentive']
+                },
+                priority=Priority.HIGH if task.priority > 1 else Priority.MEDIUM
+            )
+            
+            # Send message through communication protocol
+            await self.communication_protocol.send_message(assignment_message)
 
             # Update graph with task assignment
             self.graph_manager.G.edges[agent, task.id]['status'] = 'assigned'
             self.graph_manager.G.edges[agent, task.id]['incentive'] = incentive['incentive']
+            
+            # Update community hub
+            await self.community_hub.update_task_status(task.id, {
+                "status": TaskStatus.IN_PROGRESS.value,
+                "assigned_agent": agent,
+                "incentive": incentive['incentive']
+            })
+            
             logger.info(f"Assigned task {task.id} to agent {agent} with incentive {incentive['incentive']}")
         except Exception as e:
             logger.exception(f"Error assigning task: {str(e)}")
@@ -689,3 +705,120 @@ class UnifiedManagement:
             raise AIVillageException(f"Error optimizing graph structure: {str(e)}")
 
     # Integrate Graph-based Approach: Implementing Step 6
+
+
+    async def integrate_incentive_model(self, task: Task, agent_performance: Dict[str, float]):
+        """
+        Integrate the incentive model with task allocation and completion processes.
+        """
+        try:
+            # Calculate incentive for task
+            incentive = self.incentive_model.calculate_incentive(
+                {'assigned_agent': task.assigned_agents[0], 'task_id': task.id},
+                agent_performance
+            )
+
+            # Update graph with incentive information
+            self.graph_manager.G.add_edge(
+                task.assigned_agents[0],
+                task.id,
+                weight=incentive['incentive'],
+                type='task_assignment'
+            )
+
+            # Update task priority based on incentive
+            task.priority = max(1, int(task.priority * incentive['incentive']))
+            
+            logger.info(f"Integrated incentive model for task {task.id} with incentive {incentive['incentive']}")
+            return incentive
+        except Exception as e:
+            logger.exception(f"Error integrating incentive model: {str(e)}")
+            raise AIVillageException(f"Error integrating incentive model: {str(e)}")
+
+    async def optimize_task_allocation(self):
+        """
+        Optimize task allocation using the graph-based approach and incentive model.
+        """
+        try:
+            # Get all pending tasks
+            pending_tasks = list(self.pending_tasks)
+            
+            # Create a task dependency graph
+            task_graph = nx.DiGraph()
+            for task in pending_tasks:
+                task_graph.add_node(task.id, task=task)
+                for dep in task.dependencies:
+                    task_graph.add_edge(dep, task.id)
+            
+            # Topologically sort tasks to respect dependencies
+            try:
+                sorted_tasks = list(nx.topological_sort(task_graph))
+            except nx.NetworkXUnfeasible:
+                logger.warning("Circular dependencies detected in tasks")
+                sorted_tasks = [task.id for task in pending_tasks]
+            
+            # Calculate optimal assignments
+            assignments = {}
+            for task_id in sorted_tasks:
+                task = task_graph.nodes[task_id]['task']
+                best_agent = None
+                best_score = float('-inf')
+                
+                for agent in self.available_agents:
+                    # Calculate assignment score based on multiple factors
+                    incentive = self.incentive_model.calculate_incentive(
+                        {'assigned_agent': agent, 'task_id': task.id},
+                        self.agent_performance
+                    )
+                    performance_score = self.agent_performance.get(agent, 1.0)
+                    specialization_score = self.incentive_model.agent_specialization[
+                        self._get_agent_id(agent),
+                        self._map_task_to_action({'description': task.description})
+                    ]
+                    
+                    # Combine scores with weights
+                    total_score = (
+                        0.4 * incentive['incentive'] +
+                        0.3 * performance_score +
+                        0.3 * specialization_score
+                    )
+                    
+                    if total_score > best_score:
+                        best_score = total_score
+                        best_agent = agent
+                
+                assignments[task_id] = best_agent
+            
+            # Apply assignments
+            for task_id, agent in assignments.items():
+                task = task_graph.nodes[task_id]['task']
+                task.assigned_agents = [agent]
+                await self.assign_task(task)
+            
+            logger.info(f"Optimized task allocation for {len(assignments)} tasks")
+            return assignments
+        except Exception as e:
+            logger.exception(f"Error optimizing task allocation: {str(e)}")
+            raise AIVillageException(f"Error optimizing task allocation: {str(e)}")
+
+    def _get_agent_id(self, agent_name: str) -> int:
+        """Helper method to get agent ID for incentive model."""
+        return hash(agent_name) % self.incentive_model.num_agents
+
+    def _map_task_to_action(self, task: Dict[str, Any]) -> int:
+        """Helper method to map task to action ID for incentive model."""
+        task_type = task.get('type', 'default')
+        task_priority = task.get('priority', 1)
+        task_complexity = task.get('complexity', 1)
+        
+        if task_type == 'critical':
+            return 0
+        elif task_type == 'routine' and task_priority > 5:
+            return 1
+        elif 'analysis' in task.get('description', '').lower():
+            return 2
+        elif task_complexity > 7:
+            return 3
+        else:
+            return 4 % self.incentive_model.num_actions
+

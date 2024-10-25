@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Village Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.2.31"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.2/dist/vis-network.min.js"></script>
+  <style>
+    .network-container {
+      height: 600px;
+      border: 1px solid #ddd;
+      background: white;
+    }
+
+    .chat-container {
+      height: 500px;
+      overflow-y: auto;
+    }
+
+    .chat-message {
+      max-width: 80%;
+      margin: 8px;
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .user-message {
+      background-color: #e3f2fd;
+      margin-left: auto;
+    }
+
+    .agent-message {
+      background-color: #f5f5f5;
+      margin-right: auto;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100">
+  <div id="app" class="min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-gray-800 text-white p-4">
+      <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-xl font-bold">AI Village Dashboard</h1>
+        <div class="flex space-x-4">
+          <button @click="activeTab = 'dashboard'" :class="{'text-blue-300': activeTab === 'dashboard'}">
+            Dashboard
+          </button>
+          <button @click="activeTab = 'knowledge'" :class="{'text-blue-300': activeTab === 'knowledge'}">
+            Knowledge Graph
+          </button>
+          <button @click="activeTab = 'decisions'" :class="{'text-blue-300': activeTab === 'decisions'}">
+            Decision Tree
+          </button>
+          <button @click="activeTab = 'chat'" :class="{'text-blue-300': activeTab === 'chat'}">
+            Chat
+          </button>
+          <div v-if="isAuthenticated">
+            <span class="mr-4">{{ username }}</span>
+            <button @click="logout" class="bg-red-500 px-4 py-2 rounded">
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto mt-8">
+      <!-- Dashboard Tab -->
+      <div v-if="activeTab === 'dashboard'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- System Status Component -->
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h2 class="text-xl font-bold mb-4">System Status</h2>
+          <!-- Status content -->
+        </div>
+
+        <!-- Performance Charts -->
+        <div class="col-span-2 bg-white p-6 rounded-lg shadow">
+          <h2 class="text-xl font-bold mb-4">Performance Metrics</h2>
+          <canvas ref="performanceChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Knowledge Graph Tab -->
+      <div v-if="activeTab === 'knowledge'" class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-4">Knowledge Graph</h2>
+        <div class="network-container" ref="knowledgeGraph"></div>
+        <div class="mt-4">
+          <h3 class="text-lg font-semibold mb-2">Graph Controls</h3>
+          <button @click="zoomIn" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">
+            Zoom In
+          </button>
+          <button @click="zoomOut" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">
+            Zoom Out
+          </button>
+          <button @click="resetView" class="bg-gray-500 text-white px-4 py-2 rounded">
+            Reset View
+          </button>
+        </div>
+      </div>
+
+      <!-- Decision Tree Tab -->
+      <div v-if="activeTab === 'decisions'" class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-4">Decision Tree</h2>
+        <div class="network-container" ref="decisionTree"></div>
+        <div class="mt-4">
+          <h3 class="text-lg font-semibold mb-2">Current Decision Path</h3>
+          <div class="bg-gray-100 p-4 rounded">
+            <div v-for="(step, index) in currentDecisionPath" :key="index" class="flex items-center">
+              <div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center">
+                {{ index + 1 }}
+              </div>
+              <div class="ml-4">{{ step }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Tab -->
+      <div v-if="activeTab === 'chat'" class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-4">Chat Interface</h2>
+        <div class="chat-container bg-gray-50 rounded p-4 mb-4">
+          <div v-for="message in chatHistory" :key="message.id"
+            :class="['chat-message', message.sender === 'user' ? 'user-message' : 'agent-message']">
+            <div class="font-semibold mb-1">{{ message.sender === 'user' ? 'You' : 'Agent' }}</div>
+            <div>{{ message.content }}</div>
+            <div v-if="message.context" class="mt-2 text-sm text-gray-600">
+              <div v-if="message.context.relevant_concepts">
+                Related: {{ message.context.relevant_concepts.join(', ') }}
+              </div>
+              <div v-if="message.context.confidence">
+                Confidence: {{ (message.context.confidence * 100).toFixed(1) }}%
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex">
+          <input v-model="chatInput" @keyup.enter="sendMessage" placeholder="Type your message..."
+            class="flex-1 p-2 border rounded-l focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <button @click="sendMessage" class="bg-blue-500 text-white px-6 py-2 rounded-r hover:bg-blue-600">
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, onMounted, watch } = Vue
+
+    createApp({
+      setup() {
+        const activeTab = ref('dashboard')
+        const isAuthenticated = ref(false)
+        const username = ref('')
+        const knowledgeGraph = ref(null)
+        const decisionTree = ref(null)
+        const chatHistory = ref([])
+        const chatInput = ref('')
+        const currentDecisionPath = ref([])
+
+        // Network visualization options
+        const networkOptions = {
+          nodes: {
+            shape: 'dot',
+            size: 30,
+            font: {
+              size: 14
+            }
+          },
+          edges: {
+            arrows: 'to',
+            smooth: {
+              type: 'cubicBezier'
+            }
+          },
+          physics: {
+            stabilization: true,
+            barnesHut: {
+              gravitationalConstant: -80000,
+              springConstant: 0.001,
+              springLength: 200
+            }
+          }
+        }
+
+        const initializeNetworks = () => {
+          // Initialize Knowledge Graph
+          const knowledgeContainer = document.getElementById('knowledgeGraph')
+          if (knowledgeContainer) {
+            fetchKnowledgeGraph().then(data => {
+              knowledgeGraph.value = new vis.Network(
+                knowledgeContainer,
+                data,
+                networkOptions
+              )
+            })
+          }
+
+          // Initialize Decision Tree
+          const decisionContainer = document.getElementById('decisionTree')
+          if (decisionContainer) {
+            fetchDecisionTree().then(data => {
+              decisionTree.value = new vis.Network(
+                decisionContainer,
+                data,
+                networkOptions
+              )
+            })
+          }
+        }
+
+        const fetchKnowledgeGraph = async () => {
+          try {
+            const response = await axios.get('/api/rag/graph', {
+              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            })
+            return response.data
+          } catch (error) {
+            console.error('Error fetching knowledge graph:', error)
+            return { nodes: [], edges: [] }
+          }
+        }
+
+        const fetchDecisionTree = async () => {
+          try {
+            const response = await axios.get('/api/king/decision-tree', {
+              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            })
+            return response.data
+          } catch (error) {
+            console.error('Error fetching decision tree:', error)
+            return { nodes: [], edges: [] }
+          }
+        }
+
+        const fetchChatHistory = async () => {
+          try {
+            const response = await axios.get('/api/chat/history', {
+              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            })
+            chatHistory.value = response.data.messages
+          } catch (error) {
+            console.error('Error fetching chat history:', error)
+          }
+        }
+
+        const sendMessage = async () => {
+          if (!chatInput.value.trim()) return
+
+          const message = {
+            content: chatInput.value,
+            timestamp: new Date().toISOString()
+          }
+
+          try {
+            chatHistory.value.push({
+              id: Date.now(),
+              sender: 'user',
+              ...message
+            })
+
+            const response = await axios.post('/api/chat/message',
+              { message: chatInput.value },
+              { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+            )
+
+            chatHistory.value.push({
+              id: Date.now() + 1,
+              sender: 'agent',
+              content: response.data.response,
+              context: response.data.context,
+              timestamp: new Date().toISOString()
+            })
+
+            chatInput.value = ''
+          } catch (error) {
+            console.error('Error sending message:', error)
+          }
+        }
+
+        // Network controls
+        const zoomIn = () => {
+          if (activeTab.value === 'knowledge' && knowledgeGraph.value) {
+            knowledgeGraph.value.moveTo({ scale: knowledgeGraph.value.getScale() * 1.2 })
+          } else if (activeTab.value === 'decisions' && decisionTree.value) {
+            decisionTree.value.moveTo({ scale: decisionTree.value.getScale() * 1.2 })
+          }
+        }
+
+        const zoomOut = () => {
+          if (activeTab.value === 'knowledge' && knowledgeGraph.value) {
+            knowledgeGraph.value.moveTo({ scale: knowledgeGraph.value.getScale() * 0.8 })
+          } else if (activeTab.value === 'decisions' && decisionTree.value) {
+            decisionTree.value.moveTo({ scale: decisionTree.value.getScale() * 0.8 })
+          }
+        }
+
+        const resetView = () => {
+          if (activeTab.value === 'knowledge' && knowledgeGraph.value) {
+            knowledgeGraph.value.fit()
+          } else if (activeTab.value === 'decisions' && decisionTree.value) {
+            decisionTree.value.fit()
+          }
+        }
+
+        watch(activeTab, (newTab) => {
+          if (newTab === 'knowledge' || newTab === 'decisions') {
+            setTimeout(initializeNetworks, 100)
+          } else if (newTab === 'chat') {
+            fetchChatHistory()
+          }
+        })
+
+        onMounted(() => {
+          const token = localStorage.getItem('token')
+          if (token) {
+            isAuthenticated.value = true
+            username.value = 'User' // Replace with actual username
+          }
+        })
+
+        return {
+          activeTab,
+          isAuthenticated,
+          username,
+          chatHistory,
+          chatInput,
+          currentDecisionPath,
+          sendMessage,
+          zoomIn,
+          zoomOut,
+          resetView
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+
+</html>
