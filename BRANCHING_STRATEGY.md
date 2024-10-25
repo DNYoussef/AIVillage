@@ -42,3 +42,5 @@ This document outlines the branching strategy for our project's version control 
    - Merge into `develop`
 
 By following this branching strategy, we can maintain a clean and organized codebase, facilitate collaborative development, and ensure stable releases.
+
+
