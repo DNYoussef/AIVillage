@@ -1,6 +1,9 @@
+"""Enhanced MagiPlanning with code-specific capabilities."""
+
 import math
 import random
-from typing import List, Dict, Any, Tuple
+import uuid
+from typing import List, Dict, Any, Tuple, Optional
 import asyncio
 from collections import defaultdict
 from matplotlib import pyplot as plt
@@ -16,10 +19,18 @@ from agents.language_models.openai_gpt import OpenAIGPTConfig
 from agents.quality_assurance_layer import QualityAssuranceLayer
 from agents.utils.exceptions import AIVillageException
 from communications.protocol import StandardCommunicationProtocol
+from agents.core.techniques.registry import TechniqueRegistry
+from agents.core.techniques.multi_path_exploration import MultiPathExploration
+from agents.core.techniques.pattern_integration import PatternIntegration
+from agents.core.techniques.solution_unit_manipulation import SolutionUnitManipulation
+from .code_planning_extension import CodePlanningContext, CodePlanningExtension
+from .project_planner import ProjectPlan, ProjectPlanner
+from .build_orchestrator import BuildContext, BuildOrchestrator
 
 logger = logging.getLogger(__name__)
 
 class MCTSNode:
+    """Monte Carlo Tree Search Node."""
     def __init__(self, state, parent=None):
         self.state = state
         self.parent = parent
@@ -28,6 +39,7 @@ class MCTSNode:
         self.value = 0
 
 class GraphManager:
+    """Manages task and knowledge graphs."""
     def __init__(self):
         self.G = nx.DiGraph()
 
@@ -77,20 +89,50 @@ class MagiPlanning:
     Xanatos Gambits to create robust and adaptable plans.
     """
 
-    def __init__(self, communication_protocol: StandardCommunicationProtocol, quality_assurance_layer: QualityAssuranceLayer, graph_manager: GraphManager):
+    def __init__(
+        self,
+        communication_protocol: StandardCommunicationProtocol,
+        quality_assurance_layer: QualityAssuranceLayer,
+        graph_manager: GraphManager
+    ):
         """
         Initialize the MagiPlanning instance.
 
         Args:
-            communication_protocol (StandardCommunicationProtocol): Protocol for communication with other components.
-            quality_assurance_layer (QualityAssuranceLayer): Layer for ensuring quality and safety of operations.
-            graph_manager (GraphManager): Manager for handling graph-based representations of plans and tasks.
+            communication_protocol: Protocol for communication
+            quality_assurance_layer: Layer for ensuring quality
+            graph_manager: Manager for graph-based representations
         """
         self.communication_protocol = communication_protocol
         self.qa_layer = quality_assurance_layer
         self.graph_manager = graph_manager
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
         self.technique_performance = defaultdict(list)
+        
+        # Initialize technique registry
+        self.technique_registry = TechniqueRegistry()
+        
+        # Initialize specialized components
+        self.project_planner = ProjectPlanner(
+            tool_manager=None,  # Will be set later
+            knowledge_manager=None,  # Will be set later
+            llm=self.llm
+        )
+        self.build_orchestrator = BuildOrchestrator(
+            tool_manager=None,  # Will be set later
+            knowledge_manager=None,  # Will be set later
+            llm=self.llm
+        )
+        
+        # Initialize code planning extension
+        self.code_planning_extension = CodePlanningExtension(self)
+        
+        # Register code-specific techniques
+        self._register_code_techniques()
+        
+        # Performance tracking
+        self.performance_history = []
+        self.active_builds: Dict[str, BuildContext] = {}
 
     async def tree_of_thoughts(self, goal: str, depth: int = 2, branches: int = 3) -> Dict[str, Any]:
         async def expand_node(node: str, current_depth: int) -> Dict[str, Any]:
@@ -998,52 +1040,165 @@ class MagiPlanning:
             logger.error("Failed to decode JSON from LLM response")
             return {}
 
-async def demo_magi_planning():
-    """
-    Demonstrate the main features of the MagiPlanning class.
-    """
-    # Initialize required components
-    communication_protocol = StandardCommunicationProtocol()
-    quality_assurance_layer = QualityAssuranceLayer()
-    graph_manager = GraphManager()
+    async def _handle_project_planning(
+        self,
+        goal: str,
+        problem_analysis: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Handle planning for a project request."""
+        # Generate project plan
+        project_plan = await self.project_planner.analyze_project_request(goal)
+        
+        # Validate plan
+        validation_results = await self.project_planner.validate_plan(project_plan)
+        
+        if not validation_results['is_valid']:
+            logger.warning(
+                f"Project plan validation failed: {validation_results['issues']}")
+            # Attempt to fix issues
+            project_plan = await self._fix_plan_issues(
+                project_plan, validation_results)
+        
+        # Create build context
+        project_id = str(uuid.uuid4())
+        build_context = await self.build_orchestrator.orchestrate_build(
+            project_id, project_plan)
+        
+        self.active_builds[project_id] = build_context
+        
+        return {
+            'project_id': project_id,
+            'plan': project_plan,
+            'build_context': build_context,
+            'validation': validation_results
+        }
 
-    # Create MagiPlanning instance
-    magi_planner = MagiPlanning(communication_protocol, quality_assurance_layer, graph_manager)
+    async def _fix_plan_issues(
+        self,
+        project_plan: ProjectPlan,
+        validation_results: Dict[str, Any]
+    ) -> ProjectPlan:
+        """Attempt to fix issues in the project plan."""
+        fix_prompt = f"""
+        Fix the following issues in the project plan:
+        Issues: {validation_results['issues']}
+        Warnings: {validation_results['warnings']}
 
-    # Define a goal and problem analysis
-    goal = "Develop a new feature for our AI-powered chatbot"
-    problem_analysis = {
-        "problem_statement": "Our chatbot needs to handle multi-turn conversations more effectively.",
-        "constraints": ["Must be implemented within 2 weeks", "Should not increase latency by more than 100ms"],
-        "resources": ["2 senior developers", "1 ML engineer", "Access to GPT-4 API"]
-    }
+        Current Plan:
+        {project_plan}
 
-    # Generate a plan
-    plan = await magi_planner.generate_plan(goal, problem_analysis)
+        Provide specific fixes for each issue while maintaining the plan's overall structure and goals.
+        """
+        
+        fixes = await self.llm.generate(fix_prompt)
+        
+        # Apply fixes to plan
+        updated_plan = await self.project_planner.analyze_project_request(fixes)
+        
+        # Validate again
+        new_validation = await self.project_planner.validate_plan(updated_plan)
+        
+        if not new_validation['is_valid']:
+            logger.error("Unable to fix all plan issues")
+            raise ValueError(f"Plan validation failed: {new_validation['issues']}")
+            
+        return updated_plan
 
-    # Print plan summary
-    print(f"Plan for goal: {plan['goal']}")
-    print(f"Success likelihood: {plan['success_likelihood']:.2f}")
-    print(f"Number of tasks: {plan['metrics']['total_tasks']}")
-    print(f"Estimated time: {plan['metrics']['total_estimated_time']} hours")
-    print(f"Capability gaps: {', '.join(plan['capability_gaps'])}")
-    print(f"Plan visualization saved as: {plan['visualization']}")
+    async def get_build_status(self, project_id: str) -> Optional[BuildContext]:
+        """Get the current status of a build."""
+        return self.active_builds.get(project_id)
 
-    # Execute a sample task
-    sample_task = "Implement a context management system for the chatbot"
-    task_result = await magi_planner.execute_task(sample_task)
-    print(f"\nTask executed using {task_result['technique']} technique")
-    print(f"Execution time: {task_result['execution_time']:.2f} seconds")
+    async def improve_tool_creation(self):
+        """Improve the tool creation process based on historical data."""
+        if not self.active_builds:
+            return
+            
+        # Analyze tool creation patterns
+        tool_patterns = self._analyze_tool_patterns()
+        
+        # Update tool creation strategies
+        await self._update_tool_strategies(tool_patterns)
+        
+        logger.info("Tool creation process improved")
 
-    # Analyze execution results
-    analysis = await magi_planner._analyze_execution_result(task_result, plan['plan_tree'])
-    print("\nExecution Analysis:")
-    print("Success factors:", analysis['success_factors'])
-    print("Areas for improvement:", analysis['areas_for_improvement'])
+    def _analyze_tool_patterns(self) -> Dict[str, Any]:
+        """Analyze patterns in tool creation and usage."""
+        patterns = {
+            'common_requirements': set(),
+            'successful_tools': [],
+            'failed_tools': [],
+            'usage_frequency': {}
+        }
+        
+        for build in self.active_builds.values():
+            for tool in build.tools_created:
+                # Track tool usage
+                if tool in patterns['usage_frequency']:
+                    patterns['usage_frequency'][tool] += 1
+                else:
+                    patterns['usage_frequency'][tool] = 1
+                    
+                # Track success/failure
+                if build.status == 'completed':
+                    patterns['successful_tools'].append(tool)
+                elif build.status == 'failed':
+                    patterns['failed_tools'].append(tool)
+                    
+        return patterns
 
-    # Update models based on execution results
-    await magi_planner._update_models(task_result, task_result, analysis)
-    print("\nModels updated based on execution results")
+    async def _update_tool_strategies(self, patterns: Dict[str, Any]):
+        """Update tool creation strategies based on analyzed patterns."""
+        # Generate strategy update prompt
+        update_prompt = f"""
+        Update tool creation strategies based on these patterns:
+        
+        Successful tools: {patterns['successful_tools']}
+        Failed tools: {patterns['failed_tools']}
+        Usage frequency: {patterns['usage_frequency']}
+        
+        Provide specific improvements to:
+        1. Tool requirements analysis
+        2. Implementation approach
+        3. Testing strategy
+        4. Integration methods
+        """
+        
+        strategy_updates = await self.llm.generate(update_prompt)
+        
+        # Apply updates to tool manager
+        await self.tool_manager.update_creation_strategies(strategy_updates)
 
-if __name__ == "__main__":
-    asyncio.run(demo_magi_planning())
+
+    async def plan_code_task(
+        self,
+        task: Dict[str, Any],
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Plan a code-related task using specialized techniques.
+        
+        Args:
+            task: Task description and requirements
+            context: Additional context like existing code, constraints
+            
+        Returns:
+            Comprehensive plan for code implementation
+        """
+        # Create code planning context
+        code_context = CodePlanningContext(
+            existing_code=context.get('existing_code', {}),
+            style_guide=context.get('style_guide'),
+            performance_requirements=context.get('performance_requirements'),
+            dependencies=context.get('dependencies')
+        )
+        
+        # Generate base plan using standard MagiPlanning capabilities
+        base_plan = await self.generate_plan(task, context)
+        
+        # Enhance plan with code-specific considerations
+        enhanced_plan = await self.code_planning_extension.enhance_plan_for_code(
+            base_plan,
+            code_context
+        )
+        
+        return enhanced_plan

@@ -1,154 +1,219 @@
-import random
-from typing import Dict, Any, List
-import logging
+from typing import Dict, Any, List, Optional
 import numpy as np
-from scipy.stats import norm
+from dataclasses import dataclass
+from datetime import datetime
+import logging
+from rag_system.core.structures import EvolutionMetrics
 
 logger = logging.getLogger(__name__)
 
+@dataclass
+class EvolutionConfig:
+    """Configuration for the self-evolving system."""
+    learning_rate: float = 0.01
+    evolution_rate: float = 0.1
+    mutation_rate: float = 0.05
+    population_size: int = 10
+    generations: int = 100
+    fitness_threshold: float = 0.95
+    adaptation_threshold: float = 0.8
+
 class SelfEvolvingSystem:
-    def __init__(self, agent):
+    """
+    Implements self-evolution capabilities for the Sage agent.
+    """
+    
+    def __init__(self, agent: Any):
         self.agent = agent
-        self.evolution_rate = 0.1
-        self.mutation_rate = 0.01
-        self.learning_rate = 0.001
-        self.performance_history = []
-        self.architecture_space = {
-            "num_layers": [1, 2, 3, 4, 5],
-            "hidden_size": [32, 64, 128, 256, 512],
-            "activation": ["relu", "tanh", "sigmoid"],
-            "dropout_rate": [0.1, 0.2, 0.3, 0.4, 0.5],
-        }
-        self.current_architecture = self._initialize_architecture()
-        self.population_size = 10
-        self.population = [self._initialize_architecture() for _ in range(self.population_size)]
-
-    def _initialize_architecture(self):
-        return {param: random.choice(values) for param, values in self.architecture_space.items()}
-
+        self.config = EvolutionConfig()
+        self.current_generation = 0
+        self.evolution_history: List[EvolutionMetrics] = []
+        self.performance_history: List[float] = []
+        self.current_architecture: Dict[str, Any] = {}
+        self.adaptation_state: Dict[str, Any] = {}
+        
     async def evolve(self):
-        await self._neural_architecture_search()
-        await self._hyperparameter_optimization()
-        if random.random() < self.evolution_rate:
-            await self._mutate()
-        await self._adapt()
-
-    async def _neural_architecture_search(self):
-        for _ in range(5):  # Run for 5 generations
-            fitness_scores = await self._evaluate_population()
-            new_population = [self.population[np.argmax(fitness_scores)]]  # Elitism
-            while len(new_population) < self.population_size:
-                parent1, parent2 = self._tournament_selection(fitness_scores)
-                child = self._crossover(parent1, parent2)
-                child = self._mutate_architecture(child)
-                new_population.append(child)
-            self.population = new_population
+        """
+        Implement core evolution logic.
+        """
+        # Analyze recent performance
+        performance_metrics = await self.analyze_performance()
         
-        best_architecture = self.population[np.argmax(await self._evaluate_population())]
-        self.current_architecture = best_architecture
-        logger.info(f"Updated architecture: {self.current_architecture}")
-
-    async def _hyperparameter_optimization(self):
-        param_space = {
-            "learning_rate": (0.0001, 0.1),
-            "batch_size": (16, 256),
-            "num_epochs": (10, 100),
+        # Update learning parameters
+        await self.update_learning_parameters(performance_metrics)
+        
+        # Evolve knowledge representation
+        await self.evolve_knowledge_representation()
+        
+        # Update retrieval strategies
+        await self.update_retrieval_strategies()
+        
+        # Track evolution
+        self._track_evolution(performance_metrics)
+        
+    async def analyze_performance(self) -> Dict[str, float]:
+        """
+        Analyze recent performance metrics.
+        
+        :return: Dictionary of performance metrics.
+        """
+        recent_performance = self.performance_history[-100:] if self.performance_history else []
+        
+        if not recent_performance:
+            return {
+                'average_performance': 0.0,
+                'trend': 0.0,
+                'volatility': 0.0
+            }
+            
+        metrics = {
+            'average_performance': np.mean(recent_performance),
+            'trend': self._calculate_trend(recent_performance),
+            'volatility': np.std(recent_performance),
+            'improvement_rate': self._calculate_improvement_rate(recent_performance)
         }
         
-        best_params, best_score = await self._bayesian_optimization(param_space)
+        return metrics
         
-        self.learning_rate = best_params["learning_rate"]
-        logger.info(f"Updated hyperparameters: {best_params}")
-
-    async def _bayesian_optimization(self, param_space, n_iterations=50):
-        X_sample = []
-        y_sample = []
-
-        def sample_params():
-            return {name: random.uniform(bounds[0], bounds[1]) for name, bounds in param_space.items()}
-
-        for _ in range(5):  # Initial random sampling
-            params = sample_params()
-            score = await self._evaluate_hyperparameters(params)
-            X_sample.append(list(params.values()))
-            y_sample.append(score)
-
-        best_score = max(y_sample)
-        best_params = dict(zip(param_space.keys(), X_sample[np.argmax(y_sample)]))
-
-        for _ in range(n_iterations):
-            next_params = await self._propose_location(X_sample, y_sample, param_space)
-            score = await self._evaluate_hyperparameters(dict(zip(param_space.keys(), next_params)))
+    async def update_learning_parameters(self, performance_metrics: Dict[str, float]):
+        """
+        Update learning parameters based on performance.
+        
+        :param performance_metrics: Current performance metrics.
+        """
+        # Adjust learning rate based on performance trend
+        if performance_metrics['trend'] > 0:
+            self.config.learning_rate *= 0.95  # Reduce learning rate when improving
+        else:
+            self.config.learning_rate *= 1.05  # Increase learning rate when performance is declining
             
-            if score > best_score:
-                best_score = score
-                best_params = dict(zip(param_space.keys(), next_params))
-
-            X_sample.append(next_params)
-            y_sample.append(score)
-
-        return best_params, best_score
-
-    async def _propose_location(self, X_sample, y_sample, param_space):
-        # This is a simplified version. In a real-world scenario, you'd use a Gaussian Process here.
-        best_params = X_sample[np.argmax(y_sample)]
-        return [
-            np.clip(param + np.random.normal(0, 0.1), bounds[0], bounds[1])
-            for param, bounds in zip(best_params, param_space.values())
-        ]
-
-    async def _evaluate_population(self):
-        return [await self._evaluate_architecture(arch) for arch in self.population]
-
-    async def _evaluate_architecture(self, architecture):
-        # This is a placeholder. In a real scenario, you'd train and evaluate a model with this architecture.
-        return random.random()
-
-    async def _evaluate_hyperparameters(self, params):
-        # This is a placeholder. In a real scenario, you'd train and evaluate a model with these hyperparameters.
-        return random.random()
-
-    def _tournament_selection(self, fitness_scores, tournament_size=3):
-        selected = [random.randint(0, len(self.population) - 1) for _ in range(tournament_size)]
-        return self.population[max(selected, key=lambda i: fitness_scores[i])]
-
-    def _crossover(self, parent1, parent2):
-        child = {}
-        for param in self.architecture_space:
-            child[param] = random.choice([parent1[param], parent2[param]])
-        return child
-
-    def _mutate_architecture(self, architecture):
-        for param in architecture:
-            if random.random() < self.mutation_rate:
-                architecture[param] = random.choice(self.architecture_space[param])
-        return architecture
-
-    async def _mutate(self):
-        if random.random() < self.mutation_rate:
-            capability = random.choice(self.agent.research_capabilities)
-            new_capability = await self.agent.generate(
-                f"Suggest an improvement or variation of the research capability: {capability}"
-            )
-            self.agent.research_capabilities.append(new_capability)
-
-    async def _adapt(self):
-        if len(self.performance_history) > 10:
-            avg_performance = sum(self.performance_history[-10:]) / 10
-            if avg_performance > 0.8:
-                self.evolution_rate *= 0.9
-                self.mutation_rate *= 0.9
-            else:
-                self.evolution_rate *= 1.1
-                self.mutation_rate *= 1.1
-
-    async def update_hyperparameters(self, new_evolution_rate: float, new_mutation_rate: float, new_learning_rate: float):
-        self.evolution_rate = new_evolution_rate
-        self.mutation_rate = new_mutation_rate
-        self.learning_rate = new_learning_rate
-
-    async def process_task(self, task) -> Dict[str, Any]:
-        result = await self.agent.task_executor.execute_task(task)
-        performance = result.get('performance', 0.5)  # Default performance metric
-        self.performance_history.append(performance)
-        return result
+        # Adjust evolution rate based on volatility
+        if performance_metrics['volatility'] > 0.2:
+            self.config.evolution_rate *= 0.9  # Reduce evolution rate when volatile
+        else:
+            self.config.evolution_rate *= 1.1  # Increase evolution rate when stable
+            
+        # Keep parameters within reasonable bounds
+        self.config.learning_rate = np.clip(self.config.learning_rate, 0.001, 0.1)
+        self.config.evolution_rate = np.clip(self.config.evolution_rate, 0.01, 0.5)
+        
+    async def evolve_knowledge_representation(self):
+        """
+        Evolve the knowledge representation system.
+        """
+        # Get current state
+        current_state = await self.get_current_state()
+        
+        # Optimize knowledge structure
+        optimal_structure = await self.optimize_knowledge_structure(current_state)
+        
+        # Update knowledge structure
+        await self.update_knowledge_structure(optimal_structure)
+        
+    async def get_current_state(self) -> Dict[str, Any]:
+        """
+        Get current state of the system.
+        
+        :return: Dictionary containing current state information.
+        """
+        return {
+            'architecture': self.current_architecture,
+            'performance': self.performance_history[-1] if self.performance_history else 0.0,
+            'adaptation_state': self.adaptation_state,
+            'learning_parameters': {
+                'learning_rate': self.config.learning_rate,
+                'evolution_rate': self.config.evolution_rate,
+                'mutation_rate': self.config.mutation_rate
+            }
+        }
+        
+    async def optimize_knowledge_structure(self, current_state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Optimize knowledge structure based on current state.
+        
+        :param current_state: Current system state.
+        :return: Optimized knowledge structure.
+        """
+        # Generate candidate structures
+        candidates = self._generate_candidate_structures(current_state)
+        
+        # Evaluate candidates
+        evaluations = await self._evaluate_candidates(candidates)
+        
+        # Select best structure
+        best_structure = max(evaluations, key=lambda x: x['fitness'])
+        
+        return best_structure['structure']
+        
+    async def update_knowledge_structure(self, optimal_structure: Dict[str, Any]):
+        """
+        Update the knowledge structure with optimized version.
+        
+        :param optimal_structure: Optimized knowledge structure.
+        """
+        # Update architecture
+        self.current_architecture = optimal_structure
+        
+        # Apply changes to agent's knowledge system
+        await self.agent.update_knowledge_structure(optimal_structure)
+        
+        # Update adaptation state
+        self.adaptation_state = {
+            'last_update': datetime.now(),
+            'structure': optimal_structure
+        }
+        
+    async def update_retrieval_strategies(self):
+        """
+        Update retrieval strategies based on performance.
+        """
+        # Analyze current retrieval performance
+        retrieval_metrics = await self._analyze_retrieval_performance()
+        
+        # Generate improved strategies
+        new_strategies = self._generate_improved_strategies(retrieval_metrics)
+        
+        # Update agent's retrieval system
+        await self.agent.update_retrieval_strategies(new_strategies)
+        
+    def _calculate_trend(self, performance_history: List[float]) -> float:
+        """
+        Calculate performance trend.
+        
+        :param performance_history: List of performance values.
+        :return: Trend value.
+        """
+        if len(performance_history) < 2:
+            return 0.0
+            
+        x = np.arange(len(performance_history))
+        y = np.array(performance_history)
+        z = np.polyfit(x, y, 1)
+        return float(z[0])
+        
+    def _calculate_improvement_rate(self, performance_history: List[float]) -> float:
+        """
+        Calculate rate of improvement.
+        
+        :param performance_history: List of performance values.
+        :return: Improvement rate.
+        """
+        if len(performance_history) < 2:
+            return 0.0
+            
+        recent = performance_history[-10:]
+        return float(np.mean(np.diff(recent)))
+        
+    def _generate_candidate_structures(self, current_state: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Generate candidate knowledge structures.
+        
+        :param current_state: Current system state.
+        :return: List of candidate structures.
+        """
+        candidates = []
+        base_structure = current_state['architecture']
+        
+        for _ in range(self.config.population_size):
+            # Create mutated version
+            candidate = self._mutate_structure(base_structure)

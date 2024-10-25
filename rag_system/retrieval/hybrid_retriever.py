@@ -1,5 +1,7 @@
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 import json
 from rag_system.core.config import UnifiedConfig
 from rag_system.retrieval.vector_store import VectorStore
@@ -68,6 +70,212 @@ class HybridRetriever:
         vector_results = await self.vector_store.retrieve(query_vector, k, timestamp)
         return vector_results
 
+    def _generate_feedback(self, query: str, results: List[RetrievalResult]) -> Dict[str, Any]:
+        """
+        Generate comprehensive feedback for query refinement.
+
+        :param query: The original query string.
+        :param results: Current retrieval results.
+        :return: Feedback data including relevance scores, coverage analysis, and semantic gaps.
+        """
+        # Calculate relevance scores
+        relevance_scores = self._calculate_relevance_scores(query, results)
+        
+        # Analyze coverage
+        coverage_analysis = self._analyze_coverage(results)
+        
+        # Identify semantic gaps
+        semantic_gaps = self._identify_semantic_gaps(query, results)
+        
+        # Generate query expansions
+        suggested_expansions = self._generate_query_expansions(query, results)
+        
+        # Combine feedback components
+        feedback = {
+            "relevance_scores": relevance_scores,
+            "coverage_analysis": coverage_analysis,
+            "semantic_gaps": semantic_gaps,
+            "suggested_expansions": suggested_expansions,
+            "confidence_score": self._calculate_confidence_score(relevance_scores, coverage_analysis),
+            "diversity_metric": self._calculate_diversity_metric(results),
+            "temporal_distribution": self._analyze_temporal_distribution(results)
+        }
+        
+        return feedback
+
+    def _calculate_relevance_scores(self, query: str, results: List[RetrievalResult]) -> List[float]:
+        """
+        Calculate semantic similarity between query and results.
+
+        :param query: The query string.
+        :param results: List of retrieval results.
+        :return: List of relevance scores.
+        """
+        query_embedding = self.agent.get_embedding(query)
+        result_embeddings = [self.agent.get_embedding(result.content) for result in results]
+        
+        # Calculate cosine similarity between query and each result
+        similarities = cosine_similarity([query_embedding], result_embeddings)[0]
+        
+        # Normalize scores
+        min_score = np.min(similarities)
+        max_score = np.max(similarities)
+        if max_score > min_score:
+            normalized_scores = (similarities - min_score) / (max_score - min_score)
+        else:
+            normalized_scores = similarities
+            
+        return normalized_scores.tolist()
+
+    def _analyze_coverage(self, results: List[RetrievalResult]) -> Dict[str, Any]:
+        """
+        Analyze how well the results cover different aspects of the topic.
+
+        :param results: List of retrieval results.
+        :return: Coverage analysis data.
+        """
+        # Extract key concepts from results
+        concepts = self._extract_key_concepts(results)
+        
+        # Calculate concept overlap
+        concept_overlap = self._calculate_concept_overlap(concepts)
+        
+        # Identify coverage gaps
+        coverage_gaps = self._identify_coverage_gaps(concepts)
+        
+        return {
+            "concept_coverage": len(concepts),
+            "concept_overlap": concept_overlap,
+            "coverage_gaps": coverage_gaps,
+            "coverage_score": self._calculate_coverage_score(concepts, coverage_gaps)
+        }
+
+    def _identify_semantic_gaps(self, query: str, results: List[RetrievalResult]) -> List[str]:
+        """
+        Identify semantic concepts from the query that are not well-represented in results.
+
+        :param query: The query string.
+        :param results: List of retrieval results.
+        :return: List of identified semantic gaps.
+        """
+        # Extract query concepts
+        query_concepts = self._extract_key_concepts([RetrievalResult(content=query, id="query", score=1.0)])
+        
+        # Extract result concepts
+        result_concepts = self._extract_key_concepts(results)
+        
+        # Find concepts in query but not well-represented in results
+        semantic_gaps = []
+        for concept in query_concepts:
+            if concept not in result_concepts:
+                semantic_gaps.append(concept)
+                
+        return semantic_gaps
+
+    def _generate_query_expansions(self, query: str, results: List[RetrievalResult]) -> List[str]:
+        """
+        Generate suggested query expansions based on results analysis.
+
+        :param query: The original query string.
+        :param results: Current retrieval results.
+        :return: List of suggested query expansions.
+        """
+        # Extract key terms from high-scoring results
+        high_scoring_results = [r for r in results if r.score > 0.7]
+        key_terms = self._extract_key_terms(high_scoring_results)
+        
+        # Generate expansions using different strategies
+        expansions = []
+        
+        # Synonym-based expansion
+        synonyms = self._get_synonyms(query)
+        expansions.extend([f"{query} {syn}" for syn in synonyms])
+        
+        # Context-based expansion
+        context_terms = self._extract_context_terms(results)
+        expansions.extend([f"{query} {term}" for term in context_terms])
+        
+        # Concept-based expansion
+        concepts = self._extract_key_concepts(results)
+        expansions.extend([f"{query} {concept}" for concept in concepts])
+        
+        return list(set(expansions))  # Remove duplicates
+
+    def _calculate_confidence_score(self, relevance_scores: List[float], coverage_analysis: Dict[str, Any]) -> float:
+        """
+        Calculate overall confidence score for the retrieval results.
+
+        :param relevance_scores: List of relevance scores.
+        :param coverage_analysis: Coverage analysis data.
+        :return: Confidence score between 0 and 1.
+        """
+        # Weight factors for different components
+        relevance_weight = 0.4
+        coverage_weight = 0.3
+        diversity_weight = 0.3
+        
+        # Calculate weighted average
+        avg_relevance = np.mean(relevance_scores)
+        coverage_score = coverage_analysis['coverage_score']
+        diversity_score = self._calculate_diversity_metric(results)
+        
+        confidence = (
+            relevance_weight * avg_relevance +
+            coverage_weight * coverage_score +
+            diversity_weight * diversity_score
+        )
+        
+        return min(max(confidence, 0.0), 1.0)  # Ensure score is between 0 and 1
+
+    def _calculate_diversity_metric(self, results: List[RetrievalResult]) -> float:
+        """
+        Calculate diversity metric for results.
+
+        :param results: List of retrieval results.
+        :return: Diversity score between 0 and 1.
+        """
+        if not results:
+            return 0.0
+            
+        # Get embeddings for all results
+        embeddings = [self.agent.get_embedding(r.content) for r in results]
+        
+        # Calculate pairwise similarities
+        similarities = cosine_similarity(embeddings)
+        
+        # Calculate average similarity (lower means more diverse)
+        avg_similarity = (np.sum(similarities) - len(results)) / (len(results) * (len(results) - 1))
+        
+        # Convert to diversity score (higher means more diverse)
+        diversity_score = 1.0 - avg_similarity
+        
+        return diversity_score
+
+    def _analyze_temporal_distribution(self, results: List[RetrievalResult]) -> Dict[str, Any]:
+        """
+        Analyze temporal distribution of results.
+
+        :param results: List of retrieval results.
+        :return: Temporal analysis data.
+        """
+        timestamps = [r.timestamp for r in results if r.timestamp]
+        
+        if not timestamps:
+            return {"temporal_coverage": 0.0, "time_range": None}
+            
+        # Calculate time range and distribution
+        time_range = max(timestamps) - min(timestamps)
+        time_buckets = np.histogram(timestamps, bins=10)
+        
+        return {
+            "temporal_coverage": len(timestamps) / len(results),
+            "time_range": str(time_range),
+            "distribution": {
+                "counts": time_buckets[0].tolist(),
+                "bin_edges": [str(edge) for edge in time_buckets[1]]
+            }
+        }
+
     def merge_results(self, low_level_results: List[RetrievalResult], high_level_results: List[RetrievalResult]) -> List[RetrievalResult]:
         """
         Merge and deduplicate low-level and high-level retrieval results.
@@ -108,37 +316,35 @@ class HybridRetriever:
 
         for _ in range(feedback_iterations):
             feedback = self._generate_feedback(query, current_results)
-            refined_query, refined_vector = self._refine_query(query, feedback)
+            refined_query = self._refine_query(query, feedback)
             new_results = await self.retrieve(refined_query, k, timestamp)
             current_results = self._merge_results(current_results, new_results)
 
         return current_results
 
-    def _generate_feedback(self, query: str, results: List[RetrievalResult]) -> Dict[str, Any]:
-        """
-        Generate feedback for query refinement.
-
-        :param query: The original query.
-        :param results: Current retrieval results.
-        :return: Feedback data.
-        """
-        # Implement feedback generation logic
-        # Placeholder for actual implementation
-        return {}
-
-    def _refine_query(self, original_query: str, feedback: Dict[str, Any]) -> Tuple[str, List[float]]:
+    def _refine_query(self, original_query: str, feedback: Dict[str, Any]) -> str:
         """
         Refine the query based on feedback.
 
         :param original_query: The original query string.
         :param feedback: Feedback data for refinement.
-        :return: A tuple of refined query string and its vector embedding.
+        :return: Refined query string.
         """
-        # Implement query refinement logic
-        # Placeholder for actual implementation
-        refined_query = original_query  # No refinement in placeholder
-        refined_vector = self.agent.get_embedding(refined_query)
-        return refined_query, refined_vector
+        # Extract relevant components from feedback
+        semantic_gaps = feedback.get('semantic_gaps', [])
+        suggested_expansions = feedback.get('suggested_expansions', [])
+        
+        # If there are semantic gaps, prioritize addressing them
+        if semantic_gaps:
+            gap_terms = ' '.join(semantic_gaps[:2])  # Add top 2 missing concepts
+            refined_query = f"{original_query} {gap_terms}"
+        # Otherwise, use the highest-scored expansion
+        elif suggested_expansions:
+            refined_query = suggested_expansions[0]
+        else:
+            refined_query = original_query
+            
+        return refined_query
 
     def _merge_results(self, old_results: List[RetrievalResult], new_results: List[RetrievalResult]) -> List[RetrievalResult]:
         """
@@ -200,70 +406,3 @@ class HybridRetriever:
             filtered_results.sort(key=lambda x: linearized_nodes.index(x.id) if x.id in linearized_nodes else float('inf'))
 
         return filtered_results[:self.config.MAX_RESULTS]
-
-    async def generate_plan(self, query: str) -> RetrievalPlan:
-        """
-        Generate a retrieval plan for a given query.
-
-        :param query: The user's query string.
-        :return: The generated retrieval plan.
-        """
-        # Implement plan generation logic
-        # Placeholder for actual implementation
-        return RetrievalPlan(query=query)
-
-    async def refine_plan(self, query: str, current_plan: RetrievalPlan, results: List[RetrievalResult]) -> RetrievalPlan:
-        """
-        Refine the retrieval plan based on results.
-
-        :param query: The user's query string.
-        :param current_plan: The current retrieval plan.
-        :param results: Retrieval results to base refinements on.
-        :return: The refined retrieval plan.
-        """
-        # Implement plan refinement logic
-        # Placeholder for actual implementation
-        return current_plan
-
-    def _apply_upo(self, results: List[RetrievalResult], query: str) -> List[RetrievalResult]:
-        """
-        Apply uncertainty-aware probabilistic ordering (UPO) to results.
-
-        :param results: List of retrieval results.
-        :param query: The original query.
-        :return: Results after applying UPO.
-        """
-        for result in results:
-            # Adjust score based on uncertainty
-            certainty = 1 - result.uncertainty
-            result.score *= certainty
-
-            # Apply time decay
-            time_diff = (datetime.now() - result.timestamp).total_seconds()
-            decay_factor = 1 / (1 + time_diff / self.config.TEMPORAL_GRANULARITY.total_seconds())
-            result.score *= decay_factor
-
-        # Re-sort results based on the new scores
-        return sorted(results, key=lambda x: x.score, reverse=True)
-
-    def _causal_retrieval(self, query: str, initial_results: List[RetrievalResult]) -> List[RetrievalResult]:
-        """
-        Apply causal retrieval adjustments to results.
-
-        :param query: The original query.
-        :param initial_results: Initial retrieval results.
-        :return: Results after applying causal adjustments.
-        """
-        causal_scores = {}
-        for result in initial_results:
-            causal_score = 0
-            for edge in self.graph_store.causal_edges.values():
-                if edge.source == result.id:
-                    causal_score += edge.strength
-            causal_scores[result.id] = causal_score
-
-        # Combine original scores with causal scores
-        for result in initial_results:
-            result.score = 0.7 * result.score + 0.3 * causal_scores.get(result.id, 0)
-
-        return sorted(initial_results, key=lambda x: x.score, reverse=True)

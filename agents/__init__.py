@@ -1,10 +1,3 @@
-from .unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig, create_agent, SelfEvolvingSystem
-from .orchestration import main
-
-__all__ = [
-    "UnifiedBaseAgent",
-    "UnifiedAgentConfig",
-    "create_agent",
-    "SelfEvolvingSystem",
-    "main"
-]
+"""Agent module initialization."""
+# Temporarily comment out imports that require external dependencies
+# from .unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig, create_agent, SelfEvolvingSystem

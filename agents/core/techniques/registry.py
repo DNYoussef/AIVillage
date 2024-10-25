@@ -1,17 +1,20 @@
-"""Registry for MAGI reasoning techniques."""
+"""Registry for reasoning techniques."""
 
 from typing import Dict, Type, Any, List, Optional, TypeVar, Generic
 from dataclasses import dataclass
 import asyncio
 import logging
 from .base import BaseTechnique, TechniqueResult
-from ..core.exceptions import MAGIException
-from ..utils.logging import get_logger
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
+# Type variables for input and output
 I = TypeVar('I')  # Input type
 O = TypeVar('O')  # Output type
+
+class TechniqueRegistryError(Exception):
+    """Base exception for technique registry."""
+    pass
 
 @dataclass
 class TechniqueInfo:
@@ -24,7 +27,6 @@ class TechniqueInfo:
     parameters: Dict[str, Any]
     tags: List[str]
     version: str
-    author: str
     created_at: str
     updated_at: str
 
@@ -44,14 +46,13 @@ class TechniqueRegistry(Generic[I, O]):
         parameters: Optional[Dict[str, Any]] = None,
         tags: Optional[List[str]] = None,
         version: str = "1.0.0",
-        author: str = "MAGI",
         **kwargs
     ) -> None:
         """Register a new technique."""
         name = name or technique_class.__name__
         
         if name in self._techniques:
-            raise MAGIException(f"Technique {name} already registered")
+            raise TechniqueRegistryError(f"Technique {name} already registered")
         
         info = TechniqueInfo(
             name=name,
@@ -62,7 +63,6 @@ class TechniqueRegistry(Generic[I, O]):
             parameters=parameters or {},
             tags=tags or [],
             version=version,
-            author=author,
             created_at=kwargs.get('created_at', ''),
             updated_at=kwargs.get('updated_at', '')
         )
@@ -74,7 +74,7 @@ class TechniqueRegistry(Generic[I, O]):
     def unregister(self, name: str) -> None:
         """Unregister a technique."""
         if name not in self._techniques:
-            raise MAGIException(f"Technique {name} not registered")
+            raise TechniqueRegistryError(f"Technique {name} not registered")
         
         if name in self._instances:
             del self._instances[name]
@@ -86,7 +86,7 @@ class TechniqueRegistry(Generic[I, O]):
     async def get_instance(self, name: str) -> BaseTechnique[I, O]:
         """Get or create an instance of a technique."""
         if name not in self._techniques:
-            raise MAGIException(f"Technique {name} not registered")
+            raise TechniqueRegistryError(f"Technique {name} not registered")
         
         if name not in self._instances:
             info = self._techniques[name]
@@ -103,7 +103,7 @@ class TechniqueRegistry(Generic[I, O]):
     def get_info(self, name: str) -> TechniqueInfo:
         """Get information about a technique."""
         if name not in self._techniques:
-            raise MAGIException(f"Technique {name} not registered")
+            raise TechniqueRegistryError(f"Technique {name} not registered")
         
         return self._techniques[name]
     
@@ -145,7 +145,7 @@ class TechniqueRegistry(Generic[I, O]):
         candidates = self.list_techniques(tags=tags)
         
         if not candidates:
-            raise MAGIException("No suitable techniques found")
+            raise TechniqueRegistryError("No suitable techniques found")
         
         # Select based on performance history
         best_technique = max(
@@ -186,7 +186,7 @@ class TechniqueRegistry(Generic[I, O]):
     def get_performance_history(self, name: str) -> List[float]:
         """Get performance history for a technique."""
         if name not in self._techniques:
-            raise MAGIException(f"Technique {name} not registered")
+            raise TechniqueRegistryError(f"Technique {name} not registered")
         
         return self._performance_history[name].copy()
     
@@ -194,7 +194,7 @@ class TechniqueRegistry(Generic[I, O]):
         """Clear performance history for one or all techniques."""
         if name:
             if name not in self._techniques:
-                raise MAGIException(f"Technique {name} not registered")
+                raise TechniqueRegistryError(f"Technique {name} not registered")
             self._performance_history[name].clear()
         else:
             for history in self._performance_history.values():
