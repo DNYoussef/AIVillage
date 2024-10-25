@@ -1,19 +1,34 @@
-"""MAGI Agent initialization."""
+"""MAGI Agent package."""
 
-from agents.magi.core.magi_agent import MagiAgent
-from agents.magi.core.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
-from agents.magi.core.magi_planning import MagiPlanning, GraphManager
-from agents.magi.core.continuous_learner import ContinuousLearner
-from agents.magi.core.evolution_manager import EvolutionManager
-from agents.magi.core.quality_assurance_layer import QualityAssuranceLayer
+from agents.magi.core import (
+    MAGIAgent,
+    TaskResearch,
+    QualityAssuranceLayer,
+    EvolutionManager,
+    ContinuousLearner,
+    GraphManager,
+    ProjectPlanner,
+    KnowledgeManager
+)
+
+from agents.magi.tools import (
+    ToolPersistence,
+    ToolCreator,
+    ToolManager,
+    ToolOptimizer
+)
 
 __all__ = [
-    'MagiAgent',
-    'UnifiedBaseAgent',
-    'UnifiedAgentConfig',
-    'MagiPlanning',
-    'GraphManager',
-    'ContinuousLearner',
+    'MAGIAgent',
+    'TaskResearch',
+    'QualityAssuranceLayer',
     'EvolutionManager',
-    'QualityAssuranceLayer'
+    'ContinuousLearner',
+    'GraphManager',
+    'ProjectPlanner',
+    'KnowledgeManager',
+    'ToolPersistence',
+    'ToolCreator',
+    'ToolManager',
+    'ToolOptimizer'
 ]

@@ -7,76 +7,92 @@ import os
 import json
 from datetime import datetime
 
-from ...utils.logging import get_logger
-from ...utils.exceptions import AIVillageException
-from ..utils.task_management import TaskManager
-from ..core.quality_assurance_layer import QualityAssuranceLayer
-from ..core.evolution_manager import EvolutionManager
-from ..core.learning_system import LearningSystem
-from ..core.graph_manager import GraphManager
-from ..core.planning_system import PlanningSystem
-from ..tools.persistence_manager import PersistenceManager
-from ..tools.tool_creator import ToolCreator
-from ..tools.tool_manager import ToolManager
-from ..tools.tool_optimizer import ToolOptimizer
-from ..core.knowledge_manager import KnowledgeManager
+from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
+from agents.utils.task import Task as LangroidTask
+from agents.utils.logging import get_logger
+from agents.utils.exceptions import AIVillageException
+
+# MAGI-specific imports
+from agents.magi.core.task_research import TaskResearch
+from agents.magi.core.quality_assurance_layer import QualityAssuranceLayer
+from agents.magi.core.evolution_manager import EvolutionManager
+from agents.magi.core.continuous_learner import ContinuousLearner
+from agents.magi.core.magi_planning import GraphManager, MagiPlanning
+from agents.magi.core.project_planner import ProjectPlanner
+from agents.magi.core.knowledge_manager import KnowledgeManager
+
+# Tool-related imports
+from agents.magi.tools.tool_persistence import ToolPersistence
+from agents.magi.tools.tool_creator import ToolCreator
+from agents.magi.tools.tool_management import ToolManager
+from agents.magi.tools.tool_optimization import ToolOptimizer
 
 logger = get_logger(__name__)
 
-class MAGIAgent:
+class MAGIAgent(UnifiedBaseAgent):
     """
     MAGI (Multi-Agent General Intelligence) Agent implementation.
-    Coordinates multiple specialized sub-agents and systems for complex task handling.
+    Inherits from UnifiedBaseAgent while maintaining specialized capabilities.
     """
     
-    def __init__(self, config: Dict[str, Any]):
-        """
-        Initialize MAGI Agent with configuration.
+    def __init__(
+        self,
+        config: UnifiedAgentConfig,
+        communication_protocol: StandardCommunicationProtocol
+    ):
+        super().__init__(config, communication_protocol)
         
-        Args:
-            config: Configuration dictionary for the agent
-        """
-        self.config = config
-        self.task_manager = TaskManager()
-        self.quality_assurance = QualityAssuranceLayer()
-        self.evolution_manager = EvolutionManager()
-        self.learning_system = LearningSystem()
-        self.graph_manager = GraphManager()
-        self.planning_system = PlanningSystem()
-        self.persistence_manager = PersistenceManager()
+        # Initialize MAGI-specific components
+        self.task_manager = TaskResearch()
+        self.magi_planning = MagiPlanning(
+            communication_protocol,
+            self.quality_assurance_layer,
+            self.graph_manager
+        )
+        self.project_planner = ProjectPlanner()
+        self.tool_persistence = ToolPersistence("tools_storage")
         self.tool_creator = ToolCreator()
         self.tool_manager = ToolManager()
         self.tool_optimizer = ToolOptimizer()
-        self.knowledge_manager = KnowledgeManager()
         
-        logger.info("MAGI Agent initialized with all subsystems")
+        # Load persisted tools
+        self.load_persisted_tools()
+        
+        # Add MAGI-specific capabilities
+        self.add_capability("tool_creation", {
+            "description": "Dynamic tool creation and optimization",
+            "confidence": 0.95
+        })
+        self.add_capability("project_planning", {
+            "description": "Advanced project planning and execution",
+            "confidence": 0.9
+        })
+        self.add_capability("knowledge_synthesis", {
+            "description": "Complex knowledge integration and analysis",
+            "confidence": 0.9
+        })
 
-    async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    def load_persisted_tools(self):
+        """Load previously persisted tools."""
+        persisted_tools = self.tool_persistence.load_all_tools()
+        for tool_name, tool_data in persisted_tools.items():
+            self.tools[tool_name] = tool_data
+
+    async def _process_task(self, task: LangroidTask) -> Dict[str, Any]:
         """
-        Process a task through the MAGI system.
-        
-        Args:
-            task: Task description and parameters
-            
-        Returns:
-            Task results and metadata
+        Implement core task processing logic specific to MAGIAgent.
         """
         try:
             # Initial task analysis
             task_analysis = await self.task_manager.analyze_task(task)
             
-            # Quality check
-            qa_result = await self.quality_assurance.check_task(task_analysis)
-            if not qa_result['passed']:
-                raise AIVillageException(f"Task failed quality check: {qa_result['reason']}")
-            
             # Generate execution plan
-            plan = await self.planning_system.create_plan(task_analysis)
+            plan = await self.magi_planning.create_plan(task_analysis)
             
             # Execute plan with continuous monitoring
             result = await self._execute_plan_with_monitoring(plan)
             
-            # Post-execution analysis and learning
+            # Post-execution processing
             await self._post_execution_processing(task, result)
             
             return result
@@ -228,16 +244,15 @@ class MAGIAgent:
             await self.knowledge_manager.update_knowledge(task, result)
             
             # Learn from execution
-            await self.learning_system.learn_from_execution(task, result)
+            await self.continuous_learner.learn_from_execution(task, result)
             
             # Optimize tools based on usage
             await self.tool_optimizer.optimize_tools(self.tool_manager.get_tool_usage_stats())
             
             # Persist relevant data
-            await self.persistence_manager.save_execution_data(task, result)
+            await self.tool_persistence.save_execution_data(task, result)
         except Exception as e:
             logger.exception(f"Error in post-execution processing: {str(e)}")
-            # Don't raise exception here to avoid affecting the main task result
 
     async def save_state(self, path: str):
         """
@@ -250,11 +265,11 @@ class MAGIAgent:
             state = {
                 'config': self.config,
                 'task_manager': await self.task_manager.get_state(),
-                'quality_assurance': await self.quality_assurance.get_state(),
+                'quality_assurance': await self.quality_assurance_layer.get_state(),
                 'evolution_manager': await self.evolution_manager.get_state(),
-                'learning_system': await self.learning_system.get_state(),
+                'continuous_learner': await self.continuous_learner.get_state(),
                 'graph_manager': await self.graph_manager.get_state(),
-                'planning_system': await self.planning_system.get_state(),
+                'magi_planning': await self.magi_planning.get_state(),
                 'tool_manager': await self.tool_manager.get_state(),
                 'knowledge_manager': await self.knowledge_manager.get_state()
             }
@@ -281,11 +296,11 @@ class MAGIAgent:
                 
             self.config = state['config']
             await self.task_manager.load_state(state['task_manager'])
-            await self.quality_assurance.load_state(state['quality_assurance'])
+            await self.quality_assurance_layer.load_state(state['quality_assurance'])
             await self.evolution_manager.load_state(state['evolution_manager'])
-            await self.learning_system.load_state(state['learning_system'])
+            await self.continuous_learner.load_state(state['continuous_learner'])
             await self.graph_manager.load_state(state['graph_manager'])
-            await self.planning_system.load_state(state['planning_system'])
+            await self.magi_planning.load_state(state['magi_planning'])
             await self.tool_manager.load_state(state['tool_manager'])
             await self.knowledge_manager.load_state(state['knowledge_manager'])
             
@@ -304,11 +319,11 @@ class MAGIAgent:
         try:
             return {
                 'task_manager': await self.task_manager.get_status(),
-                'quality_assurance': await self.quality_assurance.get_status(),
+                'quality_assurance': await self.quality_assurance_layer.get_status(),
                 'evolution_manager': await self.evolution_manager.get_status(),
-                'learning_system': await self.learning_system.get_status(),
+                'continuous_learner': await self.continuous_learner.get_status(),
                 'graph_manager': await self.graph_manager.get_status(),
-                'planning_system': await self.planning_system.get_status(),
+                'magi_planning': await self.magi_planning.get_status(),
                 'tool_manager': await self.tool_manager.get_status(),
                 'knowledge_manager': await self.knowledge_manager.get_status()
             }

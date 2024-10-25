@@ -1,3 +1,5 @@
+"""Unified base agent implementation."""
+
 from typing import Dict, Any, List, Optional, Callable, Tuple
 import asyncio
 from dataclasses import dataclass, field
@@ -5,18 +7,30 @@ from datetime import datetime
 import random
 import numpy as np
 from pydantic import BaseModel, Field
+
+# Core imports
 from agents.utils.task import Task as LangroidTask
 from agents.language_models.openai_gpt import OpenAIGPTConfig
 from langroid.vector_store.base import VectorStore
-from sklearn.linear_model import LogisticRegression
-from types import SimpleNamespace
+
+# RAG system imports
 from rag_system.core.config import UnifiedConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.core.structures import RetrievalResult
+from rag_system.core.cognitive_nexus import CognitiveNexus
+from rag_system.retrieval.hybrid_retriever import HybridRetriever
+from rag_system.processing.reasoning_engine import UncertaintyAwareReasoningEngine
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
+from rag_system.core.exploration_mode import ExplorationMode
+from rag_system.utils.advanced_analytics import AdvancedAnalytics
+from rag_system.evaluation.comprehensive_evaluation import ComprehensiveEvaluationFramework
+
+# Communication imports
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType, Priority
 
 @dataclass
 class UnifiedAgentConfig:
+    """Enhanced configuration for unified agent implementation."""
+    # Basic configuration
     name: str
     description: str
     capabilities: List[str]
@@ -24,12 +38,45 @@ class UnifiedAgentConfig:
     vector_store: VectorStore
     model: str
     instructions: str
+    
+    # Performance configuration
+    max_retries: int = 3
+    timeout: float = 30.0
+    batch_size: int = 32
+    memory_size: int = 1000
+    
+    # Learning configuration
+    learning_rate: float = 0.01
+    temperature: float = 0.7
+    top_p: float = 0.9
+    
+    # Evolution configuration
+    evolution_rate: float = 0.1
+    mutation_rate: float = 0.05
+    crossover_rate: float = 0.7
+    
+    # Planning configuration
+    planning_depth: int = 3
+    exploration_weight: float = 1.0
+    simulation_depth: int = 10
+    
+    # Quality assurance configuration
+    quality_threshold: float = 0.7
+    safety_threshold: float = 0.8
+    uncertainty_threshold: float = 0.3
+    
+    # Resource configuration
+    max_memory_usage: float = 0.9
+    max_cpu_usage: float = 0.8
+    
+    # Additional parameters
     extra_params: Dict[str, Any] = field(default_factory=dict)
 
 class UnifiedBaseAgent:
+    """Enhanced base agent with standardized implementation and RAG system integration."""
+    
     def __init__(self, config: UnifiedAgentConfig, communication_protocol: StandardCommunicationProtocol):
         self.config = config
-        self.rag_pipeline = EnhancedRAGPipeline(config.rag_config)
         self.name = config.name
         self.description = config.description
         self.capabilities = config.capabilities
@@ -39,49 +86,288 @@ class UnifiedBaseAgent:
         self.tools: Dict[str, Callable] = {}
         self.communication_protocol = communication_protocol
         self.communication_protocol.subscribe(self.name, self.handle_message)
-        self.llm = OpenAIGPTConfig(chat_model=self.model).create()
+        
+        # Initialize LLM
+        self.llm = OpenAIGPTConfig(
+            chat_model=self.model,
+            temperature=config.temperature,
+            top_p=config.top_p
+        ).create()
 
-        # Initialize new layers
-        self.quality_assurance_layer = QualityAssuranceLayer()
+        # Initialize RAG system components
+        self.rag_pipeline = EnhancedRAGPipeline(config.rag_config)
+        self.cognitive_nexus = CognitiveNexus()
+        self.hybrid_retriever = HybridRetriever(config.rag_config)
+        self.reasoning_engine = UncertaintyAwareReasoningEngine(config.rag_config)
+        self.knowledge_tracker = UnifiedKnowledgeTracker(config.vector_store, None)  # Graph store to be added if needed
+        self.exploration_mode = ExplorationMode(None, self.llm, None)  # Graph store and NLP to be added if needed
+        self.advanced_analytics = AdvancedAnalytics()
+        self.evaluation_framework = ComprehensiveEvaluationFramework(self.advanced_analytics)
+
+        # Initialize enhanced layers
+        self.quality_assurance_layer = QualityAssuranceLayer(upo_threshold=0.7)
         self.foundational_layer = FoundationalLayer(self.vector_store)
         self.continuous_learning_layer = ContinuousLearningLayer(self.vector_store)
         self.agent_architecture_layer = AgentArchitectureLayer()
         self.decision_making_layer = DecisionMakingLayer()
 
+        # Initialize memory and state
+        self.memory = []
+        self.state = SimpleNamespace(
+            last_task=None,
+            last_result=None,
+            performance_metrics={},
+            error_count=0
+        )
+
+        # Add RAG-specific tools
+        self.add_tool("query_rag", self.query_rag, "Query the RAG system for information")
+        self.add_tool("explore_knowledge", self.explore_knowledge, "Explore knowledge connections")
+        self.add_tool("track_knowledge", self.track_knowledge, "Track and update knowledge")
+        self.add_tool("reason_with_uncertainty", self.reason_with_uncertainty, "Perform uncertainty-aware reasoning")
+
+    async def query_rag(self, query: str) -> Dict[str, Any]:
+        """Query the RAG system with uncertainty handling."""
+        try:
+            # Start timing for analytics
+            start_time = datetime.now()
+
+            # Create standardized prompt
+            prompt = create_standardized_prompt(query)
+
+            # Process through RAG pipeline
+            retrieval_results = await self.hybrid_retriever.retrieve(prompt)
+            reasoning_results = await self.reasoning_engine.reason(prompt, retrieval_results)
+            
+            # Track knowledge updates
+            await self.knowledge_tracker.track_query(query, retrieval_results)
+            
+            # Process through cognitive nexus
+            enhanced_results = await self.cognitive_nexus.process(
+                query=query,
+                retrieval_results=retrieval_results,
+                reasoning_results=reasoning_results
+            )
+
+            # Create standardized output
+            output = create_standardized_output(enhanced_results, OutputFormat.DETAILED)
+
+            # Record analytics
+            end_time = datetime.now()
+            self.advanced_analytics.record_query(
+                query=query,
+                duration=(end_time - start_time).total_seconds(),
+                result_count=len(retrieval_results),
+                quality_score=enhanced_results.get('quality_score', 0)
+            )
+
+            return output
+
+        except Exception as e:
+            self.state.error_count += 1
+            return {
+                "error": str(e),
+                "status": "failed",
+                "query": query
+            }
+
+    async def explore_knowledge(self, start_point: str, depth: int = 2) -> Dict[str, Any]:
+        """Explore knowledge connections using the exploration mode."""
+        try:
+            exploration_results = await self.exploration_mode.explore(
+                start_point=start_point,
+                depth=depth,
+                analytics=self.advanced_analytics
+            )
+            
+            await self.knowledge_tracker.track_exploration(
+                start_point=start_point,
+                results=exploration_results
+            )
+            
+            return exploration_results
+
+        except Exception as e:
+            self.state.error_count += 1
+            return {
+                "error": str(e),
+                "status": "failed",
+                "start_point": start_point
+            }
+
+    async def track_knowledge(self, content: Dict[str, Any]) -> Dict[str, Any]:
+        """Track and update knowledge in the system."""
+        try:
+            tracking_result = await self.knowledge_tracker.track_update(content)
+            
+            # Update analytics
+            self.advanced_analytics.record_knowledge_update(
+                content_type=content.get('type', 'unknown'),
+                update_size=len(str(content)),
+                success=tracking_result.get('success', False)
+            )
+            
+            return tracking_result
+
+        except Exception as e:
+            self.state.error_count += 1
+            return {
+                "error": str(e),
+                "status": "failed",
+                "content_type": content.get('type', 'unknown')
+            }
+
+    async def reason_with_uncertainty(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Perform uncertainty-aware reasoning."""
+        try:
+            reasoning_result = await self.reasoning_engine.reason_with_uncertainty(
+                query=query,
+                context=context
+            )
+            
+            # Track reasoning process
+            await self.knowledge_tracker.track_reasoning(
+                query=query,
+                result=reasoning_result
+            )
+            
+            return reasoning_result
+
+        except Exception as e:
+            self.state.error_count += 1
+            return {
+                "error": str(e),
+                "status": "failed",
+                "query": query
+            }
+
     async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
-        # Quality Assurance Layer check
-        if not self.quality_assurance_layer.check_task_safety(task):
-            return {"error": "Task deemed unsafe"}
+        """Enhanced task execution with RAG integration."""
+        try:
+            # Pre-execution checks
+            if not self.quality_assurance_layer.check_task_safety(task):
+                return {"error": "Task deemed unsafe", "status": "rejected"}
 
-        # Foundational Layer processing
-        task = await self.foundational_layer.process_task(task)
+            # Get relevant knowledge from RAG system
+            rag_results = await self.query_rag(task.content)
+            
+            # Enhance task with RAG knowledge
+            enhanced_task = await self.enhance_task_with_rag(task, rag_results)
+            
+            # Process through layers
+            prepared_task = await self.foundational_layer.process_task(enhanced_task)
+            
+            # Core execution with retries
+            for attempt in range(self.config.max_retries):
+                try:
+                    result = await asyncio.wait_for(
+                        self._process_task(prepared_task),
+                        timeout=self.config.timeout
+                    )
+                    break
+                except asyncio.TimeoutError:
+                    if attempt == self.config.max_retries - 1:
+                        return {"error": "Task execution timeout", "status": "failed"}
+                    continue
+                except Exception as e:
+                    if attempt == self.config.max_retries - 1:
+                        return {"error": str(e), "status": "failed"}
+                    continue
 
-        # Use existing processing logic
-        result = await self._process_task(task)
+            # Post-processing with RAG enhancement
+            processed_result = await self.agent_architecture_layer.process_result(result)
+            decision = await self.decision_making_layer.make_decision(enhanced_task, processed_result)
+            
+            # Update knowledge tracking
+            await self.track_knowledge({
+                "type": "task_execution",
+                "task": task.content,
+                "result": decision,
+                "timestamp": datetime.now().isoformat()
+            })
+            
+            # Learning and updates
+            await self.continuous_learning_layer.update(enhanced_task, decision)
+            self._update_memory(enhanced_task, decision)
+            self._update_metrics(enhanced_task, decision)
 
-        # Agent Architecture Layer processing
-        result = await self.agent_architecture_layer.process_result(result)
+            return {
+                "status": "success",
+                "result": decision,
+                "metrics": self.state.performance_metrics,
+                "rag_enhancement": rag_results
+            }
 
-        # Decision Making Layer processing
-        decision = await self.decision_making_layer.make_decision(task, result)
+        except Exception as e:
+            self.state.error_count += 1
+            return {
+                "error": str(e),
+                "status": "failed",
+                "error_count": self.state.error_count
+            }
 
-        # Continuous Learning Layer update
-        await self.continuous_learning_layer.update(task, decision)
-
-        return {"result": decision}
+    async def enhance_task_with_rag(self, task: LangroidTask, rag_results: Dict[str, Any]) -> LangroidTask:
+        """Enhance a task with RAG system results."""
+        enhanced_content = f"""
+        Original Task: {task.content}
+        
+        Retrieved Knowledge:
+        {rag_results.get('knowledge', 'No knowledge retrieved')}
+        
+        Reasoning:
+        {rag_results.get('reasoning', 'No reasoning available')}
+        
+        Confidence: {rag_results.get('confidence', 0)}
+        """
+        
+        task.content = enhanced_content
+        task.metadata = {
+            **(task.metadata or {}),
+            "rag_enhanced": True,
+            "rag_confidence": rag_results.get('confidence', 0),
+            "enhancement_timestamp": datetime.now().isoformat()
+        }
+        
+        return task
 
     async def _process_task(self, task: LangroidTask) -> Dict[str, Any]:
-        """
-        Process the task and return the result or a handoff to another agent.
-        This method should be implemented by subclasses.
-        """
+        """Core task processing logic to be implemented by subclasses."""
         raise NotImplementedError("Subclasses must implement _process_task method")
 
+    def _update_memory(self, task: LangroidTask, result: Any):
+        """Update agent's memory with task and result."""
+        self.memory.append({
+            "timestamp": datetime.now().isoformat(),
+            "task": task.content,
+            "result": result
+        })
+        if len(self.memory) > self.config.memory_size:
+            self.memory.pop(0)
+
+    def _update_metrics(self, task: LangroidTask, result: Any):
+        """Update performance metrics."""
+        self.state.performance_metrics.update({
+            "tasks_completed": self.state.performance_metrics.get("tasks_completed", 0) + 1,
+            "error_rate": self.state.error_count / (self.state.performance_metrics.get("tasks_completed", 1)),
+            "last_task_timestamp": datetime.now().isoformat()
+        })
+
     async def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
+        """Enhanced message processing with standardized communication."""
         task = LangroidTask(self, message['content'])
-        return await self.execute_task(task)
+        result = await self.execute_task(task)
+        
+        # Standardized response format
+        return {
+            "agent": self.name,
+            "task_id": message.get('id'),
+            "timestamp": datetime.now().isoformat(),
+            "result": result,
+            "status": result.get("status", "unknown")
+        }
 
     async def handle_message(self, message: Message):
+        """Standardized message handling."""
         if message.type == MessageType.TASK:
             result = await self.process_message(message.content)
             response = Message(
@@ -89,139 +375,86 @@ class UnifiedBaseAgent:
                 sender=self.name,
                 receiver=message.sender,
                 content=result,
-                parent_id=message.id
+                parent_id=message.id,
+                priority=message.priority
             )
             await self.communication_protocol.send_message(response)
 
-    def add_capability(self, capability: str):
-        if capability not in self.capabilities:
-            self.capabilities.append(capability)
-
-    def remove_capability(self, capability: str):
-        if capability in self.capabilities:
-            self.capabilities.remove(capability)
-
-    def add_tool(self, name: str, tool: Callable):
-        self.tools[name] = tool
+    # Tool management methods
+    def add_tool(self, name: str, tool: Callable, description: str = ""):
+        """Add a tool with metadata."""
+        self.tools[name] = {
+            "function": tool,
+            "description": description,
+            "added": datetime.now().isoformat()
+        }
 
     def remove_tool(self, name: str):
+        """Remove a tool."""
         if name in self.tools:
             del self.tools[name]
 
-    def get_tool(self, name: str) -> Optional[Callable]:
+    def get_tool(self, name: str) -> Optional[Dict[str, Any]]:
+        """Get tool with metadata."""
         return self.tools.get(name)
+
+    def list_tools(self) -> List[Dict[str, Any]]:
+        """List all available tools with metadata."""
+        return [{
+            "name": name,
+            "description": tool["description"],
+            "added": tool["added"]
+        } for name, tool in self.tools.items()]
+
+    # Capability management
+    def add_capability(self, capability: str, metadata: Dict[str, Any] = None):
+        """Add a capability with metadata."""
+        if capability not in self.capabilities:
+            self.capabilities.append(capability)
+            if metadata:
+                self.state.performance_metrics[f"capability_{capability}"] = metadata
+
+    def remove_capability(self, capability: str):
+        """Remove a capability."""
+        if capability in self.capabilities:
+            self.capabilities.remove(capability)
+            if f"capability_{capability}" in self.state.performance_metrics:
+                del self.state.performance_metrics[f"capability_{capability}"]
 
     @property
     def info(self) -> Dict[str, Any]:
+        """Enhanced agent information."""
         return {
             "name": self.name,
             "description": self.description,
             "capabilities": self.capabilities,
             "model": self.model,
-            "tools": list(self.tools.keys())
+            "tools": self.list_tools(),
+            "metrics": self.state.performance_metrics,
+            "memory_size": len(self.memory),
+            "error_count": self.state.error_count
         }
 
-    # Implement AgentInterface methods
-
-    async def generate(self, prompt: str) -> str:
-        """
-        Generate a response using the agent's language model.
-        """
-        response = await self.llm.complete(prompt)
-        return response.text
-
-    async def get_embedding(self, text: str) -> List[float]:
-        """
-        Get the embedding for the given text.
-        """
-        return await self.rag_pipeline.get_embedding(text)
-
-    async def rerank(self, query: str, results: List[Dict[str, Any]], k: int) -> List[Dict[str, Any]]:
-        """
-        Rerank the given results based on the query.
-        """
-        return await self.rag_pipeline.rerank(query, results, k)
-
-    async def introspect(self) -> Dict[str, Any]:
-        """
-        Return the agent's internal state.
-        """
-        return self.info
-
-    async def communicate(self, message: str, recipient: str) -> str:
-        """
-        Communicate with another agent using the communication protocol.
-        """
-        query_message = Message(
-            type=MessageType.QUERY,
-            sender=self.name,
-            receiver=recipient,
-            content={"message": message},
-            priority=Priority.MEDIUM
-        )
-        response = await self.communication_protocol.query(self.name, recipient, query_message.content)
-        return f"Sent: {message}, Received: {response}"
-
-    async def activate_latent_space(self, query: str) -> Tuple[str, str]:
-        """
-        Activate the agent's latent space for the given query.
-        """
-        activation_prompt = f"""
-        Given the following query, provide:
-        1. All relevant background knowledge you have about the topic.
-        2. A refined version of the query that incorporates this background knowledge.
-
-        Original query: {query}
-
-        Background Knowledge:
-        """
-
-        response = await self.generate(activation_prompt)
-        
-        # Split the response into background knowledge and refined query
-        parts = response.split("Refined Query:")
-        background_knowledge = parts[0].strip()
-        refined_query = parts[1].strip() if len(parts) > 1 else query
-
-        return background_knowledge, refined_query
-
-    async def query_rag(self, query: str) -> Dict[str, Any]:
-        """
-        Submit a query to the RAG system and receive a structured response.
-        """
-        result = await self.rag_pipeline.process_query(query)
-        return result
-
-    async def add_document(self, content: str, filename: str):
-        """
-        Add a new document to the RAG system.
-        """
-        await self.rag_pipeline.add_document(content, filename)
-
-    def create_handoff(self, target_agent: 'UnifiedBaseAgent'):
-        """
-        Create a handoff function to transfer control to another agent.
-        """
-        def handoff():
-            return target_agent
-        self.add_tool(f"transfer_to_{target_agent.name}", handoff)
-
-    async def update_instructions(self, new_instructions: str):
-        """
-        Update the agent's instructions dynamically.
-        """
-        self.instructions = new_instructions
-        # Optionally, you could add logic here to re-initialize the agent with the new instructions
-        # For example, updating the language model's system message
-
     async def evolve(self):
+        """Enhanced evolution process."""
         print(f"Evolving agent: {self.name}")
+        
+        # Evolve all layers
         await self.quality_assurance_layer.evolve()
         await self.foundational_layer.evolve()
         await self.continuous_learning_layer.evolve()
         await self.agent_architecture_layer.evolve()
         await self.decision_making_layer.evolve()
+        
+        # Update configuration based on performance
+        if self.state.performance_metrics.get("error_rate", 1.0) > 0.2:
+            self.config.max_retries += 1
+        
+        if self.state.performance_metrics.get("timeout_rate", 0.0) > 0.1:
+            self.config.timeout *= 1.5
+        
         print(f"Agent {self.name} evolution complete.")
+        print(f"Updated configuration: max_retries={self.config.max_retries}, timeout={self.config.timeout}")
 
 # New layer implementations
 
@@ -457,9 +690,7 @@ class SelfEvolvingSystem:
             self.recent_decisions.pop(0)
 
 def create_agent(agent_type: str, config: UnifiedAgentConfig, communication_protocol: StandardCommunicationProtocol) -> UnifiedBaseAgent:
-    """
-    Factory function to create different types of agents.
-    """
+    """Factory function to create different types of agents."""
     return UnifiedBaseAgent(config, communication_protocol)
 
 # Example usage (keeping existing example)
@@ -508,3 +739,4 @@ if __name__ == "__main__":
     self_evolving_system = SelfEvolvingSystem([agent], vector_store)
     
     # Use the self_evolving_system to process tasks and evolve the system
+
