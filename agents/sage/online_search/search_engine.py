@@ -23,7 +23,7 @@ try:
     import spacy
     nlp = spacy.load("en_core_web_sm")
 except ImportError:
-    logger.warning("spacy not installed. Please install with: pip install spacy && python -m spacy download en_core_web_sm")
+    logging.Logger.warning("spacy not installed. Please install with: pip install spacy && python -m spacy download en_core_web_sm")
     nlp = None
 
 from urllib.parse import quote_plus, urlparse
