@@ -12,7 +12,7 @@ import json  # Added missing import
 try:
     from playwright.async_api import async_playwright, Browser, Page
 except ImportError:
-    logger.warning("playwright not installed. Please install with: pip install playwright && playwright install")
+    logging.Logger.warning("playwright not installed. Please install with: pip install playwright && playwright install")
     async_playwright = None
     Browser = None
     Page = None
