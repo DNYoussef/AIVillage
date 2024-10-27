@@ -104,6 +104,7 @@ class DeepSystemBakerTask(Task):
                 print(f"Reached consistency threshold after {i+1} iterations.")
                 break
         
+        # Save the baked model
         self.model.save_pretrained("deep_baked_model")
         self.tokenizer.save_pretrained("deep_baked_model")
 
@@ -161,20 +162,3 @@ class DeepSystemBakerTask(Task):
     async def run(self, max_iterations=50, consistency_threshold=0.95):
         await self.deep_bake_system(max_iterations, consistency_threshold)
         return "Deep baking completed successfully"
-
-# Usage example
-if __name__ == "__main__":
-    import asyncio
-    from langroid.language_models.openai_gpt import OpenAIGPTConfig
-
-    async def main():
-        config = ChatAgentConfig(
-            name="DeepSystemBaker",
-            llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
-        )
-        agent = ChatAgent(config)
-        task = DeepSystemBakerTask(agent, "mistralai/Mistral-7B-v0.1")
-        result = await task.run()
-        print(result)
-
-    asyncio.run(main())

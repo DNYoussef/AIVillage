@@ -1,195 +1,367 @@
-Certainly! Here's a structured TODO list for refactoring the SageAgent, organized for an efficient development path:
+# AI Village Development TODO
 
-1. Prepare the foundation:
-   - [ ] Review and update UnifiedBaseAgent class if necessary
-   - [ ] Ensure EnhancedRAGPipeline is fully functional and up-to-date
+## 1. Initial Setup
+- [X] 1.1 OpenRouter API Integration
+  - [X] 1.1.1 Create OpenRouter account and generate API key [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]
+  - [X] 1.1.2 Implement OpenRouterAgent class with AsyncOpenAI client
+  - [X] 1.1.3 Add error handling and rate limiting to OpenRouterAgent
+  - [X] 1.1.4 Create separate instances for King (nvidia/llama-3.1-nemotron-70b-instruct), Sage (anthropic/claude-3.5-sonnet), and Magi (openai/o1-mini-2024-09-12)
 
-2. Implement new core components:
-   - [ ] Create WebScraper class in web_scraping/scraper.py
-   - [ ] Develop OnlineSearchEngine class in online_search/search_engine.py
-   - [ ] Implement ReportWriter class in report_generation/report_writer.py
-   - [ ] Design and implement KnowledgeSynthesizer class
+- [ ] 1.2 Local Model Initialization
+  - [ ] 1.2.1 Implement LocalAgent class using Hugging Face's Transformers
+  - [ ] 1.2.2 Set up King's local model with Qwen/Qwen2.5-3B-Instruct
+  - [ ] 1.2.3 Set up Sage's local model with deepseek-ai/Janus-1.3B
+  - [ ] 1.2.4 Set up Magi's local model with ibm-granite/granite-3b-code-instruct-128k
 
-3. Enhance existing RAG system components:
-   - [ ] Update QueryProcessor to handle more complex queries
-   - [ ] Enhance HybridRetriever for better integration with new SageAgent capabilities
-   - [ ] Integrate LatentSpaceActivation into the RAG pipeline
-   - [ ] Incorporate SelfReferentialQueryProcessor into the query processing flow
+## 2. Agent Architecture
+- [X] 2.1 Implement DPO Tracking
+  - [X] 2.1.1 Create interaction tracking in OpenRouterAgent
+  - [X] 2.1.2 Implement performance metrics recording
+  - [X] 2.1.3 Set up DPO metrics analysis
+  - [X] 2.1.4 Configure training data collection
 
-4. Develop ExplorationMode:
-   - [ ] Create ExplorationMode class for creative knowledge exploration
-   - [ ] Implement explore method using the RAG system
+- [ ] 2.2 Implement Agent Manager
+  - [X] 2.2.1 Create AgentManager class
+  - [X] 2.2.2 Implement agent configuration loading
+  - [X] 2.2.3 Set up agent initialization and management
+  - [ ] 2.2.4 Add agent interaction orchestration
 
-5. Refactor SageAgent class:
-   - [ ] Update __init__ method to include new components
-   - [ ] Implement execute_task method with task type routing
-   - [ ] Develop conduct_research method
-   - [ ] Create scrape_web method
-   - [ ] Implement generate_report method
-   - [ ] Add update_rag_system method
-   - [ ] Incorporate explore_knowledge method
+- [ ] 2.3 Implement Training Pipeline
+  - [ ] 2.3.1 Set up data preprocessing for local models
+  - [ ] 2.3.2 Implement training loop with DPO metrics
+  - [ ] 2.3.3 Add model checkpointing and evaluation
+  - [ ] 2.3.4 Configure automatic training triggers
 
-6. Integrate new capabilities:
-   - [ ] Connect WebScraper to RAG system for knowledge updates
-   - [ ] Link OnlineSearchEngine results to KnowledgeSynthesizer
-   - [ ] Ensure ReportWriter can access all necessary data sources
+## Next Steps:
+1. Implement LocalAgent class for managing the HuggingFace models
+2. Set up the training pipeline to use the collected DPO data
+3. Create agent interaction orchestration in AgentManager
+4. Implement automatic training triggers based on DPO metrics
 
-7. Implement advanced features:
-   - [ ] Develop adaptive research strategies based on task complexity
-   - [ ] Create a feedback loop for continuous RAG system improvement
-   - [ ] Implement cross-referencing and fact-checking mechanisms
+## Notes:
+- OpenRouter integration is complete with:
+  - Rate limiting and error handling
+  - Interaction tracking for DPO
+  - Performance metrics collection
+  - Training data generation
 
-8. Optimize and fine-tune:
-   - [ ] Optimize query processing and retrieval for better performance
-   - [ ] Fine-tune knowledge synthesis algorithms
-   - [ ] Implement caching mechanisms for frequently accessed data
+- Agent configuration is set up with:
+  - Frontier models from OpenRouter
+  - Local models from HuggingFace
+  - Performance tracking metrics
+  - DPO settings
 
-9. Testing and validation:
-   - [ ] Develop unit tests for each new component
-   - [ ] Create integration tests for SageAgent's interactions with other system parts
-   - [ ] Perform end-to-end testing of research, web scraping, and report generation tasks
+The system is now ready for:
+1. Collecting interaction data from frontier models
+2. Tracking performance with DPO metrics
+3. Generating training data for local models
 
-10. Documentation and code cleanup:
-    - [ ] Update SageAgent documentation with new capabilities
-    - [ ] Refactor and clean up code for readability and maintainability
-    - [ ] Create usage examples for new SageAgent features
+Next major focus should be on implementing the local model training pipeline to utilize the collected data.
+ [ ] 2.3 Implement KingAgent
+       [ ] 2.3.1 Integrate OpenRouterAgent, LocalAgent, ContinuousLearningLayer, and SelfEvolvingSystem
+       [ ] 2.3.2 Implement process_task() method with API/local model selection logic
+       [ ] 2.3.3 Develop is_complex_task() method for task routing
 
-11. Integration with other agents:
-    - [ ] Update KingAgent to leverage SageAgent's new capabilities
-    - [ ] Ensure proper communication between SageAgent and MagiAgent for code-related tasks
+   [ ] 2.4 Implement SageAgent
+       [ ] 2.4.1 Integrate all components as in KingAgent
+       [ ] 2.4.2 Implement conduct_research() method with API/local model usage
+       [ ] 2.4.3 Develop research-specific task complexity evaluation
 
-12. Final review and optimization:
-    - [ ] Conduct a final code review
-    - [ ] Profile and optimize performance bottlenecks
-    - [ ] Ensure all error handling and edge cases are addressed
+   [ ] 2.5 Implement MagiAgent
+       [ ] 2.5.1 Integrate all components as in KingAgent
+       [ ] 2.5.2 Implement generate_code() method with API/local model selection
+       [ ] 2.5.3 Develop is_complex_code() method for code task evaluation
 
-Certainly! I'll elaborate on each of the 12 points to provide more context and detail for the development process:
+3. Bootstrapping Process
+   [ ] 3.1 Implement data collection system
+       [ ] 3.1.1 Create DataCollector class to store API outputs and performance metrics
+       [ ] 3.1.2 Implement methods to save data to disk (use appropriate format, e.g., JSON or CSV)
+       [ ] 3.1.3 Develop data loading methods for analysis and model updates
 
-1. Prepare the foundation:
-   - Review the UnifiedBaseAgent class to ensure it provides all necessary base functionalities for the SageAgent.
-   - Check if any updates are needed to support new features like web scraping or online search.
-   - Verify that the EnhancedRAGPipeline is fully implemented and can handle the expanded capabilities of the SageAgent.
-   - Ensure the pipeline can effectively manage knowledge updates from various sources.
+   [ ] 3.2 Implement complexity threshold system
+       [ ] 3.2.1 Create ComplexityEvaluator class with initial thresholds for each agent
+       [ ] 3.2.2 Implement methods to gradually increase thresholds based on local model performance
+       [ ] 3.2.3 Develop periodic threshold adjustment mechanism
 
-2. Implement new core components:
-   - WebScraper: Create a robust, async-capable web scraping module that can handle various website structures and respect ethical guidelines.
-   - OnlineSearchEngine: Develop an interface to online search APIs (e.g., Google, Bing) that can perform targeted searches and filter results.
-   - ReportWriter: Implement a flexible report generation system that can create structured reports from various data sources.
-   - KnowledgeSynthesizer: Design a system that can combine information from multiple sources (RAG, web scraping, online search) into coherent knowledge.
+4. Implementation Steps
+   [ ] 4.1 Develop main.py script
+       [ ] 4.1.1 Implement asyncio event loop for concurrent agent operations
+       [ ] 4.1.2 Create task queue and distribution system
+       [ ] 4.1.3 Implement main execution flow with error handling
 
-3. Enhance existing RAG system components:
-   - Update QueryProcessor to handle complex, multi-part queries that might arise from research tasks.
-   - Improve HybridRetriever to better balance between vector and graph-based retrieval based on query type.
-   - Integrate LatentSpaceActivation to enable more nuanced understanding of queries and knowledge connections.
-   - Incorporate SelfReferentialQueryProcessor to allow the system to query and reason about its own knowledge and processes.
+   [ ] 4.2 Implement AIVillage class
+       [ ] 4.2.1 Create instances of KingAgent, SageAgent, and MagiAgent
+       [ ] 4.2.2 Implement task routing logic to appropriate agents
+       [ ] 4.2.3 Develop inter-agent communication methods
 
-4. Develop ExplorationMode:
-   - Create an ExplorationMode class that can traverse the knowledge graph in creative ways.
-   - Implement algorithms for finding non-obvious connections between concepts.
-   - Develop methods for generating hypotheses or research questions based on explored knowledge.
+5. Data Management
+   [ ] 5.1 Implement DatabaseManager class
+       [ ] 5.1.1 Set up SQLite database for storing learning examples and performance data
+       [ ] 5.1.2 Create methods for inserting, updating, and querying data
+       [ ] 5.1.3 Implement data backup and recovery mechanisms
 
-5. Refactor SageAgent class:
-   - Update the initialization to include all new components and systems.
-   - Implement a flexible execute_task method that can route different types of tasks to appropriate handlers.
-   - Develop a conduct_research method that orchestrates the use of RAG, online search, and web scraping.
-   - Create a scrape_web method that safely and effectively extracts information from web pages.
-   - Implement a generate_report method that can create comprehensive reports from research findings.
-   - Add an update_rag_system method to ensure new knowledge is properly integrated.
-   - Incorporate an explore_knowledge method that utilizes the ExplorationMode for creative research.
+   [ ] 5.2 Develop ModelCheckpointer class
+       [ ] 5.2.1 Implement methods to save local model states
+       [ ] 5.2.2 Create loading mechanisms for resuming from checkpoints
+       [ ] 5.2.3 Set up periodic checkpointing (e.g., daily or after significant updates)
 
-6. Integrate new capabilities:
-   - Ensure WebScraper can feed new information directly into the RAG system.
-   - Develop a system for OnlineSearchEngine to provide results to KnowledgeSynthesizer for integration with existing knowledge.
-   - Create interfaces for ReportWriter to access all relevant data sources (RAG, scraped data, search results).
+6. Evaluation and Monitoring
+   [ ] 6.1 Implement PerformanceTracker class
+       [ ] 6.1.1 Define metrics for API and local model performance (e.g., accuracy, latency)
+       [ ] 6.1.2 Create methods to calculate and store performance metrics
+       [ ] 6.1.3 Implement performance comparison and trend analysis
 
-7. Implement advanced features:
-   - Develop algorithms to adapt research strategies based on task complexity and initial findings.
-   - Create a feedback loop where research outcomes inform and improve the RAG system.
-   - Implement cross-referencing and fact-checking mechanisms to ensure information accuracy.
+   [ ] 6.2 Develop Dashboardclass
+       [ ] 6.2.1 Create web-based dashboard using a framework like Dash or Streamlit
+       [ ] 6.2.2 Implement real-time performance metric visualizations
+       [ ] 6.2.3 Add controls for adjusting system parameters (e.g., learning rates, thresholds)
 
-8. Optimize and fine-tune:
-   - Profile and optimize query processing and retrieval operations for faster performance.
-   - Refine knowledge synthesis algorithms to produce more accurate and relevant results.
-   - Implement intelligent caching mechanisms to speed up frequent or similar queries.
+   [ ] 6.3 Set up logging system
+       [ ] 6.3.1 Implement comprehensive logging using Python's logging module
+       [ ] 6.3.2 Create log rotation and archiving mechanism
+       [ ] 6.3.3 Develop log analysis tools for troubleshooting and optimization
 
-9. Testing and validation:
-   - Develop comprehensive unit tests for each new component (WebScraper, OnlineSearchEngine, etc.).
-   - Create integration tests to ensure smooth interaction between SageAgent and other system components.
-   - Perform end-to-end testing of complex research tasks, including web scraping and report generation.
+7. Optimization Cycle
+   [ ] 7.1 Implement AutoOptimizer class
+       [ ] 7.1.1 Create methods to analyze performance trends
+       [ ] 7.1.2 Develop algorithms to adjust learning rates and optimization strategies
+       [ ] 7.1.3 Implement automatic complexity threshold adjustments
 
-10. Documentation and code cleanup:
-    - Update all documentation to reflect SageAgent's new capabilities and usage patterns.
-    - Refactor code for clarity, removing redundancies and improving structure.
-    - Create detailed examples and tutorials for using SageAgent's new features.
+   [ ] 7.2 Develop ModelResetManager class
+       [ ] 7.2.1 Implement detection of performance plateaus
+       [ ] 7.2.2 Create methods for controlled resets of local models
+       [ ] 7.2.3 Develop mechanisms for major architecture updates
 
-11. Integration with other agents:
-    - Update KingAgent to effectively delegate research and knowledge-related tasks to SageAgent.
-    - Establish clear communication protocols between SageAgent and MagiAgent for tasks requiring both research and code generation.
-    - Ensure SageAgent can provide relevant context and information to other agents when needed.
+8. Scaling and Efficiency
+   [ ] 8.1 Implement CacheManager class
+       [ ] 8.1.1 Create LRU cache for API responses
+       [ ] 8.1.2 Implement cache invalidation strategies
+       [ ] 8.1.3 Develop methods to preemptively cache common queries
 
-12. Final review and optimization:
-    - Conduct a thorough code review, possibly involving multiple team members.
-    - Use profiling tools to identify and address any remaining performance bottlenecks.
-    - Perform extensive testing to catch and handle edge cases and potential errors.
-    - Consider scalability and future extensibility in the final design.
+   [ ] 8.2 Create BatchProcessor class
+       [ ] 8.2.1 Implement request batching for API calls
+       [ ] 8.2.2 Develop dynamic batch size adjustment based on current load
+       [ ] 8.2.3 Create methods for efficient batch processing of local model operations
+
+   [ ] 8.3 Set up distributed computing framework
+       [ ] 8.3.1 Integrate a tool like Dask or Ray for distributed computing
+       [ ] 8.3.2 Implement distributed processing for model optimization tasks
+       [ ] 8.3.3 Develop load balancing mechanisms for distributed operations
+
+9. Safety and Ethical Considerations
+   [ ] 9.1 Implement ContentFilter class
+       [ ] 9.1.1 Develop input sanitization methods
+       [ ] 9.1.2 Create output filtering mechanisms
+       [ ] 9.1.3 Implement content policy enforcement
+
+   [ ] 9.2 Develop ComplianceChecker class
+       [ ] 9.2.1 Implement API usage tracking and limit enforcement
+       [ ] 9.2.2 Create methods to ensure adherence to terms of service
+       [ ] 9.2.3 Develop reporting mechanisms for compliance monitoring
+
+10. Testing and Validation
+    [ ] 10.1 Create comprehensive test suite
+        [ ] 10.1.1 Develop unit tests for all major classes and methods
+        [ ] 10.1.2 Implement integration tests for agent interactions
+        [ ] 10.1.3 Create end-to-end tests for complete system workflows
+
+    [ ] 10.2 Develop SimulationEnvironment class
+        [ ] 10.2.1 Create simulated task generators for each agent type
+        [ ] 10.2.2 Implement mechanisms to fast-forward time for evolution testing
+        [ ] 10.2.3 Develop analysis tools for long-term system behavior
+
+11. Documentation and Maintenance
+    [ ] 11.1 Create detailed documentation
+        [ ] 11.1.1 Write architectural overview and component descriptions
+        [ ] 11.1.2 Develop API documentation for all classes and methods
+        [ ] 11.1.3 Create user guides for system operation and maintenance
+
+    [ ] 11.2 Implement auto-documentation tools
+        [ ] 11.2.1 Set up Sphinx for automatic documentation generation
+        [ ] 11.2.2 Implement docstring conventions across all code
+        [ ] 11.2.3 Create documentation build and deployment pipeline
+
+12. Future Expansion
+    [ ] 12.1 Research integration of new frontier models
+        [ ] 12.1.1 Develop AbstractModelAdapter for easy integration of new models
+        [ ] 12.1.2 Create benchmarking suite for evaluating new models
+        [ ] 12.1.3 Implement automated model integration testing
+
+    [ ] 12.2 Explore advanced knowledge transfer techniques
+        [ ] 12.2.1 Research and implement knowledge distillation methods
+        [ ] 12.2.2 Develop cross-model transfer learning capabilities
+        [ ] 12.2.3 Create experiments for continual learning approaches
+
+    [ ] 12.3 Investigate multi-modal capabilities
+        [ ] 12.3.1 Research integration of image processing models
+        [ ] 12.3.2 Explore audio processing capabilities
+        [ ] 12.3.3 Develop prototype for multi-modal task handling
+
+This detailed todo list provides a comprehensive breakdown of the tasks required to implement the AI Village system with frontier model integration and local model bootstrapping. Each main task is broken down into specific, actionable subtasks for clarity and ease of implementation.
 
 
-ALL CHANEGES FROM HERE DOWN APPLY TO THE WHOLE SYSTEM
+To integrate OpenRouter into your programs and select appropriate models, follow these steps:
 
-13. Documentation:
-    - [ ] Write comprehensive documentation for each component
-    - [ ] Create a user manual for system operation
-    - [ ] Document the system architecture and component interactions
+## Integration Process
 
-14. Deployment and Scalability:
-    - [ ] Set up deployment scripts and processes
-    - [ ] Implement load balancing for scalability
-    - [ ] Set up monitoring and alerting systems
+1. **Create an Account**
 
-15. Continuous Improvement:
-    - [ ] Implement the feedback loop for system self-improvement
-    - [ ] Set up mechanisms for gathering and analyzing system performance data
-    - [ ] Create processes for regular system updates and improvements
+Create an account on OpenRouter (www.openrouter.ai) and generate an API key[3].
 
-16. Security:
-    - [ ] Implement security best practices across the system
-    - [ ] Set up encryption for sensitive data
-    - [ ] Implement secure communication protocols
+2. **Choose Integration Method**
 
-17. Final Integration and Testing:
-    - [ ] Conduct full system integration
-    - [ ] Perform extensive system-wide testing
-    - [ ] Address any issues or bugs discovered during testing
+OpenRouter offers two main integration methods:
 
+   a) **Direct API Integration**:
 
-13. Documentation:
-    - Create detailed documentation for each agent's capabilities and interfaces
-    - Develop user manuals for interacting with the village system
-    - Implement auto-documentation features for Magi's code outputs
-    - Create a wiki-like system for maintaining and updating documentation
+   Use the OpenRouter API endpoint directly in your code[3].
 
-14. Deployment and Scalability:
-    - Develop containerization strategies for easy deployment
-    - Implement auto-scaling capabilities for handling varying workloads
-    - Create backup and disaster recovery systems
-    - Develop strategies for distributing the system across multiple servers or cloud instances
+   b) **OpenAI SDK Compatibility**:
 
-15. Continuous Improvement:
-    - Implement self-analysis capabilities for each agent
-    - Develop learning mechanisms to improve performance over time
-    - Create systems for incorporating user feedback
-    - Implement automated update and patch management systems
+   Utilize OpenRouter through the OpenAI SDK by modifying the base URL[2].
 
-16. Security:
-    - Implement robust authentication and authorization systems
-    - Develop encryption for all inter-agent communications
-    - Create security audit logging and intrusion detection systems
-    - Implement ethical guidelines and constraints, especially for Magi's capabilities
+3. **Set Up Authentication**
 
-17. Final Integration and Testing:
-    - Develop a phased integration plan, starting with core functionalities
-    - Create a comprehensive test suite covering all integrated functionalities
-    - Implement stress testing to ensure system stability under heavy loads
-    - Develop a user acceptance testing protocol and gather feedback
+Include your OpenRouter API key in the request headers[3].
 
-This detailed breakdown should provide a comprehensive roadmap for developing your multi-agent system with King as the overseer, Sage as the researcher and RAG system manager, and Magi as the coding expert. Remember to prioritize tasks based on your specific project needs and available resources.
+## Code Implementation
+
+### Direct API Integration
+
+```javascript
+
+fetch("https://openrouter.ai/api/v1/chat/completions", {
+
+  method: "POST",
+
+  headers: {
+
+    "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+
+    "HTTP-Referer": `${YOUR_SITE_URL}`, // Optional
+
+    "X-Title": `${YOUR_SITE_NAME}`, // Optional
+
+    "Content-Type": "application/json"
+
+  },
+
+  body: JSON.stringify({
+
+    "model": "openai/gpt-3.5-turbo", // Replace with your chosen model
+
+    "messages": [
+
+      {"role": "user", "content": "What is the meaning of life?"}
+
+    ]
+
+  })
+
+});
+
+```
+
+### OpenAI SDK Compatibility
+
+```javascript
+
+import OpenAI from "openai"
+
+const openai = new OpenAI({
+
+  baseURL: "https://openrouter.ai/api/v1",
+
+  apiKey: OPENROUTER_API_KEY,
+
+  defaultHeaders: {
+
+    "HTTP-Referer": YOUR_SITE_URL, // Optional
+
+    "X-Title": YOUR_SITE_NAME // Optional
+
+  }
+
+})
+
+async function main() {
+
+  const completion = await openai.chat.completions.create({
+
+    model: "openai/gpt-3.5-turbo", // Replace with your chosen model
+
+    messages: [
+
+      {"role": "user", "content": "What is the meaning of life?"}
+
+    ]
+
+  })
+
+  console.log(completion.choices[0].message)
+
+}
+
+main()
+
+```
+
+## Choosing a Model
+
+To select an appropriate model for your use case:
+
+1. **Browse Available Models**
+
+Visit the OpenRouter models page (https://openrouter.ai/models) to explore available options[8].
+
+2. **Consider Factors**
+
+When choosing a model, consider:
+
+   - Task requirements (e.g., general conversation, coding, roleplay)
+
+   - Context length needed
+
+   - Pricing
+
+   - Supported parameters (e.g., temperature, top_p)
+
+3. **Use Model Identifiers**
+
+Replace the model identifier in your code with your chosen model. For example:
+
+   - "openai/gpt-3.5-turbo"
+
+   - "anthropic/claude-2.1"
+
+   - "google/gemini-pro"
+
+4. **Experiment with Settings**
+
+Adjust model parameters to optimize performance. OpenRouter has analyzed optimal settings for various models, which you can use as a starting point[4].
+
+5. **Utilize Auto-Routing (Optional)**
+
+OpenRouter offers an "Auto" router that selects high-quality models based on your prompt. Use "model": "auto" in your request to enable this feature[5].
+
+6. **Implement Fallbacks (Optional)**
+
+Set up fallback models to handle errors or unavailability:
+
+```javascript
+
+{
+
+  "models": ["anthropic/claude-2.1", "gryphe/mythomax-l2-13b"],
+
+  "route": "fallback",
+
+  // Other parameters
+
+}
+
+```
+
+This configuration will try the first model and fall back to the second if needed[5].
+
+By following these steps, you can effectively integrate OpenRouter into your programs and select the most suitable models for your specific requirements.

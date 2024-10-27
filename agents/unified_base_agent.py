@@ -1,5 +1,6 @@
 """Unified base agent implementation."""
 
+from types import SimpleNamespace
 from typing import Dict, Any, List, Optional, Callable, Tuple
 import asyncio
 from dataclasses import dataclass, field
@@ -26,6 +27,7 @@ from rag_system.evaluation.comprehensive_evaluation import ComprehensiveEvaluati
 
 # Communication imports
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType, Priority
+from utils.standardized_formats import OutputFormat, create_standardized_output, create_standardized_prompt
 
 @dataclass
 class UnifiedAgentConfig:

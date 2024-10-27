@@ -1,45 +1,45 @@
-langroid>=0.16.1
-pydantic>=2.8.2
-fastapi>=0.95.1
-uvicorn>=0.22.0
-numpy>=1.24.3
-scikit-learn>=1.2.2
-pandas>=2.0.1
-torch>=2.0.1
-transformers>=4.29.2
-sentence-transformers>=2.2.2
-qdrant-client>=1.1.7
-neo4j>=5.3.0
-networkx>=2.8.4
-community>=1.0.0b1
-python-dotenv>=1.0.0
-redis>=4.5.5
-aiofiles>=23.1.0
-pytest
-pytest-asyncio
-click
-pyyaml
-ollama
-aiohttp>=3.10.5
-flake8>=7.1.1
-fsspec>=2024.6.1
-openai>=1.42.0
-pillow>=10.4.0
-pycodestyle>=2.12.1
-pydantic-core>=2.20.1
-requests>=2.32.3
-tokenizers>=0.19.1
-tqdm>=4.66.5
-nltk>3.8.1
-llama.cpp
-maes
-gpt-researcher>=1.0.0
-scrapegraphai>=1.0.0
-# New dependencies for King Agent and related components
-mcts>=1.0.0  # For Monte Carlo Tree Search
-gym>=0.21.0  # For reinforcement learning environments (used in MCTS)
-scipy>=1.7.3  # For scientific computing (used in various components)
-matplotlib>=3.5.1  # For visualization (if needed)
-asyncio>=3.4.3  # For asynchronous programming
-logging>=0.5.1.2  # For logging functionality
-typing>=3.7.4.3  # For type hinting
+# Core dependencies
+openai>=1.0.0  # For OpenRouter API integration
+torch>=2.0.0  # For local model inference
+transformers>=4.30.0  # For HuggingFace models
+pyyaml>=6.0  # For configuration management
+aiohttp>=3.8.0  # For async HTTP requests
+numpy>=1.21.0  # For numerical operations
+pandas>=1.3.0  # For data analysis
+
+# Database
+sqlite3  # Built into Python, for data storage
+
+# Testing
+pytest>=7.0.0  # For testing framework
+pytest-asyncio>=0.20.0  # For async test support
+pytest-cov>=4.0.0  # For test coverage
+pytest-mock>=3.10.0  # For mocking in tests
+
+# Logging and monitoring
+python-json-logger>=2.0.0  # For structured logging
+psutil>=5.9.0  # For system resource monitoring
+
+# Development tools
+black>=22.0.0  # For code formatting
+isort>=5.10.0  # For import sorting
+mypy>=1.0.0  # For type checking
+pylint>=2.15.0  # For code linting
+
+# Documentation
+sphinx>=4.5.0  # For documentation generation
+sphinx-rtd-theme>=1.0.0  # Documentation theme
+myst-parser>=0.18.0  # For Markdown support in Sphinx
+
+# Optional dependencies for enhanced functionality
+scikit-learn>=1.0.0  # For machine learning utilities
+difflib  # Built into Python, for text comparison
+gzip  # Built into Python, for log compression
+shutil  # Built into Python, for file operations
+pathlib  # Built into Python, for path manipulation
+typing  # Built into Python, for type hints
+asyncio  # Built into Python, for async operations
+logging  # Built into Python, for logging
+json  # Built into Python, for JSON handling
+datetime  # Built into Python, for date/time operations
+os  # Built into Python, for OS operations

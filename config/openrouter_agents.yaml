@@ -1,0 +1,59 @@
+version: "1.0.0"
+
+agents:
+  king:
+    frontier_model: "nvidia/llama-3.1-nemotron-70b-instruct"
+    local_model: "Qwen/Qwen2.5-3B-Instruct"
+    description: "Advanced instruction-following model for complex tasks"
+    settings:
+      temperature: 0.7
+      max_tokens: 1000
+      system_prompt: "You are King, an advanced AI agent specializing in complex problem-solving and strategic thinking."
+
+  sage:
+    frontier_model: "anthropic/claude-3.5-sonnet"
+    local_model: "deepseek-ai/Janus-1.3B"
+    description: "Research and analysis focused model with vision capabilities"
+    settings:
+      temperature: 0.8
+      max_tokens: 2000
+      system_prompt: "You are Sage, an AI researcher specializing in analysis, research, and knowledge synthesis."
+
+  magi:
+    frontier_model: "openai/o1-mini-2024-09-12"
+    local_model: "ibm-granite/granite-3b-code-instruct-128k"
+    description: "Code generation and analysis specialist"
+    settings:
+      temperature: 0.2
+      max_tokens: 1500
+      system_prompt: "You are Magi, an expert coding AI specializing in software development and technical problem-solving."
+
+openrouter:
+  base_url: "https://openrouter.ai/api/v1"
+  requests_per_minute: 50
+  retry_delay: 1
+  max_retries: 3
+
+performance_tracking:
+  metrics:
+    - name: "response_quality"
+      weight: 0.4
+      description: "Quality and relevance of the response"
+    
+    - name: "task_completion"
+      weight: 0.3
+      description: "Whether the task was successfully completed"
+    
+    - name: "efficiency"
+      weight: 0.2
+      description: "Token usage efficiency and response time"
+    
+    - name: "creativity"
+      weight: 0.1
+      description: "Uniqueness and innovation in solutions"
+
+  dpo_settings:
+    batch_size: 16
+    learning_rate: 1e-5
+    beta: 0.1
+    update_interval: 100  # Update local models after every 100 interactions
