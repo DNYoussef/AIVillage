@@ -1,33 +1,196 @@
+"""Enhanced Sage agent with improved research and knowledge synthesis capabilities."""
+
 import logging
 import time
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
+from datetime import datetime
+import asyncio
+
+from config.unified_config import UnifiedConfig, AgentConfig
 from ..openrouter_agent import OpenRouterAgent, AgentInteraction
 from ..local_agent import LocalAgent
+from ...data.complexity_evaluator import ComplexityEvaluator
+from rag_system.core.exploration_mode import ExplorationMode
 
 logger = logging.getLogger(__name__)
 
+class ResearchManager:
+    """Manages research tasks and knowledge synthesis."""
+    
+    def __init__(self, config: UnifiedConfig):
+        self.config = config
+        self.research_history: List[Dict[str, Any]] = []
+        self.knowledge_graph = {}  # Simplified for now, would use proper graph DB
+        self.research_metrics = {
+            "depth_score": 0.0,
+            "breadth_score": 0.0,
+            "synthesis_quality": 0.0,
+            "verification_rate": 0.0
+        }
+    
+    async def plan_research(self, topic: str) -> Dict[str, Any]:
+        """Plan research approach for a topic."""
+        research_plan = {
+            "topic": topic,
+            "timestamp": time.time(),
+            "stages": [
+                {
+                    "name": "initial_exploration",
+                    "depth": 2,
+                    "focus_areas": self._identify_focus_areas(topic)
+                },
+                {
+                    "name": "deep_analysis",
+                    "depth": 4,
+                    "focus_areas": []  # To be filled after initial exploration
+                },
+                {
+                    "name": "synthesis",
+                    "dependencies": ["initial_exploration", "deep_analysis"]
+                }
+            ]
+        }
+        return research_plan
+    
+    def _identify_focus_areas(self, topic: str) -> List[str]:
+        """Identify key areas to focus research on."""
+        # This would be more sophisticated in practice
+        words = topic.lower().split()
+        return [w for w in words if len(w) > 4]  # Simplified example
+    
+    async def synthesize_knowledge(self, 
+                                 research_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Synthesize research results into coherent knowledge."""
+        # Track synthesis metrics
+        start_time = time.time()
+        
+        # Group findings by theme
+        themes = {}
+        for result in research_results:
+            theme = result.get("theme", "general")
+            if theme not in themes:
+                themes[theme] = []
+            themes[theme].append(result)
+        
+        # Synthesize each theme
+        synthesis = {
+            "themes": {},
+            "cross_cutting_insights": [],
+            "confidence_scores": {}
+        }
+        
+        for theme, findings in themes.items():
+            synthesis["themes"][theme] = {
+                "key_findings": self._extract_key_findings(findings),
+                "implications": self._analyze_implications(findings),
+                "confidence": self._calculate_confidence(findings)
+            }
+        
+        # Identify cross-cutting insights
+        synthesis["cross_cutting_insights"] = self._find_cross_cutting_insights(themes)
+        
+        # Update metrics
+        duration = time.time() - start_time
+        self.research_metrics["synthesis_quality"] = self._evaluate_synthesis_quality(synthesis)
+        
+        return synthesis
+    
+    def _extract_key_findings(self, findings: List[Dict[str, Any]]) -> List[str]:
+        """Extract key findings from research results."""
+        # Would use more sophisticated NLP in practice
+        return [f["summary"] for f in findings if f.get("importance_score", 0) > 0.7]
+    
+    def _analyze_implications(self, findings: List[Dict[str, Any]]) -> List[str]:
+        """Analyze implications of research findings."""
+        implications = []
+        for finding in findings:
+            if "implications" in finding:
+                implications.extend(finding["implications"])
+        return list(set(implications))  # Remove duplicates
+    
+    def _calculate_confidence(self, findings: List[Dict[str, Any]]) -> float:
+        """Calculate confidence score for findings."""
+        if not findings:
+            return 0.0
+        confidence_scores = [f.get("confidence", 0) for f in findings]
+        return sum(confidence_scores) / len(confidence_scores)
+    
+    def _find_cross_cutting_insights(self, themes: Dict[str, List[Dict[str, Any]]]) -> List[str]:
+        """Identify insights that span multiple themes."""
+        # Would use more sophisticated analysis in practice
+        insights = []
+        all_implications = []
+        
+        for theme_findings in themes.values():
+            for finding in theme_findings:
+                if "implications" in finding:
+                    all_implications.extend(finding["implications"])
+        
+        # Find common implications
+        from collections import Counter
+        common = Counter(all_implications)
+        insights = [impl for impl, count in common.items() if count > 1]
+        
+        return insights
+    
+    def _evaluate_synthesis_quality(self, synthesis: Dict[str, Any]) -> float:
+        """Evaluate the quality of knowledge synthesis."""
+        # Would use more sophisticated evaluation in practice
+        scores = []
+        
+        # Evaluate theme coverage
+        scores.append(len(synthesis["themes"]) / 5)  # Normalize to 0-1
+        
+        # Evaluate insight depth
+        insight_count = len(synthesis["cross_cutting_insights"])
+        scores.append(min(1.0, insight_count / 10))
+        
+        # Evaluate confidence
+        confidence_scores = synthesis["confidence_scores"].values()
+        if confidence_scores:
+            scores.append(sum(confidence_scores) / len(confidence_scores))
+        
+        return sum(scores) / len(scores) if scores else 0.0
+
 class SageAgent:
     """
-    Sage agent specializing in research, analysis, and knowledge synthesis.
+    Enhanced Sage agent specializing in research and knowledge synthesis.
     Uses anthropic/claude-3.5-sonnet as frontier model and
-    deepseek-ai/Janus-1.3B as local model for vision and web capabilities.
+    deepseek-ai/Janus-1.3B as local model.
     """
     
-    def __init__(self, openrouter_agent: OpenRouterAgent):
+    def __init__(self, 
+                 openrouter_agent: OpenRouterAgent,
+                 config: UnifiedConfig):
         """
-        Initialize SageAgent.
+        Initialize enhanced SageAgent.
         
         Args:
-            openrouter_agent: OpenRouterAgent instance configured for Sage's models
+            openrouter_agent: OpenRouterAgent instance
+            config: UnifiedConfig instance
         """
+        self.config = config
+        self.agent_config = config.get_agent_config("sage")
         self.frontier_agent = openrouter_agent
-        self.local_agent = LocalAgent(openrouter_agent.local_model)
-        self.research_history: List[Dict[str, Any]] = []
+        self.local_agent = LocalAgent(
+            model_config=self.agent_config.local_model,
+            config=config
+        )
+        
+        # Initialize support systems
+        self.research_manager = ResearchManager(config)
+        self.complexity_evaluator = ComplexityEvaluator(config)
+        self.exploration_mode = ExplorationMode(
+            graph_store=None,  # Would initialize properly
+            llm_config=None,   # Would initialize properly
+            advanced_nlp=None  # Would initialize properly
+        )
+        
+        # Performance tracking
         self.performance_metrics: Dict[str, float] = {
             "research_quality": 0.0,
-            "analysis_depth": 0.0,
-            "source_integration": 0.0,
-            "insight_generation": 0.0,
+            "synthesis_quality": 0.0,
+            "verification_rate": 0.0,
             "local_model_performance": 0.0
         }
         
@@ -35,242 +198,200 @@ class SageAgent:
         logger.info(f"  Frontier model: {openrouter_agent.model}")
         logger.info(f"  Local model: {openrouter_agent.local_model}")
     
-    async def conduct_research(self, 
-                             query: str, 
-                             context: Optional[str] = None,
-                             depth: str = "standard") -> AgentInteraction:
+    async def conduct_research(self,
+                             topic: str,
+                             depth: int = 3,
+                             system_prompt: Optional[str] = None) -> AgentInteraction:
         """
-        Conduct research and analysis on a given query.
+        Conduct research on a topic with knowledge synthesis.
         
         Args:
-            query: The research query or topic
-            context: Optional background context
-            depth: Research depth ("quick", "standard", or "deep")
+            topic: Research topic
+            depth: Research depth (1-5)
+            system_prompt: Optional system prompt
             
         Returns:
-            AgentInteraction containing the research results
+            AgentInteraction containing research results
         """
-        # Determine if query requires deep analysis
-        requires_deep_analysis = await self._evaluate_research_complexity(query, depth)
+        start_time = time.time()
         
-        # Prepare research prompt
-        research_prompt = self._construct_research_prompt(query, context, depth)
-        
-        # Try local model first for non-deep research
-        local_response = None
-        if not requires_deep_analysis and depth != "deep":
-            try:
-                local_response = await self.local_agent.generate_response(
-                    prompt=research_prompt,
-                    system_prompt=self._get_research_system_prompt(depth),
-                    temperature=0.6,
-                    max_tokens=1000
+        try:
+            # Evaluate complexity
+            complexity_evaluation = await self.complexity_evaluator.evaluate_complexity(
+                agent_type="sage",
+                task=f"Research: {topic}",
+                context={"depth": depth}
+            )
+            
+            # Create research plan
+            research_plan = await self.research_manager.plan_research(topic)
+            
+            # Conduct initial exploration
+            exploration_results = await self.exploration_mode.explore_knowledge_graph(
+                start_node=topic,
+                depth=min(depth, 3)
+            )
+            
+            # Determine if we need frontier model
+            use_frontier = complexity_evaluation["is_complex"] or depth > 2
+            
+            if use_frontier:
+                # Use frontier model for deep research
+                interaction = await self.frontier_agent.generate_response(
+                    prompt=self._create_research_prompt(topic, depth, exploration_results),
+                    system_prompt=system_prompt or self._get_default_system_prompt(),
+                    max_tokens=2000,
+                    temperature=0.8
                 )
-            except Exception as e:
-                logger.warning(f"Local model research failed: {str(e)}")
-        
-        # Use frontier model if deep analysis needed or local model failed
-        if requires_deep_analysis or not local_response:
-            interaction = await self.frontier_agent.generate_response(
-                prompt=research_prompt,
-                system_prompt=self._get_research_system_prompt(depth),
-                temperature=0.8,
-                max_tokens=2000 if depth == "deep" else 1000
-            )
+            else:
+                # Use local model for basic research
+                local_response = await self.local_agent.generate_response(
+                    prompt=self._create_research_prompt(topic, depth, exploration_results),
+                    system_prompt=system_prompt or self._get_default_system_prompt(),
+                    max_tokens=1500,
+                    temperature=0.7
+                )
+                
+                # Convert to AgentInteraction format
+                interaction = AgentInteraction(
+                    prompt=topic,
+                    response=local_response["response"],
+                    model=local_response["model"],
+                    timestamp=time.time(),
+                    metadata={
+                        **local_response["metadata"],
+                        "research_plan": research_plan,
+                        "exploration_results": exploration_results
+                    }
+                )
             
-            # If we tried local model, record performance comparison
-            if local_response:
-                self._record_model_comparison(local_response, interaction)
-        else:
-            # Convert local response to AgentInteraction format
-            current_time = time.time()
-            interaction = AgentInteraction(
-                prompt=research_prompt,
-                response=local_response["response"],
-                model=local_response["model"],
-                timestamp=current_time,
-                metadata=local_response["metadata"]
-            )
-        
-        # Track research and update metrics
-        self._update_research_history(query, interaction, requires_deep_analysis, depth)
-        
-        return interaction
+            # Synthesize knowledge
+            synthesis = await self.research_manager.synthesize_knowledge([
+                {
+                    "content": interaction.response,
+                    "source": interaction.model,
+                    "confidence": complexity_evaluation["confidence"]
+                }
+            ])
+            
+            # Add synthesis to interaction metadata
+            interaction.metadata["knowledge_synthesis"] = synthesis
+            
+            # Update performance metrics
+            duration = time.time() - start_time
+            self._update_metrics(interaction, {
+                "duration": duration,
+                "depth": depth,
+                "complexity_score": complexity_evaluation["complexity_score"],
+                "synthesis_quality": synthesis.get("quality_score", 0.0)
+            })
+            
+            return interaction
+            
+        except Exception as e:
+            logger.error(f"Error conducting research: {str(e)}")
+            raise
     
-    async def _evaluate_research_complexity(self, query: str, depth: str) -> bool:
+    def _create_research_prompt(self,
+                              topic: str,
+                              depth: int,
+                              exploration_results: Dict[str, Any]) -> str:
+        """Create detailed research prompt."""
+        return f"""Conduct {'deep' if depth > 2 else 'focused'} research on: {topic}
+
+Initial Knowledge Graph Exploration:
+{self._format_exploration_results(exploration_results)}
+
+Research Parameters:
+- Depth Level: {depth}/5
+- Focus Areas: {', '.join(self.research_manager._identify_focus_areas(topic))}
+- Required: Evidence-based findings
+- Required: Confidence levels for claims
+- Required: Implications and connections
+
+Please provide:
+1. Key findings with evidence
+2. Analysis of implications
+3. Identified knowledge gaps
+4. Confidence levels for each finding
+5. Suggested areas for deeper investigation
+
+Format the response with clear sections and hierarchical organization."""
+    
+    def _format_exploration_results(self, results: Dict[str, Any]) -> str:
+        """Format knowledge graph exploration results."""
+        formatted = []
+        
+        if "explored_nodes" in results:
+            formatted.append(f"Related Concepts: {', '.join(results['explored_nodes'][:5])}")
+        
+        if "exploration_results" in results:
+            formatted.append("\nKey Relationships:")
+            for result in results["exploration_results"][:3]:
+                formatted.append(f"- {result.get('source', '')} → {result.get('target', '')}")
+        
+        return "\n".join(formatted)
+    
+    def _get_default_system_prompt(self) -> str:
+        """Get the default system prompt for Sage agent."""
+        return """You are Sage, an AI researcher specializing in comprehensive analysis and knowledge synthesis.
+        Your approach is:
+        1. Systematic exploration of topics
+        2. Evidence-based analysis
+        3. Identification of patterns and connections
+        4. Clear articulation of findings
+        5. Recognition of limitations and uncertainties
+        
+        You excel at:
+        - Deep research and analysis
+        - Knowledge synthesis
+        - Pattern recognition
+        - Implications analysis
+        - Evidence evaluation
         """
-        Evaluate if a research query requires deep analysis.
-        
-        Args:
-            query: The research query
-            depth: Requested research depth
-            
-        Returns:
-            Boolean indicating if deep analysis is needed
-        """
-        if depth == "deep":
-            return True
-            
-        # Complexity indicators for research tasks
-        complexity_indicators = [
-            "analyze",
-            "compare",
-            "evaluate",
-            "synthesize",
-            "implications",
-            "relationship",
-            "impact",
-            "trends",
-            "patterns",
-            "framework"
-        ]
-        
-        # Count complexity indicators
-        indicator_count = sum(1 for indicator in complexity_indicators if indicator in query.lower())
-        
-        # Consider query sophistication
-        requires_synthesis = any(phrase in query.lower() for phrase in [
-            "how does",
-            "why does",
-            "what are the implications",
-            "how do",
-            "what is the relationship",
-            "what patterns"
-        ])
-        
-        return indicator_count >= 2 or requires_synthesis
     
-    def _construct_research_prompt(self, query: str, context: Optional[str], depth: str) -> str:
-        """Construct a detailed research prompt."""
-        prompt_parts = []
+    def _update_metrics(self,
+                       interaction: AgentInteraction,
+                       performance: Dict[str, Any]):
+        """Update comprehensive performance metrics."""
+        # Update research quality
+        if "synthesis_quality" in performance:
+            current_quality = self.performance_metrics["research_quality"]
+            new_quality = performance["synthesis_quality"]
+            self.performance_metrics["research_quality"] = (
+                current_quality * 0.9 + new_quality * 0.1  # Rolling average
+            )
         
-        if context:
-            prompt_parts.append(f"Context:\n{context}\n")
-            
-        prompt_parts.append(f"Research Query:\n{query}\n")
+        # Update synthesis quality
+        synthesis_quality = self.research_manager.research_metrics["synthesis_quality"]
+        self.performance_metrics["synthesis_quality"] = synthesis_quality
         
-        depth_instructions = {
-            "quick": "Provide a concise overview of the key points.",
-            "standard": "Conduct a thorough analysis covering main aspects and supporting evidence.",
-            "deep": """Perform an in-depth analysis including:
-            1. Comprehensive examination of all relevant aspects
-            2. Evaluation of multiple perspectives and approaches
-            3. Analysis of relationships and patterns
-            4. Synthesis of insights and implications
-            5. Identification of gaps and future directions"""
-        }
+        # Update verification rate (if available)
+        if "verified_claims" in interaction.metadata:
+            verified = interaction.metadata["verified_claims"]
+            total = interaction.metadata.get("total_claims", 1)
+            self.performance_metrics["verification_rate"] = verified / total
         
-        prompt_parts.append(f"Instructions:\n{depth_instructions[depth]}")
-        
-        return "\n\n".join(prompt_parts)
-    
-    def _get_research_system_prompt(self, depth: str) -> str:
-        """Get the appropriate system prompt based on research depth."""
-        base_prompt = """You are Sage, an AI researcher specializing in analysis, research, and knowledge synthesis.
-        Your approach:
-        1. Thoroughly examine available information
-        2. Identify patterns and relationships
-        3. Synthesize insights from multiple sources
-        4. Generate novel perspectives and implications
-        5. Maintain academic rigor and clarity"""
-        
-        depth_additions = {
-            "quick": "\nFocus on providing clear, concise key insights.",
-            "standard": "\nProvide comprehensive analysis while maintaining clarity and relevance.",
-            "deep": """\nConduct exhaustive analysis including:
-            - Multiple theoretical frameworks
-            - Cross-domain implications
-            - Systematic evaluation of evidence
-            - Integration of diverse perspectives
-            - Meta-analysis where applicable"""
-        }
-        
-        return base_prompt + depth_additions[depth]
-    
-    def _update_research_history(self, 
-                               query: str, 
-                               interaction: AgentInteraction,
-                               was_complex: bool,
-                               depth: str):
-        """Update research history and performance metrics."""
-        research_record = {
-            "query": query,
-            "timestamp": interaction.timestamp,
-            "was_complex": was_complex,
-            "depth": depth,
-            "model_used": interaction.model,
-            "tokens_used": interaction.metadata["usage"]["total_tokens"] if "usage" in interaction.metadata else 0
-        }
-        self.research_history.append(research_record)
-        
-        # Keep last 100 research tasks
-        if len(self.research_history) > 100:
-            self.research_history = self.research_history[-100:]
-    
-    def _record_model_comparison(self, local_response: Dict[str, Any], frontier_interaction: AgentInteraction):
-        """Record performance comparison between local and frontier models."""
-        # Calculate response similarity (you might want to use a more sophisticated metric)
-        from difflib import SequenceMatcher
-        similarity = SequenceMatcher(
-            None, 
-            local_response["response"], 
-            frontier_interaction.response
-        ).ratio()
-        
-        # Record local model performance
-        self.local_agent.record_performance({
-            "response_similarity": similarity,
-            "was_used": similarity > 0.8  # Consider local model successful if very similar
-        })
+        # Update local model performance
+        local_metrics = self.local_agent.get_performance_metrics()
+        if "average_similarity" in local_metrics:
+            self.performance_metrics["local_model_performance"] = local_metrics["average_similarity"]
     
     def get_performance_metrics(self) -> Dict[str, float]:
-        """Get current performance metrics."""
-        if not self.research_history:
-            return self.performance_metrics
-            
-        # Calculate metrics from recent history
-        recent_research = self.research_history[-100:]
+        """Get comprehensive performance metrics."""
+        metrics = self.performance_metrics.copy()
         
-        # Research quality (if metrics were recorded)
-        quality_scores = [
-            task.get("performance_metrics", {}).get("quality", 0.0)
-            for task in recent_research
-        ]
-        if quality_scores:
-            self.performance_metrics["research_quality"] = sum(quality_scores) / len(quality_scores)
+        # Add research manager metrics
+        metrics.update(self.research_manager.research_metrics)
         
-        # Analysis depth
-        deep_research = [task for task in recent_research if task["depth"] == "deep"]
-        if deep_research:
-            depth_scores = [
-                task.get("performance_metrics", {}).get("depth_score", 0.0)
-                for task in deep_research
-            ]
-            if depth_scores:
-                self.performance_metrics["analysis_depth"] = sum(depth_scores) / len(depth_scores)
-        
-        # Source integration
-        source_scores = [
-            task.get("performance_metrics", {}).get("source_integration", 0.0)
-            for task in recent_research
-        ]
-        if source_scores:
-            self.performance_metrics["source_integration"] = sum(source_scores) / len(source_scores)
-        
-        # Insight generation
-        insight_scores = [
-            task.get("performance_metrics", {}).get("insight_score", 0.0)
-            for task in recent_research
-        ]
-        if insight_scores:
-            self.performance_metrics["insight_generation"] = sum(insight_scores) / len(insight_scores)
-        
-        # Local model performance
+        # Add local model metrics
         local_metrics = self.local_agent.get_performance_metrics()
-        if "response_similarity" in local_metrics:
-            self.performance_metrics["local_model_performance"] = local_metrics["response_similarity"]
+        metrics.update({
+            f"local_{k}": v 
+            for k, v in local_metrics.items()
+        })
         
-        return self.performance_metrics
+        return metrics
     
     def get_training_data(self) -> List[Dict[str, Any]]:
         """Get training data for the local model."""

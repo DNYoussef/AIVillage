@@ -1,101 +1,128 @@
-version: "1.0.0"
-environment: "development"
+# Default configuration for AI Village
 
-components:
-  task_manager:
-    version: "1.0.0"
-    enabled: true
-    settings:
-      batch_size: 5
-      max_concurrent_tasks: 10
-      task_timeout: 300
-      retry_attempts: 3
-      priority_levels:
-        low: 1
-        medium: 2
-        high: 3
-        critical: 4
-    dependencies:
-      - "error_handler"
-      - "performance_monitor"
+environment: development
 
-  planning:
-    version: "1.0.0"
-    enabled: true
-    settings:
-      mcts_iterations: 1000
-      exploration_weight: 1.0
-      max_depth: 10
-      optimization_interval: 3600
-      planning_timeout: 60
-    dependencies:
-      - "task_manager"
-      - "knowledge_tracker"
-
-  knowledge_tracker:
-    version: "1.0.0"
-    enabled: true
-    settings:
-      vector_store:
-        type: "faiss"
-        dimension: 768
-        index_path: "data/vector_store"
-      graph_store:
-        type: "networkx"
-        persistence: true
-        backup_interval: 3600
-      update_batch_size: 100
-      confidence_threshold: 0.75
-    dependencies:
-      - "error_handler"
-
-  error_handler:
-    version: "1.0.0"
-    enabled: true
-    settings:
-      log_level: "INFO"
-      log_path: "logs/"
-      error_thresholds:
-        CRITICAL: 1
-        ERROR: 5
-        WARNING: 10
-      retention_days: 30
-      alert_channels:
-        - "console"
-        - "file"
-
-  performance_monitor:
-    version: "1.0.0"
-    enabled: true
-    settings:
-      monitoring_interval: 60
-      metrics_retention: 1000
-      alert_thresholds:
-        cpu_percent: 80.0
-        memory_percent: 80.0
-        operation_time: 5.0
-      log_path: "logs/performance.log"
-
+# System-wide settings
 system:
-  logging:
-    level: "INFO"
-    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    handlers:
-      - type: "file"
-        filename: "logs/system.log"
-        level: "INFO"
-      - type: "console"
-        level: "INFO"
-  
-  security:
-    enable_authentication: true
-    token_expiration: 3600
-    allowed_origins:
-      - "localhost"
-      - "127.0.0.1"
+  log_level: INFO
+  max_memory_usage: 0.9  # 90% of available memory
+  max_cpu_usage: 0.8    # 80% of available CPU
 
-  resources:
-    max_memory: "4G"
-    max_cpu_percent: 80
-    temp_directory: "tmp/"
-    data_directory: "data/"
+# RAG system configuration
+rag_system:
+  retrieval_depth: 3
+  relevance_threshold: 0.7
+  feedback_enabled: true
+  exploration_weight: 1.0
+  max_context_length: 2000
+
+# Database configuration
+database:
+  path: "data/agent_data.db"
+  backup_interval: 24  # hours
+  max_backup_count: 7
+  vacuum_threshold: 1000  # rows
+
+# Performance tracking
+performance:
+  metrics:
+    response_quality: 0.4
+    task_completion: 0.3
+    efficiency: 0.2
+    creativity: 0.1
+  dpo_settings:
+    batch_size: 16
+    learning_rate: 1.0e-5
+    beta: 0.1
+    update_interval: 100
+
+# API configuration
+api:
+  base_url: "https://openrouter.ai/api/v1"
+  timeout: 30
+  max_retries: 3
+  retry_delay: 1
+  requests_per_minute: 50
+
+# Communication settings
+communication:
+  message_retention: 1000  # Number of messages to keep in history
+  max_queue_size: 1000    # Maximum size of message queues
+  priority_levels:
+    high: 2
+    medium: 1
+    low: 0
+
+# Evolution settings
+evolution:
+  enabled: true
+  interval: 1000  # Number of interactions before evolution
+  mutation_rate: 0.1
+  crossover_rate: 0.7
+  population_size: 10
+  generations: 5
+
+# Model defaults
+model_defaults:
+  frontier:
+    temperature: 0.7
+    max_tokens: 1000
+    top_p: 0.9
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+  local:
+    temperature: 0.5
+    max_tokens: 800
+    top_p: 0.9
+    frequency_penalty: 0.1
+    presence_penalty: 0.1
+
+# Complexity evaluation
+complexity:
+  token_weights:
+    count: 0.3
+    indicators: 0.4
+    semantic: 0.3
+  thresholds:
+    king: 0.6
+    sage: 0.7
+    magi: 0.65
+  performance_thresholds:
+    king: 0.8
+    sage: 0.75
+    magi: 0.85
+
+# Safety settings
+safety:
+  content_filtering: true
+  max_response_time: 30  # seconds
+  max_token_limit: 4096
+  banned_keywords: []
+  required_disclaimers: []
+
+# Development settings (only used in development environment)
+development:
+  debug: true
+  mock_api_calls: false
+  test_mode: false
+  profile_performance: true
+
+# Production settings (only used in production environment)
+production:
+  debug: false
+  mock_api_calls: false
+  test_mode: false
+  profile_performance: false
+  min_availability: 0.99
+  max_response_time: 10  # seconds
+
+# Monitoring and logging
+monitoring:
+  enabled: true
+  metrics_interval: 60  # seconds
+  alert_thresholds:
+    error_rate: 0.1
+    response_time: 5000  # milliseconds
+    memory_usage: 0.9
+    cpu_usage: 0.8
+  log_retention: 30  # days

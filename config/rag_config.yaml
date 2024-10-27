@@ -1,0 +1,33 @@
+# RAG System Configuration
+
+# Core settings
+model_name: "gpt-3.5-turbo"
+embedding_model: "text-embedding-ada-002"
+
+# System parameters
+max_tokens: 4096
+temperature: 0.7
+top_p: 1.0
+frequency_penalty: 0.0
+presence_penalty: 0.0
+
+# RAG specific settings
+chunk_size: 1000
+chunk_overlap: 200
+max_chunks_per_doc: 10
+similarity_threshold: 0.7
+
+# Performance settings
+batch_size: 32
+max_concurrent_requests: 5
+request_timeout: 30
+
+# Paths and storage
+data_dir: "data"
+cache_dir: "cache"
+index_path: "indexes"
+
+# Monitoring and logging
+log_level: "INFO"
+enable_monitoring: true
+metrics_port: 8000

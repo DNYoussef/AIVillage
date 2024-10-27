@@ -1,4 +1,5 @@
-# Previous imports remain the same, but remove signal import
+"""Tests for Magi agent's deep baking system."""
+
 import os
 from pathlib import Path
 import logging
@@ -12,6 +13,13 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig
 import json
 import threading
 from typing import Optional, Dict, Any, List
+import pytest
+from unittest.mock import Mock, patch
+
+from config.unified_config import UnifiedConfig, ModelConfig
+from agent_forge.agents.magi.magi_agent import MagiAgent
+from agent_forge.agents.openrouter_agent import OpenRouterAgent
+from agent_forge.bakedquietiot.deepbaking import DeepSystemBakerTask
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -61,441 +69,202 @@ class ProgressTracker:
         logger.info(f"{self.description}: {self.current_step}/{self.total_steps} - "
                    f"Elapsed: {elapsed:.1f}s - ETA: {eta:.1f}s")
 
-class SimpleBaker:
-    """Simplified version of DeepSystemBaker without langroid dependencies."""
+@pytest.fixture
+def config():
+    """Create test configuration."""
+    return UnifiedConfig()
+
+@pytest.fixture
+def openrouter_agent():
+    """Create mock OpenRouter agent."""
+    return Mock(spec=OpenRouterAgent)
+
+@pytest.fixture
+def magi_agent(config, openrouter_agent):
+    """Create Magi agent for testing."""
+    return MagiAgent(openrouter_agent=openrouter_agent, config=config)
+
+@pytest.mark.asyncio
+async def test_code_generation_simple(magi_agent):
+    """Test code generation for simple tasks."""
+    task = """
+    Write a Python function that:
+    1. Takes a list of numbers
+    2. Returns the sum of even numbers
     
-    def __init__(self, model_name: str = "ibm-granite/granite-3b-code-instruct-128k", device: str = "cuda" if torch.cuda.is_available() else "cpu"):
-        self.device = device
-        logger.info(f"Loading model {model_name} on {device}")
-        
-        # Load model with minimal config and lower precision
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-            trust_remote_code=True,
-            attn_implementation="eager",
-            low_cpu_mem_usage=True,
-            use_cache=False,
-            device_map="auto" if device == "cuda" else None
-        ).to(device)
-        
-        # Enable gradients for all parameters
-        for param in self.model.parameters():
-            param.requires_grad = True
-        
-        # Initialize tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            model_name,
-            trust_remote_code=True,
-            model_max_length=128  # Even smaller context size
-        )
-        
-        # Set up special tokens
-        self.special_tokens = [
-            "<start>", "<end>",
-            "<analyze>", "</analyze>",
-            "<plan>", "</plan>",
-            "<code>", "</code>",
-            "<explain>", "</explain>",
-            "<|stop|>"
-        ]
-        self._setup_tokenizer()
-        
-        # Initialize optimizer with lower learning rate
-        self.optimizer = torch.optim.AdamW(
-            self.model.parameters(),
-            lr=5e-7,  # Even lower learning rate
-            weight_decay=0.005,  # Lower weight decay
-            eps=1e-8
-        )
-        
-        # Clear memory
-        gc.collect()
-        if device == "cuda":
-            torch.cuda.empty_cache()
+    Keep it short and include a docstring.
+    """
     
-    def _setup_tokenizer(self):
-        """Set up tokenizer with special tokens and padding."""
-        special_tokens_dict = {
-            'additional_special_tokens': self.special_tokens,
-            'pad_token': '[PAD]',
-            'eos_token': '<|stop|>',
-            'bos_token': '<start>'
-        }
-        
-        num_added_toks = self.tokenizer.add_special_tokens(special_tokens_dict)
-        self.model.resize_token_embeddings(len(self.tokenizer))
-        logger.info(f"Added {num_added_toks} special tokens")
-        
-        # Ensure all necessary tokens are set
-        self.tokenizer.pad_token = '[PAD]'
-        self.model.config.pad_token_id = self.tokenizer.pad_token_id
-        self.model.config.bos_token_id = self.tokenizer.bos_token_id
-        self.model.config.eos_token_id = self.tokenizer.eos_token_id
+    # Mock local agent response
+    local_response = {
+        "response": """def sum_even_numbers(numbers: list[int]) -> int:
+    \"\"\"Sum all even numbers in the list.\"\"\"
+    return sum(n for n in numbers if n % 2 == 0)""",
+        "model": "local_model",
+        "metadata": {"quality": 0.9}
+    }
+    magi_agent.local_agent.generate_response.return_value = local_response
     
-    def _log_memory_usage(self):
-        """Log current memory usage."""
-        process = psutil.Process()
-        ram_usage = process.memory_info().rss / 1024 / 1024  # MB
-        logger.info(f"RAM Usage: {ram_usage:.2f} MB")
-        if self.device == "cuda":
-            gpu_usage = torch.cuda.memory_allocated() / 1024 / 1024  # MB
-            logger.info(f"GPU Memory Usage: {gpu_usage:.2f} MB")
+    # Generate code
+    result = await magi_agent.generate_code(task)
     
-    def _process_chunk(self, chunk: str, chunk_size: int, batch_size: int, timer: Timer) -> Optional[float]:
-        """Process a single chunk with timeout."""
-        try:
-            # Start timer
-            timer.start()
-            
-            # Tokenize input with padding
-            encoded = self.tokenizer(
-                chunk,
-                padding=True,
-                truncation=True,
-                max_length=chunk_size,
-                return_tensors="pt"
-            )
-            
-            input_ids = encoded["input_ids"].to(self.device)
-            attention_mask = encoded["attention_mask"].to(self.device)
-            
-            # Forward pass with labels for training
-            outputs = self.model(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                labels=input_ids
-            )
-            
-            # Check for timeout
-            if timer.timed_out:
-                raise TimeoutException("Operation timed out")
-            
-            # Scale loss and backward pass
-            loss = outputs.loss / batch_size
-            loss.backward()
-            
-            loss_value = loss.item()
-            
-            # Clear memory
-            del outputs, loss, input_ids, attention_mask, encoded
-            gc.collect()
-            if self.device == "cuda":
-                torch.cuda.empty_cache()
-            
-            return loss_value
-            
-        except Exception as e:
-            logger.error(f"Error processing chunk: {str(e)}")
-            return None
-        finally:
-            timer.cancel()
+    # Verify local model was used
+    assert "local_model" in result.model
+    assert "sum_even_numbers" in result.response
+    assert "docstring" in result.response.lower()
+
+@pytest.mark.asyncio
+async def test_code_generation_complex(magi_agent):
+    """Test code generation for complex tasks."""
+    task = """
+    Create a Python class implementing a thread-safe cache with LRU eviction policy.
+    Include proper type hints and comprehensive documentation.
+    """
     
-    def bake(self, prompt: str, num_iterations: int = 3, batch_size: int = 4, chunk_size: int = 32, timeout: int = 120):
-        """Bake the system prompt into the model."""
-        logger.info(f"Starting baking process with {num_iterations} iterations")
-        self._log_memory_usage()
-        
-        # Enable training mode
-        self.model.train()
-        
-        # Split prompt into smaller chunks
-        prompt_chunks = [prompt[i:i+chunk_size] for i in range(0, len(prompt), chunk_size)]
-        total_chunks = len(prompt_chunks)
-        
-        progress = ProgressTracker(total_steps=num_iterations * total_chunks, description="Baking progress")
-        
-        for i in range(num_iterations):
-            logger.info(f"Baking iteration {i+1}/{num_iterations}")
-            chunk_losses = []
-            
-            # Initialize gradient accumulation
-            accumulated_loss = 0
-            steps_since_update = 0
-            
-            for chunk_idx, chunk in enumerate(prompt_chunks):
-                start_time = time.time()
-                
-                # Create timer for this chunk
-                timer = Timer(timeout)
-                
-                # Process chunk
-                loss_value = self._process_chunk(chunk, chunk_size, batch_size, timer)
-                
-                if loss_value is not None:
-                    accumulated_loss += loss_value
-                    steps_since_update += 1
-                    
-                    # Update weights if we've accumulated enough steps
-                    if steps_since_update == batch_size:
-                        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.1)  # Lower gradient clipping
-                        self.optimizer.step()
-                        self.optimizer.zero_grad()
-                        chunk_losses.append(accumulated_loss)
-                        accumulated_loss = 0
-                        steps_since_update = 0
-                    
-                    # Log progress
-                    elapsed = time.time() - start_time
-                    logger.info(f"  Chunk {chunk_idx+1}/{total_chunks} - "
-                              f"Loss: {loss_value:.4f} - Time: {elapsed:.2f}s")
-                    
-                    # Update progress
-                    progress.update()
-            
-            # Log average loss for iteration
-            avg_loss = sum(chunk_losses) / len(chunk_losses) if chunk_losses else 0
-            logger.info(f"Iteration {i+1} average loss: {avg_loss:.4f}")
-            self._log_memory_usage()
-        
-        # Switch back to eval mode
-        self.model.eval()
-        logger.info("Baking completed")
-        self._log_memory_usage()
+    # Mock frontier agent response
+    frontier_response = {
+        "response": """class LRUCache:
+    \"\"\"Thread-safe LRU cache implementation.\"\"\"
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self._cache = {}
+        self._lock = threading.Lock()""",
+        "model": "frontier_model",
+        "metadata": {"quality": 0.95}
+    }
+    magi_agent.frontier_agent.generate_response.return_value = frontier_response
+    
+    # Generate code
+    result = await magi_agent.generate_code(task)
+    
+    # Verify frontier model was used
+    assert "frontier_model" in result.model
+    assert "LRUCache" in result.response
+    assert "thread" in result.response.lower()
+    assert "lock" in result.response.lower()
 
-    def save_model(self, path: str):
-        """Save the baked model."""
-        logger.info(f"Saving model to {path}")
-        os.makedirs(path, exist_ok=True)
-        self.model.save_pretrained(path)
-        self.tokenizer.save_pretrained(path)
+@pytest.mark.asyncio
+async def test_code_validation(magi_agent):
+    """Test code validation functionality."""
+    task = "Write a function to calculate factorial."
+    code = """def factorial(n: int) -> int:
+    \"\"\"Calculate factorial of n.\"\"\"
+    if n < 0:
+        raise ValueError("n must be non-negative")
+    return 1 if n <= 1 else n * factorial(n - 1)
+    """
+    
+    # Mock validation response
+    validation_results = {
+        "passes_syntax": True,
+        "meets_requirements": {"calculate factorial": True},
+        "test_results": {"passed_tests": 1, "total_tests": 1},
+        "metrics": {"complexity": 0.3, "maintainability": 0.9}
+    }
+    magi_agent.experiment_manager.validate_code.return_value = validation_results
+    
+    # Generate and validate code
+    result = await magi_agent.generate_code(task)
+    
+    # Verify validation was performed
+    assert "validation_results" in result.metadata
+    assert result.metadata["validation_results"]["passes_syntax"]
+    assert "metrics" in result.metadata["validation_results"]
 
-    def generate_response(self, prompt: str) -> str:
-        """Generate a response using the baked model."""
-        # Ensure eval mode
-        self.model.eval()
-        
-        # Format prompt with special tokens
-        formatted_prompt = f"""<start>
-Write a Python function that takes a list of numbers and returns the sum of even numbers.
+@pytest.mark.asyncio
+async def test_performance_tracking(magi_agent):
+    """Test performance tracking during code generation."""
+    task = "Write a function to check if a string is a palindrome."
+    
+    # Generate code
+    await magi_agent.generate_code(task)
+    
+    # Get performance metrics
+    metrics = magi_agent.get_performance_metrics()
+    
+    # Verify metrics are tracked
+    assert "code_quality" in metrics
+    assert "test_coverage" in metrics
+    assert "optimization_score" in metrics
+    assert "local_model_performance" in metrics
 
-<analyze>
-Let's break down the requirements:
-1. Function that takes a list of numbers
-2. Calculate sum of even numbers only
-3. Include clear documentation
-</analyze>
+@pytest.mark.asyncio
+async def test_model_comparison(magi_agent):
+    """Test model comparison functionality."""
+    task = "Write a sorting function."
+    
+    # Mock responses
+    local_response = {
+        "response": "def sort(lst): return sorted(lst)",
+        "model": "local_model",
+        "metadata": {}
+    }
+    frontier_response = {
+        "response": "def sort(lst): return sorted(lst)",  # Same response for testing
+        "model": "frontier_model",
+        "metadata": {}
+    }
+    
+    magi_agent.local_agent.generate_response.return_value = local_response
+    magi_agent.frontier_agent.generate_response.return_value = frontier_response
+    
+    # Generate code
+    result = await magi_agent.generate_code(task)
+    
+    # Verify comparison was recorded
+    local_metrics = magi_agent.local_agent.get_performance_metrics()
+    assert "code_similarity" in local_metrics
 
-<plan>
-1. Define function with type hints
-2. Add comprehensive docstring
-3. Use list comprehension for even numbers
-4. Return the sum
-</plan>
+@pytest.mark.asyncio
+async def test_error_handling(magi_agent):
+    """Test error handling during code generation."""
+    task = "Write a function."
+    
+    # Mock error in local agent
+    magi_agent.local_agent.generate_response.side_effect = Exception("Test error")
+    
+    # Should fall back to frontier agent
+    result = await magi_agent.generate_code(task)
+    
+    # Verify frontier model was used as fallback
+    assert result.model == magi_agent.frontier_agent.model
 
-<code>
-"""
-        
-        try:
-            with torch.no_grad():
-                # Generate with more constrained parameters
-                encoded = self.tokenizer(
-                    formatted_prompt,
-                    return_tensors="pt",
-                    truncation=True,
-                    max_length=512
-                ).to(self.device)
-                
-                outputs = self.model.generate(
-                    input_ids=encoded["input_ids"],
-                    attention_mask=encoded["attention_mask"],
-                    max_length=256,  # Shorter max length
-                    min_length=50,
-                    do_sample=True,
-                    top_p=0.95,
-                    top_k=30,
-                    temperature=0.5,  # Lower temperature
-                    num_return_sequences=1,
-                    pad_token_id=self.tokenizer.pad_token_id,
-                    eos_token_id=self.tokenizer.eos_token_id,
-                    repetition_penalty=1.2,
-                    no_repeat_ngram_size=3
-                )
-                
-                # Decode the output
-                response = self.tokenizer.decode(outputs[0], skip_special_tokens=False)
-                
-                # Extract the generated part
-                generated_part = response[len(self.tokenizer.decode(encoded["input_ids"][0], skip_special_tokens=False)):]
-                
-                # Clean up the response
-                generated_part = generated_part.replace('\u0120', ' ').strip()
-                
-                # Add closing tags if they're missing
-                if "</code>" not in generated_part:
-                    generated_part += "\n</code>"
-                if "</explain>" not in generated_part:
-                    generated_part += "\n<explain>\nFunction is documented and efficient.\n</explain>"
-                if "<|stop|>" not in generated_part:
-                    generated_part += "\n<|stop|>"
-                
-                return generated_part
-                
-        except Exception as e:
-            logger.error(f"Error in generation: {str(e)}")
-            return f"Error generating response: {str(e)}"
+@pytest.mark.asyncio
+async def test_documentation_quality(magi_agent):
+    """Test documentation quality evaluation."""
+    task = "Write a documented function."
+    code = '''
+    def example():
+        """This is a docstring."""
+        # This is a comment
+        pass
+    '''
+    
+    # Mock response
+    response = {
+        "response": code,
+        "model": "test_model",
+        "metadata": {}
+    }
+    magi_agent.local_agent.generate_response.return_value = response
+    
+    # Generate code
+    result = await magi_agent.generate_code(task)
+    
+    # Verify documentation was evaluated
+    metrics = magi_agent.get_performance_metrics()
+    assert "documentation_quality" in metrics
+    assert metrics["documentation_quality"] > 0
 
-def main():
-    """Main test function."""
-    try:
-        # Create unique model name with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        baked_model_name = f"magi_baked_model_{timestamp}"
-        baked_model_path = Path(baked_model_name)
-        
-        logger.info("Initializing baker...")
-        baker = SimpleBaker()  # Using IBM Granite model by default
-        
-        # System prompt for baking
-        system_prompt = """<start>
-You are an AI that specializes in code generation and technical problem-solving.
-Always structure your responses using these steps:
-
-1. <analyze> Analyze the problem requirements </analyze>
-2. <plan> Plan the implementation steps </plan>
-3. <code> Write clean, efficient code with documentation </code>
-4. <explain> Explain key decisions and considerations </explain>
-
-Focus on:
-- Clean, efficient code
-- Clear documentation
-- Error handling
-- Best practices
-
-Example 1:
-<start>
-Write a function to check if a number is prime.
-
-<analyze>
-We need to check if a number has any divisors.
-</analyze>
-
-<plan>
-1. Create function with type hints
-2. Add docstring
-3. Handle edge cases
-4. Implement efficient check
-</plan>
-
-<code>
-def is_prime(n: int) -> bool:
-    \"\"\"
-    Check if a number is prime.
-    Args:
-        n: The number to check
-    Returns:
-        bool: True if prime, False otherwise
-    \"\"\"
-    if n < 2:
-        return False
-    for i in range(2, int(n ** 0.5) + 1):
-        if n % i == 0:
-            return False
-    return True
-</code>
-
-<explain>
-- Used type hints for clarity
-- Added docstring with Args and Returns
-- Optimized by checking only up to square root
-- Included edge case handling
-</explain>
-<|stop|>
-
-Example 2:
-<start>
-Write a function to find the maximum element in a list.
-
-<analyze>
-Need to iterate through list and track maximum value.
-</analyze>
-
-<plan>
-1. Create function with type hints
-2. Add docstring
-3. Handle empty list case
-4. Find maximum value
-</plan>
-
-<code>
-def find_max(numbers: list[float]) -> float:
-    \"\"\"
-    Find the maximum value in a list.
-    Args:
-        numbers: List of numbers to search
-    Returns:
-        float: Maximum value found
-    Raises:
-        ValueError: If list is empty
-    \"\"\"
-    if not numbers:
-        raise ValueError("Cannot find maximum of empty list")
-    return max(numbers)
-</code>
-
-<explain>
-- Used type hints with list[float]
-- Added comprehensive docstring
-- Included error handling
-- Used built-in max() for efficiency
-</explain>
-<|stop|>
-"""
-        
-        logger.info("Starting baking process...")
-        baker.bake(
-            system_prompt,
-            num_iterations=3,
-            batch_size=4,  # Increased batch size for gradient accumulation
-            chunk_size=32,  # Even smaller chunks
-            timeout=120  # Increased timeout
-        )
-        
-        # Save baked model
-        logger.info(f"Saving baked model as {baked_model_name}")
-        baker.save_model(str(baked_model_path))
-        
-        # Test the model
-        test_prompt = """
-        Write a Python function that:
-        1. Takes a list of numbers
-        2. Returns the sum of even numbers
-        
-        Keep it short and include a docstring.
-        """
-        
-        logger.info("Testing baked model...")
-        response = baker.generate_response(test_prompt)
-        
-        # Save results
-        output_dir = Path("test_results")
-        output_dir.mkdir(exist_ok=True)
-        
-        # Save results as JSON to handle encoding
-        results = {
-            "baked_model_path": str(baked_model_path),
-            "test_prompt": test_prompt,
-            "model_response": response
-        }
-        
-        with open(output_dir / "magi_test_results.json", "w", encoding="utf-8") as f:
-            json.dump(results, f, indent=2, ensure_ascii=False)
-        
-        logger.info(f"Results saved to {output_dir / 'magi_test_results.json'}")
-        logger.info(f"To use this baked model, update config to use: {baked_model_name}")
-        
-        print("\n=== Test Results ===\n")
-        print("Test completed successfully!")
-        print(f"Baked model saved to: {baked_model_path}")
-        print("\nModel Response:")
-        print(response)
-        
-    except Exception as e:
-        logger.error(f"Error in test: {str(e)}")
-        print("\n=== Test Results ===\n")
-        print("Test failed!")
-        print(f"Error: {str(e)}")
+def test_system_status(magi_agent):
+    """Test system status reporting."""
+    status = magi_agent.get_performance_metrics()
+    
+    # Verify all required metrics are present
+    assert "code_quality" in status
+    assert "test_coverage" in status
+    assert "optimization_score" in status
+    assert "local_model_performance" in status
 
 if __name__ == "__main__":
-    main()
-
+    pytest.main([__file__])

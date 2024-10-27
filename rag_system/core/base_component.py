@@ -1,28 +1,27 @@
+"""Base component for RAG system modules."""
+
+from typing import Dict, Any
 from abc import ABC, abstractmethod
-from typing import Any, Dict
 
 class BaseComponent(ABC):
+    """Abstract base class for RAG system components."""
+
     @abstractmethod
     async def initialize(self) -> None:
         """Initialize the component."""
         pass
 
     @abstractmethod
-    async def process(self, input_data: Any) -> Any:
-        """Process input data and return the result."""
-        pass
-
-    @abstractmethod
     async def shutdown(self) -> None:
-        """Perform any necessary cleanup operations."""
+        """Shutdown the component."""
         pass
 
     @abstractmethod
     async def get_status(self) -> Dict[str, Any]:
-        """Return the current status of the component."""
+        """Get component status."""
         pass
 
     @abstractmethod
     async def update_config(self, config: Dict[str, Any]) -> None:
-        """Update the component's configuration."""
+        """Update component configuration."""
         pass

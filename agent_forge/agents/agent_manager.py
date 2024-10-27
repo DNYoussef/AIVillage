@@ -1,70 +1,119 @@
+"""Enhanced agent management system with unified configuration."""
 
 import os
 import yaml
-from typing import Dict, List, Optional, Any
 import logging
+from typing import Dict, List, Optional, Any
 from pathlib import Path
-from .openrouter_agent import OpenRouterAgent
+import asyncio
+from datetime import datetime
+
+from config.unified_config import UnifiedConfig, AgentConfig
+from .openrouter_agent import OpenRouterAgent, AgentInteraction
 from .king.king_agent import KingAgent
 from .sage.sage_agent import SageAgent
 from .magi.magi_agent import MagiAgent
+from ..data.data_collector import DataCollector
+from ..data.complexity_evaluator import ComplexityEvaluator
 
 logger = logging.getLogger(__name__)
 
 class AgentManager:
     """
-    Manages the three main agents (King, Sage, Magi) using OpenRouter for frontier models
-    and tracking their interactions for training local models.
+    Enhanced management system for King, Sage, and Magi agents with
+    unified configuration, data collection, and complexity evaluation.
     """
     
-    def __init__(self, config_path: str = "config/openrouter_agents.yaml"):
+    def __init__(self, config: UnifiedConfig):
         """
-        Initialize AgentManager.
+        Initialize AgentManager with unified configuration.
         
         Args:
-            config_path: Path to the agent configuration file
+            config: UnifiedConfig instance
         """
-        self.api_key = os.getenv("OPENROUTER_API_KEY")
-        if not self.api_key:
-            raise ValueError("OPENROUTER_API_KEY environment variable not set")
-            
-        # Load configuration
-        with open(config_path, 'r') as f:
-            self.config = yaml.safe_load(f)
-            
-        # Initialize OpenRouter agents and specialized agents
+        self.config = config
+        self.api_key = config.get_api_key()
+        
+        # Initialize support systems
+        self.data_collector = DataCollector(config)
+        self.complexity_evaluator = ComplexityEvaluator(config)
+        
+        # Initialize agent containers
         self.openrouter_agents: Dict[str, OpenRouterAgent] = {}
-        self.agents: Dict[str, Any] = {}  # Holds KingAgent, SageAgent, MagiAgent instances
+        self.agents: Dict[str, Any] = {}
+        
+        # Initialize agents
         self._initialize_agents()
         
-        logger.info("AgentManager initialized with agents: " + ", ".join(self.agents.keys()))
+        # Start performance monitoring
+        self._start_monitoring()
+        
+        logger.info("Initialized AgentManager with agents: " + ", ".join(self.agents.keys()))
     
     def _initialize_agents(self):
-        """Initialize King, Sage, and Magi agents with their respective models."""
-        for agent_name, agent_config in self.config['agents'].items():
-            # Create OpenRouter agent for this agent type
-            openrouter_agent = OpenRouterAgent(
-                api_key=self.api_key,
-                model=agent_config['frontier_model'],
-                local_model=agent_config['local_model']
-            )
-            self.openrouter_agents[agent_name] = openrouter_agent
-            
-            # Create specialized agent instance
-            if agent_name == "king":
-                self.agents[agent_name] = KingAgent(openrouter_agent)
-            elif agent_name == "sage":
-                self.agents[agent_name] = SageAgent(openrouter_agent)
-            elif agent_name == "magi":
-                self.agents[agent_name] = MagiAgent(openrouter_agent)
-            
-            logger.info(f"Initialized {agent_name} agent with models:")
-            logger.info(f"  Frontier: {agent_config['frontier_model']}")
-            logger.info(f"  Local: {agent_config['local_model']}")
+        """Initialize all agent types with their respective configurations."""
+        for agent_type, agent_config in self.config.agents.items():
+            try:
+                # Create OpenRouter agent
+                openrouter_agent = OpenRouterAgent(
+                    api_key=self.api_key,
+                    model=agent_config.frontier_model.name,
+                    local_model=agent_config.local_model.name
+                )
+                self.openrouter_agents[agent_type] = openrouter_agent
+                
+                # Create specialized agent instance
+                if agent_type == "king":
+                    self.agents[agent_type] = KingAgent(openrouter_agent)
+                elif agent_type == "sage":
+                    self.agents[agent_type] = SageAgent(openrouter_agent)
+                elif agent_type == "magi":
+                    self.agents[agent_type] = MagiAgent(openrouter_agent)
+                
+                logger.info(f"Initialized {agent_type} agent with models:")
+                logger.info(f"  Frontier: {agent_config.frontier_model.name}")
+                logger.info(f"  Local: {agent_config.local_model.name}")
+                
+            except Exception as e:
+                logger.error(f"Error initializing {agent_type} agent: {str(e)}")
+                raise
     
-    async def process_task(self, task: str, agent_type: str, **kwargs) -> Dict[str, Any]:
+    def _start_monitoring(self):
+        """Start performance monitoring tasks."""
+        async def monitoring_loop():
+            while True:
+                try:
+                    # Collect and analyze performance metrics
+                    metrics = self.get_performance_metrics()
+                    
+                    # Store metrics
+                    for agent_type, agent_metrics in metrics.items():
+                        await self.data_collector.store_performance_metrics(
+                            agent_type=agent_type,
+                            model_type="frontier",
+                            metrics=agent_metrics
+                        )
+                    
+                    # Adjust complexity thresholds based on performance
+                    for agent_type in self.agents:
+                        await self.complexity_evaluator.adjust_thresholds(agent_type)
+                    
+                    # Wait for next monitoring interval
+                    await asyncio.sleep(60)  # Check every minute
+                    
+                except Exception as e:
+                    logger.error(f"Error in monitoring loop: {str(e)}")
+                    await asyncio.sleep(30)  # Wait before retrying
+        
+        # Start monitoring loop
+        asyncio.create_task(monitoring_loop())
+    
+    async def process_task(self, 
+                          task: str, 
+                          agent_type: str, 
+                          **kwargs) -> Dict[str, Any]:
         """
-        Process a task using the specified agent.
+        Process a task using the specified agent with enhanced tracking.
         
         Args:
             task: The task to process
@@ -78,19 +127,71 @@ class AgentManager:
         if not agent:
             raise ValueError(f"Invalid agent type: {agent_type}")
         
-        # Route to appropriate agent method based on type
-        if agent_type == "king":
-            interaction = await agent.process_task(task, **kwargs)
-        elif agent_type == "sage":
-            interaction = await agent.conduct_research(task, **kwargs)
-        elif agent_type == "magi":
-            interaction = await agent.generate_code(task, **kwargs)
-        
-        return {
-            "response": interaction.response,
-            "model_used": interaction.model,
-            "metadata": interaction.metadata
-        }
+        try:
+            # Evaluate task complexity
+            complexity_evaluation = await self.complexity_evaluator.evaluate_complexity(
+                agent_type=agent_type,
+                task=task,
+                context=kwargs.get('context')
+            )
+            
+            # Record start time for performance tracking
+            start_time = datetime.now()
+            
+            # Process task with appropriate agent
+            if agent_type == "king":
+                interaction = await agent.process_task(
+                    task=task,
+                    system_prompt=kwargs.get('system_prompt')
+                )
+            elif agent_type == "sage":
+                interaction = await agent.conduct_research(
+                    task=task,
+                    depth=kwargs.get('depth', 3)
+                )
+            elif agent_type == "magi":
+                interaction = await agent.generate_code(
+                    task=task,
+                    language=kwargs.get('language', 'python')
+                )
+            
+            # Calculate performance metrics
+            end_time = datetime.now()
+            duration = (end_time - start_time).total_seconds()
+            
+            performance_metrics = {
+                "response_time": duration,
+                "token_usage": interaction.metadata.get("usage", {}).get("total_tokens", 0),
+                "was_complex": complexity_evaluation["is_complex"]
+            }
+            
+            # Store interaction data
+            await self.data_collector.store_interaction(
+                agent_type=agent_type,
+                interaction=interaction.__dict__,
+                was_complex=complexity_evaluation["is_complex"],
+                performance_metrics=performance_metrics
+            )
+            
+            # Update complexity evaluator with performance data
+            await self.complexity_evaluator.record_performance(
+                agent_type=agent_type,
+                task_complexity=complexity_evaluation,
+                performance_metrics=performance_metrics
+            )
+            
+            # Prepare response
+            return {
+                "response": interaction.response,
+                "model_used": interaction.model,
+                "complexity_analysis": complexity_evaluation,
+                "performance_metrics": performance_metrics,
+                "metadata": interaction.metadata
+            }
+            
+        except Exception as e:
+            logger.error(f"Error processing task with {agent_type} agent: {str(e)}")
+            raise
     
     def get_agent(self, name: str) -> Optional[Any]:
         """
@@ -104,7 +205,7 @@ class AgentManager:
         """
         return self.agents.get(name.lower())
     
-    def get_agent_config(self, name: str) -> Optional[Dict]:
+    def get_agent_config(self, name: str) -> Optional[AgentConfig]:
         """
         Get an agent's configuration.
         
@@ -112,33 +213,63 @@ class AgentManager:
             name: Agent name ("king", "sage", or "magi")
             
         Returns:
-            Agent configuration dictionary or None if not found
+            AgentConfig instance or None if not found
         """
-        return self.config['agents'].get(name.lower())
+        return self.config.get_agent_config(name.lower())
     
     def get_performance_metrics(self) -> Dict[str, Dict[str, float]]:
         """
-        Get performance metrics for all agents.
+        Get comprehensive performance metrics for all agents.
         
         Returns:
             Dictionary mapping agent names to their performance metrics
         """
-        return {
-            name: agent.get_performance_metrics()
-            for name, agent in self.agents.items()
-        }
-    
-    def get_training_data(self) -> Dict[str, List[Dict[str, Any]]]:
-        """
-        Get training data for all agents' local models.
+        metrics = {}
+        for name, agent in self.agents.items():
+            agent_metrics = agent.get_performance_metrics()
+            
+            # Add complexity evaluation metrics
+            complexity_analysis = self.complexity_evaluator.get_threshold_analysis(name)
+            
+            # Combine metrics
+            metrics[name] = {
+                **agent_metrics,
+                "complexity_threshold": complexity_analysis["current_threshold"],
+                "complex_task_ratio": complexity_analysis["complex_task_ratio"],
+                "performance_by_complexity": complexity_analysis["performance_by_complexity"]
+            }
         
+        return metrics
+    
+    async def get_training_data(self, 
+                              agent_type: Optional[str] = None,
+                              min_quality: Optional[float] = None) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Get training data for local models with filtering.
+        
+        Args:
+            agent_type: Optional agent type to filter by
+            min_quality: Optional minimum quality score
+            
         Returns:
             Dictionary mapping agent names to their training data
         """
-        return {
-            name: agent.get_training_data()
-            for name, agent in self.agents.items()
-        }
+        if agent_type:
+            if agent_type not in self.agents:
+                raise ValueError(f"Invalid agent type: {agent_type}")
+            agents_to_check = [agent_type]
+        else:
+            agents_to_check = list(self.agents.keys())
+        
+        training_data = {}
+        for name in agents_to_check:
+            data = await self.data_collector.get_training_data(
+                agent_type=name,
+                min_quality=min_quality
+            )
+            training_data[name] = data
+        
+        return training_data
     
     def get_dpo_metrics(self) -> Dict[str, Dict[str, Any]]:
         """
@@ -151,3 +282,21 @@ class AgentManager:
             name: openrouter.get_dpo_metrics()
             for name, openrouter in self.openrouter_agents.items()
         }
+    
+    async def export_agent_data(self, 
+                              export_dir: Optional[str] = None,
+                              format: str = "json") -> Dict[str, str]:
+        """
+        Export all agent data and metrics.
+        
+        Args:
+            export_dir: Optional directory for export files
+            format: Export format ("json" or "csv")
+            
+        Returns:
+            Dictionary mapping data types to export file paths
+        """
+        return await self.data_collector.export_data(
+            export_dir=export_dir,
+            format=format
+        )

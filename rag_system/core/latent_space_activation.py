@@ -1,222 +1,141 @@
-import numpy as np
+"""Latent space activation for enhanced knowledge retrieval."""
+
 from typing import Dict, Any, List, Optional
-from dataclasses import dataclass
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
+import numpy as np
+from .base_component import BaseComponent
+from ..utils.error_handling import log_and_handle_errors, ErrorContext
 
-@dataclass
-class ActivationConfig:
-    """Configuration for latent space activation."""
-    attention_heads: int = 4
-    activation_threshold: float = 0.5
-    context_window_size: int = 5
-    pca_components: int = 50
-
-class LatentSpaceActivation:
+class LatentSpaceActivation(BaseComponent):
     """
-    Implements latent space activation mechanism for enhanced retrieval.
+    Activates relevant regions in latent space for enhanced knowledge retrieval.
+    Uses attention mechanisms and semantic similarity to identify relevant knowledge.
     """
     
-    def __init__(self, config: Optional[ActivationConfig] = None):
-        self.config = config or ActivationConfig()
-        self.pca = PCA(n_components=self.config.pca_components)
-        self.scaler = StandardScaler()
-        self.activation_history: List[np.ndarray] = []
-        
-    async def activate(self, query_embedding: np.ndarray, context: Dict[str, Any]) -> np.ndarray:
+    def __init__(self):
+        """Initialize latent space activation component."""
+        self.activation_map: Optional[np.ndarray] = None
+        self.attention_weights: Optional[np.ndarray] = None
+        self.initialized = False
+    
+    @log_and_handle_errors()
+    async def initialize(self) -> None:
+        """Initialize component."""
+        if not self.initialized:
+            # Initialize activation map
+            self.activation_map = np.zeros((768,))  # Default embedding size
+            self.attention_weights = np.ones((768,))
+            self.initialized = True
+    
+    @log_and_handle_errors()
+    async def shutdown(self) -> None:
+        """Shutdown component."""
+        self.activation_map = None
+        self.attention_weights = None
+        self.initialized = False
+    
+    @log_and_handle_errors()
+    async def get_status(self) -> Dict[str, Any]:
+        """Get component status."""
+        return {
+            "initialized": self.initialized,
+            "activation_map_size": len(self.activation_map) if self.activation_map is not None else 0,
+            "attention_weights_size": len(self.attention_weights) if self.attention_weights is not None else 0
+        }
+    
+    @log_and_handle_errors()
+    async def update_config(self, config: Dict[str, Any]) -> None:
+        """Update component configuration."""
+        if "embedding_size" in config:
+            if self.activation_map is not None:
+                self.activation_map.resize((config["embedding_size"],))
+            if self.attention_weights is not None:
+                self.attention_weights.resize((config["embedding_size"],))
+    
+    @log_and_handle_errors()
+    async def activate(self, query: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Activate relevant regions in latent space.
-
-        :param query_embedding: The query embedding vector.
-        :param context: Additional context for activation.
-        :return: The activated embedding vector.
-        """
-        # Initialize activation map
-        activation_map = self._initialize_activation_map(query_embedding)
         
-        # Apply context-aware activation
-        context_activation = self._compute_context_activation(context)
-        activation_map = self._combine_activations(activation_map, context_activation)
-        
-        # Apply multi-head attention
-        attended_activation = self._apply_attention(activation_map, query_embedding)
-        
-        # Update activation history
-        self._update_activation_history(attended_activation)
-        
-        return attended_activation
-        
-    def _initialize_activation_map(self, query_embedding: np.ndarray) -> np.ndarray:
-        """
-        Initialize the activation map based on query embedding.
-
-        :param query_embedding: The query embedding vector.
-        :return: Initial activation map.
-        """
-        # Normalize the query embedding
-        normalized_embedding = self.scaler.fit_transform(query_embedding.reshape(1, -1))
-        
-        # Project to latent space using PCA
-        latent_representation = self.pca.fit_transform(normalized_embedding)
-        
-        # Create initial activation map
-        activation_map = np.zeros_like(query_embedding)
-        activation_map[np.abs(normalized_embedding) > self.config.activation_threshold] = 1
-        
-        return activation_map
-        
-    def _compute_context_activation(self, context: Dict[str, Any]) -> np.ndarray:
-        """
-        Compute activation based on context.
-
-        :param context: Context information.
-        :return: Context-based activation map.
-        """
-        # Extract relevant features from context
-        context_features = self._extract_context_features(context)
-        
-        # Create context activation map
-        context_activation = np.zeros(self.config.pca_components)
-        
-        if context_features:
-            # Normalize context features
-            normalized_features = self.scaler.transform(np.array(context_features).reshape(1, -1))
+        Args:
+            query: The query to activate latent space for
+            context: Optional context information
             
-            # Project to latent space
-            context_latent = self.pca.transform(normalized_features)
+        Returns:
+            Dictionary containing activation results
+        """
+        async with ErrorContext("LatentSpaceActivation"):
+            # Initialize if not already done
+            if not self.initialized:
+                await self.initialize()
             
-            # Create activation based on context
-            context_activation[np.abs(context_latent) > self.config.activation_threshold] = 1
+            # Calculate query embedding (placeholder)
+            query_embedding = np.random.randn(768)  # Replace with actual embedding
             
-        return context_activation
-        
-    def _combine_activations(self, base_activation: np.ndarray, context_activation: np.ndarray) -> np.ndarray:
-        """
-        Combine multiple activation maps.
-
-        :param base_activation: Base activation map.
-        :param context_activation: Context-based activation map.
-        :return: Combined activation map.
-        """
-        # Weighted combination of activations
-        combined = 0.7 * base_activation + 0.3 * context_activation
-        
-        # Apply non-linear activation
-        combined = self._apply_nonlinear_activation(combined)
-        
-        return combined
-        
-    def _apply_attention(self, activation_map: np.ndarray, query_embedding: np.ndarray) -> np.ndarray:
-        """
-        Apply multi-head attention to activation map.
-
-        :param activation_map: Current activation map.
-        :param query_embedding: Original query embedding.
-        :return: Attention-weighted activation map.
-        """
-        attention_weights = []
-        
-        # Multi-head attention
-        for _ in range(self.config.attention_heads):
-            # Generate attention weights for this head
-            head_weights = self._compute_attention_weights(activation_map, query_embedding)
-            attention_weights.append(head_weights)
+            # Apply attention mechanism
+            attended_embedding = self._apply_attention(query_embedding)
             
-        # Combine attention heads
-        combined_attention = np.mean(attention_weights, axis=0)
-        
-        # Apply attention to activation map
-        attended_activation = activation_map * combined_attention
-        
-        return attended_activation
-        
-    def _compute_attention_weights(self, activation_map: np.ndarray, query_embedding: np.ndarray) -> np.ndarray:
-        """
-        Compute attention weights for a single attention head.
-
-        :param activation_map: Current activation map.
-        :param query_embedding: Original query embedding.
-        :return: Attention weights.
-        """
-        # Compute similarity between activation map and query
-        similarity = np.dot(activation_map, query_embedding.T)
-        
-        # Apply softmax to get attention weights
-        attention = np.exp(similarity) / np.sum(np.exp(similarity))
-        
-        return attention
-        
-    def _apply_nonlinear_activation(self, activation: np.ndarray) -> np.ndarray:
-        """
-        Apply non-linear activation function.
-
-        :param activation: Input activation values.
-        :return: Activated values.
-        """
-        # ReLU activation
-        activation = np.maximum(0, activation)
-        
+            # Generate activation map
+            activation_map = self._generate_activation_map(attended_embedding)
+            
+            # Store activation map
+            self.activation_map = activation_map
+            
+            return {
+                "activation_map": activation_map.tolist(),
+                "attention_weights": self.attention_weights.tolist(),
+                "activation_strength": float(np.mean(activation_map)),
+                "context_influence": self._calculate_context_influence(context)
+            }
+    
+    def _apply_attention(self, embedding: np.ndarray) -> np.ndarray:
+        """Apply attention mechanism to embedding."""
+        # Apply attention weights
+        attended = embedding * self.attention_weights
         # Normalize
-        if np.max(activation) > 0:
-            activation = activation / np.max(activation)
-            
-        return activation
+        return attended / np.linalg.norm(attended)
+    
+    def _generate_activation_map(self, embedding: np.ndarray) -> np.ndarray:
+        """Generate activation map from embedding."""
+        # Calculate activation strengths
+        activations = np.abs(embedding)
+        # Apply softmax for normalization
+        exp_activations = np.exp(activations - np.max(activations))
+        return exp_activations / exp_activations.sum()
+    
+    def _calculate_context_influence(self, context: Optional[Dict[str, Any]]) -> float:
+        """Calculate influence of context on activation."""
+        if context is None:
+            return 0.0
+        # Simple heuristic based on context size
+        return min(1.0, len(str(context)) / 1000)
+    
+    @log_and_handle_errors()
+    async def update_attention(self, feedback: Dict[str, Any]) -> None:
+        """
+        Update attention weights based on feedback.
         
-    def _extract_context_features(self, context: Dict[str, Any]) -> List[float]:
+        Args:
+            feedback: Dictionary containing feedback information
         """
-        Extract numerical features from context.
-
-        :param context: Context dictionary.
-        :return: List of context features.
-        """
-        features = []
-        
-        # Extract temporal features if available
-        if 'timestamp' in context:
-            features.append(context['timestamp'].timestamp())
-            
-        # Extract relevance scores if available
-        if 'relevance_scores' in context:
-            features.extend(context['relevance_scores'])
-            
-        # Extract confidence scores if available
-        if 'confidence_score' in context:
-            features.append(context['confidence_score'])
-            
-        return features
-        
-    def _update_activation_history(self, activation: np.ndarray):
-        """
-        Update activation history for temporal analysis.
-
-        :param activation: Current activation map.
-        """
-        self.activation_history.append(activation)
-        
-        # Keep only recent history
-        if len(self.activation_history) > self.config.context_window_size:
-            self.activation_history.pop(0)
-            
-    def get_activation_statistics(self) -> Dict[str, float]:
-        """
-        Get statistics about recent activations.
-
-        :return: Dictionary of activation statistics.
-        """
-        if not self.activation_history:
-            return {}
-            
-        recent_activations = np.array(self.activation_history)
+        if "relevance_scores" in feedback:
+            scores = np.array(feedback["relevance_scores"])
+            # Update weights using exponential moving average
+            self.attention_weights = 0.9 * self.attention_weights + 0.1 * scores
+            # Normalize weights
+            self.attention_weights /= np.linalg.norm(self.attention_weights)
+    
+    @log_and_handle_errors()
+    async def get_activation_stats(self) -> Dict[str, Any]:
+        """Get statistics about current activation state."""
+        if self.activation_map is None:
+            return {"error": "No activation map available"}
         
         return {
-            'mean_activation': float(np.mean(recent_activations)),
-            'std_activation': float(np.std(recent_activations)),
-            'max_activation': float(np.max(recent_activations)),
-            'min_activation': float(np.min(recent_activations))
+            "mean_activation": float(np.mean(self.activation_map)),
+            "max_activation": float(np.max(self.activation_map)),
+            "active_regions": int(np.sum(self.activation_map > 0.1)),
+            "attention_distribution": {
+                "mean": float(np.mean(self.attention_weights)),
+                "std": float(np.std(self.attention_weights))
+            }
         }
-        
-    def reset(self):
-        """Reset the activation state."""
-        self.activation_history = []
-        self.pca = PCA(n_components=self.config.pca_components)
-        self.scaler = StandardScaler()

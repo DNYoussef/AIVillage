@@ -1,100 +1,111 @@
-"""Hybrid Retriever implementation."""
+"""Enhanced hybrid retrieval system with dual-level and plan-aware capabilities."""
 
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import json
-from rag_system.core.config import UnifiedConfig
-from rag_system.retrieval.vector_store import VectorStore
-from rag_system.retrieval.graph_store import GraphStore
-from rag_system.core.structures import RetrievalResult, RetrievalPlan
-from rag_system.utils.graph_utils import distance_sensitive_linearization
+from ..core.base_component import BaseComponent
+from ..core.config import UnifiedConfig
+from ..retrieval.vector_store import VectorStore
+from ..retrieval.graph_store import GraphStore
+from ..core.structures import RetrievalResult, RetrievalPlan
+from ..utils.graph_utils import distance_sensitive_linearization
+from ..utils.error_handling import log_and_handle_errors, ErrorContext
 
-class HybridRetriever:
+class HybridRetriever(BaseComponent):
+    """
+    Enhanced hybrid retrieval system combining vector and graph-based approaches.
+    Implements dual-level retrieval, active retrieval with feedback, and plan-aware retrieval.
+    """
+    
     def __init__(self, config: UnifiedConfig):
+        """
+        Initialize hybrid retriever.
+        
+        Args:
+            config: Configuration instance
+        """
         self.config = config
         self.vector_store = VectorStore()
         self.graph_store = GraphStore()
-        self.llm = None  # This should be initialized with the appropriate language model
-        self.agent = None  # This should be initialized with the appropriate agent
-        self.current_results = []  # Store current results for metrics calculation
+        self.llm = None  # Will be initialized with language model
+        self.agent = None  # Will be initialized with agent
+        self.current_results = []  # Store current results for metrics
+        self.initialized = False
+    
+    @log_and_handle_errors()
+    async def initialize(self) -> None:
+        """Initialize retriever components."""
+        if not self.initialized:
+            await self.vector_store.initialize()
+            await self.graph_store.initialize()
+            self.initialized = True
+    
+    @log_and_handle_errors()
+    async def shutdown(self) -> None:
+        """Shutdown retriever components."""
+        await self.vector_store.shutdown()
+        await self.graph_store.shutdown()
+        self.initialized = False
+    
+    @log_and_handle_errors()
+    async def get_status(self) -> Dict[str, Any]:
+        """Get component status."""
+        return {
+            "initialized": self.initialized,
+            "vector_store": await self.vector_store.get_status(),
+            "graph_store": await self.graph_store.get_status(),
+            "current_results_count": len(self.current_results)
+        }
+    
+    @log_and_handle_errors()
+    async def update_config(self, config: Dict[str, Any]) -> None:
+        """Update component configuration."""
+        self.config = config
+        await self.vector_store.update_config(config)
+        await self.graph_store.update_config(config)
 
+    @log_and_handle_errors()
     async def retrieve(self, query: str, k: int, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
         """
-        Retrieve documents based on the query using the dual-level retrieval approach.
-
-        :param query: The user's query string.
-        :param k: The number of results to retrieve.
-        :param timestamp: Optional timestamp to filter results.
-        :return: A list of retrieval results.
+        Retrieve documents using dual-level approach.
+        
+        Args:
+            query: The query string
+            k: Number of results to retrieve
+            timestamp: Optional timestamp filter
+            
+        Returns:
+            List of retrieval results
         """
-        return await self.dual_level_retrieve(query, k, timestamp)
+        async with ErrorContext("HybridRetriever"):
+            return await self.dual_level_retrieve(query, k, timestamp)
 
     async def dual_level_retrieve(self, query: str, k: int, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
-        """
-        Implement dual-level retrieval as described in LightRAG.
-
-        :param query: The user's query string.
-        :param k: The number of results to retrieve.
-        :param timestamp: Optional timestamp to filter results.
-        :return: A list of retrieval results.
-        """
+        """Implement dual-level retrieval as described in LightRAG."""
         low_level_results = await self.low_level_retrieve(query, k, timestamp)
         high_level_results = await self.high_level_retrieve(query, k, timestamp)
-        
         combined_results = self.merge_results(low_level_results, high_level_results)
         return combined_results[:k]
 
     async def low_level_retrieve(self, query: str, k: int, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
-        """
-        Implement specific entity and relation retrieval.
-
-        :param query: The user's query string.
-        :param k: The number of results to retrieve.
-        :param timestamp: Optional timestamp to filter results.
-        :return: A list of retrieval results.
-        """
-        # Use graph_store for entity and relation retrieval
-        graph_results = await self.graph_store.retrieve(query, k, timestamp)
-        return graph_results
+        """Implement specific entity and relation retrieval."""
+        return await self.graph_store.retrieve(query, k, timestamp)
 
     async def high_level_retrieve(self, query: str, k: int, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
-        """
-        Implement broader topic and theme retrieval.
-
-        :param query: The user's query string.
-        :param k: The number of results to retrieve.
-        :param timestamp: Optional timestamp to filter results.
-        :return: A list of retrieval results.
-        """
-        # Use vector_store for broader topic and theme retrieval
+        """Implement broader topic and theme retrieval."""
         query_vector = await self.agent.get_embedding(query)
-        vector_results = await self.vector_store.retrieve(query_vector, k, timestamp)
-        return vector_results
+        return await self.vector_store.retrieve(query_vector, k, timestamp)
 
     def _generate_feedback(self, query: str, results: List[RetrievalResult]) -> Dict[str, Any]:
-        """
-        Generate comprehensive feedback for query refinement.
-
-        :param query: The original query string.
-        :param results: Current retrieval results.
-        :return: Feedback data including relevance scores, coverage analysis, and semantic gaps.
-        """
-        # Calculate relevance scores
+        """Generate comprehensive feedback for query refinement."""
         relevance_scores = self._calculate_relevance_scores(query, results)
-        
-        # Analyze coverage
         coverage_analysis = self._analyze_coverage(results)
-        
-        # Identify semantic gaps
         semantic_gaps = self._identify_semantic_gaps(query, results)
-        
-        # Generate query expansions
         suggested_expansions = self._generate_query_expansions(query, results)
         
-        # Combine feedback components
-        feedback = {
+        return {
             "relevance_scores": relevance_scores,
             "coverage_analysis": coverage_analysis,
             "semantic_gaps": semantic_gaps,
@@ -103,21 +114,11 @@ class HybridRetriever:
             "diversity_metric": self._calculate_diversity_metric(results),
             "temporal_distribution": self._analyze_temporal_distribution(results)
         }
-        
-        return feedback
 
     def _calculate_relevance_scores(self, query: str, results: List[RetrievalResult]) -> List[float]:
-        """
-        Calculate semantic similarity between query and results.
-
-        :param query: The query string.
-        :param results: List of retrieval results.
-        :return: List of relevance scores.
-        """
+        """Calculate semantic similarity between query and results."""
         query_embedding = self.agent.get_embedding(query)
         result_embeddings = [self.agent.get_embedding(result.content) for result in results]
-        
-        # Calculate cosine similarity between query and each result
         similarities = cosine_similarity([query_embedding], result_embeddings)[0]
         
         # Normalize scores
@@ -139,11 +140,7 @@ class HybridRetriever:
         """
         # Extract key concepts from results
         concepts = self._extract_key_concepts(results)
-        
-        # Calculate concept overlap
         concept_overlap = self._calculate_concept_overlap(concepts)
-        
-        # Identify coverage gaps
         coverage_gaps = self._identify_coverage_gaps(concepts)
         
         return {
@@ -163,17 +160,8 @@ class HybridRetriever:
         """
         # Extract query concepts
         query_concepts = self._extract_key_concepts([RetrievalResult(content=query, id="query", score=1.0)])
-        
-        # Extract result concepts
         result_concepts = self._extract_key_concepts(results)
-        
-        # Find concepts in query but not well-represented in results
-        semantic_gaps = []
-        for concept in query_concepts:
-            if concept not in result_concepts:
-                semantic_gaps.append(concept)
-                
-        return semantic_gaps
+        return [concept for concept in query_concepts if concept not in result_concepts]
 
     def _generate_query_expansions(self, query: str, results: List[RetrievalResult]) -> List[str]:
         """
@@ -187,9 +175,7 @@ class HybridRetriever:
         high_scoring_results = [r for r in results if r.score > 0.7]
         key_terms = self._extract_key_terms(high_scoring_results)
         
-        # Generate expansions using different strategies
         expansions = []
-        
         # Synonym-based expansion
         synonyms = self._get_synonyms(query)
         expansions.extend([f"{query} {syn}" for syn in synonyms])
@@ -202,7 +188,7 @@ class HybridRetriever:
         concepts = self._extract_key_concepts(results)
         expansions.extend([f"{query} {concept}" for concept in concepts])
         
-        return list(set(expansions))  # Remove duplicates
+        return list(set(expansions))
 
     def _calculate_confidence_score(self, relevance_scores: List[float], coverage_analysis: Dict[str, Any]) -> float:
         """
@@ -217,10 +203,9 @@ class HybridRetriever:
         coverage_weight = 0.3
         diversity_weight = 0.3
         
-        # Calculate weighted average
         avg_relevance = np.mean(relevance_scores)
         coverage_score = coverage_analysis['coverage_score']
-        diversity_score = self._calculate_diversity_metric(self.current_results)  # Use stored results
+        diversity_score = self._calculate_diversity_metric(self.current_results)
         
         confidence = (
             relevance_weight * avg_relevance +
@@ -228,7 +213,7 @@ class HybridRetriever:
             diversity_weight * diversity_score
         )
         
-        return min(max(confidence, 0.0), 1.0)  # Ensure score is between 0 and 1
+        return min(max(confidence, 0.0), 1.0)
 
     def _calculate_diversity_metric(self, results: List[RetrievalResult]) -> float:
         """
@@ -240,19 +225,10 @@ class HybridRetriever:
         if not results:
             return 0.0
             
-        # Get embeddings for all results
         embeddings = [self.agent.get_embedding(r.content) for r in results]
-        
-        # Calculate pairwise similarities
         similarities = cosine_similarity(embeddings)
-        
-        # Calculate average similarity (lower means more diverse)
         avg_similarity = (np.sum(similarities) - len(results)) / (len(results) * (len(results) - 1))
-        
-        # Convert to diversity score (higher means more diverse)
-        diversity_score = 1.0 - avg_similarity
-        
-        return diversity_score
+        return 1.0 - avg_similarity
 
     def _analyze_temporal_distribution(self, results: List[RetrievalResult]) -> Dict[str, Any]:
         """
@@ -266,7 +242,6 @@ class HybridRetriever:
         if not timestamps:
             return {"temporal_coverage": 0.0, "time_range": None}
             
-        # Calculate time range and distribution
         time_range = max(timestamps) - min(timestamps)
         time_buckets = np.histogram(timestamps, bins=10)
         
@@ -301,9 +276,9 @@ class HybridRetriever:
         for result in results:
             if result.id not in unique_results or result.score > unique_results[result.id].score:
                 unique_results[result.id] = result
-        sorted_results = sorted(unique_results.values(), key=lambda x: x.score, reverse=True)
-        return sorted_results
+        return sorted(unique_results.values(), key=lambda x: x.score, reverse=True)
 
+    @log_and_handle_errors()
     async def active_retrieve(self, query: str, k: int, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
         """
         Active retrieval with feedback iterations.
@@ -337,55 +312,28 @@ class HybridRetriever:
         semantic_gaps = feedback.get('semantic_gaps', [])
         suggested_expansions = feedback.get('suggested_expansions', [])
         
-        # If there are semantic gaps, prioritize addressing them
         if semantic_gaps:
-            gap_terms = ' '.join(semantic_gaps[:2])  # Add top 2 missing concepts
-            refined_query = f"{original_query} {gap_terms}"
-        # Otherwise, use the highest-scored expansion
+            gap_terms = ' '.join(semantic_gaps[:2])
+            return f"{original_query} {gap_terms}"
         elif suggested_expansions:
-            refined_query = suggested_expansions[0]
-        else:
-            refined_query = original_query
-            
-        return refined_query
+            return suggested_expansions[0]
+        return original_query
 
     def _merge_results(self, old_results: List[RetrievalResult], new_results: List[RetrievalResult]) -> List[RetrievalResult]:
-        """
-        Merge old and new retrieval results.
+        """Merge old and new results."""
+        return self._combine_results(old_results + new_results)
 
-        :param old_results: Previous retrieval results.
-        :param new_results: Newly retrieved results.
-        :return: Merged list of results.
-        """
-        combined = old_results + new_results
-        deduplicated = self._combine_results(combined)
-        return deduplicated
-
+    @log_and_handle_errors()
     async def plan_aware_retrieve(self, query: str, k: int, plan: RetrievalPlan, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
-        """
-        Retrieve documents using a given retrieval plan.
-
-        :param query: The user's query string.
-        :param k: The number of results to retrieve.
-        :param plan: A predefined retrieval plan.
-        :param timestamp: Optional timestamp to filter results.
-        :return: A list of retrieval results.
-        """
+        """Plan-aware retrieval."""
         initial_results = await self.retrieve(query, k, timestamp)
-        filtered_results = self._apply_plan(initial_results, plan)
-        return filtered_results
+        return self._apply_plan(initial_results, plan)
 
     def _apply_plan(self, results: List[RetrievalResult], plan: RetrievalPlan) -> List[RetrievalResult]:
-        """
-        Apply the retrieval plan to filter and rank results.
-
-        :param results: List of retrieval results.
-        :param plan: The retrieval plan to apply.
-        :return: Filtered and ranked list of results.
-        """
+        """Apply retrieval plan to filter and rank results."""
         filtered_results = results
 
-        # Apply filters from the plan
+        # Apply filters
         if plan.filters.get("keywords"):
             filtered_results = [r for r in filtered_results if any(kw in r.content for kw in plan.filters["keywords"])]
 
@@ -396,16 +344,163 @@ class HybridRetriever:
         if plan.filters.get("source_types"):
             filtered_results = [r for r in filtered_results if r.source_type in plan.filters["source_types"]]
 
-        # Apply custom ranking strategy if specified in the plan
+        # Apply ranking strategy
         if plan.strategy == "recency":
             filtered_results.sort(key=lambda x: x.timestamp, reverse=True)
         elif plan.strategy == "uncertainty":
             filtered_results.sort(key=lambda x: x.uncertainty)
 
-        # Apply distance-sensitive linearization if needed
+        # Apply linearization
         if plan.use_linearization:
             graph = self.graph_store.get_graph()
             linearized_nodes = distance_sensitive_linearization(graph, plan.query)
             filtered_results.sort(key=lambda x: linearized_nodes.index(x.id) if x.id in linearized_nodes else float('inf'))
 
         return filtered_results[:self.config.MAX_RESULTS]
+
+    def _extract_key_concepts(self, results: List[RetrievalResult]) -> List[str]:
+        """
+        Extract key concepts from retrieval results.
+        
+        Args:
+            results: List of retrieval results
+            
+        Returns:
+            List of extracted concepts
+        """
+        concepts = set()
+        for result in results:
+            # Extract concepts using NLP (placeholder implementation)
+            # In practice, this would use proper NLP techniques
+            words = result.content.lower().split()
+            concepts.update(words)
+        return list(concepts)
+    
+    def _calculate_concept_overlap(self, concepts: List[str]) -> float:
+        """
+        Calculate overlap between concepts.
+        
+        Args:
+            concepts: List of concepts
+            
+        Returns:
+            Overlap score between 0 and 1
+        """
+        if not concepts:
+            return 0.0
+        
+        # Calculate pairwise overlaps (placeholder implementation)
+        # In practice, this would use semantic similarity
+        total_overlap = 0
+        pairs = 0
+        for i, c1 in enumerate(concepts):
+            for c2 in concepts[i+1:]:
+                similarity = len(set(c1) & set(c2)) / len(set(c1) | set(c2))
+                total_overlap += similarity
+                pairs += 1
+        
+        return total_overlap / pairs if pairs > 0 else 0.0
+    
+    def _identify_coverage_gaps(self, concepts: List[str]) -> List[str]:
+        """
+        Identify gaps in concept coverage.
+        
+        Args:
+            concepts: List of concepts
+            
+        Returns:
+            List of identified gaps
+        """
+        # Placeholder implementation
+        # In practice, this would compare against a knowledge base
+        expected_concepts = set(["technology", "science", "business", "health"])
+        actual_concepts = set(concepts)
+        return list(expected_concepts - actual_concepts)
+    
+    def _calculate_coverage_score(self,
+                                concepts: List[str],
+                                coverage_gaps: List[str]) -> float:
+        """
+        Calculate coverage score based on concepts and gaps.
+        
+        Args:
+            concepts: List of concepts
+            coverage_gaps: List of coverage gaps
+            
+        Returns:
+            Coverage score between 0 and 1
+        """
+        if not concepts:
+            return 0.0
+        
+        # Calculate score based on gaps (placeholder implementation)
+        # In practice, this would use more sophisticated metrics
+        total_concepts = len(concepts) + len(coverage_gaps)
+        return len(concepts) / total_concepts if total_concepts > 0 else 0.0
+    
+    def _extract_key_terms(self, results: List[RetrievalResult]) -> List[str]:
+        """
+        Extract key terms from results.
+        
+        Args:
+            results: List of retrieval results
+            
+        Returns:
+            List of key terms
+        """
+        terms = set()
+        for result in results:
+            # Extract terms using NLP (placeholder implementation)
+            # In practice, this would use proper NLP techniques
+            words = result.content.lower().split()
+            # Filter common words (simple stopword removal)
+            terms.update([w for w in words if len(w) > 3])
+        return list(terms)
+    
+    def _get_synonyms(self, text: str) -> List[str]:
+        """
+        Get synonyms for terms in text.
+        
+        Args:
+            text: Input text
+            
+        Returns:
+            List of synonyms
+        """
+        # Placeholder implementation
+        # In practice, this would use WordNet or similar
+        synonyms = {
+            "large": ["big", "huge", "massive"],
+            "small": ["tiny", "little", "miniature"],
+            "good": ["great", "excellent", "superb"],
+            "bad": ["poor", "terrible", "awful"]
+        }
+        
+        words = text.lower().split()
+        result = []
+        for word in words:
+            if word in synonyms:
+                result.extend(synonyms[word])
+        return result
+    
+    def _extract_context_terms(self, results: List[RetrievalResult]) -> List[str]:
+        """
+        Extract contextually relevant terms from results.
+        
+        Args:
+            results: List of retrieval results
+            
+        Returns:
+            List of context terms
+        """
+        context_terms = set()
+        for result in results:
+            # Extract context using NLP (placeholder implementation)
+            # In practice, this would use proper NLP techniques
+            sentences = result.content.split('.')
+            for sentence in sentences:
+                words = sentence.lower().split()
+                # Simple context extraction
+                if len(words) > 2:
+                    context_terms.update(words[1:-1])  # Exclude first and last words
+        return list(context_terms)
