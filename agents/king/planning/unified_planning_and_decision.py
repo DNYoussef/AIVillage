@@ -1,5 +1,3 @@
-"""Unified Planning and Decision implementation."""
-
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import logging
@@ -15,15 +13,15 @@ import torch
 from collections import defaultdict
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
-from ...utils.logging import get_logger
-from ...utils.exceptions import AIVillageException
-from ..quality_assurance.layer import QualityAssuranceLayer
-from ..task.handling import TaskHandler
-from ..routing.router import Router
-from ..reasoning.reasoning_engine import ReasoningEngine
-from ...communication.protocol import StandardCommunicationProtocol
-from ...rag.pipeline import EnhancedRAGPipeline
-from ...language_models.openai_gpt import OpenAIGPTConfig
+from agents.utils.logging_setup import get_logger
+from rag_system.utils.error_handling import AIVillageException
+from agents.king.quality_assurance_layer import QualityAssuranceLayer
+from agents.king.task_management.unified_task_manager import UnifiedManagement
+from agents.king.task_management.route_llm import Router
+from agents.king.planning.reasoning_engine import ReasoningEngine
+from communications.protocol import StandardCommunicationProtocol
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from agents.language_models.openai_gpt import OpenAIGPTConfig
 
 logger = get_logger(__name__)
 
@@ -151,7 +149,7 @@ class UnifiedPlanningAndDecision:
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model.to(self.device)
         self.reasoning_engine = ReasoningEngine()
-        self.task_handler = TaskHandler()
+        self.task_handler = UnifiedManagement(communication_protocol, self, num_agents=10, num_actions=5)
         self.optimizer = Optimizer()
         self.router = Router()
         self.graph_manager = GraphManager()
@@ -1072,3 +1070,185 @@ class UnifiedPlanningAndDecision:
         return hierarchy
 
 
+
+    async def _create_execution_plan(self, workflow: Dict[str, Any]) -> Dict[str, Any]:
+        """Create an execution plan from an optimized workflow."""
+        try:
+            # Extract tasks and create dependency graph
+            tasks = workflow.get('tasks', [])
+            task_graph = nx.DiGraph()
+            for task in tasks:
+                task_graph.add_node(task['id'], **task)
+                for dep in task.get('dependencies', []):
+                    task_graph.add_edge(dep, task['id'])
+            
+            # Merge with existing agent graph for better resource allocation
+            self.graph_manager.merge_task_graph(task_graph)
+            
+            # Use existing MCTS search for optimizing task order
+            optimized_state = await self.mcts_search(
+                {'tasks': tasks},
+                self.reasoning_engine,
+                self.optimizer,
+                iterations=500
+            )
+            
+            # Get optimized tasks from MCTS result
+            optimized_tasks = optimized_state['tasks']
+            
+            # Use existing resource allocation optimization
+            optimized_resources = await self._optimize_resource_allocation(
+                optimized_tasks,
+                workflow.get('resources', {})  # Fixed: using workflow instead of plan
+            )
+            
+            # Generate hierarchical subgoals using existing method
+            subgoals = await self._generate_hierarchical_subgoals({
+                'tasks': optimized_tasks,
+                'resources': optimized_resources
+            })
+            
+            # Create parallel execution groups based on dependencies
+            execution_groups = []
+            visited = set()
+            
+            # Get optimal task ordering using topological sort
+            try:
+                execution_order = list(nx.topological_sort(task_graph))
+            except nx.NetworkXUnfeasible:
+                logger.warning("Circular dependencies detected, using original task order")
+                execution_order = [task['id'] for task in optimized_tasks]
+            
+            while len(visited) < len(optimized_tasks):
+                # Find all tasks that can be executed in parallel
+                parallel_group = []
+                for task_id in execution_order:
+                    if task_id in visited:
+                        continue
+                    
+                    task = next(t for t in optimized_tasks if t['id'] == task_id)
+                    dependencies = set(task.get('dependencies', []))
+                    
+                    # If all dependencies are visited, task can be executed
+                    if dependencies.issubset(visited):
+                        parallel_group.append(task)
+                        visited.add(task_id)
+                
+                if parallel_group:
+                    execution_groups.append(parallel_group)
+            
+            # Create implementation steps with optimized information
+            implementation_steps = []
+            for task in optimized_tasks:
+                step = {
+                    'id': task['id'],
+                    'description': task['description'],
+                    'estimated_time': task.get('estimated_time', 0),
+                    'required_resources': task.get('required_resources', []),
+                    'dependencies': task.get('dependencies', []),
+                    'risk_level': task.get('risk_level', 0),
+                    'mitigation_strategies': task.get('mitigation_strategies', []),
+                    'allocated_resources': {
+                        r: amount for r, amount in optimized_resources.items()
+                        if r in task.get('required_resources', [])
+                    }
+                }
+                implementation_steps.append(step)
+            
+            # Create timeline based on execution groups
+            timeline = []
+            current_time = 0
+            for group in execution_groups:
+                # Tasks in the same group start at the same time
+                group_duration = max(task.get('estimated_time', 0) for task in group)
+                for task in group:
+                    timeline.append({
+                        'task_id': task['id'],
+                        'start_time': current_time,
+                        'duration': task.get('estimated_time', 0),
+                        'end_time': current_time + task.get('estimated_time', 0)
+                    })
+                current_time += group_duration
+            
+            # Identify critical path
+            critical_path = nx.dag_longest_path(task_graph)
+            
+            return {
+                'steps': implementation_steps,
+                'execution_groups': execution_groups,
+                'timeline': timeline,
+                'resource_allocation': optimized_resources,
+                'subgoals': subgoals,
+                'critical_path': critical_path,
+                'total_estimated_time': current_time,
+                'visualization': self._create_plan_visualization({
+                    'tasks': implementation_steps,
+                    'timeline': timeline,
+                    'execution_groups': execution_groups,
+                    'critical_path': critical_path
+                })
+            }
+        except Exception as e:
+            logger.exception(f"Error creating execution plan: {str(e)}")
+            raise AIVillageException(f"Error creating execution plan: {str(e)}") from e
+
+    async def _execute_workflow_in_parallel(self, execution_plan: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute workflow tasks in parallel based on execution plan."""
+        try:
+            results = {}
+            
+            # Execute tasks group by group
+            for group in execution_plan['execution_groups']:
+                # Create tasks for parallel execution
+                tasks = []
+                for task in group:
+                    # Prepare task for execution
+                    execution_task = {
+                        'id': task['id'],
+                        'description': task.get('description', ''),
+                        'required_resources': task.get('required_resources', []),
+                        'allocated_resources': {
+                            r: amount for r, amount in execution_plan['resource_allocation'].items()
+                            if r in task.get('required_resources', [])
+                        }
+                    }
+                    
+                    # Create coroutine for task execution
+                    tasks.append(self.task_handler.execute_task(execution_task))
+                
+                # Execute group of tasks in parallel
+                group_results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                # Process results
+                for task, result in zip(group, group_results):
+                    if isinstance(result, Exception):
+                        logger.error(f"Error executing task {task['id']}: {str(result)}")
+                        results[task['id']] = {
+                            'status': 'failed',
+                            'error': str(result),
+                            'task': task
+                        }
+                    else:
+                        results[task['id']] = {
+                            'status': 'completed',
+                            'result': result,
+                            'task': task
+                        }
+            
+            # Calculate overall execution metrics
+            successful_tasks = sum(1 for r in results.values() if r['status'] == 'completed')
+            failed_tasks = sum(1 for r in results.values() if r['status'] == 'failed')
+            
+            return {
+                'results': results,
+                'metrics': {
+                    'total_tasks': len(results),
+                    'successful_tasks': successful_tasks,
+                    'failed_tasks': failed_tasks,
+                    'success_rate': successful_tasks / len(results) if results else 0
+                },
+                'execution_plan': execution_plan
+            }
+        except Exception as e:
+            logger.exception(f"Error executing workflow: {str(e)}")
+            raise AIVillageException(f"Error executing workflow: {str(e)}") from e

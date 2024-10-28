@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, List
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+from rag_system.utils.error_handling import log_and_handle_errors, AIVillageException
 import json
 import torch.nn as nn
 
@@ -12,7 +12,7 @@ class ResponseGenerationAgent:
         self.llm = llm_config.create()
         self.model = None
 
-    @error_handler.handle_error
+    @log_and_handle_errors()
     async def generate_response(self, input_data: Dict[str, Any], user_preferences: Dict[str, Any]) -> str:
         """
         Generate a response based on input data and user preferences.
@@ -85,12 +85,12 @@ class ResponseGenerationAgent:
             text = text.replace(f" {word} ", f" {word} {emoji} ")
         return text
 
-    @error_handler.handle_error
+    @log_and_handle_errors()
     async def update_model(self, new_model: nn.Module):
         self.model = new_model
         logger.info("Model updated in ResponseGenerationAgent")
 
-    @error_handler.handle_error
+    @log_and_handle_errors()
     async def update_hyperparameters(self, hyperparameters: Dict[str, Any]):
         # Update hyperparameters if needed
         # For example, if using a custom language model:
@@ -135,7 +135,7 @@ class ResponseGenerationAgent:
         {format_specific_instructions.get(format_type, "Generate a standard response.")}
         """
 
-    @safe_execute
+    @log_and_handle_errors()
     async def process_and_respond(self, reasoning_result: Dict[str, Any], user_preferences: Dict[str, Any]) -> Dict[str, Any]:
         """
         Process the reasoning result and generate appropriate responses.
@@ -215,4 +215,3 @@ if __name__ == "__main__":
         print(json.dumps(result["response_metadata"], indent=2))
 
     asyncio.run(main())
-

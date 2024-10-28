@@ -1,418 +1,412 @@
-import logging
+"""Unified knowledge tracking system."""
+
+from typing import Dict, Any, List, Optional, Set
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
-from dataclasses import dataclass, field
 import networkx as nx
-from rag_system.utils.embedding import get_embedding
-from rag_system.utils.named_entity_recognition import extract_entities
-from rag_system.utils.relation_extraction import extract_relations
+from ..core.base_component import BaseComponent
+from ..core.config import UnifiedConfig
+from ..utils.embedding import get_embedding
+from ..utils.named_entity_recognition import extract_entities, extract_relations
+from ..utils.error_handling import log_and_handle_errors, ErrorContext
 
-logger = logging.getLogger(__name__)
-
-@dataclass
-class KnowledgeChange:
-    entity: str
-    relation: str
-    old_value: Any
-    new_value: Any
-    timestamp: datetime
-    source: str
-    confidence: float = 1.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
-
-class UnifiedKnowledgeTracker:
-    def __init__(self, vector_store, graph_store):
-        self.vector_store = vector_store
-        self.graph_store = graph_store
-        self.knowledge_changes: List[KnowledgeChange] = []
-        self.knowledge_graph: Dict[str, Dict[str, Any]] = {}
-        self.entity_embeddings: Dict[str, List[float]] = {}
-        self.relation_patterns: Set[str] = set()
-        self.confidence_thresholds: Dict[str, float] = {
-            'entity_merge': 0.85,
-            'relation_inference': 0.75,
-            'knowledge_update': 0.9
+class UnifiedKnowledgeTracker(BaseComponent):
+    """
+    Unified system for tracking knowledge and insights across the RAG system.
+    Implements knowledge graph construction, entity tracking, and insight generation.
+    """
+    
+    def __init__(self, config: UnifiedConfig):
+        """
+        Initialize knowledge tracker.
+        
+        Args:
+            config: Configuration instance
+        """
+        self.config = config
+        self.knowledge_graph = nx.Graph()
+        self.entity_embeddings = {}
+        self.relation_types = set()
+        self.tracked_entities = set()
+        self.initialized = False
+        self.tracking_stats = {
+            "total_entities": 0,
+            "total_relations": 0,
+            "total_insights": 0,
+            "avg_confidence": 0.0
         }
+    
+    @log_and_handle_errors()
+    async def initialize(self) -> None:
+        """Initialize knowledge tracker."""
+        if not self.initialized:
+            # Load any saved state
+            if hasattr(self.config, 'knowledge_state_path'):
+                try:
+                    self._load_state(self.config.knowledge_state_path)
+                except:
+                    pass  # Use default state if file doesn't exist
+            self.initialized = True
+    
+    @log_and_handle_errors()
+    async def shutdown(self) -> None:
+        """Shutdown knowledge tracker."""
+        if self.initialized:
+            # Save current state
+            if hasattr(self.config, 'knowledge_state_path'):
+                self._save_state(self.config.knowledge_state_path)
+            self.initialized = False
+    
+    @log_and_handle_errors()
+    async def get_status(self) -> Dict[str, Any]:
+        """Get component status."""
+        return {
+            "initialized": self.initialized,
+            "graph_size": len(self.knowledge_graph),
+            "tracked_entities": len(self.tracked_entities),
+            "relation_types": len(self.relation_types),
+            "tracking_stats": self.tracking_stats
+        }
+    
+    @log_and_handle_errors()
+    async def update_config(self, config: Dict[str, Any]) -> None:
+        """Update component configuration."""
+        self.config = config
 
-    async def record_change(self, change: KnowledgeChange):
-        """Record a knowledge change and update all relevant stores."""
-        try:
-            # Validate change
-            if not self._validate_change(change):
-                logger.warning(f"Invalid change detected: {change}")
-                return
-
-            # Record the change
-            self.knowledge_changes.append(change)
+    async def process_text(self, text: str, source: str = "unknown") -> Dict[str, Any]:
+        """
+        Process text to extract and track knowledge.
+        
+        Args:
+            text: Input text
+            source: Source of the text
+            
+        Returns:
+            Dictionary containing extracted knowledge
+        """
+        async with ErrorContext("KnowledgeTracker"):
+            # Extract entities and relations
+            entities = extract_entities(text)
+            relations = extract_relations(text)
             
             # Update knowledge graph
-            await self._update_knowledge_graph(change)
+            await self._update_graph(entities, relations, source)
             
-            # Update vector store
-            await self.update_vector_store(change)
+            # Generate insights
+            insights = await self._generate_insights(entities, relations)
             
-            # Update graph store
-            await self.update_graph_store(change)
-            
-            # Update entity embeddings
-            await self._update_entity_embeddings(change.entity)
-            
-            logger.info(f"Successfully recorded change for entity {change.entity}")
-        except Exception as e:
-            logger.exception(f"Error recording change: {str(e)}")
-            raise
-
-    async def track_changes(self, result: Dict[str, Any], timestamp: datetime):
-        """Track changes from a result and update knowledge stores."""
-        try:
-            # Extract entities and relations
-            entities = await extract_entities(result)
-            relations = await extract_relations(result)
-            
-            # Process each entity and its relations
-            for entity in entities:
-                # Get current state
-                current_state = self.get_current_knowledge(entity)
-                
-                # Process each relation
-                for relation in relations:
-                    if relation['subject'] == entity:
-                        change = KnowledgeChange(
-                            entity=entity,
-                            relation=relation['predicate'],
-                            old_value=current_state.get(relation['predicate']),
-                            new_value=relation['object'],
-                            timestamp=timestamp,
-                            source="result_processing",
-                            confidence=relation.get('confidence', 1.0),
-                            metadata={'context': result.get('context')}
-                        )
-                        await self.record_change(change)
-            
-            # Perform knowledge integration
-            await self._integrate_new_knowledge(result)
-            
-            logger.info(f"Successfully tracked changes from result")
-        except Exception as e:
-            logger.exception(f"Error tracking changes: {str(e)}")
-            raise
-
-    async def update_vector_store(self, change: Optional[KnowledgeChange] = None):
-        """Update the vector store with new knowledge."""
-        try:
-            if change:
-                # Update specific entity
-                embedding = await get_embedding(f"{change.entity} {change.relation} {change.new_value}")
-                await self.vector_store.update(
-                    id=change.entity,
-                    vector=embedding,
-                    metadata={
-                        'relation': change.relation,
-                        'value': change.new_value,
-                        'timestamp': change.timestamp.isoformat(),
-                        'confidence': change.confidence
-                    }
-                )
-            else:
-                # Bulk update all entities
-                for entity, knowledge in self.knowledge_graph.items():
-                    text = f"{entity} " + " ".join(f"{k} {v}" for k, v in knowledge.items())
-                    embedding = await get_embedding(text)
-                    await self.vector_store.update(
-                        id=entity,
-                        vector=embedding,
-                        metadata=knowledge
-                    )
-            
-            logger.info(f"Successfully updated vector store")
-        except Exception as e:
-            logger.exception(f"Error updating vector store: {str(e)}")
-            raise
-
-    async def update_graph_store(self, change: Optional[KnowledgeChange] = None):
-        """Update the graph store with new knowledge."""
-        try:
-            if change:
-                # Update specific relation
-                self.graph_store.add_edge(
-                    change.entity,
-                    change.new_value,
-                    key=change.relation,
-                    weight=change.confidence,
-                    timestamp=change.timestamp.isoformat(),
-                    metadata=change.metadata
-                )
-            else:
-                # Rebuild entire graph
-                self.graph_store.clear()
-                for change in self.knowledge_changes:
-                    self.graph_store.add_edge(
-                        change.entity,
-                        change.new_value,
-                        key=change.relation,
-                        weight=change.confidence,
-                        timestamp=change.timestamp.isoformat(),
-                        metadata=change.metadata
-                    )
-            
-            logger.info(f"Successfully updated graph store")
-        except Exception as e:
-            logger.exception(f"Error updating graph store: {str(e)}")
-            raise
-
-    async def _update_knowledge_graph(self, change: KnowledgeChange):
-        """Update the internal knowledge graph with new information."""
-        try:
-            if change.entity not in self.knowledge_graph:
-                self.knowledge_graph[change.entity] = {}
-            
-            # Update the value
-            self.knowledge_graph[change.entity][change.relation] = {
-                'value': change.new_value,
-                'confidence': change.confidence,
-                'timestamp': change.timestamp,
-                'source': change.source,
-                'metadata': change.metadata
-            }
-            
-            # Infer new relations
-            await self._infer_new_relations(change)
-            
-            logger.info(f"Successfully updated knowledge graph for entity {change.entity}")
-        except Exception as e:
-            logger.exception(f"Error updating knowledge graph: {str(e)}")
-            raise
-
-    async def _infer_new_relations(self, change: KnowledgeChange):
-        """Infer new relations based on existing knowledge."""
-        try:
-            # Get related entities
-            related_entities = self.graph_store.get_neighbors(change.entity)
-            
-            for related_entity in related_entities:
-                # Get common relations
-                common_relations = self._find_common_relations(change.entity, related_entity)
-                
-                # Infer new relations based on patterns
-                for relation in common_relations:
-                    confidence = self._calculate_inference_confidence(
-                        change.entity,
-                        related_entity,
-                        relation
-                    )
-                    
-                    if confidence >= self.confidence_thresholds['relation_inference']:
-                        inferred_change = KnowledgeChange(
-                            entity=related_entity,
-                            relation=f"inferred_{relation}",
-                            old_value=None,
-                            new_value=change.new_value,
-                            timestamp=datetime.now(),
-                            source="inference",
-                            confidence=confidence
-                        )
-                        await self.record_change(inferred_change)
-            
-            logger.info(f"Successfully inferred new relations for entity {change.entity}")
-        except Exception as e:
-            logger.exception(f"Error inferring new relations: {str(e)}")
-            raise
-
-    def _find_common_relations(self, entity1: str, entity2: str) -> Set[str]:
-        """Find common relations between two entities."""
-        relations1 = set(self.knowledge_graph.get(entity1, {}).keys())
-        relations2 = set(self.knowledge_graph.get(entity2, {}).keys())
-        return relations1.intersection(relations2)
-
-    def _calculate_inference_confidence(
-        self,
-        entity1: str,
-        entity2: str,
-        relation: str
-    ) -> float:
-        """Calculate confidence score for an inferred relation."""
-        try:
-            # Get embeddings
-            emb1 = self.entity_embeddings.get(entity1)
-            emb2 = self.entity_embeddings.get(entity2)
-            
-            if not (emb1 and emb2):
-                return 0.0
-            
-            # Calculate similarity
-            similarity = self._calculate_embedding_similarity(emb1, emb2)
-            
-            # Get relation confidence
-            relation_conf = min(
-                self.knowledge_graph[entity1][relation]['confidence'],
-                self.knowledge_graph[entity2][relation]['confidence']
-            )
-            
-            # Combine scores
-            return 0.7 * similarity + 0.3 * relation_conf
-        except Exception:
-            return 0.0
-
-    async def _update_entity_embeddings(self, entity: str):
-        """Update embeddings for an entity."""
-        try:
-            # Get entity context
-            context = self._get_entity_context(entity)
-            
-            # Generate new embedding
-            embedding = await get_embedding(context)
-            
-            # Update embedding
-            self.entity_embeddings[entity] = embedding
-            
-            logger.info(f"Successfully updated embeddings for entity {entity}")
-        except Exception as e:
-            logger.exception(f"Error updating entity embeddings: {str(e)}")
-            raise
-
-    def _get_entity_context(self, entity: str) -> str:
-        """Get textual context for an entity."""
-        knowledge = self.knowledge_graph.get(entity, {})
-        return f"{entity} " + " ".join(
-            f"{relation} {value['value']}"
-            for relation, value in knowledge.items()
-        )
-
-    async def _integrate_new_knowledge(self, result: Dict[str, Any]):
-        """Integrate new knowledge with existing knowledge."""
-        try:
-            # Extract new knowledge
-            new_entities = await extract_entities(result)
-            new_relations = await extract_relations(result)
-            
-            # Find potential entity matches
-            for new_entity in new_entities:
-                matches = await self._find_matching_entities(new_entity)
-                
-                # Merge or create entities
-                if matches:
-                    await self._merge_entities(new_entity, matches)
-                else:
-                    await self._create_new_entity(new_entity, new_relations)
-            
-            logger.info("Successfully integrated new knowledge")
-        except Exception as e:
-            logger.exception(f"Error integrating new knowledge: {str(e)}")
-            raise
-
-    async def _find_matching_entities(self, entity: str) -> List[Tuple[str, float]]:
-        """Find existing entities that might match the new entity."""
-        try:
-            # Get embedding for new entity
-            embedding = await get_embedding(entity)
-            
-            # Find similar entities in vector store
-            similar_entities = await self.vector_store.search(
-                embedding,
-                limit=5,
-                min_score=self.confidence_thresholds['entity_merge']
-            )
-            
-            return [(hit.id, hit.score) for hit in similar_entities]
-        except Exception as e:
-            logger.exception(f"Error finding matching entities: {str(e)}")
-            return []
-
-    async def _merge_entities(self, new_entity: str, matches: List[Tuple[str, float]]):
-        """Merge a new entity with existing entities."""
-        try:
-            # Sort matches by similarity score
-            matches.sort(key=lambda x: x[1], reverse=True)
-            best_match = matches[0][0]
-            
-            # Merge knowledge
-            if best_match in self.knowledge_graph:
-                for relation, value in self.knowledge_graph[best_match].items():
-                    change = KnowledgeChange(
-                        entity=new_entity,
-                        relation=relation,
-                        old_value=None,
-                        new_value=value['value'],
-                        timestamp=datetime.now(),
-                        source="entity_merge",
-                        confidence=value['confidence']
-                    )
-                    await self.record_change(change)
-            
-            logger.info(f"Successfully merged entity {new_entity} with {best_match}")
-        except Exception as e:
-            logger.exception(f"Error merging entities: {str(e)}")
-            raise
-
-    async def _create_new_entity(self, entity: str, relations: List[Dict[str, Any]]):
-        """Create a new entity with its relations."""
-        try:
-            # Record initial knowledge
-            for relation in relations:
-                if relation['subject'] == entity:
-                    change = KnowledgeChange(
-                        entity=entity,
-                        relation=relation['predicate'],
-                        old_value=None,
-                        new_value=relation['object'],
-                        timestamp=datetime.now(),
-                        source="new_entity",
-                        confidence=relation.get('confidence', 1.0)
-                    )
-                    await self.record_change(change)
-            
-            logger.info(f"Successfully created new entity {entity}")
-        except Exception as e:
-            logger.exception(f"Error creating new entity: {str(e)}")
-            raise
-
-    def _validate_change(self, change: KnowledgeChange) -> bool:
-        """Validate a knowledge change."""
-        return (
-            change.confidence >= self.confidence_thresholds['knowledge_update']
-            and change.entity
-            and change.relation
-            and change.new_value is not None
-        )
-
-    def get_entity_history(self, entity: str) -> List[KnowledgeChange]:
-        """Get the history of changes for an entity."""
-        return [
-            change for change in self.knowledge_changes
-            if change.entity == entity
-        ]
-
-    def get_current_knowledge(self, entity: str) -> Dict[str, Any]:
-        """Get current knowledge about an entity."""
-        return self.knowledge_graph.get(entity, {})
-
-    def analyze_knowledge_evolution(self) -> Dict[str, Any]:
-        """Analyze how knowledge has evolved over time."""
-        try:
-            total_changes = len(self.knowledge_changes)
-            unique_entities = len(set(change.entity for change in self.knowledge_changes))
-            unique_relations = len(set(change.relation for change in self.knowledge_changes))
-            
-            # Calculate change frequency over time
-            timestamps = [change.timestamp for change in self.knowledge_changes]
-            if timestamps:
-                time_range = max(timestamps) - min(timestamps)
-                changes_per_day = total_changes / (time_range.days + 1)
-            else:
-                changes_per_day = 0
-            
-            # Analyze confidence trends
-            confidences = [change.confidence for change in self.knowledge_changes]
-            avg_confidence = sum(confidences) / len(confidences) if confidences else 0
+            # Update statistics
+            self._update_stats(entities, relations, insights)
             
             return {
-                "total_changes": total_changes,
-                "unique_entities": unique_entities,
-                "unique_relations": unique_relations,
-                "changes_per_day": changes_per_day,
-                "average_confidence": avg_confidence,
-                "last_update": max(timestamps) if timestamps else None
+                "entities": entities,
+                "relations": relations,
+                "insights": insights,
+                "source": source,
+                "timestamp": datetime.now().isoformat()
             }
-        except Exception as e:
-            logger.exception(f"Error analyzing knowledge evolution: {str(e)}")
-            return {}
+
+    async def _update_graph(self,
+                          entities: List[Dict[str, Any]],
+                          relations: List[Dict[str, Any]],
+                          source: str) -> None:
+        """Update knowledge graph with new information."""
+        # Add entities
+        for entity in entities:
+            if entity["text"] not in self.tracked_entities:
+                # Get embedding for new entity
+                embedding = get_embedding(entity["text"])
+                self.entity_embeddings[entity["text"]] = embedding
+                self.tracked_entities.add(entity["text"])
+            
+            # Add or update node
+            self.knowledge_graph.add_node(
+                entity["text"],
+                label=entity["label"],
+                description=entity["description"],
+                sources=set([source])
+            )
+        
+        # Add relations
+        for relation in relations:
+            self.relation_types.add(relation["relation_type"])
+            
+            if relation["subject"] in self.tracked_entities and \
+               relation["object"] in self.tracked_entities:
+                self.knowledge_graph.add_edge(
+                    relation["subject"],
+                    relation["object"],
+                    relation_type=relation["relation_type"],
+                    predicate=relation["predicate"],
+                    confidence=relation["confidence"],
+                    sources=set([source])
+                )
+
+    async def _generate_insights(self,
+                               entities: List[Dict[str, Any]],
+                               relations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Generate insights from new information."""
+        insights = []
+        
+        # Entity-based insights
+        entity_clusters = self._cluster_entities(entities)
+        for cluster in entity_clusters:
+            if len(cluster) > 1:
+                insights.append({
+                    "type": "entity_cluster",
+                    "entities": cluster,
+                    "description": f"Found related entities: {', '.join(cluster)}",
+                    "confidence": 0.8
+                })
+        
+        # Relation-based insights
+        relation_patterns = self._find_relation_patterns(relations)
+        for pattern in relation_patterns:
+            insights.append({
+                "type": "relation_pattern",
+                "pattern": pattern["pattern"],
+                "instances": pattern["instances"],
+                "description": f"Found repeated relation pattern: {pattern['pattern']}",
+                "confidence": pattern["confidence"]
+            })
+        
+        return insights
+
+    def _cluster_entities(self, entities: List[Dict[str, Any]]) -> List[List[str]]:
+        """Cluster related entities based on embeddings."""
+        clusters = []
+        processed = set()
+        
+        for entity in entities:
+            if entity["text"] in processed:
+                continue
+            
+            cluster = [entity["text"]]
+            entity_embedding = self.entity_embeddings.get(entity["text"])
+            
+            if entity_embedding:
+                # Find similar entities
+                for other in entities:
+                    if other["text"] != entity["text"] and \
+                       other["text"] not in processed:
+                        other_embedding = self.entity_embeddings.get(other["text"])
+                        if other_embedding:
+                            similarity = self._calculate_similarity(
+                                entity_embedding,
+                                other_embedding
+                            )
+                            if similarity > self.config.similarity_threshold:
+                                cluster.append(other["text"])
+                                processed.add(other["text"])
+            
+            if len(cluster) > 1:
+                clusters.append(cluster)
+            processed.add(entity["text"])
+        
+        return clusters
+
+    def _find_relation_patterns(self,
+                              relations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Find recurring patterns in relations."""
+        patterns = {}
+        
+        for relation in relations:
+            pattern = (
+                relation["relation_type"],
+                relation["predicate"]
+            )
+            
+            if pattern not in patterns:
+                patterns[pattern] = {
+                    "pattern": f"{pattern[0]} ({pattern[1]})",
+                    "instances": [],
+                    "count": 0,
+                    "confidence": 0.0
+                }
+            
+            patterns[pattern]["instances"].append({
+                "subject": relation["subject"],
+                "object": relation["object"]
+            })
+            patterns[pattern]["count"] += 1
+            patterns[pattern]["confidence"] = min(
+                0.5 + (patterns[pattern]["count"] * 0.1),
+                1.0
+            )
+        
+        return [
+            pattern for pattern in patterns.values()
+            if pattern["count"] > 1
+        ]
+
+    def _calculate_similarity(self, emb1: List[float], emb2: List[float]) -> float:
+        """Calculate cosine similarity between embeddings."""
+        import numpy as np
+        emb1_np = np.array(emb1)
+        emb2_np = np.array(emb2)
+        return float(
+            np.dot(emb1_np, emb2_np) /
+            (np.linalg.norm(emb1_np) * np.linalg.norm(emb2_np))
+        )
+
+    def _update_stats(self,
+                     entities: List[Dict[str, Any]],
+                     relations: List[Dict[str, Any]],
+                     insights: List[Dict[str, Any]]) -> None:
+        """Update tracking statistics."""
+        self.tracking_stats["total_entities"] += len(entities)
+        self.tracking_stats["total_relations"] += len(relations)
+        self.tracking_stats["total_insights"] += len(insights)
+        
+        # Update average confidence
+        if insights:
+            confidences = [insight["confidence"] for insight in insights]
+            current_avg = self.tracking_stats["avg_confidence"]
+            total_insights = self.tracking_stats["total_insights"]
+            
+            if total_insights > 1:
+                self.tracking_stats["avg_confidence"] = (
+                    (current_avg * (total_insights - len(insights)) +
+                     sum(confidences)) / total_insights
+                )
+            else:
+                self.tracking_stats["avg_confidence"] = sum(confidences) / len(confidences)
+
+    def _save_state(self, path: str) -> None:
+        """Save current state to file."""
+        import pickle
+        state = {
+            "graph": self.knowledge_graph,
+            "embeddings": self.entity_embeddings,
+            "relations": self.relation_types,
+            "entities": self.tracked_entities,
+            "stats": self.tracking_stats
+        }
+        with open(path, 'wb') as f:
+            pickle.dump(state, f)
+
+    def _load_state(self, path: str) -> None:
+        """Load state from file."""
+        import pickle
+        with open(path, 'rb') as f:
+            state = pickle.load(f)
+            self.knowledge_graph = state["graph"]
+            self.entity_embeddings = state["embeddings"]
+            self.relation_types = state["relations"]
+            self.tracked_entities = state["entities"]
+            self.tracking_stats = state["stats"]
+
+    async def get_entity_knowledge(self, entity: str) -> Optional[Dict[str, Any]]:
+        """
+        Get all knowledge about an entity.
+        
+        Args:
+            entity: Entity to query
+            
+        Returns:
+            Dictionary containing entity knowledge
+        """
+        if entity not in self.tracked_entities:
+            return None
+        
+        # Get node data
+        node_data = dict(self.knowledge_graph.nodes[entity])
+        
+        # Get relations
+        relations = []
+        for neighbor in self.knowledge_graph.neighbors(entity):
+            edge_data = self.knowledge_graph.edges[entity, neighbor]
+            relations.append({
+                "target": neighbor,
+                "type": edge_data["relation_type"],
+                "predicate": edge_data["predicate"],
+                "confidence": edge_data["confidence"]
+            })
+        
+        return {
+            "entity": entity,
+            "metadata": node_data,
+            "relations": relations,
+            "embedding": self.entity_embeddings.get(entity)
+        }
+
+    async def find_paths(self,
+                        start_entity: str,
+                        end_entity: str,
+                        max_length: int = 3) -> List[List[Dict[str, Any]]]:
+        """
+        Find paths between entities in knowledge graph.
+        
+        Args:
+            start_entity: Starting entity
+            end_entity: Ending entity
+            max_length: Maximum path length
+            
+        Returns:
+            List of paths, where each path is a list of edges
+        """
+        if not (start_entity in self.tracked_entities and \
+                end_entity in self.tracked_entities):
+            return []
+        
+        paths = []
+        for path in nx.all_simple_paths(
+            self.knowledge_graph,
+            start_entity,
+            end_entity,
+            cutoff=max_length
+        ):
+            path_edges = []
+            for i in range(len(path) - 1):
+                edge_data = dict(self.knowledge_graph.edges[path[i], path[i+1]])
+                path_edges.append({
+                    "source": path[i],
+                    "target": path[i+1],
+                    "type": edge_data["relation_type"],
+                    "predicate": edge_data["predicate"],
+                    "confidence": edge_data["confidence"]
+                })
+            paths.append(path_edges)
+        
+        return sorted(
+            paths,
+            key=lambda p: sum(edge["confidence"] for edge in p),
+            reverse=True
+        )
+
+    async def get_similar_entities(self,
+                                 entity: str,
+                                 threshold: float = 0.7) -> List[Dict[str, Any]]:
+        """
+        Find entities similar to given entity.
+        
+        Args:
+            entity: Entity to compare
+            threshold: Similarity threshold
+            
+        Returns:
+            List of similar entities with similarity scores
+        """
+        if entity not in self.tracked_entities:
+            return []
+        
+        entity_embedding = self.entity_embeddings[entity]
+        similar_entities = []
+        
+        for other in self.tracked_entities:
+            if other != entity:
+                other_embedding = self.entity_embeddings[other]
+                similarity = self._calculate_similarity(
+                    entity_embedding,
+                    other_embedding
+                )
+                if similarity > threshold:
+                    similar_entities.append({
+                        "entity": other,
+                        "similarity": similarity
+                    })
+        
+        return sorted(
+            similar_entities,
+            key=lambda x: x["similarity"],
+            reverse=True
+        )

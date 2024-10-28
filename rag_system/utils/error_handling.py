@@ -6,6 +6,7 @@ from typing import Any, Callable, TypeVar, ParamSpec, Dict, Optional, Type
 import traceback
 import asyncio
 from contextlib import AbstractAsyncContextManager
+import types
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +163,7 @@ class ErrorContext(AbstractAsyncContextManager):
         self,
         exc_type: Optional[Type[BaseException]],
         exc_val: Optional[BaseException],
-        exc_tb: Optional[traceback.TracebackType]
+        exc_tb: Optional[types.TracebackType]
     ) -> bool:
         """
         Handle errors on async context exit.

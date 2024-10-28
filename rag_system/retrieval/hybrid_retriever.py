@@ -27,8 +27,8 @@ class HybridRetriever(BaseComponent):
             config: Configuration instance
         """
         self.config = config
-        self.vector_store = VectorStore()
-        self.graph_store = GraphStore()
+        self.vector_store = VectorStore(config, config.vector_dimension)
+        self.graph_store = GraphStore(config)
         self.llm = None  # Will be initialized with language model
         self.agent = None  # Will be initialized with agent
         self.current_results = []  # Store current results for metrics

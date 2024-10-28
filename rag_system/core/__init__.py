@@ -1,9 +1,19 @@
 """Core RAG system components."""
 
-from .unified_config import UnifiedConfig, ConfigManager
+from .unified_config import UnifiedConfig, ConfigManager, unified_config, config_manager
+from .base_component import BaseComponent
+from .pipeline import EnhancedRAGPipeline, pipeline
+from .latent_space_activation import LatentSpaceActivation
+from .cognitive_nexus import CognitiveNexus
 
-# Create default configuration manager instance
-config_manager = ConfigManager("config/rag_config.yaml")
-unified_config = config_manager.get_config()
-
-__all__ = ['UnifiedConfig', 'ConfigManager', 'unified_config', 'config_manager']
+__all__ = [
+    'UnifiedConfig',
+    'ConfigManager',
+    'unified_config',
+    'config_manager',
+    'BaseComponent',
+    'EnhancedRAGPipeline',
+    'pipeline',
+    'LatentSpaceActivation',
+    'CognitiveNexus'
+]

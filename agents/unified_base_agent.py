@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 # Core imports
 from agents.utils.task import Task as LangroidTask
 from agents.language_models.openai_gpt import OpenAIGPTConfig
-from langroid.vector_store.base import VectorStore
+from rag_system.retrieval.vector_store import VectorStore
 
 # RAG system imports
 from rag_system.core.config import UnifiedConfig
