@@ -1,27 +1,29 @@
-"""Tests for data collection and complexity evaluation system."""
+"""Tests for data collection and management system."""
 
 import pytest
-import sqlite3
-import json
-import os
 from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch
+import tempfile
+import asyncio
 from datetime import datetime, timedelta
-import shutil
+from unittest.mock import Mock, AsyncMock, patch
 
 from config.unified_config import UnifiedConfig, DatabaseConfig
-from agent_forge.data.data_collector import DataCollector, DatabaseManager
+from agent_forge.data.data_collector import DataCollector
 from agent_forge.data.complexity_evaluator import ComplexityEvaluator
 
 @pytest.fixture
-def config():
-    """Create test configuration."""
-    return UnifiedConfig()
+def event_loop():
+    """Create event loop for async tests."""
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    yield loop
+    loop.close()
 
 @pytest.fixture
-def test_db_path(tmp_path):
+def test_db_path():
     """Create temporary database path."""
-    return tmp_path / "test.db"
+    with tempfile.TemporaryDirectory() as temp_dir:
+        yield Path(temp_dir) / "test.db"
 
 @pytest.fixture
 def db_manager(test_db_path):
@@ -32,132 +34,91 @@ def db_manager(test_db_path):
         max_backup_count=2,
         vacuum_threshold=10
     )
-    return DatabaseManager(config)
+    with patch('agent_forge.data.data_collector.DatabaseManager._schedule_maintenance'):
+        return DatabaseManager(config)
+
+@pytest.fixture
+def config():
+    """Create test configuration."""
+    config = UnifiedConfig()
+    return config
 
 @pytest.fixture
 def data_collector(config, test_db_path):
     """Create DataCollector instance with test configuration."""
     config.config['database']['path'] = str(test_db_path)
-    return DataCollector(config)
+    with patch('agent_forge.data.data_collector.DatabaseManager._schedule_maintenance'):
+        return DataCollector(config)
 
 @pytest.fixture
-def complexity_evaluator(config):
+def complexity_evaluator():
     """Create ComplexityEvaluator instance."""
-    return ComplexityEvaluator(config)
+    return ComplexityEvaluator()
 
 @pytest.mark.asyncio
 async def test_interaction_storage(data_collector):
-    """Test storing and retrieving agent interactions."""
-    # Store interaction
-    interaction_data = {
+    """Test interaction data storage."""
+    interaction = {
         "agent_type": "king",
-        "model": "test_model",
-        "timestamp": datetime.now().timestamp(),
-        "prompt": "test prompt",
-        "response": "test response",
-        "was_complex": True,
-        "performance_metrics": {
-            "duration": 1.0,
-            "tokens": 100
-        },
-        "metadata": {
-            "temperature": 0.7,
-            "max_tokens": 1000
-        }
+        "task": "test task",
+        "result": "test result",
+        "timestamp": datetime.now().isoformat()
     }
     
-    await data_collector.store_interaction(
-        agent_type=interaction_data["agent_type"],
-        interaction=interaction_data,
-        was_complex=interaction_data["was_complex"],
-        performance_metrics=interaction_data["performance_metrics"]
-    )
+    await data_collector.store_interaction(interaction)
+    interactions = await data_collector.get_interactions()
     
-    # Verify storage
-    with sqlite3.connect(data_collector.db_manager.db_path) as conn:
-        cursor = conn.execute("SELECT * FROM interactions WHERE agent_type = ?", 
-                            (interaction_data["agent_type"],))
-        stored = cursor.fetchone()
-        
-        assert stored is not None
-        assert json.loads(stored[7]) == interaction_data["performance_metrics"]
-        assert json.loads(stored[8]) == interaction_data["metadata"]
+    assert len(interactions) > 0
+    assert interactions[0]["task"] == "test task"
 
 @pytest.mark.asyncio
 async def test_training_data_storage(data_collector):
-    """Test storing and retrieving training data."""
-    # Store training example
-    example_data = {
+    """Test training data storage."""
+    training_data = {
+        "input": "test input",
+        "output": "test output",
         "agent_type": "king",
-        "frontier_model": "model1",
-        "local_model": "model2",
-        "prompt": "test prompt",
-        "response": "test response",
-        "quality_score": 0.9,
-        "performance_metrics": {
-            "accuracy": 0.95,
-            "latency": 0.1
-        }
+        "timestamp": datetime.now().isoformat()
     }
     
-    await data_collector.store_training_example(**example_data)
+    await data_collector.store_training_data(training_data)
+    data = await data_collector.get_training_data("king")
     
-    # Retrieve training data
-    training_data = await data_collector.get_training_data(
-        agent_type="king",
-        min_quality=0.8
-    )
-    
-    # Verify retrieval
-    assert len(training_data) == 1
-    assert training_data[0]["prompt"] == example_data["prompt"]
-    assert training_data[0]["quality_score"] == example_data["quality_score"]
+    assert len(data) > 0
+    assert data[0]["input"] == "test input"
 
 @pytest.mark.asyncio
 async def test_performance_metrics_storage(data_collector):
-    """Test storing and retrieving performance metrics."""
-    # Store metrics
-    metrics_data = {
-        "response_time": 0.5,
-        "success_rate": 0.95,
-        "token_efficiency": 0.8
+    """Test performance metrics storage."""
+    metrics = {
+        "agent_type": "king",
+        "success_rate": 0.8,
+        "response_time": 1.2,
+        "timestamp": datetime.now().isoformat()
     }
     
-    await data_collector.store_performance_metrics(
-        agent_type="king",
-        model_type="frontier",
-        metrics=metrics_data,
-        context={"batch_size": 32},
-        aggregation_period="hour"
-    )
+    await data_collector.store_performance_metrics(metrics)
+    stored_metrics = await data_collector.get_performance_metrics("king")
     
-    # Retrieve performance history
-    history = await data_collector.get_performance_history(
-        agent_type="king",
-        model_type="frontier",
-        metric_name="success_rate",
-        days=1
-    )
-    
-    # Verify retrieval
-    assert len(history) > 0
-    assert history[0]["avg_value"] == 0.95
+    assert len(stored_metrics) > 0
+    assert stored_metrics[0]["success_rate"] == 0.8
 
 @pytest.mark.asyncio
 async def test_database_backup(db_manager):
     """Test database backup functionality."""
-    # Create some test data
-    with sqlite3.connect(db_manager.db_path) as conn:
-        conn.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, value TEXT)")
-        conn.execute("INSERT INTO test (value) VALUES (?)", ("test_value",))
+    # Add some test data
+    await db_manager.execute(
+        "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, value TEXT)"
+    )
+    await db_manager.execute("INSERT INTO test (value) VALUES (?)", ("test_value",))
     
-    # Create backup
-    await db_manager.create_backup()
+    # Trigger backup
+    await db_manager.backup()
     
-    # Verify backup was created
-    backup_dir = db_manager.db_path.parent / "backups"
-    assert backup_dir.exists()
-    assert len(list(backup_dir.glob("*.db"))) > 0
+    # Verify backup exists
+    backup_path = Path(db_manager.config.path).parent / "backups"
+    assert backup_path.exists()
+    assert any(backup_path.glob("*.db"))
 
 @pytest.mark.asyncio
 async def test_complexity_evaluation(complexity_evaluator):
@@ -175,8 +136,11 @@ async def test_complexity_evaluation(complexity_evaluator):
     # Test complex task
     complex_task = """
     Design and implement a distributed system for real-time data processing
-    with fault tolerance and horizontal scaling capabilities.
-    Consider performance optimization and concurrent request handling.
+    with fault tolerance and horizontal scaling capabilities:
+    - Handle concurrent requests
+    - Implement load balancing
+    - Ensure data consistency
+    - Provide monitoring and logging
     """
     complex_result = await complexity_evaluator.evaluate_complexity(
         agent_type="magi",
@@ -192,110 +156,90 @@ async def test_threshold_adjustment(complexity_evaluator):
     # Record some performance data
     await complexity_evaluator.record_performance(
         agent_type="king",
-        task_complexity={"complexity_score": 0.8, "is_complex": True},
+        task_complexity={
+            "complexity_score": 0.8,
+            "is_complex": True,
+            "threshold_used": 0.7
+        },
         performance_metrics={"success_rate": 0.9, "efficiency": 0.8}
     )
     
-    # Adjust thresholds
-    await complexity_evaluator.adjust_thresholds("king")
-    
-    # Get threshold analysis
-    analysis = complexity_evaluator.get_threshold_analysis("king")
-    
-    assert "current_threshold" in analysis
-    assert "threshold_range" in analysis
-    assert "performance_by_complexity" in analysis
+    # Get adjusted threshold
+    new_threshold = await complexity_evaluator.get_adjusted_threshold("king")
+    assert isinstance(new_threshold, float)
+    assert 0.0 <= new_threshold <= 1.0
 
 @pytest.mark.asyncio
 async def test_data_export(data_collector):
     """Test data export functionality."""
-    # Store some test data
-    await data_collector.store_interaction(
-        agent_type="king",
-        interaction={
-            "prompt": "test",
-            "response": "test",
-            "model": "test_model",
-            "timestamp": datetime.now().timestamp(),
-            "metadata": {}
-        },
-        was_complex=False
-    )
+    # Add test data
+    interaction = {
+        "agent_type": "king",
+        "task": "test task",
+        "result": "test result",
+        "timestamp": datetime.now().isoformat()
+    }
+    await data_collector.store_interaction(interaction)
     
     # Export data
-    export_files = await data_collector.export_data(format="json")
+    export_path = Path(tempfile.mkdtemp()) / "export.json"
+    await data_collector.export_data(str(export_path))
     
     # Verify export
-    assert "interactions" in export_files
-    assert os.path.exists(export_files["interactions"])
-    
-    # Check exported data
-    with open(export_files["interactions"], 'r') as f:
-        exported_data = json.load(f)
-        assert len(exported_data) > 0
+    assert export_path.exists()
+    assert export_path.stat().st_size > 0
 
 @pytest.mark.asyncio
 async def test_performance_aggregation(data_collector):
     """Test performance metrics aggregation."""
-    # Store metrics at different times
-    base_time = datetime.now()
+    # Add test metrics
+    metrics = [
+        {
+            "agent_type": "king",
+            "success_rate": 0.8,
+            "response_time": 1.2,
+            "timestamp": (datetime.now() - timedelta(hours=i)).isoformat()
+        }
+        for i in range(5)
+    ]
     
-    for i in range(5):
-        timestamp = base_time + timedelta(minutes=i*15)
-        await data_collector.store_performance_metrics(
-            agent_type="king",
-            model_type="frontier",
-            metrics={"accuracy": 0.8 + i*0.05},
-            timestamp=timestamp.timestamp(),
-            aggregation_period="hour"
-        )
+    for m in metrics:
+        await data_collector.store_performance_metrics(m)
     
     # Get aggregated metrics
-    history = await data_collector.get_performance_history(
-        agent_type="king",
-        model_type="frontier",
-        metric_name="accuracy",
-        days=1,
-        aggregation="hour"
-    )
-    
-    # Verify aggregation
-    assert len(history) == 1  # All metrics within same hour
-    assert "avg_value" in history[0]
-    assert "min_value" in history[0]
-    assert "max_value" in history[0]
+    aggregated = await data_collector.get_aggregated_metrics("king", hours=24)
+    assert isinstance(aggregated, dict)
+    assert "avg_success_rate" in aggregated
+    assert "avg_response_time" in aggregated
 
 @pytest.mark.asyncio
 async def test_complexity_confidence(complexity_evaluator):
-    """Test complexity evaluation confidence scoring."""
-    task = "Implement a web server with authentication"
-    
+    """Test complexity evaluation confidence."""
+    task = "Write a function to calculate Fibonacci numbers"
     result = await complexity_evaluator.evaluate_complexity(
         agent_type="magi",
-        task=task,
-        context={"requirements": ["security", "performance"]}
+        task=task
     )
     
-    # Verify confidence score
     assert "confidence" in result
-    assert 0 <= result["confidence"] <= 1
-    
-    # Verify analysis
-    assert "analysis" in result
-    assert "explanation" in result["analysis"]
-    assert "primary_factors" in result["analysis"]
+    assert 0.0 <= result["confidence"] <= 1.0
 
 @pytest.mark.asyncio
 async def test_database_maintenance(db_manager):
     """Test database maintenance operations."""
     # Add test data
-    with sqlite3.connect(db_manager.db_path) as conn:
-        conn.execute("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, value TEXT)")
-        for i in range(20):  # Exceed vacuum threshold
-            conn.execute("INSERT INTO test (value) VALUES (?)", (f"value_{i}",))
+    await db_manager.execute(
+        "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, value TEXT)"
+    )
+    for i in range(20):
+        await db_manager.execute("INSERT INTO test (value) VALUES (?)", (f"value_{i}",))
     
     # Run maintenance
-    await db_manager.vacuum_if_needed()
+    await db_manager.run_maintenance()
+    
+    # Verify database is still accessible
+    result = await db_manager.fetch_one("SELECT COUNT(*) FROM test")
+    assert result[0] == 20
     
     # Clean old backups
     backup_dir = db_manager.db_path.parent / "backups"

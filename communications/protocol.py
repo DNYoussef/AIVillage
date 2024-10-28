@@ -1,3 +1,5 @@
+"""Enhanced communication protocol implementation."""
+
 from typing import Dict, Any, Callable, Coroutine, List, Set, Optional
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -71,6 +73,10 @@ class GroupCommunication:
         if group_id not in self.groups:
             raise AIVillageException(f"Group {group_id} does not exist")
 
+        config = self.group_configs[group_id]
+        if "max_members" in config and len(self.groups[group_id]) >= config["max_members"]:
+            raise AIVillageException(f"Group {group_id} has reached maximum members limit")
+
         self.groups[group_id].add(agent_id)
         if agent_id not in self.agent_groups:
             self.agent_groups[agent_id] = set()
@@ -85,11 +91,11 @@ class GroupCommunication:
         if agent_id in self.agent_groups:
             self.agent_groups[agent_id].discard(group_id)
 
-    def get_agent_groups(self, agent_id: str) -> Set[str]:
+    async def get_agent_groups(self, agent_id: str) -> Set[str]:
         """Get all groups an agent belongs to."""
         return self.agent_groups.get(agent_id, set())
 
-    def get_group_members(self, group_id: str) -> Set[str]:
+    async def get_group_members(self, group_id: str) -> Set[str]:
         """Get all members of a group."""
         if group_id not in self.groups:
             raise AIVillageException(f"Group {group_id} does not exist")
@@ -115,12 +121,16 @@ class StandardCommunicationProtocol(CommunicationProtocol):
             if message.receiver not in self.message_queues:
                 self.message_queues[message.receiver] = MessageQueue()
 
-            self.message_queues[message.receiver].enqueue(message)
+            await self.message_queues[message.receiver].enqueue(message)
             self.message_history.append(message)
             self.stats['messages_sent'] += 1
 
             if message.receiver in self.subscribers:
-                await self.subscribers[message.receiver](message)
+                try:
+                    await self.subscribers[message.receiver](message)
+                except Exception:
+                    self.stats['failed_deliveries'] += 1
+
         except Exception as e:
             self.stats['failed_deliveries'] += 1
             raise AIVillageException(f"Failed to send message: {str(e)}")
@@ -128,10 +138,12 @@ class StandardCommunicationProtocol(CommunicationProtocol):
     async def receive_message(self, agent_id: str) -> Message:
         """Receive message with priority handling."""
         if agent_id not in self.message_queues:
+            self.stats['failed_deliveries'] += 1
             raise AIVillageException(f"No message queue for agent {agent_id}")
 
-        message = self.message_queues[agent_id].dequeue()
+        message = await self.message_queues[agent_id].dequeue()
         if message is None:
+            self.stats['failed_deliveries'] += 1
             raise AIVillageException(f"No messages for agent {agent_id}")
 
         self.stats['messages_received'] += 1
@@ -167,13 +179,13 @@ class StandardCommunicationProtocol(CommunicationProtocol):
             )
             await self.send_message(message_copy)
 
-    def get_queue_status(self, agent_id: str) -> Dict[str, int]:
+    async def get_queue_status(self, agent_id: str) -> Dict[str, int]:
         """Get status of an agent's message queue."""
         if agent_id not in self.message_queues:
             return {'high_priority': 0, 'medium_priority': 0, 'low_priority': 0, 'total': 0}
-        return self.message_queues[agent_id].get_queue_stats()
+        return await self.message_queues[agent_id].get_queue_stats()
 
-    def get_communication_stats(self) -> Dict[str, Any]:
+    async def get_communication_stats(self) -> Dict[str, Any]:
         """Get communication statistics."""
         return {
             **self.stats,
@@ -192,10 +204,10 @@ class StandardCommunicationProtocol(CommunicationProtocol):
         """Broadcast message to all members of a group."""
         await self.group_communication.broadcast_to_group(group_id, message)
 
-    def get_agent_groups(self, agent_id: str) -> Set[str]:
+    async def get_agent_groups(self, agent_id: str) -> Set[str]:
         """Get all groups an agent belongs to."""
-        return self.group_communication.get_agent_groups(agent_id)
+        return await self.group_communication.get_agent_groups(agent_id)
 
-    def get_group_members(self, group_id: str) -> Set[str]:
+    async def get_group_members(self, group_id: str) -> Set[str]:
         """Get all members of a group."""
-        return self.group_communication.get_group_members(group_id)
+        return await self.group_communication.get_group_members(group_id)

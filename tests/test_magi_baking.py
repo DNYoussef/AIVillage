@@ -14,12 +14,11 @@ import json
 import threading
 from typing import Optional, Dict, Any, List
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, AsyncMock
 
 from config.unified_config import UnifiedConfig, ModelConfig
 from agent_forge.agents.magi.magi_agent import MagiAgent
 from agent_forge.agents.openrouter_agent import OpenRouterAgent
-from agent_forge.bakedquietiot.deepbaking import DeepSystemBakerTask
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -77,12 +76,26 @@ def config():
 @pytest.fixture
 def openrouter_agent():
     """Create mock OpenRouter agent."""
-    return Mock(spec=OpenRouterAgent)
+    mock = Mock(spec=OpenRouterAgent)
+    # Set required attributes
+    mock.model = "test-model"
+    mock.generate_response = AsyncMock(return_value={
+        "response": "Test response",
+        "model": "test-model",
+        "metadata": {"quality": 0.9}
+    })
+    return mock
 
 @pytest.fixture
 def magi_agent(config, openrouter_agent):
     """Create Magi agent for testing."""
-    return MagiAgent(openrouter_agent=openrouter_agent, config=config)
+    agent = MagiAgent(openrouter_agent=openrouter_agent, config=config)
+    # Mock internal components
+    agent.local_agent = Mock()
+    agent.local_agent.generate_response = AsyncMock()
+    agent.experiment_manager = Mock()
+    agent.experiment_manager.validate_code = AsyncMock()
+    return agent
 
 @pytest.mark.asyncio
 async def test_code_generation_simple(magi_agent):

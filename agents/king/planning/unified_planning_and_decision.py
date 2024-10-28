@@ -13,7 +13,7 @@ import torch
 from collections import defaultdict
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
-from agents.utils.logging_setup import get_logger
+from agent_forge.utils.logging_setup import get_logger
 from rag_system.utils.error_handling import AIVillageException
 from agents.king.quality_assurance_layer import QualityAssuranceLayer
 from agents.king.task_management.unified_task_manager import UnifiedManagement
