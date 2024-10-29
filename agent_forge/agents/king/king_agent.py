@@ -194,6 +194,12 @@ class KingAgent:
                     temperature=resources["temperature"]
                 )
                 
+                # Add complexity evaluation and resources to frontier response
+                interaction.metadata.update({
+                    "complexity_evaluation": complexity_evaluation,
+                    "resources_allocated": resources
+                })
+                
                 # If we tried local model, record performance comparison
                 if local_response:
                     self._record_model_comparison(local_response, interaction)

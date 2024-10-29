@@ -271,6 +271,10 @@ def king_agent(config, mock_openrouter_agent):
             "local_model_performance": 0.85
         }
         
+        # Mock task manager
+        agent.task_manager.active_tasks = {}
+        agent.task_manager.completed_tasks = []
+        
         return agent
 
 @pytest.mark.asyncio
@@ -345,6 +349,13 @@ async def test_complexity_evaluation(king_agent):
     assert result.metadata["complexity_evaluation"]["complexity_score"] == 0.5
     assert result.metadata["complexity_evaluation"]["is_complex"] is False
     assert "resources_allocated" in result.metadata
+    
+    # Verify task was properly tracked
+    assert len(king_agent.task_manager.completed_tasks) > 0
+    completed_task = king_agent.task_manager.completed_tasks[-1]
+    assert completed_task["status"] == "completed"
+    assert "interaction" in completed_task["result"]
+    assert "performance" in completed_task["result"]
 
 if __name__ == "__main__":
     pytest.main([__file__])

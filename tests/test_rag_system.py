@@ -5,7 +5,7 @@ import asyncio
 from unittest.mock import AsyncMock, Mock, patch, MagicMock
 from datetime import datetime
 import neo4j
-from core.exploration_mode import ExplorationMode
+from rag_system.core.exploration_mode import ExplorationMode
 from rag_system.core.cognitive_nexus import CognitiveNexus
 from rag_system.retrieval.hybrid_retriever import HybridRetriever
 from rag_system.processing.reasoning_engine import UncertaintyAwareReasoningEngine
@@ -14,38 +14,22 @@ from rag_system.core.structures import RetrievalResult
 from config.unified_config import UnifiedConfig, RAGConfig
 from rag_system.processing.advanced_nlp import AdvancedNLP
 
-def cleanup_resources():
-    """Clean up resources after tests."""
-    try:
-        # Get the event loop
-        try:
-            loop = asyncio.get_event_loop()
-        except:
-            loop = None
-
-        # Cancel all tasks if loop exists
-        if loop and not loop.is_closed():
-            try:
-                # Cancel all tasks
-                for task in asyncio.all_tasks(loop):
-                    task.cancel()
-                
-                # Run loop until tasks are cancelled
-                loop.run_until_complete(asyncio.gather(*asyncio.all_tasks(loop), return_exceptions=True))
-                
-                # Stop and close loop
-                loop.stop()
-                loop.close()
-            except:
-                pass
-    except:
+# Mock networkx
+class MockGraph:
+    def __init__(self):
+        self.nodes = {}
+        self.edges = {}
+    
+    def copy(self):
+        return self
+    
+    def remove_nodes_from(self, nodes):
         pass
 
-@pytest.fixture(autouse=True)
-def cleanup_after_test():
-    """Clean up after each test."""
-    yield
-    cleanup_resources()
+class MockNetworkX:
+    @staticmethod
+    def all_simple_paths(graph, start_node, end_node, cutoff=None):
+        return [["node1", "node2", "node3"]]
 
 # Mock Neo4j driver and session with proper context manager
 class MockNode:
@@ -161,36 +145,23 @@ class MockDriver:
 class MockLangroidConfig:
     def __init__(self, *args, **kwargs):
         self.chat_model = kwargs.get('chat_model', 'gpt-3.5-turbo')
+        self.create = lambda: AsyncMock()
 
 class MockLangroidAgent:
     def __init__(self, *args, **kwargs):
         self.config = kwargs.get('config', MockLangroidConfig())
 
-# Mock ExplorationMode
-class MockExplorationMode:
-    """Mock ExplorationMode to avoid LLM initialization."""
-    def __init__(self, graph_store, llm_config, advanced_nlp):
-        self.graph_store = graph_store
-        self.advanced_nlp = advanced_nlp
-        self.llm = AsyncMock()
-        self.llm.complete = AsyncMock(return_value=Mock(text='{"relation": "test", "confidence": 0.9}'))
-        self.initialized = True
-
-    async def explore_knowledge_graph(self, start_node, depth=3):
-        return {
-            "nodes": ["node1", "node2", "node3"],
-            "paths": [["node1", "node2", "node3"]]
-        }
-
-    async def find_creative_connections(self, start_node, end_node, excluded_nodes):
-        return [["node1", "node3"]]
-
 # Apply patches
 @pytest.fixture(autouse=True)
 def mock_dependencies():
     """Mock external dependencies."""
+    mock_nx = Mock()
+    mock_nx.all_simple_paths = MockNetworkX.all_simple_paths
+    mock_nx.Graph = MockGraph
+
     with patch('neo4j.GraphDatabase.driver', return_value=MockDriver()), \
-         patch('rag_system.core.exploration_mode.ExplorationMode', MockExplorationMode), \
+         patch('networkx.all_simple_paths', mock_nx.all_simple_paths), \
+         patch('networkx.Graph', mock_nx.Graph), \
          patch('langroid.ChatAgent', MockLangroidAgent), \
          patch('langroid.ChatAgentConfig', MockLangroidConfig), \
          patch('langroid.language_models.openai_gpt.OpenAIGPTConfig', MockLangroidConfig):
@@ -217,18 +188,17 @@ def rag_config():
 def mock_graph_store():
     """Create mock graph store."""
     mock = AsyncMock()
-    mock.get_graph = AsyncMock(return_value={
-        "nodes": ["node1", "node2", "node3"],
-        "edges": [
-            {"source": "node1", "target": "node2", "type": "related"},
-            {"source": "node2", "target": "node3", "type": "depends_on"}
-        ]
-    })
+    mock.get_graph = AsyncMock(return_value=MockGraph())
     mock.get_node_info = AsyncMock(return_value={
         "connections": [
             {"target": "node2", "type": "related_to"},
             {"target": "node3", "type": "depends_on"}
         ]
+    })
+    mock.get_edge_data = AsyncMock(return_value={
+        "is_causal": True,
+        "novelty": 0.8,
+        "relevance": 0.7
     })
     mock.initialized = True
     return mock
@@ -328,10 +298,11 @@ def exploration_mode(mock_graph_store, mock_llm, mock_advanced_nlp):
     """Create ExplorationMode instance."""
     mode = ExplorationMode(
         graph_store=mock_graph_store,
-        llm_config=None,  # Not used since we mock llm directly
+        llm_config=MockLangroidConfig(),  # Use MockLangroidConfig
         advanced_nlp=mock_advanced_nlp
     )
     mode.initialized = True
+    mode.llm = mock_llm  # Set mock LLM directly
     return mode
 
 @pytest.fixture
