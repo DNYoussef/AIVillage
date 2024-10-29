@@ -1,3 +1,5 @@
+"""Main entry point for the AI Village system."""
+
 import asyncio
 import logging
 import os
@@ -7,6 +9,7 @@ import yaml
 from .agents.agent_manager import AgentManager
 from .data.data_collector import DataCollector
 from .data.complexity_evaluator import ComplexityEvaluator
+from config.unified_config import UnifiedConfig
 
 logger = logging.getLogger(__name__)
 
@@ -16,21 +19,25 @@ class AIVillage:
     and complexity evaluation for the AI Village system.
     """
     
-    def __init__(self, config_path: str = "config/openrouter_agents.yaml"):
+    def __init__(self, config: Optional[UnifiedConfig] = None):
         """
         Initialize AIVillage.
         
         Args:
-            config_path: Path to agent configuration file
+            config: Optional UnifiedConfig instance. If not provided,
+                   will load from default config path.
         """
         # Ensure OpenRouter API key is set
         if not os.getenv("OPENROUTER_API_KEY"):
             raise ValueError("OPENROUTER_API_KEY environment variable not set")
         
-        # Initialize components
-        self.agent_manager = AgentManager(config_path)
-        self.data_collector = DataCollector()
-        self.complexity_evaluator = ComplexityEvaluator()
+        # Initialize configuration
+        self.config = config if config else UnifiedConfig()
+        
+        # Initialize components with config
+        self.agent_manager = AgentManager(self.config)
+        self.data_collector = DataCollector(self.config)
+        self.complexity_evaluator = ComplexityEvaluator(self.config)
         
         # Task queue
         self.task_queue: asyncio.Queue = asyncio.Queue()
@@ -49,55 +56,66 @@ class AIVillage:
         Returns:
             Dictionary containing the response and metadata
         """
-        # Determine appropriate agent if not specified
-        if not agent_type:
-            agent_type = self._determine_agent_type(task)
-        
-        # Evaluate task complexity
-        complexity_analysis = self.complexity_evaluator.evaluate_complexity(
-            agent_type=agent_type,
-            task=task,
-            context=kwargs.get("context")
-        )
-        
-        # Process task with appropriate agent
-        result = await self.agent_manager.process_task(
-            task=task,
-            agent_type=agent_type,
-            **kwargs
-        )
-        
-        # Store interaction data
-        self.data_collector.store_interaction(
-            agent_type=agent_type,
-            interaction=result,
-            was_complex=complexity_analysis["is_complex"]
-        )
-        
-        # If frontier model was used, store training data
-        if result["model"] == self.agent_manager.get_agent_config(agent_type)["frontier_model"]:
-            self.data_collector.store_training_example(
+        try:
+            # Determine appropriate agent if not specified
+            if not agent_type:
+                agent_type = self._determine_agent_type(task)
+            
+            # Evaluate task complexity
+            complexity_analysis = await self.complexity_evaluator.evaluate_complexity(
                 agent_type=agent_type,
-                frontier_model=result["model"],
-                local_model=self.agent_manager.get_agent_config(agent_type)["local_model"],
-                prompt=task,
-                response=result["response"]
+                task=task,
+                context=kwargs.get("context")
             )
-        
-        # Store performance metrics
-        agent = self.agent_manager.get_agent(agent_type)
-        self.data_collector.store_performance_metrics(
-            agent_type=agent_type,
-            model_type="frontier" if complexity_analysis["is_complex"] else "local",
-            metrics=agent.get_performance_metrics()
-        )
-        
-        return {
-            "response": result["response"],
-            "model_used": result["model"],
-            "complexity_analysis": complexity_analysis,
-            "performance_metrics": agent.get_performance_metrics()
-        }
+            
+            # Process task with appropriate agent
+            result = await self.agent_manager.process_task(
+                task=task,
+                agent_type=agent_type,
+                **kwargs
+            )
+            
+            # Store interaction data
+            await self.data_collector.store_interaction(
+                agent_type=agent_type,
+                interaction=result,
+                was_complex=complexity_analysis["is_complex"]
+            )
+            
+            # If frontier model was used, store training data
+            agent_config = self.config.get_agent_config(agent_type)
+            if result["model"] == agent_config.frontier_model.name:
+                await self.data_collector.store_training_example(
+                    agent_type=agent_type,
+                    frontier_model=agent_config.frontier_model.name,
+                    local_model=agent_config.local_model.name,
+                    prompt=task,
+                    response=result["response"],
+                    quality_score=result.metadata.get("quality_score", 0.0)
+                )
+            
+            # Store performance metrics
+            agent = self.agent_manager.get_agent(agent_type)
+            await self.data_collector.store_performance_metrics(
+                agent_type=agent_type,
+                model_type="frontier" if complexity_analysis["is_complex"] else "local",
+                metrics=agent.get_performance_metrics()
+            )
+            
+            return {
+                "response": result["response"],
+                "model_used": result["model"],
+                "complexity_analysis": complexity_analysis,
+                "performance_metrics": agent.get_performance_metrics(),
+                "status": "success"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error processing task: {str(e)}")
+            return {
+                "status": "failed",
+                "error": str(e)
+            }
     
     def _determine_agent_type(self, task: str) -> str:
         """
@@ -159,10 +177,11 @@ class AIVillage:
         for agent_type in ["king", "sage", "magi"]:
             try:
                 # Get recent performance data
-                performance_metrics = self.agent_manager.get_agent(agent_type).get_performance_metrics()
+                agent = self.agent_manager.get_agent(agent_type)
+                performance_metrics = agent.get_performance_metrics()
                 
                 # Get recent complexity history
-                complexity_history = self.data_collector.get_performance_history(
+                complexity_history = await self.data_collector.get_performance_history(
                     agent_type=agent_type,
                     model_type="local",
                     metric_name="complexity_score",
@@ -170,11 +189,14 @@ class AIVillage:
                 )
                 
                 # Adjust thresholds
-                self.complexity_evaluator.adjust_thresholds(
+                new_threshold = await self.complexity_evaluator.adjust_thresholds(
                     agent_type=agent_type,
                     performance_metrics=performance_metrics,
                     complexity_history=complexity_history
                 )
+                
+                if new_threshold is not None:
+                    logger.info(f"Updated complexity threshold for {agent_type}: {new_threshold}")
                 
             except Exception as e:
                 logger.error(f"Error updating complexity thresholds for {agent_type}: {str(e)}")
@@ -199,16 +221,36 @@ class AIVillage:
         Returns:
             Dictionary containing system status information
         """
+        agent_metrics = {}
+        for agent_type in ["king", "sage", "magi"]:
+            try:
+                agent = self.agent_manager.get_agent(agent_type)
+                metrics = agent.get_performance_metrics()
+                agent_metrics[agent_type] = {
+                    "task_success_rate": metrics.get("task_success_rate", 0.0),
+                    "local_model_performance": metrics.get("local_model_performance", 0.0)
+                }
+            except Exception as e:
+                logger.error(f"Error getting metrics for {agent_type}: {str(e)}")
+                agent_metrics[agent_type] = {
+                    "task_success_rate": 0.0,
+                    "local_model_performance": 0.0
+                }
+        
         return {
             "queue_size": self.task_queue.qsize(),
-            "agent_metrics": self.agent_manager.get_performance_metrics(),
+            "agent_metrics": agent_metrics,
             "complexity_thresholds": {
-                agent_type: self.complexity_evaluator.thresholds[agent_type]["base_complexity_threshold"]
+                agent_type: self.complexity_evaluator.get_threshold(agent_type)
                 for agent_type in ["king", "sage", "magi"]
             },
             "training_data_counts": {
                 agent_type: len(self.data_collector.get_training_data(agent_type=agent_type))
                 for agent_type in ["king", "sage", "magi"]
+            },
+            "system_health": {
+                "status": "healthy",
+                "last_error": None
             }
         }
 

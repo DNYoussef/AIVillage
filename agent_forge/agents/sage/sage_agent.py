@@ -11,6 +11,9 @@ from ..openrouter_agent import OpenRouterAgent, AgentInteraction
 from ..local_agent import LocalAgent
 from ...data.complexity_evaluator import ComplexityEvaluator
 from rag_system.core.exploration_mode import ExplorationMode
+from rag_system.core.config import OpenAIGPTConfig
+from rag_system.processing.advanced_nlp import AdvancedNLP
+from rag_system.retrieval.graph_store import GraphStore
 
 logger = logging.getLogger(__name__)
 
@@ -180,10 +183,23 @@ class SageAgent:
         # Initialize support systems
         self.research_manager = ResearchManager(config)
         self.complexity_evaluator = ComplexityEvaluator(config)
+        
+        # Initialize exploration mode with proper configuration
+        llm_config = OpenAIGPTConfig(
+            api_key=config.get_api_key(),
+            model_name=self.agent_config.frontier_model.name,
+            temperature=0.7,
+            max_tokens=1000
+        )
+        
+        # Initialize components with default settings
+        graph_store = GraphStore(config)  # Pass config to GraphStore
+        advanced_nlp = AdvancedNLP()
+        
         self.exploration_mode = ExplorationMode(
-            graph_store=None,  # Would initialize properly
-            llm_config=None,   # Would initialize properly
-            advanced_nlp=None  # Would initialize properly
+            graph_store=graph_store,
+            llm_config=llm_config,
+            advanced_nlp=advanced_nlp
         )
         
         # Performance tracking

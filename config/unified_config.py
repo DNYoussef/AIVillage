@@ -33,6 +33,12 @@ class ModelConfig:
     retry_delay: int = 1
     max_retries: int = 3
 
+    def update(self, updates: Dict[str, Any]):
+        """Update model configuration."""
+        for key, value in updates.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
 @dataclass
 class AgentConfig:
     """Configuration for a specific agent."""
@@ -44,6 +50,15 @@ class AgentConfig:
     performance_threshold: float = 0.7
     complexity_threshold: float = 0.6
     evolution_rate: float = 0.1
+
+    def update(self, updates: Dict[str, Any]):
+        """Update agent configuration."""
+        for key, value in updates.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+            elif hasattr(self.frontier_model, key):
+                self.frontier_model.update({key: value})
+                self.local_model.update({key: value})
 
 @dataclass
 class RAGConfig:
@@ -100,7 +115,32 @@ class UnifiedConfig:
         self._load_configs()
         
         logger.info("Initialized UnifiedConfig")
+    
+    def update(self, config: Dict[str, Any]):
+        """
+        Update configuration with new values.
         
+        Args:
+            config: Dictionary containing configuration updates
+        """
+        self.config.update(config)
+        
+        # Update component configs if present
+        if 'agents' in config:
+            self._process_agent_config({'agents': config['agents']})
+        if 'rag_system' in config:
+            for key, value in config['rag_system'].items():
+                if hasattr(self.rag_config, key):
+                    setattr(self.rag_config, key, value)
+        if 'database' in config:
+            for key, value in config['database'].items():
+                if hasattr(self.db_config, key):
+                    setattr(self.db_config, key, value)
+        if 'performance' in config:
+            for key, value in config['performance'].items():
+                if hasattr(self.performance_config, key):
+                    setattr(self.performance_config, key, value)
+    
     def _load_configs(self):
         """Load all configuration files."""
         try:
@@ -212,13 +252,7 @@ class UnifiedConfig:
             updates: Dictionary of updates to apply
         """
         agent_config = self.get_agent_config(agent_type)
-        
-        for key, value in updates.items():
-            if hasattr(agent_config, key):
-                setattr(agent_config, key, value)
-            else:
-                logger.warning(f"Unknown configuration key for agent {agent_type}: {key}")
-        
+        agent_config.update(updates)
         self._save_agent_config(agent_type)
     
     def _save_agent_config(self, agent_type: str):

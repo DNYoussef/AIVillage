@@ -64,11 +64,11 @@ class AgentManager:
                 
                 # Create specialized agent instance
                 if agent_type == "king":
-                    self.agents[agent_type] = KingAgent(openrouter_agent)
+                    self.agents[agent_type] = KingAgent(openrouter_agent, self.config)
                 elif agent_type == "sage":
-                    self.agents[agent_type] = SageAgent(openrouter_agent)
+                    self.agents[agent_type] = SageAgent(openrouter_agent, self.config)
                 elif agent_type == "magi":
-                    self.agents[agent_type] = MagiAgent(openrouter_agent)
+                    self.agents[agent_type] = MagiAgent(openrouter_agent, self.config)
                 
                 logger.info(f"Initialized {agent_type} agent with models:")
                 logger.info(f"  Frontier: {agent_config.frontier_model.name}")

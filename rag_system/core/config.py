@@ -1,5 +1,7 @@
+"""Configuration classes for RAG system."""
+
 from pydantic import BaseModel, Field
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import timedelta
 
 class UnifiedConfig(BaseModel):
@@ -48,5 +50,20 @@ class RAGConfig(UnifiedConfig):
     # Add RAG-specific configuration parameters here
     num_documents: int = 5
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+class OpenAIGPTConfig(BaseModel):
+    """Configuration for OpenAI GPT models."""
+    api_key: str
+    model_name: str
+    temperature: float = 0.7
+    max_tokens: int = 1000
+    system_prompt: Optional[str] = None
+    chat_model: Optional[str] = "gpt-4"
+    
+    def create(self):
+        """Create a model instance with this configuration."""
+        # This would typically create an OpenAI model instance
+        # For now, return self as we're just using it for configuration
+        return self
 
 # You can add more specific config classes as needed

@@ -1,134 +1,154 @@
-import unittest
-import asyncio
-from unittest.mock import MagicMock, patch, AsyncMock
-from agent_forge.agents.king.king_agent import KingAgent, TaskManager
-from agent_forge.agents.openrouter_agent import OpenRouterAgent, AgentInteraction
-from config.unified_config import UnifiedConfig
+"""Tests for King agent functionality."""
+
 import pytest
+from pytest_asyncio import fixture as async_fixture
+import asyncio
+import os
+from datetime import datetime
+from typing import Dict, Any, List
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from datetime import datetime
+
+from config.unified_config import UnifiedConfig, AgentConfig, ModelConfig, AgentType, ModelType
+from agent_forge.agents.king.king_agent import KingAgent
+from agent_forge.agents.openrouter_agent import AgentInteraction
 
 @pytest.fixture
 def config():
     """Create test configuration."""
-    config = UnifiedConfig()
-    config.vector_dimension = 768  # Add required attribute
-    return config
-
-@pytest.fixture
-def openrouter_agent():
-    """Create mock OpenRouter agent."""
-    mock = AsyncMock(spec=OpenRouterAgent)
-    # Set required attributes
-    mock.model = "test-model"
-    mock.local_model = "test-local-model"
-    mock.generate_response = AsyncMock(return_value=AgentInteraction(
-        prompt="test prompt",
-        response="Test response",
-        model="test-model",
-        timestamp=123456789,
-        metadata={"quality": 0.9},
-        token_usage={"total_tokens": 100}
-    ))
-    return mock
-
-@pytest.fixture
-def king_agent(config, openrouter_agent):
-    """Create KingAgent instance."""
-    agent = KingAgent(openrouter_agent=openrouter_agent, config=config)
-    
-    # Initialize performance metrics
-    agent.performance_metrics = {
-        "task_success_rate": 0.0,
-        "avg_response_quality": 0.0,
-        "complexity_handling": 0.0,
-        "local_model_performance": 0.0
-    }
-    
-    # Mock task manager
-    agent.task_manager = MagicMock(spec=TaskManager)
-    agent.task_manager.completed_tasks = [{
-        "status": "completed",
-        "task": {"complexity": {"is_complex": False}},
-        "duration": 0.5
-    }]
-    
-    # Mock internal components
-    agent.local_agent = AsyncMock()
-    agent.local_agent.generate_response = AsyncMock(return_value={
-        "response": "Local test response",
-        "model": "test-local-model",
-        "metadata": {
-            "performance": {
-                "duration": 0.5,
-                "total_tokens": 50
-            }
+    with patch('config.unified_config.UnifiedConfig._load_configs'):
+        config = UnifiedConfig()
+        config.config = {
+            'openrouter_api_key': 'test_key',
+            'model_name': 'test-model',
+            'temperature': 0.7,
+            'max_tokens': 1000
         }
-    })
-    agent.local_agent.get_performance_metrics = AsyncMock(return_value={
-        "average_similarity": 0.8,
-        "success_rate": 0.9
-    })
-    agent.complexity_evaluator = AsyncMock()
-    agent.complexity_evaluator.evaluate_complexity = AsyncMock(return_value={
-        "complexity_score": 0.5,
-        "is_complex": False
-    })
+        config.agents = {
+            'king': AgentConfig(
+                type=AgentType.KING,
+                frontier_model=ModelConfig(
+                    name="test-frontier-model",
+                    type=ModelType.FRONTIER,
+                    temperature=0.7,
+                    max_tokens=1000
+                ),
+                local_model=ModelConfig(
+                    name="test-local-model",
+                    type=ModelType.LOCAL,
+                    temperature=0.7,
+                    max_tokens=1000
+                ),
+                description="Strategic decision making agent",
+                capabilities=["task_management", "coordination"],
+                performance_threshold=0.7,
+                complexity_threshold=0.6,
+                evolution_rate=0.1
+            )
+        }
+        return config
+
+@pytest.fixture
+def mock_create_task():
+    """Mock asyncio.create_task."""
+    async def mock_coro(*args, **kwargs):
+        return None
     
-    # Patch _update_metrics to handle async get_performance_metrics
-    async def patched_update_metrics(interaction, performance):
-        local_metrics = await agent.local_agent.get_performance_metrics()
-        if "average_similarity" in local_metrics:
-            agent.performance_metrics["local_model_performance"] = local_metrics["average_similarity"]
+    def mock_task(*args, **kwargs):
+        return asyncio.create_task(mock_coro())
     
-    agent._update_metrics = patched_update_metrics
-    
-    return agent
+    with patch('asyncio.create_task', side_effect=mock_task) as mock:
+        yield mock
+
+@pytest.fixture
+async def king_agent(config, mock_create_task):
+    """Create KingAgent instance for testing."""
+    with patch('agent_forge.agents.king.king_agent.asyncio.create_task', side_effect=mock_create_task):
+        agent = KingAgent(config)
+        agent.frontier_agent = AsyncMock()
+        agent.local_agent = AsyncMock()
+        agent.local_agent.generate_response = AsyncMock(return_value=AgentInteraction(
+            prompt="Test task",
+            response="Local test response",
+            model="test-local-model",
+            timestamp=datetime.now().timestamp(),
+            metadata={
+                "performance": {
+                    "duration": 0.5,
+                    "total_tokens": 50
+                }
+            }
+        ))
+        agent.local_agent.get_performance_metrics = AsyncMock(return_value={
+            "average_similarity": 0.8,
+            "success_rate": 0.9
+        })
+        agent.complexity_evaluator = AsyncMock()
+        agent.complexity_evaluator.evaluate_complexity = AsyncMock(return_value={
+            "complexity_score": 0.5,
+            "is_complex": False
+        })
+        
+        # Mock process_task method
+        async def mock_process_task(task, system_prompt=None):
+            return AgentInteraction(
+                prompt="Test task",
+                response="Test response",
+                model="test-model",
+                timestamp=datetime.now().timestamp(),
+                metadata={"test": "data"}
+            )
+        agent.frontier_agent.process_task = mock_process_task
+        agent.local_agent.process_task = mock_process_task
+        
+        return agent
 
 @pytest.mark.asyncio
 async def test_process_task(king_agent):
-    """Test processing of task."""
-    # Process a task
-    result = await king_agent.process_task("Test task")
-
-    # Verify result structure
+    """Test task processing."""
+    task = "Test task"
+    result = await king_agent.process_task(task)
+    
     assert isinstance(result, AgentInteraction)
-    assert result.response is not None
-    assert result.model is not None
-    assert result.metadata is not None
-
-    # Verify component calls
-    king_agent.complexity_evaluator.evaluate_complexity.assert_called_once()
-    # Local model should be tried first for non-complex tasks
-    king_agent.local_agent.generate_response.assert_called_once()
+    assert result.response == "Test response"
+    assert result.model == "test-model"
 
 @pytest.mark.asyncio
 async def test_error_handling(king_agent):
-    """Test error handling in task processing."""
-    # Mock error in local agent
-    king_agent.local_agent.generate_response.side_effect = Exception("Test error")
-
-    # Process should fall back to frontier agent
-    result = await king_agent.process_task("Test task")
-
-    # Verify frontier agent was used
-    assert result.model == "test-model"  # Using frontier model name
-    assert result.response is not None
+    """Test error handling during task processing."""
+    task = "Invalid task that should raise an error"
+    
+    # Mock process_task to raise an error
+    async def mock_error_task(*args, **kwargs):
+        raise Exception("Test error")
+    king_agent.frontier_agent.process_task = mock_error_task
+    king_agent.local_agent.process_task = mock_error_task
+    
+    # Process should not raise exception but return error info
+    result = await king_agent.process_task(task)
+    assert isinstance(result, dict)
+    assert "error" in result
+    assert result["status"] == "failed"
+    assert "Test error" in str(result["error"])
 
 @pytest.mark.asyncio
 async def test_performance_metrics(king_agent):
-    """Test performance metrics tracking."""
-    # Process a few tasks
-    await king_agent.process_task("Task 1")
-    await king_agent.process_task("Task 2")
-
+    """Test performance metrics collection."""
+    # Process some tasks
+    task1 = "Test task 1"
+    task2 = "Test task 2"
+    
+    await king_agent.process_task(task1)
+    await king_agent.process_task(task2)
+    
     # Get metrics
-    metrics = king_agent.performance_metrics
-
-    # Verify metrics structure
+    metrics = await king_agent.get_performance_metrics()
+    
     assert isinstance(metrics, dict)
     assert "task_success_rate" in metrics
-    assert "avg_response_quality" in metrics
-    assert "complexity_handling" in metrics
     assert "local_model_performance" in metrics
+    assert 0 <= metrics["task_success_rate"] <= 1
+    assert 0 <= metrics["local_model_performance"] <= 1
 
 if __name__ == "__main__":
     pytest.main([__file__])

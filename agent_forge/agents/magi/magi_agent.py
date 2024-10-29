@@ -352,6 +352,123 @@ class MagiAgent:
         logger.info(f"Initialized MagiAgent with:")
         logger.info(f"  Frontier model: {openrouter_agent.model}")
         logger.info(f"  Local model: {openrouter_agent.local_model}")
+
+    def _construct_coding_prompt(self,
+                               task: str,
+                               context: Optional[str] = None,
+                               language: Optional[str] = None,
+                               requirements: Optional[List[str]] = None) -> str:
+        """
+        Construct a detailed prompt for code generation.
+        
+        Args:
+            task: The coding task description
+            context: Optional codebase context
+            language: Target programming language
+            requirements: Optional specific requirements
+            
+        Returns:
+            Formatted prompt string
+        """
+        prompt_parts = []
+        
+        # Add task description
+        prompt_parts.append(f"Task: {task}")
+        
+        # Add language specification
+        if language:
+            prompt_parts.append(f"\nLanguage: {language}")
+        
+        # Add context if provided
+        if context:
+            prompt_parts.append(f"\nContext:\n{context}")
+        
+        # Add requirements if provided
+        if requirements:
+            prompt_parts.append("\nRequirements:")
+            for req in requirements:
+                prompt_parts.append(f"- {req}")
+        
+        # Add specific instructions
+        prompt_parts.extend([
+            "\nInstructions:",
+            "1. Write clean, efficient, and well-documented code",
+            "2. Include type hints where applicable",
+            "3. Add docstrings and comments for clarity",
+            "4. Handle edge cases and errors appropriately",
+            "5. Follow language-specific best practices",
+            "\nProvide the complete implementation below:"
+        ])
+        
+        return "\n".join(prompt_parts)
+
+    def _get_coding_system_prompt(self, language: str) -> str:
+        """
+        Get system-level instructions for code generation.
+        
+        Args:
+            language: Target programming language
+            
+        Returns:
+            System prompt string
+        """
+        language_specific = {
+            "python": """You are an expert Python developer who writes clean, efficient, and well-documented code.
+Follow PEP 8 style guidelines and use type hints.
+Include comprehensive docstrings and handle errors appropriately.
+Prefer clarity over cleverness and maintainability over premature optimization.""",
+            
+            "javascript": """You are an expert JavaScript developer who writes modern, clean, and efficient code.
+Follow ESLint and Prettier conventions.
+Use ES6+ features appropriately and handle errors properly.
+Write clear documentation and consider browser compatibility.""",
+            
+            "java": """You are an expert Java developer who writes clean, efficient, and well-documented code.
+Follow Java coding conventions and design patterns.
+Use appropriate exception handling and include Javadoc comments.
+Consider performance and maintainability in your implementations."""
+        }
+        
+        return language_specific.get(language.lower(), 
+            """You are an expert software developer who writes clean, efficient, and well-documented code.
+Follow language-specific best practices and conventions.
+Include appropriate documentation and error handling.
+Focus on code quality, maintainability, and performance.""")
+
+    def _extract_code(self, response: str) -> str:
+        """
+        Extract code blocks from the response.
+        
+        Args:
+            response: The full response string
+            
+        Returns:
+            Extracted code string
+        """
+        # Look for code blocks between triple backticks
+        code_blocks = re.findall(r'```(?:\w+)?\n(.*?)```', response, re.DOTALL)
+        if code_blocks:
+            return '\n'.join(code_blocks)
+        
+        # If no code blocks found, try to extract based on indentation
+        lines = response.split('\n')
+        code_lines = []
+        in_code = False
+        
+        for line in lines:
+            if line.startswith('    ') or line.startswith('\t'):
+                in_code = True
+                code_lines.append(line)
+            elif in_code and line.strip() == '':
+                code_lines.append(line)
+            elif in_code:
+                break
+        
+        if code_lines:
+            return '\n'.join(code_lines)
+        
+        # If no clear code blocks found, return the full response
+        return response
     
     async def generate_code(self,
                           task: str,
@@ -374,8 +491,8 @@ class MagiAgent:
         language = language or "python"  # Default to python if not specified
         
         try:
-            # Evaluate task complexity (preserved from original)
-            complexity_evaluation = await self.complexity_evaluator.evaluate_complexity(
+            # Evaluate task complexity (now synchronous)
+            complexity_evaluation = self.complexity_evaluator.evaluate_complexity(
                 agent_type="magi",
                 task=f"Code generation: {task}",
                 context={"language": language, "requirements": requirements}
@@ -388,8 +505,7 @@ class MagiAgent:
                 context={"codebase_context": context} if context else None
             )
             
-            # Try local model first if task isn't complex (preserved from original)
-            local_response = None
+            # Try local model first if task isn't complex
             if not complexity_evaluation["is_complex"]:
                 try:
                     local_response = await self.local_agent.generate_response(
@@ -398,36 +514,33 @@ class MagiAgent:
                         temperature=0.2,
                         max_tokens=1000
                     )
+                    
+                    # Create AgentInteraction from local response
+                    interaction = AgentInteraction(
+                        prompt=task,
+                        response=local_response.response,  # Access as attribute
+                        model=local_response.model,  # Access as attribute
+                        timestamp=time.time(),
+                        metadata={
+                            **(local_response.metadata or {}),  # Access as attribute
+                            "generation_plan": generation_plan
+                        }
+                    )
+                    return interaction
+                    
                 except Exception as e:
                     logger.warning(f"Local model code generation failed: {str(e)}")
             
             # Use frontier model if task is complex or local model failed
-            if complexity_evaluation["is_complex"] or not local_response:
-                interaction = await self.frontier_agent.generate_response(
-                    prompt=self._construct_coding_prompt(task, context, language, requirements),
-                    system_prompt=self._get_coding_system_prompt(language),
-                    temperature=0.2,
-                    max_tokens=1500
-                )
-                
-                # If we tried local model, record performance comparison (preserved from original)
-                if local_response:
-                    self._record_model_comparison(local_response, interaction)
-            else:
-                # Convert local response to AgentInteraction format (preserved from original)
-                interaction = AgentInteraction(
-                    prompt=task,
-                    response=local_response["response"],
-                    model=local_response["model"],
-                    timestamp=time.time(),
-                    metadata={
-                        **local_response["metadata"],
-                        "generation_plan": generation_plan
-                    }
-                )
+            interaction = await self.frontier_agent.generate_response(
+                prompt=self._construct_coding_prompt(task, context, language, requirements),
+                system_prompt=self._get_coding_system_prompt(language),
+                temperature=0.2,
+                max_tokens=1500
+            )
             
             # Extract code from response
-            code = self._extract_code(interaction.response)
+            code = self._extract_code(interaction.response)  # Access as attribute
             
             # Validate code (enhanced)
             validation_results = await self.experiment_manager.validate_code(
@@ -437,9 +550,11 @@ class MagiAgent:
             )
             
             # Add validation results to interaction metadata
+            if interaction.metadata is None:
+                interaction.metadata = {}
             interaction.metadata["validation_results"] = validation_results
             
-            # Update code history (preserved from original)
+            # Update code history
             self._update_code_history(
                 task=task,
                 interaction=interaction,
@@ -461,85 +576,19 @@ class MagiAgent:
             logger.error(f"Error generating code: {str(e)}")
             raise
     
-    def _construct_coding_prompt(self, 
-                               task: str, 
-                               context: Optional[str],
-                               language: Optional[str],
-                               requirements: Optional[List[str]]) -> str:
-        """Construct detailed coding prompt (preserved from original)."""
-        prompt_parts = []
-        
-        if context:
-            prompt_parts.append(f"Code Context:\n{context}\n")
-            
-        prompt_parts.append(f"Task Description:\n{task}\n")
-        
-        if language:
-            prompt_parts.append(f"Programming Language: {language}\n")
-            
-        if requirements:
-            prompt_parts.append("Requirements:")
-            for req in requirements:
-                prompt_parts.append(f"- {req}")
-        
-        prompt_parts.append("""
-        Please provide:
-        1. Code implementation
-        2. Brief explanation of the approach
-        3. Any important considerations or assumptions
-        4. Example usage (if applicable)
-        """)
-        
-        return "\n\n".join(prompt_parts)
-    
-    def _get_coding_system_prompt(self, language: Optional[str]) -> str:
-        """Get appropriate system prompt (preserved from original)."""
-        base_prompt = """You are Magi, an expert coding AI specializing in software development and technical problem-solving.
-        Your approach:
-        1. Write clean, efficient, and maintainable code
-        2. Follow best practices and design patterns
-        3. Consider edge cases and error handling
-        4. Provide clear documentation and explanations
-        5. Optimize for performance where appropriate"""
-        
-        if language:
-            language_specific = f"\nYou are writing code in {language}. Follow {language}-specific best practices and conventions."
-            return base_prompt + language_specific
-            
-        return base_prompt
-    
-    def _extract_code(self, response: str) -> str:
-        """Extract code blocks from response."""
-        # Look for code blocks
-        code_blocks = re.findall(r'```(?:\w+)?\n(.*?)```', response, re.DOTALL)
-        
-        if code_blocks:
-            # Return the largest code block
-            return max(code_blocks, key=len).strip()
-        
-        # If no code blocks found, try to extract indented code
-        lines = response.split('\n')
-        code_lines = [line for line in lines if line.strip().startswith('    ')]
-        
-        if code_lines:
-            return '\n'.join(code_lines)
-        
-        # If no code found, return original response
-        return response
-    
     def _update_code_history(self, 
                            task: str, 
                            interaction: AgentInteraction,
                            was_complex: bool,
                            language: Optional[str]):
-        """Update code history (preserved from original)."""
+        """Update code history."""
         code_record = {
             "task": task,
-            "timestamp": interaction.timestamp,
+            "timestamp": interaction.timestamp,  # Access as attribute
             "was_complex": was_complex,
             "language": language,
-            "model_used": interaction.model,
-            "tokens_used": interaction.metadata["usage"]["total_tokens"] if "usage" in interaction.metadata else 0
+            "model_used": interaction.model,  # Access as attribute
+            "tokens_used": interaction.metadata.get("usage", {}).get("total_tokens", 0) if interaction.metadata else 0
         }
         self.code_history.append(code_record)
         
@@ -547,12 +596,12 @@ class MagiAgent:
         if len(self.code_history) > 100:
             self.code_history = self.code_history[-100:]
     
-    def _record_model_comparison(self, local_response: Dict[str, Any], frontier_interaction: AgentInteraction):
-        """Record model comparison (preserved from original)."""
+    def _record_model_comparison(self, local_response: AgentInteraction, frontier_interaction: AgentInteraction):
+        """Record model comparison."""
         similarity = SequenceMatcher(
             None, 
-            local_response["response"], 
-            frontier_interaction.response
+            local_response.response,  # Access as attribute
+            frontier_interaction.response  # Access as attribute
         ).ratio()
         
         self.local_agent.record_performance({

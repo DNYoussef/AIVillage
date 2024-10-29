@@ -18,17 +18,40 @@ class ComplexityEvaluator:
     for when to use frontier vs local models.
     """
     
-    def __init__(self, config: UnifiedConfig):
+    def __init__(self, config: Optional[UnifiedConfig] = None):
         """
         Initialize ComplexityEvaluator.
         
         Args:
-            config: Unified configuration instance
+            config: Optional unified configuration instance
         """
-        self.config = config
-        self.thresholds = config.config['complexity']['thresholds']
-        self.token_weights = config.config['complexity']['token_weights']
-        self.performance_thresholds = config.config['complexity']['performance_thresholds']
+        # Initialize default thresholds and weights if no config provided
+        self.thresholds = {
+            "king": 0.6,
+            "sage": 0.7,
+            "magi": 0.65
+        }
+        
+        self.token_weights = {
+            "count": 0.3,
+            "indicators": 0.4,
+            "semantic": 0.3
+        }
+        
+        self.performance_thresholds = {
+            "king": 0.7,
+            "sage": 0.75,
+            "magi": 0.8
+        }
+        
+        if config and hasattr(config, 'config') and 'complexity' in config.config:
+            complexity_config = config.config['complexity']
+            if 'thresholds' in complexity_config:
+                self.thresholds.update(complexity_config['thresholds'])
+            if 'token_weights' in complexity_config:
+                self.token_weights.update(complexity_config['token_weights'])
+            if 'performance_thresholds' in complexity_config:
+                self.performance_thresholds.update(complexity_config['performance_thresholds'])
         
         # Initialize complexity indicators for each agent type
         self.complexity_indicators = {
@@ -68,10 +91,10 @@ class ComplexityEvaluator:
         
         logger.info("Initialized ComplexityEvaluator with adaptive thresholds")
     
-    async def evaluate_complexity(self, 
-                                agent_type: str, 
-                                task: str,
-                                context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def evaluate_complexity(self, 
+                          agent_type: str, 
+                          task: str,
+                          context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Evaluate task complexity with enhanced analysis.
         
@@ -128,16 +151,41 @@ class ComplexityEvaluator:
             )
         }
     
-    def _calculate_token_complexity(self, task: str) -> float:
+    def _calculate_structural_complexity(self, task: str) -> float:
         """
-        Calculate complexity score based on token count and structure.
+        Calculate complexity score based on task structure.
         
         Args:
             task: The task to evaluate
             
         Returns:
-            Float between 0 and 1 indicating token-based complexity
+            Float between 0 and 1 indicating structural complexity
         """
+        # Count nested structures
+        nesting_level = task.count('(') + task.count('{') + task.count('[')
+        
+        # Count bullet points or numbered lists
+        lines = [line for line in task.split('\n') if line.strip()]  # Skip empty lines
+        list_items = sum(1 for line in lines if (
+            line.strip().startswith(('-', '*', '•')) or 
+            (len(line.strip()) >= 2 and line.strip()[0].isdigit() and line.strip()[1] in '.)'))
+        )
+        
+        # Count code-like patterns
+        code_indicators = sum(1 for line in lines if 
+                            line.strip().startswith(('def ', 'class ', 'function', 'import ', 'from ')))
+        
+        # Calculate structural score
+        structural_score = (
+            min(1.0, nesting_level / 5) * 0.4 +  # Max score at 5 nested levels
+            min(1.0, list_items / 10) * 0.3 +    # Max score at 10 list items
+            min(1.0, code_indicators / 3) * 0.3   # Max score at 3 code indicators
+        )
+        
+        return structural_score
+    
+    def _calculate_token_complexity(self, task: str) -> float:
+        """Calculate complexity score based on token count and structure."""
         words = task.split()
         word_count = len(words)
         
@@ -154,16 +202,7 @@ class ComplexityEvaluator:
         return (base_score * 0.5 + unique_ratio * 0.3 + normalized_length * 0.2)
     
     def _calculate_indicator_complexity(self, agent_type: str, task: str) -> float:
-        """
-        Calculate complexity score based on agent-specific indicators.
-        
-        Args:
-            agent_type: Type of agent
-            task: The task to evaluate
-            
-        Returns:
-            Float between 0 and 1 indicating indicator-based complexity
-        """
+        """Calculate complexity score based on agent-specific indicators."""
         task_lower = task.lower()
         indicators = self.complexity_indicators[agent_type]
         
@@ -180,16 +219,7 @@ class ComplexityEvaluator:
         return min(1.0, weighted_count / (max_possible * 0.5))  # Divide by 0.5 to allow reaching 1.0 with fewer indicators
     
     def _calculate_semantic_complexity(self, task: str, context: Optional[Dict[str, Any]] = None) -> float:
-        """
-        Calculate complexity score based on semantic analysis.
-        
-        Args:
-            task: The task to evaluate
-            context: Optional context information
-            
-        Returns:
-            Float between 0 and 1 indicating semantic complexity
-        """
+        """Calculate complexity score based on semantic analysis."""
         # Split into sentences
         sentences = [s.strip() for s in task.split('.') if s.strip()]
         
@@ -231,47 +261,8 @@ class ComplexityEvaluator:
         
         return base_score
     
-    def _calculate_structural_complexity(self, task: str) -> float:
-        """
-        Calculate complexity score based on task structure.
-        
-        Args:
-            task: The task to evaluate
-            
-        Returns:
-            Float between 0 and 1 indicating structural complexity
-        """
-        # Count nested structures
-        nesting_level = task.count('(') + task.count('{') + task.count('[')
-        
-        # Count bullet points or numbered lists
-        lines = task.split('\n')
-        list_items = sum(1 for line in lines if line.strip().startswith(('-', '*', '•')) or 
-                        (line.strip()[0].isdigit() and line.strip()[1] in '.)'))
-        
-        # Count code-like patterns
-        code_indicators = sum(1 for line in lines if 
-                            line.strip().startswith(('def ', 'class ', 'function', 'import ', 'from ')))
-        
-        # Calculate structural score
-        structural_score = (
-            min(1.0, nesting_level / 5) * 0.4 +  # Max score at 5 nested levels
-            min(1.0, list_items / 10) * 0.3 +    # Max score at 10 list items
-            min(1.0, code_indicators / 3) * 0.3   # Max score at 3 code indicators
-        )
-        
-        return structural_score
-    
     def _calculate_evaluation_confidence(self, *scores: float) -> float:
-        """
-        Calculate confidence in the complexity evaluation.
-        
-        Args:
-            *scores: Component scores used in evaluation
-            
-        Returns:
-            Float between 0 and 1 indicating confidence level
-        """
+        """Calculate confidence in the complexity evaluation."""
         # Calculate mean and standard deviation of scores
         mean_score = np.mean(scores)
         std_score = np.std(scores)
@@ -292,18 +283,7 @@ class ComplexityEvaluator:
                                    task: str,
                                    complexity_score: float,
                                    threshold: float) -> Dict[str, Any]:
-        """
-        Generate detailed analysis of task complexity.
-        
-        Args:
-            agent_type: Type of agent
-            task: The task to evaluate
-            complexity_score: Calculated complexity score
-            threshold: Current complexity threshold
-            
-        Returns:
-            Dictionary containing detailed analysis
-        """
+        """Generate detailed analysis of task complexity."""
         # Determine primary complexity factors
         indicators_found = [
             indicator for indicator in self.complexity_indicators[agent_type]
@@ -337,14 +317,7 @@ class ComplexityEvaluator:
                                agent_type: str,
                                task_complexity: Dict[str, Any],
                                performance_metrics: Dict[str, float]):
-        """
-        Record performance for threshold adjustment.
-        
-        Args:
-            agent_type: Type of agent
-            task_complexity: Complexity evaluation results
-            performance_metrics: Performance metrics from task execution
-        """
+        """Record performance for threshold adjustment."""
         record = {
             "timestamp": datetime.now().timestamp(),
             "complexity_score": task_complexity["complexity_score"],
@@ -363,35 +336,49 @@ class ComplexityEvaluator:
         if len(self.performance_history[agent_type]) % 100 == 0:
             await self.adjust_thresholds(agent_type)
     
-    async def adjust_thresholds(self, agent_type: str):
+    def adjust_thresholds(self,
+                         agent_type: str,
+                         performance_metrics: Optional[Dict[str, float]] = None,
+                         complexity_history: Optional[List[Dict[str, Any]]] = None) -> float:
         """
         Adjust complexity thresholds based on performance history.
         
         Args:
             agent_type: Type of agent
+            performance_metrics: Optional current performance metrics
+            complexity_history: Optional historical complexity data
+            
+        Returns:
+            New threshold value
         """
-        if not self.performance_history[agent_type]:
-            return
+        if not self.performance_history[agent_type] and not complexity_history:
+            return self.adaptive_thresholds[agent_type]['base']
         
-        recent_history = self.performance_history[agent_type][-100:]
+        history = complexity_history if complexity_history else self.performance_history[agent_type][-100:]
+        
+        if not history:
+            return self.adaptive_thresholds[agent_type]['base']
         
         # Analyze performance patterns
-        complex_tasks = [r for r in recent_history if r["was_complex"]]
-        simple_tasks = [r for r in recent_history if not r["was_complex"]]
+        complex_tasks = [r for r in history if r.get("was_complex", False)]
+        simple_tasks = [r for r in history if not r.get("was_complex", False)]
         
         if not complex_tasks or not simple_tasks:
-            return
+            return self.adaptive_thresholds[agent_type]['base']
         
         # Calculate average performance
-        complex_performance = np.mean([
-            np.mean(list(r["performance"].values())) 
-            for r in complex_tasks
-        ])
-        
-        simple_performance = np.mean([
-            np.mean(list(r["performance"].values())) 
-            for r in simple_tasks
-        ])
+        if performance_metrics:
+            complex_performance = np.mean(list(performance_metrics.values()))
+            simple_performance = complex_performance  # Use same metrics if no separate data
+        else:
+            complex_performance = np.mean([
+                np.mean([v for v in r.get("performance", {}).values() if isinstance(v, (int, float))])
+                for r in complex_tasks if r.get("performance")
+            ])
+            simple_performance = np.mean([
+                np.mean([v for v in r.get("performance", {}).values() if isinstance(v, (int, float))])
+                for r in simple_tasks if r.get("performance")
+            ])
         
         # Get current threshold configuration
         threshold_config = self.adaptive_thresholds[agent_type]
@@ -406,7 +393,7 @@ class ComplexityEvaluator:
             adjustment = -threshold_config['adjustment_rate']
         else:
             # Performance is balanced, small adjustment based on ratio
-            performance_ratio = complex_performance / simple_performance
+            performance_ratio = complex_performance / simple_performance if simple_performance > 0 else 1
             adjustment = threshold_config['adjustment_rate'] * (performance_ratio - 1)
         
         # Apply adjustment within bounds
@@ -414,53 +401,15 @@ class ComplexityEvaluator:
         new_threshold = max(threshold_config['min'], 
                           min(threshold_config['max'], new_threshold))
         
-        # Update threshold
-        self.adaptive_thresholds[agent_type]['base'] = new_threshold
+        # Update threshold if changed
+        if new_threshold != current_threshold:
+            self.adaptive_thresholds[agent_type]['base'] = new_threshold
+            logger.info(
+                f"Adjusted {agent_type} complexity threshold: {current_threshold:.3f} -> {new_threshold:.3f}"
+            )
         
-        logger.info(
-            f"Adjusted {agent_type} complexity threshold: {current_threshold:.3f} -> {new_threshold:.3f}"
-        )
+        return new_threshold
     
-    def get_threshold_analysis(self, agent_type: str) -> Dict[str, Any]:
-        """
-        Get analysis of threshold performance.
-        
-        Args:
-            agent_type: Type of agent
-            
-        Returns:
-            Dictionary containing threshold analysis
-        """
-        if not self.performance_history[agent_type]:
-            return {"error": "No performance history available"}
-        
-        recent_history = self.performance_history[agent_type][-100:]
-        
-        # Calculate metrics
-        complex_ratio = sum(1 for r in recent_history if r["was_complex"]) / len(recent_history)
-        
-        performance_by_complexity = {
-            "complex": np.mean([
-                np.mean(list(r["performance"].values()))
-                for r in recent_history if r["was_complex"]
-            ]) if any(r["was_complex"] for r in recent_history) else 0,
-            
-            "simple": np.mean([
-                np.mean(list(r["performance"].values()))
-                for r in recent_history if not r["was_complex"]
-            ]) if any(not r["was_complex"] for r in recent_history) else 0
-        }
-        
-        threshold_config = self.adaptive_thresholds[agent_type]
-        
-        return {
-            "current_threshold": threshold_config['base'],
-            "threshold_range": {
-                "min": threshold_config['min'],
-                "max": threshold_config['max']
-            },
-            "complex_task_ratio": complex_ratio,
-            "performance_by_complexity": performance_by_complexity,
-            "adjustment_rate": threshold_config['adjustment_rate'],
-            "history_size": len(self.performance_history[agent_type])
-        }
+    def get_threshold(self, agent_type: str) -> float:
+        """Get current complexity threshold for an agent type."""
+        return self.adaptive_thresholds[agent_type]['base']
