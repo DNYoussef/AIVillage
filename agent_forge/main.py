@@ -62,7 +62,7 @@ class AIVillage:
                 agent_type = self._determine_agent_type(task)
             
             # Evaluate task complexity
-            complexity_analysis = await self.complexity_evaluator.evaluate_complexity(
+            complexity_analysis = self.complexity_evaluator.evaluate_complexity(
                 agent_type=agent_type,
                 task=task,
                 context=kwargs.get("context")
@@ -84,29 +84,34 @@ class AIVillage:
             
             # If frontier model was used, store training data
             agent_config = self.config.get_agent_config(agent_type)
-            if result["model"] == agent_config.frontier_model.name:
+            if result["model_used"] == agent_config.frontier_model.name:
                 await self.data_collector.store_training_example(
                     agent_type=agent_type,
                     frontier_model=agent_config.frontier_model.name,
                     local_model=agent_config.local_model.name,
-                    prompt=task,
-                    response=result["response"],
-                    quality_score=result.metadata.get("quality_score", 0.0)
+                    example={
+                        "input": task,
+                        "output": result["response"],
+                        "metadata": result.get("metadata", {})
+                    },
+                    quality_score=result.get("metadata", {}).get("quality_score", 0.0)
                 )
             
             # Store performance metrics
             agent = self.agent_manager.get_agent(agent_type)
+            performance_metrics = agent.get_performance_metrics()
             await self.data_collector.store_performance_metrics(
                 agent_type=agent_type,
                 model_type="frontier" if complexity_analysis["is_complex"] else "local",
-                metrics=agent.get_performance_metrics()
+                metrics=performance_metrics
             )
             
             return {
                 "response": result["response"],
-                "model_used": result["model"],
+                "model_used": result["model_used"],
                 "complexity_analysis": complexity_analysis,
-                "performance_metrics": agent.get_performance_metrics(),
+                "performance_metrics": performance_metrics,
+                "metadata": result.get("metadata", {}),
                 "status": "success"
             }
             
@@ -157,6 +162,11 @@ class AIVillage:
                 # Get task from queue
                 task_data = await self.task_queue.get()
                 
+                # Ensure task data has required fields
+                if not isinstance(task_data, dict) or "task" not in task_data:
+                    logger.error("Invalid task data format")
+                    continue
+                
                 # Process task
                 result = await self.process_task(**task_data)
                 
@@ -178,6 +188,10 @@ class AIVillage:
             try:
                 # Get recent performance data
                 agent = self.agent_manager.get_agent(agent_type)
+                if not agent:
+                    logger.error(f"Agent {agent_type} not found")
+                    continue
+                    
                 performance_metrics = agent.get_performance_metrics()
                 
                 # Get recent complexity history
@@ -189,14 +203,11 @@ class AIVillage:
                 )
                 
                 # Adjust thresholds
-                new_threshold = await self.complexity_evaluator.adjust_thresholds(
+                self.complexity_evaluator.adjust_thresholds(
                     agent_type=agent_type,
                     performance_metrics=performance_metrics,
                     complexity_history=complexity_history
                 )
-                
-                if new_threshold is not None:
-                    logger.info(f"Updated complexity threshold for {agent_type}: {new_threshold}")
                 
             except Exception as e:
                 logger.error(f"Error updating complexity thresholds for {agent_type}: {str(e)}")
@@ -211,10 +222,11 @@ class AIVillage:
         """
         await self.task_queue.put({
             "task": task,
-            **kwargs
+            "agent_type": kwargs.get("agent_type"),
+            **{k: v for k, v in kwargs.items() if k != "agent_type"}
         })
     
-    def get_system_status(self) -> Dict[str, Any]:
+    async def get_system_status(self) -> Dict[str, Any]:
         """
         Get current system status and metrics.
         
@@ -225,6 +237,14 @@ class AIVillage:
         for agent_type in ["king", "sage", "magi"]:
             try:
                 agent = self.agent_manager.get_agent(agent_type)
+                if not agent:
+                    logger.error(f"Agent {agent_type} not found")
+                    agent_metrics[agent_type] = {
+                        "task_success_rate": 0.0,
+                        "local_model_performance": 0.0
+                    }
+                    continue
+                    
                 metrics = agent.get_performance_metrics()
                 agent_metrics[agent_type] = {
                     "task_success_rate": metrics.get("task_success_rate", 0.0),
@@ -237,6 +257,15 @@ class AIVillage:
                     "local_model_performance": 0.0
                 }
         
+        training_data_counts = {}
+        for agent_type in ["king", "sage", "magi"]:
+            try:
+                data = await self.data_collector.get_training_data(agent_type=agent_type)
+                training_data_counts[agent_type] = len(data) if data else 0
+            except Exception as e:
+                logger.error(f"Error getting training data count for {agent_type}: {str(e)}")
+                training_data_counts[agent_type] = 0
+        
         return {
             "queue_size": self.task_queue.qsize(),
             "agent_metrics": agent_metrics,
@@ -244,10 +273,7 @@ class AIVillage:
                 agent_type: self.complexity_evaluator.get_threshold(agent_type)
                 for agent_type in ["king", "sage", "magi"]
             },
-            "training_data_counts": {
-                agent_type: len(self.data_collector.get_training_data(agent_type=agent_type))
-                for agent_type in ["king", "sage", "magi"]
-            },
+            "training_data_counts": training_data_counts,
             "system_health": {
                 "status": "healthy",
                 "last_error": None
@@ -287,7 +313,7 @@ async def main():
         task_loop.cancel()
         
         # Print final status
-        status = village.get_system_status()
+        status = await village.get_system_status()
         logger.info("Final system status:")
         logger.info(yaml.dump(status, default_flow_style=False))
         

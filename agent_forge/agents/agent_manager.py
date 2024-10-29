@@ -96,7 +96,10 @@ class AgentManager:
                     
                     # Adjust complexity thresholds based on performance
                     for agent_type in self.agents:
-                        await self.complexity_evaluator.adjust_thresholds(agent_type)
+                        self.complexity_evaluator.adjust_thresholds(
+                            agent_type=agent_type,
+                            performance_metrics=metrics[agent_type]
+                        )
                     
                     # Wait for next monitoring interval
                     await asyncio.sleep(60)  # Check every minute
@@ -129,7 +132,7 @@ class AgentManager:
         
         try:
             # Evaluate task complexity
-            complexity_evaluation = await self.complexity_evaluator.evaluate_complexity(
+            complexity_evaluation = self.complexity_evaluator.evaluate_complexity(
                 agent_type=agent_type,
                 task=task,
                 context=kwargs.get('context')
@@ -174,19 +177,20 @@ class AgentManager:
             )
             
             # Update complexity evaluator with performance data
-            await self.complexity_evaluator.record_performance(
+            self.complexity_evaluator.record_performance(
                 agent_type=agent_type,
                 task_complexity=complexity_evaluation,
                 performance_metrics=performance_metrics
             )
             
-            # Prepare response
+            # Return interaction as dictionary
             return {
                 "response": interaction.response,
                 "model_used": interaction.model,
                 "complexity_analysis": complexity_evaluation,
                 "performance_metrics": performance_metrics,
-                "metadata": interaction.metadata
+                "metadata": interaction.metadata,
+                "status": "success"
             }
             
         except Exception as e:

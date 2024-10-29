@@ -50,6 +50,10 @@ class RAGConfig(UnifiedConfig):
     # Add RAG-specific configuration parameters here
     num_documents: int = 5
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    vector_dimension: int = 768  # Added vector dimension
+    neo4j_uri: str = "bolt://localhost:7687"
+    neo4j_user: str = "neo4j"
+    neo4j_password: str = "password"
 
 class OpenAIGPTConfig(BaseModel):
     """Configuration for OpenAI GPT models."""

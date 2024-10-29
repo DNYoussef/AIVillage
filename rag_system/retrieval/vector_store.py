@@ -35,6 +35,9 @@ class VectorStore(BaseComponent):
             # Load any saved index and documents
             if hasattr(self.config, 'vector_store_path') and os.path.exists(self.config.vector_store_path):
                 self.load(self.config.vector_store_path, self.config)
+            # Add a dummy document if store is empty to prevent index errors
+            if not self.documents:
+                self.add_texts(["Initialization document"])
             self.initialized = True
     
     @log_and_handle_errors()
@@ -63,6 +66,8 @@ class VectorStore(BaseComponent):
 
     def add_documents(self, documents: List[Dict[str, Any]]) -> None:
         """Add documents to the vector store."""
+        if not documents:
+            return
         vectors = [doc['embedding'] for doc in documents]
         self.index.add(np.array(vectors).astype('float32'))
         self.documents.extend(documents)
@@ -104,22 +109,32 @@ class VectorStore(BaseComponent):
             List of retrieval results
         """
         async with ErrorContext("VectorStore.retrieve"):
+            if not self.initialized:
+                await self.initialize()
+
+            if not self.documents:
+                return []
+
+            # Ensure k is not larger than the number of documents
+            k = min(k, len(self.documents))
+            
             query_vector_np = np.array([query_vector]).astype('float32')
             distances, indices = self.index.search(query_vector_np, k)
             
             results = []
-            for i, idx in enumerate(indices[0]):
-                if idx < len(self.documents):  # Check index bounds
-                    doc = self.documents[idx]
-                    if (timestamp is None or doc.get('timestamp') <= timestamp) and \
-                       (metadata_filter is None or all(doc.get(key) == value for key, value in metadata_filter.items())):
-                        result = RetrievalResult(
-                            id=doc['id'],
-                            content=doc['content'],
-                            score=1 / (1 + distances[0][i]),  # Convert distance to similarity score
-                            timestamp=doc.get('timestamp')
-                        )
-                        results.append(result)
+            if len(indices) > 0 and len(indices[0]) > 0:
+                for i, idx in enumerate(indices[0]):
+                    if idx >= 0 and idx < len(self.documents):  # Check index bounds
+                        doc = self.documents[idx]
+                        if (timestamp is None or doc.get('timestamp') <= timestamp) and \
+                           (metadata_filter is None or all(doc.get(key) == value for key, value in metadata_filter.items())):
+                            result = RetrievalResult(
+                                id=doc['id'],
+                                content=doc['content'],
+                                score=1 / (1 + distances[0][i]),  # Convert distance to similarity score
+                                timestamp=doc.get('timestamp')
+                            )
+                            results.append(result)
             
             return results
 
@@ -158,9 +173,9 @@ class VectorStore(BaseComponent):
 
     def add_texts(self, texts: List[str]) -> None:
         """Add texts to vector store."""
-        # This is a convenience method for ContinuousLearningLayer
-        # In a real implementation, you would embed these texts first
-        # For now, just create random embeddings as a placeholder
+        if not texts:
+            return
+            
         documents = []
         for i, text in enumerate(texts):
             doc = {

@@ -133,11 +133,42 @@ def magi_agent(config, openrouter_agent, mock_code_generator, mock_experiment_ma
     })
     agent.code_generator = mock_code_generator
     agent.experiment_manager = mock_experiment_manager
+    
+    # Mock complexity evaluator with complete response structure
     agent.complexity_evaluator = Mock()
     agent.complexity_evaluator.evaluate_complexity = Mock(return_value={
         "is_complex": False,
         "complexity_score": 0.3,
-        "confidence": 0.9
+        "confidence": 0.9,
+        "threshold_used": 0.7,
+        "components": {
+            "token_complexity": 0.2,
+            "indicator_complexity": 0.3,
+            "semantic_complexity": 0.4,
+            "structural_complexity": 0.3
+        },
+        "analysis": {
+            "explanation": "Task is considered manageable for magi agent",
+            "primary_factors": ["code", "function", "implement"],
+            "score_breakdown": {
+                "raw_score": 0.3,
+                "threshold": 0.7,
+                "margin": 0.4
+            }
+        }
+    })
+    agent.complexity_evaluator.record_performance = Mock()
+    agent.complexity_evaluator.adjust_thresholds = Mock(return_value=0.7)
+    agent.complexity_evaluator.get_threshold = Mock(return_value=0.7)
+    agent.complexity_evaluator.get_threshold_analysis = Mock(return_value={
+        "current_threshold": 0.7,
+        "min_threshold": 0.5,
+        "max_threshold": 0.9,
+        "complex_task_ratio": 0.3,
+        "performance_by_complexity": {
+            "complex": 0.85,
+            "simple": 0.9
+        }
     })
 
     # Mock _construct_coding_prompt
@@ -161,7 +192,7 @@ def magi_agent(config, openrouter_agent, mock_code_generator, mock_experiment_ma
         "test_coverage": 0.95,
         "optimization_score": 0.9,
         "local_model_performance": 0.85,
-        "documentation_quality": 0.8  # Set a non-zero value
+        "documentation_quality": 0.8
     }
 
     return agent

@@ -3,7 +3,7 @@
 import logging
 import json
 import sqlite3
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple, Union
 from pathlib import Path
 from datetime import datetime
 import numpy as np
@@ -189,12 +189,15 @@ class ComplexityEvaluator:
         words = task.split()
         word_count = len(words)
         
+        if word_count == 0:
+            return 0.0
+        
         # Calculate unique word ratio
         unique_words = len(set(words))
-        unique_ratio = unique_words / word_count if word_count > 0 else 0
+        unique_ratio = unique_words / word_count
         
         # Calculate average word length
-        avg_word_length = sum(len(word) for word in words) / word_count if word_count > 0 else 0
+        avg_word_length = sum(len(word) for word in words) / word_count
         normalized_length = min(1.0, avg_word_length / 10)  # Normalize to 0-1
         
         # Combine metrics
@@ -223,6 +226,9 @@ class ComplexityEvaluator:
         # Split into sentences
         sentences = [s.strip() for s in task.split('.') if s.strip()]
         
+        if not sentences:
+            return 0.0
+        
         # Analyze logical operators and conditions
         logical_operators = ['and', 'or', 'but', 'however', 'although', 'unless', 'if', 'then', 'else']
         condition_markers = ['if', 'when', 'while', 'unless', 'until', 'provided that', 'assuming that']
@@ -246,12 +252,7 @@ class ComplexityEvaluator:
         
         # Calculate base complexity
         total_markers = operator_count + condition_count + temporal_count
-        sentence_count = len(sentences)
-        
-        if sentence_count == 0:
-            return 0.0
-        
-        density = total_markers / sentence_count
+        density = total_markers / len(sentences)
         base_score = min(1.0, density / 3)  # Normalize to 0-1
         
         # Adjust for context if available
@@ -263,9 +264,12 @@ class ComplexityEvaluator:
     
     def _calculate_evaluation_confidence(self, *scores: float) -> float:
         """Calculate confidence in the complexity evaluation."""
+        if not scores:
+            return 0.0
+            
         # Calculate mean and standard deviation of scores
-        mean_score = np.mean(scores)
-        std_score = np.std(scores)
+        mean_score = float(np.mean(scores))
+        std_score = float(np.std(scores))
         
         # Higher confidence when scores are consistent (low std dev)
         consistency_factor = 1 - min(1.0, std_score * 2)
@@ -313,11 +317,14 @@ class ComplexityEvaluator:
             }
         }
     
-    async def record_performance(self,
-                               agent_type: str,
-                               task_complexity: Dict[str, Any],
-                               performance_metrics: Dict[str, float]):
+    def record_performance(self,
+                         agent_type: str,
+                         task_complexity: Dict[str, Any],
+                         performance_metrics: Dict[str, float]) -> None:
         """Record performance for threshold adjustment."""
+        if agent_type not in self.adaptive_thresholds:
+            raise ValueError(f"Invalid agent type: {agent_type}")
+            
         record = {
             "timestamp": datetime.now().timestamp(),
             "complexity_score": task_complexity["complexity_score"],
@@ -334,7 +341,7 @@ class ComplexityEvaluator:
         
         # Adjust thresholds periodically
         if len(self.performance_history[agent_type]) % 100 == 0:
-            await self.adjust_thresholds(agent_type)
+            self.adjust_thresholds(agent_type)
     
     def adjust_thresholds(self,
                          agent_type: str,
@@ -351,6 +358,9 @@ class ComplexityEvaluator:
         Returns:
             New threshold value
         """
+        if agent_type not in self.adaptive_thresholds:
+            raise ValueError(f"Invalid agent type: {agent_type}")
+            
         if not self.performance_history[agent_type] and not complexity_history:
             return self.adaptive_thresholds[agent_type]['base']
         
@@ -412,4 +422,43 @@ class ComplexityEvaluator:
     
     def get_threshold(self, agent_type: str) -> float:
         """Get current complexity threshold for an agent type."""
+        if agent_type not in self.adaptive_thresholds:
+            raise ValueError(f"Invalid agent type: {agent_type}")
         return self.adaptive_thresholds[agent_type]['base']
+    
+    def get_threshold_analysis(self, agent_type: str) -> Dict[str, Any]:
+        """Get analysis of current threshold and performance."""
+        if agent_type not in self.adaptive_thresholds:
+            raise ValueError(f"Invalid agent type: {agent_type}")
+        
+        threshold_config = self.adaptive_thresholds[agent_type]
+        history = self.performance_history[agent_type][-100:] if self.performance_history[agent_type] else []
+        
+        complex_tasks = [r for r in history if r.get("was_complex", False)]
+        simple_tasks = [r for r in history if not r.get("was_complex", False)]
+        
+        complex_performance = 0.0
+        simple_performance = 0.0
+        
+        if complex_tasks:
+            complex_performance = np.mean([
+                np.mean([v for v in r.get("performance", {}).values() if isinstance(v, (int, float))])
+                for r in complex_tasks if r.get("performance")
+            ])
+            
+        if simple_tasks:
+            simple_performance = np.mean([
+                np.mean([v for v in r.get("performance", {}).values() if isinstance(v, (int, float))])
+                for r in simple_tasks if r.get("performance")
+            ])
+        
+        return {
+            "current_threshold": threshold_config['base'],
+            "min_threshold": threshold_config['min'],
+            "max_threshold": threshold_config['max'],
+            "complex_task_ratio": len(complex_tasks) / len(history) if history else 0,
+            "performance_by_complexity": {
+                "complex": complex_performance,
+                "simple": simple_performance
+            }
+        }
