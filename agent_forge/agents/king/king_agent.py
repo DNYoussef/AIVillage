@@ -135,6 +135,24 @@ class KingAgent:
         logger.info(f"  Frontier model: {openrouter_agent.model}")
         logger.info(f"  Local model: {openrouter_agent.local_model}")
     
+    def _get_default_system_prompt(self) -> str:
+        """Get the default system prompt for King agent."""
+        return """You are King, an advanced AI agent specializing in complex problem-solving and strategic thinking who helps guide the AI village with the peace of a Taoist.
+        Your approach is:
+        1. Analyze problems thoroughly from multiple angles
+        2. Break down complex tasks into manageable steps
+        3. Consider long-term implications and strategic impact
+        4. Provide clear, actionable guidance
+        5. Maintain awareness of context and constraints
+        
+        You excel at:
+        - Strategic planning and decision making
+        - Resource allocation and optimization
+        - Complex problem decomposition
+        - Risk assessment and mitigation
+        - Performance monitoring and adaptation
+        """
+    
     async def process_task(self, 
                           task: str,
                           system_prompt: Optional[str] = None,
@@ -182,6 +200,15 @@ class KingAgent:
                         max_tokens=resources["max_tokens"],
                         temperature=resources["temperature"]
                     )
+                    # Convert dictionary response to AgentInteraction if needed
+                    if isinstance(local_response, dict):
+                        local_response = AgentInteraction(
+                            prompt=task,
+                            response=local_response["response"],
+                            model=local_response["model"],
+                            timestamp=time.time(),
+                            metadata=local_response["metadata"]
+                        )
                 except Exception as e:
                     logger.warning(f"Local model generation failed: {str(e)}")
             
@@ -204,18 +231,13 @@ class KingAgent:
                 if local_response:
                     self._record_model_comparison(local_response, interaction)
             else:
-                # Convert local response to AgentInteraction format
-                interaction = AgentInteraction(
-                    prompt=task,
-                    response=local_response["response"],
-                    model=local_response["model"],
-                    timestamp=time.time(),
-                    metadata={
-                        **local_response["metadata"],
-                        "complexity_evaluation": complexity_evaluation,
-                        "resources_allocated": resources
-                    }
-                )
+                # Use local response directly since it's already an AgentInteraction
+                interaction = local_response
+                # Add complexity evaluation and resources
+                interaction.metadata.update({
+                    "complexity_evaluation": complexity_evaluation,
+                    "resources_allocated": resources
+                })
             
             # Calculate performance metrics
             duration = time.time() - start_time
@@ -243,26 +265,8 @@ class KingAgent:
                 self.task_manager.active_tasks[task_id]["status"] = "failed"
             raise
     
-    def _get_default_system_prompt(self) -> str:
-        """Get the default system prompt for King agent."""
-        return """You are King, an advanced AI agent specializing in complex problem-solving and strategic thinking.
-        Your approach is:
-        1. Analyze problems thoroughly from multiple angles
-        2. Break down complex tasks into manageable steps
-        3. Consider long-term implications and strategic impact
-        4. Provide clear, actionable guidance
-        5. Maintain awareness of context and constraints
-        
-        You excel at:
-        - Strategic planning and decision making
-        - Resource allocation and optimization
-        - Complex problem decomposition
-        - Risk assessment and mitigation
-        - Performance monitoring and adaptation
-        """
-    
     def _record_model_comparison(self, 
-                               local_response: Dict[str, Any],
+                               local_response: AgentInteraction,
                                frontier_interaction: AgentInteraction):
         """Record detailed performance comparison between models."""
         from difflib import SequenceMatcher
@@ -270,16 +274,16 @@ class KingAgent:
         # Calculate response similarity
         similarity = SequenceMatcher(
             None, 
-            local_response["response"], 
+            local_response.response, 
             frontier_interaction.response
         ).ratio()
         
         # Calculate performance metrics
-        local_duration = local_response["metadata"]["performance"]["duration"]
-        frontier_duration = frontier_interaction.duration
+        local_duration = local_response.metadata["performance"]["duration"]
+        frontier_duration = frontier_interaction.metadata["performance"]["duration"]
         
-        local_tokens = local_response["metadata"]["performance"]["total_tokens"]
-        frontier_tokens = frontier_interaction.token_usage["total_tokens"]
+        local_tokens = local_response.metadata["token_usage"]["total_tokens"]
+        frontier_tokens = frontier_interaction.metadata["token_usage"]["total_tokens"]
         
         performance_metrics = {
             "response_similarity": similarity,

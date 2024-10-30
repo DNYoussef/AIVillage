@@ -160,10 +160,10 @@ class ReverseEngineer:
         5. Performance characteristics
         
         For each hypothesis, provide:
-        1. The hypothesis statement
+        1. The hypothesis statement in terms of falsifaction
         2. Expected evidence
         3. Test approach
-        4. Success criteria
+        4. Falsification criteria
         
         Format as JSON list of dictionaries.
         """
