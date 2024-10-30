@@ -1,31 +1,42 @@
 """
-inference_engine.py
-Efficient inference for hyper-compressed models
+inference_engine.py - Efficient inference for hypercompressed and LFSR-seeded models
 """
 
-from base64 import decode
-import tokenize
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, Any, Optional, List, Tuple
+import cupy as cp
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from collections import OrderedDict
-import threading
-from queue import Queue
 import numpy as np
+import logging
 from concurrent.futures import ThreadPoolExecutor
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @dataclass
 class InferenceConfig:
     """Configuration for inference engine"""
+    # Memory management
     cache_size: int = 1024
+    pattern_cache_size: int = 128
+    max_working_memory: int = 4  # GB
+    
+    # Hardware settings
     num_threads: int = 4
     batch_size: int = 1
-    prefetch_layers: int = 2
     device: str = 'cuda'
     mixed_precision: bool = True
-    pattern_cache_size: int = 128
+    
+    # LFSR settings
+    lfsr_length: int = 16
+    lfsr_polynomial: int = 0x1100B
+    
+    # Pipeline settings
+    prefetch_layers: int = 2
+    block_size: int = 256
     enable_pipeline: bool = True
 
 class WeightCache:
@@ -33,324 +44,227 @@ class WeightCache:
     def __init__(self, size: int):
         self.size = size
         self.cache = OrderedDict()
-        
+    
     def get(self, key: str) -> Optional[torch.Tensor]:
         if key in self.cache:
-            # Move to end (most recently used)
             self.cache.move_to_end(key)
             return self.cache[key]
         return None
-        
+    
     def put(self, key: str, value: torch.Tensor):
         if key in self.cache:
             self.cache.move_to_end(key)
         else:
             if len(self.cache) >= self.size:
-                # Remove least recently used
                 self.cache.popitem(last=False)
         self.cache[key] = value
 
+# CUDA kernels for weight reconstruction
+cuda_reconstruct_group = cp.RawKernel(r'''
+extern "C" __global__
+void reconstruct_group(float theta, int K, int8_t* output) {
+    int idx = blockDim.x * blockIdx.x + threadIdx.x;
+    if (idx < K) {
+        float value = theta / (M_PI + (idx + 1));
+        value = value - floor(value);
+        output[idx] = round(value * 2 - 1);
+    }
+}
+''', 'reconstruct_group')
+
 class LFSR:
-    """Hardware-optimized LFSR implementation"""
-    def __init__(self, width: int = 16):
+    """Hardware-efficient LFSR for weight generation"""
+    def __init__(self, width: int = 16, polynomial: int = 0x1100B):
         self.width = width
+        self.polynomial = polynomial
         self.mask = (1 << width) - 1
-        self.taps = [0, 2, 3, 5]  # Optimized feedback polynomial
         
-    @torch.jit.script  # JIT compilation for speed
+    @torch.jit.script  # JIT compile for speed
     def generate_sequence(self, seed: int, length: int) -> torch.Tensor:
-        """Generate sequence using optimized implementation"""
-        state = seed
-        sequence = torch.zeros(length, dtype=torch.int32)
+        state = seed & self.mask
+        sequence = torch.zeros(length, dtype=torch.int8)
         
         for i in range(length):
-            feedback = 0
-            for tap in self.taps:
-                feedback ^= (state >> tap) & 1
-            state = ((state >> 1) | (feedback << (self.width-1))) & self.mask
-            sequence[i] = state
+            feedback = bin(state & self.polynomial).count('1') & 1
+            state = ((state >> 1) | (feedback << (self.width - 1))) & self.mask
+            sequence[i] = (state % 3) - 1
             
         return sequence
 
-class WeightReconstructor:
-    """Efficient weight reconstruction from compressed state"""
-    def __init__(self, 
-                 compressed_state: Dict[str, Any],
-                 config: InferenceConfig):
-        self.compressed_state = compressed_state
+class WeightManager:
+    """Manages weight reconstruction and caching"""
+    def __init__(self, config: InferenceConfig):
         self.config = config
         self.cache = WeightCache(config.cache_size)
-        self.lfsr = LFSR()
-        self.pattern_cache = {}
-        self.reconstruction_queue = Queue()
-        self.executor = ThreadPoolExecutor(max_workers=config.num_threads)
+        self.pattern_cache = WeightCache(config.pattern_cache_size)
+        self.lfsr = LFSR(config.lfsr_length, config.lfsr_polynomial)
         
-    def _regenerate_pattern(self, 
-                           theta: float, 
-                           size: int,
-                           device: str) -> torch.Tensor:
-        """Regenerate pattern from theta"""
-        if (theta, size) in self.pattern_cache:
-            return self.pattern_cache[(theta, size)]
-            
-        indices = torch.arange(size, device=device, dtype=torch.float32)
-        values = torch.tensor(theta, device=device) / (torch.pi + indices)
-        values = values - values.floor()
-        pattern = torch.round(values * 2 - 1).to(torch.int8)
-        
-        if len(self.pattern_cache) < self.config.pattern_cache_size:
-            self.pattern_cache[(theta, size)] = pattern
-            
-        return pattern
-        
-    @torch.cuda.amp.autocast()
     def reconstruct_layer(self, 
-                         layer_name: str,
-                         device: str = 'cuda') -> torch.Tensor:
+                         compressed_data: Dict[str, Any],
+                         layer_name: str) -> torch.Tensor:
         """Reconstruct weights for a layer"""
-        # Check cache first
+        # Check cache
         cached = self.cache.get(layer_name)
         if cached is not None:
             return cached
             
-        compressed_data = self.compressed_state[layer_name]
-        original_shape = compressed_data['original_shape']
-        seeds = compressed_data['seeds']
-        indices = compressed_data['indices']
+        reconstructed_chunks = []
+        for chunk in compressed_data['chunks']:
+            decompressed_chunk = self._reconstruct_chunk(chunk)
+            reconstructed_chunks.append(decompressed_chunk)
+            
+        # Combine chunks
+        weights = torch.cat(reconstructed_chunks).reshape(compressed_data['original_shape'])
+        weights = weights * compressed_data['scale']  # Apply scale
         
-        # Reconstruct patterns
-        patterns = {}
-        for name, seed in seeds.items():
-            if name == 'zero':
-                patterns[name] = torch.zeros(
-                    compressed_data['patterns'][name]['size'],
-                    device=device
-                )
-                continue
-                
-            # Generate from LFSR seed
-            sequence = self.lfsr.generate_sequence(
-                seed,
-                compressed_data['patterns'][name]['size']
-            ).to(device)
-            
-            # Apply hyperfunction transformation
-            pattern = self._regenerate_pattern(
-                compressed_data['patterns'][name]['theta'],
-                sequence.size(0),
-                device
-            )
-            
-            patterns[name] = pattern
-            
-        # Reconstruct full weight matrix
-        weights = torch.zeros(original_shape, device=device)
-        for i, idx in enumerate(indices):
-            pattern_name = f'pattern_{idx}'
-            if idx == 0:
-                pattern_name = 'zero'
-            weights[i*self.config.block_size:(i+1)*self.config.block_size] = \
-                patterns[pattern_name]
-                
         # Cache result
         self.cache.put(layer_name, weights)
-        
         return weights
-
-class PipelineExecutor:
-    """Manages pipelined execution of layer reconstruction and computation"""
-    def __init__(self, config: InferenceConfig):
-        self.config = config
-        self.reconstruction_queue = Queue()
-        self.compute_queue = Queue()
-        self.result_queue = Queue()
         
-    def start_pipeline(self):
-        """Start pipeline threads"""
-        self.reconstruction_thread = threading.Thread(
-            target=self._reconstruction_worker
-        )
-        self.compute_thread = threading.Thread(
-            target=self._compute_worker
-        )
-        
-        self.reconstruction_thread.start()
-        self.compute_thread.start()
-        
-    def _reconstruction_worker(self):
-        """Worker for weight reconstruction"""
-        while True:
-            task = self.reconstruction_queue.get()
-            if task is None:
-                break
-                
-            layer_name, reconstructor = task
-            weights = reconstructor.reconstruct_layer(layer_name)
-            self.compute_queue.put((layer_name, weights))
+    def _reconstruct_chunk(self, chunk: Dict[str, Any]) -> torch.Tensor:
+        """Reconstruct a single chunk from seeds"""
+        patterns = []
+        for seed in chunk['seeds']:
+            # Try pattern cache first
+            pattern = self.pattern_cache.get(str(seed))
+            if pattern is None:
+                pattern = self.lfsr.generate_sequence(
+                    seed,
+                    self.config.block_size
+                )
+                self.pattern_cache.put(str(seed), pattern)
+            patterns.append(pattern)
             
-    def _compute_worker(self):
-        """Worker for computation"""
-        while True:
-            task = self.compute_queue.get()
-            if task is None:
-                break
-                
-            layer_name, weights = task
-            # Computation happens here
-            self.result_queue.put((layer_name, None))
+        return torch.cat(patterns)
 
 class InferenceEngine:
     """Main inference engine for compressed models"""
     def __init__(self, 
-                 model_path: str,
+                 compressed_state: Dict[str, Any],
                  config: Optional[InferenceConfig] = None):
         self.config = config or InferenceConfig()
-        self.compressed_state = torch.load(model_path)
-        self.reconstructor = WeightReconstructor(
-            self.compressed_state,
-            self.config
-        )
-        self.pipeline = PipelineExecutor(self.config)
+        self.compressed_state = compressed_state
+        self.weight_manager = WeightManager(self.config)
+        self.current_layer = 0
         
+        # Setup layer prefetching
         if self.config.enable_pipeline:
-            self.pipeline.start_pipeline()
+            self.prefetch_queue = []
+            self._init_prefetch()
             
+    def _init_prefetch(self):
+        """Initialize prefetch queue"""
+        for i in range(self.config.prefetch_layers):
+            layer_name = f"layers.{self.current_layer + i}.weight"
+            if layer_name in self.compressed_state:
+                self.prefetch_queue.append(
+                    self.weight_manager.reconstruct_layer(
+                        self.compressed_state[layer_name],
+                        layer_name
+                    )
+                )
+    
     @torch.inference_mode()
+    @torch.cuda.amp.autocast()
     def generate(self, 
                 input_ids: torch.Tensor,
                 max_length: int = 100,
                 temperature: float = 1.0) -> torch.Tensor:
-        """Generate tokens using efficient inference"""
-        batch_size = input_ids.size(0)
+        """Generate tokens with efficient weight reconstruction"""
         device = input_ids.device
+        generated = []
         
         for _ in range(max_length):
-            # 1. Prefetch next layers
-            for i in range(self.config.prefetch_layers):
-                next_layer = f"layer_{self.current_layer + i}"
-                if next_layer in self.compressed_state:
-                    self.pipeline.reconstruction_queue.put(
-                        (next_layer, self.reconstructor)
+            # Get next layer weights
+            if self.prefetch_queue:
+                weights = self.prefetch_queue.pop(0)
+            else:
+                layer_name = f"layers.{self.current_layer}.weight"
+                weights = self.weight_manager.reconstruct_layer(
+                    self.compressed_state[layer_name],
+                    layer_name
+                )
+            
+            # Prefetch next layer
+            next_layer = f"layers.{self.current_layer + self.config.prefetch_layers}.weight"
+            if next_layer in self.compressed_state:
+                self.prefetch_queue.append(
+                    self.weight_manager.reconstruct_layer(
+                        self.compressed_state[next_layer],
+                        next_layer
                     )
-                    
-            # 2. Get current layer weights
-            weights = self.reconstructor.reconstruct_layer(
-                f"layer_{self.current_layer}"
-            )
-            
-            # 3. Compute attention
-            with torch.cuda.amp.autocast(enabled=self.config.mixed_precision):
-                attention_output = self._compute_attention(
-                    input_ids,
-                    weights
                 )
-                
-                # 4. Compute FFN
-                ffn_output = self._compute_ffn(
-                    attention_output,
-                    weights
-                )
-                
-                # 5. Generate next token
-                logits = self._compute_logits(ffn_output)
-                
-                # 6. Sample
-                next_token = self._sample_token(
-                    logits,
-                    temperature
-                )
-                
-            # Append new token
-            input_ids = torch.cat(
-                [input_ids, next_token.unsqueeze(-1)],
-                dim=-1
-            )
             
-        return input_ids
-        
-    def _compute_attention(self, 
-                          input_ids: torch.Tensor,
-                          weights: Dict[str, torch.Tensor]) -> torch.Tensor:
-        """Optimized attention computation"""
-        # Implementation specific to model architecture
-        pass
-        
-    def _compute_ffn(self,
-                     hidden_states: torch.Tensor,
-                     weights: Dict[str, torch.Tensor]) -> torch.Tensor:
-        """Optimized feed-forward computation"""
-        # Implementation specific to model architecture
-        pass
-        
-    def _compute_logits(self, 
-                       hidden_states: torch.Tensor) -> torch.Tensor:
-        """Compute logits for next token prediction"""
-        # Implementation specific to model architecture
-        pass
-        
-    def _sample_token(self,
-                     logits: torch.Tensor,
-                     temperature: float) -> torch.Tensor:
-        """Sample next token from logits"""
-        if temperature == 0:
-            return torch.argmax(logits, dim=-1)
+            # Apply layer
+            x_norm = F.layer_norm(input_ids, input_ids.shape[-1:])
+            x_quant = x_norm + (self._quantize_activations(x_norm) - x_norm).detach()
+            output = F.linear(x_quant, weights)
             
-        probs = F.softmax(logits / temperature, dim=-1)
-        return torch.multinomial(probs, num_samples=1).squeeze(-1)
-        
-    def cleanup(self):
-        """Cleanup resources"""
-        if self.config.enable_pipeline:
-            self.pipeline.reconstruction_queue.put(None)
-            self.pipeline.compute_queue.put(None)
-            self.pipeline.reconstruction_thread.join()
-            self.pipeline.compute_thread.join()
+            # Sample next token
+            if temperature == 0:
+                next_token = torch.argmax(output, dim=-1)
+            else:
+                probs = F.softmax(output / temperature, dim=-1)
+                next_token = torch.multinomial(probs, num_samples=1).squeeze(-1)
+                
+            generated.append(next_token)
+            input_ids = torch.cat([input_ids, next_token.unsqueeze(-1)], dim=-1)
+            self.current_layer = (self.current_layer + 1) % len(self.compressed_state)
             
-        self.reconstructor.executor.shutdown()
+        return torch.cat(generated)
+    
+    def _quantize_activations(self, x: torch.Tensor) -> torch.Tensor:
+        """Quantize activations to INT8"""
+        scale = 127.0 / torch.max(torch.abs(x), dim=-1, keepdim=True)[0].clamp_(min=1e-5)
+        return torch.round(torch.clamp(x * scale, -127, 127)) / scale
 
 def load_and_generate(
     model_path: str,
     prompt: str,
+    tokenizer,
     max_length: int = 100,
     temperature: float = 1.0,
     config: Optional[InferenceConfig] = None
 ) -> str:
     """Utility function for easy model loading and generation"""
     
+    # Load compressed model
+    compressed_state = torch.load(model_path)
+    
     # Initialize inference engine
-    engine = InferenceEngine(model_path, config)
+    engine = InferenceEngine(compressed_state, config)
     
-    # Tokenize prompt (implementation depends on tokenizer)
-    input_ids = tokenize(prompt)
+    # Tokenize prompt
+    input_ids = tokenizer(prompt, return_tensors="pt").input_ids.cuda()
     
-    try:
-        # Generate
-        output_ids = engine.generate(
-            input_ids,
-            max_length=max_length,
-            temperature=temperature
-        )
-        
-        # Decode
-        return decode(output_ids)
-        
-    finally:
-        engine.cleanup()
+    # Generate
+    output_ids = engine.generate(
+        input_ids,
+        max_length=max_length,
+        temperature=temperature
+    )
+    
+    # Decode
+    return tokenizer.decode(output_ids)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    from transformers import AutoTokenizer
+    
     # Example usage
     config = InferenceConfig(
         cache_size=1024,
         num_threads=4,
         batch_size=1,
         prefetch_layers=2,
-        device='cuda',
-        mixed_precision=True
+        device='cuda'
     )
     
+    tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b")
+    
     response = load_and_generate(
-        model_path='final_compressed_model.pt',
+        model_path='compressed_model.pt',
         prompt="Once upon a time",
+        tokenizer=tokenizer,
         max_length=100,
         temperature=0.7,
         config=config

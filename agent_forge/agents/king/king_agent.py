@@ -318,7 +318,7 @@ class KingAgent:
         # Update complexity handling
         complex_tasks = [
             task for task in self.task_manager.completed_tasks
-            if task["task"]["complexity"]["is_complex"]
+            if task.get("complexity", {}).get("is_complex", False)
         ]
         if complex_tasks:
             complex_success = sum(

@@ -1,281 +1,281 @@
 """
-training_compression.py
-Handles BitNet (1.58-bit) and VPTQ compression during training phase
+initial_compression.py - First stage compression implementing VPTQ followed by BitNet
 """
 
-import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Tuple, Optional
 from dataclasses import dataclass
 import logging
-from torch.cuda.amp import autocast
-from torch.utils.tensorboard import SummaryWriter
+import math
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 @dataclass
 class CompressionConfig:
-    """Configuration for training compression"""
+    """Configuration for VPTQ and BitNet compression"""
+    # VPTQ settings
     vector_size: int = 8
     codebook_size: int = 256
-    warmup_steps: int = 1000
-    target_bits: float = 1.58
-    lambda_schedule: str = 'linear'  # 'linear' or 'exponential'
-    cache_size: int = 1024
-    gradient_checkpointing: bool = True
+    group_size: int = 128
+    
+    # BitNet settings
+    lambda_warmup: int = 1000  # Steps for gradual quantization
+    lambda_schedule: str = 'linear'  # or 'exponential'
+    
+    # Training settings
+    batch_size: int = 32
+    learning_rate: float = 1e-4
+    epochs: int = 5
+    
+    # Hardware settings
+    device: str = 'cuda'
     mixed_precision: bool = True
-
-class MemoryTracker:
-    """Track and optimize memory usage during training"""
-    def __init__(self):
-        self.peak_memory = 0
-        self.current_memory = 0
-        
-    def update(self):
-        self.current_memory = torch.cuda.memory_allocated()
-        self.peak_memory = max(self.peak_memory, self.current_memory)
-        
-    def get_stats(self) -> Dict[str, float]:
-        return {
-            'current_memory_gb': self.current_memory / 1e9,
-            'peak_memory_gb': self.peak_memory / 1e9
-        }
+    num_workers: int = 4
 
 class TernaryQuantizer(torch.autograd.Function):
-    """Convert weights to ternary values (-1, 0, 1) with STE"""
+    """Convert weights to ternary values (-1, 0, 1) with straight-through estimator"""
+    
     @staticmethod
-    def forward(ctx, inputs: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
-        ctx.save_for_backward(inputs)
-        return torch.round(torch.clamp(inputs / scale, -1, 1)).to(torch.int8)
+    def forward(ctx, input):
+        ctx.save_for_backward(input)
+        scale = torch.mean(torch.abs(input)).clamp(min=1e-8)
+        return torch.round(torch.clamp(input / scale, -1, 1)).to(torch.int8), scale
 
     @staticmethod
-    def backward(ctx, grad_output: torch.Tensor) -> Tuple[torch.Tensor, None]:
-        inputs, = ctx.saved_tensors
-        mask = inputs.abs() <= 1
-        return grad_output * mask.float(), None
+    def backward(ctx, grad_output, grad_scale):
+        input, = ctx.saved_tensors
+        grad_input = grad_output.clone()
+        grad_input[input.abs() > 1] = 0
+        return grad_input
 
-class VectorQuantizer:
-    """VPTQ quantization with codebook learning"""
-    def __init__(self, vector_size: int, codebook_size: int):
-        self.vector_size = vector_size
-        self.codebook_size = codebook_size
-        self.codebook = None
-        
-    def initialize_codebook(self, weight_matrix: torch.Tensor):
-        """Initialize codebook using k-means++"""
-        vectors = weight_matrix.view(-1, self.vector_size)
-        
-        # K-means++ initialization
-        centroids = [vectors[torch.randint(0, vectors.size(0), (1,))]]
-        
-        for _ in range(self.codebook_size - 1):
-            distances = torch.cat([
-                torch.min(torch.cdist(vectors, torch.stack(centroids)), dim=1)[0]
-            ])
-            probabilities = distances ** 2
-            probabilities /= probabilities.sum()
-            new_centroid_idx = torch.multinomial(probabilities, 1)
-            centroids.append(vectors[new_centroid_idx])
-            
-        self.codebook = nn.Parameter(torch.stack(centroids))
+def quantize_activations(x):
+    """INT8 quantization for activations"""
+    scale = 127.0 / torch.max(torch.abs(x), dim=-1, keepdim=True).values.clamp_(min=1e-5)
+    return torch.round(torch.clamp(x * scale, -127, 127)) / scale
 
-    def quantize(self, weight_matrix: torch.Tensor) -> torch.Tensor:
-        if self.codebook is None:
-            self.initialize_codebook(weight_matrix)
-            
-        vectors = weight_matrix.view(-1, self.vector_size)
-        distances = torch.cdist(vectors, self.codebook)
-        indices = torch.argmin(distances, dim=1)
-        return self.codebook[indices].view_as(weight_matrix)
-
-class CompressedLinear(nn.Linear):
-    """Linear layer with BitNet and VPTQ compression"""
-    def __init__(self, 
-                 in_features: int, 
-                 out_features: int, 
-                 bias: bool = True,
-                 config: Optional[CompressionConfig] = None):
+class VPTQLinear(nn.Linear):
+    """Linear layer with VPTQ quantization"""
+    def __init__(self, in_features, out_features, bias=True, config: Optional[CompressionConfig] = None):
         super().__init__(in_features, out_features, bias)
         self.config = config or CompressionConfig()
-        self.register_buffer('weight_scale', torch.ones(1))
-        self.register_buffer('quantized_weight', 
-                           torch.zeros_like(self.weight, dtype=torch.int8))
-        
-        self.vq = VectorQuantizer(
-            self.config.vector_size,
-            self.config.codebook_size
-        )
-        self.steps = 0
-        
-    def get_lambda(self) -> float:
-        """Get current lambda for gradual quantization"""
-        if self.config.lambda_schedule == 'linear':
-            return min(self.steps / self.config.warmup_steps, 1.0)
-        else:  # exponential
-            return 1 - math.exp(-5 * self.steps / self.config.warmup_steps)
+        self.register_buffer('centroids', None)
+        self.register_buffer('assignments', None)
+        self.register_buffer('scales', None)
+
+    def quantize(self):
+        """Apply VPTQ quantization"""
+        if self.centroids is None:
+            # Initialize centroids using k-means++
+            vectors = self.weight.view(-1, self.config.vector_size)
+            norms = torch.norm(vectors, dim=1, keepdim=True)
+            normalized = vectors / (norms + 1e-8)
             
+            # Choose initial centroids
+            centroids = [normalized[torch.randint(0, normalized.size(0), (1,))]]
+            for _ in range(self.config.codebook_size - 1):
+                # Calculate distances to existing centroids
+                dists = torch.cat([torch.norm(normalized.unsqueeze(1) - c, dim=2).min(1)[0]
+                                 for c in centroids], dim=0)
+                # Choose next centroid with probability proportional to distance squared
+                probs = dists ** 2
+                probs /= probs.sum()
+                next_idx = torch.multinomial(probs, 1)
+                centroids.append(normalized[next_idx])
+            
+            self.centroids = torch.stack(centroids)
+            
+        # Quantize using current centroids
+        vectors = self.weight.view(-1, self.config.vector_size)
+        norms = torch.norm(vectors, dim=1, keepdim=True)
+        normalized = vectors / (norms + 1e-8)
+        
+        # Find nearest centroids
+        distances = torch.cdist(normalized, self.centroids)
+        self.assignments = torch.argmin(distances, dim=1)
+        
+        # Calculate optimal scales
+        assigned = self.centroids[self.assignments]
+        self.scales = (vectors * assigned).sum(1) / ((assigned ** 2).sum(1) + 1e-8)
+        
+        # Reconstruct weight matrix
+        quantized = (self.centroids[self.assignments] * self.scales.unsqueeze(1)).view_as(self.weight)
+        return quantized
+
+    def forward(self, x):
+        # Use quantized weights for forward pass
+        quantized_weight = self.quantize()
+        return F.linear(x, quantized_weight, self.bias)
+
+class BitLinear(nn.Linear):
+    """Linear layer with ternary weight quantization"""
+    def __init__(self, in_features, out_features, bias=True):
+        super().__init__(in_features, out_features, bias)
+        self.register_buffer('weight_scale', torch.ones(1))
+        self.register_buffer('quantized_weight', torch.zeros_like(self.weight, dtype=torch.int8))
+        self.steps = 0
+
     def quantize_weight(self):
-        """Apply both VPTQ and ternary quantization"""
-        # 1. Vector quantization
-        vq_weights = self.vq.quantize(self.weight)
-        
-        # 2. Calculate scale
-        self.weight_scale = vq_weights.abs().mean()
-        
-        # 3. Gradual quantization
-        lambda_ = self.get_lambda()
-        intermediate = (lambda_ * vq_weights + 
-                      (1 - lambda_) * self.weight)
-        
-        # 4. Ternary quantization
-        self.quantized_weight = TernaryQuantizer.apply(
-            intermediate, self.weight_scale
-        )
-        
-    @autocast()
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Convert weights to ternary values"""
+        self.quantized_weight, self.weight_scale = TernaryQuantizer.apply(self.weight)
+
+    def forward(self, x):
         self.steps += 1
-        self.quantize_weight()
-        
-        # Quantize activations to INT8
-        x_scaled = x / x.abs().max(dim=-1, keepdim=True)[0].clamp(min=1e-8)
-        x_quant = torch.round(x_scaled * 127).clamp(-128, 127) / 127
-        
-        return F.linear(
-            x_quant,
-            self.quantized_weight.float() * self.weight_scale,
-            self.bias
-        )
+        # Layer normalize input
+        x_norm = F.layer_norm(x, x.shape[-1:])
+        # Quantize activations
+        x_quant = x_norm + (quantize_activations(x_norm) - x_norm).detach()
+        # Use quantized weights
+        w_quant = self.quantized_weight.float() * self.weight_scale
+        return F.linear(x_quant, w_quant, self.bias)
 
 class CompressedModel(nn.Module):
-    """Wrapper for model during compressed training"""
-    def __init__(self, 
-                 model: nn.Module,
-                 config: Optional[CompressionConfig] = None):
+    """Model wrapper for compression pipeline"""
+    def __init__(self, model: nn.Module, config: Optional[CompressionConfig] = None):
         super().__init__()
         self.config = config or CompressionConfig()
-        self.model = self._convert_model(model)
-        self.memory_tracker = MemoryTracker()
-        
-    def _convert_model(self, model: nn.Module) -> nn.Module:
-        """Convert Linear layers to CompressedLinear"""
+        # First convert to VPTQ
+        self.model = self._convert_to_vptq(model)
+        self.steps = 0
+
+    def _convert_to_vptq(self, model: nn.Module) -> nn.Module:
+        """Convert Linear layers to VPTQLinear"""
         for name, module in model.named_children():
             if isinstance(module, nn.Linear):
-                setattr(model, name, CompressedLinear(
+                vptq_linear = VPTQLinear(
                     module.in_features,
                     module.out_features,
                     module.bias is not None,
                     self.config
-                ))
+                )
+                vptq_linear.weight.data = module.weight.data
+                if module.bias is not None:
+                    vptq_linear.bias.data = module.bias.data
+                setattr(model, name, vptq_linear)
             else:
-                self._convert_model(module)
+                self._convert_to_vptq(module)
         return model
 
-    def forward(self, *args, **kwargs):
-        self.memory_tracker.update()
-        return self.model(*args, **kwargs)
+    def convert_to_bitnet(self):
+        """Convert VPTQLinear layers to BitLinear"""
+        for name, module in self.model.named_modules():
+            if isinstance(module, VPTQLinear):
+                # Get quantized weights from VPTQ
+                quantized_weight = module.quantize()
+                
+                # Create BitLinear layer
+                bit_linear = BitLinear(
+                    module.in_features,
+                    module.out_features,
+                    module.bias is not None
+                )
+                
+                # Initialize with quantized weights
+                bit_linear.weight.data = quantized_weight
+                if module.bias is not None:
+                    bit_linear.bias.data = module.bias.data
+                    
+                # Initial ternary quantization
+                bit_linear.quantize_weight()
+                
+                # Replace module
+                parent_name = '.'.join(name.split('.')[:-1])
+                child_name = name.split('.')[-1]
+                parent_module = self.model if parent_name == '' else getattr(self.model, parent_name)
+                setattr(parent_module, child_name, bit_linear)
 
-def train_compressed_model(
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.model(x)
+
+async def compress_and_train(
     model: nn.Module,
-    train_dataloader: torch.utils.data.DataLoader,
-    val_dataloader: torch.utils.data.DataLoader,
-    config: Optional[CompressionConfig] = None,
-    num_epochs: int = 5,
-    learning_rate: float = 1e-4,
-    save_path: str = 'compressed_model.pt'
-) -> nn.Module:
-    """Train model with compression"""
+    train_loader: torch.utils.data.DataLoader,
+    val_loader: torch.utils.data.DataLoader,
+    config: Optional[CompressionConfig] = None
+) -> Tuple[nn.Module, Dict[str, Any]]:
+    """Complete compression pipeline"""
+    config = config or CompressionConfig()
     
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    compressed_model = CompressedModel(model, config).to(device)
-    optimizer = torch.optim.AdamW(compressed_model.parameters(), 
-                                lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=num_epochs
-    )
-    writer = SummaryWriter('runs/compression_training')
+    # Step 1: VPTQ compression
+    compressed_model = CompressedModel(model, config)
     
-    for epoch in range(num_epochs):
+    # Step 2: Train with VPTQ
+    optimizer = torch.optim.Adam(compressed_model.parameters(), lr=config.learning_rate)
+    criterion = nn.CrossEntropyLoss()
+    
+    logger.info("Starting VPTQ training...")
+    for epoch in range(config.epochs):
         compressed_model.train()
-        for batch_idx, (data, target) in enumerate(train_dataloader):
-            data, target = data.to(device), target.to(device)
-            
+        for batch_idx, (data, target) in enumerate(train_loader):
             optimizer.zero_grad()
             output = compressed_model(data)
-            loss = F.cross_entropy(output, target)
-            
+            loss = criterion(output, target)
             loss.backward()
             optimizer.step()
             
-            # Log metrics
             if batch_idx % 100 == 0:
-                writer.add_scalar('Loss/train', loss.item(), 
-                                epoch * len(train_dataloader) + batch_idx)
-                writer.add_scalar('Memory/usage_gb',
-                                compressed_model.memory_tracker.current_memory / 1e9,
-                                epoch * len(train_dataloader) + batch_idx)
-                
-        # Validation
-        compressed_model.eval()
-        val_loss = 0
-        correct = 0
-        with torch.no_grad():
-            for data, target in val_dataloader:
-                data, target = data.to(device), target.to(device)
-                output = compressed_model(data)
-                val_loss += F.cross_entropy(output, target).item()
-                pred = output.argmax(dim=1, keepdim=True)
-                correct += pred.eq(target.view_as(pred)).sum().item()
-                
-        val_loss /= len(val_dataloader)
-        accuracy = correct / len(val_dataloader.dataset)
-        
-        writer.add_scalar('Loss/val', val_loss, epoch)
-        writer.add_scalar('Accuracy/val', accuracy, epoch)
-        
-        scheduler.step()
-        
-        # Save checkpoint
-        if epoch % 5 == 0:
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': compressed_model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'loss': val_loss,
-            }, f'{save_path}_epoch_{epoch}.pt')
+                logger.info(f"Epoch {epoch}, Batch {batch_idx}, Loss: {loss.item():.4f}")
+    
+    # Step 3: Convert to BitNet
+    logger.info("Converting to BitNet...")
+    compressed_model.convert_to_bitnet()
+    
+    # Step 4: Fine-tune BitNet
+    optimizer = torch.optim.Adam(compressed_model.parameters(), lr=config.learning_rate)
+    
+    logger.info("Starting BitNet fine-tuning...")
+    for epoch in range(config.epochs):
+        compressed_model.train()
+        for batch_idx, (data, target) in enumerate(train_loader):
+            optimizer.zero_grad()
+            output = compressed_model(data)
+            loss = criterion(output, target)
+            loss.backward()
+            optimizer.step()
             
-    return compressed_model
+            # Re-quantize weights after each update
+            for module in compressed_model.modules():
+                if isinstance(module, BitLinear):
+                    module.quantize_weight()
+    
+    return compressed_model, {
+        'config': config,
+        'final_loss': loss.item()
+    }
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Example usage
-    model = torch.hub.load('huggingface/pytorch-transformers', 
-                          'model', 
-                          'gpt2')
+    import asyncio
     
-    config = CompressionConfig(
-        vector_size=8,
-        codebook_size=256,
-        warmup_steps=1000,
-        target_bits=1.58,
-        lambda_schedule='exponential'
-    )
+    async def main():
+        # Create dummy model and data
+        model = nn.Sequential(
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Linear(512, 256)
+        )
+        
+        train_data = torch.randn(1000, 1024)
+        train_labels = torch.randint(0, 256, (1000,))
+        train_loader = torch.utils.data.DataLoader(
+            list(zip(train_data, train_labels)),
+            batch_size=32,
+            shuffle=True
+        )
+        
+        val_loader = torch.utils.data.DataLoader(
+            list(zip(train_data[:100], train_labels[:100])),
+            batch_size=32
+        )
+        
+        # Run compression pipeline
+        compressed_model, stats = await compress_and_train(
+            model, train_loader, val_loader
+        )
+        
+        print("Compression complete!")
+        print(f"Final loss: {stats['final_loss']:.4f}")
     
-    # Create dummy data loaders
-    train_loader = torch.utils.data.DataLoader(
-        torch.randn(1000, 512, 768),
-        batch_size=32
-    )
-    
-    val_loader = torch.utils.data.DataLoader(
-        torch.randn(200, 512, 768),
-        batch_size=32
-    )
-    
-    compressed_model = train_compressed_model(
-        model,
-        train_loader,
-        val_loader,
-        config,
-        num_epochs=10,
-        learning_rate=1e-4
-    )
+    asyncio.run(main())
