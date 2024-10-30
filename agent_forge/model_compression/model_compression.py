@@ -1,369 +1,281 @@
+"""
+training_compression.py
+Handles BitNet (1.58-bit) and VPTQ compression during training phase
+"""
+
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from scipy.optimize import minimize_scalar
-import concurrent.futures
-from numba import jit, prange
-import cupy as cp
+from typing import Dict, Any, Optional, Tuple
+from dataclasses import dataclass
 import logging
-from typing import Dict, Any, Tuple
-from langroid import Task, ChatAgent, ChatAgentConfig
+from torch.cuda.amp import autocast
+from torch.utils.tensorboard import SummaryWriter
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+@dataclass
+class CompressionConfig:
+    """Configuration for training compression"""
+    vector_size: int = 8
+    codebook_size: int = 256
+    warmup_steps: int = 1000
+    target_bits: float = 1.58
+    lambda_schedule: str = 'linear'  # 'linear' or 'exponential'
+    cache_size: int = 1024
+    gradient_checkpointing: bool = True
+    mixed_precision: bool = True
 
-# Bitlinearization components
+class MemoryTracker:
+    """Track and optimize memory usage during training"""
+    def __init__(self):
+        self.peak_memory = 0
+        self.current_memory = 0
+        
+    def update(self):
+        self.current_memory = torch.cuda.memory_allocated()
+        self.peak_memory = max(self.peak_memory, self.current_memory)
+        
+    def get_stats(self) -> Dict[str, float]:
+        return {
+            'current_memory_gb': self.current_memory / 1e9,
+            'peak_memory_gb': self.peak_memory / 1e9
+        }
+
 class TernaryQuantizer(torch.autograd.Function):
+    """Convert weights to ternary values (-1, 0, 1) with STE"""
     @staticmethod
-    def forward(ctx, input):
-        ctx.save_for_backward(input)
-        scale = torch.mean(torch.abs(input)).clamp(min=1e-8)
-        return torch.round(torch.clamp(input / scale, -1, 1)).to(torch.int8), scale
+    def forward(ctx, inputs: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
+        ctx.save_for_backward(inputs)
+        return torch.round(torch.clamp(inputs / scale, -1, 1)).to(torch.int8)
 
     @staticmethod
-    def backward(ctx, grad_output, grad_scale):
-        input, = ctx.saved_tensors
-        grad_input = grad_output.clone()
-        grad_input[input.abs() > 1] = 0
-        return grad_input
+    def backward(ctx, grad_output: torch.Tensor) -> Tuple[torch.Tensor, None]:
+        inputs, = ctx.saved_tensors
+        mask = inputs.abs() <= 1
+        return grad_output * mask.float(), None
 
-class BitLinear(nn.Linear):
-    def __init__(self, in_features, out_features, bias=True):
+class VectorQuantizer:
+    """VPTQ quantization with codebook learning"""
+    def __init__(self, vector_size: int, codebook_size: int):
+        self.vector_size = vector_size
+        self.codebook_size = codebook_size
+        self.codebook = None
+        
+    def initialize_codebook(self, weight_matrix: torch.Tensor):
+        """Initialize codebook using k-means++"""
+        vectors = weight_matrix.view(-1, self.vector_size)
+        
+        # K-means++ initialization
+        centroids = [vectors[torch.randint(0, vectors.size(0), (1,))]]
+        
+        for _ in range(self.codebook_size - 1):
+            distances = torch.cat([
+                torch.min(torch.cdist(vectors, torch.stack(centroids)), dim=1)[0]
+            ])
+            probabilities = distances ** 2
+            probabilities /= probabilities.sum()
+            new_centroid_idx = torch.multinomial(probabilities, 1)
+            centroids.append(vectors[new_centroid_idx])
+            
+        self.codebook = nn.Parameter(torch.stack(centroids))
+
+    def quantize(self, weight_matrix: torch.Tensor) -> torch.Tensor:
+        if self.codebook is None:
+            self.initialize_codebook(weight_matrix)
+            
+        vectors = weight_matrix.view(-1, self.vector_size)
+        distances = torch.cdist(vectors, self.codebook)
+        indices = torch.argmin(distances, dim=1)
+        return self.codebook[indices].view_as(weight_matrix)
+
+class CompressedLinear(nn.Linear):
+    """Linear layer with BitNet and VPTQ compression"""
+    def __init__(self, 
+                 in_features: int, 
+                 out_features: int, 
+                 bias: bool = True,
+                 config: Optional[CompressionConfig] = None):
         super().__init__(in_features, out_features, bias)
+        self.config = config or CompressionConfig()
         self.register_buffer('weight_scale', torch.ones(1))
-        self.register_buffer('quantized_weight', torch.zeros_like(self.weight, dtype=torch.int8))
-
+        self.register_buffer('quantized_weight', 
+                           torch.zeros_like(self.weight, dtype=torch.int8))
+        
+        self.vq = VectorQuantizer(
+            self.config.vector_size,
+            self.config.codebook_size
+        )
+        self.steps = 0
+        
+    def get_lambda(self) -> float:
+        """Get current lambda for gradual quantization"""
+        if self.config.lambda_schedule == 'linear':
+            return min(self.steps / self.config.warmup_steps, 1.0)
+        else:  # exponential
+            return 1 - math.exp(-5 * self.steps / self.config.warmup_steps)
+            
     def quantize_weight(self):
-        self.quantized_weight, self.weight_scale = TernaryQuantizer.apply(self.weight)
-
-    def forward(self, x):
-        x_norm = F.layer_norm(x, x.shape[-1:])
-        x_quant = x_norm + (quantize_activations(x_norm) - x_norm).detach()
-        w_quant = self.quantized_weight.float() * self.weight_scale
-        return F.linear(x_quant, w_quant, self.bias)
-
-def quantize_activations(x):
-    scale = 127.0 / torch.max(torch.abs(x), dim=-1, keepdim=True).values.clamp_(min=1e-5)
-    return torch.round(torch.clamp(x * scale, -127, 127)) / scale
-
-def convert_to_bitnet(model: nn.Module) -> nn.Module:
-    for name, module in model.named_children():
-        if isinstance(module, nn.Linear):
-            bit_linear = BitLinear(module.in_features, module.out_features, module.bias is not None)
-            bit_linear.weight.data = module.weight.data
-            if module.bias is not None:
-                bit_linear.bias.data = module.bias.data
-            bit_linear.quantize_weight()
-            setattr(model, name, bit_linear)
-        else:
-            convert_to_bitnet(module)
-    return model
-
-class BitNetModel(nn.Module):
-    def __init__(self, original_model: nn.Module):
-        super().__init__()
-        self.model = convert_to_bitnet(original_model)
-
+        """Apply both VPTQ and ternary quantization"""
+        # 1. Vector quantization
+        vq_weights = self.vq.quantize(self.weight)
+        
+        # 2. Calculate scale
+        self.weight_scale = vq_weights.abs().mean()
+        
+        # 3. Gradual quantization
+        lambda_ = self.get_lambda()
+        intermediate = (lambda_ * vq_weights + 
+                      (1 - lambda_) * self.weight)
+        
+        # 4. Ternary quantization
+        self.quantized_weight = TernaryQuantizer.apply(
+            intermediate, self.weight_scale
+        )
+        
+    @autocast()
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.model(x)
-
-# Hypercompression components
-cuda_reconstruct_group = cp.RawKernel(r'''
-extern "C" __global__
-void reconstruct_group(float theta, int K, int8_t* output) {
-    int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    if (idx < K) {
-        float value = theta / (M_PI + (idx + 1));
-        value = value - floor(value);
-        output[idx] = round(value * 2 - 1);
-    }
-}
-''', 'reconstruct_group')
-
-cuda_compress = cp.RawKernel(r'''
-extern "C" __global__
-void compress(const int8_t* weights, int num_groups, int K, float U, float* thetas) {
-    int group_idx = blockDim.x * blockIdx.x + threadIdx.x;
-    if (group_idx < num_groups) {
-        float best_theta = 0;
-        float min_loss = INFINITY;
-        for (float theta = 0; theta <= U; theta += U/1000) {
-            float loss = 0;
-            for (int k = 0; k < K; k++) {
-                float value = theta / (M_PI + (k + 1));
-                value = value - floor(value);
-                int8_t reconstructed = round(value * 2 - 1);
-                loss += abs(reconstructed - weights[group_idx * K + k]);
-            }
-            if (loss < min_loss) {
-                min_loss = loss;
-                best_theta = theta;
-            }
-        }
-        thetas[group_idx] = best_theta;
-    }
-}
-''', 'compress')
-
-@jit(nopython=True)
-def adaptive_parameter_selection(weights: np.ndarray, target_compression: float) -> Tuple[int, float]:
-    total_params = weights.size
-    K_candidates = [128, 256, 512, 1024]
-    U_candidates = [1e5, 5e5, 1e6, 5e6]
-
-    best_K, best_U = K_candidates[0], U_candidates[0]
-    best_ratio = 0
-
-    for K in K_candidates:
-        for U in U_candidates:
-            num_groups = total_params // K
-            compressed_size = num_groups * 4  # 4 bytes for float32 theta
-            original_size = total_params
-            ratio = original_size / compressed_size
-
-            if ratio > best_ratio and ratio <= target_compression:
-                best_ratio = ratio
-                best_K, best_U = K, U
-
-    return best_K, best_U
-
-class HyperCompressor:
-    def __init__(self, K: int = 256, U: float = 1000000):
-        self.K = K
-        self.U = U
-
-    def compress(self, ternary_weights: torch.Tensor, scale_factors: torch.Tensor) -> Dict[str, Any]:
-        W = cp.asarray(ternary_weights.numpy())
-        num_groups = len(W) // self.K
-        thetas = cp.zeros(num_groups, dtype=cp.float32)
-
-        threads_per_block = 256
-        blocks = (num_groups + threads_per_block - 1) // threads_per_block
-
-        cuda_compress((blocks,), (threads_per_block,), (W, num_groups, self.K, self.U, thetas))
-
-        return {
-            'thetas': cp.asnumpy(thetas),
-            'original_shape': ternary_weights.shape,
-            'scale_factors': scale_factors.numpy()
-        }
-
-    def decompress(self, compressed_data: Dict[str, Any]) -> torch.Tensor:
-        thetas = cp.asarray(compressed_data['thetas'])
-        original_shape = compressed_data['original_shape']
-        scale_factors = cp.asarray(compressed_data['scale_factors'])
-
-        num_groups = len(thetas)
-        reconstructed = cp.zeros(num_groups * self.K, dtype=cp.int8)
-
-        threads_per_block = 256
-        blocks = (self.K + threads_per_block - 1) // threads_per_block
-
-        for i in range(num_groups):
-            cuda_reconstruct_group((blocks,), (threads_per_block,), (thetas[i], self.K, reconstructed[i*self.K:]))
-
-        reconstructed = reconstructed.reshape(original_shape) * scale_factors
-        return torch.tensor(cp.asnumpy(reconstructed))
-
-# Combined ModelCompressionTask
-class ModelCompressionTask(Task):
-    def __init__(self, agent: ChatAgent, model: nn.Module):
-        super().__init__(agent)
-        self.model = model
-        self.compressor = HyperCompressor()
-
-    async def fine_tune(self, train_loader: torch.utils.data.DataLoader, 
-                        val_loader: torch.utils.data.DataLoader, epochs: int = 5, 
-                        lr: float = 1e-4) -> Dict[str, Any]:
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
-        criterion = nn.CrossEntropyLoss()
-        scheduler = torch.optim.CosineAnnealingLR(optimizer, T_max=epochs)
+        self.steps += 1
+        self.quantize_weight()
         
-        best_acc = 0
-        history = {'train_loss': [], 'val_acc': []}
+        # Quantize activations to INT8
+        x_scaled = x / x.abs().max(dim=-1, keepdim=True)[0].clamp(min=1e-8)
+        x_quant = torch.round(x_scaled * 127).clamp(-128, 127) / 127
         
-        for epoch in range(epochs):
-            self.model.train()
-            train_loss = 0
-            for batch in train_loader:
-                inputs, targets = batch
-                optimizer.zero_grad()
-                outputs = self.model(inputs)
-                loss = criterion(outputs, targets)
-                loss.backward()
-                optimizer.step()
-                train_loss += loss.item()
+        return F.linear(
+            x_quant,
+            self.quantized_weight.float() * self.weight_scale,
+            self.bias
+        )
+
+class CompressedModel(nn.Module):
+    """Wrapper for model during compressed training"""
+    def __init__(self, 
+                 model: nn.Module,
+                 config: Optional[CompressionConfig] = None):
+        super().__init__()
+        self.config = config or CompressionConfig()
+        self.model = self._convert_model(model)
+        self.memory_tracker = MemoryTracker()
+        
+    def _convert_model(self, model: nn.Module) -> nn.Module:
+        """Convert Linear layers to CompressedLinear"""
+        for name, module in model.named_children():
+            if isinstance(module, nn.Linear):
+                setattr(model, name, CompressedLinear(
+                    module.in_features,
+                    module.out_features,
+                    module.bias is not None,
+                    self.config
+                ))
+            else:
+                self._convert_model(module)
+        return model
+
+    def forward(self, *args, **kwargs):
+        self.memory_tracker.update()
+        return self.model(*args, **kwargs)
+
+def train_compressed_model(
+    model: nn.Module,
+    train_dataloader: torch.utils.data.DataLoader,
+    val_dataloader: torch.utils.data.DataLoader,
+    config: Optional[CompressionConfig] = None,
+    num_epochs: int = 5,
+    learning_rate: float = 1e-4,
+    save_path: str = 'compressed_model.pt'
+) -> nn.Module:
+    """Train model with compression"""
+    
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    compressed_model = CompressedModel(model, config).to(device)
+    optimizer = torch.optim.AdamW(compressed_model.parameters(), 
+                                lr=learning_rate)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=num_epochs
+    )
+    writer = SummaryWriter('runs/compression_training')
+    
+    for epoch in range(num_epochs):
+        compressed_model.train()
+        for batch_idx, (data, target) in enumerate(train_dataloader):
+            data, target = data.to(device), target.to(device)
+            
+            optimizer.zero_grad()
+            output = compressed_model(data)
+            loss = F.cross_entropy(output, target)
+            
+            loss.backward()
+            optimizer.step()
+            
+            # Log metrics
+            if batch_idx % 100 == 0:
+                writer.add_scalar('Loss/train', loss.item(), 
+                                epoch * len(train_dataloader) + batch_idx)
+                writer.add_scalar('Memory/usage_gb',
+                                compressed_model.memory_tracker.current_memory / 1e9,
+                                epoch * len(train_dataloader) + batch_idx)
                 
-                # Re-quantize weights after each update
-                for module in self.model.modules():
-                    if isinstance(module, BitLinear):
-                        module.quantize_weight()
-            
-            train_loss /= len(train_loader)
-            history['train_loss'].append(train_loss)
-            
-            self.model.eval()
-            correct = 0
-            total = 0
-            with torch.no_grad():
-                for batch in val_loader:
-                    inputs, targets = batch
-                    outputs = self.model(inputs)
-                    _, predicted = outputs.max(1)
-                    total += targets.size(0)
-                    correct += predicted.eq(targets).sum().item()
-            
-            accuracy = correct / total
-            history['val_acc'].append(accuracy)
-            
-            if accuracy > best_acc:
-                best_acc = accuracy
-                best_model = self.model.state_dict()
-            
-            await self.agent.llm_response(f"Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.4f}, Val Accuracy: {accuracy:.4f}")
-            scheduler.step()
-        
-        return {'best_model': best_model, 'best_acc': best_acc, 'history': history}
-
-    async def compress_model(self, chunk_size: int = 1000000) -> Dict[str, Any]:
-        compressed_state_dict = {}
-
-        for name, param in self.model.state_dict().items():
-            if 'weight' in name and param.dim() > 1:
-                ternary_weights = torch.sign(param).to(torch.int8)
-                scale_factors = param.abs().mean().to(torch.float32)
-
-                chunks = ternary_weights.split(chunk_size)
-                compressed_chunks = []
-
-                for chunk in chunks:
-                    compressed_chunk = self.compressor.compress(chunk, scale_factors)
-                    compressed_chunks.append(compressed_chunk)
-
-                compressed_state_dict[name] = {
-                    'chunks': compressed_chunks,
-                    'original_shape': param.shape
-                }
-            else:
-                compressed_state_dict[name] = param
-
-        return compressed_state_dict
-
-    async def decompress_model(self, compressed_state_dict: Dict[str, Any]) -> nn.Module:
-        decompressed_state_dict = {}
-
-        for name, compressed_param in compressed_state_dict.items():
-            if isinstance(compressed_param, dict) and 'chunks' in compressed_param:
-                decompressed_chunks = [self.compressor.decompress(chunk) for chunk in compressed_param['chunks']]
-                decompressed_param = torch.cat(decompressed_chunks).reshape(compressed_param['original_shape'])
-                decompressed_state_dict[name] = decompressed_param
-            else:
-                decompressed_state_dict[name] = compressed_param
-
-        self.model.load_state_dict(decompressed_state_dict)
-        return self.model
-
-    async def benchmark_compression(self, compressed_model: Dict[str, Any]) -> Dict[str, float]:
-        original_size = sum(p.numel() * p.element_size() for p in self.model.parameters())
-        compressed_size = sum(
-            sum(chunk['thetas'].size * chunk['thetas'].itemsize + chunk['scale_factors'].size * chunk['scale_factors'].itemsize 
-                for chunk in param['chunks'])
-            if isinstance(param, dict) and 'chunks' in param
-            else param.numel() * param.element_size()
-            for param in compressed_model.values()
-        )
-        compression_ratio = original_size / compressed_size
-
-        return {
-            'original_size_mb': original_size / (1024 * 1024),
-            'compressed_size_mb': compressed_size / (1024 * 1024),
-            'compression_ratio': compression_ratio
-        }
-
-    async def run(self, train_loader: torch.utils.data.DataLoader, 
-                  val_loader: torch.utils.data.DataLoader, epochs: int = 5, 
-                  lr: float = 1e-4) -> Dict[str, Any]:
-        await self.agent.llm_response("Starting model compression process...")
-
-        # Step 1: Convert to BitNet model
-        self.model = BitNetModel(self.model)
-        await self.agent.llm_response("Converted model to BitNet")
-
-        # Step 2: Fine-tune the BitNet model
-        fine_tune_results = await self.fine_tune(train_loader, val_loader, epochs, lr)
-        await self.agent.llm_response(f"Fine-tuned BitNet model. Best validation accuracy: {fine_tune_results['best_acc']:.4f}")
-
-        # Step 3: Apply hypercompression
-        compressed_model = await self.compress_model()
-        await self.agent.llm_response("Applied hypercompression")
-
-        # Step 4: Benchmark compression
-        metrics = await self.benchmark_compression(compressed_model)
-        await self.agent.llm_response(f"Compression metrics: {metrics}")
-
-        # Step 5: Decompress the model
-        decompressed_model = await self.decompress_model(compressed_model)
-        await self.agent.llm_response("Decompressed model")
-
-        # Step 6: Verify decompression
+        # Validation
+        compressed_model.eval()
+        val_loss = 0
+        correct = 0
         with torch.no_grad():
-            input = torch.randn(1, 10000)
-            original_output = self.model(input)
-            decompressed_output = decompressed_model(input)
-            error = torch.mean((original_output - decompressed_output).abs())
-            await self.agent.llm_response(f"Mean absolute error after decompression: {error.item():.6f}")
+            for data, target in val_dataloader:
+                data, target = data.to(device), target.to(device)
+                output = compressed_model(data)
+                val_loss += F.cross_entropy(output, target).item()
+                pred = output.argmax(dim=1, keepdim=True)
+                correct += pred.eq(target.view_as(pred)).sum().item()
+                
+        val_loss /= len(val_dataloader)
+        accuracy = correct / len(val_dataloader.dataset)
+        
+        writer.add_scalar('Loss/val', val_loss, epoch)
+        writer.add_scalar('Accuracy/val', accuracy, epoch)
+        
+        scheduler.step()
+        
+        # Save checkpoint
+        if epoch % 5 == 0:
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': compressed_model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': val_loss,
+            }, f'{save_path}_epoch_{epoch}.pt')
+            
+    return compressed_model
 
-        return {
-            'fine_tune_results': fine_tune_results,
-            'compressed_model': compressed_model,
-            'decompressed_model': decompressed_model,
-            'metrics': metrics,
-            'error': error.item()
-        }
-
-# Example usage
-if __name__ == "__main__":
-    import asyncio
-    from langroid.language_models.openai_gpt import OpenAIGPTConfig
-
-    async def main():
-        torch.manual_seed(0)
-        np.random.seed(0)
-        cp.random.seed(0)
-
-        config = ChatAgentConfig(
-            name="ModelCompressionAgent",
-            llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
-        )
-        agent = ChatAgent(config)
-
-        # Create a large model
-        model = nn.Sequential(
-            nn.Linear(10000, 5000),
-            nn.ReLU(),
-            nn.Linear(5000, 2500),
-            nn.ReLU(),
-            nn.Linear(2500, 1000)
-        )
-
-        # Create dummy data loaders (replace with your actual data)
-        train_loader = torch.utils.data.DataLoader(
-            torch.randn(1000, 10000),
-            batch_size=32,
-            shuffle=True
-        )
-        val_loader = torch.utils.data.DataLoader(
-            torch.randn(200, 10000),
-            batch_size=32,
-            shuffle=False
-        )
-
-        task = ModelCompressionTask(agent, model)
-        results = await task.run(train_loader, val_loader)
-
-        print(f"Compression ratio: {results['metrics']['compression_ratio']:.2f}")
-        print(f"Mean absolute error: {results['error']:.6f}")
-
-    asyncio.run(main())
+if __name__ == '__main__':
+    # Example usage
+    model = torch.hub.load('huggingface/pytorch-transformers', 
+                          'model', 
+                          'gpt2')
+    
+    config = CompressionConfig(
+        vector_size=8,
+        codebook_size=256,
+        warmup_steps=1000,
+        target_bits=1.58,
+        lambda_schedule='exponential'
+    )
+    
+    # Create dummy data loaders
+    train_loader = torch.utils.data.DataLoader(
+        torch.randn(1000, 512, 768),
+        batch_size=32
+    )
+    
+    val_loader = torch.utils.data.DataLoader(
+        torch.randn(200, 512, 768),
+        batch_size=32
+    )
+    
+    compressed_model = train_compressed_model(
+        model,
+        train_loader,
+        val_loader,
+        config,
+        num_epochs=10,
+        learning_rate=1e-4
+    )
