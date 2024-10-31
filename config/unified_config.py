@@ -7,6 +7,10 @@ from pathlib import Path
 from dataclasses import dataclass, field
 import logging
 from enum import Enum
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -201,8 +205,22 @@ class UnifiedConfig:
     
     def _load_env_vars(self):
         """Load configuration from environment variables."""
+        # Load environment variables from .env file (already done at module level)
+        
         # API keys
         self.config['openrouter_api_key'] = os.getenv('OPENROUTER_API_KEY')
+        
+        # UI Configuration
+        self.config['ui_port'] = int(os.getenv('UI_PORT', '8080'))
+        self.config['ui_host'] = os.getenv('UI_HOST', '0.0.0.0')
+        
+        # System Configuration
+        self.config['environment'] = os.getenv('ENVIRONMENT', 'development')
+        self.config['log_level'] = os.getenv('LOG_LEVEL', 'INFO')
+        
+        # Model Configuration
+        self.config['default_temperature'] = float(os.getenv('DEFAULT_TEMPERATURE', '0.7'))
+        self.config['max_tokens'] = int(os.getenv('MAX_TOKENS', '2000'))
         
         # Override configurations from environment variables
         for key, value in os.environ.items():
@@ -212,10 +230,15 @@ class UnifiedConfig:
     
     def _validate_config(self):
         """Validate the loaded configuration."""
-        required_keys = ['openrouter_api_key']
-        missing_keys = [key for key in required_keys if not self.config.get(key)]
-        if missing_keys:
-            raise ValueError(f"Missing required configuration keys: {missing_keys}")
+        # In development mode, don't require API key
+        if self.is_development():
+            if not self.config.get('openrouter_api_key'):
+                logger.warning("No OpenRouter API key found. Running in development mode with limited functionality.")
+                self.config['openrouter_api_key'] = 'development_key'
+        else:
+            # In production, require API key
+            if not self.config.get('openrouter_api_key'):
+                raise ValueError("OpenRouter API key is required in production mode")
             
         # Validate agent configurations
         if not self.agents:

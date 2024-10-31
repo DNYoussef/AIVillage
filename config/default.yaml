@@ -107,22 +107,12 @@ development:
   test_mode: false
   profile_performance: true
 
-# Production settings (only used in production environment)
-production:
-  debug: false
-  mock_api_calls: false
-  test_mode: false
-  profile_performance: false
-  min_availability: 0.99
-  max_response_time: 10  # seconds
-
-# Monitoring and logging
-monitoring:
-  enabled: true
-  metrics_interval: 60  # seconds
-  alert_thresholds:
-    error_rate: 0.1
-    response_time: 5000  # milliseconds
-    memory_usage: 0.9
-    cpu_usage: 0.8
-  log_retention: 30  # days
+# UI Configuration
+ui:
+  port: 8080
+  host: "0.0.0.0"
+  websocket_path: "/ws"
+  static_path: "ui/static"
+  templates_path: "ui/templates"
+  session_timeout: 3600  # 1 hour
+  max_connections: 1000

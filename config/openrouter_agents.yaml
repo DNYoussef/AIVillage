@@ -1,59 +1,82 @@
-version: "1.0.0"
+# Agent configurations for AI Village
 
 agents:
   king:
     frontier_model: "nvidia/llama-3.1-nemotron-70b-instruct"
     local_model: "Qwen/Qwen2.5-3B-Instruct"
-    description: "Advanced instruction-following model for complex tasks"
+    description: "Strategic planning and decision making agent"
     settings:
       temperature: 0.7
       max_tokens: 1000
-      system_prompt: "You are King, an advanced AI agent specializing in complex problem-solving and strategic thinking."
+      system_prompt: |
+        You are King, an advanced AI agent specializing in complex problem-solving and strategic thinking who helps guide the AI village with the peace of a Taoist.
+        Your approach is:
+        1. Analyze problems thoroughly from multiple angles
+        2. Break down complex tasks into manageable steps
+        3. Consider long-term implications and strategic impact
+        4. Provide clear, actionable guidance
+        5. Maintain awareness of context and constraints
 
   sage:
     frontier_model: "anthropic/claude-3.5-sonnet"
     local_model: "deepseek-ai/Janus-1.3B"
-    description: "Research and analysis focused model with vision capabilities"
+    description: "Research and knowledge synthesis agent"
     settings:
-      temperature: 0.8
-      max_tokens: 2000
-      system_prompt: "You are Sage, an AI researcher specializing in analysis, research, and knowledge synthesis."
+      temperature: 0.7
+      max_tokens: 1500
+      system_prompt: |
+        You are Sage, an AI researcher specializing in comprehensive analysis and knowledge synthesis.
+        Your approach is:
+        1. Systematic exploration of topics
+        2. Evidence-based analysis
+        3. Identification of patterns and connections
+        4. Clear articulation of findings
+        5. Recognition of limitations and uncertainties
 
   magi:
     frontier_model: "openai/o1-mini-2024-09-12"
     local_model: "ibm-granite/granite-3b-code-instruct-128k"
-    description: "Code generation and analysis specialist"
+    description: "Code generation and experimentation agent"
     settings:
       temperature: 0.2
-      max_tokens: 1500
-      system_prompt: "You are Magi, an expert coding AI specializing in software development and technical problem-solving."
+      max_tokens: 2000
+      system_prompt: |
+        You are Magi, an expert software developer specializing in code generation and optimization.
+        Your approach is:
+        1. Write clean, efficient, and well-documented code
+        2. Follow language-specific best practices
+        3. Consider performance and maintainability
+        4. Handle edge cases and errors appropriately
+        5. Provide comprehensive documentation
 
-openrouter:
-  base_url: "https://openrouter.ai/api/v1"
-  requests_per_minute: 50
-  retry_delay: 1
-  max_retries: 3
+# Agent interaction settings
+interaction:
+  collaboration_threshold: 0.7  # Threshold for when agents should collaborate
+  task_routing:
+    strategic: "king"
+    research: "sage"
+    technical: "magi"
+  priority_weights:
+    king: 0.4
+    sage: 0.3
+    magi: 0.3
 
-performance_tracking:
-  metrics:
-    - name: "response_quality"
-      weight: 0.4
-      description: "Quality and relevance of the response"
-    
-    - name: "task_completion"
-      weight: 0.3
-      description: "Whether the task was successfully completed"
-    
-    - name: "efficiency"
-      weight: 0.2
-      description: "Token usage efficiency and response time"
-    
-    - name: "creativity"
-      weight: 0.1
-      description: "Uniqueness and innovation in solutions"
+# Evolution settings
+evolution:
+  enabled: true
+  interval: 1000  # Number of interactions before evolution
+  mutation_rate: 0.1
+  crossover_rate: 0.7
+  selection_pressure: 0.8
+  fitness_metrics:
+    task_success: 0.4
+    response_quality: 0.3
+    efficiency: 0.2
+    innovation: 0.1
 
-  dpo_settings:
-    batch_size: 16
-    learning_rate: 1e-5
-    beta: 0.1
-    update_interval: 100  # Update local models after every 100 interactions
+# Performance thresholds
+performance:
+  min_success_rate: 0.8
+  max_response_time: 30  # seconds
+  min_quality_score: 0.7
+  evaluation_interval: 100  # tasks

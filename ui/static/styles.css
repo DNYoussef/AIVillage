@@ -1,0 +1,213 @@
+/* Additional styles for AI Village UI */
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Performance metrics cards */
+.metric-card {
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Agent status indicators */
+.agent-status {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-active {
+    background-color: #10B981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.status-inactive {
+    background-color: #EF4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+.status-busy {
+    background-color: #F59E0B;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+}
+
+/* Knowledge graph node styles */
+.node-king {
+    background-color: #3B82F6;
+}
+
+.node-sage {
+    background-color: #10B981;
+}
+
+.node-magi {
+    background-color: #8B5CF6;
+}
+
+/* Chat interface enhancements */
+.chat-message {
+    position: relative;
+    animation: messageSlide 0.3s ease-out;
+}
+
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chat-timestamp {
+    font-size: 0.75rem;
+    color: #6B7280;
+    margin-top: 4px;
+}
+
+/* Decision tree node styles */
+.decision-node {
+    padding: 8px 16px;
+    border-radius: 4px;
+    background-color: #F3F4F6;
+    margin: 4px 0;
+    transition: background-color 0.2s;
+}
+
+.decision-node:hover {
+    background-color: #E5E7EB;
+}
+
+.decision-node.active {
+    background-color: #DBEAFE;
+    border-left: 4px solid #3B82F6;
+}
+
+/* Loading indicators */
+.loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #F3F4F6;
+    border-top: 3px solid #3B82F6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .network-container {
+        height: 400px;
+    }
+    
+    .chat-container {
+        height: 400px;
+    }
+    
+    .chat-message {
+        max-width: 90%;
+    }
+}
+
+/* Error message styling */
+.error-message {
+    background-color: #FEE2E2;
+    border-left: 4px solid #EF4444;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 4px;
+}
+
+/* Success message styling */
+.success-message {
+    background-color: #D1FAE5;
+    border-left: 4px solid #10B981;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 4px;
+}
+
+/* Tooltip styles */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltip-text {
+    visibility: hidden;
+    background-color: #1F2937;
+    color: white;
+    text-align: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Performance chart styles */
+.chart-container {
+    position: relative;
+    margin: auto;
+    height: 300px;
+}
+
+/* Agent type badges */
+.agent-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.agent-badge.king {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+}
+
+.agent-badge.sage {
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+.agent-badge.magi {
+    background-color: #EDE9FE;
+    color: #5B21B6;
+}

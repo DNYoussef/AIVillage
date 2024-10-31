@@ -17,6 +17,31 @@ chunk_overlap: 200
 max_chunks_per_doc: 10
 similarity_threshold: 0.7
 
+# Retrieval settings
+retrieval:
+  depth: 3
+  relevance_threshold: 0.7
+  max_results: 10
+  reranking_enabled: true
+  hybrid_search: true
+  exploration_weight: 1.0
+
+# Processing settings
+processing:
+  reasoning_depth: 2
+  uncertainty_threshold: 0.3
+  feedback_enabled: true
+  max_reasoning_steps: 5
+  confidence_threshold: 0.8
+
+# Knowledge tracking
+tracking:
+  update_interval: 100
+  max_history: 1000
+  pruning_threshold: 0.3
+  consolidation_interval: 24  # hours
+  backup_enabled: true
+
 # Performance settings
 batch_size: 32
 max_concurrent_requests: 5
@@ -26,8 +51,57 @@ request_timeout: 30
 data_dir: "data"
 cache_dir: "cache"
 index_path: "indexes"
+backup_dir: "data/backups"
 
 # Monitoring and logging
 log_level: "INFO"
 enable_monitoring: true
 metrics_port: 8000
+
+# Advanced features
+features:
+  cognitive_architecture: true
+  latent_space: true
+  exploration_mode: true
+  uncertainty_estimation: true
+  knowledge_synthesis: true
+  
+# Graph settings
+graph:
+  max_nodes: 10000
+  max_edges: 50000
+  pruning_interval: 168  # hours (1 week)
+  centrality_threshold: 0.1
+  clustering_enabled: true
+
+# Vector settings
+vector:
+  dimensions: 1536
+  metric: "cosine"
+  index_type: "hnsw"
+  compression_enabled: true
+  quantization_bits: 8
+
+# Exploration settings
+exploration:
+  max_depth: 3
+  breadth_factor: 2
+  novelty_threshold: 0.3
+  diversity_weight: 0.5
+  serendipity_factor: 0.2
+
+# Synthesis settings
+synthesis:
+  min_sources: 2
+  max_sources: 10
+  quality_threshold: 0.7
+  coherence_weight: 0.6
+  novelty_weight: 0.4
+
+# Error handling
+error_handling:
+  max_retries: 3
+  retry_delay: 1
+  fallback_enabled: true
+  graceful_degradation: true
+  error_logging: true

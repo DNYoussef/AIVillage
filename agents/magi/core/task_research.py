@@ -1,201 +1,191 @@
-"""Task Research implementation."""
+"""Task research component for MAGI agent."""
 
 from typing import Dict, Any, List, Optional
-import logging
-import asyncio
 from datetime import datetime
-
-from ...utils.logging import get_logger
-from ...utils.exceptions import AIVillageException
+from agents.utils.logging import setup_logger
 from ..research.integration import ResearchIntegration
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 class TaskResearch:
-    """
-    Handles research tasks for the MAGI system.
-    Integrates with various research sources and tools.
-    """
+    """Handles task analysis and research for MAGI agent."""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self):
+        self.research_integration = ResearchIntegration()
+        self.analysis_history = []
+    
+    async def analyze_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Initialize TaskResearch with configuration.
+        Analyze a task to understand requirements and context.
         
         Args:
-            config: Configuration dictionary
-        """
-        self.config = config
-        self.research_integration = ResearchIntegration(config)
-        logger.info("TaskResearch initialized")
-
-    async def research_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Perform research for a given task.
-        
-        Args:
-            task: Task description and parameters
+            task: Task to analyze
             
         Returns:
-            Research results and findings
+            Analysis results
         """
         try:
-            # Extract research requirements
-            requirements = await self._extract_research_requirements(task)
+            logger.info(f"Analyzing task: {task.get('type', 'unknown')}")
             
-            # Gather information from multiple sources
-            results = await asyncio.gather(
-                self._search_knowledge_base(requirements),
-                self._search_external_sources(requirements),
-                self._analyze_related_tasks(requirements)
-            )
+            # Extract task components
+            task_type = task.get('type', 'unknown')
+            content = task.get('content', {})
+            requirements = content.get('requirements', {})
             
-            # Combine and analyze results
-            combined_results = await self._combine_research_results(results)
-            analysis = await self._analyze_research_results(combined_results)
-            
-            return {
-                'requirements': requirements,
-                'results': combined_results,
-                'analysis': analysis,
+            # Analyze requirements
+            analysis = {
+                'task_type': task_type,
+                'complexity': self._assess_complexity(content),
+                'requirements': self._analyze_requirements(requirements),
+                'risks': self._identify_risks(content),
                 'timestamp': datetime.now().isoformat()
             }
-        except Exception as e:
-            logger.exception(f"Error researching task: {str(e)}")
-            raise AIVillageException(f"Error researching task: {str(e)}")
-
-    async def _extract_research_requirements(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Extract research requirements from task.
-        
-        Args:
-            task: Task description and parameters
             
-        Returns:
-            Research requirements
-        """
-        try:
-            return await self.research_integration.extract_requirements(task)
-        except Exception as e:
-            logger.exception(f"Error extracting research requirements: {str(e)}")
-            raise AIVillageException(f"Error extracting research requirements: {str(e)}")
-
-    async def _search_knowledge_base(self, requirements: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Search internal knowledge base.
-        
-        Args:
-            requirements: Research requirements
+            # Store analysis
+            self.analysis_history.append(analysis)
             
-        Returns:
-            Knowledge base search results
-        """
-        try:
-            return await self.research_integration.search_knowledge_base(requirements)
-        except Exception as e:
-            logger.exception(f"Error searching knowledge base: {str(e)}")
-            raise AIVillageException(f"Error searching knowledge base: {str(e)}")
-
-    async def _search_external_sources(self, requirements: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Search external information sources.
-        
-        Args:
-            requirements: Research requirements
+            return analysis
             
-        Returns:
-            External source search results
-        """
-        try:
-            return await self.research_integration.search_external_sources(requirements)
         except Exception as e:
-            logger.exception(f"Error searching external sources: {str(e)}")
-            raise AIVillageException(f"Error searching external sources: {str(e)}")
-
-    async def _analyze_related_tasks(self, requirements: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Analyze related tasks and their outcomes.
+            logger.error(f"Error analyzing task: {str(e)}")
+            return {
+                'error': str(e),
+                'status': 'failed',
+                'timestamp': datetime.now().isoformat()
+            }
+    
+    def _assess_complexity(self, content: Dict[str, Any]) -> Dict[str, Any]:
+        """Assess task complexity."""
+        # Count requirements and constraints
+        req_count = len(content.get('requirements', {}))
+        constraint_count = len(content.get('constraints', []))
         
-        Args:
-            requirements: Research requirements
+        # Calculate base complexity
+        base_complexity = min(1.0, (req_count + constraint_count) / 10)
+        
+        # Adjust for specific factors
+        adjustments = []
+        
+        if 'mathematical' in str(content).lower():
+            adjustments.append(0.2)
+        if 'optimization' in str(content).lower():
+            adjustments.append(0.3)
+        if 'compression' in str(content).lower():
+            adjustments.append(0.4)
+        
+        # Apply adjustments
+        final_complexity = base_complexity + sum(adjustments)
+        
+        return {
+            'score': min(1.0, final_complexity),
+            'base_complexity': base_complexity,
+            'adjustments': adjustments,
+            'factors': {
+                'requirements_count': req_count,
+                'constraints_count': constraint_count
+            }
+        }
+    
+    def _analyze_requirements(self, requirements: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze task requirements."""
+        analysis = {
+            'categories': {},
+            'dependencies': [],
+            'critical_requirements': []
+        }
+        
+        # Categorize requirements
+        for key, value in requirements.items():
+            category = self._categorize_requirement(key, value)
+            if category not in analysis['categories']:
+                analysis['categories'][category] = []
+            analysis['categories'][category].append(key)
             
-        Returns:
-            Related task analysis results
-        """
-        try:
-            return await self.research_integration.analyze_related_tasks(requirements)
-        except Exception as e:
-            logger.exception(f"Error analyzing related tasks: {str(e)}")
-            raise AIVillageException(f"Error analyzing related tasks: {str(e)}")
-
-    async def _combine_research_results(self, results: List[List[Dict[str, Any]]]) -> Dict[str, Any]:
-        """
-        Combine results from different sources.
-        
-        Args:
-            results: List of results from different sources
+            # Check for dependencies
+            deps = self._find_dependencies(key, value)
+            if deps:
+                analysis['dependencies'].extend(deps)
             
-        Returns:
-            Combined research results
-        """
-        try:
-            return await self.research_integration.combine_results(results)
-        except Exception as e:
-            logger.exception(f"Error combining research results: {str(e)}")
-            raise AIVillageException(f"Error combining research results: {str(e)}")
-
-    async def _analyze_research_results(self, combined_results: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Analyze combined research results.
+            # Check if critical
+            if self._is_critical_requirement(key, value):
+                analysis['critical_requirements'].append(key)
         
-        Args:
-            combined_results: Combined results from all sources
-            
-        Returns:
-            Analysis of research results
-        """
-        try:
-            return await self.research_integration.analyze_results(combined_results)
-        except Exception as e:
-            logger.exception(f"Error analyzing research results: {str(e)}")
-            raise AIVillageException(f"Error analyzing research results: {str(e)}")
-
-    async def get_research_status(self) -> Dict[str, Any]:
-        """
-        Get current research system status.
+        return analysis
+    
+    def _identify_risks(self, content: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Identify potential risks in the task."""
+        risks = []
         
-        Returns:
-            Status information for the research system
-        """
-        try:
-            return await self.research_integration.get_status()
-        except Exception as e:
-            logger.exception(f"Error getting research status: {str(e)}")
-            raise AIVillageException(f"Error getting research status: {str(e)}")
-
-    async def save_state(self, path: str):
-        """
-        Save research system state.
+        # Check for common risk patterns
+        if 'accuracy' in str(content).lower():
+            risks.append({
+                'type': 'accuracy',
+                'description': 'Task requires high accuracy',
+                'severity': 'high'
+            })
         
-        Args:
-            path: Path to save state
-        """
-        try:
-            await self.research_integration.save_state(path)
-            logger.info(f"Research system state saved to {path}")
-        except Exception as e:
-            logger.exception(f"Error saving research system state: {str(e)}")
-            raise AIVillageException(f"Error saving research system state: {str(e)}")
-
-    async def load_state(self, path: str):
-        """
-        Load research system state.
+        if 'memory' in str(content).lower():
+            risks.append({
+                'type': 'resource',
+                'description': 'Task may have high memory requirements',
+                'severity': 'medium'
+            })
         
-        Args:
-            path: Path to load state from
-        """
-        try:
-            await self.research_integration.load_state(path)
-            logger.info(f"Research system state loaded from {path}")
-        except Exception as e:
-            logger.exception(f"Error loading research system state: {str(e)}")
-            raise AIVillageException(f"Error loading research system state: {str(e)}")
+        if 'performance' in str(content).lower():
+            risks.append({
+                'type': 'performance',
+                'description': 'Task has performance requirements',
+                'severity': 'medium'
+            })
+        
+        return risks
+    
+    def _categorize_requirement(self, key: str, value: Any) -> str:
+        """Categorize a requirement."""
+        key_lower = key.lower()
+        
+        if 'accuracy' in key_lower or 'precision' in key_lower:
+            return 'quality'
+        elif 'time' in key_lower or 'speed' in key_lower:
+            return 'performance'
+        elif 'memory' in key_lower or 'storage' in key_lower:
+            return 'resource'
+        elif 'maintain' in key_lower or 'preserve' in key_lower:
+            return 'preservation'
+        else:
+            return 'general'
+    
+    def _find_dependencies(self, key: str, value: Any) -> List[str]:
+        """Find dependencies in a requirement."""
+        deps = []
+        
+        # Check for explicit dependencies
+        if isinstance(value, dict) and 'depends_on' in value:
+            deps.extend(value['depends_on'])
+        
+        # Check for implicit dependencies in text
+        if isinstance(value, str):
+            if 'after' in value.lower():
+                deps.append(f"implicit: {value}")
+            if 'requires' in value.lower():
+                deps.append(f"implicit: {value}")
+        
+        return deps
+    
+    def _is_critical_requirement(self, key: str, value: Any) -> bool:
+        """Determine if a requirement is critical."""
+        # Check key indicators
+        key_lower = key.lower()
+        if 'critical' in key_lower or 'essential' in key_lower:
+            return True
+        
+        # Check value indicators
+        if isinstance(value, dict):
+            return value.get('critical', False)
+        
+        # Check text content
+        if isinstance(value, str):
+            indicators = ['must', 'required', 'essential', 'critical']
+            return any(ind in value.lower() for ind in indicators)
+        
+        return False

@@ -154,7 +154,8 @@ def deep_baker(mock_agent, mock_tokenizer):
     
     class TestDeepSystemBakerTask(DeepSystemBakerTask):
         def __init__(self, agent, model_name, device):
-            super().__init__(agent, model_name, device)
+            # Skip the parent class __init__ and set up our own mocked version
+            super(DeepSystemBakerTask, self).__init__(agent, "", device)  # Pass empty string as model_name
             self.tokenizer = mock_tokenizer
             self.model = MockPyTorchModel()
             
@@ -171,9 +172,7 @@ def deep_baker(mock_agent, mock_tokenizer):
             return loss
     
     with patch('langroid.Task', MockTask):
-        # Use a local model path instead of model name
-        model_path = os.path.expanduser("~/.cache/huggingface/hub/models--Qwen--Qwen2.5-1.5B-Instruct")
-        baker = TestDeepSystemBakerTask(agent=mock_agent, model_name=model_path, device="cpu")
+        baker = TestDeepSystemBakerTask(agent=mock_agent, model_name="", device="cpu")
         return baker
 
 @pytest.mark.asyncio
