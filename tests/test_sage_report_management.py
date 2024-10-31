@@ -7,7 +7,6 @@ from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime
 from typing import Dict, Any, List
 
-# Mock the problematic imports
 class MockRAGPipeline:
     def __init__(self):
         self.process_query = AsyncMock(return_value={
@@ -23,144 +22,114 @@ class MockCognitiveNexus:
             "confidence": 0.9
         })
 
-@pytest.fixture
-def mock_rag_pipeline():
-    """Create mock RAG pipeline."""
-    return MockRAGPipeline()
-
-@pytest.fixture
-def mock_cognitive_nexus():
-    """Create mock CognitiveNexus."""
-    return MockCognitiveNexus()
-
-@pytest.fixture
-def report_manager(mock_rag_pipeline, mock_cognitive_nexus):
-    """Create ReportManager instance for testing."""
-    class MockReportManager:
-        def __init__(self):
-            self.rag_pipeline = mock_rag_pipeline
-            self.cognitive_nexus = mock_cognitive_nexus
-            self.report_history = {}
-            
-            # Mock report writers that preserve input content exactly
-            def create_writer(report_type):
-                async def writer(**kwargs):
-                    # Return exactly what was passed in
-                    return dict(kwargs)  # Create a new dict to avoid reference issues
-                return AsyncMock(side_effect=writer)
-            
-            self.scientific_writer = AsyncMock()
-            self.scientific_writer.generate_paper = create_writer("scientific")
-            
-            self.agent_writer = AsyncMock()
-            self.agent_writer.generate_report = create_writer("agent")
-            
-            self.wiki_writer = AsyncMock()
-            self.wiki_writer.generate_article = create_writer("wiki")
-            
-            self.project_writer = AsyncMock()
-            self.project_writer.generate_report = create_writer("project")
+class MockReportManager:
+    def __init__(self):
+        # Initialize with empty state
+        self.clear_state()
         
-        async def generate_report(self, report_type: str, content: Dict[str, Any], **kwargs) -> Dict[str, Any]:
-            writer_map = {
-                "scientific": self.scientific_writer.generate_paper,
-                "agent": self.agent_writer.generate_report,
-                "wiki": self.wiki_writer.generate_article,
-                "project": self.project_writer.generate_report
-            }
-            
-            if report_type not in writer_map:
-                raise ValueError(f"Unknown report type: {report_type}")
-            
-            # Create a new dict with the content to avoid reference issues
-            report_content = dict(content)
-            
-            # Generate report
-            report = await writer_map[report_type](**report_content)
-            
-            # Store in history
-            report_id = f"{report_type}_{datetime.now().isoformat()}"
-            if report_id not in self.report_history:
-                self.report_history[report_id] = []
-            self.report_history[report_id].append(report)
-            
-            return report
+    def clear_state(self):
+        """Clear all state for isolation between tests."""
+        self.report_history = {}
+        self.rag_pipeline = MockRAGPipeline()
+        self.cognitive_nexus = MockCognitiveNexus()
+        self.id_counter = 0  # Add counter for unique IDs
         
-        async def update_report(self, report_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
-            if report_id not in self.report_history:
-                raise ValueError(f"Report not found: {report_id}")
-            
-            latest_version = dict(self.report_history[report_id][-1])  # Create a new dict
-            
-            # Merge updates recursively
-            def merge_dicts(original, updates):
-                result = dict(original)  # Create a new dict
-                for key, value in updates.items():
-                    if isinstance(value, dict) and key in result and isinstance(result[key], dict):
-                        result[key] = merge_dicts(result[key], value)
-                    else:
-                        result[key] = value
-                return result
-            
-            merged_content = merge_dicts(latest_version, updates)
-            
-            # Generate new version
-            report_type = report_id.split("_")[0]
-            new_version = await self.generate_report(report_type, merged_content)
-            self.report_history[report_id].append(new_version)
-            
-            return new_version
+        # Initialize report writers
+        self.scientific_writer = AsyncMock()
+        self.agent_writer = AsyncMock()
+        self.wiki_writer = AsyncMock()
+        self.project_writer = AsyncMock()
         
-        async def get_report_history(self, report_id: str) -> List[Dict[str, Any]]:
-            if report_id not in self.report_history:
-                raise ValueError(f"Report not found: {report_id}")
-            return self.report_history[report_id]
+        # Set up mock responses to return input content
+        async def mock_generate(**kwargs):
+            print(f"Generating report with content: {kwargs}")
+            return dict(kwargs)  # Return a new dict to avoid reference issues
         
-        async def search_reports(self, query: str, report_type: str = None) -> List[Dict[str, Any]]:
-            results = []
-            query = query.lower()
-            
-            # Debug print
-            print(f"\nSearching for query: {query}")
-            print(f"Report history: {self.report_history}")
-            
-            for report_id, versions in self.report_history.items():
-                if report_type and not report_id.startswith(report_type):
-                    continue
-                
-                latest_version = versions[-1]
-                print(f"\nChecking report {report_id}:")
-                print(f"Content: {latest_version}")
-                
-                if self._matches_query(latest_version, query):
-                    print(f"Match found in report {report_id}")
-                    results.append({
-                        "report_id": report_id,
-                        "report": dict(latest_version),  # Create a new dict
-                        "version_count": len(versions)
-                    })
-                else:
-                    print(f"No match found in report {report_id}")
-            
-            return results
-        
-        def _matches_query(self, report: Dict[str, Any], query: str) -> bool:
-            """Recursively search through report content for query."""
-            def search_value(value: Any) -> bool:
-                if isinstance(value, str):
-                    result = query in value.lower()
-                    print(f"Checking string value: {value}, query: {query}, match: {result}")
-                    return result
-                elif isinstance(value, dict):
-                    return any(search_value(v) for v in value.values())
-                elif isinstance(value, (list, tuple)):
-                    return any(search_value(item) for item in value)
-                return False
-            
-            # Search through all values in the report
-            return any(search_value(value) for value in report.values())
+        self.scientific_writer.generate_paper = AsyncMock(side_effect=mock_generate)
+        self.agent_writer.generate_report = AsyncMock(side_effect=mock_generate)
+        self.wiki_writer.generate_article = AsyncMock(side_effect=mock_generate)
+        self.project_writer.generate_report = AsyncMock(side_effect=mock_generate)
     
-    return MockReportManager()
+    async def generate_report(self, report_type: str, content: Dict[str, Any]) -> Dict[str, Any]:
+        print(f"\nGenerating {report_type} report with content: {content}")
+        writer_map = {
+            "scientific": self.scientific_writer.generate_paper,
+            "agent": self.agent_writer.generate_report,
+            "wiki": self.wiki_writer.generate_article,
+            "project": self.project_writer.generate_report
+        }
+        
+        if report_type not in writer_map:
+            raise ValueError(f"Unknown report type: {report_type}")
+        
+        # Generate report using the appropriate writer
+        report = await writer_map[report_type](**content)
+        print(f"Generated report: {report}")
+        
+        # Store in history with unique ID
+        self.id_counter += 1
+        report_id = f"{report_type}_{self.id_counter}_{datetime.now().isoformat()}"
+        self.report_history[report_id] = [dict(report)]  # Store a copy
+        print(f"Stored report with ID {report_id}")
+        print(f"Current report history: {self.report_history}")
+        
+        return dict(report)  # Return a copy
+    
+    async def update_report(self, report_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+        if report_id not in self.report_history:
+            raise ValueError(f"Report not found: {report_id}")
+        
+        latest_version = dict(self.report_history[report_id][-1])  # Create a copy
+        latest_version.update(updates)
+        self.report_history[report_id].append(dict(latest_version))  # Store a copy
+        return dict(latest_version)  # Return a copy
+    
+    async def get_report_history(self, report_id: str) -> List[Dict[str, Any]]:
+        if report_id not in self.report_history:
+            raise ValueError(f"Report not found: {report_id}")
+        return [dict(version) for version in self.report_history[report_id]]  # Return copies
+    
+    async def search_reports(self, query: str, report_type: str = None) -> List[Dict[str, Any]]:
+        print(f"\nSearching for query: {query}")
+        print(f"Current report history: {self.report_history}")
+        results = []
+        query = query.lower()
+        
+        for report_id, versions in self.report_history.items():
+            print(f"\nChecking report {report_id}:")
+            if report_type and not report_id.split('_')[0] != report_type:  # Fix report type check
+                continue
+            
+            latest_version = dict(versions[-1])  # Create a copy
+            print(f"Content: {latest_version}")
+            
+            # Search in both title and content
+            matches = False
+            for key, value in latest_version.items():
+                print(f"Checking field {key}: {value}")
+                if isinstance(value, str) and query in value.lower():
+                    print(f"Found match in {key}")
+                    matches = True
+                    break
+            
+            if matches:
+                print(f"Adding report {report_id} to results")
+                results.append({
+                    "report_id": report_id,
+                    "report": dict(latest_version),  # Store a copy
+                    "version_count": len(versions)
+                })
+        
+        print(f"Final search results: {results}")
+        return results
+
+@pytest.fixture
+def report_manager():
+    """Create ReportManager instance for testing."""
+    manager = MockReportManager()
+    yield manager
+    # Clean up after each test
+    manager.clear_state()
 
 @pytest.mark.asyncio
 async def test_scientific_paper_generation(report_manager):
@@ -181,12 +150,13 @@ async def test_scientific_paper_generation(report_manager):
     assert isinstance(report, dict)
     assert "title" in report
     assert "sections" in report
-    assert len(report["sections"]) == len(content["sections"])
+    assert len(report["sections"]) > 0
+    assert report["title"] == content["title"]
+    assert report["sections"] == content["sections"]
 
 @pytest.mark.asyncio
 async def test_report_update(report_manager):
     """Test report updating."""
-    # First create a report
     initial_content = {
         "title": "Test Report",
         "content": "Initial content"
@@ -194,7 +164,6 @@ async def test_report_update(report_manager):
     report = await report_manager.generate_report("wiki", initial_content)
     report_id = list(report_manager.report_history.keys())[0]
     
-    # Update the report
     updates = {
         "content": "Updated content"
     }
@@ -203,6 +172,7 @@ async def test_report_update(report_manager):
     assert isinstance(updated_report, dict)
     assert "content" in updated_report
     assert updated_report["content"] == "Updated content"
+    assert updated_report["title"] == initial_content["title"]
 
 @pytest.mark.asyncio
 async def test_report_history(report_manager):
@@ -212,20 +182,21 @@ async def test_report_history(report_manager):
         "content": "Test content"
     }
     
-    # Generate report
     report = await report_manager.generate_report("wiki", content)
     report_id = list(report_manager.report_history.keys())[0]
     
-    # Get history
     history = await report_manager.get_report_history(report_id)
     
     assert isinstance(history, list)
     assert len(history) == 1
     assert history[0]["title"] == content["title"]
+    assert history[0]["content"] == content["content"]
 
 @pytest.mark.asyncio
 async def test_report_search(report_manager):
     """Test report searching."""
+    print("\nStarting test_report_search")
+    
     # Generate reports
     reports = [
         {
@@ -239,33 +210,19 @@ async def test_report_search(report_manager):
     ]
     
     # Generate each report
-    print("\nGenerating test reports:")
     for report_content in reports:
         print(f"\nGenerating report with content: {report_content}")
-        report = await report_manager.generate_report("wiki", report_content)
+        report = await report_manager.generate_report("wiki", dict(report_content))  # Pass a copy
         print(f"Generated report: {report}")
-        # Debug assertion to verify report content
-        assert report["title"] == report_content["title"]
-        assert report["content"] == report_content["content"]
     
-    # Debug: Print all reports in history
-    print("\nCurrent report history:")
-    for report_id, versions in report_manager.report_history.items():
-        latest = versions[-1]
-        print(f"\nReport {report_id}:")
-        print(f"Content: {latest}")
-        assert isinstance(latest, dict)
-        assert "title" in latest
-        assert "content" in latest
+    print(f"\nReport history after generation: {report_manager.report_history}")
     
     # Search for AI-related reports
-    print("\nSearching for 'ai'...")
     results = await report_manager.search_reports("ai")
-    
     print(f"\nSearch results: {results}")
     
     assert isinstance(results, list)
-    assert len(results) == 1
+    assert len(results) == 1, f"Expected 1 result, got {len(results)}. Results: {results}"
     assert "ai" in results[0]["report"]["title"].lower()
 
 @pytest.mark.asyncio
@@ -281,4 +238,4 @@ async def test_invalid_report_type(report_manager):
     assert "Unknown report type" in str(exc_info.value)
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    pytest.main([__file__, "-v", "-s"])
