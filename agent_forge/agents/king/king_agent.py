@@ -24,6 +24,10 @@ class TaskManager:
             "resource_efficiency": 1.0
         }
     
+    async def initialize(self):
+        """Initialize task manager."""
+        logger.info("Initialized TaskManager")
+    
     async def add_task(self, task_id: str, task: Dict[str, Any]):
         """Add a new task to manage."""
         self.active_tasks[task_id] = {
@@ -74,6 +78,10 @@ class ResourceAllocator:
         self.config = config
         self.allocations: Dict[str, Dict[str, float]] = {}
         self.usage_history: List[Dict[str, Any]] = []
+    
+    async def initialize(self):
+        """Initialize resource allocator."""
+        logger.info("Initialized ResourceAllocator")
     
     async def allocate_resources(self, 
                                task: Dict[str, Any],
@@ -134,6 +142,28 @@ class KingAgent:
         logger.info(f"Initialized KingAgent with:")
         logger.info(f"  Frontier model: {openrouter_agent.model}")
         logger.info(f"  Local model: {openrouter_agent.local_model}")
+    
+    async def initialize(self):
+        """Initialize all agent components."""
+        try:
+            logger.info("Initializing KingAgent components...")
+            
+            # Initialize frontier agent
+            await self.frontier_agent.initialize()
+            
+            # Initialize local agent
+            await self.local_agent.initialize()
+            
+            # Initialize support systems
+            await self.task_manager.initialize()
+            await self.resource_allocator.initialize()
+            await self.complexity_evaluator.initialize()
+            
+            logger.info("Successfully initialized all KingAgent components")
+            
+        except Exception as e:
+            logger.error(f"Error initializing KingAgent: {str(e)}")
+            raise
     
     def _get_default_system_prompt(self) -> str:
         """Get the default system prompt for King agent."""

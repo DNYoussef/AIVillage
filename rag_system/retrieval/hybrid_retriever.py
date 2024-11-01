@@ -1,10 +1,9 @@
 """Enhanced hybrid retrieval system with dual-level and plan-aware capabilities."""
 
-# ... [previous imports remain the same] ...
-
 from typing import List, Dict, Any, Optional, Tuple, Union
 from datetime import datetime, timedelta
 import numpy as np
+import logging
 from sklearn.metrics.pairwise import cosine_similarity
 import json
 from ..core.base_component import BaseComponent
@@ -14,6 +13,8 @@ from ..retrieval.graph_store import GraphStore
 from ..core.structures import RetrievalResult, RetrievalPlan
 from ..utils.graph_utils import distance_sensitive_linearization
 from ..utils.error_handling import log_and_handle_errors, ErrorContext, RAGSystemError
+
+logger = logging.getLogger(__name__)
 
 class MockAgent:
     """Mock agent for testing."""
@@ -43,6 +44,7 @@ class HybridRetriever(BaseComponent):
         Args:
             config: Configuration instance
         """
+        super().__init__()  # Call parent's init
         self.config = config
         vector_dimension = (
             config.vector_dimension if isinstance(config, RAGConfig)
@@ -53,49 +55,180 @@ class HybridRetriever(BaseComponent):
         self.llm = None  # Will be initialized with language model
         self.agent = None  # Will be initialized with agent
         self.current_results = []  # Store current results for metrics
-        self.initialized = False
+        
+        # Add component-specific stats
+        self.stats.update({
+            "total_retrievals": 0,
+            "successful_retrievals": 0,
+            "failed_retrievals": 0,
+            "total_feedbacks": 0,
+            "successful_feedbacks": 0,
+            "failed_feedbacks": 0,
+            "avg_retrieval_time": 0.0,
+            "avg_feedback_time": 0.0,
+            "avg_result_count": 0.0,
+            "last_retrieval": None,
+            "last_feedback": None,
+            "memory_usage": {
+                "vector_store": 0,
+                "graph_store": 0,
+                "current_results": 0
+            }
+        })
+        
+        logger.info("Initialized HybridRetriever")
     
     @log_and_handle_errors()
     async def initialize(self) -> None:
         """Initialize retriever components."""
-        if not self.initialized:
-            try:
-                await self.vector_store.initialize()
-                await self.graph_store.initialize()
-                # Initialize mock agent if none provided
-                if self.agent is None:
-                    self.agent = MockAgent()
-                if not getattr(self.agent, 'initialized', False):
-                    await self.agent.initialize()
-                self.initialized = True
-            except Exception as e:
-                raise RAGSystemError(f"Failed to initialize hybrid retriever: {str(e)}") from e
+        try:
+            await self._pre_initialize()
+            
+            logger.info("Initializing HybridRetriever...")
+            
+            await self.vector_store.initialize()
+            await self.graph_store.initialize()
+            
+            # Initialize mock agent if none provided
+            if self.agent is None:
+                self.agent = MockAgent()
+            if not getattr(self.agent, 'initialized', False):
+                await self.agent.initialize()
+            
+            await self._post_initialize()
+            logger.info("Successfully initialized HybridRetriever")
+            
+        except Exception as e:
+            logger.error(f"Error initializing HybridRetriever: {str(e)}")
+            self.initialized = False
+            raise RAGSystemError(f"Failed to initialize hybrid retriever: {str(e)}") from e
     
     @log_and_handle_errors()
+    async def generate_feedback(self, query: str, results: List[RetrievalResult]) -> Dict[str, Any]:
+        """Generate comprehensive feedback for query refinement."""
+        return await self._safe_operation("generate_feedback", self._do_generate_feedback(query, results))
+    
+    async def _do_generate_feedback(self, query: str, results: List[RetrievalResult]) -> Dict[str, Any]:
+        """Internal feedback generation implementation."""
+        try:
+            start_time = datetime.now()
+            self.stats["total_feedbacks"] += 1
+            
+            if not results:
+                feedback = {
+                    "relevance_scores": [],
+                    "coverage_analysis": self._analyze_coverage([]),
+                    "semantic_gaps": [],
+                    "suggested_expansions": [],
+                    "confidence_score": 0.0,
+                    "diversity_metric": 0.0,
+                    "temporal_distribution": {"temporal_coverage": 0.0, "time_range": None}
+                }
+            else:
+                relevance_scores = await self._calculate_relevance_scores(query, results)
+                coverage_analysis = self._analyze_coverage(results)
+                semantic_gaps = self._identify_semantic_gaps(query, results)
+                suggested_expansions = self._generate_query_expansions(query, results)
+                
+                feedback = {
+                    "relevance_scores": relevance_scores,
+                    "coverage_analysis": coverage_analysis,
+                    "semantic_gaps": semantic_gaps,
+                    "suggested_expansions": suggested_expansions,
+                    "confidence_score": self._calculate_confidence_score(relevance_scores, coverage_analysis),
+                    "diversity_metric": await self._calculate_diversity_metric(results),
+                    "temporal_distribution": self._analyze_temporal_distribution(results)
+                }
+            
+            # Update stats
+            processing_time = (datetime.now() - start_time).total_seconds()
+            self.stats["successful_feedbacks"] += 1
+            self.stats["avg_feedback_time"] = (
+                (self.stats["avg_feedback_time"] * (self.stats["successful_feedbacks"] - 1) + processing_time) /
+                self.stats["successful_feedbacks"]
+            )
+            self.stats["last_feedback"] = datetime.now().isoformat()
+            
+            # Update memory usage stats
+            self.stats["memory_usage"].update({
+                "vector_store": await self._get_vector_store_size(),
+                "graph_store": await self._get_graph_store_size(),
+                "current_results": len(self.current_results)
+            })
+            
+            return feedback
+            
+        except Exception as e:
+            self.stats["failed_feedbacks"] += 1
+            raise RAGSystemError(f"Error generating feedback: {str(e)}") from e
+
+    async def _get_vector_store_size(self) -> int:
+        """Get vector store memory usage."""
+        try:
+            status = await self.vector_store.get_status()
+            return status.get("memory_usage", {}).get("total", 0)
+        except Exception:
+            return 0
+
+    async def _get_graph_store_size(self) -> int:
+        """Get graph store memory usage."""
+        try:
+            status = await self.graph_store.get_status()
+            return status.get("memory_usage", {}).get("total", 0)
+        except Exception:
+            return 0
+
     async def shutdown(self) -> None:
         """Shutdown retriever components."""
-        if self.initialized:
+        try:
+            await self._pre_shutdown()
+            
+            logger.info("Shutting down HybridRetriever...")
+            
             await self.vector_store.shutdown()
             await self.graph_store.shutdown()
-            self.initialized = False
+            
+            self.current_results = []
+            
+            await self._post_shutdown()
+            logger.info("Successfully shut down HybridRetriever")
+            
+        except Exception as e:
+            logger.error(f"Error shutting down HybridRetriever: {str(e)}")
+            raise
     
     @log_and_handle_errors()
     async def get_status(self) -> Dict[str, Any]:
         """Get component status."""
-        return {
-            "initialized": self.initialized,
+        base_status = await self.get_base_status()
+        
+        component_status = {
             "vector_store": await self.vector_store.get_status(),
             "graph_store": await self.graph_store.get_status(),
             "agent": "initialized" if getattr(self.agent, 'initialized', False) else "not initialized",
             "current_results_count": len(self.current_results)
         }
+        
+        return {
+            **base_status,
+            **component_status
+        }
     
     @log_and_handle_errors()
     async def update_config(self, config: Union[UnifiedConfig, RAGConfig]) -> None:
         """Update component configuration."""
-        self.config = config
-        await self.vector_store.update_config(config)
-        await self.graph_store.update_config(config)
+        try:
+            logger.info("Updating HybridRetriever configuration...")
+            
+            self.config = config
+            await self.vector_store.update_config(config)
+            await self.graph_store.update_config(config)
+            
+            logger.info("Successfully updated configuration")
+            
+        except Exception as e:
+            logger.error(f"Error updating configuration: {str(e)}")
+            raise RAGSystemError(f"Failed to update configuration: {str(e)}") from e
 
     @log_and_handle_errors()
     async def retrieve(self, query: str, k: int, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
@@ -110,14 +243,41 @@ class HybridRetriever(BaseComponent):
         Returns:
             List of retrieval results
         """
-        async with ErrorContext("HybridRetriever"):
+        return await self._safe_operation("retrieve", self._do_retrieve(query, k, timestamp))
+    
+    async def _do_retrieve(self, query: str, k: int, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
+        """Internal retrieve implementation."""
+        try:
             if not self.initialized:
                 await self.initialize()
             
             if not self.agent:
                 raise RAGSystemError("Agent not initialized in HybridRetriever")
-                
-            return await self.dual_level_retrieve(query, k, timestamp)
+            
+            start_time = datetime.now()
+            self.stats["total_retrievals"] += 1
+            
+            results = await self.dual_level_retrieve(query, k, timestamp)
+            self.current_results = results
+            
+            # Update stats
+            processing_time = (datetime.now() - start_time).total_seconds()
+            self.stats["successful_retrievals"] += 1
+            self.stats["avg_retrieval_time"] = (
+                (self.stats["avg_retrieval_time"] * (self.stats["successful_retrievals"] - 1) + processing_time) /
+                self.stats["successful_retrievals"]
+            )
+            self.stats["avg_result_count"] = (
+                (self.stats["avg_result_count"] * (self.stats["successful_retrievals"] - 1) + len(results)) /
+                self.stats["successful_retrievals"]
+            )
+            self.stats["last_retrieval"] = datetime.now().isoformat()
+            
+            return results
+            
+        except Exception as e:
+            self.stats["failed_retrievals"] += 1
+            raise RAGSystemError(f"Error in retrieval: {str(e)}") from e
 
     async def dual_level_retrieve(self, query: str, k: int, timestamp: Optional[datetime] = None) -> List[RetrievalResult]:
         """Implement dual-level retrieval as described in LightRAG."""
@@ -481,3 +641,5 @@ class HybridRetriever(BaseComponent):
             return list(context_terms)
         except Exception as e:
             raise RAGSystemError(f"Error extracting context terms: {str(e)}") from e
+
+

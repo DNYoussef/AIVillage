@@ -3,6 +3,7 @@
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import asyncio
+import logging
 
 from .base_component import BaseComponent
 from ..core.config import RAGConfig
@@ -10,6 +11,8 @@ from ..retrieval.hybrid_retriever import HybridRetriever
 from ..processing.reasoning_engine import UncertaintyAwareReasoningEngine
 from .latent_space_activation import LatentSpaceActivation
 from ..utils.error_handling import log_and_handle_errors, ErrorContext, RAGSystemError
+
+logger = logging.getLogger(__name__)
 
 class EnhancedRAGPipeline(BaseComponent):
     """
@@ -19,71 +22,173 @@ class EnhancedRAGPipeline(BaseComponent):
     
     def __init__(self, config: Optional[RAGConfig] = None):
         """Initialize pipeline components."""
+        super().__init__()
         self.config = config or RAGConfig()
         self.latent_activator = LatentSpaceActivation()
         self.retriever = None  # Initialize in initialize() method
         self.reasoner = None   # Initialize in initialize() method
         self.agent = None      # Set by test or application code
-        self.initialized = False
-        self.processing_stats = {
+        
+        # Add pipeline-specific stats
+        self.stats.update({
             "total_queries": 0,
             "successful_queries": 0,
             "failed_queries": 0,
-            "avg_processing_time": 0.0
-        }
+            "avg_processing_time": 0.0,
+            "component_status": {
+                "latent_activator": False,
+                "retriever": False,
+                "reasoner": False,
+                "agent": False
+            }
+        })
+        
+        logger.info("Initialized EnhancedRAGPipeline")
     
     @log_and_handle_errors()
     async def initialize(self) -> None:
         """Initialize all pipeline components."""
-        if not self.initialized:
+        try:
+            await self._pre_initialize()
+            
+            logger.info("Initializing pipeline components...")
+            
+            # Initialize retriever if needed
             if not self.retriever:
                 self.retriever = HybridRetriever(self.config)
+            
+            # Initialize reasoner if needed
             if not self.reasoner:
                 self.reasoner = UncertaintyAwareReasoningEngine(self.config)
             
-            # Initialize components
-            await self.latent_activator.initialize()
-            await self.retriever.initialize()
-            await self.reasoner.initialize()
+            # Initialize all components
+            try:
+                await self.latent_activator.initialize()
+                self.stats["component_status"]["latent_activator"] = True
+            except Exception as e:
+                logger.error(f"Error initializing latent activator: {str(e)}")
+                raise
             
-            # Verify all required components are set
+            try:
+                await self.retriever.initialize()
+                self.stats["component_status"]["retriever"] = True
+            except Exception as e:
+                logger.error(f"Error initializing retriever: {str(e)}")
+                raise
+            
+            try:
+                await self.reasoner.initialize()
+                self.stats["component_status"]["reasoner"] = True
+            except Exception as e:
+                logger.error(f"Error initializing reasoner: {str(e)}")
+                raise
+            
+            # Verify agent is set
             if not self.agent:
                 raise RAGSystemError("Agent not set in pipeline")
+            self.stats["component_status"]["agent"] = True
             
-            self.initialized = True
+            await self._post_initialize()
+            logger.info("Successfully initialized all pipeline components")
+            
+        except Exception as e:
+            logger.error(f"Error initializing pipeline: {str(e)}")
+            self.initialized = False
+            raise
     
     @log_and_handle_errors()
     async def shutdown(self) -> None:
         """Shutdown all pipeline components."""
-        if self.initialized:
-            await self.latent_activator.shutdown()
-            if self.retriever:
-                await self.retriever.shutdown()
+        try:
+            await self._pre_shutdown()
+            
+            logger.info("Shutting down pipeline components...")
+            
+            # Shutdown components in reverse order
             if self.reasoner:
-                await self.reasoner.shutdown()
-            self.initialized = False
+                try:
+                    await self.reasoner.shutdown()
+                    self.stats["component_status"]["reasoner"] = False
+                except Exception as e:
+                    logger.error(f"Error shutting down reasoner: {str(e)}")
+            
+            if self.retriever:
+                try:
+                    await self.retriever.shutdown()
+                    self.stats["component_status"]["retriever"] = False
+                except Exception as e:
+                    logger.error(f"Error shutting down retriever: {str(e)}")
+            
+            try:
+                await self.latent_activator.shutdown()
+                self.stats["component_status"]["latent_activator"] = False
+            except Exception as e:
+                logger.error(f"Error shutting down latent activator: {str(e)}")
+            
+            self.stats["component_status"]["agent"] = False
+            
+            await self._post_shutdown()
+            logger.info("Successfully shut down all pipeline components")
+            
+        except Exception as e:
+            logger.error(f"Error shutting down pipeline: {str(e)}")
+            raise
     
     @log_and_handle_errors()
     async def get_status(self) -> Dict[str, Any]:
         """Get pipeline status."""
-        return {
-            "initialized": self.initialized,
+        base_status = await self.get_base_status()
+        
+        component_status = {
             "latent_activator": await self.latent_activator.get_status(),
             "retriever": await self.retriever.get_status() if self.retriever else None,
             "reasoner": await self.reasoner.get_status() if self.reasoner else None,
-            "agent": "set" if self.agent else "not set",
-            "processing_stats": self.processing_stats
+            "agent": "set" if self.agent else "not set"
+        }
+        
+        return {
+            **base_status,
+            "component_status": component_status,
+            "config": {
+                "num_documents": self.config.num_documents,
+                "uncertainty_threshold": self.config.uncertainty_threshold
+            }
         }
     
     @log_and_handle_errors()
     async def update_config(self, config: RAGConfig) -> None:
         """Update pipeline configuration."""
-        self.config = config
-        await self.latent_activator.update_config(config)
-        if self.retriever:
-            await self.retriever.update_config(config)
-        if self.reasoner:
-            await self.reasoner.update_config(config)
+        try:
+            logger.info("Updating pipeline configuration...")
+            
+            self.config = config
+            
+            # Update component configurations
+            try:
+                await self.latent_activator.update_config(config)
+            except Exception as e:
+                logger.error(f"Error updating latent activator config: {str(e)}")
+                raise
+            
+            if self.retriever:
+                try:
+                    await self.retriever.update_config(config)
+                except Exception as e:
+                    logger.error(f"Error updating retriever config: {str(e)}")
+                    raise
+            
+            if self.reasoner:
+                try:
+                    await self.reasoner.update_config(config)
+                except Exception as e:
+                    logger.error(f"Error updating reasoner config: {str(e)}")
+                    raise
+            
+            logger.info("Successfully updated pipeline configuration")
+            
+        except Exception as e:
+            logger.error(f"Error updating pipeline configuration: {str(e)}")
+            raise
     
     @log_and_handle_errors()
     async def process_query(self,
@@ -106,7 +211,7 @@ class EnhancedRAGPipeline(BaseComponent):
             
         async with ErrorContext("EnhancedRAGPipeline"):
             start_time = datetime.now()
-            self.processing_stats["total_queries"] += 1
+            self.stats["total_queries"] += 1
             
             try:
                 # Get number of documents to retrieve from context or config
@@ -162,17 +267,17 @@ class EnhancedRAGPipeline(BaseComponent):
     def _update_stats(self, processing_time: float, success: bool) -> None:
         """Update processing statistics."""
         if success:
-            self.processing_stats["successful_queries"] += 1
+            self.stats["successful_queries"] += 1
         else:
-            self.processing_stats["failed_queries"] += 1
+            self.stats["failed_queries"] += 1
         
         # Update average processing time
-        total_queries = self.processing_stats["successful_queries"]
-        current_avg = self.processing_stats["avg_processing_time"]
+        total_queries = self.stats["successful_queries"]
+        current_avg = self.stats["avg_processing_time"]
         
         if total_queries > 1:
-            self.processing_stats["avg_processing_time"] = (
+            self.stats["avg_processing_time"] = (
                 (current_avg * (total_queries - 1) + processing_time) / total_queries
             )
         else:
-            self.processing_stats["avg_processing_time"] = processing_time
+            self.stats["avg_processing_time"] = processing_time

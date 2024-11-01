@@ -1,12 +1,15 @@
 """Uncertainty-aware reasoning engine with Neo4j integration."""
 
 import numpy as np
+import logging
 from typing import Dict, Any, List, Tuple, Optional, Union
 from datetime import datetime
 from ..core.base_component import BaseComponent
 from ..core.config import UnifiedConfig, RAGConfig
 from ..core.structures import RetrievalResult
 from ..utils.error_handling import log_and_handle_errors, ErrorContext, RAGSystemError
+
+logger = logging.getLogger(__name__)
 
 class MockLLM:
     """Mock LLM for testing."""
@@ -22,23 +25,43 @@ class UncertaintyAwareReasoningEngine(BaseComponent):
     
     def __init__(self, config: Union[UnifiedConfig, RAGConfig]):
         """Initialize reasoning engine."""
+        super().__init__()
         self.config = config
         self.driver = None  # Neo4j driver
         self.causal_edges = {}
         self.llm = None  # Language model
-        self.initialized = False
         self.uncertainty_thresholds = {
             "high": 0.8,
             "medium": 0.5,
             "low": 0.2
         }
+        
+        # Add component-specific stats
+        self.stats.update({
+            "total_reasonings": 0,
+            "successful_reasonings": 0,
+            "failed_reasonings": 0,
+            "avg_reasoning_time": 0.0,
+            "avg_uncertainty": 0.0,
+            "last_reasoning": None,
+            "memory_usage": {
+                "causal_edges": 0,
+                "graph_nodes": 0
+            }
+        })
+        
+        logger.info("Initialized UncertaintyAwareReasoningEngine")
     
     @log_and_handle_errors()
     async def initialize(self) -> None:
         """Initialize Neo4j driver and other components."""
-        if not self.initialized:
+        try:
+            await self._pre_initialize()
+            
+            logger.info("Initializing UncertaintyAwareReasoningEngine...")
+            
+            # Initialize Neo4j driver
             try:
-                # Initialize Neo4j driver
                 from neo4j import GraphDatabase
                 if isinstance(self.config, RAGConfig):
                     uri = self.config.neo4j_uri
@@ -55,35 +78,116 @@ class UncertaintyAwareReasoningEngine(BaseComponent):
                     auth=(user, password)
                 )
                 
-                # Initialize mock LLM for testing
-                if not self.llm:
-                    self.llm = MockLLM()
-                    
-                self.initialized = True
+                # Test connection
+                with self.driver.session() as session:
+                    session.run("RETURN 1")
+                
+                logger.info("Successfully connected to Neo4j")
+                
             except Exception as e:
-                raise RAGSystemError(f"Failed to initialize reasoning engine: {str(e)}") from e
+                logger.error(f"Error connecting to Neo4j: {str(e)}")
+                self.driver = None
+            
+            # Initialize mock LLM for testing
+            if not self.llm:
+                self.llm = MockLLM()
+            
+            # Update memory usage stats
+            self.stats["memory_usage"].update({
+                "causal_edges": len(self.causal_edges),
+                "graph_nodes": self._count_graph_nodes()
+            })
+            
+            await self._post_initialize()
+            logger.info("Successfully initialized UncertaintyAwareReasoningEngine")
+            
+        except Exception as e:
+            logger.error(f"Error initializing UncertaintyAwareReasoningEngine: {str(e)}")
+            self.initialized = False
+            raise RAGSystemError(f"Failed to initialize reasoning engine: {str(e)}") from e
     
     @log_and_handle_errors()
     async def shutdown(self) -> None:
         """Shutdown components."""
-        if self.driver:
-            self.driver.close()
-        self.initialized = False
+        try:
+            await self._pre_shutdown()
+            
+            logger.info("Shutting down UncertaintyAwareReasoningEngine...")
+            
+            # Close Neo4j driver
+            if self.driver:
+                try:
+                    self.driver.close()
+                    logger.info("Closed Neo4j connection")
+                except Exception as e:
+                    logger.error(f"Error closing Neo4j connection: {str(e)}")
+            
+            # Clear state
+            self.causal_edges.clear()
+            self.driver = None
+            self.llm = None
+            
+            # Update memory usage stats
+            self.stats["memory_usage"].update({
+                "causal_edges": 0,
+                "graph_nodes": 0
+            })
+            
+            await self._post_shutdown()
+            logger.info("Successfully shut down UncertaintyAwareReasoningEngine")
+            
+        except Exception as e:
+            logger.error(f"Error shutting down UncertaintyAwareReasoningEngine: {str(e)}")
+            raise
     
     @log_and_handle_errors()
     async def get_status(self) -> Dict[str, Any]:
         """Get component status."""
-        return {
-            "initialized": self.initialized,
+        base_status = await self.get_base_status()
+        
+        component_status = {
             "driver_connected": bool(self.driver),
             "llm_initialized": bool(self.llm),
-            "causal_edges_count": len(self.causal_edges)
+            "causal_edges_count": len(self.causal_edges),
+            "uncertainty_thresholds": self.uncertainty_thresholds,
+            "memory_usage": self.stats["memory_usage"]
+        }
+        
+        return {
+            **base_status,
+            **component_status
         }
     
     @log_and_handle_errors()
     async def update_config(self, config: Union[UnifiedConfig, RAGConfig]) -> None:
         """Update configuration."""
-        self.config = config
+        try:
+            logger.info("Updating UncertaintyAwareReasoningEngine configuration...")
+            
+            self.config = config
+            
+            # Update Neo4j connection if needed
+            if self.initialized and self.driver:
+                await self.shutdown()
+                await self.initialize()
+            
+            logger.info("Successfully updated configuration")
+            
+        except Exception as e:
+            logger.error(f"Error updating configuration: {str(e)}")
+            raise RAGSystemError(f"Failed to update configuration: {str(e)}") from e
+    
+    def _count_graph_nodes(self) -> int:
+        """Count nodes in Neo4j graph."""
+        try:
+            if not self.driver:
+                return 0
+            
+            with self.driver.session() as session:
+                result = session.run("MATCH (n) RETURN count(n) as count")
+                return result.single()["count"]
+        except Exception:
+            return 0
     
     @log_and_handle_errors()
     async def reason(self, 
@@ -101,45 +205,67 @@ class UncertaintyAwareReasoningEngine(BaseComponent):
         Returns:
             Dictionary containing reasoning results
         """
-        async with ErrorContext("UncertaintyAwareReasoningEngine"):
-            if not self.initialized:
-                await self.initialize()
-                
+        return await self._safe_operation("reason", self._do_reason(query, retrieved_info, activated_knowledge))
+    
+    async def _do_reason(self,
+                        query: str,
+                        retrieved_info: List[RetrievalResult],
+                        activated_knowledge: Dict[str, Any]) -> Dict[str, Any]:
+        """Internal reasoning implementation."""
+        try:
             # Handle empty inputs
             if not query:
                 raise RAGSystemError("Query cannot be empty")
-                
+            
+            start_time = datetime.now()
+            self.stats["total_reasonings"] += 1
+            
             retrieved_info = retrieved_info or []
             activated_knowledge = activated_knowledge or {}
             
-            try:
-                # Get current timestamp
-                timestamp = datetime.now()
-                
-                # Perform reasoning with uncertainty tracking
-                reasoning, uncertainty, detailed_steps = await self.reason_with_uncertainty(
-                    query,
-                    activated_knowledge,
-                    timestamp
-                )
-                
-                # Analyze uncertainty sources
-                uncertainty_sources = self.analyze_uncertainty_sources(detailed_steps)
-                
-                # Generate suggestions for uncertainty reduction
-                suggestions = self.suggest_uncertainty_reduction(uncertainty_sources)
-                
-                return {
-                    "reasoning": reasoning,
-                    "uncertainty": uncertainty,
-                    "detailed_steps": detailed_steps,
-                    "uncertainty_sources": uncertainty_sources,
-                    "suggestions": suggestions,
-                    "supporting_evidence": [result.content for result in retrieved_info[:3]],
-                    "activated_concepts": list(activated_knowledge.keys())[:5]
-                }
-            except Exception as e:
-                raise RAGSystemError(f"Error in reasoning process: {str(e)}") from e
+            # Get current timestamp
+            timestamp = datetime.now()
+            
+            # Perform reasoning with uncertainty tracking
+            reasoning, uncertainty, detailed_steps = await self.reason_with_uncertainty(
+                query,
+                activated_knowledge,
+                timestamp
+            )
+            
+            # Analyze uncertainty sources
+            uncertainty_sources = self.analyze_uncertainty_sources(detailed_steps)
+            
+            # Generate suggestions for uncertainty reduction
+            suggestions = self.suggest_uncertainty_reduction(uncertainty_sources)
+            
+            # Update stats
+            processing_time = (datetime.now() - start_time).total_seconds()
+            self.stats["successful_reasonings"] += 1
+            self.stats["avg_reasoning_time"] = (
+                (self.stats["avg_reasoning_time"] * (self.stats["successful_reasonings"] - 1) + processing_time) /
+                self.stats["successful_reasonings"]
+            )
+            self.stats["avg_uncertainty"] = (
+                (self.stats["avg_uncertainty"] * (self.stats["successful_reasonings"] - 1) + uncertainty) /
+                self.stats["successful_reasonings"]
+            )
+            self.stats["last_reasoning"] = datetime.now().isoformat()
+            
+            return {
+                "reasoning": reasoning,
+                "uncertainty": uncertainty,
+                "detailed_steps": detailed_steps,
+                "uncertainty_sources": uncertainty_sources,
+                "suggestions": suggestions,
+                "supporting_evidence": [result.content for result in retrieved_info[:3]],
+                "activated_concepts": list(activated_knowledge.keys())[:5],
+                "processing_time": processing_time
+            }
+            
+        except Exception as e:
+            self.stats["failed_reasonings"] += 1
+            raise RAGSystemError(f"Error in reasoning process: {str(e)}") from e
     
     async def reason_with_uncertainty(self,
                                    query: str,
@@ -401,3 +527,4 @@ class UncertaintyAwareReasoningEngine(BaseComponent):
                 edge.strength = (1 - learning_rate) * edge.strength + learning_rate * min(max(observed_probability, 0), 1)
         except Exception as e:
             raise RAGSystemError(f"Error updating causal strength: {str(e)}") from e
+

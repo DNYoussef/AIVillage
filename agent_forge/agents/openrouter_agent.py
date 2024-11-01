@@ -46,19 +46,12 @@ class OpenRouterAgent:
             local_model: Local model identifier
             config: Optional UnifiedConfig instance
         """
-        self.client = AsyncOpenAI(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=api_key,
-            default_headers={
-                "HTTP-Referer": "https://github.com/yourusername/AIVillage",
-                "X-Title": "AI Village"
-            }
-        )
+        self.api_key = api_key
         self.model = model
         self.local_model = local_model
+        self.config = config
         
         # Load configuration
-        self.config = config
         if config:
             api_config = config.config['api']
             self.requests_per_minute = api_config['requests_per_minute']
@@ -87,6 +80,33 @@ class OpenRouterAgent:
         }
         
         logger.info(f"Initialized OpenRouterAgent with model: {model}")
+    
+    async def initialize(self):
+        """Initialize the OpenRouter client and verify API access."""
+        try:
+            # Initialize client with default headers exactly as shown in OpenRouter docs
+            self.client = AsyncOpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=self.api_key,
+                default_headers={
+                    "HTTP-Referer": "https://github.com/yourusername/AIVillage",
+                    "X-Title": "AI Village"
+                }
+            )
+            
+            # Test API access with a simple request
+            test_messages = [{"role": "user", "content": "test"}]
+            await self.client.chat.completions.create(
+                model=self.model,
+                messages=test_messages,
+                max_tokens=1
+            )
+            
+            logger.info("Successfully initialized OpenRouter client and verified API access")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize OpenRouter client: {str(e)}")
+            raise
     
     async def _handle_rate_limit(self):
         """Enhanced rate limit handling with adaptive delays."""

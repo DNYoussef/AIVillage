@@ -18,12 +18,83 @@ class CommunityHub:
         self.agents = {}
         self.projects = {}
         self.communication_protocol = communication_protocol
+        logger.info("Initialized CommunityHub")
+    
+    async def initialize(self):
+        """Initialize the community hub."""
+        try:
+            logger.info("Initializing CommunityHub...")
+            
+            # Initialize communication protocol if it has an initialize method
+            if hasattr(self.communication_protocol, 'initialize'):
+                await self.communication_protocol.initialize()
+            
+            # Initialize storage
+            self.research_results.clear()
+            self.agents.clear()
+            self.projects.clear()
+            
+            logger.info("Successfully initialized CommunityHub")
+            
+        except Exception as e:
+            logger.error(f"Error initializing CommunityHub: {str(e)}")
+            raise
+    
+    async def shutdown(self):
+        """Shutdown the community hub."""
+        try:
+            logger.info("Shutting down CommunityHub...")
+            
+            # Notify all agents of shutdown
+            for agent_id in self.agents:
+                try:
+                    await self.communication_protocol.send_message(
+                        Message(
+                            type=MessageType.SYSTEM,
+                            sender="community_hub",
+                            receiver=agent_id,
+                            content={"action": "shutdown"},
+                            priority=Priority.HIGH
+                        )
+                    )
+                except Exception as e:
+                    logger.warning(f"Error notifying agent {agent_id} of shutdown: {str(e)}")
+            
+            # Shutdown communication protocol if it has a shutdown method
+            if hasattr(self.communication_protocol, 'shutdown'):
+                await self.communication_protocol.shutdown()
+            
+            # Clear storage
+            self.research_results.clear()
+            self.agents.clear()
+            self.projects.clear()
+            
+            logger.info("Successfully shut down CommunityHub")
+            
+        except Exception as e:
+            logger.error(f"Error shutting down CommunityHub: {str(e)}")
+            raise
 
     async def register_agent(self, agent_id: str, capabilities: Dict[str, Any]) -> None:
         """Register a new agent with the community hub."""
         if agent_id in self.agents:
             raise AIVillageException(f"Agent {agent_id} is already registered")
         self.agents[agent_id] = capabilities
+        
+        # Notify other agents of new registration
+        notification = Message(
+            type=MessageType.NOTIFICATION,
+            sender="community_hub",
+            receiver="all",
+            content={
+                "event": "agent_registered",
+                "agent_id": agent_id,
+                "capabilities": capabilities
+            },
+            priority=Priority.LOW
+        )
+        await self.communication_protocol.send_message(notification)
+        
         logger.info(f"Agent {agent_id} registered with capabilities: {capabilities}")
 
     async def submit_research(self, agent_id: str, research_id: str, results: Dict[str, Any]) -> None:
@@ -36,6 +107,22 @@ class CommunityHub:
             'results': results,
             'timestamp': datetime.now()
         }
+        
+        # Notify relevant agents of new research
+        notification = Message(
+            type=MessageType.NOTIFICATION,
+            sender="community_hub",
+            receiver="all",
+            content={
+                "event": "research_submitted",
+                "research_id": research_id,
+                "agent_id": agent_id,
+                "summary": results.get("summary", "No summary provided")
+            },
+            priority=Priority.MEDIUM
+        )
+        await self.communication_protocol.send_message(notification)
+        
         logger.info(f"Research {research_id} submitted by agent {agent_id}")
 
     async def get_research(self, research_id: str) -> Dict[str, Any]:
@@ -52,8 +139,25 @@ class CommunityHub:
         self.projects[project_id] = {
             'details': details,
             'participants': set(),
-            'status': 'created'
+            'status': 'created',
+            'created_at': datetime.now(),
+            'last_updated': datetime.now()
         }
+        
+        # Notify agents of new project
+        notification = Message(
+            type=MessageType.NOTIFICATION,
+            sender="community_hub",
+            receiver="all",
+            content={
+                "event": "project_created",
+                "project_id": project_id,
+                "details": details
+            },
+            priority=Priority.MEDIUM
+        )
+        await self.communication_protocol.send_message(notification)
+        
         logger.info(f"Project {project_id} created with details: {details}")
 
     async def join_project(self, project_id: str, agent_id: str) -> None:
@@ -64,6 +168,22 @@ class CommunityHub:
             raise AIVillageException(f"Agent {agent_id} is not registered")
         
         self.projects[project_id]['participants'].add(agent_id)
+        self.projects[project_id]['last_updated'] = datetime.now()
+        
+        # Notify project participants
+        notification = Message(
+            type=MessageType.NOTIFICATION,
+            sender="community_hub",
+            receiver="project_participants",
+            content={
+                "event": "agent_joined",
+                "project_id": project_id,
+                "agent_id": agent_id
+            },
+            priority=Priority.LOW
+        )
+        await self.broadcast_to_project(project_id, notification.content)
+        
         logger.info(f"Agent {agent_id} joined project {project_id}")
 
     async def broadcast_to_project(self, project_id: str, message: Dict[str, Any], 
@@ -78,7 +198,11 @@ class CommunityHub:
                 type=MessageType.NOTIFICATION,
                 sender="community_hub",
                 receiver=participant,
-                content=message,
+                content={
+                    **message,
+                    "project_id": project_id,
+                    "timestamp": datetime.now().isoformat()
+                },
                 priority=priority
             )
             await self.communication_protocol.send_message(msg)
@@ -94,7 +218,14 @@ class CommunityHub:
     def list_projects(self) -> List[Dict[str, Any]]:
         """Get a list of all active projects."""
         return [
-            {'id': pid, **pdata}
+            {
+                'id': pid,
+                'details': pdata['details'],
+                'participant_count': len(pdata['participants']),
+                'status': pdata['status'],
+                'created_at': pdata['created_at'],
+                'last_updated': pdata['last_updated']
+            }
             for pid, pdata in self.projects.items()
         ]
 
@@ -107,6 +238,13 @@ class CommunityHub:
     def list_agents(self) -> List[Dict[str, Any]]:
         """Get a list of all registered agents."""
         return [
-            {'id': aid, 'capabilities': capabilities}
+            {
+                'id': aid,
+                'capabilities': capabilities,
+                'projects': [
+                    pid for pid, pdata in self.projects.items()
+                    if aid in pdata['participants']
+                ]
+            }
             for aid, capabilities in self.agents.items()
         ]

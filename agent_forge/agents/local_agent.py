@@ -74,10 +74,11 @@ class LocalAgent:
         )
         self.chat_agent = ChatAgent(chat_config)
         
-        # Load and bake model
-        self._load_and_bake_model()
-        
         logger.info(f"Initialized LocalAgent with model: {model_config.name} on device: {device}")
+    
+    async def initialize(self):
+        """Initialize the agent by loading and baking the model."""
+        await self._load_and_bake_model()
     
     async def _load_and_bake_model(self):
         """Load and enhance the model with deep baking system."""

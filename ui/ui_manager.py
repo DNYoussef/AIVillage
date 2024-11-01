@@ -16,6 +16,52 @@ class WebSocketManager:
         self.connections: Set[web.WebSocketResponse] = set()
         self.message_history: List[Dict[str, Any]] = []
         self.max_history = 1000
+        logger.info("Initialized WebSocketManager")
+    
+    async def initialize(self):
+        """Initialize the WebSocket manager."""
+        try:
+            logger.info("Initializing WebSocketManager...")
+            
+            # Clear existing state
+            self.connections.clear()
+            self.message_history.clear()
+            
+            logger.info("Successfully initialized WebSocketManager")
+            
+        except Exception as e:
+            logger.error(f"Error initializing WebSocketManager: {str(e)}")
+            raise
+    
+    async def shutdown(self):
+        """Shutdown the WebSocket manager."""
+        try:
+            logger.info("Shutting down WebSocketManager...")
+            
+            # Send shutdown message to all connections
+            shutdown_message = {
+                "type": "system",
+                "data": {"action": "shutdown"},
+                "timestamp": datetime.now().isoformat()
+            }
+            await self.broadcast(shutdown_message)
+            
+            # Close all connections
+            for ws in self.connections.copy():
+                try:
+                    await ws.close()
+                except Exception as e:
+                    logger.warning(f"Error closing WebSocket connection: {str(e)}")
+            
+            # Clear state
+            self.connections.clear()
+            self.message_history.clear()
+            
+            logger.info("Successfully shut down WebSocketManager")
+            
+        except Exception as e:
+            logger.error(f"Error shutting down WebSocketManager: {str(e)}")
+            raise
     
     async def add_connection(self, ws: web.WebSocketResponse):
         """Add a new WebSocket connection."""
@@ -37,7 +83,7 @@ class WebSocketManager:
             self.message_history = self.message_history[-self.max_history:]
         
         # Broadcast to all connections
-        for ws in self.connections:
+        for ws in self.connections.copy():
             try:
                 await ws.send_json(message)
             except Exception as e:
@@ -53,12 +99,18 @@ class UIManager:
         self.websocket_manager = WebSocketManager()
         self.metrics: Dict[str, Any] = {}
         self.last_update = datetime.now()
+        self.runner: Optional[web.AppRunner] = None
+        self.site: Optional[web.TCPSite] = None
+        logger.info("Initialized UI Manager")
     
     async def initialize(self):
         """Initialize the UI system."""
-        logger.info("Initializing UI Manager")
-        
         try:
+            logger.info("Initializing UI Manager...")
+            
+            # Initialize WebSocket manager
+            await self.websocket_manager.initialize()
+            
             # Set up routes
             self.app.router.add_get('/', self.index_handler)
             self.app.router.add_get('/ws', self.websocket_handler)
@@ -90,23 +142,44 @@ class UIManager:
     
     async def start(self, host: str = '0.0.0.0', port: int = 8080):
         """Start the web server."""
-        logger.info(f"Starting UI server on {host}:{port}")
-        runner = web.AppRunner(self.app)
-        await runner.setup()
-        site = web.TCPSite(runner, host, port)
-        await site.start()
+        try:
+            logger.info(f"Starting UI server on {host}:{port}")
+            
+            self.runner = web.AppRunner(self.app)
+            await self.runner.setup()
+            
+            self.site = web.TCPSite(self.runner, host, port)
+            await self.site.start()
+            
+            logger.info(f"UI server started successfully at http://{host}:{port}")
+            
+        except Exception as e:
+            logger.error(f"Error starting UI server: {str(e)}")
+            raise
     
     async def shutdown(self):
         """Shutdown the UI system."""
-        logger.info("Shutting down UI Manager")
-        
-        # Close all WebSocket connections
-        for ws in self.websocket_manager.connections.copy():
-            await ws.close()
-        
-        # Cleanup
-        if hasattr(self.app, 'cleanup'):
-            await self.app.cleanup()
+        try:
+            logger.info("Shutting down UI Manager...")
+            
+            # Shutdown WebSocket manager
+            await self.websocket_manager.shutdown()
+            
+            # Shutdown web server
+            if self.site:
+                await self.site.stop()
+            
+            if self.runner:
+                await self.runner.cleanup()
+            
+            # Clear state
+            self.metrics.clear()
+            
+            logger.info("Successfully shut down UI Manager")
+            
+        except Exception as e:
+            logger.error(f"Error shutting down UI Manager: {str(e)}")
+            raise
     
     async def update_metrics(self, metrics: Dict[str, Any]):
         """Update system metrics."""

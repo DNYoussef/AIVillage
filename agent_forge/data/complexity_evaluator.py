@@ -25,6 +25,8 @@ class ComplexityEvaluator:
         Args:
             config: Optional unified configuration instance
         """
+        self.config = config
+        
         # Initialize default thresholds and weights if no config provided
         self.thresholds = {
             "king": 0.6,
@@ -43,15 +45,6 @@ class ComplexityEvaluator:
             "sage": 0.75,
             "magi": 0.8
         }
-        
-        if config and hasattr(config, 'config') and 'complexity' in config.config:
-            complexity_config = config.config['complexity']
-            if 'thresholds' in complexity_config:
-                self.thresholds.update(complexity_config['thresholds'])
-            if 'token_weights' in complexity_config:
-                self.token_weights.update(complexity_config['token_weights'])
-            if 'performance_thresholds' in complexity_config:
-                self.performance_thresholds.update(complexity_config['performance_thresholds'])
         
         # Initialize complexity indicators for each agent type
         self.complexity_indicators = {
@@ -91,10 +84,34 @@ class ComplexityEvaluator:
         
         logger.info("Initialized ComplexityEvaluator with adaptive thresholds")
     
-    def evaluate_complexity(self, 
-                          agent_type: str, 
-                          task: str,
-                          context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def initialize(self):
+        """Initialize the complexity evaluator with configuration."""
+        try:
+            if self.config and hasattr(self.config, 'config') and 'complexity' in self.config.config:
+                complexity_config = self.config.config['complexity']
+                if 'thresholds' in complexity_config:
+                    self.thresholds.update(complexity_config['thresholds'])
+                if 'token_weights' in complexity_config:
+                    self.token_weights.update(complexity_config['token_weights'])
+                if 'performance_thresholds' in complexity_config:
+                    self.performance_thresholds.update(complexity_config['performance_thresholds'])
+                
+                # Update adaptive thresholds with new base values
+                for agent_type, threshold in self.thresholds.items():
+                    self.adaptive_thresholds[agent_type]['base'] = threshold
+                    self.adaptive_thresholds[agent_type]['min'] = max(0.3, threshold - 0.2)
+                    self.adaptive_thresholds[agent_type]['max'] = min(0.9, threshold + 0.2)
+            
+            logger.info("Successfully initialized ComplexityEvaluator")
+            
+        except Exception as e:
+            logger.error(f"Error initializing ComplexityEvaluator: {str(e)}")
+            raise
+    
+    async def evaluate_complexity(self, 
+                                agent_type: str, 
+                                task: str,
+                                context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Evaluate task complexity with enhanced analysis.
         
@@ -152,15 +169,7 @@ class ComplexityEvaluator:
         }
     
     def _calculate_structural_complexity(self, task: str) -> float:
-        """
-        Calculate complexity score based on task structure.
-        
-        Args:
-            task: The task to evaluate
-            
-        Returns:
-            Float between 0 and 1 indicating structural complexity
-        """
+        """Calculate complexity score based on task structure."""
         # Count nested structures
         nesting_level = task.count('(') + task.count('{') + task.count('[')
         

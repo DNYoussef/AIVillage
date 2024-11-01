@@ -3,11 +3,15 @@
 from typing import List, Dict, Any, Tuple, Optional
 import networkx as nx
 from datetime import datetime
+import logging
+import os
 from neo4j import GraphDatabase
 from ..core.base_component import BaseComponent
 from ..core.config import UnifiedConfig
 from ..core.structures import RetrievalResult
 from ..utils.error_handling import log_and_handle_errors, ErrorContext
+
+logger = logging.getLogger(__name__)
 
 class GraphStore(BaseComponent):
     """Graph store for knowledge graph operations."""
@@ -25,39 +29,113 @@ class GraphStore(BaseComponent):
         self.causal_edges = {}
         self.llm = None
         self.initialized = False
+        self.stats = {
+            "total_queries": 0,
+            "total_nodes": 0,
+            "total_edges": 0,
+            "average_query_time": 0.0,
+            "neo4j_connected": False
+        }
+        logger.info("Initialized GraphStore")
     
     @log_and_handle_errors()
     async def initialize(self) -> None:
         """Initialize graph store components."""
-        if not self.initialized:
-            # Initialize Neo4j driver
-            if hasattr(self.config, 'neo4j_uri'):
-                self.driver = GraphDatabase.driver(
-                    self.config.neo4j_uri,
-                    auth=(self.config.neo4j_user, self.config.neo4j_password)
-                )
+        try:
+            logger.info("Initializing GraphStore...")
             
-            # Load any saved graph state
-            if hasattr(self.config, 'graph_store_path'):
-                try:
-                    self.graph = nx.read_gpickle(self.config.graph_store_path)
-                except:
-                    pass  # Use empty graph if file doesn't exist
+            if not self.initialized:
+                # Initialize Neo4j driver
+                if hasattr(self.config, 'neo4j_uri'):
+                    try:
+                        self.driver = GraphDatabase.driver(
+                            self.config.neo4j_uri,
+                            auth=(self.config.neo4j_user, self.config.neo4j_password)
+                        )
+                        # Test connection
+                        with self.driver.session() as session:
+                            session.run("RETURN 1")
+                        self.stats["neo4j_connected"] = True
+                        logger.info("Successfully connected to Neo4j")
+                    except Exception as e:
+                        logger.error(f"Error connecting to Neo4j: {str(e)}")
+                        self.driver = None
+                
+                # Load any saved graph state
+                if hasattr(self.config, 'graph_store_path'):
+                    try:
+                        graph_path = self.config.graph_store_path
+                        if os.path.exists(graph_path):
+                            self.graph = nx.read_gpickle(graph_path)
+                            logger.info(f"Loaded graph from {graph_path}")
+                        else:
+                            logger.info("No existing graph found, starting with empty graph")
+                    except Exception as e:
+                        logger.error(f"Error loading graph: {str(e)}")
+                        self.graph = nx.Graph()
+                
+                # Initialize stats
+                self.stats.update({
+                    "total_queries": 0,
+                    "total_nodes": len(self.graph),
+                    "total_edges": self.graph.number_of_edges(),
+                    "average_query_time": 0.0,
+                    "last_save": None,
+                    "last_maintenance": None
+                })
+                
+                self.initialized = True
+                logger.info(f"Successfully initialized GraphStore with {len(self.graph)} nodes and {self.graph.number_of_edges()} edges")
+            else:
+                logger.warning("GraphStore already initialized")
             
-            self.initialized = True
+        except Exception as e:
+            logger.error(f"Error initializing GraphStore: {str(e)}")
+            self.initialized = False
+            raise
     
     @log_and_handle_errors()
     async def shutdown(self) -> None:
         """Shutdown graph store components."""
-        if self.initialized:
-            if self.driver:
-                self.driver.close()
+        try:
+            logger.info("Shutting down GraphStore...")
             
-            # Save current graph state
-            if hasattr(self.config, 'graph_store_path'):
-                nx.write_gpickle(self.graph, self.config.graph_store_path)
+            if self.initialized:
+                # Close Neo4j driver
+                if self.driver:
+                    try:
+                        self.driver.close()
+                        logger.info("Closed Neo4j connection")
+                    except Exception as e:
+                        logger.error(f"Error closing Neo4j connection: {str(e)}")
+                
+                # Save current graph state
+                if hasattr(self.config, 'graph_store_path'):
+                    try:
+                        graph_path = self.config.graph_store_path
+                        os.makedirs(os.path.dirname(graph_path), exist_ok=True)
+                        nx.write_gpickle(self.graph, graph_path)
+                        logger.info(f"Saved graph to {graph_path}")
+                    except Exception as e:
+                        logger.error(f"Error saving graph: {str(e)}")
+                
+                # Log final stats
+                logger.info(f"Final stats: {self.stats}")
+                
+                # Clear state
+                self.graph.clear()
+                self.causal_edges.clear()
+                self.stats.clear()
+                self.driver = None
+                
+                self.initialized = False
+                logger.info("Successfully shut down GraphStore")
+            else:
+                logger.warning("GraphStore not initialized")
             
-            self.initialized = False
+        except Exception as e:
+            logger.error(f"Error shutting down GraphStore: {str(e)}")
+            raise
     
     @log_and_handle_errors()
     async def get_status(self) -> Dict[str, Any]:
@@ -66,7 +144,13 @@ class GraphStore(BaseComponent):
             "initialized": self.initialized,
             "graph_size": len(self.graph),
             "edge_count": self.graph.number_of_edges(),
-            "driver_connected": bool(self.driver)
+            "neo4j_connected": bool(self.driver),
+            "stats": self.stats,
+            "memory_usage": {
+                "nodes": len(self.graph),
+                "edges": self.graph.number_of_edges(),
+                "causal_edges": len(self.causal_edges)
+            }
         }
     
     @log_and_handle_errors()
@@ -78,12 +162,15 @@ class GraphStore(BaseComponent):
         """Add documents to the graph store."""
         for doc in documents:
             self.graph.add_node(doc['id'], **doc)
+            self.stats["total_nodes"] += 1
+            
             # Add edges based on similarity or relationships
             for other_node in self.graph.nodes:
                 if other_node != doc['id']:
                     similarity = self._calculate_similarity(doc, self.graph.nodes[other_node])
                     if similarity > self.config.similarity_threshold:
                         self.graph.add_edge(doc['id'], other_node, weight=similarity)
+                        self.stats["total_edges"] += 1
 
     @log_and_handle_errors()
     async def retrieve(self,
@@ -101,55 +188,81 @@ class GraphStore(BaseComponent):
         Returns:
             List of retrieval results
         """
+        if not self.initialized:
+            raise RuntimeError("GraphStore not initialized")
+        
         async with ErrorContext("GraphStore.retrieve"):
-            if self.driver:
-                with self.driver.session() as session:
-                    if timestamp:
-                        result = session.run(
-                            """
-                            CALL db.index.fulltext.queryNodes("nodeContent", $query) 
-                            YIELD node, score
-                            MATCH (node)-[:VERSION]->(v:NodeVersion)
-                            WHERE v.timestamp <= $timestamp
-                            WITH node, score, v
-                            ORDER BY v.timestamp DESC, score DESC
-                            LIMIT $k
-                            RETURN id(node) as id, v.content as content, score, 
-                                v.uncertainty as uncertainty, v.timestamp as timestamp, 
-                                v.version as version
-                            """,
-                            query=query, timestamp=timestamp, k=k
-                        )
-                    else:
-                        result = session.run(
-                            """
-                            CALL db.index.fulltext.queryNodes("nodeContent", $query) 
-                            YIELD node, score
-                            MATCH (node)-[:VERSION]->(v:NodeVersion)
-                            WITH node, score, v
-                            ORDER BY v.timestamp DESC, score DESC
-                            LIMIT $k
-                            RETURN id(node) as id, v.content as content, score, 
-                                v.uncertainty as uncertainty, v.timestamp as timestamp, 
-                                v.version as version
-                            """,
-                            query=query, k=k
-                        )
+            start_time = datetime.now()
+            
+            try:
+                if self.driver:
+                    results = await self._retrieve_from_neo4j(query, k, timestamp)
+                else:
+                    results = await self._retrieve_from_graph(query, k, timestamp)
+                
+                # Update stats
+                query_time = (datetime.now() - start_time).total_seconds()
+                self.stats["total_queries"] += 1
+                self.stats["average_query_time"] = (
+                    (self.stats["average_query_time"] * (self.stats["total_queries"] - 1) + query_time) /
+                    self.stats["total_queries"]
+                )
+                
+                return results
+                
+            except Exception as e:
+                logger.error(f"Error during retrieval: {str(e)}")
+                raise
 
-                    return [
-                        RetrievalResult(
-                            id=record["id"],
-                            content=record["content"],
-                            score=record["score"],
-                            uncertainty=record["uncertainty"],
-                            timestamp=record["timestamp"],
-                            version=record["version"]
-                        )
-                        for record in result
-                    ]
+    async def _retrieve_from_neo4j(self,
+                                 query: str,
+                                 k: int,
+                                 timestamp: Optional[datetime]) -> List[RetrievalResult]:
+        """Retrieve from Neo4j database."""
+        with self.driver.session() as session:
+            if timestamp:
+                result = session.run(
+                    """
+                    CALL db.index.fulltext.queryNodes("nodeContent", $query) 
+                    YIELD node, score
+                    MATCH (node)-[:VERSION]->(v:NodeVersion)
+                    WHERE v.timestamp <= $timestamp
+                    WITH node, score, v
+                    ORDER BY v.timestamp DESC, score DESC
+                    LIMIT $k
+                    RETURN id(node) as id, v.content as content, score, 
+                        v.uncertainty as uncertainty, v.timestamp as timestamp, 
+                        v.version as version
+                    """,
+                    query=query, timestamp=timestamp, k=k
+                )
             else:
-                # Fallback to NetworkX graph if Neo4j is not available
-                return await self._retrieve_from_graph(query, k, timestamp)
+                result = session.run(
+                    """
+                    CALL db.index.fulltext.queryNodes("nodeContent", $query) 
+                    YIELD node, score
+                    MATCH (node)-[:VERSION]->(v:NodeVersion)
+                    WITH node, score, v
+                    ORDER BY v.timestamp DESC, score DESC
+                    LIMIT $k
+                    RETURN id(node) as id, v.content as content, score, 
+                        v.uncertainty as uncertainty, v.timestamp as timestamp, 
+                        v.version as version
+                    """,
+                    query=query, k=k
+                )
+
+            return [
+                RetrievalResult(
+                    id=record["id"],
+                    content=record["content"],
+                    score=record["score"],
+                    uncertainty=record["uncertainty"],
+                    timestamp=record["timestamp"],
+                    version=record["version"]
+                )
+                for record in result
+            ]
 
     async def _retrieve_from_graph(self,
                                  query: str,
@@ -217,6 +330,9 @@ class GraphStore(BaseComponent):
         Returns:
             List of (path, score) tuples
         """
+        if not self.initialized:
+            raise RuntimeError("GraphStore not initialized")
+        
         initial_entities = await self.get_initial_entities(query)
         beams = [[entity] for entity in initial_entities]
 

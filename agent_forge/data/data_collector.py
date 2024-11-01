@@ -16,31 +16,37 @@ logger = logging.getLogger(__name__)
 class DatabaseManager:
     """Manages database connections and operations."""
     
-    def __init__(self, db_config: DatabaseConfig, start_maintenance: bool = True):
+    def __init__(self, db_config: DatabaseConfig):
         """
         Initialize DatabaseManager.
         
         Args:
             db_config: Database configuration
-            start_maintenance: Whether to start the maintenance loop
         """
         self.db_path = Path(db_config.path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.backup_interval = db_config.backup_interval
         self.max_backup_count = db_config.max_backup_count
         self.vacuum_threshold = db_config.vacuum_threshold
-        
-        self._init_database()
-        if start_maintenance:
-            self._schedule_maintenance()
+        self.maintenance_task = None
         
         logger.info(f"Initialized DatabaseManager with database at {self.db_path}")
     
-    def _init_database(self):
+    async def initialize(self):
+        """Initialize database schema and start maintenance."""
+        try:
+            await self._init_database()
+            await self._start_maintenance()
+            logger.info("Successfully initialized DatabaseManager")
+        except Exception as e:
+            logger.error(f"Error initializing DatabaseManager: {str(e)}")
+            raise
+    
+    async def _init_database(self):
         """Initialize database schema."""
-        with sqlite3.connect(str(self.db_path)) as conn:
+        async with aiosqlite.connect(str(self.db_path)) as conn:
             # Create interactions table with additional fields
-            conn.execute("""
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS interactions (
                     id INTEGER PRIMARY KEY,
                     agent_type TEXT NOT NULL,
@@ -59,7 +65,7 @@ class DatabaseManager:
             """)
             
             # Create training_data table with enhanced fields
-            conn.execute("""
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS training_data (
                     id INTEGER PRIMARY KEY,
                     agent_type TEXT NOT NULL,
@@ -77,7 +83,7 @@ class DatabaseManager:
             """)
             
             # Create performance_metrics table with detailed tracking
-            conn.execute("""
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS performance_metrics (
                     id INTEGER PRIMARY KEY,
                     agent_type TEXT NOT NULL,
@@ -92,7 +98,7 @@ class DatabaseManager:
             """)
             
             # Create backup_history table
-            conn.execute("""
+            await conn.execute("""
                 CREATE TABLE IF NOT EXISTS backup_history (
                     id INTEGER PRIMARY KEY,
                     backup_path TEXT NOT NULL,
@@ -104,12 +110,35 @@ class DatabaseManager:
             """)
             
             # Create indexes for better query performance
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_interactions_agent_type ON interactions(agent_type)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_interactions_timestamp ON interactions(timestamp)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_training_status ON training_data(training_status)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_performance_metrics_composite ON performance_metrics(agent_type, model_type, metric_name)")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_interactions_agent_type ON interactions(agent_type)")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_interactions_timestamp ON interactions(timestamp)")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_training_status ON training_data(training_status)")
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_performance_metrics_composite ON performance_metrics(agent_type, model_type, metric_name)")
             
-            conn.commit()
+            await conn.commit()
+    
+    async def _start_maintenance(self):
+        """Start the maintenance loop."""
+        async def maintenance_loop():
+            while True:
+                try:
+                    await self.create_backup()
+                    await self.run_maintenance()
+                    await asyncio.sleep(self.backup_interval * 3600)
+                except Exception as e:
+                    logger.error(f"Error in maintenance loop: {str(e)}")
+                    await asyncio.sleep(300)
+        
+        self.maintenance_task = asyncio.create_task(maintenance_loop())
+    
+    async def shutdown(self):
+        """Shutdown the database manager."""
+        if self.maintenance_task:
+            self.maintenance_task.cancel()
+            try:
+                await self.maintenance_task
+            except asyncio.CancelledError:
+                pass
     
     async def store_interaction(self, agent_type: str, interaction: Dict[str, Any], was_complex: bool = False):
         """Store an interaction in the database."""
@@ -260,30 +289,36 @@ class DatabaseManager:
             
             await conn.commit()
             return cleaned_count
-    
-    def _schedule_maintenance(self):
-        """Schedule database maintenance tasks."""
-        async def maintenance_loop():
-            while True:
-                try:
-                    await self.create_backup()
-                    await self.run_maintenance()
-                    await asyncio.sleep(self.backup_interval * 3600)
-                except Exception as e:
-                    logger.error(f"Error in maintenance loop: {str(e)}")
-                    await asyncio.sleep(300)
-        
-        asyncio.create_task(maintenance_loop())
 
 class DataCollector:
     """Enhanced system for collecting and storing agent data."""
     
-    def __init__(self, config: UnifiedConfig, start_maintenance: bool = False):
+    def __init__(self, config: UnifiedConfig):
         """Initialize DataCollector."""
-        self.db_manager = DatabaseManager(config.get_db_config(), start_maintenance=start_maintenance)
+        self.config = config
+        self.db_manager = DatabaseManager(config.get_db_config())
         self.performance_config = config.get_performance_config()
         
         logger.info("Initialized DataCollector")
+    
+    async def initialize(self):
+        """Initialize the data collector and its components."""
+        try:
+            logger.info("Initializing DataCollector...")
+            await self.db_manager.initialize()
+            logger.info("Successfully initialized DataCollector")
+        except Exception as e:
+            logger.error(f"Error initializing DataCollector: {str(e)}")
+            raise
+    
+    async def shutdown(self):
+        """Shutdown the data collector."""
+        try:
+            await self.db_manager.shutdown()
+            logger.info("Successfully shut down DataCollector")
+        except Exception as e:
+            logger.error(f"Error shutting down DataCollector: {str(e)}")
+            raise
     
     async def store_interaction(self, agent_type: str, interaction: Dict[str, Any], was_complex: bool = False):
         """Store an agent interaction."""

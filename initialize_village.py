@@ -21,6 +21,45 @@ from rag_system.retrieval.vector_store import VectorStore
 from rag_system.retrieval.graph_store import GraphStore
 from ui.ui_manager import UIManager
 
+async def _initialize_openrouter_agents(self):
+    """Initialize OpenRouter agent instances."""
+    logger.info("Initializing OpenRouter agents...")
+    
+    try:
+        api_key = self.config.get_api_key()
+        
+        # Create and initialize OpenRouter agent instances with Claude for all agents
+        self.openrouter_agents = {
+            'king': OpenRouterAgent(
+                api_key=api_key,
+                model="anthropic/claude-3.5-sonnet",  # Using Claude for all agents
+                local_model="Qwen/Qwen2.5-3B-Instruct",
+                config=self.config
+            ),
+            'sage': OpenRouterAgent(
+                api_key=api_key,
+                model="anthropic/claude-3.5-sonnet",
+                local_model="deepseek-ai/Janus-1.3B",
+                config=self.config
+            ),
+            'magi': OpenRouterAgent(
+                api_key=api_key,
+                model="anthropic/claude-3.5-sonnet",
+                local_model="ibm-granite/granite-3b-code-instruct-128k",
+                config=self.config
+            )
+        }
+        
+        # Initialize each OpenRouter agent
+        for agent_name, agent in self.openrouter_agents.items():
+            await agent.initialize()
+        
+        logger.info("OpenRouter agents initialized successfully")
+        
+    except Exception as e:
+        logger.error(f"Error initializing OpenRouter agents: {str(e)}")
+        raise
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -37,6 +76,7 @@ class AIVillage:
         self.initialized = False
         self.agents = {}
         self.systems = {}
+        self.openrouter_agents = {}
     
     async def initialize(self):
         """Initialize all AI Village components."""
@@ -49,7 +89,10 @@ class AIVillage:
             # Initialize communication protocol
             self.systems['communication_protocol'] = StandardCommunicationProtocol()
             
-            # Initialize agents
+            # Initialize OpenRouter agents first
+            await self._initialize_openrouter_agents()
+            
+            # Initialize specialized agents
             await self._initialize_agents()
             
             # Initialize communication hub
@@ -75,8 +118,13 @@ class AIVillage:
         try:
             # Initialize data systems
             self.systems['data_collector'] = DataCollector(config=self.config)
+            await self.systems['data_collector'].initialize()
+            
             self.systems['vector_store'] = VectorStore()
+            await self.systems['vector_store'].initialize()
+            
             self.systems['graph_store'] = GraphStore(self.config)
+            await self.systems['graph_store'].initialize()
             
             # Initialize RAG system
             self.systems['cognitive_nexus'] = CognitiveNexus()
@@ -91,18 +139,18 @@ class AIVillage:
             logger.error(f"Error initializing core systems: {str(e)}")
             raise
     
-    async def _initialize_agents(self):
-        """Initialize agent components."""
-        logger.info("Initializing agents...")
+    async def _initialize_openrouter_agents(self):
+        """Initialize OpenRouter agent instances."""
+        logger.info("Initializing OpenRouter agents...")
         
         try:
             api_key = self.config.get_api_key()
             
-            # Create OpenRouter agent instances for each agent type
-            openrouter_agents = {
+            # Create and initialize OpenRouter agent instances
+            self.openrouter_agents = {
                 'king': OpenRouterAgent(
                     api_key=api_key,
-                    model="nvidia/llama-3.1-nemotron-70b-instruct",
+                    model="neversleep/llama-3.1-luminmaid-70b",
                     local_model="Qwen/Qwen2.5-3B-Instruct",
                     config=self.config
                 ),
@@ -114,32 +162,50 @@ class AIVillage:
                 ),
                 'magi': OpenRouterAgent(
                     api_key=api_key,
-                    model="openai/o1-mini-2024-09-12",
+                    model="anthropic/claude-3.5-sonnet:beta",
                     local_model="ibm-granite/granite-3b-code-instruct-128k",
                     config=self.config
                 )
             }
             
-            # Initialize specialized agents
-            self.agents['king'] = KingAgent(
-                openrouter_agent=openrouter_agents['king'],
-                config=self.config
-            )
+            # Initialize each OpenRouter agent
+            for agent_name, agent in self.openrouter_agents.items():
+                await agent.initialize()
             
-            self.agents['sage'] = SageAgent(
-                openrouter_agent=openrouter_agents['sage'],
-                config=self.config
-            )
-            
-            self.agents['magi'] = MagiAgent(
-                openrouter_agent=openrouter_agents['magi'],
-                config=self.config
-            )
-            
-            logger.info("Agents initialized successfully")
+            logger.info("OpenRouter agents initialized successfully")
             
         except Exception as e:
-            logger.error(f"Error initializing agents: {str(e)}")
+            logger.error(f"Error initializing OpenRouter agents: {str(e)}")
+            raise
+    
+    async def _initialize_agents(self):
+        """Initialize specialized agent components."""
+        logger.info("Initializing specialized agents...")
+        
+        try:
+            # Initialize specialized agents
+            self.agents['king'] = KingAgent(
+                openrouter_agent=self.openrouter_agents['king'],
+                config=self.config
+            )
+            await self.agents['king'].initialize()
+            
+            self.agents['sage'] = SageAgent(
+                openrouter_agent=self.openrouter_agents['sage'],
+                config=self.config
+            )
+            await self.agents['sage'].initialize()
+            
+            self.agents['magi'] = MagiAgent(
+                openrouter_agent=self.openrouter_agents['magi'],
+                config=self.config
+            )
+            await self.agents['magi'].initialize()
+            
+            logger.info("Specialized agents initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Error initializing specialized agents: {str(e)}")
             raise
     
     async def _initialize_communication(self):
@@ -150,6 +216,9 @@ class AIVillage:
             self.systems['community_hub'] = CommunityHub(
                 communication_protocol=self.systems['communication_protocol']
             )
+            
+            # Initialize community hub
+            await self.systems['community_hub'].initialize()
             
             # Register agents with communication hub
             for agent_name, agent in self.agents.items():
@@ -250,10 +319,17 @@ class AIVillage:
                 logger.info("Shutting down UI system...")
                 await self.systems['ui_manager'].shutdown()
             
-            # Shutdown agents
+            # Shutdown specialized agents
             for agent_name, agent in self.agents.items():
                 logger.info(f"Shutting down {agent_name} agent...")
-                # Add agent-specific shutdown logic here
+                if hasattr(agent, 'shutdown'):
+                    await agent.shutdown()
+            
+            # Shutdown OpenRouter agents
+            for agent_name, agent in self.openrouter_agents.items():
+                logger.info(f"Shutting down OpenRouter {agent_name} agent...")
+                if hasattr(agent, 'shutdown'):
+                    await agent.shutdown()
             
             # Shutdown remaining systems
             for system_name, system in self.systems.items():
@@ -294,3 +370,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+

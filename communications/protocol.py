@@ -6,9 +6,22 @@ from datetime import datetime
 from .message import Message, MessageType, Priority
 from .queue import MessageQueue
 from agents.utils.exceptions import AIVillageException
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CommunicationProtocol(ABC):
     """Abstract base class defining the communication protocol interface."""
+    
+    @abstractmethod
+    async def initialize(self) -> None:
+        """Initialize the communication protocol."""
+        pass
+    
+    @abstractmethod
+    async def shutdown(self) -> None:
+        """Shutdown the communication protocol."""
+        pass
     
     @abstractmethod
     async def send_message(self, message: Message) -> None:
@@ -38,6 +51,34 @@ class GroupCommunication:
         self.groups: Dict[str, Set[str]] = {}
         self.agent_groups: Dict[str, Set[str]] = {}
         self.group_configs: Dict[str, Dict[str, Any]] = {}
+    
+    async def initialize(self):
+        """Initialize group communication."""
+        logger.info("Initializing GroupCommunication")
+        self.groups.clear()
+        self.agent_groups.clear()
+        self.group_configs.clear()
+    
+    async def shutdown(self):
+        """Shutdown group communication."""
+        logger.info("Shutting down GroupCommunication")
+        # Notify all groups of shutdown
+        for group_id, members in self.groups.items():
+            try:
+                message = Message(
+                    type=MessageType.SYSTEM,
+                    sender="group_communication",
+                    receiver="group_members",
+                    content={"action": "group_shutdown", "group_id": group_id},
+                    priority=Priority.HIGH
+                )
+                await self.protocol.broadcast_to_group(group_id, message)
+            except Exception as e:
+                logger.warning(f"Error notifying group {group_id} of shutdown: {str(e)}")
+        
+        self.groups.clear()
+        self.agent_groups.clear()
+        self.group_configs.clear()
 
     async def create_group(self, group_id: str, members: List[str], 
                          config: Optional[Dict[str, Any]] = None) -> None:
@@ -114,6 +155,71 @@ class StandardCommunicationProtocol(CommunicationProtocol):
             'messages_received': 0,
             'failed_deliveries': 0
         }
+        logger.info("Initialized StandardCommunicationProtocol")
+    
+    async def initialize(self) -> None:
+        """Initialize the communication protocol."""
+        try:
+            logger.info("Initializing StandardCommunicationProtocol...")
+            
+            # Clear existing state
+            self.message_queues.clear()
+            self.subscribers.clear()
+            self.message_history.clear()
+            self.stats = {
+                'messages_sent': 0,
+                'messages_received': 0,
+                'failed_deliveries': 0
+            }
+            
+            # Initialize group communication
+            await self.group_communication.initialize()
+            
+            logger.info("Successfully initialized StandardCommunicationProtocol")
+            
+        except Exception as e:
+            logger.error(f"Error initializing StandardCommunicationProtocol: {str(e)}")
+            raise
+    
+    async def shutdown(self) -> None:
+        """Shutdown the communication protocol."""
+        try:
+            logger.info("Shutting down StandardCommunicationProtocol...")
+            
+            # Notify all subscribers of shutdown
+            shutdown_message = Message(
+                type=MessageType.SYSTEM,
+                sender="system",
+                receiver="all",
+                content={"action": "shutdown"},
+                priority=Priority.HIGH
+            )
+            
+            for subscriber_id in self.subscribers:
+                try:
+                    await self.send_message(Message(
+                        type=shutdown_message.type,
+                        sender=shutdown_message.sender,
+                        receiver=subscriber_id,
+                        content=shutdown_message.content,
+                        priority=shutdown_message.priority
+                    ))
+                except Exception as e:
+                    logger.warning(f"Error notifying subscriber {subscriber_id} of shutdown: {str(e)}")
+            
+            # Shutdown group communication
+            await self.group_communication.shutdown()
+            
+            # Clear all state
+            self.message_queues.clear()
+            self.subscribers.clear()
+            self.message_history.clear()
+            
+            logger.info("Successfully shut down StandardCommunicationProtocol")
+            
+        except Exception as e:
+            logger.error(f"Error shutting down StandardCommunicationProtocol: {str(e)}")
+            raise
 
     async def send_message(self, message: Message) -> None:
         """Send a message with priority handling."""
