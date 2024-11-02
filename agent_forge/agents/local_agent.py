@@ -21,6 +21,8 @@ from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from config.unified_config import UnifiedConfig, ModelConfig
 from ..bakedquietiot.deepbaking import DeepSystemBakerTask
 from ..bakedquietiot.quiet_star import QuietSTaRTask
+from ..model_compression.model_compression import CompressedModel, CompressionConfig, compress_and_train
+from ..model_compression.hypercompression import FinalCompressionConfig, FinalCompressor
 
 logger = logging.getLogger(__name__)
 
@@ -85,10 +87,25 @@ class LocalAgent:
         try:
             logger.info(f"Loading model: {self.model_config.name}")
             
-            # Initialize deep baker
+            # Check for compressed model
+            compressed_path = f"compressed_{self.model_config.name.split('/')[-1].lower()}"
+            if not Path(compressed_path).exists():
+                logger.info("Compressed model not found. Running compression pipeline...")
+                await self._run_compression_pipeline()
+            
+            # Load compressed model
+            logger.info("Loading compressed model...")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                compressed_path,
+                device_map="auto" if self.device == "cuda" else None,
+                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32
+            )
+            self.tokenizer = AutoTokenizer.from_pretrained(compressed_path)
+            
+            # Initialize deep baker with compressed model
             baker = DeepSystemBakerTask(
                 agent=self.chat_agent,
-                model_name=self.model_config.name,
+                model_name=compressed_path,
                 device=self.device
             )
             
@@ -121,6 +138,74 @@ class LocalAgent:
             
         except Exception as e:
             logger.error(f"Error loading model: {str(e)}")
+            raise
+    
+    async def _run_compression_pipeline(self):
+        """Run the full compression pipeline."""
+        try:
+            # Stage 1: Load original model
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_config.name,
+                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                low_cpu_mem_usage=True
+            )
+            tokenizer = AutoTokenizer.from_pretrained(self.model_config.name)
+            
+            # Stage 2: VPTQ + BitNet compression
+            compression_config = CompressionConfig(
+                vector_size=4,
+                codebook_size=128,
+                group_size=64,
+                lambda_warmup=500,
+                lambda_schedule='linear',
+                batch_size=4,
+                learning_rate=1e-5,
+                epochs=1,
+                device=self.device,
+                mixed_precision=True,
+                num_workers=4
+            )
+            
+            # Create dummy data for compression
+            dummy_data = [(torch.randn(1, 512), torch.zeros(1))]
+            train_loader = torch.utils.data.DataLoader(dummy_data, batch_size=1)
+            val_loader = torch.utils.data.DataLoader(dummy_data, batch_size=1)
+            
+            compressed_model = CompressedModel(model, compression_config)
+            compressed_model, stats = await compress_and_train(
+                model=compressed_model,
+                train_loader=train_loader,
+                val_loader=val_loader,
+                config=compression_config
+            )
+            
+            # Stage 3: HyperCompression + SeedLM
+            final_config = FinalCompressionConfig(
+                block_size=128,
+                theta_max=500000,
+                chunk_size=500000,
+                lfsr_length=12,
+                lfsr_polynomial=0x1100B,
+                num_threads=4,
+                device=self.device,
+                enable_mixed_precision=True
+            )
+            
+            final_compressor = FinalCompressor(final_config)
+            compressed_state = final_compressor.compress_model(compressed_model)
+            
+            # Save compressed model
+            output_dir = f"compressed_{self.model_config.name.split('/')[-1].lower()}"
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Save compressed state and tokenizer
+            torch.save(compressed_state, os.path.join(output_dir, "compressed_state.pt"))
+            tokenizer.save_pretrained(output_dir)
+            
+            logger.info(f"Saved compressed model to {output_dir}")
+            
+        except Exception as e:
+            logger.error(f"Error in compression pipeline: {str(e)}")
             raise
     
     def _create_checkpoint(self, metadata: Dict[str, Any]):

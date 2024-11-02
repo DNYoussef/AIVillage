@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CompressionConfig:
     """Configuration for VPTQ and BitNet compression"""
-    # VPTQ settings
+    # VPTQ settings - will be adjusted based on model size
     vector_size: int = 8
     codebook_size: int = 256
     group_size: int = 128
@@ -34,6 +34,38 @@ class CompressionConfig:
     device: str = 'cuda'
     mixed_precision: bool = True
     num_workers: int = 4
+    
+    @staticmethod
+    def from_model(model: nn.Module) -> 'CompressionConfig':
+        """Create config with settings optimized for model size."""
+        # Calculate total parameters
+        total_params = sum(p.numel() for p in model.parameters())
+        
+        # Adjust settings based on model size
+        if total_params > 1e9:  # >1B params
+            return CompressionConfig(
+                vector_size=32,
+                codebook_size=1024,
+                group_size=512,
+                batch_size=1,
+                num_workers=1
+            )
+        elif total_params > 1e8:  # >100M params
+            return CompressionConfig(
+                vector_size=16,
+                codebook_size=512,
+                group_size=256,
+                batch_size=2,
+                num_workers=2
+            )
+        else:  # Smaller models
+            return CompressionConfig(
+                vector_size=8,
+                codebook_size=256,
+                group_size=128,
+                batch_size=4,
+                num_workers=4
+            )
 
 class TernaryQuantizer(torch.autograd.Function):
     """Convert weights to ternary values (-1, 0, 1) with straight-through estimator"""
@@ -64,45 +96,90 @@ class VPTQLinear(nn.Linear):
         self.register_buffer('centroids', None)
         self.register_buffer('assignments', None)
         self.register_buffer('scales', None)
+        
+        # Calculate safe vector size
+        total_elements = in_features * out_features
+        self.vector_size = 1
+        while self.vector_size * 2 <= min(total_elements // 100, self.config.vector_size):
+            self.vector_size *= 2
+        
+        logger.info(f"Layer size: {in_features}x{out_features}, Vector size: {self.vector_size}")
 
-    def quantize(self):
-        """Apply VPTQ quantization"""
-        if self.centroids is None:
-            # Initialize centroids using k-means++
-            vectors = self.weight.view(-1, self.config.vector_size)
-            norms = torch.norm(vectors, dim=1, keepdim=True)
-            normalized = vectors / (norms + 1e-8)
-            
-            # Choose initial centroids
-            centroids = [normalized[torch.randint(0, normalized.size(0), (1,))]]
-            for _ in range(self.config.codebook_size - 1):
-                # Calculate distances to existing centroids
-                dists = torch.cat([torch.norm(normalized.unsqueeze(1) - c, dim=2).min(1)[0]
-                                 for c in centroids], dim=0)
-                # Choose next centroid with probability proportional to distance squared
-                probs = dists ** 2
-                probs /= probs.sum()
-                next_idx = torch.multinomial(probs, 1)
-                centroids.append(normalized[next_idx])
-            
-            self.centroids = torch.stack(centroids)
-            
-        # Quantize using current centroids
-        vectors = self.weight.view(-1, self.config.vector_size)
+    def _reshape_weights(self):
+        """Safely reshape weights into vectors."""
+        weight_flat = self.weight.view(-1)
+        total_elements = weight_flat.size(0)
+        
+        # Calculate number of complete vectors
+        num_complete_vectors = (total_elements // self.vector_size) * self.vector_size
+        vectors = weight_flat[:num_complete_vectors].view(-1, self.vector_size)
+        remaining = weight_flat[num_complete_vectors:]
+        
+        return vectors, remaining
+
+    def _init_centroids(self, vectors):
+        """Initialize centroids using k-means++."""
         norms = torch.norm(vectors, dim=1, keepdim=True)
         normalized = vectors / (norms + 1e-8)
         
-        # Find nearest centroids
-        distances = torch.cdist(normalized, self.centroids)
-        self.assignments = torch.argmin(distances, dim=1)
+        # Choose initial centroids
+        num_centroids = min(self.config.codebook_size, len(vectors))
+        centroids = [normalized[torch.randint(0, normalized.size(0), (1,))]]
         
-        # Calculate optimal scales
-        assigned = self.centroids[self.assignments]
-        self.scales = (vectors * assigned).sum(1) / ((assigned ** 2).sum(1) + 1e-8)
+        for _ in range(num_centroids - 1):
+            # Calculate distances to existing centroids
+            dists = torch.cat([torch.norm(normalized.unsqueeze(1) - c, dim=2).min(1)[0]
+                             for c in centroids], dim=0)
+            # Choose next centroid with probability proportional to distance squared
+            probs = dists ** 2
+            probs /= probs.sum()
+            next_idx = torch.multinomial(probs, 1)
+            centroids.append(normalized[next_idx])
         
-        # Reconstruct weight matrix
-        quantized = (self.centroids[self.assignments] * self.scales.unsqueeze(1)).view_as(self.weight)
-        return quantized
+        return torch.stack(centroids)
+
+    def quantize(self):
+        """Apply VPTQ quantization"""
+        try:
+            # Reshape weights into vectors
+            vectors, remaining = self._reshape_weights()
+            
+            if len(vectors) == 0:
+                # If no complete vectors, just do ternary quantization
+                return TernaryQuantizer.apply(self.weight)[0]
+            
+            if self.centroids is None:
+                self.centroids = self._init_centroids(vectors)
+            
+            # Normalize vectors
+            norms = torch.norm(vectors, dim=1, keepdim=True)
+            normalized = vectors / (norms + 1e-8)
+            
+            # Find nearest centroids
+            distances = torch.cdist(normalized, self.centroids)
+            self.assignments = torch.argmin(distances, dim=1)
+            
+            # Calculate optimal scales
+            assigned = self.centroids[self.assignments]
+            self.scales = (vectors * assigned).sum(1) / ((assigned ** 2).sum(1) + 1e-8)
+            
+            # Reconstruct vectors
+            quantized = (self.centroids[self.assignments] * self.scales.unsqueeze(1))
+            
+            # Handle remaining elements with ternary quantization
+            if len(remaining) > 0:
+                remaining_quant = TernaryQuantizer.apply(remaining)[0]
+                quantized = torch.cat([quantized.view(-1), remaining_quant])
+            
+            return quantized.view_as(self.weight)
+            
+        except RuntimeError as e:
+            if "out of bounds" in str(e) or "dimension" in str(e):
+                # Reduce vector size and try again
+                self.vector_size = max(1, self.vector_size // 2)
+                logger.warning(f"Reducing vector size to {self.vector_size} and retrying...")
+                return self.quantize()
+            raise
 
     def forward(self, x):
         # Use quantized weights for forward pass

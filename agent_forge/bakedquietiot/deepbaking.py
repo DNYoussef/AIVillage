@@ -7,7 +7,9 @@ class DeepSystemBakerTask(Task):
     def __init__(self, agent: ChatAgent, model_name: str, device: str = "cuda" if torch.cuda.is_available() else "cpu"):
         super().__init__(agent)
         self.device = device
+        # Load model in eval mode since we're working with ternary weights
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
+        self.model.eval()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.special_tokens = [
             "<start of thought>", "<end of thought>",
@@ -36,8 +38,10 @@ class DeepSystemBakerTask(Task):
         
     def add_special_tokens(self):
         special_tokens_dict = {'additional_special_tokens': self.special_tokens}
-        self.tokenizer.add_special_tokens(special_tokens_dict)
-        self.model.resize_token_embeddings(len(self.tokenizer))
+        num_added_tokens = self.tokenizer.add_special_tokens(special_tokens_dict)
+        # Resize token embeddings without gradient
+        with torch.no_grad():
+            self.model.resize_token_embeddings(len(self.tokenizer))
 
     async def deep_bake_system(self, max_iterations=50, consistency_threshold=0.95):
         system_prompt = """
@@ -95,30 +99,36 @@ class DeepSystemBakerTask(Task):
         Always use the appropriate special tokens to structure your response, and incorporate the thinking framework in your analysis and problem-solving approach.
         """
         
-        for i in range(max_iterations):
-            print(f"Iteration {i+1}/{max_iterations}")
-            await self.bake(system_prompt)
-            consistency = await self.evaluate_consistency()
-            print(f"Current consistency: {consistency:.2f}")
-            if consistency >= consistency_threshold:
-                print(f"Reached consistency threshold after {i+1} iterations.")
-                break
-        
-        # Save the baked model
-        self.model.save_pretrained("deep_baked_model")
-        self.tokenizer.save_pretrained("deep_baked_model")
+        try:
+            for i in range(max_iterations):
+                print(f"Iteration {i+1}/{max_iterations}")
+                await self.bake(system_prompt)
+                consistency = await self.evaluate_consistency()
+                print(f"Current consistency: {consistency:.2f}")
+                if consistency >= consistency_threshold:
+                    print(f"Reached consistency threshold after {i+1} iterations.")
+                    break
+            
+            # Save the baked model
+            self.model.save_pretrained("deep_baked_model")
+            self.tokenizer.save_pretrained("deep_baked_model")
+            
+            return "Baking completed successfully"
+            
+        except Exception as e:
+            print(f"Error during baking: {str(e)}")
+            raise
 
     async def bake(self, prompt):
-        tokenizer_output = self.tokenizer(prompt, return_tensors="pt")
-        inputs = {k: v.to(self.device) for k, v in tokenizer_output.items()}
+        """Bake the system prompt into the model's behavior without gradients."""
+        # Process prompt in eval mode
         with torch.no_grad():
+            tokenizer_output = self.tokenizer(prompt, return_tensors="pt")
+            inputs = {k: v.to(self.device) for k, v in tokenizer_output.items()}
             outputs = self.model(**inputs)
-        loss = F.cross_entropy(outputs.logits.view(-1, outputs.logits.size(-1)), inputs['input_ids'].view(-1))
-        loss.backward()
-        
-        optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-5)
-        optimizer.step()
-        optimizer.zero_grad()
+            
+            # Store outputs in model's state
+            self.model.config.baked_outputs = outputs.logits.detach()
 
     async def evaluate_consistency(self, num_samples=10):
         test_prompts = [
@@ -140,7 +150,8 @@ class DeepSystemBakerTask(Task):
     async def generate_response(self, prompt):
         tokenizer_output = self.tokenizer(prompt, return_tensors="pt")
         inputs = {k: v.to(self.device) for k, v in tokenizer_output.items()}
-        outputs = self.model.generate(**inputs, max_length=500, num_return_sequences=1, do_sample=True)
+        with torch.no_grad():  # No gradients needed for generation
+            outputs = self.model.generate(**inputs, max_length=500, num_return_sequences=1, do_sample=True)
         return self.tokenizer.decode(outputs[0], skip_special_tokens=False)
 
     async def score_response(self, response):
