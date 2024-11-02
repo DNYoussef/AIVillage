@@ -21,45 +21,6 @@ from rag_system.retrieval.vector_store import VectorStore
 from rag_system.retrieval.graph_store import GraphStore
 from ui.ui_manager import UIManager
 
-async def _initialize_openrouter_agents(self):
-    """Initialize OpenRouter agent instances."""
-    logger.info("Initializing OpenRouter agents...")
-    
-    try:
-        api_key = self.config.get_api_key()
-        
-        # Create and initialize OpenRouter agent instances with Claude for all agents
-        self.openrouter_agents = {
-            'king': OpenRouterAgent(
-                api_key=api_key,
-                model="anthropic/claude-3.5-sonnet",  # Using Claude for all agents
-                local_model="Qwen/Qwen2.5-3B-Instruct",
-                config=self.config
-            ),
-            'sage': OpenRouterAgent(
-                api_key=api_key,
-                model="anthropic/claude-3.5-sonnet",
-                local_model="deepseek-ai/Janus-1.3B",
-                config=self.config
-            ),
-            'magi': OpenRouterAgent(
-                api_key=api_key,
-                model="anthropic/claude-3.5-sonnet",
-                local_model="ibm-granite/granite-3b-code-instruct-128k",
-                config=self.config
-            )
-        }
-        
-        # Initialize each OpenRouter agent
-        for agent_name, agent in self.openrouter_agents.items():
-            await agent.initialize()
-        
-        logger.info("OpenRouter agents initialized successfully")
-        
-    except Exception as e:
-        logger.error(f"Error initializing OpenRouter agents: {str(e)}")
-        raise
-
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
@@ -146,27 +107,14 @@ class AIVillage:
         try:
             api_key = self.config.get_api_key()
             
-            # Create and initialize OpenRouter agent instances
-            self.openrouter_agents = {
-                'king': OpenRouterAgent(
+            # Create and initialize OpenRouter agent instances using config
+            for agent_name, agent_config in self.config.agents.items():
+                self.openrouter_agents[agent_name] = OpenRouterAgent(
                     api_key=api_key,
-                    model="neversleep/llama-3.1-luminmaid-70b",
-                    local_model="Qwen/Qwen2.5-3B-Instruct",
-                    config=self.config
-                ),
-                'sage': OpenRouterAgent(
-                    api_key=api_key,
-                    model="anthropic/claude-3.5-sonnet",
-                    local_model="deepseek-ai/Janus-1.3B",
-                    config=self.config
-                ),
-                'magi': OpenRouterAgent(
-                    api_key=api_key,
-                    model="anthropic/claude-3.5-sonnet:beta",
-                    local_model="ibm-granite/granite-3b-code-instruct-128k",
+                    model=agent_config.frontier_model.name,
+                    local_model=agent_config.local_model.name,
                     config=self.config
                 )
-            }
             
             # Initialize each OpenRouter agent
             for agent_name, agent in self.openrouter_agents.items():
@@ -370,4 +318,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

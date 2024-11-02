@@ -2,7 +2,7 @@
 
 agents:
   king:
-    frontier_model: "nvidia/llama-3.1-nemotron-70b-instruct"
+    frontier_model: "anthropic/claude-3.5-sonnet"
     local_model: "Qwen/Qwen2.5-3B-Instruct"
     description: "Strategic planning and decision making agent"
     settings:
@@ -34,7 +34,7 @@ agents:
         5. Recognition of limitations and uncertainties
 
   magi:
-    frontier_model: "openai/o1-mini-2024-09-12"
+    frontier_model: "anthropic/claude-3.5-sonnet"
     local_model: "ibm-granite/granite-3b-code-instruct-128k"
     description: "Code generation and experimentation agent"
     settings:

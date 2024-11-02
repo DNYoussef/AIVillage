@@ -15,8 +15,19 @@ venv/
 env/
 ENV/
 
-# Environment variables 
+# Environment variables and sensitive data
 .env
+.env.*
+*.env
+.env.local
+.env.development
+.env.production
+.env.test
+config/secrets.yaml
+config/credentials.yaml
+config/api_keys.yaml
+secrets/
+credentials/
 
 # IDE-related
 .vscode/
@@ -32,6 +43,9 @@ Thumbs.db
 *.log
 *.db
 *.sqlite3
+logs/
+data/backups/
+cache/
 
 # Jupyter Notebooks
 .ipynb_checkpoints
@@ -40,8 +54,23 @@ Thumbs.db
 *.pt
 *.pth
 *.onnx
+*.bin
+*.safetensors
+models/
+weights/
+checkpoints/
 
 # Temporary files
 *.tmp
 *.bak
 *.swp
+
+# Local development
+local_settings.py
+local_config.yaml
+dev_config.yaml
+
+# Generated files
+generated/
+output/
+results/
