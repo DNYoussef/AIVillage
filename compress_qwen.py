@@ -8,6 +8,9 @@ import asyncio
 import logging
 from pathlib import Path
 
+# Set Hugging Face cache directory
+os.environ['HF_HOME'] = 'D:\\AI_Models\\huggingface'
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
