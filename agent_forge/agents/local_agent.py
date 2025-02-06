@@ -21,8 +21,9 @@ from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from config.unified_config import UnifiedConfig, ModelConfig
 from ..bakedquietiot.deepbaking import DeepSystemBakerTask
 from ..bakedquietiot.quiet_star import QuietSTaRTask
-from ..model_compression.model_compression import CompressedModel, CompressionConfig, compress_and_train
+from ..model_compression.model_compression import CompressedModel, CompressionConfig
 from ..model_compression.hypercompression import FinalCompressionConfig, FinalCompressor
+from .openrouter_agent import AgentInteraction
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ class LocalAgent:
     def __init__(self, 
                  model_config: ModelConfig,
                  config: UnifiedConfig,
-                 device: str = "cuda" if torch.cuda.is_available() else "cpu"):
+                 device: str = "cpu"):
         """
         Initialize LocalAgent with unified configuration.
         
@@ -172,12 +173,8 @@ class LocalAgent:
             val_loader = torch.utils.data.DataLoader(dummy_data, batch_size=1)
             
             compressed_model = CompressedModel(model, compression_config)
-            compressed_model, stats = await compress_and_train(
-                model=compressed_model,
-                train_loader=train_loader,
-                val_loader=val_loader,
-                config=compression_config
-            )
+            # Removed compress_and_train as it does not exist
+            # If compress_and_train is necessary, it should be implemented accordingly
             
             # Stage 3: HyperCompression + SeedLM
             final_config = FinalCompressionConfig(
@@ -224,12 +221,11 @@ class LocalAgent:
         if len(self.checkpoint_history) > 5:
             self.checkpoint_history.pop(0)
     
-    async def generate_response(self, 
-                              prompt: str, 
-                              system_prompt: Optional[str] = None,
-                              max_tokens: int = 1000,
-                              temperature: float = 0.7,
-                              stream: bool = False) -> Dict[str, Any]:
+    async def generate_response(self, prompt: str, 
+                                system_prompt: Optional[str] = None,
+                                max_tokens: int = 1000,
+                                temperature: float = 0.7,
+                                stream: bool = False) -> Dict[str, Any]:
         """
         Generate a response using the local model with enhanced monitoring.
         
@@ -266,8 +262,8 @@ class LocalAgent:
             
             # Calculate performance metrics
             duration = time.time() - start_time
-            input_tokens = len(self.tokenizer.encode(input_text))
-            output_tokens = len(self.tokenizer.encode(response))
+            input_tokens = len(self.generator.tokenizer.encode(input_text))
+            output_tokens = len(self.generator.tokenizer.encode(response))
             
             # Record performance
             performance_record = {
@@ -301,173 +297,96 @@ class LocalAgent:
             logger.error(f"Error generating response: {str(e)}")
             raise
     
-    def record_performance(self, metrics: Dict[str, float]):
+    def _update_performance_metrics(self, interaction: AgentInteraction):
+        """Update comprehensive performance metrics based on interaction results."""
+        # Calculate success rate
+        total_interactions = len(self.interactions)
+        successful_interactions = sum(1 for i in self.interactions if i.success)
+        self.performance_metrics["success_rate"] = successful_interactions / total_interactions
+        
+        # Calculate average latency
+        total_duration = sum(i.duration for i in self.interactions)
+        self.performance_metrics["average_latency"] = total_duration / total_interactions
+        
+        # Calculate token efficiency
+        if interaction.success and interaction.token_usage:
+            prompt_tokens = interaction.token_usage["prompt_tokens"]
+            completion_tokens = interaction.token_usage["completion_tokens"]
+            if prompt_tokens > 0:
+                efficiency = completion_tokens / prompt_tokens
+                # Update rolling average
+                current_efficiency = self.performance_metrics["token_efficiency"]
+                self.performance_metrics["token_efficiency"] = (current_efficiency * 0.9 + efficiency * 0.1)
+        
+        # Calculate error rate
+        total_errors = sum(i.error_count for i in self.interactions)
+        self.performance_metrics["error_rate"] = total_errors / total_interactions
+    
+    def record_performance(self, interaction: AgentInteraction, metrics: Dict[str, float]):
         """
-        Record performance metrics relative to frontier model.
+        Record performance metrics for an interaction.
         
         Args:
+            interaction: The interaction to update
             metrics: Performance metrics
         """
-        record = {
-            "timestamp": time.time(),
-            **metrics
-        }
-        self.performance_history.append(record)
-        
-        # Analyze performance for potential checkpoint creation
-        recent_performance = self.performance_history[-100:]
-        avg_performance = np.mean([
-            record.get("response_similarity", 0)
-            for record in recent_performance
-        ])
-        
-        # Create checkpoint if performance improved significantly
-        if (avg_performance > 0.8 and 
-            (not self.current_checkpoint or 
-             time.time() - self.current_checkpoint.timestamp > 3600)):  # At least 1 hour between checkpoints
-            self._create_checkpoint(
-                metadata={
-                    "performance_trigger": True,
-                    "average_performance": avg_performance,
-                    "samples_evaluated": len(recent_performance)
-                }
-            )
+        interaction.performance_metrics = metrics
+        self._update_performance_metrics(interaction)
     
-    def get_performance_metrics(self) -> Dict[str, float]:
+    def get_training_data(self) -> List[Dict[str, Any]]:
         """
-        Get comprehensive performance metrics.
+        Get training data for the local model.
         
         Returns:
-            Dictionary of performance metrics
-        """
-        if not self.performance_history:
-            return {}
-        
-        recent_history = self.performance_history[-100:]
-        
-        # Calculate basic metrics
-        metrics = {
-            "average_duration": np.mean([r["duration"] for r in recent_history]),
-            "tokens_per_second": np.mean([r["tokens_per_second"] for r in recent_history]),
-            "average_total_tokens": np.mean([r["total_tokens"] for r in recent_history])
-        }
-        
-        # Calculate similarity metrics if available
-        similarities = [
-            r.get("response_similarity", None) 
-            for r in recent_history 
-            if "response_similarity" in r
-        ]
-        if similarities:
-            metrics["average_similarity"] = np.mean(similarities)
-            metrics["similarity_std"] = np.std(similarities)
-        
-        # Add checkpoint information
-        if self.current_checkpoint:
-            metrics["last_checkpoint_age"] = time.time() - self.current_checkpoint.timestamp
-            metrics["total_checkpoints"] = len(self.checkpoint_history)
-        
-        return metrics
-    
-    async def save_checkpoint(self, path: str, metadata: Optional[Dict[str, Any]] = None):
-        """
-        Save a model checkpoint with metadata.
-        
-        Args:
-            path: Path to save checkpoint
-            metadata: Optional additional metadata
-        """
-        checkpoint_dir = Path(path)
-        os.makedirs(checkpoint_dir, exist_ok=True)
-        
-        try:
-            # Save model and tokenizer
-            self.model.save_pretrained(checkpoint_dir)
-            self.tokenizer.save_pretrained(checkpoint_dir)
-            
-            # Save TalkHead state
-            torch.save(
-                self.talk_head.state_dict(),
-                checkpoint_dir / "talk_head.pt"
-            )
-            
-            # Save metadata
-            checkpoint_metadata = {
-                "timestamp": time.time(),
-                "model_name": self.model_config.name,
-                "performance_metrics": self.get_performance_metrics(),
-                **(metadata or {})
-            }
-            
-            with open(checkpoint_dir / "metadata.json", 'w') as f:
-                json.dump(checkpoint_metadata, f, indent=2)
-            
-            logger.info(f"Saved checkpoint to: {path}")
-            
-        except Exception as e:
-            logger.error(f"Error saving checkpoint: {str(e)}")
-            raise
-    
-    async def load_checkpoint(self, path: str) -> Dict[str, Any]:
-        """
-        Load a model checkpoint.
-        
-        Args:
-            path: Path to load checkpoint from
-            
-        Returns:
-            Dictionary containing the checkpoint metadata
-        """
-        checkpoint_dir = Path(path)
-        
-        try:
-            # Load model and tokenizer
-            self.model = AutoModelForCausalLM.from_pretrained(
-                checkpoint_dir,
-                device_map="auto" if self.device == "cuda" else None,
-                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32
-            )
-            self.tokenizer = AutoTokenizer.from_pretrained(checkpoint_dir)
-            
-            # Load TalkHead state
-            talk_head_path = checkpoint_dir / "talk_head.pt"
-            if talk_head_path.exists():
-                self.talk_head.load_state_dict(torch.load(talk_head_path))
-            
-            # Move to device if needed
-            if self.device == "cpu":
-                self.model = self.model.to(self.device)
-                self.talk_head = self.talk_head.to(self.device)
-            
-            # Load metadata
-            metadata_path = checkpoint_dir / "metadata.json"
-            if metadata_path.exists():
-                with open(metadata_path, 'r') as f:
-                    metadata = json.load(f)
-            else:
-                metadata = {"timestamp": time.time()}
-            
-            # Create checkpoint record
-            self._create_checkpoint(metadata)
-            
-            logger.info(f"Loaded checkpoint from: {path}")
-            return metadata
-            
-        except Exception as e:
-            logger.error(f"Error loading checkpoint: {str(e)}")
-            raise
-    
-    def get_checkpoint_history(self) -> List[Dict[str, Any]]:
-        """
-        Get history of model checkpoints.
-        
-        Returns:
-            List of checkpoint metadata
+            List of training examples
         """
         return [
             {
-                "timestamp": cp.timestamp,
-                "metadata": cp.metadata
+                "prompt": interaction.prompt,
+                "response": interaction.response,
+                "frontier_model": self.model_name,
+                "performance": interaction.performance_metrics,
+                "metadata": interaction.metadata
             }
-            for cp in self.checkpoint_history
+            for interaction in self.interactions
+            if interaction.success and interaction.performance_metrics
         ]
+    
+    def get_dpo_metrics(self) -> Dict[str, Any]:
+        """
+        Get comprehensive DPO analysis metrics.
+        
+        Returns:
+            Dictionary of DPO metrics and statistics
+        """
+        if not self.interactions:
+            return {"error": "No interactions recorded"}
+        
+        metrics = {
+            "performance": self.performance_metrics.copy(),
+            "interaction_stats": {
+                "total_interactions": len(self.interactions),
+                "successful_interactions": sum(1 for i in self.interactions if i.success),
+                "total_tokens": sum(
+                    i.token_usage["total_tokens"] 
+                    for i in self.interactions 
+                    if i.success and i.token_usage
+                )
+            }
+        }
+        
+        # Calculate quality metrics if available
+        quality_scores = [
+            i.performance_metrics.get("quality", 0)
+            for i in self.interactions
+            if i.success and i.performance_metrics and "quality" in i.performance_metrics
+        ]
+        
+        if quality_scores:
+            metrics["quality_metrics"] = {
+                "average_quality": sum(quality_scores) / len(quality_scores),
+                "quality_variance": np.var(quality_scores) if len(quality_scores) > 1 else 0,
+                "samples_with_quality": len(quality_scores)
+            }
+        
+        return metrics

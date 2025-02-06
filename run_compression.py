@@ -4,8 +4,7 @@ import torch
 from initialize_village import AIVillage
 from agent_forge.model_compression import (
     CompressionConfig,
-    CompressedModel,
-    compress_and_train
+    CompressedModel
 )
 from agent_forge.model_compression.hypercompression import (
     FinalCompressionConfig,
@@ -29,19 +28,16 @@ async def run_compression_task():
         await village.initialize()
         
         # Load model and tokenizer
-        model_name = "Qwen/Qwen2.5-Math-7B-Instruct"
+        model_name = "unsloth/DeepSeek-R1-GGUF"
         logger.info(f"Loading model: {model_name}")
-        model = AutoModelForCausalLM.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name).cpu()
         tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-        # Stage 1: Initial Compression with VPTQ
-        logger.info("Stage 1: VPTQ Compression")
+        # Instantiate CompressionConfig based on the model
         compression_config = CompressionConfig.from_model(model)
-        compressed_model = CompressedModel(model, compression_config)
         
-        # Stage 2: BitNet Quantization
-        logger.info("Stage 2: BitNet Quantization")
-        compressed_model.convert_to_bitnet()
+        # Instantiate CompressedModel
+        compressed_model = CompressedModel(model, compression_config)
         
         # Stage 3: HyperCompression and SeedLM
         logger.info("Stage 3: HyperCompression and SeedLM")
@@ -52,7 +48,7 @@ async def run_compression_task():
             lfsr_length=16,
             lfsr_polynomial=0x1100B,
             num_threads=4,
-            device='cuda',
+            device='cpu',
             enable_mixed_precision=True
         )
         final_compressor = FinalCompressor(final_config)
@@ -74,13 +70,13 @@ async def run_compression_task():
             num_threads=4,
             batch_size=1,
             prefetch_layers=2,
-            device='cuda'
+            device='cpu'
         )
         engine = InferenceEngine(compressed_state, inference_config)
         
         # Test generation
         test_prompt = "Solve the following math problem: What is the derivative of x^2?"
-        input_ids = tokenizer(test_prompt, return_tensors="pt").input_ids.cuda()
+        input_ids = tokenizer(test_prompt, return_tensors="pt").input_ids.cpu()
         output_ids = engine.generate(input_ids, max_length=100, temperature=0.7)
         response = tokenizer.decode(output_ids)
         

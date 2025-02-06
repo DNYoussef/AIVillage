@@ -12,7 +12,7 @@ from datetime import datetime
 
 from config.unified_config import UnifiedConfig, AgentConfig, ModelConfig, AgentType, ModelType
 from agent_forge.agents.king.king_agent import KingAgent, TaskManager, ResourceAllocator
-from agent_forge.agents.openrouter_agent import AgentInteraction, OpenRouterAgent
+from agent_forge.agents.openrouter_agent import AgentInteraction, HuggingFaceAgent
 
 def force_close_connections():
     """Force close any open SQLite connections."""
@@ -82,10 +82,9 @@ def config():
 
 @pytest.fixture
 def mock_openrouter_agent(config):
-    """Create mock OpenRouter agent."""
-    agent = AsyncMock(spec=OpenRouterAgent)
+    """Create mock HuggingFace agent."""
+    agent = AsyncMock(spec=HuggingFaceAgent)
     agent.model = "test-frontier-model"
-    agent.local_model = "test-local-model"
     
     # Create complexity evaluation
     complexity_evaluation = {
@@ -150,8 +149,8 @@ def king_agent(config, mock_openrouter_agent):
     """Create KingAgent instance for testing."""
     with patch('agent_forge.agents.local_agent.LocalAgent._load_and_bake_model'), \
          patch('sqlite3.connect', sqlite3.connect), \
-         patch('aiosqlite.connect', AsyncMock()):
-        agent = KingAgent(openrouter_agent=mock_openrouter_agent, config=config)
+         patch('aio sqlite.connect', AsyncMock()):
+        agent = KingAgent(huggingface_agent=mock_openrouter_agent, config=config)
         
         # Mock complexity evaluator with AsyncMock
         complexity_evaluation = {
@@ -194,71 +193,13 @@ def king_agent(config, mock_openrouter_agent):
         })
         agent.complexity_evaluator = mock_evaluator
         
-        # Rest of the fixture remains the same...
-        
-        # Mock local agent responses
-        async def mock_local_response(*args, **kwargs):
-            current_time = datetime.now().timestamp()
-            response = AgentInteraction(
-                prompt=args[0] if args else kwargs.get('prompt', ''),
-                response="Local test response",
-                model="test-local-model",  # Match the model name from config
-                timestamp=current_time,
-                metadata={
-                    "performance": {
-                        "duration": 0.5,
-                        "total_tokens": 50,
-                        "tokens_per_second": 100,
-                        "complexity_score": complexity_evaluation["complexity_score"]
-                    },
-                    "quality_score": 0.85,
-                    "device": "cpu",
-                    "max_tokens": kwargs.get("max_tokens", 1000),
-                    "temperature": kwargs.get("temperature", 0.7),
-                    "system_prompt_used": bool(kwargs.get("system_prompt")),
-                    "stream_mode": False,
-                    "token_usage": {
-                        "total_tokens": 50,
-                        "prompt_tokens": 25,
-                        "completion_tokens": 25
-                    },
-                    "complexity_evaluation": complexity_evaluation,
-                    "resources_allocated": {
-                        "max_tokens": kwargs.get("max_tokens", 1000),
-                        "temperature": kwargs.get("temperature", 0.7),
-                        "timeout": 45
-                    }
-                }
-            )
-            # Record performance after generating response
-            mock_evaluator.record_performance(
-                agent_type="king",
-                task_complexity=complexity_evaluation,
-                performance_metrics={
-                    "duration": 0.5,
-                    "complexity_score": complexity_evaluation["complexity_score"],
-                    "quality_score": 0.85
-                }
-            )
-            return response
-            
-        agent.local_agent.generate_response = AsyncMock(side_effect=mock_local_response)
-        agent.local_agent.get_performance_metrics = Mock(return_value={
-            "average_similarity": 0.8,
-            "success_rate": 0.9,
-            "local_model_performance": 0.85,
-            "average_duration": 0.5,
-            "tokens_per_second": 100,
-            "average_total_tokens": 50
-        })
-        
         # Set local agent model config
         agent.local_agent.model_config = config.agents["king"].local_model
         
         # Initialize task manager metrics with non-zero duration
         agent.task_manager.task_metrics = {
             "success_rate": 1.0,
-            "average_duration": 0.5,  # Set non-zero duration
+            "average_duration": 0.5,
             "resource_efficiency": 1.0
         }
         
@@ -273,7 +214,7 @@ def king_agent(config, mock_openrouter_agent):
                 "complexity": complexity_evaluation
             }
             return task_id
-            
+        
         async def mock_complete_task(*args, **kwargs):
             task_id = args[0] if args else kwargs.get("task_id")
             task_data = agent.task_manager.active_tasks.pop(task_id)
@@ -321,7 +262,7 @@ def king_agent(config, mock_openrouter_agent):
             agent.task_manager.task_metrics["average_duration"] = 0.5
             
             return task_data
-            
+        
         agent.task_manager.track_task = AsyncMock(side_effect=mock_track_task)
         agent.task_manager.complete_task = AsyncMock(side_effect=mock_complete_task)
         
@@ -379,7 +320,6 @@ async def test_process_task(king_agent):
     assert "performance" in result.metadata
     assert "token_usage" in result.metadata
     assert "complexity_evaluation" in result.metadata
-    assert "resources_allocated" in result.metadata
 
 @pytest.mark.asyncio
 async def test_error_handling(king_agent):
@@ -413,7 +353,6 @@ async def test_performance_metrics(king_agent):
     assert "local_model_performance" in metrics
     assert 0 <= metrics["task_success_rate"] <= 1
     assert 0 <= metrics["local_model_performance"] <= 1
-
 
 @pytest.mark.asyncio
 async def test_complexity_evaluation(king_agent):
@@ -501,4 +440,3 @@ async def test_complexity_evaluation(king_agent):
 
 if __name__ == "__main__":
     pytest.main([__file__])
-

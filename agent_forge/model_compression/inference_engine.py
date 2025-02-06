@@ -27,7 +27,7 @@ class InferenceConfig:
     max_working_memory: int = 4  # GB
     num_threads: int = 4
     batch_size: int = 1
-    device: str = 'cuda'
+    device: str = 'cpu'  # Changed from 'cuda'
     mixed_precision: bool = True
     lfsr_length: int = 16
     lfsr_polynomial: int = 0x1100B
@@ -127,7 +127,7 @@ class InferenceEngine(nn.Module):
                 self.prefetch_queue.append(weights)
 
     @torch.inference_mode()
-    @torch.cuda.amp.autocast()
+    @torch.amp.autocast(device_type='cpu')
     def generate(self, input_ids: torch.Tensor, max_length: int = 100, temperature: float = 1.0) -> torch.Tensor:
         generated = []
         for _ in range(max_length):
@@ -180,7 +180,7 @@ if __name__ == "__main__":
         num_threads=4,
         batch_size=1,
         prefetch_layers=2,
-        device='cuda'
+        device='cpu'  # Changed from 'cuda'
     )
     tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b")
     response = load_and_generate(

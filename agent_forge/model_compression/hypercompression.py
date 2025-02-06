@@ -22,16 +22,20 @@ class FinalCompressionConfig:
     lfsr_length: int = 16
     lfsr_polynomial: int = 0x1100B
     num_threads: int = 4
-    device: str = 'cuda'
+    device: str = 'cpu'  # Changed from 'cuda'
     enable_mixed_precision: bool = True
 
 class CudaKernelManager:
     def __init__(self, arch=None):
-        self.arch = arch or torch.cuda.get_device_capability()[0]
+        self.arch = arch or None  # Changed to avoid CUDA
         self.kernel_cache = {}
         
     def get_kernel(self, name, code):
         if name not in self.kernel_cache:
+            if self.arch is None:
+                logger.warning(f"Attempting to compile CUDA kernel '{name}' without specifying architecture.")
+                # Handle CPU-based operations or skip kernel compilation
+                return None
             self.kernel_cache[name] = cp.RawKernel(
                 code, 
                 name, 
@@ -41,7 +45,7 @@ class CudaKernelManager:
                     '--use_fast_math'
                 )
             )
-        return self.kernel_cache[name]
+        return self.kernel_cache.get(name)
 
 _kernel_manager = CudaKernelManager()
 

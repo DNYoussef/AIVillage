@@ -181,7 +181,7 @@ class UnifiedConfig:
         for agent_name, agent_data in config.get('agents', {}).items():
             # Create model configs
             frontier_model = ModelConfig(
-                name=agent_data['frontier_model'],
+                name="unsloth/DeepSeek-R1-GGUF",
                 type=ModelType.FRONTIER,
                 temperature=agent_data['settings'].get('temperature', 0.7),
                 max_tokens=agent_data['settings'].get('max_tokens', 1000),
@@ -189,7 +189,7 @@ class UnifiedConfig:
             )
             
             local_model = ModelConfig(
-                name=agent_data['local_model'],
+                name="unsloth/DeepSeek-R1-GGUF",
                 type=ModelType.LOCAL,
                 temperature=agent_data['settings'].get('temperature', 0.7),
                 max_tokens=agent_data['settings'].get('max_tokens', 1000)

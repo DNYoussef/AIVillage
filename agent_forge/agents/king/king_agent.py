@@ -1,4 +1,6 @@
-"""Enhanced King agent with improved task management and strategic capabilities."""
+"""Enhanced King agent specializing in complex instruction-following and strategic thinking.
+Uses HuggingFaceAgent as the local model.
+"""
 
 import logging
 import time
@@ -6,8 +8,8 @@ from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 
 from config.unified_config import UnifiedConfig, AgentConfig
-from ..openrouter_agent import OpenRouterAgent, AgentInteraction
-from ..local_agent import LocalAgent
+from agents import OpenRouterAgent, AgentInteraction  # Updated import
+from agents import LocalAgent, KingAgent
 from ...data.complexity_evaluator import ComplexityEvaluator
 
 logger = logging.getLogger(__name__)
@@ -23,11 +25,11 @@ class TaskManager:
             "average_duration": 0.0,
             "resource_efficiency": 1.0
         }
-    
+        
     async def initialize(self):
         """Initialize task manager."""
         logger.info("Initialized TaskManager")
-    
+        
     async def add_task(self, task_id: str, task: Dict[str, Any]):
         """Add a new task to manage."""
         self.active_tasks[task_id] = {
@@ -36,7 +38,7 @@ class TaskManager:
             "status": "pending",
             "attempts": 0
         }
-    
+        
     async def complete_task(self, task_id: str, result: Dict[str, Any]):
         """Mark a task as completed."""
         if task_id in self.active_tasks:
@@ -49,15 +51,12 @@ class TaskManager:
             })
             self.completed_tasks.append(task_record)
             self._update_metrics(task_record)
-    
+        
     def _update_metrics(self, task_record: Dict[str, Any]):
         """Update task performance metrics."""
         # Update success rate
         total_tasks = len(self.completed_tasks)
-        successful_tasks = sum(
-            1 for task in self.completed_tasks
-            if task["status"] == "completed"
-        )
+        successful_tasks = sum(1 for task in self.completed_tasks if task["status"] == "completed")
         self.task_metrics["success_rate"] = successful_tasks / total_tasks
         
         # Update average duration
@@ -78,14 +77,14 @@ class ResourceAllocator:
         self.config = config
         self.allocations: Dict[str, Dict[str, float]] = {}
         self.usage_history: List[Dict[str, Any]] = []
-    
+        
     async def initialize(self):
         """Initialize resource allocator."""
         logger.info("Initialized ResourceAllocator")
-    
+        
     async def allocate_resources(self, 
-                               task: Dict[str, Any],
-                               complexity_score: float) -> Dict[str, float]:
+                           task: Dict[str, Any],
+                           complexity_score: float) -> Dict[str, float]:
         """Allocate resources based on task complexity."""
         # Calculate base allocations
         token_allocation = min(1000 + int(complexity_score * 2000), 4000)
@@ -104,23 +103,22 @@ class ResourceAllocator:
 class KingAgent:
     """
     Enhanced King agent specializing in complex instruction-following and strategic thinking.
-    Uses nvidia/llama-3.1-nemotron-70b-instruct as frontier model and
-    Qwen/Qwen2.5-3B-Instruct as local model.
+    Uses HuggingFaceAgent as the local model.
     """
     
     def __init__(self, 
-                 openrouter_agent: OpenRouterAgent,
+                 huggingface_agent: OpenRouterAgent,
                  config: UnifiedConfig):
         """
         Initialize enhanced KingAgent.
         
         Args:
-            openrouter_agent: OpenRouterAgent instance
+            huggingface_agent: HuggingFaceAgent instance
             config: UnifiedConfig instance
         """
         self.config = config
         self.agent_config = config.get_agent_config("king")
-        self.frontier_agent = openrouter_agent
+        self.frontier_agent = huggingface_agent
         self.local_agent = LocalAgent(
             model_config=self.agent_config.local_model,
             config=config
@@ -140,9 +138,9 @@ class KingAgent:
         }
         
         logger.info(f"Initialized KingAgent with:")
-        logger.info(f"  Frontier model: {openrouter_agent.model}")
-        logger.info(f"  Local model: {openrouter_agent.local_model}")
-    
+        logger.info(f"  Frontier model: {huggingface_agent.model_name}")
+        logger.info(f"  Local model: {self.local_agent.model_config.name}")
+        
     async def initialize(self):
         """Initialize all agent components."""
         try:
@@ -164,25 +162,25 @@ class KingAgent:
         except Exception as e:
             logger.error(f"Error initializing KingAgent: {str(e)}")
             raise
-    
+        
     def _get_default_system_prompt(self) -> str:
         """Get the default system prompt for King agent."""
         return """You are King, an advanced AI agent specializing in complex problem-solving and strategic thinking who helps guide the AI village with the peace of a Taoist.
-        Your approach is:
-        1. Analyze problems thoroughly from multiple angles
-        2. Break down complex tasks into manageable steps
-        3. Consider long-term implications and strategic impact
-        4. Provide clear, actionable guidance
-        5. Maintain awareness of context and constraints
+Your approach is:
+1. Analyze problems thoroughly from multiple angles
+2. Break down complex tasks into manageable steps
+3. Consider long-term implications and strategic impact
+4. Provide clear, actionable guidance
+5. Maintain awareness of context and constraints
+
+You excel at:
+- Strategic planning and decision making
+- Resource allocation and optimization
+- Complex problem decomposition
+- Risk assessment and mitigation
+- Performance monitoring and adaptation
+"""
         
-        You excel at:
-        - Strategic planning and decision making
-        - Resource allocation and optimization
-        - Complex problem decomposition
-        - Risk assessment and mitigation
-        - Performance monitoring and adaptation
-        """
-    
     async def process_task(self, 
                           task: str,
                           system_prompt: Optional[str] = None,
@@ -294,10 +292,10 @@ class KingAgent:
             if task_id in self.task_manager.active_tasks:
                 self.task_manager.active_tasks[task_id]["status"] = "failed"
             raise
-    
+        
     def _record_model_comparison(self, 
-                               local_response: AgentInteraction,
-                               frontier_interaction: AgentInteraction):
+                           local_response: AgentInteraction,
+                           frontier_interaction: AgentInteraction):
         """Record detailed performance comparison between models."""
         from difflib import SequenceMatcher
         
@@ -323,11 +321,11 @@ class KingAgent:
         }
         
         # Record performance
-        self.local_agent.record_performance(performance_metrics)
+        self.local_agent.record_performance(frontier_interaction, performance_metrics)
     
     def _update_metrics(self, 
                        interaction: AgentInteraction,
-                       performance: Dict[str, Any]):
+                       performance: Dict[str, float]):
         """Update comprehensive performance metrics."""
         # Update task success rate
         total_tasks = len(self.task_manager.completed_tasks)
@@ -382,5 +380,49 @@ class KingAgent:
         return metrics
     
     def get_training_data(self) -> List[Dict[str, Any]]:
-        """Get training data for the local model."""
+        """
+        Get training data for the local model.
+        
+        Returns:
+            List of training examples
+        """
         return self.frontier_agent.get_training_data()
+
+    def get_dpo_metrics(self) -> Dict[str, Any]:
+        """
+        Get comprehensive DPO analysis metrics.
+        
+        Returns:
+            Dictionary of DPO metrics and statistics
+        """
+        if not self.interactions:
+            return {"error": "No interactions recorded"}
+        
+        metrics = {
+            "performance": self.performance_metrics.copy(),
+            "interaction_stats": {
+                "total_interactions": len(self.interactions),
+                "successful_interactions": sum(1 for i in self.interactions if i.success),
+                "total_tokens": sum(
+                    i.token_usage["total_tokens"] 
+                    for i in self.interactions 
+                    if i.success and i.token_usage
+                )
+            }
+        }
+        
+        # Calculate quality metrics if available
+        quality_scores = [
+            i.performance_metrics.get("quality", 0)
+            for i in self.interactions
+            if i.success and i.performance_metrics and "quality" in i.performance_metrics
+        ]
+        
+        if quality_scores:
+            metrics["quality_metrics"] = {
+                "average_quality": sum(quality_scores) / len(quality_scores),
+                "quality_variance": np.var(quality_scores) if len(quality_scores) > 1 else 0,
+                "samples_with_quality": len(quality_scores)
+            }
+        
+        return metrics

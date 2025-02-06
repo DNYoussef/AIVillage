@@ -12,7 +12,7 @@ from agent_forge.data.data_collector import DataCollector
 from agent_forge.agents.king.king_agent import KingAgent
 from agent_forge.agents.sage.sage_agent import SageAgent
 from agent_forge.agents.magi.magi_agent import MagiAgent
-from agent_forge.agents.openrouter_agent import OpenRouterAgent
+from agent_forge.agents.openrouter_agent import HuggingFaceAgent, AgentInteraction
 from communications.community_hub import CommunityHub
 from communications.protocol import StandardCommunicationProtocol
 from communications.message import Message, MessageType, Priority
@@ -50,7 +50,7 @@ class AIVillage:
             # Initialize communication protocol
             self.systems['communication_protocol'] = StandardCommunicationProtocol()
             
-            # Initialize OpenRouter agents first
+            # Initialize HuggingFace agents first
             await self._initialize_openrouter_agents()
             
             # Initialize specialized agents
@@ -101,29 +101,27 @@ class AIVillage:
             raise
     
     async def _initialize_openrouter_agents(self):
-        """Initialize OpenRouter agent instances."""
-        logger.info("Initializing OpenRouter agents...")
+        """Initialize HuggingFace agent instances."""
+        logger.info("Initializing HuggingFace agents...")
         
         try:
             api_key = self.config.get_api_key()
             
-            # Create and initialize OpenRouter agent instances using config
+            # Create and initialize HuggingFace agent instances using config
             for agent_name, agent_config in self.config.agents.items():
-                self.openrouter_agents[agent_name] = OpenRouterAgent(
-                    api_key=api_key,
-                    model=agent_config.frontier_model.name,
-                    local_model=agent_config.local_model.name,
+                self.openrouter_agents[agent_name] = HuggingFaceAgent(
+                    model_name=agent_config.frontier_model.name,
                     config=self.config
                 )
             
-            # Initialize each OpenRouter agent
+            # Initialize each HuggingFace agent
             for agent_name, agent in self.openrouter_agents.items():
                 await agent.initialize()
             
-            logger.info("OpenRouter agents initialized successfully")
+            logger.info("HuggingFace agents initialized successfully")
             
         except Exception as e:
-            logger.error(f"Error initializing OpenRouter agents: {str(e)}")
+            logger.error(f"Error initializing HuggingFace agents: {str(e)}")
             raise
     
     async def _initialize_agents(self):
@@ -133,19 +131,19 @@ class AIVillage:
         try:
             # Initialize specialized agents
             self.agents['king'] = KingAgent(
-                openrouter_agent=self.openrouter_agents['king'],
+                huggingface_agent=self.openrouter_agents['king'],
                 config=self.config
             )
             await self.agents['king'].initialize()
             
             self.agents['sage'] = SageAgent(
-                openrouter_agent=self.openrouter_agents['sage'],
+                huggingface_agent=self.openrouter_agents['sage'],
                 config=self.config
             )
             await self.agents['sage'].initialize()
             
             self.agents['magi'] = MagiAgent(
-                openrouter_agent=self.openrouter_agents['magi'],
+                huggingface_agent=self.openrouter_agents['magi'],
                 config=self.config
             )
             await self.agents['magi'].initialize()
@@ -273,9 +271,9 @@ class AIVillage:
                 if hasattr(agent, 'shutdown'):
                     await agent.shutdown()
             
-            # Shutdown OpenRouter agents
+            # Shutdown HuggingFace agents
             for agent_name, agent in self.openrouter_agents.items():
-                logger.info(f"Shutting down OpenRouter {agent_name} agent...")
+                logger.info(f"Shutting down HuggingFace {agent_name} agent...")
                 if hasattr(agent, 'shutdown'):
                     await agent.shutdown()
             
