@@ -208,9 +208,8 @@ By following these steps, you can manually feed several dozen academic papers in
 
 2. The server will start running on `http://localhost:8000`. You can now use the following endpoints:
 
-   - POST `/query`: Send a query to the AI Village
-   - POST `/upload`: Upload a file to populate the knowledge base
-   - POST `/import_open_researcher`: Import data from the Open Researcher project
+  - POST `/query`: Send a query to the AI Village
+  - POST `/upload`: Upload a file to populate the knowledge base
 
 3. Use a tool like curl or Postman to interact with the API, or integrate it into your application.
 
