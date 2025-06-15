@@ -36,4 +36,6 @@ class RetrievalPlan:
     query: str
     strategy: str
     filters: Dict[str, Any]
+    use_linearization: bool
     timestamp: datetime
+    version: int
