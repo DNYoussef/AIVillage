@@ -2,7 +2,7 @@ import unittest
 import asyncio
 from unittest.mock import Mock, patch
 from agents.king.quality_assurance_layer import QualityAssuranceLayer
-from agents.king.planning_and_task_management.unified_decision_maker import UnifiedDecisionMaker
+from agents.king.planning.unified_decision_maker import UnifiedDecisionMaker
 from agents.king.problem_analyzer import ProblemAnalyzer
 from agents.king.continuous_learner import ContinuousLearner
 from agents.king.king_agent import KingAgent

@@ -11,7 +11,10 @@ from .dynamic_knowledge_integration_agent import DynamicKnowledgeIntegrationAgen
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.retrieval.vector_store import VectorStore
 from .coordinator import KingCoordinator
-from .planning_and_task_management.unified_planning_and_management import UnifiedPlanningAndManagement
+# `planning_and_task_management` was split into separate `planning` and
+# `task_management` packages.  The unified planning/management class now
+# resides in `planning.unified_planning`.
+from .planning.unified_planning import UnifiedPlanningAndManagement
 from .analytics.unified_analytics import UnifiedAnalytics
 from .evolution_manager import EvolutionManager, run_evolution_and_optimization
 from .response_generation_agent import ResponseGenerationAgent

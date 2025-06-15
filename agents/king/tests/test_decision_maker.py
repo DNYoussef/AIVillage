@@ -1,7 +1,7 @@
 import unittest
 import asyncio
 from unittest.mock import Mock, patch
-from agents.king.planning_and_task_management.unified_decision_maker import UnifiedDecisionMaker
+from agents.king.planning.unified_decision_maker import UnifiedDecisionMaker
 from agents.king.quality_assurance_layer import QualityAssuranceLayer
 from agents.utils.task import Task as LangroidTask
 
