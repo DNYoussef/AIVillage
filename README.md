@@ -286,10 +286,12 @@ Example:
 from agents.king.king_agent import KingAgent, KingAgentConfig
 from your_communication_protocol import CommunicationProtocol
 from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.core.config import UnifiedConfig
 
 # Initialize dependencies
 comm_protocol = CommunicationProtocol()
-rag_system = EnhancedRAGPipeline()
+rag_config = UnifiedConfig()
+rag_system = EnhancedRAGPipeline(rag_config)
 
 # Create KingAgent
 config = KingAgentConfig(name="KingAgent", description="Main coordinator for AI Village", model="gpt-4")

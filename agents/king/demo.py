@@ -3,6 +3,7 @@ import logging
 from agents.king.king_agent import KingAgent, KingAgentConfig
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
+from rag_system.core.config import UnifiedConfig
 from agents.sage.sage_agent import SageAgent
 from agents.magi.magi_agent import MagiAgent
 from agents.utils.exceptions import AIVillageException
@@ -16,7 +17,8 @@ async def run_demo():
         # Initialize components
         logger.info("Initializing components...")
         communication_protocol = StandardCommunicationProtocol()
-        rag_system = RAGSystem()
+        rag_config = UnifiedConfig()
+        rag_system = RAGSystem(rag_config)
         
         # Create KingAgent
         logger.info("Creating KingAgent...")

@@ -22,7 +22,7 @@ class KingAgent(UnifiedBaseAgent):
     ):
         super().__init__(config, communication_protocol)
         self.vector_store = vector_store
-        self.rag_pipeline = EnhancedRAGPipeline()  # Initialize the RAG pipeline
+        self.rag_pipeline = EnhancedRAGPipeline(config.rag_config)  # Initialize the RAG pipeline
         self.coordinator = KingCoordinator(config, communication_protocol)
         self.unified_planning_and_management = UnifiedPlanningAndManagement(communication_protocol, self.rag_pipeline, self)
         self.unified_analytics = UnifiedAnalytics()

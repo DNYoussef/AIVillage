@@ -50,7 +50,7 @@ async def initialize_components() -> Dict[str, Any]:
         "hybrid_retriever": HybridRetriever(unified_config),
         "reasoning_engine": UncertaintyAwareReasoningEngine(unified_config),
         "cognitive_nexus": CognitiveNexus(),
-        "pipeline": EnhancedRAGPipeline(),
+        "pipeline": EnhancedRAGPipeline(unified_config),
         "communication_protocol": communication_protocol,
         "king_agent": KingAgent(king_agent_config, communication_protocol, vector_store),
         "knowledge_tracker": UnifiedKnowledgeTracker(vector_store, graph_store),
