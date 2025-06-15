@@ -19,7 +19,7 @@ from agents.unified_base_agent import UnifiedAgentConfig
 from communications.protocol import StandardCommunicationProtocol
 from rag_system.retrieval.vector_store import VectorStore
 from rag_system.retrieval.graph_store import GraphStore
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
+from agents.language_models.openai_gpt import OpenAIGPTConfig
 from rag_system.utils.error_handling import log_and_handle_errors, setup_logging, RAGSystemError
 
 logger = setup_logging()

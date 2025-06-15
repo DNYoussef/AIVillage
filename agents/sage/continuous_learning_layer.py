@@ -19,9 +19,9 @@ class ContinuousLearningLayer:
         return f"Task: {task['content']}\nResult: {result}\nLearned: {self._extract_key_insights(task, result)}"
 
     def _extract_key_insights(self, task, result) -> str:
-        # Implement logic to extract key insights from the task and result
-        # This could involve NLP techniques, pattern recognition, etc.
-        pass
+        task_text = task.get('content') if isinstance(task, dict) else str(task)
+        summary = str(result)
+        return f"{task_text} => {summary[:100]}"
 
     async def evolve(self):
         if len(self.performance_history) > 100:
@@ -40,10 +40,7 @@ class ContinuousLearningLayer:
             self.recent_learnings.clear()
 
     def _synthesize_learnings(self, learnings: List[str]) -> str:
-        # Implement logic to synthesize multiple learnings into a consolidated insight
-        # This could involve clustering, summarization techniques, etc.
-        pass
+        return "\n".join(learnings)
 
     async def retrieve_relevant_learnings(self, task: Dict[str, Any]) -> List[str]:
-        # Implement logic to retrieve learnings relevant to the current task
-        pass
+        return list(self.recent_learnings)

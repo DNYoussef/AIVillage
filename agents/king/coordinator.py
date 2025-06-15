@@ -2,7 +2,7 @@ from asyncio.log import logger
 from typing import List, Dict, Any
 from agents.unified_base_agent import UnifiedBaseAgent
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
-from core.config import UnifiedConfig
+from rag_system.core.config import UnifiedConfig
 from ..magi.magi_agent import MagiAgent
 from ..sage.sage_agent import SageAgent
 from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
