@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 from typing import Dict, Any
+from agents.utils.task import Task as LangroidTask
 
 from rag_system.core.unified_config import unified_config
 from rag_system.core.pipeline import EnhancedRAGPipeline
@@ -77,24 +78,20 @@ async def initialize_components() -> Dict[str, Any]:
 @log_and_handle_errors
 async def process_user_query(components: Dict[str, Any], query: str) -> Dict[str, Any]:
     king_agent = components["king_agent"]
-    task = {
-        "type": "query",
-        "content": query,
-        "timestamp": datetime.now().isoformat()
-    }
+    task = LangroidTask(king_agent, query, datetime.now().isoformat(), 1)
+    task.type = "query"
     return await king_agent.execute_task(task)
 
 @log_and_handle_errors
 async def run_creative_exploration(components: Dict[str, Any], start_node: str, end_node: str):
     king_agent = components["king_agent"]
-    task = {
-        "type": "creative_exploration",
-        "content": {
-            "start_node": start_node,
-            "end_node": end_node
-        },
-        "timestamp": datetime.now().isoformat()
-    }
+    task = LangroidTask(
+        king_agent,
+        {"start_node": start_node, "end_node": end_node},
+        datetime.now().isoformat(),
+        1,
+    )
+    task.type = "creative_exploration"
     return await king_agent.execute_task(task)
 
 @log_and_handle_errors

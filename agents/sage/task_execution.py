@@ -1,4 +1,5 @@
 from typing import Dict, Any, List
+from agents.utils.task import Task as LangroidTask
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,9 +27,23 @@ class TaskExecutor:
                     if handler:
                         result = await handler(task)
                     else:
-                        result = await self.agent.execute_task(task)
+                        langroid_task = LangroidTask(
+                            self.agent,
+                            task.get('content'),
+                            task.get('id', ''),
+                            task.get('priority', 1),
+                        )
+                        langroid_task.type = task.get('type', 'general')
+                        result = await self.agent.execute_task(langroid_task)
                 else:
-                    result = await self.agent.execute_task(task)
+                    langroid_task = LangroidTask(
+                        self.agent,
+                        task.get('content'),
+                        task.get('id', ''),
+                        task.get('priority', 1),
+                    )
+                    langroid_task.type = task.get('type', 'general')
+                    result = await self.agent.execute_task(langroid_task)
 
             # Apply self-consistency check
             result = await self.agent.apply_self_consistency(task, result)
@@ -77,8 +92,20 @@ class TaskExecutor:
             subgoals = await self.generate_subgoals(task['content'])
             results = []
             for subgoal in subgoals:
-                subtask = {'type': task['type'], 'content': subgoal}
-                subtask_result = await self.execute_task(subtask)
+            subtask = {
+                'type': task['type'],
+                'content': subgoal,
+                'priority': task.get('priority', 1),
+                'id': task.get('id', ''),
+            }
+            langroid_subtask = LangroidTask(
+                self.agent,
+                subtask['content'],
+                subtask['id'],
+                subtask['priority'],
+            )
+            langroid_subtask.type = subtask['type']
+            subtask_result = await self.execute_task(langroid_subtask)
                 results.append(subtask_result)
             final_result = await self.summarize_results(task, subgoals, results)
             return final_result

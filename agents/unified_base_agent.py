@@ -408,21 +408,6 @@ class DecisionMakingLayer:
         reasoning_result = await self.rag_pipeline.reason(query, retrieval_results)
         return reasoning_result
 
-    async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        # Implement task execution logic here
-        task_type = task.get("type", "default")
-        task_content = task.get("content", "")
-
-        if task_type == "query":
-            return await self.process_query(task_content)
-        elif task_type == "analysis":
-            # Implement analysis logic
-            pass
-        elif task_type == "generation":
-            # Implement generation logic
-            pass
-        else:
-            raise ValueError(f"Unknown task type: {task_type}")
 
 
 class MCTSConfig:

@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from typing import Dict, Any
+from agents.utils.task import Task as LangroidTask
 from agents.king.king_agent import KingAgent
 from agents.sage.sage_agent import SageAgent
 from agents.magi.magi_agent import MagiAgent
@@ -41,7 +42,14 @@ class AIVillageSystem:
     @safe_execute
     async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         logger.info(f"Processing task: {task}")
-        result = await self.king_agent.execute_task(task)
+        langroid_task = LangroidTask(
+            self.king_agent,
+            task.get("content"),
+            task.get("id", ""),
+            task.get("priority", 1),
+        )
+        langroid_task.type = task.get("type", "general")
+        result = await self.king_agent.execute_task(langroid_task)
         logger.info(f"Task result: {result}")
         return result
 

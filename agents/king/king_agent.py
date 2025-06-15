@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from typing import Dict, Any
+from agents.utils.task import Task as LangroidTask
 from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
 from .user_intent_interpreter import UserIntentInterpreter
 from .key_concept_extractor import KeyConceptExtractor
@@ -81,20 +82,33 @@ class KingAgent(UnifiedBaseAgent):
     @log_and_handle_errors
     async def process_message(self, message: Message) -> Any:
         if message.type == MessageType.TASK:
-            return await self.execute_task(message.content)
+            task_dict = message.content
+            task = LangroidTask(
+                self,
+                task_dict.get("content"),
+                task_dict.get("id", ""),
+                task_dict.get("priority", 1),
+            )
+            task.type = task_dict.get("type", "general")
+            return await self.execute_task(task)
         else:
             return await self.coordinator.handle_message(message)
 
     @log_and_handle_errors
-    async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
         self.logger.info(f"Executing task: {task}")
         start_time = self.unified_analytics.get_current_time()
-        result = await self.unified_planning_and_management.manage_task(task)
+        result = await self.unified_planning_and_management.manage_task({
+            "type": getattr(task, "type", "general"),
+            "content": task.name if hasattr(task, "name") else task.content,
+        })
         end_time = self.unified_analytics.get_current_time()
         execution_time = end_time - start_time
 
-        self.unified_analytics.record_task_completion(task.get('id', 'unknown'), execution_time, result.get('success', False))
-        self.unified_analytics.update_performance_history(result.get('performance', 0.5))
+        self.unified_analytics.record_task_completion(
+            getattr(task, "task_id", "unknown"), execution_time, result.get("success", False)
+        )
+        self.unified_analytics.update_performance_history(result.get("performance", 0.5))
 
         await self.continuous_learning_layer.update(task, result)
         return result

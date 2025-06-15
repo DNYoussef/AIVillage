@@ -1,4 +1,5 @@
 from typing import Dict, Any
+from agents.utils.task import Task as LangroidTask
 from agents.unified_base_agent import UnifiedBaseAgent
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline
@@ -59,14 +60,21 @@ class SageAgent(UnifiedBaseAgent):
             "average_execution_time": 0,
         }
 
-    async def execute_task(self, task):
+    async def execute_task(self, task: LangroidTask):
         self.performance_metrics["total_tasks"] += 1
         start_time = time.time()
         try:
-            if task.get('is_user_query', False):
-                result = await self.process_user_query(task['content'])
+            if getattr(task, 'is_user_query', False):
+                result = await self.process_user_query(task.content)
             else:
-                result = await self.task_executor.execute_task(task)
+                result = await self.task_executor.execute_task(
+                    {
+                        'type': getattr(task, 'type', 'general'),
+                        'content': task.content,
+                        'priority': getattr(task, 'priority', 1),
+                        'id': getattr(task, 'task_id', ''),
+                    }
+                )
             self.performance_metrics["successful_tasks"] += 1
             return result
         except Exception as e:
@@ -145,11 +153,9 @@ class SageAgent(UnifiedBaseAgent):
             task_content = message.content.get('content')
             task_type = message.content.get('task_type', 'general')
             is_user_query = message.content.get('is_user_query', False)
-            task = {
-                'type': task_type,
-                'content': task_content,
-                'is_user_query': is_user_query
-            }
+            task = LangroidTask(self, task_content, '', 1)
+            task.type = task_type
+            task.is_user_query = is_user_query
             result = await self.execute_task(task)
             response = Message(
                 type=MessageType.RESPONSE,
