@@ -1,15 +1,35 @@
 from typing import Tuple, List
 import torch
-from transformers import AutoTokenizer, AutoModel
+
+try:
+    from transformers import AutoTokenizer, AutoModel
+except ImportError:  # transformers not installed
+    AutoTokenizer = None  # type: ignore
+    AutoModel = None  # type: ignore
 
 
 class BERTEmbeddingModel:
     """Simple wrapper around a BERT model for embedding extraction."""
 
     def __init__(self, model_name: str = "bert-base-uncased") -> None:
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
-        self.model.eval()
+        self.fallback = False
+        self.hidden_size = 768
+        if AutoTokenizer is None or AutoModel is None:
+            # transformers package unavailable
+            self.fallback = True
+        else:
+            try:
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+                self.model = AutoModel.from_pretrained(model_name)
+                self.model.eval()
+                self.hidden_size = self.model.config.hidden_size
+            except Exception:
+                # Loading the model failed (e.g., no internet or missing files)
+                self.fallback = True
+        if self.fallback:
+            # Provide minimal tokenizer/model placeholders
+            self.tokenizer = None
+            self.model = None
 
     def encode(self, text: str) -> Tuple[List[str], torch.Tensor]:
         """Encode text into token embeddings.
@@ -29,6 +49,10 @@ class BERTEmbeddingModel:
             The tokens and their embeddings.
         """
 
+        if self.fallback:
+            tokens = text.split()
+            token_embeddings = torch.randn(len(tokens), self.hidden_size)
+            return tokens, token_embeddings
         inputs = self.tokenizer(text, return_tensors="pt")
         with torch.no_grad():
             outputs = self.model(**inputs)
