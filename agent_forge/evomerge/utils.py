@@ -126,15 +126,23 @@ def generate_text(model: torch.nn.Module, tokenizer: AutoTokenizer, prompt: str,
 
 def evaluate_model(model_path: str) -> Dict[str, Union[float, str]]:
     try:
+        # Load model and tokenizer from the provided path
         model = AutoModelForCausalLM.from_pretrained(model_path)
         tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-        # Implement your evaluation logic here
-        # This is a placeholder implementation
+        # Simple perplexity evaluation on a short example text
+        test_text = "The quick brown fox jumps over the lazy dog"
+        inputs = tokenizer(test_text, return_tensors="pt")
+        with torch.no_grad():
+            outputs = model(**inputs, labels=inputs["input_ids"])
+            perplexity = torch.exp(outputs.loss).item()
+
+        # Derive a basic overall score using the inverse of perplexity
+        overall_score = 1 / perplexity if perplexity != 0 else float("inf")
+
         return {
-            "perplexity": 100.0,
-            "accuracy": 0.8,
-            "overall_score": 0.9
+            "perplexity": perplexity,
+            "overall_score": overall_score
         }
 
     except Exception as e:
