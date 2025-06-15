@@ -7,9 +7,20 @@ import os
 from ..core.config import UnifiedConfig
 from ..core.structures import RetrievalResult
 
+DEFAULT_DIMENSION = 768
+
 class VectorStore:
-    def __init__(self, config: UnifiedConfig, dimension: int):
-        self.config = config
+    def __init__(self, config: Optional[UnifiedConfig] = None, dimension: int = DEFAULT_DIMENSION):
+        """Create a VectorStore.
+
+        The previous version of :class:`VectorStore` required ``config`` and
+        ``dimension`` arguments.  Many parts of the codebase still instantiate
+        this class without any parameters which resulted in ``TypeError`` being
+        raised at runtime.  To maintain backwards compatibility we allow both
+        arguments to be optional and provide sensible defaults.
+        """
+
+        self.config = config or UnifiedConfig()
         self.dimension = dimension
         self.index = faiss.IndexFlatL2(dimension)
         self.documents: List[Dict[str, Any]] = []
