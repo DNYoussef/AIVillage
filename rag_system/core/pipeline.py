@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from rag_system.core.unified_config import unified_config
 from rag_system.core.base_component import BaseComponent
+from rag_system.core.config import UnifiedConfig
 from rag_system.core.latent_space_activation import LatentSpaceActivation
 from rag_system.retrieval.hybrid_retriever import HybridRetriever
 from rag_system.processing.reasoning_engine import UncertaintyAwareReasoningEngine
@@ -12,8 +13,9 @@ from rag_system.retrieval.bayes_net import BayesNet
 shared_bayes_net = BayesNet()
 
 class EnhancedRAGPipeline(BaseComponent):
-    def __init__(self):
-        self.config = unified_config
+    def __init__(self, config: UnifiedConfig | None = None):
+        """Initialize the RAG pipeline with an optional configuration."""
+        self.config = config or unified_config
         self.latent_space_activation = LatentSpaceActivation()
         self.hybrid_retriever = HybridRetriever(self.config)
         self.reasoning_engine = UncertaintyAwareReasoningEngine(self.config)
