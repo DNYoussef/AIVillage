@@ -1,6 +1,8 @@
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 import json
+import re
+from collections import Counter
 from rag_system.core.config import UnifiedConfig
 from rag_system.retrieval.vector_store import VectorStore
 from rag_system.retrieval.graph_store import GraphStore
@@ -122,9 +124,26 @@ class HybridRetriever:
         :param results: Current retrieval results.
         :return: Feedback data.
         """
-        # Implement feedback generation logic
-        # Placeholder for actual implementation
-        return {}
+        # Simple feedback generation based on most common terms in the current
+        # retrieval results.  The returned feedback dictionary can then be used
+        # for query or plan refinement.
+
+        feedback: Dict[str, Any] = {}
+        if not results:
+            return feedback
+
+        # Aggregate text from the top results and extract common words.
+        text_blob = " ".join(r.content for r in results)
+        tokens = re.findall(r"\b\w+\b", text_blob.lower())
+        if tokens:
+            common = [w for w, _ in Counter(tokens).most_common(5)]
+            feedback["keywords"] = common
+
+        # Provide average uncertainty which may inform later decisions.
+        avg_uncertainty = sum(r.uncertainty for r in results) / len(results)
+        feedback["avg_uncertainty"] = avg_uncertainty
+
+        return feedback
 
     def _refine_query(self, original_query: str, feedback: Dict[str, Any]) -> Tuple[str, List[float]]:
         """
@@ -134,10 +153,21 @@ class HybridRetriever:
         :param feedback: Feedback data for refinement.
         :return: A tuple of refined query string and its vector embedding.
         """
-        # Implement query refinement logic
-        # Placeholder for actual implementation
-        refined_query = original_query  # No refinement in placeholder
-        refined_vector = self.agent.get_embedding(refined_query)
+        # Incorporate feedback keywords that are not already present in the
+        # original query.  This simple strategy gradually expands the query with
+        # terms extracted from the current retrieval results.
+
+        refined_query = original_query
+        keywords = feedback.get("keywords", [])
+        if keywords:
+            existing_tokens = set(re.findall(r"\b\w+\b", original_query.lower()))
+            additions = [kw for kw in keywords if kw not in existing_tokens]
+            if additions:
+                refined_query = original_query + " " + " ".join(additions)
+
+        # The embedding is computed asynchronously elsewhere when the refined
+        # query is used for retrieval, so we simply return an empty vector here.
+        refined_vector: List[float] = []
         return refined_query, refined_vector
 
     def _merge_results(self, old_results: List[RetrievalResult], new_results: List[RetrievalResult]) -> List[RetrievalResult]:
@@ -208,9 +238,20 @@ class HybridRetriever:
         :param query: The user's query string.
         :return: The generated retrieval plan.
         """
-        # Implement plan generation logic
-        # Placeholder for actual implementation
-        return RetrievalPlan(query=query)
+        # Basic plan generation that extracts simple keywords from the query and
+        # defaults to a recency based ranking strategy.  This serves as a
+        # starting plan which can later be refined using ``refine_plan``.
+
+        keywords = re.findall(r"\b\w+\b", query.lower())
+        plan = RetrievalPlan(
+            query=query,
+            strategy="recency",
+            filters={"keywords": keywords},
+            use_linearization=False,
+            timestamp=datetime.now(),
+            version=1,
+        )
+        return plan
 
     async def refine_plan(self, query: str, current_plan: RetrievalPlan, results: List[RetrievalResult]) -> RetrievalPlan:
         """
@@ -221,9 +262,30 @@ class HybridRetriever:
         :param results: Retrieval results to base refinements on.
         :return: The refined retrieval plan.
         """
-        # Implement plan refinement logic
-        # Placeholder for actual implementation
-        return current_plan
+        # Refine the existing plan using feedback generated from the latest
+        # retrieval results.  Additional keywords are appended and the strategy
+        # may switch to uncertainty-based ranking if the average uncertainty is
+        # high.
+
+        feedback = self._generate_feedback(query, results)
+        keywords = list(current_plan.filters.get("keywords", []))
+        for kw in feedback.get("keywords", []):
+            if kw not in keywords:
+                keywords.append(kw)
+
+        strategy = current_plan.strategy
+        if feedback.get("avg_uncertainty", 0) > 0.5:
+            strategy = "uncertainty"
+
+        refined_plan = RetrievalPlan(
+            query=query,
+            strategy=strategy,
+            filters={**current_plan.filters, "keywords": keywords},
+            use_linearization=current_plan.use_linearization,
+            timestamp=datetime.now(),
+            version=current_plan.version + 1,
+        )
+        return refined_plan
 
     def _apply_upo(self, results: List[RetrievalResult], query: str) -> List[RetrievalResult]:
         """
