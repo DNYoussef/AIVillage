@@ -46,8 +46,31 @@ class TaskExecutor:
             return {"error": str(e)}
 
     async def _is_complex_task(self, task):
-        # Implement logic to determine if a task is complex
-        pass
+        try:
+            # Flagged directly as complex
+            if task.get("is_complex"):
+                return True
+
+            content = str(task.get("content", ""))
+            task_type = task.get("type", "")
+
+            # Consider content length
+            if len(content) > 200:
+                return True
+
+            # Some task types are inherently complex
+            complex_types = {
+                "data_analysis",
+                "information_synthesis",
+                "exploration_mode",
+            }
+            if task_type in complex_types:
+                return True
+
+            return False
+        except Exception as e:
+            logger.error(f"Error determining task complexity: {str(e)}")
+            return False
 
     async def _execute_with_subgoals(self, task) -> Dict[str, Any]:
         try:
