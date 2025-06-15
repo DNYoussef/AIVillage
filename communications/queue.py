@@ -1,21 +1,21 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 from collections import deque
 from .message import Message, Priority
 
 class MessageQueue:
-    def __init__(self):
+    def __init__(self) -> None:
         self._queues: Dict[Priority, deque[Message]] = {
             Priority.LOW: deque(),
             Priority.MEDIUM: deque(),
             Priority.HIGH: deque(),
-            Priority.CRITICAL: deque()
+            Priority.CRITICAL: deque(),
         }
 
     def enqueue(self, message: Message) -> None:
         self._queues[message.priority].append(message)
 
     def dequeue(self) -> Optional[Message]:
-        for priority in reversed(Priority):
+        for priority in reversed(list(Priority)):
             if self._queues[priority]:
                 return self._queues[priority].popleft()
         return None
@@ -27,7 +27,7 @@ class MessageQueue:
         return list(self._queues[priority])
 
     def get_all_messages(self) -> List[Message]:
-        all_messages = []
-        for priority in reversed(Priority):
+        all_messages: List[Message] = []
+        for priority in reversed(list(Priority)):
             all_messages.extend(self.get_messages_by_priority(priority))
         return all_messages
