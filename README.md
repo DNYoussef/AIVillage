@@ -70,7 +70,21 @@ python -m unittest discover tests
 
 ## Testing
 
-After installing the heavy dependencies you can execute the full test suite:
+Before running the tests ensure that **all** dependencies are installed. The
+main `requirements.txt` file contains heavy packages such as `torch` and
+`numpy` that are required by the tests:
+
+```bash
+pip install -r requirements.txt
+```
+
+Install the additional test-only packages from `requirements-dev.txt`:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+After installing these dependencies you can execute the full test suite:
 
 ```bash
 pytest
