@@ -4,6 +4,13 @@ from datetime import datetime
 from ..core.config import UnifiedConfig
 from ..core.structures import RetrievalResult
 
+try:
+    from neo4j import GraphDatabase
+    _NEO4J_AVAILABLE = True
+except Exception:  # pragma: no cover - neo4j optional
+    GraphDatabase = None  # type: ignore
+    _NEO4J_AVAILABLE = False
+
 class GraphStore:
     def __init__(self, config: Optional[UnifiedConfig] = None):
         """Create a GraphStore.
@@ -16,7 +23,19 @@ class GraphStore:
 
         self.config = config or UnifiedConfig()
         self.graph = nx.Graph()
-        self.driver = None  # This should be initialized with a proper Neo4j driver
+        if _NEO4J_AVAILABLE:
+            try:  # pragma: no cover - connection may fail
+                self.driver = GraphDatabase.driver(
+                    self.config.get("NEO4J_URI", ""),
+                    auth=(
+                        self.config.get("NEO4J_USER", ""),
+                        self.config.get("NEO4J_PASSWORD", ""),
+                    ),
+                )
+            except Exception:
+                self.driver = None
+        else:
+            self.driver = None
         self.causal_edges = {}
         self.llm = None  # This should be initialized with a proper language model
 
@@ -30,50 +49,72 @@ class GraphStore:
                     self.graph.add_edge(doc['id'], other_node, weight=0.5)
 
     async def retrieve(self, query: str, k: int, timestamp: datetime = None) -> List[RetrievalResult]:
-        with self.driver.session() as session:
-            if timestamp:
-                result = session.run(
-                    """
-                    CALL db.index.fulltext.queryNodes("nodeContent", $query) 
-                    YIELD node, score
-                    MATCH (node)-[:VERSION]->(v:NodeVersion)
-                    WHERE v.timestamp <= $timestamp
-                    WITH node, score, v
-                    ORDER BY v.timestamp DESC, score DESC
-                    LIMIT $k
-                    RETURN id(node) as id, v.content as content, score, 
-                        v.uncertainty as uncertainty, v.timestamp as timestamp, 
-                        v.version as version
-                    """,
-                    query=query, timestamp=timestamp, k=k
+        if self.driver:
+            with self.driver.session() as session:
+                if timestamp:
+                    result = session.run(
+                        """
+                        CALL db.index.fulltext.queryNodes("nodeContent", $query)
+                        YIELD node, score
+                        MATCH (node)-[:VERSION]->(v:NodeVersion)
+                        WHERE v.timestamp <= $timestamp
+                        WITH node, score, v
+                        ORDER BY v.timestamp DESC, score DESC
+                        LIMIT $k
+                        RETURN id(node) as id, v.content as content, score,
+                            v.uncertainty as uncertainty, v.timestamp as timestamp,
+                            v.version as version
+                        """,
+                        query=query, timestamp=timestamp, k=k
+                    )
+                else:
+                    result = session.run(
+                        """
+                        CALL db.index.fulltext.queryNodes("nodeContent", $query)
+                        YIELD node, score
+                        MATCH (node)-[:VERSION]->(v:NodeVersion)
+                        WITH node, score, v
+                        ORDER BY v.timestamp DESC, score DESC
+                        LIMIT $k
+                        RETURN id(node) as id, v.content as content, score,
+                            v.uncertainty as uncertainty, v.timestamp as timestamp,
+                            v.version as version
+                        """,
+                        query=query, k=k
+                    )
+
+            return [
+                RetrievalResult(
+                    id=record["id"],
+                    content=record["content"],
+                    score=record["score"],
+                    uncertainty=record["uncertainty"],
+                    timestamp=record["timestamp"],
+                    version=record["version"]
                 )
-            else:
-                result = session.run(
-                    """
-                    CALL db.index.fulltext.queryNodes("nodeContent", $query) 
-                    YIELD node, score
-                    MATCH (node)-[:VERSION]->(v:NodeVersion)
-                    WITH node, score, v
-                    ORDER BY v.timestamp DESC, score DESC
-                    LIMIT $k
-                    RETURN id(node) as id, v.content as content, score, 
-                        v.uncertainty as uncertainty, v.timestamp as timestamp, 
-                        v.version as version
-                    """,
-                    query=query, k=k
+                for record in result
+            ]
+
+        # Fallback to in-memory search if Neo4j driver is unavailable
+        matches = []
+        for node, data in self.graph.nodes(data=True):
+            if timestamp is not None and data.get("timestamp") > timestamp:
+                continue
+            score = 1.0 if query.lower() in str(data.get("content", "")).lower() else 0.0
+            if score > 0:
+                matches.append(
+                    RetrievalResult(
+                        id=node,
+                        content=data.get("content", ""),
+                        score=score,
+                        uncertainty=data.get("uncertainty", 0.0),
+                        timestamp=data.get("timestamp", datetime.now()),
+                        version=data.get("version", 1),
+                    )
                 )
 
-        return [
-            RetrievalResult(
-                id=record["id"],
-                content=record["content"],
-                score=record["score"],
-                uncertainty=record["uncertainty"],
-                timestamp=record["timestamp"],
-                version=record["version"]
-            )
-            for record in result
-        ]
+        matches.sort(key=lambda r: r.score, reverse=True)
+        return matches[:k]
 
     def update_causal_strength(self, source: str, target: str, observed_probability: float):
         edge = self.causal_edges.get((source, target))
@@ -120,3 +161,11 @@ class GraphStore:
         if self.graph.has_node(doc_id):
             return self.graph.nodes[doc_id]
         return None
+
+    async def get_graph(self) -> nx.Graph:
+        """Return the underlying graph."""
+        return self.graph
+
+    async def get_edge_data(self, source: str, target: str) -> Dict[str, Any]:
+        """Return edge attributes between ``source`` and ``target`` if present."""
+        return self.graph.get_edge_data(source, target, default={})

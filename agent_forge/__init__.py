@@ -1,6 +1,15 @@
-from . import evomerge
-from .training.training import TrainingTask
-from . import tool_baking
+try:
+    from . import evomerge
+except Exception:  # pragma: no cover - optional heavy deps
+    evomerge = None
+try:
+    from .training.training import TrainingTask
+except Exception:  # pragma: no cover - optional heavy deps
+    TrainingTask = None
+try:
+    from . import tool_baking
+except Exception:  # pragma: no cover - optional heavy deps
+    tool_baking = None
 # from . import adas  # Module not found in project structure
 
 __all__ = [
@@ -9,22 +18,32 @@ __all__ = [
 
 class AgentForge:
     def __init__(self, model_name="gpt2"):
-        config = evomerge.create_default_config()
-        self.evolution_tournament = evomerge.EvolutionaryTournament(config)
-        self.training_task = TrainingTask(None)  # Note: We're passing None as the agent, you might need to adjust this
-        self.prompt_baker = tool_baking.RAGPromptBaker(model_name)
+        if evomerge:
+            config = evomerge.create_default_config()
+            self.evolution_tournament = evomerge.EvolutionaryTournament(config)
+        else:
+            config = None
+            self.evolution_tournament = None
+        if TrainingTask:
+            self.training_task = TrainingTask(None)  # Note: We're passing None as the agent, you might need to adjust this
+        else:
+            self.training_task = None
+        self.prompt_baker = tool_baking.RAGPromptBaker(model_name) if tool_baking else None
         # self.adas_process = adas.ADASProcess()  # Commented out since module doesn't exist
 
     def run_evolution_tournament(self):
-        return self.evolution_tournament.evolve()
+        if self.evolution_tournament:
+            return self.evolution_tournament.evolve()
+        return None
 
     def run_training(self):
         # You might need to adjust this method to work with TrainingTask
         pass
 
     def run_prompt_baking(self):
-        self.prompt_baker.load_model()  # Explicitly load the model
-        self.prompt_baker.bake_prompts(tool_baking.get_rag_prompts())
+        if self.prompt_baker and tool_baking:
+            self.prompt_baker.load_model()  # Explicitly load the model
+            self.prompt_baker.bake_prompts(tool_baking.get_rag_prompts())
 
     # def run_adas_process(self):
     #     self.adas_process.run()

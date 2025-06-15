@@ -7,10 +7,7 @@ import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-fake_faiss = mock.MagicMock()
-fake_faiss.__spec__ = mock.MagicMock()
-with mock.patch.dict('sys.modules', {'faiss': fake_faiss}):
-    from rag_system.core.pipeline import EnhancedRAGPipeline, shared_bayes_net
+from rag_system.core.pipeline import EnhancedRAGPipeline, shared_bayes_net
 
 class TestBayesNetIntegration(unittest.TestCase):
     def test_shared_instance(self):

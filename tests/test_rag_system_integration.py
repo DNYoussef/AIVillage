@@ -5,17 +5,14 @@ from pathlib import Path
 from unittest import mock
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
-
 pytest.skip("Skipping integration test due to heavy dependencies", allow_module_level=True)
 
-fake_faiss = mock.MagicMock()
-fake_faiss.__spec__ = mock.MagicMock()
-with mock.patch.dict('sys.modules', {'faiss': fake_faiss}):
-    from rag_system.core.config import UnifiedConfig
-    from rag_system.main import initialize_components, process_user_query
-    from rag_system.retrieval.hybrid_retriever import HybridRetriever
-    from rag_system.core.structures import RetrievalResult
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
+from rag_system.core.config import UnifiedConfig
+from rag_system.main import initialize_components, process_user_query
+from rag_system.retrieval.hybrid_retriever import HybridRetriever
+from rag_system.core.structures import RetrievalResult
 
 class MockVectorStore:
     async def retrieve(self, query_vector, k, timestamp=None):
