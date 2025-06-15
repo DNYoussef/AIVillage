@@ -1,5 +1,5 @@
 from ...communications.community_hub import CommunityHub
-from .rag_management import KingRAGManagement
+from agents.sage.rag_management import KingRAGManagement
 from ...communication.protocol import StandardCommunicationProtocol
 from ...utils.agent_progress_tracker import AgentProgressTracker
 from ...utils.monitoring_and_adjustment import MonitoringAndAdjustment
