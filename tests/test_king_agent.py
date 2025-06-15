@@ -1,7 +1,8 @@
 import unittest
 import asyncio
 from unittest.mock import MagicMock, patch
-from agents.king.king_agent import KingAgent, KingAgentConfig
+from agents.king.king_agent import KingAgent
+from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
 from rag_system.core.config import RAGConfig
 from langroid.vector_store.base import VectorStore
 from communications.protocol import StandardCommunicationProtocol
