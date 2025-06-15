@@ -65,12 +65,48 @@ class CommunityHub:
         logger.info(f"Updated status of project {project_id} to {status} with progress {progress}")
 
     async def generate_project_report(self, project_id: str):
-        # This is a placeholder for generating a comprehensive project report
-        logger.info(f"Generating comprehensive report for project {project_id}")
-        # Implementation details would go here
+        """Generate a summary report for a single project.
+
+        The report aggregates stored project information such as tasks,
+        resources and any research results for those tasks.
+        """
+        if project_id not in self.projects:
+            raise ValueError(f"No project found with ID {project_id}")
+
+        project_data = self.projects[project_id]
+        task_reports = []
+        for task_id in project_data.get("tasks", []):
+            task_reports.append({
+                "task_id": task_id,
+                "data": project_data.get("task_data", {}).get(task_id, {}),
+                "research_results": self.research_results.get(task_id, {})
+            })
+
+        report = {
+            "project_id": project_id,
+            "status": project_data.get("status"),
+            "progress": project_data.get("progress"),
+            "resources": project_data.get("resources", {}),
+            "tasks": task_reports
+        }
+
+        logger.info(f"Generated project report for {project_id}")
+        return report
 
     async def create_combined_report(self, project_ids: List[str]) -> Dict[str, Any]:
-        # This is a placeholder for creating a combined report from multiple projects
-        logger.info(f"Creating combined report for projects: {', '.join(project_ids)}")
-        # Implementation details would go here
-        return {}
+        """Create a combined report for multiple projects."""
+        combined_report = {"projects": [], "overall_progress": 0.0}
+
+        progress_sum = 0.0
+        for pid in project_ids:
+            report = await self.generate_project_report(pid)
+            combined_report["projects"].append(report)
+            progress_sum += report.get("progress", 0.0) or 0.0
+
+        if project_ids:
+            combined_report["overall_progress"] = progress_sum / len(project_ids)
+
+        logger.info(
+            f"Created combined report for projects: {', '.join(project_ids)}"
+        )
+        return combined_report
