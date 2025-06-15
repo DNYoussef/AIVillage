@@ -18,5 +18,22 @@ class DynamicKnowledgeIntegrationAgent(AgentInterface):
         Args:
             new_relations (Dict[str, Any]): New relations to be added to the knowledge graph.
         """
-        # TODO: Implement logic to update the knowledge graph with new relations
-        self.graph_store.add_relations(new_relations)
+        # ``new_relations`` is expected to be a mapping describing edges to add
+        # to the underlying :class:`GraphStore`.  Each entry should contain a
+        # source node, a target node and a relation type.  The method gracefully
+        # handles missing nodes by creating them on-the-fly.
+
+        relations = new_relations.get("relations", [])
+        for rel in relations:
+            source = rel.get("source")
+            target = rel.get("target")
+            relation_type = rel.get("relation")
+            if not source or not target:
+                continue
+
+            if not self.graph_store.graph.has_node(source):
+                self.graph_store.graph.add_node(source)
+            if not self.graph_store.graph.has_node(target):
+                self.graph_store.graph.add_node(target)
+
+            self.graph_store.graph.add_edge(source, target, relation=relation_type)
