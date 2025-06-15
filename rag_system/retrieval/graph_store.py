@@ -86,8 +86,33 @@ class GraphStore:
             self.driver.close()
 
     async def get_snapshot(self, timestamp: datetime) -> Dict[str, Any]:
-        # Implement logic to return a snapshot of the graph store at the given timestamp
-        pass
+        """Return a snapshot of the graph up to ``timestamp``.
+
+        Nodes and edges whose ``timestamp`` attribute is greater than the
+        provided ``timestamp`` are omitted from the snapshot.  If a node or edge
+        does not have a ``timestamp`` attribute it is assumed to always be
+        present.
+        """
+
+        snapshot = nx.Graph()
+
+        for node_id, data in self.graph.nodes(data=True):
+            node_ts = data.get("timestamp")
+            if node_ts is None or node_ts <= timestamp:
+                snapshot.add_node(node_id, **data)
+
+        for source, target, data in self.graph.edges(data=True):
+            if not (snapshot.has_node(source) and snapshot.has_node(target)):
+                continue
+
+            edge_ts = data.get("timestamp")
+            if edge_ts is None or edge_ts <= timestamp:
+                snapshot.add_edge(source, target, **data)
+
+        return {
+            "nodes": list(snapshot.nodes(data=True)),
+            "edges": list(snapshot.edges(data=True)),
+        }
 
     async def beam_search(self, query: str, beam_width: int, max_depth: int) -> List[Tuple[List[str], float]]:
         initial_entities = await self.get_initial_entities(query)
@@ -107,14 +132,27 @@ class GraphStore:
         return beams
 
     async def get_initial_entities(self, query: str) -> List[str]:
-        # Implement logic to get initial entities based on the query
-        # This could involve a simple keyword search or more advanced NLP techniques
-        pass
+        """Return a list of node IDs that match the query string."""
+
+        query_lower = query.lower()
+        matches: List[str] = []
+
+        for node_id, data in self.graph.nodes(data=True):
+            content = str(data.get("content", "")).lower()
+            if query_lower in content:
+                matches.append(node_id)
+                if len(matches) >= self.config.top_k:
+                    break
+
+        return matches
 
     async def get_neighbors(self, entity: str) -> List[str]:
-        # Implement logic to get neighboring entities in the graph
-        # This could involve a Cypher query to Neo4j
-        pass
+        """Return IDs of nodes adjacent to ``entity`` in the graph."""
+
+        if not self.graph.has_node(entity):
+            return []
+
+        return list(self.graph.neighbors(entity))
 
     def get_document_by_id(self, doc_id: str) -> Dict[str, Any]:
         if self.graph.has_node(doc_id):
