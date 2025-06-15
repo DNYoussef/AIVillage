@@ -326,10 +326,6 @@ class DecisionMakingLayer:
     def simulate(self, task: LangroidTask, context: str, option: str) -> float:
         return random.random()
 
-    async def direct_preference_optimization(self, task: LangroidTask, context: Any) -> str:
-        # Implement DPO logic
-        return "DPO placeholder result"
-
     async def direct_preference_optimization(self, task: LangroidTask, context: str) -> str:
         options = ["Approach X", "Approach Y", "Approach Z"]
         preferences = await self.get_preferences(task, context, options)
