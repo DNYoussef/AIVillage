@@ -66,7 +66,8 @@ class KingCoordinator:
             await self.task_manager.assign_task(message.content)
         else:
             # Handle other message types if needed
-            pass
+            logger.warning(f"Unhandled message type: {message.type}")
+            raise NotImplementedError(f"Message type {message.type} not supported")
 
     async def _implement_decision(self, decision_result: Dict[str, Any]):
         try:

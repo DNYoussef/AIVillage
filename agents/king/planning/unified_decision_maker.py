@@ -617,5 +617,5 @@ class UnifiedDecisionMaker:
             raise AIVillageException(f"Error creating implementation plan: {str(e)}")
 
 if __name__ == "__main__":
-    # This section can be used for testing or running the UnifiedDecisionMaker independently
-    pass
+    raise SystemExit(
+        "Run 'agents/orchestration.py' to start the decision making subsystem.")

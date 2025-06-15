@@ -5,8 +5,9 @@ logger = logging.getLogger(__name__)
 
 class ResponseGenerator:
     def __init__(self):
-        # Initialize any necessary components or models
-        pass
+        """Set up placeholders for future NLP models."""
+        self.model = None
+        logger.debug("ResponseGenerator initialized")
 
     async def generate_response(self, query: str, rag_result: Dict[str, Any], intent: Dict[str, Any]) -> str:
         """

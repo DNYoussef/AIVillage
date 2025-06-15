@@ -68,6 +68,15 @@ The tokenizer file `rag_system/utils/token_data/cl100k_base.tiktoken` is bundled
 python -m unittest discover tests
 ```
 
+## Testing
+
+After installing the heavy dependencies you can execute the full test suite:
+
+```bash
+pytest
+```
+
+
 
 ## Running the System
 
