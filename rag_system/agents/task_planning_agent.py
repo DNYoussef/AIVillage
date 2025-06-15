@@ -49,12 +49,35 @@ class TaskPlanningAgent(AgentInterface):
         Returns:
             Dict[str, Any]: A structured task plan.
         """
-        # TODO: Implement actual task planning logic
+        # Collate search terms from both keywords and entity texts
+        keywords = concepts.get('keywords', [])
+        entities = [e.get('text') for e in concepts.get('entities', []) if isinstance(e, dict)]
+        search_terms = [t for t in keywords + entities if t]
+
+        # Fall back to intent information if no explicit concepts were found
+        if not search_terms:
+            topic = intent.get('topic') or intent.get('primary_intent') or intent.get('type')
+            if topic:
+                search_terms.append(topic)
+
+        # Determine the analysis action based on the primary intent
+        primary_intent = intent.get('primary_intent') or intent.get('type', '')
+        action = 'analyze_information'
+        lower_intent = primary_intent.lower() if isinstance(primary_intent, str) else ''
+        if any(word in lower_intent for word in ['summarize', 'describe']):
+            action = 'summarize_information'
+        elif any(word in lower_intent for word in ['create', 'generate', 'write']):
+            action = 'create_content'
+
         task_plan = {
+            'analysis': {
+                'primary_intent': primary_intent,
+                'search_terms': search_terms,
+            },
             'steps': [
-                {'action': 'retrieve_information', 'parameters': concepts.get('keywords', [])},
-                {'action': 'analyze_data', 'parameters': concepts.get('entities', [])},
-                {'action': 'generate_response', 'parameters': intent}
+                {'action': 'retrieve_information', 'parameters': search_terms},
+                {'action': action, 'parameters': intent},
+                {'action': 'generate_response', 'parameters': intent},
             ]
         }
         return task_plan
