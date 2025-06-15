@@ -80,13 +80,13 @@ pytest
 
 ## Running the System
 
-Execute the main script:
+Start the API server:
 
 ```
-python agents/orchestration.py
+python server.py
 ```
 
-This will start the AI Village system, initializing all agents and the self-evolving components.
+This will start a FastAPI application that initializes the RAG pipeline and exposes the HTTP endpoints.
 
 ## Extending the System
 
@@ -125,7 +125,7 @@ To provide your AI Village with a starting base of information, you can manually
 
 2. Start the AI Village server if it's not already running:
    ```
-   python agents/orchestration.py
+   python server.py
    ```
 
 3. Use the `/upload` endpoint to add each paper to the knowledge base:
@@ -203,7 +203,7 @@ By following these steps, you can manually feed several dozen academic papers in
 
 1. Start the AI Village server:
    ```
-   python agents/orchestration.py
+   python server.py
    ```
 
 2. The server will start running on `http://localhost:8000`. You can now use the following endpoints:
