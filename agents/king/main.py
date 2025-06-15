@@ -5,6 +5,10 @@ from ...utils.agent_progress_tracker import AgentProgressTracker
 from ...utils.monitoring_and_adjustment import MonitoringAndAdjustment
 from ...core.sage import Sage
 from ...utils.exceptions import AIVillageException
+from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
+from rag_system.core.config import UnifiedConfig
+from rag_system.retrieval.vector_store import VectorStore
+import uuid
 import logging
 
 logger = logging.getLogger(__name__)
@@ -91,8 +95,28 @@ class King:
             raise AIVillageException(f"Error implementing adjustments: {str(e)}") from e
 
     async def create_new_agent(self, required_capabilities: list):
-        # Placeholder for agent creation logic
-        pass
+        try:
+            agent_name = f"agent_{uuid.uuid4().hex[:8]}"
+            rag_config = UnifiedConfig()
+            vector_store = VectorStore(rag_config)
+            config = UnifiedAgentConfig(
+                name=agent_name,
+                description="Auto-generated agent",
+                capabilities=required_capabilities,
+                rag_config=rag_config,
+                vector_store=vector_store,
+                model="gpt-4",
+                instructions="You are a dynamically created agent."
+            )
+            agent = UnifiedBaseAgent(config, self.communication_protocol)
+            self.community_hub.agents[agent_name] = {
+                "capabilities": required_capabilities,
+                "tasks": []
+            }
+            return agent_name
+        except Exception as e:
+            logger.error(f"Error creating new agent: {str(e)}")
+            raise AIVillageException(f"Error creating new agent: {str(e)}") from e
 
     async def handle_task_result(self, agent_id: str, task_id: str, result: dict):
         try:
