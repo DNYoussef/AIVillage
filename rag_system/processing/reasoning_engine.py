@@ -1,4 +1,5 @@
 import numpy as np
+import networkx as nx
 from typing import Dict, Any, List, Tuple
 from datetime import datetime
 from ..core.config import UnifiedConfig
@@ -10,6 +11,9 @@ class UncertaintyAwareReasoningEngine:
         self.driver = None  # This should be initialized with a proper database driver
         self.causal_edges = {}
         self.llm = None  # This should be initialized with a proper language model
+        # Local in-memory graph used for reasoning steps
+        # Each node is expected to contain at least a ``content`` field
+        self.graph = nx.Graph()
 
     async def reason(self, query: str, retrieved_info: List[RetrievalResult], activated_knowledge: Dict[str, Any]) -> Dict[str, Any]:
         with self.driver.session() as session:
@@ -88,14 +92,31 @@ class UncertaintyAwareReasoningEngine:
         return beams
 
     async def get_initial_entities(self, query: str) -> List[str]:
-        # Implement logic to get initial entities based on the query
-        # This could involve a simple keyword search or more advanced NLP techniques
-        pass
+        """Return graph nodes that match the query string.
+
+        The implementation performs a case-insensitive substring search over the
+        ``content`` attribute of each node stored in ``self.graph``.  If the
+        node does not have a ``content`` field, its identifier is used instead.
+        """
+
+        query_lower = query.lower()
+        matched: List[str] = []
+
+        for node, data in self.graph.nodes(data=True):
+            text = str(data.get("content", node)).lower()
+            if query_lower in text:
+                matched.append(node)
+
+        # Limit results if ``top_k`` is configured
+        k = getattr(self.config, "top_k", len(matched))
+        return matched[:k]
 
     async def get_neighbors(self, entity: str) -> List[str]:
-        # Implement logic to get neighboring entities in the graph
-        # This could involve a Cypher query to Neo4j
-        pass
+        """Return the neighbours of ``entity`` from the local graph."""
+
+        if not self.graph.has_node(entity):
+            return []
+        return list(self.graph.neighbors(entity))
 
         reasoning_result = {
             "query": query,
