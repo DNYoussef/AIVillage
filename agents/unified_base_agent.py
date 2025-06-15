@@ -253,46 +253,82 @@ class QualityAssuranceLayer:
 class FoundationalLayer:
     def __init__(self, vector_store: VectorStore):
         self.vector_store = vector_store
+        # strength determines how much baked knowledge is injected into the task
+        self.bake_strength: float = 1.0
+        self._history: List[int] = []
 
     async def process_task(self, task: LangroidTask) -> LangroidTask:
         baked_knowledge = await self.bake_knowledge(task.content)
         task.content = f"{task.content}\nBaked Knowledge: {baked_knowledge}"
+        self._history.append(len(task.content))
+        if len(self._history) > 100:
+            self._history.pop(0)
         return task
 
     async def bake_knowledge(self, content: str) -> str:
         # Implement Prompt Baking mechanism
-        return f"Baked: {content}"
+        return f"Baked({self.bake_strength:.2f}): {content}"
 
     async def evolve(self):
-        # Implement evolution logic for Foundational Layer
-        pass
+        if self._history:
+            avg_len = sum(self._history) / len(self._history)
+            if avg_len > 200:
+                self.bake_strength *= 0.95
+            else:
+                self.bake_strength *= 1.05
+            self.bake_strength = max(0.5, min(2.0, self.bake_strength))
 
 
 class ContinuousLearningLayer:
     def __init__(self, vector_store: VectorStore):
         self.vector_store = vector_store
+        self.learning_rate: float = 0.05
+        self.performance_history: List[float] = []
 
     async def update(self, task: LangroidTask, result: Any):
         # Implement SELF-PARAM (rapid parameter updating)
         learned_info = self.extract_learning(task, result)
         await self.vector_store.add_texts([learned_info])
+        performance = 0.5
+        if isinstance(result, dict) and "performance" in result:
+            performance = float(result["performance"])
+        else:
+            try:
+                performance = float(result)
+            except Exception:
+                performance = random.random()
+        self.performance_history.append(performance)
+        if len(self.performance_history) > 100:
+            self.performance_history.pop(0)
 
     def extract_learning(self, task: LangroidTask, result: Any) -> str:
         return f"Learned: Task '{task.content}' resulted in '{result}'"
 
     async def evolve(self):
-        # Implement evolution logic for Continuous Learning Layer
-        pass
+        if self.performance_history:
+            recent = self.performance_history[-10:]
+            avg_perf = sum(recent) / len(recent)
+            if avg_perf > 0.8:
+                self.learning_rate *= 0.9
+            elif avg_perf < 0.6:
+                self.learning_rate *= 1.1
+            self.learning_rate = max(0.001, min(0.2, self.learning_rate))
+            self.performance_history = self.performance_history[-100:]
 
 
 class AgentArchitectureLayer:
     def __init__(self):
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
+        self.quality_threshold: float = 0.9
+        self.evaluation_history: List[float] = []
 
     async def process_result(self, result: Any) -> Any:
         # Implement SAGE framework (Self-Aware Generative Engine)
         evaluation = await self.evaluate_result(result)
-        if evaluation["quality"] < 0.9:
+        self.evaluation_history.append(evaluation["quality"])
+        if len(self.evaluation_history) > 50:
+            self.evaluation_history.pop(0)
+        if evaluation["quality"] < self.quality_threshold:
             result = await self.revise_result(result, evaluation)
         return result
 
@@ -307,8 +343,13 @@ class AgentArchitectureLayer:
         return revision.text
 
     async def evolve(self):
-        # Implement evolution logic for Agent Architecture Layer
-        pass
+        if self.evaluation_history:
+            avg_quality = sum(self.evaluation_history) / len(self.evaluation_history)
+            if avg_quality > self.quality_threshold:
+                self.quality_threshold = min(0.99, self.quality_threshold * 1.01)
+            else:
+                self.quality_threshold = max(0.5, self.quality_threshold * 0.99)
+            self.evaluation_history.clear()
 
 
 class DecisionMakingLayer:
