@@ -98,6 +98,16 @@ def main(config_file: str, output_dir: str):
         enhanced_model.tokenizer.save_pretrained(trained_model_path)
         print(f"Trained model saved to: {trained_model_path}")
 
+        # Initialize final agent template using MACP
+        from communications import MultiAgentCommunicationProtocol
+        from agent_forge.final_agent_template import FinalAgent
+        protocol = MultiAgentCommunicationProtocol()
+        final_agent = FinalAgent("forge_agent", trained_model_path, protocol)
+        final_agent_path = os.path.join(output_dir, "final_agent")
+        os.makedirs(final_agent_path, exist_ok=True)
+        enhanced_model.model.save_pretrained(final_agent_path)
+        enhanced_model.tokenizer.save_pretrained(final_agent_path)
+
         # Log training completion
         wandb.log({"step": "model_training", "trained_model_path": trained_model_path})
 
