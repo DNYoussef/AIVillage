@@ -48,6 +48,10 @@ The system periodically evolves by updating agent capabilities, refining decisio
    pip install -r requirements.txt
    ```
 
+The repository bundles the `cl100k_base.tiktoken` file used by
+`tiktoken` under `rag_system/utils/token_data/`. This allows tokenizer
+initialization without network access.
+
 4. Set up environment variables:
    - Create a `.env` file in the project root
    - Add your OpenAI API key: `OPENAI_API_KEY=your_api_key_here`
