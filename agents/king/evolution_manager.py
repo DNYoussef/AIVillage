@@ -5,7 +5,10 @@ import random
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from .planning_and_task_management.optimization import Optimizer
+# The optimization utilities live in the planning package.  The original
+# import pointed to a deprecated `planning_and_task_management` package which
+# no longer exists.
+from .planning.optimization import Optimizer
 from rag_system.utils.error_handling import log_and_handle_errors, AIVillageException
 
 logger = logging.getLogger(__name__)

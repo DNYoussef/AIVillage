@@ -12,7 +12,8 @@ from agents.utils.exceptions import AIVillageException
 from .incentive_model import IncentiveModel
 from .subgoal_generator import SubGoalGenerator
 from ..analytics.unified_analytics import UnifiedAnalytics
-from ..planning_and_task_management.unified_decision_maker import UnifiedDecisionMaker
+# Decision making utilities were moved under the `planning` package.
+from ..planning.unified_decision_maker import UnifiedDecisionMaker
 
 logger = logging.getLogger(__name__)
 
