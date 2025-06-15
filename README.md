@@ -58,9 +58,9 @@ initialization without network access.
 
 ## Installing Heavy Dependencies
 
-Some features rely on large libraries such as `torch` and `faiss`. These packages may need to be installed separately, especially when GPU support is desired. Example commands:
+Some features rely on large libraries such as `numpy`, `torch` and `faiss`. These packages may need to be installed separately, especially when GPU support is desired. Example commands:
 ```bash
-pip install torch faiss-cpu # or faiss-gpu for CUDA systems
+pip install numpy torch faiss-cpu  # or faiss-gpu for CUDA systems
 ```
 
 The tokenizer file `rag_system/utils/token_data/cl100k_base.tiktoken` is bundled so that `tiktoken` can initialize without internet access. Ensure you have a `.env` file in the project root containing your API keys. After installing the dependencies you can run the test suite:
@@ -87,6 +87,13 @@ To add new capabilities or agents:
 2. Implement the `execute_task` method for the new agent
 3. Add the new agent to the `SelfEvolvingSystem` in `orchestration.py`
 
+## Communication Message Types
+
+Agents exchange `Message` objects categorized by `MessageType`. The core types are
+`TASK`, `QUERY`, `RESPONSE`, and `NOTIFICATION`. Collaborative features also use
+`COLLABORATION_REQUEST`, `KNOWLEDGE_SHARE`, `TASK_RESULT`, and
+`JOINT_REASONING_RESULT` as defined in `communications/message.py`.
+
 ## Recent Updates
 
 The agent system has recently undergone significant updates to improve modularity, reduce redundancy, and incorporate a self-evolving system. Key changes include:
@@ -109,7 +116,7 @@ To provide your AI Village with a starting base of information, you can manually
 
 2. Start the AI Village server if it's not already running:
    ```
-   python main.py
+   python agents/orchestration.py
    ```
 
 3. Use the `/upload` endpoint to add each paper to the knowledge base:
@@ -187,7 +194,7 @@ By following these steps, you can manually feed several dozen academic papers in
 
 1. Start the AI Village server:
    ```
-   python main.py
+   python agents/orchestration.py
    ```
 
 2. The server will start running on `http://localhost:8000`. You can now use the following endpoints:

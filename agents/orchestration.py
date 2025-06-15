@@ -73,9 +73,9 @@ def create_agents(config: UnifiedConfig, communication_protocol: StandardCommuni
     ]
     
     return [
-        KingAgent(agent_configs[0], communication_protocol),
-        SageAgent(agent_configs[1], communication_protocol),
-        MagiAgent(agent_configs[2], communication_protocol)
+        KingAgent(agent_configs[0], communication_protocol, vector_store),
+        SageAgent(agent_configs[1], communication_protocol, vector_store),
+        MagiAgent(agent_configs[2], communication_protocol, config, vector_store)
     ]
 
 async def run_task(self_evolving_system: SelfEvolvingSystem, rag_pipeline: EnhancedRAGPipeline, task_data: Dict[str, Any]):
