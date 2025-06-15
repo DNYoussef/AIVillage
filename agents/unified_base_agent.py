@@ -1,19 +1,20 @@
 from typing import Dict, Any, List, Optional, Callable, Tuple
-import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
 import random
 import numpy as np
-from pydantic import BaseModel, Field
 from agents.utils.task import Task as LangroidTask
 from agents.language_models.openai_gpt import OpenAIGPTConfig
 from langroid.vector_store.base import VectorStore
-from sklearn.linear_model import LogisticRegression
-from types import SimpleNamespace
 from rag_system.core.config import UnifiedConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.core.structures import RetrievalResult
-from communications.protocol import StandardCommunicationProtocol, Message, MessageType, Priority
+from communications.protocol import (
+    StandardCommunicationProtocol,
+    Message,
+    MessageType,
+    Priority,
+)
+
 
 @dataclass
 class UnifiedAgentConfig:
@@ -25,6 +26,7 @@ class UnifiedAgentConfig:
     model: str
     instructions: str
     extra_params: Dict[str, Any] = field(default_factory=dict)
+
 
 class UnifiedBaseAgent:
     def __init__(self, config: UnifiedAgentConfig, communication_protocol: StandardCommunicationProtocol):
@@ -177,7 +179,7 @@ class UnifiedBaseAgent:
         """
 
         response = await self.generate(activation_prompt)
-        
+
         # Split the response into background knowledge and refined query
         parts = response.split("Refined Query:")
         background_knowledge = parts[0].strip()
@@ -225,6 +227,7 @@ class UnifiedBaseAgent:
 
 # New layer implementations
 
+
 class QualityAssuranceLayer:
     def __init__(self, upo_threshold: float = 0.7):
         self.upo_threshold = upo_threshold
@@ -238,7 +241,14 @@ class QualityAssuranceLayer:
         return random.random()  # Placeholder implementation
 
     async def evolve(self):
-        self.upo_threshold = max(0.5, min(0.9, self.upo_threshold * (1 + (random.random() - 0.5) * 0.1)))
+        self.upo_threshold = max(
+            0.5,
+            min(
+                0.9,
+                self.upo_threshold * (1 + (random.random() - 0.5) * 0.1),
+            ),
+        )
+
 
 class FoundationalLayer:
     def __init__(self, vector_store: VectorStore):
@@ -257,6 +267,7 @@ class FoundationalLayer:
         # Implement evolution logic for Foundational Layer
         pass
 
+
 class ContinuousLearningLayer:
     def __init__(self, vector_store: VectorStore):
         self.vector_store = vector_store
@@ -272,6 +283,7 @@ class ContinuousLearningLayer:
     async def evolve(self):
         # Implement evolution logic for Continuous Learning Layer
         pass
+
 
 class AgentArchitectureLayer:
     def __init__(self):
@@ -298,6 +310,7 @@ class AgentArchitectureLayer:
         # Implement evolution logic for Agent Architecture Layer
         pass
 
+
 class DecisionMakingLayer:
     def __init__(self):
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
@@ -306,7 +319,7 @@ class DecisionMakingLayer:
         # Implement Agent Q (Monte Carlo Tree Search and Direct Preference Optimization)
         mcts_result = self.monte_carlo_tree_search(task, context)
         dpo_result = await self.direct_preference_optimization(task, context)
-        
+
         decision_prompt = f"""
         Task: {task.content}
         Context: {context}
@@ -356,24 +369,26 @@ class DecisionMakingLayer:
 
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         # Implement task execution logic here
-        task_type = task.get('type', 'default')
-        task_content = task.get('content', '')
-        
-        if task_type == 'query':
+        task_type = task.get("type", "default")
+        task_content = task.get("content", "")
+
+        if task_type == "query":
             return await self.process_query(task_content)
-        elif task_type == 'analysis':
+        elif task_type == "analysis":
             # Implement analysis logic
             pass
-        elif task_type == 'generation':
+        elif task_type == "generation":
             # Implement generation logic
             pass
         else:
             raise ValueError(f"Unknown task type: {task_type}")
 
+
 class MCTSConfig:
     def __init__(self):
         self.exploration_weight = 1.0
         self.simulation_depth = 10
+
 
 class SelfEvolvingSystem:
     def __init__(self, agents: List[UnifiedBaseAgent]):
@@ -408,7 +423,10 @@ class SelfEvolvingSystem:
     async def generate_new_capabilities(self, agent: UnifiedBaseAgent, performance: Dict[str, float]) -> List[str]:
         print(f"Generating new capabilities for agent: {agent.name}")
         low_performing = [cap for cap, score in performance.items() if score < 0.6]
-        prompt = f"Agent {agent.name} is underperforming in {', '.join(low_performing)}. Suggest 2-3 new capabilities to improve performance."
+        prompt = (
+            f"Agent {agent.name} is underperforming in {', '.join(low_performing)}. "
+            "Suggest 2-3 new capabilities to improve performance."
+        )
         response = await self.sage_framework.assistant_response(prompt)
         new_capabilities = [cap.strip() for cap in response.split(',')]
         print(f"Suggested new capabilities for {agent.name}: {new_capabilities}")
@@ -430,12 +448,12 @@ class SelfEvolvingSystem:
     async def optimize_upo_threshold(self) -> float:
         print("Optimizing UPO threshold...")
         safety_checks = await self.quality_assurance.get_recent_safety_checks()
-        
+
         if safety_checks:
             safety_scores = [check.safety_score for check in safety_checks]
             mean_score = np.mean(safety_scores)
             std_score = np.std(safety_scores)
-            
+
             new_threshold = mean_score - (1.5 * std_score)
             new_threshold = max(0.5, min(0.9, new_threshold))
         else:
@@ -452,55 +470,33 @@ class SelfEvolvingSystem:
         if len(self.recent_decisions) > 1000:
             self.recent_decisions.pop(0)
 
-def create_agent(agent_type: str, config: UnifiedAgentConfig, communication_protocol: StandardCommunicationProtocol) -> UnifiedBaseAgent:
-    """
-    Factory function to create different types of agents.
-    """
+
+def create_agent(
+    agent_type: str,
+    config: UnifiedAgentConfig,
+    communication_protocol: StandardCommunicationProtocol,
+) -> UnifiedBaseAgent:
+    """Factory function to create different types of agents."""
     return UnifiedBaseAgent(config, communication_protocol)
 
-# Example usage (keeping existing example)
+
 if __name__ == "__main__":
     vector_store = VectorStore()  # Placeholder, implement actual VectorStore
     communication_protocol = StandardCommunicationProtocol()
-    
+
     agent_config = UnifiedAgentConfig(
         name="ExampleAgent",
         description="An example agent",
         capabilities=["general_task"],
         vector_store=vector_store,
         model="gpt-4",
-        instructions="You are an example agent capable of handling general tasks."
+        instructions=(
+            "You are an example agent capable of handling general tasks."
+        ),
     )
-    
+
     agent = create_agent("ExampleAgent", agent_config, communication_protocol)
-    
+
     self_evolving_system = SelfEvolvingSystem([agent], vector_store)
-    
-    # Use the self_evolving_system to process tasks and evolve the system
 
-
-def create_agent(agent_type: str, config: UnifiedAgentConfig, communication_protocol: StandardCommunicationProtocol) -> UnifiedBaseAgent:
-    """
-    Factory function to create different types of agents.
-    """
-    return UnifiedBaseAgent(config, communication_protocol)
-
-# Example usage
-if __name__ == "__main__":
-    vector_store = VectorStore()  # Placeholder, implement actual VectorStore
-    communication_protocol = StandardCommunicationProtocol()
-    
-    agent_config = UnifiedAgentConfig(
-        name="ExampleAgent",
-        description="An example agent",
-        capabilities=["general_task"],
-        vector_store=vector_store,
-        model="gpt-4",
-        instructions="You are an example agent capable of handling general tasks."
-    )
-    
-    agent = create_agent("ExampleAgent", agent_config, communication_protocol)
-    
-    self_evolving_system = SelfEvolvingSystem([agent], vector_store)
-    
     # Use the self_evolving_system to process tasks and evolve the system
