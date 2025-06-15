@@ -1,5 +1,9 @@
 from typing import Dict, Any, List
-from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
+from agents.unified_base_agent import (
+    UnifiedBaseAgent,
+    UnifiedAgentConfig,
+    SelfEvolvingSystem,
+)
 from rag_system.core.config import UnifiedConfig, RAGConfig
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline
@@ -7,47 +11,6 @@ from langroid.vector_store.base import VectorStore
 from langroid.agent.task import Task as LangroidTask
 import random
 
-class SelfEvolvingSystem:
-    def __init__(self, agent):
-        self.agent = agent
-        self.evolution_rate = 0.1
-        self.mutation_rate = 0.01
-        self.learning_rate = 0.001
-        self.performance_history = []
-
-    async def evolve(self):
-        if random.random() < self.evolution_rate:
-            await self._mutate()
-        await self._adapt()
-
-    async def _mutate(self):
-        if random.random() < self.mutation_rate:
-            # Mutate a random development capability
-            if self.agent.development_capabilities:
-                capability = random.choice(self.agent.development_capabilities)
-                new_capability = await self.agent.generate(f"Suggest an improvement or variation of the development capability: {capability}")
-                self.agent.development_capabilities.append(new_capability)
-
-    async def _adapt(self):
-        if len(self.performance_history) > 10:
-            avg_performance = sum(self.performance_history[-10:]) / 10
-            if avg_performance > 0.8:
-                self.evolution_rate *= 0.9
-                self.mutation_rate *= 0.9
-            else:
-                self.evolution_rate *= 1.1
-                self.mutation_rate *= 1.1
-
-    async def update_hyperparameters(self, new_evolution_rate: float, new_mutation_rate: float, new_learning_rate: float):
-        self.evolution_rate = new_evolution_rate
-        self.mutation_rate = new_mutation_rate
-        self.learning_rate = new_learning_rate
-
-    async def process_task(self, task: LangroidTask) -> Dict[str, Any]:
-        result = await self.agent.execute_task(task)
-        performance = result.get('performance', 0.5)  # Assume a default performance metric
-        self.performance_history.append(performance)
-        return result
 
 class MagiAgentConfig(UnifiedAgentConfig):
     development_capabilities: List[str] = ["coding", "debugging", "code_review"]
@@ -58,7 +21,7 @@ class MagiAgent(UnifiedBaseAgent):
         self.specialized_knowledge = {}  # Initialize specialized knowledge base
         self.rag_system = EnhancedRAGPipeline(rag_config)
         self.vector_store = vector_store
-        self.self_evolving_system = SelfEvolvingSystem(self)
+        self.self_evolving_system = SelfEvolvingSystem([self])
         self.development_capabilities = config.development_capabilities
 
     async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
@@ -105,8 +68,6 @@ class MagiAgent(UnifiedBaseAgent):
     async def evolve(self):
         await self.self_evolving_system.evolve()
 
-    async def update_evolution_parameters(self, evolution_rate: float, mutation_rate: float, learning_rate: float):
-        await self.self_evolving_system.update_hyperparameters(evolution_rate, mutation_rate, learning_rate)
 
     async def query_rag(self, query: str) -> Dict[str, Any]:
         return await self.rag_system.process_query(query)

@@ -9,7 +9,7 @@ from rag_system.core.cognitive_nexus import CognitiveNexus
 from rag_system.core.latent_space_activation import LatentSpaceActivation
 from rag_system.error_handling.adaptive_controller import AdaptiveErrorController
 from rag_system.processing.confidence_estimator import ConfidenceEstimator
-from .self_evolving_system import SelfEvolvingSystem
+from agents.unified_base_agent import SelfEvolvingSystem
 from .foundational_layer import FoundationalLayer
 from .continuous_learning_layer import ContinuousLearningLayer
 from .query_processing import QueryProcessor
@@ -35,7 +35,7 @@ class SageAgent(UnifiedBaseAgent):
         self.rag_system = EnhancedRAGPipeline(config)
         self.vector_store = vector_store
         self.exploration_mode = ExplorationMode(self.rag_system)
-        self.self_evolving_system = SelfEvolvingSystem(self)
+        self.self_evolving_system = SelfEvolvingSystem([self])
         self.foundational_layer = FoundationalLayer(vector_store)
         self.continuous_learning_layer = ContinuousLearningLayer(vector_store)
         self.cognitive_nexus = CognitiveNexus()
