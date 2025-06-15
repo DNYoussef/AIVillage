@@ -23,6 +23,16 @@ class ResearchCapabilities:
             "search_result": search_result
         }
 
+    async def handle_web_scrape(self, task):
+        url = task['content']
+        reasoning = self.chain_of_thought.process(f"Scrape information from {url}")
+        scrape_result = await self.agent.perform_web_scrape(url)
+        return {
+            "url": url,
+            "reasoning": reasoning,
+            "scrape_result": scrape_result,
+        }
+
     async def handle_data_analysis(self, task):
         data = task['content']
         reasoning = self.chain_of_thought.process(f"Analyze data: {data}")

@@ -20,6 +20,10 @@ from .user_intent_interpreter import UserIntentInterpreter
 from .response_generator import ResponseGenerator
 import logging
 import time
+import requests
+from bs4 import BeautifulSoup
+import uuid
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +101,44 @@ class SageAgent(UnifiedBaseAgent):
             "confidence": await self.confidence_estimator.estimate(original_query, rag_result),
         }
         return processed_result
+
+    async def perform_web_scrape(self, url: str) -> Dict[str, Any]:
+        """Scrape a web page and store the content in the RAG system."""
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+        text = soup.get_text(separator=" ", strip=True)
+
+        doc_id = str(uuid.uuid4())
+        embedding = await self.get_embedding(text)
+        document = {
+            "id": doc_id,
+            "content": text,
+            "embedding": embedding,
+            "timestamp": datetime.now(),
+        }
+        self.rag_system.hybrid_retriever.vector_store.add_documents([document])
+        await self.rag_system.update_bayes_net(doc_id, text)
+
+        return {"url": url, "doc_id": doc_id, "snippet": text[:200]}
+
+    async def perform_web_search(self, query: str) -> Dict[str, Any]:
+        """Perform a simple web search and return snippets."""
+        resp = requests.get("https://duckduckgo.com/html/", params={"q": query}, timeout=10)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "html.parser")
+        results = []
+        for a in soup.select("a.result__a")[:3]:
+            results.append(a.get_text())
+        return {"query": query, "results": results}
+
+    async def analyze_data(self, data: Any) -> Dict[str, Any]:
+        """Placeholder for data analysis."""
+        return {"summary": str(data)[:100]}
+
+    async def synthesize_information(self, info: str) -> str:
+        """Placeholder for information synthesis."""
+        return info
 
     async def handle_message(self, message: Message):
         if message.type == MessageType.TASK:

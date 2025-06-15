@@ -43,3 +43,4 @@ matplotlib>=3.5.1  # For visualization (if needed)
 asyncio>=3.4.3  # For asynchronous programming
 logging>=0.5.1.2  # For logging functionality
 typing>=3.7.4.3  # For type hinting
+beautifulsoup4>=4.12.0
