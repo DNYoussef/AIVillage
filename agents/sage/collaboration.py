@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
 from communications.protocol import Message, MessageType
+from agents.utils.task import Task as LangroidTask
 import logging
 
 logger = logging.getLogger(__name__)
@@ -40,8 +41,15 @@ class CollaborationManager:
 
     async def delegate_task(self, message: Message):
         try:
-            task = message.content.get('task')
-            result = await self.agent.execute_task(task)
+            task_dict = message.content.get('task')
+            langroid_task = LangroidTask(
+                self.agent,
+                task_dict.get('content'),
+                task_dict.get('id', ''),
+                task_dict.get('priority', 1),
+            )
+            langroid_task.type = task_dict.get('type', 'general')
+            result = await self.agent.execute_task(langroid_task)
             response = Message(
                 type=MessageType.TASK_RESULT,
                 sender=self.agent.name,

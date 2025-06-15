@@ -110,7 +110,14 @@ async def run_task(self_evolving_system: SelfEvolvingSystem, rag_pipeline: Enhan
 
 async def orchestrate_agents(agents: List[UnifiedBaseAgent], task: Dict[str, Any]) -> Dict[str, Any]:
     king_agent = next(agent for agent in agents if isinstance(agent, KingAgent))
-    result = await king_agent.execute_task(task)
+    langroid_task = LangroidTask(
+        king_agent,
+        task.get("content"),
+        task.get("id", ""),
+        task.get("priority", 1),
+    )
+    langroid_task.type = task.get("type", "general")
+    result = await king_agent.execute_task(langroid_task)
     return result
 
 async def main():

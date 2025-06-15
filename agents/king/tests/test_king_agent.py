@@ -2,6 +2,7 @@ import unittest
 import asyncio
 from unittest.mock import Mock, patch
 from agents.king.king_agent import KingAgent, UnifiedAgentConfig
+from agents.utils.task import Task as LangroidTask
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.retrieval.vector_store import VectorStore
 
@@ -21,7 +22,8 @@ class TestKingAgent(unittest.IsolatedAsyncioTestCase):
         mock_get_status.side_effect = ['IN_PROGRESS', 'IN_PROGRESS', 'COMPLETED']
         mock_get_result.return_value = {'success': True, 'result': 'Task completed'}
 
-        result = await self.king_agent.execute_task({'description': 'Test task'})
+        task = LangroidTask(None, 'Test task')
+        result = await self.king_agent.execute_task(task)
 
         self.assertTrue(result['success'])
         self.assertEqual(result['result'], 'Task completed')

@@ -1,5 +1,6 @@
 from asyncio.log import logger
 from typing import List, Dict, Any
+from agents.utils.task import Task as LangroidTask
 from agents.unified_base_agent import UnifiedBaseAgent
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.config import UnifiedConfig
@@ -26,26 +27,37 @@ class KingCoordinator:
     @error_handler.handle_error
     async def coordinate_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         start_time = self.unified_analytics.get_current_time()
-        result = await self._delegate_task(task)
+        langroid_task = LangroidTask(
+            self.king_agent,
+            task.get("content"),
+            task.get("id", ""),
+            task.get("priority", 1),
+        )
+        langroid_task.type = task.get("type", "general")
+        result = await self._delegate_task(langroid_task)
         end_time = self.unified_analytics.get_current_time()
         execution_time = end_time - start_time
-        
-        self.unified_analytics.record_task_completion(task['id'], execution_time, result.get('success', False))
-        self.unified_analytics.record_metric(f"task_type_{task['type']}_execution_time", execution_time)
+
+        self.unified_analytics.record_task_completion(
+            task.get("id", "unknown"), execution_time, result.get("success", False)
+        )
+        self.unified_analytics.record_metric(
+            f"task_type_{task.get('type', 'general')}_execution_time", execution_time
+        )
         
         return result
 
     @error_handler.handle_error
-    async def _delegate_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        if task['type'] == 'research':
+    async def _delegate_task(self, task: LangroidTask) -> Dict[str, Any]:
+        if task.type == 'research':
             sage_agent = next((agent for agent in self.agents.values() if isinstance(agent, SageAgent)), None)
             if sage_agent:
                 return await sage_agent.execute_task(task)
-        elif task['type'] in ['coding', 'debugging', 'code_review']:
+        elif task.type in ['coding', 'debugging', 'code_review']:
             magi_agent = next((agent for agent in self.agents.values() if isinstance(agent, MagiAgent)), None)
             if magi_agent:
                 return await magi_agent.execute_task(task)
-        
+
         # If no specific agent is found, delegate to the first available agent
         if self.agents:
             return await next(iter(self.agents.values())).execute_task(task)
