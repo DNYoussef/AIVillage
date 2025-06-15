@@ -6,6 +6,10 @@ from rag_system.retrieval.hybrid_retriever import HybridRetriever
 from rag_system.processing.reasoning_engine import UncertaintyAwareReasoningEngine
 from rag_system.core.cognitive_nexus import CognitiveNexus
 from rag_system.utils.error_handling import log_and_handle_errors
+from rag_system.retrieval.bayes_net import BayesNet
+
+# Global BayesNet instance shared across pipelines
+shared_bayes_net = BayesNet()
 
 class EnhancedRAGPipeline(BaseComponent):
     def __init__(self):
@@ -14,6 +18,7 @@ class EnhancedRAGPipeline(BaseComponent):
         self.hybrid_retriever = HybridRetriever(self.config)
         self.reasoning_engine = UncertaintyAwareReasoningEngine(self.config)
         self.cognitive_nexus = CognitiveNexus()
+        self.bayes_net = shared_bayes_net
 
     @log_and_handle_errors
     async def initialize(self) -> None:
@@ -66,3 +71,14 @@ class EnhancedRAGPipeline(BaseComponent):
         await self.hybrid_retriever.update_config(config)
         await self.reasoning_engine.update_config(config)
         # Update other components as needed
+
+    # New methods for BayesNet interaction
+    async def update_bayes_net(self, node_id: str, content: str,
+                               probability: float = 0.5,
+                               uncertainty: float = 0.1) -> None:
+        """Add or update a node in the shared BayesNet."""
+        self.bayes_net.add_node(node_id, content, probability, uncertainty)
+
+    def get_bayes_net_snapshot(self) -> Dict[str, Dict[str, Any]]:
+        """Return a snapshot of the current BayesNet."""
+        return self.bayes_net.all_nodes()
