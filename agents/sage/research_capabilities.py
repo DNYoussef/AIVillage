@@ -68,5 +68,5 @@ class ResearchCapabilities:
         }
 
     async def evolve_research_capabilities(self):
-        # Implement logic to evolve research capabilities based on recent performance and learnings
-        pass
+        """Placeholder for adaptive logic."""
+        raise NotImplementedError("Research capability evolution not implemented")

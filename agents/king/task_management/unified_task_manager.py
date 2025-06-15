@@ -373,5 +373,5 @@ class UnifiedManagement:
             raise AIVillageException(f"Error in introspection: {str(e)}")
 
 if __name__ == "__main__":
-    # This section can be used for testing or running the UnifiedManagement independently
-    pass
+    raise SystemExit(
+        "Run 'agents/orchestration.py' to start the task manager.")
