@@ -19,8 +19,7 @@ class TestBayesNetIntegration(unittest.TestCase):
         p1.bayes_net.add_node("n1", "content")
         self.assertIn("n1", p2.bayes_net.nodes)
 
-    @mock.patch("requests.get")
-    def test_web_scrape_updates_bayesnet(self, mock_get):
+    def test_web_scrape_updates_bayesnet(self):
         pytest.skip("Skipping web scrape test due to missing dependencies")
 
 if __name__ == '__main__':
