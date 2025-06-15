@@ -1,12 +1,20 @@
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 import networkx as nx
 from datetime import datetime
 from ..core.config import UnifiedConfig
 from ..core.structures import RetrievalResult
 
 class GraphStore:
-    def __init__(self, config: UnifiedConfig):
-        self.config = config
+    def __init__(self, config: Optional[UnifiedConfig] = None):
+        """Create a GraphStore.
+
+        Similar to :class:`VectorStore`, older code instantiated ``GraphStore``
+        without providing a configuration object which caused a ``TypeError``
+        after the constructor signature changed.  The configuration parameter is
+        now optional and defaults to a new :class:`UnifiedConfig` instance.
+        """
+
+        self.config = config or UnifiedConfig()
         self.graph = nx.Graph()
         self.driver = None  # This should be initialized with a proper Neo4j driver
         self.causal_edges = {}
