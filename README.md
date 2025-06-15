@@ -320,15 +320,17 @@ from agents.king.king_agent import KingAgent, KingAgentConfig
 from your_communication_protocol import CommunicationProtocol
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.core.config import UnifiedConfig
+from rag_system.retrieval.vector_store import VectorStore
 
 # Initialize dependencies
 comm_protocol = CommunicationProtocol()
 rag_config = UnifiedConfig()
+vector_store = VectorStore(rag_config)
 rag_system = EnhancedRAGPipeline(rag_config)
 
 # Create KingAgent
 config = KingAgentConfig(name="KingAgent", description="Main coordinator for AI Village", model="gpt-4")
-king_agent = KingAgent(config, comm_protocol, rag_system)
+king_agent = KingAgent(config, comm_protocol, vector_store)
 
 # Register agents
 await king_agent.coordinator.add_agent("sage", SageAgent(comm_protocol))
