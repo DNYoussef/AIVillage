@@ -56,6 +56,19 @@ initialization without network access.
    - Create a `.env` file in the project root
    - Add your OpenAI API key: `OPENAI_API_KEY=your_api_key_here`
 
+## Installing Heavy Dependencies
+
+Some features rely on large libraries such as `torch` and `faiss`. These packages may need to be installed separately, especially when GPU support is desired. Example commands:
+```bash
+pip install torch faiss-cpu # or faiss-gpu for CUDA systems
+```
+
+The tokenizer file `rag_system/utils/token_data/cl100k_base.tiktoken` is bundled so that `tiktoken` can initialize without internet access. Ensure you have a `.env` file in the project root containing your API keys. After installing the dependencies you can run the test suite:
+```bash
+python -m unittest discover tests
+```
+
+
 ## Running the System
 
 Execute the main script:
