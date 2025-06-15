@@ -5,7 +5,12 @@ import numpy as np
 from scipy.optimize import minimize_scalar
 import concurrent.futures
 from numba import jit, prange
-import cupy as cp
+try:
+    import cupy as cp  # type: ignore
+    CUPY_AVAILABLE = True
+except Exception:  # pragma: no cover - optional dependency
+    cp = None  # type: ignore
+    CUPY_AVAILABLE = False
 import logging
 from typing import Dict, Any, Tuple
 from langroid import Task, ChatAgent, ChatAgentConfig
@@ -70,7 +75,8 @@ class BitNetModel(nn.Module):
         return self.model(x)
 
 # Hypercompression components
-cuda_reconstruct_group = cp.RawKernel(r'''
+if CUPY_AVAILABLE:
+    cuda_reconstruct_group = cp.RawKernel(r'''
 extern "C" __global__
 void reconstruct_group(float theta, int K, int8_t* output) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -81,8 +87,7 @@ void reconstruct_group(float theta, int K, int8_t* output) {
     }
 }
 ''', 'reconstruct_group')
-
-cuda_compress = cp.RawKernel(r'''
+    cuda_compress = cp.RawKernel(r'''
 extern "C" __global__
 void compress(const int8_t* weights, int num_groups, int K, float U, float* thetas) {
     int group_idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -106,6 +111,9 @@ void compress(const int8_t* weights, int num_groups, int K, float U, float* thet
     }
 }
 ''', 'compress')
+else:
+    cuda_reconstruct_group = None  # type: ignore
+    cuda_compress = None  # type: ignore
 
 @jit(nopython=True)
 def adaptive_parameter_selection(weights: np.ndarray, target_compression: float) -> Tuple[int, float]:
@@ -135,37 +143,70 @@ class HyperCompressor:
         self.U = U
 
     def compress(self, ternary_weights: torch.Tensor, scale_factors: torch.Tensor) -> Dict[str, Any]:
-        W = cp.asarray(ternary_weights.numpy())
-        num_groups = len(W) // self.K
-        thetas = cp.zeros(num_groups, dtype=cp.float32)
+        if CUPY_AVAILABLE:
+            W = cp.asarray(ternary_weights.numpy())
+            num_groups = len(W) // self.K
+            thetas = cp.zeros(num_groups, dtype=cp.float32)
 
-        threads_per_block = 256
-        blocks = (num_groups + threads_per_block - 1) // threads_per_block
+            threads_per_block = 256
+            blocks = (num_groups + threads_per_block - 1) // threads_per_block
 
-        cuda_compress((blocks,), (threads_per_block,), (W, num_groups, self.K, self.U, thetas))
+            cuda_compress((blocks,), (threads_per_block,), (W, num_groups, self.K, self.U, thetas))
+            theta_out = cp.asnumpy(thetas)
+        else:
+            W = ternary_weights.numpy()
+            num_groups = len(W) // self.K
+            theta_out = np.zeros(num_groups, dtype=np.float32)
+            for i in range(num_groups):
+                group = W[i * self.K:(i + 1) * self.K]
+                best_theta = 0.0
+                min_loss = float('inf')
+                for theta in np.linspace(0, self.U, 1001):
+                    vals = theta / (np.pi + np.arange(1, self.K + 1))
+                    vals = vals - np.floor(vals)
+                    recon = np.round(vals * 2 - 1).astype(np.int8)
+                    loss = np.abs(recon - group).sum()
+                    if loss < min_loss:
+                        min_loss = loss
+                        best_theta = theta
+                theta_out[i] = best_theta
 
         return {
-            'thetas': cp.asnumpy(thetas),
+            'thetas': theta_out,
             'original_shape': ternary_weights.shape,
             'scale_factors': scale_factors.numpy()
         }
 
     def decompress(self, compressed_data: Dict[str, Any]) -> torch.Tensor:
-        thetas = cp.asarray(compressed_data['thetas'])
         original_shape = compressed_data['original_shape']
-        scale_factors = cp.asarray(compressed_data['scale_factors'])
+        if CUPY_AVAILABLE:
+            thetas = cp.asarray(compressed_data['thetas'])
+            scale_factors = cp.asarray(compressed_data['scale_factors'])
 
-        num_groups = len(thetas)
-        reconstructed = cp.zeros(num_groups * self.K, dtype=cp.int8)
+            num_groups = len(thetas)
+            reconstructed = cp.zeros(num_groups * self.K, dtype=cp.int8)
 
-        threads_per_block = 256
-        blocks = (self.K + threads_per_block - 1) // threads_per_block
+            threads_per_block = 256
+            blocks = (self.K + threads_per_block - 1) // threads_per_block
 
-        for i in range(num_groups):
-            cuda_reconstruct_group((blocks,), (threads_per_block,), (thetas[i], self.K, reconstructed[i*self.K:]))
+            for i in range(num_groups):
+                cuda_reconstruct_group((blocks,), (threads_per_block,), (thetas[i], self.K, reconstructed[i*self.K:]))
 
-        reconstructed = reconstructed.reshape(original_shape) * scale_factors
-        return torch.tensor(cp.asnumpy(reconstructed))
+            reconstructed = cp.asnumpy(reconstructed).reshape(original_shape) * cp.asnumpy(scale_factors)
+        else:
+            thetas = np.asarray(compressed_data['thetas'])
+            scale_factors = np.asarray(compressed_data['scale_factors'])
+
+            num_groups = len(thetas)
+            reconstructed = np.zeros(num_groups * self.K, dtype=np.int8)
+            for i in range(num_groups):
+                theta = thetas[i]
+                vals = theta / (np.pi + np.arange(1, self.K + 1))
+                vals = vals - np.floor(vals)
+                reconstructed[i * self.K:(i + 1) * self.K] = np.round(vals * 2 - 1).astype(np.int8)
+            reconstructed = reconstructed.reshape(original_shape) * scale_factors
+
+        return torch.tensor(reconstructed)
 
 # Combined ModelCompressionTask
 class ModelCompressionTask(Task):
@@ -299,6 +340,11 @@ class ModelCompressionTask(Task):
         compressed_model = await self.compress_model()
         await self.agent.llm_response("Applied hypercompression")
 
+        # Capture output before decompression for verification later
+        with torch.no_grad():
+            verification_input = torch.randn(1, 10000)
+            original_output = self.model(verification_input)
+
         # Step 4: Benchmark compression
         metrics = await self.benchmark_compression(compressed_model)
         await self.agent.llm_response(f"Compression metrics: {metrics}")
@@ -309,11 +355,10 @@ class ModelCompressionTask(Task):
 
         # Step 6: Verify decompression
         with torch.no_grad():
-            input = torch.randn(1, 10000)
-            original_output = self.model(input)
-            decompressed_output = decompressed_model(input)
+            decompressed_output = decompressed_model(verification_input)
             error = torch.mean((original_output - decompressed_output).abs())
-            await self.agent.llm_response(f"Mean absolute error after decompression: {error.item():.6f}")
+            await self.agent.llm_response(
+                f"Mean absolute error after decompression: {error.item():.6f}")
 
         return {
             'fine_tune_results': fine_tune_results,
@@ -331,7 +376,8 @@ if __name__ == "__main__":
     async def main():
         torch.manual_seed(0)
         np.random.seed(0)
-        cp.random.seed(0)
+        if CUPY_AVAILABLE:
+            cp.random.seed(0)
 
         config = ChatAgentConfig(
             name="ModelCompressionAgent",
