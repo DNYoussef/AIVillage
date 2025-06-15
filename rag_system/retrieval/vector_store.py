@@ -4,6 +4,7 @@ from datetime import datetime
 import faiss
 import pickle
 import os
+import uuid
 from ..core.config import UnifiedConfig
 from ..core.structures import RetrievalResult
 
@@ -29,6 +30,18 @@ class VectorStore:
         vectors = [doc['embedding'] for doc in documents]
         self.index.add(np.array(vectors).astype('float32'))
         self.documents.extend(documents)
+
+    async def add_texts(self, texts: List[str]):
+        """Convenience helper used by learning layers to store raw text."""
+        docs = []
+        for text in texts:
+            docs.append({
+                'id': str(uuid.uuid4()),
+                'content': text,
+                'embedding': np.random.rand(self.dimension).astype('float32'),
+                'timestamp': datetime.now(),
+            })
+        self.add_documents(docs)
 
     def update_document(self, doc_id: str, new_doc: Dict[str, Any]):
         for i, doc in enumerate(self.documents):

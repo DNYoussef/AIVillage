@@ -9,6 +9,11 @@ class MessageType(Enum):
     RESPONSE = "response"
     QUERY = "query"
     NOTIFICATION = "notification"
+    # Additional types used by collaboration features
+    COLLABORATION_REQUEST = "collaboration_request"
+    KNOWLEDGE_SHARE = "knowledge_share"
+    TASK_RESULT = "task_result"
+    JOINT_REASONING_RESULT = "joint_reasoning_result"
 
 class Priority(Enum):
     LOW = 0
