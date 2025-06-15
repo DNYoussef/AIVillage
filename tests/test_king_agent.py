@@ -1,6 +1,13 @@
 import unittest
 import asyncio
 from unittest.mock import MagicMock, patch
+import sys
+from pathlib import Path
+
+# Ensure the repository root is on the Python path so that the ``agents``
+# package imports correctly when running this test in isolation.
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
 from agents.king.king_agent import KingAgent
 from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
 from rag_system.core.config import RAGConfig
