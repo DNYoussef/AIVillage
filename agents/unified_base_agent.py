@@ -563,6 +563,7 @@ def create_agent(
 
 
 if __name__ == "__main__":
+    # Minimal usage demonstration
     vector_store = VectorStore()  # Placeholder, implement actual VectorStore
     communication_protocol = StandardCommunicationProtocol()
 
@@ -579,6 +580,6 @@ if __name__ == "__main__":
 
     agent = create_agent("ExampleAgent", agent_config, communication_protocol)
 
-    self_evolving_system = SelfEvolvingSystem([agent], vector_store)
+    self_evolving_system = SelfEvolvingSystem([agent])
 
     # Use the self_evolving_system to process tasks and evolve the system
