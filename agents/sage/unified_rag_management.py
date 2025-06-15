@@ -1,6 +1,6 @@
 from typing import Dict, Any
 from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+from utils.error_handler import error_handler, safe_execute, AIVillageException
 from rag_system.core.config import RAGConfig
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 import logging
@@ -12,7 +12,7 @@ class UnifiedRAGManagement:
         self.rag_system = EnhancedRAGPipeline(rag_config)
         self.llm = llm_config.create()
 
-    @error_handler.handle_error
+    @error_handler
     async def perform_health_check(self) -> Dict[str, Any]:
         try:
             health_check_prompt = """
@@ -41,7 +41,7 @@ class UnifiedRAGManagement:
             logger.error(f"Error performing health check: {str(e)}")
             raise AIVillageException(f"Error performing health check: {str(e)}") from e
 
-    @error_handler.handle_error
+    @error_handler
     async def handle_rag_health_issue(self, health_check_result: Dict[str, Any]):
         try:
             handling_prompt = f"""

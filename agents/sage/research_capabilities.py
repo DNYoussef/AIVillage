@@ -68,5 +68,7 @@ class ResearchCapabilities:
         }
 
     async def evolve_research_capabilities(self):
-        # Implement logic to evolve research capabilities based on recent performance and learnings
-        pass
+        """Update internal components using recent learning data."""
+        logger.info("Evolving research capabilities for %s", self.agent.name)
+        if hasattr(self.agent, "continuous_learning_layer"):
+            await self.agent.continuous_learning_layer.evolve()

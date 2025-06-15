@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, List
 from .base_analytics import BaseAnalytics
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+from utils.error_handler import error_handler, safe_execute, AIVillageException
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ class AnalyticsManager(BaseAnalytics):
         self.task_success_rates = {}
         self.system_efficiency_metrics = []
 
-    @error_handler.handle_error
+    @error_handler
     def record_task_completion(self, task_id: str, completion_time: float, success: bool):
         self.record_metric("task_completion_time", completion_time)
         
@@ -20,15 +20,15 @@ class AnalyticsManager(BaseAnalytics):
             self.task_success_rates[task_type] = []
         self.task_success_rates[task_type].append(int(success))
 
-    @error_handler.handle_error
+    @error_handler
     def update_agent_performance(self, agent: str, performance: float):
         self.record_metric(f"{agent}_performance", performance)
 
-    @error_handler.handle_error
+    @error_handler
     def record_system_efficiency(self, metrics: Dict[str, float]):
         self.system_efficiency_metrics.append(metrics)
 
-    @error_handler.handle_error
+    @error_handler
     def generate_task_success_rate_plot(self) -> str:
         success_rates = {task_type: sum(rates) / len(rates) for task_type, rates in self.task_success_rates.items()}
         plt.figure(figsize=(10, 6))
@@ -41,7 +41,7 @@ class AnalyticsManager(BaseAnalytics):
         plt.close()
         return filename
 
-    @error_handler.handle_error
+    @error_handler
     def generate_system_efficiency_plot(self) -> str:
         metrics = list(self.system_efficiency_metrics[0].keys())
         data = {metric: [entry[metric] for entry in self.system_efficiency_metrics] for metric in metrics}
@@ -58,7 +58,7 @@ class AnalyticsManager(BaseAnalytics):
         plt.close()
         return filename
 
-    @error_handler.handle_error
+    @error_handler
     def generate_analytics_report(self) -> Dict[str, Any]:
         return {
             "task_completion_time_plot": self.generate_task_completion_time_plot(),

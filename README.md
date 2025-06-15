@@ -62,6 +62,7 @@ Some features rely on large libraries such as `numpy`, `torch` and `faiss`. Thes
 ```bash
 pip install numpy torch faiss-cpu  # or faiss-gpu for CUDA systems
 ```
+Install the rest of the dependencies using `pip install -r requirements.txt` before running the tests.
 
 The tokenizer file `rag_system/utils/token_data/cl100k_base.tiktoken` is bundled so that `tiktoken` can initialize without internet access. Ensure you have a `.env` file in the project root containing your API keys. After installing the dependencies you can run the test suite:
 ```bash

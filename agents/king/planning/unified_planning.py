@@ -385,5 +385,10 @@ class UnifiedPlanningAndManagement:
             raise AIVillageException(f"Error in introspect: {str(e)}")
 
 if __name__ == "__main__":
-    # This section can be used for testing or running the UnifiedPlanningAndManagement independently
-    pass
+    async def _demo():
+        protocol = StandardCommunicationProtocol()
+        planning = UnifiedPlanningAndManagement(protocol)
+        info = await planning.introspect()
+        print(info)
+
+    asyncio.run(_demo())
