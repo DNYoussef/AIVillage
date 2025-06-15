@@ -62,8 +62,22 @@ class UnifiedAnalytics:
         return successful_tasks / len(self.task_history)
 
     async def evolve(self):
-        # Implement evolution logic here
-        pass
+        """Adapt internal parameters based on recent history."""
+        trend = self.get_performance_trend()
+
+        if trend > 0:
+            self.learning_rate *= 0.95  # reduce step size when improving
+        elif trend < 0:
+            self.learning_rate *= 1.05  # try to learn faster when degrading
+
+        self.learning_rate = float(max(0.0001, min(0.1, self.learning_rate)))
+
+        # Remove metrics that have not changed recently to keep history small
+        for name in list(self.metrics.keys()):
+            values = self.metrics[name]
+            if len(values) > 10 and np.std(values[-10:]) == 0:
+                logger.info(f"Pruning stagnant metric {name}")
+                del self.metrics[name]
 
     def get_info(self) -> Dict[str, Any]:
         return {
