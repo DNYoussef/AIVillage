@@ -2,6 +2,12 @@ import torch
 import torch.nn as nn
 from typing import Dict, Any
 from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
+from .user_intent_interpreter import UserIntentInterpreter
+from .key_concept_extractor import KeyConceptExtractor
+from .task_planning_agent import TaskPlanningAgent
+from .knowledge_graph_agent import KnowledgeGraphAgent
+from .reasoning_agent import ReasoningAgent
+from .dynamic_knowledge_integration_agent import DynamicKnowledgeIntegrationAgent
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.retrieval.vector_store import VectorStore
 from .coordinator import KingCoordinator
@@ -12,6 +18,9 @@ from .response_generation_agent import ResponseGenerationAgent
 from rag_system.utils.error_handling import log_and_handle_errors
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
+
+# Backwards compatibility alias
+KingAgentConfig = UnifiedAgentConfig
 
 class KingAgent(UnifiedBaseAgent):
     def __init__(
@@ -34,6 +43,37 @@ class KingAgent(UnifiedBaseAgent):
         self.add_tool("coordinate_task", self.coordinator.coordinate_task)
         self.add_tool("plan_task", self.unified_planning_and_management.make_decision)
         self.add_tool("generate_response", self.response_generation_agent.generate_response)
+
+    async def _maybe_async(self, func, *args, **kwargs):
+        result = func(*args, **kwargs)
+        if hasattr(result, "__await") or hasattr(result, "__await__"):
+            return await result
+        return result
+
+    @log_and_handle_errors
+    async def process_user_input(self, user_input: str) -> Dict[str, Any]:
+        interpreter = UserIntentInterpreter(OpenAIGPTConfig(chat_model="gpt-4"))
+        extractor = KeyConceptExtractor(OpenAIGPTConfig(chat_model="gpt-4"))
+        planner = TaskPlanningAgent()
+        kg_agent = KnowledgeGraphAgent(OpenAIGPTConfig(chat_model="gpt-4"))
+        reasoner = ReasoningAgent(OpenAIGPTConfig(chat_model="gpt-4"), kg_agent)
+        dki_agent = DynamicKnowledgeIntegrationAgent(None)
+
+        interpreted_intent = await self._maybe_async(interpreter.interpret_intent, user_input)
+        key_concepts = await self._maybe_async(extractor.extract_key_concepts, user_input)
+        task_plan = await self._maybe_async(planner.generate_task_plan, key_concepts)
+        graph_data = await self._maybe_async(kg_agent.query_graph, user_input)
+        reasoning_result = await self._maybe_async(reasoner.perform_reasoning, graph_data)
+        response = await self._maybe_async(self.response_generation_agent.generate_response, reasoning_result)
+        await self._maybe_async(dki_agent.integrate_new_knowledge, reasoning_result)
+
+        return {
+            "interpreted_intent": interpreted_intent,
+            "key_concepts": key_concepts,
+            "task_plan": task_plan,
+            "reasoning_result": reasoning_result,
+            "response": response,
+        }
 
     @log_and_handle_errors
     async def process_message(self, message: Message) -> Any:

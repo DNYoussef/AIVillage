@@ -5,7 +5,8 @@ from agents.king.quality_assurance_layer import QualityAssuranceLayer
 from agents.king.planning_and_task_management.unified_decision_maker import UnifiedDecisionMaker
 from agents.king.problem_analyzer import ProblemAnalyzer
 from agents.king.continuous_learner import ContinuousLearner
-from agents.king.king_agent import KingAgent, KingAgentConfig
+from agents.king.king_agent import KingAgent
+from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
 from agents.utils.task import Task as LangroidTask
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from communications.protocol import StandardCommunicationProtocol
