@@ -14,8 +14,20 @@ class AgentTechnique(ToolMessage):
     code: str
 
     def handle(self):
-        # This method would be implemented to actually apply the technique
-        pass
+        """Return the callable defined by this technique's code."""
+
+        local_env = {}
+        try:
+            exec(self.code, {}, local_env)
+        except Exception as e:
+            raise RuntimeError(f"Failed to apply technique '{self.name}': {e}") from e
+
+        # Techniques generally define either a ``run`` or ``forward`` function.
+        if "run" in local_env:
+            return local_env["run"]
+        if "forward" in local_env:
+            return local_env["forward"]
+        return None
 
 # Rest of the PROMPT_TECHNIQUE_ARCHIVE content remains the same
 PROMPT_TECHNIQUE_ARCHIVE = [

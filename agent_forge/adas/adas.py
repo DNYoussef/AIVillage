@@ -1,4 +1,5 @@
 import random
+import json
 from typing import List, Dict, Any
 from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
 from langroid.agent.task import Task
@@ -48,9 +49,31 @@ class ADASTask(Task):
         return response.content
 
     def evaluate_agent(self, agent: Dict[str, Any]) -> float:
-        # This is a placeholder. In a real scenario, you'd implement actual evaluation logic here.
-        # It might involve running the agent on a set of tasks and measuring performance.
-        return random.random()  # Placeholder random performance
+        """Simple evaluation of a generated agent.
+
+        The ``agent`` argument can either be a dictionary or a JSON string
+        representing an object with a ``code`` field.  We attempt to compile
+        the code to make sure it is syntactically valid.  If compilation
+        succeeds we return a deterministic score based on the number of lines in
+        the code.  If it fails, ``0.0`` is returned.
+        """
+
+        if isinstance(agent, str):
+            try:
+                agent = json.loads(agent)
+            except json.JSONDecodeError:
+                return 0.0
+
+        code = agent.get("code", "")
+
+        try:
+            compile(code, "<adas-agent>", "exec")
+        except Exception:
+            return 0.0
+
+        # Use the length of the code as a very rough heuristic for performance
+        # so that results are deterministic during testing.
+        return float(len(code.splitlines()))
 
     async def run(self):
         num_iterations = 10  # You can adjust this or make it a parameter
