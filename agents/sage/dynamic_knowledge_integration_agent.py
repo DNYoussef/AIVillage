@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, List, Tuple
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+from utils.error_handler import error_handler, safe_execute, AIVillageException
 from .knowledge_graph_agent import KnowledgeGraphAgent
 import json
 import asyncio
@@ -13,7 +13,7 @@ class DynamicKnowledgeIntegrationAgent:
         self.llm = llm_config.create()
         self.knowledge_graph_agent = knowledge_graph_agent
 
-    @error_handler.handle_error
+    @error_handler
     async def integrate_new_knowledge(self, new_information: Dict[str, Any]) -> Dict[str, Any]:
         """
         Integrate new knowledge into the system.
@@ -44,7 +44,7 @@ class DynamicKnowledgeIntegrationAgent:
         else:
             return {"status": "failed", "reason": "Failed to update knowledge graph"}
 
-    @error_handler.handle_error
+    @error_handler
     async def _validate_information(self, new_information: Dict[str, Any]) -> Dict[str, Any]:
         """
         Validate the new information for accuracy and relevance.
@@ -109,7 +109,7 @@ class DynamicKnowledgeIntegrationAgent:
                 })
         return conflicts
 
-    @error_handler.handle_error
+    @error_handler
     async def _resolve_conflicts(self, new_info: Dict[str, Any], conflicts: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Resolve conflicts between new and existing information.
@@ -153,7 +153,7 @@ class DynamicKnowledgeIntegrationAgent:
             logger.error(f"Failed to parse conflict resolution response: {response}")
             raise AIVillageException("Failed to parse conflict resolution response")
 
-    @error_handler.handle_error
+    @error_handler
     async def _trigger_system_updates(self, integrated_info: Dict[str, Any]):
         """
         Trigger updates in other components of the system when significant changes occur.
@@ -167,7 +167,7 @@ class DynamicKnowledgeIntegrationAgent:
         # Example: await self.reasoning_agent.update_knowledge_base(integrated_info)
         # Example: await self.task_planning_agent.reassess_current_plans(integrated_info)
 
-    @error_handler.handle_error
+    @error_handler
     async def remove_outdated_information(self, time_threshold: str) -> List[Dict[str, Any]]:
         """
         Identify and remove outdated or irrelevant information from the knowledge graph.

@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, List, Tuple
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+from utils.error_handler import error_handler, safe_execute, AIVillageException
 import networkx as nx
 import matplotlib.pyplot as plt
 import io
@@ -14,7 +14,7 @@ class KnowledgeGraphAgent:
         self.llm = llm_config.create()
         self.graph = nx.Graph()
 
-    @error_handler.handle_error
+    @error_handler
     async def query_graph(self, query: str) -> Dict[str, Any]:
         """
         Query the knowledge graph based on the given query.
@@ -54,7 +54,7 @@ class KnowledgeGraphAgent:
             logger.error(f"Failed to parse graph query response: {response}")
             raise AIVillageException("Failed to parse graph query response")
 
-    @error_handler.handle_error
+    @error_handler
     async def update_graph(self, new_information: Dict[str, Any]) -> bool:
         """
         Update the knowledge graph with new information.
@@ -121,7 +121,7 @@ class KnowledgeGraphAgent:
             logger.error(f"Error applying graph updates: {str(e)}")
             return False
 
-    @error_handler.handle_error
+    @error_handler
     async def perform_reasoning(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """
         Perform graph-based reasoning to infer new relationships or information.

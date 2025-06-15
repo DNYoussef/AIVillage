@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, List
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+from utils.error_handler import error_handler, safe_execute, AIVillageException
 
 logger = logging.getLogger(__name__)
 
@@ -9,7 +9,7 @@ class UserIntentInterpreter:
     def __init__(self, llm_config: OpenAIGPTConfig):
         self.llm = llm_config.create()
 
-    @error_handler.handle_error
+    @error_handler
     async def interpret_intent(self, user_input: str) -> Dict[str, Any]:
         """
         Interpret the user's intent from their input.
@@ -51,7 +51,7 @@ class UserIntentInterpreter:
             logger.error(f"Failed to parse intent response: {response}")
             raise AIVillageException("Failed to parse intent response")
 
-    @error_handler.handle_error
+    @error_handler
     async def extract_key_concepts(self, interpreted_intent: Dict[str, Any]) -> List[str]:
         """
         Extract key concepts from the interpreted intent.

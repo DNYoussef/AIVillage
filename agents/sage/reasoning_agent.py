@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, List
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+from utils.error_handler import error_handler, safe_execute, AIVillageException
 from .knowledge_graph_agent import KnowledgeGraphAgent
 import json
 
@@ -12,7 +12,7 @@ class ReasoningAgent:
         self.llm = llm_config.create()
         self.knowledge_graph_agent = knowledge_graph_agent
 
-    @error_handler.handle_error
+    @error_handler
     async def perform_reasoning(self, context: Dict[str, Any], query: str) -> Dict[str, Any]:
         """
         Perform reasoning based on the given context and query.
@@ -69,7 +69,7 @@ class ReasoningAgent:
             logger.error(f"Failed to parse reasoning response: {response}")
             raise AIVillageException("Failed to parse reasoning response")
 
-    @error_handler.handle_error
+    @error_handler
     async def resolve_conflicts(self, conflicting_info: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Resolve conflicts between different pieces of information.
@@ -113,7 +113,7 @@ class ReasoningAgent:
             logger.error(f"Failed to parse conflict resolution response: {response}")
             raise AIVillageException("Failed to parse conflict resolution response")
 
-    @error_handler.handle_error
+    @error_handler
     async def generate_explanation(self, reasoning_result: Dict[str, Any]) -> str:
         """
         Generate a natural language explanation of the reasoning process and conclusions.

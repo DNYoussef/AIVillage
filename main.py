@@ -8,7 +8,7 @@ from rag_system.core.config import UnifiedConfig
 from rag_system.retrieval.vector_store import VectorStore
 from communications.protocol import StandardCommunicationProtocol
 from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+from utils.error_handler import error_handler, safe_execute, AIVillageException
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -88,7 +88,7 @@ class AIVillageSystem:
             "priority": 1
         }
 
-@error_handler.handle_error
+@error_handler
 async def main():
     config = {
         "vector_store_config": {

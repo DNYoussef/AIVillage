@@ -617,5 +617,8 @@ class UnifiedDecisionMaker:
             raise AIVillageException(f"Error creating implementation plan: {str(e)}")
 
 if __name__ == "__main__":
-    # This section can be used for testing or running the UnifiedDecisionMaker independently
-    pass
+    async def _demo():
+        dm = UnifiedDecisionMaker()
+        print(await dm.introspect())
+
+    asyncio.run(_demo())

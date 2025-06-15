@@ -5,8 +5,14 @@ logger = logging.getLogger(__name__)
 
 class ResponseGenerator:
     def __init__(self):
-        # Initialize any necessary components or models
-        pass
+        """Create a simple response generator.
+
+        The current implementation is deliberately lightweight and only logs
+        initialization.  More sophisticated NLP models can be plugged in later
+        without modifying callers.
+        """
+        self.logger = logger
+        self.logger.info("ResponseGenerator initialized")
 
     async def generate_response(self, query: str, rag_result: Dict[str, Any], intent: Dict[str, Any]) -> str:
         """

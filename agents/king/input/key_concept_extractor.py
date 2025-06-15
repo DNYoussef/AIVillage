@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, List
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+from utils.error_handler import error_handler, safe_execute, AIVillageException
 import networkx as nx
 import matplotlib.pyplot as plt
 import io
@@ -12,7 +12,7 @@ class KeyConceptExtractor:
     def __init__(self, llm_config: OpenAIGPTConfig):
         self.llm = llm_config.create()
 
-    @error_handler.handle_error
+    @error_handler
     async def extract_key_concepts(self, user_input: str, interpreted_intent: Dict[str, Any]) -> Dict[str, Any]:
         """
         Extract key concepts from the user input and interpreted intent.
@@ -67,7 +67,7 @@ class KeyConceptExtractor:
                 G.add_edge(concept, related['concept'], type=related['type'])
         return G
 
-    @error_handler.handle_error
+    @error_handler
     async def analyze_concept_importance(self, concepts: Dict[str, Any]) -> Dict[str, float]:
         """
         Analyze the importance of each extracted concept.

@@ -6,9 +6,9 @@ from agents.king.king_agent import KingAgent
 from agents.magi.magi_agent import MagiAgent
 from rag_system.core.config import UnifiedConfig
 from communications.protocol import StandardCommunicationProtocol
-from langroid.vector_store.base import VectorStore
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from langroid.agent.task import Task as LangroidTask
+from rag_system.retrieval.vector_store import VectorStore
+from agents.language_models.openai_gpt import OpenAIGPTConfig
+from agents.utils.task import Task as LangroidTask
 from rag_system.core.pipeline import EnhancedRAGPipeline
 
 class TaskQueue:
@@ -73,9 +73,9 @@ def create_agents(config: UnifiedConfig, communication_protocol: StandardCommuni
     ]
     
     return [
-        KingAgent(agent_configs[0], communication_protocol),
-        SageAgent(agent_configs[1], communication_protocol),
-        MagiAgent(agent_configs[2], communication_protocol)
+        KingAgent(agent_configs[0], communication_protocol, vector_store),
+        SageAgent(agent_configs[1], communication_protocol, vector_store),
+        MagiAgent(agent_configs[2], communication_protocol, config, vector_store)
     ]
 
 async def run_task(self_evolving_system: SelfEvolvingSystem, rag_pipeline: EnhancedRAGPipeline, task_data: Dict[str, Any]):

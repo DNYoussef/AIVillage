@@ -5,8 +5,13 @@ logger = logging.getLogger(__name__)
 
 class UserIntentInterpreter:
     def __init__(self):
-        # Initialize any necessary components or models
-        pass
+        """Construct a minimal intent interpreter.
+
+        At this stage we simply store a logger instance; more advanced NLP
+        models can be integrated later.
+        """
+        self.logger = logger
+        self.logger.info("UserIntentInterpreter initialized")
 
     async def interpret_intent(self, query: str) -> Dict[str, Any]:
         """

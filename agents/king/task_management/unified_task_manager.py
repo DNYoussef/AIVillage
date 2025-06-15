@@ -373,5 +373,10 @@ class UnifiedManagement:
             raise AIVillageException(f"Error in introspection: {str(e)}")
 
 if __name__ == "__main__":
-    # This section can be used for testing or running the UnifiedManagement independently
-    pass
+    async def _demo():
+        protocol = StandardCommunicationProtocol()
+        decision_maker = UnifiedDecisionMaker()
+        manager = UnifiedManagement(protocol, decision_maker, num_agents=1, num_actions=1)
+        print(await manager.introspect())
+
+    asyncio.run(_demo())

@@ -1,11 +1,13 @@
-from asyncio.log import logger
+import logging
 from typing import List, Dict, Any
 from agents.unified_base_agent import UnifiedBaseAgent
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
-from core.config import UnifiedConfig
+from rag_system.core.config import UnifiedConfig
 from ..magi.magi_agent import MagiAgent
 from ..sage.sage_agent import SageAgent
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+from utils.error_handler import error_handler, safe_execute, AIVillageException
+
+logger = logging.getLogger(__name__)
 from .analytics.unified_analytics import UnifiedAnalytics
 
 class KingCoordinator:
@@ -23,7 +25,7 @@ class KingCoordinator:
     def add_agent(self, agent_name: str, agent: UnifiedBaseAgent):
         self.agents[agent_name] = agent
 
-    @error_handler.handle_error
+    @error_handler
     async def coordinate_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         start_time = self.unified_analytics.get_current_time()
         result = await self._delegate_task(task)
@@ -35,7 +37,7 @@ class KingCoordinator:
         
         return result
 
-    @error_handler.handle_error
+    @error_handler
     async def _delegate_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         if task['type'] == 'research':
             sage_agent = next((agent for agent in self.agents.values() if isinstance(agent, SageAgent)), None)
@@ -65,8 +67,8 @@ class KingCoordinator:
             await self.communication_protocol.send_message(response)
             await self.task_manager.assign_task(message.content)
         else:
-            # Handle other message types if needed
-            pass
+            logger.warning("Unhandled message type: %s", message.type)
+            raise AIVillageException(f"Unhandled message type: {message.type}")
 
     async def _implement_decision(self, decision_result: Dict[str, Any]):
         try:
