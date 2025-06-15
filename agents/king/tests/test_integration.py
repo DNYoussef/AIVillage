@@ -10,7 +10,7 @@ from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
 from agents.utils.task import Task as LangroidTask
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from communications.protocol import StandardCommunicationProtocol
-from langroid.vector_store.base import VectorStore
+from rag_system.retrieval.vector_store import VectorStore
 
 class TestIntegration(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):

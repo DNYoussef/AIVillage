@@ -5,7 +5,7 @@ import random
 import numpy as np
 from agents.utils.task import Task as LangroidTask
 from agents.language_models.openai_gpt import OpenAIGPTConfig
-from langroid.vector_store.base import VectorStore
+from rag_system.retrieval.vector_store import VectorStore
 from rag_system.core.config import UnifiedConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from communications.protocol import (

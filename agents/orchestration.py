@@ -6,9 +6,9 @@ from agents.king.king_agent import KingAgent
 from agents.magi.magi_agent import MagiAgent
 from rag_system.core.config import UnifiedConfig
 from communications.protocol import StandardCommunicationProtocol
-from langroid.vector_store.base import VectorStore
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from langroid.agent.task import Task as LangroidTask
+from rag_system.retrieval.vector_store import VectorStore
+from agents.language_models.openai_gpt import OpenAIGPTConfig
+from agents.utils.task import Task as LangroidTask
 from rag_system.core.pipeline import EnhancedRAGPipeline
 
 class TaskQueue:
