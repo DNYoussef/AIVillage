@@ -88,6 +88,10 @@ class VectorStore:
     def get_size(self) -> int:
         return len(self.documents)
 
+    async def get_count(self) -> int:
+        """Return the number of stored vector documents."""
+        return len(self.documents)
+
     def save(self, file_path: str):
         with open(file_path, 'wb') as f:
             pickle.dump({
