@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Dict, Any
 from agents.utils.task import Task as LangroidTask
 
-from rag_system.core.unified_config import unified_config
+from rag_system.core.config import UnifiedConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 from rag_system.utils.embedding import BERTEmbeddingModel
@@ -24,6 +24,7 @@ from agents.language_models.openai_gpt import OpenAIGPTConfig
 from rag_system.utils.error_handling import log_and_handle_errors, setup_logging, RAGSystemError
 
 logger = setup_logging()
+rag_config = UnifiedConfig()
 
 @log_and_handle_errors
 async def initialize_components() -> Dict[str, Any]:
@@ -38,7 +39,7 @@ async def initialize_components() -> Dict[str, Any]:
         name="KingAgent",
         description="The main coordinating agent for the RAG system",
         capabilities=["task_coordination", "decision_making", "problem_analysis"],
-        rag_config=unified_config,
+        rag_config=rag_config,
         vector_store=vector_store,
         model="gpt-4",
         instructions="You are the main coordinating agent for the RAG system. Your role is to manage tasks, make decisions, and analyze problems."
@@ -48,10 +49,10 @@ async def initialize_components() -> Dict[str, Any]:
         "embedding_model": BERTEmbeddingModel(),
         "vector_store": vector_store,
         "graph_store": graph_store,
-        "hybrid_retriever": HybridRetriever(unified_config),
-        "reasoning_engine": UncertaintyAwareReasoningEngine(unified_config),
+        "hybrid_retriever": HybridRetriever(rag_config),
+        "reasoning_engine": UncertaintyAwareReasoningEngine(rag_config),
         "cognitive_nexus": CognitiveNexus(),
-        "pipeline": EnhancedRAGPipeline(unified_config),
+        "pipeline": EnhancedRAGPipeline(rag_config),
         "communication_protocol": communication_protocol,
         "king_agent": KingAgent(king_agent_config, communication_protocol, vector_store),
         "knowledge_tracker": UnifiedKnowledgeTracker(vector_store, graph_store),
@@ -98,7 +99,7 @@ async def run_creative_exploration(components: Dict[str, Any], start_node: str, 
 async def main():
     # Load configuration
     config_path = "config/rag_config.json"
-    unified_config.load_config(config_path)
+    rag_config.load_config(config_path)
 
     components = await initialize_components()
 
