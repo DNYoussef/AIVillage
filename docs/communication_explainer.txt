@@ -47,7 +47,7 @@ Purpose: Defines the StandardCommunicationProtocol class, managing message sendi
 
 StandardCommunicationProtocol Class:
 Attributes:
-message_queue: Instance of MessageQueue.
+message_queues: Dictionary mapping agent IDs to MessageQueue instances.
 subscribers: Dictionary mapping agent IDs to lists of callback functions.
 Methods:
 send_message(message):
