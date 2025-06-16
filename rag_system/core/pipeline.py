@@ -51,6 +51,11 @@ class EnhancedRAGPipeline(BaseComponent):
             "integrated_result": integrated_result
         }
 
+    # Compatibility wrapper for legacy calls
+    async def process_query(self, query: str) -> Dict[str, Any]:
+        """Backward compatible wrapper around :meth:`process`."""
+        return await self.process(query)
+
     @log_and_handle_errors
     async def shutdown(self) -> None:
         await self.latent_space_activation.shutdown()

@@ -1,17 +1,17 @@
 # rag_system/processing/self_referential_query_processor.py
 
 from typing import Dict, Any
-from ..core.pipeline import RAGPipeline
+from ..core.pipeline import EnhancedRAGPipeline
 
 class SelfReferentialQueryProcessor:
-    def __init__(self, rag_system: RAGPipeline):
+    def __init__(self, rag_system: EnhancedRAGPipeline):
         self.rag_system = rag_system
 
     async def process_self_query(self, query: str) -> str:
         if query.startswith("SELF:"):
             return await self._process_internal_query(query[5:])
         else:
-            return await self.rag_system.process_query(query)
+            return await self.rag_system.process(query)
 
     async def _process_internal_query(self, query: str) -> str:
         # Implement logic to query system's internal state, knowledge, or history

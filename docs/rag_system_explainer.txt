@@ -7,8 +7,8 @@ Based on the provided code and folder structure, here's how the system pipeline 
 1. Configuration Setup
 RAGConfig (from core.config): Manages configuration settings, including paths, model parameters, and other essential settings required for the system's operation.
 2. Query Processing Pipeline
-RAGPipeline (from core.pipeline): The primary component responsible for processing queries submitted by agents.
-The process_query(query) method likely follows these steps:
+EnhancedRAGPipeline (from core.pipeline): The primary component responsible for processing queries submitted by agents.
+The process(query) method (or its process_query wrapper) likely follows these steps:
 
 a. Input Processing
 Input Pipeline (from input_pipeline/):
@@ -124,18 +124,18 @@ Agents interact with the RAG system by importing the necessary modules and submi
 Code Example
 import asyncio
 from core.config import RAGConfig
-from core.pipeline import RAGPipeline
+from core.pipeline import EnhancedRAGPipeline
 
 async def agent_query():
     # Initialize configuration and pipeline
     config = RAGConfig()
-    pipeline = RAGPipeline(config)
+    pipeline = EnhancedRAGPipeline(config)
     
     # Define the query
     query = "What festivals does the village celebrate each year?"
     
     # Process the query
-    result = await pipeline.process_query(query)
+    result = await pipeline.process(query)
     
     # Access the results
     answer = result.get('answer')
@@ -155,11 +155,11 @@ async def agent_query():
 if __name__ == "__main__":
     asyncio.run(agent_query())
 Explanation
-Initialization: Agents create instances of RAGConfig and RAGPipeline to set up the system.
+Initialization: Agents create instances of RAGConfig and EnhancedRAGPipeline to set up the system.
 
 Submitting a Query: Agents define their query as a string.
 
-Processing the Query: Use await pipeline.process_query(query) to process the query asynchronously.
+Processing the Query: Use await pipeline.process(query) (or pipeline.process_query) to process the query asynchronously.
 
 Handling the Result: Extract the answer, confidence_score, source_documents, and metadata from the result.
 
