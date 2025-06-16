@@ -56,6 +56,10 @@ initialization without network access.
    - Create a `.env` file in the project root
    - Add your OpenAI API key: `OPENAI_API_KEY=your_api_key_here`
 
+5. Review the default Retrieval-Augmented Generation configuration:
+   - The file `configs/rag_config.yaml` contains the default settings used by
+     the RAG pipeline. Edit this file if you need to customize the behaviour.
+
 ## Installing Heavy Dependencies
 
 Some features rely on large libraries such as `numpy`, `torch` and `faiss`. These packages may need to be installed separately, especially when GPU support is desired. Example commands:
