@@ -158,3 +158,7 @@ class GraphStore:
         if self.graph.has_node(doc_id):
             return self.graph.nodes[doc_id]
         return None
+
+    async def get_count(self) -> int:
+        """Return the number of nodes stored in the graph."""
+        return self.graph.number_of_nodes()
