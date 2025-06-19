@@ -31,5 +31,6 @@ Implementation helpers:
 - `training/self_modeling.py` – self-modeling trainer used in Phase 3.
 - `training/prompt_baking.py` – utilities for baking prompt strategies.
 - `training/expert_vectors.py` – simple expert vector system for vector composition.
+- `training/identity.py` – basic identity formation and moral framework utilities.
 
 For a step-by-step description of each phase see [complete_agent_forge_pipeline.md](complete_agent_forge_pipeline.md).

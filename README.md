@@ -441,6 +441,7 @@ Additional utilities for this pipeline include:
 - `agent_forge/training/self_modeling.py` – temperature‑based self‑modeling.
 - `agent_forge/training/prompt_baking.py` – wrapper for deep prompt baking cycles.
 - `agent_forge/training/expert_vectors.py` – tools for expert vector creation and composition.
+- `agent_forge/training/identity.py` – identity formation and moral framework utilities.
 
 ## Contributing
 

@@ -31,3 +31,4 @@ Implementation helpers can be found in the codebase:
 - `agent_forge/training/self_modeling.py` for the self‑modeling loop
 - `agent_forge/training/prompt_baking.py` for automated prompt baking
 - `agent_forge/training/expert_vectors.py` for creating and applying expert vectors
+- `agent_forge/training/identity.py` for identity formation and the moral framework baker
