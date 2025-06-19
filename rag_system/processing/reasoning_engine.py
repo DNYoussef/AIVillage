@@ -16,50 +16,16 @@ class UncertaintyAwareReasoningEngine:
         self.graph = nx.Graph()
 
     async def reason(self, query: str, retrieved_info: List[RetrievalResult], activated_knowledge: Dict[str, Any]) -> Dict[str, Any]:
-        with self.driver.session() as session:
-            if timestamp:
-                result = session.run(
-                    """
-                        CALL db.index.fulltext.queryNodes("nodeContent", $query) 
-                    YIELD node, score
-                        MATCH (node)-[:VERSION]->(v:NodeVersion)
-                        WHERE v.timestamp <= $timestamp
-                        WITH node, score, v
-                        ORDER BY v.timestamp DESC, score DESC
-                    LIMIT $k
-                        RETURN id(node) as id, v.content as content, score, 
-                            v.uncertainty as uncertainty, v.timestamp as timestamp, 
-                            v.version as version
-                    """,
-                        query=query, timestamp=timestamp, k=k
-                    )
-            else:
-                result = session.run(
-                    """
-                    CALL db.index.fulltext.queryNodes("nodeContent", $query) 
-                    YIELD node, score
-                    MATCH (node)-[:VERSION]->(v:NodeVersion)
-                    WITH node, score, v
-                    ORDER BY v.timestamp DESC, score DESC
-                    LIMIT $k
-                    RETURN id(node) as id, v.content as content, score, 
-                        v.uncertainty as uncertainty, v.timestamp as timestamp, 
-                        v.version as version
-                    """,
-                    query=query, k=k
-                )
-
-        return [
-            RetrievalResult(
-                id=record["id"],
-                content=record["content"],
-                score=record["score"],
-                uncertainty=record["uncertainty"],
-                timestamp=record["timestamp"],
-                version=record["version"]
-            )
-            for record in result
-        ]
+        """Return a reasoning result summarizing provided information."""
+        reasoning_result = {
+            "query": query,
+            "conclusion": "This is a placeholder conclusion.",
+            "confidence": 0.8,
+            "uncertainty": 0.2,
+            "supporting_evidence": [result.content for result in retrieved_info[:3]],
+            "activated_concepts": list(activated_knowledge.keys())[:5],
+        }
+        return reasoning_result
 
     def update_causal_strength(self, source: str, target: str, observed_probability: float):
         edge = self.causal_edges.get((source, target))
