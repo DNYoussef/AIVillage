@@ -20,6 +20,7 @@ pytest
 pytest-asyncio
 click
 pyyaml
+PyYAML
 ollama
 aiohttp>=3.10.5
 flake8>=7.1.1
