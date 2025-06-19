@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Dict, Any
 from agents.utils.task import Task as LangroidTask
 
-from rag_system.core.config import UnifiedConfig
+from rag_system.core.config import UnifiedConfig, load_from_yaml
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 from rag_system.utils.embedding import BERTEmbeddingModel
@@ -98,8 +98,9 @@ async def run_creative_exploration(components: Dict[str, Any], start_node: str, 
 @log_and_handle_errors
 async def main():
     # Load configuration
-    config_path = "config/rag_config.json"
-    rag_config.load_config(config_path)
+    config_path = "configs/rag_config.yaml"
+    global rag_config
+    rag_config = load_from_yaml(config_path)
 
     components = await initialize_components()
 
