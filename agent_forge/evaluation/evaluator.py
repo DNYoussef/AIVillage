@@ -1,4 +1,5 @@
 import torch
+from nlp.metrics import measure_coherence, measure_relevance
 
 def evaluate_thought_quality(model, eval_data):
     thought_coherence = []
@@ -44,13 +45,3 @@ def evaluate_model(model, eval_data):
         "accuracy": avg_accuracy,
         **thought_metrics
     }
-
-def measure_coherence(thoughts):
-    # Placeholder for coherence measurement
-    # In a real implementation, this would assess the logical flow and consistency of thoughts
-    return thoughts.std().item()
-
-def measure_relevance(thoughts, targets):
-    # Placeholder for relevance measurement
-    # In a real implementation, this would assess how well thoughts relate to the target output
-    return F.cosine_similarity(thoughts.mean(dim=1), targets.mean(dim=1)).mean().item()
