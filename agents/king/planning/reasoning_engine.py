@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, Any
 import torch.nn as nn
+from agents.utils.exceptions import AIVillageException
 
 logger = logging.getLogger(__name__)
 

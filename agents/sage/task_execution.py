@@ -92,20 +92,20 @@ class TaskExecutor:
             subgoals = await self.generate_subgoals(task['content'])
             results = []
             for subgoal in subgoals:
-            subtask = {
-                'type': task['type'],
-                'content': subgoal,
-                'priority': task.get('priority', 1),
-                'id': task.get('id', ''),
-            }
-            langroid_subtask = LangroidTask(
-                self.agent,
-                subtask['content'],
-                subtask['id'],
-                subtask['priority'],
-            )
-            langroid_subtask.type = subtask['type']
-            subtask_result = await self.execute_task(langroid_subtask)
+                subtask = {
+                    'type': task['type'],
+                    'content': subgoal,
+                    'priority': task.get('priority', 1),
+                    'id': task.get('id', ''),
+                }
+                langroid_subtask = LangroidTask(
+                    self.agent,
+                    subtask['content'],
+                    subtask['id'],
+                    subtask['priority'],
+                )
+                langroid_subtask.type = subtask['type']
+                subtask_result = await self.execute_task(langroid_subtask)
                 results.append(subtask_result)
             final_result = await self.summarize_results(task, subgoals, results)
             return final_result
