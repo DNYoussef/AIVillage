@@ -95,8 +95,10 @@ class UncertaintyAwareReasoningEngine:
             edge.strength = (1 - learning_rate) * edge.strength + learning_rate * observed_probability
     
     def close(self):
+        """Close the underlying driver if it exists."""
         if self.driver:
             self.driver.close()
+            self.driver = None
 
     async def get_snapshot(self, timestamp: datetime) -> Dict[str, Any]:
         # Implement logic to return a snapshot of the graph store at the given timestamp
