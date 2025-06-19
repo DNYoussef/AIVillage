@@ -3,7 +3,9 @@
 from typing import Dict, Any, List
 from ..core.agent_interface import AgentInterface
 from ..core.interface import ReasoningEngine
-from ..processing.self_referential_query_processor import SelfReferentialQueryProcessor
+from ..processing.self_referential_query_processor import (
+    SelfReferentialQueryProcessor,
+)
 
 class CognitiveNexus:
     def __init__(self, reasoning_engine: ReasoningEngine, self_ref_processor: SelfReferentialQueryProcessor):
