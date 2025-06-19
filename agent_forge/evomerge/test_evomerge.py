@@ -1,4 +1,15 @@
 import unittest
+import importlib.util
+
+# Skip these heavy integration tests if PyTorch is unavailable.  They
+# require loading pretrained models and running tensor operations.
+try:
+    torch_spec = importlib.util.find_spec("torch")
+except ValueError:
+    torch_spec = None
+if torch_spec is None:
+    raise unittest.SkipTest("PyTorch not installed")
+
 import torch
 from .config import Configuration, ModelReference, MergeSettings, EvolutionSettings
 from .utils import (

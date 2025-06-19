@@ -1,5 +1,16 @@
 import unittest
 import asyncio
+import importlib.util
+
+# Skip if PyTorch is not installed since the QA layer relies on transformer
+# models that require torch.
+try:
+    torch_spec = importlib.util.find_spec("torch")
+except ValueError:
+    torch_spec = None
+if torch_spec is None:
+    raise unittest.SkipTest("PyTorch not installed")
+
 from agents.king.quality_assurance_layer import QualityAssuranceLayer, EudaimoniaTriangulator
 from agents.utils.task import Task as LangroidTask
 
