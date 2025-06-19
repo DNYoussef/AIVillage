@@ -30,7 +30,7 @@ class TestKingAgent(unittest.TestCase):
         self.communication_protocol = StandardCommunicationProtocol()
         self.rag_config = RAGConfig()
         self.vector_store = MagicMock(spec=VectorStore)
-        self.king_agent = KingAgent(self.config, self.communication_protocol, self.rag_config, self.vector_store)
+        self.king_agent = KingAgent(self.config, self.communication_protocol, self.vector_store)
 
     @patch('agents.king.user_intent_interpreter.UserIntentInterpreter.interpret_intent')
     @patch('agents.king.key_concept_extractor.KeyConceptExtractor.extract_key_concepts')

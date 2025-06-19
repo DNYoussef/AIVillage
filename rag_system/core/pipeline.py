@@ -7,12 +7,14 @@ from rag_system.processing.reasoning_engine import UncertaintyAwareReasoningEngi
 from rag_system.core.cognitive_nexus import CognitiveNexus
 from rag_system.utils.error_handling import log_and_handle_errors
 from rag_system.retrieval.bayes_net import BayesNet
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 
 # Global BayesNet instance shared across pipelines
 shared_bayes_net = BayesNet()
 
 class EnhancedRAGPipeline(BaseComponent):
-    def __init__(self, config: UnifiedConfig | None = None):
+    def __init__(self, config: UnifiedConfig | None = None,
+                 knowledge_tracker: UnifiedKnowledgeTracker | None = None):
         """Initialize the RAG pipeline with an optional configuration."""
         self.config = config or UnifiedConfig()
         self.latent_space_activation = LatentSpaceActivation()
@@ -20,6 +22,7 @@ class EnhancedRAGPipeline(BaseComponent):
         self.reasoning_engine = UncertaintyAwareReasoningEngine(self.config)
         self.cognitive_nexus = CognitiveNexus()
         self.bayes_net = shared_bayes_net
+        self.knowledge_tracker = knowledge_tracker
 
     @log_and_handle_errors
     async def initialize(self) -> None:
@@ -35,6 +38,8 @@ class EnhancedRAGPipeline(BaseComponent):
 
         # Retrieval
         retrieved_info = await self.hybrid_retriever.retrieve(query, activated_knowledge)
+        if self.knowledge_tracker is not None:
+            self.knowledge_tracker.record_retrieval(query, retrieved_info)
 
         # Reasoning
         reasoning_result = await self.reasoning_engine.reason(query, retrieved_info, activated_knowledge)

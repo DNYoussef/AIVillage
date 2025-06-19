@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from ..core.structures import RetrievalResult
 from dataclasses import dataclass, field
 
 @dataclass
@@ -19,6 +20,7 @@ class UnifiedKnowledgeTracker:
         self.graph_store = graph_store
         self.knowledge_changes: List[KnowledgeChange] = []
         self.knowledge_graph: Dict[str, Dict[str, Any]] = {}
+        self.retrieval_log: List[Dict[str, Any]] = []
 
     def record_change(self, change: KnowledgeChange):
         self.knowledge_changes.append(change)
@@ -49,6 +51,21 @@ class UnifiedKnowledgeTracker:
 
     def get_current_knowledge(self, entity: str) -> Dict[str, Any]:
         return self.knowledge_graph.get(entity, {})
+
+    def record_retrieval(
+        self,
+        query: str,
+        results: List["RetrievalResult"],
+        timestamp: Optional[datetime] = None,
+    ) -> None:
+        """Record retrieval results for auditing and analysis."""
+        self.retrieval_log.append(
+            {
+                "query": query,
+                "results": results,
+                "timestamp": timestamp or datetime.now(),
+            }
+        )
 
     def update_vector_store(self):
         """Synchronize recorded changes with the underlying vector store.

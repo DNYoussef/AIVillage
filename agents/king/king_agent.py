@@ -22,6 +22,7 @@ from .response_generation_agent import ResponseGenerationAgent
 from rag_system.utils.error_handling import log_and_handle_errors
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 
 # Backwards compatibility alias
 KingAgentConfig = UnifiedAgentConfig
@@ -31,11 +32,12 @@ class KingAgent(UnifiedBaseAgent):
         self,
         config: UnifiedAgentConfig,
         communication_protocol: StandardCommunicationProtocol,
-        vector_store: VectorStore
+        vector_store: VectorStore,
+        knowledge_tracker: UnifiedKnowledgeTracker | None = None
     ):
-        super().__init__(config, communication_protocol)
+        super().__init__(config, communication_protocol, knowledge_tracker)
         self.vector_store = vector_store
-        self.rag_pipeline = EnhancedRAGPipeline(config.rag_config)  # Initialize the RAG pipeline
+        self.rag_pipeline = EnhancedRAGPipeline(config.rag_config, knowledge_tracker)  # Initialize the RAG pipeline
         self.coordinator = KingCoordinator(config, communication_protocol)
         self.unified_planning_and_management = UnifiedPlanningAndManagement(communication_protocol, self.rag_pipeline, self)
         self.unified_analytics = UnifiedAnalytics()

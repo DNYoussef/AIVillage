@@ -2,11 +2,16 @@ from fastapi import FastAPI, UploadFile, File
 from pydantic import BaseModel
 
 from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 
 app = FastAPI()
 
 rag_pipeline = EnhancedRAGPipeline()
 vector_store = rag_pipeline.hybrid_retriever.vector_store
+knowledge_tracker = UnifiedKnowledgeTracker(
+    rag_pipeline.hybrid_retriever.vector_store, rag_pipeline.hybrid_retriever.graph_store
+)
+rag_pipeline.knowledge_tracker = knowledge_tracker
 
 class QueryRequest(BaseModel):
     query: str

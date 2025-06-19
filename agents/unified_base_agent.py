@@ -8,6 +8,7 @@ from agents.language_models.openai_gpt import OpenAIGPTConfig
 from rag_system.retrieval.vector_store import VectorStore
 from rag_system.core.config import UnifiedConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 from communications.protocol import (
     StandardCommunicationProtocol,
     Message,
@@ -29,9 +30,11 @@ class UnifiedAgentConfig:
 
 
 class UnifiedBaseAgent:
-    def __init__(self, config: UnifiedAgentConfig, communication_protocol: StandardCommunicationProtocol):
+    def __init__(self, config: UnifiedAgentConfig,
+                 communication_protocol: StandardCommunicationProtocol,
+                 knowledge_tracker: UnifiedKnowledgeTracker | None = None):
         self.config = config
-        self.rag_pipeline = EnhancedRAGPipeline(config.rag_config)
+        self.rag_pipeline = EnhancedRAGPipeline(config.rag_config, knowledge_tracker)
         self.name = config.name
         self.description = config.description
         self.capabilities = config.capabilities
@@ -557,9 +560,10 @@ def create_agent(
     agent_type: str,
     config: UnifiedAgentConfig,
     communication_protocol: StandardCommunicationProtocol,
+    knowledge_tracker: UnifiedKnowledgeTracker | None = None,
 ) -> UnifiedBaseAgent:
     """Factory function to create different types of agents."""
-    return UnifiedBaseAgent(config, communication_protocol)
+    return UnifiedBaseAgent(config, communication_protocol, knowledge_tracker)
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ from pathlib import Path
 
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.append(str(repo_root))
+import agents
 
 import importlib.util
 

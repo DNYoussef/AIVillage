@@ -1,5 +1,6 @@
 from typing import Dict, Any
 from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
 from rag_system.core.config import RAGConfig
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
@@ -8,8 +9,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 class UnifiedRAGManagement:
-    def __init__(self, rag_config: RAGConfig, llm_config: OpenAIGPTConfig):
-        self.rag_system = EnhancedRAGPipeline(rag_config)
+    def __init__(self, rag_config: RAGConfig, llm_config: OpenAIGPTConfig, knowledge_tracker: UnifiedKnowledgeTracker | None = None):
+        self.rag_system = EnhancedRAGPipeline(rag_config, knowledge_tracker)
         self.llm = llm_config.create()
 
     @error_handler.handle_error

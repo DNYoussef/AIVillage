@@ -338,16 +338,19 @@ from your_communication_protocol import CommunicationProtocol
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.core.config import UnifiedConfig
 from rag_system.retrieval.vector_store import VectorStore
+from rag_system.retrieval.graph_store import GraphStore
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 
 # Initialize dependencies
 comm_protocol = CommunicationProtocol()
 rag_config = UnifiedConfig()
 vector_store = VectorStore(rag_config)
-rag_system = EnhancedRAGPipeline(rag_config)
+tracker = UnifiedKnowledgeTracker(vector_store, GraphStore())
+rag_system = EnhancedRAGPipeline(rag_config, tracker)
 
 # Create KingAgent
 config = KingAgentConfig(name="KingAgent", description="Main coordinator for AI Village", model="gpt-4")
-king_agent = KingAgent(config, comm_protocol, vector_store)
+king_agent = KingAgent(config, comm_protocol, vector_store, tracker)
 
 # Register agents
 await king_agent.coordinator.add_agent("sage", SageAgent(comm_protocol))
@@ -393,8 +396,8 @@ The RAG system consists of the following main components:
 
 1. **UnifiedConfig**: A centralized configuration class that manages settings for all components of the system.
 2. **SageAgent**: An advanced agent capable of processing queries, executing tasks, and managing the RAG pipeline.
-3. **EnhancedRAGPipeline**: The core RAG system that handles retrieval and generation tasks.
-4. **UnifiedKnowledgeTracker**: A component that tracks and manages knowledge changes and evolution.
+3. **EnhancedRAGPipeline**: The core RAG system that handles retrieval and generation tasks and reports retrieved documents to the tracker.
+4. **UnifiedKnowledgeTracker**: Tracks knowledge changes and logs all retrievals for later analysis.
 5. **ErrorController**: A centralized error handling system for managing and recovering from errors.
 
 ## Key Features

@@ -28,7 +28,7 @@ def build_agent():
         instructions=""
     )
     protocol = MagicMock(spec=StandardCommunicationProtocol)
-    return DummyAgent(config, protocol)
+    return DummyAgent(config, protocol, None)
 
 class TestLayerSequence(unittest.IsolatedAsyncioTestCase):
     async def test_layers_run(self):
