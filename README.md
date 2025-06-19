@@ -267,7 +267,7 @@ To use the model mergers, follow these steps:
    python cli.py --download-and-merge --model1 <model1_path> --model2 <model2_path> [--model3 <model3_path>] [options]
    ```
 
-3. The merged model will be saved in the directory specified by the `--custom-dir` option (default is `./merged_models`).
+3. The merged model will be saved in the directory specified by the `--custom-dir` option. By default, this is the `merged_models/` folder in your working directory. You can modify this location by editing `merge_config.yaml` or passing `--custom-dir` on the command line.
 
 ### Configuration Options
 
