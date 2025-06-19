@@ -14,7 +14,7 @@ This project implements a multi-agent AI system featuring a self-evolving archit
    - Prompt Baking: Efficiently incorporates new knowledge.
    - Continuous Learning: Rapidly integrates new experiences.
    - SAGE Framework: Enables recursive self-improvement through assistant-checker-reviser cycle.
-   - Decision Making: Utilizes advanced algorithms (MCTS and DPO) for effective choices.
+   - Decision Making: Includes a modular decision-making layer with stub implementations of Monte Carlo Tree Search (MCTS) and Direct Preference Optimization (DPO).
 4. IncentiveModel: A sophisticated model for calculating and managing incentives for agents based on their performance and task complexity.
 
 ## Self-Evolving System
@@ -25,7 +25,7 @@ The self-evolving system is the core of the AI Village's continuous improvement 
 2. Foundational Layer (Prompt Baking): Encodes and integrates new knowledge efficiently into the system's knowledge base.
 3. Continuous Learning Layer: Extracts valuable information from tasks and results to update the system's capabilities.
 4. Agent Architecture Layer (SAGE Framework): Implements a self-aware generative engine for response generation, evaluation, and revision.
-5. Decision-Making Layer: Utilizes advanced AI techniques for making informed decisions based on tasks and context.
+5. Decision-Making Layer: Uses the same modular decision maker, where MCTS and DPO currently act as stub algorithms, to guide choices based on task context.
 
 The system periodically evolves by updating agent capabilities, refining decision-making processes, and optimizing its overall architecture.
 
@@ -293,11 +293,11 @@ For more detailed information on model merging and advanced configurations, plea
 
 ## King Agent
 
-The King Agent is a sophisticated AI system designed to coordinate and manage multiple AI agents in the AI Village project. It uses advanced decision-making processes, task routing, and management techniques to efficiently handle complex tasks and workflows.
+The King Agent coordinates multiple AI agents in the AI Village project. It features modular decision-making, task routing, and management components, though some algorithms are currently placeholders.
 
 ### Key Features
 
-1. **Monte Carlo Tree Search (MCTS) for Workflow Optimization**: The King Agent uses MCTS to generate and optimize workflows for complex tasks.
+1. **Monte Carlo Tree Search (MCTS) for Workflow Optimization**: The current implementation includes a basic MCTS stub for workflow planning.
 
 2. **Incentive-Based Agent Management**: An incentive model is implemented to motivate and manage multiple agents effectively.
 
@@ -318,7 +318,7 @@ The King Agent is a sophisticated AI system designed to coordinate and manage mu
 - **KingAgent**: The main class that integrates all other components and serves as the primary interface for the King Agent system.
 - **KingCoordinator**: The central component that manages interactions between different parts of the system.
 - **UnifiedTaskManager**: Responsible for creating, assigning, and managing tasks across different agents.
-- **DecisionMaker**: Makes complex decisions using various AI techniques, including MCTS and RAG-enhanced analysis.
+- **DecisionMaker**: Provides a decision-making interface; MCTS support exists as a stub and integrates with RAG for analysis.
 - **ProblemAnalyzer**: Analyzes tasks and generates comprehensive problem analyses by collaborating with other agents.
 - **AgentRouter**: Efficiently routes tasks to the most appropriate agents based on their capabilities and past performance.
 
@@ -386,9 +386,12 @@ These changes have further improved the system's ability to adapt and optimize i
 4. Enhance the evolution mechanisms to include more advanced techniques like neural architecture search.
 5. Further refine the IncentiveModel to incorporate more complex factors and long-term performance trends.
 6. Develop advanced analytics and visualization tools for monitoring agent performance and system efficiency.
+
+For a detailed roadmap, see [TODO.md](TODO.md).
+
 # RAG System
 
-This repository contains an implementation of a Retrieval-Augmented Generation (RAG) system with advanced features and a modular architecture.
+This repository contains an early-stage implementation of a Retrieval-Augmented Generation (RAG) system. Its modular design supports further expansion, and some advanced capabilities remain stubbed.
 
 ## System Architecture
 
