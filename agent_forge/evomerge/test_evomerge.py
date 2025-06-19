@@ -1,10 +1,8 @@
 import unittest
-import importlib.util
 import pytest
 
 pytestmark = pytest.mark.requires_gpu
-if importlib.util.find_spec("torch") is None:
-    pytest.skip("PyTorch not installed", allow_module_level=True)
+torch = pytest.importorskip("torch")
 from .config import Configuration, ModelReference, MergeSettings, EvolutionSettings
 from .utils import (
     EvoMergeException,

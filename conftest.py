@@ -29,7 +29,20 @@ def _ensure_module(name: str, attrs: dict | None = None):
 
 # Stub faiss if missing
 _ensure_module('faiss', {'IndexFlatL2': lambda *args, **kwargs: object()})
-_ensure_module('numpy', {'zeros': lambda *args, **kwargs: [0] * (args[0] if args else 0)})
+
+class _FakeArray(list):
+    def astype(self, *args, **kwargs):
+        return self
+
+_ensure_module(
+    'numpy',
+    {
+        '__version__': '0.0',
+        'float32': 'float32',
+        'array': lambda a=None, *args, **kwargs: _FakeArray(list(a) if a is not None else []),
+        'zeros': lambda shape, dtype=None: _FakeArray([0] * (shape[0] if isinstance(shape, tuple) else shape)),
+    },
+)
 _ensure_module('httpx', {'BaseTransport': object})
 _ensure_module('yaml', {'safe_load': lambda *a, **k: {}, 'safe_dump': lambda *a, **k: ''})
 class _SimpleGraph:
@@ -92,11 +105,7 @@ _ensure_module('tiktoken', {'Encoding': type('Encoding', (), {})})
 # allow the test suite to be imported even when the real packages are not
 # installed.  The actual tests that rely on them will be skipped if the
 # dependencies are missing.
-_ensure_module('numpy', {
-    '__version__': '0.0',
-    'array': lambda *a, **k: [],
-    'zeros': lambda *a, **k: []
-})
+
 _ensure_module('httpx', {'BaseTransport': object})
 
 # Ensure `importlib.util.find_spec` reports these stubs as missing so tests
