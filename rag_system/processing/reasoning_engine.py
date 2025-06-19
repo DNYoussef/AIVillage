@@ -15,6 +15,33 @@ class UncertaintyAwareReasoningEngine:
         # Each node is expected to contain at least a ``content`` field
         self.graph = nx.Graph()
 
+    async def initialize(self) -> None:
+        """Initialize underlying resources for the reasoning engine.
+
+        This default implementation simply returns as there are no
+        mandatory resources to initialize yet.  Subclasses can override
+        this method to set up database connections or language models.
+        """
+        return None
+
+    async def shutdown(self) -> None:
+        """Release any resources held by the reasoning engine."""
+        return None
+
+    async def get_status(self) -> Dict[str, Any]:
+        """Return a basic status dictionary for monitoring purposes."""
+        return {
+            "driver_initialized": self.driver is not None,
+            "graph_nodes": self.graph.number_of_nodes(),
+        }
+
+    async def update_config(self, config: Dict[str, Any]) -> None:
+        """Update the engine configuration with the provided values."""
+        if isinstance(config, UnifiedConfig):
+            self.config = config
+        else:
+            self.config.update(**config)
+
     async def reason(self, query: str, retrieved_info: List[RetrievalResult], activated_knowledge: Dict[str, Any]) -> Dict[str, Any]:
         with self.driver.session() as session:
             if timestamp:
