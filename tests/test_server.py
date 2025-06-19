@@ -1,4 +1,7 @@
-import unittest
+import importlib.util, unittest
+if importlib.util.find_spec("httpx") is None:
+    raise unittest.SkipTest("Required dependency not installed")
+
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 import sys
