@@ -32,7 +32,59 @@ _ensure_module('faiss', {'IndexFlatL2': lambda *args, **kwargs: object()})
 _ensure_module('numpy', {'zeros': lambda *args, **kwargs: [0] * (args[0] if args else 0)})
 _ensure_module('httpx', {'BaseTransport': object})
 _ensure_module('yaml', {'safe_load': lambda *a, **k: {}, 'safe_dump': lambda *a, **k: ''})
-_ensure_module('networkx', {'Graph': object})
+class _SimpleGraph:
+    def __init__(self):
+        self._nodes = {}
+        self._edges = []
+
+    class _NodeView(list):
+        def __init__(self, nodes):
+            self._nodes = nodes
+
+        def __iter__(self):
+            return iter(self._nodes)
+
+        def __call__(self, data=False):
+            if data:
+                return [(n, a) for n, a in self._nodes.items()]
+            return list(self._nodes)
+
+    class _EdgeView(list):
+        def __init__(self, edges):
+            self._edges = edges
+
+        def __iter__(self):
+            return iter((u, v) for u, v, _ in self._edges)
+
+        def __call__(self, data=False):
+            if data:
+                return [(u, v, a) for u, v, a in self._edges]
+            return [(u, v) for u, v, _ in self._edges]
+
+    def add_node(self, node, **attrs):
+        self._nodes[node] = attrs
+
+    @property
+    def nodes(self):
+        return self._NodeView(self._nodes)
+
+    def add_edge(self, u, v, **attrs):
+        self._edges.append((u, v, attrs))
+
+    @property
+    def edges(self):
+        return self._EdgeView(self._edges)
+
+    def has_node(self, node):
+        return node in self._nodes
+
+    def neighbors(self, node):
+        return [v for u, v, _ in self._edges if u == node] + [u for u, v, _ in self._edges if v == node]
+
+    def number_of_nodes(self):
+        return len(self._nodes)
+
+_ensure_module('networkx', {'Graph': _SimpleGraph})
 _ensure_module('tiktoken.load', {'load_tiktoken_bpe': lambda *a, **k: {}})
 _ensure_module('tiktoken', {'Encoding': type('Encoding', (), {})})
 
