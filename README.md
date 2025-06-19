@@ -336,12 +336,12 @@ Example:
 from agents.king.king_agent import KingAgent, KingAgentConfig
 from your_communication_protocol import CommunicationProtocol
 from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.core.config import UnifiedConfig
+from rag_system.core.config import load_from_yaml
 from rag_system.retrieval.vector_store import VectorStore
 
 # Initialize dependencies
 comm_protocol = CommunicationProtocol()
-rag_config = UnifiedConfig()
+rag_config = load_from_yaml("configs/rag_config.yaml")
 vector_store = VectorStore(rag_config)
 rag_system = EnhancedRAGPipeline(rag_config)
 
