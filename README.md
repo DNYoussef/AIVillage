@@ -435,7 +435,12 @@ The system can be configured by modifying the `UnifiedConfig` class in `rag_syst
 
 ## Agent Forge Pipeline
 
-See [docs/agent_forge_pipeline_overview.md](docs/agent_forge_pipeline_overview.md) for a summary of the full training and deployment process used to create self-improving agents.
+See [docs/complete_agent_forge_pipeline.md](docs/complete_agent_forge_pipeline.md) for a detailed description of the training pipeline. A shorter summary remains available in [docs/agent_forge_pipeline_overview.md](docs/agent_forge_pipeline_overview.md).
+
+Additional utilities for this pipeline include:
+- `agent_forge/training/self_modeling.py` – temperature‑based self‑modeling.
+- `agent_forge/training/prompt_baking.py` – wrapper for deep prompt baking cycles.
+- `agent_forge/training/expert_vectors.py` – tools for expert vector creation and composition.
 
 ## Contributing
 

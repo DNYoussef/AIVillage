@@ -26,3 +26,10 @@ This document summarizes the full Agent Forge pipeline used to create self-impro
 2. **Monitoring & Continuous Learning** – Once deployed, the agent continues to gather data, log behaviour and feed new experiences back into the training loop.
 
 This pipeline combines evolutionary merging, reinforcement learning, self‑reflection and automated architectural search to produce robust agents that improve over time.
+
+Implementation helpers:
+- `training/self_modeling.py` – self-modeling trainer used in Phase 3.
+- `training/prompt_baking.py` – utilities for baking prompt strategies.
+- `training/expert_vectors.py` – simple expert vector system for vector composition.
+
+For a step-by-step description of each phase see [complete_agent_forge_pipeline.md](complete_agent_forge_pipeline.md).
