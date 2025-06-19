@@ -1,5 +1,4 @@
 import sys
-import sys
 import types
 import importlib.util
 import importlib.machinery
@@ -21,13 +20,15 @@ def _ensure_module(name: str, attrs: dict | None = None):
 
 # Stub faiss if missing
 _ensure_module('faiss', {'IndexFlatL2': lambda *args, **kwargs: object()})
+_ensure_module('numpy', {'zeros': lambda *args, **kwargs: [0] * (args[0] if args else 0)})
+_ensure_module('httpx')
 
 
 
 def pytest_collection_modifyitems(config, items):
     """Skip tests requiring heavy ML dependencies if they aren't available."""
     missing = []
-    for dep in ("torch", "sklearn", "psutil"):
+    for dep in ("torch", "sklearn", "psutil", "numpy", "httpx"):
         try:
             if importlib.util.find_spec(dep) is None:
                 missing.append(dep)
@@ -46,13 +47,14 @@ def pytest_ignore_collect(path, config):
     heavy_dirs = ["agent_forge/evomerge", "agents/king/tests", "tests/test_king_agent.py"]
     pstr = str(path)
     if any(h in pstr for h in heavy_dirs):
-        print('ignore_collect check', pstr)
-        for dep in ("torch", "sklearn", "psutil"):
+        missing = []
+        for dep in ("torch", "sklearn", "psutil", "numpy", "httpx"):
             try:
                 if importlib.util.find_spec(dep) is None:
-                    print('missing', dep)
-                    return True
+                    missing.append(dep)
             except ValueError:
-                print('error spec', dep)
-                return True
+                missing.append(dep)
+        if missing:
+            print(f"Skipping {pstr} due to missing dependencies: {', '.join(missing)}")
+            return True
     return False
