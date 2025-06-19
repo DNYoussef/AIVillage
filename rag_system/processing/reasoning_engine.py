@@ -18,15 +18,14 @@ class UncertaintyAwareReasoningEngine:
     async def initialize(self) -> None:
         """Initialize underlying resources for the reasoning engine.
 
-        This default implementation simply returns as there are no
-        mandatory resources to initialize yet.  Subclasses can override
-        this method to set up database connections or language models.
+        The base implementation performs no work.  Subclasses may
+        override this method to set up database or model connections.
         """
-        return None
+        pass
 
     async def shutdown(self) -> None:
         """Release any resources held by the reasoning engine."""
-        return None
+        pass
 
     async def get_status(self) -> Dict[str, Any]:
         """Return a basic status dictionary for monitoring purposes."""
