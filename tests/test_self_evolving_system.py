@@ -1,4 +1,7 @@
-import unittest
+import importlib.util, unittest
+if importlib.util.find_spec("numpy") is None:
+    raise unittest.SkipTest("Required dependency not installed")
+
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 import numpy as np

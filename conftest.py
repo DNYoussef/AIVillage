@@ -1,26 +1,52 @@
 import sys
-import sys
 import types
 import importlib.util
 import importlib.machinery
 import pytest
 
+_STUBBED_MODULES = set()
+
 # Provide lightweight stubs for heavy optional dependencies so test collection
 # succeeds even if they are not installed in the environment.
 
 def _ensure_module(name: str, attrs: dict | None = None):
-    if importlib.util.find_spec(name) is None and name not in sys.modules:
+    spec = importlib.util.find_spec(name)
+    if spec is None and name not in sys.modules:
         mod = types.ModuleType(name)
         if attrs:
             for k, v in attrs.items():
                 setattr(mod, k, v)
         mod.__spec__ = importlib.machinery.ModuleSpec(name, loader=None)
+        mod._is_stub = True
         sys.modules[name] = mod
+        _STUBBED_MODULES.add(name)
         return mod
     return sys.modules.get(name)
 
 # Stub faiss if missing
 _ensure_module('faiss', {'IndexFlatL2': lambda *args, **kwargs: object()})
+
+# Provide simple stubs for optional dependencies used in tests.  These
+# allow the test suite to be imported even when the real packages are not
+# installed.  The actual tests that rely on them will be skipped if the
+# dependencies are missing.
+_ensure_module('numpy', {
+    '__version__': '0.0',
+    'array': lambda *a, **k: [],
+    'zeros': lambda *a, **k: []
+})
+_ensure_module('httpx')
+
+# Ensure `importlib.util.find_spec` reports these stubs as missing so tests
+# can detect optional dependencies correctly.
+_real_find_spec = importlib.util.find_spec
+
+def _patched_find_spec(name, *args, **kwargs):
+    if name in _STUBBED_MODULES:
+        return None
+    return _real_find_spec(name, *args, **kwargs)
+
+importlib.util.find_spec = _patched_find_spec
 
 
 
