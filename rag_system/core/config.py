@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Dict, Any
 from datetime import timedelta
+from pathlib import Path
+import yaml
 
 class UnifiedConfig(BaseModel):
     # Add common configuration parameters here
@@ -50,3 +52,25 @@ class RAGConfig(UnifiedConfig):
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 # You can add more specific config classes as needed
+
+
+def load_from_yaml(config_path: str) -> RAGConfig:
+    """Load configuration from a YAML file.
+
+    Parameters
+    ----------
+    config_path: str
+        Path to the YAML configuration file.
+
+    Returns
+    -------
+    RAGConfig
+        Configuration populated with values from the YAML file.
+    """
+    path = Path(config_path)
+    data = {}
+    if path.is_file():
+        with open(path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+    return RAGConfig(**data)
+
