@@ -1,8 +1,10 @@
 import importlib
 import unittest
+import pytest
 
+pytestmark = pytest.mark.requires_gpu
 if importlib.util.find_spec("torch") is None:
-    raise unittest.SkipTest("PyTorch not installed")
+    pytest.skip("PyTorch not installed", allow_module_level=True)
 
 from agent_forge.training.identity import IdentityFormationSystem, MoralFrameworkBaker
 

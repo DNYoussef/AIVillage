@@ -1,6 +1,5 @@
-import importlib.util, unittest
-if importlib.util.find_spec("numpy") is None:
-    raise unittest.SkipTest("Required dependency not installed")
+import importlib.util
+import unittest
 
 from datetime import datetime
 import numpy as np

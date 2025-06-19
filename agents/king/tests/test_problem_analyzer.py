@@ -2,15 +2,10 @@ import unittest
 import asyncio
 import importlib.util
 from unittest.mock import Mock, patch
+import pytest
 
-# Skip if PyTorch is not installed since the quality assurance layer imports
-# transformer models that require it.
-try:
-    torch_spec = importlib.util.find_spec("torch")
-except ValueError:
-    torch_spec = None
-if torch_spec is None:
-    raise unittest.SkipTest("PyTorch not installed")
+pytestmark = pytest.mark.requires_gpu
+torch = pytest.importorskip("torch")
 
 from agents.king.planning.problem_analyzer import ProblemAnalyzer
 from agents.king.quality_assurance_layer import QualityAssuranceLayer

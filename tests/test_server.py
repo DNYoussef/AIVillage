@@ -1,6 +1,10 @@
-import importlib.util, unittest
+import importlib.util
+import unittest
+import pytest
+
+pytestmark = pytest.mark.requires_gpu
 if importlib.util.find_spec("httpx") is None:
-    raise unittest.SkipTest("Required dependency not installed")
+    pytest.skip("httpx not installed", allow_module_level=True)
 
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch

@@ -3,10 +3,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import sys
 from pathlib import Path
 import importlib.util
+import pytest
 
-# Skip if torch is unavailable since underlying agents rely on transformer models.
+pytestmark = pytest.mark.requires_gpu
 if importlib.util.find_spec("torch") is None:
-    raise unittest.SkipTest("PyTorch not installed")
+    pytest.skip("PyTorch not installed", allow_module_level=True)
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig

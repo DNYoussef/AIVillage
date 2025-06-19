@@ -1,6 +1,10 @@
-import importlib.util, unittest
-if importlib.util.find_spec("numpy") is None:
-    raise unittest.SkipTest("Required dependency not installed")
+import importlib.util
+import unittest
+import pytest
+
+pytestmark = pytest.mark.requires_gpu
+if importlib.util.find_spec("torch") is None:
+    pytest.skip("PyTorch not installed", allow_module_level=True)
 
 import asyncio
 from unittest.mock import AsyncMock, MagicMock

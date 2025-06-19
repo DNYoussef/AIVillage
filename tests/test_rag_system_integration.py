@@ -3,11 +3,14 @@ import asyncio
 import sys
 from pathlib import Path
 from unittest import mock
+import importlib.util
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
+pytestmark = pytest.mark.requires_gpu
+if importlib.util.find_spec("torch") is None:
+    pytest.skip("PyTorch not installed", allow_module_level=True)
 
-pytest.skip("Skipping integration test due to heavy dependencies", allow_module_level=True)
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 fake_faiss = mock.MagicMock()
 fake_faiss.__spec__ = mock.MagicMock()

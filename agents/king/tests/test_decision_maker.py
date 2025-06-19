@@ -2,16 +2,10 @@ import unittest
 import asyncio
 import importlib.util
 from unittest.mock import Mock, patch
+import pytest
 
-# These decision maker tests rely on the quality assurance layer which pulls in
-# transformer models requiring PyTorch. Skip the tests entirely if torch isn't
-# available.
-try:
-    torch_spec = importlib.util.find_spec("torch")
-except ValueError:
-    torch_spec = None
-if torch_spec is None:
-    raise unittest.SkipTest("PyTorch not installed")
+pytestmark = pytest.mark.requires_gpu
+torch = pytest.importorskip("torch")
 
 from agents.king.planning.unified_decision_maker import UnifiedDecisionMaker
 from agents.king.quality_assurance_layer import QualityAssuranceLayer
