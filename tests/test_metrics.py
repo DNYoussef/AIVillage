@@ -17,6 +17,10 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(measure_relevance(thought, target_same), 1.0, places=5)
         self.assertLess(measure_relevance(thought, target_diff), 0.5)
 
+    def test_single_step_coherence_is_one(self):
+        single = np.array([[[1.0, 0.0]]])
+        self.assertEqual(measure_coherence(single), 1.0)
+
 
 if __name__ == "__main__":
     unittest.main()
