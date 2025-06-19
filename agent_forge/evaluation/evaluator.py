@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 
 def evaluate_thought_quality(model, eval_data):
     thought_coherence = []
