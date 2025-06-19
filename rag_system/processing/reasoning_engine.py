@@ -71,22 +71,59 @@ class UncertaintyAwareReasoningEngine:
         self.driver.close()
 
     async def get_snapshot(self, timestamp: datetime) -> Dict[str, Any]:
-        # Implement logic to return a snapshot of the graph store at the given timestamp
-        pass
+        """Return a snapshot of the reasoning graph up to ``timestamp``.
+
+        Nodes or edges with a ``timestamp`` attribute greater than the supplied
+        ``timestamp`` are omitted.  This mirrors the behaviour of
+        :class:`~rag_system.retrieval.graph_store.GraphStore.get_snapshot` and
+        allows tests to reason about time filtered views of the in-memory graph.
+        """
+
+        snapshot = nx.Graph()
+
+        for node_id, data in self.graph.nodes(data=True):
+            node_ts = data.get("timestamp")
+            if node_ts is None or node_ts <= timestamp:
+                snapshot.add_node(node_id, **data)
+
+        for source, target, data in self.graph.edges(data=True):
+            if not (snapshot.has_node(source) and snapshot.has_node(target)):
+                continue
+
+            edge_ts = data.get("timestamp")
+            if edge_ts is None or edge_ts <= timestamp:
+                snapshot.add_edge(source, target, **data)
+
+        return {
+            "nodes": list(snapshot.nodes(data=True)),
+            "edges": list(snapshot.edges(data=True)),
+        }
 
     async def beam_search(self, query: str, beam_width: int, max_depth: int) -> List[Tuple[List[str], float]]:
         initial_entities = await self.get_initial_entities(query)
-        beams = [[entity] for entity in initial_entities]
+        beams: List[List[str]] = [[e] for e in initial_entities]
 
         for _ in range(max_depth):
-            candidates = []
+            candidates: List[Tuple[List[str], float]] = []
             for beam in beams:
                 neighbors = await self.get_neighbors(beam[-1])
                 for neighbor in neighbors:
+                    if neighbor in beam:
+                        continue
                     new_beam = beam + [neighbor]
-                    score = await self.llm.score_path(query, new_beam)
+
+                    if self.llm and hasattr(self.llm, "score_path"):
+                        score = await self.llm.score_path(query, new_beam)
+                    else:
+                        score = 0.0
+                        for s, t in zip(new_beam[:-1], new_beam[1:]):
+                            score += self.graph[s][t].get("weight", 1.0)
+
                     candidates.append((new_beam, score))
-            
+
+            if not candidates:
+                break
+
             beams = sorted(candidates, key=lambda x: x[1], reverse=True)[:beam_width]
 
         return beams
@@ -179,15 +216,14 @@ class UncertaintyAwareReasoningEngine:
         :param uncertainties: A list of uncertainties for each step.
         :return: The propagated uncertainty as a float between 0 and 1.
         """
-        # Implement a more sophisticated uncertainty propagation method
-        # This method assumes that uncertainties are independent and combines them using the formula:
-        # overall_uncertainty = 1 - (1 - u1) * (1 - u2) * ... * (1 - un)
-        # where u1, u2, ..., un are the individual uncertainties
+        # This implementation assumes the uncertainties of individual reasoning
+        # steps are independent.  The overall uncertainty is therefore the
+        # complement of the probability that *all* steps are correct.
 
         propagated_uncertainty = 1.0
         for step_uncertainty in uncertainties:
             propagated_uncertainty *= (1 - step_uncertainty)
-        
+
         return 1 - propagated_uncertainty
 
     async def reason_with_uncertainty(self, query: str, constructed_knowledge: Dict[str, Any], timestamp: datetime) -> Tuple[str, float, List[Dict[str, Any]]]:

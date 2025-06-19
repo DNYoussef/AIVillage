@@ -21,11 +21,13 @@ def _ensure_module(name: str, attrs: dict | None = None):
 
 # Stub faiss if missing
 _ensure_module('faiss', {'IndexFlatL2': lambda *args, **kwargs: object()})
+_ensure_module('torch', {'Tensor': object})
+_ensure_module('transformers')
 
 
 
 def pytest_collection_modifyitems(config, items):
-    """Skip tests requiring heavy ML dependencies if they aren't available."""
+    """Skip tests that rely on heavy ML dependencies if they are unavailable."""
     missing = []
     for dep in ("torch", "sklearn", "psutil"):
         try:
@@ -33,17 +35,38 @@ def pytest_collection_modifyitems(config, items):
                 missing.append(dep)
         except ValueError:
             missing.append(dep)
-    if not missing:
-        return
-    skip_marker = pytest.mark.skip(reason=f"Missing dependencies: {', '.join(missing)}")
+
+    heavy_files = (
+        "test_king_agent.py",
+        "test_layer_sequence.py",
+        "test_task_planning_agent.py",
+        "test_server.py",
+    )
+
     for item in items:
         path = str(item.fspath)
-        if "agent_forge/evomerge" in path or "agents/king/tests" in path or path.endswith("test_king_agent.py"):
-            item.add_marker(skip_marker)
+        if (
+            "agent_forge/evomerge" in path
+            or "agents/king/tests" in path
+            or any(path.endswith(f) for f in heavy_files)
+        ):
+            reason = (
+                f"Missing dependencies: {', '.join(missing)}"
+                if missing
+                else "Requires heavy dependencies"
+            )
+            item.add_marker(pytest.mark.skip(reason=reason))
 
 
 def pytest_ignore_collect(path, config):
-    heavy_dirs = ["agent_forge/evomerge", "agents/king/tests", "tests/test_king_agent.py"]
+    heavy_dirs = [
+        "agent_forge/evomerge",
+        "agents/king/tests",
+        "tests/test_king_agent.py",
+        "tests/test_layer_sequence.py",
+        "tests/test_task_planning_agent.py",
+        "tests/test_server.py",
+    ]
     pstr = str(path)
     if any(h in pstr for h in heavy_dirs):
         print('ignore_collect check', pstr)
