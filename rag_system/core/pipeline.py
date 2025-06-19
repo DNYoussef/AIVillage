@@ -6,20 +6,35 @@ from rag_system.retrieval.hybrid_retriever import HybridRetriever
 from rag_system.processing.reasoning_engine import UncertaintyAwareReasoningEngine
 from rag_system.core.cognitive_nexus import CognitiveNexus
 from rag_system.utils.error_handling import log_and_handle_errors
+from rag_system.error_handling.error_control import ErrorController
+try:
+    from rag_system.error_handling.hybrid_controller import HybridErrorController
+except Exception:  # pragma: no cover - optional dependency
+    HybridErrorController = None
 from rag_system.retrieval.bayes_net import BayesNet
 
 # Global BayesNet instance shared across pipelines
 shared_bayes_net = BayesNet()
 
 class EnhancedRAGPipeline(BaseComponent):
-    def __init__(self, config: UnifiedConfig | None = None):
-        """Initialize the RAG pipeline with an optional configuration."""
+    def __init__(self, config: UnifiedConfig | None = None,
+                 error_controller: ErrorController | None = None):
+        """Initialize the RAG pipeline with an optional configuration and error controller."""
         self.config = config or UnifiedConfig()
         self.latent_space_activation = LatentSpaceActivation()
         self.hybrid_retriever = HybridRetriever(self.config)
         self.reasoning_engine = UncertaintyAwareReasoningEngine(self.config)
         self.cognitive_nexus = CognitiveNexus()
         self.bayes_net = shared_bayes_net
+        if error_controller is not None:
+            self.error_controller = error_controller
+        else:
+            if HybridErrorController:
+                self.error_controller = HybridErrorController(
+                    num_steps=4, target_error_rate=0.05,
+                    adaptation_rate=0.1, confidence_level=0.95)
+            else:
+                self.error_controller = ErrorController()
 
     @log_and_handle_errors
     async def initialize(self) -> None:
@@ -30,17 +45,37 @@ class EnhancedRAGPipeline(BaseComponent):
 
     @log_and_handle_errors
     async def process(self, query: str) -> Dict[str, Any]:
-        # Latent space activation
-        activated_knowledge = await self.latent_space_activation.activate(query)
+        try:
+            activated_knowledge = await self.latent_space_activation.activate(query)
+        except Exception as e:
+            self.error_controller.handle_error(
+                "Latent space activation failed", e, {"stage": "activation", "query": query}
+            )
+            raise
 
-        # Retrieval
-        retrieved_info = await self.hybrid_retriever.retrieve(query, activated_knowledge)
+        try:
+            retrieved_info = await self.hybrid_retriever.retrieve(query, activated_knowledge)
+        except Exception as e:
+            self.error_controller.handle_error(
+                "Retrieval failed", e, {"stage": "retrieval", "query": query}
+            )
+            raise
 
-        # Reasoning
-        reasoning_result = await self.reasoning_engine.reason(query, retrieved_info, activated_knowledge)
+        try:
+            reasoning_result = await self.reasoning_engine.reason(query, retrieved_info, activated_knowledge)
+        except Exception as e:
+            self.error_controller.handle_error(
+                "Reasoning failed", e, {"stage": "reasoning", "query": query}
+            )
+            raise
 
-        # Cognitive integration
-        integrated_result = await self.cognitive_nexus.integrate(query, reasoning_result, activated_knowledge)
+        try:
+            integrated_result = await self.cognitive_nexus.integrate(query, reasoning_result, activated_knowledge)
+        except Exception as e:
+            self.error_controller.handle_error(
+                "Integration failed", e, {"stage": "integration", "query": query}
+            )
+            raise
 
         return {
             "query": query,

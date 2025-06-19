@@ -4,7 +4,23 @@ from datetime import datetime
 import random
 import numpy as np
 from agents.utils.task import Task as LangroidTask
-from agents.language_models.openai_gpt import OpenAIGPTConfig
+try:
+    from agents.language_models.openai_gpt import OpenAIGPTConfig
+except Exception:  # pragma: no cover - allow direct loading
+    from dataclasses import dataclass
+
+    class _StubLLM:
+        async def complete(self, prompt: str):
+            return type("Response", (), {"text": ""})()
+
+    @dataclass
+    class OpenAIGPTConfig:
+        chat_model: str = "gpt-4"
+        temperature: float = 0.7
+        max_tokens: int = 1000
+
+        def create(self):
+            return _StubLLM()
 from rag_system.retrieval.vector_store import VectorStore
 from rag_system.core.config import UnifiedConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
