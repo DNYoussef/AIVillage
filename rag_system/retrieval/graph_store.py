@@ -30,19 +30,51 @@ class GraphStore:
                     self.graph.add_edge(doc['id'], other_node, weight=0.5)
 
     async def retrieve(self, query: str, k: int, timestamp: datetime = None) -> List[RetrievalResult]:
+        """Return nodes that match ``query``.
+
+        When ``self.driver`` is provided it should be an instance of
+        :class:`neo4j.Driver` configured with a full-text index named
+        ``"nodeContent"``.  In that case this method performs the Neo4j query
+        shown below.  If ``self.driver`` is ``None`` a fallback search is
+        executed over ``self.graph`` by scanning the ``content`` attribute of
+        each node.
+        """
+
+        if self.driver is None:
+            query_lower = query.lower()
+            results: List[RetrievalResult] = []
+            for node_id, data in self.graph.nodes(data=True):
+                content = str(data.get("content", ""))
+                if query_lower in content.lower():
+                    node_ts = data.get("timestamp", datetime.min)
+                    if timestamp is None or node_ts <= timestamp:
+                        results.append(
+                            RetrievalResult(
+                                id=node_id,
+                                content=content,
+                                score=1.0,
+                                uncertainty=data.get("uncertainty", 0.0),
+                                timestamp=node_ts,
+                                version=data.get("version", 0),
+                            )
+                        )
+                if len(results) >= k:
+                    break
+            return results[:k]
+
         with self.driver.session() as session:
             if timestamp:
                 result = session.run(
                     """
-                    CALL db.index.fulltext.queryNodes("nodeContent", $query) 
+                    CALL db.index.fulltext.queryNodes("nodeContent", $query)
                     YIELD node, score
                     MATCH (node)-[:VERSION]->(v:NodeVersion)
                     WHERE v.timestamp <= $timestamp
                     WITH node, score, v
                     ORDER BY v.timestamp DESC, score DESC
                     LIMIT $k
-                    RETURN id(node) as id, v.content as content, score, 
-                        v.uncertainty as uncertainty, v.timestamp as timestamp, 
+                    RETURN id(node) as id, v.content as content, score,
+                        v.uncertainty as uncertainty, v.timestamp as timestamp,
                         v.version as version
                     """,
                     query=query, timestamp=timestamp, k=k
@@ -50,14 +82,14 @@ class GraphStore:
             else:
                 result = session.run(
                     """
-                    CALL db.index.fulltext.queryNodes("nodeContent", $query) 
+                    CALL db.index.fulltext.queryNodes("nodeContent", $query)
                     YIELD node, score
                     MATCH (node)-[:VERSION]->(v:NodeVersion)
                     WITH node, score, v
                     ORDER BY v.timestamp DESC, score DESC
                     LIMIT $k
-                    RETURN id(node) as id, v.content as content, score, 
-                        v.uncertainty as uncertainty, v.timestamp as timestamp, 
+                    RETURN id(node) as id, v.content as content, score,
+                        v.uncertainty as uncertainty, v.timestamp as timestamp,
                         v.version as version
                     """,
                     query=query, k=k
