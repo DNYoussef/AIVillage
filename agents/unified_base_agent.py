@@ -360,7 +360,7 @@ class DecisionMakingLayer:
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
 
     async def make_decision(self, task: LangroidTask, context: Any) -> Any:
-        # Implement Agent Q (Monte Carlo Tree Search and Direct Preference Optimization)
+        """Return a decision using placeholder MCTS and DPO logic."""
         mcts_result = self.monte_carlo_tree_search(task, context)
         dpo_result = await self.direct_preference_optimization(task, context)
 
@@ -375,21 +375,25 @@ class DecisionMakingLayer:
         return decision.text
 
     def monte_carlo_tree_search(self, task: LangroidTask, context: str) -> str:
+        """Simplified placeholder for future MCTS implementation."""
         options = ["Option A", "Option B", "Option C"]
         scores = [self.simulate(task, context, option) for option in options]
         best_option = options[np.argmax(scores)]
         return f"MCTS suggests: {best_option}"
 
     def simulate(self, task: LangroidTask, context: str, option: str) -> float:
+        """Placeholder simulation used by the MCTS stub."""
         return random.random()
 
     async def direct_preference_optimization(self, task: LangroidTask, context: str) -> str:
+        """Simplified Direct Preference Optimization stub."""
         options = ["Approach X", "Approach Y", "Approach Z"]
         preferences = await self.get_preferences(task, context, options)
         best_approach = max(preferences, key=preferences.get)
         return f"DPO suggests: {best_approach}"
 
     async def get_preferences(self, task: LangroidTask, context: str, options: List[str]) -> Dict[str, float]:
+        """Return mock preference scores for each option."""
         prompt = f"""
         Task: {task.content}
         Context: {context}
