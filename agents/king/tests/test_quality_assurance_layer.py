@@ -1,6 +1,7 @@
 import unittest
 import asyncio
 import importlib.util
+import numpy as np
 
 # Skip if PyTorch is not installed since the QA layer relies on transformer
 # models that require torch.
