@@ -433,6 +433,10 @@ python -m unittest discover tests
 
 The system can be configured by modifying the `UnifiedConfig` class in `rag_system/core/config.py`. This class manages settings for all components of the RAG system.
 
+## Agent Forge Pipeline
+
+See [docs/agent_forge_pipeline_overview.md](docs/agent_forge_pipeline_overview.md) for a summary of the full training and deployment process used to create self-improving agents.
+
 ## Contributing
 
 Please refer to the CONTRIBUTING.md file for guidelines on how to contribute to this project.
