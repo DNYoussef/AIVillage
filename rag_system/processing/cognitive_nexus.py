@@ -2,7 +2,7 @@
 
 from typing import Dict, Any, List
 from ..core.agent_interface import AgentInterface
-from ..processing.reasoning_engine import ReasoningEngine
+from ..core.interface import ReasoningEngine
 from ..processing.self_referential_query_processor import SelfReferentialQueryProcessor
 
 class CognitiveNexus:
