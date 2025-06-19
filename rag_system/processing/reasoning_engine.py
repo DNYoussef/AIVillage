@@ -15,17 +15,34 @@ class UncertaintyAwareReasoningEngine:
         # Each node is expected to contain at least a ``content`` field
         self.graph = nx.Graph()
 
-    async def reason(self, query: str, retrieved_info: List[RetrievalResult], activated_knowledge: Dict[str, Any]) -> Dict[str, Any]:
-        """Return a reasoning result summarizing provided information."""
-        reasoning_result = {
+    async def reason(
+        self,
+        query: str,
+        retrieved_info: List[RetrievalResult],
+        activated_knowledge: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Summarize retrieved info and activated knowledge."""
+
+        evidence_texts = [r.content for r in retrieved_info]
+        knowledge_keys = list(activated_knowledge.keys())
+
+        summary_parts = []
+        if evidence_texts:
+            summary_parts.append(" ".join(evidence_texts[:2]))
+        if knowledge_keys:
+            summary_parts.append(
+                f"Key concepts: {', '.join(knowledge_keys[:3])}"
+            )
+        conclusion = " ".join(summary_parts) if summary_parts else "No evidence available"
+
+        return {
             "query": query,
-            "conclusion": "This is a placeholder conclusion.",
+            "conclusion": conclusion,
             "confidence": 0.8,
             "uncertainty": 0.2,
-            "supporting_evidence": [result.content for result in retrieved_info[:3]],
-            "activated_concepts": list(activated_knowledge.keys())[:5],
+            "supporting_evidence": evidence_texts[:3],
+            "activated_concepts": knowledge_keys[:5],
         }
-        return reasoning_result
 
     def update_causal_strength(self, source: str, target: str, observed_probability: float):
         edge = self.causal_edges.get((source, target))
@@ -83,16 +100,6 @@ class UncertaintyAwareReasoningEngine:
         if not self.graph.has_node(entity):
             return []
         return list(self.graph.neighbors(entity))
-
-        reasoning_result = {
-            "query": query,
-            "conclusion": "This is a placeholder conclusion.",
-            "confidence": 0.8,
-            "uncertainty": 0.2,
-            "supporting_evidence": [result.content for result in retrieved_info[:3]],
-            "activated_concepts": list(activated_knowledge.keys())[:5]
-        }
-        return reasoning_result
 
     def estimate_uncertainty(self, reasoning_result: Dict[str, Any]) -> float:
         # Implement uncertainty estimation logic
