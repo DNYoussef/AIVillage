@@ -30,6 +30,7 @@ rag_config = UnifiedConfig()
 async def initialize_components() -> Dict[str, Any]:
     vector_store = VectorStore()
     graph_store = GraphStore()
+    knowledge_tracker = UnifiedKnowledgeTracker(vector_store, graph_store)
     llm_config = OpenAIGPTConfig(chat_model="gpt-4")
     advanced_analytics = AdvancedAnalytics()
     advanced_nlp = AdvancedNLP()
@@ -52,10 +53,10 @@ async def initialize_components() -> Dict[str, Any]:
         "hybrid_retriever": HybridRetriever(rag_config),
         "reasoning_engine": UncertaintyAwareReasoningEngine(rag_config),
         "cognitive_nexus": CognitiveNexus(),
-        "pipeline": EnhancedRAGPipeline(rag_config),
+        "pipeline": EnhancedRAGPipeline(rag_config, knowledge_tracker),
         "communication_protocol": communication_protocol,
-        "king_agent": KingAgent(king_agent_config, communication_protocol, vector_store),
-        "knowledge_tracker": UnifiedKnowledgeTracker(vector_store, graph_store),
+        "king_agent": KingAgent(king_agent_config, communication_protocol, vector_store, knowledge_tracker),
+        "knowledge_tracker": knowledge_tracker,
         "exploration_mode": ExplorationMode(graph_store, llm_config, advanced_nlp),
         "advanced_analytics": advanced_analytics,
         "evaluation_framework": ComprehensiveEvaluationFramework(advanced_analytics),

@@ -56,6 +56,7 @@ Tracking Module (from tracking/):
 
 Query Tracking: Monitors queries processed by the system.
 Usage Statistics: Collects data on system utilization for analysis.
+Retrieval Logging: Stores retrieved documents for each query to aid future analysis.
 Calculation and Derivation of Answers
 The system calculates and derives answers through the following process:
 
@@ -125,11 +126,15 @@ Code Example
 import asyncio
 from core.config import RAGConfig
 from core.pipeline import EnhancedRAGPipeline
+from retrieval.graph_store import GraphStore
+from tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 
 async def agent_query():
     # Initialize configuration and pipeline
     config = RAGConfig()
     pipeline = EnhancedRAGPipeline(config)
+    tracker = UnifiedKnowledgeTracker(pipeline.hybrid_retriever.vector_store, GraphStore())
+    pipeline.knowledge_tracker = tracker
     
     # Define the query
     query = "What festivals does the village celebrate each year?"

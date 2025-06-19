@@ -7,6 +7,7 @@ from agents.unified_base_agent import (
 from rag_system.core.config import UnifiedConfig, RAGConfig
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 from rag_system.retrieval.vector_store import VectorStore
 from agents.utils.task import Task as LangroidTask
 import random
@@ -16,10 +17,10 @@ class MagiAgentConfig(UnifiedAgentConfig):
     development_capabilities: List[str] = ["coding", "debugging", "code_review"]
 
 class MagiAgent(UnifiedBaseAgent):
-    def __init__(self, config: MagiAgentConfig, communication_protocol: StandardCommunicationProtocol, rag_config: RAGConfig, vector_store: VectorStore):
-        super().__init__(config, communication_protocol)
+    def __init__(self, config: MagiAgentConfig, communication_protocol: StandardCommunicationProtocol, rag_config: RAGConfig, vector_store: VectorStore, knowledge_tracker: UnifiedKnowledgeTracker | None = None):
+        super().__init__(config, communication_protocol, knowledge_tracker)
         self.specialized_knowledge = {}  # Initialize specialized knowledge base
-        self.rag_system = EnhancedRAGPipeline(rag_config)
+        self.rag_system = EnhancedRAGPipeline(rag_config, knowledge_tracker)
         self.vector_store = vector_store
         self.self_evolving_system = SelfEvolvingSystem([self])
         self.development_capabilities = config.development_capabilities

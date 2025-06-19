@@ -3,6 +3,7 @@ from agents.utils.task import Task as LangroidTask
 from agents.unified_base_agent import UnifiedBaseAgent
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType
 from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 from rag_system.core.config import UnifiedConfig
 from rag_system.core.exploration_mode import ExplorationMode
 from rag_system.retrieval.vector_store import VectorStore
@@ -33,11 +34,12 @@ class SageAgent(UnifiedBaseAgent):
         self,
         config: UnifiedConfig,
         communication_protocol: StandardCommunicationProtocol,
-        vector_store: VectorStore
+        vector_store: VectorStore,
+        knowledge_tracker: UnifiedKnowledgeTracker | None = None
     ):
-        super().__init__(config, communication_protocol)
+        super().__init__(config, communication_protocol, knowledge_tracker)
         self.research_capabilities = config.get('research_capabilities', [])
-        self.rag_system = EnhancedRAGPipeline(config)
+        self.rag_system = EnhancedRAGPipeline(config, knowledge_tracker)
         self.vector_store = vector_store
         self.exploration_mode = ExplorationMode(self.rag_system)
         self.self_evolving_system = SelfEvolvingSystem([self])
