@@ -43,7 +43,6 @@ _ensure_module(
         'zeros': lambda shape, dtype=None: _FakeArray([0] * (shape[0] if isinstance(shape, tuple) else shape)),
     },
 )
-_ensure_module('httpx', {'BaseTransport': object})
 _ensure_module('yaml', {'safe_load': lambda *a, **k: {}, 'safe_dump': lambda *a, **k: ''})
 class _SimpleGraph:
     def __init__(self):
