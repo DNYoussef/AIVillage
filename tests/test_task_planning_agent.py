@@ -2,12 +2,14 @@ import unittest
 import sys
 from pathlib import Path
 import types
+import importlib.machinery
 
 # Ensure repository root is on path and provide dummy torch module to avoid
 # heavy dependency import failures when loading the agent modules.
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 if 'torch' not in sys.modules:
     fake_torch = types.ModuleType('torch')
+    fake_torch.__spec__ = importlib.machinery.ModuleSpec('torch', loader=None)
     fake_torch.Tensor = type('Tensor', (), {})
     fake_torch.randn = lambda *args, **kwargs: 0
     sys.modules['torch'] = fake_torch

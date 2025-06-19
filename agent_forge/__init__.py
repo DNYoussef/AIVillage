@@ -1,4 +1,7 @@
-from . import evomerge
+try:
+    from . import evomerge
+except Exception:  # pragma: no cover - optional heavy deps may be missing
+    evomerge = None
 from .training.training import TrainingTask
 from . import tool_baking
 # from . import adas  # Module not found in project structure

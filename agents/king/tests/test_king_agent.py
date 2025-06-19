@@ -1,6 +1,13 @@
 import unittest
 import asyncio
+import importlib.util
 from unittest.mock import Mock, patch
+
+# Skip these tests when PyTorch is not installed since KingAgent depends on
+# transformer models.
+if importlib.util.find_spec("torch") is None:
+    raise unittest.SkipTest("PyTorch not installed")
+
 from agents.king.king_agent import KingAgent, UnifiedAgentConfig
 from agents.utils.task import Task as LangroidTask
 from communications.protocol import StandardCommunicationProtocol, Message, MessageType

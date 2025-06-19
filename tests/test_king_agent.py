@@ -1,8 +1,18 @@
 import unittest
 import asyncio
+import importlib.util
 from unittest.mock import MagicMock, patch
 import sys
 from pathlib import Path
+
+# Skip these tests if PyTorch isn't installed since KingAgent relies on
+# transformer models.
+try:
+    torch_spec = importlib.util.find_spec("torch")
+except ValueError:
+    torch_spec = None
+if torch_spec is None:
+    raise unittest.SkipTest("PyTorch not installed")
 
 # Ensure the repository root is on the Python path so that the ``agents``
 # package imports correctly when running this test in isolation.

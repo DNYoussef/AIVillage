@@ -2,6 +2,12 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 import sys
 from pathlib import Path
+import importlib.util
+
+# Skip if torch is unavailable since underlying agents rely on transformer models.
+if importlib.util.find_spec("torch") is None:
+    raise unittest.SkipTest("PyTorch not installed")
+
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
 from communications.protocol import StandardCommunicationProtocol
