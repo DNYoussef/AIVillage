@@ -6,4 +6,4 @@ parameters:
   weights:
     - 0.6
     - 0.4
-custom_dir: C:\Users\17175\Desktop\AI_Models
+custom_dir: merged_models/

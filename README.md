@@ -67,9 +67,9 @@ Some features rely on large libraries such as `numpy`, `torch` and `faiss`. Thes
 pip install numpy torch faiss-cpu  # or faiss-gpu for CUDA systems
 ```
 
-The tokenizer file `rag_system/utils/token_data/cl100k_base.tiktoken` is bundled so that `tiktoken` can initialize without internet access. Ensure you have a `.env` file in the project root containing your API keys. After installing the dependencies you can run the test suite:
+The tokenizer file `rag_system/utils/token_data/cl100k_base.tiktoken` is bundled so that `tiktoken` can initialize without internet access. Ensure you have a `.env` file in the project root containing your API keys. After installing the dependencies you can run the test suite with `pytest`:
 ```bash
-python -m unittest discover tests
+pytest
 ```
 
 ## Testing
@@ -82,7 +82,8 @@ main `requirements.txt` file contains heavy packages such as `torch` and
 pip install -r requirements.txt
 ```
 
-Install the additional test-only packages from `requirements-dev.txt`:
+Install the additional test-only packages from `requirements-dev.txt`.
+Both files include `PyYAML`, which is required by the test configuration:
 
 ```bash
 pip install -r requirements-dev.txt
@@ -267,7 +268,7 @@ To use the model mergers, follow these steps:
    python cli.py --download-and-merge --model1 <model1_path> --model2 <model2_path> [--model3 <model3_path>] [options]
    ```
 
-3. The merged model will be saved in the directory specified by the `--custom-dir` option (default is `./merged_models`).
+3. The merged model will be saved in the directory specified by the `--custom-dir` option. By default, this is the `merged_models/` folder in your working directory. You can modify this location by editing `merge_config.yaml` or passing `--custom-dir` on the command line.
 
 ### Configuration Options
 
