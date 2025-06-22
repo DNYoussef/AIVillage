@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Village Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav>
+  <ul>
+    <li><a href="#chat">Chat</a></li>
+    <li><a href="#upload">Upload</a></li>
+    <li><a href="#bayes">BayesRAG Graph</a></li>
+    <li><a href="#logs">Logs</a></li>
+    <li><a href="#status">Status</a></li>
+  </ul>
+</nav>
+<section id="chat">
+  <h2>Chat / Query</h2>
+  <textarea id="query" rows="4" cols="80" placeholder="Enter your query..."></textarea><br>
+  <button id="sendQuery">Send</button>
+  <pre id="response"></pre>
+</section>
+<section id="upload">
+  <h2>Upload Text File</h2>
+  <input type="file" id="fileInput">
+  <button id="uploadBtn">Upload</button>
+  <pre id="uploadStatus"></pre>
+</section>
+<section id="bayes">
+  <h2>BayesRAG Graph Snapshot</h2>
+  <button id="refreshBayes">Refresh</button>
+  <pre id="bayesData"></pre>
+</section>
+<section id="logs">
+  <h2>Retrieval Logs</h2>
+  <button id="refreshLogs">Refresh</button>
+  <pre id="logData"></pre>
+</section>
+<section id="status">
+  <h2>System Status</h2>
+  <button id="refreshStatus">Refresh</button>
+  <pre id="statusData"></pre>
+</section>
+<script src="script.js"></script>
+</body>
+</html>

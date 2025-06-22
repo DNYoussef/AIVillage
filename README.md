@@ -107,6 +107,15 @@ python server.py
 
 This will start a FastAPI application that initializes the RAG pipeline and exposes the HTTP endpoints.
 
+### Web UI
+
+After starting the server, open `http://localhost:8000/` in a browser to access a simple dashboard. The UI allows you to:
+
+1. Submit queries to the `/query` endpoint.
+2. Upload text files that update the vector store.
+3. View the current BayesRAG graph snapshot and system status.
+4. Inspect recent retrieval logs.
+
 ## Extending the System
 
 To add new capabilities or agents:
