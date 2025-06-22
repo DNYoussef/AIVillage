@@ -1,10 +1,13 @@
 from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 
 app = FastAPI()
+app.mount("/ui", StaticFiles(directory="ui"), name="ui")
 
 rag_pipeline = EnhancedRAGPipeline()
 vector_store = rag_pipeline.hybrid_retriever.vector_store
@@ -35,3 +38,19 @@ async def upload_endpoint(file: UploadFile = File(...)):
     text = content.decode("utf-8", errors="ignore")
     await vector_store.add_texts([text])
     return {"status": "uploaded"}
+
+@app.get("/")
+async def root():
+    return FileResponse("ui/index.html")
+
+@app.get("/status")
+async def status_endpoint():
+    return await rag_pipeline.get_status()
+
+@app.get("/bayes")
+async def bayes_endpoint():
+    return rag_pipeline.get_bayes_net_snapshot()
+
+@app.get("/logs")
+async def logs_endpoint():
+    return knowledge_tracker.retrieval_log
