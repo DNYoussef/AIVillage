@@ -67,9 +67,9 @@ Some features rely on large libraries such as `numpy`, `torch` and `faiss`. Thes
 pip install numpy torch faiss-cpu  # or faiss-gpu for CUDA systems
 ```
 
-The tokenizer file `rag_system/utils/token_data/cl100k_base.tiktoken` is bundled so that `tiktoken` can initialize without internet access. Ensure you have a `.env` file in the project root containing your API keys. After installing the dependencies you can run the test suite:
+The tokenizer file `rag_system/utils/token_data/cl100k_base.tiktoken` is bundled so that `tiktoken` can initialize without internet access. Ensure you have a `.env` file in the project root containing your API keys. After installing the dependencies you can run the test suite with `pytest`:
 ```bash
-python -m unittest discover tests
+pytest
 ```
 
 ## Testing
@@ -82,7 +82,8 @@ main `requirements.txt` file contains heavy packages such as `torch` and
 pip install -r requirements.txt
 ```
 
-Install the additional test-only packages from `requirements-dev.txt`:
+Install the additional test-only packages from `requirements-dev.txt`.
+Both files include `PyYAML`, which is required by the test configuration:
 
 ```bash
 pip install -r requirements-dev.txt
@@ -267,7 +268,7 @@ To use the model mergers, follow these steps:
    python cli.py --download-and-merge --model1 <model1_path> --model2 <model2_path> [--model3 <model3_path>] [options]
    ```
 
-3. The merged model will be saved in the directory specified by the `--custom-dir` option (default is `./merged_models`).
+3. The merged model will be saved in the directory specified by the `--custom-dir` option. By default, this is the `merged_models/` folder in your working directory. You can modify this location by editing `merge_config.yaml` or passing `--custom-dir` on the command line.
 
 ### Configuration Options
 
@@ -442,7 +443,7 @@ Additional utilities for this pipeline include:
 - `agent_forge/training/prompt_baking.py` – wrapper for deep prompt baking cycles.
 - `agent_forge/training/expert_vectors.py` – tools for expert vector creation and composition.
 - `agent_forge/training/identity.py` – identity formation and moral framework utilities.
- - `docs/coherence_relevance_metrics.md` – explanation of the embedding-based coherence and relevance metrics used during evaluation.
+- `docs/coherence_relevance_metrics.md` – explanation of the embedding-based coherence and relevance metrics used during evaluation.
 
 ## Contributing
 
