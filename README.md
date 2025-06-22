@@ -29,6 +29,10 @@ The self-evolving system is the core of the AI Village's continuous improvement 
 
 The system periodically evolves by updating agent capabilities, refining decision-making processes, and optimizing its overall architecture.
 
+## Implementation Status and Placeholders
+
+Several modules in this repository are still **incomplete** or simplified. The code includes placeholder implementations for advanced features such as Monte Carlo Tree Search, Direct Preference Optimization, and parts of the training pipeline. Sections of the retrieval system also use minimal logic pending future work. These placeholders are marked with comments in the source files and noted throughout this README. Contributions are welcome to expand these stubs into full implementations.
+
 ## Setup
 
 1. Clone the repository:
@@ -94,6 +98,7 @@ After installing these dependencies you can execute the full test suite:
 ```bash
 pytest
 ```
+If you encounter ImportError messages for packages such as `PyYAML`, `networkx`, or `requests`, install them manually via `pip`. Some tests are skipped when optional libraries (e.g., `faiss`) are unavailable.
 
 
 
