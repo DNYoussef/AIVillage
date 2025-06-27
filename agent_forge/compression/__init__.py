@@ -1,16 +1,21 @@
 from .seedlm import SeedLMCompressor
 from .vptq import VPTQQuantizer
 from .hyperfn import HyperCompressionEncoder
-from agent_forge.model_compression.bitlinearization import BitNetModel
+from .stage1_bitnet import convert_to_bitnet
 
 from dataclasses import dataclass
 import torch
 import torch.nn as nn
+import bitsandbytes as bnb
 from typing import Optional, Dict
 
 @dataclass
 class CompressionConfig:
     bitnet_finetune: bool = True
+    bitnet_zero_threshold: float = 0.02
+    bitnet_batch_size: int = 2
+    bitnet_finetuning_epochs: int = 1
+    bitnet_learning_rate: float = 1e-4
     seed_block_size: int = 8
     seed_latent_dim: int = 4
     seed_num_candidates: int = 256
@@ -48,12 +53,29 @@ import torch
 def stream_compress_model(model: nn.Module, config: Optional[CompressionConfig]=None) -> Dict[str, Dict]:
     cfg = config or CompressionConfig()
     compressor = TwoStageCompressor(cfg)
+    handled = set()
     if cfg.bitnet_finetune:
-        model = BitNetModel(model)
+        try:
+            model = convert_to_bitnet(model, threshold=cfg.bitnet_zero_threshold)
+        except ImportError:
+            pass
 
     compressed = {}
+    have_bitnet = hasattr(bnb.nn, 'LinearBitNet')
+    for mod_name, module in model.named_modules():
+        if have_bitnet and isinstance(module, bnb.nn.LinearBitNet):
+            w_name = f"{mod_name}.weight" if mod_name else "weight"
+            compressed[w_name] = compressor.compress_layer(module.to_float())
+            handled.add(w_name)
+            if module.bias is not None:
+                b_name = f"{mod_name}.bias" if mod_name else "bias"
+                compressed[b_name] = module.bias.data
+                handled.add(b_name)
+
     for name, param in model.named_parameters():
-        if param.dim()>=2:
+        if name in handled:
+            continue
+        if param.dim() >= 2:
             compressed[name] = compressor.compress_layer(param.data)
         else:
             compressed[name] = param.data
