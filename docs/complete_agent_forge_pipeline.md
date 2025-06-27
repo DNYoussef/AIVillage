@@ -2,6 +2,14 @@
 
 This document details the full training and optimization process for building self‑evolving AI agents. It expands upon the overview in `agent_forge_pipeline_overview.md`.
 
+> **Note**
+> The pipeline below describes the long‑term vision for Agent Forge. Only a
+> subset of these phases has been implemented in the current codebase. The
+> implemented pieces are limited to basic RAG retrieval, a minimal training
+> loop and experimental merging utilities. All advanced stages (Quiet‑STaR,
+> expert vectors, ADAS, etc.) remain conceptual and are included here as future
+> work.
+
 ## Phase 1 – Model Foundation & Merging
 1. **Evolution and Merge Pipeline** – Start with three specialized models and generate eight merged candidates using linear, SLERP, TIES, DARE, Frankenmerge and DFS techniques. Evaluate all models, mutate the best performers and recombine weaker ones for 50 generations to select the strongest foundation.
 2. **Quiet‑STaR Integration** – Modify the architecture to produce parallel thought tokens using learnable `<|startofthought|>` and `<|endofthought|>` markers. This enables internal monologue generation during training.
