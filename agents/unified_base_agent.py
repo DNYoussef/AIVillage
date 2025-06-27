@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import random
 import numpy as np
+import warnings
+from sklearn.linear_model import LogisticRegression
 from agents.utils.task import Task as LangroidTask
 from agents.language_models.openai_gpt import OpenAIGPTConfig
 from agents.utils import (
@@ -453,16 +455,34 @@ class DecisionMakingLayer:
 
 
 
-class _SageFrameworkStub:
+class _SageFramework:
+    """Very small helper to suggest new capabilities."""
+
+    def __init__(self) -> None:
+        self.pool = [
+            "advanced_planning",
+            "meta_reasoning",
+            "collaboration",
+            "data_exploration",
+            "self_reflection",
+        ]
+
     async def assistant_response(self, prompt: str) -> str:
-        # Return a simple comma separated list as a placeholder
-        return "capability_a, capability_b"
+        unused = [cap for cap in self.pool if cap not in prompt]
+        return ", ".join(unused[:3])
 
 
-class _DPOStub:
+class _DPOModule:
+    """Simple preference optimizer using logistic regression."""
+
+    def __init__(self) -> None:
+        self.model = LogisticRegression()
+
     def fit(self, X: np.array, y: np.array) -> None:
-        # Placeholder fit method which simply returns without doing anything
-        return None
+        if len(X) and len(y):
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore")
+                self.model.fit(X, y)
 
 
 @dataclass
@@ -483,9 +503,9 @@ class SelfEvolvingSystem:
         self.agents = agents
         # Initialize basic stub components so the system functions even
         # when full implementations are not provided.
-        self.sage_framework = _SageFrameworkStub()
+        self.sage_framework = _SageFramework()
         self.mcts = MCTSConfig()
-        self.dpo = _DPOStub()
+        self.dpo = _DPOModule()
         self.quality_assurance = _QualityAssuranceStub()
         self.recent_decisions: List[tuple] = []
 

@@ -1,6 +1,13 @@
 # AI Village Self-Improving System
 
-This project implements a multi-agent AI system featuring a self-evolving architecture for continuous improvement and adaptation.
+This project implements a multi-agent AI system featuring a self-evolving
+architecture for continuous improvement and adaptation.
+
+> **Status**
+> Only the core RAG pipeline, FastAPI server and experimental model merging
+> utilities are currently operational. Advanced features described in the
+> documentation (Quiet-STaR thought generation, expert vectors, ADAS, etc.) are
+> still under development.
 
 ## System Components
 
@@ -28,6 +35,9 @@ The self-evolving system is the core of the AI Village's continuous improvement 
 5. Decision-Making Layer: Utilizes advanced AI techniques for making informed decisions based on tasks and context.
 
 The system periodically evolves by updating agent capabilities, refining decision-making processes, and optimizing its overall architecture.
+
+See [docs/roadmap.md](docs/roadmap.md) for a short overview of completed and
+planned milestones.
 
 ## Setup
 
@@ -125,6 +135,17 @@ After starting the server, open `http://localhost:8000/` in a browser to access 
 2. Upload text files that update the vector store.
 3. View the current BayesRAG graph snapshot and system status.
 4. Inspect recent retrieval logs.
+
+### Stand-alone RAG Example
+
+You can also exercise the pipeline without the web server:
+
+```bash
+python rag_system/main.py
+```
+
+This script issues a sample query and performs a short knowledge graph
+exploration using the built-in reasoning engine.
 
 ## Extending the System
 
@@ -303,6 +324,8 @@ To use the model mergers, follow these steps:
 - `--weight-mask-rate`: Weight mask rate, between 0.0 and 1.0 (default: 0.0)
 - `--use-weight-rescale`: Use weight rescaling (flag)
 - `--mask-strategy`: Mask strategy, either "random" or "magnitude" (default: random)
+- `--use-disk-based-merge`: Perform merging on disk instead of RAM (flag)
+- `--chunk-size`: Chunk size for disk-based operations (default: 1000000)
 - `--use-cli`: Use Hugging Face CLI to download models (flag)
 - `--verbose`: Enable verbose output (flag)
 

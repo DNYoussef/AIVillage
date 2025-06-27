@@ -42,50 +42,22 @@ class UncertaintyAwareReasoningEngine:
             self.config.update(**config)
 
     async def reason(self, query: str, retrieved_info: List[RetrievalResult], activated_knowledge: Dict[str, Any]) -> Dict[str, Any]:
-        with self.driver.session() as session:
-            if timestamp:
-                result = session.run(
-                    """
-                        CALL db.index.fulltext.queryNodes("nodeContent", $query) 
-                    YIELD node, score
-                        MATCH (node)-[:VERSION]->(v:NodeVersion)
-                        WHERE v.timestamp <= $timestamp
-                        WITH node, score, v
-                        ORDER BY v.timestamp DESC, score DESC
-                    LIMIT $k
-                        RETURN id(node) as id, v.content as content, score, 
-                            v.uncertainty as uncertainty, v.timestamp as timestamp, 
-                            v.version as version
-                    """,
-                        query=query, timestamp=timestamp, k=k
-                    )
-            else:
-                result = session.run(
-                    """
-                    CALL db.index.fulltext.queryNodes("nodeContent", $query) 
-                    YIELD node, score
-                    MATCH (node)-[:VERSION]->(v:NodeVersion)
-                    WITH node, score, v
-                    ORDER BY v.timestamp DESC, score DESC
-                    LIMIT $k
-                    RETURN id(node) as id, v.content as content, score, 
-                        v.uncertainty as uncertainty, v.timestamp as timestamp, 
-                        v.version as version
-                    """,
-                    query=query, k=k
-                )
-
-        return [
-            RetrievalResult(
-                id=record["id"],
-                content=record["content"],
-                score=record["score"],
-                uncertainty=record["uncertainty"],
-                timestamp=record["timestamp"],
-                version=record["version"]
-            )
-            for record in result
-        ]
+        """Generate a basic reasoning result from retrieved information."""
+        top_evidence = [r.content for r in retrieved_info[:3]]
+        summary = " ".join(top_evidence) if top_evidence else "No relevant documents."
+        confidence = 0.0
+        if retrieved_info:
+            confidence = float(np.clip(np.mean([r.score for r in retrieved_info[:3]]), 0.0, 1.0))
+        conclusion = f"Based on the retrieved information, {summary}"
+        uncertainty = 1.0 - confidence
+        return {
+            "query": query,
+            "conclusion": conclusion,
+            "confidence": confidence,
+            "uncertainty": uncertainty,
+            "supporting_evidence": top_evidence,
+            "activated_concepts": list(activated_knowledge.keys())[:5],
+        }
 
     def update_causal_strength(self, source: str, target: str, observed_probability: float):
         edge = self.causal_edges.get((source, target))
@@ -147,24 +119,12 @@ class UncertaintyAwareReasoningEngine:
             return []
         return list(self.graph.neighbors(entity))
 
-        reasoning_result = {
-            "query": query,
-            "conclusion": "This is a placeholder conclusion.",
-            "confidence": 0.8,
-            "uncertainty": 0.2,
-            "supporting_evidence": [result.content for result in retrieved_info[:3]],
-            "activated_concepts": list(activated_knowledge.keys())[:5]
-        }
-        return reasoning_result
-
     def estimate_uncertainty(self, reasoning_result: Dict[str, Any]) -> float:
-        # Implement uncertainty estimation logic
-        # This is a placeholder implementation
-        return 1 - reasoning_result.get("confidence", 0.5)
+        """Return the complement of the confidence score."""
+        return 1.0 - reasoning_result.get("confidence", 0.0)
 
     def adjust_conclusion(self, reasoning_result: Dict[str, Any], uncertainty: float) -> Dict[str, Any]:
-        # Implement logic to adjust the conclusion based on uncertainty
-        # This is a placeholder implementation
+        """Append a note to the conclusion if uncertainty is high."""
         if uncertainty > 0.5:
             reasoning_result["conclusion"] += " (High uncertainty)"
         return reasoning_result
