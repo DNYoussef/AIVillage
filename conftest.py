@@ -27,6 +27,31 @@ def _ensure_module(name: str, attrs: dict | None = None):
 _ensure_module('faiss', {'IndexFlatL2': lambda *args, **kwargs: object()})
 _ensure_module('numpy', {'zeros': lambda *args, **kwargs: [0] * (args[0] if args else 0)})
 _ensure_module('httpx')
+parent = _ensure_module('langroid', {
+    'ChatAgent': object,
+    'ChatAgentConfig': object,
+    'Task': object,
+})
+if parent is not None:
+    parent.__spec__.submodule_search_locations = []
+    parent.__path__ = []
+_ensure_module('langroid.agent')
+mod_agent = _ensure_module('langroid.agent')
+if mod_agent is not None:
+    mod_agent.__spec__.submodule_search_locations = []
+    mod_agent.__path__ = []
+_ensure_module('langroid.agent.tool_message', {'ToolMessage': object})
+_ensure_module('langroid.language_models')
+mod_lm = _ensure_module('langroid.language_models')
+if mod_lm is not None:
+    mod_lm.__spec__.submodule_search_locations = []
+    mod_lm.__path__ = []
+_ensure_module('langroid.language_models.openai_gpt', {'OpenAIGPTConfig': object})
+tok = _ensure_module('tiktoken')
+if tok is not None:
+    tok.__spec__.submodule_search_locations = []
+    tok.__path__ = []
+_ensure_module('tiktoken.load', {'load_tiktoken_bpe': lambda p: {}})
 
 # Provide simple stubs for optional dependencies used in tests.  These
 # allow the test suite to be imported even when the real packages are not

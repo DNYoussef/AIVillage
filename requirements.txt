@@ -5,9 +5,13 @@ uvicorn>=0.22.0
 numpy>=1.24.3
 scikit-learn>=1.2.2
 pandas>=2.0.1
-torch>=2.0.1
+torch>=2.3.0
 faiss-cpu>=1.7.4
-transformers>=4.29.2
+transformers>=4.41.1
+accelerate>=0.29.3
+bitsandbytes>=0.43.1
+triton==2.3.0
+xformers>=0.0.26
 sentence-transformers>=2.2.2
 qdrant-client>=1.1.7
 neo4j>=5.3.0

@@ -1,6 +1,6 @@
 """Utility wrappers for BitNet-style linear layers and quantization helpers."""
 
-from .model_compression import BitNetModel, BitLinear, convert_to_bitnet
+from agent_forge.compression.stage1_bitnet import convert_to_bitnet
 
 # quantization helpers located in training modules
 try:
@@ -13,8 +13,6 @@ except Exception:  # pragma: no cover - optional if training module unavailable
         raise ImportError("quantize_activations not available")
 
 __all__ = [
-    "BitNetModel",
-    "BitLinear",
     "convert_to_bitnet",
     "quantize_weights",
     "quantize_activations",
