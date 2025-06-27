@@ -72,6 +72,14 @@ The tokenizer file `rag_system/utils/token_data/cl100k_base.tiktoken` is bundled
 pytest
 ```
 
+## Embedding Model Requirement
+
+The vector store expects an embedding model instance capable of providing
+sentence embeddings. By default the code uses `BERTEmbeddingModel` from
+`rag_system.utils.embedding`, which loads a small BERT model from
+HuggingFace. If you prefer a different embedding source you can inject your
+own model when constructing `VectorStore`.
+
 ## Testing
 
 Before running the tests ensure that **all** dependencies are installed. The

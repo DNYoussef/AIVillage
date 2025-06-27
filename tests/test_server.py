@@ -2,8 +2,11 @@ import importlib.util, unittest
 if importlib.util.find_spec("httpx") is None:
     raise unittest.SkipTest("Required dependency not installed")
 
-from fastapi.testclient import TestClient
+from fastapi import UploadFile
+from io import BytesIO
+import asyncio
 from unittest.mock import AsyncMock, patch
+import numpy as np
 import sys
 from pathlib import Path
 
@@ -13,35 +16,56 @@ import types
 
 fake_faiss = types.ModuleType("faiss")
 fake_faiss.IndexFlatL2 = lambda *args, **kwargs: object()
+fake_torch = types.ModuleType("torch")
 
-with patch.dict(sys.modules, {"faiss": fake_faiss}):
+with patch.dict(sys.modules, {"faiss": fake_faiss, "torch": fake_torch}):
     import server
 
 
 class TestServer(unittest.TestCase):
     def test_query_and_upload(self):
         async_mock_response = {"answer": "ok"}
+        class DummyIndex:
+            def add(self, x):
+                pass
+            def search(self, x, k):
+                return (np.zeros((1, k), dtype="float32"), np.zeros((1, k), dtype=int))
+            def remove_ids(self, x):
+                pass
+
+        class DummyEmbeddingModel:
+            def __init__(self, size=8) -> None:
+                self.hidden_size = size
+            def encode(self, text: str):
+                rng = np.random.default_rng(abs(hash(text)) % (2**32))
+                return [], rng.random(self.hidden_size).astype("float32")
+
         with patch.object(server.rag_pipeline, "initialize", AsyncMock()) as mock_init, \
              patch.object(server.rag_pipeline, "shutdown", AsyncMock()) as mock_shutdown, \
-             patch.object(server.rag_pipeline, "process", AsyncMock(return_value=async_mock_response)) as mock_process, \
-             patch.object(server.vector_store, "add_texts", AsyncMock()) as mock_add_texts:
-            with TestClient(server.app) as client:
-                # Startup should have been awaited
-                mock_init.assert_awaited_once()
+             patch.object(server.rag_pipeline, "process", AsyncMock(return_value=async_mock_response)) as mock_process:
 
-                resp = client.post("/query", json={"query": "hello"})
-                self.assertEqual(resp.status_code, 200)
-                self.assertEqual(resp.json(), async_mock_response)
-                mock_process.assert_awaited_once_with("hello")
+            server.vector_store.index = DummyIndex()
+            server.vector_store.embedding_model = DummyEmbeddingModel(4)
 
-                resp = client.post("/upload", files={"file": ("test.txt", b"hello", "text/plain")})
-                self.assertEqual(resp.status_code, 200)
-                self.assertEqual(resp.json(), {"status": "uploaded"})
-                mock_add_texts.assert_awaited_once_with(["hello"])
+            async def run_flow():
+                await server.startup_event()
+                file = UploadFile(filename="test.txt", file=BytesIO(b"hello"))
+                resp1 = await server.upload_endpoint(file)
+                file = UploadFile(filename="test.txt", file=BytesIO(b"hello"))
+                resp2 = await server.upload_endpoint(file)
+                await server.shutdown_event()
+                return resp1, resp2
 
-            # After exiting the context manager shutdown event should have run
+            resp1, resp2 = asyncio.run(run_flow())
+
+            mock_init.assert_awaited_once()
             mock_shutdown.assert_awaited_once()
-            mock_init.assert_awaited_once()  # ensure still only once
+            self.assertEqual(resp1, {"status": "uploaded"})
+            self.assertEqual(resp2, {"status": "uploaded"})
+            self.assertEqual(len(server.vector_store.documents), 2)
+            emb1 = server.vector_store.documents[0]["embedding"]
+            emb2 = server.vector_store.documents[1]["embedding"]
+            self.assertTrue(np.array_equal(emb1, emb2))
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 import importlib.util, unittest
-if importlib.util.find_spec("numpy") is None:
+if importlib.util.find_spec("numpy") is None or importlib.util.find_spec("torch") is None:
     raise unittest.SkipTest("Required dependency not installed")
 
 import asyncio
@@ -10,6 +10,14 @@ from pathlib import Path
 
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.append(str(repo_root))
+import types
+sys.modules.setdefault("tiktoken", types.ModuleType("tiktoken"))
+fake_load = types.ModuleType("tiktoken.load")
+def load_tiktoken_bpe(*a, **k):
+    return {}
+fake_load.load_tiktoken_bpe = load_tiktoken_bpe
+sys.modules.setdefault("tiktoken.load", fake_load)
+sys.modules["tiktoken"].Encoding = object
 import agents
 
 import importlib.util
