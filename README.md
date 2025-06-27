@@ -141,6 +141,11 @@ Agents exchange `Message` objects categorized by `MessageType`. The core types a
 `COLLABORATION_REQUEST`, `KNOWLEDGE_SHARE`, `TASK_RESULT`, and
 `JOINT_REASONING_RESULT` as defined in `communications/message.py`.
 
+
+## Model Compression
+
+This repository includes a two-stage compression framework in `agent_forge/compression`. It converts linear weights to 1.58-bit BitNet form, encodes them with SeedLM, applies VPTQ quantization, and optionally hyperfunction encoding. Use `stream_compress_model` to compress a PyTorch model. See `docs/ultimate_llm_compression_framework.md` for details.
+
 ## Recent Updates
 
 The agent system has recently undergone significant updates to improve modularity, reduce redundancy, and incorporate a self-evolving system. Key changes include:

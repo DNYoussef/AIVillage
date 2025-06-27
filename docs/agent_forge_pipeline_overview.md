@@ -6,6 +6,7 @@ This document summarizes the full Agent Forge pipeline used to create self-impro
 1. **Evolution and Merge Pipeline** – Start with three specialized base models. Use multiple merge techniques (linear, SLERP, TIES, DARE, Frankenmerge, DFS) to create an initial population of merged models. Evaluate, select top performers, mutate and recombine over many generations until the best foundation model is obtained.
 2. **Quiet‑STaR Integration** – Modify the architecture to generate parallel "thought" tokens. Introduce learnable `<|startofthought|>` and `<|endofthought|>` tokens for internal monologue generation.
 3. **Initial Compression** – Apply 1.58‑bit quantization and convert the model to the BitNet format to reduce size before heavy training.
+    - SeedLM pseudo-random block encoding and VPTQ quantization provide additional reduction before deployment.
 
 ## Phase 2 – Core Training Loop
 1. **Curriculum Creation** – Automatically generate questions across difficulty levels to determine the model’s baseline. Build a 10‑level curriculum mixing organic data, synthetic examples, retrieval‑augmented tasks and multi‑agent scenarios.
