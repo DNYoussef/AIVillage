@@ -5,6 +5,14 @@ import random
 import numpy as np
 from agents.utils.task import Task as LangroidTask
 from agents.language_models.openai_gpt import OpenAIGPTConfig
+from agents.utils import (
+    MCTSConfig,
+    MonteCarloTreeSearch,
+    DPOConfig,
+    DirectPreferenceOptimizer,
+)
+import yaml
+from pathlib import Path
 from rag_system.retrieval.vector_store import VectorStore
 from rag_system.core.config import UnifiedConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
@@ -356,13 +364,28 @@ class AgentArchitectureLayer:
 
 
 class DecisionMakingLayer:
-    def __init__(self):
+    def __init__(self, config_path: str = "configs/decision_making.yaml"):
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
+        cfg_data = {}
+        path = Path(config_path)
+        if path.is_file():
+            with open(path, "r", encoding="utf-8") as f:
+                cfg_data = yaml.safe_load(f) or {}
+
+        mcts_cfg = MCTSConfig(
+            iterations=cfg_data.get("mcts_iterations", 10),
+            exploration_weight=cfg_data.get("mcts_exploration_weight", 1.0),
+            simulation_depth=cfg_data.get("mcts_simulation_depth", 10),
+        )
+        dpo_cfg = DPOConfig(beta=cfg_data.get("dpo_beta", 0.1))
+
+        self.mcts = MonteCarloTreeSearch(mcts_cfg)
+        self.dpo = DirectPreferenceOptimizer(dpo_cfg)
 
     async def make_decision(self, task: LangroidTask, context: Any) -> Any:
-        """Return a decision using placeholder MCTS and DPO logic."""
-        mcts_result = self.monte_carlo_tree_search(task, context)
-        dpo_result = await self.direct_preference_optimization(task, context)
+        """Return a decision using MCTS and DPO helpers."""
+        mcts_result = self._monte_carlo_tree_search(task, context)
+        dpo_result = await self._direct_preference_optimization(task, context)
 
         decision_prompt = f"""
         Task: {task.content}
@@ -374,25 +397,23 @@ class DecisionMakingLayer:
         decision = await self.llm.complete(decision_prompt)
         return decision.text
 
-    def monte_carlo_tree_search(self, task: LangroidTask, context: str) -> str:
-        """Simplified placeholder for future MCTS implementation."""
+    def _monte_carlo_tree_search(self, task: LangroidTask, context: str) -> str:
         options = ["Option A", "Option B", "Option C"]
-        scores = [self.simulate(task, context, option) for option in options]
-        best_option = options[np.argmax(scores)]
+        best_option = self.mcts.search(
+            options, lambda opt: self._simulate(task, context, opt)
+        )
         return f"MCTS suggests: {best_option}"
 
-    def simulate(self, task: LangroidTask, context: str, option: str) -> float:
-        """Placeholder simulation used by the MCTS stub."""
+    def _simulate(self, task: LangroidTask, context: str, option: str) -> float:
         return random.random()
 
-    async def direct_preference_optimization(self, task: LangroidTask, context: str) -> str:
-        """Simplified Direct Preference Optimization stub."""
+    async def _direct_preference_optimization(self, task: LangroidTask, context: str) -> str:
         options = ["Approach X", "Approach Y", "Approach Z"]
-        preferences = await self.get_preferences(task, context, options)
-        best_approach = max(preferences, key=preferences.get)
+        preferences = await self._get_preferences(task, context, options)
+        best_approach = self.dpo.select(preferences)
         return f"DPO suggests: {best_approach}"
 
-    async def get_preferences(self, task: LangroidTask, context: str, options: List[str]) -> Dict[str, float]:
+    async def _get_preferences(self, task: LangroidTask, context: str, options: List[str]) -> Dict[str, float]:
         """Return mock preference scores for each option."""
         prompt = f"""
         Task: {task.content}
@@ -415,12 +436,6 @@ class DecisionMakingLayer:
         reasoning_result = await self.rag_pipeline.reason(query, retrieval_results)
         return reasoning_result
 
-
-
-class MCTSConfig:
-    def __init__(self):
-        self.exploration_weight = 1.0
-        self.simulation_depth = 10
 
 
 class _SageFrameworkStub:
