@@ -10,7 +10,7 @@ from agent_forge.adas import ADASystem
 from agent_forge.evomerge.merger import AdvancedModelMerger
 from agent_forge.bakedquietiot.deepbaking import DeepSystemBaker
 from agent_forge.model_compression.bitlinearization import BitNetModel
-from agent_forge.model_compression.hyperparameter_compression import stream_compress_model
+from agent_forge.compression import stream_compress_model
 from agent_forge.training.training import EnhancedQuietSTaR, CognitiveTrainingPipeline
 
 @click.command()
