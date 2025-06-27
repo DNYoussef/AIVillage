@@ -14,7 +14,7 @@ This project implements a multi-agent AI system featuring a self-evolving archit
    - Prompt Baking: Efficiently incorporates new knowledge.
    - Continuous Learning: Rapidly integrates new experiences.
    - SAGE Framework: Enables recursive self-improvement through assistant-checker-reviser cycle.
-   - Decision Making: Utilizes simplified MCTS and Direct Preference Optimization (DPO) stubs; full algorithms are planned for future work.
+   - Decision Making: Uses dedicated Monte Carlo Tree Search (MCTS) and Direct Preference Optimization (DPO) modules.
 4. IncentiveModel: A sophisticated model for calculating and managing incentives for agents based on their performance and task complexity.
 
 ## Self-Evolving System
@@ -59,6 +59,8 @@ initialization without network access.
 5. Review the default Retrieval-Augmented Generation configuration:
    - The file `configs/rag_config.yaml` contains the default settings used by
      the RAG pipeline. Edit this file if you need to customize the behaviour.
+6. Tune decision-making hyperparameters:
+   - `configs/decision_making.yaml` defines settings for the MCTS and DPO modules.
 
 ## Installing Heavy Dependencies
 
@@ -328,7 +330,7 @@ The King Agent is a sophisticated AI system designed to coordinate and manage mu
 - **KingAgent**: The main class that integrates all other components and serves as the primary interface for the King Agent system.
 - **KingCoordinator**: The central component that manages interactions between different parts of the system.
 - **UnifiedTaskManager**: Responsible for creating, assigning, and managing tasks across different agents.
-- **DecisionMaker**: Uses placeholder modules for MCTS and Direct Preference Optimization (DPO) alongside RAG-enhanced analysis; more sophisticated approaches are planned.
+- **DecisionMaker**: Relies on MCTS and DPO utilities from `agents.utils` and integrates RAG-enhanced analysis.
 - **ProblemAnalyzer**: Analyzes tasks and generates comprehensive problem analyses by collaborating with other agents.
 - **AgentRouter**: Efficiently routes tasks to the most appropriate agents based on their capabilities and past performance.
 

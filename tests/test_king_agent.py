@@ -23,6 +23,7 @@ from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
 from rag_system.core.config import RAGConfig
 from rag_system.retrieval.vector_store import VectorStore
 from communications.protocol import StandardCommunicationProtocol
+from agents.utils.task import Task as LangroidTask
 
 class TestKingAgent(unittest.TestCase):
     def setUp(self):
@@ -31,6 +32,22 @@ class TestKingAgent(unittest.TestCase):
         self.rag_config = RAGConfig()
         self.vector_store = MagicMock(spec=VectorStore)
         self.king_agent = KingAgent(self.config, self.communication_protocol, self.vector_store)
+
+    @patch('agents.unified_base_agent.DecisionMakingLayer._get_preferences')
+    @patch('agents.utils.mcts.MonteCarloTreeSearch.search')
+    async def test_decision_layer(self, mock_search, mock_prefs):
+        mock_search.return_value = 'Option B'
+        mock_prefs.return_value = {'Approach X': 0.1, 'Approach Y': 0.9}
+        dm = self.king_agent.decision_making_layer
+        async def fake_complete(prompt):
+            return type('Resp', (object,), {'text': 'final'})
+
+        dm.llm.complete = fake_complete
+        task = LangroidTask(self.king_agent, 'demo', '1', 1)
+        decision = await dm.make_decision(task, 'ctx')
+        self.assertEqual(decision, 'final')
+        mock_search.assert_called_once()
+        mock_prefs.assert_called_once()
 
     @patch('agents.king.user_intent_interpreter.UserIntentInterpreter.interpret_intent')
     @patch('agents.king.key_concept_extractor.KeyConceptExtractor.extract_key_concepts')
