@@ -324,16 +324,31 @@ class AgentArchitectureLayer:
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
         self.quality_threshold: float = 0.9
         self.evaluation_history: List[float] = []
+        self.max_revisions: int = 3
+
+    async def assistant(self, result: Any) -> Any:
+        """Generate an initial assistant response."""
+        return result
+
+    async def checker(self, assistant_output: Any) -> Dict[str, Any]:
+        """Evaluate assistant output and return quality feedback."""
+        return await self.evaluate_result(assistant_output)
+
+    async def reviser(self, assistant_output: Any, feedback: Dict[str, Any]) -> Any:
+        """Revise the assistant output based on checker feedback."""
+        return await self.revise_result(assistant_output, feedback)
 
     async def process_result(self, result: Any) -> Any:
-        # Implement SAGE framework (Self-Aware Generative Engine)
-        evaluation = await self.evaluate_result(result)
-        self.evaluation_history.append(evaluation["quality"])
-        if len(self.evaluation_history) > 50:
-            self.evaluation_history.pop(0)
-        if evaluation["quality"] < self.quality_threshold:
-            result = await self.revise_result(result, evaluation)
-        return result
+        output = await self.assistant(result)
+        for _ in range(self.max_revisions):
+            evaluation = await self.checker(output)
+            self.evaluation_history.append(evaluation["quality"])
+            if len(self.evaluation_history) > 50:
+                self.evaluation_history.pop(0)
+            if evaluation["quality"] >= self.quality_threshold:
+                break
+            output = await self.reviser(output, evaluation)
+        return output
 
     async def evaluate_result(self, result: Any) -> Dict[str, Any]:
         evaluation_prompt = f"Evaluate the following result: '{result}'. Provide a quality score between 0 and 1."

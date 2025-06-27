@@ -9,7 +9,11 @@ if importlib.util.find_spec("torch") is None:
     raise unittest.SkipTest("PyTorch not installed")
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from agents.unified_base_agent import UnifiedBaseAgent, UnifiedAgentConfig
+from agents.unified_base_agent import (
+    UnifiedBaseAgent,
+    UnifiedAgentConfig,
+    AgentArchitectureLayer,
+)
 from communications.protocol import StandardCommunicationProtocol
 from agents.utils.task import Task as LangroidTask
 
@@ -47,6 +51,39 @@ class TestLayerSequence(unittest.IsolatedAsyncioTestCase):
         dm_mock.assert_called_once_with(task, {"ok": True})
         cl_mock.assert_called_once_with(task, "done")
         self.assertEqual(result, {"result": "done"})
+
+
+class TestArchitectureLayerCycle(unittest.IsolatedAsyncioTestCase):
+    async def test_revision_cycle(self):
+        layer = AgentArchitectureLayer()
+        layer.quality_threshold = 0.9
+        layer.max_revisions = 3
+        layer.assistant = AsyncMock(return_value="draft1")
+        layer.checker = AsyncMock(side_effect=[{"quality": 0.4}, {"quality": 0.95}])
+        layer.reviser = AsyncMock(return_value="draft2")
+
+        result = await layer.process_result("input")
+
+        layer.assistant.assert_called_once_with("input")
+        self.assertEqual(layer.checker.call_count, 2)
+        layer.reviser.assert_called_once_with("draft1", {"quality": 0.4})
+        self.assertEqual(result, "draft2")
+        self.assertEqual(layer.evaluation_history, [0.4, 0.95])
+
+    async def test_no_revision_needed(self):
+        layer = AgentArchitectureLayer()
+        layer.quality_threshold = 0.5
+        layer.assistant = AsyncMock(return_value="good")
+        layer.checker = AsyncMock(return_value={"quality": 0.8})
+        layer.reviser = AsyncMock()
+
+        result = await layer.process_result("something")
+
+        layer.assistant.assert_called_once_with("something")
+        layer.checker.assert_called_once_with("good")
+        layer.reviser.assert_not_called()
+        self.assertEqual(result, "good")
+        self.assertEqual(layer.evaluation_history, [0.8])
 
 if __name__ == '__main__':
     unittest.main()
