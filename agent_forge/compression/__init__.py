@@ -1,6 +1,7 @@
 from .seedlm import SeedLMCompressor
 from .vptq import VPTQQuantizer
 from .hyperfn import HyperCompressionEncoder
+from agent_forge.model_compression.bitlinearization import BitNetModel
 
 from dataclasses import dataclass
 import torch
@@ -47,10 +48,23 @@ import torch
 def stream_compress_model(model: nn.Module, config: Optional[CompressionConfig]=None) -> Dict[str, Dict]:
     cfg = config or CompressionConfig()
     compressor = TwoStageCompressor(cfg)
+    if cfg.bitnet_finetune:
+        model = BitNetModel(model)
+
     compressed = {}
     for name, param in model.named_parameters():
         if param.dim()>=2:
             compressed[name] = compressor.compress_layer(param.data)
         else:
             compressed[name] = param.data
+    # estimate compression ratio using serialization sizes
+    import io
+    buf_o = io.BytesIO()
+    torch.save(model.state_dict(), buf_o)
+    original_size = buf_o.tell()
+
+    buf_c = io.BytesIO()
+    torch.save(compressed, buf_c)
+    compressed_size = buf_c.tell() or 1
+    compressed['__compression_ratio__'] = original_size / compressed_size
     return compressed

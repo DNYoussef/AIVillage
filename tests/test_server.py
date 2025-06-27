@@ -53,10 +53,11 @@ class TestServer(unittest.TestCase):
                 resp1 = await server.upload_endpoint(file)
                 file = UploadFile(filename="test.txt", file=BytesIO(b"hello"))
                 resp2 = await server.upload_endpoint(file)
+                query_resp = await server.query_endpoint(server.QueryRequest(query="hi"))
                 await server.shutdown_event()
-                return resp1, resp2
+                return resp1, resp2, query_resp
 
-            resp1, resp2 = asyncio.run(run_flow())
+            resp1, resp2, query_resp = asyncio.run(run_flow())
 
             mock_init.assert_awaited_once()
             mock_shutdown.assert_awaited_once()
@@ -66,6 +67,7 @@ class TestServer(unittest.TestCase):
             emb1 = server.vector_store.documents[0]["embedding"]
             emb2 = server.vector_store.documents[1]["embedding"]
             self.assertTrue(np.array_equal(emb1, emb2))
+            self.assertEqual(query_resp, async_mock_response)
 
 
 if __name__ == "__main__":
