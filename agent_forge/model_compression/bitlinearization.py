@@ -2,9 +2,10 @@
 
 from .model_compression import BitNetModel, BitLinear, convert_to_bitnet
 
-# quantization helpers originally located in training.training
+# quantization helpers located in training modules
 try:
-    from agent_forge.training.training import quantize_weights, quantize_activations
+    from agent_forge.training.training import quantize_weights
+    from agent_forge.training.sleep_and_dream import quantize_activations
 except Exception:  # pragma: no cover - optional if training module unavailable
     def quantize_weights(x):
         raise ImportError("quantize_weights not available")
