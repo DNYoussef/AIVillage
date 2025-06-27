@@ -11,7 +11,9 @@ from ..core.structures import RetrievalResult
 DEFAULT_DIMENSION = 768
 
 class VectorStore:
-    def __init__(self, config: Optional[UnifiedConfig] = None, dimension: int = DEFAULT_DIMENSION):
+    def __init__(self, config: Optional[UnifiedConfig] = None,
+                 dimension: int = DEFAULT_DIMENSION,
+                 embedding_model: Optional[Any] = None):
         """Create a VectorStore.
 
         The previous version of :class:`VectorStore` required ``config`` and
@@ -22,8 +24,9 @@ class VectorStore:
         """
 
         self.config = config or UnifiedConfig()
-        self.dimension = dimension
-        self.index = faiss.IndexFlatL2(dimension)
+        self.embedding_model = embedding_model
+        self.dimension = getattr(embedding_model, "hidden_size", dimension) if embedding_model is not None else dimension
+        self.index = faiss.IndexFlatL2(self.dimension)
         self.documents: List[Dict[str, Any]] = []
 
     def add_documents(self, documents: List[Dict[str, Any]]):
@@ -35,10 +38,19 @@ class VectorStore:
         """Convenience helper used by learning layers to store raw text."""
         docs = []
         for text in texts:
+            if self.embedding_model is not None:
+                _, emb = self.embedding_model.encode(text)
+                try:
+                    vec = emb.mean(dim=0).detach().cpu().numpy().astype('float32')
+                except Exception:
+                    vec = np.asarray(emb, dtype='float32')
+            else:
+                vec = np.random.rand(self.dimension).astype('float32')
+
             docs.append({
                 'id': str(uuid.uuid4()),
                 'content': text,
-                'embedding': np.random.rand(self.dimension).astype('float32'),
+                'embedding': vec,
                 'timestamp': datetime.now(),
             })
         self.add_documents(docs)

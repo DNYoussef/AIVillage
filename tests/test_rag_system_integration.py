@@ -3,6 +3,7 @@ import asyncio
 import sys
 from pathlib import Path
 from unittest import mock
+import numpy as np
 import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
@@ -11,11 +12,34 @@ pytest.skip("Skipping integration test due to heavy dependencies", allow_module_
 
 fake_faiss = mock.MagicMock()
 fake_faiss.__spec__ = mock.MagicMock()
-with mock.patch.dict('sys.modules', {'faiss': fake_faiss}):
+fake_torch = mock.MagicMock()
+fake_torch.__spec__ = mock.MagicMock()
+fake_mpl = mock.MagicMock()
+fake_mpl.__spec__ = mock.MagicMock()
+import types
+fake_sklearn = types.ModuleType("sklearn")
+fake_metrics = types.ModuleType("sklearn.metrics")
+fake_pairwise = types.ModuleType("sklearn.metrics.pairwise")
+fake_pairwise.cosine_similarity = lambda *args, **kwargs: None
+fake_metrics.pairwise = fake_pairwise
+fake_sklearn.metrics = fake_metrics
+with mock.patch.dict('sys.modules', {
+    'faiss': fake_faiss,
+    'torch': fake_torch,
+    'matplotlib': fake_mpl,
+    'matplotlib.pyplot': fake_mpl,
+    'seaborn': fake_mpl,
+    'pandas': fake_mpl,
+    'transformers': fake_mpl,
+    'sklearn': fake_sklearn,
+    'sklearn.metrics': fake_metrics,
+    'sklearn.metrics.pairwise': fake_pairwise,
+}):
     from rag_system.core.config import UnifiedConfig
     from rag_system.main import initialize_components, process_user_query
     from rag_system.retrieval.hybrid_retriever import HybridRetriever
     from rag_system.core.structures import RetrievalResult
+    from rag_system.retrieval.vector_store import VectorStore
 
 class MockVectorStore:
     async def retrieve(self, query_vector, k, timestamp=None):
@@ -59,6 +83,27 @@ class TestRAGSystemIntegration(unittest.TestCase):
         components["hybrid_retriever"].vector_store = components["vector_store"]
         components["hybrid_retriever"].graph_store = components["graph_store"]
         return components
+
+
+class DummyEmbeddingModel:
+    def __init__(self, size: int = 8) -> None:
+        self.hidden_size = size
+
+    def encode(self, text: str):
+        rng = np.random.default_rng(abs(hash(text)) % (2**32))
+        return [], rng.random(self.hidden_size).astype("float32")
+
+
+class TestVectorStoreDeterminism(unittest.IsolatedAsyncioTestCase):
+    async def test_embeddings_are_deterministic(self):
+        model = DummyEmbeddingModel(4)
+        store = VectorStore(embedding_model=model, dimension=model.hidden_size)
+
+        await store.add_texts(["test", "test"])
+
+        emb1 = store.documents[0]["embedding"]
+        emb2 = store.documents[1]["embedding"]
+        assert np.array_equal(emb1, emb2)
 
 if __name__ == '__main__':
     unittest.main()
