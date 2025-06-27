@@ -3,7 +3,16 @@ from unittest import mock
 import asyncio
 import sys
 from pathlib import Path
+import types
 import pytest
+
+yaml_stub = types.ModuleType("yaml")
+yaml_stub.safe_load = lambda *args, **kwargs: {}
+sys.modules.setdefault("yaml", yaml_stub)
+sys.modules.setdefault("networkx", types.ModuleType("networkx"))
+requests_stub = types.ModuleType("requests")
+requests_stub.get = lambda *a, **k: None
+sys.modules.setdefault("requests", requests_stub)
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 

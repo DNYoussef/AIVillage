@@ -14,6 +14,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 import torch
 from agent_forge.compression import SeedLMCompressor, VPTQQuantizer, stream_compress_model
+from agent_forge.model_compression.bitlinearization import BitNetModel
 
 class TestCompressionPipeline(unittest.TestCase):
     def test_seedlm_roundtrip(self):
@@ -36,6 +37,13 @@ class TestCompressionPipeline(unittest.TestCase):
         compressed = stream_compress_model(model)
         self.assertIn('weight', compressed)
         self.assertIn('bias', compressed)
+        self.assertGreater(compressed['__compression_ratio__'], 1.0)
+
+    def test_bitnet_wrapper(self):
+        lin = torch.nn.Linear(4,2)
+        bit = BitNetModel(lin)
+        out = bit(torch.randn(1,4))
+        self.assertEqual(out.shape[-1], 2)
 
 if __name__ == '__main__':
     unittest.main()
