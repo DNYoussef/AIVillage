@@ -6,6 +6,7 @@ import torch
 import wandb
 
 from agent_forge.evomerge.config import MergeConfig
+from agent_forge.adas import ADASystem
 from agent_forge.evomerge.merger import AdvancedModelMerger
 from agent_forge.bakedquietiot.deepbaking import DeepSystemBaker
 from agent_forge.model_compression.bitlinearization import BitNetModel
@@ -33,6 +34,8 @@ def main(config_file: str, output_dir: str):
         print(f"Loading configuration from {config_file}")
         with open(config_file, "r") as f:
             config_dict = yaml.safe_load(f)
+
+        enable_adas = config_dict.get("enable_adas", True)
 
         print("Configuration:")
         print(yaml.dump(config_dict, default_flow_style=False))
@@ -100,6 +103,16 @@ def main(config_file: str, output_dir: str):
 
         # Log training completion
         wandb.log({"step": "model_training", "trained_model_path": trained_model_path})
+
+        # Optional ADAS optimization
+        if enable_adas:
+            print("Running ADAS optimization")
+            adas_system = ADASystem(trained_model_path)
+            optimized_model_path = adas_system.optimize_agent_architecture(output_dir)
+            print(f"ADAS optimized model saved to: {optimized_model_path}")
+            wandb.log({"step": "adas_optimization", "adas_model_path": optimized_model_path})
+        else:
+            optimized_model_path = trained_model_path
 
         # Finish wandb run
         wandb.finish()

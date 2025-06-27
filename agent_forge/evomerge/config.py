@@ -92,6 +92,7 @@ class Configuration(BaseModel):
     merge_settings: MergeSettings
     evolution_settings: EvolutionSettings
     target_domain: Optional[ModelDomain] = None
+    enable_adas: bool = Field(default=True, description="Run ADAS optimization after training")
 
 def create_default_config() -> Configuration:
     return Configuration(
@@ -123,7 +124,8 @@ def create_default_config() -> Configuration:
             use_cma_es=False,
             adaptive_mutation=True,
             objectives=["overall_score", "perplexity"]
-        )
+        ),
+        enable_adas=True
     )
 
 if __name__ == "__main__":
