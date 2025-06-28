@@ -22,6 +22,7 @@ This document summarizes the full Agent Forge pipeline used to create self-impro
 2. **Tool & Memory Integration** – Connect the model to external tools and the shared RAG system, enabling persistent knowledge storage and retrieval.
 3. **ADAS Optimization** – A meta‑model repeatedly tests, grades and adjusts the agent’s architecture until further improvements plateau.
 4. After training completes the code automatically runs `ADASystem.optimize_agent_architecture` to produce the final optimized model saved in `adas_optimized_model`.
+5. To try ADAS yourself, instantiate `ADASystem` with the path to a trained model and call `optimize_agent_architecture(output_dir)`. The method performs a few lightweight hyperparameter perturbations and writes the best configuration to `adas_config.json` inside the output folder.
 
 ## Phase 5 – Deployment
 1. **Compression & Packaging** – Apply final compression passes for efficient deployment.
