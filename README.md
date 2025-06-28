@@ -497,4 +497,4 @@ Please refer to the CONTRIBUTING.md file for guidelines on how to contribute to 
 
 ## License
 
-[Insert your chosen license here]
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
