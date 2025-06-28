@@ -494,6 +494,7 @@ Additional utilities for this pipeline include:
 - `agent_forge/training/prompt_baking.py` – wrapper for deep prompt baking cycles.
 - `agent_forge/training/expert_vectors.py` – tools for expert vector creation and composition *(planned feature)*.
 - `agent_forge/training/identity.py` – identity formation and moral framework utilities.
+- `agent_forge/training/geometry_pipeline.py` – minimal geometry-aware training loop using SVF and Edge-of-Chaos PID.
 
 - For geometry-aware modules integrating Two-NN ID estimation, Grokfast optimization and SleepNet/DreamNet cycles see [docs/geometry_aware_training.md](docs/geometry_aware_training.md).
 ## Contributing
@@ -503,3 +504,4 @@ Please refer to the CONTRIBUTING.md file for guidelines on how to contribute to 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
