@@ -495,6 +495,7 @@ Additional utilities for this pipeline include:
 - `agent_forge/training/expert_vectors.py` – tools for expert vector creation and composition *(planned feature)*.
 - `agent_forge/training/identity.py` – identity formation and moral framework utilities.
 
+- For geometry-aware modules integrating Two-NN ID estimation, Grokfast optimization and SleepNet/DreamNet cycles see [docs/geometry_aware_training.md](docs/geometry_aware_training.md).
 ## Contributing
 
 Please refer to the CONTRIBUTING.md file for guidelines on how to contribute to this project.

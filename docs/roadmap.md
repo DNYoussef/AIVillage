@@ -1,12 +1,12 @@
 # Agent Forge Roadmap
 
-This short roadmap clarifies the current state of the project and highlights
-planned features.
+This short roadmap clarifies the current state of the project and highlights planned features. The geometry-aware modules described in `geometry_aware_training.md` are now included as experimental components.
 
 ## Implemented
 - Retrieval-Augmented Generation (basic pipeline)
 - FastAPI server with simple query endpoint
 - Initial EvoMerge utilities for model merging
+- Geometry-aware training helpers (Two-NN ID estimator, Grokfast optimizer, Edge-of-Chaos PID, SleepNet/DreamNet stubs, BitNet quantization)
 
 ## In Progress / Planned
 - Quiet-STaR thought generation
