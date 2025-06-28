@@ -2,9 +2,9 @@
 
 from agent_forge.compression.stage1_bitnet import convert_to_bitnet
 
-# quantization helpers located in training modules
+# quantization helpers located in foundation and training modules
 try:
-    from agent_forge.training.training import quantize_weights
+    from agent_forge.foundation.bitnet import q_bitnet as quantize_weights
     from agent_forge.training.sleep_and_dream import quantize_activations
 except Exception:  # pragma: no cover - optional if training module unavailable
     def quantize_weights(x):
