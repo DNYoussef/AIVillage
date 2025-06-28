@@ -8,6 +8,9 @@ from tqdm import tqdm
 from langroid import Task, ChatAgent, ChatAgentConfig
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
+# shared training state from geometry feedback loop
+state = dict(G={'ID_nl': 0.0}, pre_grok=False)
+
 from grokfast import GrokFastTask
 from sleep_and_dream import SleepNet, DreamNet
 from agent_forge.model_compression.bitlinearization import quantize_weights, quantize_activations
@@ -37,9 +40,17 @@ class SelfModelingTask(Task):
         self.dream_net = DreamNet(input_size=self.model.config.hidden_size, output_size=self.model.config.hidden_size, num_dream_blocks=3)
         self.grokfast_task = GrokFastTask(agent, self.model)
         self.avg_difficulty = 50  # Start with an average difficulty of 50
-        
+
         # Quantize the initial model weights
         self.quantize_model()
+
+        # predictor for self-modeling loss
+        h = self.model.config.hidden_size
+        self.hidden_pred = nn.Sequential(
+            nn.Linear(h, h), nn.ReLU(),
+            nn.Linear(h, h)
+        ).to(self.device)
+        self.beta = 0.1
 
     def quantize_model(self):
         with torch.no_grad():
@@ -47,6 +58,8 @@ class SelfModelingTask(Task):
                 param.data = quantize_weights(param.data)
 
     async def generate_text(self, prompt: str, temperature: float) -> str:
+        meta = f"<geom idnl={state['G']['ID_nl']:.2f} temp={temperature:.2f}/>"
+        prompt = meta + prompt
         input_ids = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
             output = self.model.generate(
@@ -74,8 +87,10 @@ class SelfModelingTask(Task):
         return input_ids, labels, mask_indices
 
     async def train_step(self, input_ids: torch.Tensor, labels: torch.Tensor, mask_indices: List[int]) -> Tuple[float, float]:
-        outputs = self.model(input_ids=input_ids, labels=labels)
-        loss = outputs.loss
+        outputs = self.model(input_ids=input_ids, labels=labels, output_hidden_states=True)
+        pred_hidden = self.hidden_pred(outputs.hidden_states[-1].detach())
+        L_self = torch.nn.functional.mse_loss(pred_hidden, outputs.hidden_states[-1])
+        loss = outputs.loss + self.beta * L_self
         loss.backward()
         
         # Quantize gradients
@@ -83,7 +98,7 @@ class SelfModelingTask(Task):
             if param.grad is not None:
                 param.grad.data = quantize_weights(param.grad.data)
         
-        self.optimizer.step()
+        self.optimizer.step(amplify=state['pre_grok'])
         
         # Quantize updated weights
         with torch.no_grad():
