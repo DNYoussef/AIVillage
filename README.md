@@ -4,10 +4,14 @@ This project implements a multi-agent AI system featuring a self-evolving
 architecture for continuous improvement and adaptation.
 
 > **Status**
-> Only the core RAG pipeline, FastAPI server and experimental model merging
-> utilities are currently operational. Advanced features described in the
-> documentation (Quiet-STaR thought generation, expert vectors, ADAS, etc.) are
-> still under development.
+> The following pieces of the project are usable today:
+> - Retrieval-Augmented Generation (RAG) pipeline
+> - FastAPI server with a simple web UI
+> - Experimental model merging utilities
+> 
+> All other phases &mdash; including Quiet-STaR thought generation, expert
+> vectors and ADAS optimization &mdash; remain future work and are outlined for
+> reference only in the documentation.
 
 ## System Components
 
@@ -483,12 +487,12 @@ The system can be configured by modifying the `UnifiedConfig` class in `rag_syst
 
 ## Agent Forge Pipeline
 
-See [docs/complete_agent_forge_pipeline.md](docs/complete_agent_forge_pipeline.md) for a detailed description of the training pipeline. A shorter summary remains available in [docs/agent_forge_pipeline_overview.md](docs/agent_forge_pipeline_overview.md).
+See [docs/complete_agent_forge_pipeline.md](docs/complete_agent_forge_pipeline.md) for a detailed description of the planned training pipeline. Advanced phases such as Quiet-STaR, expert vectors and ADAS are noted there as **future work**. A shorter summary remains available in [docs/agent_forge_pipeline_overview.md](docs/agent_forge_pipeline_overview.md).
 
 Additional utilities for this pipeline include:
 - `agent_forge/training/self_modeling.py` – temperature‑based self‑modeling.
 - `agent_forge/training/prompt_baking.py` – wrapper for deep prompt baking cycles.
-- `agent_forge/training/expert_vectors.py` – tools for expert vector creation and composition.
+- `agent_forge/training/expert_vectors.py` – tools for expert vector creation and composition *(planned feature)*.
 - `agent_forge/training/identity.py` – identity formation and moral framework utilities.
 
 ## Contributing
