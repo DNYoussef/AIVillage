@@ -16,11 +16,12 @@ This document summarises the additional components used to implement the self-ad
 ## Integration Points
 
 1. **Expert Vectors**: `training/expert_vectors.py` trains and applies SVF-based expert vectors. They are activated during the advanced prompt-baking loop.
-2. **Intrinsic Dimension Monitoring**: `geometry/id_twonn.py` exposes `twonn` for estimating the model's intrinsic dimensionality every mini-batch.
-3. **Grokfast Optimizer**: `training/grokfast.py` filters gradients to speed up grokking. Used when `pre_grok` is `True`.
+2. **Intrinsic Dimension Monitoring**: `geometry/snapshot.py` wraps the Two‑NN estimator and token entropy probes for a complete geometry snapshot each mini‑batch.
+3. **Grokfast Optimizer**: `training/grokfast_opt.py` exposes an AugmentedAdam wrapper with a `slow_power()` probe used whenever `pre_grok` is `True`.
 4. **Edge-of-Chaos PID**: `training/pid_edgechaos.py` adjusts the learning rate based on complexity metrics to keep the network near λ ≈ 0.5.
 5. **Unexpected Self-Modeling**: `training/self_modeling.py` includes a hidden-state predictor that adds an MSE term to the language modeling loss.
 6. **Sleep/Dream Cycle**: `training/sleep_and_dream.py` implements frozen encoder/decoder modules that propose weight deltas during the dream phase.
-7. **BitNet Compression**: `foundation/bitnet.py` offers a ternary quantization function applied before and after training for efficient deployment.
+7. **Self-Model Grok Gate**: `phase3/self_modeling_gate.py` ensures each level is mastered internally before promotion and is called from `training/train_level.py`.
+8. **BitNet Compression**: `foundation/bitnet.py` offers a ternary quantization function applied before and after training for efficient deployment.
 
 For usage instructions see `docs/external_modules_roadmap.md` and the in-code docstrings of each module.
