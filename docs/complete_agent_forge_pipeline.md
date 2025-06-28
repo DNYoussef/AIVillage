@@ -17,7 +17,7 @@ This document details the full training and optimization process for building se
 
 ## Phase 2 – Core Training Loop
 1. **Curriculum Creation** – Automatically produce up to 1000 assessment tasks ranging from very easy to cutting edge. Determine the failure point and build ten curriculum levels mixing organic data, synthetic tasks, RAG queries and multi‑agent scenarios.
-2. **Training Cycle** – For each level the model receives tasks with a self‑awareness prefix, generates internal thoughts via Quiet‑STaR, outputs a final answer and receives scores for both answer quality and reasoning. Reinforcement updates are applied and sleep/dream cycles run every 50 rounds. Quiet‑STaR support is experimental and disabled by default.
+2. **Training Cycle** – For each level the model receives tasks with a self‑awareness prefix, generates internal thoughts via Quiet‑STaR, outputs a final answer and receives scores for both answer quality and reasoning. Reinforcement updates are applied and sleep/dream cycles run every 50 rounds. Quiet‑STaR support is experimental and disabled by default. To enable it, pass `TrainingConfig(enable_quiet_star=True)` to the training loop in `agent_forge/training/training.py`.
 3. **Self‑Modeling** – At regular intervals the model trains on its own generated texts across five temperature ranges (0‑0.05 to 0.95‑1.0) to refine reasoning and creativity.
 
 ## Phase 3 – Self‑Modeling & Expert Vectors
