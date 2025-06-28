@@ -490,8 +490,8 @@ The RAG system consists of the following main components:
 
 To run the unit tests and integration tests:
 
-```
-python -m unittest discover tests
+```bash
+pytest -vv
 ```
 
 ## Configuration
