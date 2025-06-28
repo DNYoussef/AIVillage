@@ -92,19 +92,28 @@ class DreamBlock(nn.Module):
         return quantize_activations(chain_output + dream_output)
 
 class SleepNet(nn.Module):
-    def __init__(self, input_size, output_size, num_sleep_blocks, model_type='vit-base', freeze_encoder=True):
+    def __init__(self, input_size, output_size, num_sleep_blocks, model_type='vit-base', freeze_encoder=True, pretrained=False):
+        """Lightweight SleepNet wrapper.
+
+        When ``pretrained`` is ``False`` (default) a simple ``nn.Identity`` is
+        used instead of downloading large vision models so that unit tests can
+        run without network access. Set ``pretrained=True`` to restore the
+        original behaviour.
+        """
         super().__init__()
         self.input_layer = CustomQuantizedLinear(input_size, input_size)
-        
-        if 'vit' in model_type:
-            self.pretrained_encoder = AutoModel.from_pretrained(f"google/{model_type}-patch16-224")
-        elif 'roberta' in model_type:
-            self.pretrained_encoder = AutoModel.from_pretrained(f"roberta-{model_type.split('-')[1]}")
+
+        if pretrained:
+            if 'vit' in model_type:
+                self.pretrained_encoder = AutoModel.from_pretrained(f"google/{model_type}-patch16-224")
+            elif 'roberta' in model_type:
+                self.pretrained_encoder = AutoModel.from_pretrained(f"roberta-{model_type.split('-')[1]}")
+            else:
+                raise ValueError(f"Unsupported model type: {model_type}")
+            if freeze_encoder:
+                self.pretrained_encoder = FrozenEncoder(self.pretrained_encoder)
         else:
-            raise ValueError(f"Unsupported model type: {model_type}")
-        
-        if freeze_encoder:
-            self.pretrained_encoder = FrozenEncoder(self.pretrained_encoder)
+            self.pretrained_encoder = nn.Identity()
         
         self.sleep_blocks = nn.ModuleList([
             SleepBlock(input_size, input_size, self.pretrained_encoder)
@@ -119,19 +128,22 @@ class SleepNet(nn.Module):
         return self.output_layer(x)
 
 class DreamNet(nn.Module):
-    def __init__(self, input_size, output_size, num_dream_blocks, model_type='mae-base', freeze_autoencoder=True):
+    def __init__(self, input_size, output_size, num_dream_blocks, model_type='mae-base', freeze_autoencoder=True, pretrained=False):
+        """Mirror of ``SleepNet`` for the dream phase."""
         super().__init__()
         self.input_layer = CustomQuantizedLinear(input_size, input_size)
-        
-        if 'mae' in model_type:
-            self.pretrained_autoencoder = AutoModelForMaskedLM.from_pretrained(f"facebook/{model_type}")
-        elif 'xlnet' in model_type:
-            self.pretrained_autoencoder = AutoModelForCausalLM.from_pretrained(f"xlnet-{model_type.split('-')[1]}")
+
+        if pretrained:
+            if 'mae' in model_type:
+                self.pretrained_autoencoder = AutoModelForMaskedLM.from_pretrained(f"facebook/{model_type}")
+            elif 'xlnet' in model_type:
+                self.pretrained_autoencoder = AutoModelForCausalLM.from_pretrained(f"xlnet-{model_type.split('-')[1]}")
+            else:
+                raise ValueError(f"Unsupported model type: {model_type}")
+            if freeze_autoencoder:
+                self.pretrained_autoencoder = FrozenAutoencoder(self.pretrained_autoencoder)
         else:
-            raise ValueError(f"Unsupported model type: {model_type}")
-        
-        if freeze_autoencoder:
-            self.pretrained_autoencoder = FrozenAutoencoder(self.pretrained_autoencoder)
+            self.pretrained_autoencoder = nn.Identity()
         
         self.dream_blocks = nn.ModuleList([
             DreamBlock(input_size, input_size, self.pretrained_autoencoder)
@@ -146,10 +158,10 @@ class DreamNet(nn.Module):
         return self.output_layer(x)
 
 class SleepAndDreamTask(Task):
-    def __init__(self, agent: ChatAgent, input_size: int, output_size: int, num_sleep_blocks: int, num_dream_blocks: int):
+    def __init__(self, agent: ChatAgent, input_size: int, output_size: int, num_sleep_blocks: int, num_dream_blocks: int, *, pretrained: bool = False):
         super().__init__(agent)
-        self.sleep_net = SleepNet(input_size, output_size, num_sleep_blocks)
-        self.dream_net = DreamNet(input_size, output_size, num_dream_blocks)
+        self.sleep_net = SleepNet(input_size, output_size, num_sleep_blocks, pretrained=pretrained)
+        self.dream_net = DreamNet(input_size, output_size, num_dream_blocks, pretrained=pretrained)
 
     async def run(self, input_data: torch.Tensor) -> torch.Tensor:
         sleep_output = self.sleep_net(input_data)
@@ -167,7 +179,7 @@ if __name__ == "__main__":
             llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
         )
         agent = ChatAgent(config)
-        task = SleepAndDreamTask(agent, input_size=768, output_size=768, num_sleep_blocks=3, num_dream_blocks=3)
+        task = SleepAndDreamTask(agent, input_size=768, output_size=768, num_sleep_blocks=3, num_dream_blocks=3, pretrained=False)
         
         # Example input tensor
         input_data = torch.randn(1, 768)
