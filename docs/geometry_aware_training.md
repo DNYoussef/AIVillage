@@ -6,7 +6,9 @@ This document summarises the additional components used to implement the self-ad
 
 - **Transformer² (SakanaAI/self-adaptive-llms)** — provides the `ExpertVector` class for Σ-scale expert vectors and prompt baking utilities.
 - **SVF (syp2ysy/SVF)** — lightweight singular value fine-tuning kernel used by `apply_svf` in `training/svf_ops.py`.
-- **torch-twonn** — Two-NN intrinsic dimension estimator, wrapped by `geometry/id_twonn.py`.
+- **torch-twonn** — Two-NN intrinsic dimension estimator.  `geometry/snapshot.py`
+  will automatically fall back to the local implementation in
+  `geometry/id_twonn.py` if this package is unavailable.
 - **grokfast** — custom optimizer giving slow gradients extra weight, referenced in the training loop.
 - **Intelligence_at_the_edge_of_chaos** — computes Langton λ and entropy for the PID loop in `training/pid_edgechaos.py`.
 - **unexpected-benefits-of-self-modeling** — hidden-state predictor that regularises weights in the self-modeling task.

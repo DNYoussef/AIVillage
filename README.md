@@ -11,7 +11,8 @@ architecture for continuous improvement and adaptation.
 > 
 > All other phases &mdash; including Quiet-STaR thought generation, expert
 > vectors and ADAS optimization &mdash; remain future work and are outlined for
-> reference only in the documentation.
+> reference only in the documentation.  The `SelfEvolvingSystem` class present
+> in the code is a lightweight stub used for demos and tests.
 
 ## System Components
 
@@ -73,6 +74,9 @@ and place it in `rag_system/utils/token_data/`.
 5. Review the default Retrieval-Augmented Generation configuration:
    - The file `configs/rag_config.yaml` contains the default settings used by
      the RAG pipeline. Edit this file if you need to customize the behaviour.
+   - Parameters such as `vector_store_type` and `graph_store_type` are
+     currently informational only&mdash;`VectorStore` always uses FAISS and
+     `GraphStore` always uses NetworkX.
 6. Tune decision-making hyperparameters:
    - `configs/decision_making.yaml` defines settings for the MCTS and DPO modules.
 
@@ -82,6 +86,11 @@ Some features rely on large libraries such as `numpy`, `torch` and `faiss`. Thes
 ```bash
 pip install numpy torch faiss-cpu  # or faiss-gpu for CUDA systems
 ```
+
+The geometry-aware training helpers attempt to use the optional
+`torch-twonn` package for intrinsic dimension estimation but will fall
+back to the lightweight implementation in `agent_forge/geometry/id_twonn.py`
+if it is not installed.
 
 Ensure the file `rag_system/utils/token_data/cl100k_base.tiktoken` exists before running the code. If absent, download it from the [tiktoken repository](https://github.com/openai/tiktoken). After installing the dependencies and placing the file, you can run the test suite with `pytest`:
 ```bash
@@ -118,6 +127,10 @@ After installing these dependencies you can execute the full test suite:
 ```bash
 pytest
 ```
+
+Some unit tests automatically skip themselves if optional packages such
+as PyTorch are missing. Installing the full requirements is recommended
+for complete coverage.
 
 
 
