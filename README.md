@@ -283,7 +283,7 @@ By following these steps, you can manually feed several dozen academic papers in
 
 ## Documentation
 
-For more detailed information about the AI Village architecture, usage, and API reference, please refer to the documents in the `docs/` directory.
+For a quick repository structure overview see `docs/system_overview.md`. Detailed pipeline documentation is provided in `docs/complete_agent_forge_pipeline.md` and other files in the `docs/` directory.
 
 ## Model Mergers
 
