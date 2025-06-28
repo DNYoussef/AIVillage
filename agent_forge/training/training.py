@@ -8,10 +8,20 @@ from langroid.agent.tool_message import ToolMessage
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 from typing import List, Dict, Tuple, Any
 from dataclasses import dataclass
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from .quiet_star import QuietSTaRModel
+import os
 import sqlite3
 import random
 from .grokfast import GrokFastTask
 from agent_forge.foundation.bitnet import q_bitnet as quantize_weights
+
+
+@dataclass
+class TrainingConfig:
+    """Configuration for the training pipeline."""
+    enable_quiet_star: bool = False
+    model_name: str = "distilgpt2"
 
 class CodingTask(ToolMessage):
     request: str = "coding_task"
@@ -471,24 +481,64 @@ def create_preference_pairs(trajectories: List[Tuple[CodeState, float]]) -> List
                 pairs.append((trajectories[j][0], trajectories[i][0]))
     return pairs
 
-def code_state_to_tensor(state: CodeState) -> torch.Tensor:
-    # This is a placeholder implementation. In practice, you'd want to use
-    # a more sophisticated encoding of the code state, possibly using
-    # a pre-trained code embedding model.
-    return torch.tensor([
-        len(state.code),
-        len(state.thoughts),
-        len(state.response),
-        state.task.difficulty
-    ], dtype=torch.float32)
+def code_state_to_tensor(
+    state: CodeState,
+    quiet_model: QuietSTaRModel | None = None,
+    tokenizer: AutoTokenizer | None = None,
+) -> torch.Tensor:
+    """Convert a CodeState to a feature tensor.
+
+    If a QuietSTaRModel is provided, an additional feature based on the
+    mixed logits is appended.
+    """
+
+    features = torch.tensor(
+        [
+            len(state.code),
+            len(state.thoughts),
+            len(state.response),
+            state.task.difficulty,
+        ],
+        dtype=torch.float32,
+    )
+
+    if quiet_model is not None and tokenizer is not None:
+        tokens = tokenizer.encode(state.code or "", return_tensors="pt")
+        with torch.no_grad():
+            mixed, _ = quiet_model(tokens, generate_thoughts=True)
+        features = torch.cat([features, mixed.mean().float().view(1)])
+
+    return features
 
 class TrainingTask(Task):
-    async def run_training_loop(self, magi_agent: EnhancedMagiAgent, supervisor_agent: EnhancedSupervisorAgent, hyperparameters: Dict[str, Any]) -> Tuple[float, bool]:
+    async def run_training_loop(
+        self,
+        magi_agent: EnhancedMagiAgent,
+        supervisor_agent: EnhancedSupervisorAgent,
+        hyperparameters: Dict[str, Any],
+        config: TrainingConfig | None = None,
+    ) -> Tuple[float, bool]:
+        config = config or TrainingConfig()
+
         ai_feedback_task = AIFeedbackTask(self.agent)
         data_pipeline = DataCollectionPipeline("magi_training.db")
-        
-        dpo_model = CodePreferenceModel(input_size=4, hidden_size=64)
-        dpo_trainer = DPOTrainer(dpo_model, learning_rate=hyperparameters["dpo_learning_rate"], beta=hyperparameters["dpo_beta"])
+
+        quiet_model = None
+        tokenizer = None
+        input_size = 4
+        if config.enable_quiet_star:
+            tokenizer = AutoTokenizer.from_pretrained(config.model_name)
+            base_model = AutoModelForCausalLM.from_pretrained(config.model_name)
+            quiet_model = QuietSTaRModel(base_model)
+            quiet_model.eval()
+            input_size = 5
+
+        dpo_model = CodePreferenceModel(input_size=input_size, hidden_size=64)
+        dpo_trainer = DPOTrainer(
+            dpo_model,
+            learning_rate=hyperparameters["dpo_learning_rate"],
+            beta=hyperparameters["dpo_beta"],
+        )
         
         grokfast_task = None
         best_val_performance = float('-inf')
@@ -578,8 +628,16 @@ class TrainingTask(Task):
             # Train DPO model
             preference_pairs = create_preference_pairs(all_trajectories)
             for preferred, non_preferred in preference_pairs:
-                preferred_tensor = code_state_to_tensor(preferred)
-                non_preferred_tensor = code_state_to_tensor(non_preferred)
+                preferred_tensor = code_state_to_tensor(
+                    preferred,
+                    quiet_model=quiet_model,
+                    tokenizer=tokenizer,
+                )
+                non_preferred_tensor = code_state_to_tensor(
+                    non_preferred,
+                    quiet_model=quiet_model,
+                    tokenizer=tokenizer,
+                )
                 loss = dpo_trainer.train_step(preferred_tensor, non_preferred_tensor)
 
                 if grokfast_task:
@@ -589,7 +647,13 @@ class TrainingTask(Task):
             print(f"Tasks remaining: {len(training_tasks)}")
             
             # Validation step
-            val_performance = await self.evaluate_model(magi_agent, supervisor_agent, hyperparameters)
+            val_performance = await self.evaluate_model(
+                magi_agent,
+                supervisor_agent,
+                hyperparameters,
+                quiet_model=quiet_model,
+                tokenizer=tokenizer,
+            )
             print(f"Validation performance: {val_performance:.4f}")
             
             if val_performance > best_val_performance:
@@ -628,7 +692,14 @@ class TrainingTask(Task):
         
         return best_val_performance, grok_detected
 
-    async def evaluate_model(self, magi_agent: EnhancedMagiAgent, supervisor_agent: EnhancedSupervisorAgent, hyperparameters: Dict[str, Any]) -> float:
+    async def evaluate_model(
+        self,
+        magi_agent: EnhancedMagiAgent,
+        supervisor_agent: EnhancedSupervisorAgent,
+        hyperparameters: Dict[str, Any],
+        quiet_model: QuietSTaRModel | None = None,
+        tokenizer: AutoTokenizer | None = None,
+    ) -> float:
         validation_tasks = await supervisor_agent.create_training_tasks(50)  # Create 50 validation tasks
         total_reward = 0
         
@@ -651,7 +722,16 @@ class TrainingTask(Task):
         return total_reward / len(validation_tasks)
 
 class OptimizationTask(Task):
-    async def run_training_loop_with_optimization(self, magi_agent: EnhancedMagiAgent, supervisor_agent: EnhancedSupervisorAgent, optimization_rounds: int = 10):
+    async def run_training_loop_with_optimization(
+        self,
+        magi_agent: EnhancedMagiAgent,
+        supervisor_agent: EnhancedSupervisorAgent,
+        *,
+        config: TrainingConfig | None = None,
+        optimization_rounds: int = 10,
+    ):
+        config = config or TrainingConfig()
+
         hyperparameter_optimization_task = HyperparameterOptimizationTask(self.agent)
         training_task = TrainingTask(self.agent)
         
@@ -666,7 +746,12 @@ class OptimizationTask(Task):
             hyperparameters = hyperparameter_optimization_task.current_hyperparameters
             
             # Run the training loop with current hyperparameters
-            performance_metric, grok_occurred = await training_task.run_training_loop(magi_agent, supervisor_agent, hyperparameters)
+            performance_metric, grok_occurred = await training_task.run_training_loop(
+                magi_agent,
+                supervisor_agent,
+                hyperparameters,
+                config,
+            )
             
             print(f"Performance metric: {performance_metric}")
             if grok_occurred:
@@ -685,7 +770,12 @@ class OptimizationTask(Task):
             if grok_detected:
                 # If groking occurred, we might want to explore these hyperparameters more thoroughly
                 for _ in range(3):  # Run a few more times with these hyperparameters
-                    performance_metric, _ = await training_task.run_training_loop(magi_agent, supervisor_agent, hyperparameters)
+                    performance_metric, _ = await training_task.run_training_loop(
+                        magi_agent,
+                        supervisor_agent,
+                        hyperparameters,
+                        config,
+                    )
                     if performance_metric > best_performance:
                         best_performance = performance_metric
                         best_hyperparameters = hyperparameters.copy()
@@ -714,12 +804,22 @@ async def main():
     supervisor_agent = EnhancedSupervisorAgent(supervisor_config)
     
     optimization_task = OptimizationTask(magi_agent)
-    best_hyperparameters, grok_detected = await optimization_task.run_training_loop_with_optimization(magi_agent, supervisor_agent)
+    training_config = TrainingConfig(enable_quiet_star=os.environ.get("ENABLE_QUIET_STAR") == "1")
+    best_hyperparameters, grok_detected = await optimization_task.run_training_loop_with_optimization(
+        magi_agent,
+        supervisor_agent,
+        config=training_config,
+    )
     
     # Final run with best hyperparameters
     print("Running final training loop with best hyperparameters")
     training_task = TrainingTask(magi_agent)
-    final_performance, _ = await training_task.run_training_loop(magi_agent, supervisor_agent, best_hyperparameters)
+    final_performance, _ = await training_task.run_training_loop(
+        magi_agent,
+        supervisor_agent,
+        best_hyperparameters,
+        training_config,
+    )
     print(f"Final performance: {final_performance}")
 
     # Save the final model
