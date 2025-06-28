@@ -1,4 +1,4 @@
-from .task import Task, TaskStatus
-from .workflow import Workflow
+from agents.task_management import Task, TaskStatus, Workflow
 
 __all__ = ['Task', 'TaskStatus', 'Workflow']
+
