@@ -59,5 +59,15 @@ class TestSelfEvolvingSystem(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(ses.mcts.exploration_weight, old_weight)
         self.assertGreater(ses.mcts.simulation_depth, old_depth)
 
+    async def test_system_evolve(self):
+        class EvoAgent(DummyAgent):
+            async def evolve(self):
+                self.add_capability("new")
+
+        agent = EvoAgent()
+        ses = SelfEvolvingSystem([agent])
+        await ses.evolve()
+        self.assertIn("new", agent.capabilities)
+
 if __name__ == "__main__":
     unittest.main()

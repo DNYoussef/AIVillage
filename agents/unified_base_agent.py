@@ -5,6 +5,7 @@ import random
 import numpy as np
 import warnings
 from sklearn.linear_model import LogisticRegression
+from agents.self_evolve.quality_assurance import BasicUPOChecker, SafetyCheck
 from agents.utils.task import Task as LangroidTask
 from agents.language_models.openai_gpt import OpenAIGPTConfig
 from agents.utils import (
@@ -473,30 +474,34 @@ class _SageFramework:
 
 
 class _DPOModule:
-    """Simple preference optimizer using logistic regression."""
+    """Simple preference optimizer using logistic regression.
+
+    A tiny dataset of decisions and outcomes is kept in memory so that the model
+    can be retrained during ``evolve_decision_maker``.
+    """
 
     def __init__(self) -> None:
         self.model = LogisticRegression()
+        self.X: List[np.ndarray] = []
+        self.y: List[int] = []
 
-    def fit(self, X: np.array, y: np.array) -> None:
+    def add_record(self, features: np.array, outcome: int) -> None:
+        self.X.append(features)
+        self.y.append(outcome)
+        if len(self.X) > 1000:
+            self.X.pop(0)
+            self.y.pop(0)
+
+    def fit(self, X: np.array | None = None, y: np.array | None = None) -> None:
+        if X is None or y is None:
+            X = np.array(self.X)
+            y = np.array(self.y)
         if len(X) and len(y):
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore")
                 self.model.fit(X, y)
 
 
-@dataclass
-class _SafetyCheck:
-    safety_score: float
-
-
-class _QualityAssuranceStub:
-    def __init__(self, upo_threshold: float = 0.7):
-        self.upo_threshold = upo_threshold
-
-    async def get_recent_safety_checks(self) -> List[_SafetyCheck]:
-        # Return a few mock safety checks
-        return [_SafetyCheck(random.uniform(0.5, 1.0)) for _ in range(5)]
 
 class SelfEvolvingSystem:
     """Simplified placeholder managing agent evolution.
@@ -516,7 +521,7 @@ class SelfEvolvingSystem:
         self.sage_framework = _SageFramework()
         self.mcts = MCTSConfig()
         self.dpo = _DPOModule()
-        self.quality_assurance = _QualityAssuranceStub()
+        self.quality_assurance = BasicUPOChecker()
         self.recent_decisions: List[tuple] = []
 
     async def process_task(self, task: LangroidTask) -> Dict[str, Any]:
@@ -575,12 +580,9 @@ class SelfEvolvingSystem:
             except Exception:
                 pass
 
-        recent_decisions = self.get_recent_decisions()
-        if recent_decisions and hasattr(self.dpo, "fit"):
+        if hasattr(self.dpo, "fit"):
             try:
-                X = np.array([d[0] for d in recent_decisions])
-                y = np.array([d[1] for d in recent_decisions])
-                self.dpo.fit(X, y)
+                self.dpo.fit()
             except Exception:
                 pass
 
@@ -618,6 +620,11 @@ class SelfEvolvingSystem:
         self.recent_decisions.append((features, outcome))
         if len(self.recent_decisions) > 1000:
             self.recent_decisions.pop(0)
+        if hasattr(self.dpo, "add_record"):
+            try:
+                self.dpo.add_record(features, outcome)
+            except Exception:
+                pass
 
 
 def create_agent(
