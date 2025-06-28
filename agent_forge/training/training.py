@@ -11,11 +11,7 @@ from dataclasses import dataclass
 import sqlite3
 import random
 from .grokfast import GrokFastTask
-
-# Utility function for 1.58-bit quantization
-def quantize_weights(weights):
-    rand = torch.rand_like(weights)
-    return torch.sign(weights) * (rand < torch.abs(weights)).float()
+from agent_forge.foundation.bitnet import q_bitnet as quantize_weights
 
 class CodingTask(ToolMessage):
     request: str = "coding_task"
