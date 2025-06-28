@@ -23,7 +23,6 @@ aiofiles>=23.1.0
 pytest
 pytest-asyncio
 click
-pyyaml
 PyYAML
 ollama
 aiohttp>=3.10.5
