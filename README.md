@@ -58,9 +58,15 @@ planned milestones.
    pip install -r requirements.txt
    ```
 
-The repository bundles the `cl100k_base.tiktoken` file used by
-`tiktoken` under `rag_system/utils/token_data/`. This allows tokenizer
-initialization without network access.
+Download the `cl100k_base.tiktoken` file used by `tiktoken` and place it
+under `rag_system/utils/token_data/`. Without this file the tokenizer
+cannot be initialized offline. Obtain it from the OpenAI public
+encodings repository:
+
+```bash
+curl -L -o rag_system/utils/token_data/cl100k_base.tiktoken \
+  https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken
+```
 
 4. Set up environment variables:
    - Create a `.env` file in the project root
@@ -79,7 +85,9 @@ Some features rely on large libraries such as `numpy`, `torch` and `faiss`. Thes
 pip install numpy torch faiss-cpu  # or faiss-gpu for CUDA systems
 ```
 
-The tokenizer file `rag_system/utils/token_data/cl100k_base.tiktoken` is bundled so that `tiktoken` can initialize without internet access. Ensure you have a `.env` file in the project root containing your API keys. After installing the dependencies you can run the test suite with `pytest`:
+Ensure you have downloaded `cl100k_base.tiktoken` as described above and have a
+`.env` file in the project root containing your API keys. After installing the
+dependencies you can run the test suite with `pytest`:
 ```bash
 pytest
 ```
