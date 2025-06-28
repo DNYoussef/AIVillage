@@ -7,7 +7,10 @@ Fast utilities for sensing representational geometry every mini-batch.
 from __future__ import annotations
 import torch, math
 from torch import Tensor
-from twonn import twonn                           # Two-NN impl
+try:
+    from twonn import twonn  # external Two-NN implementation
+except Exception:  # pragma: no cover - fallback for minimal installs
+    from .id_twonn import twonn  # lightweight local estimator
 from torch.linalg import svdvals                  # native batched SVD (PyTorch ≥2.1)
 
 __all__ = ["snapshot", "GeomState"]

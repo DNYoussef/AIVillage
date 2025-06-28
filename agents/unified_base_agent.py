@@ -499,6 +499,16 @@ class _QualityAssuranceStub:
         return [_SafetyCheck(random.uniform(0.5, 1.0)) for _ in range(5)]
 
 class SelfEvolvingSystem:
+    """Simplified placeholder managing agent evolution.
+
+    This class is a stub.  It exposes just enough behaviour for the
+    tutorials and unit tests to run without implementing the full
+    self‑evolving pipeline outlined in the documentation.  Additional
+    modules such as Quiet‑STaR, expert vectors and ADAS optimisation are
+    not integrated yet and will require substantial work before this
+    system becomes feature complete.
+    """
+
     def __init__(self, agents: List[UnifiedBaseAgent]):
         self.agents = agents
         # Initialize basic stub components so the system functions even
