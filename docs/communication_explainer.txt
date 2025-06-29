@@ -26,7 +26,7 @@ content: Dictionary containing message content.
 priority: Priority level (Priority).
 timestamp: Time when the message was created.
 parent_id: (Optional) ID of the parent message, used for threading.
-metadata: Optional dictionary with additional data.
+metadata: Optional dictionary with additional data about the message.
 Methods:
 
 with_updated_content(new_content): Returns a new Message with updated content.
