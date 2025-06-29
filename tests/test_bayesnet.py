@@ -18,6 +18,18 @@ fake_faiss = mock.MagicMock()
 fake_faiss.__spec__ = mock.MagicMock()
 with mock.patch.dict('sys.modules', {'faiss': fake_faiss, 'requests': requests_stub, 'yaml': yaml_stub, 'networkx': networkx_stub}):
     from rag_system.core.pipeline import EnhancedRAGPipeline, shared_bayes_net
+    from rag_system.retrieval.graph_store import GraphStore
+
+class DummyGraph:
+    def __init__(self) -> None:
+        self.nodes = {}
+        self.edges = {}
+
+    def add_node(self, node_id: str, **attrs):
+        self.nodes[node_id] = attrs
+
+    def add_edge(self, src: str, dst: str, weight: float = 0.0):
+        self.edges[(src, dst)] = {"weight": weight}
 
 class TestBayesNetIntegration(unittest.TestCase):
     def test_shared_instance(self):
@@ -32,6 +44,22 @@ class TestBayesNetIntegration(unittest.TestCase):
     @mock.patch("requests.get")
     def test_web_scrape_updates_bayesnet(self, mock_get):
         pytest.skip("Skipping web scrape test due to missing dependencies")
+
+
+class TestGraphStoreSimilarity(unittest.TestCase):
+    def test_cosine_similarity_edge_weight(self):
+        store = GraphStore()
+        store.graph = DummyGraph()
+
+        docs = [
+            {"id": "1", "content": "a", "embedding": [1.0, 0.0, 0.0]},
+            {"id": "2", "content": "b", "embedding": [1.0, 0.0, 0.0]},
+        ]
+
+        store.add_documents(docs)
+
+        self.assertIn(("1", "2"), store.graph.edges)
+        self.assertAlmostEqual(store.graph.edges[("1", "2")]["weight"], 1.0)
 
 if __name__ == '__main__':
     unittest.main()
