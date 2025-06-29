@@ -8,17 +8,15 @@ import pytest
 
 yaml_stub = types.ModuleType("yaml")
 yaml_stub.safe_load = lambda *args, **kwargs: {}
-sys.modules.setdefault("yaml", yaml_stub)
-sys.modules.setdefault("networkx", types.ModuleType("networkx"))
+networkx_stub = types.ModuleType("networkx")
 requests_stub = types.ModuleType("requests")
 requests_stub.get = lambda *a, **k: None
-sys.modules.setdefault("requests", requests_stub)
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 fake_faiss = mock.MagicMock()
 fake_faiss.__spec__ = mock.MagicMock()
-with mock.patch.dict('sys.modules', {'faiss': fake_faiss}):
+with mock.patch.dict('sys.modules', {'faiss': fake_faiss, 'requests': requests_stub, 'yaml': yaml_stub, 'networkx': networkx_stub}):
     from rag_system.core.pipeline import EnhancedRAGPipeline, shared_bayes_net
 
 class TestBayesNetIntegration(unittest.TestCase):

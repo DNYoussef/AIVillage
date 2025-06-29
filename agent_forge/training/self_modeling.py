@@ -187,39 +187,33 @@ class SelfModelingTask(Task):
             torch.save(self.model.state_dict(), f"self_model_checkpoint_level_{level}.pth")
 
     async def evaluate_model(self, val_loader) -> float:
-        """Return a composite score for the current model."""
+        """Return the validation perplexity for the current model."""
 
-        tot_mask = 0
-        ok_mask = 0
-        mse_hid = 0.0
-        n_hid = 0
-        ids_lin: list[int] = []
-        ids_nl: list[float] = []
+        from agent_forge.evaluation import evaluator
 
-        self.model.eval()
-        with torch.inference_mode():
-            for batch in val_loader:
-                txt = batch["txt"].to(self.device)
-                out = self.model(txt, output_hidden_states=True, labels=txt)
-                preds = out.logits.argmax(-1)
-                ok_mask += (preds == txt).float().sum().item()
-                tot_mask += txt.numel()
+        eval_data = []
+        for batch in val_loader:
+            txt = batch["txt"].to(self.device)
+            attn = torch.ones_like(txt)
+            eval_data.append((txt, attn, txt))
 
-                H = out.hidden_states[-1]
-                mse_hid += F.mse_loss(self.hidden_pred(H), H, reduction="sum").item()
-                n_hid += H.numel()
+        class EvalWrapper(nn.Module):
+            def __init__(self, model, tokenizer):
+                super().__init__()
+                self.model = model
+                self.tokenizer = tokenizer
 
-                geom = snapshot(H)
-                ids_nl.append(geom["ID_nl"])
-                ids_lin.append(geom["ID_lin"])
+            def forward(self, input_ids, attention_mask=None, labels=None):
+                return self.model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
 
-        acc = ok_mask / max(1, tot_mask)
-        r2 = 1.0 - mse_hid / max(1e-9, n_hid)
-        comp = (sum(ids_lin) / sum(ids_nl or [1.0])) / 100.0
+            def generate_thoughts(self, inputs, attention_mask):
+                with torch.no_grad():
+                    out = self.model.generate(inputs, attention_mask=attention_mask, max_length=inputs.size(1) + 1)
+                return self.tokenizer.decode(out[0], skip_special_tokens=True)
 
-        eps = 1e-6
-        score = 3.0 / ((1 / (acc + eps)) + (1 / (r2 + eps)) + (1 / (comp + eps)))
-        return max(0.0, min(1.0, float(score)))
+        wrapped = EvalWrapper(self.model, self.tokenizer)
+        metrics = evaluator.evaluate_model(wrapped, eval_data)
+        return float(metrics["perplexity"])
 
     async def run(self):
         await self.evolve_across_curriculum()
