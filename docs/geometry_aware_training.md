@@ -1,6 +1,6 @@
 # Geometry-Aware Training Modules
 
-This document summarises the additional components used to implement the self-adaptive "geometry-aware" training pipeline. They correspond to the roadmap provided in `external_modules_roadmap.md` and are referenced by various modules in `agent_forge/training/` and `agent_forge/geometry/`.
+This document summarises the additional components proposed for the self-adaptive "geometry-aware" training pipeline. Most of these modules are experimental stubs only. Features such as expert vectors and advanced sleep/dream cycles are **not implemented** in the current repository.
 
 ## Key External Projects
 
@@ -17,7 +17,7 @@ This document summarises the additional components used to implement the self-ad
 
 ## Integration Points
 
-1. **Expert Vectors**: `training/expert_vectors.py` trains and applies SVF-based expert vectors. Use `ExpertVectorSystem.train_expert_vector_from_texts` to build vectors from raw text or curriculum tasks. `PromptBakingManager` automatically applies any loaded vectors when baking prompts or loading a model.
+1. **Expert Vectors**: `training/expert_vectors.py` is a placeholder for SVF-based expert vectors. Use `ExpertVectorSystem.train_expert_vector_from_texts` to build vectors from raw text or curriculum tasks once this feature is implemented. `PromptBakingManager` currently does not load real vectors.
 2. **Intrinsic Dimension Monitoring**: `geometry/snapshot.py` wraps the Two‑NN estimator and token entropy probes for a complete geometry snapshot each mini‑batch.
 3. **Grokfast Optimizer**: `training/grokfast_opt.py` exposes an AugmentedAdam wrapper with a `slow_power()` probe used whenever `pre_grok` is `True`.
 4. **Edge-of-Chaos PID**: `training/pid_edgechaos.py` adjusts the learning rate based on complexity metrics to keep the network near λ ≈ 0.5.

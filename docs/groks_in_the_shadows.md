@@ -4,6 +4,7 @@
 emergence of grok-like behaviour in language models. It combines the
 **Quiet‑STaR** thought layer and the **Grokfast** optimizer to monitor hidden
 states and gradient dynamics long before the validation loss visibly improves.
+These components are experimental only, and Quiet‑STaR is not yet integrated into the main training loop.
 
 The technique operates in two phases:
 
