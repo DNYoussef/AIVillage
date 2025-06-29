@@ -2,14 +2,18 @@ try:
     from . import evomerge
 except Exception:  # pragma: no cover - optional heavy deps may be missing
     evomerge = None
+# Re-export key subsystems so external modules can rely on them
 from .training.training import TrainingTask
-from . import tool_baking
+from .training import expert_vectors
+from . import tool_baking, adas
 # Import ADAS utilities if available. The ADAS module is optional and may
 # require additional heavy dependencies.
 from . import adas
 
 __all__ = [
     "AgentForge",
+    "adas",
+    "expert_vectors",
 ]
 
 class AgentForge:

@@ -2,6 +2,7 @@ from typing import Dict, Any, List, Optional, Callable, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 import random
+from utils.logging import get_logger
 import numpy as np
 import warnings
 from sklearn.linear_model import LogisticRegression
@@ -515,6 +516,7 @@ class SelfEvolvingSystem:
     """
 
     def __init__(self, agents: List[UnifiedBaseAgent]):
+        self.logger = get_logger(__name__)
         self.agents = agents
         # Initialize basic stub components so the system functions even
         # when full implementations are not provided.
@@ -531,27 +533,39 @@ class SelfEvolvingSystem:
         return {"error": "No suitable agent found for the task"}
 
     async def evolve(self):
-        print("Starting system-wide evolution...")
+        self.logger.info("Starting system-wide evolution...")
         for agent in self.agents:
+            perf = await self.analyze_agent_performance(agent)
+            new_caps = await self.generate_new_capabilities(agent, perf)
+            for cap in new_caps:
+                agent.add_capability(cap)
             await agent.evolve()
-        print("System-wide evolution complete.")
+
+        if self.quality_assurance:
+            self.quality_assurance.upo_threshold = await self.optimize_upo_threshold()
+        await self.evolve_decision_maker()
+        self.logger.info("System-wide evolution complete.")
 
     async def evolve_agent(self, agent: UnifiedBaseAgent):
-        print(f"Evolving agent: {agent.name}")
+        self.logger.info("Evolving agent: %s", agent.name)
         performance = await self.analyze_agent_performance(agent)
         new_capabilities = await self.generate_new_capabilities(agent, performance)
         for capability in new_capabilities:
             agent.add_capability(capability)
-        print(f"Agent {agent.name} evolution complete. New capabilities: {new_capabilities}")
+        self.logger.info(
+            "Agent %s evolution complete. New capabilities: %s",
+            agent.name,
+            new_capabilities,
+        )
 
     async def analyze_agent_performance(self, agent: UnifiedBaseAgent) -> Dict[str, float]:
-        print(f"Analyzing performance of agent: {agent.name}")
+        self.logger.info("Analyzing performance of agent: %s", agent.name)
         performance = {capability: random.uniform(0.4, 1.0) for capability in agent.capabilities}
-        print(f"Performance analysis for {agent.name}: {performance}")
+        self.logger.info("Performance analysis for %s: %s", agent.name, performance)
         return performance
 
     async def generate_new_capabilities(self, agent: UnifiedBaseAgent, performance: Dict[str, float]) -> List[str]:
-        print(f"Generating new capabilities for agent: {agent.name}")
+        self.logger.info("Generating new capabilities for agent: %s", agent.name)
         low_performing = [cap for cap, score in performance.items() if score < 0.6]
         prompt = (
             f"Agent {agent.name} is underperforming in {', '.join(low_performing)}. "
@@ -564,11 +578,13 @@ class SelfEvolvingSystem:
                 new_capabilities = [cap.strip() for cap in response.split(',') if cap.strip()]
             except Exception:
                 new_capabilities = []
-        print(f"Suggested new capabilities for {agent.name}: {new_capabilities}")
+        self.logger.info(
+            "Suggested new capabilities for %s: %s", agent.name, new_capabilities
+        )
         return new_capabilities
 
     async def evolve_decision_maker(self):
-        print("Evolving decision maker...")
+        self.logger.info("Evolving decision maker...")
         if hasattr(self.mcts, "exploration_weight"):
             try:
                 self.mcts.exploration_weight *= 1.05
@@ -586,10 +602,10 @@ class SelfEvolvingSystem:
             except Exception:
                 pass
 
-        print("Decision maker evolution complete.")
+        self.logger.info("Decision maker evolution complete.")
 
     async def optimize_upo_threshold(self) -> float:
-        print("Optimizing UPO threshold...")
+        self.logger.info("Optimizing UPO threshold...")
         safety_checks = []
         if self.quality_assurance and hasattr(self.quality_assurance, "get_recent_safety_checks"):
             try:
@@ -608,7 +624,7 @@ class SelfEvolvingSystem:
             base = self.quality_assurance.upo_threshold if self.quality_assurance else 0.7
             new_threshold = base * (1 + (random.random() - 0.5) * 0.1)
 
-        print(f"New UPO threshold: {new_threshold:.4f}")
+        self.logger.info("New UPO threshold: %.4f", new_threshold)
         return new_threshold
 
     def get_recent_decisions(self) -> List[tuple]:

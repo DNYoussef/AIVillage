@@ -1,12 +1,33 @@
-from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, UploadFile, File, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from fastapi.middleware import Middleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from pydantic import BaseModel, ValidationError
+import os
+from utils.logging import get_logger
 
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 
-app = FastAPI()
+logger = get_logger(__name__)
+
+API_KEY = os.getenv("API_KEY")
+
+class AuthMiddleware(BaseHTTPMiddleware):
+    """Simple API key authentication and validation middleware."""
+    async def dispatch(self, request: Request, call_next):
+        if API_KEY and request.url.path not in ("/", "/ui", "/ui/index.html"):
+            key = request.headers.get("x-api-key")
+            if key != API_KEY:
+                return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+        try:
+            response = await call_next(request)
+        except ValidationError as exc:
+            return JSONResponse(status_code=400, content={"detail": exc.errors()})
+        return response
+
+app = FastAPI(middleware=[Middleware(AuthMiddleware)])
 app.mount("/ui", StaticFiles(directory="ui"), name="ui")
 
 rag_pipeline = EnhancedRAGPipeline()

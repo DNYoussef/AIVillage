@@ -74,6 +74,7 @@ and place it in `rag_system/utils/token_data/`.
 4. Set up environment variables:
    - Create a `.env` file in the project root
    - Add your OpenAI API key: `OPENAI_API_KEY=your_api_key_here`
+   - Add an API key for the server: `API_KEY=my_secret_key`
 
 5. Review the default Retrieval-Augmented Generation configuration:
    - The file `configs/rag_config.yaml` contains the default settings used by
@@ -526,3 +527,4 @@ Please refer to the CONTRIBUTING.md file for guidelines on how to contribute to 
 
 This project is licensed under the [MIT License](LICENSE).
 
+\n## Docker\nA `Dockerfile` is provided to run tests in a container:\n```bash\ndocker build -t aivillage .\ndocker run aivillage\n```
