@@ -28,16 +28,59 @@ def _ensure_module(name: str, attrs: dict | None = None):
 _ensure_module('faiss', {'IndexFlatL2': lambda *args, **kwargs: object()})
 _ensure_module('numpy', {'zeros': lambda *args, **kwargs: [0] * (args[0] if args else 0)})
 _ensure_module('httpx')
-_ensure_module('torch', {
+_ensure_module('requests', {'get': lambda *a, **k: None})
+_ensure_module('yaml', {'safe_load': lambda *a, **k: {}})
+torch_mod = _ensure_module('torch', {
     'Tensor': object,
     'randn': lambda *a, **k: 0,
     '__getattr__': lambda name: object,
 })
+if torch_mod is not None:
+    torch_mod.__spec__.submodule_search_locations = []
+    torch_mod.__path__ = []
 _ensure_module('sklearn')
 _ensure_module('sklearn.feature_extraction')
-_ensure_module('sklearn.feature_extraction.text', {'TfidfVectorizer': object})
+class _DummyTfidfVectorizer:
+    def fit(self, docs):
+        self.vocab = sorted({w.lower() for d in docs for w in str(d).split()})
+        return self
+    def transform(self, docs):
+        vecs = []
+        for d in docs:
+            tokens = d.lower().split()
+            vecs.append([tokens.count(v) for v in self.vocab])
+        return vecs
+
+_ensure_module('sklearn.feature_extraction.text', {'TfidfVectorizer': _DummyTfidfVectorizer})
 _ensure_module('sklearn.metrics')
-_ensure_module('sklearn.metrics.pairwise', {'cosine_similarity': lambda *a, **k: [[1.0]]})
+class _DummyCosineResult(list):
+    def __getitem__(self, item):
+        if isinstance(item, tuple):
+            return super().__getitem__(item[0])[item[1]]
+        return super().__getitem__(item)
+    class _Diag(list):
+        def mean(self):
+            return sum(self) / len(self) if self else 0.0
+
+    def diagonal(self):
+        return self._Diag([self[i][i] for i in range(min(len(self), len(self[0])))] )
+
+def _dummy_cosine_similarity(a, b):
+    import math
+    def dot(u, v):
+        return sum(x * y for x, y in zip(u, v))
+    def norm(u):
+        return math.sqrt(sum(x * x for x in u))
+    res = []
+    for row in a:
+        row_res = []
+        for col in b:
+            denom = norm(row) * norm(col)
+            row_res.append(dot(row, col) / denom if denom else 0.0)
+        res.append(row_res)
+    return _DummyCosineResult(res)
+
+_ensure_module('sklearn.metrics.pairwise', {'cosine_similarity': _dummy_cosine_similarity})
 _ensure_module('psutil')
 _ensure_module('networkx', {'Graph': object})
 parent = _ensure_module('langroid', {
@@ -87,6 +130,8 @@ def _patched_find_spec(name, *args, **kwargs):
     if mod is not None and getattr(mod, "__spec__", None) is None:
         return None
     if name in _STUBBED_MODULES:
+        return None
+    if name.startswith("torch") or name.startswith("sklearn"):
         return None
     return _real_find_spec(name, *args, **kwargs)
 

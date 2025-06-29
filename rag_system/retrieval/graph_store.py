@@ -1,11 +1,24 @@
-from typing import List, Dict, Any, Tuple, Optional
-import networkx as nx
+from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
+import math
+import random
+
+try:  # networkx might not be installed in minimal test envs
+    import networkx as nx
+except Exception:  # pragma: no cover - handled by fallback logic
+    nx = None  # type: ignore
+
+try:  # embedding dependencies are optional
+    from ..utils.embedding import BERTEmbeddingModel
+except Exception:  # pragma: no cover - missing torch/transformers
+    BERTEmbeddingModel = None  # type: ignore
+
 from ..core.config import UnifiedConfig
 from ..core.structures import RetrievalResult
 
 class GraphStore:
-    def __init__(self, config: Optional[UnifiedConfig] = None):
+    def __init__(self, config: Optional[UnifiedConfig] = None,
+                 embedding_model: Optional[Any] = None):
         """Create a GraphStore.
 
         Similar to :class:`VectorStore`, older code instantiated ``GraphStore``
@@ -15,6 +28,12 @@ class GraphStore:
         """
 
         self.config = config or UnifiedConfig()
+        self.embedding_model = embedding_model
+        if self.embedding_model is None and BERTEmbeddingModel is not None:
+            try:
+                self.embedding_model = BERTEmbeddingModel()
+            except Exception:  # pragma: no cover - model load failed
+                self.embedding_model = None
         try:
             self.graph = nx.Graph()
         except Exception:  # pragma: no cover - fallback if networkx is stubbed
@@ -24,20 +43,49 @@ class GraphStore:
         self.causal_edges = {}
         self.llm = None  # This should be initialized with a proper language model
 
+    def _generate_embedding(self, text: str) -> List[float]:
+        """Return an embedding vector for ``text``.
+
+        When an embedding model is available it is used; otherwise a
+        deterministic random vector based on ``hash(text)`` is returned.
+        """
+        if self.embedding_model is not None:
+            try:
+                _, emb = self.embedding_model.encode(text)
+                try:
+                    vec = emb.mean(dim=0).detach().cpu().tolist()
+                except Exception:
+                    try:
+                        vec = emb.tolist()
+                    except Exception:
+                        vec = list(emb)
+                return [float(v) for v in vec]
+            except Exception:
+                pass
+
+        rng = random.Random(abs(hash(text)) % (2**32))
+        return [rng.random() for _ in range(64)]
+
     def add_documents(self, documents: List[Dict[str, Any]]):
         for doc in documents:
+            # Ensure each document has an embedding
+            if "embedding" not in doc or doc["embedding"] is None:
+                doc["embedding"] = self._generate_embedding(str(doc.get("content", "")))
+
             if hasattr(self.graph, "add_node"):
                 self.graph.add_node(doc["id"], **doc)
             else:
                 self._nodes[doc["id"]] = doc
 
         for i, doc in enumerate(documents):
-            tokens_i = set(str(doc.get("content", "")).lower().split())
+            emb_i = doc.get("embedding", [])
             for other in documents[i + 1 :]:
-                tokens_j = set(str(other.get("content", "")).lower().split())
-                intersection = tokens_i & tokens_j
-                union = tokens_i | tokens_j
-                sim = len(intersection) / len(union) if union else 0.0
+                emb_j = other.get("embedding", [])
+                dot = sum(a * b for a, b in zip(emb_i, emb_j))
+                norm_i = math.sqrt(sum(a * a for a in emb_i))
+                norm_j = math.sqrt(sum(b * b for b in emb_j))
+                denom = norm_i * norm_j
+                sim = float(dot / denom) if denom else 0.0
                 if hasattr(self.graph, "add_edge"):
                     self.graph.add_edge(doc["id"], other["id"], weight=sim)
 
