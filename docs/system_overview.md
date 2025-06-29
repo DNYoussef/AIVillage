@@ -3,6 +3,9 @@
 This document provides a quick reference for the structure of the repository and the main
 technologies used.
 
+> **Note**
+> Features such as the SAGE framework, expert vector system and ADAS optimization are conceptual only. The current codebase implements a basic RAG pipeline without these advanced capabilities.
+
 ## Directory Layout
 
 - `agent_forge/` – Training utilities and experimental pipelines.
