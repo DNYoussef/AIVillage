@@ -2,6 +2,22 @@ import unittest
 import asyncio
 import importlib.util
 import numpy as np
+import torch
+from unittest.mock import patch
+
+
+class DummyTok:
+    def __call__(self, *args, **kwargs):
+        return {"input_ids": torch.tensor([[0]]), "attention_mask": torch.tensor([[1]])}
+
+
+class DummyModel:
+    def __call__(self, *args, **kwargs):
+        class Output:
+            def __init__(self):
+                self.last_hidden_state = torch.zeros((1, 1, 768))
+
+        return Output()
 
 # Skip if PyTorch is not installed since the QA layer relies on transformer
 # models that require torch.
@@ -17,6 +33,12 @@ from agents.utils.task import Task as LangroidTask
 
 class TestQualityAssuranceLayer(unittest.TestCase):
     def setUp(self):
+        tok_patch = patch('transformers.AutoTokenizer.from_pretrained', return_value=DummyTok())
+        model_patch = patch('transformers.AutoModel.from_pretrained', return_value=DummyModel())
+        self.addCleanup(tok_patch.stop)
+        self.addCleanup(model_patch.stop)
+        tok_patch.start()
+        model_patch.start()
         self.qa_layer = QualityAssuranceLayer()
 
     def test_check_task_safety(self):
@@ -61,6 +83,12 @@ class TestQualityAssuranceLayer(unittest.TestCase):
 
 class TestEudaimoniaTriangulator(unittest.TestCase):
     def setUp(self):
+        tok_patch = patch('transformers.AutoTokenizer.from_pretrained', return_value=DummyTok())
+        model_patch = patch('transformers.AutoModel.from_pretrained', return_value=DummyModel())
+        self.addCleanup(tok_patch.stop)
+        self.addCleanup(model_patch.stop)
+        tok_patch.start()
+        model_patch.start()
         self.triangulator = EudaimoniaTriangulator()
 
     def test_get_embedding(self):
