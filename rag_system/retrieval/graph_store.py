@@ -15,19 +15,31 @@ class GraphStore:
         """
 
         self.config = config or UnifiedConfig()
-        self.graph = nx.Graph()
+        try:
+            self.graph = nx.Graph()
+        except Exception:  # pragma: no cover - fallback if networkx is stubbed
+            self.graph = object()
+        self._nodes: Dict[str, Dict[str, Any]] = {}
         self.driver = None  # This should be initialized with a proper Neo4j driver
         self.causal_edges = {}
         self.llm = None  # This should be initialized with a proper language model
 
     def add_documents(self, documents: List[Dict[str, Any]]):
         for doc in documents:
-            self.graph.add_node(doc['id'], **doc)
-            # Add edges based on some similarity measure or relationship
-            # This is a placeholder and should be implemented based on your specific needs
-            for other_node in self.graph.nodes:
-                if other_node != doc['id']:
-                    self.graph.add_edge(doc['id'], other_node, weight=0.5)
+            if hasattr(self.graph, "add_node"):
+                self.graph.add_node(doc["id"], **doc)
+            else:
+                self._nodes[doc["id"]] = doc
+
+        for i, doc in enumerate(documents):
+            tokens_i = set(str(doc.get("content", "")).lower().split())
+            for other in documents[i + 1 :]:
+                tokens_j = set(str(other.get("content", "")).lower().split())
+                intersection = tokens_i & tokens_j
+                union = tokens_i | tokens_j
+                sim = len(intersection) / len(union) if union else 0.0
+                if hasattr(self.graph, "add_edge"):
+                    self.graph.add_edge(doc["id"], other["id"], weight=sim)
 
     async def retrieve(self, query: str, k: int, timestamp: datetime = None) -> List[RetrievalResult]:
         """Return nodes that match ``query``.
@@ -180,17 +192,17 @@ class GraphStore:
 
     async def get_neighbors(self, entity: str) -> List[str]:
         """Return IDs of nodes adjacent to ``entity`` in the graph."""
-
-        if not self.graph.has_node(entity):
-            return []
-
-        return list(self.graph.neighbors(entity))
+        if hasattr(self.graph, "has_node") and self.graph.has_node(entity):
+            return list(self.graph.neighbors(entity))
+        return []
 
     def get_document_by_id(self, doc_id: str) -> Dict[str, Any]:
-        if self.graph.has_node(doc_id):
+        if hasattr(self.graph, "has_node") and self.graph.has_node(doc_id):
             return self.graph.nodes[doc_id]
-        return None
+        return self._nodes.get(doc_id)
 
     async def get_count(self) -> int:
         """Return the number of nodes stored in the graph."""
-        return self.graph.number_of_nodes()
+        if hasattr(self.graph, "number_of_nodes"):
+            return self.graph.number_of_nodes()
+        return len(self._nodes)

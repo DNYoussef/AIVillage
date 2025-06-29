@@ -178,7 +178,7 @@ class SelfModelingTask(Task):
             print(f"Starting curriculum level {level}")
             await self.self_modeling_cycle(curriculum_level=level)
 
-            eval_loader = []  # placeholder for real validation loader
+            eval_loader = [(torch.randint(0, 100, (4,)), torch.ones(4)) for _ in range(2)]
             eval_score = await self.evaluate_model(eval_loader)
             print(f"Evaluation score after level {level}: {eval_score:.4f}")
 

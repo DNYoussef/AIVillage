@@ -31,8 +31,8 @@ class AgentForge:
     def run_training(self):
         """Invoke the training task if an agent is configured."""
         if hasattr(self.training_task, "run_training_loop"):
-            print("Training pipeline stub – no agent configured")
-
+            self.training_task.run_training_loop()
+        
     def run_prompt_baking(self):
         self.prompt_baker.load_model()  # Explicitly load the model
         self.prompt_baker.bake_prompts(tool_baking.get_rag_prompts())

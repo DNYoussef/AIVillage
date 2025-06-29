@@ -21,11 +21,13 @@ class ResponseGenerator:
         Returns:
             str: The generated response.
         """
-        # Implement response generation logic here
-        # This could involve natural language generation techniques, templates, or other methods
-        
-        # Placeholder implementation
-        response = f"Based on your query '{query}' and the information we've gathered, here's what I found: {rag_result['integrated_result']}"
+        summary = rag_result.get("integrated_result", "No data available")
+        intent_type = intent.get("type", "information")
+        response = (
+            f"Intent: {intent_type}.\n"
+            f"Query: {query}\n"
+            f"Answer: {summary}"
+        )
         
         logger.info(f"Generated response: {response}")
         return response

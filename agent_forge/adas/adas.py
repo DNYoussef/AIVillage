@@ -106,7 +106,11 @@ class AgentTechnique(ToolMessage):
 
     def __init__(self, **data: Any):
         super().__init__(**data)
-        self.logger = get_logger("ADAS")
+        if "get_logger" in globals():
+            self.logger = get_logger("ADAS")
+        else:
+            import logging
+            self.logger = logging.getLogger("ADAS")
 
     def handle(self, model_path: str, params: Dict[str, Any]) -> float:
         """Execute the technique callable stored in ``code``.
