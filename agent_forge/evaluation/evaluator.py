@@ -1,9 +1,8 @@
 import torch
-import torch.nn.functional as F
-import language_tool_python
 import re
-import math
-import nltk
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
 
 def evaluate_thought_quality(model, eval_data):
     thought_coherence = []
@@ -43,28 +42,29 @@ def evaluate_model(model, eval_data):
     avg_accuracy = total_accuracy / len(eval_data)
     
     thought_metrics = evaluate_thought_quality(model, eval_data)
-    
+
     return {
         "perplexity": torch.exp(torch.tensor(avg_loss)).item(),
         "accuracy": avg_accuracy,
         **thought_metrics
     }
 
-_lt = language_tool_python.LanguageTool("en-US")
 
 
 def measure_coherence(text: str) -> float:
-    """Coherence computed from grammar and flow."""
-    matches = _lt.check(text)
-    grammar_penalty = len(matches)
-    edge_penalty = len(re.findall(r"\.\s+[a-z]", text))
-    return 1.0 / (1.0 + grammar_penalty + edge_penalty)
+    """Approximate coherence via cosine similarity between consecutive sentences."""
+    sentences = [s.strip() for s in re.split(r"[.!?]+", text) if s.strip()]
+    if len(sentences) < 2:
+        return 1.0
+    vectorizer = TfidfVectorizer().fit(sentences)
+    vectors = vectorizer.transform(sentences)
+    sims = cosine_similarity(vectors[:-1], vectors[1:])
+    return float(sims.diagonal().mean())
 
 def measure_relevance(text: str, query: str) -> float:
-    """Relevance via unigram BLEU overlap."""
-    ref = query.lower().split()
-    hyp = text.lower().split()
-    if not ref or not hyp:
-        return 0.0
-    bleu = nltk.translate.bleu_score.sentence_bleu([ref], hyp, weights=(1, 0, 0, 0))
-    return float(bleu)
+    """Relevance computed from cosine similarity of TF-IDF vectors."""
+    docs = [query, text]
+    vectorizer = TfidfVectorizer().fit(docs)
+    vectors = vectorizer.transform(docs)
+    sim = cosine_similarity(vectors[0:1], vectors[1:2])[0, 0]
+    return float(sim)
