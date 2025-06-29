@@ -37,6 +37,10 @@ tokenizers>=0.19.1
 tqdm>=4.66.5
 nltk>3.8.1
 llama-cpp-python
+chromadb
+peft
+plyer
+langdetect
 # New dependencies for King Agent and related components
 mcts>=1.0.0  # For Monte Carlo Tree Search
 gym>=0.21.0  # For reinforcement learning environments (used in MCTS)
