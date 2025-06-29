@@ -1,5 +1,6 @@
 from typing import Tuple, List
 import torch
+import hashlib
 
 try:
     from transformers import AutoTokenizer, AutoModel
@@ -53,8 +54,9 @@ class BERTEmbeddingModel:
             tokens = text.split()
             embeddings = []
             for tok in tokens:
-                h = hash(tok) % (10 ** 6)
-                torch.manual_seed(h)
+                h_bytes = hashlib.sha256(tok.encode("utf-8")).digest()
+                h_int = int.from_bytes(h_bytes[:4], "little")
+                torch.manual_seed(h_int)
                 embeddings.append(torch.randn(self.hidden_size))
             return tokens, torch.stack(embeddings)
         inputs = self.tokenizer(text, return_tensors="pt")
