@@ -4,6 +4,7 @@ import torch.optim as optim
 from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoModelForCausalLM
 from typing import List, Tuple
 import random
+import math
 from tqdm import tqdm
 from langroid import Task, ChatAgent, ChatAgentConfig
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
@@ -14,6 +15,8 @@ state = dict(G={'ID_nl': 0.0}, pre_grok=False)
 from grokfast import GrokFastTask
 from sleep_and_dream import SleepNet, DreamNet
 from agent_forge.model_compression.bitlinearization import quantize_weights, quantize_activations
+from agent_forge.geometry.snapshot import snapshot
+import torch.nn.functional as F
 
 class CodingTask:
     def __init__(self, description: str, difficulty: int):
@@ -175,17 +178,48 @@ class SelfModelingTask(Task):
             print(f"Starting curriculum level {level}")
             await self.self_modeling_cycle(curriculum_level=level)
 
-            eval_score = await self.evaluate_model()
+            eval_loader = []  # placeholder for real validation loader
+            eval_score = await self.evaluate_model(eval_loader)
             print(f"Evaluation score after level {level}: {eval_score:.4f}")
 
             self.avg_difficulty = max(1, min(100, int(self.avg_difficulty + (eval_score - 0.5) * 10)))
 
             torch.save(self.model.state_dict(), f"self_model_checkpoint_level_{level}.pth")
 
-    async def evaluate_model(self):
-        # Placeholder for model evaluation
-        # You should implement a proper evaluation method based on your specific requirements
-        return random.random()
+    async def evaluate_model(self, val_loader) -> float:
+        """Return a composite score for the current model."""
+
+        tot_mask = 0
+        ok_mask = 0
+        mse_hid = 0.0
+        n_hid = 0
+        ids_lin: list[int] = []
+        ids_nl: list[float] = []
+
+        self.model.eval()
+        with torch.inference_mode():
+            for batch in val_loader:
+                txt = batch["txt"].to(self.device)
+                out = self.model(txt, output_hidden_states=True, labels=txt)
+                preds = out.logits.argmax(-1)
+                ok_mask += (preds == txt).float().sum().item()
+                tot_mask += txt.numel()
+
+                H = out.hidden_states[-1]
+                mse_hid += F.mse_loss(self.hidden_pred(H), H, reduction="sum").item()
+                n_hid += H.numel()
+
+                geom = snapshot(H)
+                ids_nl.append(geom["ID_nl"])
+                ids_lin.append(geom["ID_lin"])
+
+        acc = ok_mask / max(1, tot_mask)
+        r2 = 1.0 - mse_hid / max(1e-9, n_hid)
+        comp = (sum(ids_lin) / sum(ids_nl or [1.0])) / 100.0
+
+        eps = 1e-6
+        score = 3.0 / ((1 / (acc + eps)) + (1 / (r2 + eps)) + (1 / (comp + eps)))
+        return max(0.0, min(1.0, float(score)))
 
     async def run(self):
         await self.evolve_across_curriculum()
