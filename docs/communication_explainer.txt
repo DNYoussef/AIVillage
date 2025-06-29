@@ -12,7 +12,7 @@ Purpose: Defines the Message class and related enums for message types and prior
 
 MessageType Enum: Specifies the type of message.
 
-Values: TASK, QUERY, RESPONSE, UPDATE, COMMAND, BULK_UPDATE, PROJECT_UPDATE, SYSTEM_STATUS_UPDATE, CONFIG_UPDATE, TOOL_CALL.
+Values: TASK, RESPONSE, QUERY, NOTIFICATION, COLLABORATION_REQUEST, KNOWLEDGE_SHARE, TASK_RESULT, JOINT_REASONING_RESULT, UPDATE, COMMAND, BULK_UPDATE, PROJECT_UPDATE, SYSTEM_STATUS_UPDATE, CONFIG_UPDATE, TOOL_CALL.
 Priority Enum: Specifies the priority level of messages.
 
 Values: LOW, MEDIUM, HIGH, CRITICAL.
@@ -51,23 +51,19 @@ message_queues: Dictionary mapping agent IDs to MessageQueue instances.
 subscribers: Dictionary mapping agent IDs to lists of callback functions.
 Methods:
 send_message(message):
-Enqueues the message.
-Notifies subscribers if the receiver is registered.
-_notify_subscribers(message):
-Internal method to call subscriber callbacks.
-get_next_message():
-Retrieves the next message from the queue.
+Enqueues the message and notifies subscribers.
+receive_message(agent_id):
+Retrieves the next message for the specified agent.
+query(sender, receiver, content, priority):
+Sends a QUERY message and waits for a RESPONSE by calling receive_message().
+send_and_wait(message, timeout):
+Sends a message and waits for a related response.
+broadcast(sender, message_type, content, priority):
+Sends a message to all subscribed agents.
 subscribe(agent_id, callback):
 Agents register to receive messages addressed to them.
 unsubscribe(agent_id, callback):
 Agents can remove their subscription.
-query(sender, receiver, query, priority):
-Sends a QUERY message and waits for a RESPONSE.
-Uses _wait_for_response() internally.
-_wait_for_response(query_id, timeout):
-Waits asynchronously for a response message.
-broadcast(sender, message_type, content, priority):
-Sends a message to all agents or subscribers.
 get_message_history(agent_id, message_type):
 Retrieves messages sent to or from an agent.
 process_messages(handler):
