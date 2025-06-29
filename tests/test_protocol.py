@@ -51,5 +51,22 @@ class TestProtocol(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(0)
         self.assertEqual(received, ["a"])
 
+    async def test_history_and_process(self):
+        protocol = StandardCommunicationProtocol()
+        processed = []
+
+        async def handler(msg: Message):
+            processed.append(msg)
+
+        task = asyncio.create_task(protocol.process_messages(handler))
+        await protocol.send_message(Message(type=MessageType.NOTIFICATION, sender="s", receiver="r", content={}))
+        await asyncio.sleep(0.05)
+        protocol._running = False
+        await asyncio.sleep(0.01)
+        self.assertTrue(processed)
+        hist = protocol.get_message_history("r")
+        self.assertEqual(len(hist), 1)
+        task.cancel()
+
 if __name__ == "__main__":
     unittest.main()

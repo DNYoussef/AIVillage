@@ -1,8 +1,17 @@
 from typing import Dict, Any, Callable, Coroutine, List, Optional
 from abc import ABC, abstractmethod
 import asyncio
+import time
+from threading import Thread
 from .message import Message, MessageType, Priority
 from .queue import MessageQueue
+try:
+    from .mcp_client import MCPClient
+    from .a2a_protocol import send_a2a
+except Exception:  # pragma: no cover - optional dependencies
+    MCPClient = None  # type: ignore
+    def send_a2a(*args, **kwargs):
+        raise RuntimeError("a2a protocol dependencies not installed")
 try:
     from agents.utils.exceptions import AIVillageException
 except Exception:  # pragma: no cover - fallback if agents package isn't available
@@ -38,9 +47,17 @@ class CommunicationProtocol(ABC):
         pass
 
 class StandardCommunicationProtocol(CommunicationProtocol):
-    def __init__(self):
+    def __init__(self, mcp_client: Optional[MCPClient] = None,
+                 certs: Optional[Dict[str, Dict[str, str]]] = None,
+                 cards: Optional[Dict[str, Dict[str, Any]]] = None):
         self.message_queues: Dict[str, MessageQueue] = {}
         self.subscribers: Dict[str, List[Callable[[Message], Coroutine[Any, Any, None]]]] = {}
+        self.message_history: Dict[str, List[Message]] = {}
+        self.mcp = mcp_client
+        self.certs = certs or {}
+        self.cards = cards or {}
+        self._running = False
+        self._dispatch_thread: Optional[Thread] = None
 
     def enqueue(self, message: Message) -> None:
         if message.receiver not in self.message_queues:
@@ -58,12 +75,39 @@ class StandardCommunicationProtocol(CommunicationProtocol):
 
     async def send_message(self, message: Message) -> None:
         self.enqueue(message)
+        self.message_history.setdefault(message.receiver, []).append(message)
         await self._notify_subscribers(message)
+
+        if self.mcp and message.type == MessageType.TOOL_CALL:
+            result = self.mcp.call(
+                message.content.get("tool_id"),
+                message.content.get("args", {}),
+            )
+            if message.content.get("reply", True):
+                resp = Message(
+                    type=MessageType.RESPONSE,
+                    sender=message.receiver,
+                    receiver=message.sender,
+                    content={"result": result},
+                    parent_id=message.id,
+                )
+                await self.send_message(resp)
+        elif message.receiver in self.certs:
+            card = self.cards.get(message.receiver)
+            if card:
+                url = card.get("service_url", "") + "/inbox"
+                priv = self.certs[message.sender]["key"]
+                pub = self.certs[message.receiver]["crt"]
+                try:
+                    send_a2a(url, message.to_dict(), priv, pub)
+                except Exception:
+                    pass
 
     async def receive_message(self, agent_id: str) -> Message:
         message = self.dequeue(agent_id)
         if message is None:
             raise AIVillageException(f"No messages for agent {agent_id}")
+        self.message_history.setdefault(agent_id, []).append(message)
         return message
 
     async def query(
@@ -126,3 +170,22 @@ class StandardCommunicationProtocol(CommunicationProtocol):
                 priority=priority,
             )
             await self.send_message(msg)
+
+    def get_message_history(self, agent_id: str, message_type: Optional[MessageType] = None) -> List[Message]:
+        history = self.message_history.get(agent_id, [])
+        if message_type is None:
+            return list(history)
+        return [m for m in history if m.type == message_type]
+
+    async def process_messages(self, handler: Callable[[Message], Coroutine[Any, Any, None]]) -> None:
+        self._running = True
+        while self._running:
+            processed = False
+            for agent_id, q in list(self.message_queues.items()):
+                msg = q.dequeue()
+                if msg is not None:
+                    await handler(msg)
+                    processed = True
+            if not processed:
+                await asyncio.sleep(0.01)
+
