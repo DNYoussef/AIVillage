@@ -1,2 +1,7 @@
 [project]
+name = "aivillage"
+version = "0.1.0"
+description = "Self-improving multi-agent system"
 requires-python = ">=3.10"
+readme = "README.md"
+license = {file = "LICENSE"}

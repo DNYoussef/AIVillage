@@ -17,6 +17,7 @@ def _ensure_module(name: str, attrs: dict | None = None):
             for k, v in attrs.items():
                 setattr(mod, k, v)
         mod.__spec__ = importlib.machinery.ModuleSpec(name, loader=None)
+        mod.__path__ = []
         mod._is_stub = True
         sys.modules[name] = mod
         _STUBBED_MODULES.add(name)
@@ -27,6 +28,18 @@ def _ensure_module(name: str, attrs: dict | None = None):
 _ensure_module('faiss', {'IndexFlatL2': lambda *args, **kwargs: object()})
 _ensure_module('numpy', {'zeros': lambda *args, **kwargs: [0] * (args[0] if args else 0)})
 _ensure_module('httpx')
+_ensure_module('torch', {
+    'Tensor': object,
+    'randn': lambda *a, **k: 0,
+    '__getattr__': lambda name: object,
+})
+_ensure_module('sklearn')
+_ensure_module('sklearn.feature_extraction')
+_ensure_module('sklearn.feature_extraction.text', {'TfidfVectorizer': object})
+_ensure_module('sklearn.metrics')
+_ensure_module('sklearn.metrics.pairwise', {'cosine_similarity': lambda *a, **k: [[1.0]]})
+_ensure_module('psutil')
+_ensure_module('networkx', {'Graph': object})
 parent = _ensure_module('langroid', {
     'ChatAgent': object,
     'ChatAgentConfig': object,
@@ -66,9 +79,13 @@ _ensure_module('httpx')
 
 # Ensure `importlib.util.find_spec` reports these stubs as missing so tests
 # can detect optional dependencies correctly.
+
 _real_find_spec = importlib.util.find_spec
 
 def _patched_find_spec(name, *args, **kwargs):
+    mod = sys.modules.get(name)
+    if mod is not None and getattr(mod, "__spec__", None) is None:
+        return None
     if name in _STUBBED_MODULES:
         return None
     return _real_find_spec(name, *args, **kwargs)

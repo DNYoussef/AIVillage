@@ -1,6 +1,6 @@
 import os
 import shutil
-import logging
+from utils.logging import get_logger
 import random
 import json
 
@@ -9,7 +9,7 @@ class ADASystem:
 
     def __init__(self, model_path: str):
         self.model_path = model_path
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
 
     def perturb_and_evaluate(self, config: dict) -> tuple[dict, float]:
         """Perturb hyperparameters and score the candidate.

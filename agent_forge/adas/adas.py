@@ -1,7 +1,7 @@
 from __future__ import annotations
 import random
 import json
-import logging
+from utils.logging import get_logger
 import time
 import pathlib
 import tempfile
@@ -106,7 +106,7 @@ class AgentTechnique(ToolMessage):
 
     def __init__(self, **data: Any):
         super().__init__(**data)
-        self.logger = logging.getLogger("ADAS")
+        self.logger = get_logger("ADAS")
 
     def handle(self, model_path: str, params: Dict[str, Any]) -> float:
         """Execute the technique callable stored in ``code``.
