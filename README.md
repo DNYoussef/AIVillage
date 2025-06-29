@@ -113,19 +113,16 @@ own model when constructing `VectorStore`.
 ## Testing
 
 Before running the tests ensure that **all** dependencies are installed. The
-main `requirements.txt` file contains heavy packages such as `torch` and
-`numpy` that are required by the tests:
+main `requirements.txt` file includes heavy packages such as `torch`,
+`faiss-cpu` and `numpy` that are required by the tests. Run the setup
+script to install everything you need:
 
 ```bash
-pip install -r requirements.txt
+bash scripts/setup_env.sh
 ```
 
-Install the additional test-only packages from `requirements-dev.txt`.
-Both files include `PyYAML`, which is required by the test configuration:
-
-```bash
-pip install -r requirements-dev.txt
-```
+The script installs both runtime and development requirements,
+including `PyYAML` which is required by the test configuration.
 
 After installing these dependencies you can execute the full test suite:
 
