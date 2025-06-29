@@ -12,6 +12,17 @@ class ResearchCapabilities:
         self.chain_of_thought = ChainOfThought()
         self.named_entity_recognizer = NamedEntityRecognizer()
         self.relation_extractor = RelationExtractor()
+        self.capability_metrics: Dict[str, Dict[str, int]] = {
+            cap: {"success": 0, "fail": 0} for cap in getattr(agent, "research_capabilities", [])
+        }
+
+    def record_result(self, capability: str, success: bool) -> None:
+        """Record the outcome of a capability usage."""
+        stats = self.capability_metrics.setdefault(capability, {"success": 0, "fail": 0})
+        if success:
+            stats["success"] += 1
+        else:
+            stats["fail"] += 1
 
     async def handle_web_search(self, task):
         search_query = task['content']
@@ -68,5 +79,38 @@ class ResearchCapabilities:
         }
 
     async def evolve_research_capabilities(self):
-        """Placeholder for adaptive logic."""
-        raise NotImplementedError("Research capability evolution not implemented")
+        """Adapt the agent's research capabilities based on past performance.
+
+        Success and failure counts for each capability are stored in
+        ``self.capability_metrics``.  When enough data points are available, the
+        method will enable or disable the capability on ``self.agent`` depending
+        on the observed success rate.
+        """
+
+        for capability, stats in self.capability_metrics.items():
+            attempts = stats["success"] + stats["fail"]
+            if attempts < 5:
+                # Not enough data to make a decision
+                continue
+
+            success_rate = stats["success"] / attempts
+
+            if success_rate < 0.3 and capability in self.agent.research_capabilities:
+                self.agent.research_capabilities.remove(capability)
+                logger.info(
+                    "Disabled capability %s due to low success rate %.2f",
+                    capability,
+                    success_rate,
+                )
+            elif success_rate > 0.8 and capability not in self.agent.research_capabilities:
+                self.agent.research_capabilities.append(capability)
+                logger.info(
+                    "Enabled capability %s due to high success rate %.2f",
+                    capability,
+                    success_rate,
+                )
+
+        # Ensure metrics exist for any newly added capabilities
+        for cap in getattr(self.agent, "research_capabilities", []):
+            self.capability_metrics.setdefault(cap, {"success": 0, "fail": 0})
+
