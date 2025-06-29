@@ -75,7 +75,10 @@ class StandardCommunicationProtocol(CommunicationProtocol):
 
     async def send_message(self, message: Message) -> None:
         self.enqueue(message)
+        # Track history for both the sender and receiver so each agent can
+        # retrieve the full conversation context.
         self.message_history.setdefault(message.receiver, []).append(message)
+        self.message_history.setdefault(message.sender, []).append(message)
         await self._notify_subscribers(message)
 
         if self.mcp and message.type == MessageType.TOOL_CALL:
@@ -107,7 +110,6 @@ class StandardCommunicationProtocol(CommunicationProtocol):
         message = self.dequeue(agent_id)
         if message is None:
             raise AIVillageException(f"No messages for agent {agent_id}")
-        self.message_history.setdefault(agent_id, []).append(message)
         return message
 
     async def query(

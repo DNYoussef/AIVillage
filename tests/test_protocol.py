@@ -64,9 +64,23 @@ class TestProtocol(unittest.IsolatedAsyncioTestCase):
         protocol._running = False
         await asyncio.sleep(0.01)
         self.assertTrue(processed)
-        hist = protocol.get_message_history("r")
-        self.assertEqual(len(hist), 1)
+        hist_r = protocol.get_message_history("r")
+        self.assertEqual(len(hist_r), 1)
+        hist_s = protocol.get_message_history("s")
+        self.assertEqual(len(hist_s), 1)
+        # ensure filtering by message type works
+        self.assertEqual(len(protocol.get_message_history("r", MessageType.NOTIFICATION)), 1)
+        self.assertEqual(protocol.get_message_history("r", MessageType.QUERY), [])
         task.cancel()
+
+    async def test_history_no_duplicate_on_receive(self):
+        protocol = StandardCommunicationProtocol()
+        msg = Message(type=MessageType.NOTIFICATION, sender="a", receiver="b", content={})
+        await protocol.send_message(msg)
+        # receive the message and ensure history not duplicated
+        await protocol.receive_message("b")
+        hist = protocol.get_message_history("b")
+        self.assertEqual(len(hist), 1)
 
 if __name__ == "__main__":
     unittest.main()
