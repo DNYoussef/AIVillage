@@ -20,5 +20,13 @@ class TestMessageHelpers(unittest.TestCase):
         restored = Message.from_dict(d)
         self.assertEqual(restored.metadata, msg.metadata)
 
+    def test_message_types_exist(self):
+        self.assertTrue(hasattr(MessageType, "UPDATE"))
+        self.assertTrue(hasattr(MessageType, "COMMAND"))
+        self.assertTrue(hasattr(MessageType, "BULK_UPDATE"))
+        self.assertTrue(hasattr(MessageType, "PROJECT_UPDATE"))
+        self.assertTrue(hasattr(MessageType, "SYSTEM_STATUS_UPDATE"))
+        self.assertTrue(hasattr(MessageType, "CONFIG_UPDATE"))
+
 if __name__ == "__main__":
     unittest.main()
