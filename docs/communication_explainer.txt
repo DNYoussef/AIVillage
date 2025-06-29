@@ -67,7 +67,7 @@ Agents can remove their subscription.
 get_message_history(agent_id, message_type=None):
 Returns the message history for the given agent. If message_type is omitted, all messages are returned.
 process_messages(handler):
-Asynchronous; continuously processes messages using a handler coroutine.
+Async method that must be awaited. Continuously processes messages using a handler coroutine.
 Example usage: await protocol.process_messages(handler)
 4. __init__.py
 Exports the main classes and enums for easy importing:
