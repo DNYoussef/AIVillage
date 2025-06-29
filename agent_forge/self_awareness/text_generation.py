@@ -1,7 +1,6 @@
 import random
 from typing import List, Tuple
 from langroid import Task, ChatAgent, ChatAgentConfig
-from rag_system.retriever import HybridRetriever
 
 class TextGenerationTask(Task):
     def __init__(self, agent: ChatAgent, rag_system):
@@ -14,6 +13,7 @@ class TextGenerationTask(Task):
         for _ in range(self.NUM_TEXTS_PER_RANGE):
             temperature = random.uniform(*temp_range)
             prompt = await self._create_prompt(complexity, curriculum_level)
+            prompt = self.rag_system.augment_prompt(prompt)
             response = await self.agent.llm_response(prompt, temperature=temperature)
             texts.append(response.content)
         return texts
@@ -67,17 +67,19 @@ if __name__ == "__main__":
     import asyncio
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
-    from rag_system.retriever import HybridRetriever
-
     class MockRAGSystem:
-        """Minimal RAG wrapper using the real HybridRetriever."""
+        """Very small RAG wrapper returning canned retrieval snippets."""
 
-        def __init__(self, retriever: HybridRetriever, n_ctx: int = 3):
-            self.ret = retriever
+        def __init__(self, snippets: List[str] | None = None, n_ctx: int = 3):
+            self.snippets = snippets or [
+                "The quick brown fox jumps over the lazy dog.",
+                "RAG systems combine retrieval with generation.",
+                "Curriculum learning can improve language models.",
+            ]
             self.n = n_ctx
 
         def augment_prompt(self, prompt: str, k: int = 3) -> str:
-            docs = self.ret.retrieve(prompt, top_k=k)
+            docs = self.snippets[:k]
             if not docs:
                 return prompt
             ctx = "\n".join(f"[ctx{i}] {d}" for i, d in enumerate(docs[: self.n], 1))
@@ -89,8 +91,9 @@ if __name__ == "__main__":
             llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
         )
         agent = ChatAgent(config)
-        retriever = HybridRetriever()
-        rag_system = MockRAGSystem(retriever)
+        # In this mock setup we skip a real vector store and return canned
+        # retrieval snippets instead.
+        rag_system = MockRAGSystem()
         task = TextGenerationTask(agent, rag_system)
         
         temp_range = (0.7, 0.9)
