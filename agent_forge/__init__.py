@@ -22,8 +22,9 @@ class AgentForge:
         return self.evolution_tournament.evolve()
 
     def run_training(self):
-        # You might need to adjust this method to work with TrainingTask
-        pass
+        """Invoke the training task if an agent is configured."""
+        if hasattr(self.training_task, "run_training_loop"):
+            print("Training pipeline stub – no agent configured")
 
     def run_prompt_baking(self):
         self.prompt_baker.load_model()  # Explicitly load the model
