@@ -24,3 +24,18 @@ artifacts.
 The project follows a monolithic layout with modular packages rather than multiple
 microservices. Agents share a common `UnifiedBaseAgent` class and interact with the
 RAG pipeline through well defined interfaces.
+
+## User Intent Interpretation
+
+The `UserIntentInterpreter` in `agents/sage` detects simple intent types using
+keyword patterns. The following phrases are recognised:
+
+- `search for`, `look up`, `find` → **search**
+- `summarize`, `summary of` → **summarize**
+- `explain` → **explanation**
+- `analyze` → **analysis**
+- `compare` → **comparison**
+- `generate`, `write`, `create` → **generation**
+
+Queries that do not match any pattern are marked as `unknown` with a lower
+confidence score.
