@@ -97,10 +97,11 @@ message = Message(
 await protocol.send_message(message)
 
 # Agent B subscribes to receive messages
-def agent_b_callback(message):
+async def agent_b_callback(message):
     # Process the message
     pass
 
+# subscribe() expects an async callback
 protocol.subscribe('agent_b', agent_b_callback)
 Group Communication
 Group Identification:
