@@ -27,7 +27,7 @@ class BERTEmbeddingModel:
                 # Loading the model failed (e.g., no internet or missing files)
                 self.fallback = True
         if self.fallback:
-            # Provide minimal tokenizer/model placeholders
+            # Provide minimal tokenizer/model placeholders and deterministic embeddings
             self.tokenizer = None
             self.model = None
 
@@ -51,8 +51,12 @@ class BERTEmbeddingModel:
 
         if self.fallback:
             tokens = text.split()
-            token_embeddings = torch.randn(len(tokens), self.hidden_size)
-            return tokens, token_embeddings
+            embeddings = []
+            for tok in tokens:
+                h = hash(tok) % (10 ** 6)
+                torch.manual_seed(h)
+                embeddings.append(torch.randn(self.hidden_size))
+            return tokens, torch.stack(embeddings)
         inputs = self.tokenizer(text, return_tensors="pt")
         with torch.no_grad():
             outputs = self.model(**inputs)

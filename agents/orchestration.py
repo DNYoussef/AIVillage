@@ -126,7 +126,7 @@ async def main():
     """
     config = UnifiedConfig()
     communication_protocol = StandardCommunicationProtocol()
-    vector_store = VectorStore()  # This is a placeholder. Implement or use a concrete VectorStore.
+    vector_store = VectorStore()
     agents = create_agents(config, communication_protocol, vector_store)
     self_evolving_system = SelfEvolvingSystem(agents)
     

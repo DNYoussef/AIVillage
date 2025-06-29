@@ -333,13 +333,15 @@ class ExplorationMode:
         Returns:
             float: A creativity score for the path.
         """
-        # This is a placeholder implementation. In a real-world scenario, you would
-        # implement a more sophisticated scoring mechanism based on various factors.
-        score = 0
+        total = 0.0
         for i in range(len(path) - 1):
-            edge_data = await self.graph_store.get_edge_data(path[i], path[i+1])
-            score += edge_data.get('novelty', 0) * edge_data.get('relevance', 0)
-        return score / (len(path) - 1)
+            edge = await self.graph_store.get_edge_data(path[i], path[i + 1])
+            novelty = float(edge.get("novelty", 0.0))
+            relevance = float(edge.get("relevance", 0.0))
+            total += novelty * 0.7 + relevance * 0.3
+        if len(path) > 1:
+            return total / (len(path) - 1)
+        return 0.0
 
     async def generate_new_ideas(self, start_node: str, end_node: str) -> List[Dict[str, Any]]:
         """

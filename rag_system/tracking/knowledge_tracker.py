@@ -15,6 +15,7 @@ class KnowledgeChange:
 class KnowledgeTracker:
     def __init__(self):
         self.changes = []
+        self.knowledge_graph = {}
 
     def record_change(self, change: KnowledgeChange):
         """
@@ -23,6 +24,8 @@ class KnowledgeTracker:
         :param change: An instance of KnowledgeChange representing the modification.
         """
         self.changes.append(change)
+        entity_data = self.knowledge_graph.setdefault(change.entity, {})
+        entity_data[change.relation] = change.new_value
 
     def get_entity_history(self, entity: str):
         """
@@ -39,18 +42,10 @@ class KnowledgeTracker:
 
         :param change_id: The index of the change in the changes list.
         """
-        if 0 <= change_id < len(self.changes):
-            change = self.changes[change_id]
-            # Implement the logic to reverse this change in the knowledge graph
-            # This is a placeholder and would need to be implemented based on your KG structure
-
-            # For example:
-            # self.knowledge_graph.update_relation(
-            #     entity=change.entity,
-            #     relation=change.relation,
-            #     value=change.old_value
-            # )
-
-            self.changes.pop(change_id)
-        else:
+        if not (0 <= change_id < len(self.changes)):
             raise ValueError("Invalid change_id")
+
+        change = self.changes.pop(change_id)
+        entity_data = self.knowledge_graph.get(change.entity, {})
+        if change.relation in entity_data:
+            entity_data[change.relation] = change.old_value

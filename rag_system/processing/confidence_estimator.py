@@ -2,8 +2,7 @@ from typing import Any, Dict, List
 
 class ConfidenceEstimator:
     def __init__(self):
-        # Initialize any necessary attributes or models
-        pass
+        self.history: List[float] = []
 
     def estimate_confidence(self, query: str, context: List[Dict[str, Any]], response: str) -> float:
         """
@@ -14,9 +13,13 @@ class ConfidenceEstimator:
         :param response: The generated response
         :return: A confidence score between 0 and 1
         """
-        # Implement confidence estimation logic here
-        # This is a placeholder implementation
-        return 0.8
+        scores = [ctx.get("score", 0.0) for ctx in context]
+        score_mean = sum(scores) / len(scores) if scores else 0.0
+        length_penalty = min(len(response) / 1000.0, 1.0)
+        confidence = 0.6 * score_mean + 0.4 * length_penalty
+        confidence = float(max(0.0, min(1.0, confidence)))
+        self.history.append(confidence)
+        return confidence
 
     def update_model(self, query: str, context: List[Dict[str, Any]], response: str, human_feedback: float):
         """
@@ -27,5 +30,5 @@ class ConfidenceEstimator:
         :param response: The generated response
         :param human_feedback: Human-provided confidence score between 0 and 1
         """
-        # Implement model updating logic here
-        pass
+        if 0.0 <= human_feedback <= 1.0:
+            self.history.append(human_feedback)

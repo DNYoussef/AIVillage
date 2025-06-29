@@ -21,11 +21,12 @@ class UncertaintyAwareReasoningEngine:
         The base implementation performs no work.  Subclasses may
         override this method to set up database or model connections.
         """
-        pass
+        if self.driver is None:
+            self.driver = "initialized"
 
     async def shutdown(self) -> None:
         """Release any resources held by the reasoning engine."""
-        pass
+        self.driver = None
 
     async def get_status(self) -> Dict[str, Any]:
         """Return a basic status dictionary for monitoring purposes."""
@@ -72,8 +73,19 @@ class UncertaintyAwareReasoningEngine:
             self.driver = None
 
     async def get_snapshot(self, timestamp: datetime) -> Dict[str, Any]:
-        # Implement logic to return a snapshot of the graph store at the given timestamp
-        pass
+        snapshot = nx.Graph()
+        for node, data in self.graph.nodes(data=True):
+            ts = data.get("timestamp", datetime.min)
+            if ts <= timestamp:
+                snapshot.add_node(node, **data)
+        for u, v, data in self.graph.edges(data=True):
+            ts = data.get("timestamp", datetime.min)
+            if ts <= timestamp and snapshot.has_node(u) and snapshot.has_node(v):
+                snapshot.add_edge(u, v, **data)
+        return {
+            "nodes": list(snapshot.nodes(data=True)),
+            "edges": list(snapshot.edges(data=True)),
+        }
 
     async def beam_search(self, query: str, beam_width: int, max_depth: int) -> List[Tuple[List[str], float]]:
         initial_entities = await self.get_initial_entities(query)

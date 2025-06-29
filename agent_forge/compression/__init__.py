@@ -57,8 +57,8 @@ def stream_compress_model(model: nn.Module, config: Optional[CompressionConfig]=
     if cfg.bitnet_finetune:
         try:
             model = convert_to_bitnet(model, threshold=cfg.bitnet_zero_threshold)
-        except ImportError:
-            pass
+        except ImportError as exc:
+            print(f"BitNet conversion unavailable: {exc}")
 
     compressed = {}
     have_bitnet = hasattr(bnb.nn, 'LinearBitNet')

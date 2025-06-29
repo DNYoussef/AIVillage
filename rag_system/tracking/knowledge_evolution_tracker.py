@@ -1,6 +1,7 @@
 # rag_system/tracking/knowledge_evolution_tracker.py
 
 from typing import Any, List, Dict
+import asyncio
 from datetime import datetime
 from ..retrieval.vector_store import VectorStore
 from ..retrieval.graph_store import GraphStore
@@ -20,8 +21,7 @@ class KnowledgeEvolutionTracker:
         }
         self.change_log.append(change_record)
 
-        # You might want to store this in a database for persistence
-        # self._store_change_record(change_record)
+        await self._store_change_record(change_record)
 
     async def get_evolution(self, entity_id: str, start_time: datetime, end_time: datetime) -> List[Dict[str, Any]]:
         evolution = [
@@ -40,6 +40,10 @@ class KnowledgeEvolutionTracker:
             "graph_knowledge": graph_snapshot
         }
 
-    # def _store_change_record(self, record: Dict[str, Any]):
-    #     # Implement this method to store change records in a database
-    #     pass
+    async def _store_change_record(self, record: Dict[str, Any]):
+        """Persist a change record to a simple JSONL log for now."""
+        import json, os
+        log_path = os.path.join(os.path.dirname(__file__), "evolution.log")
+        async with asyncio.Lock():
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record, default=str) + "\n")

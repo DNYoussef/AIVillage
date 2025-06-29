@@ -34,7 +34,10 @@ class BasicUPOChecker:
 
         Current implementation is a stub that returns a random value.
         """
-        return random.random()
+        desc = getattr(task, "content", str(task))
+        length_factor = min(len(desc) / 100.0, 1.0)
+        noise = random.random() * 0.1
+        return max(0.0, 1.0 - length_factor + noise)
 
     async def check_task_safety(self, task: LangroidTask) -> bool:
         """Return ``True`` if the task is considered safe."""
