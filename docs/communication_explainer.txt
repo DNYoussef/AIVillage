@@ -65,7 +65,7 @@ Agents register to receive messages addressed to them.
 unsubscribe(agent_id, callback):
 Agents can remove their subscription.
 get_message_history(agent_id, message_type=None):
-Retrieves messages sent to or from an agent. Omitting message_type returns all messages.
+Returns the message history for the given agent. If message_type is omitted, all messages are returned.
 process_messages(handler):
 Asynchronous; continuously processes messages using a handler coroutine.
 Example usage: await protocol.process_messages(handler)
