@@ -36,10 +36,7 @@ requests>=2.32.3
 tokenizers>=0.19.1
 tqdm>=4.66.5
 nltk>3.8.1
-llama.cpp
-maes
-gpt-researcher>=1.0.0
-scrapegraphai>=1.0.0
+llama-cpp-python
 # New dependencies for King Agent and related components
 mcts>=1.0.0  # For Monte Carlo Tree Search
 gym>=0.21.0  # For reinforcement learning environments (used in MCTS)
