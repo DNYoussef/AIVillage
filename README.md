@@ -13,6 +13,7 @@ architecture for continuous improvement and adaptation.
 > vectors and ADAS optimization &mdash; remain future work and are outlined for
 > reference only in the documentation.  The `SelfEvolvingSystem` class present
 > in the code is a lightweight stub used for demos and tests.
+> The SAGE Framework remains a placeholder and is not yet implemented.
 
 ## System Components
 
