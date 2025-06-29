@@ -26,7 +26,7 @@ content: Dictionary containing message content.
 priority: Priority level (Priority).
 timestamp: Time when the message was created.
 parent_id: (Optional) ID of the parent message, used for threading.
-metadata: Additional metadata.
+metadata: Optional dictionary with additional data.
 Methods:
 
 with_updated_content(new_content): Returns a new Message with updated content.
@@ -64,13 +64,19 @@ subscribe(agent_id, callback):
 Agents register to receive messages addressed to them.
 unsubscribe(agent_id, callback):
 Agents can remove their subscription.
-get_message_history(agent_id, message_type):
-Retrieves messages sent to or from an agent.
+get_message_history(agent_id, message_type=None):
+Retrieves messages sent to or from an agent. Omitting message_type returns all messages.
 process_messages(handler):
-Continuously processes messages using a handler function.
+Asynchronous; continuously processes messages using a handler coroutine.
+Example usage: await protocol.process_messages(handler)
 4. __init__.py
 Exports the main classes and enums for easy importing:
 StandardCommunicationProtocol, Message, MessageType, Priority, MessageQueue.
+5. Additional Modules in `communications/`
+- `mesh_node.py`: Implements `MeshNode`, a peer-to-peer pub/sub node using libp2p with Noise encryption and a gRPC fallback.
+- `credit_manager.py`: Handles minting and spending compute credits via Bittensor.
+- `federated_client.py`: Wraps a model and optimizer with Hivemind for secure federated learning.
+- `sharder.py`: Contains `ShardPlanner` to assign neural network layers across mesh peers using ILP.
 How Communication Works in the Village
 Private Communication Between Agents
 Sending a Message:
@@ -97,11 +103,11 @@ message = Message(
 await protocol.send_message(message)
 
 # Agent B subscribes to receive messages
-def agent_b_callback(message):
+async def agent_b_callback(message):
     # Process the message
     pass
 
-protocol.subscribe('agent_b', agent_b_callback)
+protocol.subscribe('agent_b', agent_b_callback)  # subscribe expects an async callback
 Group Communication
 Group Identification:
 

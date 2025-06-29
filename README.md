@@ -179,7 +179,9 @@ To add new capabilities or agents:
 Agents exchange `Message` objects categorized by `MessageType`. The core types are
 `TASK`, `QUERY`, `RESPONSE`, and `NOTIFICATION`. Collaborative features also use
 `COLLABORATION_REQUEST`, `KNOWLEDGE_SHARE`, `TASK_RESULT`, and
-`JOINT_REASONING_RESULT` as defined in `communications/message.py`.
+`JOINT_REASONING_RESULT`. Additional system messages include `UPDATE`, `COMMAND`,
+`BULK_UPDATE`, `PROJECT_UPDATE`, `SYSTEM_STATUS_UPDATE`, `CONFIG_UPDATE`, and
+`TOOL_CALL` as defined in `communications/message.py`.
 
 
 ## Model Compression
@@ -195,6 +197,7 @@ The agent system has recently undergone significant updates to improve modularit
 3. Integration of the self-evolving system into all specialized agents (KingAgent, SageAgent, MagiAgent).
 4. Removal of the `langroid` folder, with its functionality now integrated into the main agent structure.
 5. Updates to the `orchestration.py` file to use the new agent classes and self-evolving system.
+6. Addition of a mesh-sharding subsystem in `communications/` providing peer-to-peer networking, federated learning, credit management, and sharding utilities.
 
 These changes have made the code more modular, easier to maintain, and more consistent across the system. The self-evolving system now works with all agents, which should make it easier to add new agent types or modify existing ones in the future.
 
