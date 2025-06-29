@@ -6,7 +6,7 @@ This document summarizes the full Agent Forge pipeline used to create self-impro
 
 ## Phase 1 – Model Foundation & Merging
 1. **Evolution and Merge Pipeline** – Start with three specialized base models. Use multiple merge techniques (linear, SLERP, TIES, DARE, Frankenmerge, DFS) to create an initial population of merged models. Evaluate, select top performers, mutate and recombine over many generations until the best foundation model is obtained.
-2. **Quiet‑STaR Integration** – Modify the architecture to generate parallel "thought" tokens. Introduce learnable `<|startofthought|>` and `<|endofthought|>` tokens for internal monologue generation.
+2. **Quiet‑STaR Integration** – Modify the architecture to generate parallel "thought" tokens. Introduce learnable `<|startofthought|>` and `<|endofthought|>` tokens for internal monologue generation. *(future work, not implemented)*
 3. **Initial Compression** – Apply 1.58‑bit quantization and convert the model to the BitNet format to reduce size before heavy training.
     - SeedLM pseudo-random block encoding and VPTQ quantization provide additional reduction before deployment.
 
@@ -16,15 +16,15 @@ This document summarizes the full Agent Forge pipeline used to create self-impro
 3. **Self‑Modeling** – Every few cycles, the model trains on its own generated texts across a range of temperatures to refine reasoning patterns and creativity.
 
 ## Phase 3 – Self‑Modeling & Expert Vectors
-1. **Quiet‑STaR Self‑Reflection** – Periodically run deeper self‑modeling where the model analyses its thoughts, identifies errors and generates improved reasoning.
-2. **Expert Vector Creation** – Successful reasoning patterns are converted into specialized expert vectors using Singular Value Fine‑tuning (SVF). A dispatch system selects appropriate vectors depending on task type and confidence.
+1. **Quiet‑STaR Self‑Reflection** – Periodically run deeper self‑modeling where the model analyses its thoughts, identifies errors and generates improved reasoning. *(future work)*
+2. **Expert Vector Creation** – Successful reasoning patterns are converted into specialized expert vectors using Singular Value Fine‑tuning (SVF). A dispatch system selects appropriate vectors depending on task type and confidence. *(future work)*
 
 ## Phase 4 – Advanced Integration
 1. **Prompt Baking** – Incorporate new knowledge and reasoning strategies directly into model weights via an iterative prompt testing and baking process.
 2. **Tool & Memory Integration** – Connect the model to external tools and the shared RAG system, enabling persistent knowledge storage and retrieval.
-3. **ADAS Optimization** – A meta‑model repeatedly tests, grades and adjusts the agent’s architecture until further improvements plateau.
-4. After training completes the code automatically runs `ADASystem.optimize_agent_architecture` to produce the final optimized model saved in `adas_optimized_model`.
-5. To try ADAS yourself, instantiate `ADASystem` with the path to a trained model and call `optimize_agent_architecture(output_dir)`. The method performs a few lightweight hyperparameter perturbations and writes the best configuration to `adas_config.json` inside the output folder.
+3. **ADAS Optimization** – A meta‑model repeatedly tests, grades and adjusts the agent’s architecture until further improvements plateau. *(future work)*
+4. After training completes the code would run `ADASystem.optimize_agent_architecture` to produce the final optimized model saved in `adas_optimized_model`. This behaviour is currently unimplemented.
+5. To try ADAS yourself, instantiate `ADASystem` with the path to a trained model and call `optimize_agent_architecture(output_dir)`. The method description is conceptual only and not executed in the repository.
 
 ## Phase 5 – Deployment
 1. **Compression & Packaging** – Apply final compression passes for efficient deployment.

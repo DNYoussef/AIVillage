@@ -1,5 +1,7 @@
 # Explanation of Agent Forge Process Charts
 
+These diagrams describe the long‑term vision for Agent Forge. Features such as Quiet‑STaR and the ADAS process are conceptual only and are **not implemented** in the current repository.
+
 ## 1. Corrected Training Loop
 
 This chart illustrates the training process for an individual model within the Agent Forge system.
@@ -49,7 +51,7 @@ Prompt baking is a crucial step in the Agent Forge process, allowing the model t
 
 ## 4. ADAS Process
 
-The Automatic Discovery of Agentic Space (ADAS) process is shown in this chart. It's a method for optimizing the model's architecture and capabilities.
+The Automatic Discovery of Agentic Space (ADAS) process is shown in this chart. This step is conceptual and not implemented in the current codebase. It's a method proposed for optimizing the model's architecture and capabilities.
 
 Key steps:
 1. Start with an integrated model
@@ -68,13 +70,13 @@ This chart provides an overview of the entire Agent Forge process, showing how a
 Key stages:
 1. Select specialized models
 2. Apply the Evolution and Merge Pipeline
-3. Apply Quiet-STaR
+3. Apply Quiet-STaR *(planned feature, not implemented)*
 4. Perform 1.58-bit Quantization
 5. Conduct Training
 6. Engage in Prompt Engineering and Baking
 7. Apply Hyper-compression
 8. Integrate Tools and Memory
-9. Undergo the ADAS Process
+9. Undergo the ADAS Process *(future work)*
 10. Deploy the Final Agent
 
 This chart illustrates the full journey from initial specialized models to a fully optimized, deployment-ready AI agent. It shows how each step builds upon the previous ones, creating a sophisticated agent through a series of refinement and optimization processes.
