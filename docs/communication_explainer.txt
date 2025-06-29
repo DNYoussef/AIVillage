@@ -12,7 +12,7 @@ Purpose: Defines the Message class and related enums for message types and prior
 
 MessageType Enum: Specifies the type of message.
 
-Values: TASK, QUERY, RESPONSE, UPDATE, COMMAND, BULK_UPDATE, PROJECT_UPDATE, SYSTEM_STATUS_UPDATE, CONFIG_UPDATE.
+Values: TASK, QUERY, RESPONSE, UPDATE, COMMAND, BULK_UPDATE, PROJECT_UPDATE, SYSTEM_STATUS_UPDATE, CONFIG_UPDATE, TOOL_CALL.
 Priority Enum: Specifies the priority level of messages.
 
 Values: LOW, MEDIUM, HIGH, CRITICAL.
