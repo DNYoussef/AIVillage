@@ -2,6 +2,21 @@ import unittest
 import asyncio
 import importlib.util
 from unittest.mock import Mock, patch
+import torch
+
+
+class DummyTok:
+    def __call__(self, *args, **kwargs):
+        return {"input_ids": torch.tensor([[0]]), "attention_mask": torch.tensor([[1]])}
+
+
+class DummyModel:
+    def __call__(self, *args, **kwargs):
+        class Output:
+            def __init__(self):
+                self.last_hidden_state = torch.zeros((1, 1, 768))
+
+        return Output()
 
 # Skip if PyTorch is not installed since the quality assurance layer imports
 # transformer models that require it.
@@ -18,6 +33,12 @@ from agents.utils.task import Task as LangroidTask
 
 class TestProblemAnalyzer(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
+        tok_patch = patch('transformers.AutoTokenizer.from_pretrained', return_value=DummyTok())
+        model_patch = patch('transformers.AutoModel.from_pretrained', return_value=DummyModel())
+        self.addCleanup(tok_patch.stop)
+        self.addCleanup(model_patch.stop)
+        tok_patch.start()
+        model_patch.start()
         self.communication_protocol = Mock()
         self.agent = Mock()
         self.quality_assurance_layer = Mock(spec=QualityAssuranceLayer)
