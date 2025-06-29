@@ -106,11 +106,11 @@ class MoralFrameworkBaker:
         )
 
     def deep_bake_rules(self) -> List[Rule]:
-        """Blend the Eudaimonic framework into each rule text.
+        """Return a contextualized version of the core moral rules.
 
-        The basic rules establish a moral skeleton. This method
-        interlaces the details from the *Eudaimonic Morality System for AI*
-        so the final guidance is richer and self contained.
+        The method enriches the skeleton provided by ``self.core_rules`` with
+        additional constraints and references to the :class:`TriPartCompass`.
+        The resulting list replaces ``self.core_rules`` and is returned.
         """
 
         baked_rules: List[Rule] = []
@@ -124,6 +124,12 @@ class MoralFrameworkBaker:
                     "65% or greater, continue. Otherwise engage the Three-Part "
                     "Moral Compass for deliberation. Respect everyone's agency "
                     "while seeking the best collective outcome."
+                )
+                additional.append(
+                    "When uncertain consult the compass questions:"
+                    f" {self.tri_part_compass.jesus_archetype.question_template},"
+                    f" {self.tri_part_compass.lao_tzu_archetype.question_template}"
+                    f" and {self.tri_part_compass.diogenes_archetype.question_template}."
                 )
             elif rule.number == 2:
                 additional.append(
@@ -152,4 +158,5 @@ class MoralFrameworkBaker:
                 Rule(number=rule.number, text=enriched_text, priority=rule.priority)
             )
 
+        self.core_rules = baked_rules
         return baked_rules

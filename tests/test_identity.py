@@ -25,13 +25,15 @@ class TestIdentitySystem(unittest.TestCase):
 
     def test_deep_bake_rules(self):
         baker = MoralFrameworkBaker()
+        original_texts = [r.text for r in baker.core_rules]
         baked_rules = baker.deep_bake_rules()
-        self.assertEqual(len(baked_rules), len(baker.core_rules))
-        differences = [
-            baked.text != core.text
-            for baked, core in zip(baked_rules, baker.core_rules)
-        ]
-        self.assertTrue(any(differences))
+
+        # the returned rules should match what is stored on the baker
+        self.assertEqual(baked_rules, baker.core_rules)
+
+        # every rule text should be enriched compared to the original
+        for baked, original in zip(baked_rules, original_texts):
+            self.assertNotEqual(baked.text, original)
 
 
 if __name__ == "__main__":
