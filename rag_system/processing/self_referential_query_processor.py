@@ -1,13 +1,22 @@
 # rag_system/processing/self_referential_query_processor.py
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 from ..core.pipeline import EnhancedRAGPipeline
 
 class SelfReferentialQueryProcessor:
-    def __init__(self, rag_system: EnhancedRAGPipeline):
+    def __init__(self, rag_system: EnhancedRAGPipeline, history_limit: int = 100):
         self.rag_system = rag_system
+        # Keep an in-memory list of processed queries
+        self.query_history: List[str] = []
+        self.history_limit = history_limit
 
     async def process_self_query(self, query: str) -> str:
+        # Record every processed query
+        self.query_history.append(query)
+        # Enforce history size limit
+        if len(self.query_history) > self.history_limit:
+            self.query_history.pop(0)
+
         if query.startswith("SELF:"):
             return await self._process_internal_query(query[5:])
         else:
@@ -20,7 +29,10 @@ class SelfReferentialQueryProcessor:
         elif query.startswith("KNOWLEDGE"):
             return await self._get_knowledge_summary()
         elif query.startswith("HISTORY"):
-            return await self._get_query_history()
+            # Parse optional limit, e.g., "HISTORY 5"
+            parts = query.split()
+            limit = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 5
+            return await self._get_query_history(limit)
         else:
             return f"Unknown self-referential query: {query}"
 
@@ -34,7 +46,8 @@ class SelfReferentialQueryProcessor:
         graph_count = await self.rag_system.hybrid_retriever.graph_store.get_count()
         return f"Current knowledge: {vector_count} vector entries, {graph_count} graph nodes"
 
-    async def _get_query_history(self) -> str:
-        # Implement logic to return recent query history
-        # This is a placeholder; you'd need to implement query history tracking
-        return "Recent queries: [Query 1], [Query 2], [Query 3]"
+    async def _get_query_history(self, n: int = 5) -> str:
+        """Return a string describing the last ``n`` processed queries."""
+        history = self.query_history[-n:]
+        formatted = ", ".join(f"[{q}]" for q in history)
+        return f"Recent queries: {formatted}" if formatted else "Recent queries:"
