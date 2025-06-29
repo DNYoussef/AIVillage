@@ -114,14 +114,25 @@ class AgentTechnique(ToolMessage):
         The ``code`` should define a function ``run(model_path, work_dir, params)``
         that returns a fitness score between 0 and 1.
         """
-        local_ns: Dict[str, Any] = {}
+        safe_globals: Dict[str, Any] = {
+            "__builtins__": {
+                "__import__": __import__,
+                "open": open,
+                "len": len,
+                "range": range,
+                "min": min,
+                "max": max,
+                "str": str,
+                "float": float,
+            }
+        }
         try:
-            exec(self.code, {}, local_ns)
+            exec(self.code, safe_globals)
         except Exception as exc:  # pragma: no cover - user code may be faulty
             self.logger.exception("Failed to load technique %s", self.technique_name)
             return 0.0
 
-        fn = local_ns.get("run")
+        fn = safe_globals.get("run")
         if not callable(fn):
             self.logger.error("Technique %s has no run() function", self.technique_name)
             return 0.0
