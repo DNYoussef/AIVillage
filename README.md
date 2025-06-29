@@ -66,6 +66,7 @@ environment uses a compatible interpreter.
    ```
    pip install -r requirements.txt
    ```
+   # Optional: compile `llama.cpp` for mobile builds.
 
 The tokenizer requires the `cl100k_base.tiktoken` vocabulary file. If it is
 missing, download it from the [tiktoken repository](https://github.com/openai/tiktoken)
@@ -279,6 +280,7 @@ Make sure you have **Python 3.10+** installed before continuing with the install
    ```
    pip install -r requirements.txt
    ```
+   # Optional: compile `llama.cpp` for mobile builds.
 
 4. Set up environment variables:
    - Create a `.env` file in the root directory and add the following variables:
@@ -490,6 +492,7 @@ The RAG system consists of the following main components:
    ```
    pip install -r requirements.txt
    ```
+   # Optional: compile `llama.cpp` for mobile builds.
 3. Run the main script:
    ```
    python rag_system/main.py

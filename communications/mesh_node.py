@@ -87,6 +87,17 @@ class MeshNode:
         log.info("MeshNode listening on %s, id=%s",
                  self.listen_addr, self.node.get_id().to_base58())
 
+        await self.pubsub.publish(
+            "meta/announce",
+            json.dumps(
+                {
+                    "id": self.node.get_id().to_base58(),
+                    "node_type": "twin",
+                    "speed_toks": 90,
+                }
+            ).encode(),
+        )
+
     async def _broadcast_handshake(self):
         payload = {
             "type": self.HANDSHAKE,
@@ -122,6 +133,12 @@ class MeshNode:
         enc = SecureEnvelope(self.priv, self.peer_keys[target_id]) \
               .encode(message.to_json().encode())
         await self.pubsub.publish(target_id, enc)
+        from communications.credit_manager import CreditManager
+        import os
+        CreditManager(os.getenv("TWIN_MNEMONIC", "")).mint(
+            task_id=message.id,
+            macs=len(message.content.get("tensor", [])) * 1_000_000,
+        )
 
     # --------------------------------------------------------------------------
     # Fallback MCP tool call via gRPC+TLS
