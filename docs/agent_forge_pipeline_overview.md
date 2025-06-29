@@ -2,7 +2,7 @@
 
 This document summarizes the full Agent Forge pipeline used to create self-improving AI agents. It condenses the detailed procedure described in the project documentation and implementation guide.
 
-**Note:** Several stages (SAGE self-improvement, expert vectors and ADAS optimization) remain aspirational and are not yet implemented in the repository.
+**Note:** Several stages (SAGE self-improvement, expert vectors and ADAS optimization) remain conceptual and are not yet implemented in the repository.
 
 ## Phase 1 – Model Foundation & Merging
 1. **Evolution and Merge Pipeline** – Start with three specialized base models. Use multiple merge techniques (linear, SLERP, TIES, DARE, Frankenmerge, DFS) to create an initial population of merged models. Evaluate, select top performers, mutate and recombine over many generations until the best foundation model is obtained.
