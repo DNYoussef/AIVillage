@@ -23,6 +23,16 @@ class TestIdentitySystem(unittest.TestCase):
         self.assertEqual(compass.lao_tzu_archetype.name, "Lao Tzu")
         self.assertEqual(compass.diogenes_archetype.name, "Diogenes")
 
+    def test_deep_bake_rules(self):
+        baker = MoralFrameworkBaker()
+        baked_rules = baker.deep_bake_rules()
+        self.assertEqual(len(baked_rules), len(baker.core_rules))
+        differences = [
+            baked.text != core.text
+            for baked, core in zip(baked_rules, baker.core_rules)
+        ]
+        self.assertTrue(any(differences))
+
 
 if __name__ == "__main__":
     unittest.main()

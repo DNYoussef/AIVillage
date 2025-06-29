@@ -25,7 +25,7 @@ architecture for continuous improvement and adaptation.
    - Quality Assurance: Ensures task safety and stability using Uncertainty-enhanced Preference Optimization (UPO).
    - Prompt Baking: Efficiently incorporates new knowledge.
    - Continuous Learning: Rapidly integrates new experiences.
-   - SAGE Framework: Enables recursive self-improvement through assistant-checker-reviser cycle.
+   - SAGE Framework: Enables recursive self-improvement through assistant-checker-reviser cycle *(planned feature, not yet implemented).* 
    - Decision Making: Uses dedicated Monte Carlo Tree Search (MCTS) and Direct Preference Optimization (DPO) modules.
 4. IncentiveModel: A sophisticated model for calculating and managing incentives for agents based on their performance and task complexity.
 
@@ -36,7 +36,7 @@ The self-evolving system is the core of the AI Village's continuous improvement 
 1. Quality Assurance Layer: Uses uncertainty estimation to ensure task safety.
 2. Foundational Layer (Prompt Baking): Encodes and integrates new knowledge efficiently into the system's knowledge base.
 3. Continuous Learning Layer: Extracts valuable information from tasks and results to update the system's capabilities.
-4. Agent Architecture Layer (SAGE Framework): Implements a self-aware generative engine for response generation, evaluation, and revision.
+4. Agent Architecture Layer (SAGE Framework): Implements a self-aware generative engine for response generation, evaluation, and revision. *(This layer is currently a placeholder.)*
 5. Decision-Making Layer: Utilizes advanced AI techniques for making informed decisions based on tasks and context.
 
 The system periodically evolves by updating agent capabilities, refining decision-making processes, and optimizing its overall architecture.

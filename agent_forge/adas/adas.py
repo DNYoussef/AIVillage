@@ -1,6 +1,11 @@
+from __future__ import annotations
 import random
 import json
-from typing import List, Dict, Any
+import logging
+import time
+import pathlib
+import tempfile
+from typing import List, Dict, Any, Callable
 from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
 from langroid.agent.task import Task
 from langroid.agent.tool_message import ToolMessage
@@ -99,9 +104,43 @@ class AgentTechnique(ToolMessage):
     technique_name: str
     code: str
 
-    def handle(self):
-        # This method would be implemented to actually apply the technique
-        pass
+    def __init__(self, **data: Any):
+        super().__init__(**data)
+        self.logger = logging.getLogger("ADAS")
+
+    def handle(self, model_path: str, params: Dict[str, Any]) -> float:
+        """Execute the technique callable stored in ``code``.
+
+        The ``code`` should define a function ``run(model_path, work_dir, params)``
+        that returns a fitness score between 0 and 1.
+        """
+        local_ns: Dict[str, Any] = {}
+        try:
+            exec(self.code, {}, local_ns)
+        except Exception as exc:  # pragma: no cover - user code may be faulty
+            self.logger.exception("Failed to load technique %s", self.technique_name)
+            return 0.0
+
+        fn = local_ns.get("run")
+        if not callable(fn):
+            self.logger.error("Technique %s has no run() function", self.technique_name)
+            return 0.0
+
+        t0 = time.perf_counter()
+        with tempfile.TemporaryDirectory(prefix=f"adas_{self.technique_name}_") as wdir:
+            wdir_path = pathlib.Path(wdir)
+            try:
+                score = float(fn(model_path, wdir_path, params))
+            except Exception as exc:
+                self.logger.exception("Technique %s failed", self.technique_name)
+                score = 0.0
+
+        dt = time.perf_counter() - t0
+        score = max(0.0, min(1.0, score))
+        self.logger.info(
+            "ADAS | %s completed in %.1fs with score %.4f", self.technique_name, dt, score
+        )
+        return score
 
 # Example usage
 if __name__ == "__main__":

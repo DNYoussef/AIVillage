@@ -1,5 +1,9 @@
 import torch
 import torch.nn.functional as F
+import language_tool_python
+import re
+import math
+import nltk
 
 def evaluate_thought_quality(model, eval_data):
     thought_coherence = []
@@ -46,12 +50,21 @@ def evaluate_model(model, eval_data):
         **thought_metrics
     }
 
-def measure_coherence(thoughts):
-    # Placeholder for coherence measurement
-    # In a real implementation, this would assess the logical flow and consistency of thoughts
-    return thoughts.std().item()
+_lt = language_tool_python.LanguageTool("en-US")
 
-def measure_relevance(thoughts, targets):
-    # Placeholder for relevance measurement
-    # In a real implementation, this would assess how well thoughts relate to the target output
-    return F.cosine_similarity(thoughts.mean(dim=1), targets.mean(dim=1)).mean().item()
+
+def measure_coherence(text: str) -> float:
+    """Coherence computed from grammar and flow."""
+    matches = _lt.check(text)
+    grammar_penalty = len(matches)
+    edge_penalty = len(re.findall(r"\.\s+[a-z]", text))
+    return 1.0 / (1.0 + grammar_penalty + edge_penalty)
+
+def measure_relevance(text: str, query: str) -> float:
+    """Relevance via unigram BLEU overlap."""
+    ref = query.lower().split()
+    hyp = text.lower().split()
+    if not ref or not hyp:
+        return 0.0
+    bleu = nltk.translate.bleu_score.sentence_bleu([ref], hyp, weights=(1, 0, 0, 0))
+    return float(bleu)

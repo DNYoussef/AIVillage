@@ -1,6 +1,7 @@
 import random
 from typing import List, Tuple
 from langroid import Task, ChatAgent, ChatAgentConfig
+from rag_system.retriever import HybridRetriever
 
 class TextGenerationTask(Task):
     def __init__(self, agent: ChatAgent, rag_system):
@@ -66,8 +67,21 @@ if __name__ == "__main__":
     import asyncio
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
+    from rag_system.retriever import HybridRetriever
+
     class MockRAGSystem:
-        pass  # Implement a mock RAG system for testing purposes
+        """Minimal RAG wrapper using the real HybridRetriever."""
+
+        def __init__(self, retriever: HybridRetriever, n_ctx: int = 3):
+            self.ret = retriever
+            self.n = n_ctx
+
+        def augment_prompt(self, prompt: str, k: int = 3) -> str:
+            docs = self.ret.retrieve(prompt, top_k=k)
+            if not docs:
+                return prompt
+            ctx = "\n".join(f"[ctx{i}] {d}" for i, d in enumerate(docs[: self.n], 1))
+            return f"{ctx}\n\n[question] {prompt}"
 
     async def main():
         config = ChatAgentConfig(
@@ -75,7 +89,8 @@ if __name__ == "__main__":
             llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
         )
         agent = ChatAgent(config)
-        rag_system = MockRAGSystem()
+        retriever = HybridRetriever()
+        rag_system = MockRAGSystem(retriever)
         task = TextGenerationTask(agent, rag_system)
         
         temp_range = (0.7, 0.9)
