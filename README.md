@@ -47,6 +47,9 @@ planned milestones.
 
 ## Setup
 
+This project requires **Python 3.10 or higher**. Ensure your virtual
+environment uses a compatible interpreter.
+
 1. Clone the repository:
    ```
    git clone https://github.com/yourusername/ai-village.git
@@ -252,6 +255,10 @@ To provide your AI Village with a starting base of information, you can manually
    - Consider updating the `configs/rag_config.yaml` file to optimize the RAG system for academic paper processing.
 
 By following these steps, you can manually feed several dozen academic papers into your RAG system, providing a rich starting base of information for your AI Village. This will enhance the system's ability to answer queries and perform tasks related to the content of these papers.
+
+### Prerequisites
+
+Make sure you have **Python 3.10+** installed before continuing with the installation steps below.
 
 ## Installation
 
