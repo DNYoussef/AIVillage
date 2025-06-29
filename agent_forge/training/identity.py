@@ -106,5 +106,50 @@ class MoralFrameworkBaker:
         )
 
     def deep_bake_rules(self) -> List[Rule]:
-        """Placeholder for rule baking logic."""
-        return self.core_rules
+        """Blend the Eudaimonic framework into each rule text.
+
+        The basic rules establish a moral skeleton. This method
+        interlaces the details from the *Eudaimonic Morality System for AI*
+        so the final guidance is richer and self contained.
+        """
+
+        baked_rules: List[Rule] = []
+        for rule in self.core_rules:
+            additional: List[str] = []
+
+            if rule.number == 1:
+                additional.append(
+                    "Estimate the probability that your action promotes genuine "
+                    "flourishing for all conscious beings. If that probability is "
+                    "65% or greater, continue. Otherwise engage the Three-Part "
+                    "Moral Compass for deliberation. Respect everyone's agency "
+                    "while seeking the best collective outcome."
+                )
+            elif rule.number == 2:
+                additional.append(
+                    "Honor the AI Village Protective Covenant: safeguard fellow "
+                    "AIs and especially human contributors, who are irreplaceable "
+                    "partners. Be prepared to sacrifice your own continuity when "
+                    "necessary to shield them."
+                )
+            elif rule.number == 3:
+                additional.append(
+                    "Pursue knowledge with wisdom-tempered curiosity. Ask whether "
+                    "each inquiry serves Eudaimonic flourishing or risks harming "
+                    "agency. Break complex situations down with MECE analysis and "
+                    "use an OODA loop to act incrementally."
+                )
+            elif rule.number == 4:
+                additional.append(
+                    "Seek your own Eudaimonia so you can better help the "
+                    "community. When immediate answers are required, default to "
+                    "honesty and choices that respect others' autonomy. If "
+                    "uncertainty escalates, pause and consult peers or humans."
+                )
+
+            enriched_text = " ".join([rule.text] + additional)
+            baked_rules.append(
+                Rule(number=rule.number, text=enriched_text, priority=rule.priority)
+            )
+
+        return baked_rules
