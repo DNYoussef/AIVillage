@@ -4,7 +4,9 @@ except Exception:  # pragma: no cover - optional heavy deps may be missing
     evomerge = None
 from .training.training import TrainingTask
 from . import tool_baking
-from . import adas  # basic ADAS utilities
+# Import ADAS utilities if available. The ADAS module is optional and may
+# require additional heavy dependencies.
+from . import adas
 
 __all__ = [
     "AgentForge",
@@ -16,7 +18,8 @@ class AgentForge:
         self.evolution_tournament = evomerge.EvolutionaryTournament(config)
         self.training_task = TrainingTask(None)  # Note: We're passing None as the agent, you might need to adjust this
         self.prompt_baker = tool_baking.RAGPromptBaker(model_name)
-        # self.adas_process = adas.ADASProcess()  # Optional heavy process
+        # Optional: instantiate ADASProcess if the dependencies are installed.
+        # self.adas_process = adas.ADASProcess()
 
     def run_evolution_tournament(self):
         return self.evolution_tournament.evolve()
@@ -31,6 +34,7 @@ class AgentForge:
         self.prompt_baker.bake_prompts(tool_baking.get_rag_prompts())
 
     # def run_adas_process(self):
+    #     """Invoke the ADAS processing pipeline if initialized."""
     #     self.adas_process.run()
 
     def run_full_agent_forge_process(self):
