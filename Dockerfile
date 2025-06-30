@@ -1,7 +1,8 @@
 FROM python:3.11-slim
 WORKDIR /app
-COPY requirements.txt requirements-dev.txt pyproject.toml ./
-COPY scripts/setup_env.sh ./scripts/setup_env.sh
-RUN bash ./scripts/setup_env.sh
+COPY pyproject.toml poetry.lock ./
+RUN pip install poetry && \
+    poetry config virtualenvs.create false && \
+    poetry install --no-interaction --no-ansi
 COPY . .
 CMD ["pytest", "-vv"]

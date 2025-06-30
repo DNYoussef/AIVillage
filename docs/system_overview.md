@@ -20,7 +20,7 @@ artifacts.
 
 ## Technologies
 
- - **Language**: Python 3.10+ (≈25k lines across 325 files).
+ - **Language**: Python 3.10+ (≈19k lines across 366 files).
 - **Web Framework**: FastAPI powers the server (`server.py`).
 - **ML Libraries**: PyTorch, Transformers, FAISS, Langroid.
 

@@ -15,6 +15,8 @@ architecture for continuous improvement and adaptation.
 > in the code is a lightweight stub used for demos and tests.
 > The SAGE Framework remains a placeholder and is not yet implemented.
 
+Refer to [docs/feature_matrix.md](docs/feature_matrix.md) for a status overview of all major components.
+
 ## System Components
 
 1. UnifiedBaseAgent: A comprehensive base agent class that combines features from previous agent implementations.
@@ -195,12 +197,12 @@ The agent system has recently undergone significant updates to improve modularit
 
 1. Introduction of the `UnifiedBaseAgent` class, which serves as the foundation for all specialized agents.
 2. Implementation of the `SelfEvolvingSystem` class, which manages the continuous improvement of agents.
-3. Integration of the self-evolving system into all specialized agents (KingAgent, SageAgent, MagiAgent).
+3. Initial plumbing for the self-evolving system. Full integration across all agents is still planned.
 4. Removal of the `langroid` folder, with its functionality now integrated into the main agent structure.
 5. Updates to the `orchestration.py` file to use the new agent classes and self-evolving system.
 6. Addition of a mesh-sharding subsystem in `communications/` providing peer-to-peer networking, federated learning, credit management, and sharding utilities.
 
-These changes have made the code more modular, easier to maintain, and more consistent across the system. The self-evolving system now works with all agents, which should make it easier to add new agent types or modify existing ones in the future.
+These changes have made the code more modular and easier to maintain. The self-evolving system remains a stub used for demos and tests, so additional work is required before it can manage real agent evolution.
 
 ## Populating the RAG System with Academic Papers
 
@@ -531,3 +533,7 @@ Please refer to the CONTRIBUTING.md file for guidelines on how to contribute to 
 This project is licensed under the [MIT License](LICENSE).
 
 \n## Docker\nA `Dockerfile` is provided to run tests in a container:\n```bash\ndocker build -t aivillage .\ndocker run aivillage\n```
+
+## Development Environment
+
+Run `make dev-up` to build the Docker image and start the server on http://localhost:8000.

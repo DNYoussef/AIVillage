@@ -1,74 +1,35 @@
-name: Continuous Integration
+name: CI
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
+  push:
+    branches: [ "main" ]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.10', '3.11']
-
+    timeout-minutes: 25
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        bash scripts/setup_env.sh
-    - name: Run test suite
-      run: |
-        pytest -vv
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8
-    - name: Lint with flake8
-      run: |
-        flake8 agents/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 agents/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-  coverage:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.10'
-    - name: Install dependencies
-      run: |
-        bash scripts/setup_env.sh
-        pip install coverage
-    - name: Run tests with coverage
-      run: |
-        coverage run -m pytest -vv
-        coverage report -m
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-  docker-test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build and test image
-      run: |
-        docker build -t aivillage-test .
-        docker run aivillage-test
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Poetry
+        run: pip install poetry
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --no-root
+          poetry run pip install ruff black mypy pytest pytest-cov
+      - name: Ruff (lint)
+        run: poetry run ruff .
+      - name: Black (check only)
+        run: poetry run black --check .
+      - name: MyPy (type-check)
+        run: poetry run mypy --install-types --non-interactive . || true
+      - name: Pytest
+        run: poetry run pytest -q --cov=.
+      - name: Build docker image
+        run: docker build -t atlantis-ai:ci .

@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    command: uvicorn server:app --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
