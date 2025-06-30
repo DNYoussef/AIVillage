@@ -42,9 +42,12 @@ class UnifiedAgentConfig:
 
 
 class UnifiedBaseAgent:
-    def __init__(self, config: UnifiedAgentConfig,
-                 communication_protocol: StandardCommunicationProtocol,
-                 knowledge_tracker: UnifiedKnowledgeTracker | None = None):
+    def __init__(
+        self,
+        config: UnifiedAgentConfig,
+        communication_protocol: StandardCommunicationProtocol,
+        knowledge_tracker: UnifiedKnowledgeTracker | None = None,
+    ):
         self.config = config
         self.rag_pipeline = EnhancedRAGPipeline(config.rag_config, knowledge_tracker)
         self.name = config.name
@@ -95,7 +98,7 @@ class UnifiedBaseAgent:
         raise NotImplementedError("Subclasses must implement _process_task method")
 
     async def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
-        task = LangroidTask(self, message['content'])
+        task = LangroidTask(self, message["content"])
         return await self.execute_task(task)
 
     async def handle_message(self, message: Message):
@@ -106,7 +109,7 @@ class UnifiedBaseAgent:
                 sender=self.name,
                 receiver=message.sender,
                 content=result,
-                parent_id=message.id
+                parent_id=message.id,
             )
             await self.communication_protocol.send_message(response)
 
@@ -135,7 +138,7 @@ class UnifiedBaseAgent:
             "description": self.description,
             "capabilities": self.capabilities,
             "model": self.model,
-            "tools": list(self.tools.keys())
+            "tools": list(self.tools.keys()),
         }
 
     # Implement AgentInterface methods
@@ -153,7 +156,9 @@ class UnifiedBaseAgent:
         """
         return await self.rag_pipeline.get_embedding(text)
 
-    async def rerank(self, query: str, results: List[Dict[str, Any]], k: int) -> List[Dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: List[Dict[str, Any]], k: int
+    ) -> List[Dict[str, Any]]:
         """
         Rerank the given results based on the query.
         """
@@ -174,9 +179,11 @@ class UnifiedBaseAgent:
             sender=self.name,
             receiver=recipient,
             content={"message": message},
-            priority=Priority.MEDIUM
+            priority=Priority.MEDIUM,
         )
-        response = await self.communication_protocol.query(self.name, recipient, query_message.content)
+        response = await self.communication_protocol.query(
+            self.name, recipient, query_message.content
+        )
         return f"Sent: {message}, Received: {response}"
 
     async def activate_latent_space(self, query: str) -> Tuple[str, str]:
@@ -215,12 +222,14 @@ class UnifiedBaseAgent:
         """
         await self.rag_pipeline.add_document(content, filename)
 
-    def create_handoff(self, target_agent: 'UnifiedBaseAgent'):
+    def create_handoff(self, target_agent: "UnifiedBaseAgent"):
         """
         Create a handoff function to transfer control to another agent.
         """
+
         def handoff():
             return target_agent
+
         self.add_tool(f"transfer_to_{target_agent.name}", handoff)
 
     async def update_instructions(self, new_instructions: str):
@@ -239,6 +248,7 @@ class UnifiedBaseAgent:
         await self.agent_architecture_layer.evolve()
         await self.decision_making_layer.evolve()
         print(f"Agent {self.name} evolution complete.")
+
 
 # New layer implementations
 
@@ -368,7 +378,9 @@ class AgentArchitectureLayer:
         return {"quality": float(evaluation.text)}
 
     async def revise_result(self, result: Any, evaluation: Dict[str, Any]) -> Any:
-        revision_prompt = f"Revise the following result to improve its quality: '{result}'"
+        revision_prompt = (
+            f"Revise the following result to improve its quality: '{result}'"
+        )
         revision = await self.llm.complete(revision_prompt)
         return revision.text
 
@@ -426,13 +438,17 @@ class DecisionMakingLayer:
     def _simulate(self, task: LangroidTask, context: str, option: str) -> float:
         return random.random()
 
-    async def _direct_preference_optimization(self, task: LangroidTask, context: str) -> str:
+    async def _direct_preference_optimization(
+        self, task: LangroidTask, context: str
+    ) -> str:
         options = ["Approach X", "Approach Y", "Approach Z"]
         preferences = await self._get_preferences(task, context, options)
         best_approach = self.dpo.select(preferences)
         return f"DPO suggests: {best_approach}"
 
-    async def _get_preferences(self, task: LangroidTask, context: str, options: List[str]) -> Dict[str, float]:
+    async def _get_preferences(
+        self, task: LangroidTask, context: str, options: List[str]
+    ) -> Dict[str, float]:
         """Return mock preference scores for each option."""
         prompt = f"""
         Task: {task.content}
@@ -441,20 +457,21 @@ class DecisionMakingLayer:
         Assign a preference score (0-1) to each option based on its suitability for the task and context.
         """
         response = await self.llm.complete(prompt)
-        lines = response.text.split('\n')
+        lines = response.text.split("\n")
         preferences = {}
         for line in lines:
-            if ':' in line:
-                option, score = line.split(':')
+            if ":" in line:
+                option, score = line.split(":")
                 preferences[option.strip()] = float(score.strip())
         return preferences
 
-    async def process_query(self, query: str, timestamp: Optional[datetime] = None) -> Dict[str, Any]:
+    async def process_query(
+        self, query: str, timestamp: Optional[datetime] = None
+    ) -> Dict[str, Any]:
         # Implement query processing logic here
         retrieval_results = await self.rag_pipeline.retrieve(query, timestamp=timestamp)
         reasoning_result = await self.rag_pipeline.reason(query, retrieval_results)
         return reasoning_result
-
 
 
 class _SageFramework:
@@ -486,14 +503,14 @@ class _DPOModule:
         self.X: List[np.ndarray] = []
         self.y: List[int] = []
 
-    def add_record(self, features: np.array, outcome: int) -> None:
+    def add_record(self, features: np.ndarray, outcome: int) -> None:
         self.X.append(features)
         self.y.append(outcome)
         if len(self.X) > 1000:
             self.X.pop(0)
             self.y.pop(0)
 
-    def fit(self, X: np.array | None = None, y: np.array | None = None) -> None:
+    def fit(self, X: np.ndarray | None = None, y: np.ndarray | None = None) -> None:
         if X is None or y is None:
             X = np.array(self.X)
             y = np.array(self.y)
@@ -501,7 +518,6 @@ class _DPOModule:
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore")
                 self.model.fit(X, y)
-
 
 
 class SelfEvolvingSystem:
@@ -558,13 +574,19 @@ class SelfEvolvingSystem:
             new_capabilities,
         )
 
-    async def analyze_agent_performance(self, agent: UnifiedBaseAgent) -> Dict[str, float]:
+    async def analyze_agent_performance(
+        self, agent: UnifiedBaseAgent
+    ) -> Dict[str, float]:
         self.logger.info("Analyzing performance of agent: %s", agent.name)
-        performance = {capability: random.uniform(0.4, 1.0) for capability in agent.capabilities}
+        performance = {
+            capability: random.uniform(0.4, 1.0) for capability in agent.capabilities
+        }
         self.logger.info("Performance analysis for %s: %s", agent.name, performance)
         return performance
 
-    async def generate_new_capabilities(self, agent: UnifiedBaseAgent, performance: Dict[str, float]) -> List[str]:
+    async def generate_new_capabilities(
+        self, agent: UnifiedBaseAgent, performance: Dict[str, float]
+    ) -> List[str]:
         self.logger.info("Generating new capabilities for agent: %s", agent.name)
         low_performing = [cap for cap, score in performance.items() if score < 0.6]
         prompt = (
@@ -575,7 +597,9 @@ class SelfEvolvingSystem:
         if hasattr(self.sage_framework, "assistant_response"):
             try:
                 response = await self.sage_framework.assistant_response(prompt)
-                new_capabilities = [cap.strip() for cap in response.split(',') if cap.strip()]
+                new_capabilities = [
+                    cap.strip() for cap in response.split(",") if cap.strip()
+                ]
             except Exception:
                 new_capabilities = []
         self.logger.info(
@@ -607,7 +631,9 @@ class SelfEvolvingSystem:
     async def optimize_upo_threshold(self) -> float:
         self.logger.info("Optimizing UPO threshold...")
         safety_checks = []
-        if self.quality_assurance and hasattr(self.quality_assurance, "get_recent_safety_checks"):
+        if self.quality_assurance and hasattr(
+            self.quality_assurance, "get_recent_safety_checks"
+        ):
             try:
                 safety_checks = await self.quality_assurance.get_recent_safety_checks()
             except Exception:
@@ -621,7 +647,9 @@ class SelfEvolvingSystem:
             new_threshold = mean_score - (1.5 * std_score)
             new_threshold = max(0.5, min(0.9, new_threshold))
         else:
-            base = self.quality_assurance.upo_threshold if self.quality_assurance else 0.7
+            base = (
+                self.quality_assurance.upo_threshold if self.quality_assurance else 0.7
+            )
             new_threshold = base * (1 + (random.random() - 0.5) * 0.1)
 
         self.logger.info("New UPO threshold: %.4f", new_threshold)
@@ -664,9 +692,7 @@ if __name__ == "__main__":
         capabilities=["general_task"],
         vector_store=vector_store,
         model="gpt-4",
-        instructions=(
-            "You are an example agent capable of handling general tasks."
-        ),
+        instructions=("You are an example agent capable of handling general tasks."),
     )
 
     agent = create_agent("ExampleAgent", agent_config, communication_protocol)

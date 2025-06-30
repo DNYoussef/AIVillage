@@ -3,3 +3,4 @@ pytest-asyncio
 requests
 numpy
 PyYAML
+mypy>=1.10.0
