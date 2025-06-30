@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+httpx
+prometheus_client
+pydantic
+cachetools

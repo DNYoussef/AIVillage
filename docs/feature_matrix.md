@@ -5,7 +5,7 @@
 | Retrieval-Augmented Generation pipeline | Implemented | Basic retrieval and reasoning modules in `rag_system/` |
 | FastAPI server | Implemented | `server.py` exposes simple query endpoint |
 | Self-Evolving System | Placeholder | `SelfEvolvingSystem` stub; not integrated across agents |
-| Twin Extraction | Planned | ADR-0001 describes design; no code yet |
+| Twin Runtime | ✅ v0.2.0 | Extracted microservice in `services/twin` |
 | Mesh Networking / Federated Learning | Placeholder | skeleton modules in `communications/`, not fully functional |
 | Expert Vectors training | Planned | documented in `docs/geometry_aware_training.md` but unimplemented |
 | ADAS optimization | Prototype | basic optimizer in `agent_forge/adas` |

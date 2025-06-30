@@ -1,19 +1,19 @@
 # ADR-0001: Twin Extraction Strategy
 
 ## Status
-Draft
+Accepted – Implemented
 
 ## Context
-The project envisions an optional "twin extraction" process that snapshots an agent's
-state into a portable form for offline analysis. This mechanism does not yet exist
-in the repository.
+The project originally envisioned an optional "twin extraction" process that
+snapshots an agent's state into a portable form for offline analysis.
+This functionality now exists as a standalone microservice running inside the
+`atlantis-twin` container on port `8001`.
 
 ## Decision
-We will design the twin extraction flow as a separate module that can serialize
-an agent's configuration, knowledge base pointers and latest capabilities. The ADR
-serves as a placeholder until an implementation is ready.
+The service exposes `/v1/chat`, `/v1/embeddings` (stub) and `/healthz`. It is
+deployed via Docker (`atlantis-twin:0.1.0`) and driven by environment variables
+for the model path and runtime settings.
 
 ## Consequences
-Documentation and interfaces can reference the extraction concept, but any code
-that calls it should mark the functionality as experimental or raise
-`NotImplementedError` until the module is implemented.
+Existing scripts should invoke the microservice via its HTTP API rather than
+directly importing internal modules. Old placeholders can be removed.
