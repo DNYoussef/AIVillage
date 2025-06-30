@@ -4,7 +4,7 @@ This document provides a quick reference for the structure of the repository and
 technologies used.
 
 > **Note**
-> Features such as the SAGE framework, expert vector system and ADAS optimization are conceptual only. The current codebase implements a basic RAG pipeline without these advanced capabilities.
+> Features such as the SAGE framework and expert vector system are still conceptual. A basic ADAS prototype now accompanies the main RAG pipeline.
 
 ## Directory Layout
 
@@ -28,9 +28,7 @@ The project follows a monolithic layout with modular packages rather than multip
 microservices. Agents share a common `UnifiedBaseAgent` class and interact with the
 RAG pipeline through well defined interfaces.
 
-Many advanced features referenced in the repository (such as the SAGE framework,
-expert vectors and ADAS optimization) are presently conceptual. The running code
-implements only the base RAG pipeline and prompt-baking utilities.
+Many advanced features referenced in the repository (such as the SAGE framework and expert vectors) are still conceptual. The running code now includes a working ADAS optimizer in addition to the base RAG pipeline and prompt-baking utilities.
 
 ## User Intent Interpretation
 

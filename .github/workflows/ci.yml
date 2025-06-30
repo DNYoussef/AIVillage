@@ -23,6 +23,11 @@ jobs:
         run: |
           poetry install --no-interaction --no-root
           poetry run pip install ruff black mypy pytest pytest-cov
+      - name: Commit-msg lint (latest commit)
+        run: |
+          MSG_FILE=$(mktemp)
+          git log -1 --pretty=%B > "$MSG_FILE"
+          poetry run pre-commit run commit-msg --hook-stage commit-msg --commit-msg-filename "$MSG_FILE"
       - name: Pre-commit
         run: |
           poetry run pre-commit run --all-files --show-diff-on-failure
@@ -36,6 +41,30 @@ jobs:
         run: poetry run mypy --install-types --non-interactive . || true
       - name: Pytest
         run: poetry run pytest -q --cov=.
+      - name: Generate coverage xml
+        run: poetry run coverage xml -i
+
+      - name: Enforce ≥60 % coverage & create badge
+        run: |
+          python - <<'PY'
+import xml.etree.ElementTree as ET, sys
+rate = float(ET.parse('coverage.xml').getroot().get('line-rate')) * 100
+print(f'Line coverage = {rate:.1f}%')
+if rate < 60:
+    sys.exit('Coverage below threshold')
+from coverage_badge.__main__ import main as make_badge
+make_badge(coverage_xml='coverage.xml', output_svg='docs/assets/coverage.svg')
+PY
+
+      - name: Commit badge if changed
+        run: |
+          git config user.email "bot@atlantis.ai"
+          git config user.name "Atlantis-CI Bot"
+          if [[ $(git status --porcelain docs/assets/coverage.svg) ]]; then
+            git add docs/assets/coverage.svg
+            git commit -m "chore(ci): update coverage badge"
+            git push origin HEAD:main
+          fi
       - name: Build docker image
         run: docker build -t atlantis-ai:ci .
       - name: Notify Slack

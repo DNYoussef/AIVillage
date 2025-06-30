@@ -32,8 +32,8 @@ repository based on the various documentation files.
 5. **Exploration Scoring** – implement a more robust creativity score in
    `ExplorationMode._calculate_creativity_score` by combining novelty and
    relevance of edges.
-6. **Confidence Estimation** – `ConfidenceEstimator` should consider retrieval
-   scores and response length instead of returning a constant.
+6. **Confidence Estimation** – `ConfidenceEstimator` now factors in retrieval
+   scores and response length. Future work will refine the weighting scheme.
 7. **Rollback Support** – `KnowledgeTracker.rollback_change` should reverse the
    recorded modification in the knowledge graph.
 8. **Latent Space Activation** – flesh out activation and evolution methods to

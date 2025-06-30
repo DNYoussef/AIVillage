@@ -1,5 +1,5 @@
 # AI Village Self-Improving System
-[![API Docs](https://img.shields.io/badge/docs-latest-blue)](https://atlantisai.github.io/atlantis)
+[![API Docs](https://img.shields.io/badge/docs-latest-blue)](https://atlantisai.github.io/atlantis) [![Coverage](docs/assets/coverage.svg)](#)
 
 This project implements a multi-agent AI system featuring a self-evolving
 architecture for continuous improvement and adaptation.
@@ -19,13 +19,15 @@ architecture for continuous improvement and adaptation.
 Refer to [docs/feature_matrix.md](docs/feature_matrix.md) for a status overview of all major components.
 
 <!--feature-matrix-start-->
-| Sub‑system | Status |
+| Sub-system | Status |
 |------------|--------|
 | Twin Runtime | ✅ |
 | King / Sage / Magi | ✅ |
 | Self‑Evolving System | 🔴 |
 | HippoRAG | 🔴 |
 | Mesh Credits | ✅ |
+| ADAS Optimisation | ✅ |
+| ConfidenceEstimator | ✅ |
 <!--feature-matrix-end-->
 The [messaging protocol decision](docs/adr/0002-messaging-protocol.md) is documented in **ADR-0002**.
 

@@ -1,14 +1,16 @@
 # Architecture
 
 This repository uses a monolithic Python layout. All agents, the Retrieval-Augmented Generation pipeline and the Twin runtime
-run in one process. Planned features such as Quiet-STaR, expert vectors and ADAS remain stubs.
+run in one process. Quiet-STaR and expert vectors remain stubs, while a basic ADAS prototype is available.
 
 <!--feature-matrix-start-->
-| Sub‑system | Status |
+| Sub-system | Status |
 |------------|--------|
 | Twin Runtime | ✅ |
 | King / Sage / Magi | ✅ |
 | Self‑Evolving System | 🔴 |
 | HippoRAG | 🔴 |
 | Mesh Credits | ✅ |
+| ADAS Optimisation | ✅ |
+| ConfidenceEstimator | ✅ |
 <!--feature-matrix-end-->
