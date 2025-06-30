@@ -1,7 +1,9 @@
 # Architecture
 
-This repository uses a monolithic Python layout. All agents, the Retrieval-Augmented Generation pipeline and the Twin runtime
-run in one process. Quiet-STaR and expert vectors remain stubs, while a basic ADAS prototype is available.
+The repository started as a monolithic Python project. It now includes two
+microservices – a Gateway and the Twin runtime – which communicate over HTTP.
+Most other modules remain in-process libraries. Quiet-STaR and expert vectors
+remain stubs, while a basic ADAS prototype is available.
 
 <!--feature-matrix-start-->
 | Sub-system | Status |

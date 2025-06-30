@@ -1,0 +1,23 @@
+name: privacy-suite
+on: [pull_request]
+
+jobs:
+  compliance:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:26.0.0
+        options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compose up
+        run: docker compose -f docker-compose.yml up -d --build
+      - name: Wait for services
+        run: sleep 20
+      - name: Run tests
+        run: |
+          pip install -r tests/requirements.txt
+          pytest -q tests/privacy
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

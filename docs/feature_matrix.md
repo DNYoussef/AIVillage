@@ -6,6 +6,8 @@
 | FastAPI server | Implemented | `server.py` exposes simple query endpoint |
 | Self-Evolving System | Placeholder | `SelfEvolvingSystem` stub; not integrated across agents |
 | Twin Runtime | ✅ v0.2.0 | Extracted microservice in `services/twin` |
+| Twin Extraction | Prototype | Endpoints at `/v1/chat` & `/v1/user/{id}`; LRU eviction documented in ADR-0001 |
+| Gateway service | ✅ v0.2.0 | Prometheus metrics and rate limiting |
 | Mesh Networking / Federated Learning | Placeholder | skeleton modules in `communications/`, not fully functional |
 | Expert Vectors training | Planned | documented in `docs/geometry_aware_training.md` but unimplemented |
 | ADAS optimization | Prototype | basic optimizer in `agent_forge/adas` |

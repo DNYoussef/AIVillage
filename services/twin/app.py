@@ -30,7 +30,12 @@ class DummyModel:
 
 
 class TwinSettings:
-    model_path: str = os.getenv("TWIN_MODEL_PATH", "models/small-llama.bin")
+    _raw_path = os.getenv("TWIN_MODEL_PATH", "models/small-llama.bin")
+    model_path: str = (
+        _raw_path
+        if _raw_path.startswith("/models/") and os.path.exists(_raw_path)
+        else "models/small-llama.bin"
+    )
     max_context: int = int(os.getenv("TWIN_MAX_CONTEXT", 4096))
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
 
@@ -104,6 +109,17 @@ class TwinAgent:
         """Remove a conversation from memory."""
         self._conversations.pop(conv_id, None)
 
+    async def delete_user_data(self, user_id: str):
+        """Erase all conversations for `user_id` – used by privacy tests."""
+        to_del = [
+            cid
+            for cid, msgs in list(self._conversations.items())
+            if msgs and msgs[0].get("user_id") == user_id
+        ]
+        for cid in to_del:
+            del self._conversations[cid]
+        return {"deleted_conversations": len(to_del)}
+
 
 agent: Optional[TwinAgent] = None
 
@@ -144,6 +160,11 @@ async def health():
 @app.get("/metrics")
 async def metrics():
     return generate_latest(), 200, {"Content-Type": "text/plain; version=0.0.4"}
+
+
+@app.delete("/v1/user/{user_id}")
+async def erase_user(user_id: str, _agent: TwinAgent = Depends(get_agent)):
+    return await _agent.delete_user_data(user_id)
 
 
 if __name__ == "__main__":
