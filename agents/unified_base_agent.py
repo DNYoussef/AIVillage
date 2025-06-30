@@ -6,7 +6,7 @@ from utils.logging import get_logger
 import numpy as np
 import warnings
 from sklearn.linear_model import LogisticRegression
-from agents.self_evolve.quality_assurance import BasicUPOChecker, SafetyCheck
+from agents.self_evolve.quality_assurance import BasicUPOChecker
 from agents.utils.task import Task as LangroidTask
 from agents.language_models.openai_gpt import OpenAIGPTConfig
 from agents.utils import (
@@ -540,6 +540,10 @@ class SelfEvolvingSystem:
         self.mcts = MCTSConfig()
         self.dpo = _DPOModule()
         self.quality_assurance = BasicUPOChecker()
+        # Minimal placeholders for planned modules referenced in docs
+        self.quiet_star = object()
+        self.expert_vectors = object()
+        self.adas_optimizer = object()
         self.recent_decisions: List[tuple] = []
 
     async def process_task(self, task: LangroidTask) -> Dict[str, Any]:

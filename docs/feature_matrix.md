@@ -10,3 +10,4 @@
 | Expert Vectors training | Planned | documented in `docs/geometry_aware_training.md` but unimplemented |
 | ADAS optimization | Planned | only documentation stubs |
 | Quiet-STaR module | Planned | not implemented; tests marked xfail |
+| ADR-0002: Messaging Protocol | Proposed | gRPC with WebSocket fallback |

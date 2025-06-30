@@ -23,6 +23,11 @@ jobs:
         run: |
           poetry install --no-interaction --no-root
           poetry run pip install ruff black mypy pytest pytest-cov
+      - name: Pre-commit
+        run: |
+          poetry run pre-commit run --all-files --show-diff-on-failure
+      - name: DocSync verify
+        run: poetry run python scripts/verify_docs.py
       - name: Ruff (lint)
         run: poetry run ruff .
       - name: Black (check only)
@@ -33,3 +38,6 @@ jobs:
         run: poetry run pytest -q --cov=.
       - name: Build docker image
         run: docker build -t atlantis-ai:ci .
+      - name: Notify Slack
+        if: success()
+        run: poetry run python scripts/notify_slack.py
