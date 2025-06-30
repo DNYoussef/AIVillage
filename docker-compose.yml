@@ -1,9 +1,26 @@
-version: '3.8'
+version: "3.9"
 services:
-  app:
-    build: .
-    command: uvicorn server:app --host 0.0.0.0 --port 8000
+  twin:
+    build: ./services/twin
+    ports:
+      - "8001:8001"
+    expose:
+      - "8001"
+    environment:
+      - TWIN_MODEL_PATH=${MODEL_PATH:-/models/small-llama.bin}
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=8001"
     volumes:
-      - .:/app
+      - ./models:/models:ro
+  gateway:
+    build: ./services/gateway
     ports:
       - "8000:8000"
+    environment:
+      - TWIN_URL=http://twin:8001
+      - RATE_LIMIT_REQUESTS=100
+      - RATE_LIMIT_WINDOW=60
+      - GATEWAY_ALLOW_ORIGINS=http://localhost
+    depends_on:
+      - twin
