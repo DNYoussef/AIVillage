@@ -20,13 +20,11 @@ artifacts.
 
 ## Technologies
 
- - **Language**: Python 3.10+ (≈19k lines across 366 files).
+ - **Language**: Python 3.10+ (≈25k lines across 339 files).
 - **Web Framework**: FastAPI powers the server (`server.py`).
 - **ML Libraries**: PyTorch, Transformers, FAISS, Langroid.
 
-The project follows a monolithic layout with modular packages rather than multiple
-microservices. Agents share a common `UnifiedBaseAgent` class and interact with the
-RAG pipeline through well defined interfaces.
+The repository now includes two microservices &ndash; a Gateway and the Twin runtime &ndash; which communicate over HTTP. All other modules remain in-process libraries. Agents share a common `UnifiedBaseAgent` class and interact with the RAG pipeline through well defined interfaces.
 
 Many advanced features referenced in the repository (such as the SAGE framework and expert vectors) are still conceptual. The running code now includes a working ADAS optimizer in addition to the base RAG pipeline and prompt-baking utilities.
 
