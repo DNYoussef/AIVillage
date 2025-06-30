@@ -31,7 +31,7 @@ def current_feature_matrix() -> str:
 
 
 def generate_live_matrix() -> str:
-    """Create a markdown table from codebase inspection (very simple heuristic)."""
+    """Create a markdown table from codebase inspection."""
 
     def has_path(p: str) -> bool:
         return (ROOT / p).exists()
@@ -44,9 +44,13 @@ def generate_live_matrix() -> str:
         ),
         "HippoRAG": "✅" if has_path("rag_system/hipporag.py") else "🔴",
         "Mesh Credits": "✅" if has_path("communications/credits.py") else "🔴",
+        "ADAS Optimisation": "✅" if has_path("agent_forge/adas") else "🔴",
+        "ConfidenceEstimator": (
+            "✅" if has_path("rag_system/processing/confidence_estimator.py") else "🔴"
+        ),
     }
 
-    lines = ["| Sub‑system | Status |", "|------------|--------|"]
+    lines = ["| Sub-system | Status |", "|------------|--------|"]
     for k, v in status_map.items():
         lines.append(f"| {k} | {v} |")
     return "\n".join(lines)

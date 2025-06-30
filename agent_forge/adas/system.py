@@ -3,6 +3,8 @@ import shutil
 from utils.logging import get_logger
 import random
 import json
+from typing import Any, Callable
+
 
 class ADASystem:
     """Simple wrapper for the Automatic Discovery of Agentic Space (ADAS) stage."""
@@ -25,8 +27,12 @@ class ADASystem:
         """
 
         cand = dict(config)
-        cand["num_layers"] = max(1, cand.get("num_layers", 1) + random.choice([-1, 0, 1]))
-        cand["hidden_size"] = max(1, cand.get("hidden_size", 1) + random.randint(-16, 16))
+        cand["num_layers"] = max(
+            1, cand.get("num_layers", 1) + random.choice([-1, 0, 1])
+        )
+        cand["hidden_size"] = max(
+            1, cand.get("hidden_size", 1) + random.randint(-16, 16)
+        )
 
         score = 1.0 / (cand["num_layers"] * cand["hidden_size"])
         return cand, score
@@ -73,3 +79,16 @@ class ADASystem:
 
         self.logger.info(f"ADAS optimization complete. Saved to: {optimized_path}")
         return optimized_path
+
+
+def adaptive_search(evaluate: Callable[[Any], float], space: list[Any]) -> Any:
+    """Return the best item in ``space`` according to ``evaluate``."""
+
+    best_item: Any | None = None
+    best_score = float("-inf")
+    for item in space:
+        score = evaluate(item)
+        if score > best_score:
+            best_score = score
+            best_item = item
+    return best_item
