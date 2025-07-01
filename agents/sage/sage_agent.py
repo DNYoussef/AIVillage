@@ -10,6 +10,8 @@ from rag_system.retrieval.vector_store import VectorStore
 from rag_system.core.cognitive_nexus import CognitiveNexus
 from rag_system.core.latent_space_activation import LatentSpaceActivation
 from rag_system.error_handling.adaptive_controller import AdaptiveErrorController
+from core.evidence import EvidencePack
+from agents.utils.evidence_helpers import wrap_in_pack
 from rag_system.processing.confidence_estimator import ConfidenceEstimator
 from agents.unified_base_agent import SelfEvolvingSystem
 from .foundational_layer import FoundationalLayer
@@ -29,16 +31,17 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
 class SageAgent(UnifiedBaseAgent):
     def __init__(
         self,
         config: UnifiedConfig,
         communication_protocol: StandardCommunicationProtocol,
         vector_store: VectorStore,
-        knowledge_tracker: UnifiedKnowledgeTracker | None = None
+        knowledge_tracker: UnifiedKnowledgeTracker | None = None,
     ):
         super().__init__(config, communication_protocol, knowledge_tracker)
-        self.research_capabilities = config.get('research_capabilities', [])
+        self.research_capabilities = config.get("research_capabilities", [])
         self.rag_system = EnhancedRAGPipeline(config, knowledge_tracker)
         self.vector_store = vector_store
         self.exploration_mode = ExplorationMode(self.rag_system)
@@ -49,7 +52,9 @@ class SageAgent(UnifiedBaseAgent):
         self.latent_space_activation = LatentSpaceActivation()
         self.error_controller = AdaptiveErrorController()
         self.confidence_estimator = ConfidenceEstimator()
-        self.query_processor = QueryProcessor(self.rag_system, self.latent_space_activation, self.cognitive_nexus)
+        self.query_processor = QueryProcessor(
+            self.rag_system, self.latent_space_activation, self.cognitive_nexus
+        )
         self.task_executor = TaskExecutor(self)
         self.collaboration_manager = CollaborationManager(self)
         self.research_capabilities_manager = ResearchCapabilities(self)
@@ -66,15 +71,15 @@ class SageAgent(UnifiedBaseAgent):
         self.performance_metrics["total_tasks"] += 1
         start_time = time.time()
         try:
-            if getattr(task, 'is_user_query', False):
+            if getattr(task, "is_user_query", False):
                 result = await self.process_user_query(task.content)
             else:
                 result = await self.task_executor.execute_task(
                     {
-                        'type': getattr(task, 'type', 'general'),
-                        'content': task.content,
-                        'priority': getattr(task, 'priority', 1),
-                        'id': getattr(task, 'task_id', ''),
+                        "type": getattr(task, "type", "general"),
+                        "content": task.content,
+                        "priority": getattr(task, "priority", 1),
+                        "id": getattr(task, "task_id", ""),
                     }
                 )
             self.performance_metrics["successful_tasks"] += 1
@@ -86,29 +91,43 @@ class SageAgent(UnifiedBaseAgent):
         finally:
             execution_time = time.time() - start_time
             self.performance_metrics["average_execution_time"] = (
-                (self.performance_metrics["average_execution_time"] * (self.performance_metrics["total_tasks"] - 1) + execution_time)
-                / self.performance_metrics["total_tasks"]
-            )
+                self.performance_metrics["average_execution_time"]
+                * (self.performance_metrics["total_tasks"] - 1)
+                + execution_time
+            ) / self.performance_metrics["total_tasks"]
 
     async def process_user_query(self, query: str) -> Dict[str, Any]:
         intent = await self.user_intent_interpreter.interpret_intent(query)
         processed_query = await self.pre_process_query(query)
         rag_result = await self.rag_system.process_query(processed_query)
-        response = await self.response_generator.generate_response(query, rag_result, intent)
-        final_result = await self.post_process_result(rag_result, query, response, intent)
+        wrap_in_pack(rag_result, processed_query)
+        response = await self.response_generator.generate_response(
+            query, rag_result, intent
+        )
+        final_result = await self.post_process_result(
+            rag_result, query, response, intent
+        )
         return final_result
 
     async def pre_process_query(self, query: str) -> str:
         # Implement query pre-processing logic here
         return query
 
-    async def post_process_result(self, rag_result: Dict[str, Any], original_query: str, response: str, intent: Dict[str, Any]) -> Dict[str, Any]:
+    async def post_process_result(
+        self,
+        rag_result: Dict[str, Any],
+        original_query: str,
+        response: str,
+        intent: Dict[str, Any],
+    ) -> Dict[str, Any]:
         processed_result = {
             "original_query": original_query,
             "interpreted_intent": intent,
             "rag_result": rag_result,
             "response": response,
-            "confidence": await self.confidence_estimator.estimate(original_query, rag_result),
+            "confidence": await self.confidence_estimator.estimate(
+                original_query, rag_result
+            ),
         }
         return processed_result
 
@@ -134,7 +153,9 @@ class SageAgent(UnifiedBaseAgent):
 
     async def perform_web_search(self, query: str) -> Dict[str, Any]:
         """Perform a simple web search and return snippets."""
-        resp = requests.get("https://duckduckgo.com/html/", params={"q": query}, timeout=10)
+        resp = requests.get(
+            "https://duckduckgo.com/html/", params={"q": query}, timeout=10
+        )
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
         results = []
@@ -152,10 +173,10 @@ class SageAgent(UnifiedBaseAgent):
 
     async def handle_message(self, message: Message):
         if message.type == MessageType.TASK:
-            task_content = message.content.get('content')
-            task_type = message.content.get('task_type', 'general')
-            is_user_query = message.content.get('is_user_query', False)
-            task = LangroidTask(self, task_content, '', 1)
+            task_content = message.content.get("content")
+            task_type = message.content.get("task_type", "general")
+            is_user_query = message.content.get("is_user_query", False)
+            task = LangroidTask(self, task_content, "", 1)
             task.type = task_type
             task.is_user_query = is_user_query
             result = await self.execute_task(task)
@@ -164,9 +185,22 @@ class SageAgent(UnifiedBaseAgent):
                 sender=self.name,
                 receiver=message.sender,
                 content=result,
-                parent_id=message.id
+                parent_id=message.id,
             )
             await self.communication_protocol.send_message(response)
+            if isinstance(result, dict):
+                rag = result.get("rag_result", {})
+                pack = rag.get("evidence_pack")
+                if isinstance(pack, EvidencePack):
+                    await self.communication_protocol.send_message(
+                        Message(
+                            type=MessageType.EVIDENCE,
+                            sender=self.name,
+                            receiver=message.sender,
+                            content=pack.dict(),
+                            parent_id=message.id,
+                        )
+                    )
         elif message.type == MessageType.COLLABORATION_REQUEST:
             await self.collaboration_manager.handle_collaboration_request(message)
         else:
@@ -187,35 +221,49 @@ class SageAgent(UnifiedBaseAgent):
             **base_info,
             "research_capabilities": self.research_capabilities,
             "advanced_techniques": {
-                "reasoning": ["Chain-of-Thought", "Self-Consistency", "Tree-of-Thoughts"],
-                "NLP_models": ["BERTEmbeddingModel", "NamedEntityRecognizer", "RelationExtractor"]
+                "reasoning": [
+                    "Chain-of-Thought",
+                    "Self-Consistency",
+                    "Tree-of-Thoughts",
+                ],
+                "NLP_models": [
+                    "BERTEmbeddingModel",
+                    "NamedEntityRecognizer",
+                    "RelationExtractor",
+                ],
             },
             "layers": {
                 "SelfEvolvingSystem": "Active",
                 "FoundationalLayer": "Active",
                 "ContinuousLearningLayer": "Active",
                 "CognitiveNexus": "Active",
-                "LatentSpaceActivation": "Active"
+                "LatentSpaceActivation": "Active",
             },
             "query_processing": "Streamlined pipeline integrating all advanced components",
             "exploration_capabilities": "Enhanced with multi-strategy approach and result synthesis",
             "collaboration_capabilities": {
                 "knowledge_sharing": "Active",
                 "task_delegation": "Active",
-                "joint_reasoning": "Active"
+                "joint_reasoning": "Active",
             },
-            "collaborating_agents": list(self.collaboration_manager.collaborating_agents.keys()),
+            "collaborating_agents": list(
+                self.collaboration_manager.collaborating_agents.keys()
+            ),
             "error_handling": "Adaptive error control with confidence estimation",
             "performance_metrics": self.performance_metrics,
             "continuous_learning": {
-                "recent_learnings_count": len(self.continuous_learning_layer.recent_learnings),
+                "recent_learnings_count": len(
+                    self.continuous_learning_layer.recent_learnings
+                ),
                 "learning_rate": self.continuous_learning_layer.learning_rate,
-                "performance_history_length": len(self.continuous_learning_layer.performance_history)
+                "performance_history_length": len(
+                    self.continuous_learning_layer.performance_history
+                ),
             },
             "self_evolving_system": {
                 "current_architecture": self.self_evolving_system.current_architecture,
                 "evolution_rate": self.self_evolving_system.evolution_rate,
                 "mutation_rate": self.self_evolving_system.mutation_rate,
-                "learning_rate": self.self_evolving_system.learning_rate
-            }
+                "learning_rate": self.self_evolving_system.learning_rate,
+            },
         }

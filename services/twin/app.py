@@ -19,6 +19,7 @@ from fastapi import FastAPI, Depends
 from pydantic import BaseModel, Field
 from prometheus_client import Counter, Histogram, generate_latest
 import uvicorn
+import logging
 
 
 class DummyModel:
@@ -41,6 +42,8 @@ class TwinSettings:
 
 
 settings = TwinSettings()
+
+logger = logging.getLogger(__name__)
 
 
 REQUESTS = Counter("twin_requests_total", "Total chat requests")
@@ -160,6 +163,12 @@ async def health():
 @app.get("/metrics")
 async def metrics():
     return generate_latest(), 200, {"Content-Type": "text/plain; version=0.0.4"}
+
+
+@app.post("/v1/evidence")
+async def evidence(pack: Dict[str, Any]):
+    logger.debug("Evidence received %s", pack.get("id"))
+    return {"status": "ok"}
 
 
 @app.delete("/v1/user/{user_id}")
