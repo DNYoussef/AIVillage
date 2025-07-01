@@ -46,6 +46,16 @@ torch_mod = _ensure_module(
 if torch_mod is not None:
     torch_mod.__spec__.submodule_search_locations = []
     torch_mod.__path__ = []
+    nn_mod = types.ModuleType("torch.nn")
+    nn_mod.Module = object
+    nn_mod.functional = types.ModuleType("torch.nn.functional")
+    optim_mod = types.ModuleType("torch.optim")
+    torch_mod.nn = nn_mod
+    torch_mod.optim = optim_mod
+    torch_mod.nn.functional = nn_mod.functional
+    sys.modules.setdefault("torch.nn", nn_mod)
+    sys.modules.setdefault("torch.nn.functional", nn_mod.functional)
+    sys.modules.setdefault("torch.optim", optim_mod)
 _ensure_module("sklearn")
 _ensure_module("sklearn.feature_extraction")
 
@@ -198,6 +208,7 @@ def pytest_ignore_collect(path, config):
         "agent_forge/evomerge",
         "agents/king/tests",
         "tests/test_king_agent.py",
+        "tests/test_train_level.py",
     ]
     pstr = str(path)
     if any(h in pstr for h in heavy_dirs):

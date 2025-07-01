@@ -33,6 +33,8 @@ jobs:
           poetry run pre-commit run --all-files --show-diff-on-failure
       - name: DocSync verify
         run: poetry run python scripts/verify_docs.py
+      - name: EvidencePack schema check
+        run: poetry run python -m scripts.gen_schema --check
       - name: Ruff (lint)
         run: poetry run ruff .
       - name: Black (check only)

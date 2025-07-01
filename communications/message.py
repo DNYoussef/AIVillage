@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 import uuid
 
+
 class MessageType(Enum):
     TASK = "task"
     RESPONSE = "response"
@@ -21,12 +22,15 @@ class MessageType(Enum):
     SYSTEM_STATUS_UPDATE = "system_status_update"
     CONFIG_UPDATE = "config_update"
     TOOL_CALL = "tool_call"
+    EVIDENCE = "evidence"
+
 
 class Priority(Enum):
     LOW = 0
     MEDIUM = 1
     HIGH = 2
     CRITICAL = 3
+
 
 @dataclass(frozen=True)
 class Message:
@@ -54,7 +58,7 @@ class Message:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Message':
+    def from_dict(cls, data: Dict[str, Any]) -> "Message":
         return cls(
             id=data.get("id"),
             type=MessageType(data["type"]),
