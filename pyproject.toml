@@ -5,3 +5,11 @@ description = "Self-improving multi-agent system"
 requires-python = ">=3.10"
 readme = "README.md"
 license = {file = "LICENSE"}
+
+[tool.poetry.dependencies]
+requests = "^2.32"
+hypothesis = { version = "^6.101", optional = true }
+scikit-learn = { version = "^1.5", markers = "platform_machine != 'arm64'" }
+
+[tool.poetry.extras]
+dev = ["hypothesis", "scikit-learn"]
