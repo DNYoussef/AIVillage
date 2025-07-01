@@ -19,6 +19,13 @@ jobs:
           python-version: '3.11'
       - name: Install Poetry
         run: pip install poetry
+      - name: Cache Poetry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-
       - name: Install dependencies
         run: |
           poetry install --no-interaction --no-root
