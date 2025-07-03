@@ -1,6 +1,6 @@
 pytest
 pytest-asyncio
-pytest-cov
+pytest-cov==5.0.0
 requests
 numpy
 PyYAML
