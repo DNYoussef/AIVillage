@@ -4,7 +4,8 @@ WORKDIR /build
 COPY requirements.txt ./
 RUN pip install --no-cache-dir --target=/opt/python -r requirements.txt
 
-COPY services/twin/ /app/
+# Copy the service source code
+COPY . /app/
 WORKDIR /app
 RUN python -m compileall -q .
 
