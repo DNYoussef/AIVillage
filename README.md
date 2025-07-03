@@ -551,3 +551,23 @@ This project is licensed under the [MIT License](LICENSE).
 ## Development Environment
 
 Run `make dev-up` to build the Docker image and start the server on http://localhost:8000.
+
+## Sprint 3 Monitoring & Soak Testing
+
+To launch the services with Prometheus and Grafana enabled:
+
+```bash
+./run-monitoring.sh
+```
+
+This starts Prometheus (http://localhost:9090) and Grafana (http://localhost:3000). The default Grafana login is `admin/changeme`.
+
+For a full 8‑hour load test run:
+
+```bash
+./run-soak-test.sh
+```
+
+This uses Locust to simulate chat traffic and pushes metrics to the Pushgateway.
+
+See [docs/adr/ADR-S3-01-observability.md](docs/adr/ADR-S3-01-observability.md) for details.
