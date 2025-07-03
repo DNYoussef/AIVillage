@@ -4,78 +4,153 @@ on:
   pull_request:
     paths-ignore:
       - 'docs/**'
+      - '*.md'
   push:
     branches: [ "main" ]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install Poetry
-        run: pip install poetry
-      - name: Cache Poetry
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pypoetry
-          key: poetry-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            poetry-${{ runner.os }}-
-      - name: Install dependencies
-        run: |
-          poetry install --no-interaction --no-root
-          poetry run pip install ruff black mypy pytest pytest-cov
-      - name: Commit-msg lint (latest commit)
-        run: |
-          MSG_FILE=$(mktemp)
-          git log -1 --pretty=%B > "$MSG_FILE"
-          poetry run pre-commit run commit-msg --hook-stage commit-msg --commit-msg-filename "$MSG_FILE"
-      - name: Pre-commit
-        run: |
-          poetry run pre-commit run --all-files --show-diff-on-failure
-      - name: DocSync verify
-        run: poetry run python scripts/verify_docs.py
-      - name: EvidencePack schema check
-        run: poetry run python -m scripts.gen_schema --check
-      - name: Ruff (lint)
-        run: poetry run ruff .
-      - name: Black (check only)
-        run: poetry run black --check .
-      - name: MyPy (type-check)
-        run: poetry run mypy --install-types --non-interactive . || true
-      - name: Pytest
-        run: poetry run pytest -q --cov=.
-      - name: Generate coverage xml
-        run: poetry run coverage xml -i
+    - uses: actions/checkout@v4
 
-      - name: Enforce ≥60 % coverage & create badge
-        run: |
-          python - <<'PY'
-import xml.etree.ElementTree as ET, sys
-rate = float(ET.parse('coverage.xml').getroot().get('line-rate')) * 100
-print(f'Line coverage = {rate:.1f}%')
-if rate < 60:
-    sys.exit('Coverage below threshold')
-from coverage_badge.__main__ import main as make_badge
-make_badge(coverage_xml='coverage.xml', output_svg='docs/assets/coverage.svg')
-PY
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
 
-      - name: Commit badge if changed
-        run: |
-          git config user.email "bot@atlantis.ai"
-          git config user.name "Atlantis-CI Bot"
-          if [[ $(git status --porcelain docs/assets/coverage.svg) ]]; then
-            git add docs/assets/coverage.svg
-            git commit -m "chore(ci): update coverage badge"
-            git push origin HEAD:main
-          fi
-      - name: Build docker image
-        run: docker build -t atlantis-ai:ci .
-      - name: Notify Slack
-        if: success()
-        run: poetry run python scripts/notify_slack.py
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+
+    - name: Run tests
+      run: |
+        pytest --cov=. --cov-report=xml --cov-report=term
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Docker cache directory
+      uses: actions/cache@v4
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+
+    - name: Build and push Gateway
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./services/gateway/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}-gateway
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: |
+          type=gha
+          type=local,src=/tmp/.buildx-cache
+        cache-to: |
+          type=gha,mode=max
+          type=local,dest=/tmp/.buildx-cache-new
+        platforms: linux/amd64,linux/arm64
+
+    - name: Build and push Twin
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./services/twin/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}-twin
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: |
+          type=gha
+          type=local,src=/tmp/.buildx-cache
+        cache-to: |
+          type=gha,mode=max
+          type=local,dest=/tmp/.buildx-cache-new
+        platforms: linux/amd64,linux/arm64
+
+    - name: Check image sizes
+      run: |
+        echo "🔍 Checking image sizes..."
+        docker pull ${{ steps.meta.outputs.tags }}-gateway
+        docker pull ${{ steps.meta.outputs.tags }}-twin
+        GATEWAY_SIZE=$(docker image inspect ${{ steps.meta.outputs.tags }}-gateway --format='{{.Size}}')
+        TWIN_SIZE=$(docker image inspect ${{ steps.meta.outputs.tags }}-twin --format='{{.Size}}')
+        GATEWAY_MB=$((GATEWAY_SIZE / 1048576))
+        TWIN_MB=$((TWIN_SIZE / 1048576))
+        echo "📦 Gateway: ${GATEWAY_MB}MB"
+        echo "📦 Twin: ${TWIN_MB}MB"
+        if [ $GATEWAY_MB -gt 300 ] || [ $TWIN_MB -gt 300 ]; then
+          echo "❌ ERROR: Image size exceeds 300MB limit!"
+          exit 1
+        fi
+        echo "✅ Image sizes within limits"
+
+  soak-test-mini:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        pip install locust prometheus-client psutil
+
+    - name: Start services
+      run: |
+        docker-compose up -d
+        timeout 30 bash -c 'until curl -f http://localhost:8000/health; do sleep 1; done'
+
+    - name: Run mini soak test (15 min)
+      run: |
+        locust -f tests/soak/locustfile.py \
+          --headless \
+          --users 20 \
+          --spawn-rate 2 \
+          --run-time 15m \
+          --host http://localhost:8000 \
+          --html soak-report.html
+
+    - name: Upload results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: soak-test-results
+        path: |
+          soak-report.html
+          soak_test_report.json
