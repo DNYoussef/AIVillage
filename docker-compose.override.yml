@@ -5,6 +5,7 @@ services:
     image: prom/prometheus:v2.52.0
     container_name: ai-village-prometheus
     volumes:
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:

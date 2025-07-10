@@ -41,11 +41,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
     - name: Docker version
       run: docker version
@@ -145,7 +145,7 @@ jobs:
 
     - name: Run mini soak test (15 min)
       run: |
-        locust -f tests/soak/locustfile.py \
+        locust -f tests/soak/locustfile_simple.py \
           --headless \
           --users 20 \
           --spawn-rate 2 \

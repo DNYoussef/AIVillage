@@ -6,7 +6,7 @@ export PUSHGATEWAY_URL="localhost:9091"
 
 pip install locust prometheus-client psutil
 
-locust -f tests/soak/locustfile.py \
+locust -f tests/soak/locustfile_advanced.py \
        --headless -u 200 -r 20 -t 8h \
        --host http://localhost:8000 \
        --html soak-report.html \
