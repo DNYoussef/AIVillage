@@ -561,6 +561,7 @@ To launch the services with Prometheus and Grafana enabled:
 ```
 
 This starts Prometheus (http://localhost:9090) and Grafana (http://localhost:3000). The default Grafana login is `admin/changeme`.
+Grafana loads `ai-village-core.json` with p99 latency and error-rate panels for Gateway and Twin.
 
 For a full 8‑hour load test run:
 

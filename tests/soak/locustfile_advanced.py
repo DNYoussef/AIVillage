@@ -160,6 +160,7 @@ def on_test_stop(environment, **kwargs):
 
     with open('soak_test_report.json', 'w') as f:
         json.dump(report, f, indent=2)
+    push_to_gateway(PUSHGATEWAY_URL, job="soak_test", registry=registry)
 
     all_passed = all(report["pass_criteria"].values())
     if all_passed:
