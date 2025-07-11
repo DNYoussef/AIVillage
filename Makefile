@@ -1,4 +1,7 @@
+
 .PHONY: dev-up dev-down fmt lint test
+
+POETRY = poetry
 
 IMAGE=atlantis-dev
 
@@ -9,10 +12,10 @@ dev-down:
 	docker compose down
 
 fmt:
-	poetry run black .
+        $(POETRY) run black .
 
 lint:
-	poetry run ruff .
+        $(POETRY) run ruff .
 
 test:
-	poetry run pytest -q --cov=.
+        $(POETRY) run pytest -q --cov=.

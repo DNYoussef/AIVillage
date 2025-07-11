@@ -1,27 +1,26 @@
 # Python-related
-__pycache__/
+*.egg
+*.egg-info/
 *.py[cod]
 *.so
-*.egg-info/
-dist/
+__pycache__/
 build/
-*.egg
+dist/
 
 # Virtual environment
+*.venv
+ENV/
+env/
 evomerge_env/
 new_env/
 venv/
-*.venv
-env/
-ENV/
 
 # Environment variables 
 .env
 
 # IDE-related
-.vscode/
 .idea/
-*.swp
+.vscode/
 *.swo
 
 # OS-related
@@ -29,22 +28,22 @@ ENV/
 Thumbs.db
 
 # Project-specific
-*.log
 *.db
+*.log
 *.sqlite3
 
 # Jupyter Notebooks
 .ipynb_checkpoints
 
 # Model files (if you don't want to track large model files)
-*.pt
 *.pth
 *.onnx
+*.pt
 
 # Temporary files
-*.tmp
 *.bak
 *.swp
+*.tmp
 
 vendor/wheels/*.whl
 vendor/wheels/*.tar.gz
