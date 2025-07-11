@@ -1,3 +1,5 @@
+# Auto-generated with:
+#    poetry export --without-hashes -f requirements.txt > requirements.txt
 langroid>=0.16.1
 pydantic>=2.8.2
 fastapi>=0.95.1
@@ -20,17 +22,13 @@ community>=1.0.0b1
 python-dotenv>=1.0.0
 redis>=4.5.5
 aiofiles>=23.1.0
-pytest
-pytest-asyncio
 click
 PyYAML
 ollama
 aiohttp>=3.10.5
-flake8>=7.1.1
 fsspec>=2024.6.1
 openai>=1.42.0
 pillow>=10.4.0
-pycodestyle>=2.12.1
 pydantic-core>=2.20.1
 requests>=2.32.3
 tokenizers>=0.19.1
