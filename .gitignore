@@ -45,3 +45,6 @@ Thumbs.db
 *.tmp
 *.bak
 *.swp
+
+vendor/wheels/*.whl
+vendor/wheels/*.tar.gz

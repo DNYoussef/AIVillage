@@ -45,6 +45,20 @@ python -m unittest agents/king/tests/test_integration.py
 
 Make sure all tests pass before submitting a pull request.
 
+## Refreshing wheels
+
+The CI pipeline installs dev dependencies from `vendor/wheels` without
+internet access. Refresh the cache whenever `requirements-dev.txt` changes:
+
+1. Edit `requirements-dev.txt` as needed.
+2. Run `python scripts/fetch_wheels.py` to download wheels and update
+   `docs/build_artifacts/wheel-manifest.txt`.
+3. Commit **only** `vendor/wheels/.gitkeep` and the manifest file.
+4. **Do not** commit any `.whl` artifacts.
+
+If CI reports a wheel cache change, rerun the script and commit the updated
+manifest.
+
 ## Continuous Learning Features
 
 AI Village incorporates continuous learning capabilities. When working with these features:

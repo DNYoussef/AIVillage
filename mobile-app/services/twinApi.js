@@ -20,5 +20,11 @@ export default {
       method: 'POST', body: form
     });
     return res.json();
+  },
+
+  async fetchExplanation(chatId) {
+    const res = await fetch(`${BASE}/v1/explanation?chat_id=${chatId}`);
+    return res.json();
   }
 };
+

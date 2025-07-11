@@ -26,15 +26,63 @@ def _ensure_module(name: str, attrs: dict | None = None):
     return sys.modules.get(name)
 
 
+class _DummyArray(list):
+    def mean(self, *args, **kwargs):
+        return self
+
+    def detach(self, *args, **kwargs):
+        return self
+
+    def cpu(self, *args, **kwargs):
+        return self
+
+    def numpy(self, *args, **kwargs):
+        return self
+
+    def astype(self, *_a, **_k):
+        return self
+
+
 # Stub faiss if missing
 _ensure_module("faiss", {"IndexFlatL2": lambda *args, **kwargs: object()})
 _ensure_module(
     "numpy",
-    {"zeros": lambda *args, **kwargs: [0] * (args[0] if args else 0), "ndarray": list},
+    {
+        "zeros": lambda *args, **kwargs: [0] * (args[0] if args else 0),
+        "ndarray": list,
+        "array": lambda *a, **k: _DummyArray(),
+        "asarray": lambda arr, dtype=None: _DummyArray(arr),
+        "array_equal": lambda a, b: list(a) == list(b),
+        "random": types.SimpleNamespace(
+            default_rng=lambda *a, **k: types.SimpleNamespace(
+                random=lambda size=None: _DummyArray([0.0] * (size if size else 1))
+            )
+        ),
+    },
 )
 _ensure_module("httpx")
-_ensure_module("requests", {"get": lambda *a, **k: None})
+_ensure_module(
+    "requests",
+    {
+        "get": lambda *a, **k: types.SimpleNamespace(status_code=200, ok=True),
+        "post": lambda *a, **k: types.SimpleNamespace(ok=True, json=lambda: {}),
+        "delete": lambda *a, **k: types.SimpleNamespace(
+            ok=True, json=lambda: {"deleted_conversations": 1}
+        ),
+        "RequestException": Exception,
+    },
+)
 _ensure_module("yaml", {"safe_load": lambda *a, **k: {}})
+_ensure_module(
+    "hypothesis",
+    {"given": lambda *a, **k: (lambda f: f)},
+)
+hyp_strategies = types.ModuleType("hypothesis.strategies")
+hyp_strategies.text = lambda *a, **k: ""
+sys.modules.setdefault("hypothesis.strategies", hyp_strategies)
+tmod = sys.modules.get("hypothesis")
+if tmod:
+    tmod.strategies = hyp_strategies
 torch_mod = _ensure_module(
     "torch",
     {
@@ -56,6 +104,18 @@ if torch_mod is not None:
     sys.modules.setdefault("torch.nn", nn_mod)
     sys.modules.setdefault("torch.nn.functional", nn_mod.functional)
     sys.modules.setdefault("torch.optim", optim_mod)
+_ensure_module(
+    "transformers",
+    {
+        "BertTokenizer": object,
+        "BertModel": object,
+        "BertForSequenceClassification": object,
+        "BertForQuestionAnswering": object,
+    },
+)
+_ensure_module("bs4", {"BeautifulSoup": object})
+_ensure_module("python_multipart", {"__version__": "99.0.0"})
+_ensure_module("multipart")
 _ensure_module("sklearn")
 _ensure_module("sklearn.feature_extraction")
 
@@ -77,6 +137,7 @@ _ensure_module(
     "sklearn.feature_extraction.text", {"TfidfVectorizer": _DummyTfidfVectorizer}
 )
 _ensure_module("sklearn.metrics")
+_ensure_module("sklearn.linear_model", {"LogisticRegression": object})
 
 
 class _DummyCosineResult(list):
@@ -144,6 +205,7 @@ tok = _ensure_module("tiktoken")
 if tok is not None:
     tok.__spec__.submodule_search_locations = []
     tok.__path__ = []
+    tok.Encoding = object
 _ensure_module("tiktoken.load", {"load_tiktoken_bpe": lambda p: {}})
 
 # Provide simple stubs for optional dependencies used in tests.  These
@@ -210,6 +272,12 @@ def pytest_ignore_collect(path, config):
         "tests/test_king_agent.py",
         "tests/test_train_level.py",
     ]
+    special_tests = {
+        "tests/test_twin_api.py": ["requests"],
+        "tests/test_rate_limit.py": ["requests"],
+        "tests/privacy/test_property_deletion.py": ["requests", "hypothesis"],
+        "tests/agents/test_evidence_flow.py": ["bs4", "transformers"],
+    }
     pstr = str(path)
     if any(h in pstr for h in heavy_dirs):
         missing = []
@@ -222,4 +290,18 @@ def pytest_ignore_collect(path, config):
         if missing:
             print(f"Skipping {pstr} due to missing dependencies: {', '.join(missing)}")
             return True
+    for tpath, deps in special_tests.items():
+        if pstr.endswith(tpath):
+            missing = []
+            for dep in deps:
+                try:
+                    if importlib.util.find_spec(dep) is None:
+                        missing.append(dep)
+                except ValueError:
+                    missing.append(dep)
+            if missing:
+                print(
+                    f"Skipping {pstr} due to missing dependencies: {', '.join(missing)}"
+                )
+                return True
     return False

@@ -30,6 +30,11 @@
       "maximum": 1.0,
       "type": "number"
     },
+    "confidence_tier": {
+      "title": "Confidence Tier",
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
     "meta": {
       "title": "Meta",
       "type": "object"
