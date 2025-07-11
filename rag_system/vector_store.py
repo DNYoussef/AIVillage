@@ -1,37 +1,72 @@
-"""Helper utilities for working with ``VectorStore`` files."""
-
-from __future__ import annotations
-
 import os
-from typing import Any, Dict, Iterable, List, Tuple
+import logging
+import time
+from typing import List, Dict, Any
 
-from rag_system.retrieval.vector_store import VectorStore
-from rag_system.core.config import UnifiedConfig
+import numpy as np
+from qdrant_client import QdrantClient
+
+from .faiss_backend import FaissAdapter
+
+logger = logging.getLogger(__name__)
+
+USE_QDRANT = os.getenv("RAG_USE_QDRANT", "0") == "1"
+QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
+COLLECTION_NAME = os.getenv("COLLECTION_NAME", "ai_village_vectors")
 
 
-DEFAULT_STORE_PATH = os.getenv("VECTOR_STORE_PATH", "vector_store.pkl")
+class VectorStore:
+    """Unified interface backed by Qdrant or FAISS with automatic fallback."""
 
+    def __init__(self):
+        self.faiss = FaissAdapter()
+        self.backend = self.faiss
+        if USE_QDRANT:
+            try:
+                self.qdrant = QdrantClient(url=QDRANT_URL, timeout=5)
+                self.qdrant.get_collections()
+                self.backend = self.qdrant
+                logger.info("VectorStore: using Qdrant backend")
+            except Exception as e:  # pragma: no cover - network side effects
+                logger.warning("Qdrant unavailable (%s) – falling back to FAISS", e)
 
-class FaissAdapter:
-    """Thin wrapper exposing batches of embeddings from a pickled store."""
+    def add(self, ids: List[str], embeddings: np.ndarray, payload: List[Dict[str, Any]]) -> None:
+        if self.backend is self.faiss:
+            self.faiss.add(ids, embeddings, payload)
+        else:
+            try:
+                self.backend.upload_collection(
+                    collection_name=COLLECTION_NAME,
+                    ids=ids,
+                    vectors=embeddings,
+                    payload=payload,
+                    parallel=1,
+                )
+                self.faiss.add(ids, embeddings, payload)
+            except Exception as e:  # pragma: no cover - network side effects
+                logger.error("Qdrant add failed – reverting to FAISS: %s", e)
+                self.backend = self.faiss
+                self.faiss.add(ids, embeddings, payload)
 
-    def __init__(self, path: str = DEFAULT_STORE_PATH) -> None:
-        self.path = path
-        self.store = VectorStore.load(path, UnifiedConfig())
-
-    def iter_embeddings(
-        self, batch_size: int = 100
-    ) -> Iterable[Tuple[List[Any], List[Any], List[Dict[str, Any]]]]:
-        """Yield ``(ids, vectors, payload)`` tuples from the store."""
-
-        docs = list(self.store.documents)
-        for i in range(0, len(docs), batch_size):
-            batch = docs[i : i + batch_size]
-            ids = [d["id"] for d in batch]
-            vectors = [d["embedding"] for d in batch]
-            payload = [
-                {k: v for k, v in d.items() if k not in {"embedding"}}
-                for d in batch
+    def search(self, query_vec: np.ndarray, k: int = 5) -> List[Dict[str, Any]]:
+        started = time.time()
+        try:
+            if self.backend is self.faiss:
+                return self.faiss.search(query_vec, k)
+            res = self.backend.search(
+                collection_name=COLLECTION_NAME,
+                query_vector=query_vec.tolist(),
+                limit=k,
+                with_payload=True,
+            )
+            return [
+                {"id": p.id, "score": p.score, "meta": p.payload}
+                for p in res
             ]
-            yield ids, vectors, payload
-
+        except Exception as e:  # pragma: no cover - network side effects
+            logger.error("Qdrant search failed – falling back (%s)", e)
+            self.backend = self.faiss
+            return self.faiss.search(query_vec, k)
+        finally:
+            dur = (time.time() - started) * 1000
+            logger.debug("vector search %s ms", round(dur, 2))
