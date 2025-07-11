@@ -1,3 +1,8 @@
+"""Minimal soak test configuration.
+
+Run with 10 users for 5 minutes by default.
+"""
+
 from locust import HttpUser, task, between
 
 class QuickUser(HttpUser):
