@@ -547,6 +547,7 @@ Please refer to the CONTRIBUTING.md file for guidelines on how to contribute to 
 This project is licensed under the [MIT License](LICENSE).
 
 \n## Docker\nA `Dockerfile` is provided to run tests in a container:\n```bash\ndocker build -t aivillage .\ndocker run aivillage\n```
+CI uses [docker/setup-docker](https://github.com/docker/setup-docker) to provision the Docker CLI on restricted runners.
 
 ## Development Environment
 
