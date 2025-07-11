@@ -15,8 +15,9 @@ from typing import Dict, Optional, Any
 
 from cachetools import LRUCache
 
-from fastapi import FastAPI, Depends
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, Depends, HTTPException
+from .schemas import ChatRequest, ChatResponse, HealthResponse
+from core.chat_engine import ChatEngine
 from prometheus_client import Counter, Histogram, generate_latest
 import uvicorn
 import logging
@@ -45,6 +46,20 @@ settings = TwinSettings()
 
 logger = logging.getLogger(__name__)
 
+CALIBRATION_ENABLED = os.getenv("CALIBRATION_ENABLED", "0") == "1"
+if CALIBRATION_ENABLED:
+    try:
+        from calibration.conformal import ConformalCalibrator
+
+        _calibrator = ConformalCalibrator.load_default()
+        logger.info("Calibration enabled")
+    except Exception:  # pragma: no cover - rarely triggered
+        logger.exception("Failed to load calibrator")
+        CALIBRATION_ENABLED = False
+        _calibrator = None
+else:  # pragma: no cover - disabled feature
+    _calibrator = None
+
 
 REQUESTS = Counter("twin_requests_total", "Total chat requests")
 LATENCY = Histogram(
@@ -52,25 +67,6 @@ LATENCY = Histogram(
 )
 
 
-class ChatRequest(BaseModel):
-    message: str = Field(..., min_length=1, max_length=10_000)
-    user_id: str = Field(..., description="Unique user identifier")
-    conversation_id: Optional[str] = None
-    context: Dict[str, Any] = Field(default_factory=dict)
-
-
-class ChatResponse(BaseModel):
-    response: str
-    conversation_id: str
-    timestamp: datetime
-    processing_time_ms: float
-
-
-class HealthResponse(BaseModel):
-    status: str
-    version: str
-    model_loaded: bool
-    timestamp: datetime
 
 
 class TwinAgent:
@@ -100,12 +96,21 @@ class TwinAgent:
             {"role": "assistant", "content": answer, "ts": datetime.utcnow()}
         )
 
+        raw_prob = 0.5
+        calibrated = None
+        if CALIBRATION_ENABLED and _calibrator is not None:
+            try:
+                calibrated = _calibrator.calibrate(raw_prob)
+            except Exception as exc:  # pragma: no cover - unexpected
+                logger.warning("Calibration error: %s", exc)
+
         latency_ms = (time.perf_counter() - start) * 1000
         return ChatResponse(
             response=answer,
             conversation_id=conv_id,
             timestamp=datetime.utcnow(),
             processing_time_ms=latency_ms,
+            calibrated_prob=calibrated,
         )
 
     def delete_conversation(self, conv_id: str) -> None:
@@ -136,13 +141,21 @@ def get_agent() -> TwinAgent:  # noqa: D401
 
 
 app = FastAPI(title="Atlantis Twin", version="0.2.0")
+_engine = ChatEngine()
 
 
 @app.post("/v1/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest, _agent: TwinAgent = Depends(get_agent)):
+async def chat_endpoint(req: ChatRequest):
     REQUESTS.inc()
-    with LATENCY.time():
-        return await _agent.chat(req)
+    started = time.time()
+    try:
+        payload = _engine.process_chat(req.message, req.conversation_id)
+    except Exception:
+        logger.exception("chat processing failed")
+        raise HTTPException(status_code=500, detail="Internal error") from None
+
+    payload["processing_time_ms"] = int((time.time() - started) * 1000)
+    return ChatResponse(**payload)
 
 
 @app.get("/v1/embeddings")
