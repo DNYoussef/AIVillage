@@ -13,5 +13,6 @@ This short roadmap clarifies the current state of the project and highlights pla
 - Self-evolving agent system with expert vectors
 - Full evolutionary training pipeline (see `complete_agent_forge_pipeline.md`)
 - ADAS optimisation and advanced compression
+- gRPC/WebSocket support for inter-service communication
 
 The roadmap will be updated as milestones are completed.
