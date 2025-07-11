@@ -564,19 +564,19 @@ Run `make dev-up` to build the Docker image and start the server on http://local
 To launch the services with Prometheus and Grafana enabled:
 
 ```bash
-./run-monitoring.sh
+./scripts/manage.sh start
 ```
 
-This starts Prometheus (http://localhost:9090) and Grafana (http://localhost:3000). The default Grafana login is `admin/changeme`.
-Grafana loads `ai-village-core.json` with p99 latency and error-rate panels for Gateway and Twin.
+This starts Prometheus (`$PROMETHEUS_URL`, default `http://localhost:9090`) and Grafana (`$GRAFANA_URL`, default `http://localhost:3000`).
+Grafana loads `ai-village-core.json` with p99 latency and error‑rate panels for Gateway and Twin.
 
 For a full 8‑hour load test run:
 
 ```bash
-./run-soak-test.sh
+./scripts/manage.sh soak-test
 ```
 
-This uses Locust to simulate chat traffic and pushes metrics to the Pushgateway.
+This uses Locust to simulate chat traffic and pushes metrics to the Pushgateway (`$PUSHGATEWAY_URL`).
 
 See [docs/adr/ADR-S3-01-observability.md](docs/adr/ADR-S3-01-observability.md) for details.
 Demo: [video](https://example.com/demo.mp4)
