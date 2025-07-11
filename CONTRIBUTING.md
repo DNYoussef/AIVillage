@@ -69,19 +69,19 @@ AI Village incorporates continuous learning capabilities. When working with thes
 
 ## Submitting Changes
 
-1. Create a new branch for your feature or bug fix:
+1. Create a new `feature/<description>` branch from `main`:
    ```
-   git checkout -b feature/your-feature-name
+   git checkout -b feature/your-feature-name main
    ```
 2. Make your changes and commit them with a clear commit message.
-3. Push your changes to your fork:
+3. Push your branch to your fork:
    ```
    git push origin feature/your-feature-name
    ```
-4. Create a pull request from your fork to the main AI Village repository.
+4. Open a pull request targeting the `main` branch.
 5. Ensure that your pull request includes:
-   - A clear description of the changes
-   - Any relevant issue numbers
+   - A clear description of the changes and related issue numbers
+   - Passing test results
    - Updates to documentation if necessary
 
 ## Code Style Guidelines

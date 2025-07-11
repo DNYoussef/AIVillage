@@ -1,6 +1,6 @@
 [project]
 name = "aivillage"
-version = "0.5.0"
+version = "0.5.1"
 description = "Self-improving multi-agent system"
 requires-python = ">=3.10"
 readme = "README.md"
