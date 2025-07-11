@@ -24,8 +24,25 @@ jobs:
         python-version: '3.11'
         cache: 'pip'
 
-    - name: Install dev dependencies
-      run: pip install -r requirements-dev.txt
+    - name: Cache PyPI wheels
+      id: cache-pip
+      uses: actions/cache@v4
+      with:
+        path: vendor/wheels
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+
+    - name: Check wheel cache hit
+      run: |
+        if [ "${{ steps.cache-pip.outputs.cache-hit }}" != "true" ]; then
+          echo "::notice ::Wheel cache miss — dependencies downloaded and cached."
+        fi
+
+    - name: Populate wheel cache (first run)
+      if: steps.cache-pip.outputs.cache-hit != 'true'
+      run: pip download -r requirements-dev.txt -d vendor/wheels
+
+    - name: Install dev dependencies (offline)
+      run: pip install --no-index --find-links vendor/wheels -r requirements-dev.txt
 
     - name: Run tests
       run: |
@@ -47,10 +64,16 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Docker version
+    - name: Set up Docker
+      uses: docker/setup-docker@v2
+      with:
+        version: '24.0'
+
+    - name: Show Docker version
       run: docker version
 
     - name: Build services with compose
+      if: success() && command -v docker
       run: docker compose build twin gateway
 
     - name: Log in to Container Registry
