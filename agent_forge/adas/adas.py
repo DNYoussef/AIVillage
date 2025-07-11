@@ -1,6 +1,7 @@
 from __future__ import annotations
 import random
 import json
+import ast
 from utils.logging import get_logger
 import time
 import pathlib
@@ -12,6 +13,8 @@ from langroid.agent.tool_message import ToolMessage
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
 from .technique_archive import PROMPT_TECHNIQUE_ARCHIVE
+
+
 
 class ADASTask(Task):
     def __init__(self, task_description: str):
@@ -103,6 +106,17 @@ class AgentTechnique(ToolMessage):
     purpose: str = "Apply a specific AI technique"
     technique_name: str
     code: str
+    SAFE_BUILTINS = {
+        "__import__": __import__,
+        "open": open,
+        "len": len,
+        "range": range,
+        "min": min,
+        "max": max,
+        "str": str,
+        "float": float,
+    }
+    ALLOWED_IMPORTS = {"os"}
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -112,26 +126,43 @@ class AgentTechnique(ToolMessage):
             import logging
             self.logger = logging.getLogger("ADAS")
 
+    @classmethod
+    def _sanitize_code(cls, code: str) -> bool:
+        """Basic validation for untrusted code snippets."""
+        import ast
+
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return False
+
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                names = [n.name for n in node.names]
+                if not all(name in cls.ALLOWED_IMPORTS for name in names):
+                    return False
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                if node.func.id in {"exec", "eval", "__import__", "compile"}:
+                    return False
+
+        return True
+
     def handle(self, model_path: str, params: Dict[str, Any]) -> float:
         """Execute the technique callable stored in ``code``.
 
         The ``code`` should define a function ``run(model_path, work_dir, params)``
         that returns a fitness score between 0 and 1.
         """
+        if not self._sanitize_code(self.code):
+            self.logger.error("Technique %s failed security checks", self.technique_name)
+            return 0.0
+
         safe_globals: Dict[str, Any] = {
-            "__builtins__": {
-                "__import__": __import__,
-                "open": open,
-                "len": len,
-                "range": range,
-                "min": min,
-                "max": max,
-                "str": str,
-                "float": float,
-            }
+            "__builtins__": self.SAFE_BUILTINS
         }
         try:
-            exec(self.code, safe_globals)
+            compiled = compile(self.code, "<adas-technique>", "exec")
+            exec(compiled, safe_globals)
         except Exception as exc:  # pragma: no cover - user code may be faulty
             self.logger.exception("Failed to load technique %s", self.technique_name)
             return 0.0
