@@ -68,6 +68,18 @@ LATENCY = Histogram(
     "twin_chat_latency_seconds", "Chat latency", buckets=(0.1, 0.3, 0.5, 1, 2, 5)
 )
 
+# Metrics for the graph explainer
+EXPLAIN_REQS = Counter(
+    "explain_requests_total",
+    "Path explanation requests",
+    ["status"],
+)
+EXPLAIN_LATENCY = Histogram(
+    "explain_latency_seconds",
+    "Path explanation latency",
+    buckets=(0.1, 0.3, 0.5, 1, 2, 5),
+)
+
 
 
 
@@ -194,12 +206,17 @@ class ExplainResponse(BaseModel):
 
 @app.post("/explain", response_model=ExplainResponse)
 async def explain_endpoint(req: ExplainRequest):
-    t0 = time.time()
-    data = explain_path(req.src, req.dst)
-    if not data["found"]:
-        raise HTTPException(status_code=404, detail="Path not found")
-    data["processing_ms"] = round((time.time() - t0) * 1000, 1)
-    return ExplainResponse(**data)
+    started = time.perf_counter()
+    try:
+        data = explain_path(req.src, req.dst)
+        if not data["found"]:
+            EXPLAIN_REQS.labels(status="error").inc()
+            raise HTTPException(status_code=404, detail="Path not found")
+        EXPLAIN_REQS.labels(status="success").inc()
+        data["processing_ms"] = round((time.perf_counter() - started) * 1000, 1)
+        return ExplainResponse(**data)
+    finally:
+        EXPLAIN_LATENCY.observe(time.perf_counter() - started)
 
 
 @app.post("/v1/evidence")
