@@ -190,3 +190,15 @@ jobs:
         path: |
           soak-report.html
           soak_test_report.json
+
+  wheel-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate wheels
+        run: |
+          python -m pip install safety==2.3.5
+          python scripts/fetch_wheels.py --validate
+      - name: Safety audit
+        run: |
+          safety check --full-report --continue-on-error
