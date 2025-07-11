@@ -9,7 +9,7 @@ from utils.logging import get_logger
 
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
-from rag_system.graph_explain import explain_path
+from rag_system.graph_explain import explain_path, MAX_HOPS
 
 logger = get_logger(__name__)
 
@@ -129,6 +129,6 @@ async def v1_explanation_endpoint(chat_id: str):
 
 
 @app.get("/explain")
-async def explain_endpoint(start: str, end: str):
+async def explain_endpoint(start: str, end: str, hops: int = MAX_HOPS):
     """Return graph explanation path between two nodes."""
-    return explain_path(start, end)
+    return explain_path(start, end, hops)

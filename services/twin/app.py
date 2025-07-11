@@ -17,7 +17,7 @@ from cachetools import LRUCache
 
 from fastapi import FastAPI, Depends, HTTPException
 from .schemas import ChatRequest, ChatResponse, HealthResponse
-from rag_system.graph_explain import explain_path
+from rag_system.graph_explain import explain_path, MAX_HOPS
 from pydantic import BaseModel
 from core.chat_engine import ChatEngine
 from prometheus_client import Counter, Histogram, generate_latest
@@ -79,8 +79,6 @@ EXPLAIN_LATENCY = Histogram(
     "Path explanation latency",
     buckets=(0.1, 0.3, 0.5, 1, 2, 5),
 )
-
-
 
 
 class TwinAgent:
@@ -195,10 +193,12 @@ async def metrics():
 class ExplainRequest(BaseModel):
     src: str
     dst: str
+    hops: int | None = None
 
 
 class ExplainResponse(BaseModel):
-    path: list
+    nodes: list
+    edges: list
     hops: int
     found: bool
     processing_ms: float
@@ -208,7 +208,8 @@ class ExplainResponse(BaseModel):
 async def explain_endpoint(req: ExplainRequest):
     started = time.perf_counter()
     try:
-        data = explain_path(req.src, req.dst)
+        hops = req.hops if req.hops is not None else MAX_HOPS
+        data = explain_path(req.src, req.dst, hops)
         if not data["found"]:
             EXPLAIN_REQS.labels(status="error").inc()
             raise HTTPException(status_code=404, detail="Path not found")
