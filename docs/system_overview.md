@@ -24,7 +24,7 @@ artifacts.
 - **Web Framework**: FastAPI powers the server (`server.py`).
 - **ML Libraries**: PyTorch, Transformers, FAISS, Langroid.
 
-The repository now includes two microservices &ndash; a Gateway and the Twin runtime &ndash; which communicate over HTTP. All other modules remain in-process libraries. Agents share a common `UnifiedBaseAgent` class and interact with the RAG pipeline through well defined interfaces.
+The repository now includes two microservices &ndash; a Gateway and the Twin runtime &ndash; which communicate over HTTP. All other modules remain in-process libraries. gRPC/WebSocket support is planned but has not been implemented. Agents share a common `UnifiedBaseAgent` class and interact with the RAG pipeline through well defined interfaces.
 
 Many advanced features referenced in the repository (such as the SAGE framework and expert vectors) are still conceptual. The running code now includes a working ADAS optimizer in addition to the base RAG pipeline and prompt-baking utilities.
 

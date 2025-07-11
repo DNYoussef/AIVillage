@@ -29,7 +29,7 @@ Refer to [docs/feature_matrix.md](docs/feature_matrix.md) for a status overview 
 | ADAS Optimisation | ✅ |
 | ConfidenceEstimator | ✅ |
 <!--feature-matrix-end-->
-The [messaging protocol decision](docs/adr/0002-messaging-protocol.md) is documented in **ADR-0002**.
+The [messaging protocol decision](docs/adr/0002-messaging-protocol.md) is documented in **ADR-0002**.  gRPC/WebSocket support described there is **not yet implemented**; the Gateway and Twin currently communicate over plain HTTP.
 
 ## System Components
 
