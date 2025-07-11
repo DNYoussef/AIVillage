@@ -1,8 +1,8 @@
 """Migrate existing FAISS vectors into a Qdrant collection.
 
 Run ``python scripts/migrate_to_qdrant.py`` with optional ``--dry-run``
-and ``--delete-existing`` flags.  The script expects a pickled
-``VectorStore`` (``vector_store.pkl`` by default) and will upsert the
+and ``--delete-existing`` flags.  The script expects a serialized
+``VectorStore`` (``vector_store.json`` by default) and will upsert the
 stored embeddings into the Qdrant collection defined by the environment
 variables ``QDRANT_URL`` and ``COLLECTION_NAME``.
 

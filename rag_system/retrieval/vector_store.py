@@ -10,8 +10,9 @@ if USE_QDRANT:
         from qdrant_client import QdrantClient
     except Exception:  # pragma: no cover - optional
         QdrantClient = None
-import pickle
 import os
+import json
+import base64
 import uuid
 from ..core.config import UnifiedConfig
 from ..core.structures import RetrievalResult
@@ -152,20 +153,27 @@ class VectorStore:
         return len(self.documents)
 
     def save(self, file_path: str):
-        with open(file_path, 'wb') as f:
-            pickle.dump({
-                'index': faiss.serialize_index(self.index),
-                'documents': self.documents,
-                'dimension': self.dimension
-            }, f)
+        index_bytes = faiss.serialize_index(self.index) if self.index is not None else b""
+        data = {
+            'index': base64.b64encode(index_bytes).decode('utf-8'),
+            'documents': self.documents,
+            'dimension': self.dimension
+        }
+        with open(file_path, 'w') as f:
+            json.dump(data, f)
 
     @classmethod
     def load(cls, file_path: str, config: UnifiedConfig) -> 'VectorStore':
-        with open(file_path, 'rb') as f:
-            data = pickle.load(f)
-        
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+
         vector_store = cls(config, data['dimension'])
-        vector_store.index = faiss.deserialize_index(data['index'])
-        vector_store.documents = data['documents']
-        
+        index_data = data.get('index', '')
+        if index_data:
+            idx_bytes = base64.b64decode(index_data)
+            vector_store.index = faiss.deserialize_index(idx_bytes)
+        else:
+            vector_store.index = faiss.IndexFlatL2(vector_store.dimension)
+        vector_store.documents = data.get('documents', [])
+
         return vector_store

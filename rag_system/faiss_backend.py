@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, List, Tuple
 from rag_system.retrieval.vector_store import VectorStore as PickledStore
 from rag_system.core.config import UnifiedConfig
 
-DEFAULT_STORE_PATH = os.getenv("VECTOR_STORE_PATH", "vector_store.pkl")
+DEFAULT_STORE_PATH = os.getenv("VECTOR_STORE_PATH", "vector_store.json")
 DEFAULT_DIM = 768
 
 

@@ -215,6 +215,9 @@ The agent system has recently undergone significant updates to improve modularit
 4. Removal of the `langroid` folder, with its functionality now integrated into the main agent structure.
 5. Updates to the `orchestration.py` file to use the new agent classes and self-evolving system.
 6. Addition of a mesh-sharding subsystem in `communications/` providing peer-to-peer networking, federated learning, credit management, and sharding utilities.
+7. `VectorStore` persistence now uses JSON instead of pickle. Convert existing `.pkl` stores or regenerate them.
+
+For details see [docs/migration_notes.md](docs/migration_notes.md).
 
 These changes have made the code more modular and easier to maintain. The self-evolving system remains a stub used for demos and tests, so additional work is required before it can manage real agent evolution.
 
@@ -467,6 +470,9 @@ The agent system has recently undergone significant updates to improve modularit
 
 6. Enhancement of the IncentiveModel with improved functionality for calculating incentives, updating based on task results, and adapting to changing agent performance.
 7. Improved integration of incentive-based management in the UnifiedTaskManager for more effective task allocation and agent motivation.
+8. `VectorStore` persistence now uses JSON instead of pickle. Convert existing `.pkl` stores or regenerate them.
+
+For details see [docs/migration_notes.md](docs/migration_notes.md).
 
 These changes have further improved the system's ability to adapt and optimize its performance over time.
 
