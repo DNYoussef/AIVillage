@@ -574,3 +574,18 @@ This uses Locust to simulate chat traffic and pushes metrics to the Pushgateway.
 
 See [docs/adr/ADR-S3-01-observability.md](docs/adr/ADR-S3-01-observability.md) for details.
 Demo: [video](https://example.com/demo.mp4)
+
+## 🎉 Sprint 4β (v0.5.0)
+
+| Feature | TL;DR |
+|---------|-------|
+| **Confidence Calibration** | Optional `calibrated_prob` returned from `/v1/chat` (enable with `CALIBRATION_ENABLED=1`). |
+| **Qdrant Vector Store** | Production search now served by Qdrant (<150 ms p95); FAISS fallback baked in. |
+| **Path Explainer API** | `POST /explain` returns up-to-3-hop reasoning path for transparency. |
+
+Upgrade steps:  
+```bash
+docker compose pull && \
+export RAG_USE_QDRANT=1 CALIBRATION_ENABLED=1 && \
+docker compose up -d --build
+```
