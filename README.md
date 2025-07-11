@@ -129,10 +129,11 @@ own model when constructing `VectorStore`.
 
 ## Testing
 
-Before running the tests ensure that **all** dependencies are installed. The
-main `requirements.txt` file includes heavy packages such as `torch`,
-`faiss-cpu` and `numpy` that are required by the tests. Run the setup
-script to install everything you need:
+The test suite uses lightweight stubs so that `pytest` can discover the tests
+even when heavy optional dependencies like PyTorch are missing.  To actually
+execute the ML focused tests install the full requirements first.  The helper
+script below installs both runtime and development dependencies including
+`torch`, `faiss-cpu` and `scikit-learn`:
 
 ```bash
 bash scripts/setup_env.sh
@@ -140,6 +141,12 @@ bash scripts/setup_env.sh
 
 The script installs both runtime and development requirements,
 including `PyYAML` which is required by the test configuration.
+If you prefer to manage the heavy ML libraries yourself, simply install the
+test extras with:
+
+```bash
+pip install -r tests/requirements.txt
+```
 
 After installing these dependencies you can execute the full test suite:
 
@@ -148,8 +155,8 @@ pytest
 ```
 
 Some unit tests automatically skip themselves if optional packages such
-as PyTorch are missing. Installing the full requirements is recommended
-for complete coverage.
+as PyTorch are missing. When these packages are available they will be used
+instead of the lightweight stubs, providing complete coverage.
 
 
 
@@ -522,10 +529,14 @@ The RAG system consists of the following main components:
 
 ## Running Tests
 
-To run the unit tests and integration tests:
+To run the unit tests and integration tests (with real ML libraries installed):
 
 ```bash
 pytest -vv
+```
+Install the additional testing dependencies with:
+```bash
+pip install -r tests/requirements.txt
 ```
 
 ## Configuration
