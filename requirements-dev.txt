@@ -1,8 +1,11 @@
 pytest
-pytest-asyncio
+pytest-asyncio==1.0.0
 pytest-cov==5.0.0
 requests
 numpy
 PyYAML
 mypy>=1.10.0
 hypothesis
+fastapi[testclient]==0.116.0
+httpx==0.28.1
+coverage==7.5.3

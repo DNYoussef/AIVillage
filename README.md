@@ -573,3 +573,4 @@ For a full 8‑hour load test run:
 This uses Locust to simulate chat traffic and pushes metrics to the Pushgateway.
 
 See [docs/adr/ADR-S3-01-observability.md](docs/adr/ADR-S3-01-observability.md) for details.
+Demo: [video](https://example.com/demo.mp4)

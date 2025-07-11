@@ -2,9 +2,16 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from enum import Enum
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, HttpUrl, validator
+
+
+class ConfidenceTier(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
 
 
 class Chunk(BaseModel):
@@ -27,6 +34,7 @@ class EvidencePack(BaseModel):
     query: str
     chunks: List[Chunk]
     proto_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    confidence_tier: Optional["ConfidenceTier"] = None
     meta: Dict[str, Any] = Field(default_factory=dict)
 
     class Config:

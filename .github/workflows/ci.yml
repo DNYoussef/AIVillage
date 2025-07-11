@@ -29,7 +29,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: vendor/wheels
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+        key: pip-v2-${{ hashFiles('docs/build_artifacts/wheel-manifest.txt') }}
 
     - name: Check wheel cache hit
       run: |
@@ -37,12 +37,18 @@ jobs:
           echo "::notice ::Wheel cache miss — dependencies downloaded and cached."
         fi
 
-    - name: Populate wheel cache (first run)
+    - name: Populate wheel cache
       if: steps.cache-pip.outputs.cache-hit != 'true'
-      run: pip download -r requirements-dev.txt -d vendor/wheels
+      run: python scripts/fetch_wheels.py
 
     - name: Install dev dependencies (offline)
-      run: pip install --no-index --find-links vendor/wheels -r requirements-dev.txt
+      run: |
+        set -o pipefail
+        pip install --no-index --find-links vendor/wheels -r requirements-dev.txt 2>&1 | tee /tmp/pip.log
+        if grep -q "Found link requiring enable-hashes" /tmp/pip.log; then
+          echo "::error ::Wheel cache changed; run 'python scripts/fetch_wheels.py'"
+          exit 1
+        fi
 
     - name: Run tests
       run: |
