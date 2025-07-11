@@ -17,6 +17,8 @@ from cachetools import LRUCache
 
 from fastapi import FastAPI, Depends, HTTPException
 from .schemas import ChatRequest, ChatResponse, HealthResponse
+from rag_system.graph_explain import explain_path
+from pydantic import BaseModel
 from core.chat_engine import ChatEngine
 from prometheus_client import Counter, Histogram, generate_latest
 import uvicorn
@@ -176,6 +178,28 @@ async def health():
 @app.get("/metrics")
 async def metrics():
     return generate_latest(), 200, {"Content-Type": "text/plain; version=0.0.4"}
+
+
+class ExplainRequest(BaseModel):
+    src: str
+    dst: str
+
+
+class ExplainResponse(BaseModel):
+    path: list
+    hops: int
+    found: bool
+    processing_ms: float
+
+
+@app.post("/explain", response_model=ExplainResponse)
+async def explain_endpoint(req: ExplainRequest):
+    t0 = time.time()
+    data = explain_path(req.src, req.dst)
+    if not data["found"]:
+        raise HTTPException(status_code=404, detail="Path not found")
+    data["processing_ms"] = round((time.time() - t0) * 1000, 1)
+    return ExplainResponse(**data)
 
 
 @app.post("/v1/evidence")
