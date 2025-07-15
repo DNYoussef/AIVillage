@@ -15,7 +15,7 @@ for node in module.body:
         class_src = "\n".join(lines)
         break
 
-import typing, logging, time, tempfile, pathlib
+import typing, logging, time, tempfile, pathlib, importlib, os, types
 
 class DummyToolMessage:
     def __init__(self, **data):
@@ -32,6 +32,9 @@ exec(
         "time": time,
         "tempfile": tempfile,
         "pathlib": pathlib,
+        "importlib": importlib,
+        "os": os,
+        "types": types,
     },
     local_ns,
 )
