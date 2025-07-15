@@ -1,10 +1,12 @@
-from typing import List, Any
-from pydantic import BaseModel
+from typing import List
+import ast
+import importlib.util
+import os
+import tempfile
+import types
 
 # Import necessary dependencies (adjust import paths as needed)
 from agent_forge.utils.tool_message import ToolMessage
-from agents.unified_base_agent import UnifiedBaseAgent
-from rag_system.core.config import UnifiedConfig
 
 class AgentTechnique(ToolMessage):
     request: str = "apply_technique"
@@ -12,22 +14,51 @@ class AgentTechnique(ToolMessage):
     thought: str
     name: str
     code: str
+    SAFE_BUILTINS = {
+        "__import__": __import__,
+        "open": open,
+        "len": len,
+        "range": range,
+        "min": min,
+        "max": max,
+        "str": str,
+        "float": float,
+    }
 
     def handle(self):
         """Return the callable defined by this technique's code."""
+        module = self._load_module(self.code)
 
-        local_env = {}
-        try:
-            exec(self.code, {}, local_env)
-        except Exception as e:
-            raise RuntimeError(f"Failed to apply technique '{self.name}': {e}") from e
-
-        # Techniques generally define either a ``run`` or ``forward`` function.
-        if "run" in local_env:
-            return local_env["run"]
-        if "forward" in local_env:
-            return local_env["forward"]
+        if hasattr(module, "run"):
+            return module.run
+        if hasattr(module, "forward"):
+            return module.forward
         return None
+
+    def _load_module(self, code: str) -> types.ModuleType:
+        """Safely load a technique's code into a module."""
+        try:
+            tree = ast.parse(code)
+        except SyntaxError as e:
+            raise RuntimeError(f"Invalid code for technique '{self.name}': {e}") from e
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                if node.func.id in {"exec", "eval", "__import__", "compile"}:
+                    raise RuntimeError("Disallowed operation in technique code")
+
+        with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
+            tmp.write(code)
+            path = tmp.name
+        try:
+            spec = importlib.util.spec_from_file_location(f"tech_{self.name}", path)
+            module = importlib.util.module_from_spec(spec)
+            module.__dict__["__builtins__"] = self.SAFE_BUILTINS
+            if spec.loader is not None:
+                spec.loader.exec_module(module)
+            return module
+        finally:
+            os.remove(path)
 
 # Rest of the PROMPT_TECHNIQUE_ARCHIVE content remains the same
 PROMPT_TECHNIQUE_ARCHIVE = [

@@ -1,12 +1,13 @@
 from __future__ import annotations
-import random
 import json
-import ast
+import importlib.util
+import os
+import types
 from utils.logging import get_logger
 import time
 import pathlib
 import tempfile
-from typing import List, Dict, Any, Callable
+from typing import List, Dict, Any
 from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
 from langroid.agent.task import Task
 from langroid.agent.tool_message import ToolMessage
@@ -147,6 +148,23 @@ class AgentTechnique(ToolMessage):
 
         return True
 
+    def _load_module(self, code: str) -> types.ModuleType:
+        """Safely load code string into a new module."""
+        with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
+            tmp.write(code)
+            path = tmp.name
+        try:
+            spec = importlib.util.spec_from_file_location(
+                f"adas_tech_{self.technique_name}", path
+            )
+            module = importlib.util.module_from_spec(spec)
+            module.__dict__["__builtins__"] = self.SAFE_BUILTINS
+            if spec.loader is not None:
+                spec.loader.exec_module(module)
+            return module
+        finally:
+            os.remove(path)
+
     def handle(self, model_path: str, params: Dict[str, Any]) -> float:
         """Execute the technique callable stored in ``code``.
 
@@ -156,18 +174,13 @@ class AgentTechnique(ToolMessage):
         if not self._sanitize_code(self.code):
             self.logger.error("Technique %s failed security checks", self.technique_name)
             return 0.0
-
-        safe_globals: Dict[str, Any] = {
-            "__builtins__": self.SAFE_BUILTINS
-        }
         try:
-            compiled = compile(self.code, "<adas-technique>", "exec")
-            exec(compiled, safe_globals)
-        except Exception as exc:  # pragma: no cover - user code may be faulty
+            module = self._load_module(self.code)
+        except Exception:  # pragma: no cover - user code may be faulty
             self.logger.exception("Failed to load technique %s", self.technique_name)
             return 0.0
 
-        fn = safe_globals.get("run")
+        fn = getattr(module, "run", None)
         if not callable(fn):
             self.logger.error("Technique %s has no run() function", self.technique_name)
             return 0.0
@@ -177,7 +190,7 @@ class AgentTechnique(ToolMessage):
             wdir_path = pathlib.Path(wdir)
             try:
                 score = float(fn(model_path, wdir_path, params))
-            except Exception as exc:
+            except Exception:
                 self.logger.exception("Technique %s failed", self.technique_name)
                 score = 0.0
 
