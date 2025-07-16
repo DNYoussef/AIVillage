@@ -15,7 +15,7 @@ evomerge_env/
 new_env/
 venv/
 
-# Environment variables 
+# Environment variables
 .env
 
 # IDE-related
@@ -44,6 +44,18 @@ Thumbs.db
 *.bak
 *.swp
 *.tmp
+
+# Security analysis artifacts
+*_security.json
+comprehensive_security.json
+analyze_security.py
+
+# Development environments and models
+download_env/
+models/
+
+# Claude development files
+.claude/
 
 vendor/wheels/*.whl
 vendor/wheels/*.tar.gz
