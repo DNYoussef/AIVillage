@@ -1,21 +1,18 @@
-from typing import List, Dict
-from rag_system.core.agent_interface import AgentInterface
-from utils.embedding import BERTEmbeddingModel
 from nlp.named_entity_recognition import NamedEntityRecognizer
+from rag_system.core.agent_interface import AgentInterface
+from rag_system.utils.embedding import BERTEmbeddingModel
+
 
 class KeyConceptExtractorAgent(AgentInterface):
-    """
-    Agent responsible for extracting key concepts from text using advanced NLP techniques.
-    """
+    """Agent responsible for extracting key concepts from text using advanced NLP techniques."""
 
     def __init__(self):
         super().__init__()
         self.embedding_model = BERTEmbeddingModel()
         self.named_entity_recognizer = NamedEntityRecognizer()
 
-    def extract_key_concepts(self, text: str) -> Dict[str, List[str]]:
-        """
-        Extract key concepts from the given text.
+    def extract_key_concepts(self, text: str) -> dict[str, list[str]]:
+        """Extract key concepts from the given text.
 
         Args:
             text (str): Input text from which to extract key concepts.
@@ -26,12 +23,9 @@ class KeyConceptExtractorAgent(AgentInterface):
         entities = self.named_entity_recognizer.recognize(text)
         embeddings = self.embedding_model.encode(text)
         keywords = self._extract_keywords_from_embeddings(embeddings)
-        return {
-            'entities': entities,
-            'keywords': keywords
-        }
+        return {"entities": entities, "keywords": keywords}
 
-    def _extract_keywords_from_embeddings(self, embeddings) -> List[str]:
+    def _extract_keywords_from_embeddings(self, embeddings) -> list[str]:
         """Derive simple keywords from token embeddings.
 
         The ``BERTEmbeddingModel.encode`` method returns a tuple of tokens and
@@ -39,7 +33,6 @@ class KeyConceptExtractorAgent(AgentInterface):
         are most similar to the mean sentence embedding and returns them as
         keywords.  Special tokens are ignored.
         """
-
         tokens, token_embeddings = embeddings
 
         if len(tokens) == 0:
@@ -48,7 +41,9 @@ class KeyConceptExtractorAgent(AgentInterface):
         import torch.nn.functional as F
 
         sentence_emb = token_embeddings.mean(dim=0)
-        similarities = F.cosine_similarity(token_embeddings, sentence_emb.unsqueeze(0), dim=1)
+        similarities = F.cosine_similarity(
+            token_embeddings, sentence_emb.unsqueeze(0), dim=1
+        )
         topk = similarities.topk(min(5, len(tokens))).indices.tolist()
 
         keywords = []

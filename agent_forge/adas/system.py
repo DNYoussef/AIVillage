@@ -5,7 +5,7 @@ import random
 import shutil
 from typing import Any
 
-from utils.logging import get_logger
+from rag_system.utils.logging import setup_logger as get_logger
 
 
 class ADASystem:

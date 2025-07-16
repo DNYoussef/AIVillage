@@ -18,7 +18,7 @@ from core.evidence import Chunk, ConfidenceTier, EvidencePack
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.graph_explain import MAX_HOPS, explain_path
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
-from utils.logging import get_logger
+from rag_system.utils.logging import setup_logger as get_logger
 
 logger = get_logger(__name__)
 

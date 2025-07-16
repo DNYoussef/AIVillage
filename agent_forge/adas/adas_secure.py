@@ -13,7 +13,7 @@ from langroid.agent.task import Task
 from langroid.agent.tool_message import ToolMessage
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
-from utils.logging import get_logger
+from rag_system.utils.logging import setup_logger as get_logger
 
 from .technique_archive import PROMPT_TECHNIQUE_ARCHIVE
 
