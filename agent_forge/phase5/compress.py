@@ -1,4 +1,5 @@
 """Wrapper to create final compressed package."""
+
 from torch import nn
 
 from ..compression import CompressionConfig, stream_compress_model

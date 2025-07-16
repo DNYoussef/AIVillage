@@ -17,5 +17,6 @@ class TestSVFOps(unittest.TestCase):
         apply_svf(lin, {"": torch.full((4,), 0.01)})
         assert not torch.allclose(before, lin.weight)
 
+
 if __name__ == "__main__":
     unittest.main()

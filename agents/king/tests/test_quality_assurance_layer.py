@@ -19,6 +19,7 @@ class DummyModel:
 
         return Output()
 
+
 # Skip if PyTorch is not installed since the QA layer relies on transformer
 # models that require torch.
 try:
@@ -37,8 +38,12 @@ from agents.utils.task import Task as LangroidTask
 
 class TestQualityAssuranceLayer(unittest.TestCase):
     def setUp(self):
-        tok_patch = patch("transformers.AutoTokenizer.from_pretrained", return_value=DummyTok())
-        model_patch = patch("transformers.AutoModel.from_pretrained", return_value=DummyModel())
+        tok_patch = patch(
+            "transformers.AutoTokenizer.from_pretrained", return_value=DummyTok()
+        )
+        model_patch = patch(
+            "transformers.AutoModel.from_pretrained", return_value=DummyModel()
+        )
         self.addCleanup(tok_patch.stop)
         self.addCleanup(model_patch.stop)
         tok_patch.start()
@@ -61,7 +66,9 @@ class TestQualityAssuranceLayer(unittest.TestCase):
         self.assertLessEqual(uncertainty, 1)
 
     def test_evaluate_rule_compliance(self):
-        task_vector = self.qa_layer.eudaimonia_triangulator.get_embedding("Test task content")
+        task_vector = self.qa_layer.eudaimonia_triangulator.get_embedding(
+            "Test task content"
+        )
         rule_compliance = self.qa_layer.evaluate_rule_compliance(task_vector)
         self.assertGreaterEqual(rule_compliance, 0)
         self.assertLessEqual(rule_compliance, 1)
@@ -85,10 +92,15 @@ class TestQualityAssuranceLayer(unittest.TestCase):
         self.assertIn("task_history_size", info)
         self.assertIn("rules", info)
 
+
 class TestEudaimoniaTriangulator(unittest.TestCase):
     def setUp(self):
-        tok_patch = patch("transformers.AutoTokenizer.from_pretrained", return_value=DummyTok())
-        model_patch = patch("transformers.AutoModel.from_pretrained", return_value=DummyModel())
+        tok_patch = patch(
+            "transformers.AutoTokenizer.from_pretrained", return_value=DummyTok()
+        )
+        model_patch = patch(
+            "transformers.AutoModel.from_pretrained", return_value=DummyModel()
+        )
         self.addCleanup(tok_patch.stop)
         self.addCleanup(model_patch.stop)
         tok_patch.start()
@@ -105,6 +117,7 @@ class TestEudaimoniaTriangulator(unittest.TestCase):
         score = self.triangulator.triangulate(task_vector)
         self.assertGreaterEqual(score, 0)
         self.assertLessEqual(score, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

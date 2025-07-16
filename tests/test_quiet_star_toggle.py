@@ -23,4 +23,3 @@ def test_quiet_star_toggle_changes_output():
     qs_logits, _ = qs_model(tokens, generate_thoughts=True)
 
     assert not torch.allclose(base_logits, qs_logits)
-

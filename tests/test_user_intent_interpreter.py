@@ -4,7 +4,12 @@ import unittest
 
 # Load the interpreter directly to avoid importing heavy dependencies from the
 # parent `agents` package during test collection.
-module_path = Path(__file__).resolve().parents[1] / "agents" / "sage" / "user_intent_interpreter.py"
+module_path = (
+    Path(__file__).resolve().parents[1]
+    / "agents"
+    / "sage"
+    / "user_intent_interpreter.py"
+)
 spec = importlib.util.spec_from_file_location("user_intent_interpreter", module_path)
 ui = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ui)  # type: ignore

@@ -14,10 +14,12 @@ class DummyModel:
     def __init__(self, hidden_size=4, vocab_size=6):
         self.config = type("cfg", (), {"hidden_size": hidden_size})
         self.vocab_size = vocab_size
+
     def __call__(self, input_ids, attention_mask=None):
         b, l = input_ids.shape
         logits = torch.randn(b, l, self.vocab_size)
         return type("Out", (), {"logits": logits})
+
 
 class TestQuietStar(unittest.TestCase):
     def test_forward_with_thoughts(self):
@@ -33,6 +35,7 @@ class TestQuietStar(unittest.TestCase):
         logits, thoughts = model(inp, generate_thoughts=False)
         assert logits.shape == (1, 2, model.base_model.vocab_size)
         assert thoughts is None
+
 
 if __name__ == "__main__":
     unittest.main()

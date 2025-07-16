@@ -8,19 +8,34 @@ from transformers import BertForSequenceClassification, BertModel, BertTokenizer
 
 logger = logging.getLogger(__name__)
 
+
 class AdvancedNLP:
     def __init__(self):
-        self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-        self.model = BertModel.from_pretrained("bert-base-uncased")
-        self.classifier = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
+        self.tokenizer = BertTokenizer.from_pretrained(
+            "bert-base-uncased",
+            revision="main",  # Pin to main branch for security
+            trust_remote_code=False  # Disable remote code execution
+        )
+        self.model = BertModel.from_pretrained(
+            "bert-base-uncased",
+            revision="main",
+            trust_remote_code=False
+        )
+        self.classifier = BertForSequenceClassification.from_pretrained(
+            "bert-base-uncased", 
+            num_labels=2,
+            revision="main",
+            trust_remote_code=False
+        )
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         self.classifier.to(self.device)
 
     def get_embeddings(self, texts: list[str]) -> np.ndarray:
-        """Generate BERT embeddings for a list of texts.
-        """
-        encoded_input = self.tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+        """Generate BERT embeddings for a list of texts."""
+        encoded_input = self.tokenizer(
+            texts, padding=True, truncation=True, return_tensors="pt"
+        )
         encoded_input = {k: v.to(self.device) for k, v in encoded_input.items()}
 
         with torch.no_grad():
@@ -31,16 +46,16 @@ class AdvancedNLP:
         return sentence_embeddings
 
     def semantic_similarity(self, text1: str, text2: str) -> float:
-        """Calculate semantic similarity between two texts using BERT embeddings.
-        """
+        """Calculate semantic similarity between two texts using BERT embeddings."""
         embeddings = self.get_embeddings([text1, text2])
         similarity = cosine_similarity(embeddings)[0][1]
         return similarity
 
     def classify_sentiment(self, text: str) -> dict[str, float]:
-        """Classify the sentiment of a given text using BERT.
-        """
-        inputs = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+        """Classify the sentiment of a given text using BERT."""
+        inputs = self.tokenizer(
+            text, return_tensors="pt", padding=True, truncation=True
+        )
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
         with torch.no_grad():
@@ -53,13 +68,14 @@ class AdvancedNLP:
         return {"positive": positive_prob, "negative": negative_prob}
 
     def extract_keywords(self, text: str, top_k: int = 5) -> list[str]:
-        """Extract top-k keywords from the given text using BERT embeddings.
-        """
+        """Extract top-k keywords from the given text using BERT embeddings."""
         # Tokenize the text
         tokens = self.tokenizer.tokenize(text)
 
         # Get embeddings for each token
-        encoded_input = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+        encoded_input = self.tokenizer(
+            text, return_tensors="pt", padding=True, truncation=True
+        )
         encoded_input = {k: v.to(self.device) for k, v in encoded_input.items()}
 
         with torch.no_grad():
@@ -73,14 +89,19 @@ class AdvancedNLP:
 
         # Get the top-k important tokens
         top_indices = token_importance.argsort()[0][-top_k:]
-        keywords = [tokens[i] for i in top_indices if tokens[i] not in self.tokenizer.all_special_tokens]
+        keywords = [
+            tokens[i]
+            for i in top_indices
+            if tokens[i] not in self.tokenizer.all_special_tokens
+        ]
 
         return keywords
 
     def generate_summary(self, text: str, max_length: int = 100) -> str:
-        """Generate a summary of the given text using BERT.
-        """
-        inputs = self.tokenizer([text], max_length=512, return_tensors="pt", truncation=True)
+        """Generate a summary of the given text using BERT."""
+        inputs = self.tokenizer(
+            [text], max_length=512, return_tensors="pt", truncation=True
+        )
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
         with torch.no_grad():
@@ -114,8 +135,7 @@ class AdvancedNLP:
         return summary
 
     async def process_text(self, text: str) -> dict[str, Any]:
-        """Process the given text using various NLP techniques.
-        """
+        """Process the given text using various NLP techniques."""
         try:
             embeddings = self.get_embeddings([text])[0]
             sentiment = self.classify_sentiment(text)
@@ -126,15 +146,14 @@ class AdvancedNLP:
                 "embeddings": embeddings.tolist(),
                 "sentiment": sentiment,
                 "keywords": keywords,
-                "summary": summary
+                "summary": summary,
             }
         except Exception as e:
             logger.error(f"Error processing text: {e!s}")
             raise
 
     async def compare_texts(self, text1: str, text2: str) -> dict[str, Any]:
-        """Compare two texts using various NLP techniques.
-        """
+        """Compare two texts using various NLP techniques."""
         try:
             similarity = self.semantic_similarity(text1, text2)
             embeddings1 = self.get_embeddings([text1])[0]
@@ -151,7 +170,7 @@ class AdvancedNLP:
                 "sentiment1": sentiment1,
                 "sentiment2": sentiment2,
                 "keywords1": keywords1,
-                "keywords2": keywords2
+                "keywords2": keywords2,
             }
         except Exception as e:
             logger.error(f"Error comparing texts: {e!s}")

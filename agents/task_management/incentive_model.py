@@ -10,13 +10,22 @@ import torch
 
 logger = logging.getLogger(__name__)
 
+
 class IncentiveModel:
-    def __init__(self, num_agents: int, num_actions: int, learning_rate: float = 0.01, history_length: int = 1000):
+    def __init__(
+        self,
+        num_agents: int,
+        num_actions: int,
+        learning_rate: float = 0.01,
+        history_length: int = 1000,
+    ):
         self.num_agents = num_agents
         self.num_actions = num_actions
         self.learning_rate = learning_rate
         self.incentive_matrix = np.zeros((num_agents, num_actions))
-        self.performance_history = {i: deque(maxlen=history_length) for i in range(num_agents)}
+        self.performance_history = {
+            i: deque(maxlen=history_length) for i in range(num_agents)
+        }
         self.task_difficulty_history = deque(maxlen=history_length)
         self.long_term_performance = np.zeros(num_agents)
         self.agent_specialization = np.zeros((num_agents, num_actions))
@@ -25,7 +34,9 @@ class IncentiveModel:
         self.scaler = StandardScaler()
         self.pca = PCA(n_components=5)  # Adjust the number of components as needed
 
-    def calculate_incentive(self, task: dict[str, Any], agent_performance: dict[str, float]) -> dict[str, float]:
+    def calculate_incentive(
+        self, task: dict[str, Any], agent_performance: dict[str, float]
+    ) -> dict[str, float]:
         agent_id = self._get_agent_id(task["assigned_agent"])
         action_id = self._map_task_to_action(task)
         base_incentive = self.incentive_matrix[agent_id, action_id]
@@ -50,16 +61,19 @@ class IncentiveModel:
         innovation_factor = 1 + self.innovation_score[agent_id]
 
         adjusted_incentive = (
-            base_incentive *
-            performance_factor *
-            difficulty_factor *
-            trend_factor *
-            specialization_factor *
-            collaboration_factor *
-            innovation_factor
+            base_incentive
+            * performance_factor
+            * difficulty_factor
+            * trend_factor
+            * specialization_factor
+            * collaboration_factor
+            * innovation_factor
         )
 
-        return {"agent_id": task["assigned_agent"], "incentive": float(adjusted_incentive)}
+        return {
+            "agent_id": task["assigned_agent"],
+            "incentive": float(adjusted_incentive),
+        }
 
     def update(self, task: dict[str, Any], result: dict[str, Any]):
         agent_id = self._get_agent_id(task["assigned_agent"])
@@ -78,7 +92,9 @@ class IncentiveModel:
         self.task_difficulty_history.append(task_difficulty)
 
         # Update long-term performance
-        self.long_term_performance[agent_id] = np.mean(self.performance_history[agent_id])
+        self.long_term_performance[agent_id] = np.mean(
+            self.performance_history[agent_id]
+        )
 
         # Update agent specialization
         self.agent_specialization[agent_id, action_id] += 0.1 * reward
@@ -110,7 +126,9 @@ class IncentiveModel:
         if analytics is not None:
             try:
                 analytics.update_performance_history(agent_performance[agent])
-            except Exception as e:  # pragma: no cover - analytics failures shouldn't break
+            except (
+                Exception
+            ) as e:  # pragma: no cover - analytics failures shouldn't break
                 logger.exception(f"Analytics update failed: {e}")
         logger.info(
             f"Updated performance for agent {agent}: {agent_performance[agent]}"
@@ -143,13 +161,21 @@ class IncentiveModel:
     def _calculate_reward(self, result: dict[str, Any]) -> float:
         # Enhanced reward calculation
         base_reward = result.get("success", 0) * 10
-        time_factor = max(0, 1 - result.get("time_taken", 0) / result.get("expected_time", 1))
+        time_factor = max(
+            0, 1 - result.get("time_taken", 0) / result.get("expected_time", 1)
+        )
         quality_factor = result.get("quality", 0.5)
         cost_factor = max(0, 1 - result.get("cost", 0) / result.get("budget", 1))
         innovation_factor = 1 + (0.5 if result.get("innovative_solution", False) else 0)
         collaboration_factor = 1 + (0.3 * len(result.get("collaborators", [])))
 
-        return base_reward * (time_factor + quality_factor + cost_factor) / 3 * innovation_factor * collaboration_factor
+        return (
+            base_reward
+            * (time_factor + quality_factor + cost_factor)
+            / 3
+            * innovation_factor
+            * collaboration_factor
+        )
 
     def _calculate_task_difficulty(self, task: dict[str, Any]) -> float:
         # Implement logic to calculate task difficulty
@@ -159,7 +185,9 @@ class IncentiveModel:
         required_skills = len(task.get("required_skills", []))
         priority = task.get("priority", 1)
 
-        difficulty = (complexity * estimated_time * (1 + required_skills * 0.1) * priority) / 100
+        difficulty = (
+            complexity * estimated_time * (1 + required_skills * 0.1) * priority
+        ) / 100
         return min(max(difficulty, 0), 1)  # Normalize to [0, 1]
 
     def _calculate_performance_trend(self, agent_id: int) -> float:
@@ -177,7 +205,14 @@ class IncentiveModel:
 
     def analyze_agent_performance(self, agent_id: int) -> dict[str, Any]:
         if len(self.performance_history[agent_id]) == 0:
-            return {"average": 0, "trend": 0, "long_term": 0, "specialization": [], "collaboration": 0, "innovation": 0}
+            return {
+                "average": 0,
+                "trend": 0,
+                "long_term": 0,
+                "specialization": [],
+                "collaboration": 0,
+                "innovation": 0,
+            }
 
         performance_data = np.array(self.performance_history[agent_id]).reshape(-1, 1)
         normalized_data = self.scaler.fit_transform(performance_data)
@@ -190,7 +225,7 @@ class IncentiveModel:
             "specialization": self.agent_specialization[agent_id].tolist(),
             "collaboration": np.mean(self.collaboration_score[agent_id]),
             "innovation": self.innovation_score[agent_id],
-            "pca_components": pca_result.flatten().tolist()
+            "pca_components": pca_result.flatten().tolist(),
         }
 
     def get_task_difficulty_summary(self) -> dict[str, float]:
@@ -202,28 +237,28 @@ class IncentiveModel:
         y = np.array(self.task_difficulty_history)
         slope, _, _, _, _ = linregress(x, y)
 
-        return {
-            "average": average,
-            "trend": slope
-        }
+        return {"average": average, "trend": slope}
 
     def save(self, path: str):
-        torch.save({
-            "incentive_matrix": self.incentive_matrix,
-            "num_agents": self.num_agents,
-            "num_actions": self.num_actions,
-            "learning_rate": self.learning_rate,
-            "performance_history": self.performance_history,
-            "task_difficulty_history": self.task_difficulty_history,
-            "long_term_performance": self.long_term_performance,
-            "agent_specialization": self.agent_specialization,
-            "collaboration_score": self.collaboration_score,
-            "innovation_score": self.innovation_score
-        }, path)
+        torch.save(
+            {
+                "incentive_matrix": self.incentive_matrix,
+                "num_agents": self.num_agents,
+                "num_actions": self.num_actions,
+                "learning_rate": self.learning_rate,
+                "performance_history": self.performance_history,
+                "task_difficulty_history": self.task_difficulty_history,
+                "long_term_performance": self.long_term_performance,
+                "agent_specialization": self.agent_specialization,
+                "collaboration_score": self.collaboration_score,
+                "innovation_score": self.innovation_score,
+            },
+            path,
+        )
         logger.info(f"Incentive model saved to {path}")
 
     def load(self, path: str):
-        checkpoint = torch.load(path)
+        checkpoint = torch.load(path, weights_only=True)
         self.incentive_matrix = checkpoint["incentive_matrix"]
         self.num_agents = checkpoint["num_agents"]
         self.num_actions = checkpoint["num_actions"]
@@ -245,7 +280,10 @@ class IncentiveModel:
 
     def reset(self):
         self.incentive_matrix = np.zeros((self.num_agents, self.num_actions))
-        self.performance_history = {i: deque(maxlen=self.performance_history[0].maxlen) for i in range(self.num_agents)}
+        self.performance_history = {
+            i: deque(maxlen=self.performance_history[0].maxlen)
+            for i in range(self.num_agents)
+        }
         self.task_difficulty_history.clear()
         self.long_term_performance = np.zeros(self.num_agents)
         self.agent_specialization = np.zeros((self.num_agents, self.num_actions))

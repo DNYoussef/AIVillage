@@ -33,14 +33,20 @@ class TestExpertVectorSystem(unittest.TestCase):
         class DummyBaker:
             def __init__(self, *_):
                 self.model = torch.nn.Linear(4, 4, bias=False)
+
             def load_model(self):
                 pass
+
             def bake_prompts(self, prompts, num_iterations=1, lr=1e-5):
                 pass
+
             def save_model(self, path):
                 pass
 
-        with mock.patch("agent_forge.training.prompt_baking.rag_prompt_baker.RAGPromptBaker", DummyBaker):
+        with mock.patch(
+            "agent_forge.training.prompt_baking.rag_prompt_baker.RAGPromptBaker",
+            DummyBaker,
+        ):
             vector_model = torch.nn.Linear(4, 4, bias=False)
             vec = ExpertVectorSystem(vector_model).train_expert_vector_svf("v")
             manager = PromptBakingManager("dummy", {"v": vec})

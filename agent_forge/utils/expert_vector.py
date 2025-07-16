@@ -1,4 +1,3 @@
-
 import torch
 
 
@@ -14,4 +13,4 @@ class ExpertVector:
             W = layer.weight.data
             U, S, Vh = torch.linalg.svd(W, full_matrices=False)
             S_new = S * z.to(S.device)
-            layer.weight.data = (U @ torch.diag(S_new) @ Vh)
+            layer.weight.data = U @ torch.diag(S_new) @ Vh

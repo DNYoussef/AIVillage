@@ -30,19 +30,24 @@ from .user_intent_interpreter import UserIntentInterpreter
 # Backwards compatibility alias
 KingAgentConfig = UnifiedAgentConfig
 
+
 class KingAgent(UnifiedBaseAgent):
     def __init__(
         self,
         config: UnifiedAgentConfig,
         communication_protocol: StandardCommunicationProtocol,
         vector_store: VectorStore,
-        knowledge_tracker: UnifiedKnowledgeTracker | None = None
+        knowledge_tracker: UnifiedKnowledgeTracker | None = None,
     ):
         super().__init__(config, communication_protocol, knowledge_tracker)
         self.vector_store = vector_store
-        self.rag_pipeline = EnhancedRAGPipeline(config.rag_config, knowledge_tracker)  # Initialize the RAG pipeline
+        self.rag_pipeline = EnhancedRAGPipeline(
+            config.rag_config, knowledge_tracker
+        )  # Initialize the RAG pipeline
         self.coordinator = KingCoordinator(config, communication_protocol)
-        self.unified_planning_and_management = UnifiedPlanningAndManagement(communication_protocol, self.rag_pipeline, self)
+        self.unified_planning_and_management = UnifiedPlanningAndManagement(
+            communication_protocol, self.rag_pipeline, self
+        )
         self.unified_analytics = UnifiedAnalytics()
         self.evolution_manager = EvolutionManager()
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
@@ -51,7 +56,9 @@ class KingAgent(UnifiedBaseAgent):
         # Add tools
         self.add_tool("coordinate_task", self.coordinator.coordinate_task)
         self.add_tool("plan_task", self.unified_planning_and_management.make_decision)
-        self.add_tool("generate_response", self.response_generation_agent.generate_response)
+        self.add_tool(
+            "generate_response", self.response_generation_agent.generate_response
+        )
 
     async def _maybe_async(self, func, *args, **kwargs):
         result = func(*args, **kwargs)
@@ -68,12 +75,20 @@ class KingAgent(UnifiedBaseAgent):
         reasoner = ReasoningAgent(OpenAIGPTConfig(chat_model="gpt-4"), kg_agent)
         dki_agent = DynamicKnowledgeIntegrationAgent(None)
 
-        interpreted_intent = await self._maybe_async(interpreter.interpret_intent, user_input)
-        key_concepts = await self._maybe_async(extractor.extract_key_concepts, user_input)
+        interpreted_intent = await self._maybe_async(
+            interpreter.interpret_intent, user_input
+        )
+        key_concepts = await self._maybe_async(
+            extractor.extract_key_concepts, user_input
+        )
         task_plan = await self._maybe_async(planner.generate_task_plan, key_concepts)
         graph_data = await self._maybe_async(kg_agent.query_graph, user_input)
-        reasoning_result = await self._maybe_async(reasoner.perform_reasoning, graph_data)
-        response = await self._maybe_async(self.response_generation_agent.generate_response, reasoning_result)
+        reasoning_result = await self._maybe_async(
+            reasoner.perform_reasoning, graph_data
+        )
+        response = await self._maybe_async(
+            self.response_generation_agent.generate_response, reasoning_result
+        )
         await self._maybe_async(dki_agent.integrate_new_knowledge, reasoning_result)
 
         return {
@@ -102,17 +117,23 @@ class KingAgent(UnifiedBaseAgent):
     async def execute_task(self, task: LangroidTask) -> dict[str, Any]:
         self.logger.info(f"Executing task: {task}")
         start_time = self.unified_analytics.get_current_time()
-        result = await self.unified_planning_and_management.manage_task({
-            "type": getattr(task, "type", "general"),
-            "content": task.name if hasattr(task, "name") else task.content,
-        })
+        result = await self.unified_planning_and_management.manage_task(
+            {
+                "type": getattr(task, "type", "general"),
+                "content": task.name if hasattr(task, "name") else task.content,
+            }
+        )
         end_time = self.unified_analytics.get_current_time()
         execution_time = end_time - start_time
 
         self.unified_analytics.record_task_completion(
-            getattr(task, "task_id", "unknown"), execution_time, result.get("success", False)
+            getattr(task, "task_id", "unknown"),
+            execution_time,
+            result.get("success", False),
         )
-        self.unified_analytics.update_performance_history(result.get("performance", 0.5))
+        self.unified_analytics.update_performance_history(
+            result.get("performance", 0.5)
+        )
 
         await self.continuous_learning_layer.update(task, result)
         return result
@@ -134,7 +155,7 @@ class KingAgent(UnifiedBaseAgent):
                 "unified_analytics": self.unified_analytics.get_info(),
                 "evolution_manager": self.evolution_manager.get_info(),
             },
-            "analytics": self.unified_analytics.generate_summary_report()
+            "analytics": self.unified_analytics.generate_summary_report(),
         }
         return {**base_status, **king_status}
 
@@ -167,7 +188,9 @@ class KingAgent(UnifiedBaseAgent):
             elif architecture["activation"] == "sigmoid":
                 layers.append(nn.Sigmoid())
 
-            if i < architecture["num_layers"] - 1:  # Don't add dropout after the last layer
+            if (
+                i < architecture["num_layers"] - 1
+            ):  # Don't add dropout after the last layer
                 layers.append(nn.Dropout(architecture["dropout_rate"]))
 
             in_features = out_features
@@ -193,7 +216,9 @@ class KingAgent(UnifiedBaseAgent):
     async def update_hyperparameters(self, hyperparameters: dict[str, Any]):
         self.logger.info(f"Updating hyperparameters: {hyperparameters}")
         try:
-            await self.unified_planning_and_management.update_hyperparameters(hyperparameters)
+            await self.unified_planning_and_management.update_hyperparameters(
+                hyperparameters
+            )
             await self.response_generation_agent.update_hyperparameters(hyperparameters)
             self.current_hyperparameters = hyperparameters
             self.logger.info("Hyperparameters updated successfully")

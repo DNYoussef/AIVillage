@@ -13,6 +13,7 @@ class TalkHead(nn.Module):
     def forward(self, x):
         return self.activation(self.dense(x))
 
+
 class QuietSTaRTask(Task):
     def __init__(self, agent: ChatAgent, model_path="deep_baked_model"):
         super().__init__(agent)
@@ -28,7 +29,7 @@ class QuietSTaRTask(Task):
             "cross_domain",
             "probabilistic_thinking",
             "rapid_iteration",
-            "paradox_resolution"
+            "paradox_resolution",
         ]
 
     async def generate_thought(self, input_text, temperature=0.5):
@@ -51,12 +52,14 @@ class QuietSTaRTask(Task):
             num_return_sequences=1,
             early_stopping=True,
             output_hidden_states=True,
-            return_dict_in_generate=True
+            return_dict_in_generate=True,
         )
 
         return {
-            "text": self.tokenizer.decode(outputs.sequences[0], skip_special_tokens=False),
-            "hidden_states": outputs.hidden_states
+            "text": self.tokenizer.decode(
+                outputs.sequences[0], skip_special_tokens=False
+            ),
+            "hidden_states": outputs.hidden_states,
         }
 
     async def extract_strategy_insights(self, thought):
@@ -67,7 +70,7 @@ class QuietSTaRTask(Task):
             start = thought.find(start_tag)
             end = thought.find(end_tag)
             if start != -1 and end != -1:
-                insights[strategy] = thought[start+len(start_tag):end].strip()
+                insights[strategy] = thought[start + len(start_tag) : end].strip()
             else:
                 insights[strategy] = "No specific insight found."
         return insights
@@ -77,10 +80,20 @@ class QuietSTaRTask(Task):
         for _ in range(max_iterations):
             thought = await self.generate_thought(thought["text"])
             insights = await self.extract_strategy_insights(thought["text"])
-            critique = await self.generate_critique(thought["text"], insights, temperature=0.2)
-            alternatives = await self.generate_alternatives(thought["text"], insights, temperature=0.8)
+            critique = await self.generate_critique(
+                thought["text"], insights, temperature=0.2
+            )
+            alternatives = await self.generate_alternatives(
+                thought["text"], insights, temperature=0.8
+            )
             evaluation = await self.self_evaluate(thought["text"], insights)
-            thought = await self.revise(thought["text"], critique["text"], alternatives["text"], evaluation["text"], insights)
+            thought = await self.revise(
+                thought["text"],
+                critique["text"],
+                alternatives["text"],
+                evaluation["text"],
+                insights,
+            )
 
             if "<ready to answer>" in thought["text"]:
                 break
@@ -88,7 +101,9 @@ class QuietSTaRTask(Task):
         return thought, insights
 
     async def generate_critique(self, thought, insights, temperature=0.2):
-        prompt = f"Critique the following thought and insights:\n{thought}\n\nInsights:\n"
+        prompt = (
+            f"Critique the following thought and insights:\n{thought}\n\nInsights:\n"
+        )
         for strategy, insight in insights.items():
             prompt += f"{strategy}: {insight}\n"
         prompt += "\nCritique:"
@@ -126,7 +141,10 @@ class QuietSTaRTask(Task):
         ethical_evaluation = await self.generate_thought(ethical_prompt)
 
         combined_evaluation = f"{evaluation['text']}\n\nEthical considerations:\n{ethical_evaluation['text']}"
-        return {"text": combined_evaluation, "hidden_states": evaluation["hidden_states"]}
+        return {
+            "text": combined_evaluation,
+            "hidden_states": evaluation["hidden_states"],
+        }
 
     async def revise(self, thought, critique, alternatives, evaluation, insights):
         prompt = f"""
@@ -134,7 +152,7 @@ class QuietSTaRTask(Task):
         Critique: {critique}
         Alternatives: {alternatives}
         Evaluation: {evaluation}
-        
+
         Insights:
         """
         for strategy, insight in insights.items():
@@ -152,7 +170,9 @@ class QuietSTaRTask(Task):
         combined_hidden = torch.cat([base_hidden, thought_hidden], dim=-1)
         mixing_weights = self.talk_head(combined_hidden)
 
-        mixed_hidden = (1 - mixing_weights) * base_hidden + mixing_weights * thought_hidden
+        mixed_hidden = (
+            1 - mixing_weights
+        ) * base_hidden + mixing_weights * thought_hidden
 
         lm_head = self.model.get_output_embeddings()
         mixed_logits = lm_head(mixed_hidden)
@@ -164,7 +184,7 @@ class QuietSTaRTask(Task):
             top_k=50,
             top_p=0.95,
             num_return_sequences=1,
-            early_stopping=True
+            early_stopping=True,
         )
 
         return self.tokenizer.decode(mixed_output[0], skip_special_tokens=False)
@@ -176,7 +196,7 @@ class QuietSTaRTask(Task):
             "Alternative Perspective",
             "Self-Evaluation",
             "Revised Thought",
-            "Final Output"
+            "Final Output",
         ] + self.cognitive_strategies
 
         formatted_output = ""
@@ -194,7 +214,7 @@ class QuietSTaRTask(Task):
         start = output.find(start_tag)
         end = output.find(end_tag)
         if start != -1 and end != -1:
-            return output[start+len(start_tag):end].strip()
+            return output[start + len(start_tag) : end].strip()
         return "Section not found."
 
     async def evaluate_insight_quality(self, insights):
@@ -221,6 +241,7 @@ class QuietSTaRTask(Task):
 
     async def run(self, input_text):
         return await self.process_query(input_text)
+
 
 # Usage example
 if __name__ == "__main__":

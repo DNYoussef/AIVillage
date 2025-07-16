@@ -1,7 +1,10 @@
 import importlib
 import unittest
 
-if importlib.util.find_spec("torch") is None or importlib.util.find_spec("grokfast") is None:
+if (
+    importlib.util.find_spec("torch") is None
+    or importlib.util.find_spec("grokfast") is None
+):
     msg = "Dependencies not installed"
     raise unittest.SkipTest(msg)
 
@@ -16,8 +19,10 @@ class TestGrokfastOpt(unittest.TestCase):
         opt = GrokfastAdam(lin.parameters(), lr=0.01)
         out = lin(torch.randn(4, 2)).sum()
         out.backward()
-        opt.step(); opt.zero_grad()
+        opt.step()
+        opt.zero_grad()
         assert isinstance(opt.slow_power(), float)
+
 
 if __name__ == "__main__":
     unittest.main()

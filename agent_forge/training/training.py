@@ -21,8 +21,10 @@ from .quiet_star import QuietSTaRModel
 @dataclass
 class TrainingConfig:
     """Configuration for the training pipeline."""
+
     enable_quiet_star: bool = False
     model_name: str = "distilgpt2"
+
 
 class CodingTask(ToolMessage):
     request: str = "coding_task"
@@ -32,12 +34,16 @@ class CodingTask(ToolMessage):
     difficulty: int
     success_count: int = 0
 
+
 class CodeState:
-    def __init__(self, task: CodingTask, code: str = "", thoughts: str = "", response: str = ""):
+    def __init__(
+        self, task: CodingTask, code: str = "", thoughts: str = "", response: str = ""
+    ):
         self.task = task
         self.code = code
         self.thoughts = thoughts
         self.response = response
+
 
 class MCTSNode:
     def __init__(self, state: CodeState, parent=None):
@@ -47,25 +53,34 @@ class MCTSNode:
         self.visits = 0
         self.value = 0.0
 
+
 class EnhancedMagiAgent(ChatAgent):
     def __init__(self, config: ChatAgentConfig):
         super().__init__(config)
         self.enable_message(CodingTask)
         self.cognitive_strategies = [
-            "systems_thinking", "first_principles", "cross_domain",
-            "probabilistic_thinking", "rapid_iteration", "paradox_resolution"
+            "systems_thinking",
+            "first_principles",
+            "cross_domain",
+            "probabilistic_thinking",
+            "rapid_iteration",
+            "paradox_resolution",
         ]
 
     async def coding_task(self, task: CodingTask) -> tuple[str, str, str]:
         thoughts = await self.generate_thoughts(task)
-        response = await self.llm_response(f"Explain your approach to solving this task: {task.task_description}")
-        code = await self.llm_response(f"Write code to solve this task: {task.task_description}")
+        response = await self.llm_response(
+            f"Explain your approach to solving this task: {task.task_description}"
+        )
+        code = await self.llm_response(
+            f"Write code to solve this task: {task.task_description}"
+        )
         return thoughts, response.content, code.content
 
     async def generate_thoughts(self, task: CodingTask) -> str:
         prompt = f"""
         Apply the following cognitive strategies to solve this coding task:
-        {', '.join(self.cognitive_strategies)}
+        {", ".join(self.cognitive_strategies)}
 
         Task: {task.task_description}
 
@@ -81,10 +96,15 @@ class EnhancedMagiAgent(ChatAgent):
         if not state.thoughts:
             return await self.generate_thoughts(state.task)
         if not state.response:
-            response = await self.llm_response(f"Explain your approach to solving this task: {state.task.task_description}")
+            response = await self.llm_response(
+                f"Explain your approach to solving this task: {state.task.task_description}"
+            )
             return response.content
-        response = await self.llm_response(f"Write or improve the code to solve this task: {state.task.task_description}\nCurrent code: {state.code}")
+        response = await self.llm_response(
+            f"Write or improve the code to solve this task: {state.task.task_description}\nCurrent code: {state.code}"
+        )
         return response.content
+
 
 class EnhancedSupervisorAgent(ChatAgent):
     def __init__(self, config: ChatAgentConfig):
@@ -94,7 +114,7 @@ class EnhancedSupervisorAgent(ChatAgent):
         tasks = []
         for i in range(1, 101):
             prompt = f"""
-            Create a coding task with difficulty level {i}/100. 
+            Create a coding task with difficulty level {i}/100.
             The task should include:
             1. A clear problem description
             2. The expected code result
@@ -103,38 +123,49 @@ class EnhancedSupervisorAgent(ChatAgent):
             """
             response = await self.llm_response(prompt)
             parts = response.content.split("\n")
-            tasks.append(CodingTask(
-                task_description=parts[0].split(": ", 1)[1],
-                expected_result=parts[1].split(": ", 1)[1],
-                difficulty=i
-            ))
+            tasks.append(
+                CodingTask(
+                    task_description=parts[0].split(": ", 1)[1],
+                    expected_result=parts[1].split(": ", 1)[1],
+                    difficulty=i,
+                )
+            )
         return tasks
 
-    async def grade_attempt(self, task: CodingTask, thoughts: str, response: str, code: str) -> tuple[int, int, int, bool]:
+    async def grade_attempt(
+        self, task: CodingTask, thoughts: str, response: str, code: str
+    ) -> tuple[int, int, int, bool]:
         grading_prompt = f"""
         Grade the following coding attempt for the task:
         Task: {task.task_description}
         Expected Result: {task.expected_result}
-        
+
         Attempt:
         Thoughts: {thoughts}
         Response: {response}
         Code: {code}
-        
+
         Provide four outputs:
         1. Thought grade (1-10)
         2. Response grade (1-10)
         3. Code grade (1-10)
         4. Overall success (True/False)
-        
+
         Return only these four values separated by commas.
         """
         grades = await self.llm_response(grading_prompt)
         thought_grade, response_grade, code_grade, success = grades.content.split(",")
-        return int(thought_grade), int(response_grade), int(code_grade), success.strip().lower() == "true"
+        return (
+            int(thought_grade),
+            int(response_grade),
+            int(code_grade),
+            success.strip().lower() == "true",
+        )
 
     async def grade_mcts_state(self, state: CodeState) -> tuple[int, int, int, bool]:
-        return await self.grade_attempt(state.task, state.thoughts, state.response, state.code)
+        return await self.grade_attempt(
+            state.task, state.thoughts, state.response, state.code
+        )
 
     def determine_competence_level(self, results: list[tuple[CodingTask, bool]]) -> int:
         sorted_results = sorted(results, key=lambda x: x[0].difficulty)
@@ -150,14 +181,28 @@ class EnhancedSupervisorAgent(ChatAgent):
             prompt = f"Create a coding task with difficulty {difficulty}/100. Include description and expected result."
             response = await self.llm_response(prompt)
             description, expected_result = response.content.split("\nExpected Result:")
-            tasks.append(CodingTask(task_description=description.strip(), expected_result=expected_result.strip(), difficulty=difficulty))
+            tasks.append(
+                CodingTask(
+                    task_description=description.strip(),
+                    expected_result=expected_result.strip(),
+                    difficulty=difficulty,
+                )
+            )
 
         for _ in range(500):
-            difficulty = random.randint(competence_level + 1, min(100, competence_level + 20))
+            difficulty = random.randint(
+                competence_level + 1, min(100, competence_level + 20)
+            )
             prompt = f"Create a coding task with difficulty {difficulty}/100. Include description and expected result."
             response = await self.llm_response(prompt)
             description, expected_result = response.content.split("\nExpected Result:")
-            tasks.append(CodingTask(task_description=description.strip(), expected_result=expected_result.strip(), difficulty=difficulty))
+            tasks.append(
+                CodingTask(
+                    task_description=description.strip(),
+                    expected_result=expected_result.strip(),
+                    difficulty=difficulty,
+                )
+            )
 
         return tasks
 
@@ -166,12 +211,16 @@ class EnhancedSupervisorAgent(ChatAgent):
         Reword the following coding task without changing its difficulty or core concept:
         {task.task_description}
         Expected Result: {task.expected_result}
-        
+
         Provide the reworded task in the same format.
         """
         response = await self.llm_response(prompt)
         description, expected_result = response.content.split("\nExpected Result:")
-        return CodingTask(task_description=description.strip(), expected_result=expected_result.strip(), difficulty=task.difficulty)
+        return CodingTask(
+            task_description=description.strip(),
+            expected_result=expected_result.strip(),
+            difficulty=task.difficulty,
+        )
 
     async def compute_reward(self, thoughts: str, code: str, task: CodingTask) -> float:
         reasoning_score = await self.analyze_reasoning(thoughts)
@@ -182,11 +231,19 @@ class EnhancedSupervisorAgent(ChatAgent):
         return total_reward / 3  # Normalize to [0, 1]
 
     async def analyze_reasoning(self, thoughts: str) -> float:
-        strategies_used = sum(1 for strategy in EnhancedMagiAgent(self.config).cognitive_strategies if f"<{strategy}>" in thoughts)
-        return strategies_used / len(EnhancedMagiAgent(self.config).cognitive_strategies)
+        strategies_used = sum(
+            1
+            for strategy in EnhancedMagiAgent(self.config).cognitive_strategies
+            if f"<{strategy}>" in thoughts
+        )
+        return strategies_used / len(
+            EnhancedMagiAgent(self.config).cognitive_strategies
+        )
 
     async def score_output(self, code: str, expected_result: str) -> float:
-        response = await self.llm_response(f"On a scale of 0 to 1, how similar is this code's output likely to be to the expected result?\nCode: {code}\nExpected Result: {expected_result}")
+        response = await self.llm_response(
+            f"On a scale of 0 to 1, how similar is this code's output likely to be to the expected result?\nCode: {code}\nExpected Result: {expected_result}"
+        )
         return float(response.content)
 
     async def grade_insight_creativity(self, thoughts: str) -> float:
@@ -198,24 +255,25 @@ class EnhancedSupervisorAgent(ChatAgent):
         grade = await self.llm_response(prompt)
         return float(grade.content)
 
+
 class AIFeedbackTask(Task):
     async def evaluate_code(self, task: CodingTask, code: str) -> float:
         prompt = f"""
         Evaluate the following code for the given task:
-        
+
         Task: {task.task_description}
         Expected Result: {task.expected_result}
-        
+
         Code:
         {code}
-        
+
         Provide a score between 0 and 1, where 0 is completely incorrect and 1 is perfect.
         Consider the following aspects:
         1. Correctness: Does the code solve the task?
         2. Efficiency: Is the solution efficient?
         3. Readability: Is the code well-structured and easy to understand?
         4. Best practices: Does the code follow good programming practices?
-        
+
         Return only the numeric score.
         """
 
@@ -227,6 +285,7 @@ class AIFeedbackTask(Task):
             print(f"Error parsing AI feedback score: {response.content}")
             return 0.0  # Return 0 if we can't parse the score
 
+
 class CodePreferenceModel(nn.Module):
     def __init__(self, input_size, hidden_size):
         super().__init__()
@@ -235,14 +294,17 @@ class CodePreferenceModel(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
-            nn.Linear(hidden_size, 1)
+            nn.Linear(hidden_size, 1),
         )
 
     def forward(self, x):
         return self.encoder(x)
 
+
 class DPOTrainer:
-    def __init__(self, model: CodePreferenceModel, learning_rate: float = 1e-4, beta: float = 0.1):
+    def __init__(
+        self, model: CodePreferenceModel, learning_rate: float = 1e-4, beta: float = 0.1
+    ):
         self.model = model
         self.optimizer = optim.Adam(model.parameters(), lr=learning_rate)
         self.beta = beta
@@ -253,7 +315,9 @@ class DPOTrainer:
         preferred_score = self.model(preferred)
         non_preferred_score = self.model(non_preferred)
 
-        loss = -torch.log(torch.sigmoid(self.beta * (preferred_score - non_preferred_score))).mean()
+        loss = -torch.log(
+            torch.sigmoid(self.beta * (preferred_score - non_preferred_score))
+        ).mean()
 
         loss.backward()
 
@@ -271,6 +335,7 @@ class DPOTrainer:
 
         return loss.item()
 
+
 class HyperparameterOptimizationTask(Task):
     def __init__(self, agent: ChatAgent):
         super().__init__(agent)
@@ -283,8 +348,12 @@ class HyperparameterOptimizationTask(Task):
         }
         self.performance_history = []
 
-    async def suggest_hyperparameters(self, performance_metric: float, grok_detected: bool) -> dict[str, Any]:
-        self.performance_history.append((self.current_hyperparameters.copy(), performance_metric, grok_detected))
+    async def suggest_hyperparameters(
+        self, performance_metric: float, grok_detected: bool
+    ) -> dict[str, Any]:
+        self.performance_history.append(
+            (self.current_hyperparameters.copy(), performance_metric, grok_detected)
+        )
 
         prompt = f"""
         Current hyperparameters:
@@ -316,7 +385,9 @@ class HyperparameterOptimizationTask(Task):
                 key = key.strip()
                 if key in self.current_hyperparameters:
                     try:
-                        suggested_hyperparameters[key] = type(self.current_hyperparameters[key])(value.strip())
+                        suggested_hyperparameters[key] = type(
+                            self.current_hyperparameters[key]
+                        )(value.strip())
                     except ValueError:
                         print(f"Failed to parse suggested value for {key}: {value}")
 
@@ -331,6 +402,7 @@ class HyperparameterOptimizationTask(Task):
         self.current_hyperparameters = new_hyperparameters
         return new_hyperparameters
 
+
 @dataclass
 class TrajectoryStep:
     task_id: int
@@ -340,6 +412,7 @@ class TrajectoryStep:
     response: str
     action: str
     reward: float
+
 
 class DataCollectionPipeline:
     def __init__(self, db_path: str):
@@ -371,38 +444,59 @@ class DataCollectionPipeline:
         self.conn.commit()
 
     def store_task(self, task: CodingTask) -> int:
-        cursor = self.conn.execute("""
+        cursor = self.conn.execute(
+            """
             INSERT INTO tasks (description, expected_result, difficulty)
             VALUES (?, ?, ?)
-        """, (task.task_description, task.expected_result, task.difficulty))
+        """,
+            (task.task_description, task.expected_result, task.difficulty),
+        )
         self.conn.commit()
         return cursor.lastrowid
 
     def store_trajectory(self, task_id: int, trajectory: list[TrajectoryStep]):
         for step in trajectory:
-            self.conn.execute("""
+            self.conn.execute(
+                """
                 INSERT INTO trajectories (task_id, step_number, code, thoughts, response, action, reward)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (task_id, step.step_number, step.code, step.thoughts, step.response, step.action, step.reward))
+            """,
+                (
+                    task_id,
+                    step.step_number,
+                    step.code,
+                    step.thoughts,
+                    step.response,
+                    step.action,
+                    step.reward,
+                ),
+            )
         self.conn.commit()
 
     def get_trajectories(self, task_id: int) -> list[TrajectoryStep]:
-        cursor = self.conn.execute("""
+        cursor = self.conn.execute(
+            """
             SELECT * FROM trajectories WHERE task_id = ? ORDER BY step_number
-        """, (task_id,))
+        """,
+            (task_id,),
+        )
         return [TrajectoryStep(**row) for row in cursor.fetchall()]
 
     def get_all_tasks(self) -> list[CodingTask]:
         cursor = self.conn.execute("SELECT * FROM tasks")
         return [CodingTask(**row) for row in cursor.fetchall()]
 
+
 def uct_select_child(node: MCTSNode, exploration_weight: float = 1.0) -> MCTSNode:
     def uct_value(n):
         if n.visits == 0:
             return float("inf")
-        return n.value / n.visits + exploration_weight * np.sqrt(np.log(node.visits) / n.visits)
+        return n.value / n.visits + exploration_weight * np.sqrt(
+            np.log(node.visits) / n.visits
+        )
 
     return max(node.children, key=uct_value)
+
 
 async def expand(node: MCTSNode, magi_agent: EnhancedMagiAgent) -> MCTSNode:
     new_action = await magi_agent.mcts_action(node.state)
@@ -410,22 +504,39 @@ async def expand(node: MCTSNode, magi_agent: EnhancedMagiAgent) -> MCTSNode:
         node.state.task,
         code=node.state.code + new_action if node.state.response else node.state.code,
         thoughts=new_action if not node.state.thoughts else node.state.thoughts,
-        response=new_action if node.state.thoughts and not node.state.response else node.state.response
+        response=new_action
+        if node.state.thoughts and not node.state.response
+        else node.state.response,
     )
     child = MCTSNode(new_state, parent=node)
     node.children.append(child)
     return child
 
-async def simulate(node: MCTSNode, supervisor_agent: EnhancedSupervisorAgent, ai_feedback_task: AIFeedbackTask, ai_feedback_weight: float) -> float:
-    thought_grade, response_grade, code_grade, success = await supervisor_agent.grade_mcts_state(node.state)
+
+async def simulate(
+    node: MCTSNode,
+    supervisor_agent: EnhancedSupervisorAgent,
+    ai_feedback_task: AIFeedbackTask,
+    ai_feedback_weight: float,
+) -> float:
+    (
+        thought_grade,
+        response_grade,
+        code_grade,
+        success,
+    ) = await supervisor_agent.grade_mcts_state(node.state)
     ai_score = await ai_feedback_task.evaluate_code(node.state.task, node.state.code)
-    return (thought_grade + response_grade + code_grade) / 30.0 * (1 - ai_feedback_weight) + ai_score * ai_feedback_weight
+    return (thought_grade + response_grade + code_grade) / 30.0 * (
+        1 - ai_feedback_weight
+    ) + ai_score * ai_feedback_weight
+
 
 def backpropagate(node: MCTSNode, reward: float):
     while node:
         node.visits += 1
         node.value += reward
         node = node.parent
+
 
 async def mcts_code_generation(
     root_state: CodeState,
@@ -435,7 +546,7 @@ async def mcts_code_generation(
     iterations: int,
     exploration_weight: float,
     ai_feedback_weight: float,
-    trajectory: list[TrajectoryStep]
+    trajectory: list[TrajectoryStep],
 ) -> CodeState:
     root = MCTSNode(root_state)
 
@@ -451,27 +562,36 @@ async def mcts_code_generation(
             node = await expand(node, magi_agent)
 
         # Simulation
-        reward = await simulate(node, supervisor_agent, ai_feedback_task, ai_feedback_weight)
+        reward = await simulate(
+            node, supervisor_agent, ai_feedback_task, ai_feedback_weight
+        )
 
         # Backpropagation
         backpropagate(node, reward)
 
         # Collect trajectory data
-        trajectory.append(TrajectoryStep(
-            task_id=-1,  # This will be updated when storing in the database
-            step_number=i,
-            code=node.state.code,
-            thoughts=node.state.thoughts,
-            response=node.state.response,
-            action=node.state.code[-1] if node.state.code else "",
-            reward=reward
-        ))
+        trajectory.append(
+            TrajectoryStep(
+                task_id=-1,  # This will be updated when storing in the database
+                step_number=i,
+                code=node.state.code,
+                thoughts=node.state.thoughts,
+                response=node.state.response,
+                action=node.state.code[-1] if node.state.code else "",
+                reward=reward,
+            )
+        )
 
     # Return the best child's state
-    best_child = max(root.children, key=lambda c: c.value / c.visits if c.visits > 0 else 0)
+    best_child = max(
+        root.children, key=lambda c: c.value / c.visits if c.visits > 0 else 0
+    )
     return best_child.state
 
-def create_preference_pairs(trajectories: list[tuple[CodeState, float]]) -> list[tuple[CodeState, CodeState]]:
+
+def create_preference_pairs(
+    trajectories: list[tuple[CodeState, float]],
+) -> list[tuple[CodeState, CodeState]]:
     pairs = []
     for i in range(len(trajectories)):
         for j in range(i + 1, len(trajectories)):
@@ -480,6 +600,7 @@ def create_preference_pairs(trajectories: list[tuple[CodeState, float]]) -> list
             elif trajectories[j][1] > trajectories[i][1]:
                 pairs.append((trajectories[j][0], trajectories[i][0]))
     return pairs
+
 
 def code_state_to_tensor(
     state: CodeState,
@@ -508,6 +629,7 @@ def code_state_to_tensor(
         features = torch.cat([features, mixed.mean().float().view(1)])
 
     return features
+
 
 class TrainingTask(Task):
     async def run_training_loop(
@@ -565,7 +687,7 @@ class TrainingTask(Task):
                 iterations=hyperparameters["mcts_iterations"],
                 exploration_weight=hyperparameters["exploration_weight"],
                 ai_feedback_weight=hyperparameters["ai_feedback_weight"],
-                trajectory=trajectory
+                trajectory=trajectory,
             )
             _, _, _, success = await supervisor_agent.grade_mcts_state(final_state)
             test_results.append((task, success))
@@ -600,9 +722,14 @@ class TrainingTask(Task):
                     iterations=hyperparameters["mcts_iterations"],
                     exploration_weight=hyperparameters["exploration_weight"],
                     ai_feedback_weight=hyperparameters["ai_feedback_weight"],
-                    trajectory=trajectory
+                    trajectory=trajectory,
                 )
-                thought_grade, response_grade, code_grade, success = await supervisor_agent.grade_mcts_state(final_state)
+                (
+                    thought_grade,
+                    response_grade,
+                    code_grade,
+                    success,
+                ) = await supervisor_agent.grade_mcts_state(final_state)
 
                 # Store the trajectory
                 data_pipeline.store_trajectory(task_id, trajectory)
@@ -618,7 +745,11 @@ class TrainingTask(Task):
                 else:
                     task.success_count = 0
                     feedback = f"Grades: Thinking ({thought_grade}/10), Response ({response_grade}/10), Code ({code_grade}/10). "
-                    feedback += (await supervisor_agent.llm_response(f"Explain why this attempt failed and how to improve: {final_state.thoughts}\n{final_state.response}\n{final_state.code}")).content
+                    feedback += (
+                        await supervisor_agent.llm_response(
+                            f"Explain why this attempt failed and how to improve: {final_state.thoughts}\n{final_state.response}\n{final_state.code}"
+                        )
+                    ).content
                     task.feedback = feedback
                     new_training_tasks.append(task)
 
@@ -657,7 +788,7 @@ class TrainingTask(Task):
 
             if val_performance > best_val_performance:
                 best_val_performance = val_performance
-                torch.save(dpo_model.state_dict(), f"best_model_round_{round+1}.pth")
+                torch.save(dpo_model.state_dict(), f"best_model_round_{round + 1}.pth")
                 patience_counter = 0
             else:
                 patience_counter += 1
@@ -665,19 +796,25 @@ class TrainingTask(Task):
             if patience_counter >= patience:
                 if not overfitting_detected:
                     print("Overfitting detected. Activating GrokFast.")
-                    grokfast_task = GrokFastTask(self.agent, dpo_model, method="EMA", lamb=2.0, alpha=0.98)
+                    grokfast_task = GrokFastTask(
+                        self.agent, dpo_model, method="EMA", lamb=2.0, alpha=0.98
+                    )
                     overfitting_detected = True
                     grokfast_activated = True
                     patience_counter = 0  # Reset patience counter
                 elif grokfast_activated:
                     # Check for the "second spike" indicating groking
                     if val_performance > best_val_performance * (1 + grok_threshold):
-                        print("Groking detected! Significant performance improvement observed.")
+                        print(
+                            "Groking detected! Significant performance improvement observed."
+                        )
                         best_val_performance = val_performance
                         patience_counter = 0  # Reset patience counter
                         grok_detected = True
                     else:
-                        print("No significant improvement. Continuing training with GrokFast.")
+                        print(
+                            "No significant improvement. Continuing training with GrokFast."
+                        )
                 else:
                     print("Training complete. No groking observed.")
                     break
@@ -699,7 +836,9 @@ class TrainingTask(Task):
         quiet_model: QuietSTaRModel | None = None,
         tokenizer: AutoTokenizer | None = None,
     ) -> float:
-        validation_tasks = await supervisor_agent.create_training_tasks(50)  # Create 50 validation tasks
+        validation_tasks = await supervisor_agent.create_training_tasks(
+            50
+        )  # Create 50 validation tasks
         total_reward = 0
 
         for task in validation_tasks:
@@ -713,12 +852,15 @@ class TrainingTask(Task):
                 iterations=hyperparameters["mcts_iterations"],
                 exploration_weight=hyperparameters["exploration_weight"],
                 ai_feedback_weight=hyperparameters["ai_feedback_weight"],
-                trajectory=trajectory
+                trajectory=trajectory,
             )
-            reward = await supervisor_agent.compute_reward(final_state.thoughts, final_state.code, task)
+            reward = await supervisor_agent.compute_reward(
+                final_state.thoughts, final_state.code, task
+            )
             total_reward += reward
 
         return total_reward / len(validation_tasks)
+
 
 class OptimizationTask(Task):
     async def run_training_loop_with_optimization(
@@ -762,7 +904,11 @@ class OptimizationTask(Task):
                 best_hyperparameters = hyperparameters.copy()
 
             # Suggest new hyperparameters based on performance and grok occurrence
-            new_hyperparameters = await hyperparameter_optimization_task.suggest_hyperparameters(performance_metric, grok_detected)
+            new_hyperparameters = (
+                await hyperparameter_optimization_task.suggest_hyperparameters(
+                    performance_metric, grok_detected
+                )
+            )
 
             print(f"New suggested hyperparameters: {new_hyperparameters}")
 
@@ -785,6 +931,7 @@ class OptimizationTask(Task):
 
         return best_hyperparameters, grok_detected
 
+
 async def main():
     magi_config = ChatAgentConfig(
         name="Magi",
@@ -803,8 +950,13 @@ async def main():
     supervisor_agent = EnhancedSupervisorAgent(supervisor_config)
 
     optimization_task = OptimizationTask(magi_agent)
-    training_config = TrainingConfig(enable_quiet_star=os.environ.get("ENABLE_QUIET_STAR") == "1")
-    best_hyperparameters, grok_detected = await optimization_task.run_training_loop_with_optimization(
+    training_config = TrainingConfig(
+        enable_quiet_star=os.environ.get("ENABLE_QUIET_STAR") == "1"
+    )
+    (
+        best_hyperparameters,
+        grok_detected,
+    ) = await optimization_task.run_training_loop_with_optimization(
         magi_agent,
         supervisor_agent,
         config=training_config,
@@ -829,7 +981,8 @@ async def main():
     # For example, you might want to generate a report on the training process,
     # including learning curves, task success rates, and examples of solved tasks.
 
+
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(main())
 
+    asyncio.run(main())

@@ -14,8 +14,14 @@ from .planning.optimization import Optimizer
 
 logger = logging.getLogger(__name__)
 
+
 class EvolutionManager:
-    def __init__(self, population_size: int = 10, mutation_rate: float = 0.1, crossover_rate: float = 0.7):
+    def __init__(
+        self,
+        population_size: int = 10,
+        mutation_rate: float = 0.1,
+        crossover_rate: float = 0.7,
+    ):
         self.population_size = population_size
         self.mutation_rate = mutation_rate
         self.crossover_rate = crossover_rate
@@ -23,7 +29,12 @@ class EvolutionManager:
         self.best_individual = None
 
     @log_and_handle_errors
-    async def evolve(self, architecture_space: dict[str, Any], fitness_function, generations: int = 50):
+    async def evolve(
+        self,
+        architecture_space: dict[str, Any],
+        fitness_function,
+        generations: int = 50,
+    ):
         self.initialize_population(architecture_space)
 
         for generation in range(generations):
@@ -47,7 +58,10 @@ class EvolutionManager:
     def initialize_population(self, architecture_space: dict[str, Any]):
         self.population = []
         for _ in range(self.population_size):
-            individual = {param: random.choice(values) for param, values in architecture_space.items()}
+            individual = {
+                param: random.choice(values)
+                for param, values in architecture_space.items()
+            }
             self.population.append(individual)
 
     async def evaluate_population(self, fitness_function):
@@ -66,7 +80,9 @@ class EvolutionManager:
             parents.append(parent)
         return parents
 
-    def crossover(self, parent1: dict[str, Any], parent2: dict[str, Any]) -> dict[str, Any]:
+    def crossover(
+        self, parent1: dict[str, Any], parent2: dict[str, Any]
+    ) -> dict[str, Any]:
         if random.random() < self.crossover_rate:
             child = {}
             for key in parent1:
@@ -75,11 +91,14 @@ class EvolutionManager:
             return child
         return random.choice([parent1, parent2]).copy()
 
-    def mutate(self, individual: dict[str, Any], architecture_space: dict[str, Any]) -> dict[str, Any]:
+    def mutate(
+        self, individual: dict[str, Any], architecture_space: dict[str, Any]
+    ) -> dict[str, Any]:
         for key in individual:
             if key != "fitness" and random.random() < self.mutation_rate:
                 individual[key] = random.choice(architecture_space[key])
         return individual
+
 
 @log_and_handle_errors
 async def run_evolution_and_optimization(king_agent):
@@ -89,7 +108,7 @@ async def run_evolution_and_optimization(king_agent):
         "output_size": [32, 64],
         "num_layers": [2, 3, 4],
         "activation": ["relu", "tanh", "sigmoid"],
-        "dropout_rate": [0.1, 0.3, 0.5]
+        "dropout_rate": [0.1, 0.3, 0.5],
     }
 
     optimizer = Optimizer()
@@ -134,7 +153,9 @@ async def run_evolution_and_optimization(king_agent):
 
     try:
         evolution_manager = EvolutionManager()
-        best_architecture = await evolution_manager.evolve(architecture_space, fitness_function)
+        best_architecture = await evolution_manager.evolve(
+            architecture_space, fitness_function
+        )
 
         new_model = king_agent.create_model_from_architecture(best_architecture)
         await king_agent.update_model_architecture(best_architecture)
@@ -143,13 +164,17 @@ async def run_evolution_and_optimization(king_agent):
         hyperparameter_space = {
             "learning_rate": [0.001, 0.01, 0.1],
             "batch_size": [32, 64, 128],
-            "optimizer": ["adam", "sgd", "rmsprop"]
+            "optimizer": ["adam", "sgd", "rmsprop"],
         }
 
-        best_hyperparameters = await optimizer.optimize_hyperparameters(hyperparameter_space, fitness_function)
+        best_hyperparameters = await optimizer.optimize_hyperparameters(
+            hyperparameter_space, fitness_function
+        )
         await king_agent.update_hyperparameters(best_hyperparameters)
 
-        logger.info(f"Evolution and optimization completed. Best architecture: {best_architecture}")
+        logger.info(
+            f"Evolution and optimization completed. Best architecture: {best_architecture}"
+        )
         logger.info(f"Best hyperparameters: {best_hyperparameters}")
 
     except Exception as e:

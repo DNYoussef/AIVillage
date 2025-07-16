@@ -5,33 +5,58 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class DeepSystemBakerTask(Task):
-    def __init__(self, agent: ChatAgent, model_name: str, device: str = "cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(
+        self,
+        agent: ChatAgent,
+        model_name: str,
+        device: str = "cuda" if torch.cuda.is_available() else "cpu",
+    ):
         super().__init__(agent)
         self.device = device
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.special_tokens = [
-            "<start of thought>", "<end of thought>",
-            "<initial thought>", "</initial thought>",
-            "<refined thought>", "</refined thought>",
-            "<alternative perspective>", "</alternative perspective>",
-            "<key insight>", "</key insight>",
-            "<memory recall>", "</memory recall>",
-            "<hypothesis>", "</hypothesis>",
-            "<evidence>", "</evidence>",
-            "<confidence score>", "<continue thinking>",
+            "<start of thought>",
+            "<end of thought>",
+            "<initial thought>",
+            "</initial thought>",
+            "<refined thought>",
+            "</refined thought>",
+            "<alternative perspective>",
+            "</alternative perspective>",
+            "<key insight>",
+            "</key insight>",
+            "<memory recall>",
+            "</memory recall>",
+            "<hypothesis>",
+            "</hypothesis>",
+            "<evidence>",
+            "</evidence>",
+            "<confidence score>",
+            "<continue thinking>",
             "<ready to answer>",
-            "<analyze>", "</analyze>",
-            "<plan>", "</plan>",
-            "<execute>", "</execute>",
-            "<evaluate>", "</evaluate>",
-            "<revise>", "</revise>",
-            "<systems_thinking>", "</systems_thinking>",
-            "<first_principles>", "</first_principles>",
-            "<cross_domain>", "</cross_domain>",
-            "<probabilistic_thinking>", "</probabilistic_thinking>",
-            "<rapid_iteration>", "</rapid_iteration>",
-            "<paradox_resolution>", "</paradox_resolution>"
+            "<analyze>",
+            "</analyze>",
+            "<plan>",
+            "</plan>",
+            "<execute>",
+            "</execute>",
+            "<evaluate>",
+            "</evaluate>",
+            "<revise>",
+            "</revise>",
+            "<systems_thinking>",
+            "</systems_thinking>",
+            "<first_principles>",
+            "</first_principles>",
+            "<cross_domain>",
+            "</cross_domain>",
+            "<probabilistic_thinking>",
+            "</probabilistic_thinking>",
+            "<rapid_iteration>",
+            "</rapid_iteration>",
+            "<paradox_resolution>",
+            "</paradox_resolution>",
         ]
         self.add_special_tokens()
 
@@ -97,12 +122,12 @@ class DeepSystemBakerTask(Task):
         """
 
         for i in range(max_iterations):
-            print(f"Iteration {i+1}/{max_iterations}")
+            print(f"Iteration {i + 1}/{max_iterations}")
             await self.bake(system_prompt)
             consistency = await self.evaluate_consistency()
             print(f"Current consistency: {consistency:.2f}")
             if consistency >= consistency_threshold:
-                print(f"Reached consistency threshold after {i+1} iterations.")
+                print(f"Reached consistency threshold after {i + 1} iterations.")
                 break
 
         self.model.save_pretrained("deep_baked_model")
@@ -112,7 +137,9 @@ class DeepSystemBakerTask(Task):
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
             outputs = self.model(**inputs)
-        loss = F.cross_entropy(outputs.logits.view(-1, outputs.logits.size(-1)), inputs.input_ids.view(-1))
+        loss = F.cross_entropy(
+            outputs.logits.view(-1, outputs.logits.size(-1)), inputs.input_ids.view(-1)
+        )
         loss.backward()
 
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-5)
@@ -138,7 +165,9 @@ class DeepSystemBakerTask(Task):
 
     async def generate_response(self, prompt):
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
-        outputs = self.model.generate(**inputs, max_length=500, num_return_sequences=1, do_sample=True)
+        outputs = self.model.generate(
+            **inputs, max_length=500, num_return_sequences=1, do_sample=True
+        )
         return self.tokenizer.decode(outputs[0], skip_special_tokens=False)
 
     async def score_response(self, response):
@@ -162,6 +191,7 @@ class DeepSystemBakerTask(Task):
     async def run(self, max_iterations=50, consistency_threshold=0.95):
         await self.deep_bake_system(max_iterations, consistency_threshold)
         return "Deep baking completed successfully"
+
 
 # Usage example
 if __name__ == "__main__":

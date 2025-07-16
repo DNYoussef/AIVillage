@@ -9,7 +9,9 @@ import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-pytest.skip("Skipping integration test due to heavy dependencies", allow_module_level=True)
+pytest.skip(
+    "Skipping integration test due to heavy dependencies", allow_module_level=True
+)
 
 fake_faiss = mock.MagicMock()
 fake_faiss.__spec__ = mock.MagicMock()
@@ -25,31 +27,37 @@ fake_pairwise = types.ModuleType("sklearn.metrics.pairwise")
 fake_pairwise.cosine_similarity = lambda *args, **kwargs: None
 fake_metrics.pairwise = fake_pairwise
 fake_sklearn.metrics = fake_metrics
-with mock.patch.dict("sys.modules", {
-    "faiss": fake_faiss,
-    "torch": fake_torch,
-    "matplotlib": fake_mpl,
-    "matplotlib.pyplot": fake_mpl,
-    "seaborn": fake_mpl,
-    "pandas": fake_mpl,
-    "transformers": fake_mpl,
-    "sklearn": fake_sklearn,
-    "sklearn.metrics": fake_metrics,
-    "sklearn.metrics.pairwise": fake_pairwise,
-}):
+with mock.patch.dict(
+    "sys.modules",
+    {
+        "faiss": fake_faiss,
+        "torch": fake_torch,
+        "matplotlib": fake_mpl,
+        "matplotlib.pyplot": fake_mpl,
+        "seaborn": fake_mpl,
+        "pandas": fake_mpl,
+        "transformers": fake_mpl,
+        "sklearn": fake_sklearn,
+        "sklearn.metrics": fake_metrics,
+        "sklearn.metrics.pairwise": fake_pairwise,
+    },
+):
     from rag_system.core.config import UnifiedConfig
     from rag_system.core.structures import RetrievalResult
     from rag_system.main import process_user_query
     from rag_system.retrieval.hybrid_retriever import HybridRetriever
     from rag_system.retrieval.vector_store import VectorStore
 
+
 class MockVectorStore:
     async def retrieve(self, query_vector, k, timestamp=None):
         return [RetrievalResult(id="1", content="Mock vector result", score=0.9)]
 
+
 class MockGraphStore:
     async def retrieve(self, query, k, timestamp=None):
         return [RetrievalResult(id="2", content="Mock graph result", score=0.8)]
+
 
 class TestRAGSystemIntegration(unittest.TestCase):
     def setUp(self):
@@ -65,7 +73,9 @@ class TestRAGSystemIntegration(unittest.TestCase):
 
         # Process a sample user query
         sample_query = "What are the key features of the RAG system?"
-        result = self.loop.run_until_complete(process_user_query(components, sample_query))
+        result = self.loop.run_until_complete(
+            process_user_query(components, sample_query)
+        )
 
         # Verify that the result is not None and contains expected keys
         assert result is not None
@@ -106,6 +116,7 @@ class TestVectorStoreDeterminism(unittest.IsolatedAsyncioTestCase):
         emb1 = store.documents[0]["embedding"]
         emb2 = store.documents[1]["embedding"]
         assert np.array_equal(emb1, emb2)
+
 
 if __name__ == "__main__":
     unittest.main()

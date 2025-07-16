@@ -20,8 +20,14 @@ from .task_handling import TaskHandler
 
 logger = logging.getLogger(__name__)
 
+
 class UnifiedPlanningAndManagement:
-    def __init__(self, communication_protocol: StandardCommunicationProtocol, rag_system: EnhancedRAGPipeline, agent):
+    def __init__(
+        self,
+        communication_protocol: StandardCommunicationProtocol,
+        rag_system: EnhancedRAGPipeline,
+        agent,
+    ):
         self.communication_protocol = communication_protocol
         self.rag_system = rag_system
         self.agent = agent
@@ -38,9 +44,19 @@ class UnifiedPlanningAndManagement:
         try:
             rag_info = await self.rag_system.process_query(content)
 
-            task_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(content)
-            eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(task_vector)
-            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(task_vector)
+            task_vector = (
+                self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(
+                    content
+                )
+            )
+            eudaimonia_score = (
+                self.quality_assurance_layer.eudaimonia_triangulator.triangulate(
+                    task_vector
+                )
+            )
+            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(
+                task_vector
+            )
 
             decision_prompt = f"""
             Task: {content}
@@ -60,20 +76,26 @@ class UnifiedPlanningAndManagement:
             response = await self.llm.complete(decision_prompt)
 
             decision = response.text
-            alternatives = await self._generate_alternatives({"content": content, "rag_info": rag_info})
+            alternatives = await self._generate_alternatives(
+                {"content": content, "rag_info": rag_info}
+            )
 
             ranked_criteria = [
                 {"criterion": "eudaimonia", "weight": 0.4},
                 {"criterion": "curiosity", "weight": 0.2},
                 {"criterion": "protection", "weight": 0.3},
-                {"criterion": "self_preservation", "weight": 0.1}
+                {"criterion": "self_preservation", "weight": 0.1},
             ]
 
-            evaluated_alternatives = await self._evaluate_alternatives(alternatives, ranked_criteria)
+            evaluated_alternatives = await self._evaluate_alternatives(
+                alternatives, ranked_criteria
+            )
 
             best_alternative = evaluated_alternatives[0]["alternative"]
 
-            implementation_plan = await self._create_implementation_plan({"decision": decision, "best_alternative": best_alternative})
+            implementation_plan = await self._create_implementation_plan(
+                {"decision": decision, "best_alternative": best_alternative}
+            )
 
             return {
                 "decision": decision,
@@ -81,7 +103,7 @@ class UnifiedPlanningAndManagement:
                 "rule_compliance": rule_compliance,
                 "rag_info": rag_info,
                 "best_alternative": best_alternative,
-                "implementation_plan": implementation_plan
+                "implementation_plan": implementation_plan,
             }
         except Exception as e:
             logger.exception(f"Error in make_decision: {e!s}")
@@ -96,7 +118,9 @@ class UnifiedPlanningAndManagement:
             execution_result = await self.task_handler.execute_task(routed_task)
 
             # Perform post-execution analysis
-            analysis = await self._analyze_execution_result(execution_result, optimized_plan)
+            analysis = await self._analyze_execution_result(
+                execution_result, optimized_plan
+            )
 
             # Update models based on execution results
             await self._update_models(task, execution_result, analysis)
@@ -106,7 +130,9 @@ class UnifiedPlanningAndManagement:
             logger.exception(f"Error in manage_task: {e!s}")
             raise AIVillageException(f"Error in manage_task: {e!s}")
 
-    async def create_and_execute_workflow(self, tasks: list[dict[str, Any]]) -> dict[str, Any]:
+    async def create_and_execute_workflow(
+        self, tasks: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         try:
             workflow = await self.task_handler.create_workflow(tasks)
             optimized_workflow = await self.optimizer.optimize_workflow(workflow)
@@ -114,7 +140,9 @@ class UnifiedPlanningAndManagement:
             results = await self._execute_workflow_in_parallel(execution_plan)
 
             # Perform post-execution analysis
-            analysis = await self._analyze_workflow_execution(results, optimized_workflow)
+            analysis = await self._analyze_workflow_execution(
+                results, optimized_workflow
+            )
 
             # Update models based on workflow execution results
             await self._update_models_from_workflow(tasks, results, analysis)
@@ -124,7 +152,9 @@ class UnifiedPlanningAndManagement:
             logger.exception(f"Error in create_and_execute_workflow: {e!s}")
             raise AIVillageException(f"Error in create_and_execute_workflow: {e!s}")
 
-    async def _generate_alternatives(self, problem_analysis: dict[str, Any]) -> list[str]:
+    async def _generate_alternatives(
+        self, problem_analysis: dict[str, Any]
+    ) -> list[str]:
         try:
             king_alternatives = await self.agent.generate_structured_response(
                 f"Given the problem analysis: {problem_analysis}, generate 3 potential solutions. Output as a JSON list of strings."
@@ -138,9 +168,16 @@ class UnifiedPlanningAndManagement:
                     type=MessageType.QUERY,
                     sender="King",
                     receiver=agent,
-                    content={"action": "generate_alternatives", "problem_analysis": problem_analysis}
+                    content={
+                        "action": "generate_alternatives",
+                        "problem_analysis": problem_analysis,
+                    },
                 )
-                agent_tasks.append(self.communication_protocol.send_and_wait(agent_alternatives_request))
+                agent_tasks.append(
+                    self.communication_protocol.send_and_wait(
+                        agent_alternatives_request
+                    )
+                )
 
             agent_responses = await asyncio.gather(*agent_tasks)
             for response in agent_responses:
@@ -151,22 +188,43 @@ class UnifiedPlanningAndManagement:
             logger.exception(f"Error in _generate_alternatives: {e!s}")
             raise AIVillageException(f"Error in _generate_alternatives: {e!s}")
 
-    async def _evaluate_alternatives(self, alternatives: list[str], ranked_criteria: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    async def _evaluate_alternatives(
+        self, alternatives: list[str], ranked_criteria: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         try:
             evaluated_alternatives = []
             for alt in alternatives:
-                alt_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(alt)
-                eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(alt_vector)
-                rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(alt_vector)
+                alt_vector = (
+                    self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(
+                        alt
+                    )
+                )
+                eudaimonia_score = (
+                    self.quality_assurance_layer.eudaimonia_triangulator.triangulate(
+                        alt_vector
+                    )
+                )
+                rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(
+                    alt_vector
+                )
 
                 total_score = sum(
-                    criterion["weight"] * (eudaimonia_score if criterion["criterion"] == "eudaimonia" else rule_compliance)
+                    criterion["weight"]
+                    * (
+                        eudaimonia_score
+                        if criterion["criterion"] == "eudaimonia"
+                        else rule_compliance
+                    )
                     for criterion in ranked_criteria
                 )
 
-                evaluated_alternatives.append({"alternative": alt, "score": total_score})
+                evaluated_alternatives.append(
+                    {"alternative": alt, "score": total_score}
+                )
 
-            return sorted(evaluated_alternatives, key=lambda x: x["score"], reverse=True)
+            return sorted(
+                evaluated_alternatives, key=lambda x: x["score"], reverse=True
+            )
         except Exception as e:
             logger.exception(f"Error in _evaluate_alternatives: {e!s}")
             raise AIVillageException(f"Error in _evaluate_alternatives: {e!s}")
@@ -209,20 +267,35 @@ class UnifiedPlanningAndManagement:
             parallel_groups = []
             while execution_order:
                 group = [execution_order.pop(0)]
-                group.extend([task for task in execution_order if all(dep not in group for dep in G.predecessors(task))])
+                group.extend(
+                    [
+                        task
+                        for task in execution_order
+                        if all(dep not in group for dep in G.predecessors(task))
+                    ]
+                )
                 parallel_groups.append(group)
-                execution_order = [task for task in execution_order if task not in group]
+                execution_order = [
+                    task for task in execution_order if task not in group
+                ]
 
             return {"parallel_groups": parallel_groups, "graph": G}
         except Exception as e:
             logger.exception(f"Error in _create_execution_plan: {e!s}")
             raise AIVillageException(f"Error in _create_execution_plan: {e!s}")
 
-    async def _execute_workflow_in_parallel(self, execution_plan: dict[str, Any]) -> list[dict[str, Any]]:
+    async def _execute_workflow_in_parallel(
+        self, execution_plan: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         try:
             results = []
             for group in execution_plan["parallel_groups"]:
-                group_tasks = [self.task_handler.execute_task(execution_plan["graph"].nodes[task_id]["task"]) for task_id in group]
+                group_tasks = [
+                    self.task_handler.execute_task(
+                        execution_plan["graph"].nodes[task_id]["task"]
+                    )
+                    for task_id in group
+                ]
                 group_results = await asyncio.gather(*group_tasks)
                 results.extend(group_results)
             return results
@@ -230,7 +303,9 @@ class UnifiedPlanningAndManagement:
             logger.exception(f"Error in _execute_workflow_in_parallel: {e!s}")
             raise AIVillageException(f"Error in _execute_workflow_in_parallel: {e!s}")
 
-    async def _analyze_execution_result(self, execution_result: dict[str, Any], optimized_plan: dict[str, Any]) -> dict[str, Any]:
+    async def _analyze_execution_result(
+        self, execution_result: dict[str, Any], optimized_plan: dict[str, Any]
+    ) -> dict[str, Any]:
         try:
             prompt = f"""
             Analyze the following execution result and optimized plan:
@@ -252,7 +327,9 @@ class UnifiedPlanningAndManagement:
             logger.exception(f"Error in _analyze_execution_result: {e!s}")
             raise AIVillageException(f"Error in _analyze_execution_result: {e!s}")
 
-    async def _analyze_workflow_execution(self, results: list[dict[str, Any]], optimized_workflow: dict[str, Any]) -> dict[str, Any]:
+    async def _analyze_workflow_execution(
+        self, results: list[dict[str, Any]], optimized_workflow: dict[str, Any]
+    ) -> dict[str, Any]:
         try:
             prompt = f"""
             Analyze the following workflow execution results and optimized workflow:
@@ -275,18 +352,32 @@ class UnifiedPlanningAndManagement:
             logger.exception(f"Error in _analyze_workflow_execution: {e!s}")
             raise AIVillageException(f"Error in _analyze_workflow_execution: {e!s}")
 
-    async def _update_models(self, task: dict[str, Any], execution_result: dict[str, Any], analysis: dict[str, Any]):
+    async def _update_models(
+        self,
+        task: dict[str, Any],
+        execution_result: dict[str, Any],
+        analysis: dict[str, Any],
+    ):
         try:
             await self.reasoning_engine.update_model(task, execution_result, analysis)
             await self.optimizer.update_model(task, execution_result, analysis)
             await self.router.update_model(task, execution_result, analysis)
             await self.task_handler.update_model(task, execution_result, analysis)
-            await self.quality_assurance_layer.update_task_history(task, execution_result.get("performance", 0.5), execution_result.get("uncertainty", 0.5))
+            await self.quality_assurance_layer.update_task_history(
+                task,
+                execution_result.get("performance", 0.5),
+                execution_result.get("uncertainty", 0.5),
+            )
         except Exception as e:
             logger.exception(f"Error in _update_models: {e!s}")
             raise AIVillageException(f"Error in _update_models: {e!s}")
 
-    async def _update_models_from_workflow(self, tasks: list[dict[str, Any]], results: list[dict[str, Any]], analysis: dict[str, Any]):
+    async def _update_models_from_workflow(
+        self,
+        tasks: list[dict[str, Any]],
+        results: list[dict[str, Any]],
+        analysis: dict[str, Any],
+    ):
         try:
             for task, result in zip(tasks, results, strict=False):
                 await self._update_models(task, result, analysis)
@@ -302,7 +393,9 @@ class UnifiedPlanningAndManagement:
             await self.optimizer.update_model(new_model)
             await self.router.update_model(new_model)
             await self.task_handler.update_model(new_model)
-            logger.info("Model updated in UnifiedPlanningAndManagement and its components")
+            logger.info(
+                "Model updated in UnifiedPlanningAndManagement and its components"
+            )
         except Exception as e:
             logger.exception(f"Error in update_model: {e!s}")
             raise AIVillageException(f"Error in update_model: {e!s}")
@@ -314,7 +407,9 @@ class UnifiedPlanningAndManagement:
             await self.reasoning_engine.update_hyperparameters(hyperparameters)
             await self.router.update_hyperparameters(hyperparameters)
             await self.task_handler.update_hyperparameters(hyperparameters)
-            logger.info("Hyperparameters updated in UnifiedPlanningAndManagement and its components")
+            logger.info(
+                "Hyperparameters updated in UnifiedPlanningAndManagement and its components"
+            )
         except Exception as e:
             logger.exception(f"Error in update_hyperparameters: {e!s}")
             raise AIVillageException(f"Error in update_hyperparameters: {e!s}")
@@ -324,41 +419,59 @@ class UnifiedPlanningAndManagement:
             logger.info(f"Saving unified planning and management models to {path}")
             os.makedirs(path, exist_ok=True)
             await self.optimizer.save_models(os.path.join(path, "optimizer"))
-            await self.reasoning_engine.save_models(os.path.join(path, "reasoning_engine"))
+            await self.reasoning_engine.save_models(
+                os.path.join(path, "reasoning_engine")
+            )
             await self.router.save_models(os.path.join(path, "router"))
             await self.task_handler.save_models(os.path.join(path, "task_handler"))
-            self.quality_assurance_layer.save(os.path.join(path, "quality_assurance_layer.json"))
+            self.quality_assurance_layer.save(
+                os.path.join(path, "quality_assurance_layer.json")
+            )
 
             # Save other necessary data
-            data = {
-                "available_agents": self.available_agents
-            }
-            with open(os.path.join(path, "unified_planning_and_management_data.json"), "w") as f:
+            data = {"available_agents": self.available_agents}
+            with open(
+                os.path.join(path, "unified_planning_and_management_data.json"), "w"
+            ) as f:
                 json.dump(data, f)
 
             logger.info("Unified planning and management models saved successfully")
         except Exception as e:
-            logger.exception(f"Error saving unified planning and management models: {e!s}")
-            raise AIVillageException(f"Error saving unified planning and management models: {e!s}")
+            logger.exception(
+                f"Error saving unified planning and management models: {e!s}"
+            )
+            raise AIVillageException(
+                f"Error saving unified planning and management models: {e!s}"
+            )
 
     async def load_models(self, path: str):
         try:
             logger.info(f"Loading unified planning and management models from {path}")
             await self.optimizer.load_models(os.path.join(path, "optimizer"))
-            await self.reasoning_engine.load_models(os.path.join(path, "reasoning_engine"))
+            await self.reasoning_engine.load_models(
+                os.path.join(path, "reasoning_engine")
+            )
             await self.router.load_models(os.path.join(path, "router"))
             await self.task_handler.load_models(os.path.join(path, "task_handler"))
-            self.quality_assurance_layer = QualityAssuranceLayer.load(os.path.join(path, "quality_assurance_layer.json"))
+            self.quality_assurance_layer = QualityAssuranceLayer.load(
+                os.path.join(path, "quality_assurance_layer.json")
+            )
 
             # Load other necessary data
-            with open(os.path.join(path, "unified_planning_and_management_data.json")) as f:
+            with open(
+                os.path.join(path, "unified_planning_and_management_data.json")
+            ) as f:
                 data = json.load(f)
             self.available_agents = data["available_agents"]
 
             logger.info("Unified planning and management models loaded successfully")
         except Exception as e:
-            logger.exception(f"Error loading unified planning and management models: {e!s}")
-            raise AIVillageException(f"Error loading unified planning and management models: {e!s}")
+            logger.exception(
+                f"Error loading unified planning and management models: {e!s}"
+            )
+            raise AIVillageException(
+                f"Error loading unified planning and management models: {e!s}"
+            )
 
     def update_agent_list(self, agent_list: list[str]):
         try:
@@ -379,12 +492,12 @@ class UnifiedPlanningAndManagement:
                 "reasoning_engine_info": await self.reasoning_engine.introspect(),
                 "task_handler_info": await self.task_handler.introspect(),
                 "optimizer_info": await self.optimizer.introspect(),
-                "router_info": await self.router.introspect()
+                "router_info": await self.router.introspect(),
             }
         except Exception as e:
             logger.exception(f"Error in introspect: {e!s}")
             raise AIVillageException(f"Error in introspect: {e!s}")
 
+
 if __name__ == "__main__":
-    raise SystemExit(
-        "Run 'agents/orchestration.py' to start the planning subsystem.")
+    raise SystemExit("Run 'agents/orchestration.py' to start the planning subsystem.")

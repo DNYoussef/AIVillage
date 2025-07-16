@@ -16,8 +16,16 @@ from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracke
 class MagiAgentConfig(UnifiedAgentConfig):
     development_capabilities: list[str] = ["coding", "debugging", "code_review"]
 
+
 class MagiAgent(UnifiedBaseAgent):
-    def __init__(self, config: MagiAgentConfig, communication_protocol: StandardCommunicationProtocol, rag_config: RAGConfig, vector_store: VectorStore, knowledge_tracker: UnifiedKnowledgeTracker | None = None):
+    def __init__(
+        self,
+        config: MagiAgentConfig,
+        communication_protocol: StandardCommunicationProtocol,
+        rag_config: RAGConfig,
+        vector_store: VectorStore,
+        knowledge_tracker: UnifiedKnowledgeTracker | None = None,
+    ):
         super().__init__(config, communication_protocol, knowledge_tracker)
         self.specialized_knowledge = {}  # Initialize specialized knowledge base
         self.rag_system = EnhancedRAGPipeline(rag_config, knowledge_tracker)
@@ -39,7 +47,9 @@ class MagiAgent(UnifiedBaseAgent):
         return {"debug_result": debug_result}
 
     async def handle_code_review(self, task: LangroidTask) -> dict[str, Any]:
-        review_result = await self.generate(f"Review the following code: {task.content}")
+        review_result = await self.generate(
+            f"Review the following code: {task.content}"
+        )
         return {"review_result": review_result}
 
     async def handle_message(self, message: Message):
@@ -52,7 +62,7 @@ class MagiAgent(UnifiedBaseAgent):
                 sender=self.name,
                 receiver=message.sender,
                 content=result,
-                parent_id=message.id
+                parent_id=message.id,
             )
             await self.communication_protocol.send_message(response)
         else:
@@ -60,20 +70,17 @@ class MagiAgent(UnifiedBaseAgent):
 
     async def introspect(self) -> dict[str, Any]:
         base_info = await super().introspect()
-        return {
-            **base_info,
-            "development_capabilities": self.development_capabilities
-        }
+        return {**base_info, "development_capabilities": self.development_capabilities}
 
     async def evolve(self):
         await self.self_evolving_system.evolve()
-
 
     async def query_rag(self, query: str) -> dict[str, Any]:
         return await self.rag_system.process_query(query)
 
     async def add_document(self, content: str, filename: str):
         await self.rag_system.add_document(content, filename)
+
 
 # Example usage
 if __name__ == "__main__":
@@ -87,10 +94,11 @@ if __name__ == "__main__":
         capabilities=["coding", "debugging", "code_review"],
         vector_store=vector_store,
         model="gpt-4",
-        instructions="You are a Magi agent capable of writing, debugging, and reviewing code."
+        instructions="You are a Magi agent capable of writing, debugging, and reviewing code.",
     )
 
-    magi_agent = MagiAgent(magi_config, communication_protocol, rag_config, vector_store)
+    magi_agent = MagiAgent(
+        magi_config, communication_protocol, rag_config, vector_store
+    )
 
     # Use the magi_agent to process tasks and evolve
-

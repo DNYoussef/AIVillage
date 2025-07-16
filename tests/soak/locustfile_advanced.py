@@ -12,12 +12,25 @@ from prometheus_client import CollectorRegistry, Counter, Gauge, push_to_gateway
 PUSHGATEWAY_URL = os.getenv("PUSHGATEWAY_URL", "localhost:9091")
 registry = CollectorRegistry()
 
-memory_usage = Gauge("soak_test_memory_usage_mb", "Memory usage in MB", ["service"], registry=registry)
-error_count = Counter("soak_test_errors_total", "Total errors during soak test", ["service", "error_type"], registry=registry)
-task_duration = Gauge("soak_test_task_duration_seconds", "Task completion time", ["task_type"], registry=registry)
+memory_usage = Gauge(
+    "soak_test_memory_usage_mb", "Memory usage in MB", ["service"], registry=registry
+)
+error_count = Counter(
+    "soak_test_errors_total",
+    "Total errors during soak test",
+    ["service", "error_type"],
+    registry=registry,
+)
+task_duration = Gauge(
+    "soak_test_task_duration_seconds",
+    "Task completion time",
+    ["task_type"],
+    registry=registry,
+)
 
 # Enable memory tracking
 tracemalloc.start()
+
 
 class AdvancedVillageUser(HttpUser):
     wait_time = between(0.5, 2.0)
@@ -36,34 +49,37 @@ class AdvancedVillageUser(HttpUser):
             "Explain quantum computing in simple terms",
             "How do I make pasta carbonara?",
             "Tell me about machine learning",
-            "What are the benefits of meditation?"
+            "What are the benefits of meditation?",
         ]
 
         payload = {
             "prompt": random.choice(prompts),
             "user_id": self.user_id,
             "session_id": self.session_id,
-            "history": self.conversation_history[-5:]
+            "history": self.conversation_history[-5:],
         }
 
         start_time = time.time()
-        with self.client.post("/v1/chat", json=payload, catch_response=True) as response:
+        with self.client.post(
+            "/v1/chat", json=payload, catch_response=True
+        ) as response:
             duration = time.time() - start_time
             task_duration.labels(task_type="simple_chat").set(duration)
 
             if response.status_code == 200:
                 response.success()
                 result = response.json()
-                self.conversation_history.append({
-                    "user": payload["prompt"],
-                    "assistant": result.get("response", "")
-                })
+                self.conversation_history.append(
+                    {"user": payload["prompt"], "assistant": result.get("response", "")}
+                )
             elif response.status_code == 429:
                 response.failure("Rate limited")
                 error_count.labels(service="gateway", error_type="rate_limit").inc()
             else:
                 response.failure(f"Got status code {response.status_code}")
-                error_count.labels(service="twin", error_type=f"http_{response.status_code}").inc()
+                error_count.labels(
+                    service="twin", error_type=f"http_{response.status_code}"
+                ).inc()
 
     @task(30)
     def chat_complex(self):
@@ -72,7 +88,7 @@ class AdvancedVillageUser(HttpUser):
             "Create a detailed marketing plan for a new AI startup",
             "Debug this Python code: def factorial(n): return n * factorial(n-1)",
             "Write a comprehensive analysis of climate change impacts",
-            "Design a REST API for a social media platform"
+            "Design a REST API for a social media platform",
         ]
 
         payload = {
@@ -81,11 +97,13 @@ class AdvancedVillageUser(HttpUser):
             "session_id": f"complex_{self.session_id}",
             "history": self.conversation_history[-10:],
             "temperature": 0.8,
-            "max_tokens": 2000
+            "max_tokens": 2000,
         }
 
         start_time = time.time()
-        with self.client.post("/v1/chat", json=payload, catch_response=True) as response:
+        with self.client.post(
+            "/v1/chat", json=payload, catch_response=True
+        ) as response:
             duration = time.time() - start_time
             task_duration.labels(task_type="complex_chat").set(duration)
 
@@ -115,17 +133,18 @@ class AdvancedVillageUser(HttpUser):
             "Can you elaborate on that?",
             "What are the potential risks?",
             "How would you implement this?",
-            "Can you provide a concrete example?"
+            "Can you provide a concrete example?",
         ]
 
         payload = {
             "prompt": random.choice(follow_ups),
             "user_id": self.user_id,
             "session_id": self.session_id,
-            "history": self.conversation_history[-5:]
+            "history": self.conversation_history[-5:],
         }
 
         self.client.post("/v1/chat", json=payload)
+
 
 @events.test_stop.add_listener
 def on_test_stop(environment, **kwargs):
@@ -141,7 +160,7 @@ def on_test_stop(environment, **kwargs):
             "total_requests": stats.num_requests,
             "failure_rate": stats.fail_ratio,
             "current_rps": stats.current_rps,
-            "peak_memory_mb": memory_mb
+            "peak_memory_mb": memory_mb,
         },
         "response_times": {
             "min": stats.min_response_time,
@@ -149,13 +168,13 @@ def on_test_stop(environment, **kwargs):
             "avg": stats.avg_response_time,
             "p50": stats.get_response_time_percentile(0.5),
             "p95": stats.get_response_time_percentile(0.95),
-            "p99": stats.get_response_time_percentile(0.99)
+            "p99": stats.get_response_time_percentile(0.99),
         },
         "pass_criteria": {
             "error_rate_ok": stats.fail_ratio < 0.005,
             "memory_ok": memory_mb < 500,
-            "p99_ok": stats.get_response_time_percentile(0.99) < 1000
-        }
+            "p99_ok": stats.get_response_time_percentile(0.99) < 1000,
+        },
     }
 
     with open("soak_test_report.json", "w") as f:

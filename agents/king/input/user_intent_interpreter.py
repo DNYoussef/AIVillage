@@ -11,6 +11,7 @@ from rag_system.error_handling.error_handler import (
 
 logger = logging.getLogger(__name__)
 
+
 class UserIntentInterpreter:
     def __init__(self, llm_config: OpenAIGPTConfig):
         self.llm = llm_config.create()
@@ -50,6 +51,7 @@ class UserIntentInterpreter:
         # In a real implementation, you would parse the JSON response
         # For simplicity, we'll assume the response is already in the correct format
         import json
+
         try:
             return json.loads(response)
         except json.JSONDecodeError:
@@ -57,7 +59,9 @@ class UserIntentInterpreter:
             raise AIVillageException("Failed to parse intent response")
 
     @error_handler.handle_error
-    async def extract_key_concepts(self, interpreted_intent: dict[str, Any]) -> list[str]:
+    async def extract_key_concepts(
+        self, interpreted_intent: dict[str, Any]
+    ) -> list[str]:
         """Extract key concepts from the interpreted intent.
 
         Args:
@@ -86,6 +90,7 @@ class UserIntentInterpreter:
 
     def _parse_key_concepts_response(self, response: str) -> list[str]:
         import json
+
         try:
             return json.loads(response)
         except json.JSONDecodeError:
@@ -105,10 +110,8 @@ class UserIntentInterpreter:
         interpreted_intent = await self.interpret_intent(user_input)
         key_concepts = await self.extract_key_concepts(interpreted_intent)
 
-        return {
-            "interpreted_intent": interpreted_intent,
-            "key_concepts": key_concepts
-        }
+        return {"interpreted_intent": interpreted_intent, "key_concepts": key_concepts}
+
 
 # Example usage
 if __name__ == "__main__":
@@ -118,7 +121,9 @@ if __name__ == "__main__":
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
         interpreter = UserIntentInterpreter(llm_config)
 
-        user_input = "I need help organizing my team's project deadlines for the next quarter."
+        user_input = (
+            "I need help organizing my team's project deadlines for the next quarter."
+        )
         result = await interpreter.process_user_input(user_input)
 
         print("Interpreted Intent:")

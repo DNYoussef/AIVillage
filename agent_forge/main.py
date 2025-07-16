@@ -27,7 +27,7 @@ def main(config_file: str, output_dir: str):
             name="agent_forge_run",
             config={
                 "config_file": config_file,
-            }
+            },
         )
 
         # Ensure output directory exists
@@ -70,6 +70,7 @@ def main(config_file: str, output_dir: str):
         # Step 3: Compress the model using model_compression
         print("Loading the deep baked model for compression")
         from transformers import AutoModelForCausalLM
+
         model = AutoModelForCausalLM.from_pretrained(baked_model_path)
         print("Converting model to BitNetModel")
         bitnet_model = BitNetModel(model)
@@ -82,7 +83,12 @@ def main(config_file: str, output_dir: str):
 
         # Log compression step
         compressed_model_size = os.path.getsize(compressed_model_path) / (1024 * 1024)
-        wandb.log({"step": "model_compression", "compressed_model_size_MB": compressed_model_size})
+        wandb.log(
+            {
+                "step": "model_compression",
+                "compressed_model_size_MB": compressed_model_size,
+            }
+        )
 
         # Step 4: Train the new smaller model using training
         print("Initializing EnhancedQuietSTaR for training")
@@ -91,9 +97,11 @@ def main(config_file: str, output_dir: str):
         print("Setting up training pipeline")
         # Replace the following placeholders with your actual data loaders
         train_data = []  # Your training data
-        val_data = []    # Your validation data
+        val_data = []  # Your validation data
 
-        pipeline = CognitiveTrainingPipeline(enhanced_model, train_data, val_data, num_epochs=50)
+        pipeline = CognitiveTrainingPipeline(
+            enhanced_model, train_data, val_data, num_epochs=50
+        )
         print("Training the model")
         trained_model = pipeline.train()
 
@@ -112,7 +120,9 @@ def main(config_file: str, output_dir: str):
             adas_system = ADASystem(trained_model_path)
             optimized_model_path = adas_system.optimize_agent_architecture(output_dir)
             print(f"ADAS optimized model saved to: {optimized_model_path}")
-            wandb.log({"step": "adas_optimization", "adas_model_path": optimized_model_path})
+            wandb.log(
+                {"step": "adas_optimization", "adas_model_path": optimized_model_path}
+            )
         else:
             optimized_model_path = trained_model_path
 
@@ -125,6 +135,7 @@ def main(config_file: str, output_dir: str):
         print(f"An error occurred: {e!s}")
         print("Traceback:")
         print(traceback.format_exc())
+
 
 if __name__ == "__main__":
     main()

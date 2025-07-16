@@ -6,5 +6,5 @@ __all__ = [
     "ModelCompressionTask",
     "convert_to_bitnet",
     "quantize_activations",
-    "quantize_weights"
+    "quantize_weights",
 ]

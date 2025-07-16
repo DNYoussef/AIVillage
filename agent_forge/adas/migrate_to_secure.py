@@ -18,7 +18,9 @@ import sys
 def backup_original(file_path: Path) -> Path:
     """Create a timestamped backup of the original file."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_path = file_path.parent / f"{file_path.stem}_backup_{timestamp}{file_path.suffix}"
+    backup_path = (
+        file_path.parent / f"{file_path.stem}_backup_{timestamp}{file_path.suffix}"
+    )
     shutil.copy2(file_path, backup_path)
     print(f"✓ Created backup: {backup_path}")
     return backup_path
@@ -30,7 +32,7 @@ def update_imports(root_dir: Path):
     patterns = [
         "from agent_forge.adas.adas import",
         "from .adas import",
-        "import agent_forge.adas.adas"
+        "import agent_forge.adas.adas",
     ]
 
     files_updated = []
@@ -51,15 +53,14 @@ def update_imports(root_dir: Path):
                 # Update imports to use secure version
                 content = content.replace(
                     "from agent_forge.adas.adas import",
-                    "from agent_forge.adas.adas_secure import"
+                    "from agent_forge.adas.adas_secure import",
                 )
                 content = content.replace(
-                    "from .adas import",
-                    "from .adas_secure import"
+                    "from .adas import", "from .adas_secure import"
                 )
                 content = content.replace(
                     "import agent_forge.adas.adas",
-                    "import agent_forge.adas.adas_secure"
+                    "import agent_forge.adas.adas_secure",
                 )
 
                 if content != original_content:
@@ -84,7 +85,7 @@ def run_tests(root_dir: Path) -> bool:
     test_files = [
         root_dir / "tests" / "test_adas_system.py",
         root_dir / "tests" / "test_adas_technique.py",
-        root_dir / "tests" / "test_adas_search.py"
+        root_dir / "tests" / "test_adas_search.py",
     ]
 
     all_passed = True
@@ -94,8 +95,9 @@ def run_tests(root_dir: Path) -> bool:
             print(f"\nRunning {test_file.name}...")
             result = subprocess.run(
                 [sys.executable, "-m", "pytest", str(test_file), "-v"],
-                check=False, capture_output=True,
-                text=True
+                check=False,
+                capture_output=True,
+                text=True,
             )
 
             if result.returncode == 0:

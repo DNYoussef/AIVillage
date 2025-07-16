@@ -19,8 +19,14 @@ class ModelTracker:
         with open(self.tracking_file, "w") as f:
             json.dump(self.models, f, indent=2)
 
-    def add_model(self, model_path: str, parent_models: list[str], merge_techniques: list[str],
-                  config: dict[str, Any], score: float):
+    def add_model(
+        self,
+        model_path: str,
+        parent_models: list[str],
+        merge_techniques: list[str],
+        config: dict[str, Any],
+        score: float,
+    ):
         model_id = os.path.basename(model_path)
         self.models[model_id] = {
             "path": model_path,
@@ -28,7 +34,7 @@ class ModelTracker:
             "merge_techniques": merge_techniques,
             "config": config,
             "score": score,
-            "creation_time": datetime.now().isoformat()
+            "creation_time": datetime.now().isoformat(),
         }
         self._save_tracking_data()
 
@@ -47,5 +53,6 @@ class ModelTracker:
 
     def get_all_models(self) -> dict[str, dict[str, Any]]:
         return self.models
+
 
 model_tracker = ModelTracker()

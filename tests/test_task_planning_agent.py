@@ -38,6 +38,7 @@ class DummyPlanningAgent(TaskPlanningAgent):
     async def activate_latent_space(self, query):
         return "", ""
 
+
 class TestTaskPlanningAgent(unittest.TestCase):
     def setUp(self):
         self.agent = DummyPlanningAgent()
@@ -46,7 +47,7 @@ class TestTaskPlanningAgent(unittest.TestCase):
         intent = {"primary_intent": "Summarize research"}
         concepts = {
             "keywords": ["machine", "learning"],
-            "entities": [{"text": "AI", "label": "TECH"}]
+            "entities": [{"text": "AI", "label": "TECH"}],
         }
         plan = self.agent._generate_task_plan(intent, concepts)
         assert "steps" in plan
@@ -58,6 +59,7 @@ class TestTaskPlanningAgent(unittest.TestCase):
         plan = self.agent._generate_task_plan({}, {})
         assert isinstance(plan["steps"], list)
         assert plan["steps"][0]["parameters"] == []
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -12,13 +12,18 @@ try:
     from .mcp_client import MCPClient
 except Exception:  # pragma: no cover - optional dependencies
     MCPClient = None  # type: ignore
+
     def send_a2a(*args, **kwargs):
         raise RuntimeError("a2a protocol dependencies not installed")
+
+
 try:
     from agents.utils.exceptions import AIVillageException
 except Exception:  # pragma: no cover - fallback if agents package isn't available
+
     class AIVillageException(Exception):
         """Custom exception class for AI Village-specific errors."""
+
 
 class CommunicationProtocol(ABC):
     @abstractmethod
@@ -44,15 +49,23 @@ class CommunicationProtocol(ABC):
         pass
 
     @abstractmethod
-    def subscribe(self, agent_id: str, callback: Callable[[Message], Coroutine[Any, Any, None]]) -> None:
+    def subscribe(
+        self, agent_id: str, callback: Callable[[Message], Coroutine[Any, Any, None]]
+    ) -> None:
         pass
 
+
 class StandardCommunicationProtocol(CommunicationProtocol):
-    def __init__(self, mcp_client: MCPClient | None = None,
-                 certs: dict[str, dict[str, str]] | None = None,
-                 cards: dict[str, dict[str, Any]] | None = None):
+    def __init__(
+        self,
+        mcp_client: MCPClient | None = None,
+        certs: dict[str, dict[str, str]] | None = None,
+        cards: dict[str, dict[str, Any]] | None = None,
+    ):
         self.message_queues: dict[str, MessageQueue] = {}
-        self.subscribers: dict[str, list[Callable[[Message], Coroutine[Any, Any, None]]]] = {}
+        self.subscribers: dict[
+            str, list[Callable[[Message], Coroutine[Any, Any, None]]]
+        ] = {}
         self.message_history: dict[str, list[Message]] = {}
         self.mcp = mcp_client
         self.certs = certs or {}
@@ -142,18 +155,26 @@ class StandardCommunicationProtocol(CommunicationProtocol):
                 for idx, resp in enumerate(queue.get_all_messages()):
                     if resp.parent_id == message.id or resp.id == message.id:
                         # remove specific response from queue
-                        self.message_queues[message.sender]._queues[resp.priority].remove(resp)
+                        self.message_queues[message.sender]._queues[
+                            resp.priority
+                        ].remove(resp)
                         return resp
             await asyncio.sleep(poll_interval)
             elapsed += poll_interval
         raise AIVillageException("Response timeout")
 
-    def subscribe(self, agent_id: str, callback: Callable[[Message], Coroutine[Any, Any, None]]) -> None:
+    def subscribe(
+        self, agent_id: str, callback: Callable[[Message], Coroutine[Any, Any, None]]
+    ) -> None:
         self.subscribers.setdefault(agent_id, []).append(callback)
 
-    def unsubscribe(self, agent_id: str, callback: Callable[[Message], Coroutine[Any, Any, None]]) -> None:
+    def unsubscribe(
+        self, agent_id: str, callback: Callable[[Message], Coroutine[Any, Any, None]]
+    ) -> None:
         if agent_id in self.subscribers:
-            self.subscribers[agent_id] = [cb for cb in self.subscribers[agent_id] if cb != callback]
+            self.subscribers[agent_id] = [
+                cb for cb in self.subscribers[agent_id] if cb != callback
+            ]
             if not self.subscribers[agent_id]:
                 del self.subscribers[agent_id]
 
@@ -174,13 +195,17 @@ class StandardCommunicationProtocol(CommunicationProtocol):
             )
             await self.send_message(msg)
 
-    def get_message_history(self, agent_id: str, message_type: MessageType | None = None) -> list[Message]:
+    def get_message_history(
+        self, agent_id: str, message_type: MessageType | None = None
+    ) -> list[Message]:
         history = self.message_history.get(agent_id, [])
         if message_type is None:
             return list(history)
         return [m for m in history if m.type == message_type]
 
-    async def process_messages(self, handler: Callable[[Message], Coroutine[Any, Any, None]]) -> None:
+    async def process_messages(
+        self, handler: Callable[[Message], Coroutine[Any, Any, None]]
+    ) -> None:
         self._running = True
         while self._running:
             processed = False
@@ -191,4 +216,3 @@ class StandardCommunicationProtocol(CommunicationProtocol):
                     processed = True
             if not processed:
                 await asyncio.sleep(0.01)
-

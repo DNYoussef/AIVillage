@@ -30,5 +30,6 @@ class TestMessageHelpers(unittest.TestCase):
         assert hasattr(MessageType, "SYSTEM_STATUS_UPDATE")
         assert hasattr(MessageType, "CONFIG_UPDATE")
 
+
 if __name__ == "__main__":
     unittest.main()

@@ -11,5 +11,5 @@ __all__ = [
     "UnifiedAgentConfig",
     "UnifiedBaseAgent",
     "create_agent",
-    "main"
+    "main",
 ]

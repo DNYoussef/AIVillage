@@ -14,7 +14,8 @@ class AugmentedAdam(Adam):
         if amplify:
             for group in self.param_groups:
                 for p in group["params"]:
-                    if p.grad is None: continue
+                    if p.grad is None:
+                        continue
                     g = p.grad.data
                     # window buffer
                     if self._grad_window is None:

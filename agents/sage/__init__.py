@@ -15,5 +15,5 @@ __all__ = [
     "ResearchCapabilities",
     "SageAgent",
     "SageAgentConfig",
-    "TaskExecutor"
+    "TaskExecutor",
 ]

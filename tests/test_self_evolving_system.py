@@ -1,7 +1,10 @@
 import importlib.util
 import unittest
 
-if importlib.util.find_spec("numpy") is None or importlib.util.find_spec("torch") is None:
+if (
+    importlib.util.find_spec("numpy") is None
+    or importlib.util.find_spec("torch") is None
+):
     msg = "Required dependency not installed"
     raise unittest.SkipTest(msg)
 
@@ -17,8 +20,12 @@ import types
 
 sys.modules.setdefault("tiktoken", types.ModuleType("tiktoken"))
 fake_load = types.ModuleType("tiktoken.load")
+
+
 def load_tiktoken_bpe(*a, **k):
     return {}
+
+
 fake_load.load_tiktoken_bpe = load_tiktoken_bpe
 sys.modules.setdefault("tiktoken.load", fake_load)
 sys.modules["tiktoken"].Encoding = object
@@ -33,6 +40,7 @@ uba = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(uba)
 SelfEvolvingSystem = uba.SelfEvolvingSystem
 
+
 class DummyAgent:
     def __init__(self):
         self.name = "dummy"
@@ -40,6 +48,7 @@ class DummyAgent:
 
     def add_capability(self, cap: str):
         self.capabilities.append(cap)
+
 
 class TestSelfEvolvingSystem(unittest.IsolatedAsyncioTestCase):
     async def test_evolve_agent(self):
@@ -71,6 +80,7 @@ class TestSelfEvolvingSystem(unittest.IsolatedAsyncioTestCase):
         ses = SelfEvolvingSystem([agent])
         await ses.evolve()
         assert "new" in agent.capabilities
+
 
 if __name__ == "__main__":
     unittest.main()

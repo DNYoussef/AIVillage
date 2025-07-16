@@ -12,13 +12,16 @@ from rag_system.error_handling.error_handler import (
 
 logger = logging.getLogger(__name__)
 
+
 class ResponseGenerationAgent:
     def __init__(self, llm_config: OpenAIGPTConfig):
         self.llm = llm_config.create()
         self.model = None
 
     @error_handler.handle_error
-    async def generate_response(self, input_data: dict[str, Any], user_preferences: dict[str, Any]) -> str:
+    async def generate_response(
+        self, input_data: dict[str, Any], user_preferences: dict[str, Any]
+    ) -> str:
         """Generate a response based on input data and user preferences.
 
         Args:
@@ -32,7 +35,9 @@ class ResponseGenerationAgent:
         response = await self.llm.complete(prompt)
         return self._post_process_response(response.text, user_preferences)
 
-    def _create_response_prompt(self, input_data: dict[str, Any], user_preferences: dict[str, Any]) -> str:
+    def _create_response_prompt(
+        self, input_data: dict[str, Any], user_preferences: dict[str, Any]
+    ) -> str:
         return f"""
         Given the following input data and user preferences, generate an appropriate response:
 
@@ -59,7 +64,9 @@ class ResponseGenerationAgent:
         Generate the response in a natural, conversational style that matches the user's preferences.
         """
 
-    def _post_process_response(self, response: str, user_preferences: dict[str, Any]) -> str:
+    def _post_process_response(
+        self, response: str, user_preferences: dict[str, Any]
+    ) -> str:
         # Implement any post-processing steps here, such as:
         # - Adjusting response length
         # - Adding or removing technical details
@@ -83,7 +90,7 @@ class ResponseGenerationAgent:
             "sad": "😢",
             "important": "❗",
             "idea": "💡",
-            "warning": "⚠️"
+            "warning": "⚠️",
         }
         for word, emoji in emoji_map.items():
             text = text.replace(f" {word} ", f" {word} {emoji} ")
@@ -101,7 +108,9 @@ class ResponseGenerationAgent:
         # self.llm.update_hyperparameters(hyperparameters)
         logger.info("Hyperparameters updated in ResponseGenerationAgent")
 
-    async def generate_multi_format_response(self, input_data: dict[str, Any], user_preferences: dict[str, Any]) -> dict[str, str]:
+    async def generate_multi_format_response(
+        self, input_data: dict[str, Any], user_preferences: dict[str, Any]
+    ) -> dict[str, str]:
         """Generate responses in multiple formats based on input data and user preferences.
 
         Args:
@@ -115,20 +124,29 @@ class ResponseGenerationAgent:
         responses = {}
 
         for format_type in formats:
-            prompt = self._create_multi_format_prompt(input_data, user_preferences, format_type)
+            prompt = self._create_multi_format_prompt(
+                input_data, user_preferences, format_type
+            )
             response = await self.llm.complete(prompt)
-            responses[format_type] = self._post_process_response(response.text, user_preferences)
+            responses[format_type] = self._post_process_response(
+                response.text, user_preferences
+            )
 
         return responses
 
-    def _create_multi_format_prompt(self, input_data: dict[str, Any], user_preferences: dict[str, Any], format_type: str) -> str:
+    def _create_multi_format_prompt(
+        self,
+        input_data: dict[str, Any],
+        user_preferences: dict[str, Any],
+        format_type: str,
+    ) -> str:
         base_prompt = self._create_response_prompt(input_data, user_preferences)
         format_specific_instructions = {
             "text": "Generate a standard text response.",
             "bullet_points": "Generate a response in the form of concise bullet points.",
             "step_by_step": "Generate a response as a series of step-by-step instructions.",
             "eli5": "Generate a response explaining the concept as you would to a 5-year-old.",
-            "technical": "Generate a more technical and detailed response for an expert audience."
+            "technical": "Generate a more technical and detailed response for an expert audience.",
         }
 
         return f"""
@@ -139,7 +157,9 @@ class ResponseGenerationAgent:
         """
 
     @safe_execute
-    async def process_and_respond(self, reasoning_result: dict[str, Any], user_preferences: dict[str, Any]) -> dict[str, Any]:
+    async def process_and_respond(
+        self, reasoning_result: dict[str, Any], user_preferences: dict[str, Any]
+    ) -> dict[str, Any]:
         """Process the reasoning result and generate appropriate responses.
 
         Args:
@@ -149,33 +169,43 @@ class ResponseGenerationAgent:
         Returns:
             Dict[str, Any]: A dictionary containing the generated responses and any additional information.
         """
-        standard_response = await self.generate_response(reasoning_result, user_preferences)
-        multi_format_responses = await self.generate_multi_format_response(reasoning_result, user_preferences)
+        standard_response = await self.generate_response(
+            reasoning_result, user_preferences
+        )
+        multi_format_responses = await self.generate_multi_format_response(
+            reasoning_result, user_preferences
+        )
 
         return {
             "standard_response": standard_response,
             "multi_format_responses": multi_format_responses,
             "input_summary": self._summarize_input(reasoning_result),
-            "response_metadata": self._generate_response_metadata(reasoning_result, user_preferences)
+            "response_metadata": self._generate_response_metadata(
+                reasoning_result, user_preferences
+            ),
         }
 
     def _summarize_input(self, reasoning_result: dict[str, Any]) -> str:
         # Implement logic to create a brief summary of the input reasoning result
         return f"Input based on reasoning about: {reasoning_result.get('main_topic', 'Unspecified topic')}"
 
-    def _generate_response_metadata(self, reasoning_result: dict[str, Any], user_preferences: dict[str, Any]) -> dict[str, Any]:
+    def _generate_response_metadata(
+        self, reasoning_result: dict[str, Any], user_preferences: dict[str, Any]
+    ) -> dict[str, Any]:
         # Generate metadata about the response, which could be useful for analytics or further processing
         return {
             "confidence_level": reasoning_result.get("confidence", 0),
             "response_tone": user_preferences.get("tone", "neutral"),
             "complexity_level": user_preferences.get("complexity", "medium"),
             "source_count": len(reasoning_result.get("sources", [])),
-            "generated_at": self._get_current_timestamp()
+            "generated_at": self._get_current_timestamp(),
         }
 
     def _get_current_timestamp(self) -> str:
         from datetime import datetime
+
         return datetime.now().isoformat()
+
 
 # Example usage
 if __name__ == "__main__":
@@ -190,11 +220,18 @@ if __name__ == "__main__":
             "conclusions": [
                 "Reducing carbon emissions is crucial",
                 "Renewable energy adoption should be accelerated",
-                "Individual actions can contribute significantly"
+                "Individual actions can contribute significantly",
             ],
             "confidence": 0.85,
-            "sources": ["IPCC Report", "Energy Industry Analysis", "Behavioral Studies"],
-            "uncertainties": ["Exact timeline for critical thresholds", "Political willingness to act"]
+            "sources": [
+                "IPCC Report",
+                "Energy Industry Analysis",
+                "Behavioral Studies",
+            ],
+            "uncertainties": [
+                "Exact timeline for critical thresholds",
+                "Political willingness to act",
+            ],
         }
 
         user_preferences = {
@@ -202,10 +239,12 @@ if __name__ == "__main__":
             "complexity": "medium",
             "max_response_length": 500,
             "include_emojis": True,
-            "response_formats": ["text", "bullet_points", "eli5"]
+            "response_formats": ["text", "bullet_points", "eli5"],
         }
 
-        result = await response_agent.process_and_respond(reasoning_result, user_preferences)
+        result = await response_agent.process_and_respond(
+            reasoning_result, user_preferences
+        )
 
         print("Standard Response:")
         print(result["standard_response"])
@@ -217,4 +256,3 @@ if __name__ == "__main__":
         print(json.dumps(result["response_metadata"], indent=2))
 
     asyncio.run(main())
-

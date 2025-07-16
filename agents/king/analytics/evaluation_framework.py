@@ -8,6 +8,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
 class EvaluationFramework:
     def __init__(self, metrics_history_length: int = 1000):
         self.metrics_history_length = metrics_history_length
@@ -19,7 +20,7 @@ class EvaluationFramework:
             "knowledge_integration_rate": deque(maxlen=metrics_history_length),
             "decision_quality": deque(maxlen=metrics_history_length),
             "nlp_accuracy": deque(maxlen=metrics_history_length),
-            "rag_relevance": deque(maxlen=metrics_history_length)
+            "rag_relevance": deque(maxlen=metrics_history_length),
         }
 
     def record_metric(self, metric_name: str, value: float):
@@ -44,7 +45,7 @@ class EvaluationFramework:
         for metric_name in self.metrics:
             report[metric_name] = {
                 "average": self.get_metric_average(metric_name),
-                "trend": self.get_metric_trend(metric_name)
+                "trend": self.get_metric_trend(metric_name),
             }
         return report
 
@@ -67,9 +68,10 @@ class EvaluationFramework:
         plt.close(fig)
         return buf.getvalue()
 
-    async def evaluate_response(self, response: dict[str, Any], user_feedback: dict[str, Any]) -> dict[str, float]:
-        """Evaluate the response based on various metrics.
-        """
+    async def evaluate_response(
+        self, response: dict[str, Any], user_feedback: dict[str, Any]
+    ) -> dict[str, float]:
+        """Evaluate the response based on various metrics."""
         evaluation = {}
 
         # Response time
@@ -85,7 +87,9 @@ class EvaluationFramework:
         evaluation["eudaimonia_score"] = response.get("eudaimonia_score", 0.0)
 
         # Knowledge integration rate (assuming response contains 'new_knowledge_integrated')
-        evaluation["knowledge_integration_rate"] = 1.0 if response.get("new_knowledge_integrated", False) else 0.0
+        evaluation["knowledge_integration_rate"] = (
+            1.0 if response.get("new_knowledge_integrated", False) else 0.0
+        )
 
         # Decision quality (assuming response contains a 'decision_confidence' score)
         evaluation["decision_quality"] = response.get("decision_confidence", 0.0)
@@ -103,8 +107,7 @@ class EvaluationFramework:
         return evaluation
 
     async def analyze_performance(self) -> dict[str, Any]:
-        """Analyze overall performance and provide insights.
-        """
+        """Analyze overall performance and provide insights."""
         report = self.generate_performance_report()
         insights = []
 
@@ -115,36 +118,39 @@ class EvaluationFramework:
                 insights.append(f"{metric_name} is declining and may need attention.")
 
         if report["user_satisfaction"]["average"] < 0.7:
-            insights.append("User satisfaction is below target. Consider reviewing and improving response quality.")
+            insights.append(
+                "User satisfaction is below target. Consider reviewing and improving response quality."
+            )
 
         if report["rag_relevance"]["average"] < 0.8:
-            insights.append("RAG system relevance is below expectations. Consider fine-tuning or expanding the knowledge base.")
+            insights.append(
+                "RAG system relevance is below expectations. Consider fine-tuning or expanding the knowledge base."
+            )
 
         return {
             "report": report,
             "insights": insights,
-            "visualization": self.visualize_metrics()
+            "visualization": self.visualize_metrics(),
         }
 
     def reset_metrics(self):
-        """Reset all metrics to their initial state.
-        """
+        """Reset all metrics to their initial state."""
         for metric in self.metrics:
             self.metrics[metric].clear()
         logger.info("All metrics have been reset.")
 
     async def save_metrics(self, path: str):
-        """Save the current state of metrics to a file.
-        """
+        """Save the current state of metrics to a file."""
         import json
+
         with open(path, "w") as f:
             json.dump({k: list(v) for k, v in self.metrics.items()}, f)
         logger.info(f"Metrics saved to {path}")
 
     async def load_metrics(self, path: str):
-        """Load metrics from a file.
-        """
+        """Load metrics from a file."""
         import json
+
         with open(path) as f:
             loaded_metrics = json.load(f)
         for k, v in loaded_metrics.items():

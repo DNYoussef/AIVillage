@@ -7,4 +7,5 @@ class TaskPlanningAgent(_BaseTaskPlanningAgent):
     def generate_task_plan(self, *args, **kwargs):
         return super().plan_tasks(*args, **kwargs)
 
+
 __all__ = ["TaskPlanningAgent"]

@@ -48,5 +48,5 @@ __all__ = [
     "run_evolutionary_tournament",
     "save_model",
     "setup_gpu_if_available",
-    "setup_logging"
+    "setup_logging",
 ]

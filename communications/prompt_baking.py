@@ -11,7 +11,11 @@ class PromptBank(nn.Module):
     def __init__(self, manifest: dict, tokenizer_name: str, embed_dim: int):
         super().__init__()
         prompt_text = json.dumps(manifest, sort_keys=True, indent=None)
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            tokenizer_name, 
+            revision="main",  # Pin to main branch for security
+            trust_remote_code=False  # Disable remote code execution
+        )
         token_ids = self.tokenizer(prompt_text)["input_ids"]
         self.register_buffer("prompt_ids", torch.tensor(token_ids))
         self.embed = nn.Embedding(len(token_ids), embed_dim)

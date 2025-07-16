@@ -16,6 +16,7 @@ import numpy as np
 # Provide a lightweight faiss stub with serialization support
 fake_faiss = types.ModuleType("faiss")
 
+
 class DummyIndex:
     def __init__(self):
         self.vectors = []
@@ -29,13 +30,16 @@ class DummyIndex:
     def remove_ids(self, x):
         pass
 
+
 fake_faiss.IndexFlatL2 = lambda dim: DummyIndex()
 fake_faiss.serialize_index = lambda idx: json.dumps(idx.vectors).encode()
+
 
 def _deserialize(data: bytes):
     idx = DummyIndex()
     idx.vectors = json.loads(data.decode())
     return idx
+
 
 fake_faiss.deserialize_index = _deserialize
 sys.modules["faiss"] = fake_faiss

@@ -33,7 +33,9 @@ class TestKingAgent(unittest.TestCase):
         self.communication_protocol = StandardCommunicationProtocol()
         self.rag_config = RAGConfig()
         self.vector_store = MagicMock(spec=VectorStore)
-        self.king_agent = KingAgent(self.config, self.communication_protocol, self.vector_store)
+        self.king_agent = KingAgent(
+            self.config, self.communication_protocol, self.vector_store
+        )
 
     @patch("agents.unified_base_agent.DecisionMakingLayer._get_preferences")
     @patch("agents.utils.mcts.MonteCarloTreeSearch.search")
@@ -41,6 +43,7 @@ class TestKingAgent(unittest.TestCase):
         mock_search.return_value = "Option B"
         mock_prefs.return_value = {"Approach X": 0.1, "Approach Y": 0.9}
         dm = self.king_agent.decision_making_layer
+
         async def fake_complete(prompt):
             return type("Resp", (object,), {"text": "final"})
 
@@ -56,10 +59,22 @@ class TestKingAgent(unittest.TestCase):
     @patch("agents.king.task_planning_agent.TaskPlanningAgent.generate_task_plan")
     @patch("agents.king.knowledge_graph_agent.KnowledgeGraphAgent.query_graph")
     @patch("agents.king.reasoning_agent.ReasoningAgent.perform_reasoning")
-    @patch("agents.king.response_generation_agent.ResponseGenerationAgent.generate_response")
-    @patch("agents.king.dynamic_knowledge_integration_agent.DynamicKnowledgeIntegrationAgent.integrate_new_knowledge")
-    async def test_process_user_input(self, mock_integrate, mock_generate_response, mock_reasoning,
-                                      mock_query_graph, mock_task_plan, mock_extract_concepts, mock_interpret_intent):
+    @patch(
+        "agents.king.response_generation_agent.ResponseGenerationAgent.generate_response"
+    )
+    @patch(
+        "agents.king.dynamic_knowledge_integration_agent.DynamicKnowledgeIntegrationAgent.integrate_new_knowledge"
+    )
+    async def test_process_user_input(
+        self,
+        mock_integrate,
+        mock_generate_response,
+        mock_reasoning,
+        mock_query_graph,
+        mock_task_plan,
+        mock_extract_concepts,
+        mock_interpret_intent,
+    ):
         # Set up mock return values
         mock_interpret_intent.return_value = {"primary_intent": "test_intent"}
         mock_extract_concepts.return_value = {"key_concept": "test_concept"}
@@ -90,8 +105,10 @@ class TestKingAgent(unittest.TestCase):
 
     # Add more test methods for other KingAgent functionalities
 
+
 def run_async_test(coro):
     return asyncio.get_event_loop().run_until_complete(coro)
+
 
 if __name__ == "__main__":
     unittest.main()

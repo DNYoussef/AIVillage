@@ -16,9 +16,18 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 fake_faiss = mock.MagicMock()
 fake_faiss.__spec__ = mock.MagicMock()
-with mock.patch.dict("sys.modules", {"faiss": fake_faiss, "requests": requests_stub, "yaml": yaml_stub, "networkx": networkx_stub}):
+with mock.patch.dict(
+    "sys.modules",
+    {
+        "faiss": fake_faiss,
+        "requests": requests_stub,
+        "yaml": yaml_stub,
+        "networkx": networkx_stub,
+    },
+):
     from rag_system.core.pipeline import EnhancedRAGPipeline, shared_bayes_net
     from rag_system.retrieval.graph_store import GraphStore
+
 
 class DummyGraph:
     def __init__(self) -> None:
@@ -30,6 +39,7 @@ class DummyGraph:
 
     def add_edge(self, src: str, dst: str, weight: float = 0.0):
         self.edges[(src, dst)] = {"weight": weight}
+
 
 class TestBayesNetIntegration(unittest.TestCase):
     def test_shared_instance(self):
@@ -60,6 +70,7 @@ class TestGraphStoreSimilarity(unittest.TestCase):
 
         assert ("1", "2") in store.graph.edges
         self.assertAlmostEqual(store.graph.edges[("1", "2")]["weight"], 1.0)
+
 
 if __name__ == "__main__":
     unittest.main()

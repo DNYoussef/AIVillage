@@ -10,6 +10,7 @@ class TaskStatus(Enum):
     COMPLETED = "completed"
     FAILED = "failed"
 
+
 @dataclass(frozen=True)
 class Task:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -30,7 +31,7 @@ class Task:
             result=self.result,
             deadline=self.deadline,
             priority=self.priority,
-            dependencies=self.dependencies
+            dependencies=self.dependencies,
         )
 
     def update_result(self, result: Any) -> "Task":
@@ -42,5 +43,5 @@ class Task:
             result=result,
             deadline=self.deadline,
             priority=self.priority,
-            dependencies=self.dependencies
+            dependencies=self.dependencies,
         )

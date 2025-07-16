@@ -41,7 +41,10 @@ def load_module():
     with mock.patch.dict(sys.modules, modules):
         spec = importlib.util.spec_from_file_location(
             "research_capabilities",
-            Path(__file__).resolve().parents[1] / "agents" / "sage" / "research_capabilities.py",
+            Path(__file__).resolve().parents[1]
+            / "agents"
+            / "sage"
+            / "research_capabilities.py",
         )
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

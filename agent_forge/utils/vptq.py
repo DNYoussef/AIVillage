@@ -8,7 +8,7 @@ class VPTQQuantizer:
         self.hessian = hessian
 
     def train_codebook(self, X: torch.Tensor):
-        centroids = X[torch.randperm(X.size(0))[:self.K]]
+        centroids = X[torch.randperm(X.size(0))[: self.K]]
         for _ in range(20):
             dists = ((X.unsqueeze(1) - centroids) ** 2).sum(-1)
             if self.hessian is not None:

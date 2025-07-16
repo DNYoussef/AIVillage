@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -14,9 +13,17 @@ def plot_fitness_over_generations(fitness_scores: list[float], output_path: str)
     plt.savefig(output_path)
     plt.close()
 
-def plot_pareto_front(scores: list[dict[str, float]], pareto_front_indices: list[int], objectives: list[str], output_path: str):
+
+def plot_pareto_front(
+    scores: list[dict[str, float]],
+    pareto_front_indices: list[int],
+    objectives: list[str],
+    output_path: str,
+):
     if len(objectives) != 2:
-        raise ValueError("Pareto front visualization is only supported for 2 objectives")
+        raise ValueError(
+            "Pareto front visualization is only supported for 2 objectives"
+        )
 
     plt.figure(figsize=(10, 6))
     x = [scores[i][objectives[0]] for i in range(len(scores))]
@@ -34,11 +41,18 @@ def plot_pareto_front(scores: list[dict[str, float]], pareto_front_indices: list
     plt.savefig(output_path)
     plt.close()
 
-def plot_evolution_progress(all_generation_scores: list[list[dict[str, float]]], objectives: list[str], output_path: str):
+
+def plot_evolution_progress(
+    all_generation_scores: list[list[dict[str, float]]],
+    objectives: list[str],
+    output_path: str,
+):
     num_generations = len(all_generation_scores)
     num_objectives = len(objectives)
 
-    fig, axes = plt.subplots(num_objectives, 1, figsize=(10, 5 * num_objectives), sharex=True)
+    fig, axes = plt.subplots(
+        num_objectives, 1, figsize=(10, 5 * num_objectives), sharex=True
+    )
     if num_objectives == 1:
         axes = [axes]
 
@@ -62,6 +76,7 @@ def plot_evolution_progress(all_generation_scores: list[list[dict[str, float]]],
     plt.tight_layout()
     plt.savefig(output_path)
     plt.close()
+
 
 def generate_html_report(benchmark_results, output_path):
     html_content = """
@@ -90,12 +105,12 @@ def generate_html_report(benchmark_results, output_path):
     for result in benchmark_results:
         html_content += f"""
             <tr>
-                <td>{result['model']}</td>
-                <td>{result['score']:.4f}</td>
-                <td>{result['time']:.2f}</td>
-                <td>{result['memory']:.2f}</td>
-                <td>{', '.join(result['merge_techniques'])}</td>
-                <td>{result['weight_mask_rate']:.2f}</td>
+                <td>{result["model"]}</td>
+                <td>{result["score"]:.4f}</td>
+                <td>{result["time"]:.2f}</td>
+                <td>{result["memory"]:.2f}</td>
+                <td>{", ".join(result["merge_techniques"])}</td>
+                <td>{result["weight_mask_rate"]:.2f}</td>
             </tr>
         """
 
@@ -107,6 +122,7 @@ def generate_html_report(benchmark_results, output_path):
 
     with open(output_path, "w") as f:
         f.write(html_content)
+
 
 def plot_benchmark_comparison(benchmark_results, output_path):
     df = pd.DataFrame(benchmark_results)
@@ -121,6 +137,7 @@ def plot_benchmark_comparison(benchmark_results, output_path):
     plt.savefig(output_path)
     plt.close()
 
+
 def plot_merge_technique_comparison(benchmark_results, output_path):
     df = pd.DataFrame(benchmark_results)
     df["merge_techniques"] = df["merge_techniques"].apply(lambda x: ", ".join(x))
@@ -134,6 +151,7 @@ def plot_merge_technique_comparison(benchmark_results, output_path):
     plt.tight_layout()
     plt.savefig(output_path)
     plt.close()
+
 
 def plot_weight_mask_rate_effect(benchmark_results, output_path):
     df = pd.DataFrame(benchmark_results)

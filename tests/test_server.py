@@ -29,17 +29,21 @@ with patch.dict(sys.modules, {"faiss": fake_faiss, "torch": fake_torch}):
 class TestServer(unittest.TestCase):
     def test_query_and_upload(self):
         async_mock_response = {"answer": "ok"}
+
         class DummyIndex:
             def add(self, x):
                 pass
+
             def search(self, x, k):
                 return (np.zeros((1, k), dtype="float32"), np.zeros((1, k), dtype=int))
+
             def remove_ids(self, x):
                 pass
 
         class DummyEmbeddingModel:
             def __init__(self, size=8) -> None:
                 self.hidden_size = size
+
             def encode(self, text: str):
                 rng = np.random.default_rng(abs(hash(text)) % (2**32))
                 return [], rng.random(self.hidden_size).astype("float32")
@@ -55,10 +59,15 @@ class TestServer(unittest.TestCase):
                     _, embedding = self.embedding_model.encode(text)
                     self.documents.append({"text": text, "embedding": embedding})
 
-        with patch.object(server.rag_pipeline, "initialize", AsyncMock()) as mock_init, \
-             patch.object(server.rag_pipeline, "shutdown", AsyncMock()) as mock_shutdown, \
-             patch.object(server.rag_pipeline, "process", AsyncMock(return_value=async_mock_response)):
-
+        with (
+            patch.object(server.rag_pipeline, "initialize", AsyncMock()) as mock_init,
+            patch.object(server.rag_pipeline, "shutdown", AsyncMock()) as mock_shutdown,
+            patch.object(
+                server.rag_pipeline,
+                "process",
+                AsyncMock(return_value=async_mock_response),
+            ),
+        ):
             # Replace vector store with dummy implementation
             dummy_vector_store = DummyVectorStore()
             server.vector_store = dummy_vector_store
@@ -69,7 +78,9 @@ class TestServer(unittest.TestCase):
                 resp1 = await server.upload_endpoint(file)
                 file = UploadFile(filename="test.txt", file=BytesIO(b"hello"))
                 resp2 = await server.upload_endpoint(file)
-                query_resp = await server.query_endpoint(server.SecureQueryRequest(query="hi"))
+                query_resp = await server.query_endpoint(
+                    server.SecureQueryRequest(query="hi")
+                )
                 await server.shutdown_event()
                 return resp1, resp2, query_resp
 

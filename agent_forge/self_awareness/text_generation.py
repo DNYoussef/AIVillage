@@ -9,7 +9,9 @@ class TextGenerationTask(Task):
         self.rag_system = rag_system
         self.NUM_TEXTS_PER_RANGE = 1000  # This can be adjusted as needed
 
-    async def generate_texts(self, temp_range: tuple[float, float], complexity: int, curriculum_level: int) -> list[str]:
+    async def generate_texts(
+        self, temp_range: tuple[float, float], complexity: int, curriculum_level: int
+    ) -> list[str]:
         texts = []
         for _ in range(self.NUM_TEXTS_PER_RANGE):
             temperature = random.uniform(*temp_range)
@@ -56,8 +58,11 @@ class TextGenerationTask(Task):
             return "Analyze your own reasoning process, identifying potential biases or limitations in your approach."
         return "Engage in deep self-reflection, evaluating your cognitive strategies, considering alternative approaches, and proposing improvements to your own thought processes."
 
-    async def run(self, temp_range: tuple[float, float], complexity: int, curriculum_level: int) -> list[str]:
+    async def run(
+        self, temp_range: tuple[float, float], complexity: int, curriculum_level: int
+    ) -> list[str]:
         return await self.generate_texts(temp_range, complexity, curriculum_level)
+
 
 # Usage example
 if __name__ == "__main__":

@@ -15,6 +15,7 @@ from ...utils.monitoring_and_adjustment import MonitoringAndAdjustment
 
 logger = logging.getLogger(__name__)
 
+
 class King:
     def __init__(self):
         self.communication_protocol = StandardCommunicationProtocol()
@@ -51,13 +52,15 @@ class King:
                     suitable_agent = await self.community_hub.request_collaboration(
                         requester_id="King",
                         task_id=task["id"],
-                        required_capabilities=task["required_capabilities"]
+                        required_capabilities=task["required_capabilities"],
                     )
                     if suitable_agent:
                         await self.community_hub.assign_task(task["id"], suitable_agent)
                         self.progress_tracker.start_task(suitable_agent, task["id"])
                     else:
-                        new_agent = await self.create_new_agent(task["required_capabilities"])
+                        new_agent = await self.create_new_agent(
+                            task["required_capabilities"]
+                        )
                         await self.community_hub.assign_task(task["id"], new_agent)
                         self.progress_tracker.start_task(new_agent, task["id"])
         except Exception as e:
@@ -67,7 +70,9 @@ class King:
     async def update_project_status(self, project_id: str):
         try:
             project_status = self.progress_tracker.get_project_status(project_id)
-            await self.community_hub.update_project_status(project_id, project_status["status"], project_status["progress"])
+            await self.community_hub.update_project_status(
+                project_id, project_status["status"], project_status["progress"]
+            )
         except Exception as e:
             logger.error(f"Error in update_project_status: {e!s}")
             raise AIVillageException(f"Error updating project status: {e!s}") from e
@@ -82,15 +87,21 @@ class King:
                     await self.implement_adjustments(project_id, adjustments)
         except Exception as e:
             logger.error(f"Error in monitor_and_adjust_projects: {e!s}")
-            raise AIVillageException(f"Error monitoring and adjusting projects: {e!s}") from e
+            raise AIVillageException(
+                f"Error monitoring and adjusting projects: {e!s}"
+            ) from e
 
     async def implement_adjustments(self, project_id: str, adjustments: list):
         try:
             for adjustment in adjustments:
                 if adjustment["type"] == "reassign_task":
-                    await self.community_hub.reassign_task(adjustment["task_id"], adjustment["new_agent"])
+                    await self.community_hub.reassign_task(
+                        adjustment["task_id"], adjustment["new_agent"]
+                    )
                 elif adjustment["type"] == "add_resources":
-                    await self.community_hub.add_resources_to_project(project_id, adjustment["resources"])
+                    await self.community_hub.add_resources_to_project(
+                        project_id, adjustment["resources"]
+                    )
                 # Implement other types of adjustments as needed
         except Exception as e:
             logger.error(f"Error in implement_adjustments: {e!s}")
@@ -108,12 +119,12 @@ class King:
                 rag_config=rag_config,
                 vector_store=vector_store,
                 model="gpt-4",
-                instructions="You are a dynamically created agent."
+                instructions="You are a dynamically created agent.",
             )
             agent = UnifiedBaseAgent(config, self.communication_protocol)
             self.community_hub.agents[agent_name] = {
                 "capabilities": required_capabilities,
-                "tasks": []
+                "tasks": [],
             }
             return agent_name
         except Exception as e:
@@ -127,7 +138,9 @@ class King:
 
             if result.get("needs_analysis", False):
                 analysis = await self.sage.analyze_problem(result["content"])
-                await self.community_hub.update_project_data(task_id, {"analysis": analysis})
+                await self.community_hub.update_project_data(
+                    task_id, {"analysis": analysis}
+                )
         except Exception as e:
             logger.error(f"Error in handle_task_result: {e!s}")
             raise AIVillageException(f"Error handling task result: {e!s}") from e

@@ -3,7 +3,13 @@ from rag_system.confidence import assign_tier, score_evidence
 
 
 def _make(scores):
-    return EvidencePack(query="q", chunks=[Chunk(id=str(i), text="t", score=s, source_uri="https://e.com") for i, s in enumerate(scores)])
+    return EvidencePack(
+        query="q",
+        chunks=[
+            Chunk(id=str(i), text="t", score=s, source_uri="https://e.com")
+            for i, s in enumerate(scores)
+        ],
+    )
 
 
 def test_score_high():

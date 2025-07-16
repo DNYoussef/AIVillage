@@ -10,8 +10,11 @@ from rag_system.core.config import UnifiedConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 async def run_demo():
     try:
@@ -23,7 +26,11 @@ async def run_demo():
 
         # Create KingAgent
         logger.info("Creating KingAgent...")
-        config = KingAgentConfig(name="KingAgent", description="Main coordinator for AI Village", model="gpt-4")
+        config = KingAgentConfig(
+            name="KingAgent",
+            description="Main coordinator for AI Village",
+            model="gpt-4",
+        )
         king_agent = KingAgent(config, communication_protocol, rag_system)
 
         # Create and register other agents
@@ -36,9 +43,28 @@ async def run_demo():
 
         # Example tasks
         tasks = [
-            Message(type=MessageType.TASK, sender="User", receiver="KingAgent", content={"description": "Analyze the impact of AI on job markets"}),
-            Message(type=MessageType.TASK, sender="User", receiver="KingAgent", content={"description": "Develop a simple machine learning model for sentiment analysis"}),
-            Message(type=MessageType.TASK, sender="User", receiver="KingAgent", content={"description": "Summarize recent advancements in quantum computing"}),
+            Message(
+                type=MessageType.TASK,
+                sender="User",
+                receiver="KingAgent",
+                content={"description": "Analyze the impact of AI on job markets"},
+            ),
+            Message(
+                type=MessageType.TASK,
+                sender="User",
+                receiver="KingAgent",
+                content={
+                    "description": "Develop a simple machine learning model for sentiment analysis"
+                },
+            ),
+            Message(
+                type=MessageType.TASK,
+                sender="User",
+                receiver="KingAgent",
+                content={
+                    "description": "Summarize recent advancements in quantum computing"
+                },
+            ),
         ]
 
         # Process tasks
@@ -63,6 +89,7 @@ async def run_demo():
 
     except Exception as e:
         logger.exception(f"Fatal error in run_demo: {e!s}")
+
 
 if __name__ == "__main__":
     try:

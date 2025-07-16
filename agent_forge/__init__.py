@@ -16,11 +16,14 @@ __all__ = [
     "expert_vectors",
 ]
 
+
 class AgentForge:
     def __init__(self, model_name="gpt2"):
         config = evomerge.create_default_config()
         self.evolution_tournament = evomerge.EvolutionaryTournament(config)
-        self.training_task = TrainingTask(None)  # Note: We're passing None as the agent, you might need to adjust this
+        self.training_task = TrainingTask(
+            None
+        )  # Note: We're passing None as the agent, you might need to adjust this
         self.prompt_baker = tool_baking.RAGPromptBaker(model_name)
         # Optional: instantiate ADASProcess if the dependencies are installed.
         # self.adas_process = adas.ADASProcess()
@@ -48,6 +51,7 @@ class AgentForge:
         # self.run_adas_process()
         print("Agent Forge process completed.")
         return best_model
+
 
 # Don't create an instance here, let it be created when needed
 # agent_forge = AgentForge()

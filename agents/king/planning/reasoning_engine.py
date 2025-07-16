@@ -7,6 +7,7 @@ from agents.utils.exceptions import AIVillageException
 
 logger = logging.getLogger(__name__)
 
+
 class ReasoningEngine:
     def __init__(self):
         self.model = None
@@ -22,11 +23,11 @@ class ReasoningEngine:
             # Perform reasoning based on the decision and RAG information
             reasoning_prompt = f"""
             Given the following decision and information:
-            Decision: {decision['decision']}
-            Best Alternative: {decision['best_alternative']}
+            Decision: {decision["decision"]}
+            Best Alternative: {decision["best_alternative"]}
             RAG Information: {rag_info}
-            Eudaimonia Score: {decision['eudaimonia_score']}
-            Rule Compliance: {decision['rule_compliance']}
+            Eudaimonia Score: {decision["eudaimonia_score"]}
+            Rule Compliance: {decision["rule_compliance"]}
 
             Please provide a comprehensive analysis and reasoning about this decision:
             1. Evaluate the potential consequences of the decision
@@ -43,26 +44,35 @@ class ReasoningEngine:
             reasoning_result = response.text  # Assuming this returns a JSON string
 
             # Perform a quality check on the reasoning
-            task_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(reasoning_result)
-            eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(task_vector)
-            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(task_vector)
+            task_vector = (
+                self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(
+                    reasoning_result
+                )
+            )
+            eudaimonia_score = (
+                self.quality_assurance_layer.eudaimonia_triangulator.triangulate(
+                    task_vector
+                )
+            )
+            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(
+                task_vector
+            )
 
             quality_check = {
                 "eudaimonia_score": eudaimonia_score,
-                "rule_compliance": rule_compliance
+                "rule_compliance": rule_compliance,
             }
 
             return {
                 "original_decision": decision,
                 "rag_info": rag_info,
                 "reasoning_result": reasoning_result,
-                "quality_check": quality_check
+                "quality_check": quality_check,
             }
 
         except Exception as e:
             logger.error(f"Error in analyze_and_reason: {e!s}", exc_info=True)
             raise AIVillageException(f"Error in analyze_and_reason: {e!s}")
-
 
     async def update_model(self, new_model: nn.Module):
         self.model = new_model
@@ -76,5 +86,5 @@ class ReasoningEngine:
         return {
             "type": "ReasoningEngine",
             "model_type": str(type(self.model)) if self.model else "None",
-            "hyperparameters": self.hyperparameters
+            "hyperparameters": self.hyperparameters,
         }

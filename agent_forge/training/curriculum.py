@@ -29,24 +29,18 @@ class CurriculumGenerator:
     def __init__(self, frontier_model: str, domain: str):
         self.domain = domain
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.frontier_model = AutoModelForCausalLM.from_pretrained(
-            frontier_model
-        ).to(self.device)
+        self.frontier_model = AutoModelForCausalLM.from_pretrained(frontier_model).to(
+            self.device
+        )
         self.tokenizer = AutoTokenizer.from_pretrained(frontier_model)
 
     def _generate(self, prompt: str, max_length: int = 200) -> str:
-        input_ids = self.tokenizer.encode(prompt, return_tensors="pt").to(
-            self.device
-        )
+        input_ids = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
-            output = self.frontier_model.generate(
-                input_ids, max_length=max_length
-            )
+            output = self.frontier_model.generate(input_ids, max_length=max_length)
         return self.tokenizer.decode(output[0], skip_special_tokens=True)
 
-    def create_assessment_questions(
-        self, num_questions: int = 1000
-    ) -> list[Question]:
+    def create_assessment_questions(self, num_questions: int = 1000) -> list[Question]:
         questions = []
         for level in range(1, num_questions + 1):
             prompt = (
@@ -60,9 +54,7 @@ class CurriculumGenerator:
                 q, a = text.split("Answer:", 1)
             else:
                 q, a = text, ""
-            questions.append(
-                Question(q.strip(), a.strip(), level, self.domain)
-            )
+            questions.append(Question(q.strip(), a.strip(), level, self.domain))
         return questions
 
     def find_model_baseline(self, model, questions: list[Question]) -> int:

@@ -12,6 +12,7 @@ class MCTSNode:
         self.visits = 0
         self.value = 0
 
+
 class MCTS:
     def __init__(self, exploration_weight=1.0, max_depth=10):
         self.exploration_weight = exploration_weight
@@ -47,7 +48,9 @@ class MCTS:
         if problem_analyzer:
             new_states = await problem_analyzer.generate_possible_states(node.state)
         else:
-            new_states = [node.state]  # Placeholder for when problem_analyzer is not provided
+            new_states = [
+                node.state
+            ]  # Placeholder for when problem_analyzer is not provided
         for state in new_states:
             if state not in [child.state for child in node.children]:
                 new_node = MCTSNode(state, parent=node)
@@ -70,8 +73,9 @@ class MCTS:
         log_n_visits = math.log(self.stats[node.state]["visits"])
         return max(
             node.children,
-            key=lambda c: (self.stats[c.state]["value"] / self.stats[c.state]["visits"]) +
-                self.exploration_weight * math.sqrt(log_n_visits / self.stats[c.state]["visits"])
+            key=lambda c: (self.stats[c.state]["value"] / self.stats[c.state]["visits"])
+            + self.exploration_weight
+            * math.sqrt(log_n_visits / self.stats[c.state]["visits"]),
         )
 
     def best_child(self, node):
@@ -83,11 +87,17 @@ class MCTS:
         self.stats[task]["value"] += result
 
     async def prune(self, node, threshold):
-        node.children = [child for child in node.children if self.stats[child.state]["visits"] > threshold]
+        node.children = [
+            child
+            for child in node.children
+            if self.stats[child.state]["visits"] > threshold
+        ]
         for child in node.children:
             await self.prune(child, threshold)
 
-    async def parallel_search(self, task, problem_analyzer, plan_generator, iterations=1000, num_workers=4):
+    async def parallel_search(
+        self, task, problem_analyzer, plan_generator, iterations=1000, num_workers=4
+    ):
         root = MCTSNode(task)
         semaphore = asyncio.Semaphore(num_workers)
 

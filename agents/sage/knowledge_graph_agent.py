@@ -15,6 +15,7 @@ from rag_system.error_handling.error_handler import (
 
 logger = logging.getLogger(__name__)
 
+
 class KnowledgeGraphAgent:
     def __init__(self, llm_config: OpenAIGPTConfig):
         self.llm = llm_config.create()
@@ -106,13 +107,17 @@ class KnowledgeGraphAgent:
                 self.graph.add_node(node["id"], **node.get("attributes", {}))
 
             for edge in update_instructions.get("add_edges", []):
-                self.graph.add_edge(edge["source"], edge["target"], **edge.get("attributes", {}))
+                self.graph.add_edge(
+                    edge["source"], edge["target"], **edge.get("attributes", {})
+                )
 
             for node in update_instructions.get("modify_nodes", []):
                 self.graph.nodes[node["id"]].update(node.get("attributes", {}))
 
             for edge in update_instructions.get("modify_edges", []):
-                self.graph[edge["source"]][edge["target"]].update(edge.get("attributes", {}))
+                self.graph[edge["source"]][edge["target"]].update(
+                    edge.get("attributes", {})
+                )
 
             for node in update_instructions.get("remove_nodes", []):
                 self.graph.remove_node(node)
@@ -169,7 +174,12 @@ class KnowledgeGraphAgent:
         return nx.to_dict_of_dicts(self.graph)
 
     @safe_execute
-    async def process_input(self, query: str, new_information: dict[str, Any], reasoning_context: dict[str, Any]) -> dict[str, Any]:
+    async def process_input(
+        self,
+        query: str,
+        new_information: dict[str, Any],
+        reasoning_context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Process input by querying the graph, updating it with new information, and performing reasoning.
 
         Args:
@@ -188,10 +198,14 @@ class KnowledgeGraphAgent:
             "query_result": query_result,
             "update_success": update_success,
             "reasoning_result": reasoning_result,
-            "graph_structure": self._get_graph_structure()
+            "graph_structure": self._get_graph_structure(),
         }
 
-    def visualize_graph(self, highlight_nodes: list[str] = None, highlight_edges: list[tuple[str, str]] = None) -> bytes:
+    def visualize_graph(
+        self,
+        highlight_nodes: list[str] = None,
+        highlight_edges: list[tuple[str, str]] = None,
+    ) -> bytes:
         """Visualize the knowledge graph and return the image as bytes.
 
         Args:
@@ -211,10 +225,18 @@ class KnowledgeGraphAgent:
 
         # Highlight specific nodes and edges if provided
         if highlight_nodes:
-            nx.draw_networkx_nodes(self.graph, pos, nodelist=highlight_nodes, node_color="red", node_size=1200)
+            nx.draw_networkx_nodes(
+                self.graph,
+                pos,
+                nodelist=highlight_nodes,
+                node_color="red",
+                node_size=1200,
+            )
 
         if highlight_edges:
-            nx.draw_networkx_edges(self.graph, pos, edgelist=highlight_edges, edge_color="red", width=2)
+            nx.draw_networkx_edges(
+                self.graph, pos, edgelist=highlight_edges, edge_color="red", width=2
+            )
 
         # Add edge labels
         edge_labels = nx.get_edge_attributes(self.graph, "relationship")
@@ -227,6 +249,7 @@ class KnowledgeGraphAgent:
         plt.close()
 
         return buf.getvalue()
+
 
 # Example usage
 if __name__ == "__main__":
@@ -246,7 +269,9 @@ if __name__ == "__main__":
         query = "Find all people who work for CompanyX"
         new_information = {
             "nodes": [{"id": "Charlie", "type": "Person"}],
-            "edges": [{"source": "Charlie", "target": "CompanyX", "relationship": "works_for"}]
+            "edges": [
+                {"source": "Charlie", "target": "CompanyX", "relationship": "works_for"}
+            ],
         }
         reasoning_context = {"focus": "employee relationships"}
 
@@ -259,7 +284,9 @@ if __name__ == "__main__":
         print(result["reasoning_result"])
 
         # Visualize the updated graph
-        graph_image = kg_agent.visualize_graph(highlight_nodes=["Charlie"], highlight_edges=[("Charlie", "CompanyX")])
+        graph_image = kg_agent.visualize_graph(
+            highlight_nodes=["Charlie"], highlight_edges=[("Charlie", "CompanyX")]
+        )
         with open("knowledge_graph.png", "wb") as f:
             f.write(graph_image)
         print("\nKnowledge graph visualization saved as 'knowledge_graph.png'")

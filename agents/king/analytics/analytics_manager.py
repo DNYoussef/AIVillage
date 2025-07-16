@@ -13,6 +13,7 @@ from .base_analytics import BaseAnalytics
 
 logger = logging.getLogger(__name__)
 
+
 class AnalyticsManager(BaseAnalytics):
     def __init__(self):
         super().__init__()
@@ -20,7 +21,9 @@ class AnalyticsManager(BaseAnalytics):
         self.system_efficiency_metrics = []
 
     @error_handler.handle_error
-    def record_task_completion(self, task_id: str, completion_time: float, success: bool):
+    def record_task_completion(
+        self, task_id: str, completion_time: float, success: bool
+    ):
         self.record_metric("task_completion_time", completion_time)
 
         task_type = task_id.split("_")[0]  # Assuming task_id format is "type_uuid"
@@ -38,7 +41,10 @@ class AnalyticsManager(BaseAnalytics):
 
     @error_handler.handle_error
     def generate_task_success_rate_plot(self) -> str:
-        success_rates = {task_type: sum(rates) / len(rates) for task_type, rates in self.task_success_rates.items()}
+        success_rates = {
+            task_type: sum(rates) / len(rates)
+            for task_type, rates in self.task_success_rates.items()
+        }
         plt.figure(figsize=(10, 6))
         plt.bar(success_rates.keys(), success_rates.values())
         plt.title("Task Success Rates by Type")
@@ -52,7 +58,10 @@ class AnalyticsManager(BaseAnalytics):
     @error_handler.handle_error
     def generate_system_efficiency_plot(self) -> str:
         metrics = list(self.system_efficiency_metrics[0].keys())
-        data = {metric: [entry[metric] for entry in self.system_efficiency_metrics] for metric in metrics}
+        data = {
+            metric: [entry[metric] for entry in self.system_efficiency_metrics]
+            for metric in metrics
+        }
 
         plt.figure(figsize=(12, 6))
         for metric, values in data.items():
@@ -73,10 +82,21 @@ class AnalyticsManager(BaseAnalytics):
             "agent_performance_plot": self.generate_agent_performance_plot(),
             "task_success_rate_plot": self.generate_task_success_rate_plot(),
             "system_efficiency_plot": self.generate_system_efficiency_plot(),
-            "average_task_completion_time": sum(self.task_completion_times) / len(self.task_completion_times) if self.task_completion_times else 0,
+            "average_task_completion_time": sum(self.task_completion_times)
+            / len(self.task_completion_times)
+            if self.task_completion_times
+            else 0,
             "total_tasks_completed": len(self.task_completion_times),
-            "average_agent_performance": {agent: sum(performances) / len(performances) for agent, performances in self.agent_performance_history.items()},
-            "overall_task_success_rate": sum(sum(rates) for rates in self.task_success_rates.values()) / sum(len(rates) for rates in self.task_success_rates.values()) if self.task_success_rates else 0,
+            "average_agent_performance": {
+                agent: sum(performances) / len(performances)
+                for agent, performances in self.agent_performance_history.items()
+            },
+            "overall_task_success_rate": sum(
+                sum(rates) for rates in self.task_success_rates.values()
+            )
+            / sum(len(rates) for rates in self.task_success_rates.values())
+            if self.task_success_rates
+            else 0,
         }
 
     @safe_execute

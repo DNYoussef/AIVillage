@@ -25,13 +25,17 @@ from rag_system.retrieval.vector_store import VectorStore
 class TestStoreCounts(unittest.IsolatedAsyncioTestCase):
     async def test_vector_store_get_count(self):
         store = VectorStore()
+
         class DummyIndex:
             def add(self, x):
                 pass
+
             def search(self, x, k):
                 return (np.zeros((1, k), dtype="float32"), np.zeros((1, k), dtype=int))
+
             def remove_ids(self, x):
                 pass
+
         store.index = DummyIndex()
         docs = [
             {
@@ -60,6 +64,7 @@ class TestStoreCounts(unittest.IsolatedAsyncioTestCase):
         store.add_documents(docs)
         count = await store.get_count()
         assert count == 2
+
 
 if __name__ == "__main__":
     unittest.main()

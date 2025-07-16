@@ -5,6 +5,7 @@ import unittest
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+
 class TestKingAgentBasic(unittest.TestCase):
     """Basic tests for King agent without heavy dependencies."""
 
@@ -27,7 +28,7 @@ class TestKingAgentBasic(unittest.TestCase):
                 type=MessageType.TASK,
                 sender="test_sender",
                 receiver="test_receiver",
-                content={"test": "data"}
+                content={"test": "data"},
             )
 
             assert protocol is not None
@@ -44,10 +45,7 @@ class TestKingAgentBasic(unittest.TestCase):
         try:
             from agents.unified_base_agent import UnifiedAgentConfig
 
-            config = UnifiedAgentConfig(
-                name="test_agent",
-                max_turns=10
-            )
+            config = UnifiedAgentConfig(name="test_agent", max_turns=10)
 
             assert config.name == "test_agent"
             assert config.max_turns == 10
@@ -73,11 +71,12 @@ class TestKingAgentBasic(unittest.TestCase):
                 type=MessageType.TASK,
                 sender="test_agent",
                 receiver="king_agent",
-                content={"action": "test", "params": {"key": "value"}}
+                content={"action": "test", "params": {"key": "value"}},
             )
 
             # Test message handling (async)
             import asyncio
+
             asyncio.run(protocol.send_message(task_message))
 
             # Check that message was added to history for both sender and receiver
@@ -109,12 +108,16 @@ class TestKingAgentBasic(unittest.TestCase):
             assert runner is not None
 
             # Test validation
-            technique = AgentTechnique(technique_name="test", code="def run(m,w,p): return 0.5")
+            technique = AgentTechnique(
+                technique_name="test", code="def run(m,w,p): return 0.5"
+            )
             is_valid = technique.validate_code("def run(m,w,p): return 0.5")
             assert is_valid
 
             # Test dangerous code rejection
-            is_dangerous = technique.validate_code("def run(m,w,p): eval('dangerous'); return 0.5")
+            is_dangerous = technique.validate_code(
+                "def run(m,w,p): eval('dangerous'); return 0.5"
+            )
             assert not is_dangerous
 
             print("✅ Security features operational")

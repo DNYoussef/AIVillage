@@ -24,14 +24,18 @@ class TestSnapshot(unittest.TestCase):
         import importlib as il
 
         import agent_forge.geometry.snapshot as snap
+
         orig_import = builtins.__import__
+
         def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
             if name == "twonn":
                 raise ImportError
             return orig_import(name, globals, locals, fromlist, level)
+
         with unittest.mock.patch("builtins.__import__", side_effect=fake_import):
             snap = il.reload(snap)
             assert "id_twonn" in snap.twonn.__module__
+
 
 if __name__ == "__main__":
     unittest.main()

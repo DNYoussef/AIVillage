@@ -146,31 +146,26 @@ class UnifiedBaseAgent:
     # Implement AgentInterface methods
 
     async def generate(self, prompt: str) -> str:
-        """Generate a response using the agent's language model.
-        """
+        """Generate a response using the agent's language model."""
         response = await self.llm.complete(prompt)
         return response.text
 
     async def get_embedding(self, text: str) -> list[float]:
-        """Get the embedding for the given text.
-        """
+        """Get the embedding for the given text."""
         return await self.rag_pipeline.get_embedding(text)
 
     async def rerank(
         self, query: str, results: list[dict[str, Any]], k: int
     ) -> list[dict[str, Any]]:
-        """Rerank the given results based on the query.
-        """
+        """Rerank the given results based on the query."""
         return await self.rag_pipeline.rerank(query, results, k)
 
     async def introspect(self) -> dict[str, Any]:
-        """Return the agent's internal state.
-        """
+        """Return the agent's internal state."""
         return self.info
 
     async def communicate(self, message: str, recipient: str) -> str:
-        """Communicate with another agent using the communication protocol.
-        """
+        """Communicate with another agent using the communication protocol."""
         query_message = Message(
             type=MessageType.QUERY,
             sender=self.name,
@@ -184,8 +179,7 @@ class UnifiedBaseAgent:
         return f"Sent: {message}, Received: {response}"
 
     async def activate_latent_space(self, query: str) -> tuple[str, str]:
-        """Activate the agent's latent space for the given query.
-        """
+        """Activate the agent's latent space for the given query."""
         activation_prompt = f"""
         Given the following query, provide:
         1. All relevant background knowledge you have about the topic.
@@ -206,19 +200,16 @@ class UnifiedBaseAgent:
         return background_knowledge, refined_query
 
     async def query_rag(self, query: str) -> dict[str, Any]:
-        """Submit a query to the RAG system and receive a structured response.
-        """
+        """Submit a query to the RAG system and receive a structured response."""
         result = await self.rag_pipeline.process_query(query)
         return result
 
     async def add_document(self, content: str, filename: str):
-        """Add a new document to the RAG system.
-        """
+        """Add a new document to the RAG system."""
         await self.rag_pipeline.add_document(content, filename)
 
     def create_handoff(self, target_agent: "UnifiedBaseAgent"):
-        """Create a handoff function to transfer control to another agent.
-        """
+        """Create a handoff function to transfer control to another agent."""
 
         def handoff():
             return target_agent
@@ -226,8 +217,7 @@ class UnifiedBaseAgent:
         self.add_tool(f"transfer_to_{target_agent.name}", handoff)
 
     async def update_instructions(self, new_instructions: str):
-        """Update the agent's instructions dynamically.
-        """
+        """Update the agent's instructions dynamically."""
         self.instructions = new_instructions
         # Optionally, you could add logic here to re-initialize the agent with the new instructions
         # For example, updating the language model's system message
@@ -445,7 +435,7 @@ class DecisionMakingLayer:
         prompt = f"""
         Task: {task.content}
         Context: {context}
-        Options: {', '.join(options)}
+        Options: {", ".join(options)}
         Assign a preference score (0-1) to each option based on its suitability for the task and context.
         """
         response = await self.llm.complete(prompt)

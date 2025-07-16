@@ -9,8 +9,14 @@ import unittest
 class MockSecureCodeRunner:
     """Mock version of SecureCodeRunner for testing."""
 
-    def run_code_sandbox(self, code: str, model_path: str, params: dict,
-                        timeout: int = 30, memory_limit_mb: int = 512) -> float:
+    def run_code_sandbox(
+        self,
+        code: str,
+        model_path: str,
+        params: dict,
+        timeout: int = 30,
+        memory_limit_mb: int = 512,
+    ) -> float:
         """Simulate secure code execution."""
         # For testing, we'll just check if the code is valid
         try:
@@ -28,6 +34,7 @@ class MockSecureCodeRunner:
             if "return" in code:
                 # Extract return value if it's a simple number (including negative)
                 import re
+
                 match = re.search(r"return\s+([-\d.]+)", code)
                 if match:
                     try:
@@ -140,9 +147,10 @@ if __name__ == "__main__":
             # Test subprocess execution
             result = subprocess.run(
                 [sys.executable, script_path],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             assert result.returncode == 0

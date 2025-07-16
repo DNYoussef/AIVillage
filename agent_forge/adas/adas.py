@@ -10,6 +10,7 @@ import tempfile
 # Windows compatibility for resource limits
 try:
     import resource
+
     HAS_RESOURCE = True
 except ImportError:
     # Windows doesn't have resource module
@@ -25,6 +26,8 @@ except ImportError:
             # On Windows, we can't set these limits at the process level
             # This is a no-op for compatibility
             pass
+
+
 from contextlib import contextmanager
 from typing import Any
 
@@ -45,7 +48,7 @@ class ADASTask(Task):
         config = ChatAgentConfig(
             name="ADAS",
             system_message="You are an expert machine learning researcher designing agentic systems.",
-            llm=OpenAIGPTConfig(model="gpt-4")
+            llm=OpenAIGPTConfig(model="gpt-4"),
         )
         agent = ChatAgent(config)
         super().__init__(agent)
@@ -82,7 +85,7 @@ class ADASTask(Task):
 
     def evaluate_agent(self, agent: dict[str, Any]) -> float:
         """Static evaluation of a generated agent without execution.
-        
+
         Uses code complexity metrics and static analysis to score agents.
         """
         if isinstance(agent, str):
@@ -99,6 +102,7 @@ class ADASTask(Task):
         # Basic syntax check
         try:
             import ast
+
             tree = ast.parse(code)
             score += 0.2  # Valid syntax
         except SyntaxError:
@@ -136,7 +140,7 @@ class ADASTask(Task):
     async def run(self):
         num_iterations = 10
         for i in range(num_iterations):
-            print(f"Iteration {i+1}/{num_iterations}")
+            print(f"Iteration {i + 1}/{num_iterations}")
 
             new_agent = self.create_new_agent()
             performance = self.evaluate_agent(new_agent)
@@ -166,6 +170,7 @@ class SecureCodeRunner:
             # Subprocess timeout is handled by subprocess.run(timeout=...)
             yield
         else:
+
             def timeout_handler(signum, frame):
                 raise TimeoutError(f"Code execution exceeded {seconds} seconds")
 
@@ -177,17 +182,23 @@ class SecureCodeRunner:
             finally:
                 signal.alarm(0)  # Disable the alarm
 
-    def run_code_sandbox(self, code: str, model_path: str, params: dict[str, Any],
-                        timeout: int = 30, memory_limit_mb: int = 512) -> float:
+    def run_code_sandbox(
+        self,
+        code: str,
+        model_path: str,
+        params: dict[str, Any],
+        timeout: int = 30,
+        memory_limit_mb: int = 512,
+    ) -> float:
         """Run code in an isolated subprocess with resource limits.
-        
+
         Args:
             code: Python code to execute
             model_path: Path to model files
             params: Parameters to pass to the code
             timeout: Maximum execution time in seconds
             memory_limit_mb: Maximum memory usage in MB
-            
+
         Returns:
             Score between 0.0 and 1.0
         """
@@ -222,7 +233,7 @@ if __name__ == "__main__":
     import tempfile
     model_path = sys.argv[1]
     params = json.loads(sys.argv[2])
-    
+
     with tempfile.TemporaryDirectory() as work_dir:
         try:
             score = run(model_path, work_dir, params)
@@ -239,13 +250,14 @@ if __name__ == "__main__":
             # Run in subprocess with restrictions
             result = subprocess.run(
                 [sys.executable, "-u", script_path, model_path, json.dumps(params)],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=timeout,
                 env={
                     "PYTHONPATH": "",  # Clear PYTHONPATH
                     "PATH": os.environ.get("PATH", ""),  # Minimal PATH
-                }
+                },
             )
 
             if result.returncode != 0:
@@ -303,7 +315,9 @@ class AgentTechnique(ToolMessage):
                 break
 
         if not has_run_function:
-            self.logger.error("Code must define a run(model_path, work_dir, params) function")
+            self.logger.error(
+                "Code must define a run(model_path, work_dir, params) function"
+            )
             return False
 
         # No obvious malicious patterns
@@ -321,14 +335,16 @@ class AgentTechnique(ToolMessage):
 
         for pattern in dangerous_patterns:
             if pattern in code:
-                self.logger.error(f"Code contains potentially dangerous pattern: {pattern}")
+                self.logger.error(
+                    f"Code contains potentially dangerous pattern: {pattern}"
+                )
                 return False
 
         return True
 
     def handle(self, model_path: str, params: dict[str, Any]) -> float:
         """Execute the technique in a secure sandbox.
-        
+
         The code should define a function `run(model_path, work_dir, params)`
         that returns a fitness score between 0 and 1.
         """
@@ -338,16 +354,10 @@ class AgentTechnique(ToolMessage):
 
         try:
             score = self.runner.run_code_sandbox(
-                self.code,
-                model_path,
-                params,
-                timeout=30,
-                memory_limit_mb=512
+                self.code, model_path, params, timeout=30, memory_limit_mb=512
             )
             self.logger.info(
-                "ADAS | %s completed with score %.4f",
-                self.technique_name,
-                score
+                "ADAS | %s completed with score %.4f", self.technique_name, score
             )
             return score
         except Exception as e:
@@ -357,7 +367,9 @@ class AgentTechnique(ToolMessage):
 
 # Example usage
 if __name__ == "__main__":
-    task_description = "Design an agent that can solve abstract reasoning tasks in the ARC challenge."
+    task_description = (
+        "Design an agent that can solve abstract reasoning tasks in the ARC challenge."
+    )
     adas_task = ADASTask(task_description)
     best_agent = adas_task.run()
 

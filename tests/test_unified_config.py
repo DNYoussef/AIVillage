@@ -31,7 +31,7 @@ class TestUnifiedConfig(unittest.TestCase):
             reasoning_engine_type="custom-reasoning",
             MAX_RESULTS=20,
             FEEDBACK_ITERATIONS=5,
-            TEMPORAL_GRANULARITY=timedelta(hours=12)
+            TEMPORAL_GRANULARITY=timedelta(hours=12),
         )
         assert custom_config.embedding_model == "custom-embedding"
         assert custom_config.vector_store_type == "custom-vector-store"
@@ -58,6 +58,7 @@ class TestUnifiedConfig(unittest.TestCase):
         config = UnifiedConfig()
         config.update(custom_param="custom_value")
         assert config.get("custom_param") == "custom_value"
+
 
 if __name__ == "__main__":
     unittest.main()

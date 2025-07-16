@@ -39,16 +39,24 @@ def verify(signed: str, pub: jwk.JWK) -> dict:
     return json.loads(token.payload)
 
 
-def send_a2a(url: str, message: dict, sender_priv: str, receiver_pub: str, encrypt_msg: bool = True) -> requests.Response:
+def send_a2a(
+    url: str,
+    message: dict,
+    sender_priv: str,
+    receiver_pub: str,
+    encrypt_msg: bool = True,
+) -> requests.Response:
     priv = _load_priv(sender_priv)
     pub = _load_pub(receiver_pub)
     signed = sign(message, priv)
     body = encrypt(signed, pub) if encrypt_msg else signed
     hdr = {"Content-Type": "application/jwe" if encrypt_msg else "application/jws"}
-    return requests.post(url, data=body, headers=hdr)
+    return requests.post(url, data=body, headers=hdr, timeout=30)
 
 
-def receive_a2a(raw: str, receiver_priv: str, sender_pub: str, encrypted: bool = True) -> dict:
+def receive_a2a(
+    raw: str, receiver_priv: str, sender_pub: str, encrypted: bool = True
+) -> dict:
     priv = _load_priv(receiver_priv)
     data = decrypt(raw, priv) if encrypted else raw
     return verify(data, _load_pub(sender_pub))

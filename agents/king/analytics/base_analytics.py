@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
+
 class BaseAnalytics(ABC):
     def __init__(self):
         self.metrics: dict[str, list[float]] = {}

@@ -1,4 +1,3 @@
-
 import torch
 from torch import nn
 from transformers import AutoModelForCausalLM
@@ -15,8 +14,12 @@ class QuietSTaRModel(nn.Module):
         self.end_thought = nn.Parameter(torch.randn(1, hidden_size))
         self.mixing_head = nn.Linear(hidden_size, 1)
 
-    def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor | None = None,
-                generate_thoughts: bool = True) -> tuple[torch.Tensor, torch.Tensor | None]:
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor | None = None,
+        generate_thoughts: bool = True,
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """Return logits and optional thought logits."""
         base_out = self.base_model(input_ids, attention_mask=attention_mask)
         if not generate_thoughts:

@@ -15,6 +15,7 @@ from rag_system.error_handling.error_handler import (
 
 logger = logging.getLogger(__name__)
 
+
 class UnifiedInputProcessor:
     def __init__(self, llm_config: OpenAIGPTConfig):
         self.llm = llm_config.create()
@@ -36,7 +37,7 @@ class UnifiedInputProcessor:
         return {
             "interpreted_intent": interpreted_intent,
             "key_concepts": key_concepts,
-            "concept_graph": concept_graph
+            "concept_graph": concept_graph,
         }
 
     async def _interpret_intent(self, user_input: str) -> dict[str, Any]:
@@ -58,7 +59,9 @@ class UnifiedInputProcessor:
         response = await self.llm.complete(prompt)
         return self._parse_json_response(response.text)
 
-    async def _extract_key_concepts(self, user_input: str, interpreted_intent: dict[str, Any]) -> dict[str, Any]:
+    async def _extract_key_concepts(
+        self, user_input: str, interpreted_intent: dict[str, Any]
+    ) -> dict[str, Any]:
         prompt = f"""
         Based on the following user input and interpreted intent, extract the key concepts:
 
@@ -93,7 +96,9 @@ class UnifiedInputProcessor:
             raise AIVillageException("Failed to parse JSON response")
 
     @safe_execute
-    async def analyze_input_importance(self, processed_input: dict[str, Any]) -> dict[str, float]:
+    async def analyze_input_importance(
+        self, processed_input: dict[str, Any]
+    ) -> dict[str, float]:
         """Analyze the importance of each extracted concept and intent.
 
         Args:
@@ -105,8 +110,8 @@ class UnifiedInputProcessor:
         prompt = f"""
         Analyze the importance of the following interpreted intent and key concepts:
 
-        Interpreted Intent: {json.dumps(processed_input['interpreted_intent'], indent=2)}
-        Key Concepts: {json.dumps(processed_input['key_concepts'], indent=2)}
+        Interpreted Intent: {json.dumps(processed_input["interpreted_intent"], indent=2)}
+        Key Concepts: {json.dumps(processed_input["key_concepts"], indent=2)}
 
         For each intent and concept, assign an importance score between 0 and 1, where:
         0 = Not important at all
@@ -149,6 +154,7 @@ class UnifiedInputProcessor:
         plt.close()
 
         return buf.getvalue()
+
 
 # Example usage
 if __name__ == "__main__":

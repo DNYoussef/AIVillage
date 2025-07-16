@@ -1,7 +1,9 @@
 import torch
 
 
-def mask_input_with_mask_rate(input_tensor: torch.Tensor, mask_rate: float, use_rescale: bool, mask_strategy: str) -> torch.Tensor:
+def mask_input_with_mask_rate(
+    input_tensor: torch.Tensor, mask_rate: float, use_rescale: bool, mask_strategy: str
+) -> torch.Tensor:
     """Mask the input tensor based on the specified mask rate and strategy.
 
     :param input_tensor: The input tensor to be masked

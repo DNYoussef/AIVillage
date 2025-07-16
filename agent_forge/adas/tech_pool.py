@@ -36,9 +36,7 @@ def prune_heads(model_path: str, work_dir, params: dict[str, Any]) -> float:
                 pruned += int(mask.sum())
 
     tok = transformers.AutoTokenizer.from_pretrained("gpt2")
-    tokens = tok.encode(
-        " ".join(random.sample(WIKI_SNIPPETS, 5)), return_tensors="pt"
-    )
+    tokens = tok.encode(" ".join(random.sample(WIKI_SNIPPETS, 5)), return_tensors="pt")
     with torch.inference_mode():
         loss = lm(tokens, labels=tokens).loss
     ppl = math.exp(loss.item())
@@ -46,4 +44,3 @@ def prune_heads(model_path: str, work_dir, params: dict[str, Any]) -> float:
 
 
 TECH_POOL = [AgentTechnique("prune_heads", prune_heads)]
-

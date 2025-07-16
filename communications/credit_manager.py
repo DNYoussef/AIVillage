@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""CreditManager → mints & spends compute tokens on Bittensor.
-"""
+"""CreditManager → mints & spends compute tokens on Bittensor."""
 
 from bittensor_wallet import Network, Wallet  # pip install bittensor-wallet
 
@@ -23,4 +22,3 @@ class CreditManager:
 
     def balance(self) -> float:
         return self.network.get_balance(self.wallet)
-

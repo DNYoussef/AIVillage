@@ -6,7 +6,10 @@ import requests
 
 JWT_SECRET = os.getenv("JWT_SECRET")
 if not JWT_SECRET:
-    raise ValueError("JWT_SECRET environment variable must be set for secure authentication")
+    raise ValueError(
+        "JWT_SECRET environment variable must be set for secure authentication"
+    )
+
 
 class MCPClient:
     """JSON-RPC 2.0 over HTTPS with mTLS & JWT."""

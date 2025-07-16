@@ -39,7 +39,11 @@ class TestAuthMiddleware(unittest.TestCase):
         server.API_KEY = os.getenv("API_KEY")
 
         # Mock the RAG pipeline to avoid initialization issues
-        with patch.object(server.rag_pipeline, "process", AsyncMock(return_value={"answer": "test response"})):
+        with patch.object(
+            server.rag_pipeline,
+            "process",
+            AsyncMock(return_value={"answer": "test response"}),
+        ):
             client = TestClient(server.app)
 
             # Test without API key - should fail

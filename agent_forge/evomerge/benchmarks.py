@@ -30,8 +30,9 @@ def benchmark_merger(config):
     return {
         "time_taken": time_taken,
         "memory_used": memory_used,
-        "evaluation_result": evaluation_result
+        "evaluation_result": evaluation_result,
     }
+
 
 def benchmark_evolutionary_tournament(config):
     start_time = time.time()
@@ -50,8 +51,9 @@ def benchmark_evolutionary_tournament(config):
     return {
         "time_taken": time_taken,
         "memory_used": memory_used,
-        "evaluation_result": evaluation_result
+        "evaluation_result": evaluation_result,
     }
+
 
 def run_benchmarks():
     config = create_default_config()
@@ -89,12 +91,23 @@ def run_benchmarks():
 
     # Generate visualizations
     benchmark_data = [
-        {"model": "Merger", "score": merger_results["evaluation_result"]["overall_score"], "time": merger_results["time_taken"], "memory": merger_results["memory_used"] / (1024 * 1024)},
-        {"model": "Evolutionary", "score": tournament_results["evaluation_result"]["overall_score"], "time": tournament_results["time_taken"], "memory": tournament_results["memory_used"] / (1024 * 1024)}
+        {
+            "model": "Merger",
+            "score": merger_results["evaluation_result"]["overall_score"],
+            "time": merger_results["time_taken"],
+            "memory": merger_results["memory_used"] / (1024 * 1024),
+        },
+        {
+            "model": "Evolutionary",
+            "score": tournament_results["evaluation_result"]["overall_score"],
+            "time": tournament_results["time_taken"],
+            "memory": tournament_results["memory_used"] / (1024 * 1024),
+        },
     ]
 
     plot_benchmark_comparison(benchmark_data, "benchmark_comparison.png")
     generate_html_report(benchmark_data, "benchmark_report.html")
+
 
 if __name__ == "__main__":
     run_benchmarks()

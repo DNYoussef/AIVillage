@@ -10,6 +10,7 @@ class DummyCountStore:
     async def get_count(self):
         return 0
 
+
 class DummyRAGPipeline:
     def __init__(self):
         self.hybrid_retriever = SimpleNamespace(
@@ -19,6 +20,7 @@ class DummyRAGPipeline:
 
     async def process(self, query: str):
         return f"processed {query}"
+
 
 class TestSelfReferentialQueryProcessor(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
@@ -36,6 +38,7 @@ class TestSelfReferentialQueryProcessor(unittest.IsolatedAsyncioTestCase):
         await self.processor.process_self_query("Q3")
         history = await self.processor._get_query_history(2)
         assert history == "Recent queries: [Q2], [Q3]"
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -5,6 +5,7 @@ import random
 @dataclass
 class AgentIdentity:
     """Simple representation of an agent's identity."""
+
     name: str
     personality: dict[str, int]
     role: str
@@ -38,13 +39,16 @@ class IdentityFormationSystem:
 
     def create_agent_identity(self) -> AgentIdentity:
         name = f"Agent-{random.randint(1000, 9999)}"
-        personality = {t: random.randint(1, 10) for t in [
-            "openness",
-            "conscientiousness",
-            "extraversion",
-            "agreeableness",
-            "neuroticism",
-        ]}
+        personality = {
+            t: random.randint(1, 10)
+            for t in [
+                "openness",
+                "conscientiousness",
+                "extraversion",
+                "agreeableness",
+                "neuroticism",
+            ]
+        }
         role = "Generalist Agent"
         return AgentIdentity(name=name, personality=personality, role=role)
 
@@ -73,7 +77,10 @@ class MoralFrameworkBaker:
                 ),
                 priority="highest",
             ),
-            Rule(number=3, text="Curiosity is good as long as it doesn't interfere with Rule 2."),
+            Rule(
+                number=3,
+                text="Curiosity is good as long as it doesn't interfere with Rule 2.",
+            ),
             Rule(
                 number=4,
                 text=(

@@ -24,6 +24,7 @@ logger = get_logger(__name__)
 
 API_KEY = os.getenv("API_KEY")
 
+
 # Rate limiting configuration
 class RateLimiter:
     """Simple in-memory rate limiter."""
@@ -64,9 +65,16 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
         if request.url.path.startswith(("/query", "/upload")):
             if not rate_limiter.is_allowed(client_id):
-                return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
+                return JSONResponse(
+                    status_code=429, content={"detail": "Rate limit exceeded"}
+                )
 
-        if API_KEY and request.url.path not in ("/", "/ui", "/ui/index.html", "/status"):
+        if API_KEY and request.url.path not in (
+            "/",
+            "/ui",
+            "/ui/index.html",
+            "/status",
+        ):
             key = request.headers.get("x-api-key")
             if key != API_KEY:
                 return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
@@ -75,10 +83,14 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
         except ValidationError:
             logger.warning(f"Validation error from {client_id}")
-            return JSONResponse(status_code=400, content={"detail": "Invalid request format"})
+            return JSONResponse(
+                status_code=400, content={"detail": "Invalid request format"}
+            )
         except Exception as e:
             logger.error(f"Server error from {client_id}: {e}")
-            return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+            return JSONResponse(
+                status_code=500, content={"detail": "Internal server error"}
+            )
 
         return response
 
@@ -195,7 +207,9 @@ async def query_endpoint(request: SecureQueryRequest):
         return result
     except Exception as e:
         logger.error(f"Query processing failed: {e}")
-        return JSONResponse(status_code=500, content={"detail": "Query processing failed"})
+        return JSONResponse(
+            status_code=500, content={"detail": "Query processing failed"}
+        )
 
 
 @app.post("/upload")
@@ -220,7 +234,9 @@ async def upload_endpoint(file: UploadFile = File(...)):
         return JSONResponse(status_code=400, content={"detail": str(e)})
     except Exception as e:
         logger.error(f"Upload endpoint error: {e}")
-        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+        return JSONResponse(
+            status_code=500, content={"detail": "Internal server error"}
+        )
 
 
 @app.get("/")

@@ -25,22 +25,49 @@ class TestProtocol(unittest.IsolatedAsyncioTestCase):
 
         protocol.subscribe("receiver", echo)
 
-        request = Message(type=MessageType.QUERY, sender="sender", receiver="receiver", content={"ping": True})
+        request = Message(
+            type=MessageType.QUERY,
+            sender="sender",
+            receiver="receiver",
+            content={"ping": True},
+        )
         response = await protocol.send_and_wait(request)
         assert response.content["echo"]
 
     async def test_priority_order(self):
         protocol = StandardCommunicationProtocol()
-        low = Message(type=MessageType.NOTIFICATION, sender="s", receiver="r", content={}, priority=Priority.LOW)
-        high = Message(type=MessageType.NOTIFICATION, sender="s", receiver="r", content={}, priority=Priority.CRITICAL)
-        medium = Message(type=MessageType.NOTIFICATION, sender="s", receiver="r", content={}, priority=Priority.MEDIUM)
+        low = Message(
+            type=MessageType.NOTIFICATION,
+            sender="s",
+            receiver="r",
+            content={},
+            priority=Priority.LOW,
+        )
+        high = Message(
+            type=MessageType.NOTIFICATION,
+            sender="s",
+            receiver="r",
+            content={},
+            priority=Priority.CRITICAL,
+        )
+        medium = Message(
+            type=MessageType.NOTIFICATION,
+            sender="s",
+            receiver="r",
+            content={},
+            priority=Priority.MEDIUM,
+        )
         await protocol.send_message(low)
         await protocol.send_message(high)
         await protocol.send_message(medium)
         msg1 = await protocol.receive_message("r")
         msg2 = await protocol.receive_message("r")
         msg3 = await protocol.receive_message("r")
-        assert [msg1.priority, msg2.priority, msg3.priority] == [Priority.CRITICAL, Priority.MEDIUM, Priority.LOW]
+        assert [msg1.priority, msg2.priority, msg3.priority] == [
+            Priority.CRITICAL,
+            Priority.MEDIUM,
+            Priority.LOW,
+        ]
 
     async def test_broadcast_and_unsubscribe(self):
         protocol = StandardCommunicationProtocol()
@@ -53,7 +80,9 @@ class TestProtocol(unittest.IsolatedAsyncioTestCase):
         protocol.subscribe("b", cb)
         protocol.unsubscribe("b", cb)
 
-        await protocol.broadcast(sender="sys", message_type=MessageType.NOTIFICATION, content={"msg": 1})
+        await protocol.broadcast(
+            sender="sys", message_type=MessageType.NOTIFICATION, content={"msg": 1}
+        )
         await asyncio.sleep(0)
         assert received == ["a"]
 
@@ -65,7 +94,9 @@ class TestProtocol(unittest.IsolatedAsyncioTestCase):
             processed.append(msg)
 
         task = asyncio.create_task(protocol.process_messages(handler))
-        await protocol.send_message(Message(type=MessageType.NOTIFICATION, sender="s", receiver="r", content={}))
+        await protocol.send_message(
+            Message(type=MessageType.NOTIFICATION, sender="s", receiver="r", content={})
+        )
         await asyncio.sleep(0.05)
         protocol._running = False
         await asyncio.sleep(0.01)
@@ -81,12 +112,15 @@ class TestProtocol(unittest.IsolatedAsyncioTestCase):
 
     async def test_history_no_duplicate_on_receive(self):
         protocol = StandardCommunicationProtocol()
-        msg = Message(type=MessageType.NOTIFICATION, sender="a", receiver="b", content={})
+        msg = Message(
+            type=MessageType.NOTIFICATION, sender="a", receiver="b", content={}
+        )
         await protocol.send_message(msg)
         # receive the message and ensure history not duplicated
         await protocol.receive_message("b")
         hist = protocol.get_message_history("b")
         assert len(hist) == 1
+
 
 if __name__ == "__main__":
     unittest.main()

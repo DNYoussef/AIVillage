@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""MeshNode: P2P pub/sub (libp2p+Noise) + gRPC/TLS fallback for MCP tool calls.
-"""
+"""MeshNode: P2P pub/sub (libp2p+Noise) + gRPC/TLS fallback for MCP tool calls."""
 
 import json
 import logging
@@ -40,10 +39,12 @@ class MeshNode:
 
     HANDSHAKE = "__handshake__"
 
-    def __init__(self,
-                 listen_addr: str,
-                 bootstrap: list[str] | None = None,
-                 on_message: callable | None = None):
+    def __init__(
+        self,
+        listen_addr: str,
+        bootstrap: list[str] | None = None,
+        on_message: callable | None = None,
+    ):
         self.listen_addr = listen_addr
         self.bootstrap = bootstrap or []
         self.on_message = on_message
@@ -59,9 +60,7 @@ class MeshNode:
     async def start(self):
         # 1) start libp2p host with Noise
         self.node = await new_node(
-            transport_opt=[NoiseSecureTransport(self.priv)],
-            muxer_opt=[],
-            sec_opt=[]
+            transport_opt=[NoiseSecureTransport(self.priv)], muxer_opt=[], sec_opt=[]
         )
         await self.node.get_network().listen(self.listen_addr)
 
@@ -80,8 +79,11 @@ class MeshNode:
         # 4) broadcast handshake so others learn our pubkey
         await self._broadcast_handshake()
 
-        log.info("MeshNode listening on %s, id=%s",
-                 self.listen_addr, self.node.get_id().to_base58())
+        log.info(
+            "MeshNode listening on %s, id=%s",
+            self.listen_addr,
+            self.node.get_id().to_base58(),
+        )
 
         await self.pubsub.publish(
             "meta/announce",
@@ -98,7 +100,7 @@ class MeshNode:
         payload = {
             "type": self.HANDSHAKE,
             "peer_id": self.node.get_id().to_base58(),
-            "pubkey": self.pub.encode().hex()
+            "pubkey": self.pub.encode().hex(),
         }
         await self.pubsub.publish("global-handshake", json.dumps(payload).encode())
 
@@ -110,7 +112,7 @@ class MeshNode:
                 payload = json.loads(data.decode())
                 if payload["type"] == self.HANDSHAKE:
                     pid = payload["peer_id"]
-                    pk  = bytes.fromhex(payload["pubkey"])
+                    pk = bytes.fromhex(payload["pubkey"])
                     self.peer_keys[pid] = PublicKey(pk)
                 return
 
@@ -126,12 +128,14 @@ class MeshNode:
         """Encrypt & publish to target’s topic. target_id must be in peer_keys."""
         if target_id not in self.peer_keys:
             raise KeyError(f"unknown peer {target_id}")
-        enc = SecureEnvelope(self.priv, self.peer_keys[target_id]) \
-              .encode(message.to_json().encode())
+        enc = SecureEnvelope(self.priv, self.peer_keys[target_id]).encode(
+            message.to_json().encode()
+        )
         await self.pubsub.publish(target_id, enc)
         import os
 
         from communications.credit_manager import CreditManager
+
         CreditManager(os.getenv("TWIN_MNEMONIC", "")).mint(
             task_id=message.id,
             macs=len(message.content.get("tensor", [])) * 1_000_000,
@@ -140,10 +144,11 @@ class MeshNode:
     # --------------------------------------------------------------------------
     # Fallback MCP tool call via gRPC+TLS
     # --------------------------------------------------------------------------
-    async def mcp_call(self, service_addr: str, stub_class, request, timeout: float = 5.0):
+    async def mcp_call(
+        self, service_addr: str, stub_class, request, timeout: float = 5.0
+    ):
         """service_addr: "host:port"; stub_class: generated gRPC Stub; request: Protobuf request."""
         creds = grpc.ssl_channel_credentials()
         async with grpc.aio.secure_channel(service_addr, creds) as ch:
             stub = stub_class(ch)
             return await stub.Call(request, timeout=timeout)
-

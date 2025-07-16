@@ -5,6 +5,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
 class GGUFReader:
     def __init__(self, file_path):
         self.file_path = file_path
@@ -26,7 +27,9 @@ class GGUFReader:
             # Read metadata
             n_tensors = struct.unpack("<Q", f.read(8))[0]
             n_kv = struct.unpack("<Q", f.read(8))[0]
-            logger.debug(f"Number of tensors: {n_tensors}, Number of metadata key-value pairs: {n_kv}")
+            logger.debug(
+                f"Number of tensors: {n_tensors}, Number of metadata key-value pairs: {n_kv}"
+            )
 
             for _ in range(n_kv):
                 key_length = struct.unpack("<Q", f.read(8))[0]
@@ -46,11 +49,7 @@ class GGUFReader:
                 dtype = struct.unpack("<I", f.read(4))[0]
                 offset = struct.unpack("<Q", f.read(8))[0]
 
-                self.tensors[name] = {
-                    "dims": dims,
-                    "dtype": dtype,
-                    "offset": offset
-                }
+                self.tensors[name] = {"dims": dims, "dtype": dtype, "offset": offset}
         logger.info(f"Successfully read GGUF file: {self.file_path}")
 
     def _read_value(self, f, value_type):
@@ -84,7 +83,11 @@ class GGUFReader:
         tensor_info = self.tensors[name]
         with open(self.file_path, "rb") as f:
             f.seek(tensor_info["offset"])
-            data = np.fromfile(f, dtype=self._get_numpy_dtype(tensor_info["dtype"]), count=np.prod(tensor_info["dims"]))
+            data = np.fromfile(
+                f,
+                dtype=self._get_numpy_dtype(tensor_info["dtype"]),
+                count=np.prod(tensor_info["dims"]),
+            )
             return data.reshape(tensor_info["dims"])
 
     def _get_numpy_dtype(self, gguf_dtype):
@@ -99,6 +102,7 @@ class GGUFReader:
             7: np.bool_,
         }
         return dtype_map.get(gguf_dtype, np.float32)  # Default to float32 if unknown
+
 
 class GGUFWriter:
     def __init__(self, file_path):
@@ -130,7 +134,9 @@ class GGUFWriter:
                 self._write_value(f, value)
 
             # Write tensor information
-            offset = f.tell() + len(self.tensors) * (8 + 4 + 8 + 8)  # Estimate tensor data start
+            offset = f.tell() + len(self.tensors) * (
+                8 + 4 + 8 + 8
+            )  # Estimate tensor data start
             for name, tensor in self.tensors.items():
                 f.write(struct.pack("<Q", len(name)))
                 f.write(name.encode("utf-8"))

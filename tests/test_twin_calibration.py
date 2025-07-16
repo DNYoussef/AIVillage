@@ -40,7 +40,14 @@ def test_calibrated_prob_feature(monkeypatch):
 
     fake_nx.shortest_path = shortest_path
 
-    with patch.dict(sys.modules, {"cachetools": fake_cachetools, "networkx": fake_nx, "prometheus_client": fake_prom}):
+    with patch.dict(
+        sys.modules,
+        {
+            "cachetools": fake_cachetools,
+            "networkx": fake_nx,
+            "prometheus_client": fake_prom,
+        },
+    ):
         mod = importlib.import_module("services.twin.app")
     agent = mod.TwinAgent(mod.settings.model_path)
     req = ChatRequest(message="hello", user_id="u1")

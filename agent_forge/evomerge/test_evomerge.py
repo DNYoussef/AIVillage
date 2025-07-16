@@ -28,7 +28,9 @@ class TestEvoMerge(unittest.TestCase):
         self.config = Configuration(
             models=[
                 ModelReference(name="model1", path="gpt2"),
-                ModelReference(name="model2", path="gpt2"),  # Changed from gpt2-medium to gpt2
+                ModelReference(
+                    name="model2", path="gpt2"
+                ),  # Changed from gpt2-medium to gpt2
             ],
             merge_settings=MergeSettings(
                 merge_method="ps_dfs",
@@ -38,9 +40,9 @@ class TestEvoMerge(unittest.TestCase):
                 dfs_techniques=["frankenmerge"],
                 weight_mask_rate=0.1,
                 use_weight_rescale=True,
-                mask_strategy="random"
+                mask_strategy="random",
             ),
-            evolution_settings=EvolutionSettings()
+            evolution_settings=EvolutionSettings(),
         )
 
     def test_load_models(self):
@@ -56,7 +58,7 @@ class TestEvoMerge(unittest.TestCase):
             parameters={},
             custom_dir="./test_merged_models",
             ps_techniques=["linear"],
-            dfs_techniques=["frankenmerge"]
+            dfs_techniques=["frankenmerge"],
         )
         self.assertIsInstance(valid_config, MergeSettings)
 
@@ -67,14 +69,11 @@ class TestEvoMerge(unittest.TestCase):
                 parameters={},
                 custom_dir="./test_merged_models",
                 ps_techniques=["linear"],
-                dfs_techniques=["frankenmerge"]
+                dfs_techniques=["frankenmerge"],
             )
 
     def test_merge_techniques(self):
-        weights = {
-            "layer1": torch.rand(2, 3, 4),
-            "layer2": torch.rand(2, 4, 5)
-        }
+        weights = {"layer1": torch.rand(2, 3, 4), "layer2": torch.rand(2, 4, 5)}
 
         for technique, func in MERGE_TECHNIQUES.items():
             merged_weights = func(weights, [])
@@ -83,21 +82,17 @@ class TestEvoMerge(unittest.TestCase):
                 self.assertEqual(merged_weights[key].shape, weights[key].shape)
 
     def test_ties_merge(self):
-        weights = {
-            "layer1": torch.rand(2, 3, 4),
-            "layer2": torch.rand(2, 4, 5)
-        }
+        weights = {"layer1": torch.rand(2, 3, 4), "layer2": torch.rand(2, 4, 5)}
         merged_weights = MERGE_TECHNIQUES["ties"](weights, [], threshold=0.1)
         self.assertEqual(len(merged_weights), len(weights))
         for key in weights:
             self.assertEqual(merged_weights[key].shape, weights[key].shape)
 
     def test_dare_merge(self):
-        weights = {
-            "layer1": torch.rand(2, 3, 4),
-            "layer2": torch.rand(2, 4, 5)
-        }
-        merged_weights = MERGE_TECHNIQUES["dare"](weights, [], threshold=0.1, amplification=2.0)
+        weights = {"layer1": torch.rand(2, 3, 4), "layer2": torch.rand(2, 4, 5)}
+        merged_weights = MERGE_TECHNIQUES["dare"](
+            weights, [], threshold=0.1, amplification=2.0
+        )
         self.assertEqual(len(merged_weights), len(weights))
         for key in weights:
             self.assertEqual(merged_weights[key].shape, weights[key].shape)
@@ -111,32 +106,47 @@ class TestEvoMerge(unittest.TestCase):
             weight_format="finetuned_weight",
             weight_mask_rate=0.1,
             use_weight_rescale=True,
-            mask_strategy="random"
+            mask_strategy="random",
         )
         self.assertEqual(len(masked_state_dict), len(model.state_dict()))
         for key in model.state_dict():
-            self.assertEqual(masked_state_dict[key].shape, model.state_dict()[key].shape)
+            self.assertEqual(
+                masked_state_dict[key].shape, model.state_dict()[key].shape
+            )
 
     def test_advanced_model_merger(self):
         merger = AdvancedModelMerger(self.config)
         merged_model_path = merger.merge()
-        self.assertTrue(merged_model_path.startswith(self.config.merge_settings.custom_dir))
+        self.assertTrue(
+            merged_model_path.startswith(self.config.merge_settings.custom_dir)
+        )
 
     def test_evolutionary_tournament(self):
         evolutionary_tournament = EvolutionaryTournament(self.config)
         best_models = evolutionary_tournament.evolve()
         self.assertIsInstance(best_models, list)
         self.assertTrue(all(isinstance(model, str) for model in best_models))
-        self.assertTrue(all(model.startswith(self.config.merge_settings.custom_dir) for model in best_models))
+        self.assertTrue(
+            all(
+                model.startswith(self.config.merge_settings.custom_dir)
+                for model in best_models
+            )
+        )
 
     def test_run_evolutionary_tournament(self):
         best_models = run_evolutionary_tournament(self.config)
         self.assertIsInstance(best_models, list)
         self.assertTrue(all(isinstance(model, str) for model in best_models))
-        self.assertTrue(all(model.startswith(self.config.merge_settings.custom_dir) for model in best_models))
+        self.assertTrue(
+            all(
+                model.startswith(self.config.merge_settings.custom_dir)
+                for model in best_models
+            )
+        )
 
     def tearDown(self):
         clean_up_models([f"{self.config.merge_settings.custom_dir}/merged_*"])
+
 
 if __name__ == "__main__":
     unittest.main()

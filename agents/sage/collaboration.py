@@ -6,6 +6,7 @@ from communications.protocol import Message, MessageType
 
 logger = logging.getLogger(__name__)
 
+
 class CollaborationManager:
     def __init__(self, agent):
         self.agent = agent
@@ -34,7 +35,7 @@ class CollaborationManager:
                 sender=self.agent.name,
                 receiver=message.sender,
                 content=relevant_knowledge,
-                parent_id=message.id
+                parent_id=message.id,
             )
             await self.agent.communication_protocol.send_message(response)
         except Exception as e:
@@ -56,7 +57,7 @@ class CollaborationManager:
                 sender=self.agent.name,
                 receiver=message.sender,
                 content=result,
-                parent_id=message.id
+                parent_id=message.id,
             )
             await self.agent.communication_protocol.send_message(response)
         except Exception as e:
@@ -65,34 +66,37 @@ class CollaborationManager:
     async def perform_joint_reasoning(self, message: Message):
         try:
             reasoning_context = message.content.get("reasoning_context")
-            our_reasoning = await self.agent.apply_advanced_reasoning({"content": reasoning_context})
+            our_reasoning = await self.agent.apply_advanced_reasoning(
+                {"content": reasoning_context}
+            )
             response = Message(
                 type=MessageType.JOINT_REASONING_RESULT,
                 sender=self.agent.name,
                 receiver=message.sender,
                 content=our_reasoning,
-                parent_id=message.id
+                parent_id=message.id,
             )
             await self.agent.communication_protocol.send_message(response)
         except Exception as e:
             logger.error(f"Error performing joint reasoning: {e!s}")
 
-    async def request_collaboration(self, agent_name: str, collaboration_type: str, content: Any):
+    async def request_collaboration(
+        self, agent_name: str, collaboration_type: str, content: Any
+    ):
         try:
             request = Message(
                 type=MessageType.COLLABORATION_REQUEST,
                 sender=self.agent.name,
                 receiver=agent_name,
-                content={
-                    "collaboration_type": collaboration_type,
-                    "content": content
-                }
+                content={"collaboration_type": collaboration_type, "content": content},
             )
             await self.agent.communication_protocol.send_message(request)
         except Exception as e:
             logger.error(f"Error requesting collaboration: {e!s}")
 
-    async def register_collaborating_agent(self, agent_name: str, capabilities: list[str]):
+    async def register_collaborating_agent(
+        self, agent_name: str, capabilities: list[str]
+    ):
         self.collaborating_agents[agent_name] = capabilities
 
     async def find_best_agent_for_task(self, task: dict[str, Any]) -> str:

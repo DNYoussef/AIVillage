@@ -3,6 +3,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class UserIntentInterpreter:
     def __init__(self):
         """Initialize interpreter state."""
@@ -11,10 +12,10 @@ class UserIntentInterpreter:
 
     async def interpret_intent(self, query: str) -> dict[str, Any]:
         """Interpret the user's intent from the given query.
-        
+
         Args:
             query (str): The user's input query.
-        
+
         Returns:
             Dict[str, Any]: A dictionary containing the interpreted intent and any additional information.
         """

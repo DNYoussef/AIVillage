@@ -14,8 +14,14 @@ from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracke
 
 logger = logging.getLogger(__name__)
 
+
 class UnifiedRAGManagement:
-    def __init__(self, rag_config: RAGConfig, llm_config: OpenAIGPTConfig, knowledge_tracker: UnifiedKnowledgeTracker | None = None):
+    def __init__(
+        self,
+        rag_config: RAGConfig,
+        llm_config: OpenAIGPTConfig,
+        knowledge_tracker: UnifiedKnowledgeTracker | None = None,
+    ):
         self.rag_system = EnhancedRAGPipeline(rag_config, knowledge_tracker)
         self.llm = llm_config.create()
 
@@ -27,22 +33,26 @@ class UnifiedRAGManagement:
             1. Index health
             2. Performance metrics
             3. Data consistency
-            
+
             For each aspect, provide:
             - A boolean indicating if it's healthy/acceptable/consistent
             - A severity level (low, medium, high) if there are issues
             - A brief description of any detected problems
-            
+
             Return the results in a structured JSON format.
             """
             health_check_result = await self.llm.complete(health_check_prompt)
             parsed_result = self._parse_json_response(health_check_result.text)
 
             return {
-                "issue_detected": not all([parsed_result["index_health"]["healthy"],
-                                           parsed_result["performance_metrics"]["acceptable"],
-                                           parsed_result["data_consistency"]["consistent"]]),
-                **parsed_result
+                "issue_detected": not all(
+                    [
+                        parsed_result["index_health"]["healthy"],
+                        parsed_result["performance_metrics"]["acceptable"],
+                        parsed_result["data_consistency"]["consistent"],
+                    ]
+                ),
+                **parsed_result,
             }
         except Exception as e:
             logger.error(f"Error performing health check: {e!s}")
@@ -53,23 +63,32 @@ class UnifiedRAGManagement:
         try:
             handling_prompt = f"""
             Given the following health check result: {health_check_result}
-            
+
             Suggest appropriate actions to address RAG system issues. For each issue:
             1. Provide a detailed step-by-step plan to resolve it
             2. Include potential risks and mitigation strategies
             3. Estimate time and resources required for each plan
-            
+
             Return the results in a structured JSON format.
             """
             handling_plan = await self.llm.complete(handling_prompt)
             parsed_plan = self._parse_json_response(handling_plan.text)
 
             for issue, plan in parsed_plan.items():
-                if issue == "index_health" and not health_check_result["index_health"]["healthy"]:
+                if (
+                    issue == "index_health"
+                    and not health_check_result["index_health"]["healthy"]
+                ):
                     await self._handle_index_issue(plan)
-                elif issue == "performance_metrics" and not health_check_result["performance_metrics"]["acceptable"]:
+                elif (
+                    issue == "performance_metrics"
+                    and not health_check_result["performance_metrics"]["acceptable"]
+                ):
                     await self._handle_performance_issue(plan)
-                elif issue == "data_consistency" and not health_check_result["data_consistency"]["consistent"]:
+                elif (
+                    issue == "data_consistency"
+                    and not health_check_result["data_consistency"]["consistent"]
+                ):
                     await self._handle_consistency_issue(plan)
 
             await self._notify_administrators(health_check_result, parsed_plan)
@@ -96,7 +115,9 @@ class UnifiedRAGManagement:
         await self._reconcile_data()
         await self._validate_data()
 
-    async def _notify_administrators(self, health_check_result: dict[str, Any], handling_plan: dict[str, Any]):
+    async def _notify_administrators(
+        self, health_check_result: dict[str, Any], handling_plan: dict[str, Any]
+    ):
         notification_prompt = f"""
         Create a notification for administrators about RAG system issues.
         Health Check Result: {health_check_result}
@@ -111,7 +132,9 @@ class UnifiedRAGManagement:
         Format the notification in a clear, easy-to-read structure.
         """
         notification = await self.llm.complete(notification_prompt)
-        logger.info(f"Notifying administrators about RAG health issues:\n{notification.text}")
+        logger.info(
+            f"Notifying administrators about RAG health issues:\n{notification.text}"
+        )
 
     async def _rebuild_index(self):
         logger.info("Rebuilding RAG index")
@@ -203,6 +226,7 @@ class UnifiedRAGManagement:
 
     def _parse_json_response(self, response: str) -> dict[str, Any]:
         import json
+
         try:
             return json.loads(response)
         except json.JSONDecodeError:

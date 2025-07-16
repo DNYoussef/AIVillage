@@ -23,7 +23,9 @@ class TestEvoMergeIntegration(unittest.TestCase):
         best_model_path = run_evolutionary_tournament(self.config)
 
         # Check if the best model was created
-        self.assertTrue(best_model_path.startswith(self.config.merge_settings.custom_dir))
+        self.assertTrue(
+            best_model_path.startswith(self.config.merge_settings.custom_dir)
+        )
 
         # Load the best model and generate text
         model = AutoModelForCausalLM.from_pretrained(best_model_path)
@@ -49,6 +51,7 @@ class TestEvoMergeIntegration(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         clean_up_models([f"{cls.config.merge_settings.custom_dir}/*"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -21,8 +21,9 @@ def evaluate_thought_quality(model, eval_data):
 
     return {
         "avg_coherence": sum(thought_coherence) / len(thought_coherence),
-        "avg_relevance": sum(thought_relevance) / len(thought_relevance)
+        "avg_relevance": sum(thought_relevance) / len(thought_relevance),
     }
+
 
 def evaluate_model(model, eval_data):
     total_loss = 0
@@ -47,9 +48,8 @@ def evaluate_model(model, eval_data):
     return {
         "perplexity": torch.exp(torch.tensor(avg_loss)).item(),
         "accuracy": avg_accuracy,
-        **thought_metrics
+        **thought_metrics,
     }
-
 
 
 def measure_coherence(text: str) -> float:
@@ -61,6 +61,7 @@ def measure_coherence(text: str) -> float:
     vectors = vectorizer.transform(sentences)
     sims = cosine_similarity(vectors[:-1], vectors[1:])
     return float(sims.diagonal().mean())
+
 
 def measure_relevance(text: str, query: str) -> float:
     """Relevance computed from cosine similarity of TF-IDF vectors."""

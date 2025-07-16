@@ -6,8 +6,15 @@ import torch
 
 
 class GrokFastTask(Task):
-    def __init__(self, agent: ChatAgent, model: torch.nn.Module, method: Literal["MA", "EMA"] = "EMA",
-                 window_size: int = 100, lamb: float = 2.0, alpha: float = 0.98):
+    def __init__(
+        self,
+        agent: ChatAgent,
+        model: torch.nn.Module,
+        method: Literal["MA", "EMA"] = "EMA",
+        window_size: int = 100,
+        lamb: float = 2.0,
+        alpha: float = 0.98,
+    ):
         super().__init__(agent)
         self.model = model
         self.method = method
@@ -23,8 +30,11 @@ class GrokFastTask(Task):
 
     async def _filter_ma(self):
         if self.grads is None:
-            self.grads = {n: deque(maxlen=self.window_size)
-                          for n, p in self.model.named_parameters() if p.requires_grad}
+            self.grads = {
+                n: deque(maxlen=self.window_size)
+                for n, p in self.model.named_parameters()
+                if p.requires_grad
+            }
 
         for n, p in self.model.named_parameters():
             if p.requires_grad:
@@ -36,17 +46,23 @@ class GrokFastTask(Task):
 
     async def _filter_ema(self):
         if self.grads is None:
-            self.grads = {n: p.grad.data.detach()
-                          for n, p in self.model.named_parameters() if p.requires_grad}
+            self.grads = {
+                n: p.grad.data.detach()
+                for n, p in self.model.named_parameters()
+                if p.requires_grad
+            }
 
         for n, p in self.model.named_parameters():
             if p.requires_grad:
-                self.grads[n] = self.grads[n] * self.alpha + p.grad.data.detach() * (1 - self.alpha)
+                self.grads[n] = self.grads[n] * self.alpha + p.grad.data.detach() * (
+                    1 - self.alpha
+                )
                 p.grad.data = p.grad.data + self.grads[n] * self.lamb
 
     async def run(self):
         await self.filter_gradients()
         return "Gradients filtered successfully"
+
 
 # Usage example
 if __name__ == "__main__":

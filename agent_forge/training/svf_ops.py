@@ -33,6 +33,7 @@ def apply_svf(model: nn.Module, z: dict[str, Tensor], clamp: float = 0.05):
             S.mul_(1 + dS)
             mod.weight.copy_(U @ torch.diag(S) @ Vh)
 
+
 if __name__ == "__main__":
     lin = nn.Linear(4, 4, bias=False)
     delta = {"": torch.full((min(lin.weight.size()),), 0.01)}

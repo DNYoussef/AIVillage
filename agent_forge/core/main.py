@@ -23,5 +23,6 @@ def main(config_file: str, out_path: str):
 
     save_model(merged_model, out_path)
 
+
 if __name__ == "__main__":
     main()

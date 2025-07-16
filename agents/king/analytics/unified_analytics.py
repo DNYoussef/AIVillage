@@ -7,6 +7,7 @@ from scipy.stats import linregress
 
 logger = logging.getLogger(__name__)
 
+
 class UnifiedAnalytics:
     def __init__(self, history_length: int = 100):
         self.metrics = {}
@@ -30,12 +31,16 @@ class UnifiedAnalytics:
             "median": np.median(values),
             "std": np.std(values),
             "min": np.min(values),
-            "max": np.max(values)
+            "max": np.max(values),
         }
 
-    def record_task_completion(self, task_id: str, completion_time: float, success: bool):
+    def record_task_completion(
+        self, task_id: str, completion_time: float, success: bool
+    ):
         self.record_metric("task_completion_time", completion_time)
-        self.task_history.append({"task_id": task_id, "completion_time": completion_time, "success": success})
+        self.task_history.append(
+            {"task_id": task_id, "completion_time": completion_time, "success": success}
+        )
 
     def update_performance_history(self, performance: float):
         self.performance_history.append(performance)
@@ -85,7 +90,8 @@ class UnifiedAnalytics:
             "metrics": list(self.metrics.keys()),
             "task_history_length": len(self.task_history),
             "performance_history_length": len(self.performance_history),
-            "learning_rate": self.learning_rate
+            "learning_rate": self.learning_rate,
         }
+
 
 # You can add more methods from the original files as needed

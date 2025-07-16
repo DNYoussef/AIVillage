@@ -26,21 +26,26 @@ class CompressionConfig:
     use_hyper: bool = True
     hyper_clusters: int = 16
 
+
 class TwoStageCompressor:
     def __init__(self, config: CompressionConfig):
         self.config = config
-        self.seedlm = SeedLMCompressor(config.seed_block_size, config.seed_latent_dim, config.seed_num_candidates)
+        self.seedlm = SeedLMCompressor(
+            config.seed_block_size, config.seed_latent_dim, config.seed_num_candidates
+        )
         self.vptq = VPTQQuantizer(config.vptq_bits, config.vptq_vector_length)
-        self.hyper = HyperCompressionEncoder(config.hyper_clusters) if config.use_hyper else None
+        self.hyper = (
+            HyperCompressionEncoder(config.hyper_clusters) if config.use_hyper else None
+        )
 
     def compress_layer(self, weight: torch.Tensor) -> dict:
         seed_data = self.seedlm.compress_weight_matrix(weight)
         decompressed = self.seedlm.decompress_weight_matrix(seed_data)
         vptq_data = self.vptq.quantize_weight_matrix(decompressed)
-        result={"seedlm":seed_data,"vptq":vptq_data}
+        result = {"seedlm": seed_data, "vptq": vptq_data}
         if self.hyper:
             hyper_data = self.hyper.compress_weight_matrix(decompressed)
-            result["hyper"]=hyper_data
+            result["hyper"] = hyper_data
         return result
 
     def decompress_layer(self, data: dict) -> torch.Tensor:
@@ -50,10 +55,13 @@ class TwoStageCompressor:
             return self.vptq.dequantize_weight_matrix(data["vptq"])
         return self.seedlm.decompress_weight_matrix(data["seedlm"])
 
+
 import torch
 
 
-def stream_compress_model(model: nn.Module, config: CompressionConfig | None=None) -> dict[str, dict]:
+def stream_compress_model(
+    model: nn.Module, config: CompressionConfig | None = None
+) -> dict[str, dict]:
     cfg = config or CompressionConfig()
     compressor = TwoStageCompressor(cfg)
     handled = set()
@@ -84,6 +92,7 @@ def stream_compress_model(model: nn.Module, config: CompressionConfig | None=Non
             compressed[name] = param.data
     # estimate compression ratio using serialization sizes
     import io
+
     buf_o = io.BytesIO()
     torch.save(model.state_dict(), buf_o)
     original_size = buf_o.tell()

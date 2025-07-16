@@ -15,16 +15,15 @@ class Workflow:
             id=self.id,
             name=self.name,
             tasks=self.tasks + [task],
-            dependencies=self.dependencies
+            dependencies=self.dependencies,
         )
 
     def update_task(self, updated_task: Task) -> "Workflow":
-        new_tasks = [updated_task if task.id == updated_task.id else task for task in self.tasks]
+        new_tasks = [
+            updated_task if task.id == updated_task.id else task for task in self.tasks
+        ]
         return Workflow(
-            id=self.id,
-            name=self.name,
-            tasks=new_tasks,
-            dependencies=self.dependencies
+            id=self.id, name=self.name, tasks=new_tasks, dependencies=self.dependencies
         )
 
     def add_dependency(self, task_id: str, dependency_id: str) -> "Workflow":
@@ -33,8 +32,5 @@ class Workflow:
             new_dependencies[task_id] = []
         new_dependencies[task_id].append(dependency_id)
         return Workflow(
-            id=self.id,
-            name=self.name,
-            tasks=self.tasks,
-            dependencies=new_dependencies
+            id=self.id, name=self.name, tasks=self.tasks, dependencies=new_dependencies
         )

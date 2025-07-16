@@ -29,21 +29,25 @@ class TaskQueue:
     def task_done(self):
         self.tasks.task_done()
 
+
 async def get_user_input() -> dict[str, Any]:
-    """Get task input from the user.
-    """
+    """Get task input from the user."""
     content = input("Enter task content: ")
     task_type = input("Enter task type: ")
     return {"content": content, "type": task_type}
 
+
 async def process_result(result: dict[str, Any]):
-    """Handle the result of a task execution.
-    """
+    """Handle the result of a task execution."""
     print(f"Processing result: {result}")
 
-def create_agents(config: UnifiedConfig, communication_protocol: StandardCommunicationProtocol, vector_store: VectorStore) -> list[UnifiedBaseAgent]:
-    """Initialize and return a list of agents with their configurations.
-    """
+
+def create_agents(
+    config: UnifiedConfig,
+    communication_protocol: StandardCommunicationProtocol,
+    vector_store: VectorStore,
+) -> list[UnifiedBaseAgent]:
+    """Initialize and return a list of agents with their configurations."""
     agent_configs = [
         UnifiedAgentConfig(
             name="KingAgent",
@@ -52,7 +56,7 @@ def create_agents(config: UnifiedConfig, communication_protocol: StandardCommuni
             rag_config=config,
             vector_store=vector_store,
             model="gpt-4",
-            instructions="You are a decision-making and task delegation agent."
+            instructions="You are a decision-making and task delegation agent.",
         ),
         UnifiedAgentConfig(
             name="SageAgent",
@@ -61,7 +65,7 @@ def create_agents(config: UnifiedConfig, communication_protocol: StandardCommuni
             rag_config=config,
             vector_store=vector_store,
             model="gpt-4",
-            instructions="You are a research and analysis agent."
+            instructions="You are a research and analysis agent.",
         ),
         UnifiedAgentConfig(
             name="MagiAgent",
@@ -70,19 +74,23 @@ def create_agents(config: UnifiedConfig, communication_protocol: StandardCommuni
             rag_config=config,
             vector_store=vector_store,
             model="gpt-4",
-            instructions="You are a specialized agent for complex problem-solving."
-        )
+            instructions="You are a specialized agent for complex problem-solving.",
+        ),
     ]
 
     return [
         KingAgent(agent_configs[0], communication_protocol, vector_store),
         SageAgent(agent_configs[1], communication_protocol, vector_store),
-        MagiAgent(agent_configs[2], communication_protocol, config, vector_store)
+        MagiAgent(agent_configs[2], communication_protocol, config, vector_store),
     ]
 
-async def run_task(self_evolving_system: SelfEvolvingSystem, rag_pipeline: EnhancedRAGPipeline, task_data: dict[str, Any]):
-    """Run a single task through the self-evolving system and RAG pipeline.
-    """
+
+async def run_task(
+    self_evolving_system: SelfEvolvingSystem,
+    rag_pipeline: EnhancedRAGPipeline,
+    task_data: dict[str, Any],
+):
+    """Run a single task through the self-evolving system and RAG pipeline."""
     task_content = task_data["content"]
     task_type = task_data["type"]
 
@@ -97,10 +105,7 @@ async def run_task(self_evolving_system: SelfEvolvingSystem, rag_pipeline: Enhan
     task.content = f"{task_content}\nRAG Context: {rag_result}"
     ses_result = await self_evolving_system.process_task(task)
 
-    combined_result = {
-        "rag_result": rag_result,
-        "ses_result": ses_result
-    }
+    combined_result = {"rag_result": rag_result, "ses_result": ses_result}
 
     await process_result(combined_result)
 
@@ -109,7 +114,10 @@ async def run_task(self_evolving_system: SelfEvolvingSystem, rag_pipeline: Enhan
 
     return combined_result
 
-async def orchestrate_agents(agents: list[UnifiedBaseAgent], task: dict[str, Any]) -> dict[str, Any]:
+
+async def orchestrate_agents(
+    agents: list[UnifiedBaseAgent], task: dict[str, Any]
+) -> dict[str, Any]:
     king_agent = next(agent for agent in agents if isinstance(agent, KingAgent))
     langroid_task = LangroidTask(
         king_agent,
@@ -121,9 +129,9 @@ async def orchestrate_agents(agents: list[UnifiedBaseAgent], task: dict[str, Any
     result = await king_agent.execute_task(langroid_task)
     return result
 
+
 async def main():
-    """Main execution loop for the orchestration system.
-    """
+    """Main execution loop for the orchestration system."""
     config = UnifiedConfig()
     communication_protocol = StandardCommunicationProtocol()
     vector_store = VectorStore()
@@ -136,11 +144,15 @@ async def main():
 
     # Add some initial tasks to the queue
     await task_queue.add_task({"content": "Analyze market trends", "type": "research"})
-    await task_queue.add_task({"content": "Debug login functionality", "type": "coding"})
-    await task_queue.add_task({
-        "type": "research",
-        "content": "Analyze the impact of artificial intelligence on job markets in the next decade."
-    })
+    await task_queue.add_task(
+        {"content": "Debug login functionality", "type": "coding"}
+    )
+    await task_queue.add_task(
+        {
+            "type": "research",
+            "content": "Analyze the impact of artificial intelligence on job markets in the next decade.",
+        }
+    )
 
     while True:
         # Get next task from queue or user input
@@ -166,6 +178,7 @@ async def main():
             break
 
     print("Orchestration complete.")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

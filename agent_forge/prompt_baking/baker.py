@@ -12,7 +12,15 @@ log = logging.getLogger("PromptBake")
 
 ANCHOR_NS = "morality_v1"  # change when you update wording
 
-def bake(model, tokenizer: AutoTokenizer, prompt_path: str | pathlib.Path, prefix_len: int = 32, lr: float = 2e-5, steps: int = 200):
+
+def bake(
+    model,
+    tokenizer: AutoTokenizer,
+    prompt_path: str | pathlib.Path,
+    prefix_len: int = 32,
+    lr: float = 2e-5,
+    steps: int = 200,
+):
     """Bake prompt into a prefix embedding matrix."""
     text = pathlib.Path(prompt_path).read_text()
     ids = tokenizer(text, return_tensors="pt").input_ids.to(model.device)
@@ -52,5 +60,7 @@ def bake(model, tokenizer: AutoTokenizer, prompt_path: str | pathlib.Path, prefi
         steps=step,
     )
     pathlib.Path("prompt_baking").mkdir(exist_ok=True)
-    (pathlib.Path("prompt_baking") / f"{ANCHOR_NS}.json").write_text(json.dumps(meta, indent=2))
+    (pathlib.Path("prompt_baking") / f"{ANCHOR_NS}.json").write_text(
+        json.dumps(meta, indent=2)
+    )
     return meta

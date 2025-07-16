@@ -27,10 +27,11 @@ try:
 except Exception:
     bnb = None
 
+
 class TestCompressionPipeline(unittest.TestCase):
     def test_seedlm_roundtrip(self):
         comp = SeedLMCompressor(block_size=4, latent_dim=2, num_seeds=32)
-        weights = torch.randn(8,4)
+        weights = torch.randn(8, 4)
         data = comp.compress_weight_matrix(weights)
         recon = comp.decompress_weight_matrix(data)
         assert recon.shape == weights.shape
@@ -38,7 +39,7 @@ class TestCompressionPipeline(unittest.TestCase):
 
     def test_vptq_roundtrip(self):
         quant = VPTQQuantizer(bits_per_vector=2.0, vector_length=4)
-        w = torch.randn(4,4)
+        w = torch.randn(4, 4)
         data = quant.quantize_weight_matrix(w)
         try:
             recon = quant.dequantize_weight_matrix(data)
@@ -47,7 +48,7 @@ class TestCompressionPipeline(unittest.TestCase):
         assert recon.shape == w.shape
 
     def test_stream_compress_model(self):
-        model = torch.nn.Linear(8,4)
+        model = torch.nn.Linear(8, 4)
         if bnb is None or not hasattr(bnb.nn, "LinearBitNet"):
             self.skipTest("LinearBitNet unavailable")
         compressed = stream_compress_model(model)
@@ -60,8 +61,9 @@ class TestCompressionPipeline(unittest.TestCase):
             self.skipTest("LinearBitNet unavailable")
         lin = torch.nn.Linear(4, 2)
         convert_to_bitnet(lin)
-        out = lin(torch.randn(1,4))
+        out = lin(torch.randn(1, 4))
         assert out.shape[-1] == 2
+
 
 if __name__ == "__main__":
     unittest.main()
