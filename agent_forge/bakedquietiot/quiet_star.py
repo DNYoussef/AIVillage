@@ -1,7 +1,8 @@
+from langroid import ChatAgent, ChatAgentConfig, Task
 import torch
-import torch.nn as nn
+from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from langroid import Task, ChatAgent, ChatAgentConfig
+
 
 class TalkHead(nn.Module):
     def __init__(self, hidden_size):
@@ -35,10 +36,10 @@ class QuietSTaRTask(Task):
         for strategy in self.cognitive_strategies:
             prompt += f"<{strategy}>\n"
         prompt += "<start of thought>"
-        
+
         input_ids = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
         attention_mask = torch.ones_like(input_ids)
-        
+
         outputs = self.model.generate(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -52,10 +53,10 @@ class QuietSTaRTask(Task):
             output_hidden_states=True,
             return_dict_in_generate=True
         )
-        
+
         return {
-            'text': self.tokenizer.decode(outputs.sequences[0], skip_special_tokens=False),
-            'hidden_states': outputs.hidden_states
+            "text": self.tokenizer.decode(outputs.sequences[0], skip_special_tokens=False),
+            "hidden_states": outputs.hidden_states
         }
 
     async def extract_strategy_insights(self, thought):
@@ -72,18 +73,18 @@ class QuietSTaRTask(Task):
         return insights
 
     async def iot_process(self, input_text, max_iterations=5):
-        thought = {'text': input_text, 'hidden_states': None}
+        thought = {"text": input_text, "hidden_states": None}
         for _ in range(max_iterations):
-            thought = await self.generate_thought(thought['text'])
-            insights = await self.extract_strategy_insights(thought['text'])
-            critique = await self.generate_critique(thought['text'], insights, temperature=0.2)
-            alternatives = await self.generate_alternatives(thought['text'], insights, temperature=0.8)
-            evaluation = await self.self_evaluate(thought['text'], insights)
-            thought = await self.revise(thought['text'], critique['text'], alternatives['text'], evaluation['text'], insights)
-            
-            if "<ready to answer>" in thought['text']:
+            thought = await self.generate_thought(thought["text"])
+            insights = await self.extract_strategy_insights(thought["text"])
+            critique = await self.generate_critique(thought["text"], insights, temperature=0.2)
+            alternatives = await self.generate_alternatives(thought["text"], insights, temperature=0.8)
+            evaluation = await self.self_evaluate(thought["text"], insights)
+            thought = await self.revise(thought["text"], critique["text"], alternatives["text"], evaluation["text"], insights)
+
+            if "<ready to answer>" in thought["text"]:
                 break
-        
+
         return thought, insights
 
     async def generate_critique(self, thought, insights, temperature=0.2):
@@ -106,7 +107,7 @@ class QuietSTaRTask(Task):
             prompt += f"{strategy}: {insight}\n"
         prompt += "\nEvaluation:"
         evaluation = await self.generate_thought(prompt)
-        
+
         ethical_prompt = f"""
         Evaluate the following thought and insights for following considerations:
         1. Does it promote unbiased and fair outcomes?
@@ -123,9 +124,9 @@ class QuietSTaRTask(Task):
             ethical_prompt += f"{strategy}: {insight}\n"
         ethical_prompt += "\nEthical evaluation:"
         ethical_evaluation = await self.generate_thought(ethical_prompt)
-        
+
         combined_evaluation = f"{evaluation['text']}\n\nEthical considerations:\n{ethical_evaluation['text']}"
-        return {'text': combined_evaluation, 'hidden_states': evaluation['hidden_states']}
+        return {"text": combined_evaluation, "hidden_states": evaluation["hidden_states"]}
 
     async def revise(self, thought, critique, alternatives, evaluation, insights):
         prompt = f"""
@@ -145,17 +146,17 @@ class QuietSTaRTask(Task):
         return await self.generate_thought(input_text)
 
     async def mix_thought_with_base_output(self, base_output, thought):
-        base_hidden = base_output['hidden_states'][-1][-1]
-        thought_hidden = thought['hidden_states'][-1][-1]
-        
+        base_hidden = base_output["hidden_states"][-1][-1]
+        thought_hidden = thought["hidden_states"][-1][-1]
+
         combined_hidden = torch.cat([base_hidden, thought_hidden], dim=-1)
         mixing_weights = self.talk_head(combined_hidden)
-        
+
         mixed_hidden = (1 - mixing_weights) * base_hidden + mixing_weights * thought_hidden
-        
+
         lm_head = self.model.get_output_embeddings()
         mixed_logits = lm_head(mixed_hidden)
-        
+
         mixed_output = self.model.generate(
             inputs_embeds=mixed_logits.unsqueeze(1),
             max_length=150,
@@ -165,7 +166,7 @@ class QuietSTaRTask(Task):
             num_return_sequences=1,
             early_stopping=True
         )
-        
+
         return self.tokenizer.decode(mixed_output[0], skip_special_tokens=False)
 
     async def format_output(self, output, insights):
@@ -210,12 +211,12 @@ class QuietSTaRTask(Task):
         thought, insights = await self.iot_process(input_text)
         final_output = await self.mix_thought_with_base_output(base_output, thought)
         formatted_output = await self.format_output(final_output, insights)
-        
+
         insight_quality = await self.evaluate_insight_quality(insights)
         formatted_output += "\n## Insight Quality Scores\n"
         for strategy, score in insight_quality.items():
             formatted_output += f"{strategy.replace('_', ' ').title()}: {score:.2f}\n"
-        
+
         return formatted_output
 
     async def run(self, input_text):
@@ -224,6 +225,7 @@ class QuietSTaRTask(Task):
 # Usage example
 if __name__ == "__main__":
     import asyncio
+
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
     async def main():

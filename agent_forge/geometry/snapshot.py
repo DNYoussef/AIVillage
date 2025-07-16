@@ -1,19 +1,19 @@
-"""
-geometry/snapshot.py
+"""geometry/snapshot.py
 --------------------
 Fast utilities for sensing representational geometry every mini-batch.
 """
 
 from __future__ import annotations
-import torch, math
+
+import torch
 from torch import Tensor
+
 try:
     from twonn import twonn  # external Two-NN implementation
 except Exception:  # pragma: no cover - fallback for minimal installs
     from .id_twonn import twonn  # lightweight local estimator
-from torch.linalg import svdvals                  # native batched SVD (PyTorch ≥2.1)
 
-__all__ = ["snapshot", "GeomState"]
+__all__ = ["GeomState", "snapshot"]
 
 
 class GeomState(dict):

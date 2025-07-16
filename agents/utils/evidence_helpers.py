@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
-from core.evidence import EvidencePack, Chunk
+from core.evidence import Chunk, EvidencePack
 
 
-def wrap_in_pack(result: Dict[str, Any], query: str) -> EvidencePack | None:
+def wrap_in_pack(result: dict[str, Any], query: str) -> EvidencePack | None:
     """Return EvidencePack built from retrieval result."""
     if "evidence_pack" in result:
         return None
-    retrieved: List[Any] = result.get("retrieved_info", [])
-    chunks: List[Chunk] = []
+    retrieved: list[Any] = result.get("retrieved_info", [])
+    chunks: list[Chunk] = []
     for idx, r in enumerate(retrieved):
         try:
             chunks.append(

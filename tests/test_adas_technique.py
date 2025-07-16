@@ -1,8 +1,8 @@
-import unittest
-import tempfile
+import ast
 import os
 from pathlib import Path
-import ast
+import tempfile
+import unittest
 
 # Load only the AgentTechnique class from the source file to avoid heavy deps
 repo_root = Path(__file__).resolve().parents[1]
@@ -15,7 +15,13 @@ for node in module.body:
         class_src = "\n".join(lines)
         break
 
-import typing, logging, time, tempfile, pathlib, importlib, os, types
+import importlib
+import logging
+import pathlib
+import time
+import types
+import typing
+
 
 class DummyToolMessage:
     def __init__(self, **data):
@@ -27,7 +33,7 @@ exec(
     {
         "ToolMessage": DummyToolMessage,
         "Any": typing.Any,
-        "Dict": typing.Dict,
+        "Dict": dict,
         "logging": logging,
         "time": time,
         "tempfile": tempfile,
@@ -55,8 +61,8 @@ def run(model_path, work_dir, params):
         technique = AgentTechnique(technique_name="demo", code=code)
         with tempfile.TemporaryDirectory() as tmp:
             result = technique.handle(tmp, {"score": 0.7})
-            self.assertTrue(os.path.isfile(os.path.join(tmp, 'flag.txt')))
-            self.assertEqual(result, 0.7)
+            assert os.path.isfile(os.path.join(tmp, "flag.txt"))
+            assert result == 0.7
 
 
 if __name__ == "__main__":

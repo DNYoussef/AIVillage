@@ -1,8 +1,8 @@
-from typing import Dict, Any
+import logging
+
 from agent_forge.adas.technique_archive import ChainOfThought
 from rag_system.utils.named_entity_recognition import NamedEntityRecognizer
 from rag_system.utils.relation_extraction import RelationExtractor
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ class ResearchCapabilities:
         self.chain_of_thought = ChainOfThought()
         self.named_entity_recognizer = NamedEntityRecognizer()
         self.relation_extractor = RelationExtractor()
-        self.capability_metrics: Dict[str, Dict[str, int]] = {
+        self.capability_metrics: dict[str, dict[str, int]] = {
             cap: {"success": 0, "fail": 0} for cap in getattr(agent, "research_capabilities", [])
         }
 
@@ -25,7 +25,7 @@ class ResearchCapabilities:
             stats["fail"] += 1
 
     async def handle_web_search(self, task):
-        search_query = task['content']
+        search_query = task["content"]
         reasoning = self.chain_of_thought.process(search_query)
         search_result = await self.agent.perform_web_search(search_query)
         return {
@@ -35,7 +35,7 @@ class ResearchCapabilities:
         }
 
     async def handle_web_scrape(self, task):
-        url = task['content']
+        url = task["content"]
         reasoning = self.chain_of_thought.process(f"Scrape information from {url}")
         scrape_result = await self.agent.perform_web_scrape(url)
         return {
@@ -45,7 +45,7 @@ class ResearchCapabilities:
         }
 
     async def handle_data_analysis(self, task):
-        data = task['content']
+        data = task["content"]
         reasoning = self.chain_of_thought.process(f"Analyze data: {data}")
         analysis_result = await self.agent.analyze_data(data)
         return {
@@ -55,7 +55,7 @@ class ResearchCapabilities:
         }
 
     async def handle_information_synthesis(self, task):
-        info = task['content']
+        info = task["content"]
         reasoning = self.chain_of_thought.process(f"Synthesize information: {info}")
         entities = self.named_entity_recognizer.recognize(info)
         relations = self.relation_extractor.extract(info)
@@ -69,7 +69,7 @@ class ResearchCapabilities:
         }
 
     async def handle_exploration_mode(self, task):
-        query = task['content']
+        query = task["content"]
         processed_query = await self.agent.query_processor.process_query(query)
         exploration_results = await self.agent.exploration_mode.discover_new_relations(processed_query)
         return {
@@ -86,7 +86,6 @@ class ResearchCapabilities:
         method will enable or disable the capability on ``self.agent`` depending
         on the observed success rate.
         """
-
         for capability, stats in self.capability_metrics.items():
             attempts = stats["success"] + stats["fail"]
             if attempts < 5:

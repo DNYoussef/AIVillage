@@ -1,13 +1,15 @@
-from typing import Dict, Any, Callable, Coroutine, List, Optional
 from abc import ABC, abstractmethod
 import asyncio
-import time
+from collections.abc import Callable, Coroutine
 from threading import Thread
+from typing import Any
+
 from .message import Message, MessageType, Priority
 from .queue import MessageQueue
+
 try:
-    from .mcp_client import MCPClient
     from .a2a_protocol import send_a2a
+    from .mcp_client import MCPClient
 except Exception:  # pragma: no cover - optional dependencies
     MCPClient = None  # type: ignore
     def send_a2a(*args, **kwargs):
@@ -17,7 +19,6 @@ try:
 except Exception:  # pragma: no cover - fallback if agents package isn't available
     class AIVillageException(Exception):
         """Custom exception class for AI Village-specific errors."""
-        pass
 
 class CommunicationProtocol(ABC):
     @abstractmethod
@@ -33,7 +34,7 @@ class CommunicationProtocol(ABC):
         self,
         sender: str,
         receiver: str,
-        content: Dict[str, Any],
+        content: dict[str, Any],
         priority: Priority = Priority.MEDIUM,
     ) -> Any:
         pass
@@ -47,24 +48,24 @@ class CommunicationProtocol(ABC):
         pass
 
 class StandardCommunicationProtocol(CommunicationProtocol):
-    def __init__(self, mcp_client: Optional[MCPClient] = None,
-                 certs: Optional[Dict[str, Dict[str, str]]] = None,
-                 cards: Optional[Dict[str, Dict[str, Any]]] = None):
-        self.message_queues: Dict[str, MessageQueue] = {}
-        self.subscribers: Dict[str, List[Callable[[Message], Coroutine[Any, Any, None]]]] = {}
-        self.message_history: Dict[str, List[Message]] = {}
+    def __init__(self, mcp_client: MCPClient | None = None,
+                 certs: dict[str, dict[str, str]] | None = None,
+                 cards: dict[str, dict[str, Any]] | None = None):
+        self.message_queues: dict[str, MessageQueue] = {}
+        self.subscribers: dict[str, list[Callable[[Message], Coroutine[Any, Any, None]]]] = {}
+        self.message_history: dict[str, list[Message]] = {}
         self.mcp = mcp_client
         self.certs = certs or {}
         self.cards = cards or {}
         self._running = False
-        self._dispatch_thread: Optional[Thread] = None
+        self._dispatch_thread: Thread | None = None
 
     def enqueue(self, message: Message) -> None:
         if message.receiver not in self.message_queues:
             self.message_queues[message.receiver] = MessageQueue()
         self.message_queues[message.receiver].enqueue(message)
 
-    def dequeue(self, agent_id: str) -> Optional[Message]:
+    def dequeue(self, agent_id: str) -> Message | None:
         if agent_id in self.message_queues:
             return self.message_queues[agent_id].dequeue()
         return None
@@ -116,7 +117,7 @@ class StandardCommunicationProtocol(CommunicationProtocol):
         self,
         sender: str,
         receiver: str,
-        content: Dict[str, Any],
+        content: dict[str, Any],
         priority: Priority = Priority.MEDIUM,
     ) -> Any:
         query_message = Message(
@@ -160,7 +161,7 @@ class StandardCommunicationProtocol(CommunicationProtocol):
         self,
         sender: str,
         message_type: MessageType,
-        content: Dict[str, Any],
+        content: dict[str, Any],
         priority: Priority = Priority.MEDIUM,
     ) -> None:
         for agent_id in list(self.subscribers.keys()):
@@ -173,7 +174,7 @@ class StandardCommunicationProtocol(CommunicationProtocol):
             )
             await self.send_message(msg)
 
-    def get_message_history(self, agent_id: str, message_type: Optional[MessageType] = None) -> List[Message]:
+    def get_message_history(self, agent_id: str, message_type: MessageType | None = None) -> list[Message]:
         history = self.message_history.get(agent_id, [])
         if message_type is None:
             return list(history)

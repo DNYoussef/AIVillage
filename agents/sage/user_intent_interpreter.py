@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -9,9 +9,8 @@ class UserIntentInterpreter:
         self.model = None
         logger.debug("UserIntentInterpreter initialized")
 
-    async def interpret_intent(self, query: str) -> Dict[str, Any]:
-        """
-        Interpret the user's intent from the given query.
+    async def interpret_intent(self, query: str) -> dict[str, Any]:
+        """Interpret the user's intent from the given query.
         
         Args:
             query (str): The user's input query.

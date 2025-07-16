@@ -1,6 +1,7 @@
 """Wrapper to create final compressed package."""
-from ..compression import stream_compress_model, CompressionConfig
-import torch.nn as nn
+from torch import nn
+
+from ..compression import CompressionConfig, stream_compress_model
 
 
 def final_package(model: nn.Module, out_path: str) -> dict:

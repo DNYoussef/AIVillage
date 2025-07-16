@@ -1,6 +1,8 @@
-from typing import List, Dict, Any
 from collections import deque
+from typing import Any
+
 from rag_system.retrieval.vector_store import VectorStore
+
 
 class ContinuousLearningLayer:
     def __init__(self, vector_store: VectorStore):
@@ -13,13 +15,13 @@ class ContinuousLearningLayer:
         learned_info = self.extract_learning(task, result)
         await self.vector_store.add_texts([learned_info])
         self.recent_learnings.append(learned_info)
-        self.performance_history.append(result.get('performance', 0.5))
+        self.performance_history.append(result.get("performance", 0.5))
 
     def extract_learning(self, task, result) -> str:
         return f"Task: {task['content']}\nResult: {result}\nLearned: {self._extract_key_insights(task, result)}"
 
     def _extract_key_insights(self, task, result) -> str:
-        task_text = task.get('content') if isinstance(task, dict) else str(task)
+        task_text = task.get("content") if isinstance(task, dict) else str(task)
         summary = str(result)
         return f"{task_text} => {summary[:100]}"
 
@@ -39,8 +41,8 @@ class ContinuousLearningLayer:
             await self.vector_store.add_texts([consolidated])
             self.recent_learnings.clear()
 
-    def _synthesize_learnings(self, learnings: List[str]) -> str:
+    def _synthesize_learnings(self, learnings: list[str]) -> str:
         return "\n".join(learnings)
 
-    async def retrieve_relevant_learnings(self, task: Dict[str, Any]) -> List[str]:
+    async def retrieve_relevant_learnings(self, task: dict[str, Any]) -> list[str]:
         return list(self.recent_learnings)

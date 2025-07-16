@@ -1,5 +1,6 @@
+
 import torch
-from typing import Dict, Tuple, Optional
+
 
 class VPTQQuantizer:
     def __init__(self, bits_per_vector: float = 2.0, vector_length: int = 32):
@@ -35,7 +36,7 @@ class VPTQQuantizer:
                 centroids[k] = vectors[mask].mean(dim=0)
         return centroids
 
-    def quantize_weight_matrix(self, weight_matrix: torch.Tensor, hessian: Optional[torch.Tensor]=None) -> Dict:
+    def quantize_weight_matrix(self, weight_matrix: torch.Tensor, hessian: torch.Tensor | None=None) -> dict:
         vectors = self._reshape_vectors(weight_matrix)
         if hessian is None:
             hessian = self._approx_hessian(vectors)
@@ -50,15 +51,15 @@ class VPTQQuantizer:
         residuals = vectors - codebook[assignments]
         res_codebook, res_idx = self._quantize_residuals(residuals)
         return {
-            'original_shape': weight_matrix.shape,
-            'vector_length': self.vector_length,
-            'codebook': codebook,
-            'assignments': assignments,
-            'residual_codebook': res_codebook,
-            'residual_idx': res_idx,
+            "original_shape": weight_matrix.shape,
+            "vector_length": self.vector_length,
+            "codebook": codebook,
+            "assignments": assignments,
+            "residual_codebook": res_codebook,
+            "residual_idx": res_idx,
         }
 
-    def _quantize_residuals(self, residuals: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _quantize_residuals(self, residuals: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         flat = residuals.flatten()
         if flat.numel()==0:
             return torch.zeros(1), torch.zeros_like(flat, dtype=torch.long)
@@ -67,13 +68,13 @@ class VPTQQuantizer:
         idx = torch.clamp(torch.round((flat-flat.min())/step),0,15).long()
         return codebook, idx.reshape(residuals.shape)
 
-    def dequantize_weight_matrix(self, data: Dict) -> torch.Tensor:
-        codebook = data['codebook']
-        assign = data['assignments']
+    def dequantize_weight_matrix(self, data: dict) -> torch.Tensor:
+        codebook = data["codebook"]
+        assign = data["assignments"]
         vectors = codebook[assign]
-        res_codebook = data['residual_codebook']
-        res_idx = data['residual_idx']
+        res_codebook = data["residual_codebook"]
+        res_idx = data["residual_idx"]
         residuals = res_codebook[res_idx]
         vecs = vectors + residuals
-        flat = vecs.flatten()[:int(torch.prod(torch.tensor(data['original_shape'])))]
-        return flat.reshape(data['original_shape'])
+        flat = vecs.flatten()[:int(torch.prod(torch.tensor(data["original_shape"])))]
+        return flat.reshape(data["original_shape"])

@@ -1,10 +1,17 @@
-import logging
-from typing import Dict, Any, List, Tuple
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
-from .knowledge_graph_agent import KnowledgeGraphAgent
-import json
 import asyncio
+import json
+import logging
+from typing import Any
+
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
+
+from rag_system.error_handling.error_handler import (
+    AIVillageException,
+    error_handler,
+    safe_execute,
+)
+
+from .knowledge_graph_agent import KnowledgeGraphAgent
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +21,8 @@ class DynamicKnowledgeIntegrationAgent:
         self.knowledge_graph_agent = knowledge_graph_agent
 
     @error_handler.handle_error
-    async def integrate_new_knowledge(self, new_information: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Integrate new knowledge into the system.
+    async def integrate_new_knowledge(self, new_information: dict[str, Any]) -> dict[str, Any]:
+        """Integrate new knowledge into the system.
 
         Args:
             new_information (Dict[str, Any]): The new information to be integrated.
@@ -28,7 +34,7 @@ class DynamicKnowledgeIntegrationAgent:
         if not validated_info:
             return {"status": "failed", "reason": "Information validation failed"}
 
-        existing_knowledge = await self.knowledge_graph_agent.query_graph(validated_info['main_topic'])
+        existing_knowledge = await self.knowledge_graph_agent.query_graph(validated_info["main_topic"])
         conflicts = self._identify_conflicts(validated_info, existing_knowledge)
 
         if conflicts:
@@ -37,17 +43,15 @@ class DynamicKnowledgeIntegrationAgent:
             resolved_info = validated_info
 
         integration_result = await self.knowledge_graph_agent.update_graph(resolved_info)
-        
+
         if integration_result:
             await self._trigger_system_updates(resolved_info)
             return {"status": "success", "integrated_info": resolved_info, "conflicts_resolved": bool(conflicts)}
-        else:
-            return {"status": "failed", "reason": "Failed to update knowledge graph"}
+        return {"status": "failed", "reason": "Failed to update knowledge graph"}
 
     @error_handler.handle_error
-    async def _validate_information(self, new_information: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Validate the new information for accuracy and relevance.
+    async def _validate_information(self, new_information: dict[str, Any]) -> dict[str, Any]:
+        """Validate the new information for accuracy and relevance.
 
         Args:
             new_information (Dict[str, Any]): The new information to be validated.
@@ -59,13 +63,12 @@ class DynamicKnowledgeIntegrationAgent:
         response = await self.llm.complete(prompt)
         validation_result = self._parse_validation_response(response.text)
 
-        if validation_result['is_valid']:
-            return validation_result['validated_info']
-        else:
-            logger.warning(f"Information validation failed: {validation_result['reason']}")
-            return None
+        if validation_result["is_valid"]:
+            return validation_result["validated_info"]
+        logger.warning(f"Information validation failed: {validation_result['reason']}")
+        return None
 
-    def _create_validation_prompt(self, new_information: Dict[str, Any]) -> str:
+    def _create_validation_prompt(self, new_information: dict[str, Any]) -> str:
         return f"""
         Please validate the following new information for accuracy and relevance:
 
@@ -91,14 +94,14 @@ class DynamicKnowledgeIntegrationAgent:
         If the information is invalid, explain why in the "reason" field and leave "validated_info" empty.
         """
 
-    def _parse_validation_response(self, response: str) -> Dict[str, Any]:
+    def _parse_validation_response(self, response: str) -> dict[str, Any]:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
             logger.error(f"Failed to parse validation response: {response}")
             raise AIVillageException("Failed to parse validation response")
 
-    def _identify_conflicts(self, new_info: Dict[str, Any], existing_knowledge: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _identify_conflicts(self, new_info: dict[str, Any], existing_knowledge: dict[str, Any]) -> list[dict[str, Any]]:
         conflicts = []
         for key, value in new_info.items():
             if key in existing_knowledge and existing_knowledge[key] != value:
@@ -110,9 +113,8 @@ class DynamicKnowledgeIntegrationAgent:
         return conflicts
 
     @error_handler.handle_error
-    async def _resolve_conflicts(self, new_info: Dict[str, Any], conflicts: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Resolve conflicts between new and existing information.
+    async def _resolve_conflicts(self, new_info: dict[str, Any], conflicts: list[dict[str, Any]]) -> dict[str, Any]:
+        """Resolve conflicts between new and existing information.
 
         Args:
             new_info (Dict[str, Any]): The new information being integrated.
@@ -126,7 +128,7 @@ class DynamicKnowledgeIntegrationAgent:
         resolved_info = self._parse_conflict_resolution_response(response.text)
         return resolved_info
 
-    def _create_conflict_resolution_prompt(self, new_info: Dict[str, Any], conflicts: List[Dict[str, Any]]) -> str:
+    def _create_conflict_resolution_prompt(self, new_info: dict[str, Any], conflicts: list[dict[str, Any]]) -> str:
         return f"""
         Please resolve the following conflicts between new and existing information:
 
@@ -146,7 +148,7 @@ class DynamicKnowledgeIntegrationAgent:
         but with conflicts resolved. Include an additional 'resolution_notes' field explaining your decisions.
         """
 
-    def _parse_conflict_resolution_response(self, response: str) -> Dict[str, Any]:
+    def _parse_conflict_resolution_response(self, response: str) -> dict[str, Any]:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
@@ -154,9 +156,8 @@ class DynamicKnowledgeIntegrationAgent:
             raise AIVillageException("Failed to parse conflict resolution response")
 
     @error_handler.handle_error
-    async def _trigger_system_updates(self, integrated_info: Dict[str, Any]):
-        """
-        Trigger updates in other components of the system when significant changes occur.
+    async def _trigger_system_updates(self, integrated_info: dict[str, Any]):
+        """Trigger updates in other components of the system when significant changes occur.
 
         Args:
             integrated_info (Dict[str, Any]): The newly integrated information.
@@ -168,9 +169,8 @@ class DynamicKnowledgeIntegrationAgent:
         # Example: await self.task_planning_agent.reassess_current_plans(integrated_info)
 
     @error_handler.handle_error
-    async def remove_outdated_information(self, time_threshold: str) -> List[Dict[str, Any]]:
-        """
-        Identify and remove outdated or irrelevant information from the knowledge graph.
+    async def remove_outdated_information(self, time_threshold: str) -> list[dict[str, Any]]:
+        """Identify and remove outdated or irrelevant information from the knowledge graph.
 
         Args:
             time_threshold (str): The time threshold for considering information as outdated.
@@ -183,16 +183,15 @@ class DynamicKnowledgeIntegrationAgent:
 
         for item in outdated_info:
             if await self._should_remove_item(item):
-                removal_result = await self.knowledge_graph_agent.update_graph({"remove": item['id']})
+                removal_result = await self.knowledge_graph_agent.update_graph({"remove": item["id"]})
                 if removal_result:
                     removed_items.append(item)
                     logger.info(f"Removed outdated information: {item['id']}")
 
         return removed_items
 
-    async def _should_remove_item(self, item: Dict[str, Any]) -> bool:
-        """
-        Determine if an item should be removed based on its relevance and importance.
+    async def _should_remove_item(self, item: dict[str, Any]) -> bool:
+        """Determine if an item should be removed based on its relevance and importance.
 
         Args:
             item (Dict[str, Any]): The item to evaluate for removal.
@@ -219,12 +218,11 @@ class DynamicKnowledgeIntegrationAgent:
         """
         response = await self.llm.complete(prompt)
         result = json.loads(response.text)
-        return result['should_remove']
+        return result["should_remove"]
 
     @safe_execute
-    async def process_new_information(self, new_information: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Process new information by integrating it into the knowledge base and triggering necessary updates.
+    async def process_new_information(self, new_information: dict[str, Any]) -> dict[str, Any]:
+        """Process new information by integrating it into the knowledge base and triggering necessary updates.
 
         Args:
             new_information (Dict[str, Any]): The new information to be processed and integrated.
@@ -233,26 +231,25 @@ class DynamicKnowledgeIntegrationAgent:
             Dict[str, Any]: A report on the processing and integration of the new information.
         """
         integration_result = await self.integrate_new_knowledge(new_information)
-        
-        if integration_result['status'] == 'success':
+
+        if integration_result["status"] == "success":
             # Simulate triggering updates in other system components
-            await self._trigger_system_updates(integration_result['integrated_info'])
-            
+            await self._trigger_system_updates(integration_result["integrated_info"])
+
             # Periodically remove outdated information (e.g., older than 30 days)
             removed_items = await self.remove_outdated_information("30 days ago")
-            
+
             return {
                 "status": "success",
                 "integration_result": integration_result,
                 "removed_outdated_items": len(removed_items),
                 "system_updated": True
             }
-        else:
-            return {
-                "status": "failed",
-                "reason": integration_result['reason'],
-                "system_updated": False
-            }
+        return {
+            "status": "failed",
+            "reason": integration_result["reason"],
+            "system_updated": False
+        }
 
 # Example usage
 if __name__ == "__main__":

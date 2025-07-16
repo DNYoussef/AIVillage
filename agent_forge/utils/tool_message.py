@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class ToolMessage(BaseModel):
     request: str
     purpose: str

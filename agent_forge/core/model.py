@@ -1,14 +1,15 @@
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
 
 class QuietStarModel(nn.Module):
     def __init__(self, model_path, thought_config):
         super().__init__()
         self.model = AutoModelForCausalLM.from_pretrained(model_path)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        
+
         self.thought_config = thought_config
         config = self.model.config
         self.thought_embeddings = nn.Embedding(config.vocab_size, config.hidden_size)
@@ -19,7 +20,7 @@ class QuietStarModel(nn.Module):
         thoughts = []
         log_probs = []
 
-        for i in range(self.thought_config['num_thoughts']):
+        for i in range(self.thought_config["num_thoughts"]):
             thought_input = torch.cat([hidden_states, self.thought_embeddings(thoughts[-1] if thoughts else torch.zeros_like(hidden_states[:, :1]))], dim=1)
             thought_output = self.model(inputs_embeds=thought_input, attention_mask=attention_mask, return_dict=True)
             thought = thought_output.last_hidden_state[:, -1:]

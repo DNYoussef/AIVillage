@@ -1,11 +1,17 @@
-import logging
-from typing import Dict, Any, List
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
-import networkx as nx
-import matplotlib.pyplot as plt
 import io
 import json
+import logging
+from typing import Any
+
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
+import matplotlib.pyplot as plt
+import networkx as nx
+
+from rag_system.error_handling.error_handler import (
+    AIVillageException,
+    error_handler,
+    safe_execute,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +20,8 @@ class UnifiedInputProcessor:
         self.llm = llm_config.create()
 
     @error_handler.handle_error
-    async def process_input(self, user_input: str) -> Dict[str, Any]:
-        """
-        Process the user input by interpreting intent and extracting key concepts.
+    async def process_input(self, user_input: str) -> dict[str, Any]:
+        """Process the user input by interpreting intent and extracting key concepts.
 
         Args:
             user_input (str): The raw input from the user.
@@ -27,14 +32,14 @@ class UnifiedInputProcessor:
         interpreted_intent = await self._interpret_intent(user_input)
         key_concepts = await self._extract_key_concepts(user_input, interpreted_intent)
         concept_graph = self._build_concept_graph(key_concepts)
-        
+
         return {
             "interpreted_intent": interpreted_intent,
             "key_concepts": key_concepts,
             "concept_graph": concept_graph
         }
 
-    async def _interpret_intent(self, user_input: str) -> Dict[str, Any]:
+    async def _interpret_intent(self, user_input: str) -> dict[str, Any]:
         prompt = f"""
         Analyze the following user input and determine the user's intent:
 
@@ -53,7 +58,7 @@ class UnifiedInputProcessor:
         response = await self.llm.complete(prompt)
         return self._parse_json_response(response.text)
 
-    async def _extract_key_concepts(self, user_input: str, interpreted_intent: Dict[str, Any]) -> Dict[str, Any]:
+    async def _extract_key_concepts(self, user_input: str, interpreted_intent: dict[str, Any]) -> dict[str, Any]:
         prompt = f"""
         Based on the following user input and interpreted intent, extract the key concepts:
 
@@ -72,15 +77,15 @@ class UnifiedInputProcessor:
         response = await self.llm.complete(prompt)
         return self._parse_json_response(response.text)
 
-    def _build_concept_graph(self, concepts: Dict[str, Any]) -> nx.Graph:
+    def _build_concept_graph(self, concepts: dict[str, Any]) -> nx.Graph:
         G = nx.Graph()
         for concept, data in concepts.items():
-            G.add_node(concept, **data.get('attributes', {}))
-            for related in data.get('relationships', []):
-                G.add_edge(concept, related['concept'], type=related['type'])
+            G.add_node(concept, **data.get("attributes", {}))
+            for related in data.get("relationships", []):
+                G.add_edge(concept, related["concept"], type=related["type"])
         return G
 
-    def _parse_json_response(self, response: str) -> Dict[str, Any]:
+    def _parse_json_response(self, response: str) -> dict[str, Any]:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
@@ -88,9 +93,8 @@ class UnifiedInputProcessor:
             raise AIVillageException("Failed to parse JSON response")
 
     @safe_execute
-    async def analyze_input_importance(self, processed_input: Dict[str, Any]) -> Dict[str, float]:
-        """
-        Analyze the importance of each extracted concept and intent.
+    async def analyze_input_importance(self, processed_input: dict[str, Any]) -> dict[str, float]:
+        """Analyze the importance of each extracted concept and intent.
 
         Args:
             processed_input (Dict[str, Any]): The processed input containing interpreted intent and key concepts.
@@ -121,8 +125,7 @@ class UnifiedInputProcessor:
         return self._parse_json_response(response.text)
 
     def visualize_concept_graph(self, graph: nx.Graph) -> bytes:
-        """
-        Visualize the concept graph and return the image as bytes.
+        """Visualize the concept graph and return the image as bytes.
 
         Args:
             graph (nx.Graph): The NetworkX graph of concepts.
@@ -132,19 +135,19 @@ class UnifiedInputProcessor:
         """
         plt.figure(figsize=(12, 8))
         pos = nx.spring_layout(graph)
-        
-        nx.draw_networkx_nodes(graph, pos, node_size=1000, node_color='lightblue')
+
+        nx.draw_networkx_nodes(graph, pos, node_size=1000, node_color="lightblue")
         nx.draw_networkx_edges(graph, pos)
         nx.draw_networkx_labels(graph, pos)
-        
-        edge_labels = nx.get_edge_attributes(graph, 'type')
+
+        edge_labels = nx.get_edge_attributes(graph, "type")
         nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_labels)
-        
+
         buf = io.BytesIO()
-        plt.savefig(buf, format='png')
+        plt.savefig(buf, format="png")
         buf.seek(0)
         plt.close()
-        
+
         return buf.getvalue()
 
 # Example usage
@@ -154,20 +157,20 @@ if __name__ == "__main__":
     async def main():
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
         processor = UnifiedInputProcessor(llm_config)
-        
+
         user_input = "I need to improve my team's productivity and communication skills within the next quarter."
-        
+
         result = await processor.process_input(user_input)
-        
+
         print("Interpreted Intent:")
         print(json.dumps(result["interpreted_intent"], indent=2))
         print("\nKey Concepts:")
         print(json.dumps(result["key_concepts"], indent=2))
-        
+
         importance_scores = await processor.analyze_input_importance(result)
         print("\nImportance Scores:")
         print(json.dumps(importance_scores, indent=2))
-        
+
         # Visualize the concept graph
         graph_image = processor.visualize_concept_graph(result["concept_graph"])
         with open("concept_graph.png", "wb") as f:

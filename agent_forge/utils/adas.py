@@ -4,11 +4,11 @@ import random
 def mutate_config(cfg: dict) -> dict:
     new = cfg.copy()
     if random.random() < 0.2:
-        new['num_layers'] = max(1, new.get('num_layers', 1) + random.choice([-1, 1]))
+        new["num_layers"] = max(1, new.get("num_layers", 1) + random.choice([-1, 1]))
     if random.random() < 0.3:
-        new['hidden_size'] = int(new.get('hidden_size', 128) * random.uniform(0.9, 1.1))
+        new["hidden_size"] = int(new.get("hidden_size", 128) * random.uniform(0.9, 1.1))
     if random.random() < 0.1:
-        new['num_experts'] = max(1, new.get('num_experts', 1) + random.choice([-1, 1]))
+        new["num_experts"] = max(1, new.get("num_experts", 1) + random.choice([-1, 1]))
     return new
 
 

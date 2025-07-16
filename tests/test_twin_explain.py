@@ -1,19 +1,22 @@
 import importlib
+import inspect
 import sys
 import types
-import inspect
 import unittest
 
 if importlib.util.find_spec("httpx") is None:
-    raise unittest.SkipTest("Required dependency not installed")
+    msg = "Required dependency not installed"
+    raise unittest.SkipTest(msg)
 
 import httpx
 
 if "app" not in inspect.signature(httpx.Client).parameters:
-    raise unittest.SkipTest("httpx lacks TestClient app support")
+    msg = "httpx lacks TestClient app support"
+    raise unittest.SkipTest(msg)
+
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
-from unittest.mock import patch
 
 
 class DummyMetric:

@@ -1,8 +1,6 @@
-import unittest
-import asyncio
-import sys
 import importlib.util
 from pathlib import Path
+import unittest
 
 # Load the interpreter directly to avoid importing heavy dependencies from the
 # parent `agents` package during test collection.
@@ -17,20 +15,20 @@ class TestUserIntentInterpreter(unittest.IsolatedAsyncioTestCase):
     async def test_search_intent(self):
         interpreter = UserIntentInterpreter()
         result = await interpreter.interpret_intent("search for python tutorials")
-        self.assertEqual(result["type"], "search")
-        self.assertGreaterEqual(result["confidence"], 0.9)
+        assert result["type"] == "search"
+        assert result["confidence"] >= 0.9
 
     async def test_summarize_intent(self):
         interpreter = UserIntentInterpreter()
         result = await interpreter.interpret_intent("summarize the rust book")
-        self.assertEqual(result["type"], "summarize")
-        self.assertIn("rust book", result["topic"])
+        assert result["type"] == "summarize"
+        assert "rust book" in result["topic"]
 
     async def test_unknown_intent(self):
         interpreter = UserIntentInterpreter()
         result = await interpreter.interpret_intent("Tell me something interesting")
-        self.assertEqual(result["type"], "unknown")
-        self.assertLess(result["confidence"], 0.9)
+        assert result["type"] == "unknown"
+        assert result["confidence"] < 0.9
 
 
 if __name__ == "__main__":

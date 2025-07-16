@@ -1,11 +1,9 @@
 # credit: torch-twonn repo, MIT licence  ➜  https://github.com/VRehnberg/torch-twonn
 import torch
-from torch import nn
 
 
 def twonn(x: torch.Tensor, k1: int = 2, k2: int = 3) -> float:
-    """
-    Facco et al. Two-NN estimator - intrinsic dimensionality of `x` (N×D).
+    """Facco et al. Two-NN estimator - intrinsic dimensionality of `x` (N×D).
     Returns float ID_nl.
     """
     with torch.no_grad():

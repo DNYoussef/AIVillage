@@ -1,11 +1,11 @@
 import argparse
 import logging
-import os
-from tqdm import tqdm
-from .config import create_default_config, Configuration, ModelReference
-from .merging.merger import AdvancedModelMerger
-from .utils import load_models, EvoMergeException, check_system_resources
+
+from .config import ModelReference, create_default_config
 from .logging_config import setup_logging
+from .merging.merger import AdvancedModelMerger
+from .utils import EvoMergeException, check_system_resources, load_models
+
 
 def download_and_merge_models(model_paths, merge_techniques, weight_mask_rate, use_weight_rescale, mask_strategy, use_disk_based_merge, chunk_size, use_cli=False, verbose=False):
     logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ def download_and_merge_models(model_paths, merge_techniques, weight_mask_rate, u
         models = load_models(config.models)
         logger.info(f"Loaded {len(models)} models successfully")
     except EvoMergeException as e:
-        logger.error(f"Failed to load models: {str(e)}")
+        logger.error(f"Failed to load models: {e!s}")
         return []
 
     if not models:
@@ -39,7 +39,7 @@ def download_and_merge_models(model_paths, merge_techniques, weight_mask_rate, u
         return []
 
     merger = AdvancedModelMerger(config)
-    
+
     merged_models = []
     max_retries = 3
     for attempt in range(max_retries):
@@ -49,7 +49,7 @@ def download_and_merge_models(model_paths, merge_techniques, weight_mask_rate, u
             logger.info(f"Successfully created merged model: {merged_model_path}")
             break
         except Exception as e:
-            logger.error(f"Attempt {attempt + 1} failed to create merged model: {str(e)}")
+            logger.error(f"Attempt {attempt + 1} failed to create merged model: {e!s}")
             if attempt == max_retries - 1:
                 logger.error(f"Failed to create merged model after {max_retries} attempts")
 
@@ -74,7 +74,7 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
 
-    logger = setup_logging(log_file='evomerge.log')
+    logger = setup_logging(log_file="evomerge.log")
     logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
     logger.info("Starting EvoMerge CLI")
@@ -83,9 +83,9 @@ def main():
         model_paths = [args.model1, args.model2]
         if args.model3:
             model_paths.append(args.model3)
-        
+
         merge_techniques = [args.ps_technique1, args.ps_technique2, args.dfs_technique]
-        
+
         logger.info(f"Model paths: {model_paths}")
         logger.info(f"Merge techniques: {merge_techniques}")
         logger.info(f"Weight mask rate: {args.weight_mask_rate}")
@@ -93,16 +93,16 @@ def main():
         logger.info(f"Mask strategy: {args.mask_strategy}")
         logger.info(f"Use disk-based merge: {args.use_disk_based_merge}")
         logger.info(f"Chunk size: {args.chunk_size}")
-        
+
         merged_models = download_and_merge_models(
-            model_paths, 
-            merge_techniques, 
-            args.weight_mask_rate, 
-            args.use_weight_rescale, 
+            model_paths,
+            merge_techniques,
+            args.weight_mask_rate,
+            args.use_weight_rescale,
             args.mask_strategy,
             args.use_disk_based_merge,
             args.chunk_size,
-            args.use_cli, 
+            args.use_cli,
             args.verbose
         )
         logger.info(f"Created {len(merged_models)} merged models:")

@@ -2,11 +2,14 @@ import importlib
 import unittest
 
 if importlib.util.find_spec("torch") is None:
-    raise unittest.SkipTest("PyTorch not installed")
+    msg = "PyTorch not installed"
+    raise unittest.SkipTest(msg)
 
 import torch
+
 from agent_forge.training.geometry_pipeline import train_geometry_model
-from agent_forge.training.sleep_and_dream import SleepNet, DreamNet
+from agent_forge.training.sleep_and_dream import DreamNet, SleepNet
+
 
 class TestGeometryTraining(unittest.TestCase):
     def test_train_geometry_model_runs(self):
@@ -19,7 +22,7 @@ class TestGeometryTraining(unittest.TestCase):
         dream = DreamNet(4, 4, 1, pretrained=False)
         x = torch.randn(2,4)
         out = dream(sleep(x))
-        self.assertEqual(out.shape, (2,4))
+        assert out.shape == (2, 4)
 
 if __name__ == "__main__":
     unittest.main()

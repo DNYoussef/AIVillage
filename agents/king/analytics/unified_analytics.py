@@ -1,7 +1,8 @@
-import numpy as np
-from typing import List, Dict, Any
 from collections import deque
 import logging
+from typing import Any
+
+import numpy as np
 from scipy.stats import linregress
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ class UnifiedAnalytics:
         self.metrics[name].append(value)
         logger.debug(f"Recorded metric {name}: {value}")
 
-    def get_metric_stats(self, name: str) -> Dict[str, float]:
+    def get_metric_stats(self, name: str) -> dict[str, float]:
         if name not in self.metrics:
             logger.warning(f"Metric {name} not found")
             return {}
@@ -47,7 +48,7 @@ class UnifiedAnalytics:
         slope, _, _, _, _ = linregress(x, y)
         return slope
 
-    def generate_summary_report(self) -> Dict[str, Any]:
+    def generate_summary_report(self) -> dict[str, Any]:
         report = {}
         for name in self.metrics:
             report[name] = self.get_metric_stats(name)
@@ -58,7 +59,7 @@ class UnifiedAnalytics:
     def calculate_task_success_rate(self) -> float:
         if not self.task_history:
             return 0.0
-        successful_tasks = sum(1 for task in self.task_history if task['success'])
+        successful_tasks = sum(1 for task in self.task_history if task["success"])
         return successful_tasks / len(self.task_history)
 
     async def evolve(self):
@@ -79,7 +80,7 @@ class UnifiedAnalytics:
                 logger.info(f"Pruning stagnant metric {name}")
                 del self.metrics[name]
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         return {
             "metrics": list(self.metrics.keys()),
             "task_history_length": len(self.task_history),

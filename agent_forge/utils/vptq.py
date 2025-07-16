@@ -1,5 +1,6 @@
 import torch
 
+
 class VPTQQuantizer:
     def __init__(self, K=4, D=32, hessian=None):
         self.K = K

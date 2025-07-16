@@ -1,17 +1,20 @@
 import importlib.util
+
 import pytest
-torch_spec = importlib.util.find_spec('torch')
+
+torch_spec = importlib.util.find_spec("torch")
 if torch_spec is None:
-    pytest.skip('torch not installed', allow_module_level=True)
+    pytest.skip("torch not installed", allow_module_level=True)
 import torch
-from agent_forge.compression import stream_compress_model, CompressionConfig
+
+from agent_forge.compression import CompressionConfig, stream_compress_model
 from twin_runtime.compressed_loader import CompressedModelLoader
 
 
 def test_loader_roundtrip(tmp_path):
     model = torch.nn.Linear(4, 2)
     compressed = stream_compress_model(model, CompressionConfig(bitnet_finetune=False, use_hyper=False))
-    file = tmp_path / 'cmp.pth'
+    file = tmp_path / "cmp.pth"
     torch.save(compressed, file)
 
     loader = CompressedModelLoader(lambda: torch.nn.Linear(4, 2), str(file))

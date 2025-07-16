@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+
 import openai
+
 from rag_system.utils.tokenizer import get_cl100k_encoding
 from utils.logging import get_logger
 
@@ -13,7 +15,7 @@ class OpenAIGPTConfig:
     temperature: float = 0.7
     max_tokens: int = 1000
 
-    def create(self) -> "OpenAIGPT":
+    def create(self) -> OpenAIGPT:
         return OpenAIGPT(self)
 
 
@@ -39,7 +41,7 @@ class OpenAIGPT:
                 (object,),
                 {"content": content, "parsed_output": {}},
             )
-        except Exception as exc:  # pragma: no cover - network errors
+        except Exception:  # pragma: no cover - network errors
             self.logger.exception("OpenAI completion failed")
             raise
 

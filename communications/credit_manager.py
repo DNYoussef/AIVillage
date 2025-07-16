@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
-"""
-CreditManager → mints & spends compute tokens on Bittensor.
+"""CreditManager → mints & spends compute tokens on Bittensor.
 """
 
-from bittensor_wallet import Wallet, Network  # pip install bittensor-wallet
+from bittensor_wallet import Network, Wallet  # pip install bittensor-wallet
 
 
 class CreditManager:
@@ -12,8 +11,7 @@ class CreditManager:
         self.network = Network(self.wallet)
 
     def mint(self, task_id: str, macs: int) -> str:
-        """
-        1 credit = 1e12 MACs
+        """1 credit = 1e12 MACs
         Returns tx hash.
         """
         tokens = macs / 1e12

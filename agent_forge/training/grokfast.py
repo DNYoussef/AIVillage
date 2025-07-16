@@ -1,10 +1,12 @@
-import torch
 from collections import deque
-from typing import Dict, Optional, Literal
-from langroid import Task, ChatAgent, ChatAgentConfig
+from typing import Literal
+
+from langroid import ChatAgent, ChatAgentConfig, Task
+import torch
+
 
 class GrokFastTask(Task):
-    def __init__(self, agent: ChatAgent, model: torch.nn.Module, method: Literal['MA', 'EMA'] = 'EMA', 
+    def __init__(self, agent: ChatAgent, model: torch.nn.Module, method: Literal["MA", "EMA"] = "EMA",
                  window_size: int = 100, lamb: float = 2.0, alpha: float = 0.98):
         super().__init__(agent)
         self.model = model
@@ -15,14 +17,13 @@ class GrokFastTask(Task):
         self.grads = None
 
     async def filter_gradients(self):
-        if self.method == 'MA':
+        if self.method == "MA":
             return await self._filter_ma()
-        else:
-            return await self._filter_ema()
+        return await self._filter_ema()
 
     async def _filter_ma(self):
         if self.grads is None:
-            self.grads = {n: deque(maxlen=self.window_size) 
+            self.grads = {n: deque(maxlen=self.window_size)
                           for n, p in self.model.named_parameters() if p.requires_grad}
 
         for n, p in self.model.named_parameters():
@@ -35,7 +36,7 @@ class GrokFastTask(Task):
 
     async def _filter_ema(self):
         if self.grads is None:
-            self.grads = {n: p.grad.data.detach() 
+            self.grads = {n: p.grad.data.detach()
                           for n, p in self.model.named_parameters() if p.requires_grad}
 
         for n, p in self.model.named_parameters():
@@ -50,6 +51,7 @@ class GrokFastTask(Task):
 # Usage example
 if __name__ == "__main__":
     import asyncio
+
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
     async def main():

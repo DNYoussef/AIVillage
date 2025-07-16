@@ -1,8 +1,7 @@
 from dataclasses import dataclass, field
-from typing import List
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 @dataclass
@@ -17,10 +16,10 @@ class Question:
 class CurriculumLevel:
     level: int
     difficulty: int
-    organic_data: List[str] = field(default_factory=list)
-    synthetic_data: List[str] = field(default_factory=list)
-    rag_data: List[str] = field(default_factory=list)
-    interaction_data: List[str] = field(default_factory=list)
+    organic_data: list[str] = field(default_factory=list)
+    synthetic_data: list[str] = field(default_factory=list)
+    rag_data: list[str] = field(default_factory=list)
+    interaction_data: list[str] = field(default_factory=list)
     self_awareness_complexity: int = 1
 
 
@@ -47,7 +46,7 @@ class CurriculumGenerator:
 
     def create_assessment_questions(
         self, num_questions: int = 1000
-    ) -> List[Question]:
+    ) -> list[Question]:
         questions = []
         for level in range(1, num_questions + 1):
             prompt = (
@@ -66,7 +65,7 @@ class CurriculumGenerator:
             )
         return questions
 
-    def find_model_baseline(self, model, questions: List[Question]) -> int:
+    def find_model_baseline(self, model, questions: list[Question]) -> int:
         failures = []
         for q in questions:
             input_ids = self.tokenizer.encode(q.text, return_tensors="pt").to(
@@ -82,7 +81,7 @@ class CurriculumGenerator:
         failure_point = min(failures)
         return max(1, failure_point - 50)
 
-    def create_curriculum_levels(self, baseline: int) -> List[CurriculumLevel]:
+    def create_curriculum_levels(self, baseline: int) -> list[CurriculumLevel]:
         world_class = min(1000, baseline + 450)
         levels = []
         for i in range(10):

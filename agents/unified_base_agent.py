@@ -1,44 +1,47 @@
-from typing import Dict, Any, List, Optional, Callable, Tuple
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 import random
-from utils.logging import get_logger
-import numpy as np
+from typing import Any
 import warnings
+
+import numpy as np
 from sklearn.linear_model import LogisticRegression
-from agents.self_evolve.quality_assurance import BasicUPOChecker
-from agents.utils.task import Task as LangroidTask
+import yaml
+
 from agents.language_models.openai_gpt import OpenAIGPTConfig
+from agents.self_evolve.quality_assurance import BasicUPOChecker
 from agents.utils import (
+    DirectPreferenceOptimizer,
+    DPOConfig,
     MCTSConfig,
     MonteCarloTreeSearch,
-    DPOConfig,
-    DirectPreferenceOptimizer,
 )
-import yaml
-from pathlib import Path
-from rag_system.retrieval.vector_store import VectorStore
-from rag_system.core.config import UnifiedConfig
-from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
+from agents.utils.task import Task as LangroidTask
 from communications.protocol import (
-    StandardCommunicationProtocol,
     Message,
     MessageType,
     Priority,
+    StandardCommunicationProtocol,
 )
+from rag_system.core.config import UnifiedConfig
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.retrieval.vector_store import VectorStore
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
+from utils.logging import get_logger
 
 
 @dataclass
 class UnifiedAgentConfig:
     name: str
     description: str
-    capabilities: List[str]
+    capabilities: list[str]
     rag_config: UnifiedConfig
     vector_store: VectorStore
     model: str
     instructions: str
-    extra_params: Dict[str, Any] = field(default_factory=dict)
+    extra_params: dict[str, Any] = field(default_factory=dict)
 
 
 class UnifiedBaseAgent:
@@ -56,7 +59,7 @@ class UnifiedBaseAgent:
         self.vector_store = config.vector_store
         self.model = config.model
         self.instructions = config.instructions
-        self.tools: Dict[str, Callable] = {}
+        self.tools: dict[str, Callable] = {}
         self.communication_protocol = communication_protocol
         self.communication_protocol.subscribe(self.name, self.handle_message)
         self.llm = OpenAIGPTConfig(chat_model=self.model).create()
@@ -68,7 +71,7 @@ class UnifiedBaseAgent:
         self.agent_architecture_layer = AgentArchitectureLayer()
         self.decision_making_layer = DecisionMakingLayer()
 
-    async def execute_task(self, task: LangroidTask) -> Dict[str, Any]:
+    async def execute_task(self, task: LangroidTask) -> dict[str, Any]:
         # Quality Assurance Layer check
         if not self.quality_assurance_layer.check_task_safety(task):
             return {"error": "Task deemed unsafe"}
@@ -90,14 +93,13 @@ class UnifiedBaseAgent:
 
         return {"result": decision}
 
-    async def _process_task(self, task: LangroidTask) -> Dict[str, Any]:
-        """
-        Process the task and return the result or a handoff to another agent.
+    async def _process_task(self, task: LangroidTask) -> dict[str, Any]:
+        """Process the task and return the result or a handoff to another agent.
         This method should be implemented by subclasses.
         """
         raise NotImplementedError("Subclasses must implement _process_task method")
 
-    async def process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_message(self, message: dict[str, Any]) -> dict[str, Any]:
         task = LangroidTask(self, message["content"])
         return await self.execute_task(task)
 
@@ -128,11 +130,11 @@ class UnifiedBaseAgent:
         if name in self.tools:
             del self.tools[name]
 
-    def get_tool(self, name: str) -> Optional[Callable]:
+    def get_tool(self, name: str) -> Callable | None:
         return self.tools.get(name)
 
     @property
-    def info(self) -> Dict[str, Any]:
+    def info(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "description": self.description,
@@ -144,35 +146,30 @@ class UnifiedBaseAgent:
     # Implement AgentInterface methods
 
     async def generate(self, prompt: str) -> str:
-        """
-        Generate a response using the agent's language model.
+        """Generate a response using the agent's language model.
         """
         response = await self.llm.complete(prompt)
         return response.text
 
-    async def get_embedding(self, text: str) -> List[float]:
-        """
-        Get the embedding for the given text.
+    async def get_embedding(self, text: str) -> list[float]:
+        """Get the embedding for the given text.
         """
         return await self.rag_pipeline.get_embedding(text)
 
     async def rerank(
-        self, query: str, results: List[Dict[str, Any]], k: int
-    ) -> List[Dict[str, Any]]:
-        """
-        Rerank the given results based on the query.
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
+        """Rerank the given results based on the query.
         """
         return await self.rag_pipeline.rerank(query, results, k)
 
-    async def introspect(self) -> Dict[str, Any]:
-        """
-        Return the agent's internal state.
+    async def introspect(self) -> dict[str, Any]:
+        """Return the agent's internal state.
         """
         return self.info
 
     async def communicate(self, message: str, recipient: str) -> str:
-        """
-        Communicate with another agent using the communication protocol.
+        """Communicate with another agent using the communication protocol.
         """
         query_message = Message(
             type=MessageType.QUERY,
@@ -186,9 +183,8 @@ class UnifiedBaseAgent:
         )
         return f"Sent: {message}, Received: {response}"
 
-    async def activate_latent_space(self, query: str) -> Tuple[str, str]:
-        """
-        Activate the agent's latent space for the given query.
+    async def activate_latent_space(self, query: str) -> tuple[str, str]:
+        """Activate the agent's latent space for the given query.
         """
         activation_prompt = f"""
         Given the following query, provide:
@@ -209,22 +205,19 @@ class UnifiedBaseAgent:
 
         return background_knowledge, refined_query
 
-    async def query_rag(self, query: str) -> Dict[str, Any]:
-        """
-        Submit a query to the RAG system and receive a structured response.
+    async def query_rag(self, query: str) -> dict[str, Any]:
+        """Submit a query to the RAG system and receive a structured response.
         """
         result = await self.rag_pipeline.process_query(query)
         return result
 
     async def add_document(self, content: str, filename: str):
-        """
-        Add a new document to the RAG system.
+        """Add a new document to the RAG system.
         """
         await self.rag_pipeline.add_document(content, filename)
 
     def create_handoff(self, target_agent: "UnifiedBaseAgent"):
-        """
-        Create a handoff function to transfer control to another agent.
+        """Create a handoff function to transfer control to another agent.
         """
 
         def handoff():
@@ -233,8 +226,7 @@ class UnifiedBaseAgent:
         self.add_tool(f"transfer_to_{target_agent.name}", handoff)
 
     async def update_instructions(self, new_instructions: str):
-        """
-        Update the agent's instructions dynamically.
+        """Update the agent's instructions dynamically.
         """
         self.instructions = new_instructions
         # Optionally, you could add logic here to re-initialize the agent with the new instructions
@@ -280,7 +272,7 @@ class FoundationalLayer:
         self.vector_store = vector_store
         # strength determines how much baked knowledge is injected into the task
         self.bake_strength: float = 1.0
-        self._history: List[int] = []
+        self._history: list[int] = []
 
     async def process_task(self, task: LangroidTask) -> LangroidTask:
         baked_knowledge = await self.bake_knowledge(task.content)
@@ -308,7 +300,7 @@ class ContinuousLearningLayer:
     def __init__(self, vector_store: VectorStore):
         self.vector_store = vector_store
         self.learning_rate: float = 0.05
-        self.performance_history: List[float] = []
+        self.performance_history: list[float] = []
 
     async def update(self, task: LangroidTask, result: Any):
         # Implement SELF-PARAM (rapid parameter updating)
@@ -345,18 +337,18 @@ class AgentArchitectureLayer:
     def __init__(self):
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
         self.quality_threshold: float = 0.9
-        self.evaluation_history: List[float] = []
+        self.evaluation_history: list[float] = []
         self.max_revisions: int = 3
 
     async def assistant(self, result: Any) -> Any:
         """Generate an initial assistant response."""
         return result
 
-    async def checker(self, assistant_output: Any) -> Dict[str, Any]:
+    async def checker(self, assistant_output: Any) -> dict[str, Any]:
         """Evaluate assistant output and return quality feedback."""
         return await self.evaluate_result(assistant_output)
 
-    async def reviser(self, assistant_output: Any, feedback: Dict[str, Any]) -> Any:
+    async def reviser(self, assistant_output: Any, feedback: dict[str, Any]) -> Any:
         """Revise the assistant output based on checker feedback."""
         return await self.revise_result(assistant_output, feedback)
 
@@ -372,12 +364,12 @@ class AgentArchitectureLayer:
             output = await self.reviser(output, evaluation)
         return output
 
-    async def evaluate_result(self, result: Any) -> Dict[str, Any]:
+    async def evaluate_result(self, result: Any) -> dict[str, Any]:
         evaluation_prompt = f"Evaluate the following result: '{result}'. Provide a quality score between 0 and 1."
         evaluation = await self.llm.complete(evaluation_prompt)
         return {"quality": float(evaluation.text)}
 
-    async def revise_result(self, result: Any, evaluation: Dict[str, Any]) -> Any:
+    async def revise_result(self, result: Any, evaluation: dict[str, Any]) -> Any:
         revision_prompt = (
             f"Revise the following result to improve its quality: '{result}'"
         )
@@ -400,7 +392,7 @@ class DecisionMakingLayer:
         cfg_data = {}
         path = Path(config_path)
         if path.is_file():
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 cfg_data = yaml.safe_load(f) or {}
 
         mcts_cfg = MCTSConfig(
@@ -447,8 +439,8 @@ class DecisionMakingLayer:
         return f"DPO suggests: {best_approach}"
 
     async def _get_preferences(
-        self, task: LangroidTask, context: str, options: List[str]
-    ) -> Dict[str, float]:
+        self, task: LangroidTask, context: str, options: list[str]
+    ) -> dict[str, float]:
         """Return mock preference scores for each option."""
         prompt = f"""
         Task: {task.content}
@@ -466,8 +458,8 @@ class DecisionMakingLayer:
         return preferences
 
     async def process_query(
-        self, query: str, timestamp: Optional[datetime] = None
-    ) -> Dict[str, Any]:
+        self, query: str, timestamp: datetime | None = None
+    ) -> dict[str, Any]:
         # Implement query processing logic here
         retrieval_results = await self.rag_pipeline.retrieve(query, timestamp=timestamp)
         reasoning_result = await self.rag_pipeline.reason(query, retrieval_results)
@@ -500,8 +492,8 @@ class _DPOModule:
 
     def __init__(self) -> None:
         self.model = LogisticRegression()
-        self.X: List[np.ndarray] = []
-        self.y: List[int] = []
+        self.X: list[np.ndarray] = []
+        self.y: list[int] = []
 
     def add_record(self, features: np.ndarray, outcome: int) -> None:
         self.X.append(features)
@@ -531,7 +523,7 @@ class SelfEvolvingSystem:
     system becomes feature complete.
     """
 
-    def __init__(self, agents: List[UnifiedBaseAgent]):
+    def __init__(self, agents: list[UnifiedBaseAgent]):
         self.logger = get_logger(__name__)
         self.agents = agents
         # Initialize basic stub components so the system functions even
@@ -544,9 +536,9 @@ class SelfEvolvingSystem:
         self.quiet_star = object()
         self.expert_vectors = object()
         self.adas_optimizer = object()
-        self.recent_decisions: List[tuple] = []
+        self.recent_decisions: list[tuple] = []
 
-    async def process_task(self, task: LangroidTask) -> Dict[str, Any]:
+    async def process_task(self, task: LangroidTask) -> dict[str, Any]:
         for agent in self.agents:
             if task.type in agent.capabilities:
                 return await agent.execute_task(task)
@@ -580,7 +572,7 @@ class SelfEvolvingSystem:
 
     async def analyze_agent_performance(
         self, agent: UnifiedBaseAgent
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         self.logger.info("Analyzing performance of agent: %s", agent.name)
         performance = {
             capability: random.uniform(0.4, 1.0) for capability in agent.capabilities
@@ -589,15 +581,15 @@ class SelfEvolvingSystem:
         return performance
 
     async def generate_new_capabilities(
-        self, agent: UnifiedBaseAgent, performance: Dict[str, float]
-    ) -> List[str]:
+        self, agent: UnifiedBaseAgent, performance: dict[str, float]
+    ) -> list[str]:
         self.logger.info("Generating new capabilities for agent: %s", agent.name)
         low_performing = [cap for cap, score in performance.items() if score < 0.6]
         prompt = (
             f"Agent {agent.name} is underperforming in {', '.join(low_performing)}. "
             "Suggest 2-3 new capabilities to improve performance."
         )
-        new_capabilities: List[str] = []
+        new_capabilities: list[str] = []
         if hasattr(self.sage_framework, "assistant_response"):
             try:
                 response = await self.sage_framework.assistant_response(prompt)
@@ -659,7 +651,7 @@ class SelfEvolvingSystem:
         self.logger.info("New UPO threshold: %.4f", new_threshold)
         return new_threshold
 
-    def get_recent_decisions(self) -> List[tuple]:
+    def get_recent_decisions(self) -> list[tuple]:
         if self.recent_decisions:
             return self.recent_decisions[-100:]
         return []

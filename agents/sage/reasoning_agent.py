@@ -1,9 +1,16 @@
-import logging
-from typing import Dict, Any, List
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
-from .knowledge_graph_agent import KnowledgeGraphAgent
 import json
+import logging
+from typing import Any
+
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
+
+from rag_system.error_handling.error_handler import (
+    AIVillageException,
+    error_handler,
+    safe_execute,
+)
+
+from .knowledge_graph_agent import KnowledgeGraphAgent
 
 logger = logging.getLogger(__name__)
 
@@ -13,9 +20,8 @@ class ReasoningAgent:
         self.knowledge_graph_agent = knowledge_graph_agent
 
     @error_handler.handle_error
-    async def perform_reasoning(self, context: Dict[str, Any], query: str) -> Dict[str, Any]:
-        """
-        Perform reasoning based on the given context and query.
+    async def perform_reasoning(self, context: dict[str, Any], query: str) -> dict[str, Any]:
+        """Perform reasoning based on the given context and query.
 
         Args:
             context (Dict[str, Any]): The context for the reasoning task.
@@ -29,7 +35,7 @@ class ReasoningAgent:
         response = await self.llm.complete(prompt)
         return self._parse_reasoning_response(response.text)
 
-    def _create_reasoning_prompt(self, context: Dict[str, Any], query: str, kg_query_result: Dict[str, Any]) -> str:
+    def _create_reasoning_prompt(self, context: dict[str, Any], query: str, kg_query_result: dict[str, Any]) -> str:
         return f"""
         Given the following context, query, and knowledge graph query result:
 
@@ -62,7 +68,7 @@ class ReasoningAgent:
         - Assumptions made
         """
 
-    def _parse_reasoning_response(self, response: str) -> Dict[str, Any]:
+    def _parse_reasoning_response(self, response: str) -> dict[str, Any]:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
@@ -70,9 +76,8 @@ class ReasoningAgent:
             raise AIVillageException("Failed to parse reasoning response")
 
     @error_handler.handle_error
-    async def resolve_conflicts(self, conflicting_info: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Resolve conflicts between different pieces of information.
+    async def resolve_conflicts(self, conflicting_info: list[dict[str, Any]]) -> dict[str, Any]:
+        """Resolve conflicts between different pieces of information.
 
         Args:
             conflicting_info (List[Dict[str, Any]]): List of conflicting information.
@@ -84,7 +89,7 @@ class ReasoningAgent:
         response = await self.llm.complete(prompt)
         return self._parse_conflict_resolution_response(response.text)
 
-    def _create_conflict_resolution_prompt(self, conflicting_info: List[Dict[str, Any]]) -> str:
+    def _create_conflict_resolution_prompt(self, conflicting_info: list[dict[str, Any]]) -> str:
         return f"""
         Given the following conflicting pieces of information:
 
@@ -106,7 +111,7 @@ class ReasoningAgent:
         - Any remaining uncertainties or areas that require further investigation
         """
 
-    def _parse_conflict_resolution_response(self, response: str) -> Dict[str, Any]:
+    def _parse_conflict_resolution_response(self, response: str) -> dict[str, Any]:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
@@ -114,9 +119,8 @@ class ReasoningAgent:
             raise AIVillageException("Failed to parse conflict resolution response")
 
     @error_handler.handle_error
-    async def generate_explanation(self, reasoning_result: Dict[str, Any]) -> str:
-        """
-        Generate a natural language explanation of the reasoning process and conclusions.
+    async def generate_explanation(self, reasoning_result: dict[str, Any]) -> str:
+        """Generate a natural language explanation of the reasoning process and conclusions.
 
         Args:
             reasoning_result (Dict[str, Any]): The result of the reasoning process.
@@ -128,7 +132,7 @@ class ReasoningAgent:
         response = await self.llm.complete(prompt)
         return response.text
 
-    def _create_explanation_prompt(self, reasoning_result: Dict[str, Any]) -> str:
+    def _create_explanation_prompt(self, reasoning_result: dict[str, Any]) -> str:
         return f"""
         Given the following reasoning result:
 
@@ -147,9 +151,8 @@ class ReasoningAgent:
         """
 
     @safe_execute
-    async def process_query(self, context: Dict[str, Any], query: str) -> Dict[str, Any]:
-        """
-        Process a query by performing reasoning, resolving conflicts, and generating an explanation.
+    async def process_query(self, context: dict[str, Any], query: str) -> dict[str, Any]:
+        """Process a query by performing reasoning, resolving conflicts, and generating an explanation.
 
         Args:
             context (Dict[str, Any]): The context for the reasoning task.
@@ -159,14 +162,14 @@ class ReasoningAgent:
             Dict[str, Any]: A dictionary containing the reasoning results, resolved conflicts, and explanation.
         """
         reasoning_result = await self.perform_reasoning(context, query)
-        
+
         # Check for conflicts in the reasoning result
-        if 'conflicts' in reasoning_result and reasoning_result['conflicts']:
-            conflict_resolution = await self.resolve_conflicts(reasoning_result['conflicts'])
-            reasoning_result['conflict_resolution'] = conflict_resolution
-        
+        if reasoning_result.get("conflicts"):
+            conflict_resolution = await self.resolve_conflicts(reasoning_result["conflicts"])
+            reasoning_result["conflict_resolution"] = conflict_resolution
+
         explanation = await self.generate_explanation(reasoning_result)
-        
+
         return {
             "reasoning_result": reasoning_result,
             "explanation": explanation
@@ -180,14 +183,14 @@ if __name__ == "__main__":
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
         kg_agent = KnowledgeGraphAgent(llm_config)
         reasoning_agent = ReasoningAgent(llm_config, kg_agent)
-        
+
         # Initialize the knowledge graph with some sample data
         kg_agent.graph.add_node("COVID-19", type="Disease")
         kg_agent.graph.add_node("Vaccine", type="Medical")
         kg_agent.graph.add_node("Mask Wearing", type="Preventive Measure")
         kg_agent.graph.add_edge("Vaccine", "COVID-19", relationship="prevents")
         kg_agent.graph.add_edge("Mask Wearing", "COVID-19", relationship="reduces spread")
-        
+
         context = {
             "current_situation": "Global pandemic",
             "available_data": {
@@ -196,9 +199,9 @@ if __name__ == "__main__":
             }
         }
         query = "What are the most effective ways to combat the spread of COVID-19?"
-        
+
         result = await reasoning_agent.process_query(context, query)
-        
+
         print("Reasoning Result:")
         print(json.dumps(result["reasoning_result"], indent=2))
         print("\nExplanation:")

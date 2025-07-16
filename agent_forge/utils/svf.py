@@ -1,5 +1,6 @@
 import torch
-import torch.nn as nn
+from torch import nn
+
 
 class SVFLinear(nn.Module):
     """Linear layer with explicit singular value factors."""

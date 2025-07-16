@@ -2,7 +2,8 @@ import importlib
 import unittest
 
 if importlib.util.find_spec("torch") is None:
-    raise unittest.SkipTest("PyTorch not installed")
+    msg = "PyTorch not installed"
+    raise unittest.SkipTest(msg)
 
 import torch
 
@@ -34,7 +35,7 @@ class TestGate(unittest.TestCase):
         state = {"opt": DummyOpt(), "rule": 0.5}
         tasks = [("p", 0.2)]
         self_model_cycle(DummyModel(), tasks, state, δ=0.0, max_iter=2)
-        self.assertTrue(state.get("self_grok", False))
+        assert state.get("self_grok", False)
 
 
 if __name__ == "__main__":

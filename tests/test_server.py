@@ -1,14 +1,18 @@
-import importlib.util, unittest
+import importlib.util
+import unittest
+
 if importlib.util.find_spec("httpx") is None:
-    raise unittest.SkipTest("Required dependency not installed")
+    msg = "Required dependency not installed"
+    raise unittest.SkipTest(msg)
+
+import asyncio
+from io import BytesIO
+from pathlib import Path
+import sys
+from unittest.mock import AsyncMock, patch
 
 from fastapi import UploadFile
-from io import BytesIO
-import asyncio
-from unittest.mock import AsyncMock, patch
 import numpy as np
-import sys
-from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
@@ -45,7 +49,7 @@ class TestServer(unittest.TestCase):
                 self.documents = []
                 self.index = DummyIndex()
                 self.embedding_model = DummyEmbeddingModel(4)
-            
+
             async def add_texts(self, texts):
                 for text in texts:
                     _, embedding = self.embedding_model.encode(text)
@@ -53,7 +57,7 @@ class TestServer(unittest.TestCase):
 
         with patch.object(server.rag_pipeline, "initialize", AsyncMock()) as mock_init, \
              patch.object(server.rag_pipeline, "shutdown", AsyncMock()) as mock_shutdown, \
-             patch.object(server.rag_pipeline, "process", AsyncMock(return_value=async_mock_response)) as mock_process:
+             patch.object(server.rag_pipeline, "process", AsyncMock(return_value=async_mock_response)):
 
             # Replace vector store with dummy implementation
             dummy_vector_store = DummyVectorStore()
@@ -73,20 +77,20 @@ class TestServer(unittest.TestCase):
 
             mock_init.assert_awaited_once()
             mock_shutdown.assert_awaited_once()
-            self.assertEqual(resp1["status"], "uploaded")
-            self.assertEqual(resp1["filename"], "test.txt")
-            self.assertEqual(resp1["size"], 5)
-            self.assertEqual(resp1["message"], "File processed successfully")
-            
-            self.assertEqual(resp2["status"], "uploaded")
-            self.assertEqual(resp2["filename"], "test.txt")
-            self.assertEqual(resp2["size"], 5)
-            self.assertEqual(resp2["message"], "File processed successfully")
-            self.assertEqual(len(dummy_vector_store.documents), 2)
+            assert resp1["status"] == "uploaded"
+            assert resp1["filename"] == "test.txt"
+            assert resp1["size"] == 5
+            assert resp1["message"] == "File processed successfully"
+
+            assert resp2["status"] == "uploaded"
+            assert resp2["filename"] == "test.txt"
+            assert resp2["size"] == 5
+            assert resp2["message"] == "File processed successfully"
+            assert len(dummy_vector_store.documents) == 2
             emb1 = dummy_vector_store.documents[0]["embedding"]
             emb2 = dummy_vector_store.documents[1]["embedding"]
-            self.assertTrue(np.array_equal(emb1, emb2))
-            self.assertEqual(query_resp, async_mock_response)
+            assert np.array_equal(emb1, emb2)
+            assert query_resp == async_mock_response
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
-import torch
 import bitsandbytes as bnb
-from transformers import TrainerCallback, TrainingArguments, Trainer
+import torch
+from transformers import Trainer, TrainerCallback, TrainingArguments
 
 
 def convert_to_bitnet(model, threshold: float = 0.02):

@@ -1,16 +1,14 @@
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from transformers import AutoTokenizer, AutoModelForMaskedLM, AutoModelForCausalLM
-from typing import List, Tuple
 import random
-import math
-from tqdm import tqdm
-from langroid import Task, ChatAgent, ChatAgentConfig
+
+from langroid import ChatAgent, ChatAgentConfig, Task
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
+import torch
+from torch import nn, optim
+from tqdm import tqdm
+from transformers import AutoModelForMaskedLM, AutoTokenizer
 
 # shared training state from geometry feedback loop
-state = dict(G={'ID_nl': 0.0}, pre_grok=False)
+state = dict(G={"ID_nl": 0.0}, pre_grok=False)
 
 try:
     from grokfast import GrokFastTask
@@ -22,7 +20,7 @@ except ImportError:
         def run(self, *args, **kwargs):
             return {"status": "stub", "message": "GrokFast not available"}
 try:
-    from sleep_and_dream import SleepNet, DreamNet
+    from sleep_and_dream import DreamNet, SleepNet
 except ImportError:
     # Stub implementations for missing sleep_and_dream dependency
     class SleepNet:
@@ -31,9 +29,9 @@ except ImportError:
     class DreamNet:
         def __init__(self, *args, **kwargs):
             pass
-from agent_forge.model_compression.bitlinearization import quantize_weights, quantize_activations
-from agent_forge.geometry.snapshot import snapshot
-import torch.nn.functional as F
+
+from agent_forge.model_compression.bitlinearization import quantize_weights
+
 
 class CodingTask:
     def __init__(self, description: str, difficulty: int):
@@ -41,7 +39,7 @@ class CodingTask:
         self.difficulty = difficulty
 
 class CodingTaskGenerationTask(Task):
-    async def generate_coding_tasks(self, num_tasks: int, avg_difficulty: int) -> List[CodingTask]:
+    async def generate_coding_tasks(self, num_tasks: int, avg_difficulty: int) -> list[CodingTask]:
         tasks = []
         for _ in range(num_tasks):
             prompt = f"Create a coding task with difficulty level {avg_difficulty}/100. Include a clear problem description."
@@ -91,40 +89,40 @@ class SelfModelingTask(Task):
             )
         return self.tokenizer.decode(output[0], skip_special_tokens=True)
 
-    def mask_and_fill(self, text: str, num_masks: int) -> Tuple[torch.Tensor, torch.Tensor, List[int]]:
+    def mask_and_fill(self, text: str, num_masks: int) -> tuple[torch.Tensor, torch.Tensor, list[int]]:
         inputs = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512)
         input_ids = inputs.input_ids.to(self.device)
         labels = input_ids.clone()
 
-        mask_candidates = [i for i in range(len(input_ids[0])) 
+        mask_candidates = [i for i in range(len(input_ids[0]))
                            if input_ids[0][i] not in [self.tokenizer.cls_token_id, self.tokenizer.sep_token_id, self.tokenizer.pad_token_id]]
-        
+
         mask_indices = random.sample(mask_candidates, min(num_masks, len(mask_candidates)))
-        
+
         for idx in mask_indices:
             input_ids[0][idx] = self.tokenizer.mask_token_id
 
         return input_ids, labels, mask_indices
 
-    async def train_step(self, input_ids: torch.Tensor, labels: torch.Tensor, mask_indices: List[int]) -> Tuple[float, float]:
+    async def train_step(self, input_ids: torch.Tensor, labels: torch.Tensor, mask_indices: list[int]) -> tuple[float, float]:
         outputs = self.model(input_ids=input_ids, labels=labels, output_hidden_states=True)
         pred_hidden = self.hidden_pred(outputs.hidden_states[-1].detach())
         L_self = torch.nn.functional.mse_loss(pred_hidden, outputs.hidden_states[-1])
         loss = outputs.loss + self.beta * L_self
         loss.backward()
-        
+
         # Quantize gradients
         for param in self.model.parameters():
             if param.grad is not None:
                 param.grad.data = quantize_weights(param.grad.data)
-        
-        self.optimizer.step(amplify=state['pre_grok'])
-        
+
+        self.optimizer.step(amplify=state["pre_grok"])
+
         # Quantize updated weights
         with torch.no_grad():
             for param in self.model.parameters():
                 param.data = quantize_weights(param.data)
-        
+
         self.optimizer.zero_grad()
 
         # Calculate accuracy of masked token predictions
@@ -205,7 +203,6 @@ class SelfModelingTask(Task):
 
     async def evaluate_model(self, val_loader) -> float:
         """Return the validation perplexity for the current model."""
-
         from agent_forge.evaluation import evaluator
 
         eval_data = []

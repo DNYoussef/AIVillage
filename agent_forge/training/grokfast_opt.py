@@ -1,11 +1,10 @@
-"""
-grokfast_opt.py
+"""grokfast_opt.py
 ---------------
 Drop-in replacement for Adam that exposes ``.slow_power()``.
 """
 
-import torch
 from grokfast import AugmentedAdam
+import torch
 
 
 class GrokfastAdam(AugmentedAdam):

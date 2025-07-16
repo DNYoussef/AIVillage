@@ -1,10 +1,16 @@
-from typing import Dict, Any
-from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
-from rag_system.core.config import RAGConfig
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
 import logging
+from typing import Any
+
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
+
+from rag_system.core.config import RAGConfig
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.error_handling.error_handler import (
+    AIVillageException,
+    error_handler,
+    safe_execute,
+)
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +20,7 @@ class UnifiedRAGManagement:
         self.llm = llm_config.create()
 
     @error_handler.handle_error
-    async def perform_health_check(self) -> Dict[str, Any]:
+    async def perform_health_check(self) -> dict[str, Any]:
         try:
             health_check_prompt = """
             Perform a comprehensive health check on the RAG system. Analyze:
@@ -33,17 +39,17 @@ class UnifiedRAGManagement:
             parsed_result = self._parse_json_response(health_check_result.text)
 
             return {
-                "issue_detected": not all([parsed_result['index_health']['healthy'],
-                                           parsed_result['performance_metrics']['acceptable'],
-                                           parsed_result['data_consistency']['consistent']]),
+                "issue_detected": not all([parsed_result["index_health"]["healthy"],
+                                           parsed_result["performance_metrics"]["acceptable"],
+                                           parsed_result["data_consistency"]["consistent"]]),
                 **parsed_result
             }
         except Exception as e:
-            logger.error(f"Error performing health check: {str(e)}")
-            raise AIVillageException(f"Error performing health check: {str(e)}") from e
+            logger.error(f"Error performing health check: {e!s}")
+            raise AIVillageException(f"Error performing health check: {e!s}") from e
 
     @error_handler.handle_error
-    async def handle_rag_health_issue(self, health_check_result: Dict[str, Any]):
+    async def handle_rag_health_issue(self, health_check_result: dict[str, Any]):
         try:
             handling_prompt = f"""
             Given the following health check result: {health_check_result}
@@ -59,38 +65,38 @@ class UnifiedRAGManagement:
             parsed_plan = self._parse_json_response(handling_plan.text)
 
             for issue, plan in parsed_plan.items():
-                if issue == 'index_health' and not health_check_result['index_health']['healthy']:
+                if issue == "index_health" and not health_check_result["index_health"]["healthy"]:
                     await self._handle_index_issue(plan)
-                elif issue == 'performance_metrics' and not health_check_result['performance_metrics']['acceptable']:
+                elif issue == "performance_metrics" and not health_check_result["performance_metrics"]["acceptable"]:
                     await self._handle_performance_issue(plan)
-                elif issue == 'data_consistency' and not health_check_result['data_consistency']['consistent']:
+                elif issue == "data_consistency" and not health_check_result["data_consistency"]["consistent"]:
                     await self._handle_consistency_issue(plan)
 
             await self._notify_administrators(health_check_result, parsed_plan)
         except Exception as e:
-            logger.error(f"Error handling RAG health issue: {str(e)}")
-            raise AIVillageException(f"Error handling RAG health issue: {str(e)}") from e
+            logger.error(f"Error handling RAG health issue: {e!s}")
+            raise AIVillageException(f"Error handling RAG health issue: {e!s}") from e
 
-    async def _handle_index_issue(self, plan: Dict[str, Any]):
+    async def _handle_index_issue(self, plan: dict[str, Any]):
         logger.info(f"Handling index issue with plan: {plan}")
-        if plan['severity'] == 'high':
+        if plan["severity"] == "high":
             await self._rebuild_index()
         else:
             await self._repair_index()
         await self._optimize_index()
 
-    async def _handle_performance_issue(self, plan: Dict[str, Any]):
+    async def _handle_performance_issue(self, plan: dict[str, Any]):
         logger.info(f"Handling performance issue with plan: {plan}")
         await self._tune_performance()
-        if plan.get('scale_resources', False):
+        if plan.get("scale_resources", False):
             await self._scale_resources()
 
-    async def _handle_consistency_issue(self, plan: Dict[str, Any]):
+    async def _handle_consistency_issue(self, plan: dict[str, Any]):
         logger.info(f"Handling consistency issue with plan: {plan}")
         await self._reconcile_data()
         await self._validate_data()
 
-    async def _notify_administrators(self, health_check_result: Dict[str, Any], handling_plan: Dict[str, Any]):
+    async def _notify_administrators(self, health_check_result: dict[str, Any], handling_plan: dict[str, Any]):
         notification_prompt = f"""
         Create a notification for administrators about RAG system issues.
         Health Check Result: {health_check_result}
@@ -178,7 +184,7 @@ class UnifiedRAGManagement:
     async def _validate_data(self):
         logger.info("Validating RAG data")
         validation_results = await self.rag_system.validate_data()
-        if not validation_results['all_valid']:
+        if not validation_results["all_valid"]:
             validation_prompt = f"""
             Suggest data validation fixes for the RAG system.
             Validation results: {validation_results}
@@ -195,7 +201,7 @@ class UnifiedRAGManagement:
             for instruction in parsed_instructions:
                 await self.rag_system.execute_data_fix(instruction)
 
-    def _parse_json_response(self, response: str) -> Dict[str, Any]:
+    def _parse_json_response(self, response: str) -> dict[str, Any]:
         import json
         try:
             return json.loads(response)
@@ -204,16 +210,16 @@ class UnifiedRAGManagement:
             raise AIVillageException("Failed to parse JSON response")
 
     @safe_execute
-    async def process_query(self, query: str) -> Dict[str, Any]:
+    async def process_query(self, query: str) -> dict[str, Any]:
         return await self.rag_system.process_query(query)
 
-    async def update_knowledge_base(self, new_data: Dict[str, Any]):
+    async def update_knowledge_base(self, new_data: dict[str, Any]):
         await self.rag_system.update_knowledge_base(new_data)
 
-    async def get_system_stats(self) -> Dict[str, Any]:
+    async def get_system_stats(self) -> dict[str, Any]:
         return await self.rag_system.get_system_stats()
 
-    async def introspect(self) -> Dict[str, Any]:
+    async def introspect(self) -> dict[str, Any]:
         return {
             "rag_system_config": self.rag_system.config.dict(),
             "system_stats": await self.get_system_stats(),

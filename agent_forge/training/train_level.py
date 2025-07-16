@@ -1,7 +1,9 @@
-from .training_loop import run_level
-from agent_forge.phase3 import self_model_cycle
-from .expert_vectors import ExpertVectorSystem
 import torch
+
+from agent_forge.phase3 import self_model_cycle
+
+from .expert_vectors import ExpertVectorSystem
+from .training_loop import run_level
 
 
 def train_level(dataset, self_model_tasks, model, state, *, expert_vector_path: str | None = None):

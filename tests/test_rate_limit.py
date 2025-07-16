@@ -1,7 +1,8 @@
-import time
 import os
-import requests
+import time
+
 import pytest
+import requests
 
 GW = os.getenv("GW_URL", "http://localhost:8000")
 

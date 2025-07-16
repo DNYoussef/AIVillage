@@ -14,6 +14,6 @@ except Exception:  # pragma: no cover - optional if training module unavailable
 
 __all__ = [
     "convert_to_bitnet",
-    "quantize_weights",
     "quantize_activations",
+    "quantize_weights",
 ]

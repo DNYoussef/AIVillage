@@ -1,10 +1,11 @@
-import torch
 import math
-from typing import Dict, List, Tuple
+
+import torch
+
 
 class LFSRGenerator:
     """Hardware-friendly LFSR pseudo-random generator"""
-    def __init__(self, seed: int, taps: List[int] = None):
+    def __init__(self, seed: int, taps: list[int] = None):
         self.register = seed & 0xFFFF
         self.taps = taps or [16, 14, 13, 11]
         self.initial_seed = seed
@@ -30,7 +31,7 @@ class SeedLMCompressor:
         self.latent_dim = latent_dim
         self.num_seeds = num_seeds
 
-    def compress_weight_matrix(self, weight_matrix: torch.Tensor) -> Dict:
+    def compress_weight_matrix(self, weight_matrix: torch.Tensor) -> dict:
         flat = weight_matrix.flatten()
         blocks = self._create_blocks(flat)
         compressed = []
@@ -38,12 +39,12 @@ class SeedLMCompressor:
             compressed.append(self._compress_single_block(block))
         ratio = self._compression_ratio(weight_matrix, compressed)
         return {
-            'compressed_blocks': compressed,
-            'original_shape': weight_matrix.shape,
-            'compression_ratio': ratio,
+            "compressed_blocks": compressed,
+            "original_shape": weight_matrix.shape,
+            "compression_ratio": ratio,
         }
 
-    def _create_blocks(self, flat: torch.Tensor) -> List[torch.Tensor]:
+    def _create_blocks(self, flat: torch.Tensor) -> list[torch.Tensor]:
         blocks = []
         for i in range(0, len(flat), self.block_size):
             block = flat[i:i+self.block_size]
@@ -54,8 +55,8 @@ class SeedLMCompressor:
             blocks.append(block)
         return blocks
 
-    def _compress_single_block(self, block: torch.Tensor) -> Dict:
-        best = {'seed':0,'coeff':torch.zeros(self.latent_dim,dtype=torch.int8),'exp':0,'error':float('inf')}
+    def _compress_single_block(self, block: torch.Tensor) -> dict:
+        best = {"seed":0,"coeff":torch.zeros(self.latent_dim,dtype=torch.int8),"exp":0,"error":float("inf")}
         candidate_seeds = torch.randint(1,2**16,(self.num_seeds,)).tolist()
         for seed in candidate_seeds:
             lfsr = LFSRGenerator(seed)
@@ -64,11 +65,11 @@ class SeedLMCompressor:
             q, exp = self._quantize(coeff)
             recon = basis @ self._dequantize(q, exp)
             err = torch.sum((block - recon)**2).item()
-            if err < best['error']:
-                best = {'seed':seed,'coeff':q,'exp':exp,'error':err}
+            if err < best["error"]:
+                best = {"seed":seed,"coeff":q,"exp":exp,"error":err}
         return best
 
-    def _quantize(self, coeff: torch.Tensor) -> Tuple[torch.Tensor,int]:
+    def _quantize(self, coeff: torch.Tensor) -> tuple[torch.Tensor,int]:
         if coeff.numel()==0:
             return torch.zeros(0,dtype=torch.int8),0
         max_abs = coeff.abs().max()
@@ -82,19 +83,19 @@ class SeedLMCompressor:
     def _dequantize(self, q: torch.Tensor, exp: int) -> torch.Tensor:
         return q.float() * (2**exp)
 
-    def _compression_ratio(self, original: torch.Tensor, blocks: List[Dict]) -> float:
+    def _compression_ratio(self, original: torch.Tensor, blocks: list[dict]) -> float:
         original_bits = original.numel()*32
         bits=0
         for b in blocks:
-            bits+=16+4+len(b['coeff'])*4
+            bits+=16+4+len(b["coeff"])*4
         return original_bits / bits if bits>0 else 0
 
-    def decompress_weight_matrix(self, data: Dict) -> torch.Tensor:
+    def decompress_weight_matrix(self, data: dict) -> torch.Tensor:
         blocks=[]
-        for b in data['compressed_blocks']:
-            lfsr=LFSRGenerator(b['seed'])
+        for b in data["compressed_blocks"]:
+            lfsr=LFSRGenerator(b["seed"])
             basis=lfsr.generate_matrix(self.block_size,self.latent_dim)
-            coeff=self._dequantize(b['coeff'], b['exp'])
+            coeff=self._dequantize(b["coeff"], b["exp"])
             blocks.append(basis @ coeff)
-        flat=torch.cat(blocks)[:int(torch.prod(torch.tensor(data['original_shape'])))]
-        return flat.reshape(data['original_shape'])
+        flat=torch.cat(blocks)[:int(torch.prod(torch.tensor(data["original_shape"])))]
+        return flat.reshape(data["original_shape"])

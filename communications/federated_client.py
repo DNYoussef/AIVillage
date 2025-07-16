@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
-"""
-FederatedClient → Hivemind DHT for secure-aggregate FL & inference.
+"""FederatedClient → Hivemind DHT for secure-aggregate FL & inference.
 """
 
-import torch
 import hivemind  # pip install hivemind
+import torch
 
 
 class FederatedClient:

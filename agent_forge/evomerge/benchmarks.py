@@ -1,11 +1,14 @@
 import time
+
 import psutil
 import torch
+
 from .config import create_default_config
 from .evolutionary_tournament import run_evolutionary_tournament
 from .merger import AdvancedModelMerger
-from .utils import load_models, parallel_evaluate_models, evaluate_model
-from .visualization import plot_benchmark_comparison, generate_html_report
+from .utils import evaluate_model, load_models
+from .visualization import generate_html_report, plot_benchmark_comparison
+
 
 def benchmark_merger(config):
     merger = AdvancedModelMerger(config)
@@ -73,8 +76,8 @@ def run_benchmarks():
         start_time = time.time()
 
         # Run a sample GPU operation
-        a = torch.randn(10000, 10000, device='cuda')
-        b = torch.randn(10000, 10000, device='cuda')
+        a = torch.randn(10000, 10000, device="cuda")
+        b = torch.randn(10000, 10000, device="cuda")
         c = torch.matmul(a, b)
 
         torch.cuda.synchronize()
@@ -86,12 +89,12 @@ def run_benchmarks():
 
     # Generate visualizations
     benchmark_data = [
-        {"model": "Merger", "score": merger_results['evaluation_result']['overall_score'], "time": merger_results['time_taken'], "memory": merger_results['memory_used'] / (1024 * 1024)},
-        {"model": "Evolutionary", "score": tournament_results['evaluation_result']['overall_score'], "time": tournament_results['time_taken'], "memory": tournament_results['memory_used'] / (1024 * 1024)}
+        {"model": "Merger", "score": merger_results["evaluation_result"]["overall_score"], "time": merger_results["time_taken"], "memory": merger_results["memory_used"] / (1024 * 1024)},
+        {"model": "Evolutionary", "score": tournament_results["evaluation_result"]["overall_score"], "time": tournament_results["time_taken"], "memory": tournament_results["memory_used"] / (1024 * 1024)}
     ]
 
-    plot_benchmark_comparison(benchmark_data, 'benchmark_comparison.png')
-    generate_html_report(benchmark_data, 'benchmark_report.html')
+    plot_benchmark_comparison(benchmark_data, "benchmark_comparison.png")
+    generate_html_report(benchmark_data, "benchmark_report.html")
 
 if __name__ == "__main__":
     run_benchmarks()

@@ -1,10 +1,11 @@
 """Foundation utilities for Agent Forge."""
 
-from .quiet_star import START_TOK, END_TOK
-from .bitnet import q_bitnet
 import torch
 
-__all__ = ["START_TOK", "END_TOK", "q_bitnet", "bootstrap"]
+from .bitnet import q_bitnet
+from .quiet_star import END_TOK, START_TOK
+
+__all__ = ["END_TOK", "START_TOK", "bootstrap", "q_bitnet"]
 
 
 def bootstrap(base_model: torch.nn.Module) -> torch.nn.Module:

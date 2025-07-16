@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List
 import math
+from typing import Any
 
 
 @dataclass
@@ -20,9 +21,9 @@ class MonteCarloTreeSearch:
     def __init__(self, config: MCTSConfig | None = None) -> None:
         self.config = config or MCTSConfig()
 
-    def search(self, options: List[Any], simulate: Callable[[Any], float]) -> Any:
+    def search(self, options: list[Any], simulate: Callable[[Any], float]) -> Any:
         """Return the best option according to simulated rewards."""
-        stats: Dict[Any, Dict[str, float]] = {
+        stats: dict[Any, dict[str, float]] = {
             opt: {"visits": 0, "value": 0.0} for opt in options
         }
         for _ in range(self.config.iterations):
@@ -34,7 +35,7 @@ class MonteCarloTreeSearch:
         best = max(options, key=lambda o: stats[o]["value"] / max(1, stats[o]["visits"]))
         return best
 
-    def _select_option(self, options: List[Any], stats: Dict[Any, Dict[str, float]]) -> Any:
+    def _select_option(self, options: list[Any], stats: dict[Any, dict[str, float]]) -> Any:
         for opt in options:
             if stats[opt]["visits"] == 0:
                 return opt

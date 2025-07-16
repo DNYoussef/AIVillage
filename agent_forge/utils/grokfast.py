@@ -1,6 +1,7 @@
 import torch
 from torch.optim import Adam
 
+
 class AugmentedAdam(Adam):
     """Adam variant with slow-gradient amplification."""
 
@@ -14,7 +15,7 @@ class AugmentedAdam(Adam):
     def record_grad(self):
         grads = torch.cat([
             p.grad.detach().flatten()
-            for p in self.param_groups[0]['params']
+            for p in self.param_groups[0]["params"]
             if p.grad is not None
         ], dim=0)
         self._grad_history.append(grads)
@@ -27,7 +28,7 @@ class AugmentedAdam(Adam):
             g_slow = torch.stack(window, dim=0).mean(0)
             lam = min(self.boost_cap, self.boost_start * (len(self._grad_history) / 1000))
             offset = 0
-            for p in self.param_groups[0]['params']:
+            for p in self.param_groups[0]["params"]:
                 if p.grad is None:
                     continue
                 numel = p.grad.numel()

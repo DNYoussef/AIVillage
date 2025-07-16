@@ -1,7 +1,8 @@
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Dict, Iterable, List
+
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as F
 
 
@@ -17,7 +18,7 @@ class MoralArchetype:
 class ExpertVector:
     """Stores singular value deltas for a model."""
     name: str
-    singular_values: Dict[str, torch.Tensor]
+    singular_values: dict[str, torch.Tensor]
 
 
 class ExpertVectorSystem:
@@ -28,7 +29,7 @@ class ExpertVectorSystem:
 
     def train_expert_vector_svf(self, name: str, scale: float = 0.05) -> ExpertVector:
         """Compute a basic expert vector by amplifying singular values."""
-        deltas: Dict[str, torch.Tensor] = {}
+        deltas: dict[str, torch.Tensor] = {}
         for pname, param in self.model.named_parameters():
             if param.ndim < 2:
                 continue
@@ -47,7 +48,7 @@ class ExpertVectorSystem:
     ) -> ExpertVector:
         """Train the model on ``texts`` and capture the Σ-deltas."""
         # Snapshot singular values before training
-        before: Dict[str, torch.Tensor] = {}
+        before: dict[str, torch.Tensor] = {}
         for pname, param in self.model.named_parameters():
             if param.ndim < 2:
                 continue
@@ -79,7 +80,7 @@ class ExpertVectorSystem:
                 loss.backward()
                 opt.step()
 
-        deltas: Dict[str, torch.Tensor] = {}
+        deltas: dict[str, torch.Tensor] = {}
         for pname, param in self.model.named_parameters():
             if param.ndim < 2 or pname not in before:
                 continue
@@ -97,7 +98,7 @@ class ExpertVectorSystem:
             s = s + scaling * vector.singular_values[pname]
             param.data = (u @ torch.diag(s) @ v).to(param.device)
 
-    def create_moral_experts(self, archetypes: List[MoralArchetype]) -> Dict[str, ExpertVector]:
+    def create_moral_experts(self, archetypes: list[MoralArchetype]) -> dict[str, ExpertVector]:
         """Create a simple expert vector for each archetype."""
         experts = {}
         for arch in archetypes:

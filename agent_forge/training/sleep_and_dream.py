@@ -1,8 +1,9 @@
+from langroid import ChatAgent, ChatAgentConfig, Task
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as F
-from transformers import AutoModel, AutoModelForMaskedLM, AutoModelForCausalLM
-from langroid import Task, ChatAgent, ChatAgentConfig
+from transformers import AutoModel, AutoModelForCausalLM, AutoModelForMaskedLM
+
 
 class TernaryQuantizer(torch.autograd.Function):
     @staticmethod
@@ -25,7 +26,7 @@ class TernaryQuantizer(torch.autograd.Function):
 class CustomQuantizedLinear(nn.Linear):
     def __init__(self, in_features, out_features, bias=True):
         super().__init__(in_features, out_features, bias)
-        self.register_buffer('weight_scale', torch.ones(1))
+        self.register_buffer("weight_scale", torch.ones(1))
 
     def forward(self, x):
         quantized_weight, self.weight_scale = TernaryQuantizer.apply(self.weight)
@@ -92,7 +93,7 @@ class DreamBlock(nn.Module):
         return quantize_activations(chain_output + dream_output)
 
 class SleepNet(nn.Module):
-    def __init__(self, input_size, output_size, num_sleep_blocks, model_type='vit-base', freeze_encoder=True, pretrained=False):
+    def __init__(self, input_size, output_size, num_sleep_blocks, model_type="vit-base", freeze_encoder=True, pretrained=False):
         """Lightweight SleepNet wrapper.
 
         When ``pretrained`` is ``False`` (default) a simple ``nn.Identity`` is
@@ -104,9 +105,9 @@ class SleepNet(nn.Module):
         self.input_layer = CustomQuantizedLinear(input_size, input_size)
 
         if pretrained:
-            if 'vit' in model_type:
+            if "vit" in model_type:
                 self.pretrained_encoder = AutoModel.from_pretrained(f"google/{model_type}-patch16-224")
-            elif 'roberta' in model_type:
+            elif "roberta" in model_type:
                 self.pretrained_encoder = AutoModel.from_pretrained(f"roberta-{model_type.split('-')[1]}")
             else:
                 raise ValueError(f"Unsupported model type: {model_type}")
@@ -114,7 +115,7 @@ class SleepNet(nn.Module):
                 self.pretrained_encoder = FrozenEncoder(self.pretrained_encoder)
         else:
             self.pretrained_encoder = nn.Identity()
-        
+
         self.sleep_blocks = nn.ModuleList([
             SleepBlock(input_size, input_size, self.pretrained_encoder)
             for _ in range(num_sleep_blocks)
@@ -128,15 +129,15 @@ class SleepNet(nn.Module):
         return self.output_layer(x)
 
 class DreamNet(nn.Module):
-    def __init__(self, input_size, output_size, num_dream_blocks, model_type='mae-base', freeze_autoencoder=True, pretrained=False):
+    def __init__(self, input_size, output_size, num_dream_blocks, model_type="mae-base", freeze_autoencoder=True, pretrained=False):
         """Mirror of ``SleepNet`` for the dream phase."""
         super().__init__()
         self.input_layer = CustomQuantizedLinear(input_size, input_size)
 
         if pretrained:
-            if 'mae' in model_type:
+            if "mae" in model_type:
                 self.pretrained_autoencoder = AutoModelForMaskedLM.from_pretrained(f"facebook/{model_type}")
-            elif 'xlnet' in model_type:
+            elif "xlnet" in model_type:
                 self.pretrained_autoencoder = AutoModelForCausalLM.from_pretrained(f"xlnet-{model_type.split('-')[1]}")
             else:
                 raise ValueError(f"Unsupported model type: {model_type}")
@@ -144,7 +145,7 @@ class DreamNet(nn.Module):
                 self.pretrained_autoencoder = FrozenAutoencoder(self.pretrained_autoencoder)
         else:
             self.pretrained_autoencoder = nn.Identity()
-        
+
         self.dream_blocks = nn.ModuleList([
             DreamBlock(input_size, input_size, self.pretrained_autoencoder)
             for _ in range(num_dream_blocks)
@@ -171,6 +172,7 @@ class SleepAndDreamTask(Task):
 # Usage example
 if __name__ == "__main__":
     import asyncio
+
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
     async def main():
@@ -180,10 +182,10 @@ if __name__ == "__main__":
         )
         agent = ChatAgent(config)
         task = SleepAndDreamTask(agent, input_size=768, output_size=768, num_sleep_blocks=3, num_dream_blocks=3, pretrained=False)
-        
+
         # Example input tensor
         input_data = torch.randn(1, 768)
-        
+
         result = await task.run(input_data)
         print("Sleep and Dream process completed. Output shape:", result.shape)
 

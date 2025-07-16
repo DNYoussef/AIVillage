@@ -1,9 +1,12 @@
+import logging
+from typing import Any
+
 import numpy as np
-from typing import Dict, Any, List
+
+from agents.utils.task import Task as LangroidTask
+
 from .analytics.base_analytics import BaseAnalytics
 from .quality_assurance_layer import QualityAssuranceLayer
-from agents.utils.task import Task as LangroidTask
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -13,10 +16,10 @@ class ContinuousLearner(BaseAnalytics):
         self.quality_assurance_layer = quality_assurance_layer
         self.learning_rate = learning_rate
 
-    async def update_embeddings(self, task: LangroidTask, result: Dict[str, Any]):
+    async def update_embeddings(self, task: LangroidTask, result: dict[str, Any]):
         task_embedding = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(task.content)
-        performance = result.get('performance', 0.5)
-        
+        performance = result.get("performance", 0.5)
+
         # Update empathy vector
         empathy_gradient = self.calculate_gradient(task_embedding, self.quality_assurance_layer.eudaimonia_triangulator.empathy_vector, performance)
         self.quality_assurance_layer.eudaimonia_triangulator.empathy_vector += self.learning_rate * empathy_gradient
@@ -41,15 +44,15 @@ class ContinuousLearner(BaseAnalytics):
         direction = task_embedding - target_embedding
         return direction * (performance - 0.5)  # Center performance around 0
 
-    async def learn_from_feedback(self, feedback: List[Dict[str, Any]]):
+    async def learn_from_feedback(self, feedback: list[dict[str, Any]]):
         for item in feedback:
-            task = LangroidTask(None, item['task_content'])
-            result = {'performance': item['performance']}
+            task = LangroidTask(None, item["task_content"])
+            result = {"performance": item["performance"]}
             await self.update_embeddings(task, result)
-        
+
         logger.info(f"Learned from {len(feedback)} feedback items")
 
-    def adjust_learning_rate(self, performance_history: List[float]):
+    def adjust_learning_rate(self, performance_history: list[float]):
         # Adjust learning rate based on recent performance
         recent_performance = np.mean(performance_history[-10:])
         if recent_performance > 0.8:
@@ -57,10 +60,10 @@ class ContinuousLearner(BaseAnalytics):
         elif recent_performance < 0.6:
             self.learning_rate *= 1.1  # Increase learning rate if performing poorly
         self.learning_rate = max(0.001, min(0.1, self.learning_rate))  # Keep learning rate within reasonable bounds
-        
+
         logger.info(f"Adjusted learning rate to {self.learning_rate}")
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         return {
             "learning_rate": self.learning_rate,
         }

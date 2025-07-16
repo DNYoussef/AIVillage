@@ -1,10 +1,10 @@
-from .model_compression import ModelCompressionTask, HyperCompressor
-from .bitlinearization import convert_to_bitnet, quantize_weights, quantize_activations
+from .bitlinearization import convert_to_bitnet, quantize_activations, quantize_weights
+from .model_compression import HyperCompressor, ModelCompressionTask
 
 __all__ = [
-    'ModelCompressionTask',
-    'convert_to_bitnet',
-    'quantize_weights',
-    'quantize_activations',
-    'HyperCompressor'
+    "HyperCompressor",
+    "ModelCompressionTask",
+    "convert_to_bitnet",
+    "quantize_activations",
+    "quantize_weights"
 ]

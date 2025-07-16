@@ -1,19 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
-"""
-MeshNode: P2P pub/sub (libp2p+Noise) + gRPC/TLS fallback for MCP tool calls.
+"""MeshNode: P2P pub/sub (libp2p+Noise) + gRPC/TLS fallback for MCP tool calls.
 """
 
-import asyncio
 import json
 import logging
 
 import grpc
-import nacl.utils
-from nacl.public import PrivateKey, PublicKey, Box
-
 from libp2p import new_node
 from libp2p.pubsub import FloodSub
 from libp2p.security.noise.transport import NoiseSecureTransport
+from nacl.public import Box, PrivateKey, PublicKey
+import nacl.utils
 
 from communications.message import Message
 
@@ -35,8 +32,7 @@ class SecureEnvelope:
 
 
 class MeshNode:
-    """
-    - libp2p FloodSub over Noise
+    """- libp2p FloodSub over Noise
     - automatic peer-key registry via handshake messages
     - on_message hook for subclasses
     - fallback mcp_call via gRPC+TLS
@@ -133,8 +129,9 @@ class MeshNode:
         enc = SecureEnvelope(self.priv, self.peer_keys[target_id]) \
               .encode(message.to_json().encode())
         await self.pubsub.publish(target_id, enc)
-        from communications.credit_manager import CreditManager
         import os
+
+        from communications.credit_manager import CreditManager
         CreditManager(os.getenv("TWIN_MNEMONIC", "")).mint(
             task_id=message.id,
             macs=len(message.content.get("tensor", [])) * 1_000_000,

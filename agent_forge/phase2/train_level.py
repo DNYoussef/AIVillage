@@ -1,9 +1,12 @@
 from __future__ import annotations
-from typing import Sequence
+
+from collections.abc import Sequence
+
 import torch
+
 from ..geometry import snapshot
-from ..svf.svf_ops import apply_svf
 from ..optim import Adam
+from ..svf.svf_ops import apply_svf
 from .pid import EdgePID
 
 

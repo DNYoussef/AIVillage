@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List
 import random
+
 import numpy as np
 
 try:
@@ -27,7 +27,7 @@ class BasicUPOChecker:
 
     def __init__(self, upo_threshold: float = 0.7) -> None:
         self.upo_threshold = upo_threshold
-        self._history: List[float] = []
+        self._history: list[float] = []
 
     def estimate_uncertainty(self, task: LangroidTask) -> float:
         """Estimate task uncertainty.
@@ -48,7 +48,7 @@ class BasicUPOChecker:
             self._history.pop(0)
         return score >= self.upo_threshold
 
-    async def get_recent_safety_checks(self) -> List[SafetyCheck]:
+    async def get_recent_safety_checks(self) -> list[SafetyCheck]:
         """Return the most recent safety scores."""
         return [SafetyCheck(s) for s in self._history[-5:]]
 

@@ -1,9 +1,9 @@
-import unittest
-import asyncio
 import importlib.util
+import unittest
+from unittest.mock import patch
+
 import numpy as np
 import torch
-from unittest.mock import patch
 
 
 class DummyTok:
@@ -28,13 +28,17 @@ except ValueError:
 if torch_spec is None:
     raise unittest.SkipTest("PyTorch not installed")
 
-from agents.king.quality_assurance_layer import QualityAssuranceLayer, EudaimoniaTriangulator
+from agents.king.quality_assurance_layer import (
+    EudaimoniaTriangulator,
+    QualityAssuranceLayer,
+)
 from agents.utils.task import Task as LangroidTask
+
 
 class TestQualityAssuranceLayer(unittest.TestCase):
     def setUp(self):
-        tok_patch = patch('transformers.AutoTokenizer.from_pretrained', return_value=DummyTok())
-        model_patch = patch('transformers.AutoModel.from_pretrained', return_value=DummyModel())
+        tok_patch = patch("transformers.AutoTokenizer.from_pretrained", return_value=DummyTok())
+        model_patch = patch("transformers.AutoModel.from_pretrained", return_value=DummyModel())
         self.addCleanup(tok_patch.stop)
         self.addCleanup(model_patch.stop)
         tok_patch.start()
@@ -83,8 +87,8 @@ class TestQualityAssuranceLayer(unittest.TestCase):
 
 class TestEudaimoniaTriangulator(unittest.TestCase):
     def setUp(self):
-        tok_patch = patch('transformers.AutoTokenizer.from_pretrained', return_value=DummyTok())
-        model_patch = patch('transformers.AutoModel.from_pretrained', return_value=DummyModel())
+        tok_patch = patch("transformers.AutoTokenizer.from_pretrained", return_value=DummyTok())
+        model_patch = patch("transformers.AutoModel.from_pretrained", return_value=DummyModel())
         self.addCleanup(tok_patch.stop)
         self.addCleanup(model_patch.stop)
         tok_patch.start()
@@ -102,5 +106,5 @@ class TestEudaimoniaTriangulator(unittest.TestCase):
         self.assertGreaterEqual(score, 0)
         self.assertLessEqual(score, 1)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

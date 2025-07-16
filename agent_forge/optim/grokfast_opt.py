@@ -1,6 +1,6 @@
 """Grokfast variant of Adam exposing ``slow_power``."""
-import torch
 from grokfast import AugmentedAdam
+import torch
 
 
 class GrokfastAdam(AugmentedAdam):

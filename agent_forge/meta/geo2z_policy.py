@@ -1,4 +1,6 @@
-import torch, torch.nn as nn, random
+import random
+
+from torch import nn
 
 
 class Geo2Z(nn.Module):

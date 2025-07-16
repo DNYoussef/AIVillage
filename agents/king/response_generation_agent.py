@@ -1,9 +1,14 @@
-import logging
-from typing import Dict, Any, List
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
 import json
-import torch.nn as nn
+import logging
+from typing import Any
+
+from langroid.language_models.openai_gpt import OpenAIGPTConfig
+from torch import nn
+
+from rag_system.error_handling.error_handler import (
+    error_handler,
+    safe_execute,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -13,9 +18,8 @@ class ResponseGenerationAgent:
         self.model = None
 
     @error_handler.handle_error
-    async def generate_response(self, input_data: Dict[str, Any], user_preferences: Dict[str, Any]) -> str:
-        """
-        Generate a response based on input data and user preferences.
+    async def generate_response(self, input_data: dict[str, Any], user_preferences: dict[str, Any]) -> str:
+        """Generate a response based on input data and user preferences.
 
         Args:
             input_data (Dict[str, Any]): The input data from other agents, including reasoning results.
@@ -28,7 +32,7 @@ class ResponseGenerationAgent:
         response = await self.llm.complete(prompt)
         return self._post_process_response(response.text, user_preferences)
 
-    def _create_response_prompt(self, input_data: Dict[str, Any], user_preferences: Dict[str, Any]) -> str:
+    def _create_response_prompt(self, input_data: dict[str, Any], user_preferences: dict[str, Any]) -> str:
         return f"""
         Given the following input data and user preferences, generate an appropriate response:
 
@@ -55,18 +59,18 @@ class ResponseGenerationAgent:
         Generate the response in a natural, conversational style that matches the user's preferences.
         """
 
-    def _post_process_response(self, response: str, user_preferences: Dict[str, Any]) -> str:
+    def _post_process_response(self, response: str, user_preferences: dict[str, Any]) -> str:
         # Implement any post-processing steps here, such as:
         # - Adjusting response length
         # - Adding or removing technical details
         # - Inserting appropriate emojis or formatting
         # - Ensuring the response adheres to specific guidelines
 
-        max_length = user_preferences.get('max_response_length', 1000)
+        max_length = user_preferences.get("max_response_length", 1000)
         if len(response) > max_length:
             response = response[:max_length] + "..."
 
-        if user_preferences.get('include_emojis', False):
+        if user_preferences.get("include_emojis", False):
             response = self._add_emojis(response)
 
         return response
@@ -91,15 +95,14 @@ class ResponseGenerationAgent:
         logger.info("Model updated in ResponseGenerationAgent")
 
     @error_handler.handle_error
-    async def update_hyperparameters(self, hyperparameters: Dict[str, Any]):
+    async def update_hyperparameters(self, hyperparameters: dict[str, Any]):
         # Update hyperparameters if needed
         # For example, if using a custom language model:
         # self.llm.update_hyperparameters(hyperparameters)
         logger.info("Hyperparameters updated in ResponseGenerationAgent")
 
-    async def generate_multi_format_response(self, input_data: Dict[str, Any], user_preferences: Dict[str, Any]) -> Dict[str, str]:
-        """
-        Generate responses in multiple formats based on input data and user preferences.
+    async def generate_multi_format_response(self, input_data: dict[str, Any], user_preferences: dict[str, Any]) -> dict[str, str]:
+        """Generate responses in multiple formats based on input data and user preferences.
 
         Args:
             input_data (Dict[str, Any]): The input data from other agents, including reasoning results.
@@ -108,7 +111,7 @@ class ResponseGenerationAgent:
         Returns:
             Dict[str, str]: A dictionary containing responses in different formats.
         """
-        formats = user_preferences.get('response_formats', ['text'])
+        formats = user_preferences.get("response_formats", ["text"])
         responses = {}
 
         for format_type in formats:
@@ -118,14 +121,14 @@ class ResponseGenerationAgent:
 
         return responses
 
-    def _create_multi_format_prompt(self, input_data: Dict[str, Any], user_preferences: Dict[str, Any], format_type: str) -> str:
+    def _create_multi_format_prompt(self, input_data: dict[str, Any], user_preferences: dict[str, Any], format_type: str) -> str:
         base_prompt = self._create_response_prompt(input_data, user_preferences)
         format_specific_instructions = {
-            'text': "Generate a standard text response.",
-            'bullet_points': "Generate a response in the form of concise bullet points.",
-            'step_by_step': "Generate a response as a series of step-by-step instructions.",
-            'eli5': "Generate a response explaining the concept as you would to a 5-year-old.",
-            'technical': "Generate a more technical and detailed response for an expert audience."
+            "text": "Generate a standard text response.",
+            "bullet_points": "Generate a response in the form of concise bullet points.",
+            "step_by_step": "Generate a response as a series of step-by-step instructions.",
+            "eli5": "Generate a response explaining the concept as you would to a 5-year-old.",
+            "technical": "Generate a more technical and detailed response for an expert audience."
         }
 
         return f"""
@@ -136,9 +139,8 @@ class ResponseGenerationAgent:
         """
 
     @safe_execute
-    async def process_and_respond(self, reasoning_result: Dict[str, Any], user_preferences: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Process the reasoning result and generate appropriate responses.
+    async def process_and_respond(self, reasoning_result: dict[str, Any], user_preferences: dict[str, Any]) -> dict[str, Any]:
+        """Process the reasoning result and generate appropriate responses.
 
         Args:
             reasoning_result (Dict[str, Any]): The result from the Reasoning Agent.
@@ -157,17 +159,17 @@ class ResponseGenerationAgent:
             "response_metadata": self._generate_response_metadata(reasoning_result, user_preferences)
         }
 
-    def _summarize_input(self, reasoning_result: Dict[str, Any]) -> str:
+    def _summarize_input(self, reasoning_result: dict[str, Any]) -> str:
         # Implement logic to create a brief summary of the input reasoning result
         return f"Input based on reasoning about: {reasoning_result.get('main_topic', 'Unspecified topic')}"
 
-    def _generate_response_metadata(self, reasoning_result: Dict[str, Any], user_preferences: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_response_metadata(self, reasoning_result: dict[str, Any], user_preferences: dict[str, Any]) -> dict[str, Any]:
         # Generate metadata about the response, which could be useful for analytics or further processing
         return {
-            "confidence_level": reasoning_result.get('confidence', 0),
-            "response_tone": user_preferences.get('tone', 'neutral'),
-            "complexity_level": user_preferences.get('complexity', 'medium'),
-            "source_count": len(reasoning_result.get('sources', [])),
+            "confidence_level": reasoning_result.get("confidence", 0),
+            "response_tone": user_preferences.get("tone", "neutral"),
+            "complexity_level": user_preferences.get("complexity", "medium"),
+            "source_count": len(reasoning_result.get("sources", [])),
             "generated_at": self._get_current_timestamp()
         }
 

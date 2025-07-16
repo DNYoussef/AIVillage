@@ -1,16 +1,20 @@
-import importlib.util, unittest
-if importlib.util.find_spec("numpy") is None or importlib.util.find_spec("torch") is None:
-    raise unittest.SkipTest("Required dependency not installed")
+import importlib.util
+import unittest
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock
-import numpy as np
-import sys
+if importlib.util.find_spec("numpy") is None or importlib.util.find_spec("torch") is None:
+    msg = "Required dependency not installed"
+    raise unittest.SkipTest(msg)
+
 from pathlib import Path
+import sys
+from unittest.mock import AsyncMock, MagicMock
+
+import numpy as np
 
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.append(str(repo_root))
 import types
+
 sys.modules.setdefault("tiktoken", types.ModuleType("tiktoken"))
 fake_load = types.ModuleType("tiktoken.load")
 def load_tiktoken_bpe(*a, **k):
@@ -18,7 +22,6 @@ def load_tiktoken_bpe(*a, **k):
 fake_load.load_tiktoken_bpe = load_tiktoken_bpe
 sys.modules.setdefault("tiktoken.load", fake_load)
 sys.modules["tiktoken"].Encoding = object
-import agents
 
 import importlib.util
 
@@ -44,8 +47,8 @@ class TestSelfEvolvingSystem(unittest.IsolatedAsyncioTestCase):
         ses = SelfEvolvingSystem([agent])
         ses.sage_framework.assistant_response = AsyncMock(return_value="cap1, cap2")
         await ses.evolve_agent(agent)
-        self.assertIn("cap1", agent.capabilities)
-        self.assertIn("cap2", agent.capabilities)
+        assert "cap1" in agent.capabilities
+        assert "cap2" in agent.capabilities
 
     async def test_evolve_decision_maker(self):
         agent = DummyAgent()
@@ -56,8 +59,8 @@ class TestSelfEvolvingSystem(unittest.IsolatedAsyncioTestCase):
         old_depth = ses.mcts.simulation_depth
         await ses.evolve_decision_maker()
         ses.dpo.fit.assert_called_once()
-        self.assertGreater(ses.mcts.exploration_weight, old_weight)
-        self.assertGreater(ses.mcts.simulation_depth, old_depth)
+        assert ses.mcts.exploration_weight > old_weight
+        assert ses.mcts.simulation_depth > old_depth
 
     async def test_system_evolve(self):
         class EvoAgent(DummyAgent):
@@ -67,7 +70,7 @@ class TestSelfEvolvingSystem(unittest.IsolatedAsyncioTestCase):
         agent = EvoAgent()
         ses = SelfEvolvingSystem([agent])
         await ses.evolve()
-        self.assertIn("new", agent.capabilities)
+        assert "new" in agent.capabilities
 
 if __name__ == "__main__":
     unittest.main()

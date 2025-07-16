@@ -1,12 +1,14 @@
-import torch
-from typing import Iterable, Tuple
-from .svf_ops import apply_svf
-from optim.augmented_adam import AugmentedAdam
-from .pid_edgechaos import EdgePID
+from collections.abc import Iterable
+
 from geometry.snapshot import geom_snapshot
 from meta.geo2z_policy import Geo2Z
+from optim.augmented_adam import AugmentedAdam
+import torch
 
-Batch = Tuple[torch.Tensor, torch.Tensor, str]
+from .pid_edgechaos import EdgePID
+from .svf_ops import apply_svf
+
+Batch = tuple[torch.Tensor, torch.Tensor, str]
 
 
 def train_geometry_model(model: torch.nn.Module, dataset: Iterable[Batch], *, epochs: int = 1) -> None:

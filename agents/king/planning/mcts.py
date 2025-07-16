@@ -1,8 +1,8 @@
-import math
-import random
-from typing import List, Dict, Any
 import asyncio
 from collections import defaultdict
+import math
+import random
+
 
 class MCTSNode:
     def __init__(self, state, parent=None):
@@ -16,7 +16,7 @@ class MCTS:
     def __init__(self, exploration_weight=1.0, max_depth=10):
         self.exploration_weight = exploration_weight
         self.max_depth = max_depth
-        self.stats = defaultdict(lambda: {'visits': 0, 'value': 0})
+        self.stats = defaultdict(lambda: {"visits": 0, "value": 0})
 
     async def search(self, task, problem_analyzer, plan_generator, iterations=1000):
         root = MCTSNode(task)
@@ -60,30 +60,30 @@ class MCTS:
 
     def backpropagate(self, node, result):
         while node:
-            self.stats[node.state]['visits'] += 1
-            self.stats[node.state]['value'] += result
+            self.stats[node.state]["visits"] += 1
+            self.stats[node.state]["value"] += result
             node.visits += 1
             node.value += result
             node = node.parent
 
     def best_uct_child(self, node):
-        log_n_visits = math.log(self.stats[node.state]['visits'])
+        log_n_visits = math.log(self.stats[node.state]["visits"])
         return max(
             node.children,
-            key=lambda c: (self.stats[c.state]['value'] / self.stats[c.state]['visits']) +
-                self.exploration_weight * math.sqrt(log_n_visits / self.stats[c.state]['visits'])
+            key=lambda c: (self.stats[c.state]["value"] / self.stats[c.state]["visits"]) +
+                self.exploration_weight * math.sqrt(log_n_visits / self.stats[c.state]["visits"])
         )
 
     def best_child(self, node):
-        return max(node.children, key=lambda c: self.stats[c.state]['visits'])
+        return max(node.children, key=lambda c: self.stats[c.state]["visits"])
 
     async def update(self, task, result):
         # Update MCTS statistics based on task execution results
-        self.stats[task]['visits'] += 1
-        self.stats[task]['value'] += result
+        self.stats[task]["visits"] += 1
+        self.stats[task]["value"] += result
 
     async def prune(self, node, threshold):
-        node.children = [child for child in node.children if self.stats[child.state]['visits'] > threshold]
+        node.children = [child for child in node.children if self.stats[child.state]["visits"] > threshold]
         for child in node.children:
             await self.prune(child, threshold)
 

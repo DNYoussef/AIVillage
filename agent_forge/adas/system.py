@@ -1,9 +1,11 @@
-import os
-import shutil
-from utils.logging import get_logger
-import random
+from collections.abc import Callable
 import json
-from typing import Any, Callable
+import os
+import random
+import shutil
+from typing import Any
+
+from utils.logging import get_logger
 
 
 class ADASystem:
@@ -21,11 +23,10 @@ class ADASystem:
         config: dict
             Dictionary with ``num_layers`` and ``hidden_size`` keys.
 
-        Returns
+        Returns:
         -------
         Tuple containing the perturbed configuration and its score.
         """
-
         cand = dict(config)
         cand["num_layers"] = max(
             1, cand.get("num_layers", 1) + random.choice([-1, 0, 1])
@@ -47,7 +48,6 @@ class ADASystem:
         iterations: int, optional
             Number of perturbation rounds to perform. Defaults to ``3``.
         """
-
         self.logger.info("Starting ADAS optimization")
 
         base_config = {"num_layers": 4, "hidden_size": 128}
@@ -83,7 +83,6 @@ class ADASystem:
 
 def adaptive_search(evaluate: Callable[[Any], float], space: list[Any]) -> Any:
     """Return the best item in ``space`` according to ``evaluate``."""
-
     best_item: Any | None = None
     best_score = float("-inf")
     for item in space:

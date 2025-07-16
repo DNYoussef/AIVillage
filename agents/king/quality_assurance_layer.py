@@ -1,13 +1,14 @@
-import random
-import numpy as np
-from typing import List, Dict, Any, Tuple
-from agents.utils.task import Task as LangroidTask
-from scipy.spatial.distance import cosine
-from transformers import AutoTokenizer, AutoModel
-import torch
-import logging
 import json
+import logging
 import os
+from typing import Any
+
+import numpy as np
+from scipy.spatial.distance import cosine
+import torch
+from transformers import AutoModel, AutoTokenizer
+
+from agents.utils.task import Task as LangroidTask
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ class EudaimoniaTriangulator:
         self_awareness_score = 1 - cosine(task_vector, self.self_awareness_vector)
         return (empathy_score + harmony_score + self_awareness_score) / 3
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "model_name": self.model_name,
             "empathy_vector": self.empathy_vector.tolist(),
@@ -41,7 +42,7 @@ class EudaimoniaTriangulator:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'EudaimoniaTriangulator':
+    def from_dict(cls, data: dict[str, Any]) -> "EudaimoniaTriangulator":
         triangulator = cls(model_name=data["model_name"])
         triangulator.empathy_vector = np.array(data["empathy_vector"])
         triangulator.harmony_vector = np.array(data["harmony_vector"])
@@ -52,7 +53,7 @@ class QualityAssuranceLayer:
     def __init__(self, upo_threshold: float = 0.7, num_samples: int = 100):
         self.upo_threshold = upo_threshold
         self.num_samples = num_samples
-        self.task_history: List[Dict[str, Any]] = []
+        self.task_history: list[dict[str, Any]] = []
         self.eudaimonia_triangulator = EudaimoniaTriangulator()
         self.rules = [
             "Move all living things towards eudaimonia",
@@ -62,43 +63,43 @@ class QualityAssuranceLayer:
         ]
         self.rule_embeddings = [self.eudaimonia_triangulator.get_embedding(rule) for rule in self.rules]
 
-    def check_task_safety(self, task: LangroidTask) -> Tuple[bool, Dict[str, float]]:
+    def check_task_safety(self, task: LangroidTask) -> tuple[bool, dict[str, float]]:
         uncertainty = self.estimate_uncertainty(task)
         task_vector = self.eudaimonia_triangulator.get_embedding(task.content)
         eudaimonia_score = self.eudaimonia_triangulator.triangulate(task_vector)
         rule_compliance = self.evaluate_rule_compliance(task_vector)
-        
+
         safety_score = (1 - uncertainty) * 0.3 + eudaimonia_score * 0.4 + rule_compliance * 0.3
-        
+
         metrics = {
             "uncertainty": uncertainty,
             "eudaimonia_score": eudaimonia_score,
             "rule_compliance": rule_compliance,
             "safety_score": safety_score
         }
-        
+
         return safety_score > self.upo_threshold, metrics
 
     def estimate_uncertainty(self, task: LangroidTask) -> float:
         task_embedding = self.eudaimonia_triangulator.get_embedding(task.content)
         similar_tasks = self.find_similar_tasks(task_embedding)
-        
+
         if not similar_tasks:
             return 1.0  # High uncertainty for completely new tasks
-        
-        outcomes = [t['outcome'] for t in similar_tasks]
+
+        outcomes = [t["outcome"] for t in similar_tasks]
         mean_outcome = np.mean(outcomes)
         std_outcome = np.std(outcomes)
-        
+
         outcome_uncertainty = std_outcome / (mean_outcome + 1e-6)  # Avoid division by zero
         novelty = 1 - (len(similar_tasks) / len(self.task_history))
-        
+
         return (outcome_uncertainty + novelty) / 2
 
-    def find_similar_tasks(self, task_embedding: np.ndarray, similarity_threshold: float = 0.8) -> List[Dict[str, Any]]:
+    def find_similar_tasks(self, task_embedding: np.ndarray, similarity_threshold: float = 0.8) -> list[dict[str, Any]]:
         similar_tasks = []
         for past_task in self.task_history:
-            similarity = 1 - cosine(task_embedding, past_task['embedding'])
+            similarity = 1 - cosine(task_embedding, past_task["embedding"])
             if similarity > similarity_threshold:
                 similar_tasks.append(past_task)
         return similar_tasks
@@ -107,8 +108,8 @@ class QualityAssuranceLayer:
         rule_scores = [1 - cosine(task_vector, rule_vector) for rule_vector in self.rule_embeddings]
         return np.mean(rule_scores)
 
-    def prioritize_entities(self, entities: List[str]) -> List[Tuple[str, float]]:
-        def capacity_score(entity: str) -> Tuple[float, float]:
+    def prioritize_entities(self, entities: list[str]) -> list[tuple[str, float]]:
+        def capacity_score(entity: str) -> tuple[float, float]:
             entity_embedding = self.eudaimonia_triangulator.get_embedding(entity)
             self_reflection = 1 - cosine(entity_embedding, self.eudaimonia_triangulator.self_awareness_vector)
             suffering = 1 - cosine(entity_embedding, self.eudaimonia_triangulator.empathy_vector)
@@ -121,14 +122,14 @@ class QualityAssuranceLayer:
     async def evolve(self):
         if len(self.task_history) > 100:
             recent_tasks = self.task_history[-100:]
-            recent_uncertainties = [task['uncertainty'] for task in recent_tasks]
+            recent_uncertainties = [task["uncertainty"] for task in recent_tasks]
             avg_uncertainty = np.mean(recent_uncertainties)
-            
+
             if avg_uncertainty > self.upo_threshold:
                 self.upo_threshold *= 1.05  # Increase threshold if average uncertainty is high
             else:
                 self.upo_threshold *= 0.95  # Decrease threshold if average uncertainty is low
-            
+
             self.upo_threshold = max(0.5, min(0.9, self.upo_threshold))
 
         logger.info(f"Evolved UPO threshold to {self.upo_threshold}")
@@ -136,11 +137,11 @@ class QualityAssuranceLayer:
     def update_task_history(self, task: LangroidTask, outcome: float, uncertainty: float):
         task_embedding = self.eudaimonia_triangulator.get_embedding(task.content)
         self.task_history.append({
-            'embedding': task_embedding,
-            'outcome': outcome,
-            'uncertainty': uncertainty
+            "embedding": task_embedding,
+            "outcome": outcome,
+            "uncertainty": uncertainty
         })
-        
+
         if len(self.task_history) > 1000:
             self.task_history = self.task_history[-1000:]
 
@@ -154,13 +155,13 @@ class QualityAssuranceLayer:
             "rule_embeddings": [embedding.tolist() for embedding in self.rule_embeddings]
         }
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(data, f)
         logger.info(f"QualityAssuranceLayer saved to {path}")
 
     @classmethod
-    def load(cls, path: str) -> 'QualityAssuranceLayer':
-        with open(path, 'r') as f:
+    def load(cls, path: str) -> "QualityAssuranceLayer":
+        with open(path) as f:
             data = json.load(f)
         qa_layer = cls(upo_threshold=data["upo_threshold"], num_samples=data["num_samples"])
         qa_layer.task_history = data["task_history"]

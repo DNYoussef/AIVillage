@@ -1,11 +1,14 @@
-import unittest
 import importlib.util
+import unittest
 
 if importlib.util.find_spec("torch") is None:
-    raise unittest.SkipTest("PyTorch not installed")
+    msg = "PyTorch not installed"
+    raise unittest.SkipTest(msg)
+
+from types import SimpleNamespace
 
 import torch
-from types import SimpleNamespace
+
 from agent_forge.prompt_baking.baker import bake
 from agent_forge.prompt_baking.loader import inject_morality
 from agent_forge.prompt_baking.prompts import morality_v1
@@ -46,10 +49,7 @@ class DummyModel(torch.nn.Module):
         self.prompt_bank = torch.nn.ModuleDict()
 
     def forward(self, input_ids=None, inputs_embeds=None, labels=None):
-        if inputs_embeds is None:
-            embeds = self.emb(input_ids)
-        else:
-            embeds = inputs_embeds
+        embeds = self.emb(input_ids) if inputs_embeds is None else inputs_embeds
         logits = self.head(embeds)
         loss = None
         if labels is not None:
@@ -73,7 +73,7 @@ class TestMoralAnchor(unittest.TestCase):
         embeds = inject_morality(model, tok, "How should I treat my neighbor?")
         out = model.generate(inputs_embeds=embeds, max_length=4)[0]
         text = tok.decode(out)
-        self.assertTrue("Eudaimonic" in text or "flourishing" in text)
+        assert "Eudaimonic" in text or "flourishing" in text
 
 
 if __name__ == "__main__":

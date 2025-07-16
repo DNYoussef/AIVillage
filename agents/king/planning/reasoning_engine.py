@@ -1,6 +1,8 @@
 import logging
-from typing import Dict, Any
-import torch.nn as nn
+from typing import Any
+
+from torch import nn
+
 from agents.utils.exceptions import AIVillageException
 
 logger = logging.getLogger(__name__)
@@ -10,13 +12,13 @@ class ReasoningEngine:
         self.model = None
         self.hyperparameters = {}
 
-    async def analyze_and_reason(self, decision: Dict[str, Any]) -> Dict[str, Any]:
+    async def analyze_and_reason(self, decision: dict[str, Any]) -> dict[str, Any]:
         try:
             logger.info(f"Analyzing and reasoning about decision: {decision}")
-            
+
             # Retrieve relevant information from RAG system
-            rag_info = await self.rag_system.process_query(decision['decision'])
-            
+            rag_info = await self.rag_system.process_query(decision["decision"])
+
             # Perform reasoning based on the decision and RAG information
             reasoning_prompt = f"""
             Given the following decision and information:
@@ -58,19 +60,19 @@ class ReasoningEngine:
             }
 
         except Exception as e:
-            logger.error(f"Error in analyze_and_reason: {str(e)}", exc_info=True)
-            raise AIVillageException(f"Error in analyze_and_reason: {str(e)}")
+            logger.error(f"Error in analyze_and_reason: {e!s}", exc_info=True)
+            raise AIVillageException(f"Error in analyze_and_reason: {e!s}")
 
 
     async def update_model(self, new_model: nn.Module):
         self.model = new_model
         logger.info("Model updated in ReasoningEngine")
 
-    async def update_hyperparameters(self, hyperparameters: Dict[str, Any]):
+    async def update_hyperparameters(self, hyperparameters: dict[str, Any]):
         self.hyperparameters.update(hyperparameters)
         logger.info("Hyperparameters updated in ReasoningEngine")
 
-    async def introspect(self) -> Dict[str, Any]:
+    async def introspect(self) -> dict[str, Any]:
         return {
             "type": "ReasoningEngine",
             "model_type": str(type(self.model)) if self.model else "None",

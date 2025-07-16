@@ -1,33 +1,35 @@
-from typing import Dict, Any
-from agents.utils.task import Task as LangroidTask
-from agents.unified_base_agent import UnifiedBaseAgent
-from communications.protocol import StandardCommunicationProtocol, Message, MessageType
-from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
-from rag_system.core.config import UnifiedConfig
-from rag_system.core.exploration_mode import ExplorationMode
-from rag_system.retrieval.vector_store import VectorStore
-from rag_system.core.cognitive_nexus import CognitiveNexus
-from rag_system.core.latent_space_activation import LatentSpaceActivation
-from rag_system.error_handling.adaptive_controller import AdaptiveErrorController
-from core.evidence import EvidencePack
-from agents.utils.evidence_helpers import wrap_in_pack
-from rag_system.processing.confidence_estimator import ConfidenceEstimator
-from agents.unified_base_agent import SelfEvolvingSystem
-from .foundational_layer import FoundationalLayer
-from .continuous_learning_layer import ContinuousLearningLayer
-from .query_processing import QueryProcessor
-from .task_execution import TaskExecutor
-from .collaboration import CollaborationManager
-from .research_capabilities import ResearchCapabilities
-from .user_intent_interpreter import UserIntentInterpreter
-from .response_generator import ResponseGenerator
+from datetime import datetime
 import logging
 import time
-import requests
-from bs4 import BeautifulSoup
+from typing import Any
 import uuid
-from datetime import datetime
+
+from bs4 import BeautifulSoup
+import requests
+
+from agents.unified_base_agent import SelfEvolvingSystem, UnifiedBaseAgent
+from agents.utils.evidence_helpers import wrap_in_pack
+from agents.utils.task import Task as LangroidTask
+from communications.protocol import Message, MessageType, StandardCommunicationProtocol
+from core.evidence import EvidencePack
+from rag_system.core.cognitive_nexus import CognitiveNexus
+from rag_system.core.config import UnifiedConfig
+from rag_system.core.exploration_mode import ExplorationMode
+from rag_system.core.latent_space_activation import LatentSpaceActivation
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.error_handling.adaptive_controller import AdaptiveErrorController
+from rag_system.processing.confidence_estimator import ConfidenceEstimator
+from rag_system.retrieval.vector_store import VectorStore
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
+
+from .collaboration import CollaborationManager
+from .continuous_learning_layer import ContinuousLearningLayer
+from .foundational_layer import FoundationalLayer
+from .query_processing import QueryProcessor
+from .research_capabilities import ResearchCapabilities
+from .response_generator import ResponseGenerator
+from .task_execution import TaskExecutor
+from .user_intent_interpreter import UserIntentInterpreter
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +88,7 @@ class SageAgent(UnifiedBaseAgent):
             return result
         except Exception as e:
             self.performance_metrics["failed_tasks"] += 1
-            logger.error(f"Error executing task: {str(e)}")
+            logger.error(f"Error executing task: {e!s}")
             return await self.error_controller.handle_error(e, task)
         finally:
             execution_time = time.time() - start_time
@@ -96,7 +98,7 @@ class SageAgent(UnifiedBaseAgent):
                 + execution_time
             ) / self.performance_metrics["total_tasks"]
 
-    async def process_user_query(self, query: str) -> Dict[str, Any]:
+    async def process_user_query(self, query: str) -> dict[str, Any]:
         intent = await self.user_intent_interpreter.interpret_intent(query)
         processed_query = await self.pre_process_query(query)
         rag_result = await self.rag_system.process_query(processed_query)
@@ -115,11 +117,11 @@ class SageAgent(UnifiedBaseAgent):
 
     async def post_process_result(
         self,
-        rag_result: Dict[str, Any],
+        rag_result: dict[str, Any],
         original_query: str,
         response: str,
-        intent: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        intent: dict[str, Any],
+    ) -> dict[str, Any]:
         processed_result = {
             "original_query": original_query,
             "interpreted_intent": intent,
@@ -131,7 +133,7 @@ class SageAgent(UnifiedBaseAgent):
         }
         return processed_result
 
-    async def perform_web_scrape(self, url: str) -> Dict[str, Any]:
+    async def perform_web_scrape(self, url: str) -> dict[str, Any]:
         """Scrape a web page and store the content in the RAG system."""
         response = requests.get(url, timeout=10)
         response.raise_for_status()
@@ -151,7 +153,7 @@ class SageAgent(UnifiedBaseAgent):
 
         return {"url": url, "doc_id": doc_id, "snippet": text[:200]}
 
-    async def perform_web_search(self, query: str) -> Dict[str, Any]:
+    async def perform_web_search(self, query: str) -> dict[str, Any]:
         """Perform a simple web search and return snippets."""
         resp = requests.get(
             "https://duckduckgo.com/html/", params={"q": query}, timeout=10
@@ -163,7 +165,7 @@ class SageAgent(UnifiedBaseAgent):
             results.append(a.get_text())
         return {"query": query, "results": results}
 
-    async def analyze_data(self, data: Any) -> Dict[str, Any]:
+    async def analyze_data(self, data: Any) -> dict[str, Any]:
         """Placeholder for data analysis."""
         return {"summary": str(data)[:100]}
 

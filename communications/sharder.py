@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""
-ShardPlanner: ILP for layer→node assignment minimizing makespan.
+"""ShardPlanner: ILP for layer→node assignment minimizing makespan.
 """
 
 import pulp
@@ -10,8 +9,7 @@ class ShardPlanner:
     def __init__(self,
                  layer_flops: dict[int, float],
                  node_speeds: dict[str, float]):
-        """
-        layer_flops: {layer_idx: flops_required}
+        """layer_flops: {layer_idx: flops_required}
         node_speeds: {peer_id: flops_per_sec}
         """
         self.layer_flops = layer_flops

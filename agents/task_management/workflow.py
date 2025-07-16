@@ -1,15 +1,16 @@
 from dataclasses import dataclass, field
-from typing import List, Dict
+
 from .task import Task
+
 
 @dataclass(frozen=True)
 class Workflow:
     id: str
     name: str
-    tasks: List[Task]
-    dependencies: Dict[str, List[str]] = field(default_factory=dict)
+    tasks: list[Task]
+    dependencies: dict[str, list[str]] = field(default_factory=dict)
 
-    def add_task(self, task: Task) -> 'Workflow':
+    def add_task(self, task: Task) -> "Workflow":
         return Workflow(
             id=self.id,
             name=self.name,
@@ -17,7 +18,7 @@ class Workflow:
             dependencies=self.dependencies
         )
 
-    def update_task(self, updated_task: Task) -> 'Workflow':
+    def update_task(self, updated_task: Task) -> "Workflow":
         new_tasks = [updated_task if task.id == updated_task.id else task for task in self.tasks]
         return Workflow(
             id=self.id,
@@ -26,7 +27,7 @@ class Workflow:
             dependencies=self.dependencies
         )
 
-    def add_dependency(self, task_id: str, dependency_id: str) -> 'Workflow':
+    def add_dependency(self, task_id: str, dependency_id: str) -> "Workflow":
         new_dependencies = self.dependencies.copy()
         if task_id not in new_dependencies:
             new_dependencies[task_id] = []

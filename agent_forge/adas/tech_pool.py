@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Dict, Any
-import random
 import math
+import random
+from typing import Any
+
 import torch
 import transformers
 
@@ -19,9 +20,8 @@ WIKI_SNIPPETS = [
 ]
 
 
-def prune_heads(model_path: str, work_dir, params: Dict[str, Any]) -> float:
+def prune_heads(model_path: str, work_dir, params: dict[str, Any]) -> float:
     """Very small pruning heuristic used for tests."""
-
     threshold = params.get("norm_threshold", 0.10)
     lm = transformers.AutoModelForCausalLM.from_pretrained(model_path).eval().half()
 

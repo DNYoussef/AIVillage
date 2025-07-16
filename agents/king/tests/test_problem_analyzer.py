@@ -1,7 +1,7 @@
-import unittest
-import asyncio
 import importlib.util
+import unittest
 from unittest.mock import Mock, patch
+
 import torch
 
 
@@ -29,12 +29,12 @@ if torch_spec is None:
 
 from agents.king.planning.problem_analyzer import ProblemAnalyzer
 from agents.king.quality_assurance_layer import QualityAssuranceLayer
-from agents.utils.task import Task as LangroidTask
+
 
 class TestProblemAnalyzer(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        tok_patch = patch('transformers.AutoTokenizer.from_pretrained', return_value=DummyTok())
-        model_patch = patch('transformers.AutoModel.from_pretrained', return_value=DummyModel())
+        tok_patch = patch("transformers.AutoTokenizer.from_pretrained", return_value=DummyTok())
+        model_patch = patch("transformers.AutoModel.from_pretrained", return_value=DummyModel())
         self.addCleanup(tok_patch.stop)
         self.addCleanup(model_patch.stop)
         tok_patch.start()
@@ -131,5 +131,5 @@ class TestProblemAnalyzer(unittest.IsolatedAsyncioTestCase):
         self.assertIn("description", introspection)
         self.assertIn("quality_assurance_info", introspection)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

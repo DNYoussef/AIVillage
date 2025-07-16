@@ -1,13 +1,16 @@
-import importlib.util, unittest
+import importlib.util
+import unittest
+
 if importlib.util.find_spec("numpy") is None:
-    raise unittest.SkipTest("Required dependency not installed")
+    msg = "Required dependency not installed"
+    raise unittest.SkipTest(msg)
 
 from datetime import datetime
-import numpy as np
-import sys
 from pathlib import Path
-
+import sys
 import types
+
+import numpy as np
 
 fake_faiss = types.ModuleType("faiss")
 fake_faiss.IndexFlatL2 = lambda *args, **kwargs: object()
@@ -15,8 +18,9 @@ sys.modules.setdefault("faiss", fake_faiss)
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from rag_system.retrieval.vector_store import VectorStore
 from rag_system.retrieval.graph_store import GraphStore
+from rag_system.retrieval.vector_store import VectorStore
+
 
 class TestStoreCounts(unittest.IsolatedAsyncioTestCase):
     async def test_vector_store_get_count(self):
@@ -33,19 +37,19 @@ class TestStoreCounts(unittest.IsolatedAsyncioTestCase):
             {
                 "id": "1",
                 "content": "a",
-                "embedding": np.zeros(store.dimension).astype('float32'),
+                "embedding": np.zeros(store.dimension).astype("float32"),
                 "timestamp": datetime.now(),
             },
             {
                 "id": "2",
                 "content": "b",
-                "embedding": np.zeros(store.dimension).astype('float32'),
+                "embedding": np.zeros(store.dimension).astype("float32"),
                 "timestamp": datetime.now(),
             },
         ]
         store.add_documents(docs)
         count = await store.get_count()
-        self.assertEqual(count, 2)
+        assert count == 2
 
     async def test_graph_store_get_count(self):
         store = GraphStore()
@@ -55,7 +59,7 @@ class TestStoreCounts(unittest.IsolatedAsyncioTestCase):
         ]
         store.add_documents(docs)
         count = await store.get_count()
-        self.assertEqual(count, 2)
+        assert count == 2
 
 if __name__ == "__main__":
     unittest.main()

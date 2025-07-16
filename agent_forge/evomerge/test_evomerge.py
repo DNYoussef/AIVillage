@@ -1,5 +1,5 @@
-import unittest
 import importlib.util
+import unittest
 
 # Skip these heavy integration tests if PyTorch is unavailable.  They
 # require loading pretrained models and running tensor operations.
@@ -11,19 +11,17 @@ if torch_spec is None:
     raise unittest.SkipTest("PyTorch not installed")
 
 import torch
-from .config import Configuration, ModelReference, MergeSettings, EvolutionSettings
-from .utils import (
-    EvoMergeException,
-    generate_text,
-    setup_gpu_if_available,
-    clean_up_models,
-    mask_model_weights
-)
-from .model_loading import load_models, save_model
-from .evaluation import evaluate_model
+
+from .config import Configuration, EvolutionSettings, MergeSettings, ModelReference
+from .evolutionary_tournament import EvolutionaryTournament, run_evolutionary_tournament
 from .merging.merge_techniques import MERGE_TECHNIQUES
 from .merging.merger import AdvancedModelMerger
-from .evolutionary_tournament import EvolutionaryTournament, run_evolutionary_tournament
+from .model_loading import load_models
+from .utils import (
+    clean_up_models,
+    mask_model_weights,
+)
+
 
 class TestEvoMerge(unittest.TestCase):
     def setUp(self):
@@ -61,7 +59,7 @@ class TestEvoMerge(unittest.TestCase):
             dfs_techniques=["frankenmerge"]
         )
         self.assertIsInstance(valid_config, MergeSettings)
-        
+
         # Test invalid configuration
         with self.assertRaises(ValueError):
             invalid_config = MergeSettings(
@@ -77,7 +75,7 @@ class TestEvoMerge(unittest.TestCase):
             "layer1": torch.rand(2, 3, 4),
             "layer2": torch.rand(2, 4, 5)
         }
-        
+
         for technique, func in MERGE_TECHNIQUES.items():
             merged_weights = func(weights, [])
             self.assertEqual(len(merged_weights), len(weights))
@@ -140,5 +138,5 @@ class TestEvoMerge(unittest.TestCase):
     def tearDown(self):
         clean_up_models([f"{self.config.merge_settings.custom_dir}/merged_*"])
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -14,11 +14,11 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 import logging
 import os
 import time
-from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
@@ -50,7 +50,7 @@ class ChatEngine:
         self._consecutive_calib_errors = 0
 
     # ------------------------------------------------------------------
-    def process_chat(self, message: str, conversation_id: str) -> Dict[str, Any]:
+    def process_chat(self, message: str, conversation_id: str) -> dict[str, Any]:
         started = time.time()
         twin_payload = {"prompt": message, "conversation_id": conversation_id}
         try:
@@ -63,7 +63,7 @@ class ChatEngine:
         data = twin_resp.json()
         resp_text: str = data.get("response", "")
         raw_prob: float = float(data.get("raw_prob", 0.5))
-        calibrated: Optional[float] = data.get("calibrated_prob")
+        calibrated: float | None = data.get("calibrated_prob")
 
         if calibrated is None and self._calib_enabled:
             try:

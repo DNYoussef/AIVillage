@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 
 @dataclass
@@ -17,7 +17,7 @@ class DirectPreferenceOptimizer:
     def __init__(self, config: DPOConfig | None = None) -> None:
         self.config = config or DPOConfig()
 
-    def select(self, preferences: Dict[Any, float]) -> Any:
+    def select(self, preferences: dict[Any, float]) -> Any:
         if not preferences:
             return None
         return max(preferences, key=preferences.get)

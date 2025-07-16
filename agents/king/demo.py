@@ -1,15 +1,16 @@
 import asyncio
 import logging
+
 from agents.king.king_agent import KingAgent, KingAgentConfig
-from communications.protocol import StandardCommunicationProtocol, Message, MessageType
-from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
-from rag_system.core.config import UnifiedConfig
-from agents.sage.sage_agent import SageAgent
 from agents.magi.magi_agent import MagiAgent
+from agents.sage.sage_agent import SageAgent
 from agents.utils.exceptions import AIVillageException
+from communications.protocol import Message, MessageType, StandardCommunicationProtocol
+from rag_system.core.config import UnifiedConfig
+from rag_system.core.pipeline import EnhancedRAGPipeline as RAGSystem
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 async def run_demo():
@@ -19,7 +20,7 @@ async def run_demo():
         communication_protocol = StandardCommunicationProtocol()
         rag_config = UnifiedConfig()
         rag_system = RAGSystem(rag_config)
-        
+
         # Create KingAgent
         logger.info("Creating KingAgent...")
         config = KingAgentConfig(name="KingAgent", description="Main coordinator for AI Village", model="gpt-4")
@@ -29,7 +30,7 @@ async def run_demo():
         logger.info("Creating and registering other agents...")
         sage_agent = SageAgent(communication_protocol)
         magi_agent = MagiAgent(communication_protocol)
-        
+
         await king_agent.coordinator.add_agent("sage", sage_agent)
         await king_agent.coordinator.add_agent("magi", magi_agent)
 
@@ -47,9 +48,9 @@ async def run_demo():
                 result = await king_agent.execute_task(task)
                 logger.info(f"Task result: {result}")
             except AIVillageException as e:
-                logger.error(f"Error processing task: {str(e)}")
+                logger.error(f"Error processing task: {e!s}")
             except Exception as e:
-                logger.exception(f"Unexpected error processing task: {str(e)}")
+                logger.exception(f"Unexpected error processing task: {e!s}")
 
         # Demonstrate introspection
         try:
@@ -58,10 +59,10 @@ async def run_demo():
             logger.info("King Agent Introspection:")
             logger.info(introspection)
         except Exception as e:
-            logger.exception(f"Error during introspection: {str(e)}")
+            logger.exception(f"Error during introspection: {e!s}")
 
     except Exception as e:
-        logger.exception(f"Fatal error in run_demo: {str(e)}")
+        logger.exception(f"Fatal error in run_demo: {e!s}")
 
 if __name__ == "__main__":
     try:
@@ -69,4 +70,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("Demo interrupted by user.")
     except Exception as e:
-        logger.exception(f"Unhandled exception in main: {str(e)}")
+        logger.exception(f"Unhandled exception in main: {e!s}")

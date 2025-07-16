@@ -1,17 +1,19 @@
-import click
-import yaml
-import traceback
 import os
+import traceback
+
+import click
 import torch
 import wandb
+import yaml
 
-from agent_forge.evomerge.config import MergeConfig
 from agent_forge.adas import ADASystem
-from agent_forge.evomerge.merger import AdvancedModelMerger
 from agent_forge.bakedquietiot.deepbaking import DeepSystemBaker
-from agent_forge.model_compression.bitlinearization import BitNetModel
 from agent_forge.compression import stream_compress_model
-from agent_forge.training.training import EnhancedQuietSTaR, CognitiveTrainingPipeline
+from agent_forge.evomerge.config import MergeConfig
+from agent_forge.evomerge.merger import AdvancedModelMerger
+from agent_forge.model_compression.bitlinearization import BitNetModel
+from agent_forge.training.training import CognitiveTrainingPipeline, EnhancedQuietSTaR
+
 
 @click.command()
 @click.argument("config_file")
@@ -32,7 +34,7 @@ def main(config_file: str, output_dir: str):
         os.makedirs(output_dir, exist_ok=True)
 
         print(f"Loading configuration from {config_file}")
-        with open(config_file, "r") as f:
+        with open(config_file) as f:
             config_dict = yaml.safe_load(f)
 
         enable_adas = config_dict.get("enable_adas", True)
@@ -120,7 +122,7 @@ def main(config_file: str, output_dir: str):
         print("Process completed successfully")
 
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        print(f"An error occurred: {e!s}")
         print("Traceback:")
         print(traceback.format_exc())
 

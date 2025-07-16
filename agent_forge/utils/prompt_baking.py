@@ -1,4 +1,4 @@
-import torch.nn as nn
+from torch import nn
 
 
 class PromptBank(nn.Module):

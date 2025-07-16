@@ -1,5 +1,6 @@
-import pytest
 import importlib
+
+import pytest
 
 missing = []
 for pkg in ["openai", "tiktoken", "transformers", "torch", "grokfast"]:

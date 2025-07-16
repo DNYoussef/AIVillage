@@ -2,13 +2,15 @@ import importlib
 import unittest
 
 if importlib.util.find_spec("torch") is None:
-    raise unittest.SkipTest("PyTorch not installed")
+    msg = "PyTorch not installed"
+    raise unittest.SkipTest(msg)
+
+from unittest import mock
 
 import torch
 
-from agent_forge.training.expert_vectors import ExpertVectorSystem, MoralArchetype
+from agent_forge.training.expert_vectors import ExpertVectorSystem
 from agent_forge.training.prompt_baking import PromptBakingManager
-from unittest import mock
 
 
 class TestExpertVectorSystem(unittest.TestCase):
@@ -19,13 +21,13 @@ class TestExpertVectorSystem(unittest.TestCase):
         before = model.weight.clone()
         system.apply_expert_vector(vector, scaling=1.0)
         after = model.weight
-        self.assertFalse(torch.allclose(before, after))
+        assert not torch.allclose(before, after)
 
     def test_train_from_text(self):
         model = torch.nn.Linear(4, 4, bias=False)
         system = ExpertVectorSystem(model)
         vector = system.train_expert_vector_from_texts("txt", ["a", "b"], epochs=1)
-        self.assertIn("weight", vector.singular_values)
+        assert "weight" in vector.singular_values
 
     def test_prompt_baking_applies_vector(self):
         class DummyBaker:
@@ -45,7 +47,7 @@ class TestExpertVectorSystem(unittest.TestCase):
             before = manager.baker.model.weight.clone()
             manager.deep_bake(["x"], num_rounds=1)
             after = manager.baker.model.weight
-            self.assertFalse(torch.allclose(before, after))
+            assert not torch.allclose(before, after)
 
 
 if __name__ == "__main__":

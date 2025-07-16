@@ -1,4 +1,5 @@
 import importlib.util
+
 import pytest
 
 spec = importlib.util.find_spec("torch")
@@ -7,6 +8,7 @@ if spec is None:
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
 from agent_forge.training.quiet_star import QuietSTaRModel
 
 

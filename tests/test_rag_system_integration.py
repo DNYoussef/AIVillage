@@ -1,8 +1,9 @@
-import unittest
 import asyncio
-import sys
 from pathlib import Path
+import sys
+import unittest
 from unittest import mock
+
 import numpy as np
 import pytest
 
@@ -17,28 +18,29 @@ fake_torch.__spec__ = mock.MagicMock()
 fake_mpl = mock.MagicMock()
 fake_mpl.__spec__ = mock.MagicMock()
 import types
+
 fake_sklearn = types.ModuleType("sklearn")
 fake_metrics = types.ModuleType("sklearn.metrics")
 fake_pairwise = types.ModuleType("sklearn.metrics.pairwise")
 fake_pairwise.cosine_similarity = lambda *args, **kwargs: None
 fake_metrics.pairwise = fake_pairwise
 fake_sklearn.metrics = fake_metrics
-with mock.patch.dict('sys.modules', {
-    'faiss': fake_faiss,
-    'torch': fake_torch,
-    'matplotlib': fake_mpl,
-    'matplotlib.pyplot': fake_mpl,
-    'seaborn': fake_mpl,
-    'pandas': fake_mpl,
-    'transformers': fake_mpl,
-    'sklearn': fake_sklearn,
-    'sklearn.metrics': fake_metrics,
-    'sklearn.metrics.pairwise': fake_pairwise,
+with mock.patch.dict("sys.modules", {
+    "faiss": fake_faiss,
+    "torch": fake_torch,
+    "matplotlib": fake_mpl,
+    "matplotlib.pyplot": fake_mpl,
+    "seaborn": fake_mpl,
+    "pandas": fake_mpl,
+    "transformers": fake_mpl,
+    "sklearn": fake_sklearn,
+    "sklearn.metrics": fake_metrics,
+    "sklearn.metrics.pairwise": fake_pairwise,
 }):
     from rag_system.core.config import UnifiedConfig
-    from rag_system.main import initialize_components, process_user_query
-    from rag_system.retrieval.hybrid_retriever import HybridRetriever
     from rag_system.core.structures import RetrievalResult
+    from rag_system.main import process_user_query
+    from rag_system.retrieval.hybrid_retriever import HybridRetriever
     from rag_system.retrieval.vector_store import VectorStore
 
 class MockVectorStore:
@@ -56,22 +58,22 @@ class TestRAGSystemIntegration(unittest.TestCase):
 
     def test_rag_system_integration(self):
         components = self.loop.run_until_complete(self._initialize_mock_components())
-        
+
         # Verify that all necessary components are initialized
-        self.assertIn("hybrid_retriever", components)
-        self.assertIsInstance(components["hybrid_retriever"], HybridRetriever)
-        
+        assert "hybrid_retriever" in components
+        assert isinstance(components["hybrid_retriever"], HybridRetriever)
+
         # Process a sample user query
         sample_query = "What are the key features of the RAG system?"
         result = self.loop.run_until_complete(process_user_query(components, sample_query))
-        
+
         # Verify that the result is not None and contains expected keys
-        self.assertIsNotNone(result)
-        self.assertIn("query", result)
-        self.assertIn("integrated_result", result)
-        
+        assert result is not None
+        assert "query" in result
+        assert "integrated_result" in result
+
         # Verify that the response is not empty
-        self.assertTrue(len(result["integrated_result"]) > 0)
+        assert len(result["integrated_result"]) > 0
 
     async def _initialize_mock_components(self):
         config = UnifiedConfig()
@@ -105,5 +107,5 @@ class TestVectorStoreDeterminism(unittest.IsolatedAsyncioTestCase):
         emb2 = store.documents[1]["embedding"]
         assert np.array_equal(emb1, emb2)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

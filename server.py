@@ -1,23 +1,24 @@
-from fastapi import FastAPI, UploadFile, File, Request
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware import Middleware
-from starlette.middleware.base import BaseHTTPMiddleware
-from pydantic import BaseModel, ValidationError, validator, Field
-import time
 from collections import defaultdict
 import html
+import mimetypes
+import os
+from pathlib import Path
 import re
 import tempfile
-import mimetypes
-from pathlib import Path
-import os
-from utils.logging import get_logger
+import time
 
+from fastapi import FastAPI, File, Request, UploadFile
+from fastapi.middleware import Middleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field, ValidationError, validator
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from core.evidence import Chunk, ConfidenceTier, EvidencePack
 from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.graph_explain import MAX_HOPS, explain_path
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
-from rag_system.graph_explain import explain_path, MAX_HOPS
-from core.evidence import EvidencePack, Chunk, ConfidenceTier
+from utils.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -97,19 +98,19 @@ rag_pipeline.knowledge_tracker = knowledge_tracker
 class SecureQueryRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=5000)
 
-    @validator('query')
+    @validator("query")
     def validate_query(cls, v):
         if not isinstance(v, str):
             raise ValueError("Query must be a string")
         v = html.escape(v.strip())
-        v = ''.join(char for char in v if ord(char) >= 32 or char in '\n\t')
+        v = "".join(char for char in v if ord(char) >= 32 or char in "\n\t")
         if len(v.strip()) == 0:
             raise ValueError("Query cannot be empty after sanitization")
         dangerous_patterns = [
-            r'<script[^>]*>.*?</script>',
-            r'javascript:',
-            r'data:.*base64',
-            r'vbscript:',
+            r"<script[^>]*>.*?</script>",
+            r"javascript:",
+            r"data:.*base64",
+            r"vbscript:",
         ]
         v_lower = v.lower()
         for pattern in dangerous_patterns:
@@ -143,7 +144,6 @@ class SecureUploadFile(BaseModel):
 
 async def stream_file_safely(file: UploadFile) -> str:
     """Stream file upload safely with size checking."""
-
     if not file.filename:
         raise ValueError("No filename provided")
 
@@ -201,7 +201,6 @@ async def query_endpoint(request: SecureQueryRequest):
 @app.post("/upload")
 async def upload_endpoint(file: UploadFile = File(...)):
     """Secure file upload with streaming and validation."""
-
     try:
         if not file.filename:
             return JSONResponse(status_code=400, content={"detail": "No file selected"})

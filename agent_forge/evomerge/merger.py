@@ -1,17 +1,26 @@
-import os
-import torch
 import logging
-from typing import List, Dict, Union, Tuple
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import shutil
+import os
 
-from .config import Configuration, ModelReference
-from .utils import load_models, save_model, evaluate_model, check_system_resources, EvoMergeException, clean_up_models
+import torch
+from transformers import AutoTokenizer
+
+from .config import Configuration
+from .cross_domain import merge_cross_domain_models
+from .instruction_tuning import (
+    is_instruction_tuned_model,
+    merge_instruction_tuned_models,
+)
 from .merging.merge_techniques import MERGE_TECHNIQUES
-from .instruction_tuning import is_instruction_tuned_model, merge_instruction_tuned_models
-from .cross_domain import get_model_domain, merge_cross_domain_models
 from .model_tracker import model_tracker
-from .utils import mask_model_weights
+from .utils import (
+    EvoMergeException,
+    check_system_resources,
+    clean_up_models,
+    evaluate_model,
+    load_models,
+    mask_model_weights,
+    save_model,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +38,8 @@ class AdvancedModelMerger:
 
             logger.info("Loading models and tokenizers")
             self.models, self.tokenizers = load_models(self.config.models)
-            
-            if all(is_instruction_tuned_model(model, tokenizer) for model, tokenizer in zip(self.models, self.tokenizers)):
+
+            if all(is_instruction_tuned_model(model, tokenizer) for model, tokenizer in zip(self.models, self.tokenizers, strict=False)):
                 logger.info("All models are instruction-tuned. Using instruction-tuned merge method.")
                 merged_model, merged_tokenizer = merge_instruction_tuned_models(self.models, self.tokenizers, self.config.merge_settings)
             elif self._models_are_compatible(self.models):
@@ -57,7 +66,7 @@ class AdvancedModelMerger:
             logger.info(f"Model merging completed successfully. Saved to: {merged_model_path}")
             return merged_model_path
         except Exception as e:
-            logger.error(f"Error during merge process: {str(e)}")
+            logger.error(f"Error during merge process: {e!s}")
             logger.exception("Traceback:")
             raise
 
@@ -71,11 +80,11 @@ class AdvancedModelMerger:
         if not check_system_resources([model.path for model in self.config.models]):
             raise EvoMergeException("Insufficient system resources to proceed with merging")
 
-    def _models_are_compatible(self, models: List[torch.nn.Module]) -> bool:
+    def _models_are_compatible(self, models: list[torch.nn.Module]) -> bool:
         base_architecture = type(models[0])
         return all(isinstance(model, base_architecture) for model in models)
 
-    def _merge_compatible_models(self, models: List[torch.nn.Module]) -> torch.nn.Module:
+    def _merge_compatible_models(self, models: list[torch.nn.Module]) -> torch.nn.Module:
         logger.info(f"Performing {self.config.merge_settings.merge_method} merge")
         if self.config.merge_settings.merge_method == "ps":
             merged_model = self._ps_merge(models)
@@ -86,14 +95,14 @@ class AdvancedModelMerger:
             merged_model = self._dfs_merge([ps_model] + models)
         else:
             raise NotImplementedError(f"Merge method {self.config.merge_settings.merge_method} not implemented")
-        
+
         # Apply weight masking if configured
         if self.config.merge_settings.weight_mask_rate > 0:
             merged_model = self._apply_weight_masking(merged_model)
-        
+
         return merged_model
 
-    def _ps_merge(self, models: List[torch.nn.Module]) -> torch.nn.Module:
+    def _ps_merge(self, models: list[torch.nn.Module]) -> torch.nn.Module:
         logger.info("Performing parameter space merge")
         merged_state_dict = {}
         chunk_size = 1000000  # Adjust based on available memory
@@ -108,14 +117,14 @@ class AdvancedModelMerger:
                         merged_param = merged_chunk
                     else:
                         merged_param = torch.cat([merged_param, merged_chunk])
-                
+
                 merged_state_dict[name] = merged_param.reshape(models[0].state_dict()[name].shape)
-        
+
         merged_model = type(models[0])(**models[0].config.to_dict())
         merged_model.load_state_dict(merged_state_dict)
         return merged_model
 
-    def _dfs_merge(self, models: List[torch.nn.Module]) -> torch.nn.Module:
+    def _dfs_merge(self, models: list[torch.nn.Module]) -> torch.nn.Module:
         logger.info("Performing deep fusion space merge")
         merged_model = type(models[0])(**models[0].config.to_dict())
         for technique in self.config.merge_settings.dfs_techniques:
@@ -163,7 +172,7 @@ class AdvancedModelMerger:
 if __name__ == "__main__":
     # For testing purposes
     from .config import create_default_config
-    
+
     config = create_default_config()
     merger = AdvancedModelMerger(config)
     merged_model_path = merger.merge()

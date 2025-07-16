@@ -1,9 +1,10 @@
+import re
+
+from langroid import ChatAgent, ChatAgentConfig, Task
+import numpy as np
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import numpy as np
-from typing import List, Dict
-import re
-from langroid import Task, ChatAgent, ChatAgentConfig
+
 
 class MetacognitiveEvaluatorTask(Task):
     def __init__(self, agent: ChatAgent, model: AutoModelForCausalLM, tokenizer: AutoTokenizer):
@@ -24,7 +25,7 @@ class MetacognitiveEvaluatorTask(Task):
             "Explain how you recognize and correct errors in your thinking or output."
         ]
 
-    async def evaluate(self, prompt: str) -> Dict[str, float]:
+    async def evaluate(self, prompt: str) -> dict[str, float]:
         overall_scores = []
         detailed_scores = {}
 
@@ -43,10 +44,10 @@ class MetacognitiveEvaluatorTask(Task):
     async def generate_response(self, prompt: str, task: str) -> str:
         input_text = f"{prompt}\n\nTask: {task}\n\nResponse:"
         inputs = self.tokenizer(input_text, return_tensors="pt").to(self.device)
-        
+
         with torch.no_grad():
             outputs = self.model.generate(**inputs, max_length=300, num_return_sequences=1, temperature=0.7)
-        
+
         response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         return response.split("Response:")[-1].strip()
 
@@ -68,13 +69,13 @@ class MetacognitiveEvaluatorTask(Task):
         }
 
     async def calculate_relevance(self, response: str, task: str) -> float:
-        task_keywords = set(re.findall(r'\w+', task.lower()))
-        response_keywords = set(re.findall(r'\w+', response.lower()))
+        task_keywords = set(re.findall(r"\w+", task.lower()))
+        response_keywords = set(re.findall(r"\w+", response.lower()))
         overlap = len(task_keywords.intersection(response_keywords))
         return min(overlap / len(task_keywords), 1)
 
     async def evaluate_structure(self, response: str) -> float:
-        sentences = response.split('.')
+        sentences = response.split(".")
         if len(sentences) < 3:
             return 0.5
         has_intro = any(s.strip().lower().startswith(("first", "to begin", "initially")) for s in sentences[:2])
@@ -103,6 +104,7 @@ class MetacognitiveEvaluatorTask(Task):
 # Usage example
 if __name__ == "__main__":
     import asyncio
+
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
     async def main():
@@ -114,7 +116,7 @@ if __name__ == "__main__":
         model = AutoModelForCausalLM.from_pretrained("gpt2")  # Replace with your preferred model
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         task = MetacognitiveEvaluatorTask(agent, model, tokenizer)
-        
+
         prompt = "Explain the concept of artificial intelligence."
         result = await task.run(prompt)
         print("Evaluation results:", result)

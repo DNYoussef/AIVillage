@@ -1,9 +1,9 @@
+from pathlib import Path
+import sys
+import types
 import unittest
 from unittest import mock
-import asyncio
-import sys
-from pathlib import Path
-import types
+
 import pytest
 
 yaml_stub = types.ModuleType("yaml")
@@ -16,7 +16,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 fake_faiss = mock.MagicMock()
 fake_faiss.__spec__ = mock.MagicMock()
-with mock.patch.dict('sys.modules', {'faiss': fake_faiss, 'requests': requests_stub, 'yaml': yaml_stub, 'networkx': networkx_stub}):
+with mock.patch.dict("sys.modules", {"faiss": fake_faiss, "requests": requests_stub, "yaml": yaml_stub, "networkx": networkx_stub}):
     from rag_system.core.pipeline import EnhancedRAGPipeline, shared_bayes_net
     from rag_system.retrieval.graph_store import GraphStore
 
@@ -37,9 +37,9 @@ class TestBayesNetIntegration(unittest.TestCase):
         p1.bayes_net = shared_bayes_net
         p2 = object.__new__(EnhancedRAGPipeline)
         p2.bayes_net = shared_bayes_net
-        self.assertIs(p1.bayes_net, p2.bayes_net)
+        assert p1.bayes_net is p2.bayes_net
         p1.bayes_net.add_node("n1", "content")
-        self.assertIn("n1", p2.bayes_net.nodes)
+        assert "n1" in p2.bayes_net.nodes
 
     @mock.patch("requests.get")
     def test_web_scrape_updates_bayesnet(self, mock_get):
@@ -58,8 +58,8 @@ class TestGraphStoreSimilarity(unittest.TestCase):
 
         store.add_documents(docs)
 
-        self.assertIn(("1", "2"), store.graph.edges)
+        assert ("1", "2") in store.graph.edges
         self.assertAlmostEqual(store.graph.edges[("1", "2")]["weight"], 1.0)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

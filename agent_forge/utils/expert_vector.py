@@ -1,8 +1,9 @@
+
 import torch
-from typing import Dict
+
 
 class ExpertVector:
-    def __init__(self, name: str, svs: Dict[str, torch.Tensor]):
+    def __init__(self, name: str, svs: dict[str, torch.Tensor]):
         self.name = name
         self.svs = svs
 

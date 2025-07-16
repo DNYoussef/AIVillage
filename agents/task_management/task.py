@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
-from typing import List, Optional, Any
 from enum import Enum
+from typing import Any
 import uuid
+
 
 class TaskStatus(Enum):
     PENDING = "pending"
@@ -13,14 +14,14 @@ class TaskStatus(Enum):
 class Task:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     description: str
-    assigned_agents: List[str]
+    assigned_agents: list[str]
     status: TaskStatus = TaskStatus.PENDING
-    result: Optional[Any] = None
-    deadline: Optional[str] = None
+    result: Any | None = None
+    deadline: str | None = None
     priority: int = 1
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
 
-    def update_status(self, new_status: TaskStatus) -> 'Task':
+    def update_status(self, new_status: TaskStatus) -> "Task":
         return Task(
             id=self.id,
             description=self.description,
@@ -32,7 +33,7 @@ class Task:
             dependencies=self.dependencies
         )
 
-    def update_result(self, result: Any) -> 'Task':
+    def update_result(self, result: Any) -> "Task":
         return Task(
             id=self.id,
             description=self.description,

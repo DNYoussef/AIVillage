@@ -1,12 +1,12 @@
+
 import torch
-import torch.nn as nn
-from typing import Dict, List
+from torch import nn
+
 
 class TaskVector:
-    def __init__(self, pretrained_model: nn.Module = None, finetuned_model: nn.Module = None, 
-                 exclude_param_names_regex: List[str] = None, task_vector_param_dict: Dict[str, torch.Tensor] = None):
-        """
-        Initialize a TaskVector object.
+    def __init__(self, pretrained_model: nn.Module = None, finetuned_model: nn.Module = None,
+                 exclude_param_names_regex: list[str] = None, task_vector_param_dict: dict[str, torch.Tensor] = None):
+        """Initialize a TaskVector object.
 
         :param pretrained_model: The pretrained model
         :param finetuned_model: The finetuned model
@@ -20,9 +20,8 @@ class TaskVector:
         elif pretrained_model is not None and finetuned_model is not None:
             self._compute_task_vector(pretrained_model, finetuned_model, exclude_param_names_regex)
 
-    def _compute_task_vector(self, pretrained_model: nn.Module, finetuned_model: nn.Module, exclude_param_names_regex: List[str]):
-        """
-        Compute the task vector by subtracting pretrained model parameters from finetuned model parameters.
+    def _compute_task_vector(self, pretrained_model: nn.Module, finetuned_model: nn.Module, exclude_param_names_regex: list[str]):
+        """Compute the task vector by subtracting pretrained model parameters from finetuned model parameters.
 
         :param pretrained_model: The pretrained model
         :param finetuned_model: The finetuned model
@@ -34,9 +33,8 @@ class TaskVector:
             if not any(re.match(regex, name) for regex in (exclude_param_names_regex or [])):
                 self.task_vector_param_dict[name] = param.data - pretrained_model.state_dict()[name].data
 
-    def combine_with_pretrained_model(self, pretrained_model: nn.Module, scaling_coefficient: float = 1.0) -> Dict[str, torch.Tensor]:
-        """
-        Combine the task vector with a pretrained model.
+    def combine_with_pretrained_model(self, pretrained_model: nn.Module, scaling_coefficient: float = 1.0) -> dict[str, torch.Tensor]:
+        """Combine the task vector with a pretrained model.
 
         :param pretrained_model: The pretrained model to combine with
         :param scaling_coefficient: The scaling factor for the task vector
@@ -51,8 +49,7 @@ class TaskVector:
         return combined_params
 
     def __add__(self, other):
-        """
-        Add two TaskVector objects.
+        """Add two TaskVector objects.
 
         :param other: Another TaskVector object
         :return: A new TaskVector object representing the sum

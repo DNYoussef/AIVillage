@@ -1,21 +1,23 @@
+import importlib.util
+from pathlib import Path
+import sys
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
-import sys
-from pathlib import Path
-import importlib.util
 
 # Skip if torch is unavailable since underlying agents rely on transformer models.
 if importlib.util.find_spec("torch") is None:
-    raise unittest.SkipTest("PyTorch not installed")
+    msg = "PyTorch not installed"
+    raise unittest.SkipTest(msg)
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from agents.unified_base_agent import (
-    UnifiedBaseAgent,
-    UnifiedAgentConfig,
     AgentArchitectureLayer,
+    UnifiedAgentConfig,
+    UnifiedBaseAgent,
 )
-from communications.protocol import StandardCommunicationProtocol
 from agents.utils.task import Task as LangroidTask
+from communications.protocol import StandardCommunicationProtocol
+
 
 class DummyAgent(UnifiedBaseAgent):
     async def _process_task(self, task: LangroidTask):
@@ -39,18 +41,18 @@ class TestLayerSequence(unittest.IsolatedAsyncioTestCase):
         agent = build_agent()
         task = LangroidTask(agent, "do something", "1", 1)
         task.type = "general"
-        with patch.object(agent.quality_assurance_layer, 'check_task_safety', return_value=True) as qa_mock, \
-             patch.object(agent.foundational_layer, 'process_task', AsyncMock(return_value=task)) as f_mock, \
-             patch.object(agent.agent_architecture_layer, 'process_result', AsyncMock(return_value={"ok": True})) as arch_mock, \
-             patch.object(agent.decision_making_layer, 'make_decision', AsyncMock(return_value="done")) as dm_mock, \
-             patch.object(agent.continuous_learning_layer, 'update', AsyncMock()) as cl_mock:
+        with patch.object(agent.quality_assurance_layer, "check_task_safety", return_value=True) as qa_mock, \
+             patch.object(agent.foundational_layer, "process_task", AsyncMock(return_value=task)) as f_mock, \
+             patch.object(agent.agent_architecture_layer, "process_result", AsyncMock(return_value={"ok": True})) as arch_mock, \
+             patch.object(agent.decision_making_layer, "make_decision", AsyncMock(return_value="done")) as dm_mock, \
+             patch.object(agent.continuous_learning_layer, "update", AsyncMock()) as cl_mock:
             result = await agent.execute_task(task)
         qa_mock.assert_called_once_with(task)
         f_mock.assert_called_once_with(task)
         arch_mock.assert_called_once()
         dm_mock.assert_called_once_with(task, {"ok": True})
         cl_mock.assert_called_once_with(task, "done")
-        self.assertEqual(result, {"result": "done"})
+        assert result == {"result": "done"}
 
 
 class TestArchitectureLayerCycle(unittest.IsolatedAsyncioTestCase):
@@ -65,10 +67,10 @@ class TestArchitectureLayerCycle(unittest.IsolatedAsyncioTestCase):
         result = await layer.process_result("input")
 
         layer.assistant.assert_called_once_with("input")
-        self.assertEqual(layer.checker.call_count, 2)
+        assert layer.checker.call_count == 2
         layer.reviser.assert_called_once_with("draft1", {"quality": 0.4})
-        self.assertEqual(result, "draft2")
-        self.assertEqual(layer.evaluation_history, [0.4, 0.95])
+        assert result == "draft2"
+        assert layer.evaluation_history == [0.4, 0.95]
 
     async def test_no_revision_needed(self):
         layer = AgentArchitectureLayer()
@@ -82,8 +84,8 @@ class TestArchitectureLayerCycle(unittest.IsolatedAsyncioTestCase):
         layer.assistant.assert_called_once_with("something")
         layer.checker.assert_called_once_with("good")
         layer.reviser.assert_not_called()
-        self.assertEqual(result, "good")
-        self.assertEqual(layer.evaluation_history, [0.8])
+        assert result == "good"
+        assert layer.evaluation_history == [0.8]
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

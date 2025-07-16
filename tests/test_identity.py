@@ -2,7 +2,8 @@ import importlib
 import unittest
 
 if importlib.util.find_spec("torch") is None:
-    raise unittest.SkipTest("PyTorch not installed")
+    msg = "PyTorch not installed"
+    raise unittest.SkipTest(msg)
 
 from agent_forge.training.identity import IdentityFormationSystem, MoralFrameworkBaker
 
@@ -11,17 +12,17 @@ class TestIdentitySystem(unittest.TestCase):
     def test_identity_creation(self):
         system = IdentityFormationSystem()
         identity = system.create_agent_identity()
-        self.assertIn("Agent-", identity.name)
-        self.assertEqual(len(identity.personality), 5)
-        self.assertEqual(identity.village_context, "AI Village")
+        assert "Agent-" in identity.name
+        assert len(identity.personality) == 5
+        assert identity.village_context == "AI Village"
 
     def test_moral_framework(self):
         baker = MoralFrameworkBaker()
-        self.assertEqual(len(baker.core_rules), 4)
+        assert len(baker.core_rules) == 4
         compass = baker.tri_part_compass
-        self.assertEqual(compass.jesus_archetype.name, "Jesus")
-        self.assertEqual(compass.lao_tzu_archetype.name, "Lao Tzu")
-        self.assertEqual(compass.diogenes_archetype.name, "Diogenes")
+        assert compass.jesus_archetype.name == "Jesus"
+        assert compass.lao_tzu_archetype.name == "Lao Tzu"
+        assert compass.diogenes_archetype.name == "Diogenes"
 
     def test_deep_bake_rules(self):
         baker = MoralFrameworkBaker()
@@ -29,11 +30,11 @@ class TestIdentitySystem(unittest.TestCase):
         baked_rules = baker.deep_bake_rules()
 
         # the returned rules should match what is stored on the baker
-        self.assertEqual(baked_rules, baker.core_rules)
+        assert baked_rules == baker.core_rules
 
         # every rule text should be enriched compared to the original
-        for baked, original in zip(baked_rules, original_texts):
-            self.assertNotEqual(baked.text, original)
+        for baked, original in zip(baked_rules, original_texts, strict=False):
+            assert baked.text != original
 
 
 if __name__ == "__main__":

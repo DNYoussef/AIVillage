@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Optional, Dict, Any
 from datetime import datetime
+from enum import Enum
+from typing import Any
 import uuid
 
 
@@ -37,14 +37,14 @@ class Message:
     type: MessageType
     sender: str
     receiver: str
-    content: Dict[str, Any]
-    metadata: Dict[str, Any] | None = None
+    content: dict[str, Any]
+    metadata: dict[str, Any] | None = None
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    parent_id: Optional[str] = None
+    parent_id: str | None = None
     timestamp: datetime = field(default_factory=datetime.now)
     priority: Priority = Priority.MEDIUM
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "type": self.type.value,
@@ -58,7 +58,7 @@ class Message:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Message":
+    def from_dict(cls, data: dict[str, Any]) -> "Message":
         return cls(
             id=data.get("id"),
             type=MessageType(data["type"]),
@@ -71,7 +71,7 @@ class Message:
             metadata=data.get("metadata"),
         )
 
-    def with_updated_content(self, new_content: Dict[str, Any]) -> "Message":
+    def with_updated_content(self, new_content: dict[str, Any]) -> "Message":
         """Return a new Message with updated content."""
         return Message(
             type=self.type,

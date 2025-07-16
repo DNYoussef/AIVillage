@@ -1,14 +1,16 @@
-"""
-self_modeling_gate.py
+"""self_modeling_gate.py
 ---------------------
 Self-model cycle; promotion is blocked until the grok signature
 (slow_grad ↑ & ID_nl ↓) re-appears internally.
 """
 
-import torch, random, logging
+from collections.abc import Sequence
+import logging
+import random
+
 from geometry.snapshot import snapshot
+import torch
 from torch.nn import functional as F
-from typing import Sequence
 
 logger = logging.getLogger("AF-SelfGrokk")
 

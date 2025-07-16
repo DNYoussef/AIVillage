@@ -1,12 +1,14 @@
 from asyncio.log import logger
-from typing import List, Dict, Any
-from agents.utils.task import Task as LangroidTask
+from typing import Any
+
 from agents.unified_base_agent import UnifiedBaseAgent
-from communications.protocol import StandardCommunicationProtocol, Message, MessageType
+from agents.utils.task import Task as LangroidTask
+from communications.protocol import Message, MessageType, StandardCommunicationProtocol
 from rag_system.core.config import UnifiedConfig
+from rag_system.error_handling.error_handler import AIVillageException, error_handler
+
 from ..magi.magi_agent import MagiAgent
 from ..sage.sage_agent import SageAgent
-from rag_system.error_handling.error_handler import error_handler, AIVillageException
 from .analytics.unified_analytics import UnifiedAnalytics
 
 
@@ -18,7 +20,7 @@ class KingCoordinator:
     ):
         self.config = config
         self.communication_protocol = communication_protocol
-        self.agents: Dict[str, UnifiedBaseAgent] = {}
+        self.agents: dict[str, UnifiedBaseAgent] = {}
         self.task_manager = None  # Initialize this in the setup method
         self.router = None  # Initialize this in the setup method
         self.decision_maker = None  # Initialize this in the setup method
@@ -27,7 +29,7 @@ class KingCoordinator:
         self.unified_analytics = UnifiedAnalytics()
 
     @error_handler.handle_error
-    async def coordinate_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def coordinate_task(self, task: dict[str, Any]) -> dict[str, Any]:
         start_time = self.unified_analytics.get_current_time()
         langroid_task = LangroidTask(
             self.king_agent,
@@ -50,7 +52,7 @@ class KingCoordinator:
         return result
 
     @error_handler.handle_error
-    async def _delegate_task(self, task: LangroidTask) -> Dict[str, Any]:
+    async def _delegate_task(self, task: LangroidTask) -> dict[str, Any]:
         if task.type == "research":
             sage_agent = next(
                 (
@@ -99,7 +101,7 @@ class KingCoordinator:
             logger.warning(f"Unhandled message type: {message.type}")
             raise NotImplementedError(f"Message type {message.type} not supported")
 
-    async def _implement_decision(self, decision_result: Dict[str, Any]):
+    async def _implement_decision(self, decision_result: dict[str, Any]):
         try:
             chosen_alternative = decision_result["chosen_alternative"]
             plan = decision_result["plan"]
@@ -119,10 +121,10 @@ class KingCoordinator:
                 await self.task_manager.assign_task(subtask)
 
         except Exception as e:
-            logger.error(f"Error implementing decision: {str(e)}")
-            raise AIVillageException(f"Error implementing decision: {str(e)}")
+            logger.error(f"Error implementing decision: {e!s}")
+            raise AIVillageException(f"Error implementing decision: {e!s}")
 
-    async def process_task_completion(self, task: Dict[str, Any], result: Any):
+    async def process_task_completion(self, task: dict[str, Any], result: Any):
         try:
             # Update router
             await self.router.train_model(
@@ -159,8 +161,8 @@ class KingCoordinator:
             )
 
         except Exception as e:
-            logger.error(f"Error processing task completion: {str(e)}")
-            raise AIVillageException(f"Error processing task completion: {str(e)}")
+            logger.error(f"Error processing task completion: {e!s}")
+            raise AIVillageException(f"Error processing task completion: {e!s}")
 
     async def save_models(self, path: str):
         try:
@@ -170,8 +172,8 @@ class KingCoordinator:
             await self.problem_analyzer.save_models(f"{path}/problem_analyzer")
             logger.info(f"Models saved to {path}")
         except Exception as e:
-            logger.error(f"Error saving models: {str(e)}")
-            raise AIVillageException(f"Error saving models: {str(e)}")
+            logger.error(f"Error saving models: {e!s}")
+            raise AIVillageException(f"Error saving models: {e!s}")
 
     async def load_models(self, path: str):
         try:
@@ -181,12 +183,12 @@ class KingCoordinator:
             await self.problem_analyzer.load_models(f"{path}/problem_analyzer")
             logger.info(f"Models loaded from {path}")
         except Exception as e:
-            logger.error(f"Error loading models: {str(e)}")
-            raise AIVillageException(f"Error loading models: {str(e)}")
+            logger.error(f"Error loading models: {e!s}")
+            raise AIVillageException(f"Error loading models: {e!s}")
 
     async def create_final_analysis(
-        self, revised_analyses: List[Dict[str, Any]], rag_info: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, revised_analyses: list[dict[str, Any]], rag_info: dict[str, Any]
+    ) -> dict[str, Any]:
         try:
             combined_analysis = {
                 "agent_analyses": revised_analyses,
@@ -197,8 +199,8 @@ class KingCoordinator:
             )
             return {"final_analysis": final_analysis}
         except Exception as e:
-            logger.error(f"Error creating final analysis: {str(e)}")
-            raise AIVillageException(f"Error creating final analysis: {str(e)}")
+            logger.error(f"Error creating final analysis: {e!s}")
+            raise AIVillageException(f"Error creating final analysis: {e!s}")
 
     def update_agent_list(self):
         agent_list = list(self.agents.keys())
@@ -218,7 +220,7 @@ class KingCoordinator:
         else:
             logger.warning(f"Attempted to remove non-existent agent: {agent_name}")
 
-    async def introspect(self) -> Dict[str, Any]:
+    async def introspect(self) -> dict[str, Any]:
         return {
             "agents": list(self.agents.keys()),
             "router_info": self.router.introspect(),

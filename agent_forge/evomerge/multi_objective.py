@@ -1,8 +1,7 @@
-from typing import List, Tuple
 
-def calculate_pareto_front(objectives: List[List[float]]) -> List[int]:
-    """
-    Calculate the Pareto front from a set of objective values.
+
+def calculate_pareto_front(objectives: list[list[float]]) -> list[int]:
+    """Calculate the Pareto front from a set of objective values.
     Returns the indices of solutions in the Pareto front.
     """
     pareto_front = []
@@ -11,15 +10,13 @@ def calculate_pareto_front(objectives: List[List[float]]) -> List[int]:
             pareto_front.append(i)
     return pareto_front
 
-def dominates(a: List[float], b: List[float]) -> bool:
+def dominates(a: list[float], b: list[float]) -> bool:
+    """Check if solution a dominates solution b.
     """
-    Check if solution a dominates solution b.
-    """
-    return all(a_val >= b_val for a_val, b_val in zip(a, b)) and any(a_val > b_val for a_val, b_val in zip(a, b))
+    return all(a_val >= b_val for a_val, b_val in zip(a, b, strict=False)) and any(a_val > b_val for a_val, b_val in zip(a, b, strict=False))
 
-def calculate_crowding_distance(objectives: List[List[float]]) -> List[float]:
-    """
-    Calculate crowding distance for solutions in objective space.
+def calculate_crowding_distance(objectives: list[list[float]]) -> list[float]:
+    """Calculate crowding distance for solutions in objective space.
     """
     n_solutions = len(objectives)
     n_objectives = len(objectives[0])
@@ -27,9 +24,9 @@ def calculate_crowding_distance(objectives: List[List[float]]) -> List[float]:
 
     for m in range(n_objectives):
         sorted_indices = sorted(range(n_solutions), key=lambda i: objectives[i][m])
-        crowding_distances[sorted_indices[0]] = float('inf')
-        crowding_distances[sorted_indices[-1]] = float('inf')
-        
+        crowding_distances[sorted_indices[0]] = float("inf")
+        crowding_distances[sorted_indices[-1]] = float("inf")
+
         obj_range = objectives[sorted_indices[-1]][m] - objectives[sorted_indices[0]][m]
         if obj_range == 0:
             continue
@@ -41,9 +38,8 @@ def calculate_crowding_distance(objectives: List[List[float]]) -> List[float]:
 
     return crowding_distances
 
-def nsga2_select(population: List, objectives: List[List[float]], n_select: int) -> Tuple[List, List[List[float]]]:
-    """
-    Perform NSGA-II selection.
+def nsga2_select(population: list, objectives: list[list[float]], n_select: int) -> tuple[list, list[list[float]]]:
+    """Perform NSGA-II selection.
     """
     fronts = non_dominated_sort(objectives)
     selected = []
@@ -63,9 +59,8 @@ def nsga2_select(population: List, objectives: List[List[float]], n_select: int)
 
     return selected, selected_objectives
 
-def non_dominated_sort(objectives: List[List[float]]) -> List[List[int]]:
-    """
-    Perform non-dominated sorting of solutions.
+def non_dominated_sort(objectives: list[list[float]]) -> list[list[int]]:
+    """Perform non-dominated sorting of solutions.
     """
     n_solutions = len(objectives)
     domination_counts = [0] * n_solutions

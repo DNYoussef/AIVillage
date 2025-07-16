@@ -1,12 +1,15 @@
+import json
 import logging
 import os
-import json
-from typing import Dict, Any, List
-from communications.protocol import StandardCommunicationProtocol, Message, MessageType
+from typing import Any
+
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
+
+from communications.protocol import Message, MessageType, StandardCommunicationProtocol
+
 from ..utils.exceptions import AIVillageException
-from .seal_enhanced_planner import SEALEnhancedPlanGenerator
 from .quality_assurance_layer import QualityAssuranceLayer
+from .seal_enhanced_planner import SEALEnhancedPlanGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +21,7 @@ class ProblemAnalyzer:
         self.enhanced_plan_generator = SEALEnhancedPlanGenerator()
         self.quality_assurance_layer = quality_assurance_layer
 
-    async def analyze(self, content: str, rag_info: Dict[str, Any], rule_compliance: float) -> Dict[str, Any]:
+    async def analyze(self, content: str, rag_info: dict[str, Any], rule_compliance: float) -> dict[str, Any]:
         task_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(content)
         eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(task_vector)
 
@@ -38,11 +41,11 @@ class ProblemAnalyzer:
         """
 
         response = await self.llm.complete(analysis_prompt)
-        
+
         initial_analyses = await self._collect_agent_analyses(content)
         critiqued_analyses = await self._collect_critiqued_analyses(initial_analyses)
         revised_analyses = await self._collect_revised_analyses(critiqued_analyses)
-        
+
         consolidated_analysis = await self._consolidate_analyses(revised_analyses, response.text)
 
         return {
@@ -52,7 +55,7 @@ class ProblemAnalyzer:
             "rag_info": rag_info
         }
 
-    async def _collect_agent_analyses(self, task: str) -> List[Dict[str, Any]]:
+    async def _collect_agent_analyses(self, task: str) -> list[dict[str, Any]]:
         analyses = []
         agents = await self.communication_protocol.get_all_agents()
         for agent in agents:
@@ -67,7 +70,7 @@ class ProblemAnalyzer:
         logger.debug(f"Collected {len(analyses)} agent analyses")
         return analyses
 
-    async def _collect_critiqued_analyses(self, initial_analyses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def _collect_critiqued_analyses(self, initial_analyses: list[dict[str, Any]]) -> list[dict[str, Any]]:
         critiqued_analyses = []
         agents = [analysis["agent"] for analysis in initial_analyses]
         for i, analysis in enumerate(initial_analyses):
@@ -86,7 +89,7 @@ class ProblemAnalyzer:
         logger.debug(f"Collected critiques for {len(critiqued_analyses)} analyses")
         return critiqued_analyses
 
-    async def _collect_revised_analyses(self, critiqued_analyses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def _collect_revised_analyses(self, critiqued_analyses: list[dict[str, Any]]) -> list[dict[str, Any]]:
         revised_analyses = []
         for analysis in critiqued_analyses:
             revision_request = Message(
@@ -100,7 +103,7 @@ class ProblemAnalyzer:
         logger.debug(f"Collected {len(revised_analyses)} revised analyses")
         return revised_analyses
 
-    async def _consolidate_analyses(self, revised_analyses: List[Dict[str, Any]], king_analysis: str) -> str:
+    async def _consolidate_analyses(self, revised_analyses: list[dict[str, Any]], king_analysis: str) -> str:
         consolidation_prompt = f"""
         King's Analysis: {king_analysis}
 
@@ -119,14 +122,14 @@ class ProblemAnalyzer:
         response = await self.llm.complete(consolidation_prompt)
         return response.text
 
-    async def update_models(self, task: Dict[str, Any], result: Any):
+    async def update_models(self, task: dict[str, Any], result: Any):
         try:
             logger.info(f"Updating models with task result: {result}")
             await self.enhanced_plan_generator.update(task, result)
-            await self.quality_assurance_layer.update_task_history(task, result.get('performance', 0.5), result.get('uncertainty', 0.5))
+            await self.quality_assurance_layer.update_task_history(task, result.get("performance", 0.5), result.get("uncertainty", 0.5))
         except Exception as e:
-            logger.error(f"Error updating models: {str(e)}", exc_info=True)
-            raise AIVillageException(f"Error updating models: {str(e)}")
+            logger.error(f"Error updating models: {e!s}", exc_info=True)
+            raise AIVillageException(f"Error updating models: {e!s}")
 
     async def save_models(self, path: str):
         try:
@@ -134,36 +137,36 @@ class ProblemAnalyzer:
             os.makedirs(path, exist_ok=True)
             self.enhanced_plan_generator.save(os.path.join(path, "enhanced_plan_generator.pt"))
             self.quality_assurance_layer.save(os.path.join(path, "quality_assurance_layer.json"))
-            
+
             # Save other necessary data
             data = {
                 "llm_config": self.llm.config.dict()
             }
-            with open(os.path.join(path, "problem_analyzer_data.json"), 'w') as f:
+            with open(os.path.join(path, "problem_analyzer_data.json"), "w") as f:
                 json.dump(data, f)
-            
+
             logger.info("Problem analyzer models saved successfully")
         except Exception as e:
-            logger.error(f"Error saving problem analyzer models: {str(e)}", exc_info=True)
-            raise AIVillageException(f"Error saving problem analyzer models: {str(e)}")
+            logger.error(f"Error saving problem analyzer models: {e!s}", exc_info=True)
+            raise AIVillageException(f"Error saving problem analyzer models: {e!s}")
 
     async def load_models(self, path: str):
         try:
             logger.info(f"Loading problem analyzer models from {path}")
             self.enhanced_plan_generator.load(os.path.join(path, "enhanced_plan_generator.pt"))
             self.quality_assurance_layer = QualityAssuranceLayer.load(os.path.join(path, "quality_assurance_layer.json"))
-            
+
             # Load other necessary data
-            with open(os.path.join(path, "problem_analyzer_data.json"), 'r') as f:
+            with open(os.path.join(path, "problem_analyzer_data.json")) as f:
                 data = json.load(f)
             self.llm = OpenAIGPTConfig(**data["llm_config"]).create()
-            
+
             logger.info("Problem analyzer models loaded successfully")
         except Exception as e:
-            logger.error(f"Error loading problem analyzer models: {str(e)}", exc_info=True)
-            raise AIVillageException(f"Error loading problem analyzer models: {str(e)}")
+            logger.error(f"Error loading problem analyzer models: {e!s}", exc_info=True)
+            raise AIVillageException(f"Error loading problem analyzer models: {e!s}")
 
-    async def introspect(self) -> Dict[str, Any]:
+    async def introspect(self) -> dict[str, Any]:
         return {
             "type": "ProblemAnalyzer",
             "description": "Analyzes problems based on content, RAG information, rule compliance, and eudaimonia scores",

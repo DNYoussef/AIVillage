@@ -2,10 +2,13 @@ import importlib
 import unittest
 
 if importlib.util.find_spec("torch") is None:
-    raise unittest.SkipTest("PyTorch not installed")
+    msg = "PyTorch not installed"
+    raise unittest.SkipTest(msg)
 
 import torch
+
 from agent_forge.training.quiet_star import QuietSTaRModel
+
 
 class DummyModel:
     def __init__(self, hidden_size=4, vocab_size=6):
@@ -21,15 +24,15 @@ class TestQuietStar(unittest.TestCase):
         model = QuietSTaRModel(DummyModel())
         inp = torch.ones(2, 3, dtype=torch.long)
         logits, thoughts = model(inp)
-        self.assertEqual(logits.shape, (2, 3, model.base_model.vocab_size))
-        self.assertEqual(thoughts.shape, (2, 3, model.base_model.vocab_size))
+        assert logits.shape == (2, 3, model.base_model.vocab_size)
+        assert thoughts.shape == (2, 3, model.base_model.vocab_size)
 
     def test_forward_without_thoughts(self):
         model = QuietSTaRModel(DummyModel())
         inp = torch.ones(1, 2, dtype=torch.long)
         logits, thoughts = model(inp, generate_thoughts=False)
-        self.assertEqual(logits.shape, (1, 2, model.base_model.vocab_size))
-        self.assertIsNone(thoughts)
+        assert logits.shape == (1, 2, model.base_model.vocab_size)
+        assert thoughts is None
 
 if __name__ == "__main__":
     unittest.main()

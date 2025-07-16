@@ -1,32 +1,32 @@
+from concurrent.futures import ProcessPoolExecutor
 import logging
+
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from typing import Dict, Union, List
-import numpy as np
-from concurrent.futures import ProcessPoolExecutor
+
 from .utils import EvoMergeException
 
 logger = logging.getLogger(__name__)
 
-def evaluate_model(model_path: str) -> Dict[str, Union[float, str]]:
+def evaluate_model(model_path: str) -> dict[str, float | str]:
     try:
         model = AutoModelForCausalLM.from_pretrained(model_path)
         tokenizer = AutoTokenizer.from_pretrained(model_path)
 
         results = {}
-        
+
         # Perplexity evaluation
         results["perplexity"] = evaluate_perplexity(model, tokenizer)
-        
+
         # Task-specific evaluations
         results["coding"] = evaluate_coding(model, tokenizer)
         results["mathematics"] = evaluate_mathematics(model, tokenizer)
         results["writing"] = evaluate_writing(model, tokenizer)
-        
+
         # Zero-shot task evaluation
         results["zero_shot_classification"] = evaluate_zero_shot_classification(model, tokenizer)
         results["zero_shot_qa"] = evaluate_zero_shot_qa(model, tokenizer)
-        
+
         # Coherence and fluency
         results["coherence"] = evaluate_coherence(model, tokenizer)
 
@@ -36,8 +36,8 @@ def evaluate_model(model_path: str) -> Dict[str, Union[float, str]]:
         return results
 
     except Exception as e:
-        logger.error(f"Error during model evaluation: {str(e)}")
-        raise EvoMergeException(f"Error evaluating model: {str(e)}")
+        logger.error(f"Error during model evaluation: {e!s}")
+        raise EvoMergeException(f"Error evaluating model: {e!s}")
 
 def evaluate_perplexity(model, tokenizer, test_text="The quick brown fox jumps over the lazy dog"):
     inputs = tokenizer(test_text, return_tensors="pt")
@@ -51,7 +51,7 @@ def evaluate_coding(model, tokenizer):
     with torch.no_grad():
         outputs = model.generate(**inputs, max_length=200)
     generated_code = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    
+
     # Basic evaluation of generated code
     score = 0
     if "def" in generated_code:
@@ -64,7 +64,7 @@ def evaluate_coding(model, tokenizer):
         score += 0.2
     if "if" in generated_code:
         score += 0.2
-    
+
     return score
 
 def evaluate_mathematics(model, tokenizer):
@@ -76,22 +76,22 @@ def evaluate_mathematics(model, tokenizer):
         "If a triangle has a base of 6 and a height of 4, what is its area?"
     ]
     correct_answers = [42, 7, 8, 16, 12]
-    
+
     score = 0
-    for problem, correct_answer in zip(math_problems, correct_answers):
+    for problem, correct_answer in zip(math_problems, correct_answers, strict=False):
         inputs = tokenizer(problem, return_tensors="pt")
         with torch.no_grad():
             outputs = model.generate(**inputs, max_length=50)
         generated_answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
+
         try:
             # Extract the numerical answer from the generated text
-            numerical_answer = float(''.join(filter(str.isdigit, generated_answer)))
+            numerical_answer = float("".join(filter(str.isdigit, generated_answer)))
             if abs(numerical_answer - correct_answer) < 0.1:  # Allow for small floating-point errors
                 score += 1
         except ValueError:
             pass
-    
+
     return score / len(math_problems)
 
 def evaluate_writing(model, tokenizer):
@@ -100,7 +100,7 @@ def evaluate_writing(model, tokenizer):
     with torch.no_grad():
         outputs = model.generate(**inputs, max_length=200)
     generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    
+
     # Basic evaluation of generated text
     score = 0
     if len(generated_text.split()) >= 50:  # Check if it's at least 50 words
@@ -113,7 +113,7 @@ def evaluate_writing(model, tokenizer):
         score += 0.2
     if "future" in generated_text.lower() or "sustainable" in generated_text.lower():
         score += 0.1
-    
+
     return score
 
 def evaluate_zero_shot_classification(model, tokenizer):
@@ -124,17 +124,17 @@ def evaluate_zero_shot_classification(model, tokenizer):
         "I'm not sure how I feel about this."
     ]
     labels = ["positive", "negative", "neutral"]
-    
+
     score = 0
     for text in texts:
         inputs = tokenizer(f"Classify the sentiment of this text: '{text}' Labels: {', '.join(labels)}", return_tensors="pt")
         with torch.no_grad():
             outputs = model.generate(**inputs, max_length=50)
         generated_label = tokenizer.decode(outputs[0], skip_special_tokens=True).lower()
-        
+
         if any(label in generated_label for label in labels):
             score += 1
-    
+
     return score / len(texts)
 
 def evaluate_zero_shot_qa(model, tokenizer):
@@ -144,17 +144,17 @@ def evaluate_zero_shot_qa(model, tokenizer):
         ("What is the largest planet in our solar system?", "Jupiter"),
         ("What year did World War II end?", "1945")
     ]
-    
+
     score = 0
     for question, answer in qa_pairs:
         inputs = tokenizer(f"Question: {question} Answer:", return_tensors="pt")
         with torch.no_grad():
             outputs = model.generate(**inputs, max_length=50)
         generated_answer = tokenizer.decode(outputs[0], skip_special_tokens=True).lower()
-        
+
         if answer.lower() in generated_answer:
             score += 1
-    
+
     return score / len(qa_pairs)
 
 def evaluate_coherence(model, tokenizer):
@@ -163,10 +163,10 @@ def evaluate_coherence(model, tokenizer):
     with torch.no_grad():
         outputs = model.generate(**inputs, max_length=200)
     generated_story = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    
+
     # Basic evaluation of coherence
     score = 0
-    sentences = generated_story.split('.')
+    sentences = generated_story.split(".")
     if len(sentences) >= 3:
         score += 0.3
     if "time" in generated_story.lower() and "travel" in generated_story.lower():
@@ -177,10 +177,10 @@ def evaluate_coherence(model, tokenizer):
         score += 0.2
     if "the end" in generated_story.lower() or "conclusion" in generated_story.lower():
         score += 0.1
-    
+
     return score
 
-def calculate_overall_score(results: Dict[str, float]) -> float:
+def calculate_overall_score(results: dict[str, float]) -> float:
     weights = {
         "perplexity": 0.2,
         "coding": 0.15,
@@ -190,7 +190,7 @@ def calculate_overall_score(results: Dict[str, float]) -> float:
         "zero_shot_qa": 0.1,
         "coherence": 0.15
     }
-    
+
     overall_score = 0
     for metric, weight in weights.items():
         if metric == "perplexity":
@@ -198,9 +198,9 @@ def calculate_overall_score(results: Dict[str, float]) -> float:
             overall_score += weight * (1 / results[metric])
         else:
             overall_score += weight * results[metric]
-    
+
     return overall_score
 
-def parallel_evaluate_models(model_paths: List[str], max_workers: int = None) -> List[Dict[str, Union[float, str]]]:
+def parallel_evaluate_models(model_paths: list[str], max_workers: int = None) -> list[dict[str, float | str]]:
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         return list(executor.map(evaluate_model, model_paths))

@@ -1,14 +1,15 @@
-import importlib.util
-import unittest
-import json
-import tempfile
-import sys
-from pathlib import Path
 from datetime import datetime
+import importlib.util
+import json
+from pathlib import Path
+import sys
+import tempfile
 import types
+import unittest
 
 if importlib.util.find_spec("numpy") is None:
-    raise unittest.SkipTest("Required dependency not installed")
+    msg = "Required dependency not installed"
+    raise unittest.SkipTest(msg)
 
 import numpy as np
 
@@ -59,8 +60,8 @@ class TestVectorStorePersistence(unittest.TestCase):
             path = Path(d) / "store.json"
             store.save(str(path))
             loaded = VectorStore.load(str(path), store.config)
-            self.assertEqual(loaded.get_size(), 1)
-            self.assertEqual(loaded.dimension, store.dimension)
+            assert loaded.get_size() == 1
+            assert loaded.dimension == store.dimension
 
 
 if __name__ == "__main__":

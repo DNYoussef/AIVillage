@@ -1,7 +1,13 @@
 import logging
-from typing import Dict, Any, List
+from typing import Any
+
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+
+from rag_system.error_handling.error_handler import (
+    AIVillageException,
+    error_handler,
+    safe_execute,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -10,9 +16,8 @@ class UserIntentInterpreter:
         self.llm = llm_config.create()
 
     @error_handler.handle_error
-    async def interpret_intent(self, user_input: str) -> Dict[str, Any]:
-        """
-        Interpret the user's intent from their input.
+    async def interpret_intent(self, user_input: str) -> dict[str, Any]:
+        """Interpret the user's intent from their input.
 
         Args:
             user_input (str): The raw input from the user.
@@ -41,7 +46,7 @@ class UserIntentInterpreter:
         Provide your analysis in a structured JSON format.
         """
 
-    def _parse_intent_response(self, response: str) -> Dict[str, Any]:
+    def _parse_intent_response(self, response: str) -> dict[str, Any]:
         # In a real implementation, you would parse the JSON response
         # For simplicity, we'll assume the response is already in the correct format
         import json
@@ -52,9 +57,8 @@ class UserIntentInterpreter:
             raise AIVillageException("Failed to parse intent response")
 
     @error_handler.handle_error
-    async def extract_key_concepts(self, interpreted_intent: Dict[str, Any]) -> List[str]:
-        """
-        Extract key concepts from the interpreted intent.
+    async def extract_key_concepts(self, interpreted_intent: dict[str, Any]) -> list[str]:
+        """Extract key concepts from the interpreted intent.
 
         Args:
             interpreted_intent (Dict[str, Any]): The interpreted intent from interpret_intent method.
@@ -66,7 +70,7 @@ class UserIntentInterpreter:
         response = await self.llm.complete(prompt)
         return self._parse_key_concepts_response(response.text)
 
-    def _create_key_concepts_prompt(self, interpreted_intent: Dict[str, Any]) -> str:
+    def _create_key_concepts_prompt(self, interpreted_intent: dict[str, Any]) -> str:
         return f"""
         Based on the following interpreted user intent, extract the key concepts that are most relevant for further processing:
 
@@ -80,7 +84,7 @@ class UserIntentInterpreter:
         Provide your list of key concepts in a JSON array format.
         """
 
-    def _parse_key_concepts_response(self, response: str) -> List[str]:
+    def _parse_key_concepts_response(self, response: str) -> list[str]:
         import json
         try:
             return json.loads(response)
@@ -89,9 +93,8 @@ class UserIntentInterpreter:
             raise AIVillageException("Failed to parse key concepts response")
 
     @safe_execute
-    async def process_user_input(self, user_input: str) -> Dict[str, Any]:
-        """
-        Process the user input by interpreting the intent and extracting key concepts.
+    async def process_user_input(self, user_input: str) -> dict[str, Any]:
+        """Process the user input by interpreting the intent and extracting key concepts.
 
         Args:
             user_input (str): The raw input from the user.
@@ -101,7 +104,7 @@ class UserIntentInterpreter:
         """
         interpreted_intent = await self.interpret_intent(user_input)
         key_concepts = await self.extract_key_concepts(interpreted_intent)
-        
+
         return {
             "interpreted_intent": interpreted_intent,
             "key_concepts": key_concepts
@@ -114,10 +117,10 @@ if __name__ == "__main__":
     async def main():
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
         interpreter = UserIntentInterpreter(llm_config)
-        
+
         user_input = "I need help organizing my team's project deadlines for the next quarter."
         result = await interpreter.process_user_input(user_input)
-        
+
         print("Interpreted Intent:")
         print(result["interpreted_intent"])
         print("\nKey Concepts:")

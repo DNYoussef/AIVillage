@@ -1,46 +1,52 @@
-from .config import Configuration, ModelReference, MergeSettings, EvolutionSettings, create_default_config
-from .merging.merger import AdvancedModelMerger
-from .evolutionary_tournament import EvolutionaryTournament, run_evolutionary_tournament
-from .utils import (
-    load_models,
-    save_model,
-    generate_text,
-    evaluate_model,
-    setup_gpu_if_available,
-    clean_up_models,
-    parallel_evaluate_models
+from .config import (
+    Configuration,
+    EvolutionSettings,
+    MergeSettings,
+    ModelReference,
+    create_default_config,
 )
+from .evolutionary_tournament import EvolutionaryTournament, run_evolutionary_tournament
+from .logging_config import setup_logging
 from .merging.merge_techniques import MERGE_TECHNIQUES
+from .merging.merger import AdvancedModelMerger
+from .utils import (
+    clean_up_models,
+    evaluate_model,
+    generate_text,
+    load_models,
+    parallel_evaluate_models,
+    save_model,
+    setup_gpu_if_available,
+)
 from .visualization import (
+    generate_html_report,
+    plot_benchmark_comparison,
+    plot_evolution_progress,
     plot_fitness_over_generations,
     plot_pareto_front,
-    plot_evolution_progress,
-    generate_html_report,
-    plot_benchmark_comparison
 )
-from .logging_config import setup_logging
 
 __all__ = [
-    "Configuration",
-    "ModelReference",
-    "MergeSettings",
-    "EvolutionSettings",
-    "create_default_config",
-    "AdvancedModelMerger",
-    "EvolutionaryTournament",
-    "run_evolutionary_tournament",
-    "load_models",
-    "save_model",
-    "generate_text",
-    "evaluate_model",
-    "setup_gpu_if_available",
-    "clean_up_models",
     "MERGE_TECHNIQUES",
+    "AdvancedModelMerger",
+    "Configuration",
+    "EvolutionSettings",
+    "EvolutionaryTournament",
+    "MergeSettings",
+    "ModelReference",
+    "clean_up_models",
+    "create_default_config",
+    "evaluate_model",
+    "generate_html_report",
+    "generate_text",
+    "load_models",
     "parallel_evaluate_models",
+    "plot_benchmark_comparison",
+    "plot_evolution_progress",
     "plot_fitness_over_generations",
     "plot_pareto_front",
-    "plot_evolution_progress",
-    "generate_html_report",
-    "plot_benchmark_comparison",
+    "run_evolutionary_tournament",
+    "save_model",
+    "setup_gpu_if_available",
     "setup_logging"
 ]

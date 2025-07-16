@@ -1,8 +1,8 @@
-import unittest
-import tempfile
-import os
 import importlib.util
+import os
 from pathlib import Path
+import tempfile
+import unittest
 
 repo_root = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
@@ -25,9 +25,9 @@ class TestADASystem(unittest.TestCase):
             adas = ADASystem(model_dir)
             result = adas.optimize_agent_architecture(out_dir, iterations=2)
 
-            self.assertTrue(os.path.isdir(result))
-            self.assertTrue(os.path.isfile(os.path.join(result, "weights.bin")))
-            self.assertTrue(os.path.isfile(os.path.join(result, "adas_config.json")))
+            assert os.path.isdir(result)
+            assert os.path.isfile(os.path.join(result, "weights.bin"))
+            assert os.path.isfile(os.path.join(result, "adas_config.json"))
 
 
 if __name__ == "__main__":

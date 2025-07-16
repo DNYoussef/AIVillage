@@ -1,20 +1,20 @@
-import os
 import json
-import time
+import os
 import random
+import sys
+import time
 import tracemalloc
-import psutil
-from locust import HttpUser, task, between, events
-from locust.runners import MasterRunner
-from prometheus_client import CollectorRegistry, Gauge, Counter, push_to_gateway
+
+from locust import HttpUser, between, events, task
+from prometheus_client import CollectorRegistry, Counter, Gauge, push_to_gateway
 
 # Prometheus metrics
-PUSHGATEWAY_URL = os.getenv('PUSHGATEWAY_URL', 'localhost:9091')
+PUSHGATEWAY_URL = os.getenv("PUSHGATEWAY_URL", "localhost:9091")
 registry = CollectorRegistry()
 
-memory_usage = Gauge('soak_test_memory_usage_mb', 'Memory usage in MB', ['service'], registry=registry)
-error_count = Counter('soak_test_errors_total', 'Total errors during soak test', ['service', 'error_type'], registry=registry)
-task_duration = Gauge('soak_test_task_duration_seconds', 'Task completion time', ['task_type'], registry=registry)
+memory_usage = Gauge("soak_test_memory_usage_mb", "Memory usage in MB", ["service"], registry=registry)
+error_count = Counter("soak_test_errors_total", "Total errors during soak test", ["service", "error_type"], registry=registry)
+task_duration = Gauge("soak_test_task_duration_seconds", "Task completion time", ["task_type"], registry=registry)
 
 # Enable memory tracking
 tracemalloc.start()
@@ -49,7 +49,7 @@ class AdvancedVillageUser(HttpUser):
         start_time = time.time()
         with self.client.post("/v1/chat", json=payload, catch_response=True) as response:
             duration = time.time() - start_time
-            task_duration.labels(task_type='simple_chat').set(duration)
+            task_duration.labels(task_type="simple_chat").set(duration)
 
             if response.status_code == 200:
                 response.success()
@@ -60,10 +60,10 @@ class AdvancedVillageUser(HttpUser):
                 })
             elif response.status_code == 429:
                 response.failure("Rate limited")
-                error_count.labels(service='gateway', error_type='rate_limit').inc()
+                error_count.labels(service="gateway", error_type="rate_limit").inc()
             else:
                 response.failure(f"Got status code {response.status_code}")
-                error_count.labels(service='twin', error_type=f'http_{response.status_code}').inc()
+                error_count.labels(service="twin", error_type=f"http_{response.status_code}").inc()
 
     @task(30)
     def chat_complex(self):
@@ -87,7 +87,7 @@ class AdvancedVillageUser(HttpUser):
         start_time = time.time()
         with self.client.post("/v1/chat", json=payload, catch_response=True) as response:
             duration = time.time() - start_time
-            task_duration.labels(task_type='complex_chat').set(duration)
+            task_duration.labels(task_type="complex_chat").set(duration)
 
             if response.status_code == 200:
                 response.success()
@@ -95,7 +95,7 @@ class AdvancedVillageUser(HttpUser):
                     self._send_follow_up()
             else:
                 response.failure(f"Complex chat failed: {response.status_code}")
-                error_count.labels(service='twin', error_type='complex_failure').inc()
+                error_count.labels(service="twin", error_type="complex_failure").inc()
 
     @task(10)
     def check_health(self):
@@ -158,7 +158,7 @@ def on_test_stop(environment, **kwargs):
         }
     }
 
-    with open('soak_test_report.json', 'w') as f:
+    with open("soak_test_report.json", "w") as f:
         json.dump(report, f, indent=2)
     push_to_gateway(PUSHGATEWAY_URL, job="soak_test", registry=registry)
 
@@ -168,4 +168,4 @@ def on_test_stop(environment, **kwargs):
     else:
         print("❌ SOAK TEST FAILED")
         print(json.dumps(report["pass_criteria"], indent=2))
-        exit(1)
+        sys.exit(1)

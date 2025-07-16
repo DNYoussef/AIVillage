@@ -1,5 +1,6 @@
 # distilled from lucidrains/grokfast-pytorch MIT impl  ➜  https://github.com/lucidrains/grokfast-pytorch
-import torch, math
+
+import torch
 from torch.optim import Adam
 
 
@@ -12,7 +13,7 @@ class AugmentedAdam(Adam):
     def step(self, closure=None, amplify=False):
         if amplify:
             for group in self.param_groups:
-                for p in group['params']:
+                for p in group["params"]:
                     if p.grad is None: continue
                     g = p.grad.data
                     # window buffer

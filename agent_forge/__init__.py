@@ -3,12 +3,12 @@ try:
 except Exception:  # pragma: no cover - optional heavy deps may be missing
     evomerge = None
 # Re-export key subsystems so external modules can rely on them
-from .training.training import TrainingTask
+from . import adas, tool_baking
 from .training import expert_vectors
-from . import tool_baking, adas
+from .training.training import TrainingTask
+
 # Import ADAS utilities if available. The ADAS module is optional and may
 # require additional heavy dependencies.
-from . import adas
 
 __all__ = [
     "AgentForge",
@@ -32,7 +32,7 @@ class AgentForge:
         """Invoke the training task if an agent is configured."""
         if hasattr(self.training_task, "run_training_loop"):
             self.training_task.run_training_loop()
-        
+
     def run_prompt_baking(self):
         self.prompt_baker.load_model()  # Explicitly load the model
         self.prompt_baker.bake_prompts(tool_baking.get_rag_prompts())

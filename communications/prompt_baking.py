@@ -1,7 +1,9 @@
 import json
+
 import torch
-import torch.nn as nn
+from torch import nn
 from transformers import AutoTokenizer
+
 
 class PromptBank(nn.Module):
     """Frozen embeddings for baked-in system prompts and manifests."""

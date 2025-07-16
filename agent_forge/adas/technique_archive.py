@@ -1,4 +1,3 @@
-from typing import List
 import ast
 import importlib.util
 import os
@@ -7,6 +6,7 @@ import types
 
 # Import necessary dependencies (adjust import paths as needed)
 from agent_forge.utils.tool_message import ToolMessage
+
 
 class AgentTechnique(ToolMessage):
     request: str = "apply_technique"
@@ -439,8 +439,7 @@ async def run(self):
 class ChainOfThought:
     @staticmethod
     def apply(prompt: str, intermediate_steps: int = 3) -> str:
-        """
-        Apply the Chain of Thought technique to a given prompt.
+        """Apply the Chain of Thought technique to a given prompt.
 
         :param prompt: The original prompt
         :param intermediate_steps: Number of intermediate reasoning steps
@@ -460,9 +459,8 @@ class ChainOfThought:
 
 class TreeOfThoughts:
     @staticmethod
-    def apply(prompt: str, branches: int = 3, depth: int = 2) -> List[str]:
-        """
-        Apply the Tree of Thoughts technique to a given prompt.
+    def apply(prompt: str, branches: int = 3, depth: int = 2) -> list[str]:
+        """Apply the Tree of Thoughts technique to a given prompt.
 
         :param prompt: The original prompt
         :param branches: Number of alternative thoughts at each step
@@ -470,7 +468,7 @@ class TreeOfThoughts:
         :return: A list of prompts representing different paths of reasoning
         """
         thought_tree = [prompt]
-        
+
         for _ in range(depth):
             new_level = []
             for thought in thought_tree:

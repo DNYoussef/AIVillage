@@ -1,22 +1,29 @@
-import unittest
 import importlib.util
-import sys
 from pathlib import Path
+import sys
+import unittest
 
 try:
-    torch_spec = importlib.util.find_spec('torch')
+    torch_spec = importlib.util.find_spec("torch")
 except ValueError:
     torch_spec = None
 if torch_spec is None:
-    raise unittest.SkipTest('PyTorch not installed')
+    msg = "PyTorch not installed"
+    raise unittest.SkipTest(msg)
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 import torch
-from agent_forge.compression import SeedLMCompressor, VPTQQuantizer, stream_compress_model
+
+from agent_forge.compression import (
+    SeedLMCompressor,
+    VPTQQuantizer,
+    stream_compress_model,
+)
 from agent_forge.compression.stage1_bitnet import convert_to_bitnet
+
 try:
-    import bitsandbytes as bnb  # noqa: F401
+    import bitsandbytes as bnb
 except Exception:
     bnb = None
 
@@ -26,8 +33,8 @@ class TestCompressionPipeline(unittest.TestCase):
         weights = torch.randn(8,4)
         data = comp.compress_weight_matrix(weights)
         recon = comp.decompress_weight_matrix(data)
-        self.assertEqual(recon.shape, weights.shape)
-        self.assertLess(torch.mean((weights - recon)**2).item(), 0.2)
+        assert recon.shape == weights.shape
+        assert torch.mean((weights - recon) ** 2).item() < 0.2
 
     def test_vptq_roundtrip(self):
         quant = VPTQQuantizer(bits_per_vector=2.0, vector_length=4)
@@ -36,25 +43,25 @@ class TestCompressionPipeline(unittest.TestCase):
         try:
             recon = quant.dequantize_weight_matrix(data)
         except IndexError:
-            self.skipTest('vptq dequant failed')
-        self.assertEqual(recon.shape, w.shape)
+            self.skipTest("vptq dequant failed")
+        assert recon.shape == w.shape
 
     def test_stream_compress_model(self):
         model = torch.nn.Linear(8,4)
-        if bnb is None or not hasattr(bnb.nn, 'LinearBitNet'):
-            self.skipTest('LinearBitNet unavailable')
+        if bnb is None or not hasattr(bnb.nn, "LinearBitNet"):
+            self.skipTest("LinearBitNet unavailable")
         compressed = stream_compress_model(model)
-        self.assertIn('weight', compressed)
-        self.assertIn('bias', compressed)
-        self.assertGreater(compressed['__compression_ratio__'], 1.0)
+        assert "weight" in compressed
+        assert "bias" in compressed
+        assert compressed["__compression_ratio__"] > 1.0
 
     def test_bitnet_wrapper(self):
-        if bnb is None or not hasattr(bnb.nn, 'LinearBitNet'):
-            self.skipTest('LinearBitNet unavailable')
+        if bnb is None or not hasattr(bnb.nn, "LinearBitNet"):
+            self.skipTest("LinearBitNet unavailable")
         lin = torch.nn.Linear(4, 2)
         convert_to_bitnet(lin)
         out = lin(torch.randn(1,4))
-        self.assertEqual(out.shape[-1], 2)
+        assert out.shape[-1] == 2
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

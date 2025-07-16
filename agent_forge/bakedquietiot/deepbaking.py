@@ -1,7 +1,8 @@
+from langroid import ChatAgent, ChatAgentConfig, Task
 import torch
 import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from langroid import Task, ChatAgent, ChatAgentConfig
+
 
 class DeepSystemBakerTask(Task):
     def __init__(self, agent: ChatAgent, model_name: str, device: str = "cuda" if torch.cuda.is_available() else "cpu"):
@@ -33,9 +34,9 @@ class DeepSystemBakerTask(Task):
             "<paradox_resolution>", "</paradox_resolution>"
         ]
         self.add_special_tokens()
-        
+
     def add_special_tokens(self):
-        special_tokens_dict = {'additional_special_tokens': self.special_tokens}
+        special_tokens_dict = {"additional_special_tokens": self.special_tokens}
         self.tokenizer.add_special_tokens(special_tokens_dict)
         self.model.resize_token_embeddings(len(self.tokenizer))
 
@@ -94,7 +95,7 @@ class DeepSystemBakerTask(Task):
 
         Always use the appropriate special tokens to structure your response, and incorporate the thinking framework in your analysis and problem-solving approach.
         """
-        
+
         for i in range(max_iterations):
             print(f"Iteration {i+1}/{max_iterations}")
             await self.bake(system_prompt)
@@ -103,7 +104,7 @@ class DeepSystemBakerTask(Task):
             if consistency >= consistency_threshold:
                 print(f"Reached consistency threshold after {i+1} iterations.")
                 break
-        
+
         self.model.save_pretrained("deep_baked_model")
         self.tokenizer.save_pretrained("deep_baked_model")
 
@@ -113,7 +114,7 @@ class DeepSystemBakerTask(Task):
             outputs = self.model(**inputs)
         loss = F.cross_entropy(outputs.logits.view(-1, outputs.logits.size(-1)), inputs.input_ids.view(-1))
         loss.backward()
-        
+
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-5)
         optimizer.step()
         optimizer.zero_grad()
@@ -126,13 +127,13 @@ class DeepSystemBakerTask(Task):
             "Describe the process of photosynthesis in plants.",
             "What are the main causes of climate change?",
         ]
-        
+
         total_score = 0
         for prompt in test_prompts[:num_samples]:
             response = await self.generate_response(prompt)
             score = await self.score_response(response)
             total_score += score
-        
+
         return total_score / num_samples
 
     async def generate_response(self, prompt):
@@ -142,12 +143,12 @@ class DeepSystemBakerTask(Task):
 
     async def score_response(self, response):
         expected_structure = self.special_tokens
-        
+
         score = 0
         for token in expected_structure:
             if token in response:
                 score += 1
-        
+
         # Check for correct order
         last_index = -1
         for token in expected_structure:
@@ -155,7 +156,7 @@ class DeepSystemBakerTask(Task):
             if index != -1 and index > last_index:
                 score += 1
                 last_index = index
-        
+
         return score / (2 * len(expected_structure))  # Normalize to [0, 1]
 
     async def run(self, max_iterations=50, consistency_threshold=0.95):
@@ -165,6 +166,7 @@ class DeepSystemBakerTask(Task):
 # Usage example
 if __name__ == "__main__":
     import asyncio
+
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
     async def main():

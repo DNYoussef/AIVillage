@@ -1,6 +1,7 @@
-from typing import Dict, Any, List
-from agents.utils.task import Task as LangroidTask
 import logging
+from typing import Any
+
+from agents.utils.task import Task as LangroidTask
 
 logger = logging.getLogger(__name__)
 
@@ -14,36 +15,35 @@ class TaskExecutor:
             task = await self.agent.foundational_layer.process_task(task)
 
             # Streamlined query processing pipeline
-            processed_task = await self.agent.query_processor.process_query(task['content'])
-            task['content'] = processed_task
+            processed_task = await self.agent.query_processor.process_query(task["content"])
+            task["content"] = processed_task
 
             # Check if the task is complex and needs to be broken down into subgoals
             if await self._is_complex_task(task):
                 result = await self._execute_with_subgoals(task)
-            else:
-                # Proceed with regular task execution
-                if task['type'] in self.agent.research_capabilities:
-                    handler = getattr(self.agent, f"handle_{task['type']}", None)
-                    if handler:
-                        result = await handler(task)
-                    else:
-                        langroid_task = LangroidTask(
-                            self.agent,
-                            task.get('content'),
-                            task.get('id', ''),
-                            task.get('priority', 1),
-                        )
-                        langroid_task.type = task.get('type', 'general')
-                        result = await self.agent.execute_task(langroid_task)
+            # Proceed with regular task execution
+            elif task["type"] in self.agent.research_capabilities:
+                handler = getattr(self.agent, f"handle_{task['type']}", None)
+                if handler:
+                    result = await handler(task)
                 else:
                     langroid_task = LangroidTask(
                         self.agent,
-                        task.get('content'),
-                        task.get('id', ''),
-                        task.get('priority', 1),
+                        task.get("content"),
+                        task.get("id", ""),
+                        task.get("priority", 1),
                     )
-                    langroid_task.type = task.get('type', 'general')
+                    langroid_task.type = task.get("type", "general")
                     result = await self.agent.execute_task(langroid_task)
+            else:
+                langroid_task = LangroidTask(
+                    self.agent,
+                    task.get("content"),
+                    task.get("id", ""),
+                    task.get("priority", 1),
+                )
+                langroid_task.type = task.get("type", "general")
+                result = await self.agent.execute_task(langroid_task)
 
             # Apply self-consistency check
             result = await self.agent.apply_self_consistency(task, result)
@@ -57,7 +57,7 @@ class TaskExecutor:
             # Return the result
             return result
         except Exception as e:
-            logger.error(f"Error executing task: {str(e)}")
+            logger.error(f"Error executing task: {e!s}")
             return {"error": str(e)}
 
     async def _is_complex_task(self, task):
@@ -84,36 +84,36 @@ class TaskExecutor:
 
             return False
         except Exception as e:
-            logger.error(f"Error determining task complexity: {str(e)}")
+            logger.error(f"Error determining task complexity: {e!s}")
             return False
 
-    async def _execute_with_subgoals(self, task) -> Dict[str, Any]:
+    async def _execute_with_subgoals(self, task) -> dict[str, Any]:
         try:
-            subgoals = await self.generate_subgoals(task['content'])
+            subgoals = await self.generate_subgoals(task["content"])
             results = []
             for subgoal in subgoals:
                 subtask = {
-                    'type': task['type'],
-                    'content': subgoal,
-                    'priority': task.get('priority', 1),
-                    'id': task.get('id', ''),
+                    "type": task["type"],
+                    "content": subgoal,
+                    "priority": task.get("priority", 1),
+                    "id": task.get("id", ""),
                 }
                 langroid_subtask = LangroidTask(
                     self.agent,
-                    subtask['content'],
-                    subtask['id'],
-                    subtask['priority'],
+                    subtask["content"],
+                    subtask["id"],
+                    subtask["priority"],
                 )
-                langroid_subtask.type = subtask['type']
+                langroid_subtask.type = subtask["type"]
                 subtask_result = await self.execute_task(langroid_subtask)
                 results.append(subtask_result)
             final_result = await self.summarize_results(task, subgoals, results)
             return final_result
         except Exception as e:
-            logger.error(f"Error executing task with subgoals: {str(e)}")
+            logger.error(f"Error executing task with subgoals: {e!s}")
             return {"error": str(e)}
 
-    async def generate_subgoals(self, content: str) -> List[str]:
+    async def generate_subgoals(self, content: str) -> list[str]:
         try:
             cognitive_context = await self.agent.query_cognitive_nexus(content)
             subgoals_text = await self.agent.tree_of_thoughts.process(
@@ -121,13 +121,13 @@ class TaskExecutor:
                 f"Context: {cognitive_context}\n"
                 f"Task: {content}"
             )
-            subgoals = subgoals_text.strip().split('\n')
+            subgoals = subgoals_text.strip().split("\n")
             return subgoals
         except Exception as e:
-            logger.error(f"Error generating subgoals: {str(e)}")
+            logger.error(f"Error generating subgoals: {e!s}")
             return []
 
-    async def summarize_results(self, task, subgoals: List[str], results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def summarize_results(self, task, subgoals: list[str], results: list[dict[str, Any]]) -> dict[str, Any]:
         summary_prompt = f"""
         Original task: {task['content']}
         Subgoals and their results:
@@ -137,8 +137,8 @@ class TaskExecutor:
         summary = await self.agent.generate(summary_prompt)
         return {"summary": summary, "subgoal_results": results}
 
-    def _format_subgoals_and_results(self, subgoals: List[str], results: List[Dict[str, Any]]) -> str:
+    def _format_subgoals_and_results(self, subgoals: list[str], results: list[dict[str, Any]]) -> str:
         formatted = ""
-        for subgoal, result in zip(subgoals, results):
+        for subgoal, result in zip(subgoals, results, strict=False):
             formatted += f"Subgoal: {subgoal}\nResult: {result}\n\n"
         return formatted

@@ -1,6 +1,7 @@
-from typing import List, Dict, Union, Optional
-from pydantic import BaseModel, Field, validator
 import os
+
+from pydantic import BaseModel, Field, validator
+
 
 class ModelDomain(BaseModel):
     name: str
@@ -10,14 +11,14 @@ class ModelDomain(BaseModel):
 class ModelReference(BaseModel):
     name: str
     path: str
-    domain: Optional[ModelDomain] = None
+    domain: ModelDomain | None = None
 
 class MergeSettings(BaseModel):
     merge_method: str
-    parameters: Dict[str, Union[float, List[float], Dict[str, Union[float, List[float]]]]] = Field(default_factory=dict)
+    parameters: dict[str, float | list[float] | dict[str, float | list[float]]] = Field(default_factory=dict)
     custom_dir: str = Field(default="./merged_models")
-    ps_techniques: List[str] = ["linear"]
-    dfs_techniques: List[str] = []
+    ps_techniques: list[str] = ["linear"]
+    dfs_techniques: list[str] = []
     use_8bit: bool = Field(default=False)
     use_4bit: bool = Field(default=False)
     cross_domain_strategy: str = Field(default="adapter")
@@ -28,14 +29,14 @@ class MergeSettings(BaseModel):
     use_disk_based_merge: bool = Field(default=True)
     chunk_size: int = Field(default=1000000)
 
-    @validator('merge_method')
+    @validator("merge_method")
     def validate_merge_method(cls, v):
         valid_methods = ["ps", "dfs", "ps_dfs"]
         if v not in valid_methods:
             raise ValueError(f"Invalid merge method. Choose from: {', '.join(valid_methods)}")
         return v
 
-    @validator('ps_techniques', 'dfs_techniques')
+    @validator("ps_techniques", "dfs_techniques")
     def validate_techniques(cls, v):
         valid_techniques = ["linear", "slerp", "ties", "dare", "task_arithmetic", "frankenmerge", "dfs"]
         for technique in v:
@@ -43,20 +44,20 @@ class MergeSettings(BaseModel):
                 raise ValueError(f"Invalid technique: {technique}. Choose from: {', '.join(valid_techniques)}")
         return v
 
-    @validator('custom_dir')
+    @validator("custom_dir")
     def validate_custom_dir(cls, v):
         if not os.path.exists(v):
             os.makedirs(v, exist_ok=True)
         return v
 
-    @validator('cross_domain_strategy')
+    @validator("cross_domain_strategy")
     def validate_cross_domain_strategy(cls, v):
         valid_strategies = ["adapter", "embedding_only", "full"]
         if v not in valid_strategies:
             raise ValueError(f"Invalid cross-domain strategy. Choose from: {', '.join(valid_strategies)}")
         return v
 
-    @validator('mask_strategy')
+    @validator("mask_strategy")
     def validate_mask_strategy(cls, v):
         valid_strategies = ["random", "magnitude"]
         if v not in valid_strategies:
@@ -71,15 +72,15 @@ class EvolutionSettings(BaseModel):
     early_stopping_generations: int = Field(default=10, ge=1)
     use_cma_es: bool = Field(default=False)
     adaptive_mutation: bool = Field(default=True)
-    objectives: List[str] = Field(default=["overall_score", "perplexity"])
+    objectives: list[str] = Field(default=["overall_score", "perplexity"])
 
-    @validator('tournament_size')
+    @validator("tournament_size")
     def validate_tournament_size(cls, v, values):
-        if 'population_size' in values and v > values['population_size']:
+        if "population_size" in values and v > values["population_size"]:
             raise ValueError("Tournament size must be less than or equal to population size")
         return v
 
-    @validator('objectives')
+    @validator("objectives")
     def validate_objectives(cls, v):
         valid_objectives = ["overall_score", "perplexity", "accuracy", "coherence"]
         for obj in v:
@@ -88,10 +89,10 @@ class EvolutionSettings(BaseModel):
         return v
 
 class Configuration(BaseModel):
-    models: List[ModelReference]
+    models: list[ModelReference]
     merge_settings: MergeSettings
     evolution_settings: EvolutionSettings
-    target_domain: Optional[ModelDomain] = None
+    target_domain: ModelDomain | None = None
     enable_adas: bool = Field(default=True, description="Run ADAS optimization after training")
 
 def create_default_config() -> Configuration:

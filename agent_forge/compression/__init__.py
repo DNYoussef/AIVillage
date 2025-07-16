@@ -1,13 +1,15 @@
-from .seedlm import SeedLMCompressor
-from .vptq import VPTQQuantizer
-from .hyperfn import HyperCompressionEncoder
-from .stage1_bitnet import convert_to_bitnet
-
 from dataclasses import dataclass
-import torch
-import torch.nn as nn
+from typing import Dict, Optional
+
 import bitsandbytes as bnb
-from typing import Optional, Dict
+import torch
+from torch import nn
+
+from .hyperfn import HyperCompressionEncoder
+from .seedlm import SeedLMCompressor
+from .stage1_bitnet import convert_to_bitnet
+from .vptq import VPTQQuantizer
+
 
 @dataclass
 class CompressionConfig:
@@ -31,26 +33,27 @@ class TwoStageCompressor:
         self.vptq = VPTQQuantizer(config.vptq_bits, config.vptq_vector_length)
         self.hyper = HyperCompressionEncoder(config.hyper_clusters) if config.use_hyper else None
 
-    def compress_layer(self, weight: torch.Tensor) -> Dict:
+    def compress_layer(self, weight: torch.Tensor) -> dict:
         seed_data = self.seedlm.compress_weight_matrix(weight)
         decompressed = self.seedlm.decompress_weight_matrix(seed_data)
         vptq_data = self.vptq.quantize_weight_matrix(decompressed)
-        result={'seedlm':seed_data,'vptq':vptq_data}
+        result={"seedlm":seed_data,"vptq":vptq_data}
         if self.hyper:
             hyper_data = self.hyper.compress_weight_matrix(decompressed)
-            result['hyper']=hyper_data
+            result["hyper"]=hyper_data
         return result
 
-    def decompress_layer(self, data: Dict) -> torch.Tensor:
-        if 'hyper' in data:
-            return self.hyper.decompress_weight_matrix(data['hyper'])
-        if 'vptq' in data:
-            return self.vptq.dequantize_weight_matrix(data['vptq'])
-        return self.seedlm.decompress_weight_matrix(data['seedlm'])
+    def decompress_layer(self, data: dict) -> torch.Tensor:
+        if "hyper" in data:
+            return self.hyper.decompress_weight_matrix(data["hyper"])
+        if "vptq" in data:
+            return self.vptq.dequantize_weight_matrix(data["vptq"])
+        return self.seedlm.decompress_weight_matrix(data["seedlm"])
 
 import torch
 
-def stream_compress_model(model: nn.Module, config: Optional[CompressionConfig]=None) -> Dict[str, Dict]:
+
+def stream_compress_model(model: nn.Module, config: CompressionConfig | None=None) -> dict[str, dict]:
     cfg = config or CompressionConfig()
     compressor = TwoStageCompressor(cfg)
     handled = set()
@@ -61,7 +64,7 @@ def stream_compress_model(model: nn.Module, config: Optional[CompressionConfig]=
             print(f"BitNet conversion unavailable: {exc}")
 
     compressed = {}
-    have_bitnet = hasattr(bnb.nn, 'LinearBitNet')
+    have_bitnet = hasattr(bnb.nn, "LinearBitNet")
     for mod_name, module in model.named_modules():
         if have_bitnet and isinstance(module, bnb.nn.LinearBitNet):
             w_name = f"{mod_name}.weight" if mod_name else "weight"
@@ -88,5 +91,5 @@ def stream_compress_model(model: nn.Module, config: Optional[CompressionConfig]=
     buf_c = io.BytesIO()
     torch.save(compressed, buf_c)
     compressed_size = buf_c.tell() or 1
-    compressed['__compression_ratio__'] = original_size / compressed_size
+    compressed["__compression_ratio__"] = original_size / compressed_size
     return compressed

@@ -1,5 +1,6 @@
 import pytest
-from core.evidence import EvidencePack, Chunk
+
+from core.evidence import Chunk, EvidencePack
 
 
 def make_pack():

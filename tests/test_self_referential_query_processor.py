@@ -1,8 +1,10 @@
-import unittest
-import asyncio
 from types import SimpleNamespace
+import unittest
 
-from rag_system.processing.self_referential_query_processor import SelfReferentialQueryProcessor
+from rag_system.processing.self_referential_query_processor import (
+    SelfReferentialQueryProcessor,
+)
+
 
 class DummyCountStore:
     async def get_count(self):
@@ -26,14 +28,14 @@ class TestSelfReferentialQueryProcessor(unittest.IsolatedAsyncioTestCase):
     async def test_history_accumulation(self):
         await self.processor.process_self_query("What is AI?")
         await self.processor.process_self_query("SELF:STATUS")
-        self.assertEqual(self.processor.query_history, ["What is AI?", "SELF:STATUS"])
+        assert self.processor.query_history == ["What is AI?", "SELF:STATUS"]
 
     async def test_get_query_history(self):
         await self.processor.process_self_query("Q1")
         await self.processor.process_self_query("Q2")
         await self.processor.process_self_query("Q3")
         history = await self.processor._get_query_history(2)
-        self.assertEqual(history, "Recent queries: [Q2], [Q3]")
+        assert history == "Recent queries: [Q2], [Q3]"
 
 if __name__ == "__main__":
     unittest.main()

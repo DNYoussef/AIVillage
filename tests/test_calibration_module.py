@@ -1,5 +1,5 @@
-from calibration.dataset import CalibrationDataset
 from calibration.calibrate import calibrate
+from calibration.dataset import CalibrationDataset
 
 
 def test_calibration_reduces_ece():

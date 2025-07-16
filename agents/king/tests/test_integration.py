@@ -1,6 +1,5 @@
-import unittest
-import asyncio
 import importlib.util
+import unittest
 from unittest.mock import Mock, patch
 
 # Skip heavy integration tests if torch is missing since they rely on the
@@ -12,16 +11,13 @@ except ValueError:
 if torch_spec is None:
     raise unittest.SkipTest("PyTorch not installed")
 
-from agents.king.quality_assurance_layer import QualityAssuranceLayer
-from agents.king.planning.unified_decision_maker import UnifiedDecisionMaker
-from agents.king.problem_analyzer import ProblemAnalyzer
-from agents.king.continuous_learner import ContinuousLearner
 from agents.king.king_agent import KingAgent
 from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
 from agents.utils.task import Task as LangroidTask
-from rag_system.core.pipeline import EnhancedRAGPipeline
 from communications.protocol import StandardCommunicationProtocol
+from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.retrieval.vector_store import VectorStore
+
 
 class TestIntegration(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
@@ -29,7 +25,7 @@ class TestIntegration(unittest.IsolatedAsyncioTestCase):
         self.rag_system = Mock(spec=EnhancedRAGPipeline)
         self.vector_store = Mock(spec=VectorStore)
         self.rag_config = Mock()
-        
+
         self.king_config = KingAgentConfig(
             name="TestKingAgent",
             description="Test King Agent",
@@ -38,10 +34,10 @@ class TestIntegration(unittest.IsolatedAsyncioTestCase):
             model="gpt-4",
             instructions="You are a test King agent."
         )
-        
+
         self.king_agent = KingAgent(self.king_config, self.communication_protocol, self.rag_config, self.vector_store)
 
-    @patch('agents.king.quality_assurance_layer.EudaimoniaTriangulator.get_embedding')
+    @patch("agents.king.quality_assurance_layer.EudaimoniaTriangulator.get_embedding")
     async def test_end_to_end_decision_making(self, mock_get_embedding):
         # Mock the embedding function to return a fixed vector
         mock_get_embedding.return_value = [0.1] * 768
@@ -60,14 +56,14 @@ class TestIntegration(unittest.IsolatedAsyncioTestCase):
         result = await self.king_agent.execute_task(task)
 
         # Assertions
-        self.assertIn('decision', result)
-        self.assertIn('eudaimonia_score', result)
-        self.assertIn('rule_compliance', result)
-        self.assertIn('rag_info', result)
-        self.assertIn('best_alternative', result)
-        self.assertIn('implementation_plan', result)
+        self.assertIn("decision", result)
+        self.assertIn("eudaimonia_score", result)
+        self.assertIn("rule_compliance", result)
+        self.assertIn("rag_info", result)
+        self.assertIn("best_alternative", result)
+        self.assertIn("implementation_plan", result)
 
-    @patch('agents.king.quality_assurance_layer.EudaimoniaTriangulator.get_embedding')
+    @patch("agents.king.quality_assurance_layer.EudaimoniaTriangulator.get_embedding")
     async def test_continuous_learning(self, mock_get_embedding):
         # Mock the embedding function to return a fixed vector
         mock_get_embedding.return_value = [0.1] * 768
@@ -79,7 +75,7 @@ class TestIntegration(unittest.IsolatedAsyncioTestCase):
         # Execute the task multiple times
         for _ in range(5):
             result = await self.king_agent.execute_task(task)
-            self.assertIn('decision', result)
+            self.assertIn("decision", result)
 
         # Provide feedback
         feedback = [
@@ -91,7 +87,7 @@ class TestIntegration(unittest.IsolatedAsyncioTestCase):
         # Check if the continuous learner's learning rate has been adjusted
         self.assertNotEqual(self.king_agent.continuous_learner.learning_rate, 0.01)  # 0.01 is the default value
 
-    @patch('agents.king.quality_assurance_layer.EudaimoniaTriangulator.get_embedding')
+    @patch("agents.king.quality_assurance_layer.EudaimoniaTriangulator.get_embedding")
     async def test_evolve(self, mock_get_embedding):
         # Mock the embedding function to return a fixed vector
         mock_get_embedding.return_value = [0.1] * 768
@@ -129,5 +125,5 @@ class TestIntegration(unittest.IsolatedAsyncioTestCase):
         self.king_agent.problem_analyzer.load_models.assert_called_once_with(f"{path}/problem_analyzer")
         self.king_agent.task_manager.load_models.assert_called_once_with(f"{path}/task_manager")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

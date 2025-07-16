@@ -1,5 +1,4 @@
-from dataclasses import dataclass, field
-from typing import Dict, List
+from dataclasses import dataclass
 import random
 
 
@@ -7,7 +6,7 @@ import random
 class AgentIdentity:
     """Simple representation of an agent's identity."""
     name: str
-    personality: Dict[str, int]
+    personality: dict[str, int]
     role: str
     village_context: str = "AI Village"
 
@@ -57,7 +56,7 @@ class MoralFrameworkBaker:
         self.core_rules = self._define_core_rules()
         self.tri_part_compass = self._create_tri_part_compass()
 
-    def _define_core_rules(self) -> List[Rule]:
+    def _define_core_rules(self) -> list[Rule]:
         return [
             Rule(
                 number=1,
@@ -105,17 +104,16 @@ class MoralFrameworkBaker:
             ),
         )
 
-    def deep_bake_rules(self) -> List[Rule]:
+    def deep_bake_rules(self) -> list[Rule]:
         """Return a contextualized version of the core moral rules.
 
         The method enriches the skeleton provided by ``self.core_rules`` with
         additional constraints and references to the :class:`TriPartCompass`.
         The resulting list replaces ``self.core_rules`` and is returned.
         """
-
-        baked_rules: List[Rule] = []
+        baked_rules: list[Rule] = []
         for rule in self.core_rules:
-            additional: List[str] = []
+            additional: list[str] = []
 
             if rule.number == 1:
                 additional.append(
