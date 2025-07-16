@@ -6,10 +6,11 @@ from pathlib import Path
 import re
 import tempfile
 import time
+import warnings
 
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware import Middleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ValidationError, validator
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -21,6 +22,22 @@ from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracke
 from rag_system.utils.logging import setup_logger as get_logger
 
 logger = get_logger(__name__)
+
+# Check if running in dev mode
+IS_DEV_MODE = os.getenv("AIVILLAGE_DEV_MODE", "false").lower() == "true"
+
+if not IS_DEV_MODE:
+    warnings.warn(
+        "WARNING: server.py is for DEVELOPMENT ONLY. "
+        "Production services should use the gateway and twin microservices. "
+        "Set AIVILLAGE_DEV_MODE=true to suppress this warning.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    logger.warning(
+        "server.py started without AIVILLAGE_DEV_MODE=true. "
+        "This service is deprecated for production use."
+    )
 
 # Validate required environment variables
 API_KEY = os.getenv("API_KEY")
@@ -54,7 +71,7 @@ class RateLimiter:
 
 rate_limiter = RateLimiter(
     max_requests=CONFIG["RATE_LIMIT_REQUESTS"],
-    window_seconds=CONFIG["RATE_LIMIT_WINDOW"]
+    window_seconds=CONFIG["RATE_LIMIT_WINDOW"],
 )
 
 # Configuration - should be moved to config file
@@ -69,6 +86,37 @@ CONFIG = {
 MAX_FILE_SIZE = CONFIG["MAX_FILE_SIZE"]
 ALLOWED_EXTENSIONS = CONFIG["ALLOWED_EXTENSIONS"]
 CHUNK_SIZE = CONFIG["CHUNK_SIZE"]
+
+
+class DeprecationMiddleware(BaseHTTPMiddleware):
+    """Add deprecation headers to responses."""
+
+    DEPRECATED_ROUTES = {
+        "/query": "Use POST /v1/query via Twin service",
+        "/upload": "Use POST /v1/upload via Twin service",
+        "/status": "Use GET /healthz",
+        "/bayes": "Use GET /v1/debug/bayes via Twin service",
+        "/logs": "Use GET /v1/debug/logs via Twin service",
+        "/v1/explanation": "Use POST /v1/evidence via Twin service",
+        "/explain": "Use POST /explain via Twin service",
+    }
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+
+        # Add deprecation header if this is a deprecated route
+        path = request.url.path
+        if path in self.DEPRECATED_ROUTES:
+            response.headers["X-Deprecated"] = self.DEPRECATED_ROUTES[path]
+            response.headers["X-Deprecation-Date"] = "2025-02-01"
+
+            if not IS_DEV_MODE:
+                logger.warning(
+                    f"Deprecated route {path} accessed from {request.client.host}. "
+                    f"Migration: {self.DEPRECATED_ROUTES[path]}"
+                )
+
+        return response
 
 
 class SecurityMiddleware(BaseHTTPMiddleware):
@@ -110,7 +158,9 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         return response
 
 
-app = FastAPI(middleware=[Middleware(SecurityMiddleware)])
+app = FastAPI(
+    middleware=[Middleware(SecurityMiddleware), Middleware(DeprecationMiddleware)]
+)
 app.mount("/ui", StaticFiles(directory="ui"), name="ui")
 
 rag_pipeline = EnhancedRAGPipeline()
@@ -261,7 +311,26 @@ async def root():
 
 @app.get("/status")
 async def status_endpoint():
-    return await rag_pipeline.get_status()
+    """Deprecated: Redirect to /healthz."""
+    return RedirectResponse(url="/healthz", status_code=307)
+
+
+@app.get("/healthz")
+async def healthz_endpoint():
+    """Health check endpoint (replacement for /status)."""
+    try:
+        status = await rag_pipeline.get_status()
+        return {
+            "status": "ok" if status.get("healthy", False) else "unhealthy",
+            "service": "server",
+            "mode": "development" if IS_DEV_MODE else "production-deprecated",
+            "details": status,
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return JSONResponse(
+            status_code=503, content={"status": "unhealthy", "error": str(e)}
+        )
 
 
 @app.get("/bayes")
@@ -279,11 +348,11 @@ async def v1_explanation_endpoint(chat_id: str):
     """Return evidence packs associated with a chat id."""
     # TODO: Replace with actual evidence pack retrieval logic
     logger.warning(f"Using placeholder data for chat_id: {chat_id}")
-    
+
     try:
         # In production, this should query actual evidence from knowledge tracker
         # evidence_packs = knowledge_tracker.get_evidence_for_chat(chat_id)
-        
+
         # Placeholder implementation
         placeholder_packs = [
             EvidencePack(

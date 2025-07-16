@@ -33,6 +33,66 @@ class SeedLMCompressor:
         self.latent_dim = latent_dim
         self.num_seeds = num_seeds
 
+    def encode(self, weight_matrix: torch.Tensor) -> torch.Tensor:
+        """Main encode method that returns compressed tensor representation
+        Returns a compact tensor that can be stored as .stage1.pt file
+        """
+        compressed_data = self.compress_weight_matrix(weight_matrix)
+        return self._pack_compressed_data(compressed_data)
+
+    def _pack_compressed_data(self, compressed_data: dict) -> torch.Tensor:
+        """Pack compressed data into a single tensor for storage"""
+        blocks = compressed_data["compressed_blocks"]
+
+        # Create a structured tensor to store all compression data
+        # Format: [num_blocks, block_data_size] where block_data contains:
+        # [seed, exp, coeff1, coeff2, ..., coeffN, error]
+
+        max_coeffs = self.latent_dim
+        block_data_size = 1 + 1 + max_coeffs + 1  # seed + exp + coeffs + error
+
+        packed_tensor = torch.zeros(len(blocks), block_data_size, dtype=torch.float32)
+
+        for i, block in enumerate(blocks):
+            packed_tensor[i, 0] = float(block["seed"])
+            packed_tensor[i, 1] = float(block["exp"])
+
+            # Pack coefficients
+            coeffs = block["coeff"].float()
+            packed_tensor[i, 2 : 2 + len(coeffs)] = coeffs
+
+            # Pack error
+            packed_tensor[i, -1] = block["error"]
+
+        return packed_tensor
+
+    def decode(
+        self, packed_tensor: torch.Tensor, original_shape: tuple
+    ) -> torch.Tensor:
+        """Decode compressed tensor back to original weight matrix"""
+        # Unpack the tensor data
+        blocks = []
+        for i in range(packed_tensor.size(0)):
+            seed = int(packed_tensor[i, 0].item())
+            exp = int(packed_tensor[i, 1].item())
+
+            # Extract coefficients
+            coeffs = packed_tensor[i, 2 : 2 + self.latent_dim]
+            coeffs = coeffs.to(torch.int8)
+
+            error = packed_tensor[i, -1].item()
+
+            blocks.append({"seed": seed, "exp": exp, "coeff": coeffs, "error": error})
+
+        # Reconstruct the weight matrix
+        compressed_data = {
+            "compressed_blocks": blocks,
+            "original_shape": original_shape,
+            "compression_ratio": 0.0,  # Will be calculated
+        }
+
+        return self.decompress_weight_matrix(compressed_data)
+
     def compress_weight_matrix(self, weight_matrix: torch.Tensor) -> dict:
         flat = weight_matrix.flatten()
         blocks = self._create_blocks(flat)

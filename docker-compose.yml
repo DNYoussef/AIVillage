@@ -2,6 +2,9 @@ version: '3.9'
 
 services:
   # Main application services
+  # NOTE: server.py is not included here as it's for development/testing only
+  # Production deployments should use gateway and twin services
+
   twin:
     build: ./services/twin
     ports:
@@ -17,6 +20,12 @@ services:
       - ./models:/models:ro
     networks:
       - ai-village-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   gateway:
     build: ./services/gateway
@@ -31,6 +40,70 @@ services:
       - twin
     networks:
       - ai-village-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Credits ledger service
+  credits-api:
+    build:
+      context: ./communications
+      dockerfile: Dockerfile.credits-api
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://aivillage_user:aivillage_pass@postgres:5432/aivillage_credits
+      - PROMETHEUS_URL=http://prometheus:9090
+    depends_on:
+      - postgres
+    networks:
+      - ai-village-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Credits earning worker (cron-like)
+  credits-worker:
+    build:
+      context: ./communications
+      dockerfile: Dockerfile.credits-worker
+    environment:
+      - DATABASE_URL=postgresql://aivillage_user:aivillage_pass@postgres:5432/aivillage_credits
+      - PROMETHEUS_URL=http://prometheus:9090
+      - CREDITS_API_URL=http://credits-api:8002
+      - WORKER_INTERVAL=300  # 5 minutes
+    depends_on:
+      - credits-api
+      - prometheus
+    networks:
+      - ai-village-net
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  # PostgreSQL database for credits
+  postgres:
+    image: postgres:15
+    container_name: ai-village-postgres
+    environment:
+      - POSTGRES_DB=aivillage_credits
+      - POSTGRES_USER=aivillage_user
+      - POSTGRES_PASSWORD=aivillage_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ai-village-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aivillage_user -d aivillage_credits"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Optional monitoring services (can be disabled)
   prometheus:
@@ -85,6 +158,7 @@ services:
 volumes:
   prometheus_data:
   grafana_data:
+  postgres_data:
 
 networks:
   ai-village-net:

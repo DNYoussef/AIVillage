@@ -27,6 +27,8 @@ Refer to [docs/feature_matrix.md](docs/feature_matrix.md) for a status overview 
 
 The [messaging protocol decision](docs/adr/0002-messaging-protocol.md) is documented in **ADR-0002**. gRPC/WebSocket support described there is not yet implemented.
 
+The [server.py restriction to dev/test only](docs/adr/ADR-0010-monolith-test-harness-only.md) is documented in **ADR-0010**. Production services should use the gateway and twin microservices.
+
 See [docs/roadmap.md](docs/roadmap.md) for upcoming milestones.
 
 ## Quick Start

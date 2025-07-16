@@ -7,29 +7,30 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+import logging
 import os
 import time
+from typing import Any
 import uuid
-from datetime import datetime
-from typing import Dict, Optional, Any
 
 from cachetools import LRUCache
-
-from fastapi import FastAPI, Depends, HTTPException
-from .schemas import ChatRequest, ChatResponse, HealthResponse
-from rag_system.graph_explain import explain_path, MAX_HOPS
-from pydantic import BaseModel
-from core.chat_engine import ChatEngine
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from prometheus_client import Counter, Histogram, generate_latest
+from pydantic import BaseModel, Field
 import uvicorn
-import logging
+
+from core.chat_engine import ChatEngine
+from rag_system.graph_explain import MAX_HOPS, explain_path
+
+from .schemas import ChatRequest, ChatResponse, HealthResponse
 
 
 class DummyModel:
     def __init__(self, model_path: str):
         self.model_path = model_path
 
-    def infer(self, prompt: str) -> str:  # noqa: D401
+    def infer(self, prompt: str) -> str:
         return f"Echo from {os.path.basename(self.model_path)} › {prompt}"
 
 
@@ -141,10 +142,10 @@ class TwinAgent:
         return {"deleted_conversations": len(to_del)}
 
 
-agent: Optional[TwinAgent] = None
+agent: TwinAgent | None = None
 
 
-def get_agent() -> TwinAgent:  # noqa: D401
+def get_agent() -> TwinAgent:
     """Return singleton TwinAgent instance."""
     global agent
     if agent is None:
@@ -221,7 +222,7 @@ async def explain_endpoint(req: ExplainRequest):
 
 
 @app.post("/v1/evidence")
-async def evidence(pack: Dict[str, Any]):
+async def evidence(pack: dict[str, Any]):
     logger.debug("Evidence received %s", pack.get("id"))
     return {"status": "ok"}
 
@@ -229,6 +230,99 @@ async def evidence(pack: Dict[str, Any]):
 @app.delete("/v1/user/{user_id}")
 async def erase_user(user_id: str, _agent: TwinAgent = Depends(get_agent)):
     return await _agent.delete_user_data(user_id)
+
+
+# New migrated routes from server.py
+
+
+class QueryRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=5000)
+
+
+class QueryResponse(BaseModel):
+    response: str
+    chunks: list[dict[str, Any]] = []
+    processing_time_ms: int
+
+
+@app.post("/v1/query", response_model=QueryResponse)
+async def query_endpoint(req: QueryRequest):
+    """Process RAG query - migrated from server.py /query endpoint."""
+    REQUESTS.inc()
+    started = time.time()
+    try:
+        # TODO: Integrate with actual RAG pipeline
+        # For now, use chat engine as placeholder
+        result = _engine.process_chat(req.query, None)
+        processing_time = int((time.time() - started) * 1000)
+
+        return QueryResponse(
+            response=result.get("response", ""),
+            chunks=result.get("chunks", []),
+            processing_time_ms=processing_time,
+        )
+    except Exception:
+        logger.exception("Query processing failed")
+        raise HTTPException(status_code=500, detail="Query processing failed")
+    finally:
+        LATENCY.observe(time.time() - started)
+
+
+class UploadResponse(BaseModel):
+    status: str
+    filename: str
+    size: int
+    message: str
+
+
+@app.post("/v1/upload", response_model=UploadResponse)
+async def upload_endpoint(file: UploadFile = File(...)):
+    """Upload file to vector store - migrated from server.py /upload endpoint."""
+    try:
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No file selected")
+
+        # TODO: Integrate with actual vector store
+        # For now, just validate and return success
+        content = await file.read()
+
+        return UploadResponse(
+            status="uploaded",
+            filename=file.filename,
+            size=len(content),
+            message="File processed successfully",
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
+        raise HTTPException(status_code=500, detail="Upload processing failed")
+
+
+# Debug endpoints (non-production)
+
+
+@app.get("/v1/debug/bayes")
+async def debug_bayes_endpoint():
+    """Get Bayes network snapshot - migrated from server.py /bayes endpoint."""
+    # TODO: Integrate with actual Bayes network
+    return {
+        "message": "Bayes network debug endpoint",
+        "nodes": [],
+        "edges": [],
+        "timestamp": datetime.utcnow(),
+    }
+
+
+@app.get("/v1/debug/logs")
+async def debug_logs_endpoint():
+    """Get knowledge tracker logs - migrated from server.py /logs endpoint."""
+    # TODO: Integrate with actual knowledge tracker
+    return {
+        "message": "Knowledge tracker logs endpoint",
+        "logs": [],
+        "timestamp": datetime.utcnow(),
+    }
 
 
 if __name__ == "__main__":

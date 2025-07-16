@@ -59,6 +59,34 @@ class TwoStageCompressor:
 import torch
 
 
+def run_stage1(input_path: str, output_path: str, config_path: str = None) -> dict:
+    """Wrapper function for Stage-1 compression pipeline
+
+    Args:
+        input_path: Path to input model checkpoint
+        output_path: Path to save compressed model (.stage1.pt)
+        config_path: Optional path to configuration file
+
+    Returns:
+        Dictionary with compression results and metrics
+    """
+    import json
+
+    from .stage1 import run_stage1_compression
+    from .stage1_config import DEFAULT_STAGE1_CONFIG, Stage1Config
+
+    # Load configuration
+    if config_path:
+        with open(config_path) as f:
+            config_dict = json.load(f)
+        config = Stage1Config(**config_dict)
+    else:
+        config = DEFAULT_STAGE1_CONFIG
+
+    # Run the compression pipeline
+    return run_stage1_compression(input_path, output_path, config)
+
+
 def stream_compress_model(
     model: nn.Module, config: CompressionConfig | None = None
 ) -> dict[str, dict]:
