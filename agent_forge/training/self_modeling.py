@@ -12,8 +12,25 @@ from langroid.language_models.openai_gpt import OpenAIGPTConfig
 # shared training state from geometry feedback loop
 state = dict(G={'ID_nl': 0.0}, pre_grok=False)
 
-from grokfast import GrokFastTask
-from sleep_and_dream import SleepNet, DreamNet
+try:
+    from grokfast import GrokFastTask
+except ImportError:
+    # Stub implementation for missing grokfast dependency
+    class GrokFastTask:
+        def __init__(self, *args, **kwargs):
+            pass
+        def run(self, *args, **kwargs):
+            return {"status": "stub", "message": "GrokFast not available"}
+try:
+    from sleep_and_dream import SleepNet, DreamNet
+except ImportError:
+    # Stub implementations for missing sleep_and_dream dependency
+    class SleepNet:
+        def __init__(self, *args, **kwargs):
+            pass
+    class DreamNet:
+        def __init__(self, *args, **kwargs):
+            pass
 from agent_forge.model_compression.bitlinearization import quantize_weights, quantize_activations
 from agent_forge.geometry.snapshot import snapshot
 import torch.nn.functional as F

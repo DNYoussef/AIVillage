@@ -5,27 +5,8 @@ import time
 import pathlib
 import tempfile
 import subprocess
-import platform
+import resource
 import signal
-
-# Windows compatibility for resource limits
-try:
-    import resource
-    HAS_RESOURCE = True
-except ImportError:
-    # Windows doesn't have resource module
-    HAS_RESOURCE = False
-    
-    # Create stub resource module for Windows
-    class resource:
-        RLIMIT_AS = 'RLIMIT_AS'
-        RLIMIT_CPU = 'RLIMIT_CPU'
-        
-        @staticmethod
-        def setrlimit(resource_type, limits):
-            # On Windows, we can't set these limits at the process level
-            # This is a no-op for compatibility
-            pass
 from typing import List, Dict, Any, Optional
 from contextlib import contextmanager
 from utils.logging import get_logger
@@ -159,22 +140,17 @@ class SecureCodeRunner:
         
     @contextmanager
     def _timeout(self, seconds: int):
-        """Context manager for timeout (Unix/Linux only)."""
-        if platform.system() == "Windows":
-            # Windows doesn't support SIGALRM, just yield without timeout
-            # Subprocess timeout is handled by subprocess.run(timeout=...)
+        """Context manager for timeout."""
+        def timeout_handler(signum, frame):
+            raise TimeoutError(f"Code execution exceeded {seconds} seconds")
+        
+        # Set the signal handler and alarm
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(seconds)
+        try:
             yield
-        else:
-            def timeout_handler(signum, frame):
-                raise TimeoutError(f"Code execution exceeded {seconds} seconds")
-            
-            # Set the signal handler and alarm
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(seconds)
-            try:
-                yield
-            finally:
-                signal.alarm(0)  # Disable the alarm
+        finally:
+            signal.alarm(0)  # Disable the alarm
     
     def run_code_sandbox(self, code: str, model_path: str, params: Dict[str, Any], 
                         timeout: int = 30, memory_limit_mb: int = 512) -> float:
@@ -194,24 +170,15 @@ class SecureCodeRunner:
         wrapper_code = f'''
 import sys
 import json
+import resource
 import os
-import platform
 
-# Set resource limits (Unix/Linux only)
-try:
-    import resource
-    resource.setrlimit(resource.RLIMIT_AS, ({memory_limit_mb} * 1024 * 1024, {memory_limit_mb} * 1024 * 1024))
-    resource.setrlimit(resource.RLIMIT_CPU, ({timeout}, {timeout}))
-except ImportError:
-    # Windows doesn't support resource limits - use timeout instead
-    pass
+# Set resource limits
+resource.setrlimit(resource.RLIMIT_AS, ({memory_limit_mb} * 1024 * 1024, {memory_limit_mb} * 1024 * 1024))
+resource.setrlimit(resource.RLIMIT_CPU, ({timeout}, {timeout}))
 
-# Restrict file system access (cross-platform)
-if platform.system() == "Windows":
-    import tempfile
-    os.chdir(tempfile.gettempdir())
-else:
-    os.chdir("/tmp")
+# Restrict file system access
+os.chdir("/tmp")
 
 # User code
 {code}
