@@ -12,10 +12,16 @@ dev-down:
 	docker compose down
 
 fmt:
-        $(POETRY) run black .
+	$(POETRY) run black .
 
 lint:
-        $(POETRY) run ruff .
+	$(POETRY) run ruff check .
 
 test:
-        $(POETRY) run pytest -q --cov=.
+	$(POETRY) run pytest -q --cov=.
+
+install:
+	$(POETRY) install
+
+install-dev:
+	$(POETRY) install --with dev

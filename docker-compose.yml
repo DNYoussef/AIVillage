@@ -1,4 +1,7 @@
+version: '3.9'
+
 services:
+  # Main application services
   twin:
     build: ./services/twin
     ports:
@@ -12,14 +15,77 @@ services:
       - "prometheus.port=8001"
     volumes:
       - ./models:/models:ro
+    networks:
+      - ai-village-net
+
   gateway:
     build: ./services/gateway
     ports:
       - "8000:8000"
     environment:
       - TWIN_URL=http://twin:8001
-      - RATE_LIMIT_REQUESTS=100
-      - RATE_LIMIT_WINDOW=60
-      - GATEWAY_ALLOW_ORIGINS=http://localhost
+      - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-100}
+      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
+      - GATEWAY_ALLOW_ORIGINS=${GATEWAY_ALLOW_ORIGINS:-http://localhost}
     depends_on:
       - twin
+    networks:
+      - ai-village-net
+
+  # Optional monitoring services (can be disabled)
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: ai-village-prometheus
+    volumes:
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - ai-village-net
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: ai-village-grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-changeme}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    ports:
+      - "3000:3000"
+    networks:
+      - ai-village-net
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+
+  pushgateway:
+    image: prom/pushgateway:v1.6.2
+    container_name: ai-village-pushgateway
+    ports:
+      - "9091:9091"
+    networks:
+      - ai-village-net
+    profiles:
+      - monitoring
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  ai-village-net:
+    external: false

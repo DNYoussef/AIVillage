@@ -22,17 +22,21 @@ from rag_system.utils.logging import setup_logger as get_logger
 
 logger = get_logger(__name__)
 
+# Validate required environment variables
 API_KEY = os.getenv("API_KEY")
+if not API_KEY:
+    logger.warning("API_KEY not set - running without authentication")
 
 
-# Rate limiting configuration
+# Rate limiting configuration - should use Redis in production
 class RateLimiter:
-    """Simple in-memory rate limiter."""
+    """Simple in-memory rate limiter - use Redis for production."""
 
     def __init__(self, max_requests: int = 100, window_seconds: int = 60):
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self.requests = defaultdict(list)
+        logger.warning("Using in-memory rate limiter - consider Redis for production")
 
     def is_allowed(self, client_id: str) -> bool:
         """Check if client is within rate limits."""
@@ -48,12 +52,23 @@ class RateLimiter:
         return True
 
 
-rate_limiter = RateLimiter(max_requests=100, window_seconds=60)
+rate_limiter = RateLimiter(
+    max_requests=CONFIG["RATE_LIMIT_REQUESTS"],
+    window_seconds=CONFIG["RATE_LIMIT_WINDOW"]
+)
 
-# File upload configuration
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB limit
-ALLOWED_EXTENSIONS = {".txt", ".md", ".pdf", ".docx", ".html"}
-CHUNK_SIZE = 8192  # 8KB chunks
+# Configuration - should be moved to config file
+CONFIG = {
+    "MAX_FILE_SIZE": int(os.getenv("MAX_FILE_SIZE", 50 * 1024 * 1024)),  # 50MB default
+    "ALLOWED_EXTENSIONS": {".txt", ".md", ".pdf", ".docx", ".html"},
+    "CHUNK_SIZE": int(os.getenv("CHUNK_SIZE", 8192)),  # 8KB default
+    "RATE_LIMIT_REQUESTS": int(os.getenv("RATE_LIMIT_REQUESTS", 100)),
+    "RATE_LIMIT_WINDOW": int(os.getenv("RATE_LIMIT_WINDOW", 60)),
+}
+
+MAX_FILE_SIZE = CONFIG["MAX_FILE_SIZE"]
+ALLOWED_EXTENSIONS = CONFIG["ALLOWED_EXTENSIONS"]
+CHUNK_SIZE = CONFIG["CHUNK_SIZE"]
 
 
 class SecurityMiddleware(BaseHTTPMiddleware):
@@ -262,35 +277,33 @@ async def logs_endpoint():
 @app.get("/v1/explanation")
 async def v1_explanation_endpoint(chat_id: str):
     """Return evidence packs associated with a chat id."""
-    dummy = [
-        EvidencePack(
-            query="demo",
-            chunks=[
-                Chunk(
-                    id="c1",
-                    text="reference one",
-                    score=0.9,
-                    source_uri="https://example.com",
-                )
-            ],
-            proto_confidence=0.9,
-            confidence_tier=ConfidenceTier.HIGH,
-        ),
-        EvidencePack(
-            query="demo",
-            chunks=[
-                Chunk(
-                    id="c2",
-                    text="reference two",
-                    score=0.6,
-                    source_uri="https://example.com",
-                )
-            ],
-            proto_confidence=0.6,
-            confidence_tier=ConfidenceTier.MEDIUM,
-        ),
-    ]
-    return [pack.dict() for pack in dummy]
+    # TODO: Replace with actual evidence pack retrieval logic
+    logger.warning(f"Using placeholder data for chat_id: {chat_id}")
+    
+    try:
+        # In production, this should query actual evidence from knowledge tracker
+        # evidence_packs = knowledge_tracker.get_evidence_for_chat(chat_id)
+        
+        # Placeholder implementation
+        placeholder_packs = [
+            EvidencePack(
+                query=f"query_for_{chat_id}",
+                chunks=[
+                    Chunk(
+                        id=f"c1_{chat_id}",
+                        text="No evidence available - implement evidence retrieval",
+                        score=0.1,
+                        source_uri="placeholder://none",
+                    )
+                ],
+                proto_confidence=0.1,
+                confidence_tier=ConfidenceTier.LOW,
+            )
+        ]
+        return [pack.dict() for pack in placeholder_packs]
+    except Exception as e:
+        logger.error(f"Error retrieving evidence for chat {chat_id}: {e}")
+        return []
 
 
 @app.get("/explain")

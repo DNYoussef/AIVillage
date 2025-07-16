@@ -1,6 +1,11 @@
 import asyncio
 import logging
+import os
+from pathlib import Path
 from typing import Dict, Any
+import click
+import yaml
+
 from agents.utils.task import Task as LangroidTask
 from agents.king.king_agent import KingAgent
 from agents.sage.sage_agent import SageAgent
@@ -87,7 +92,9 @@ class AIVillageSystem:
         logger.info("AI Village System shutting down")
 
     async def get_user_input(self) -> str:
-        return await asyncio.to_thread(input, "Enter your task (or 'exit' to quit): ")
+        # Non-blocking input for async context
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, input, "Enter your task (or 'exit' to quit): ")
 
     def create_task_from_input(self, user_input: str) -> Dict[str, Any]:
         return {
@@ -96,28 +103,38 @@ class AIVillageSystem:
             "priority": 1
         }
 
-@error_handler.handle_error
-async def main():
-    config = {
-        "vector_store_config": {
-            "engine": "faiss",
-            "dimension": 768,
-            "index_path": "path/to/faiss/index"
-        },
-        "rag_config": {
-            "retriever_type": "hybrid",
-            "reranker_model": "path/to/reranker/model",
-            "top_k": 5
-        },
-        "llm_config": {
-            "model": "gpt-4",
-            "temperature": 0.7,
-            "max_tokens": 150
-        }
-    }
+def load_config(config_path: str) -> Dict[str, Any]:
+    """Load configuration from external file."""
+    config_file = Path(config_path)
+    if not config_file.exists():
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
     
-    ai_village = AIVillageSystem(config)
+    with open(config_file, 'r') as f:
+        return yaml.safe_load(f)
+
+@click.command()
+@click.option('--config', '-c', default='configs/rag_config.yaml', 
+              help='Path to configuration file')
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
+@error_handler.handle_error
+async def main(config: str, verbose: bool):
+    """Main entry point for AI Village System."""
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    
+    try:
+        config_data = load_config(config)
+        logger.info(f"Loaded configuration from {config}")
+    except FileNotFoundError as e:
+        logger.error(f"Configuration error: {e}")
+        raise click.ClickException(f"Configuration file not found: {config}")
+    except yaml.YAMLError as e:
+        logger.error(f"Invalid YAML in configuration file: {e}")
+        raise click.ClickException(f"Invalid configuration file: {config}")
+    
+    ai_village = AIVillageSystem(config_data)
     await ai_village.run()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # Proper async CLI entry point
+    asyncio.run(main.main(standalone_mode=False))

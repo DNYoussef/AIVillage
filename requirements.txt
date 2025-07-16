@@ -1,5 +1,11 @@
 # Auto-generated with:
 #    poetry export --without-hashes -f requirements.txt > requirements.txt
+# 
+# WARNING: This file is auto-generated from pyproject.toml
+# To update dependencies, modify pyproject.toml and run:
+#    poetry export --without-hashes -f requirements.txt > requirements.txt
+#
+# Production dependencies only (no dev dependencies)
 langroid>=0.16.1
 pydantic>=2.8.2
 fastapi>=0.95.1
@@ -39,15 +45,8 @@ chromadb
 peft
 plyer
 langdetect
-# New dependencies for King Agent and related components
-mcts>=1.0.0  # For Monte Carlo Tree Search
-gym>=0.21.0  # For reinforcement learning environments (used in MCTS)
-scipy>=1.7.3  # For scientific computing (used in various components)
-matplotlib>=3.5.1  # For visualization (if needed)
+mcts>=1.0.0
+gym>=0.21.0
+scipy>=1.7.3
+matplotlib>=3.5.1
 beautifulsoup4>=4.12.0
-# Core dependencies for tests
-requests>=2.31.0
-httpx>=0.24.0
-numpy>=1.24.0
-PyYAML>=6.0
-pytest>=7.0.0
