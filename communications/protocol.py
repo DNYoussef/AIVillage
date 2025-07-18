@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 import asyncio
-from collections.abc import Callable, Coroutine
-from threading import Thread
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Coroutine
+    from threading import Thread
 
 from .message import Message, MessageType, Priority
 from .queue import MessageQueue
@@ -10,16 +14,17 @@ from .queue import MessageQueue
 try:
     from .a2a_protocol import send_a2a
     from .mcp_client import MCPClient
-except Exception:  # pragma: no cover - optional dependencies
-    MCPClient = None  # type: ignore
+except ImportError:  # pragma: no cover - optional dependencies
+    MCPClient = None  # type: ignore[assignment]
 
-    def send_a2a(*args, **kwargs):
-        raise RuntimeError("a2a protocol dependencies not installed")
+    def send_a2a(*args: Any, **kwargs: Any) -> Any:  # noqa: ARG001
+        msg = "a2a protocol dependencies not installed"
+        raise RuntimeError(msg)
 
 
 try:
     from core.error_handling import AIVillageException
-except Exception:  # pragma: no cover - fallback if agents package isn't available
+except ImportError:  # pragma: no cover - fallback if agents package isn't available
 
     class AIVillageException(Exception):
         """Custom exception class for AI Village-specific errors."""
@@ -56,7 +61,7 @@ class CommunicationProtocol(ABC):
 
 
 class StandardCommunicationProtocol(CommunicationProtocol):
-    def __init__(
+    def __init__(  # noqa: D107
         self,
         mcp_client: MCPClient | None = None,
         certs: dict[str, dict[str, str]] | None = None,
@@ -117,13 +122,14 @@ class StandardCommunicationProtocol(CommunicationProtocol):
                 pub = self.certs[message.receiver]["crt"]
                 try:
                     send_a2a(url, message.to_dict(), priv, pub)
-                except Exception:
-                    pass
+                except Exception:  # noqa: S110, BLE001
+                    pass  # Best effort delivery
 
     async def receive_message(self, agent_id: str) -> Message:
         message = self.dequeue(agent_id)
         if message is None:
-            raise AIVillageException(f"No messages for agent {agent_id}")
+            msg = f"No messages for agent {agent_id}"
+            raise AIVillageException(msg)
         return message
 
     async def query(
@@ -152,7 +158,7 @@ class StandardCommunicationProtocol(CommunicationProtocol):
         while elapsed < timeout:
             if message.sender in self.message_queues:
                 queue = self.message_queues[message.sender]
-                for idx, resp in enumerate(queue.get_all_messages()):
+                for _idx, resp in enumerate(queue.get_all_messages()):
                     if resp.parent_id == message.id or resp.id == message.id:
                         # remove specific response from queue
                         self.message_queues[message.sender]._queues[
