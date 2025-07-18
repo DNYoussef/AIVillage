@@ -8,9 +8,10 @@ and context managers in various scenarios.
 import asyncio
 from typing import Any
 
-from core.error_handling import (
+from core import (
     AIVillageException,
     ErrorCategory,
+    ErrorContext,
     ErrorContextManager,
     ErrorSeverity,
     get_component_logger,
@@ -27,26 +28,26 @@ def example_basic_exception():
     try:
         raise AIVillageException(
             "Invalid configuration provided",
-            component="ConfigService",
-            operation="validate_config",
-            severity=ErrorSeverity.HIGH,
             category=ErrorCategory.VALIDATION,
-            context={"config_file": "settings.json", "line": 42},
+            severity=ErrorSeverity.ERROR,
+            context=ErrorContext(
+                component="ConfigService",
+                operation="validate_config",
+                details={"config_file": "settings.json", "line": 42},
+            ),
         )
     except AIVillageException as e:
         print(f"Caught exception: {e}")
-        print(f"Details: {e.to_dict()}")
+        print(f"Details: {e.message}")
+        print(f"Category: {e.category.value}")
+        print(f"Severity: {e.severity.value}")
 
 
 # Example 2: Using the Error Handling Decorator
 @with_error_handling(
-    component="DataProcessor",
-    operation="process_data",
+    context={"component": "DataProcessor", "method": "process_data"},
+    category=ErrorCategory.PROCESSING,
     severity=ErrorSeverity.ERROR,
-    category=ErrorCategory.BUSINESS_LOGIC,
-    max_retries=3,
-    retry_delay=0.1,
-    wrap_exceptions=True,
 )
 def process_data(data: dict[str, Any]) -> dict[str, Any]:
     """Example function with error handling decorator."""
@@ -61,12 +62,9 @@ def process_data(data: dict[str, Any]) -> dict[str, Any]:
 
 
 @with_error_handling(
-    component="AsyncService",
-    operation="fetch_data",
-    severity=ErrorSeverity.WARNING,
+    context={"component": "AsyncService", "method": "fetch_data"},
     category=ErrorCategory.NETWORK,
-    max_retries=2,
-    wrap_exceptions=False,  # Let original exceptions propagate
+    severity=ErrorSeverity.WARNING,
 )
 async def fetch_data_async(url: str) -> str:
     """Async example with error handling."""
@@ -87,16 +85,17 @@ def example_context_manager():
         with ErrorContextManager(
             component="DatabaseService",
             operation="save_record",
-            severity=ErrorSeverity.HIGH,
-            category=ErrorCategory.DATABASE,
-            max_retries=2,
-        ) as ctx:
+            details={"table": "users", "record_id": 123},
+        ):
             # Simulate database operation
             raise ValueError("Connection timeout")
 
     except AIVillageException as e:
         print(f"Context manager caught: {e}")
-        print(f"Retry count: {e.context.get('retry_count', 0)}")
+        if e.context:
+            print(f"Component: {e.context.component}")
+            print(f"Operation: {e.context.operation}")
+            print(f"Details: {e.context.details}")
 
 
 # Example 4: Component Logger
@@ -109,12 +108,16 @@ def example_component_logger():
     try:
         raise AIVillageException(
             "Service initialization failed",
-            component="MyService",
-            operation="initialize",
+            category=ErrorCategory.INITIALIZATION,
             severity=ErrorSeverity.CRITICAL,
+            context=ErrorContext(
+                component="MyService",
+                operation="initialize",
+                details={"config_file": "service.yaml"},
+            ),
         )
     except AIVillageException as e:
-        logger.error(f"Service error: {e}", extra=e.to_dict())
+        logger.error(f"Service error: {e.message}")
 
 
 # Example 5: Migrating from Legacy Exceptions
@@ -127,20 +130,26 @@ def example_legacy_migration():
         legacy_error = ValueError("Legacy validation error")
 
         # Migrate to new exception
-        new_exception = migrate_from_legacy_exception(
-            legacy_error,
-            component="LegacyService",
-            operation="validate_input",
-            severity=ErrorSeverity.ERROR,
+        new_exception = migrate_from_legacy_exception(legacy_error)
+
+        # Enhance with additional context
+        enhanced_exception = AIVillageException(
+            f"Migrated error: {new_exception.message}",
             category=ErrorCategory.VALIDATION,
-            context={"input": "user_data"},
+            severity=ErrorSeverity.ERROR,
+            context=ErrorContext(
+                component="LegacyService",
+                operation="validate_input",
+                details={"input": "user_data", "original_error": str(legacy_error)},
+            ),
+            original_exception=legacy_error,
         )
 
-        raise new_exception
+        raise enhanced_exception
 
     except AIVillageException as e:
         print(f"Migrated exception: {e}")
-        print(f"Original exception: {e.__cause__}")
+        print(f"Original exception: {e.original_exception}")
 
 
 # Example 6: Complex Error Handling Scenario
@@ -151,22 +160,22 @@ class DataProcessingService:
         self.logger = get_component_logger("DataProcessingService")
 
     @with_error_handling(
-        component="DataProcessingService",
-        operation="process_batch",
-        severity=ErrorSeverity.HIGH,
-        category=ErrorCategory.BUSINESS_LOGIC,
-        max_retries=2,
-        retry_delay=1.0,
+        context={"component": "DataProcessingService", "method": "process_batch"},
+        category=ErrorCategory.PROCESSING,
+        severity=ErrorSeverity.ERROR,
     )
     def process_batch(self, batch_data: list[dict[str, Any]]) -> dict[str, Any]:
         """Process a batch of data with comprehensive error handling."""
         if not batch_data:
             raise AIVillageException(
                 "Empty batch provided",
-                component="DataProcessingService",
-                operation="process_batch",
-                severity=ErrorSeverity.WARNING,
                 category=ErrorCategory.VALIDATION,
+                severity=ErrorSeverity.WARNING,
+                context=ErrorContext(
+                    component="DataProcessingService",
+                    operation="process_batch",
+                    details={"batch_size": 0},
+                ),
             )
 
         results = []
@@ -175,9 +184,7 @@ class DataProcessingService:
                 with ErrorContextManager(
                     component="DataProcessingService",
                     operation="process_item",
-                    severity=ErrorSeverity.ERROR,
-                    category=ErrorCategory.BUSINESS_LOGIC,
-                    context={"item_index": idx, "item_id": item.get("id")},
+                    details={"item_index": idx, "item_id": item.get("id")},
                 ):
                     # Simulate processing
                     if item.get("id") == "error_item":
@@ -186,7 +193,7 @@ class DataProcessingService:
                     results.append({"id": item.get("id"), "status": "processed"})
 
             except AIVillageException as e:
-                self.logger.warning(f"Failed to process item {idx}: {e}")
+                self.logger.error(f"Failed to process item {idx}: {e.message}")
                 continue
 
         return {
@@ -203,14 +210,6 @@ class AsyncDataService:
     def __init__(self):
         self.logger = get_component_logger("AsyncDataService")
 
-    @with_error_handling(
-        component="AsyncDataService",
-        operation="fetch_multiple",
-        severity=ErrorSeverity.ERROR,
-        category=ErrorCategory.NETWORK,
-        max_retries=3,
-        retry_delay=0.5,
-    )
     async def fetch_multiple(self, urls: list[str]) -> dict[str, str]:
         """Fetch data from multiple URLs with error handling."""
         results = {}
@@ -219,9 +218,9 @@ class AsyncDataService:
             try:
                 data = await fetch_data_async(url)
                 results[url] = data
-            except Exception as e:
-                self.logger.error(f"Failed to fetch {url}: {e}")
-                results[url] = f"ERROR: {e!s}"
+            except AIVillageException as e:
+                self.logger.error(f"Failed to fetch {url}: {e.message}")
+                results[url] = f"ERROR: {e.message}"
 
         return results
 
@@ -241,7 +240,7 @@ async def main():
         result = process_data({"name": "test", "critical_field": "value"})
         print(f"Processing result: {result}")
     except AIVillageException as e:
-        print(f"Processing failed: {e}")
+        print(f"Processing failed: {e.message}")
 
     # Example 3: Context manager
     example_context_manager()
@@ -266,7 +265,7 @@ async def main():
         result = service.process_batch(batch_data)
         print(f"Batch processing result: {result}")
     except AIVillageException as e:
-        print(f"Batch processing failed: {e}")
+        print(f"Batch processing failed: {e.message}")
 
     # Example 7: Async service
     print("\n=== Example 7: Async Service ===")
@@ -277,7 +276,7 @@ async def main():
         results = await async_service.fetch_multiple(urls)
         print(f"Async fetch results: {results}")
     except AIVillageException as e:
-        print(f"Async fetch failed: {e}")
+        print(f"Async fetch failed: {e.message}")
 
 
 if __name__ == "__main__":

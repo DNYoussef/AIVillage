@@ -1,0 +1,449 @@
+{
+  "scan_date": "2025-07-18T10:26:02.789821",
+  "total_files": 36,
+  "risk_breakdown": {
+    "LOW": 0,
+    "MEDIUM": 0,
+    "HIGH": 36
+  },
+  "files": [
+    {
+      "path": "main.py.backup",
+      "size": 5483,
+      "modified": "2025-07-18T07:37:36.104919",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\orchestration.py.backup",
+      "size": 6279,
+      "modified": "2025-07-18T07:37:36.085974",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\unified_base_agent.py.backup",
+      "size": 26949,
+      "modified": "2025-07-18T07:37:36.095943",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "communications\\community_hub.py.backup",
+      "size": 5372,
+      "modified": "2025-07-18T07:37:36.096940",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "communications\\protocol.py.backup",
+      "size": 7948,
+      "modified": "2025-07-18T07:37:36.097938",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "rag_system\\main.py.backup",
+      "size": 6332,
+      "modified": "2025-07-18T07:37:36.106914",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "scripts\\migrate_error_handling.py.backup",
+      "size": 10483,
+      "modified": "2025-07-18T07:37:36.110904",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "tests\\test_king_agent.py.backup",
+      "size": 4583,
+      "modified": "2025-07-18T07:37:36.118881",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "tests\\test_king_agent_simple.py.backup",
+      "size": 4478,
+      "modified": "2025-07-18T07:37:36.119879",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "tests\\test_layer_sequence.py.backup",
+      "size": 3945,
+      "modified": "2025-07-18T07:37:36.120876",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "tests\\test_protocol.py.backup",
+      "size": 4102,
+      "modified": "2025-07-18T07:37:36.122871",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\base\\process_handler.py.backup",
+      "size": 16096,
+      "modified": "2025-07-18T07:37:36.065415",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\coordinator.py.backup",
+      "size": 9775,
+      "modified": "2025-07-18T07:37:36.070401",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\demo.py.backup",
+      "size": 3639,
+      "modified": "2025-07-18T07:37:36.071398",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\king_agent.py.backup",
+      "size": 10052,
+      "modified": "2025-07-18T07:37:36.076385",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\response_generation_agent.py.backup",
+      "size": 10483,
+      "modified": "2025-07-18T07:37:36.081371",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\magi\\magi_agent.py.backup",
+      "size": 4242,
+      "modified": "2025-07-18T07:37:36.084363",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\sage\\collaboration.py.backup",
+      "size": 4456,
+      "modified": "2025-07-18T07:37:36.086967",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\sage\\dynamic_knowledge_integration_agent.py.backup",
+      "size": 12263,
+      "modified": "2025-07-18T07:37:36.087964",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\sage\\knowledge_graph_agent.py.backup",
+      "size": 10996,
+      "modified": "2025-07-18T07:37:36.088962",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\sage\\reasoning_agent.py.backup",
+      "size": 9674,
+      "modified": "2025-07-18T07:37:36.089959",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\sage\\sage_agent.py.backup",
+      "size": 11942,
+      "modified": "2025-07-18T07:37:36.090957",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\sage\\unified_rag_management.py.backup",
+      "size": 10296,
+      "modified": "2025-07-18T07:37:36.092951",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\task_management\\unified_task_manager.py.backup",
+      "size": 17603,
+      "modified": "2025-07-18T07:37:36.093948",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\analytics\\analytics_manager.py.backup",
+      "size": 4089,
+      "modified": "2025-07-18T07:37:36.069403",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\input\\key_concept_extractor.py.backup",
+      "size": 8267,
+      "modified": "2025-07-18T07:37:36.072395",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\input\\unified_input_processor.py.backup",
+      "size": 7423,
+      "modified": "2025-07-18T07:37:36.073393",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\input\\user_intent_interpreter.py.backup",
+      "size": 5073,
+      "modified": "2025-07-18T07:37:36.074390",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\planning\\problem_analyzer.py.backup",
+      "size": 9526,
+      "modified": "2025-07-18T07:37:36.077382",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\planning\\reasoning_engine.py.backup",
+      "size": 3624,
+      "modified": "2025-07-18T07:37:36.078379",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\planning\\unified_decision_maker.py.backup",
+      "size": 30208,
+      "modified": "2025-07-18T07:37:36.079377",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\planning\\unified_planning.py.backup",
+      "size": 22095,
+      "modified": "2025-07-18T07:37:36.080374",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\tests\\test_integration.py.backup",
+      "size": 6152,
+      "modified": "2025-07-18T07:37:36.082369",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "agents\\king\\tests\\test_king_agent.py.backup",
+      "size": 4740,
+      "modified": "2025-07-18T07:37:36.083366",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "new_env\\Lib\\site-packages\\adodbapi\\test\\dbapi20.py.backup",
+      "size": 34421,
+      "modified": "2024-09-17T00:14:46.806514",
+      "risk_level": "HIGH"
+    },
+    {
+      "path": "tests\\agents\\test_evidence_flow.py.backup",
+      "size": 3616,
+      "modified": "2025-07-18T07:37:36.116887",
+      "risk_level": "HIGH"
+    }
+  ],
+  "risk_groups": {
+    "LOW": [],
+    "MEDIUM": [],
+    "HIGH": [
+      {
+        "path": "main.py.backup",
+        "size": 5483,
+        "modified": "2025-07-18T07:37:36.104919",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\orchestration.py.backup",
+        "size": 6279,
+        "modified": "2025-07-18T07:37:36.085974",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\unified_base_agent.py.backup",
+        "size": 26949,
+        "modified": "2025-07-18T07:37:36.095943",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "communications\\community_hub.py.backup",
+        "size": 5372,
+        "modified": "2025-07-18T07:37:36.096940",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "communications\\protocol.py.backup",
+        "size": 7948,
+        "modified": "2025-07-18T07:37:36.097938",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "rag_system\\main.py.backup",
+        "size": 6332,
+        "modified": "2025-07-18T07:37:36.106914",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "scripts\\migrate_error_handling.py.backup",
+        "size": 10483,
+        "modified": "2025-07-18T07:37:36.110904",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "tests\\test_king_agent.py.backup",
+        "size": 4583,
+        "modified": "2025-07-18T07:37:36.118881",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "tests\\test_king_agent_simple.py.backup",
+        "size": 4478,
+        "modified": "2025-07-18T07:37:36.119879",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "tests\\test_layer_sequence.py.backup",
+        "size": 3945,
+        "modified": "2025-07-18T07:37:36.120876",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "tests\\test_protocol.py.backup",
+        "size": 4102,
+        "modified": "2025-07-18T07:37:36.122871",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\base\\process_handler.py.backup",
+        "size": 16096,
+        "modified": "2025-07-18T07:37:36.065415",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\coordinator.py.backup",
+        "size": 9775,
+        "modified": "2025-07-18T07:37:36.070401",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\demo.py.backup",
+        "size": 3639,
+        "modified": "2025-07-18T07:37:36.071398",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\king_agent.py.backup",
+        "size": 10052,
+        "modified": "2025-07-18T07:37:36.076385",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\response_generation_agent.py.backup",
+        "size": 10483,
+        "modified": "2025-07-18T07:37:36.081371",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\magi\\magi_agent.py.backup",
+        "size": 4242,
+        "modified": "2025-07-18T07:37:36.084363",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\sage\\collaboration.py.backup",
+        "size": 4456,
+        "modified": "2025-07-18T07:37:36.086967",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\sage\\dynamic_knowledge_integration_agent.py.backup",
+        "size": 12263,
+        "modified": "2025-07-18T07:37:36.087964",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\sage\\knowledge_graph_agent.py.backup",
+        "size": 10996,
+        "modified": "2025-07-18T07:37:36.088962",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\sage\\reasoning_agent.py.backup",
+        "size": 9674,
+        "modified": "2025-07-18T07:37:36.089959",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\sage\\sage_agent.py.backup",
+        "size": 11942,
+        "modified": "2025-07-18T07:37:36.090957",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\sage\\unified_rag_management.py.backup",
+        "size": 10296,
+        "modified": "2025-07-18T07:37:36.092951",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\task_management\\unified_task_manager.py.backup",
+        "size": 17603,
+        "modified": "2025-07-18T07:37:36.093948",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\analytics\\analytics_manager.py.backup",
+        "size": 4089,
+        "modified": "2025-07-18T07:37:36.069403",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\input\\key_concept_extractor.py.backup",
+        "size": 8267,
+        "modified": "2025-07-18T07:37:36.072395",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\input\\unified_input_processor.py.backup",
+        "size": 7423,
+        "modified": "2025-07-18T07:37:36.073393",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\input\\user_intent_interpreter.py.backup",
+        "size": 5073,
+        "modified": "2025-07-18T07:37:36.074390",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\planning\\problem_analyzer.py.backup",
+        "size": 9526,
+        "modified": "2025-07-18T07:37:36.077382",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\planning\\reasoning_engine.py.backup",
+        "size": 3624,
+        "modified": "2025-07-18T07:37:36.078379",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\planning\\unified_decision_maker.py.backup",
+        "size": 30208,
+        "modified": "2025-07-18T07:37:36.079377",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\planning\\unified_planning.py.backup",
+        "size": 22095,
+        "modified": "2025-07-18T07:37:36.080374",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\tests\\test_integration.py.backup",
+        "size": 6152,
+        "modified": "2025-07-18T07:37:36.082369",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "agents\\king\\tests\\test_king_agent.py.backup",
+        "size": 4740,
+        "modified": "2025-07-18T07:37:36.083366",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "new_env\\Lib\\site-packages\\adodbapi\\test\\dbapi20.py.backup",
+        "size": 34421,
+        "modified": "2024-09-17T00:14:46.806514",
+        "risk_level": "HIGH"
+      },
+      {
+        "path": "tests\\agents\\test_evidence_flow.py.backup",
+        "size": 3616,
+        "modified": "2025-07-18T07:37:36.116887",
+        "risk_level": "HIGH"
+      }
+    ]
+  }
+}

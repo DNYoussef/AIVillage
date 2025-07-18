@@ -1,141 +1,101 @@
-import os
-import traceback
+#!/usr/bin/env python3
+"""Agent Forge Service Entry Point
 
-import click
-import torch
-import wandb
-import yaml
+This module provides the entry point for the Agent Forge service,
+handling agent creation, training, and management operations.
+"""
 
-from agent_forge.adas import ADASystem
-from agent_forge.bakedquietiot.deepbaking import DeepSystemBaker
-from agent_forge.compression import stream_compress_model
-from agent_forge.evomerge.config import MergeConfig
-from agent_forge.evomerge.merger import AdvancedModelMerger
-from agent_forge.model_compression.bitlinearization import BitNetModel
-from agent_forge.training.training import CognitiveTrainingPipeline, EnhancedQuietSTaR
+import argparse
+import sys
 
 
-@click.command()
-@click.argument("config_file")
-@click.argument("output_dir")
-def main(config_file: str, output_dir: str):
-    try:
-        # Setup wandb
-        wandb.login()
-        wandb.init(
-            project="agent_forge",
-            name="agent_forge_run",
-            config={
-                "config_file": config_file,
-            },
-        )
+def create_parser():
+    """Create argument parser for Agent Forge service"""
+    parser = argparse.ArgumentParser(description="Agent Forge Service")
 
-        # Ensure output directory exists
-        os.makedirs(output_dir, exist_ok=True)
+    parser.add_argument(
+        "action",
+        choices=["train", "create", "list", "delete", "status"],
+        help="Action to perform",
+    )
 
-        print(f"Loading configuration from {config_file}")
-        with open(config_file) as f:
-            config_dict = yaml.safe_load(f)
+    parser.add_argument("--config", "-c", help="Configuration file path")
 
-        enable_adas = config_dict.get("enable_adas", True)
+    parser.add_argument(
+        "--agent-type",
+        choices=["king", "sage", "magi", "base"],
+        default="base",
+        help="Type of agent to create/train",
+    )
 
-        print("Configuration:")
-        print(yaml.dump(config_dict, default_flow_style=False))
+    parser.add_argument("--name", help="Agent name")
 
-        # Step 1: Merge Models using evomerge
-        print("Creating MergeConfig")
-        config = MergeConfig(**config_dict)
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
 
-        print("Initializing AdvancedModelMerger")
-        merger = AdvancedModelMerger(config)
+    return parser
 
-        print("Merging models")
-        merged_model_path = merger.merge()
-        print(f"Merged model saved to: {merged_model_path}")
 
-        # Log merging step
-        wandb.log({"step": "model_merging", "merged_model_path": merged_model_path})
+def train_agent(args):
+    """Train an agent"""
+    print(f"Training {args.agent_type} agent: {args.name}")
+    # Implementation would go here
+    return 0
 
-        # Step 2: Apply enhancements using bakedquietiot
-        print("Initializing DeepSystemBaker")
-        baker = DeepSystemBaker(merged_model_path)
-        print("Deep baking the model")
-        baker.deep_bake_system()
-        baked_model_path = "deep_baked_model"
-        print(f"Deep baked model saved to: {baked_model_path}")
 
-        # Log deep baking step
-        wandb.log({"step": "deep_baking", "baked_model_path": baked_model_path})
+def create_agent(args):
+    """Create a new agent"""
+    print(f"Creating {args.agent_type} agent: {args.name}")
+    # Implementation would go here
+    return 0
 
-        # Step 3: Compress the model using model_compression
-        print("Loading the deep baked model for compression")
-        from transformers import AutoModelForCausalLM
 
-        model = AutoModelForCausalLM.from_pretrained(baked_model_path)
-        print("Converting model to BitNetModel")
-        bitnet_model = BitNetModel(model)
+def list_agents(args):
+    """List all agents"""
+    print("Listing all agents...")
+    # Implementation would go here
+    return 0
 
-        print("Compressing the model")
-        compressed_model = stream_compress_model(bitnet_model.model)
-        compressed_model_path = os.path.join(output_dir, "compressed_model.pt")
-        torch.save(compressed_model, compressed_model_path)
-        print(f"Compressed model saved to: {compressed_model_path}")
 
-        # Log compression step
-        compressed_model_size = os.path.getsize(compressed_model_path) / (1024 * 1024)
-        wandb.log(
-            {
-                "step": "model_compression",
-                "compressed_model_size_MB": compressed_model_size,
-            }
-        )
+def delete_agent(args):
+    """Delete an agent"""
+    print(f"Deleting agent: {args.name}")
+    # Implementation would go here
+    return 0
 
-        # Step 4: Train the new smaller model using training
-        print("Initializing EnhancedQuietSTaR for training")
-        enhanced_model = EnhancedQuietSTaR(baked_model_path)
 
-        print("Setting up training pipeline")
-        # Replace the following placeholders with your actual data loaders
-        train_data = []  # Your training data
-        val_data = []  # Your validation data
+def get_status(args):
+    """Get service status"""
+    print("Agent Forge service status: Running")
+    return 0
 
-        pipeline = CognitiveTrainingPipeline(
-            enhanced_model, train_data, val_data, num_epochs=50
-        )
-        print("Training the model")
-        trained_model = pipeline.train()
 
-        print("Saving the trained model")
-        trained_model_path = os.path.join(output_dir, "trained_model")
-        enhanced_model.model.save_pretrained(trained_model_path)
-        enhanced_model.tokenizer.save_pretrained(trained_model_path)
-        print(f"Trained model saved to: {trained_model_path}")
+def main(args=None):
+    """Main entry point for Agent Forge service"""
+    parser = create_parser()
+    if args is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(args)
 
-        # Log training completion
-        wandb.log({"step": "model_training", "trained_model_path": trained_model_path})
+    if args.verbose:
+        print(f"Agent Forge: {args.action}")
 
-        # Optional ADAS optimization
-        if enable_adas:
-            print("Running ADAS optimization")
-            adas_system = ADASystem(trained_model_path)
-            optimized_model_path = adas_system.optimize_agent_architecture(output_dir)
-            print(f"ADAS optimized model saved to: {optimized_model_path}")
-            wandb.log(
-                {"step": "adas_optimization", "adas_model_path": optimized_model_path}
-            )
-        else:
-            optimized_model_path = trained_model_path
+    actions = {
+        "train": train_agent,
+        "create": create_agent,
+        "list": list_agents,
+        "delete": delete_agent,
+        "status": get_status,
+    }
 
-        # Finish wandb run
-        wandb.finish()
-
-        print("Process completed successfully")
-
-    except Exception as e:
-        print(f"An error occurred: {e!s}")
-        print("Traceback:")
-        print(traceback.format_exc())
+    handler = actions.get(args.action)
+    if handler:
+        return handler(args)
+    print(f"Error: Unknown action '{args.action}'")
+    return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

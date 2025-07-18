@@ -1,159 +1,207 @@
-import asyncio
-import logging
+#!/usr/bin/env python3
+"""Unified Entry Point for AIVillage Platform
+
+This is the main entry point for the AIVillage platform, providing a unified
+CLI interface for all services and modes of operation.
+
+Usage:
+    python main.py --mode MODE --action ACTION [OPTIONS]
+
+    Modes:
+        agent-forge: Agent creation and management
+        king: KING agent system operations
+        rag: Retrieval-augmented generation
+        core: Core utilities and configuration
+
+Examples:
+        python main.py --mode agent-forge --action train --config config.yaml
+        python main.py --mode king --action run --task "analyze data"
+        python main.py --mode rag --action query --question "What is AI?"
+        python main.py --mode core --action status
+"""
+
+import argparse
 from pathlib import Path
-from typing import Any
+import sys
 
-import click
-import yaml
-
-from agents.king.king_agent import KingAgent
-from agents.magi.magi_agent import MagiAgent
-from agents.sage.sage_agent import SageAgent
-from agents.utils.task import Task as LangroidTask
-from core.error_handling import (
-    StandardCommunicationProtocol,
-    error_handler,
-    safe_execute,
-)
-from rag_system.core.config import UnifiedConfig
-from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.retrieval.vector_store import VectorStore
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent))
 
 
-class AIVillageSystem:
-    def __init__(self, config: dict[str, Any]):
-        self.config = UnifiedConfig(**config)
-        self.communication_protocol = StandardCommunicationProtocol()
-        self.vector_store = VectorStore(self.config.vector_store_config)
-        self.rag_pipeline = EnhancedRAGPipeline(self.config)
+def create_parser():
+    """Create the unified argument parser"""
+    parser = argparse.ArgumentParser(
+        description="AIVillage Unified Entry Point",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s --mode agent-forge --action train --config config.yaml
+  %(prog)s --mode king --action run --task "analyze data"
+  %(prog)s --mode rag --action query --question "What is AI?"
+  %(prog)s --mode core --action status
+        """,
+    )
 
-        self.king_agent = KingAgent(
-            self.config, self.communication_protocol, self.vector_store
-        )
-        self.sage_agent = SageAgent(
-            self.config, self.communication_protocol, self.vector_store
-        )
-        self.magi_agent = MagiAgent(
-            self.config, self.communication_protocol, self.vector_store
-        )
+    parser.add_argument(
+        "--mode",
+        "-m",
+        choices=["agent-forge", "king", "rag", "core"],
+        required=True,
+        help="Service mode to run",
+    )
 
-        self.agents = {
-            "king": self.king_agent,
-            "sage": self.sage_agent,
-            "magi": self.magi_agent,
-        }
+    parser.add_argument(
+        "--action", "-a", required=True, help="Action to perform (depends on mode)"
+    )
 
-    @safe_execute
-    async def initialize(self):
-        logger.info("Initializing AI Village System")
-        for agent_name, agent in self.agents.items():
-            await agent.initialize()
-        await self.king_agent.coordinator.update_agent_list()
-        logger.info("AI Village System initialized successfully")
+    parser.add_argument("--config", "-c", help="Configuration file path")
 
-    @safe_execute
-    async def process_task(self, task: dict[str, Any]) -> dict[str, Any]:
-        logger.info(f"Processing task: {task}")
-        langroid_task = LangroidTask(
-            self.king_agent,
-            task.get("content"),
-            task.get("id", ""),
-            task.get("priority", 1),
-        )
-        langroid_task.type = task.get("type", "general")
-        result = await self.king_agent.execute_task(langroid_task)
-        logger.info(f"Task result: {result}")
-        return result
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
 
-    @safe_execute
-    async def run_analytics(self):
-        while True:
-            analytics_report = (
-                self.king_agent.unified_analytics.generate_summary_report()
-            )
-            logger.info(f"Analytics Report: {analytics_report}")
-            await asyncio.sleep(3600)  # Run analytics every hour
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 
-    @safe_execute
-    async def evolve_system(self):
-        while True:
-            logger.info("Evolving AI Village System")
-            for agent in self.agents.values():
-                await agent.evolve()
-            logger.info("System evolution complete")
-            await asyncio.sleep(86400)  # Evolve daily
+    # Mode-specific arguments
+    parser.add_argument("--task", help="Task description (for king mode)")
 
-    @safe_execute
-    async def run(self):
-        await self.initialize()
-        analytics_task = asyncio.create_task(self.run_analytics())
-        evolution_task = asyncio.create_task(self.evolve_system())
+    parser.add_argument("--question", help="Question to query (for rag mode)")
 
-        while True:
-            user_input = await self.get_user_input()
-            if user_input.lower() == "exit":
-                break
-            task = self.create_task_from_input(user_input)
-            await self.process_task(task)
+    parser.add_argument("--document", help="Document to index (for rag mode)")
 
-        analytics_task.cancel()
-        evolution_task.cancel()
-        logger.info("AI Village System shutting down")
+    parser.add_argument(
+        "--agent-type",
+        choices=["king", "sage", "magi", "base"],
+        default="base",
+        help="Type of agent to create/train (for agent-forge mode)",
+    )
 
-    async def get_user_input(self) -> str:
-        # Non-blocking input for async context
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, input, "Enter your task (or 'exit' to quit): "
-        )
+    parser.add_argument("--name", help="Agent name (for agent-forge mode)")
 
-    def create_task_from_input(self, user_input: str) -> dict[str, Any]:
-        return {"type": "user_query", "content": user_input, "priority": 1}
+    parser.add_argument("--input", help="Input file or directory")
+
+    parser.add_argument("--output", help="Output file or directory")
+
+    return parser
 
 
-def load_config(config_path: str) -> dict[str, Any]:
-    """Load configuration from external file."""
-    config_file = Path(config_path)
-    if not config_file.exists():
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
-
-    with open(config_file) as f:
-        return yaml.safe_load(f)
-
-
-@click.command()
-@click.option(
-    "--config",
-    "-c",
-    default="configs/rag_config.yaml",
-    help="Path to configuration file",
-)
-@click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging")
-@error_handler.handle_error
-async def main(config: str, verbose: bool):
-    """Main entry point for AI Village System."""
-    if verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-
+def run_agent_forge_mode(args):
+    """Run Agent Forge mode"""
     try:
-        config_data = load_config(config)
-        logger.info(f"Loaded configuration from {config}")
-    except FileNotFoundError as e:
-        logger.error(f"Configuration error: {e}")
-        raise click.ClickException(f"Configuration file not found: {config}")
-    except yaml.YAMLError as e:
-        logger.error(f"Invalid YAML in configuration file: {e}")
-        raise click.ClickException(f"Invalid configuration file: {config}")
+        from agent_forge.main import main as agent_forge_main
 
-    ai_village = AIVillageSystem(config_data)
-    await ai_village.run()
+        # Convert unified args to agent-forge format
+        agent_args = [args.action]
+        if args.config:
+            agent_args.extend(["--config", args.config])
+        if args.agent_type:
+            agent_args.extend(["--agent-type", args.agent_type])
+        if args.name:
+            agent_args.extend(["--name", args.name])
+        if args.verbose:
+            agent_args.append("--verbose")
+
+        return agent_forge_main(agent_args)
+    except ImportError as e:
+        print(f"Error: Agent Forge module not found: {e}")
+        return 1
+
+
+def run_king_mode(args):
+    """Run KING agent mode"""
+    try:
+        from agents.king.main import main as king_main
+
+        # Convert unified args to king format
+        king_args = [args.action]
+        if args.config:
+            king_args.extend(["--config", args.config])
+        if args.task:
+            king_args.extend(["--task", args.task])
+        if args.input:
+            king_args.extend(["--input", args.input])
+        if args.output:
+            king_args.extend(["--output", args.output])
+        if args.verbose:
+            king_args.append("--verbose")
+
+        return king_main(king_args)
+    except ImportError as e:
+        print(f"Error: KING agent module not found: {e}")
+        return 1
+
+
+def run_rag_mode(args):
+    """Run RAG system mode"""
+    try:
+        from rag_system.main import main as rag_main
+
+        # Convert unified args to rag format
+        rag_args = [args.action]
+        if args.config:
+            rag_args.extend(["--config", args.config])
+        if args.question:
+            rag_args.extend(["--question", args.question])
+        if args.document:
+            rag_args.extend(["--document", args.document])
+        if args.input:
+            rag_args.extend(["--input", args.input])
+        if args.output:
+            rag_args.extend(["--output", args.output])
+        if args.verbose:
+            rag_args.append("--verbose")
+
+        return rag_main(rag_args)
+    except ImportError as e:
+        print(f"Error: RAG system module not found: {e}")
+        return 1
+
+
+def run_core_mode(args):
+    """Run core utilities mode"""
+    try:
+        from agent_forge.core.main import main as core_main
+
+        # Core service uses click and expects config_file and out_path
+        if args.action == "merge":
+            if not args.config:
+                print("Error: --config is required for core merge action")
+                return 1
+            if not args.output:
+                print("Error: --output is required for core merge action")
+                return 1
+
+            return core_main([args.config, args.output])
+        print("Core mode supports: merge")
+        return 1
+
+    except ImportError as e:
+        print(f"Error: Core module not found: {e}")
+        return 1
+
+
+def main():
+    """Main entry point"""
+    parser = create_parser()
+    args = parser.parse_args()
+
+    if args.verbose:
+        print(f"Running in {args.mode} mode with action: {args.action}")
+
+    # Route to appropriate mode handler
+    mode_handlers = {
+        "agent-forge": run_agent_forge_mode,
+        "king": run_king_mode,
+        "rag": run_rag_mode,
+        "core": run_core_mode,
+    }
+
+    handler = mode_handlers.get(args.mode)
+    if handler:
+        return handler(args)
+    print(f"Error: Unknown mode '{args.mode}'")
+    return 1
 
 
 if __name__ == "__main__":
-    # Proper async CLI entry point
-    asyncio.run(main.main(standalone_mode=False))
+    sys.exit(main())

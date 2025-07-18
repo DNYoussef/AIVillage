@@ -3,9 +3,22 @@ import importlib.util
 import os
 import tempfile
 import types
+from typing import Any
 
 # Import necessary dependencies (adjust import paths as needed)
 from agent_forge.utils.tool_message import ToolMessage
+
+# Safe builtins for code execution
+SAFE_BUILTINS: dict[str, Any] = {
+    "__import__": __import__,
+    "open": open,
+    "len": len,
+    "range": range,
+    "min": min,
+    "max": max,
+    "str": str,
+    "float": float,
+}
 
 
 class AgentTechnique(ToolMessage):
@@ -14,16 +27,6 @@ class AgentTechnique(ToolMessage):
     thought: str
     name: str
     code: str
-    SAFE_BUILTINS = {
-        "__import__": __import__,
-        "open": open,
-        "len": len,
-        "range": range,
-        "min": min,
-        "max": max,
-        "str": str,
-        "float": float,
-    }
 
     def handle(self):
         """Return the callable defined by this technique's code."""
@@ -53,7 +56,7 @@ class AgentTechnique(ToolMessage):
         try:
             spec = importlib.util.spec_from_file_location(f"tech_{self.name}", path)
             module = importlib.util.module_from_spec(spec)
-            module.__dict__["__builtins__"] = self.SAFE_BUILTINS
+            module.__dict__["__builtins__"] = SAFE_BUILTINS
             if spec.loader is not None:
                 spec.loader.exec_module(module)
             return module

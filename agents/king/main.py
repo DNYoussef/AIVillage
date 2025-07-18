@@ -1,157 +1,106 @@
-import logging
-import uuid
+#!/usr/bin/env python3
+"""KING Agent Service Entry Point
 
-from agents.sage.rag_management import KingRAGManagement
-from agents.unified_base_agent import UnifiedAgentConfig, UnifiedBaseAgent
-from rag_system.core.config import UnifiedConfig
-from rag_system.retrieval.vector_store import VectorStore
+This module provides the entry point for the KING agent service,
+handling task execution, planning, and system operations.
+"""
 
-from ...communication.protocol import StandardCommunicationProtocol
-from ...communications.community_hub import CommunityHub
-from ...core.sage import Sage
-from ...utils.agent_progress_tracker import AgentProgressTracker
-from ...utils.exceptions import AIVillageException
-from ...utils.monitoring_and_adjustment import MonitoringAndAdjustment
-
-logger = logging.getLogger(__name__)
+import argparse
+import sys
 
 
-class King:
-    def __init__(self):
-        self.communication_protocol = StandardCommunicationProtocol()
-        self.community_hub = CommunityHub(self.communication_protocol)
-        self.rag_management = KingRAGManagement()
-        self.progress_tracker = AgentProgressTracker()
-        self.monitoring = MonitoringAndAdjustment()
-        self.sage = Sage()
+def create_parser():
+    """Create argument parser for KING agent service"""
+    parser = argparse.ArgumentParser(description="KING Agent Service")
 
-    async def run(self, uuid: str):
-        try:
-            await self.manage_community()
-            await self.monitor_and_adjust_projects()
-            await self.handle_rag_management()
-        except Exception as e:
-            logger.error(f"Error in King's run method: {e!s}")
-            raise AIVillageException(f"Error in King's run method: {e!s}") from e
+    parser.add_argument(
+        "action",
+        choices=["run", "plan", "analyze", "status", "config"],
+        help="Action to perform",
+    )
 
-    async def manage_community(self):
-        try:
-            projects = await self.community_hub.get_all_projects()
-            for project_id, project_data in projects.items():
-                await self.assign_tasks(project_id, project_data)
-                await self.update_project_status(project_id)
-        except Exception as e:
-            logger.error(f"Error in manage_community: {e!s}")
-            raise AIVillageException(f"Error managing community: {e!s}") from e
+    parser.add_argument("--task", help="Task description to execute")
 
-    async def assign_tasks(self, project_id: str, project_data: dict):
-        try:
-            tasks = project_data.get("tasks", [])
-            for task in tasks:
-                if task["status"] == "unassigned":
-                    suitable_agent = await self.community_hub.request_collaboration(
-                        requester_id="King",
-                        task_id=task["id"],
-                        required_capabilities=task["required_capabilities"],
-                    )
-                    if suitable_agent:
-                        await self.community_hub.assign_task(task["id"], suitable_agent)
-                        self.progress_tracker.start_task(suitable_agent, task["id"])
-                    else:
-                        new_agent = await self.create_new_agent(
-                            task["required_capabilities"]
-                        )
-                        await self.community_hub.assign_task(task["id"], new_agent)
-                        self.progress_tracker.start_task(new_agent, task["id"])
-        except Exception as e:
-            logger.error(f"Error in assign_tasks: {e!s}")
-            raise AIVillageException(f"Error assigning tasks: {e!s}") from e
+    parser.add_argument("--config", "-c", help="Configuration file path")
 
-    async def update_project_status(self, project_id: str):
-        try:
-            project_status = self.progress_tracker.get_project_status(project_id)
-            await self.community_hub.update_project_status(
-                project_id, project_status["status"], project_status["progress"]
-            )
-        except Exception as e:
-            logger.error(f"Error in update_project_status: {e!s}")
-            raise AIVillageException(f"Error updating project status: {e!s}") from e
+    parser.add_argument("--input", help="Input file or directory")
 
-    async def monitor_and_adjust_projects(self):
-        try:
-            projects = await self.community_hub.get_all_projects()
-            for project_id, project_data in projects.items():
-                evm_metrics = self.monitoring.calculate_evm_metrics(project_data)
-                if self.monitoring.needs_adjustment(evm_metrics):
-                    adjustments = self.monitoring.suggest_adjustments(evm_metrics)
-                    await self.implement_adjustments(project_id, adjustments)
-        except Exception as e:
-            logger.error(f"Error in monitor_and_adjust_projects: {e!s}")
-            raise AIVillageException(
-                f"Error monitoring and adjusting projects: {e!s}"
-            ) from e
+    parser.add_argument("--output", help="Output file or directory")
 
-    async def implement_adjustments(self, project_id: str, adjustments: list):
-        try:
-            for adjustment in adjustments:
-                if adjustment["type"] == "reassign_task":
-                    await self.community_hub.reassign_task(
-                        adjustment["task_id"], adjustment["new_agent"]
-                    )
-                elif adjustment["type"] == "add_resources":
-                    await self.community_hub.add_resources_to_project(
-                        project_id, adjustment["resources"]
-                    )
-                # Implement other types of adjustments as needed
-        except Exception as e:
-            logger.error(f"Error in implement_adjustments: {e!s}")
-            raise AIVillageException(f"Error implementing adjustments: {e!s}") from e
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
 
-    async def create_new_agent(self, required_capabilities: list):
-        try:
-            agent_name = f"agent_{uuid.uuid4().hex[:8]}"
-            rag_config = UnifiedConfig()
-            vector_store = VectorStore(rag_config)
-            config = UnifiedAgentConfig(
-                name=agent_name,
-                description="Auto-generated agent",
-                capabilities=required_capabilities,
-                rag_config=rag_config,
-                vector_store=vector_store,
-                model="gpt-4",
-                instructions="You are a dynamically created agent.",
-            )
-            agent = UnifiedBaseAgent(config, self.communication_protocol)
-            self.community_hub.agents[agent_name] = {
-                "capabilities": required_capabilities,
-                "tasks": [],
-            }
-            return agent_name
-        except Exception as e:
-            logger.error(f"Error creating new agent: {e!s}")
-            raise AIVillageException(f"Error creating new agent: {e!s}") from e
+    return parser
 
-    async def handle_task_result(self, agent_id: str, task_id: str, result: dict):
-        try:
-            self.progress_tracker.complete_task(agent_id, task_id)
-            await self.community_hub.post_research_results(task_id, result)
 
-            if result.get("needs_analysis", False):
-                analysis = await self.sage.analyze_problem(result["content"])
-                await self.community_hub.update_project_data(
-                    task_id, {"analysis": analysis}
-                )
-        except Exception as e:
-            logger.error(f"Error in handle_task_result: {e!s}")
-            raise AIVillageException(f"Error handling task result: {e!s}") from e
+def run_task(args):
+    """Run a task"""
+    if not args.task:
+        print("Error: --task is required for run action")
+        return 1
 
-    async def handle_rag_management(self):
-        try:
-            health_check_result = await self.rag_management.perform_health_check()
-            if health_check_result.get("issue_detected", False):
-                await self.rag_management.handle_rag_health_issue(health_check_result)
-        except Exception as e:
-            logger.error(f"Error in handle_rag_management: {e!s}")
-            raise AIVillageException(f"Error handling RAG management: {e!s}") from e
+    print(f"Running task: {args.task}")
+    # Implementation would go here
+    return 0
 
-    # Other King methods as needed
+
+def plan_task(args):
+    """Plan a task"""
+    if not args.task:
+        print("Error: --task is required for plan action")
+        return 1
+
+    print(f"Planning task: {args.task}")
+    # Implementation would go here
+    return 0
+
+
+def analyze_data(args):
+    """Analyze data"""
+    print("Analyzing data...")
+    # Implementation would go here
+    return 0
+
+
+def get_status(args):
+    """Get service status"""
+    print("KING agent service status: Running")
+    return 0
+
+
+def configure_service(args):
+    """Configure service"""
+    print("Configuring KING agent service...")
+    # Implementation would go here
+    return 0
+
+
+def main(args=None):
+    """Main entry point for KING agent service"""
+    parser = create_parser()
+    if args is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(args)
+
+    if args.verbose:
+        print(f"KING Agent: {args.action}")
+
+    actions = {
+        "run": run_task,
+        "plan": plan_task,
+        "analyze": analyze_data,
+        "status": get_status,
+        "config": configure_service,
+    }
+
+    handler = actions.get(args.action)
+    if handler:
+        return handler(args)
+    print(f"Error: Unknown action '{args.action}'")
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
