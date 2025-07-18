@@ -5,21 +5,46 @@
 
 from __future__ import annotations
 
-import time
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+import logging
 import os
 
-from cachetools import TTLCache
+# Import unified error handling and configuration
+import sys
+import time
 
-import httpx
-from fastapi import FastAPI, HTTPException, Request, Depends
+from cachetools import TTLCache
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+import httpx
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    REGISTRY,
+    Counter,
+    Histogram,
+    generate_latest,
+)
 from starlette.middleware.base import BaseHTTPMiddleware
 
-TWIN_URL = os.getenv("TWIN_URL", "http://twin:8001")
-RATE_LIMIT_REQ = int(os.getenv("RATE_LIMIT_REQUESTS", 100))
-RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", 60))
-ALLOWED_ORIGINS = os.getenv("GATEWAY_ALLOW_ORIGINS", "http://localhost").split(",")
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from services.core.config import get_config
+from services.core.service_error_handler import (
+    gateway_error_handler,
+    network_error,
+    rate_limit_error,
+)
+
+# Load unified configuration
+config = get_config()
+gateway_config = config.gateway
+
+TWIN_URL = config.external_services.get("twin_url", "http://twin:8001")
+RATE_LIMIT_REQ = config.security.rate_limit_requests
+RATE_LIMIT_WINDOW = config.security.rate_limit_window
+ALLOWED_ORIGINS = gateway_config.cors_origins
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("gateway")
 
 app = FastAPI(title="Atlantis Gateway", version="0.2.0")
 app.add_middleware(
@@ -28,6 +53,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["Authorization", "Content-Type"],
     allow_credentials=True,
+)
+
+# Add global exception handlers
+from fastapi.exceptions import RequestValidationError
+
+app.add_exception_handler(Exception, gateway_error_handler.http_exception_handler)
+app.add_exception_handler(
+    RequestValidationError, gateway_error_handler.http_exception_handler
 )
 
 
@@ -49,22 +82,37 @@ app.add_middleware(SecurityHeaders)
 rl_cache: TTLCache = TTLCache(maxsize=10000, ttl=RATE_LIMIT_WINDOW)
 
 # ─── Prometheus -------------------------------------------------------------
-G_REQS = Counter("gw_requests_total", "Gateway HTTP requests", ["path"])
-G_RL = Counter("gw_rate_limited_total", "Requests dropped by rate-limit")
+G_REQS = Counter(
+    "gw_requests_total", "Gateway HTTP requests", ["path"], registry=REGISTRY
+)
+G_RL = Counter(
+    "gw_rate_limited_total", "Requests dropped by rate-limit", registry=REGISTRY
+)
 G_LAT = Histogram(
     "gw_latency_seconds",
     "Gateway latency",
     buckets=(0.05, 0.1, 0.2, 0.5, 1, 2, 5),
+    registry=REGISTRY,
 )
 
 
 def rate_limit(req: Request):
-    ip = req.client.host
+    ip = "unknown"
+    if req.client and req.client.host:
+        ip = req.client.host
     hits = rl_cache.get(ip, 0) + 1
     rl_cache[ip] = hits
     if hits > RATE_LIMIT_REQ:
         G_RL.inc()
-        raise HTTPException(429, "Rate limit exceeded")
+        raise rate_limit_error(
+            "Rate limit exceeded",
+            details={
+                "ip": ip,
+                "limit": RATE_LIMIT_REQ,
+                "window": RATE_LIMIT_WINDOW,
+                "current_hits": hits,
+            },
+        )
 
 
 @app.middleware("http")
@@ -88,9 +136,27 @@ async def health():
         async with httpx.AsyncClient(timeout=5) as c:
             r = await c.get(f"{TWIN_URL}/healthz")
         status = "ok" if r.status_code == 200 else "degraded"
-    except Exception as exc:  # pylint: disable=broad-except
-        status, r = "degraded", {"error": str(exc)}
-    resp = {"gateway": "ok", "twin": status, "details": r}
+        details = {"status_code": r.status_code, "response": r.text}
+    except Exception as exc:
+        # Create structured network error
+        network_exc = network_error(
+            f"Twin service health check failed: {exc}",
+            details={"twin_url": TWIN_URL, "error_type": type(exc).__name__},
+        )
+
+        # Log the error
+        logger.error(
+            "Health check failed",
+            extra={
+                "error": network_exc.to_dict(),
+                "twin_url": TWIN_URL,
+            },
+        )
+
+        status = "degraded"
+        details = {"error": str(exc), "type": type(exc).__name__}
+
+    resp = {"gateway": "ok", "twin": status, "details": details}
     from fastapi.responses import JSONResponse
 
     response = JSONResponse(resp)
@@ -125,8 +191,19 @@ async def proxy_chat(req: Request, _=Depends(rate_limit)):
 
         return JSONResponse(content=json_body, headers=headers)
     except httpx.HTTPStatusError as exc:
-        raise HTTPException(
-            exc.response.status_code, f"Twin error {exc.response.text[:100]}"
+        raise network_error(
+            f"Twin service returned HTTP {exc.response.status_code}",
+            details={
+                "status_code": exc.response.status_code,
+                "response_text": exc.response.text[:200],
+                "twin_url": f"{TWIN_URL}/v1/chat",
+            },
         )
     except httpx.RequestError as exc:
-        raise HTTPException(502, f"Upstream Twin unreachable: {exc}")
+        raise network_error(
+            f"Twin service unreachable: {exc}",
+            details={
+                "error_type": type(exc).__name__,
+                "twin_url": f"{TWIN_URL}/v1/chat",
+            },
+        )

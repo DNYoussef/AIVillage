@@ -10,7 +10,7 @@ from agents.unified_base_agent import (
     UnifiedBaseAgent,
 )
 from agents.utils.task import Task as LangroidTask
-from communications.protocol import StandardCommunicationProtocol
+from core.error_handling import StandardCommunicationProtocol
 from rag_system.core.config import UnifiedConfig
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.retrieval.vector_store import VectorStore

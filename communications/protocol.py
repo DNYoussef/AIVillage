@@ -18,7 +18,7 @@ except Exception:  # pragma: no cover - optional dependencies
 
 
 try:
-    from agents.utils.exceptions import AIVillageException
+    from core.error_handling import AIVillageException
 except Exception:  # pragma: no cover - fallback if agents package isn't available
 
     class AIVillageException(Exception):

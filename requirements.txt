@@ -1,6 +1,6 @@
 # Auto-generated with:
 #    poetry export --without-hashes -f requirements.txt > requirements.txt
-# 
+#
 # WARNING: This file is auto-generated from pyproject.toml
 # To update dependencies, modify pyproject.toml and run:
 #    poetry export --without-hashes -f requirements.txt > requirements.txt
@@ -10,7 +10,7 @@ langroid>=0.16.1
 pydantic>=2.8.2
 fastapi>=0.95.1
 uvicorn>=0.22.0
-numpy>=1.24.3
+numpy>=1.24.3,<2.0.0
 scikit-learn>=1.2.2
 pandas>=2.0.1
 torch>=2.3.0
@@ -50,3 +50,6 @@ gym>=0.21.0
 scipy>=1.7.3
 matplotlib>=3.5.1
 beautifulsoup4>=4.12.0
+tenacity<9.0.0,>=8.2.0
+typer<0.10.0,>=0.9.0
+protobuf<5.0.0,>=4.21.6

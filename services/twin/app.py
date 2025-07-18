@@ -10,13 +10,16 @@ from __future__ import annotations
 from datetime import datetime
 import logging
 import os
+
+# Import unified error handling and configuration
+import sys
 import time
 from typing import Any
 import uuid
 
 from cachetools import LRUCache
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
-from prometheus_client import Counter, Histogram, generate_latest
+from prometheus_client import REGISTRY, Counter, Histogram, generate_latest
 from pydantic import BaseModel, Field
 import uvicorn
 
@@ -24,6 +27,17 @@ from core.chat_engine import ChatEngine
 from rag_system.graph_explain import MAX_HOPS, explain_path
 
 from .schemas import ChatRequest, ChatResponse, HealthResponse
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from services.core.config import get_config
+from services.core.service_error_handler import (
+    ErrorCategory,
+    ErrorSeverity,
+    create_service_error,
+    resource_error,
+    twin_error_handler,
+    validation_error,
+)
 
 
 class DummyModel:
@@ -34,15 +48,15 @@ class DummyModel:
         return f"Echo from {os.path.basename(self.model_path)} › {prompt}"
 
 
+# Load unified configuration
+config = get_config()
+twin_config = config.twin
+
+
 class TwinSettings:
-    _raw_path = os.getenv("TWIN_MODEL_PATH", "models/small-llama.bin")
-    model_path: str = (
-        _raw_path
-        if _raw_path.startswith("/models/") and os.path.exists(_raw_path)
-        else "models/small-llama.bin"
-    )
-    max_context: int = int(os.getenv("TWIN_MAX_CONTEXT", 4096))
-    log_level: str = os.getenv("LOG_LEVEL", "INFO")
+    model_path: str = os.getenv("TWIN_MODEL_PATH", "models/small-llama.bin")
+    max_context: int = config.ai.max_context_length
+    log_level: str = twin_config.log_level
 
 
 settings = TwinSettings()
@@ -64,21 +78,23 @@ else:  # pragma: no cover - disabled feature
     _calibrator = None
 
 
-REQUESTS = Counter("twin_requests_total", "Total chat requests")
+REQUESTS = Counter("twin_requests_total", "Total chat requests", registry=REGISTRY)
 LATENCY = Histogram(
-    "twin_chat_latency_seconds", "Chat latency", buckets=(0.1, 0.3, 0.5, 1, 2, 5)
+    "twin_chat_latency_seconds",
+    "Chat latency",
+    buckets=(0.1, 0.3, 0.5, 1, 2, 5),
+    registry=REGISTRY,
 )
 
 # Metrics for the graph explainer
 EXPLAIN_REQS = Counter(
-    "explain_requests_total",
-    "Path explanation requests",
-    ["status"],
+    "explain_requests_total", "Path explanation requests", ["status"], registry=REGISTRY
 )
 EXPLAIN_LATENCY = Histogram(
     "explain_latency_seconds",
     "Path explanation latency",
     buckets=(0.1, 0.3, 0.5, 1, 2, 5),
+    registry=REGISTRY,
 )
 
 
@@ -156,16 +172,45 @@ def get_agent() -> TwinAgent:
 app = FastAPI(title="Atlantis Twin", version="0.2.0")
 _engine = ChatEngine()
 
+# Import new architecture components
+from services.core.business_logic import ServiceBusinessLogicFactory
+from services.core.http_adapters import HTTPAdapterFactory
+
+# Create service instances using clean architecture
+business_logic_factory = ServiceBusinessLogicFactory(
+    {
+        "service_name": twin_config.name,
+        "version": twin_config.version,
+        "max_message_length": 5000,
+        "max_file_size": twin_config.max_request_size,
+        "dependencies": {"chat_engine": _engine},
+    }
+)
+
+adapter_factory = HTTPAdapterFactory(business_logic_factory)
+chat_adapter = adapter_factory.create_chat_adapter()
+query_adapter = adapter_factory.create_query_adapter()
+upload_adapter = adapter_factory.create_upload_adapter()
+health_adapter = adapter_factory.create_health_adapter()
+
+# Add global exception handlers
+from fastapi.exceptions import RequestValidationError
+
+app.add_exception_handler(Exception, twin_error_handler.http_exception_handler)
+app.add_exception_handler(
+    RequestValidationError, twin_error_handler.http_exception_handler
+)
+
 
 @app.post("/v1/chat", response_model=ChatResponse)
 async def chat_endpoint(req: ChatRequest):
     REQUESTS.inc()
     started = time.time()
-    try:
-        payload = _engine.process_chat(req.message, req.conversation_id)
-    except Exception:
-        logger.exception("chat processing failed")
-        raise HTTPException(status_code=500, detail="Internal error") from None
+
+    # Use the new architecture
+    payload = await chat_adapter.handle_chat_request(
+        {"message": req.message, "conversation_id": req.conversation_id}
+    )
 
     payload["processing_time_ms"] = int((time.time() - started) * 1000)
     return ChatResponse(**payload)
@@ -178,11 +223,13 @@ async def embeddings_stub():
 
 @app.get("/healthz", response_model=HealthResponse)
 async def health():
+    # Use the new architecture
+    payload = await health_adapter.handle_health_check()
     return HealthResponse(
-        status="ok",
-        version="0.2.0",
+        status=payload["status"],
+        version=payload["version"],
         model_loaded=agent is not None,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.fromisoformat(payload["timestamp"]),
     )
 
 
@@ -209,14 +256,71 @@ class ExplainResponse(BaseModel):
 async def explain_endpoint(req: ExplainRequest):
     started = time.perf_counter()
     try:
+        # Validate request
+        if not req.src or not req.dst:
+            raise validation_error(
+                "Source and destination nodes are required",
+                details={"src_provided": bool(req.src), "dst_provided": bool(req.dst)},
+            )
+
+        if req.src == req.dst:
+            raise validation_error(
+                "Source and destination cannot be the same", details={"node": req.src}
+            )
+
         hops = req.hops if req.hops is not None else MAX_HOPS
+
+        if hops <= 0 or hops > MAX_HOPS:
+            raise validation_error(
+                f"Hops must be between 1 and {MAX_HOPS}",
+                details={"hops": hops, "max_hops": MAX_HOPS},
+            )
+
         data = explain_path(req.src, req.dst, hops)
+
         if not data["found"]:
             EXPLAIN_REQS.labels(status="error").inc()
-            raise HTTPException(status_code=404, detail="Path not found")
+            raise resource_error(
+                "Path not found between nodes",
+                details={
+                    "source": req.src,
+                    "destination": req.dst,
+                    "max_hops": hops,
+                },
+            )
+
         EXPLAIN_REQS.labels(status="success").inc()
         data["processing_ms"] = round((time.perf_counter() - started) * 1000, 1)
         return ExplainResponse(**data)
+
+    except Exception as exc:
+        if isinstance(exc, HTTPException):
+            raise
+
+        # Handle unexpected errors
+        service_error = create_service_error(
+            message=f"Path explanation failed: {exc!s}",
+            category=ErrorCategory.SYSTEM,
+            severity=ErrorSeverity.HIGH,
+            operation="path_explanation",
+            details={
+                "source": req.src,
+                "destination": req.dst,
+                "hops": req.hops,
+                "error_type": type(exc).__name__,
+            },
+        )
+
+        logger.error(
+            "Path explanation failed",
+            extra={
+                "error": service_error.to_dict(),
+                "request": {"src": req.src, "dst": req.dst, "hops": req.hops},
+            },
+        )
+
+        raise service_error
+
     finally:
         EXPLAIN_LATENCY.observe(time.perf_counter() - started)
 
@@ -250,22 +354,18 @@ async def query_endpoint(req: QueryRequest):
     """Process RAG query - migrated from server.py /query endpoint."""
     REQUESTS.inc()
     started = time.time()
-    try:
-        # TODO: Integrate with actual RAG pipeline
-        # For now, use chat engine as placeholder
-        result = _engine.process_chat(req.query, None)
-        processing_time = int((time.time() - started) * 1000)
 
-        return QueryResponse(
-            response=result.get("response", ""),
-            chunks=result.get("chunks", []),
-            processing_time_ms=processing_time,
-        )
-    except Exception:
-        logger.exception("Query processing failed")
-        raise HTTPException(status_code=500, detail="Query processing failed")
-    finally:
-        LATENCY.observe(time.time() - started)
+    # Use the new architecture
+    payload = await query_adapter.handle_query_request(
+        {"query": req.query, "limit": 10}
+    )
+
+    LATENCY.observe(time.time() - started)
+    return QueryResponse(
+        response=payload.get("results", [{}])[0].get("text", ""),
+        chunks=payload.get("results", []),
+        processing_time_ms=payload.get("processing_time_ms", 0),
+    )
 
 
 class UploadResponse(BaseModel):
@@ -278,25 +378,9 @@ class UploadResponse(BaseModel):
 @app.post("/v1/upload", response_model=UploadResponse)
 async def upload_endpoint(file: UploadFile = File(...)):
     """Upload file to vector store - migrated from server.py /upload endpoint."""
-    try:
-        if not file.filename:
-            raise HTTPException(status_code=400, detail="No file selected")
-
-        # TODO: Integrate with actual vector store
-        # For now, just validate and return success
-        content = await file.read()
-
-        return UploadResponse(
-            status="uploaded",
-            filename=file.filename,
-            size=len(content),
-            message="File processed successfully",
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Upload failed: {e}")
-        raise HTTPException(status_code=500, detail="Upload processing failed")
+    # Use the new architecture
+    payload = await upload_adapter.handle_upload_request(file)
+    return UploadResponse(**payload)
 
 
 # Debug endpoints (non-production)

@@ -1,7 +1,7 @@
 import asyncio
 import unittest
 
-from communications.protocol import (
+from core.error_handling import (
     Message,
     MessageType,
     Priority,

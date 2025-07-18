@@ -2,7 +2,7 @@ import logging
 from typing import Any
 
 from agents.utils.task import Task as LangroidTask
-from communications.protocol import Message, MessageType
+from core.error_handling import Message, MessageType
 
 logger = logging.getLogger(__name__)
 

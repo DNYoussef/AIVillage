@@ -7,7 +7,7 @@ from langroid.language_models.openai_gpt import OpenAIGPTConfig
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from rag_system.error_handling.error_handler import (
+from core.error_handling import (
     AIVillageException,
     error_handler,
     safe_execute,

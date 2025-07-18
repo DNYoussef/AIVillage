@@ -1,0 +1,305 @@
+#!/usr/bin/env python3
+"""Migration script for standardizing error handling across AIVillage.
+
+This script automates the migration from legacy exception handling to the new
+unified error handling system in core/error_handling.py.
+
+Usage:
+    python scripts/migrate_error_handling.py [--dry-run] [--backup] [--verbose]
+
+Options:
+    --dry-run   Preview changes without making them
+    --backup    Create backup files before modification
+    --verbose   Show detailed progress information
+"""
+
+import argparse
+from pathlib import Path
+import re
+import shutil
+import sys
+
+# Legacy exception patterns to migrate
+LEGACY_PATTERNS = {
+    # Exception classes to replace
+    "exception_classes": [
+        "from core.error_handling import AIVillageException",
+        "from core.error_handling import AIVillageException",
+        "from core.error_handling import AIVillageException",
+        "from core.error_handling import AIVillageException",
+        "from core.error_handling import AIVillageError",
+        "from core.error_handling import AIVillageError",
+    ],
+    # Import statements to update
+    "import_patterns": [
+        (r"from\s+exceptions\s+import\s+(.+)", r"from core.error_handling import \1"),
+        (
+            r"from\s+agents\.utils\.exceptions\s+import\s+(.+)",
+            r"from core.error_handling import \1",
+        ),
+        (
+            r"from\s+communications\.protocol\s+import\s+(.+)",
+            r"from core.error_handling import \1",
+        ),
+        (
+            r"from\s+rag_system\.error_handling\.error_handler\s+import\s+(.+)",
+            r"from core.error_handling import \1",
+        ),
+    ],
+    # Exception usage patterns
+    "usage_patterns": [
+        (r"raise\s+AIVillageException\(([^,]+)\)", r"raise AIVillageException(\1)"),
+        (r"raise\s+AIVillageError\(([^,]+)\)", r"raise AIVillageException(\1)"),
+    ],
+}
+
+# Files to exclude from migration
+EXCLUDE_PATTERNS = [
+    "*/__pycache__/*",
+    "*/.git/*",
+    "*/venv/*",
+    "*/env/*",
+    "*/node_modules/*",
+    "*/dist/*",
+    "*/build/*",
+    "*/.pytest_cache/*",
+    "*/migrations/*",
+    "*/legacy/*",
+]
+
+# Priority files for migration (processed first)
+PRIORITY_FILES = [
+    "agents/unified_base_agent.py",
+    "rag_system/core/pipeline.py",
+    "communications/protocol.py",
+    "services/gateway/main.py",
+    "services/twin/main.py",
+]
+
+
+class ErrorHandlingMigrator:
+    """Handles migration of error handling patterns across the codebase."""
+
+    def __init__(
+        self, dry_run: bool = False, backup: bool = False, verbose: bool = False
+    ):
+        self.dry_run = dry_run
+        self.backup = backup
+        self.verbose = verbose
+        self.stats = {
+            "files_processed": 0,
+            "files_modified": 0,
+            "imports_updated": 0,
+            "exceptions_updated": 0,
+            "errors": [],
+        }
+
+    def log(self, message: str, level: str = "INFO"):
+        """Log message with appropriate level."""
+        if self.verbose or level == "ERROR":
+            print(f"[{level}] {message}")
+
+    def should_exclude(self, file_path: Path) -> bool:
+        """Check if file should be excluded from migration."""
+        path_str = str(file_path)
+        for pattern in EXCLUDE_PATTERNS:
+            if pattern.replace("*/", "") in path_str.replace("\\", "/"):
+                return True
+        return False
+
+    def find_python_files(self, root_dir: Path) -> list[Path]:
+        """Find all Python files in the directory tree."""
+        python_files = []
+
+        # Process priority files first
+        for priority_file in PRIORITY_FILES:
+            priority_path = root_dir / priority_file
+            if priority_path.exists() and not self.should_exclude(priority_path):
+                python_files.append(priority_path)
+
+        # Then process all other Python files
+        for py_file in root_dir.rglob("*.py"):
+            if py_file not in python_files and not self.should_exclude(py_file):
+                python_files.append(py_file)
+
+        return python_files
+
+    def create_backup(self, file_path: Path) -> Path:
+        """Create a backup of the file."""
+        backup_path = file_path.with_suffix(file_path.suffix + ".backup")
+        if not self.dry_run:
+            shutil.copy2(file_path, backup_path)
+        self.log(f"Created backup: {backup_path}")
+        return backup_path
+
+    def update_imports(self, content: str) -> tuple[str, int]:
+        """Update import statements to use new error handling."""
+        updated_content = content
+        import_count = 0
+
+        for old_import, new_import in LEGACY_PATTERNS["import_patterns"]:
+            pattern = re.compile(old_import, re.MULTILINE)
+            matches = pattern.findall(updated_content)
+            if matches:
+                updated_content = pattern.sub(new_import, updated_content)
+                import_count += len(matches)
+
+        # Handle direct exception class replacements
+        for legacy_class in LEGACY_PATTERNS["exception_classes"]:
+            if legacy_class in updated_content:
+                updated_content = updated_content.replace(
+                    legacy_class, "from core.error_handling import AIVillageException"
+                )
+                import_count += 1
+
+        return updated_content, import_count
+
+    def update_exception_usage(self, content: str) -> tuple[str, int]:
+        """Update exception usage patterns."""
+        updated_content = content
+        usage_count = 0
+
+        for pattern, replacement in LEGACY_PATTERNS["usage_patterns"]:
+            regex = re.compile(pattern, re.MULTILINE)
+            matches = regex.findall(updated_content)
+            if matches:
+                updated_content = regex.sub(replacement, updated_content)
+                usage_count += len(matches)
+
+        return updated_content, usage_count
+
+    def process_file(self, file_path: Path) -> bool:
+        """Process a single file for migration."""
+        try:
+            self.log(f"Processing: {file_path}")
+
+            with open(file_path, encoding="utf-8") as f:
+                original_content = f.read()
+
+            # Skip if no legacy patterns found
+            has_legacy = any(
+                pattern in original_content
+                for pattern in LEGACY_PATTERNS["exception_classes"]
+            )
+
+            if not has_legacy:
+                # Check regex patterns
+                for pattern, _ in LEGACY_PATTERNS["import_patterns"]:
+                    if re.search(pattern, original_content):
+                        has_legacy = True
+                        break
+
+            if not has_legacy:
+                self.log(f"No legacy patterns found in {file_path}", "DEBUG")
+                return False
+
+            # Create backup if requested
+            if self.backup:
+                self.create_backup(file_path)
+
+            # Apply transformations
+            updated_content, import_count = self.update_imports(original_content)
+            updated_content, usage_count = self.update_exception_usage(updated_content)
+
+            total_changes = import_count + usage_count
+
+            if total_changes > 0:
+                if not self.dry_run:
+                    with open(file_path, "w", encoding="utf-8") as f:
+                        f.write(updated_content)
+
+                self.stats["files_modified"] += 1
+                self.stats["imports_updated"] += import_count
+                self.stats["exceptions_updated"] += usage_count
+
+                self.log(
+                    f"Updated {file_path}: {import_count} imports, {usage_count} usages"
+                )
+
+            return total_changes > 0
+
+        except Exception as e:
+            error_msg = f"Error processing {file_path}: {e!s}"
+            self.log(error_msg, "ERROR")
+            self.stats["errors"].append(error_msg)
+            return False
+
+    def run_migration(self, root_dir: Path) -> dict:
+        """Run the migration process."""
+        self.log("Starting error handling migration...")
+
+        python_files = self.find_python_files(root_dir)
+        self.log(f"Found {len(python_files)} Python files to process")
+
+        for file_path in python_files:
+            self.stats["files_processed"] += 1
+            self.process_file(file_path)
+
+        return self.stats
+
+    def generate_report(self) -> str:
+        """Generate a migration report."""
+        report = f"""
+Error Handling Migration Report
+==============================
+
+Files Processed: {self.stats["files_processed"]}
+Files Modified: {self.stats["files_modified"]}
+Imports Updated: {self.stats["imports_updated"]}
+Exception Usage Updated: {self.stats["exceptions_updated"]}
+Errors: {len(self.stats["errors"])}
+
+Errors Encountered:
+{chr(10).join(self.stats["errors"]) if self.stats["errors"] else "None"}
+
+Migration completed successfully!
+"""
+        return report
+
+
+def main():
+    """Main entry point."""
+    parser = argparse.ArgumentParser(
+        description="Migrate error handling to new unified system"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Preview changes without making them"
+    )
+    parser.add_argument(
+        "--backup", action="store_true", help="Create backup files before modification"
+    )
+    parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed progress information"
+    )
+    parser.add_argument(
+        "--root", type=str, default=".", help="Root directory to process"
+    )
+
+    args = parser.parse_args()
+
+    migrator = ErrorHandlingMigrator(
+        dry_run=args.dry_run, backup=args.backup, verbose=args.verbose
+    )
+
+    root_dir = Path(args.root).resolve()
+
+    if not root_dir.exists():
+        print(f"Error: Root directory {root_dir} does not exist")
+        sys.exit(1)
+
+    print(f"Starting migration from {root_dir}")
+    if args.dry_run:
+        print("DRY RUN MODE - No files will be modified")
+
+    stats = migrator.run_migration(root_dir)
+
+    print(migrator.generate_report())
+
+    if args.dry_run:
+        print(
+            "\nDRY RUN COMPLETE - Review changes above and run without --dry-run to apply"
+        )
+
+
+if __name__ == "__main__":
+    main()

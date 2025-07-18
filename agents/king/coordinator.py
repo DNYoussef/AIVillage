@@ -3,9 +3,14 @@ from typing import Any
 
 from agents.unified_base_agent import UnifiedBaseAgent
 from agents.utils.task import Task as LangroidTask
-from communications.protocol import Message, MessageType, StandardCommunicationProtocol
+from core.error_handling import (
+    AIVillageException,
+    Message,
+    MessageType,
+    StandardCommunicationProtocol,
+    error_handler,
+)
 from rag_system.core.config import UnifiedConfig
-from rag_system.error_handling.error_handler import AIVillageException, error_handler
 
 from ..magi.magi_agent import MagiAgent
 from ..sage.sage_agent import SageAgent

@@ -8,7 +8,7 @@ from langroid.language_models.openai_gpt import OpenAIGPTConfig
 import networkx as nx
 from torch import nn
 
-from communications.protocol import Message, MessageType, StandardCommunicationProtocol
+from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 from rag_system.core.pipeline import EnhancedRAGPipeline
 
 from ..quality_assurance_layer import QualityAssuranceLayer

@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from communications.protocol import (
+from core.error_handling import (
     StandardCommunicationProtocol,
 )
 

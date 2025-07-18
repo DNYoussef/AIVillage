@@ -40,7 +40,7 @@ sys.modules.setdefault(
 )
 sys.modules.setdefault("matplotlib.pyplot", types.ModuleType("matplotlib.pyplot"))
 
-from communications.protocol import (
+from core.error_handling import (
     StandardCommunicationProtocol,
     Message,
     MessageType,
@@ -48,9 +48,7 @@ from communications.protocol import (
 import importlib  # noqa: E402
 
 SageAgent = importlib.import_module("agents.sage.sage_agent").SageAgent  # noqa: E402
-UnifiedConfig = importlib.import_module(
-    "rag_system.core.config"
-).UnifiedConfig  # noqa: E402
+UnifiedConfig = importlib.import_module("rag_system.core.config").UnifiedConfig  # noqa: E402
 EvidencePack = importlib.import_module("core.evidence").EvidencePack  # noqa: E402
 
 

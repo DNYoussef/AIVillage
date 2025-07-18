@@ -6,8 +6,8 @@ import logging
 from typing import Any
 import uuid
 
-from agents.utils.exceptions import AIVillageException
-from communications.protocol import (
+from core.error_handling import (
+    AIVillageException,
     Message,
     MessageType,
     Priority,

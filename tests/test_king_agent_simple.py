@@ -14,7 +14,7 @@ class TestKingAgentBasic(unittest.TestCase):
         try:
             # Try to import core components
             from agents.unified_base_agent import UnifiedBaseAgent
-            from communications.protocol import (
+            from core.error_handling import (
                 Message,
                 MessageType,
                 StandardCommunicationProtocol,
@@ -58,7 +58,7 @@ class TestKingAgentBasic(unittest.TestCase):
     def test_communication_protocol(self):
         """Test communication protocol functionality."""
         try:
-            from communications.protocol import (
+            from core.error_handling import (
                 Message,
                 MessageType,
                 StandardCommunicationProtocol,

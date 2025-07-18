@@ -16,7 +16,7 @@ from agents.unified_base_agent import (
     UnifiedBaseAgent,
 )
 from agents.utils.task import Task as LangroidTask
-from communications.protocol import StandardCommunicationProtocol
+from core.error_handling import StandardCommunicationProtocol
 
 
 class DummyAgent(UnifiedBaseAgent):

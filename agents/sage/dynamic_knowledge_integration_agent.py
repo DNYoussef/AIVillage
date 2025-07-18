@@ -5,7 +5,7 @@ from typing import Any
 
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
-from rag_system.error_handling.error_handler import (
+from core.error_handling import (
     AIVillageException,
     error_handler,
     safe_execute,

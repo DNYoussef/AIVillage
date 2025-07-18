@@ -3,7 +3,7 @@ from typing import Any
 
 from torch import nn
 
-from agents.utils.exceptions import AIVillageException
+from core.error_handling import AIVillageException
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 
-from rag_system.error_handling.error_handler import (
+from core.error_handling import (
     error_handler,
     safe_execute,
 )

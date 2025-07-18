@@ -1,33 +1,38 @@
 import asyncio
 from datetime import datetime
-from typing import Dict, Any
-from agents.utils.task import Task as LangroidTask
+from typing import Any
 
-from rag_system.core.config import UnifiedConfig, load_from_yaml
-from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
-from rag_system.utils.embedding import BERTEmbeddingModel
-from rag_system.utils.advanced_analytics import AdvancedAnalytics
-from rag_system.utils.standardized_formats import create_standardized_prompt, create_standardized_output, OutputFormat
-from rag_system.retrieval.hybrid_retriever import HybridRetriever
-from rag_system.processing.reasoning_engine import UncertaintyAwareReasoningEngine
-from rag_system.processing.advanced_nlp import AdvancedNLP
-from rag_system.core.cognitive_nexus import CognitiveNexus
-from rag_system.core.exploration_mode import ExplorationMode
-from rag_system.evaluation.comprehensive_evaluation import ComprehensiveEvaluationFramework
 from agents.king.king_agent import KingAgent
-from agents.unified_base_agent import UnifiedAgentConfig
-from communications.protocol import StandardCommunicationProtocol
-from rag_system.retrieval.vector_store import VectorStore
-from rag_system.retrieval.graph_store import GraphStore
 from agents.language_models.openai_gpt import OpenAIGPTConfig
-from rag_system.utils.error_handling import log_and_handle_errors, setup_logging, RAGSystemError
+from agents.unified_base_agent import UnifiedAgentConfig
+from agents.utils.task import Task as LangroidTask
+from core.error_handling import StandardCommunicationProtocol
+from rag_system.core.cognitive_nexus import CognitiveNexus
+from rag_system.core.config import UnifiedConfig, load_from_yaml
+from rag_system.core.exploration_mode import ExplorationMode
+from rag_system.core.pipeline import EnhancedRAGPipeline
+from rag_system.evaluation.comprehensive_evaluation import (
+    ComprehensiveEvaluationFramework,
+)
+from rag_system.processing.advanced_nlp import AdvancedNLP
+from rag_system.processing.reasoning_engine import UncertaintyAwareReasoningEngine
+from rag_system.retrieval.graph_store import GraphStore
+from rag_system.retrieval.hybrid_retriever import HybridRetriever
+from rag_system.retrieval.vector_store import VectorStore
+from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
+from rag_system.utils.advanced_analytics import AdvancedAnalytics
+from rag_system.utils.embedding import BERTEmbeddingModel
+from rag_system.utils.error_handling import (
+    log_and_handle_errors,
+    setup_logging,
+)
 
 logger = setup_logging()
 rag_config = UnifiedConfig()
 
+
 @log_and_handle_errors
-async def initialize_components() -> Dict[str, Any]:
+async def initialize_components() -> dict[str, Any]:
     vector_store = VectorStore()
     graph_store = GraphStore()
     knowledge_tracker = UnifiedKnowledgeTracker(vector_store, graph_store)
@@ -43,7 +48,7 @@ async def initialize_components() -> Dict[str, Any]:
         rag_config=rag_config,
         vector_store=vector_store,
         model="gpt-4",
-        instructions="You are the main coordinating agent for the RAG system. Your role is to manage tasks, make decisions, and analyze problems."
+        instructions="You are the main coordinating agent for the RAG system. Your role is to manage tasks, make decisions, and analyze problems.",
     )
 
     components = {
@@ -55,37 +60,63 @@ async def initialize_components() -> Dict[str, Any]:
         "cognitive_nexus": CognitiveNexus(),
         "pipeline": EnhancedRAGPipeline(rag_config, knowledge_tracker),
         "communication_protocol": communication_protocol,
-        "king_agent": KingAgent(king_agent_config, communication_protocol, vector_store, knowledge_tracker),
+        "king_agent": KingAgent(
+            king_agent_config, communication_protocol, vector_store, knowledge_tracker
+        ),
         "knowledge_tracker": knowledge_tracker,
         "exploration_mode": ExplorationMode(graph_store, llm_config, advanced_nlp),
         "advanced_analytics": advanced_analytics,
         "evaluation_framework": ComprehensiveEvaluationFramework(advanced_analytics),
-        "advanced_nlp": advanced_nlp
+        "advanced_nlp": advanced_nlp,
     }
 
     # Initialize evaluation metrics
-    components["evaluation_framework"].add_metric("query_processing_time", "Time taken to process a user query")
-    components["evaluation_framework"].add_metric("task_processing_time", "Time taken to process an agent task")
-    components["evaluation_framework"].add_metric("retrieval_count", "Number of items retrieved for a query")
-    components["evaluation_framework"].add_metric("exploration_time", "Time taken for knowledge graph exploration")
-    components["evaluation_framework"].add_metric("explored_nodes", "Number of nodes explored in the knowledge graph")
-    components["evaluation_framework"].add_metric("new_relations", "Number of new relations discovered")
-    components["evaluation_framework"].add_metric("response_relevance", "Relevance score of the response to the query")
-    components["evaluation_framework"].add_metric("response_coherence", "Coherence score of the generated response")
-    components["evaluation_framework"].add_metric("knowledge_graph_density", "Density of the knowledge graph")
-    components["evaluation_framework"].add_metric("system_latency", "Overall system latency")
+    components["evaluation_framework"].add_metric(
+        "query_processing_time", "Time taken to process a user query"
+    )
+    components["evaluation_framework"].add_metric(
+        "task_processing_time", "Time taken to process an agent task"
+    )
+    components["evaluation_framework"].add_metric(
+        "retrieval_count", "Number of items retrieved for a query"
+    )
+    components["evaluation_framework"].add_metric(
+        "exploration_time", "Time taken for knowledge graph exploration"
+    )
+    components["evaluation_framework"].add_metric(
+        "explored_nodes", "Number of nodes explored in the knowledge graph"
+    )
+    components["evaluation_framework"].add_metric(
+        "new_relations", "Number of new relations discovered"
+    )
+    components["evaluation_framework"].add_metric(
+        "response_relevance", "Relevance score of the response to the query"
+    )
+    components["evaluation_framework"].add_metric(
+        "response_coherence", "Coherence score of the generated response"
+    )
+    components["evaluation_framework"].add_metric(
+        "knowledge_graph_density", "Density of the knowledge graph"
+    )
+    components["evaluation_framework"].add_metric(
+        "system_latency", "Overall system latency"
+    )
 
     return components
 
+
 @log_and_handle_errors
-async def process_user_query(components: Dict[str, Any], query: str) -> Dict[str, Any]:
+async def process_user_query(components: dict[str, Any], query: str) -> dict[str, Any]:
     king_agent = components["king_agent"]
     task = LangroidTask(king_agent, query, datetime.now().isoformat(), 1)
     task.type = "query"
     return await king_agent.execute_task(task)
 
+
 @log_and_handle_errors
-async def run_creative_exploration(components: Dict[str, Any], start_node: str, end_node: str):
+async def run_creative_exploration(
+    components: dict[str, Any], start_node: str, end_node: str
+):
     king_agent = components["king_agent"]
     task = LangroidTask(
         king_agent,
@@ -95,6 +126,7 @@ async def run_creative_exploration(components: Dict[str, Any], start_node: str, 
     )
     task.type = "creative_exploration"
     return await king_agent.execute_task(task)
+
 
 @log_and_handle_errors
 async def main():
@@ -112,17 +144,22 @@ async def main():
     # Run a creative exploration
     start_node = "artificial_intelligence"
     end_node = "human_creativity"
-    creative_exploration_result = await run_creative_exploration(components, start_node, end_node)
+    creative_exploration_result = await run_creative_exploration(
+        components, start_node, end_node
+    )
     print(f"Creative Exploration result: {creative_exploration_result}")
 
     # Generate and log evaluation report
-    evaluation_results = components["evaluation_framework"].evaluate_system_performance()
+    evaluation_results = components[
+        "evaluation_framework"
+    ].evaluate_system_performance()
     components["evaluation_framework"].log_evaluation_results(evaluation_results)
 
-    print(f"Evaluation complete. Check logs for detailed results.")
+    print("Evaluation complete. Check logs for detailed results.")
 
     # Evolve the KingAgent
     await components["king_agent"].evolve()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

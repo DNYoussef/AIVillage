@@ -5,7 +5,7 @@ from torch import nn
 
 from agents.unified_base_agent import UnifiedAgentConfig, UnifiedBaseAgent
 from agents.utils.task import Task as LangroidTask
-from communications.protocol import Message, MessageType, StandardCommunicationProtocol
+from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 from rag_system.core.pipeline import EnhancedRAGPipeline
 from rag_system.retrieval.vector_store import VectorStore
 from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker

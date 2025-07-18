@@ -1,0 +1,146 @@
+{
+  // MCP Servers Configuration for AIVillage Workspace
+  // This is the canonical configuration file with helpful comments
+  // Use scripts/import_mcp_to_claude.sh to import into Claude Code
+  //
+  // Configuration Overview:
+  // - Local stdio servers: markdown, memory, deep-wiki, sequential-thinking, context7
+  // - Remote SSE servers: github, huggingface, firecrawl, apify
+  // - All tokens use ${input:...} placeholders for security
+  // - Environment variables will be prompted when needed
+  "mcpServers": {
+    // GitHub Integration - Repository access via SSE
+    "github": {
+      "type": "sse",
+      "url": "https://mcp-github.com/sse",
+      "headers": {
+        "Authorization": "Bearer ${input:github-token}",
+        "User-Agent": "AIVillage-MCP-Client"
+      },
+      "disabled": false,
+      "timeout": 30,
+      "description": "GitHub repository access and management via SSE"
+    },
+    // Hugging Face Integration - Model discovery via SSE
+    "huggingface": {
+      "type": "sse",
+      "url": "https://mcp-huggingface.com/sse",
+      "headers": {
+        "Authorization": "Bearer ${input:hf-token}",
+        "Content-Type": "application/json"
+      },
+      "disabled": false,
+      "timeout": 30,
+      "description": "Hugging Face model search and information via SSE"
+    },
+    // Markdown Documentation Server - Local file access
+    "markdown": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-markdown"
+      ],
+      "env": {
+        "MARKDOWN_ROOT_PATH": "./docs"
+      },
+      "transport": "stdio",
+      "disabled": false,
+      "timeout": 30,
+      "description": "Local markdown documentation server"
+    },
+    // Memory Server - Persistent knowledge storage
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "env": {
+        "MEMORY_FILE_PATH": "./.mcp/memory.db"
+      },
+      "transport": "stdio",
+      "disabled": false,
+      "timeout": 30,
+      "alwaysAllow": [
+        "create_entity",
+        "read_graph",
+        "update_entity"
+      ],
+      "description": "Persistent memory and knowledge graph"
+    },
+    // Deep Wiki Server - Knowledge base management
+    "deep-wiki": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-deep-wiki"
+      ],
+      "env": {
+        "WIKI_ROOT_PATH": "./knowledgebase"
+      },
+      "transport": "stdio",
+      "disabled": false,
+      "timeout": 30,
+      "description": "Deep knowledge base for project documentation"
+    },
+    // Sequential Thinking - Multi-step reasoning
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "transport": "stdio",
+      "disabled": false,
+      "timeout": 30,
+      "alwaysAllow": [
+        "sequentialthinking"
+      ],
+      "description": "Multi-step reasoning and planning"
+    },
+    // Context7 - Code context and documentation
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-context7"
+      ],
+      "env": {
+        "AUTO_INDEX": "true",
+        "WORKSPACE_ROOT": "."
+      },
+      "transport": "stdio",
+      "disabled": false,
+      "timeout": 30,
+      "alwaysAllow": [
+        "search",
+        "get_context"
+      ],
+      "description": "Code context and documentation search"
+    },
+    // Firecrawl - Web scraping via SSE
+    "firecrawl": {
+      "type": "sse",
+      "url": "https://mcp-firecrawl.com/sse",
+      "headers": {
+        "Authorization": "Bearer ${input:firecrawl-key}",
+        "X-Allowed-Domains": "docs.mycompany.com,pypi.org/project"
+      },
+      "disabled": false,
+      "timeout": 30,
+      "description": "Web scraping with domain restrictions via SSE"
+    },
+    // Apify - Web automation via SSE
+    "apify": {
+      "type": "sse",
+      "url": "https://mcp-apify.com/sse",
+      "headers": {
+        "Authorization": "Bearer ${input:apify-token}",
+        "X-Allowed-Actors": "user/myCrawler,user/docsSync"
+      },
+      "disabled": false,
+      "timeout": 30,
+      "description": "Web automation with restricted actors via SSE"
+    }
+  }
+}

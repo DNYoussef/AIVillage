@@ -1,0 +1,119 @@
+﻿{
+    "mcpServers": {
+        "github": {
+            "type": "sse",
+            "url": "https://mcp-github.com/sse",
+            "headers": {
+                "Authorization": "Bearer ${input:github-token}",
+                "User-Agent": "AIVillage-MCP-Client"
+            },
+            "disabled": false,
+            "timeout": 30
+        },
+        "huggingface": {
+            "type": "sse",
+            "url": "https://mcp-huggingface.com/sse",
+            "headers": {
+                "Authorization": "Bearer ${input:hf-token}",
+                "Content-Type": "application/json"
+            },
+            "disabled": false,
+            "timeout": 30
+        },
+        "markdown": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-markdown"
+            ],
+            "env": {
+                "MARKDOWN_ROOT_PATH": "./docs"
+            },
+            "transport": "stdio",
+            "disabled": false,
+            "timeout": 30
+        },
+        "memory": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-memory"
+            ],
+            "env": {
+                "MEMORY_FILE_PATH": "./.mcp/memory.db"
+            },
+            "transport": "stdio",
+            "disabled": false,
+            "timeout": 30,
+            "alwaysAllow": [
+                "create_entity",
+                "read_graph",
+                "update_entity"
+            ]
+        },
+        "deep-wiki": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-deep-wiki"
+            ],
+            "env": {
+                "WIKI_ROOT_PATH": "./knowledgebase"
+            },
+            "transport": "stdio",
+            "disabled": false,
+            "timeout": 30
+        },
+        "sequential-thinking": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ],
+            "transport": "stdio",
+            "disabled": false,
+            "timeout": 30,
+            "alwaysAllow": [
+                "sequentialthinking"
+            ]
+        },
+        "context7": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-context7"
+            ],
+            "env": {
+                "AUTO_INDEX": "true",
+                "WORKSPACE_ROOT": "."
+            },
+            "transport": "stdio",
+            "disabled": false,
+            "timeout": 30,
+            "alwaysAllow": [
+                "search",
+                "get_context"
+            ]
+        },
+        "firecrawl": {
+            "type": "sse",
+            "url": "https://mcp-firecrawl.com/sse",
+            "headers": {
+                "Authorization": "Bearer ${input:firecrawl-key}",
+                "X-Allowed-Domains": "docs.mycompany.com,pypi.org/project"
+            },
+            "disabled": false,
+            "timeout": 30
+        },
+        "apify": {
+            "type": "sse",
+            "url": "https://mcp-apify.com/sse",
+            "headers": {
+                "Authorization": "Bearer ${input:apify-token}",
+                "X-Allowed-Actors": "user/myCrawler,user/docsSync"
+            },
+            "disabled": false,
+            "timeout": 30
+        }
+    }
+}

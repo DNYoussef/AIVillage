@@ -5,7 +5,7 @@ from typing import Any
 
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
-from communications.protocol import Message, MessageType, StandardCommunicationProtocol
+from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 
 from ..utils.exceptions import AIVillageException
 from .quality_assurance_layer import QualityAssuranceLayer

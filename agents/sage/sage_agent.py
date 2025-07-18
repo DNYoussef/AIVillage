@@ -10,7 +10,7 @@ import requests
 from agents.unified_base_agent import SelfEvolvingSystem, UnifiedBaseAgent
 from agents.utils.evidence_helpers import wrap_in_pack
 from agents.utils.task import Task as LangroidTask
-from communications.protocol import Message, MessageType, StandardCommunicationProtocol
+from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 from core.evidence import EvidencePack
 from rag_system.core.cognitive_nexus import CognitiveNexus
 from rag_system.core.config import UnifiedConfig

@@ -1,39 +1,51 @@
 import asyncio
 import logging
-import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
+
 import click
 import yaml
 
-from agents.utils.task import Task as LangroidTask
 from agents.king.king_agent import KingAgent
-from agents.sage.sage_agent import SageAgent
 from agents.magi.magi_agent import MagiAgent
+from agents.sage.sage_agent import SageAgent
+from agents.utils.task import Task as LangroidTask
+from core.error_handling import (
+    StandardCommunicationProtocol,
+    error_handler,
+    safe_execute,
+)
 from rag_system.core.config import UnifiedConfig
-from rag_system.retrieval.vector_store import VectorStore
-from communications.protocol import StandardCommunicationProtocol
 from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.error_handling.error_handler import error_handler, safe_execute, AIVillageException
+from rag_system.retrieval.vector_store import VectorStore
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
+
 class AIVillageSystem:
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = UnifiedConfig(**config)
         self.communication_protocol = StandardCommunicationProtocol()
         self.vector_store = VectorStore(self.config.vector_store_config)
         self.rag_pipeline = EnhancedRAGPipeline(self.config)
-        
-        self.king_agent = KingAgent(self.config, self.communication_protocol, self.vector_store)
-        self.sage_agent = SageAgent(self.config, self.communication_protocol, self.vector_store)
-        self.magi_agent = MagiAgent(self.config, self.communication_protocol, self.vector_store)
-        
+
+        self.king_agent = KingAgent(
+            self.config, self.communication_protocol, self.vector_store
+        )
+        self.sage_agent = SageAgent(
+            self.config, self.communication_protocol, self.vector_store
+        )
+        self.magi_agent = MagiAgent(
+            self.config, self.communication_protocol, self.vector_store
+        )
+
         self.agents = {
             "king": self.king_agent,
             "sage": self.sage_agent,
-            "magi": self.magi_agent
+            "magi": self.magi_agent,
         }
 
     @safe_execute
@@ -45,7 +57,7 @@ class AIVillageSystem:
         logger.info("AI Village System initialized successfully")
 
     @safe_execute
-    async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_task(self, task: dict[str, Any]) -> dict[str, Any]:
         logger.info(f"Processing task: {task}")
         langroid_task = LangroidTask(
             self.king_agent,
@@ -61,7 +73,9 @@ class AIVillageSystem:
     @safe_execute
     async def run_analytics(self):
         while True:
-            analytics_report = self.king_agent.unified_analytics.generate_summary_report()
+            analytics_report = (
+                self.king_agent.unified_analytics.generate_summary_report()
+            )
             logger.info(f"Analytics Report: {analytics_report}")
             await asyncio.sleep(3600)  # Run analytics every hour
 
@@ -79,10 +93,10 @@ class AIVillageSystem:
         await self.initialize()
         analytics_task = asyncio.create_task(self.run_analytics())
         evolution_task = asyncio.create_task(self.evolve_system())
-        
+
         while True:
             user_input = await self.get_user_input()
-            if user_input.lower() == 'exit':
+            if user_input.lower() == "exit":
                 break
             task = self.create_task_from_input(user_input)
             await self.process_task(task)
@@ -94,34 +108,38 @@ class AIVillageSystem:
     async def get_user_input(self) -> str:
         # Non-blocking input for async context
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, input, "Enter your task (or 'exit' to quit): ")
+        return await loop.run_in_executor(
+            None, input, "Enter your task (or 'exit' to quit): "
+        )
 
-    def create_task_from_input(self, user_input: str) -> Dict[str, Any]:
-        return {
-            "type": "user_query",
-            "content": user_input,
-            "priority": 1
-        }
+    def create_task_from_input(self, user_input: str) -> dict[str, Any]:
+        return {"type": "user_query", "content": user_input, "priority": 1}
 
-def load_config(config_path: str) -> Dict[str, Any]:
+
+def load_config(config_path: str) -> dict[str, Any]:
     """Load configuration from external file."""
     config_file = Path(config_path)
     if not config_file.exists():
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
-    
-    with open(config_file, 'r') as f:
+
+    with open(config_file) as f:
         return yaml.safe_load(f)
 
+
 @click.command()
-@click.option('--config', '-c', default='configs/rag_config.yaml', 
-              help='Path to configuration file')
-@click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
+@click.option(
+    "--config",
+    "-c",
+    default="configs/rag_config.yaml",
+    help="Path to configuration file",
+)
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging")
 @error_handler.handle_error
 async def main(config: str, verbose: bool):
     """Main entry point for AI Village System."""
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
-    
+
     try:
         config_data = load_config(config)
         logger.info(f"Loaded configuration from {config}")
@@ -131,9 +149,10 @@ async def main(config: str, verbose: bool):
     except yaml.YAMLError as e:
         logger.error(f"Invalid YAML in configuration file: {e}")
         raise click.ClickException(f"Invalid configuration file: {config}")
-    
+
     ai_village = AIVillageSystem(config_data)
     await ai_village.run()
+
 
 if __name__ == "__main__":
     # Proper async CLI entry point

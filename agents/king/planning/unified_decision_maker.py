@@ -14,8 +14,7 @@ import networkx as nx
 import torch
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
-from agents.utils.exceptions import AIVillageException
-from communications.protocol import StandardCommunicationProtocol
+from core.error_handling import AIVillageException, StandardCommunicationProtocol
 from rag_system.core.pipeline import EnhancedRAGPipeline
 
 from .quality_assurance_layer import QualityAssuranceLayer
