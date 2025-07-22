@@ -8,7 +8,7 @@ from collections.abc import Sequence
 import logging
 import random
 
-from geometry.snapshot import snapshot
+from ..geometry.snapshot import snapshot
 import torch
 from torch.nn import functional as F
 

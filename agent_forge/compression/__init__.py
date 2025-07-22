@@ -6,7 +6,7 @@ import torch
 from torch import nn
 
 from .hyperfn import HyperCompressionEncoder
-from .seedlm import SeedLMCompressor
+from .seedlm import ProgressiveSeedLMEncoder, SeedLMCompressor, SeedLMConfig
 from .stage1_bitnet import convert_to_bitnet
 from .vptq import VPTQQuantizer
 
@@ -20,29 +20,63 @@ class CompressionConfig:
     bitnet_learning_rate: float = 1e-4
     seed_block_size: int = 8
     seed_latent_dim: int = 4
-    seed_num_candidates: int = 256
+    seed_num_candidates: int = 64  # Reduced for performance
     vptq_bits: float = 2.0
     vptq_vector_length: int = 32
     use_hyper: bool = True
     hyper_clusters: int = 16
+    # Enhanced SeedLM settings
+    use_progressive_seedlm: bool = False  # Use legacy by default for compatibility
+    seedlm_compression_level: float = 0.5
+    seedlm_preset: str = "balanced"  # Options: fast, balanced, quality
 
 
 class TwoStageCompressor:
     def __init__(self, config: CompressionConfig):
         self.config = config
-        self.seedlm = SeedLMCompressor(
-            config.seed_block_size, config.seed_latent_dim, config.seed_num_candidates
-        )
+
+        # Initialize SeedLM compressor (legacy or progressive)
+        if config.use_progressive_seedlm:
+            # Use enhanced progressive SeedLM encoder
+            seedlm_config = SeedLMConfig()
+            self.seedlm = ProgressiveSeedLMEncoder(seedlm_config)
+            self.use_progressive = True
+        else:
+            # Use legacy SeedLM compressor for compatibility
+            self.seedlm = SeedLMCompressor(
+                config.seed_block_size,
+                config.seed_latent_dim,
+                config.seed_num_candidates,
+            )
+            self.use_progressive = False
+
         self.vptq = VPTQQuantizer(config.vptq_bits, config.vptq_vector_length)
         self.hyper = (
             HyperCompressionEncoder(config.hyper_clusters) if config.use_hyper else None
         )
 
     def compress_layer(self, weight: torch.Tensor) -> dict:
-        seed_data = self.seedlm.compress_weight_matrix(weight)
-        decompressed = self.seedlm.decompress_weight_matrix(seed_data)
+        if self.use_progressive:
+            # Use progressive SeedLM encoder
+            compressed = self.seedlm.encode(
+                weight, compression_level=self.config.seedlm_compression_level
+            )
+            # Extract data portion for pipeline compatibility
+            seed_data = compressed.get("data", compressed)
+            decompressed = self.seedlm.decode(compressed)
+        else:
+            # Use legacy SeedLM compressor
+            seed_data = self.seedlm.compress_weight_matrix(weight)
+            decompressed = self.seedlm.decompress_weight_matrix(seed_data)
+
         vptq_data = self.vptq.quantize_weight_matrix(decompressed)
         result = {"seedlm": seed_data, "vptq": vptq_data}
+
+        # Add progressive metadata if using enhanced SeedLM
+        if self.use_progressive:
+            result["seedlm_progressive"] = True
+            result["seedlm_metadata"] = compressed.get("metadata", {})
+
         if self.hyper:
             hyper_data = self.hyper.compress_weight_matrix(decompressed)
             result["hyper"] = hyper_data
@@ -53,6 +87,16 @@ class TwoStageCompressor:
             return self.hyper.decompress_weight_matrix(data["hyper"])
         if "vptq" in data:
             return self.vptq.dequantize_weight_matrix(data["vptq"])
+
+        # Handle both progressive and legacy SeedLM data
+        if data.get("seedlm_progressive", False):
+            # Reconstruct progressive format
+            compressed = {
+                "data": data["seedlm"],
+                "metadata": data.get("seedlm_metadata", {}),
+            }
+            return self.seedlm.decode(compressed)
+        # Legacy format
         return self.seedlm.decompress_weight_matrix(data["seedlm"])
 
 

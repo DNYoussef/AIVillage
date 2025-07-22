@@ -1,8 +1,8 @@
 from collections.abc import Iterable
 
-from geometry.snapshot import geom_snapshot
-from meta.geo2z_policy import Geo2Z
-from optim.augmented_adam import AugmentedAdam
+from ..geometry.snapshot import snapshot
+from ..meta.geo2z_policy import Geo2Z
+from ..optim.augmented_adam import AugmentedAdam
 import torch
 
 from .pid_edgechaos import EdgePID
@@ -36,7 +36,7 @@ def train_geometry_model(
             out = model(x)
             loss = torch.nn.functional.mse_loss(out, y)
             loss.backward()
-            G = geom_snapshot(out.detach())
+            G = snapshot(out.detach())
             geom_vec = torch.tensor(
                 [G[k] for k in ["ID_nl", "ID_lin", "ratio", "entropy"]]
             )

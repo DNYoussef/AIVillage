@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from transformers import AutoTokenizer
 
-from ..geometry.snapshot import geom_snapshot
+from ..geometry.snapshot import snapshot
 from ..meta.geo2z_policy import Geo2Z, Replay
 from ..optim.augmented_adam import AugmentedAdam
 from ..training.curriculum import CurriculumGenerator, CurriculumLevel
@@ -202,7 +202,7 @@ class AgentForgeTrainingLoop:
 
             # Geometry snapshot
             hidden_states = logits.detach()  # Use logits as proxy for hidden states
-            self.state["G"] = geom_snapshot(
+            self.state["G"] = snapshot(
                 hidden_states.view(-1, hidden_states.size(-1))
             )
 
@@ -353,7 +353,7 @@ def run_level(dataset):
         loss_task.backward()
 
         # geometry
-        state["G"] = geom_snapshot(H.view(-1, H.size(-1)))
+        state["G"] = snapshot(H.view(-1, H.size(-1)))
         gslow = (
             optimizer._grad_window.abs().mean().item()
             if optimizer._grad_window is not None
@@ -420,7 +420,7 @@ def run_level(dataset):
         loss_task.backward()
 
         # geometry
-        state["G"] = geom_snapshot(H.view(-1, H.size(-1)))
+        state["G"] = snapshot(H.view(-1, H.size(-1)))
         gslow = (
             optimizer._grad_window.abs().mean().item()
             if optimizer._grad_window is not None

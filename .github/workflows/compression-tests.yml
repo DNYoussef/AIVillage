@@ -1,0 +1,271 @@
+name: Compression Pipeline Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'agent_forge/compression/**'
+      - 'tests/compression/**'
+      - 'config/compression.yaml'
+      - 'notebooks/compression_benchmarks.ipynb'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'agent_forge/compression/**'
+      - 'tests/compression/**'
+      - 'config/compression.yaml'
+      - 'notebooks/compression_benchmarks.ipynb'
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  compression-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    strategy:
+      matrix:
+        test-type: [unit, integration, benchmark]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-compression-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-compression-
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-benchmark pytest-xdist pytest-cov
+        pip install scipy numpy matplotlib seaborn pandas
+
+    - name: Install compression dependencies
+      run: |
+        # Install additional dependencies for compression testing
+        pip install psutil hashlib-compat
+
+    - name: Run unit tests
+      if: matrix.test-type == 'unit'
+      run: |
+        python -m pytest tests/compression/ \
+          --cov=agent_forge.compression \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term-missing \
+          -v \
+          --tb=short \
+          --maxfail=5
+
+    - name: Run integration tests
+      if: matrix.test-type == 'integration'
+      run: |
+        python -m pytest tests/test_stage1_compression.py \
+                        tests/test_compressed_loader.py \
+          -v \
+          --tb=short \
+          --maxfail=3
+
+    - name: Run mini-benchmark suite
+      if: matrix.test-type == 'benchmark'
+      run: |
+        # Run lightweight benchmarks suitable for CI
+        python -c "
+        import sys
+        import os
+        sys.path.insert(0, os.getcwd())
+
+        exec(open('agent_forge/compression/seedlm.py').read())
+
+        import torch
+        import time
+        import json
+
+        print('=== CI Compression Benchmarks ===')
+
+        # Test configurations
+        configs = [
+            ('fast', {'compression_level': 0.3, 'block_size': 8}),
+            ('balanced', {'compression_level': 0.5, 'block_size': 8}),
+        ]
+
+        # Test weights (small for CI speed)
+        test_weights = [
+            ('small', torch.randn(32, 64)),
+            ('medium', torch.randn(64, 128)),
+        ]
+
+        results = []
+
+        config = SeedLMConfig()
+        encoder = ProgressiveSeedLMEncoder(config)
+
+        for config_name, params in configs:
+            for weight_name, weight in test_weights:
+                start_time = time.time()
+                try:
+                    compressed = encoder.encode(weight, compression_level=params['compression_level'])
+                    reconstructed = encoder.decode(compressed)
+
+                    compression_time = time.time() - start_time
+                    relative_error = (torch.norm(weight - reconstructed) / torch.norm(weight)).item()
+
+                    result = {
+                        'config': config_name,
+                        'weight': weight_name,
+                        'compression_time': compression_time,
+                        'relative_error': relative_error,
+                        'success': True
+                    }
+
+                    print(f'{config_name} + {weight_name}: {compression_time:.2f}s, {relative_error:.4f} error')
+
+                except Exception as e:
+                    result = {
+                        'config': config_name,
+                        'weight': weight_name,
+                        'success': False,
+                        'error': str(e)
+                    }
+                    print(f'{config_name} + {weight_name}: FAILED - {e}')
+
+                results.append(result)
+
+        # Save results for artifact
+        with open('ci_benchmark_results.json', 'w') as f:
+            json.dump(results, f, indent=2)
+
+        # Check for failures
+        failures = [r for r in results if not r['success']]
+        if failures:
+            print(f'❌ {len(failures)} benchmark tests failed')
+            sys.exit(1)
+        else:
+            print(f'✅ All {len(results)} benchmark tests passed')
+        "
+
+    - name: Upload test coverage
+      if: matrix.test-type == 'unit'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: compression
+        name: compression-coverage
+
+    - name: Upload benchmark results
+      if: matrix.test-type == 'benchmark'
+      uses: actions/upload-artifact@v3
+      with:
+        name: compression-benchmark-results
+        path: |
+          ci_benchmark_results.json
+
+    - name: Archive test logs
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-logs-${{ matrix.test-type }}
+        path: |
+          pytest.log
+          *.log
+
+  compression-regression-check:
+    runs-on: ubuntu-latest
+    needs: compression-tests
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2  # Need previous commit for comparison
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install torch numpy scipy
+
+    - name: Download benchmark artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: compression-benchmark-results
+
+    - name: Check for performance regression
+      run: |
+        python -c "
+        import json
+        import sys
+
+        # Load current benchmark results
+        with open('ci_benchmark_results.json', 'r') as f:
+            results = json.load(f)
+
+        # Performance thresholds
+        MAX_COMPRESSION_TIME = 30.0  # seconds
+        MAX_RELATIVE_ERROR = 2.0      # relative error threshold
+
+        print('=== Performance Regression Check ===')
+
+        regressions = []
+
+        for result in results:
+            if not result['success']:
+                regressions.append(f\"Benchmark failed: {result['config']} + {result['weight']}\")
+                continue
+
+            if result['compression_time'] > MAX_COMPRESSION_TIME:
+                regressions.append(
+                    f\"Compression too slow: {result['config']} + {result['weight']} = {result['compression_time']:.2f}s\"
+                )
+
+            if result['relative_error'] > MAX_RELATIVE_ERROR:
+                regressions.append(
+                    f\"Accuracy degraded: {result['config']} + {result['weight']} = {result['relative_error']:.4f} error\"
+                )
+
+        if regressions:
+            print('❌ Performance regressions detected:')
+            for regression in regressions:
+                print(f'  - {regression}')
+            sys.exit(1)
+        else:
+            print('✅ No performance regressions detected')
+        "
+
+  security-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run security scan on compression code
+      uses: pypa/gh-action-pip-audit@v1.0.8
+      with:
+        inputs: requirements.txt
+
+    - name: Scan for secrets in compression files
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --only-verified --filter-entropy=4.5 --filter-regex-patterns="agent_forge/compression/.*\.py$"
