@@ -1,0 +1,45 @@
+# HypeRAG MCP Server Dependencies
+
+# Core MCP and WebSocket
+websockets>=11.0.3
+pydantic>=2.0.0
+
+# Authentication and security
+PyJWT>=2.8.0
+cryptography>=41.0.0
+
+# Configuration and data handling
+PyYAML>=6.0.1
+python-dotenv>=1.0.0
+
+# Storage backends
+duckdb>=0.9.0
+neo4j>=5.0.0
+redis>=5.0.0
+qdrant-client>=1.6.0
+
+# Machine learning and embeddings
+torch>=2.0.0
+transformers>=4.30.0
+sentence-transformers>=2.2.0
+numpy>=1.24.0
+
+# Data processing
+pandas>=2.0.0
+networkx>=3.0
+
+# Async and utilities
+asyncio-mqtt>=0.13.0
+aiofiles>=23.0.0
+httpx>=0.25.0
+
+# Monitoring and logging
+prometheus-client>=0.17.0
+structlog>=23.0.0
+
+# Development tools (optional)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+isort>=5.12.0
+mypy>=1.5.0
