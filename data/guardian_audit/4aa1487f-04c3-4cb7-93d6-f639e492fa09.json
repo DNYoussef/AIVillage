@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-07-23T01:27:47.031598",
+  "decision": "QUARANTINE",
+  "bridge_id": "test_bridge",
+  "score": 0.76,
+  "rationale": "Creative bridge plausibility: 0.90, score: 0.76",
+  "components": {
+    "structural_fix": 0.7,
+    "domain_veracity": 0.9,
+    "evidence_strength": 0.6
+  },
+  "id": "4aa1487f-04c3-4cb7-93d6-f639e492fa09"
+}

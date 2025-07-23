@@ -8,13 +8,31 @@ Provides brain-inspired dual-memory architecture with creativity, repair, and sa
 __version__ = "1.0.0"
 __author__ = "AIVillage Team"
 
-from .server import HypeRAGMCPServer
-from .auth import HypeRAGPermissions, PermissionManager
-from .models import AgentReasoningModel, ModelRegistry
-from .protocol import MCPProtocolHandler
+# Delayed imports to avoid dependency issues during testing
+def get_server():
+    from .server import HypeRAGMCPServer
+    return HypeRAGMCPServer
+
+# Only import what's essential
+try:
+    from .auth import HypeRAGPermissions, PermissionManager
+except ImportError:
+    HypeRAGPermissions = None
+    PermissionManager = None
+
+try:
+    from .models import AgentReasoningModel, ModelRegistry
+except ImportError:
+    AgentReasoningModel = None
+    ModelRegistry = None
+
+try:
+    from .protocol import MCPProtocolHandler
+except ImportError:
+    MCPProtocolHandler = None
 
 __all__ = [
-    "HypeRAGMCPServer",
+    "get_server",
     "HypeRAGPermissions",
     "PermissionManager",
     "AgentReasoningModel",

@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-07-23T01:27:46.984979",
+  "decision": "QUARANTINE",
+  "gdc_id": "GDC_HIGH",
+  "score": 0.7929999999999999,
+  "proposals": [
+    {
+      "type": "MockProposal",
+      "operation": "add_edge",
+      "target_id": "new_edge",
+      "confidence": 0.9,
+      "details": "MockProposal(add_edge, new_edge)"
+    }
+  ],
+  "rationale": "quarantine: excellent structural fix; moderate domain confidence; moderate evidence (score: 0.79)",
+  "components": {
+    "structural_fix": 1.0,
+    "domain_veracity": 0.7,
+    "evidence_strength": 0.5650000000000001
+  },
+  "id": "0808ff79-da5e-4f44-ab83-c4df0bf7a423"
+}

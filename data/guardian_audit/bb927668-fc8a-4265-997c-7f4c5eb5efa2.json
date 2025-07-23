@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-07-23T01:27:47.016539",
+  "decision": "REJECT",
+  "gdc_id": "GDC_TEST",
+  "score": 0.356,
+  "proposals": [
+    {
+      "type": "MockProposal",
+      "operation": "delete_edge",
+      "target_id": "edge1",
+      "confidence": 0.5,
+      "details": "MockProposal(delete_edge, edge1)"
+    }
+  ],
+  "rationale": "reject: poor structural fix; moderate domain confidence; moderate evidence (score: 0.36)",
+  "components": {
+    "structural_fix": 0.0,
+    "domain_veracity": 0.7,
+    "evidence_strength": 0.38
+  },
+  "id": "bb927668-fc8a-4265-997c-7f4c5eb5efa2"
+}
