@@ -18,6 +18,7 @@ import uuid
 
 from .templates import TemplateEncoder, ViolationTemplate, DomainField
 from .llm_driver import LLMDriver, ModelConfig, GenerationResponse
+from ..guardian.gate import GuardianGate
 
 
 class RepairOperationType(Enum):
@@ -440,7 +441,8 @@ class InnovatorAgent:
                  llm_driver: LLMDriver,
                  template_encoder: Optional[TemplateEncoder] = None,
                  prompt_composer: Optional[PromptComposer] = None,
-                 domain: str = "general"):
+                 domain: str = "general",
+                 guardian_gate: Optional[GuardianGate] = None):
         """
         Initialize Innovator Agent
 
@@ -449,11 +451,13 @@ class InnovatorAgent:
             template_encoder: Template encoder for subgraph conversion
             prompt_composer: Prompt composer for repair instructions
             domain: Domain specialization
+            guardian_gate: Guardian gate for proposal validation
         """
         self.llm_driver = llm_driver
         self.template_encoder = template_encoder or TemplateEncoder()
         self.prompt_composer = prompt_composer or PromptComposer(domain=domain)
         self.domain = domain
+        self.guardian_gate = guardian_gate or GuardianGate()
         self.logger = logging.getLogger(__name__)
 
         # Performance tracking
@@ -533,6 +537,14 @@ class InnovatorAgent:
                 potential_risks=self._assess_potential_risks(filtered_ops),
                 validation_notes=self._generate_validation_notes(filtered_ops, violation)
             )
+
+            # Validate through Guardian Gate
+            guardian_result = await self._validate_with_guardian(proposal, violation)
+            proposal.validation_notes.extend(guardian_result.get("notes", []))
+
+            # Record Guardian decision in metadata
+            if "guardian_decision" not in proposal.validation_notes:
+                proposal.validation_notes.append(f"Guardian decision: {guardian_result.get('decision', 'UNKNOWN')}")
 
             # Record in history
             self._record_repair_attempt(proposal, violation)
@@ -921,3 +933,58 @@ class InnovatorAgent:
             llm_driver=driver,
             domain=domain
         )
+
+    async def _validate_with_guardian(self,
+                                    proposal: RepairProposal,
+                                    violation: ViolationTemplate) -> Dict[str, Any]:
+        """
+        Validate repair proposal through Guardian Gate
+
+        Args:
+            proposal: The repair proposal to validate
+            violation: The original violation
+
+        Returns:
+            Dictionary with validation results
+        """
+        try:
+            # Create mock violation object for Guardian Gate
+            from ..gdc.specs import Violation
+
+            # Convert ViolationTemplate to Violation format expected by Guardian
+            mock_violation = type('MockViolation', (), {
+                'id': violation.violation_id,
+                'severity': getattr(violation, 'severity', 'medium'),
+                'domain': self.domain,
+                'subgraph': getattr(violation, 'subgraph', {"nodes": [], "edges": []})
+            })()
+
+            # Validate repair through Guardian
+            decision = await self.guardian_gate.evaluate_repair(
+                proposal.operations,
+                mock_violation
+            )
+
+            validation_result = {
+                "decision": decision,
+                "notes": []
+            }
+
+            if decision == "APPLY":
+                validation_result["notes"].append("Guardian Gate approved all repair operations")
+            elif decision == "QUARANTINE":
+                validation_result["notes"].append("Guardian Gate flagged proposals for manual review")
+                proposal.potential_risks.append("Guardian validation required manual review")
+            else:  # REJECT
+                validation_result["notes"].append("Guardian Gate rejected repair proposals")
+                proposal.potential_risks.append("Guardian blocked this repair due to safety concerns")
+
+            self.logger.info(f"Guardian Gate decision for violation {violation.violation_id}: {decision}")
+            return validation_result
+
+        except Exception as e:
+            self.logger.error(f"Guardian validation failed: {e}")
+            return {
+                "decision": "ERROR",
+                "notes": [f"Guardian validation failed: {str(e)}"]
+            }

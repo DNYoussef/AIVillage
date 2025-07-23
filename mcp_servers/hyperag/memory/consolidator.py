@@ -21,6 +21,7 @@ from .base import (
 )
 from .hippo_index import HippoIndex, HippoNode
 from .hypergraph_kg import HypergraphKG, SemanticNode, Hyperedge, create_semantic_node, create_hyperedge
+from ..guardian.gate import GuardianGate
 
 logger = logging.getLogger(__name__)
 
@@ -200,17 +201,23 @@ class MemoryConsolidator:
     def __init__(self,
                  hippo_index: HippoIndex,
                  hypergraph_kg: HypergraphKG,
-                 config: ConsolidationConfig = None):
+                 config: ConsolidationConfig = None,
+                 guardian_gate: Optional[GuardianGate] = None):
         self.hippo = hippo_index
         self.semantic = hypergraph_kg
         self.config = config or ConsolidationConfig()
         self.pattern_detector = PatternDetector(self.config)
+        self.guardian_gate = guardian_gate or GuardianGate()
 
         # Consolidation tracking
         self.last_consolidation: Optional[datetime] = None
-        self.consolidation_stats: Dict[str, Any] = {}
+        self.consolidation_stats: Dict[str, Any] = {
+            "guardian_approvals": 0,
+            "guardian_quarantines": 0,
+            "guardian_rejections": 0
+        }
 
-        logger.info("MemoryConsolidator initialized")
+        logger.info("MemoryConsolidator initialized with Guardian Gate")
 
     async def run_consolidation_cycle(self,
                                     user_id: Optional[str] = None,
@@ -431,13 +438,21 @@ class MemoryConsolidator:
                     "pattern_type": "frequent_relation"
                 })
 
-                # Store in semantic memory
-                success = await self.semantic.store_hyperedge(hyperedge)
-                if success:
-                    result.created_hyperedges += 1
-                    result.processed_edges += pattern["frequency"]
+                # Validate through Guardian Gate before storing
+                guardian_approved = await self._validate_consolidation_with_guardian(
+                    hyperedge, "pattern_consolidation", result
+                )
+
+                if guardian_approved:
+                    # Store in semantic memory
+                    success = await self.semantic.store_hyperedge(hyperedge)
+                    if success:
+                        result.created_hyperedges += 1
+                        result.processed_edges += pattern["frequency"]
+                    else:
+                        result.errors.append(f"Failed to store hyperedge for pattern {pattern['relation']}")
                 else:
-                    result.errors.append(f"Failed to store hyperedge for pattern {pattern['relation']}")
+                    result.errors.append(f"Guardian blocked hyperedge for pattern {pattern['relation']}")
 
         except Exception as e:
             error_msg = f"Pattern consolidation failed: {str(e)}"
@@ -473,13 +488,21 @@ class MemoryConsolidator:
                     "consolidation_reason": "high_confidence_episodic"
                 })
 
-                # Store in semantic memory
-                success = await self.semantic.store_semantic_node(semantic_node)
-                if success:
-                    result.created_semantic_nodes += 1
-                    result.processed_nodes += 1
+                # Validate through Guardian Gate before storing
+                guardian_approved = await self._validate_consolidation_with_guardian(
+                    semantic_node, "node_consolidation", result
+                )
+
+                if guardian_approved:
+                    # Store in semantic memory
+                    success = await self.semantic.store_semantic_node(semantic_node)
+                    if success:
+                        result.created_semantic_nodes += 1
+                        result.processed_nodes += 1
+                    else:
+                        result.errors.append(f"Failed to store semantic node for {node.id}")
                 else:
-                    result.errors.append(f"Failed to store semantic node for {node.id}")
+                    result.errors.append(f"Guardian blocked semantic node for {node.id}")
 
         except Exception as e:
             error_msg = f"Node consolidation failed: {str(e)}"
@@ -547,6 +570,69 @@ class MemoryConsolidator:
                 return False
 
         return True
+
+    async def _validate_consolidation_with_guardian(self,
+                                                  item: Any,
+                                                  consolidation_type: str,
+                                                  result: ConsolidationResult) -> bool:
+        """
+        Validate consolidation items through Guardian Gate
+
+        Args:
+            item: The hyperedge or semantic node to validate
+            consolidation_type: Type of consolidation ("pattern_consolidation" or "node_consolidation")
+            result: ConsolidationResult to update with Guardian stats
+
+        Returns:
+            Boolean indicating if Guardian approved the consolidation
+        """
+        try:
+            # Create a creative bridge for Guardian validation
+            from ..guardian.gate import CreativeBridge
+
+            # Extract relevant information based on item type
+            if hasattr(item, 'relation'):  # Hyperedge
+                bridge_id = f"consolidation_{consolidation_type}_{item.relation}_{hash(str(item.participants)) % 10000}"
+                confidence = getattr(item, 'confidence', 0.7)
+            else:  # Semantic node
+                bridge_id = f"consolidation_{consolidation_type}_{hash(item.content) % 10000}"
+                confidence = getattr(item, 'confidence', 0.7)
+
+            bridge = CreativeBridge(
+                id=bridge_id,
+                confidence=confidence,
+                bridge_type=consolidation_type
+            )
+
+            # Add consolidation metadata to bridge if available
+            if hasattr(bridge, 'metadata'):
+                bridge.metadata = {
+                    "consolidation_type": consolidation_type,
+                    "item_type": type(item).__name__,
+                    "consolidation_batch": result.batch_id
+                }
+
+            # Validate through Guardian
+            decision = await self.guardian_gate.evaluate_creative(bridge)
+
+            # Update statistics
+            if decision == "APPLY":
+                self.consolidation_stats["guardian_approvals"] += 1
+                logger.debug(f"Guardian approved {consolidation_type} for {bridge_id}")
+                return True
+            elif decision == "QUARANTINE":
+                self.consolidation_stats["guardian_quarantines"] += 1
+                logger.warning(f"Guardian quarantined {consolidation_type} for {bridge_id}")
+                return False  # Don't store quarantined items automatically
+            else:  # REJECT
+                self.consolidation_stats["guardian_rejections"] += 1
+                logger.warning(f"Guardian rejected {consolidation_type} for {bridge_id}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Guardian validation failed during consolidation: {e}")
+            # Default to allowing consolidation on Guardian error to avoid blocking system
+            return True
 
 
 # Factory function for creating consolidator

@@ -16,6 +16,7 @@ from .plan_structures import (
 )
 from .query_classifier import QueryClassifier
 from .strategy_selector import StrategySelector
+from ..guardian.gate import GuardianGate
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +49,20 @@ class QueryPlanner:
 
     def __init__(self,
                  classifier: Optional[QueryClassifier] = None,
-                 strategy_selector: Optional[StrategySelector] = None):
+                 strategy_selector: Optional[StrategySelector] = None,
+                 guardian_gate: Optional[GuardianGate] = None):
         self.classifier = classifier or QueryClassifier()
         self.strategy_selector = strategy_selector or StrategySelector()
+        self.guardian_gate = guardian_gate or GuardianGate()
 
         # Planning configuration
         self.default_constraints = RetrievalConstraints()
         self.max_replan_attempts = 3
         self.confidence_threshold_for_replan = 0.5
+
+        # Guardian integration settings
+        self.guardian_confidence_threshold = 0.7
+        self.guardian_high_risk_domains = {"medical", "financial", "legal"}
 
         # Planning history for learning
         self.planning_history = []
@@ -63,7 +70,9 @@ class QueryPlanner:
             "plans_created": 0,
             "successful_plans": 0,
             "replans_triggered": 0,
-            "avg_plan_confidence": 0.0
+            "avg_plan_confidence": 0.0,
+            "guardian_blocks": 0,
+            "guardian_approvals": 0
         }
 
     async def create_plan(self,
@@ -522,3 +531,65 @@ class QueryPlanner:
             }
 
         return stats
+
+    async def validate_final_answer(self,
+                                  answer: str,
+                                  confidence: float,
+                                  context: Dict[str, Any]) -> Tuple[bool, str]:
+        """
+        Validate final answer through Guardian Gate if confidence is low or domain is high-risk
+
+        Args:
+            answer: The final answer to validate
+            confidence: Confidence score from reasoning
+            context: Query context including domain information
+
+        Returns:
+            Tuple of (should_proceed, rationale)
+        """
+        try:
+            # Check if Guardian validation is needed
+            domain = context.get("domain", "general")
+            needs_validation = (
+                confidence < self.guardian_confidence_threshold or
+                domain in self.guardian_high_risk_domains
+            )
+
+            if not needs_validation:
+                return True, "Answer approved: sufficient confidence and low-risk domain"
+
+            logger.info(f"Triggering Guardian validation for domain '{domain}' with confidence {confidence:.3f}")
+
+            # Create a mock creative bridge for validation
+            # In a real implementation, this would be more sophisticated
+            from ..guardian.gate import CreativeBridge
+
+            bridge = CreativeBridge(
+                id=f"query_answer_{hash(answer) % 10000}",
+                confidence=confidence,
+                bridge_type="query_answer"
+            )
+
+            # Add answer context to bridge metadata if available
+            if hasattr(bridge, 'metadata'):
+                bridge.metadata = {
+                    "answer": answer[:200],  # Truncate for safety
+                    "domain": domain,
+                    "query_context": context.get("query_type", "unknown")
+                }
+
+            # Validate through Guardian
+            decision = await self.guardian_gate.evaluate_creative(bridge)
+
+            # Update metrics
+            if decision == "APPLY":
+                self.performance_metrics["guardian_approvals"] += 1
+                return True, f"Guardian approved answer (decision: {decision})"
+            else:
+                self.performance_metrics["guardian_blocks"] += 1
+                return False, f"Guardian blocked answer (decision: {decision})"
+
+        except Exception as e:
+            logger.error(f"Guardian validation failed: {e}")
+            # Default to allowing on error to avoid blocking legitimate queries
+            return True, f"Guardian validation error, defaulting to allow: {str(e)}"

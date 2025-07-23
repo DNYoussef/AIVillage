@@ -6,10 +6,14 @@ import pathlib
 import yaml
 import uuid
 import datetime
+import time
+import hashlib
+import json
 from typing import List, Literal, Dict, Any, Optional
 from dataclasses import dataclass
 
 from . import audit
+from .metrics import get_guardian_metrics
 
 Decision = Literal["APPLY", "QUARANTINE", "REJECT"]
 
@@ -48,6 +52,14 @@ class GuardianGate:
 
         self.policy_path = pathlib.Path(policy_path)
         self.policies = self._load_policies()
+        self.metrics = get_guardian_metrics()
+
+        # Initialize policy info in metrics
+        self.metrics.set_policy_info({
+            "version": "1.0",
+            "confidence_threshold": self.policies.get("thresholds", {}).get("apply", 0.8),
+            "quarantine_threshold": self.policies.get("thresholds", {}).get("quarantine", 0.4)
+        })
 
     def _load_policies(self) -> Dict[str, Any]:
         """Load policies from YAML configuration file."""
@@ -79,8 +91,15 @@ class GuardianGate:
         violation: Violation
     ) -> Decision:
         """Validate Innovator Repair set and return decision."""
-        # 1. Calculate semantic utility by applying proposals in-memory
-        structural_fix = await self._calculate_structural_fix(proposals, violation)
+        start_time = time.time()
+        domain = getattr(violation, 'domain', 'general')
+
+        try:
+            # 1. Calculate semantic utility by applying proposals in-memory
+            structural_fix = await self._calculate_structural_fix(proposals, violation)
+        except Exception as e:
+            structural_fix = 0.0
+            logger.warning(f"Failed to calculate structural fix: {e}")
 
         # 2. External fact check (stub implementation)
         domain_veracity = await self._external_fact_check(proposals, violation)
@@ -447,3 +466,94 @@ class GuardianGate:
             "confidence": getattr(proposal, 'confidence', 0.5),
             "details": str(proposal)
         }
+
+    def validate_adapter(self, adapter_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate a LoRA adapter registration."""
+        domain = adapter_info.get("domain", "general")
+        metrics = adapter_info.get("metrics", {})
+
+        # Check adapter quality metrics
+        accuracy = metrics.get("accuracy", 0)
+        perplexity = metrics.get("perplexity", float('inf'))
+
+        # Domain-specific thresholds
+        min_accuracy = self.policies.get("adapter_thresholds", {}).get(domain, {}).get("min_accuracy", 0.7)
+        max_perplexity = self.policies.get("adapter_thresholds", {}).get(domain, {}).get("max_perplexity", 100)
+
+        # Make decision
+        if accuracy < min_accuracy or perplexity > max_perplexity:
+            decision = "REJECT"
+            reason = f"Metrics below threshold: accuracy={accuracy:.3f} (min={min_accuracy}), perplexity={perplexity:.1f} (max={max_perplexity})"
+            confidence = 0.9
+        elif accuracy < min_accuracy + 0.1:  # Close to threshold
+            decision = "QUARANTINE"
+            reason = "Metrics close to minimum thresholds"
+            confidence = 0.6
+        else:
+            decision = "APPLY"
+            reason = "Adapter meets quality standards"
+            confidence = 0.95
+
+        # Generate signature for approved adapters
+        signature = None
+        if decision == "APPLY":
+            signature = self._generate_signature(adapter_info)
+
+        # Update metrics
+        self.metrics.record_validation(domain, decision, "adapter")
+
+        return {
+            "decision": decision,
+            "confidence": confidence,
+            "reason": reason,
+            "signature": signature
+        }
+
+    def _generate_signature(self, data: Dict[str, Any]) -> str:
+        """Generate a cryptographic signature for approved items."""
+        # Simple signature using SHA256 - in production use proper signing
+        content = json.dumps(data, sort_keys=True)
+        signature = hashlib.sha256(content.encode()).hexdigest()
+        return f"guardian_v1:{signature}"
+
+    def verify_signature(self, data: Dict[str, Any], signature: str) -> bool:
+        """Verify a Guardian signature."""
+        if not signature or not signature.startswith("guardian_v1:"):
+            return False
+
+        expected_signature = self._generate_signature(data)
+        return signature == expected_signature
+
+    async def validate_query_result(self, query_context: Dict[str, Any], result: Dict[str, Any]) -> Decision:
+        """Validate query results before returning to user."""
+        domain = query_context.get("domain", "general")
+        confidence = result.get("confidence", 0.5)
+
+        # High-risk domains require higher confidence
+        high_risk_domains = self.policies.get("high_risk_domains", ["medical", "financial"])
+
+        if domain in high_risk_domains and confidence < 0.7:
+            decision = "QUARANTINE"
+            reason = f"High-risk domain {domain} requires manual review for low confidence results"
+        elif confidence < self.policies["thresholds"]["quarantine"]:
+            decision = "REJECT"
+            reason = f"Result confidence {confidence:.2f} below minimum threshold"
+        else:
+            decision = "APPLY"
+            reason = "Result meets quality standards"
+
+        # Update metrics
+        self.metrics.record_validation(domain, decision, "query")
+
+        # Log audit record
+        audit_record = {
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "decision": decision,
+            "type": "query_validation",
+            "domain": domain,
+            "confidence": confidence,
+            "rationale": reason
+        }
+        audit.log(audit_record)
+
+        return decision
