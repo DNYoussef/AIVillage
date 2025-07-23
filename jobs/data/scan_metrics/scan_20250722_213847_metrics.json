@@ -1,0 +1,27 @@
+{
+  "scan_id": "scan_20250722_213847",
+  "start_time": "2025-07-22T21:38:47.685830",
+  "end_time": null,
+  "input_metrics": {
+    "hippo_log_entries_processed": 0,
+    "co_mention_pairs_found": 0,
+    "high_confidence_pairs": 0
+  },
+  "retrieval_metrics": {
+    "divergent_retrieval_calls": 0,
+    "candidate_edges_discovered": 0
+  },
+  "pipeline_metrics": {
+    "innovator_proposals_generated": 0,
+    "guardian_evaluations": 0,
+    "guardian_approved": 0,
+    "guardian_quarantined": 0,
+    "guardian_rejected": 0
+  },
+  "performance": {
+    "total_time_seconds": 0.0,
+    "avg_retrieval_time_ms": 0.0
+  },
+  "errors": [],
+  "warnings": []
+}

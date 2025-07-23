@@ -466,8 +466,8 @@ class HiddenLinkScanner:
     
     async def _step3_pipeline_processing(self, candidate_edges: List[CandidateEdge], 
                                         dry_run: bool):
-        """Step 3: Process candidates through Innovator → Guardian pipeline."""
-        self.logger.info("Step 3: Processing through Innovator → Guardian pipeline")
+        """Step 3: Process candidates through Innovator -> Guardian pipeline."""
+        self.logger.info("Step 3: Processing through Innovator -> Guardian pipeline")
         
         if not candidate_edges:
             self.logger.info("No candidate edges to process")
@@ -563,7 +563,7 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
     
     # Default configuration
     return {
-        "hippo_log_path": "data/hippo_logs",
+        "hippo_log_path": "../data/hippo_logs",
         "lookback_hours": 24,
         "min_co_mentions": 3,
         "max_pairs_to_scan": 50,
@@ -584,6 +584,10 @@ async def main():
     
     args = parser.parse_args()
     
+    # Create log directory  
+    log_dir = Path.cwd().parent / "data" / "scan_logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    
     # Setup logging
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(
@@ -591,12 +595,9 @@ async def main():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
             logging.StreamHandler(),
-            logging.FileHandler(f"data/scan_logs/hidden_link_scan_{datetime.now().strftime('%Y%m%d')}.log")
+            logging.FileHandler(str(log_dir / f"hidden_link_scan_{datetime.now().strftime('%Y%m%d')}.log"))
         ]
     )
-    
-    # Create log directory
-    Path("data/scan_logs").mkdir(parents=True, exist_ok=True)
     
     # Load configuration
     config = load_config(args.config)
