@@ -1,0 +1,58 @@
+{
+  "description": "Branch protection rules configuration for AI Village repository",
+  "protection_rules": [
+    {
+      "pattern": "main",
+      "required_status_checks": {
+        "strict": true,
+        "contexts": [
+          "Test Suite (3.10)",
+          "Test Suite (3.11)", 
+          "Test Suite (3.12)",
+          "Test Results Summary",
+          "Build Verification",
+          "Security Scan"
+        ]
+      },
+      "required_reviews": {
+        "required_approving_review_count": 1,
+        "dismiss_stale_reviews": true,
+        "require_code_owner_reviews": true,
+        "require_last_push_approval": false
+      },
+      "enforce_admins": false,
+      "required_linear_history": false,
+      "allow_force_pushes": false,
+      "allow_deletions": false,
+      "restrictions": {
+        "users": [],
+        "teams": [],
+        "apps": []
+      }
+    },
+    {
+      "pattern": "develop",
+      "required_status_checks": {
+        "strict": true,
+        "contexts": [
+          "Test Suite (3.11)",
+          "Build Verification"
+        ]
+      },
+      "required_reviews": {
+        "required_approving_review_count": 1,
+        "dismiss_stale_reviews": false,
+        "require_code_owner_reviews": false
+      },
+      "enforce_admins": false,
+      "allow_force_pushes": false,
+      "allow_deletions": false
+    }
+  ],
+  "implementation_notes": [
+    "This configuration should be applied via GitHub CLI or API",
+    "Example command: gh api repos/:owner/:repo/branches/main/protection -X PUT --input branch-protection.json",
+    "Required status checks must match the job names in workflows",
+    "Adjust required_approving_review_count based on team size"
+  ]
+}
