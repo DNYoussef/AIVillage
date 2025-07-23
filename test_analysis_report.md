@@ -60,7 +60,7 @@ Generated: 2025-07-23 11:53:00
 
 - ✅ test_credit_ledger_simple: Basic credit ledger functionality verified
 
-#### 2. Core Chat Engine Tests  
+#### 2. Core Chat Engine Tests
 **File**: `tests/core/test_chat_engine.py`
 **Status**: ✅ PASSED (2/2)
 **Execution Time**: 0.68s
@@ -68,11 +68,11 @@ Generated: 2025-07-23 11:53:00
 - ✅ test_process_chat: Chat processing pipeline working
 - ✅ test_process_chat_prefers_server_calib: Server calibration preference verified
 
-**Warnings**: 
+**Warnings**:
 - `datetime.utcnow()` deprecated usage detected
 
 #### 3. Configuration System Tests
-**File**: `tests/test_unified_config.py`  
+**File**: `tests/test_unified_config.py`
 **Status**: ✅ PASSED (5/5)
 **Execution Time**: 0.43s
 
@@ -82,13 +82,13 @@ Generated: 2025-07-23 11:53:00
 - ✅ test_get_method: Configuration getter methods work
 - ✅ test_update_method: Configuration update methods work
 
-**Warnings**: 
+**Warnings**:
 - Pydantic V1 validator deprecation warnings (5 instances)
 - Protected namespace conflicts on "model_name" fields
 
 #### 4. Message System Tests
 **File**: `tests/test_message.py`
-**Status**: ✅ PASSED (2/2) 
+**Status**: ✅ PASSED (2/2)
 **Execution Time**: 0.29s
 
 - ✅ test_helper_methods_and_metadata: Message helper functionality verified
@@ -101,7 +101,7 @@ Generated: 2025-07-23 11:53:00
 
 **Passed Tests (12)**:
 - ✅ Adapter entry creation and serialization
-- ✅ Registry initialization and basic operations  
+- ✅ Registry initialization and basic operations
 - ✅ Adapter registration with success/rejection/quarantine flows
 - ✅ Hash verification and duplicate handling
 - ✅ Adapter integrity verification and revocation
@@ -125,7 +125,7 @@ Generated: 2025-07-23 11:53:00
 **Failed Tests (13)**:
 1. **test_exception_creation**: `ErrorSeverity.HIGH` attribute doesn't exist
 2. **test_exception_with_cause**: `AIVillageException.__init__()` unexpected `component` parameter
-3. **test_exception_serialization**: `ErrorSeverity.MEDIUM` attribute doesn't exist  
+3. **test_exception_serialization**: `ErrorSeverity.MEDIUM` attribute doesn't exist
 4. **test_context_manager_success**: `ErrorContextManager.context` returns None
 5. **test_context_manager_exception**: `ErrorContextManager.__init__()` unexpected `context` parameter
 6. **test_context_manager_custom_category**: `ErrorCategory.DATABASE` attribute doesn't exist
@@ -147,7 +147,7 @@ Generated: 2025-07-23 11:53:00
 **Impact**: Blocks entire compression test suite
 **Dependencies Missing**: grokfast, transformers optimization modules
 
-#### 2. Credits API Tests  
+#### 2. Credits API Tests
 **File**: `tests/test_credits_api.py`
 **Error**: `ModuleNotFoundError: No module named 'fastapi'`
 **Impact**: Blocks all web API testing
@@ -160,7 +160,7 @@ Generated: 2025-07-23 11:53:00
 - Heavy ML dependencies causing collection timeouts
 - Inconsistent dependency availability across test environments
 
-### 2. **API Signature Mismatches** (65% of issues)  
+### 2. **API Signature Mismatches** (65% of issues)
 - Error handling system completely out of sync with tests
 - Constructor parameter mismatches across multiple classes
 - Enum/constant definitions missing or renamed
@@ -197,7 +197,7 @@ Generated: 2025-07-23 11:53:00
 4. **Security Systems**: Privacy framework tests blocked
 5. **API Endpoints**: FastAPI-based services unable to test
 
-### Functioning Coverage  
+### Functioning Coverage
 1. **Core Systems**: Configuration and messaging (90%+ pass rate)
 2. **Basic Infrastructure**: Stub systems and utilities
 3. **Partial Subsystems**: Some HypeRAG components working
@@ -211,7 +211,7 @@ Generated: 2025-07-23 11:53:00
 
 ### ⚠️ HIGH (Within 1 week)
 1. **Standardize Test Environment**: Ensure consistent dependency availability
-2. **Fix Test Isolation**: Address shared state issues in HypeRAG tests  
+2. **Fix Test Isolation**: Address shared state issues in HypeRAG tests
 3. **Migrate Pydantic Validators**: Update V1 validators to V2 field_validator
 
 ### 📋 MEDIUM (Within 2 weeks)

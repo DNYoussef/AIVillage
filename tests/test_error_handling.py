@@ -23,7 +23,7 @@ class TestAIVillageException:
         """Test basic exception creation."""
         context = ErrorContext(
             component="test",
-            operation="test_operation", 
+            operation="test_operation",
             details={"key": "value"}
         )
         exc = AIVillageException(

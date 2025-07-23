@@ -40,7 +40,7 @@ if torch_mod is not None:
     nn_mod.Module = object
     torch_mod.nn = nn_mod
     sys.modules.setdefault("torch.nn", nn_mod)
-    
+
     # Add cuda module with is_available function
     cuda_mod = types.ModuleType("torch.cuda")
     cuda_mod.is_available = lambda: False  # Stub returns False for no GPU
