@@ -1,0 +1,17 @@
+# HypeRAG Cron Jobs Configuration
+# 
+# Hidden Link Scanner - Runs nightly at 02:30 UTC
+# Surfaces candidate missing edges through co-mention analysis
+30 2 * * * /usr/bin/python3 /path/to/AIVillage/jobs/hyperag_scan_hidden_links.py --config /path/to/AIVillage/config/scanner_config.json
+
+# Weekly cleanup of old scan logs (Sundays at 03:00 UTC)
+0 3 * * 0 find /path/to/AIVillage/data/scan_logs -name "*.log" -mtime +30 -delete
+
+# Monthly metrics aggregation (First day of month at 04:00 UTC) 
+0 4 1 * * /usr/bin/python3 /path/to/AIVillage/jobs/aggregate_scan_metrics.py --month-report
+
+# Installation instructions:
+# 1. Replace /path/to/AIVillage with actual installation path
+# 2. Ensure Python environment has required dependencies
+# 3. Install with: crontab jobs/crontab_hyperag
+# 4. Verify with: crontab -l
