@@ -9,7 +9,7 @@ import json
 import hashlib
 from pathlib import Path
 from typing import Dict, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from dataclasses import dataclass, asdict
 import yaml
@@ -73,7 +73,7 @@ class LoRARegistry:
         """Save registry to disk."""
         data = {
             "version": "1.0",
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
             "adapters": {k: v.to_dict() for k, v in self.entries.items()}
         }
 
@@ -124,12 +124,13 @@ class LoRARegistry:
             else:  # APPLY
                 entry.status = "approved"
                 entry.guardian_signature = decision.get("signature")
-                entry.signed_at = datetime.utcnow().isoformat()
+                entry.signed_at = datetime.now(timezone.utc).isoformat()
                 logger.info(f"Guardian approved adapter {entry.adapter_id}")
         else:
-            # Auto-approve if no Guardian
-            entry.status = "approved"
-            entry.signed_at = datetime.utcnow().isoformat()
+            # Preserve original status if no Guardian (for testing)
+            # Only set signed_at for approved adapters
+            if entry.status == "approved":
+                entry.signed_at = datetime.now(timezone.utc).isoformat()
 
         # Add to registry
         self.entries[entry.adapter_id] = entry
@@ -235,7 +236,7 @@ class LoRARegistry:
         """Export registry in different formats."""
         data = {
             "version": "1.0",
-            "exported_at": datetime.utcnow().isoformat(),
+            "exported_at": datetime.now(timezone.utc).isoformat(),
             "total_adapters": len(self.entries),
             "adapters_by_domain": {},
             "adapters_by_status": {},

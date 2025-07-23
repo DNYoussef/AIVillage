@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import os
 
@@ -113,7 +113,7 @@ class TwinAgent:
             self._conversations[conv_id] = history
 
         history.append(
-            {"role": "user", "content": req.message, "ts": datetime.utcnow()}
+            {"role": "user", "content": req.message, "ts": datetime.now(timezone.utc)}
         )
 
         recent_msgs = "\n".join(m["content"] for m in history[-6:])
@@ -122,7 +122,7 @@ class TwinAgent:
         answer = self._model.infer(prompt)
 
         history.append(
-            {"role": "assistant", "content": answer, "ts": datetime.utcnow()}
+            {"role": "assistant", "content": answer, "ts": datetime.now(timezone.utc)}
         )
 
         raw_prob = 0.5
@@ -137,7 +137,7 @@ class TwinAgent:
         return ChatResponse(
             response=answer,
             conversation_id=conv_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             processing_time_ms=latency_ms,
             calibrated_prob=calibrated,
         )
@@ -394,7 +394,7 @@ async def debug_bayes_endpoint():
         "message": "Bayes network debug endpoint",
         "nodes": [],
         "edges": [],
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc),
     }
 
 
@@ -405,7 +405,7 @@ async def debug_logs_endpoint():
     return {
         "message": "Knowledge tracker logs endpoint",
         "logs": [],
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc),
     }
 
 

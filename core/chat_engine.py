@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import os
 import time
@@ -81,6 +81,6 @@ class ChatEngine:
             "conversation_id": conversation_id,
             "raw_prob": raw_prob,
             "calibrated_prob": calibrated,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "processing_time_ms": int((time.time() - started) * 1000),
         }

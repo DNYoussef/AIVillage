@@ -11,7 +11,7 @@ import hashlib
 import argparse
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -249,7 +249,7 @@ class LoRATrainer:
         adapter_hash = self.compute_adapter_hash(adapter_path)
 
         entry = {
-            "adapter_id": f"{domain}_lora_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "adapter_id": f"{domain}_lora_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             "sha256": adapter_hash,
             "domain": domain,
             "base_model": self.base_model_name,
@@ -261,7 +261,7 @@ class LoRATrainer:
                 "target_modules": self.peft_model.peft_config["default"].target_modules,
                 "lora_dropout": self.peft_model.peft_config["default"].lora_dropout
             },
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "guardian_signature": None  # To be filled by Guardian
         }
 

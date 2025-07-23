@@ -13,7 +13,7 @@ import random
 import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -263,7 +263,7 @@ Provide your repair in JSON format:
                 "metadata": {
                     "domain": self.domain,
                     "violation_type": violation["type"],
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
             })
 

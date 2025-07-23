@@ -5,7 +5,7 @@ Provides comprehensive error handling with categories, severity levels, and cont
 import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import functools
 import logging
@@ -75,8 +75,8 @@ class Message:
     content: Any
     sender: str
     recipient: str
-    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    message_id: str = field(default_factory=lambda: str(datetime.utcnow().timestamp()))
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    message_id: str = field(default_factory=lambda: str(datetime.now(timezone.utc).timestamp()))
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -99,8 +99,8 @@ class Message:
             content=data["content"],
             sender=data["sender"],
             recipient=data["recipient"],
-            timestamp=data.get("timestamp", datetime.utcnow().isoformat()),
-            message_id=data.get("message_id", str(datetime.utcnow().timestamp())),
+            timestamp=data.get("timestamp", datetime.now(timezone.utc).isoformat()),
+            message_id=data.get("message_id", str(datetime.now(timezone.utc).timestamp())),
             metadata=data.get("metadata", {}),
         )
 
@@ -166,7 +166,7 @@ class ErrorContext:
 
     def __post_init__(self):
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow().isoformat()
+            self.timestamp = datetime.now(timezone.utc).isoformat()
         if self.stack_trace is None:
             self.stack_trace = traceback.format_exc()
 

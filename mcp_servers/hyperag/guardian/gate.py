@@ -126,7 +126,7 @@ class GuardianGate:
 
         # 7. Log audit record
         audit_record = {
-            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "decision": decision,
             "gdc_id": getattr(violation, 'id', 'UNKNOWN'),
             "score": score,
@@ -164,7 +164,7 @@ class GuardianGate:
 
         # Log audit record
         audit_record = {
-            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "decision": decision,
             "bridge_id": getattr(bridge, 'id', 'UNKNOWN'),
             "score": score,
@@ -547,7 +547,7 @@ class GuardianGate:
 
         # Log audit record
         audit_record = {
-            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "decision": decision,
             "type": "query_validation",
             "domain": domain,

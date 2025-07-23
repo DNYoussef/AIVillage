@@ -24,7 +24,7 @@ import logging
 import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional, Set
-from datetime import datetime
+from datetime import datetime, timezone
 import numpy as np
 from dataclasses import dataclass, asdict
 import statistics
@@ -355,7 +355,7 @@ class BasePPRApproach(PersonalizationApproach):
 
     async def retrieve(self, query: UserQuery, context: PersonalizationContext, top_k: int = 20) -> List[Tuple[str, float]]:
         """Retrieve using base PPR only"""
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
 
         # Mock PPR retrieval - in reality would use actual PPR algorithm
         all_items = list(query.relevance_scores.keys())
@@ -378,7 +378,7 @@ class BasePPRApproach(PersonalizationApproach):
         results = scored_items[:top_k]
 
         # Track performance
-        retrieval_time = (datetime.now() - start_time).total_seconds()
+        retrieval_time = (datetime.now(timezone.utc) - start_time).total_seconds()
         self.retrieval_times.append(retrieval_time)
 
         # Calculate token cost
@@ -400,7 +400,7 @@ class AlphaRescoredPPRApproach(PersonalizationApproach):
 
     async def retrieve(self, query: UserQuery, context: PersonalizationContext, top_k: int = 20) -> List[Tuple[str, float]]:
         """Retrieve using PPR + α rescoring"""
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
 
         # Step 1: Get base PPR results
         base_ppr_approach = BasePPRApproach()
@@ -421,7 +421,7 @@ class AlphaRescoredPPRApproach(PersonalizationApproach):
         results = rescored_items[:top_k]
 
         # Track performance
-        retrieval_time = (datetime.now() - start_time).total_seconds()
+        retrieval_time = (datetime.now(timezone.utc) - start_time).total_seconds()
         self.retrieval_times.append(retrieval_time)
 
         # Calculate token cost (higher due to α rescoring)
@@ -475,7 +475,7 @@ class ICLEnhancedApproach(PersonalizationApproach):
 
     async def retrieve(self, query: UserQuery, context: PersonalizationContext, top_k: int = 20) -> List[Tuple[str, float]]:
         """Retrieve using PPR + α + ICL"""
-        start_time = datetime.now()
+        start_time = datetime.now(timezone.utc)
 
         # Step 1: Get α rescored results
         alpha_approach = AlphaRescoredPPRApproach()
@@ -496,7 +496,7 @@ class ICLEnhancedApproach(PersonalizationApproach):
         results = icl_enhanced_items[:top_k]
 
         # Track performance
-        retrieval_time = (datetime.now() - start_time).total_seconds()
+        retrieval_time = (datetime.now(timezone.utc) - start_time).total_seconds()
         self.retrieval_times.append(retrieval_time)
 
         # Calculate token cost (highest due to ICL processing)
@@ -646,7 +646,7 @@ class PersonalizationBenchmark:
             total_queries=len(queries),
             avg_retrieval_time=avg_retrieval_time,
             dataset_name="movielens_and_doc_clicks",
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat()
         )
 
     def _calculate_map(self, query: UserQuery, retrieved_items: List[Tuple[str, float]]) -> float:
@@ -713,14 +713,14 @@ class PersonalizationBenchmark:
 
     async def _save_benchmark_results(self, results: Dict[str, PersonalizationMetrics]):
         """Save benchmark results to files"""
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
         # Save detailed results
         results_file = self.output_dir / f"personalization_results_{timestamp}.json"
         detailed_results = {
             "metadata": {
                 "benchmark_version": "1.0",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "approaches_evaluated": list(results.keys())
             },
             "results": {name: asdict(metrics) for name, metrics in results.items()},

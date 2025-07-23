@@ -11,7 +11,7 @@ import logging
 import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import numpy as np
 from dataclasses import dataclass
 import pickle
@@ -322,7 +322,7 @@ class VectorToHypergraphConverter:
                 "content_preview": document.content[:200] + "..." if len(document.content) > 200 else document.content,
                 "embedding": document.embedding.tolist() if document.embedding is not None else None,
                 "original_doc_id": document.doc_id,
-                "migrated_at": datetime.utcnow().isoformat(),
+                "migrated_at": datetime.now(timezone.utc).isoformat(),
                 "confidence": 0.9
             })
 
@@ -445,7 +445,7 @@ class VectorToHypergraphConverter:
                 "source_vector_store": str(self.vector_store_path),
                 "store_type": self.store_type,
                 "output_kg_path": str(self.output_kg_path),
-                "conversion_timestamp": datetime.utcnow().isoformat(),
+                "conversion_timestamp": datetime.now(timezone.utc).isoformat(),
                 "batch_size": self.batch_size
             },
             "metrics": {

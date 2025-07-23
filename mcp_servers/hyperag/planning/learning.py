@@ -8,7 +8,7 @@ Tracks plan effectiveness, updates strategy weights, and learns from agent feedb
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -40,7 +40,7 @@ class StrategyFeedback:
 
     # Context
     agent_model: Optional[str] = None
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     additional_context: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -64,7 +64,7 @@ class LearningMetrics:
     confidence_trend: float = 0.0
 
     # Learning parameters
-    last_updated: datetime = field(default_factory=datetime.utcnow)
+    last_updated: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     learning_weight: float = 1.0  # How much to trust this strategy
 
 
@@ -95,7 +95,7 @@ class PlanLearner:
             "total_feedback_received": 0,
             "successful_adaptations": 0,
             "strategy_weight_updates": 0,
-            "last_learning_update": datetime.utcnow()
+            "last_learning_update": datetime.now(timezone.utc)
         }
 
         # Pattern recognition
@@ -122,7 +122,7 @@ class PlanLearner:
 
         # Update learning statistics
         self.learning_stats["total_feedback_received"] += 1
-        self.learning_stats["last_learning_update"] = datetime.utcnow()
+        self.learning_stats["last_learning_update"] = datetime.now(timezone.utc)
 
         if feedback.success:
             self.learning_stats["successful_adaptations"] += 1
@@ -164,7 +164,7 @@ class PlanLearner:
                                    time_window_hours: int = 24) -> Dict[str, Any]:
         """Analyze strategy performance over time window"""
 
-        cutoff_time = datetime.utcnow() - timedelta(hours=time_window_hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=time_window_hours)
         recent_feedback = [
             f for f in self.feedback_history
             if f.timestamp >= cutoff_time
@@ -286,7 +286,7 @@ class PlanLearner:
                 second_half_success = sum(1 for f in recent_feedback[mid:] if f.success) / (len(recent_feedback) - mid)
                 metrics.success_trend = second_half_success - first_half_success
 
-        metrics.last_updated = datetime.utcnow()
+        metrics.last_updated = datetime.now(timezone.utc)
 
     def _update_strategy_weights(self, feedback: StrategyFeedback) -> None:
         """Update global strategy weights based on feedback"""

@@ -40,12 +40,44 @@ if torch_mod is not None:
     nn_mod.Module = object
     torch_mod.nn = nn_mod
     sys.modules.setdefault("torch.nn", nn_mod)
+    
+    # Add cuda module with is_available function
+    cuda_mod = types.ModuleType("torch.cuda")
+    cuda_mod.is_available = lambda: False  # Stub returns False for no GPU
+    torch_mod.cuda = cuda_mod
+    sys.modules.setdefault("torch.cuda", cuda_mod)
 
 _ensure_module("sklearn")
 _ensure_module("sklearn.feature_extraction")
 _ensure_module("sklearn.feature_extraction.text", {"TfidfVectorizer": object})
 _ensure_module("sklearn.metrics")
 _ensure_module("sklearn.metrics.pairwise", {"cosine_similarity": lambda a, b: []})
+_ensure_module("sklearn.linear_model", {"LogisticRegression": object})
+_ensure_module("sklearn.ensemble", {"RandomForestClassifier": object})
+_ensure_module("sklearn.model_selection", {"train_test_split": lambda *args, **kwargs: ([], [], [], [])})
+_ensure_module("sklearn.preprocessing", {"StandardScaler": object})
+
+# Add grokfast stub
+class AugmentedAdam:
+    def __init__(self, params, lr=1e-3, slow_freq=0.08, boost=1.5, **kwargs):
+        self.params = list(params)
+        self.lr = lr
+        self.slow_freq = slow_freq
+        self.boost = boost
+        self._slow_cache = {}
+    def step(self): pass
+    def zero_grad(self): pass
+
+_ensure_module("grokfast", {"AugmentedAdam": AugmentedAdam})
+
+# Add numba stub
+def jit(*args, **kwargs):
+    """Stub jit decorator that returns the function unchanged."""
+    if len(args) == 1 and callable(args[0]):
+        return args[0]  # Function was passed directly
+    return lambda func: func  # Decorator with arguments
+
+_ensure_module("numba", {"jit": jit})
 
 _real_find_spec = importlib.util.find_spec
 

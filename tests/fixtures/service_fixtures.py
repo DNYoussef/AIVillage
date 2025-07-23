@@ -4,7 +4,7 @@ This module provides comprehensive test fixtures for isolated testing
 of services without external dependencies.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -205,7 +205,7 @@ def mock_health_service():
             status="ok",
             version="0.0.1",
             services={"self": "ok", "database": "ok"},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
     service.check_health = AsyncMock(side_effect=mock_check_health)
@@ -260,7 +260,7 @@ def mock_http_adapter_factory(
             "status": "ok",
             "version": "0.0.1",
             "services": {"self": "ok"},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     )
 

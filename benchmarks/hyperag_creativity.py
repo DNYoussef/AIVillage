@@ -21,7 +21,7 @@ import logging
 import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import numpy as np
 from dataclasses import dataclass, asdict
 import statistics
@@ -482,7 +482,7 @@ class CreativityBenchmark:
             hidden_link_precision=combined_metrics["hidden_link_precision"],
             total_bridges_evaluated=combined_metrics["total_bridges_evaluated"],
             dataset_name="remote_association_and_cross_domain",
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat()
         )
 
         # Save detailed results
@@ -516,7 +516,7 @@ class CreativityBenchmark:
 
     async def _save_results(self, rat_results: Dict, cd_results: Dict, metrics: CreativityMetrics):
         """Save benchmark results to files"""
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
         # Save detailed results
         results_file = self.output_dir / f"creativity_results_{timestamp}.json"

@@ -17,7 +17,7 @@ import csv
 import json
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -82,7 +82,7 @@ def format_violation_summary(violations: List[Violation]) -> str:
 def save_violations_json(violations: List[Violation], output_path: Path) -> None:
     """Save violations to JSON file"""
     data = {
-        "scan_timestamp": datetime.utcnow().isoformat(),
+        "scan_timestamp": datetime.now(timezone.utc).isoformat(),
         "total_violations": len(violations),
         "violations": [v.to_dict() for v in violations]
     }

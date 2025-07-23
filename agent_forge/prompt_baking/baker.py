@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+from datetime import timezone
 import json
 import logging
 import pathlib
@@ -55,7 +56,7 @@ def bake(
     meta = dict(
         ns=ANCHOR_NS,
         txt=text[:160] + "…" if len(text) > 160 else text,
-        dt=dt.datetime.utcnow().isoformat(),
+        dt=dt.datetime.now(timezone.utc).isoformat(),
         loss=float(loss.item()),
         steps=step,
     )

@@ -4,7 +4,7 @@ This module contains the actual business logic separated from HTTP concerns,
 making it easier to test and maintain.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import time
 from typing import Any
@@ -86,7 +86,7 @@ class ChatBusinessLogic(ChatServiceInterface):
             {
                 "user": request.message,
                 "assistant": response_text,
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(timezone.utc),
             }
         )
 
@@ -288,7 +288,7 @@ class HealthCheckLogic(HealthCheckInterface):
             status=overall_status,
             version=self.version,
             services=services_status,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
     async def process(self, request: Any) -> HealthCheckResponse:

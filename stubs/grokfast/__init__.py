@@ -36,3 +36,22 @@ def grokfast_loss(*args, **kwargs):
 
 def grokfast_config(*args, **kwargs):
     return {}
+
+
+class AugmentedAdam:
+    """Stub implementation of AugmentedAdam optimizer."""
+    
+    def __init__(self, params, lr=1e-3, slow_freq=0.08, boost=1.5, **kwargs):
+        self.params = list(params)
+        self.lr = lr
+        self.slow_freq = slow_freq
+        self.boost = boost
+        self._slow_cache = {}
+        
+    def step(self):
+        """Stub step method."""
+        pass
+        
+    def zero_grad(self):
+        """Stub zero_grad method."""
+        pass

@@ -12,7 +12,7 @@ import argparse
 import re
 from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional, Set
-from datetime import datetime
+from datetime import datetime, timezone
 import numpy as np
 from dataclasses import dataclass, asdict
 from collections import defaultdict, Counter
@@ -546,7 +546,7 @@ class HyperedgeExtractor:
         """Save extraction metrics report"""
         report = {
             "extraction_metadata": {
-                "extraction_timestamp": datetime.utcnow().isoformat(),
+                "extraction_timestamp": datetime.now(timezone.utc).isoformat(),
                 "extraction_time_seconds": self.metrics.extraction_time,
                 "documents_per_second": self.metrics.total_documents_processed / self.metrics.extraction_time if self.metrics.extraction_time > 0 else 0
             },
@@ -578,7 +578,7 @@ class HyperedgeExtractor:
                 "source_document": hyperedge.source_document,
                 "extraction_method": hyperedge.extraction_method,
                 "properties": hyperedge.properties,
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             })
 
             # Create entity nodes and connect to hyperedge
