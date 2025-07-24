@@ -3,22 +3,19 @@
 Run SeedLM pytest tests
 """
 
-import sys
 import os
+import sys
 
 # Temporarily modify the system path to enable imports
 sys.path.insert(0, os.getcwd())
 
 # Import required libraries
-import pytest
+
 import torch
-import numpy as np
-from typing import Tuple
-import time
-import psutil
 
 # Execute the seedlm module to load classes
-exec(open('agent_forge/compression/seedlm.py').read())
+exec(open("agent_forge/compression/seedlm.py").read())
+
 
 # Now run the test functions from test_seedlm_core.py
 def test_basic_encoding_decoding_roundtrip():
@@ -38,13 +35,13 @@ def test_basic_encoding_decoding_roundtrip():
 
     torch.manual_seed(42)
     sample_weights = (
-        torch.randn(32, 64),      # Small - reduced for speed
-        torch.randn(64, 128),     # Medium - reduced for speed
-        torch.randn(128, 256),    # Large - reduced for speed
+        torch.randn(32, 64),  # Small - reduced for speed
+        torch.randn(64, 128),  # Medium - reduced for speed
+        torch.randn(128, 256),  # Large - reduced for speed
     )
 
     for i, weight in enumerate(sample_weights):
-        print(f"Testing weight {i+1}: {weight.shape}")
+        print(f"Testing weight {i + 1}: {weight.shape}")
 
         # Encode
         compressed = encoder.encode(weight)
@@ -71,7 +68,10 @@ def test_basic_encoding_decoding_roundtrip():
 
         # More lenient thresholds for this implementation
         assert max_error < 10.0, f"Max error {max_error} exceeds tolerance"
-        assert relative_error < 2.0, f"Relative error {relative_error} exceeds tolerance"
+        assert relative_error < 2.0, (
+            f"Relative error {relative_error} exceeds tolerance"
+        )
+
 
 def test_progressive_compression_levels():
     """Test progressive compression with different quality levels"""
@@ -90,7 +90,7 @@ def test_progressive_compression_levels():
         reconstructed = encoder.decode(compressed)
 
         # Calculate metrics - simplified ratio calculation
-        compression_ratio = compressed['data'].get('compression_ratio', 1.0)
+        compression_ratio = compressed["data"].get("compression_ratio", 1.0)
         reconstruction_error = torch.norm(reconstructed - weight) / torch.norm(weight)
 
         compression_ratios.append(compression_ratio)
@@ -98,6 +98,7 @@ def test_progressive_compression_levels():
 
         print(f"  Compression ratio: {compression_ratio:.2f}x")
         print(f"  Reconstruction error: {reconstruction_error:.6f}")
+
 
 def test_adaptive_block_sizing():
     """Test adaptive block size selection based on weight variance"""
@@ -116,12 +117,12 @@ def test_adaptive_block_sizing():
     print(f"High variance block size: {block_size}")
     assert block_size <= 8, "High variance weights should use smaller blocks"
 
+
 def test_multi_scale_lfsr_generation():
     """Test multi-scale LFSR basis generation"""
 
     generator = MultiScaleLFSRGenerator(
-        seeds=[12345, 67890],
-        tap_configs=[[16, 14, 13, 11], [16, 15, 13, 4]]
+        seeds=[12345, 67890], tap_configs=[[16, 14, 13, 11], [16, 15, 13, 4]]
     )
 
     # Generate bases at different scales
@@ -139,7 +140,10 @@ def test_multi_scale_lfsr_generation():
             max_error = torch.max(torch.abs(gram - identity_like)).item()
             print(f"  Orthogonality error: {max_error:.4f}")
             # More lenient orthogonality check
-            assert max_error < 2.0, f"Basis at scale {scale} should be approximately orthogonal"
+            assert max_error < 2.0, (
+                f"Basis at scale {scale} should be approximately orthogonal"
+            )
+
 
 def test_error_handling_invalid_input():
     """Test error handling for invalid inputs"""
@@ -168,6 +172,7 @@ def test_error_handling_invalid_input():
     except (SeedLMDecompressionError, KeyError):
         print("Invalid compressed data properly rejected")
 
+
 def test_progressive_layers():
     """Test progressive enhancement layers"""
 
@@ -177,10 +182,12 @@ def test_progressive_layers():
     weight = torch.randn(64, 128)  # Smaller for speed
 
     # Encode with progressive layers
-    compressed = encoder.encode_progressive(weight,
-                                          base_quality=0.3,
-                                          enhancement_layers=2,  # Fewer layers for speed
-                                          quality_increments=[0.2, 0.3])
+    compressed = encoder.encode_progressive(
+        weight,
+        base_quality=0.3,
+        enhancement_layers=2,  # Fewer layers for speed
+        quality_increments=[0.2, 0.3],
+    )
 
     # Should have base + enhancement layers
     assert "base_layer" in compressed
@@ -190,12 +197,13 @@ def test_progressive_layers():
     # Test progressive reconstruction
     qualities = []
     for i in range(3):  # Base + 2 enhancements
-        reconstructed = encoder.decode_progressive(compressed, num_layers=i+1)
+        reconstructed = encoder.decode_progressive(compressed, num_layers=i + 1)
         quality = 1 - (torch.norm(reconstructed - weight) / torch.norm(weight)).item()
         qualities.append(quality)
-        print(f"Layers {i+1}: quality = {quality:.4f}")
+        print(f"Layers {i + 1}: quality = {quality:.4f}")
 
     print("Progressive layers test completed successfully")
+
 
 if __name__ == "__main__":
     print("=== Running SeedLM Pytest-style Tests ===")
@@ -221,10 +229,11 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"[FAIL] {test.__name__}: {e}")
             import traceback
+
             traceback.print_exc()
             failed += 1
 
-    print(f"\n=== Test Results ===")
+    print("\n=== Test Results ===")
     print(f"Passed: {passed}")
     print(f"Failed: {failed}")
     print(f"Total: {passed + failed}")

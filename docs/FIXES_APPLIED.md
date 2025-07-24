@@ -9,7 +9,7 @@
    - Fixed `ruff` command to include `check` subcommand
 
 2. **Resolved dependency management conflicts**
-   - Removed conflicting `setup.cfg` (setuptools) 
+   - Removed conflicting `setup.cfg` (setuptools)
    - Kept `pyproject.toml` (Poetry) as primary dependency manager
    - Cleaned up `requirements.txt` duplicate dependencies
    - Added clear warnings about auto-generation
@@ -17,7 +17,7 @@
 ### 🐛 **Critical Code Fixes**
 
 #### **main.py Issues Fixed:**
-- ✅ Removed unused import alias `Task as LangroidTask` 
+- ✅ Removed unused import alias `Task as LangroidTask`
 - ✅ Replaced hardcoded config with external YAML file loading
 - ✅ Fixed blocking input in async context using `run_in_executor`
 - ✅ Added proper CLI argument parsing with Click
@@ -32,7 +32,7 @@
 - ✅ Added production warnings for in-memory components
 
 ### 🐳 **Docker Configuration**
-- ✅ Consolidated `docker-compose.yml` + `docker-compose.override.yml` 
+- ✅ Consolidated `docker-compose.yml` + `docker-compose.override.yml`
 - ✅ Added proper version specification
 - ✅ Made monitoring services optional with profiles
 - ✅ Added environment variable defaults
@@ -42,7 +42,7 @@
 
 ### Fixed Issues:
 - Environment variable validation
-- Rate limiter production warnings  
+- Rate limiter production warnings
 - Removed hardcoded credentials/dummy data
 - Added proper error handling
 
@@ -59,7 +59,7 @@
 # Use custom config file
 python main.py --config configs/custom.yaml
 
-# Enable verbose logging  
+# Enable verbose logging
 python main.py --verbose
 
 # Both options
@@ -86,7 +86,7 @@ export GRAFANA_PASSWORD="secure-password"
 ## 🏗️ **Build System Priority**
 Poetry is now the primary dependency manager:
 - Use `poetry install` for setup
-- Use `poetry add <package>` for new dependencies  
+- Use `poetry add <package>` for new dependencies
 - `requirements.txt` is auto-generated - don't edit directly
 
 ---

@@ -3,13 +3,16 @@
 Simple test script for SeedLM implementation
 """
 
-import torch
-import sys
 import os
+import sys
+
+import torch
+
 sys.path.insert(0, os.getcwd())
 
 # Load SeedLM implementation directly
-exec(open('agent_forge/compression/seedlm.py').read())
+exec(open("agent_forge/compression/seedlm.py").read())
+
 
 def test_basic_functionality():
     print("Testing SeedLM basic functionality...")
@@ -20,28 +23,32 @@ def test_basic_functionality():
 
     # Test with different tensor sizes
     test_cases = [
-        torch.randn(128, 256),      # Small
-        torch.randn(512, 768),      # Medium
-        torch.randn(32, 32),        # Square
+        torch.randn(128, 256),  # Small
+        torch.randn(512, 768),  # Medium
+        torch.randn(32, 32),  # Square
     ]
 
     for i, weight in enumerate(test_cases):
-        print(f"\nTest case {i+1}: {weight.shape}")
+        print(f"\nTest case {i + 1}: {weight.shape}")
 
         # Test basic encode/decode
         compressed = encoder.encode(weight, compression_level=0.5)
         reconstructed = encoder.decode(compressed)
 
         # Verify shape preservation
-        assert reconstructed.shape == weight.shape, f"Shape mismatch: {reconstructed.shape} vs {weight.shape}"
+        assert reconstructed.shape == weight.shape, (
+            f"Shape mismatch: {reconstructed.shape} vs {weight.shape}"
+        )
 
         # Check compression ratio
-        compression_ratio = compressed['data'].get('compression_ratio', 0)
+        compression_ratio = compressed["data"].get("compression_ratio", 0)
         print(f"  Compression ratio: {compression_ratio:.2f}x")
 
         # Check reconstruction error
         max_error = torch.max(torch.abs(reconstructed - weight)).item()
-        relative_error = (torch.norm(reconstructed - weight) / torch.norm(weight)).item()
+        relative_error = (
+            torch.norm(reconstructed - weight) / torch.norm(weight)
+        ).item()
 
         print(f"  Max error: {max_error:.6f}")
         print(f"  Relative error: {relative_error:.6f}")
@@ -50,9 +57,10 @@ def test_basic_functionality():
         assert max_error < 10.0, f"Max error too high: {max_error}"
         assert relative_error < 1.0, f"Relative error too high: {relative_error}"
 
-        print(f"  ✓ Test case {i+1} passed")
+        print(f"  ✓ Test case {i + 1} passed")
 
-    print(f"\n✓ All basic functionality tests passed!")
+    print("\n✓ All basic functionality tests passed!")
+
 
 def test_progressive_encoding():
     print("\nTesting progressive encoding...")
@@ -65,19 +73,22 @@ def test_progressive_encoding():
     # Test progressive encoding
     progressive_data = encoder.encode_progressive(weight)
 
-    assert 'base_layer' in progressive_data
-    assert 'enhancement_layers' in progressive_data
-    assert len(progressive_data['enhancement_layers']) == 3
+    assert "base_layer" in progressive_data
+    assert "enhancement_layers" in progressive_data
+    assert len(progressive_data["enhancement_layers"]) == 3
 
     # Test progressive decoding
     for num_layers in [1, 2, 3, 4]:
         reconstructed = encoder.decode_progressive(progressive_data, num_layers)
         assert reconstructed.shape == weight.shape
 
-        relative_error = (torch.norm(reconstructed - weight) / torch.norm(weight)).item()
+        relative_error = (
+            torch.norm(reconstructed - weight) / torch.norm(weight)
+        ).item()
         print(f"  {num_layers} layers - Relative error: {relative_error:.6f}")
 
     print("  ✓ Progressive encoding tests passed!")
+
 
 def test_error_handling():
     print("\nTesting error handling...")
@@ -106,6 +117,7 @@ def test_error_handling():
     assert reconstructed.shape == empty_tensor.shape
     print("  ✓ Empty tensor handling works")
 
+
 def test_adaptive_block_sizing():
     print("\nTesting adaptive block sizing...")
 
@@ -125,12 +137,12 @@ def test_adaptive_block_sizing():
 
     print("  ✓ Adaptive block sizing works")
 
+
 def test_multi_scale_lfsr():
     print("\nTesting multi-scale LFSR generation...")
 
     generator = MultiScaleLFSRGenerator(
-        seeds=[12345, 67890],
-        tap_configs=[[16, 14, 13, 11], [16, 15, 13, 4]]
+        seeds=[12345, 67890], tap_configs=[[16, 14, 13, 11], [16, 15, 13, 4]]
     )
 
     # Test basis generation
@@ -147,6 +159,7 @@ def test_multi_scale_lfsr():
 
     print("  ✓ Multi-scale LFSR generation works")
 
+
 if __name__ == "__main__":
     print("=== SeedLM Implementation Test Suite ===")
 
@@ -162,5 +175,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Test failed with error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

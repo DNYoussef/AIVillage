@@ -7,7 +7,7 @@ Uses pattern matching, NLP analysis, and machine learning for classification.
 
 import logging
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 

@@ -71,6 +71,19 @@ class BitNetLinear(nn.Module):
 
 def convert_to_bitnet(model, threshold: float = 0.02):
     """In-place replace every nn.Linear with BitNet implementation."""
+    # Handle case where model itself is a Linear layer
+    if isinstance(model, nn.Linear):
+        bitnet_layer = BitNetLinear(
+            model.in_features, model.out_features, bias=model.bias is not None
+        )
+
+        # Initialize with original weights
+        with torch.no_grad():
+            bitnet_layer.weight_fp.copy_(model.weight)
+            if model.bias is not None:
+                bitnet_layer.bias.copy_(model.bias)
+
+        return bitnet_layer
 
     def replace_linear_recursive(module, name=""):
         for child_name, child in module.named_children():
@@ -92,15 +105,7 @@ def convert_to_bitnet(model, threshold: float = 0.02):
                     child, f"{name}.{child_name}" if name else child_name
                 )
 
-    # First try bitsandbytes if available
-    try:
-        if hasattr(bnb.nn, "LinearBitNet"):
-            bnb.nn.LinearBitNet.convert(model, threshold=threshold)
-            return model
-    except (ImportError, AttributeError):
-        pass
-
-    # Fallback to custom implementation
+    # Use custom implementation directly since bitsandbytes doesn't have LinearBitNet
     replace_linear_recursive(model)
 
     # Add RMSNorm after attention layers for stability

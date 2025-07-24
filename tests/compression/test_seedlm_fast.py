@@ -3,13 +3,16 @@
 Fast test script for SeedLM implementation
 """
 
-import torch
-import sys
 import os
+import sys
+
+import torch
+
 sys.path.insert(0, os.getcwd())
 
 # Load SeedLM implementation directly
-exec(open('agent_forge/compression/seedlm.py').read())
+exec(open("agent_forge/compression/seedlm.py").read())
+
 
 def test_basic_functionality():
     print("Testing SeedLM basic functionality...")
@@ -20,30 +23,37 @@ def test_basic_functionality():
 
     # Test with small tensors for speed
     test_cases = [
-        torch.randn(16, 32),      # Very small
-        torch.randn(8, 8),        # Tiny square
+        torch.randn(16, 32),  # Very small
+        torch.randn(8, 8),  # Tiny square
     ]
 
     for i, weight in enumerate(test_cases):
-        print(f"\nTest case {i+1}: {weight.shape}")
+        print(f"\nTest case {i + 1}: {weight.shape}")
 
         # Test basic encode/decode with fast settings
-        compressed = encoder.encode(weight, compression_level=0.3)  # Lower level for speed
+        compressed = encoder.encode(
+            weight, compression_level=0.3
+        )  # Lower level for speed
         reconstructed = encoder.decode(compressed)
 
         # Verify shape preservation
-        assert reconstructed.shape == weight.shape, f"Shape mismatch: {reconstructed.shape} vs {weight.shape}"
+        assert reconstructed.shape == weight.shape, (
+            f"Shape mismatch: {reconstructed.shape} vs {weight.shape}"
+        )
 
         # Check reconstruction error
         max_error = torch.max(torch.abs(reconstructed - weight)).item()
-        relative_error = (torch.norm(reconstructed - weight) / torch.norm(weight)).item()
+        relative_error = (
+            torch.norm(reconstructed - weight) / torch.norm(weight)
+        ).item()
 
         print(f"  Max error: {max_error:.6f}")
         print(f"  Relative error: {relative_error:.6f}")
 
-        print(f"  [OK] Test case {i+1} passed")
+        print(f"  [OK] Test case {i + 1} passed")
 
-    print(f"\n[OK] All basic functionality tests passed!")
+    print("\n[OK] All basic functionality tests passed!")
+
 
 def test_individual_components():
     print("\nTesting individual components...")
@@ -67,10 +77,7 @@ def test_individual_components():
     print("  [OK] AdaptiveBlockAnalyzer works")
 
     # Test MultiScaleLFSRGenerator
-    generator = MultiScaleLFSRGenerator(
-        seeds=[12345],
-        tap_configs=[[16, 14, 13, 11]]
-    )
+    generator = MultiScaleLFSRGenerator(seeds=[12345], tap_configs=[[16, 14, 13, 11]])
 
     basis = generator.generate_basis(4, 2)
     assert basis.shape == (4, 2)
@@ -83,6 +90,7 @@ def test_individual_components():
     print("  [OK] LFSRGenerator works")
 
     print("  [OK] All individual components work!")
+
 
 def test_error_handling():
     print("\nTesting error handling...")
@@ -111,6 +119,7 @@ def test_error_handling():
     assert reconstructed.shape == empty_tensor.shape
     print("  [OK] Empty tensor handling works")
 
+
 def test_legacy_compatibility():
     print("\nTesting legacy SeedLMCompressor...")
 
@@ -125,6 +134,7 @@ def test_legacy_compatibility():
     print(f"  Legacy compression ratio: {compressed_data['compression_ratio']:.2f}x")
     print("  [OK] Legacy SeedLMCompressor works")
 
+
 if __name__ == "__main__":
     print("=== Fast SeedLM Implementation Test Suite ===")
 
@@ -134,10 +144,13 @@ if __name__ == "__main__":
         test_error_handling()
         test_legacy_compatibility()
 
-        print("\n[SUCCESS] All fast tests passed! SeedLM implementation is working correctly.")
+        print(
+            "\n[SUCCESS] All fast tests passed! SeedLM implementation is working correctly."
+        )
 
     except Exception as e:
         print(f"\n[ERROR] Test failed with error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
