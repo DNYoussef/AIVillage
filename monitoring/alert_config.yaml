@@ -7,16 +7,16 @@ alerts:
 channels:
   - type: "log"
     path: "monitoring/alerts.log"
-  
+
   # Uncomment and configure for GitHub integration
   # - type: "github"
   #   repo: "DNYoussef/AIVillage"
   #   labels: ["test-degradation", "automated"]
-  
+
   # Uncomment and configure for webhook alerts (Discord/Slack)
   # - type: "webhook"
   #   url: "${ALERT_WEBHOOK_URL}"
-  
+
   # Uncomment and configure for email alerts
   # - type: "email"
   #   smtp_server: "smtp.gmail.com"

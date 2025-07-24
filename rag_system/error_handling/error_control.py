@@ -14,24 +14,24 @@ class ErrorController:
     def handle_error(self, error_message: str, exception: Exception, context: Optional[Dict[str, Any]] = None):
         """
         Handle errors in a centralized manner.
-        
+
         :param error_message: A descriptive message about the error
         :param exception: The exception that was raised
         :param context: Optional dictionary containing contextual information about the error
         """
         self.logger.error(f"{error_message}: {str(exception)}")
-        
+
         if context:
             self.logger.error(f"Error context: {context}")
-        
+
         # Log the full stack trace
         self.logger.exception("Full stack trace:")
-        
+
         # Implement additional error handling logic here, such as:
         # - Sending error notifications
         # - Updating error statistics
         # - Triggering recovery mechanisms
-        
+
         self._attempt_recovery(exception, context)
 
     def _attempt_recovery(self, exception: Exception, context: Optional[Dict[str, Any]] = None):
@@ -61,12 +61,12 @@ class ErrorController:
     def log_warning(self, warning_message: str, context: Optional[Dict[str, Any]] = None):
         """
         Log a warning message with optional context.
-        
+
         :param warning_message: The warning message to log
         :param context: Optional dictionary containing contextual information about the warning
         """
         self.logger.warning(warning_message)
-        
+
         if context:
             self.logger.warning(f"Warning context: {context}")
 

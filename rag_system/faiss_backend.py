@@ -63,4 +63,3 @@ class FaissAdapter:
             meta = self.metadata[idx]
             results.append({"id": meta["id"], "score": float(-dist), "meta": meta})
         return results
-

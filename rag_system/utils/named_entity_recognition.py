@@ -70,4 +70,3 @@ class NamedEntityRecognizer:
                 continue
             entities.append({"text": ent_text, "label": "ENTITY"})
         return entities
-

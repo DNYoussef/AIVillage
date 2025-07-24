@@ -123,7 +123,7 @@ class VectorStore:
         else:
             query_vector_np = np.array([query_vector]).astype('float32')
             distances, indices = self.index.search(query_vector_np, k)
-        
+
         results = []
         for i, idx in enumerate(indices[0] if isinstance(indices, np.ndarray) else indices):
             doc = self.documents[idx]
@@ -136,7 +136,7 @@ class VectorStore:
                     timestamp=doc['timestamp']
                 )
                 results.append(result)
-        
+
         return results
 
     def get_document_by_id(self, doc_id: str) -> Optional[Dict[str, Any]]:

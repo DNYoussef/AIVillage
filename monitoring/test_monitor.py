@@ -31,39 +31,39 @@ class TestStats:
     success_rate: float
     duration: float
     modules: Dict[str, Dict[str, Any]]
-    
+
     @classmethod
     def from_pytest_json(cls, report_data: Dict[str, Any]) -> 'TestStats':
         """Create TestStats from pytest JSON report"""
         summary = report_data.get('summary', {})
-        
+
         total = summary.get('total', 0)
         passed = summary.get('passed', 0)
         failed = summary.get('failed', 0)
         skipped = summary.get('skipped', 0)
         errors = summary.get('error', 0)
-        
+
         success_rate = (passed / total * 100) if total > 0 else 0
         duration = report_data.get('duration', 0)
-        
+
         # Parse module-level stats
         modules = {}
         for test in report_data.get('tests', []):
             module_name = test.get('nodeid', '').split('::')[0]
             if '/' in module_name:
                 module_name = module_name.split('/')[-1].replace('.py', '')
-            
+
             if module_name not in modules:
                 modules[module_name] = {
-                    'total': 0, 'passed': 0, 'failed': 0, 
+                    'total': 0, 'passed': 0, 'failed': 0,
                     'skipped': 0, 'errors': 0
                 }
-            
+
             modules[module_name]['total'] += 1
             outcome = test.get('outcome', 'unknown')
             if outcome in modules[module_name]:
                 modules[module_name][outcome] += 1
-        
+
         # Calculate success rates for modules
         for module_stats in modules.values():
             total_module = module_stats['total']
@@ -71,7 +71,7 @@ class TestStats:
             module_stats['success_rate'] = (
                 (passed_module / total_module * 100) if total_module > 0 else 0
             )
-        
+
         return cls(
             timestamp=datetime.now(timezone.utc).isoformat(),
             total_tests=total,
@@ -86,17 +86,17 @@ class TestStats:
 
 class TestMonitor:
     """Automated test health monitoring system"""
-    
+
     def __init__(self, base_dir: Path = None):
         self.base_dir = base_dir or Path(__file__).parent
         self.history_file = self.base_dir / "test_history.json"
         self.dashboard_path = Path("test_health_dashboard.md")
         self.alert_threshold = 95.0  # 95% success rate
         self.history: List[TestStats] = []
-        
+
         # Load existing history
         self._load_history()
-    
+
     def _load_history(self):
         """Load historical test data"""
         if self.history_file.exists():
@@ -110,7 +110,7 @@ class TestMonitor:
                 self.history = []
         else:
             self.history = []
-    
+
     def _save_history(self):
         """Save historical test data"""
         try:
@@ -120,83 +120,83 @@ class TestMonitor:
             logger.info(f"Saved {len(self.history)} test runs to history")
         except Exception as e:
             logger.error(f"Failed to save history: {e}")
-    
+
     async def capture_test_results(self, pytest_json_report: str):
         """Parse pytest JSON report and store results"""
         try:
             with open(pytest_json_report, 'r') as f:
                 report_data = json.load(f)
-            
+
             stats = TestStats.from_pytest_json(report_data)
             self.history.append(stats)
-            
+
             # Keep last 100 runs
             if len(self.history) > 100:
                 self.history = self.history[-100:]
-            
+
             self._save_history()
-            
+
             logger.info(f"Captured test results: {stats.success_rate:.1f}% success rate")
-            
+
             # Update dashboard and check alerts
             await self.update_dashboard()
             await self.check_alert_conditions()
-            
+
         except Exception as e:
             logger.error(f"Failed to capture test results: {e}")
-    
+
     def get_trend_arrow(self) -> str:
         """Get trend direction arrow"""
         if len(self.history) < 2:
             return "→"
-        
+
         current = self.history[-1].success_rate
         previous = self.history[-2].success_rate
-        
+
         if current > previous + 1:
             return "↗️"
         elif current < previous - 1:
             return "↘️"
         else:
             return "→"
-    
+
     def generate_ascii_trend_graph(self, days: int = 30) -> str:
         """Generate ASCII trend graph"""
         if len(self.history) < 2:
             return "Insufficient data for trend graph"
-        
+
         # Get last N runs
         recent_runs = self.history[-min(days, len(self.history)):]
         success_rates = [run.success_rate for run in recent_runs]
-        
+
         if not success_rates:
             return "No data available"
-        
+
         # Simple ASCII sparkline
         min_rate = min(success_rates)
         max_rate = max(success_rates)
-        
+
         if max_rate == min_rate:
             return f"Stable at {min_rate:.1f}%: " + "─" * len(success_rates)
-        
+
         # Normalize to 0-7 range for ASCII chars
         chars = " ▁▂▃▄▅▆▇█"
         normalized = []
         for rate in success_rates:
             norm = int((rate - min_rate) / (max_rate - min_rate) * 8)
             normalized.append(chars[min(norm, 8)])
-        
+
         sparkline = ''.join(normalized)
         return f"{min_rate:.1f}%-{max_rate:.1f}%: {sparkline}"
-    
+
     def identify_hot_issues(self) -> List[Dict[str, Any]]:
         """Identify current hot issues"""
         if not self.history:
             return []
-        
+
         current_stats = self.history[-1]
         issues = []
-        
+
         # Find modules with high failure rates
         for module_name, module_stats in current_stats.modules.items():
             success_rate = module_stats.get('success_rate', 0)
@@ -207,7 +207,7 @@ class TestMonitor:
                     'failure_rate': 100 - success_rate,
                     'failed_tests': module_stats.get('failed', 0)
                 })
-        
+
         # Check for trend degradation
         if len(self.history) >= 3:
             recent_rates = [run.success_rate for run in self.history[-3:]]
@@ -218,17 +218,17 @@ class TestMonitor:
                     'failure_rate': recent_rates[0] - recent_rates[-1],
                     'trend': 'declining'
                 })
-        
+
         return sorted(issues, key=lambda x: x['failure_rate'], reverse=True)[:5]
-    
+
     async def update_dashboard(self):
         """Regenerate dashboard with latest data and trends"""
         if not self.history:
             logger.warning("No test history available for dashboard")
             return
-        
+
         current_stats = self.history[-1]
-        
+
         # Determine status emoji
         success_rate = current_stats.success_rate
         if success_rate >= 95:
@@ -237,7 +237,7 @@ class TestMonitor:
             status_emoji = "⚠️"
         else:
             status_emoji = "❌"
-        
+
         # Get trend info
         trend_arrow = self.get_trend_arrow()
         if "↗️" in trend_arrow:
@@ -246,7 +246,7 @@ class TestMonitor:
             trend_description = "Declining"
         else:
             trend_description = "Stable"
-        
+
         # Generate dashboard content
         dashboard_content = f"""# AI Village Test Health Dashboard
 Last Updated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}
@@ -263,34 +263,34 @@ Trend: {trend_arrow} {trend_description}
 
 ## 🔥 Hot Issues
 """
-        
+
         hot_issues = self.identify_hot_issues()
         if hot_issues:
             for issue in hot_issues:
                 dashboard_content += f"- **{issue['module']}**: {issue['description']} ({issue['failure_rate']:.1f}% failure rate)\n"
         else:
             dashboard_content += "✅ No major issues detected\n"
-        
+
         dashboard_content += f"""
 
 ## 📊 Module Health Matrix
 | Module | Tests | Pass | Fail | Skip | Success% | Status |
 |--------|-------|------|------|------|----------|--------|
 """
-        
+
         # Sort modules by success rate
         sorted_modules = sorted(
             current_stats.modules.items(),
             key=lambda x: x[1].get('success_rate', 0),
             reverse=True
         )
-        
+
         for module_name, module_stats in sorted_modules:
             success_rate_mod = module_stats.get('success_rate', 0)
             status = "✅" if success_rate_mod >= 95 else "⚠️" if success_rate_mod >= 80 else "❌"
-            
+
             dashboard_content += f"| {module_name} | {module_stats['total']} | {module_stats['passed']} | {module_stats['failed']} | {module_stats['skipped']} | {success_rate_mod:.1f}% | {status} |\n"
-        
+
         dashboard_content += f"""
 
 ## ⚡ Performance Metrics
@@ -300,30 +300,30 @@ Trend: {trend_arrow} {trend_description}
 
 ## 🔄 Recent Changes
 """
-        
+
         if len(self.history) >= 3:
             for i, run in enumerate(self.history[-3:], 1):
                 time_str = datetime.fromisoformat(run.timestamp.replace('Z', '+00:00')).strftime('%m-%d %H:%M')
                 dashboard_content += f"- {time_str}: {run.success_rate:.1f}% success rate ({run.total_tests} tests)\n"
-        
+
         dashboard_content += f"""
 
 ## 🚨 Alert Status
 """
-        
+
         alerts = await self._check_alert_conditions_internal()
         if alerts:
             for alert in alerts:
                 dashboard_content += f"> ⚠️ **{alert['severity']}**: {alert['message']}\n"
         else:
             dashboard_content += "✅ No active alerts\n"
-        
+
         dashboard_content += f"""
 
 ---
 *Dashboard automatically updated after each test run*
 """
-        
+
         # Write dashboard
         try:
             with open(self.dashboard_path, 'w', encoding='utf-8') as f:
@@ -331,23 +331,23 @@ Trend: {trend_arrow} {trend_description}
             logger.info(f"Updated dashboard: {self.dashboard_path}")
         except Exception as e:
             logger.error(f"Failed to update dashboard: {e}")
-    
+
     async def _check_alert_conditions_internal(self) -> List[Dict[str, str]]:
         """Internal method to check alert conditions"""
         alerts = []
-        
+
         if not self.history:
             return alerts
-        
+
         current_stats = self.history[-1]
-        
+
         # Check success rate threshold
         if current_stats.success_rate < self.alert_threshold:
             alerts.append({
                 'severity': 'HIGH',
                 'message': f'Success rate {current_stats.success_rate:.1f}% below threshold {self.alert_threshold}%'
             })
-        
+
         # Check for consecutive failures
         if len(self.history) >= 3:
             recent_rates = [run.success_rate for run in self.history[-3:]]
@@ -356,20 +356,20 @@ Trend: {trend_arrow} {trend_description}
                     'severity': 'CRITICAL',
                     'message': 'Success rate below threshold for 3 consecutive runs'
                 })
-        
+
         return alerts
-    
+
     async def check_alert_conditions(self):
         """Check if alerts should be triggered"""
         alerts = await self._check_alert_conditions_internal()
-        
+
         for alert in alerts:
             logger.warning(f"ALERT [{alert['severity']}]: {alert['message']}")
-            
+
             # Write to alert log
             alert_log = self.base_dir / "alerts.log"
             alert_log.parent.mkdir(parents=True, exist_ok=True)
-            
+
             timestamp = datetime.now(timezone.utc).isoformat()
             with open(alert_log, 'a') as f:
                 f.write(f"{timestamp} [{alert['severity']}] {alert['message']}\n")
@@ -380,11 +380,11 @@ async def main():
     parser.add_argument("--capture", help="Capture results from pytest JSON report")
     parser.add_argument("--update-dashboard", action="store_true", help="Update dashboard")
     parser.add_argument("--check-thresholds", action="store_true", help="Check alert thresholds")
-    
+
     args = parser.parse_args()
-    
+
     monitor = TestMonitor()
-    
+
     if args.capture:
         await monitor.capture_test_results(args.capture)
     elif args.update_dashboard:

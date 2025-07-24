@@ -25,13 +25,13 @@ class TaskPlanningAgent(AgentInterface):
         """
         # Interpret user intent
         intent = self.intent_interpreter.interpret_intent(query)
-        
+
         # Extract key concepts
         concepts = self.concept_extractor.extract_key_concepts(query)
-        
+
         # Plan tasks based on intent and concepts
         tasks = self._generate_task_plan(intent, concepts)
-        
+
         return {
             'intent': intent,
             'concepts': concepts,

@@ -27,7 +27,7 @@ The BitNet 1.58-bit quantization test fails due to architectural limitations in 
 
 ### Resolution Plan
 - [ ] **Step 1**: Research BitNet quantization algorithms and requirements
-- [ ] **Step 2**: Design BitNet integration architecture  
+- [ ] **Step 2**: Design BitNet integration architecture
 - [ ] **Step 3**: Implement 1.58-bit quantization support
 - [ ] **Step 4**: Add BitNet model loading and conversion
 - [ ] **Step 5**: Update compression pipeline to support BitNet
@@ -108,7 +108,7 @@ When adding architectural features that don't yet exist:
 
 1. Create the test with expected implementation
 2. Mark with `@pytest.mark.canary`
-3. Mark with `@pytest.mark.xfail(reason="...")`  
+3. Mark with `@pytest.mark.xfail(reason="...")`
 4. Document in this file
 5. Create GitHub issue for tracking
 

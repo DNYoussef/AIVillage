@@ -39,4 +39,3 @@ Implementation helpers:
 - `training/identity.py` – basic identity formation and moral framework utilities.
 
 For a step-by-step description of each phase see [complete_agent_forge_pipeline.md](complete_agent_forge_pipeline.md).
-

@@ -39,7 +39,7 @@ class HybridRetriever:
         """
         low_level_results = await self.low_level_retrieve(query, k, timestamp)
         high_level_results = await self.high_level_retrieve(query, k, timestamp)
-        
+
         combined_results = self.merge_results(low_level_results, high_level_results)
         return combined_results[:k]
 

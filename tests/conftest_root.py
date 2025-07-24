@@ -108,7 +108,7 @@ def jit(*args, **kwargs):
 
 _ensure_module("numba", {"jit": jit})
 
-# Add tiktoken stub 
+# Add tiktoken stub
 class MockEncoding:
     def encode(self, text, *args, **kwargs):
         return [1, 2, 3]  # Mock token ids

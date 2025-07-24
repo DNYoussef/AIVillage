@@ -5,12 +5,12 @@ This document captures important system behaviors that were discovered or clarif
 ## Error Handling System
 
 ### API Contract: ErrorCode Enum
-**Discovery**: Tests revealed that ErrorCode enum must include specific values for proper error categorization.  
+**Discovery**: Tests revealed that ErrorCode enum must include specific values for proper error categorization.
 **Location**: `core/error_handling.py`
 
 The ErrorCode enum requires these exact values for the system to function correctly:
 - `VALIDATION_ERROR` - Input validation failures
-- `PROCESSING_ERROR` - General processing failures  
+- `PROCESSING_ERROR` - General processing failures
 - `DEPENDENCY_ERROR` - External dependency issues
 - `CONFIGURATION_ERROR` - Configuration-related problems
 
@@ -20,16 +20,16 @@ The ErrorCode enum requires these exact values for the system to function correc
 # Required for tests to pass
 class ErrorCode(Enum):
     VALIDATION_ERROR = "validation_error"
-    PROCESSING_ERROR = "processing_error" 
+    PROCESSING_ERROR = "processing_error"
     DEPENDENCY_ERROR = "dependency_error"
     CONFIGURATION_ERROR = "configuration_error"
 ```
 
 ### ErrorHandler Constructor Signature
-**Discovery**: The ErrorHandler constructor signature was undocumented but tests revealed the expected interface.  
+**Discovery**: The ErrorHandler constructor signature was undocumented but tests revealed the expected interface.
 **Location**: `core/error_handling.py:ErrorHandler.__init__`
 
-**Previous assumption**: Constructor took no parameters  
+**Previous assumption**: Constructor took no parameters
 **Actual requirement**: Constructor expects optional ContextManager parameter
 
 ```python
@@ -43,10 +43,10 @@ def __init__(self, context_manager: Optional[ContextManager] = None):
 ## HypeRAG System
 
 ### Guardian Approval Bypass Behavior
-**Discovery**: When `require_guardian_approval=False`, the system preserves the original status rather than resetting it.  
+**Discovery**: When `require_guardian_approval=False`, the system preserves the original status rather than resetting it.
 **Location**: `mcp_servers/hyperag/lora/registry.py`
 
-**Previous assumption**: Bypassing Guardian would always approve entries  
+**Previous assumption**: Bypassing Guardian would always approve entries
 **Actual behavior**: Original status is preserved to maintain test isolation
 
 ```python
@@ -61,12 +61,12 @@ if not require_guardian_approval:
 **Testing Impact**: This behavior is critical for testing scenarios where Guardian is disabled but we need to test different approval states.
 
 ### LoRA Adapter Registry State Management
-**Discovery**: The adapter registry maintains internal state that can leak between tests if not properly reset.  
+**Discovery**: The adapter registry maintains internal state that can leak between tests if not properly reset.
 **Location**: `mcp_servers/hyperag/lora/registry.py`
 
-**Discovered behavior**: 
+**Discovered behavior**:
 - Registry caches adapter entries across method calls
-- Status changes are persistent within the same registry instance  
+- Status changes are persistent within the same registry instance
 - Tests must use fresh registry instances or explicit state reset
 
 **Testing implications**: Test isolation requires careful management of registry instances.
@@ -74,7 +74,7 @@ if not require_guardian_approval:
 ## Time Handling System-Wide Changes
 
 ### Timezone-Aware DateTime Requirements
-**Discovery**: The entire codebase was migrated from `datetime.utcnow()` to `datetime.now(timezone.utc)` during test repair.  
+**Discovery**: The entire codebase was migrated from `datetime.utcnow()` to `datetime.now(timezone.utc)` during test repair.
 **Affected files**: 20+ files across the codebase
 
 **Previous pattern** (deprecated):
@@ -90,14 +90,14 @@ timestamp = datetime.now(timezone.utc).isoformat()
 
 **Testing Impact**: Tests failed with deprecation warnings until all datetime usage was modernized. This change affects:
 - Error logging timestamps
-- Registry entry creation times  
+- Registry entry creation times
 - Audit trail generation
 - Test execution timestamps
 
 ## Dependency Stubbing Patterns
 
 ### Optional Dependency Handling
-**Discovery**: The test system uses sophisticated dependency stubbing rather than skipping tests.  
+**Discovery**: The test system uses sophisticated dependency stubbing rather than skipping tests.
 **Location**: `conftest.py`
 
 **Key discoveries**:
@@ -127,7 +127,7 @@ _ensure_module("sklearn.model_selection", {
 ```
 
 ### Numba JIT Decorator Behavior
-**Discovery**: The numba `jit` decorator can be stubbed to return functions unchanged.  
+**Discovery**: The numba `jit` decorator can be stubbed to return functions unchanged.
 **Implementation**:
 
 ```python
@@ -142,7 +142,7 @@ def jit(*args, **kwargs):
 
 ## Performance Characteristics Discovered
 
-### Test Suite Performance Profile  
+### Test Suite Performance Profile
 **Discovered during monitoring implementation**:
 
 - **Average test duration**: ~0.1-0.3s per test
@@ -197,7 +197,7 @@ with sqlite3.connect(db_path) as conn:
 
 **Persistent state locations**:
 - `monitoring/test_history.json` - Test monitoring history
-- `monitoring/alerts.log` - Alert history  
+- `monitoring/alerts.log` - Alert history
 - Various cache directories
 
 **Testing requirement**: Tests must clean up persistent state or use temporary directories.
@@ -246,7 +246,7 @@ with sqlite3.connect(db_path) as conn:
 
 **Evidence of good modularity**:
 - Components can be tested in isolation
-- Dependencies can be stubbed effectively  
+- Dependencies can be stubbed effectively
 - Configuration is externalized
 - Core functionality is separable from integrations
 
@@ -268,7 +268,7 @@ with sqlite3.connect(db_path) as conn:
 - Use the discovered patterns as implementation guidance
 - Reference the testing implications when writing new tests
 
-### For Test Authors  
+### For Test Authors
 - Follow the successful patterns documented here
 - Avoid the problematic patterns identified
 - Use the stubbing examples as templates
@@ -280,7 +280,7 @@ with sqlite3.connect(db_path) as conn:
 
 ---
 
-*Last Updated: 2025-01-23*  
+*Last Updated: 2025-01-23*
 *Next Review: 2025-04-23*
 
 **Contributing**: When you discover new behaviors during testing, add them to this document following the established format. Include the location, discovery context, and testing implications.

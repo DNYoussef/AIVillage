@@ -30,7 +30,7 @@ class ComprehensiveEvaluationFramework:
         if name not in self.metrics:
             logger.warning(f"Metric '{name}' not found. Adding it with a default description.")
             self.add_metric(name, "No description provided")
-        
+
         self.metrics[name].append(value)
         self.timestamps[name].append(datetime.now())
         self.advanced_analytics.record_metric(name, value)
@@ -40,7 +40,7 @@ class ComprehensiveEvaluationFramework:
         if name not in self.metrics:
             logger.error(f"Metric '{name}' not found.")
             return {}
-        
+
         values = self.metrics[name]
         return {
             "latest": values[-1] if values else None,
@@ -55,7 +55,7 @@ class ComprehensiveEvaluationFramework:
         if name not in self.metrics or len(self.metrics[name]) < window:
             logger.warning(f"Not enough data to calculate trend for metric '{name}'")
             return None
-        
+
         recent_values = self.metrics[name][-window:]
         x = range(len(recent_values))
         y = recent_values
@@ -74,7 +74,7 @@ class ComprehensiveEvaluationFramework:
 
     def generate_visualizations(self) -> Dict[str, bytes]:
         visualizations = {}
-        
+
         # Time series plot for all metrics
         plt.figure(figsize=(12, 6))
         for name in self.metrics:
@@ -106,7 +106,7 @@ class ComprehensiveEvaluationFramework:
     def evaluate_system_performance(self) -> Dict[str, Any]:
         performance_report = self.generate_performance_report()
         visualizations = self.generate_visualizations()
-        
+
         # Calculate overall performance score (this is a simplified example)
         metric_scores = [stats['stats']['latest'] for stats in performance_report.values() if stats['stats']['latest'] is not None]
         overall_score = np.mean(metric_scores) if metric_scores else None

@@ -135,19 +135,19 @@ async def agent_query():
     pipeline = EnhancedRAGPipeline(config)
     tracker = UnifiedKnowledgeTracker(pipeline.hybrid_retriever.vector_store, GraphStore())
     pipeline.knowledge_tracker = tracker
-    
+
     # Define the query
     query = "What festivals does the village celebrate each year?"
-    
+
     # Process the query
     result = await pipeline.process(query)
-    
+
     # Access the results
     answer = result.get('answer')
     confidence_score = result.get('confidence_score')
     source_documents = result.get('source_documents', [])
     metadata = result.get('metadata', {})
-    
+
     # Display the answer and additional information
     print(f"Answer: {answer}")
     print(f"Confidence Score: {confidence_score}")

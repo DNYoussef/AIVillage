@@ -12,7 +12,7 @@ class PromptBank(nn.Module):
         super().__init__()
         prompt_text = json.dumps(manifest, sort_keys=True, indent=None)
         self.tokenizer = AutoTokenizer.from_pretrained(
-            tokenizer_name, 
+            tokenizer_name,
             revision="main",  # Pin to main branch for security
             trust_remote_code=False  # Disable remote code execution
         )

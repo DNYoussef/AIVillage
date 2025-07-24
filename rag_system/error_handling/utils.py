@@ -35,8 +35,8 @@ def compute_confidence_interval(observed_error: float, sample_size: int, confide
     """
     z_score = np.abs(np.percentile(np.random.standard_normal(10000), (1 - confidence_level) / 2 * 100))
     margin_of_error = z_score * np.sqrt((observed_error * (1 - observed_error)) / sample_size)
-    
+
     lower_bound = max(0, observed_error - margin_of_error)
     upper_bound = min(1, observed_error + margin_of_error)
-    
+
     return (lower_bound, upper_bound)

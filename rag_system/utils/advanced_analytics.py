@@ -48,7 +48,7 @@ class AdvancedAnalytics:
     def visualize_knowledge_graph(self, graph: nx.Graph) -> bytes:
         plt.figure(figsize=(12, 8))
         pos = nx.spring_layout(graph)
-        nx.draw(graph, pos, with_labels=True, node_color='lightblue', 
+        nx.draw(graph, pos, with_labels=True, node_color='lightblue',
                 node_size=1500, font_size=10, font_weight='bold')
         edge_labels = nx.get_edge_attributes(graph, 'type')
         nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_labels)

@@ -13,14 +13,14 @@ try:
 except ImportError:
     # Skip the test if dependencies are missing
     import unittest
-    
+
     class TestAgentTechniqueHandle(unittest.TestCase):
         def test_handle_executes_code(self):
             self.skipTest("AgentTechnique not available - dependencies missing")
-    
+
     if __name__ == "__main__":
         unittest.main()
-    
+
     import sys
     sys.exit(0)
 

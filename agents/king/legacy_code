@@ -26,10 +26,10 @@ class DecisionMaker:
 
     async def make_decision(self, content: str, eudaimonia_score: float) -> Dict[str, Any]:
         rag_info = await self.rag_system.process_query(content)
-        
+
         task_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(content)
         rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(task_vector)
-        
+
         decision_prompt = f"""
         Task: {content}
         RAG Information: {rag_info}
@@ -46,23 +46,23 @@ class DecisionMaker:
         """
 
         response = await self.llm.complete(decision_prompt)
-        
+
         decision = response.text
         alternatives = await self._generate_alternatives({"content": content, "rag_info": rag_info})
-        
+
         ranked_criteria = [
             {"criterion": "eudaimonia", "weight": 0.4},
             {"criterion": "curiosity", "weight": 0.2},
             {"criterion": "protection", "weight": 0.3},
             {"criterion": "self_preservation", "weight": 0.1}
         ]
-        
+
         evaluated_alternatives = await self._evaluate_alternatives(alternatives, ranked_criteria)
-        
+
         best_alternative = evaluated_alternatives[0]['alternative']
-        
+
         implementation_plan = await self._create_implementation_plan({"decision": decision, "best_alternative": best_alternative})
-        
+
         return {
             "decision": decision,
             "eudaimonia_score": eudaimonia_score,
@@ -87,14 +87,14 @@ class DecisionMaker:
             os.makedirs(path, exist_ok=True)
             self.mcts.save(os.path.join(path, "mcts_model.pt"))
             self.quality_assurance_layer.save(os.path.join(path, "quality_assurance_layer.json"))
-            
+
             # Save other necessary data
             data = {
                 "available_agents": self.available_agents
             }
             with open(os.path.join(path, "decision_maker_data.json"), 'w') as f:
                 json.dump(data, f)
-            
+
             logger.info("Decision maker models saved successfully")
         except Exception as e:
             logger.error(f"Error saving decision maker models: {str(e)}", exc_info=True)
@@ -105,12 +105,12 @@ class DecisionMaker:
             logger.info(f"Loading decision maker models from {path}")
             self.mcts.load(os.path.join(path, "mcts_model.pt"))
             self.quality_assurance_layer = QualityAssuranceLayer.load(os.path.join(path, "quality_assurance_layer.json"))
-            
+
             # Load other necessary data
             with open(os.path.join(path, "decision_maker_data.json"), 'r') as f:
                 data = json.load(f)
             self.available_agents = data["available_agents"]
-            
+
             logger.info("Decision maker models loaded successfully")
         except Exception as e:
             logger.error(f"Error loading decision maker models: {str(e)}", exc_info=True)
@@ -124,9 +124,9 @@ class DecisionMaker:
         king_alternatives = await self.agent.generate_structured_response(
             f"Given the problem analysis: {problem_analysis}, generate 3 potential solutions. Output as a JSON list of strings."
         )
-        
+
         all_alternatives = king_alternatives.copy()
-        
+
         for agent in self.available_agents:
             agent_alternatives_request = Message(
                 type=MessageType.QUERY,
@@ -136,7 +136,7 @@ class DecisionMaker:
             )
             response = await self.communication_protocol.send_and_wait(agent_alternatives_request)
             all_alternatives.extend(response.content["alternatives"])
-        
+
         return list(dict.fromkeys(all_alternatives))
 
     async def _evaluate_alternatives(self, alternatives: List[str], ranked_criteria: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -145,16 +145,16 @@ class DecisionMaker:
             alt_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(alt)
             eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(alt_vector)
             rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(alt_vector)
-            
+
             total_score = sum(
                 criterion['weight'] * (eudaimonia_score if criterion['criterion'] == 'eudaimonia' else rule_compliance)
                 for criterion in ranked_criteria
             )
-            
+
             evaluated_alternatives.append({'alternative': alt, 'score': total_score})
-        
+
         return sorted(evaluated_alternatives, key=lambda x: x['score'], reverse=True)
-    
+
     async def _determine_probabilities(self, alternatives: List[str], outcomes: Dict[str, List[str]]) -> Dict[str, Dict[str, float]]:
         prob_trees = {}
         for alt in alternatives:

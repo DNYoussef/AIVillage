@@ -11,7 +11,7 @@ Nightly cron job that surfaces candidate missing edges through co-mention analys
 ### Pipeline Steps
 
 1. **Hippo-Index Log Analysis** - Query logs for high co-mention entity pairs
-2. **Divergent Retrieval** - Call DivergentRetriever in scan mode (n=3 candidates per pair)  
+2. **Divergent Retrieval** - Call DivergentRetriever in scan mode (n=3 candidates per pair)
 3. **Innovator → Guardian Pipeline** - Process candidates through validation
 4. **Metrics Collection** - Track candidates found, guardian decisions, and performance
 
@@ -86,7 +86,7 @@ python jobs/hyperag_scan_hidden_links.py --verbose
 
 **Schedule Overview:**
 - **02:30 UTC Daily** - Hidden link scanner
-- **03:00 UTC Sundays** - Log cleanup  
+- **03:00 UTC Sundays** - Log cleanup
 - **04:00 UTC Monthly** - Metrics aggregation
 
 **Files:**

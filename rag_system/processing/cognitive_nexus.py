@@ -48,7 +48,7 @@ class CognitiveNexus:
         - Acknowledges any limitations or uncertainties in the available information
 
         Format your response as follows:
-        
+
         Synthesis:
         [Your synthesized understanding here]
 
@@ -59,7 +59,7 @@ class CognitiveNexus:
         [Your concise final answer to the original query]
 
         Confidence: [High/Medium/Low]
-        
+
         Areas for Further Investigation:
         [List any areas that require additional research or clarification]
         """

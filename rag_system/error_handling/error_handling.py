@@ -31,7 +31,7 @@ def log_error(error: Exception, context: Dict[str, Any] = None):
     error_message = f"{type(error).__name__}: {str(error)}"
     if isinstance(error, RAGSystemError):
         error_message += f" (Error Code: {error.error_code})"
-    
+
     logger.error(error_message)
     if context:
         logger.error(f"Error Context: {context}")
@@ -52,7 +52,7 @@ def error_handler(func: Callable):
             raise
         except Exception as e:
             # For unexpected errors, wrap them in a ProcessingError
-            error = ProcessingError(f"Unexpected error in {func.__name__}: {str(e)}", "UNEXPECTED_ERROR", 
+            error = ProcessingError(f"Unexpected error in {func.__name__}: {str(e)}", "UNEXPECTED_ERROR",
                                     {"original_error": str(e), "error_type": type(e).__name__})
             log_error(error, {"function": func.__name__, "args": args, "kwargs": kwargs})
             raise error
@@ -63,7 +63,7 @@ class ErrorHandler:
     def handle_error(error: Exception, context: Dict[str, Any] = None):
         """Handle errors globally."""
         log_error(error, context)
-        
+
         if isinstance(error, InputError):
             # Handle input errors (e.g., invalid user queries)
             return {"error": "Invalid input", "details": error.details}

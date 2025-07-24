@@ -26,7 +26,7 @@ class LTTErrorController(ErrorRateController):
         """
         n = len(calibration_data)
         errors = sum(calibration_data)
-        
+
         def compute_p_value(lambda_param):
             return 1 - binom.cdf(errors, n, lambda_param)
 

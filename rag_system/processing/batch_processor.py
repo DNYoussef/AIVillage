@@ -35,22 +35,22 @@ class BatchProcessor:
         :return: A list of tuples containing (entity1, relation, entity2, confidence).
         """
         potential_relations = self.knowledge_graph.get_potential_relations(entity_group1, entity_group2)
-        
+
         entity_pairs = [
             (entity1, relation, entity2)
             for entity1 in entity_group1
             for entity2 in entity_group2
             for relation in potential_relations
         ]
-        
+
         batch_results = await self.batch_extrapolate(entity_pairs)
-        
+
         extrapolated_connections = [
             (entity1, relation, entity2, confidence)
             for entity1, relation, entity2, _, confidence in batch_results
             if confidence > confidence_threshold
         ]
-        
+
         return extrapolated_connections
 
     async def iterative_extrapolation(self, initial_entities: List[str], max_iterations: int = 3) -> dict:
@@ -66,15 +66,15 @@ class BatchProcessor:
 
         for _ in range(max_iterations):
             new_connections = await self.extrapolate_group_connections(current_entities, current_entities, 0.5)
-            
+
             for entity1, relation, entity2, confidence in new_connections:
                 key = (entity1, relation, entity2)
                 if key not in discovered_connections:
                     discovered_connections[key] = confidence
-            
+
             # Update current_entities with newly discovered entities
-            current_entities = list(set(current_entities + 
-                                        [conn[0] for conn in new_connections] + 
+            current_entities = list(set(current_entities +
+                                        [conn[0] for conn in new_connections] +
                                         [conn[2] for conn in new_connections]))
 
         return discovered_connections

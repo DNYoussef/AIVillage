@@ -41,7 +41,7 @@ Always reset global state between tests, especially for singletons, registries, 
 
 **Key areas requiring isolation:**
 - Registry singletons
-- Configuration managers  
+- Configuration managers
 - Connection pools
 - Cached data
 - File system state
@@ -52,13 +52,13 @@ Always reset global state between tests, especially for singletons, registries, 
 def reset_registry():
     """Reset registry state before each test."""
     from mcp_servers.hyperag.lora.registry import LoRARegistry
-    
+
     # Clear any cached state
     LoRARegistry._instance = None
     LoRARegistry._entries = {}
-    
+
     yield
-    
+
     # Cleanup after test
     LoRARegistry._instance = None
 ```
@@ -102,7 +102,7 @@ async def test_async_monitor():
 # For sync contexts that need async calls
 def test_sync_with_async():
     monitor = TestMonitor()
-    
+
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
@@ -122,9 +122,9 @@ def temp_monitoring_dir(tmp_path):
     """Provide temporary monitoring directory."""
     monitoring_dir = tmp_path / "monitoring"
     monitoring_dir.mkdir()
-    
+
     yield monitoring_dir
-    
+
     # Cleanup happens automatically with tmp_path
 ```
 
@@ -149,20 +149,20 @@ Create comprehensive stubs that provide minimal but functional interfaces.
 ```python
 class AugmentedAdam:
     """Stub for grokfast.AugmentedAdam optimizer."""
-    
+
     def __init__(self, params, lr=1e-3, slow_freq=0.08, boost=1.5, **kwargs):
         self.params = list(params)
         self.lr = lr
         self.slow_freq = slow_freq
         self.boost = boost
         self._slow_cache = {}
-        
+
     def step(self):
         """Stub step method."""
         pass
-        
+
     def zero_grad(self):
-        """Stub zero_grad method.""" 
+        """Stub zero_grad method."""
         pass
 
 _ensure_module("grokfast", {"AugmentedAdam": AugmentedAdam})
@@ -175,19 +175,19 @@ Handle missing dependencies gracefully with conditional logic.
 ```python
 def test_with_optional_dependency():
     """Test that works with or without optional dependency."""
-    
+
     try:
         import heavy_library
         use_real_implementation = True
     except ImportError:
         use_real_implementation = False
-    
+
     if use_real_implementation:
         result = heavy_library.complex_operation()
     else:
         # Fallback to stub or simple implementation
         result = simple_operation()
-    
+
     assert result is not None
 ```
 
@@ -201,16 +201,16 @@ Always test both success and failure paths.
 def test_error_handler_with_valid_error():
     """Test error handler with valid error code."""
     handler = ErrorHandler()
-    
+
     # Test successful error handling
     result = handler.handle_error(ErrorCode.VALIDATION_ERROR, "Test error")
     assert result.success
     assert result.error_code == ErrorCode.VALIDATION_ERROR
 
 def test_error_handler_with_invalid_error():
-    """Test error handler with invalid error code.""" 
+    """Test error handler with invalid error code."""
     handler = ErrorHandler()
-    
+
     # Test error handling failure
     with pytest.raises(ValueError):
         handler.handle_error("INVALID_CODE", "Test error")
@@ -232,7 +232,7 @@ def mock_external_service():
 def test_with_external_service(mock_external_service):
     """Test code that depends on external service."""
     result = my_function_that_uses_service()
-    
+
     assert result["status"] == "success"
     mock_external_service.fetch_data.assert_called_once()
 ```
@@ -249,11 +249,11 @@ import time
 def test_fast_operation_performance():
     """Test that critical operation completes quickly."""
     start_time = time.perf_counter()
-    
+
     result = fast_operation()
-    
+
     duration = time.perf_counter() - start_time
-    
+
     assert result is not None
     assert duration < 0.1  # Should complete in under 100ms
 ```
@@ -267,11 +267,11 @@ Mark performance-sensitive tests to enable selective running.
 def test_compression_performance():
     """Benchmark compression performance."""
     data = create_test_data(size=1000)
-    
+
     start_time = time.perf_counter()
     compressed = compress_data(data)
     duration = time.perf_counter() - start_time
-    
+
     assert compressed is not None
     assert len(compressed) < len(data)  # Should compress
     assert duration < 1.0  # Should be fast
@@ -292,7 +292,7 @@ def test_config():
         "cache_ttl": 60,
         "debug": True
     }
-    
+
     with patch.dict(os.environ, {
         "DATABASE_URL": config["database_url"],
         "CACHE_TTL": str(config["cache_ttl"]),
@@ -312,10 +312,10 @@ def test_config_validation_success():
         "required_field": "value",
         "optional_field": 42
     }
-    
+
     validator = ConfigValidator()
     result = validator.validate(config)
-    
+
     assert result.is_valid
     assert not result.errors
 
@@ -325,10 +325,10 @@ def test_config_validation_failure():
         "optional_field": 42
         # missing required_field
     }
-    
+
     validator = ConfigValidator()
     result = validator.validate(config)
-    
+
     assert not result.is_valid
     assert "required_field" in result.errors
 ```
@@ -343,16 +343,16 @@ Ensure monitoring code works correctly in tests.
 def test_monitoring_captures_results():
     """Test that monitoring captures test results correctly."""
     monitor = TestMonitor()
-    
+
     # Simulate test results
     test_data = {
         "summary": {"total": 10, "passed": 9, "failed": 1},
         "duration": 5.5,
         "tests": []
     }
-    
+
     stats = TestStats.from_pytest_json(test_data)
-    
+
     assert stats.total_tests == 10
     assert stats.success_rate == 90.0
     assert stats.duration == 5.5
@@ -367,12 +367,12 @@ def test_alert_triggers_on_low_success_rate():
     """Test that alert triggers when success rate is too low."""
     alert_manager = AlertManager()
     alert_manager.config.success_rate_threshold = 95.0
-    
+
     # Simulate low success rate
     stats = {"success_rate": 85.0, "total_tests": 100, "failed": 15}
-    
+
     alerts = alert_manager.check_thresholds(stats)
-    
+
     assert len(alerts) == 1
     assert alerts[0].severity == "high"
     assert "below threshold" in alerts[0].message
@@ -406,7 +406,7 @@ shared_cache = {}
 
 def test_first():
     shared_cache["key"] = "value"
-    
+
 def test_second():
     # This test depends on test_first running first
     assert shared_cache["key"] == "value"
@@ -429,16 +429,16 @@ Use classes to group related functionality tests.
 ```python
 class TestErrorHandler:
     """Test suite for ErrorHandler functionality."""
-    
+
     @pytest.fixture
     def handler(self):
         return ErrorHandler()
-    
+
     def test_handle_validation_error(self, handler):
         """Test handling validation errors."""
         result = handler.handle_error(ErrorCode.VALIDATION_ERROR, "Invalid input")
         assert result.success
-    
+
     def test_handle_processing_error(self, handler):
         """Test handling processing errors."""
         result = handler.handle_error(ErrorCode.PROCESSING_ERROR, "Processing failed")
@@ -459,7 +459,7 @@ def test_monitor_triggers_alert_when_success_rate_below_threshold():
     """Test that monitoring system triggers alert for low success rates."""
     pass
 
-# Bad: Vague names  
+# Bad: Vague names
 def test_registry():
     pass
 

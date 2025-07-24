@@ -7,7 +7,7 @@
         "strict": true,
         "contexts": [
           "Test Suite (3.10)",
-          "Test Suite (3.11)", 
+          "Test Suite (3.11)",
           "Test Suite (3.12)",
           "Test Results Summary",
           "Build Verification",

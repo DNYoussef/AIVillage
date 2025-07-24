@@ -33,7 +33,7 @@ class KnowledgeEvolutionTracker:
     async def get_knowledge_snapshot(self, timestamp: datetime) -> Dict[str, Any]:
         vector_snapshot = await self.vector_store.get_snapshot(timestamp)
         graph_snapshot = await self.graph_store.get_snapshot(timestamp)
-        
+
         return {
             "timestamp": timestamp,
             "vector_knowledge": vector_snapshot,

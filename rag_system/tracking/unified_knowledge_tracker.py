@@ -43,7 +43,7 @@ class UnifiedKnowledgeTracker:
     def _update_knowledge_graph(self, change: KnowledgeChange):
         if change.entity not in self.knowledge_graph:
             self.knowledge_graph[change.entity] = {}
-        
+
         self.knowledge_graph[change.entity][change.relation] = change.new_value
 
     def get_entity_history(self, entity: str) -> List[KnowledgeChange]:

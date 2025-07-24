@@ -22,7 +22,7 @@ class AdvancedNLP:
             trust_remote_code=False
         )
         self.classifier = BertForSequenceClassification.from_pretrained(
-            "bert-base-uncased", 
+            "bert-base-uncased",
             num_labels=2,
             revision="main",
             trust_remote_code=False

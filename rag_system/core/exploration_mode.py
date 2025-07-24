@@ -267,7 +267,7 @@ class ExplorationMode:
         """
         graph = await self.graph_store.get_graph()
         paths = list(nx.all_simple_paths(graph, start_node, end_node, cutoff=max_depth))
-        
+
         if not paths:
             return []
 
@@ -312,7 +312,7 @@ class ExplorationMode:
         excluded_graph.remove_nodes_from(excluded_nodes)
 
         paths = list(nx.all_simple_paths(excluded_graph, start_node, end_node, cutoff=max_depth))
-        
+
         if not paths:
             return []
 
@@ -355,7 +355,7 @@ class ExplorationMode:
             List[Dict[str, Any]]: A list of new ideas and connections.
         """
         causal_paths = await self.find_causal_paths(start_node, end_node)
-        
+
         if not causal_paths:
             return []
 

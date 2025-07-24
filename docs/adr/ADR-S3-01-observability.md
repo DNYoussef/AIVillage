@@ -13,9 +13,9 @@ Sprint 3 requires monitoring to track p99 latency and detect memory leaks during
 Adopt Prometheus v2.52 + Grafana 11 via docker-compose override.
 
 ## Consequences
-✅ p99 latency visible in <1 min  
-✅ Memory leak detection automated  
-❌ Two extra containers (+200MB RAM)  
+✅ p99 latency visible in <1 min
+✅ Memory leak detection automated
+❌ Two extra containers (+200MB RAM)
 ❌ Need to maintain dashboards
 
 ## Alternatives

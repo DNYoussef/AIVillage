@@ -14,21 +14,21 @@ class UnifiedConfig(BaseModel):
     graph_store_type: str = "networkx"
     retriever_type: str = "hybrid"
     reasoning_engine_type: str = "uncertainty_aware"
-    
+
     # SageAgent configuration
     agent_name: str = "SageAgent"
     agent_description: str = "A research and analysis agent equipped with advanced reasoning and NLP capabilities."
-    
+
     # Retrieval configuration
     MAX_RESULTS: int = 10
     FEEDBACK_ITERATIONS: int = 3
     TEMPORAL_GRANULARITY: timedelta = timedelta(days=1)
-    
+
     # Additional configuration parameters
     top_k: int = 5
     chunk_size: int = 1000
     chunk_overlap: int = 200
-    
+
     # Extensible configuration dictionary for additional parameters
     extra_params: Dict[str, Any] = Field(default_factory=dict)
 
@@ -73,4 +73,3 @@ def load_from_yaml(config_path: str) -> RAGConfig:
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
     return RAGConfig(**data)
-

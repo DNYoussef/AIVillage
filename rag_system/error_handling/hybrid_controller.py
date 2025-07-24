@@ -26,7 +26,7 @@ class HybridErrorController(AdaptiveErrorRateController, LTTErrorController):
         """
         if calibration_data:
             self.calibrate(calibration_data)
-        
+
         AdaptiveErrorRateController.update_error_rates(self, observed_errors)
 
     def _compute_step_error_rates(self):

@@ -172,7 +172,7 @@ class GraphStore:
         if edge:
             learning_rate = 0.1
             edge.strength = (1 - learning_rate) * edge.strength + learning_rate * observed_probability
-    
+
     def close(self):
         if self.driver:
             self.driver.close()
@@ -218,7 +218,7 @@ class GraphStore:
                     new_beam = beam + [neighbor]
                     score = await self.llm.score_path(query, new_beam)
                     candidates.append((new_beam, score))
-            
+
             beams = sorted(candidates, key=lambda x: x[1], reverse=True)[:beam_width]
 
         return beams

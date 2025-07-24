@@ -48,17 +48,17 @@ class AdvancedNLP:
         """
         query_embedding = self.get_embeddings([query])
         doc_embeddings = self.get_embeddings(documents)
-        
+
         similarities = cosine_similarity(query_embedding, doc_embeddings)[0]
         top_indices = similarities.argsort()[-top_k:][::-1]
-        
+
         results = []
         for idx in top_indices:
             results.append({
                 'document': documents[idx],
                 'similarity': similarities[idx]
             })
-        
+
         return results
 
     def extract_keywords(self, text: str, top_k: int = 5) -> List[str]:
@@ -67,17 +67,17 @@ class AdvancedNLP:
         """
         tokens = self.tokenizer.tokenize(text)
         token_embeddings = self.get_embeddings(tokens)
-        
+
         # Calculate the centroid of all token embeddings
         centroid = np.mean(token_embeddings, axis=0)
-        
+
         # Calculate cosine similarity between each token and the centroid
         similarities = cosine_similarity(token_embeddings, [centroid])[:, 0]
-        
+
         # Get the top-k tokens with highest similarity to the centroid
         top_indices = similarities.argsort()[-top_k:][::-1]
         keywords = [tokens[idx] for idx in top_indices]
-        
+
         return keywords
 
     def generate_summary(self, text: str, max_length: int = 100) -> str:
@@ -96,7 +96,7 @@ class AdvancedNLP:
         inputs = self.tokenizer(text, return_tensors='pt', truncation=True, max_length=512)
         with torch.no_grad():
             outputs = self.bert_classifier(**inputs)
-        
+
         probabilities = torch.nn.functional.softmax(outputs.logits, dim=1)
         sentiment_scores = {
             'positive': probabilities[0][1].item(),

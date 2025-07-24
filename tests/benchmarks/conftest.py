@@ -14,28 +14,28 @@ class BenchmarkResult:
     duration: float
     timestamp: str
     metadata: Dict[str, Any]
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 
 class PerformanceBenchmark:
     """Track test performance over time and detect regressions."""
-    
+
     def __init__(self):
         self.baselines_file = Path(__file__).parent / "baselines.json"
         self.results_file = Path(__file__).parent / "benchmark_results.json"
         self.baselines = self._load_baselines()
         self.current_results: List[BenchmarkResult] = []
-        
+
         # Performance thresholds
         self.regression_threshold = 1.5  # 50% slower than baseline
         self.warning_threshold = 1.2     # 20% slower than baseline
-    
+
     def _load_baselines(self) -> Dict[str, float]:
         """Load performance baselines from file."""
         if not self.baselines_file.exists():
             return {}
-        
+
         try:
             with open(self.baselines_file, 'r') as f:
                 data = json.load(f)
@@ -43,15 +43,15 @@ class PerformanceBenchmark:
         except Exception as e:
             print(f"Warning: Could not load baselines: {e}")
             return {}
-    
+
     def measure(self, test_name: str, metadata: Optional[Dict[str, Any]] = None):
         """Context manager for measuring test performance."""
         return BenchmarkContext(self, test_name, metadata or {})
-    
+
     def record_result(self, result: BenchmarkResult):
         """Record a benchmark result."""
         self.current_results.append(result)
-        
+
         # Check for regression
         baseline = self.baselines.get(result.test_name)
         if baseline and result.duration > baseline * self.regression_threshold:
@@ -66,21 +66,21 @@ class PerformanceBenchmark:
                 match=f"Performance warning for {result.test_name}: "
                      f"{result.duration:.3f}s vs baseline {baseline:.3f}s"
             )
-    
+
     def save_results(self):
         """Save benchmark results to file."""
         try:
             self.results_file.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Load existing results
             existing_results = []
             if self.results_file.exists():
                 with open(self.results_file, 'r') as f:
                     existing_results = json.load(f)
-            
+
             # Add new results
             all_results = existing_results + [r.to_dict() for r in self.current_results]
-            
+
             # Keep only last 100 results per test
             results_by_test = {}
             for result in all_results:
@@ -88,37 +88,37 @@ class PerformanceBenchmark:
                 if test_name not in results_by_test:
                     results_by_test[test_name] = []
                 results_by_test[test_name].append(result)
-            
+
             # Trim to last 100 per test
             trimmed_results = []
             for test_results in results_by_test.values():
                 # Sort by timestamp and keep last 100
                 sorted_results = sorted(test_results, key=lambda x: x['timestamp'])
                 trimmed_results.extend(sorted_results[-100:])
-            
+
             with open(self.results_file, 'w') as f:
                 json.dump(trimmed_results, f, indent=2)
-                
+
         except Exception as e:
             print(f"Warning: Could not save benchmark results: {e}")
 
 class BenchmarkContext:
     """Context manager for benchmark measurements."""
-    
+
     def __init__(self, benchmark: PerformanceBenchmark, test_name: str, metadata: Dict[str, Any]):
         self.benchmark = benchmark
         self.test_name = test_name
         self.metadata = metadata
         self.start_time = None
-    
+
     def __enter__(self):
         self.start_time = time.perf_counter()
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.start_time is not None:
             duration = time.perf_counter() - self.start_time
-            
+
             from datetime import datetime, timezone
             result = BenchmarkResult(
                 test_name=self.test_name,
@@ -126,7 +126,7 @@ class BenchmarkContext:
                 timestamp=datetime.now(timezone.utc).isoformat(),
                 metadata=self.metadata
             )
-            
+
             self.benchmark.record_result(result)
 
 @pytest.fixture(scope="session")
@@ -134,7 +134,7 @@ def benchmark():
     """Provide performance benchmark fixture."""
     bench = PerformanceBenchmark()
     yield bench
-    
+
     # Save results at end of session
     bench.save_results()
 
@@ -167,11 +167,11 @@ def pytest_collection_modifyitems(config, items):
         # Auto-mark tests in benchmarks directory
         if "benchmarks" in str(item.fspath):
             item.add_marker(pytest.mark.benchmark)
-        
+
         # Mark slow tests
         if "slow" in item.name.lower():
             item.add_marker(pytest.mark.slow_benchmark)
-        
+
         # Mark memory tests
         if "memory" in item.name.lower():
             item.add_marker(pytest.mark.memory_benchmark)

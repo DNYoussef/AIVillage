@@ -111,7 +111,7 @@ EvoMerge is an advanced system designed to merge multiple language models using 
 
 15. Using Hugging Face Model Links:
     The CLI supports direct input of Hugging Face model links for the initial models:
-    
+
     a. Specify models using their Hugging Face model IDs:
        ```
        python -m agent_forge.evomerge.cli --run --model1 bert-base-uncased --model2 roberta-base --model3 distilbert-base-uncased

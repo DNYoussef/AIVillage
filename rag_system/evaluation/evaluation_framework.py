@@ -80,7 +80,7 @@ class EvaluationFramework:
     def generate_visualizations(self) -> Dict[str, bytes]:
         visualizations = {}
         visualizations['metrics_over_time'] = self.advanced_analytics.visualize_metrics()
-        
+
         # Generate correlation heatmap
         metric_values = {name: metric.values for name, metric in self.metrics.items()}
         df = pd.DataFrame(metric_values)
@@ -89,15 +89,15 @@ class EvaluationFramework:
             correlation_matrix.values.tolist(),
             correlation_matrix.index.tolist()
         )
-        
+
         return visualizations
 
     def evaluate_system_performance(self) -> Dict[str, Any]:
         report = self.generate_report()
         visualizations = self.generate_visualizations()
-        
+
         overall_performance = np.mean([data['latest_value'] for data in report.values() if data['latest_value'] is not None])
-        
+
         return {
             "report": report,
             "visualizations": visualizations,

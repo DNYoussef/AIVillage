@@ -20,13 +20,13 @@ class StandardizedPrompt(BaseModel):
     def to_string(self) -> str:
         prompt = f"Task: {self.task}\n\n"
         prompt += f"Context: {self.context}\n\n"
-        
+
         if self.constraints:
             prompt += "Constraints:\n"
             for i, constraint in enumerate(self.constraints, 1):
                 prompt += f"{i}. {constraint}\n"
             prompt += "\n"
-        
+
         if self.examples:
             prompt += "Examples:\n"
             for i, example in enumerate(self.examples, 1):
@@ -34,14 +34,14 @@ class StandardizedPrompt(BaseModel):
                 for key, value in example.items():
                     prompt += f"  {key}: {value}\n"
                 prompt += "\n"
-        
+
         prompt += f"Output Format: {self.output_format.value}\n\n"
-        
+
         if self.additional_instructions:
             prompt += f"Additional Instructions: {self.additional_instructions}\n\n"
-        
+
         prompt += "Please provide your response based on the above information and guidelines."
-        
+
         return prompt
 
 class StandardizedOutput(BaseModel):

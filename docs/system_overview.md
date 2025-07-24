@@ -42,4 +42,3 @@ keyword patterns. The following phrases are recognised:
 
 Queries that do not match any pattern are marked as `unknown` with a lower
 confidence score.
-

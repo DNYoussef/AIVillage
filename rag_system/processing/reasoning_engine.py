@@ -65,7 +65,7 @@ class UncertaintyAwareReasoningEngine:
         if edge:
             learning_rate = 0.1
             edge.strength = (1 - learning_rate) * edge.strength + learning_rate * observed_probability
-    
+
     def close(self):
         """Close the underlying driver if it exists."""
         if self.driver:
@@ -99,7 +99,7 @@ class UncertaintyAwareReasoningEngine:
                     new_beam = beam + [neighbor]
                     score = await self.llm.score_path(query, new_beam)
                     candidates.append((new_beam, score))
-            
+
             beams = sorted(candidates, key=lambda x: x[1], reverse=True)[:beam_width]
 
         return beams
@@ -188,7 +188,7 @@ class UncertaintyAwareReasoningEngine:
         propagated_uncertainty = 1.0
         for step_uncertainty in uncertainties:
             propagated_uncertainty *= (1 - step_uncertainty)
-        
+
         return 1 - propagated_uncertainty
 
     async def reason_with_uncertainty(self, query: str, constructed_knowledge: Dict[str, Any], timestamp: datetime) -> Tuple[str, float, List[Dict[str, Any]]]:

@@ -19,7 +19,7 @@ class LatentSpaceAgent(AgentInterface):
         """
 
         response = await self.llm_model.generate(activation_prompt)
-        
+
         # Split the response into background knowledge and refined query
         parts = response.split("Refined Query:")
         background_knowledge = parts[0].strip()
@@ -36,7 +36,7 @@ class LatentSpaceAgent(AgentInterface):
     async def rerank(self, query: str, results: List[Dict[str, Any]], k: int) -> List[Dict[str, Any]]:
         for result in results:
             result['score'] = await self._calculate_similarity(query, result['content'])
-        
+
         # Sort results by score and return top k
         reranked_results = sorted(results, key=lambda x: x['score'], reverse=True)[:k]
         return reranked_results
@@ -52,7 +52,7 @@ class LatentSpaceAgent(AgentInterface):
     async def communicate(self, message: str, recipient: 'AgentInterface') -> str:
         response = await recipient.generate(f"Message from LatentSpaceAgent: {message}")
         return f"Sent: {message}, Received: {response}"
-    
+
     async def _calculate_similarity(self, text1: str, text2: str) -> float:
         # Implement similarity calculation
         # This could use cosine similarity between embeddings, for example
