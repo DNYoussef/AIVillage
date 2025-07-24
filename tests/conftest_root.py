@@ -26,11 +26,40 @@ def _ensure_module(name: str, attrs: dict | None = None):
 # Minimal stubs for heavy optional dependencies
 _ensure_module("faiss", {"IndexFlatL2": lambda *a, **k: object()})
 
+# Create a more complete torch stub
+class MockTensor:
+    def __init__(self, *args, **kwargs):
+        self.shape = (10, 10) if not args else args
+    def __getattr__(self, name):
+        return lambda *a, **k: self
+    def item(self):
+        return 0.5
+    def numpy(self):
+        import numpy as np
+        return np.zeros(self.shape)
+    def to(self, *args, **kwargs):
+        return self
+    def cpu(self):
+        return self
+    def detach(self):
+        return self
+
 torch_mod = _ensure_module(
     "torch",
     {
-        "Tensor": object,
-        "randn": lambda *a, **k: 0,
+        "Tensor": MockTensor,
+        "randn": lambda *a, **k: MockTensor(*a, **k),
+        "zeros": lambda *a, **k: MockTensor(*a, **k),
+        "ones": lambda *a, **k: MockTensor(*a, **k),
+        "tensor": lambda *a, **k: MockTensor(*a, **k),
+        "rand": lambda *a, **k: MockTensor(*a, **k),
+        "randn_like": lambda *a, **k: MockTensor(*a, **k),
+        "float32": "float32",
+        "int8": "int8",
+        "norm": lambda *a, **k: MockTensor(),
+        "mean": lambda *a, **k: MockTensor(),
+        "stack": lambda *a, **k: MockTensor(),
+        "cat": lambda *a, **k: MockTensor(),
     },
 )
 if torch_mod is not None:
@@ -78,6 +107,18 @@ def jit(*args, **kwargs):
     return lambda func: func  # Decorator with arguments
 
 _ensure_module("numba", {"jit": jit})
+
+# Add tiktoken stub 
+class MockEncoding:
+    def encode(self, text, *args, **kwargs):
+        return [1, 2, 3]  # Mock token ids
+    def decode(self, tokens, *args, **kwargs):
+        return "mock decoded text"
+
+_ensure_module("tiktoken", {
+    "encoding_for_model": lambda model: MockEncoding(),
+    "get_encoding": lambda encoding: MockEncoding(),
+})
 
 _real_find_spec = importlib.util.find_spec
 

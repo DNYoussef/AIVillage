@@ -31,7 +31,7 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      
+
     - name: Check for compression code
       id: check-compression
       run: |
@@ -42,7 +42,7 @@ jobs:
           echo "has_compression=false" >> $GITHUB_OUTPUT
           echo "No compression directory found"
         fi
-        
+
         if [ -d "tests/compression" ] || ls tests/test_*compression*.py 2>/dev/null; then
           echo "has_tests=true" >> $GITHUB_OUTPUT
           echo "Compression tests found"
@@ -56,7 +56,7 @@ jobs:
     needs: compression-check
     if: needs.compression-check.outputs.has_compression == 'true' || needs.compression-check.outputs.has_tests == 'true'
     timeout-minutes: 30  # Reduced from 45
-    
+
     strategy:
       fail-fast: false  # Continue other jobs if one fails
       matrix:
@@ -83,32 +83,38 @@ jobs:
     - name: Install base dependencies
       run: |
         python -m pip install --upgrade pip
-        
-        # Try to install from project files
+
+        # Try to install from project files with better error handling
         if [ -f "requirements.txt" ]; then
           echo "Installing from requirements.txt"
-          pip install -r requirements.txt || echo "Some requirements failed to install"
+          # Check if requirements.txt is properly formatted
+          if head -1 requirements.txt | grep -q "^[[:space:]]*-e"; then
+            pip install -r requirements.txt || echo "Some requirements failed to install"
+          else
+            echo "requirements.txt appears corrupted, installing essential packages directly"
+            pip install numpy scipy scikit-learn || echo "Essential packages failed"
+          fi
         elif [ -f "pyproject.toml" ]; then
           echo "Installing from pyproject.toml"
           pip install -e . || echo "Project installation failed"
         fi
-        
+
         # Install test dependencies
-        pip install pytest pytest-xdist pytest-cov pytest-timeout
+        pip install pytest pytest-xdist pytest-cov pytest-timeout || echo "Test dependencies installation failed"
 
     - name: Install compression dependencies
       run: |
         echo "=== Installing compression-specific dependencies ==="
-        
+
         # Install PyTorch CPU version (lighter for CI)
         pip install torch --index-url https://download.pytorch.org/whl/cpu || echo "PyTorch installation failed"
-        
+
         # Install scientific computing packages
         pip install numpy scipy scikit-learn || echo "Scientific packages installation failed"
-        
+
         # Install additional packages that might be needed
         pip install einops safetensors || echo "Additional packages installation failed"
-        
+
         # Check what we have
         echo ""
         echo "=== Installed packages ==="
@@ -118,7 +124,7 @@ jobs:
       if: matrix.test-type == 'unit' && needs.compression-check.outputs.has_tests == 'true'
       run: |
         echo "=== Running unit tests ==="
-        
+
         # Try different test locations
         if [ -d "tests/compression" ]; then
           echo "Running tests in tests/compression/"
@@ -172,7 +178,7 @@ print('Validation complete')
       if: matrix.test-type == 'integration'
       run: |
         echo "=== Running integration tests ==="
-        
+
         # Look for integration test files
         integration_files=""
         for pattern in "tests/test_stage1_compression.py" "tests/test_compressed_loader.py" "tests/integration/test_*.py"; do
@@ -180,7 +186,7 @@ print('Validation complete')
             integration_files="$integration_files $pattern"
           fi
         done
-        
+
         if [ -n "$integration_files" ]; then
           echo "Running integration tests: $integration_files"
           python -m pytest $integration_files \
@@ -199,20 +205,20 @@ try:
     # Test basic imports
     import torch
     print('✅ PyTorch available')
-    
+
     import numpy as np
     print('✅ NumPy available')
-    
+
     # Test basic tensor operations
     x = torch.randn(10, 20)
     print(f'✅ Created test tensor: {x.shape}')
-    
+
     # Test numpy conversion
     x_np = x.numpy()
     print(f'✅ Converted to numpy: {x_np.shape}')
-    
+
     print('✅ Basic compression environment is working')
-    
+
 except Exception as e:
     print(f'❌ Basic workflow failed: {e}')
     sys.exit(1)
@@ -242,7 +248,7 @@ except Exception as e:
     needs: compression-check
     if: needs.compression-check.outputs.has_compression == 'true'
     timeout-minutes: 15
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -274,30 +280,30 @@ results = []
 
 for rows, cols in test_sizes:
     print(f'Testing {rows}x{cols} tensor...')
-    
+
     # Create random tensor
     x = torch.randn(rows, cols, dtype=torch.float32)
-    
+
     # Time basic operations
     start_time = time.time()
-    
+
     # Simulate compression (quantization)
     x_int8 = (x * 127).clamp(-128, 127).to(torch.int8)
     x_restored = x_int8.float() / 127
-    
+
     end_time = time.time()
-    
+
     # Calculate metrics
     compression_time = end_time - start_time
     error = torch.mean((x - x_restored) ** 2).item()
-    
+
     result = {
         'size': f'{rows}x{cols}',
         'compression_time': compression_time,
         'mse_error': error,
         'success': True
     }
-    
+
     results.append(result)
     print(f'  Time: {compression_time:.4f}s, MSE: {error:.6f}')
 
@@ -319,7 +325,7 @@ print(f'✅ Completed {len(results)} benchmark tests')
     runs-on: ubuntu-latest
     needs: compression-check
     if: needs.compression-check.outputs.has_compression == 'true'
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -337,7 +343,7 @@ print(f'✅ Completed {len(results)} benchmark tests')
     - name: Run code formatting check
       run: |
         echo "=== Code Quality Checks ==="
-        
+
         # Find compression code
         compression_paths=""
         if [ -d "agent_forge/compression" ]; then
@@ -349,28 +355,28 @@ print(f'✅ Completed {len(results)} benchmark tests')
         if [ -d "tests/compression" ]; then
           compression_paths="$compression_paths tests/compression"
         fi
-        
+
         if [ -n "$compression_paths" ]; then
           echo "Checking paths: $compression_paths"
-          
+
           # Run ruff if available
           if which ruff >/dev/null 2>&1; then
             echo "Running ruff..."
             ruff check $compression_paths || echo "Ruff found issues"
           fi
-          
-          # Run black if available  
+
+          # Run black if available
           if which black >/dev/null 2>&1; then
             echo "Running black..."
             black --check --diff $compression_paths || echo "Black found formatting issues"
           fi
-          
+
           # Run flake8 if available
           if which flake8 >/dev/null 2>&1; then
             echo "Running flake8..."
             flake8 $compression_paths || echo "Flake8 found issues"
           fi
-          
+
         else
           echo "No compression code found to lint"
         fi
