@@ -86,27 +86,15 @@ jobs:
         # Try multiple installation strategies with better error handling
         if [ -f "requirements-dev.txt" ]; then
           echo "Installing from requirements-dev.txt"
-          pip install -r requirements-dev.txt || echo "requirements-dev.txt installation failed, continuing"
-        elif [ -f "requirements.txt" ]; then
-          echo "Installing from requirements.txt"
-          # Check if requirements.txt looks corrupted
-          if head -1 requirements.txt | grep -q "^[[:space:]]*-e"; then
-            pip install -r requirements.txt || echo "requirements.txt installation failed, continuing with basic deps"
-          else
-            echo "requirements.txt appears corrupted, skipping"
-          fi
-          echo "Adding test dependencies"
-          pip install pytest pytest-cov pytest-xdist scikit-learn tiktoken || echo "Some test dependencies failed"
-        elif [ -f "pyproject.toml" ]; then
-          echo "Installing from pyproject.toml"
-          pip install -e ".[test]" || pip install -e . || echo "Installation failed, continuing"
-        else
-          echo "No dependency files found, installing basic test tools"
-          pip install pytest pytest-cov
+          pip install -r requirements-dev.txt || echo "requirements-dev.txt installation failed, trying basic deps"
         fi
-
-        # Always ensure these basic packages are available
-        pip install numpy scikit-learn || echo "Could not install numpy/scikit-learn"
+        
+        # Fallback to basic dependencies if requirements-dev.txt fails
+        echo "Installing core dependencies"
+        pip install pytest pytest-cov pytest-xdist numpy scikit-learn torch transformers || echo "Some core dependencies failed"
+        
+        # Install specific packages for Agent Forge
+        pip install wandb pydantic fastapi aiohttp tiktoken || echo "Some Agent Forge dependencies failed"
 
     - name: Run tests
       run: |
@@ -256,6 +244,15 @@ jobs:
             --timeout 5400 \
             --benchmark-timeout 1800
           echo "Pipeline execution completed"
+
+      - name: Run smoke test validation
+        run: |
+          echo "=== Running Agent Forge Smoke Test ==="
+          python run_smoke_test.py \
+            --no-deploy \
+            --timeout 3600 \
+            --quick
+          echo "Smoke test completed"
 
       - name: Upload pipeline results
         if: always()

@@ -1,0 +1,105 @@
+{
+  "smoke_test": {
+    "timestamp": "2025-07-25T08:04:24.333578",
+    "version": "1.0.0",
+    "timeout": 30,
+    "dry_run": true,
+    "duration": 4.276096
+  },
+  "pipeline_execution": {
+    "status": "success",
+    "return_code": 0,
+    "execution_time": 2.38005,
+    "stdout_lines": [
+      "2025-07-25 08:04:26,478 - INFO - Starting Agent Forge Full Pipeline",
+      "2025-07-25 08:04:26,478 - INFO - Dry run mode - validating configuration only",
+      "2025-07-25 08:04:26,478 - INFO - Setting up environment...",
+      "2025-07-25 08:04:26,478 - INFO - Running in dry-run mode without frontier API key",
+      "2025-07-25 08:04:28,399 - INFO - Auto-detected device: cpu",
+      "2025-07-25 08:04:28,399 - INFO - Environment configured for device: cpu",
+      "2025-07-25 08:04:28,399 - INFO - Configuration validation completed successfully",
+      "",
+      "Agent Forge pipeline completed successfully!",
+      "Check the generated summary report for detailed results."
+    ],
+    "error": null
+  },
+  "wandb_metrics": {
+    "status": "skipped"
+  },
+  "benchmark_validation": {
+    "status": "success",
+    "best_model": "unified_pipeline",
+    "best_score": 0.541,
+    "validation": {
+      "MMLU": {
+        "score": 0.651,
+        "threshold": 0.6,
+        "passed": true,
+        "margin": 0.051000000000000045
+      },
+      "GSM8K": {
+        "score": 0.478,
+        "threshold": 0.4,
+        "passed": true,
+        "margin": 0.07799999999999996
+      },
+      "HumanEval": {
+        "score": 0.289,
+        "threshold": 0.25,
+        "passed": true,
+        "margin": 0.03899999999999998
+      }
+    },
+    "overall_pass": true,
+    "all_scores": {
+      "MMLU": 0.651,
+      "GSM8K": 0.478,
+      "HumanEval": 0.289,
+      "HellaSwag": 0.742,
+      "ARC": 0.545
+    }
+  },
+  "artifacts_check": {
+    "all_present": true,
+    "artifacts": {
+      "Agent Forge Outputs": {
+        "path": "C:\\Users\\17175\\Desktop\\AIVillage\\agent_forge_outputs",
+        "exists": true,
+        "type": "directory"
+      },
+      "Benchmark Results": {
+        "path": "C:\\Users\\17175\\Desktop\\AIVillage\\benchmark_results",
+        "exists": true,
+        "type": "directory"
+      },
+      "Pipeline Summary": {
+        "path": "C:\\Users\\17175\\Desktop\\AIVillage\\agent_forge_pipeline_summary.json",
+        "exists": true,
+        "type": "file"
+      },
+      "Forge Checkpoints": {
+        "path": "C:\\Users\\17175\\Desktop\\AIVillage\\forge_checkpoints",
+        "exists": true,
+        "type": "directory"
+      }
+    }
+  },
+  "overall_status": "PASSED",
+  "summary": {
+    "overall_status": "PASSED",
+    "execution_time": 2.38005,
+    "pipeline_success": true,
+    "artifacts_present": true,
+    "recommendations": [],
+    "benchmark_pass": true,
+    "best_model": "unified_pipeline",
+    "best_score": 0.541,
+    "benchmark_scores": {
+      "MMLU": 0.651,
+      "GSM8K": 0.478,
+      "HumanEval": 0.289
+    },
+    "wandb_available": false
+  }
+}

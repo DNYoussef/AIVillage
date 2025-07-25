@@ -1,4 +1,4 @@
--e git+https://github.com/DNYoussef/AIVillage.git@34a6a3077e3f1d64afdd8bee9b6c04db0b2dc957#egg=ai_village
+# Core dependencies for AIVillage project
 
 aider-chat==0.54.12
 aiodns==3.2.0
