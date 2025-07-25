@@ -1,0 +1,53 @@
+{
+  "os": "Windows-10-10.0.19045-SP0",
+  "python": "CPython 3.12.5",
+  "startedAt": "2025-07-25T03:16:33.119414Z",
+  "args": [
+    "--base-models",
+    "DialoGPT-medium",
+    "Qwen2-1.5B-Instruct",
+    "phi-2",
+    "--gens",
+    "50",
+    "--device",
+    "cpu",
+    "--output-dir",
+    "C:\\Users\\17175\\Desktop\\AIVillage\\agent_forge_outputs",
+    "--quick-mode"
+  ],
+  "program": "C:\\Users\\17175\\Desktop\\AIVillage\\agent_forge\\forge_orchestrator.py",
+  "codePath": "agent_forge\\forge_orchestrator.py",
+  "codePathLocal": "agent_forge\\forge_orchestrator.py",
+  "git": {
+    "remote": "https://github.com/DNYoussef/AIVillage.git",
+    "commit": "46e3ae8058c3758a2eb400e388f3b227c0fa65b2"
+  },
+  "email": "dydavidyoussef@gmail.com",
+  "root": "C:\\Users\\17175\\Desktop\\AIVillage\\wandb",
+  "host": "DESKTOP-I78AK0M",
+  "executable": "C:\\Users\\17175\\Desktop\\AIVillage\\evomerge_env\\Scripts\\python.exe",
+  "cpu_count": 6,
+  "cpu_count_logical": 12,
+  "gpu": "NVIDIA GeForce RTX 2060 SUPER",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "511358005248",
+      "used": "470620221440"
+    }
+  },
+  "memory": {
+    "total": "17063505920"
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA GeForce RTX 2060 SUPER",
+      "memoryTotal": "8589934592",
+      "cudaCores": 2176,
+      "architecture": "Turing",
+      "uuid": "GPU-246bf774-04ba-64e4-c871-c6bc2059f08b"
+    }
+  ],
+  "cudaVersion": "12.9",
+  "writerId": "6caehagarfplwwaz4tdwpddrngtt7w8e"
+}

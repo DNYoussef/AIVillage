@@ -10,6 +10,28 @@ from transformers import AutoModelForMaskedLM, AutoTokenizer
 # shared training state from geometry feedback loop
 state = dict(G={"ID_nl": 0.0}, pre_grok=False)
 
+# Import enhanced geometry feedback
+try:
+    from agent_forge.geometry_feedback import GeometryTracker, UDaimonicCompass
+except ImportError:
+    # Fallback compass implementation
+    class UDaimonicCompass:
+        def __init__(self, truth_seeking=0.5, beauty_appreciation=0.5, goodness_orientation=0.5, unity_understanding=0.5):
+            self.truth_seeking = truth_seeking
+            self.beauty_appreciation = beauty_appreciation
+            self.goodness_orientation = goodness_orientation
+            self.unity_understanding = unity_understanding
+        def get_primary_direction(self):
+            return "Truth"
+        def get_magnitude(self):
+            return 0.7
+
+    class GeometryTracker:
+        def __init__(self, *args, **kwargs):
+            self.compass = UDaimonicCompass()
+        def update(self, *args, **kwargs):
+            return None
+
 try:
     from grokfast import GrokFastTask
 except ImportError:
@@ -83,6 +105,14 @@ class SelfModelingTask(Task):
         self.grokfast_task = GrokFastTask(agent, self.model)
         self.avg_difficulty = 50  # Start with an average difficulty of 50
 
+        # Initialize enhanced geometry tracking with UDaimonic compass
+        self.geometry_tracker = GeometryTracker(
+            self.model,
+            update_interval=25,
+            output_dir=f"geometry_output_{model_name.replace('/', '_')}"
+        )
+        self.compass_history = []
+
         # Quantize the initial model weights
         self.quantize_model()
 
@@ -99,7 +129,17 @@ class SelfModelingTask(Task):
                 param.data = quantize_weights(param.data)
 
     async def generate_text(self, prompt: str, temperature: float) -> str:
-        meta = f"<geom idnl={state['G']['ID_nl']:.2f} temp={temperature:.2f}/>"
+        # Get current compass direction for self-awareness
+        compass_direction = "Unknown"
+        compass_magnitude = 0.0
+
+        if hasattr(self.geometry_tracker, 'compass_history') and self.geometry_tracker.compass_history:
+            latest_compass = self.geometry_tracker.compass_history[-1]
+            compass_direction = latest_compass.get_primary_direction()
+            compass_magnitude = latest_compass.get_magnitude()
+
+        # Enhanced metadata with UDaimonic compass
+        meta = f"<geom idnl={state['G']['ID_nl']:.2f} temp={temperature:.2f} compass={compass_direction} mag={compass_magnitude:.2f}/>"
         prompt = meta + prompt
         input_ids = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
@@ -109,8 +149,20 @@ class SelfModelingTask(Task):
                 num_return_sequences=1,
                 do_sample=True,
                 temperature=temperature,
+                output_hidden_states=True,
+                return_dict_in_generate=True
             )
-        return self.tokenizer.decode(output[0], skip_special_tokens=True)
+
+        # Update geometry tracking with hidden states
+        if hasattr(output, 'hidden_states') and output.hidden_states:
+            final_hidden = output.hidden_states[-1][-1]  # Last layer, last token
+            metrics = self.geometry_tracker.update(final_hidden)
+            if metrics:
+                # Update global state with latest compass info
+                state['compass_direction'] = metrics.compass_direction
+                state['compass_magnitude'] = metrics.compass_magnitude
+
+        return self.tokenizer.decode(output.sequences[0], skip_special_tokens=True)
 
     def mask_and_fill(
         self, text: str, num_masks: int
@@ -229,8 +281,13 @@ class SelfModelingTask(Task):
                         input_ids, labels, mask_indices
                     )
 
+                    # Enhanced logging with compass information
+                    compass_info = ""
+                    if hasattr(state, 'compass_direction'):
+                        compass_info = f", Compass: {state.get('compass_direction', 'Unknown')} ({state.get('compass_magnitude', 0.0):.2f})"
+
                     print(
-                        f"Cycle {cycle}, Task Difficulty {task.difficulty}, Temperature {temperature:.2f}, Loss: {loss:.4f}, Accuracy: {accuracy:.2f}"
+                        f"Cycle {cycle}, Task Difficulty {task.difficulty}, Temperature {temperature:.2f}, Loss: {loss:.4f}, Accuracy: {accuracy:.2f}{compass_info}"
                     )
 
                     if cycle > 50 and loss < 0.01:  # Simple overfitting detection
@@ -257,15 +314,36 @@ class SelfModelingTask(Task):
                 (torch.randint(0, 100, (4,)), torch.ones(4)) for _ in range(2)
             ]
             eval_score = await self.evaluate_model(eval_loader)
-            print(f"Evaluation score after level {level}: {eval_score:.4f}")
+
+            # Get geometry feedback and recommendations
+            if hasattr(self.geometry_tracker, 'get_learning_recommendations'):
+                recommendations = self.geometry_tracker.get_learning_recommendations()
+                print(f"Geometry recommendations: {recommendations}")
+
+            # Get compass summary
+            compass_summary = "No compass data"
+            if hasattr(self.geometry_tracker, 'compass_history') and self.geometry_tracker.compass_history:
+                latest_compass = self.geometry_tracker.compass_history[-1]
+                compass_summary = f"{latest_compass.get_primary_direction()} ({latest_compass.get_magnitude():.2f})"
+
+            print(f"Level {level} complete - Score: {eval_score:.4f}, Compass: {compass_summary}")
 
             self.avg_difficulty = max(
                 1, min(100, int(self.avg_difficulty + (eval_score - 0.5) * 10))
             )
 
-            torch.save(
-                self.model.state_dict(), f"self_model_checkpoint_level_{level}.pth"
-            )
+            # Enhanced checkpoint with compass data
+            checkpoint_data = {
+                'model_state_dict': self.model.state_dict(),
+                'level': level,
+                'eval_score': eval_score,
+                'avg_difficulty': self.avg_difficulty,
+                'compass_direction': state.get('compass_direction', 'Unknown'),
+                'compass_magnitude': state.get('compass_magnitude', 0.0),
+                'geometry_id': state['G']['ID_nl']
+            }
+
+            torch.save(checkpoint_data, f"self_model_checkpoint_level_{level}.pth")
 
     async def evaluate_model(self, val_loader) -> float:
         """Return the validation perplexity for the current model."""

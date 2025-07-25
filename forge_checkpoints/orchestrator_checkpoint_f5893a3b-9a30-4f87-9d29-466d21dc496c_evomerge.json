@@ -1,0 +1,27 @@
+{
+  "run_id": "f5893a3b-9a30-4f87-9d29-466d21dc496c",
+  "phase": "evomerge",
+  "timestamp": "2025-07-24T23:16:34.471203",
+  "results": {
+    "evomerge": {
+      "phase_type": "evomerge",
+      "status": "skipped",
+      "start_time": "2025-07-24 23:16:34.470084",
+      "end_time": "2025-07-24 23:16:34.471203",
+      "duration_seconds": 0.001119,
+      "artifacts_produced": [],
+      "metrics": {
+        "duration_seconds": 0.001119,
+        "artifacts_produced": 0,
+        "warnings_count": 0,
+        "todos_count": 1
+      },
+      "error_message": "Phase module not discovered",
+      "warnings": [],
+      "todos": [
+        "Implement evomerge module"
+      ]
+    }
+  },
+  "artifacts": {}
+}

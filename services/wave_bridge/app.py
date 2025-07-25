@@ -51,26 +51,26 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     Target: <5 second response time
     """
     start_time = time.time()
-    
+
     try:
         # Parse Twilio webhook data
         form_data = await request.form()
         incoming_msg = form_data.get('Body', '').strip()
         from_number = form_data.get('From', '')
         message_sid = form_data.get('MessageSid', '')
-        
+
         logger.info(f"Received WhatsApp message from {from_number}: {incoming_msg[:50]}...")
-        
+
         # Validate required fields
         if not incoming_msg or not from_number:
             raise HTTPException(status_code=400, detail="Missing required fields")
-        
+
         # Generate session ID for tracking
         session_id = generate_session_id(from_number, message_sid)
-        
+
         # Detect language for personalization
         detected_lang = await detect_language(incoming_msg)
-        
+
         # Log interaction to W&B immediately
         wandb.log({
             "interaction_type": "whatsapp_incoming",
@@ -80,7 +80,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "from_number_hash": hashlib.sha256(from_number.encode()).hexdigest()[:8]
         })
-        
+
         # Route to prompt-engineered tutor with timeout
         try:
             response = await asyncio.wait_for(
@@ -90,63 +90,63 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         except asyncio.TimeoutError:
             logger.warning(f"Timeout for session {session_id}")
             response = get_fallback_response(detected_lang)
-            
+
         # Calculate response time
         response_time = time.time() - start_time
-        
+
         # Track response metrics in background
         background_tasks.add_task(
-            log_response_metrics, 
-            response, 
-            response_time, 
+            log_response_metrics,
+            response,
+            response_time,
             session_id,
             detected_lang
         )
-        
+
         # Format and return Twilio response
         twiml_response = format_whatsapp_response(response)
-        
+
         logger.info(f"Response sent in {response_time:.2f}s for session {session_id}")
-        
+
         return PlainTextResponse(content=str(twiml_response), media_type="application/xml")
-        
+
     except Exception as e:
         logger.error(f"Error processing WhatsApp webhook: {str(e)}")
-        
+
         # Log error to W&B
         wandb.log({
             "error_type": "webhook_processing",
             "error_message": str(e),
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
-        
+
         # Return fallback response
         error_response = get_error_response()
         return PlainTextResponse(content=str(error_response), media_type="application/xml")
 
 async def get_tutor_response(
-    message: str, 
-    from_number: str, 
-    session_id: str, 
+    message: str,
+    from_number: str,
+    session_id: str,
     detected_lang: str
 ) -> Dict[str, Any]:
     """
     Generate tutoring response with W&B prompt optimization
     """
-    
+
     # Check if this is a greeting (new conversation)
     is_greeting = is_greeting_message(message, detected_lang)
-    
+
     if is_greeting:
         # A/B test greeting responses
         greeting_variant = ab_test_manager.get_greeting_variant(from_number)
-        
+
         wandb.log({
             "interaction_type": "greeting",
             "ab_variant": greeting_variant,
             "session_id": session_id
         })
-        
+
         response = await ai_tutor.generate_greeting(
             variant=greeting_variant,
             language=detected_lang,
@@ -159,7 +159,7 @@ async def get_tutor_response(
             language=detected_lang,
             context={"user_message": message, "session_id": session_id}
         )
-        
+
         # Generate tutoring response
         response = await ai_tutor.generate_response(
             user_message=message,
@@ -167,11 +167,11 @@ async def get_tutor_response(
             language=detected_lang,
             session_id=session_id
         )
-    
+
     # Handle translation if needed
     if detected_lang != 'en' and detected_lang in SUPPORTED_LANGUAGES:
         response = await auto_translate_flow(response, detected_lang)
-    
+
     return {
         "text": response,
         "language": detected_lang,
@@ -195,10 +195,10 @@ def is_greeting_message(message: str, language: str) -> bool:
         'pt': ['olá', 'oi', 'ajuda'],
         'fr': ['bonjour', 'salut', 'aide']
     }
-    
+
     patterns = greeting_patterns.get(language, greeting_patterns['en'])
     message_lower = message.lower()
-    
+
     return any(pattern in message_lower for pattern in patterns)
 
 def format_whatsapp_response(response_data: Dict[str, Any]) -> str:
@@ -219,7 +219,7 @@ def get_fallback_response(language: str) -> Dict[str, Any]:
         'pt': "Estou processando sua mensagem. Por favor, aguarde um momento...",
         'fr': "Je traite votre message. Veuillez patienter un moment..."
     }
-    
+
     return {
         "text": fallback_messages.get(language, fallback_messages['en']),
         "language": language,
@@ -234,13 +234,13 @@ def get_error_response() -> str:
     return str(response)
 
 async def log_response_metrics(
-    response: Dict[str, Any], 
-    response_time: float, 
+    response: Dict[str, Any],
+    response_time: float,
     session_id: str,
     language: str
 ):
     """Log detailed response metrics to W&B"""
-    
+
     # Core metrics
     metrics_data = {
         "response_time": response_time,
@@ -251,17 +251,17 @@ async def log_response_metrics(
         "is_fallback": response.get("is_fallback", False),
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
-    
+
     # Performance flags
     metrics_data["performance_target_met"] = response_time < 5.0
     metrics_data["response_quality"] = "good" if response_time < 3.0 else "acceptable" if response_time < 5.0 else "slow"
-    
+
     # Log to W&B
     wandb.log(metrics_data)
-    
+
     # Update local metrics tracker
     await metrics.update_metrics(metrics_data)
-    
+
     logger.info(f"Logged metrics for session {session_id}: {response_time:.2f}s")
 
 @app.get("/health")

@@ -1,0 +1,110 @@
+_wandb:
+    value:
+        cli_version: 0.21.0
+        e:
+            6caehagarfplwwaz4tdwpddrngtt7w8e:
+                args:
+                    - --base-models
+                    - DialoGPT-medium
+                    - Qwen2-1.5B-Instruct
+                    - phi-2
+                    - --gens
+                    - "50"
+                    - --device
+                    - cpu
+                    - --output-dir
+                    - C:\Users\17175\Desktop\AIVillage\agent_forge_outputs
+                    - --quick-mode
+                codePath: agent_forge\forge_orchestrator.py
+                codePathLocal: agent_forge\forge_orchestrator.py
+                cpu_count: 6
+                cpu_count_logical: 12
+                cudaVersion: "12.9"
+                disk:
+                    /:
+                        total: "511358005248"
+                        used: "470620221440"
+                email: dydavidyoussef@gmail.com
+                executable: C:\Users\17175\Desktop\AIVillage\evomerge_env\Scripts\python.exe
+                git:
+                    commit: 46e3ae8058c3758a2eb400e388f3b227c0fa65b2
+                    remote: https://github.com/DNYoussef/AIVillage.git
+                gpu: NVIDIA GeForce RTX 2060 SUPER
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Turing
+                      cudaCores: 2176
+                      memoryTotal: "8589934592"
+                      name: NVIDIA GeForce RTX 2060 SUPER
+                      uuid: GPU-246bf774-04ba-64e4-c871-c6bc2059f08b
+                host: DESKTOP-I78AK0M
+                memory:
+                    total: "17063505920"
+                os: Windows-10-10.0.19045-SP0
+                program: C:\Users\17175\Desktop\AIVillage\agent_forge\forge_orchestrator.py
+                python: CPython 3.12.5
+                root: C:\Users\17175\Desktop\AIVillage\wandb
+                startedAt: "2025-07-25T03:16:33.119414Z"
+                writerId: 6caehagarfplwwaz4tdwpddrngtt7w8e
+        m: []
+        python_version: 3.12.5
+        t:
+            "1":
+                - 105
+            "2":
+                - 105
+            "3":
+                - 2
+                - 15
+                - 16
+            "4": 3.12.5
+            "5": 0.21.0
+            "8":
+                - 3
+            "12": 0.21.0
+            "13": windows-amd64
+base_models:
+    value:
+        - microsoft/DialoGPT-medium
+config:
+    value:
+        base_models:
+            - microsoft/DialoGPT-medium
+        checkpoint_dir: forge_checkpoints
+        checkpoint_frequency: 1
+        detect_stubs: true
+        enabled_phases:
+            - EVOMERGE
+            - GEOMETRY
+            - SELF_MODELING
+            - PROMPT_BAKING
+            - ADAS
+        fail_fast: false
+        max_memory_gb: 16
+        max_phase_duration_minutes: 120
+        output_dir: forge_output
+        retry_attempts: 3
+        stub_keywords:
+            - NotImplementedError
+            - pass
+            - TODO
+            - FIXME
+            - placeholder
+            - raise NotImplementedError
+            - return None
+        wandb_job_type: orchestrator
+        wandb_project: agent-forge
+        wandb_tags:
+            - pipeline
+            - orchestrator
+discovered_phases:
+    value: []
+enabled_phases:
+    value:
+        - evomerge
+        - geometry
+        - self_modeling
+        - prompt_baking
+        - adas
+run_id:
+    value: f5893a3b-9a30-4f87-9d29-466d21dc496c

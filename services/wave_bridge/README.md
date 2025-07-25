@@ -91,7 +91,7 @@ Hi! I need help with calculus
 
 Expected response:
 ```
-🌟 Hey there! I'm your AI tutor and I'm so excited to help you learn today! 
+🌟 Hey there! I'm your AI tutor and I'm so excited to help you learn today!
 
 I see you're interested in mathematics! That's one of my favorite subjects to teach. ✨
 
@@ -258,7 +258,7 @@ https://wandb.ai/your-entity/aivillage-tutoring
 variants = ['enthusiastic', 'professional', 'friendly']
 weights = [0.33, 0.33, 0.34]  # Equal distribution
 
-# Tutoring approach test  
+# Tutoring approach test
 variants = ['formal', 'conversational', 'socratic']
 weights = [0.3, 0.4, 0.3]  # Favor conversational
 ```
@@ -283,7 +283,7 @@ analysis = await ab_test_manager.analyze_test_results('greeting_style')
 ### Benchmarks Achieved
 
 - **Average Response Time**: 2.8 seconds
-- **95th Percentile**: 4.2 seconds  
+- **95th Percentile**: 4.2 seconds
 - **Target Achievement**: 96.4% under 5 seconds
 - **Uptime**: 99.9% availability
 - **Multi-language Accuracy**: 94% translation quality
@@ -333,7 +333,7 @@ subject_experts = {
         'examples_needed': True
     },
     'programming': {
-        'approach': 'practical', 
+        'approach': 'practical',
         'examples_needed': True
     }
 }
@@ -467,7 +467,7 @@ ENABLE_DEBUG_MODE=true
 ### Roadmap
 
 1. **Voice Messages**: WhatsApp audio support
-2. **Image Recognition**: Visual learning assistance  
+2. **Image Recognition**: Visual learning assistance
 3. **Group Tutoring**: Multi-user sessions
 4. **Personalization**: User learning profiles
 5. **Advanced Analytics**: Learning outcome tracking

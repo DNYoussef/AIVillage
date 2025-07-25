@@ -1,0 +1,119 @@
+{
+  "run_summary": {
+    "run_id": "f5893a3b-9a30-4f87-9d29-466d21dc496c",
+    "start_time": "2025-07-24T23:16:32.761935",
+    "end_time": "2025-07-24T23:16:34.478152",
+    "total_duration_seconds": 1.716217,
+    "phases_attempted": 5,
+    "phases_completed": 0,
+    "phases_failed": 0,
+    "phases_stub": 0
+  },
+  "phase_details": {
+    "evomerge": {
+      "phase_type": "evomerge",
+      "status": "skipped",
+      "start_time": "2025-07-24 23:16:34.470084",
+      "end_time": "2025-07-24 23:16:34.471203",
+      "duration_seconds": 0.001119,
+      "artifacts_produced": [],
+      "metrics": {
+        "duration_seconds": 0.001119,
+        "artifacts_produced": 0,
+        "warnings_count": 0,
+        "todos_count": 1
+      },
+      "error_message": "Phase module not discovered",
+      "warnings": [],
+      "todos": [
+        "Implement evomerge module"
+      ]
+    },
+    "geometry": {
+      "phase_type": "geometry",
+      "status": "skipped",
+      "start_time": "2025-07-24 23:16:34.472385",
+      "end_time": "2025-07-24 23:16:34.472385",
+      "duration_seconds": 0.0,
+      "artifacts_produced": [],
+      "metrics": {
+        "duration_seconds": 0.0,
+        "artifacts_produced": 0,
+        "warnings_count": 0,
+        "todos_count": 1
+      },
+      "error_message": "Phase module not discovered",
+      "warnings": [],
+      "todos": [
+        "Implement geometry module"
+      ]
+    },
+    "self_modeling": {
+      "phase_type": "self_modeling",
+      "status": "skipped",
+      "start_time": "2025-07-24 23:16:34.473915",
+      "end_time": "2025-07-24 23:16:34.473952",
+      "duration_seconds": 3.7e-05,
+      "artifacts_produced": [],
+      "metrics": {
+        "duration_seconds": 3.7e-05,
+        "artifacts_produced": 0,
+        "warnings_count": 0,
+        "todos_count": 1
+      },
+      "error_message": "Phase module not discovered",
+      "warnings": [],
+      "todos": [
+        "Implement self_modeling module"
+      ]
+    },
+    "prompt_baking": {
+      "phase_type": "prompt_baking",
+      "status": "skipped",
+      "start_time": "2025-07-24 23:16:34.475424",
+      "end_time": "2025-07-24 23:16:34.475424",
+      "duration_seconds": 0.0,
+      "artifacts_produced": [],
+      "metrics": {
+        "duration_seconds": 0.0,
+        "artifacts_produced": 0,
+        "warnings_count": 0,
+        "todos_count": 1
+      },
+      "error_message": "Phase module not discovered",
+      "warnings": [],
+      "todos": [
+        "Implement prompt_baking module"
+      ]
+    },
+    "adas": {
+      "phase_type": "adas",
+      "status": "skipped",
+      "start_time": "2025-07-24 23:16:34.477128",
+      "end_time": "2025-07-24 23:16:34.477128",
+      "duration_seconds": 0.0,
+      "artifacts_produced": [],
+      "metrics": {
+        "duration_seconds": 0.0,
+        "artifacts_produced": 0,
+        "warnings_count": 0,
+        "todos_count": 1
+      },
+      "error_message": "Phase module not discovered",
+      "warnings": [],
+      "todos": [
+        "Implement adas module"
+      ]
+    }
+  },
+  "artifacts_produced": 0,
+  "todos": [
+    "Implement prompt_baking module",
+    "Implement adas module",
+    "Implement evomerge module",
+    "Implement geometry module",
+    "Implement self_modeling module"
+  ],
+  "warnings": [],
+  "success_rate": 0.0
+}

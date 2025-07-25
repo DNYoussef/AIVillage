@@ -1,0 +1,90 @@
+{
+  "run_summary": {
+    "run_id": "9b97a8db-9a84-4e53-b397-e3e69c2db422",
+    "start_time": "2025-07-24T23:50:23.401512",
+    "end_time": "2025-07-24T23:50:23.408492",
+    "total_duration_seconds": 0.00698,
+    "phases_attempted": 6,
+    "phases_completed": 0,
+    "phases_failed": 6,
+    "phases_stub": 0
+  },
+  "phase_details": {
+    "evomerge": {
+      "phase_type": "evomerge",
+      "status": "failed",
+      "start_time": "2025-07-24 23:50:23.407495",
+      "end_time": null,
+      "duration_seconds": null,
+      "artifacts_produced": [],
+      "metrics": {},
+      "error_message": "'ForgeOrchestrator' object has no attribute '_get_current_time'",
+      "warnings": [],
+      "todos": []
+    },
+    "geometry": {
+      "phase_type": "geometry",
+      "status": "failed",
+      "start_time": "2025-07-24 23:50:23.407495",
+      "end_time": null,
+      "duration_seconds": null,
+      "artifacts_produced": [],
+      "metrics": {},
+      "error_message": "'ForgeOrchestrator' object has no attribute '_get_current_time'",
+      "warnings": [],
+      "todos": []
+    },
+    "self_modeling": {
+      "phase_type": "self_modeling",
+      "status": "failed",
+      "start_time": "2025-07-24 23:50:23.408492",
+      "end_time": null,
+      "duration_seconds": null,
+      "artifacts_produced": [],
+      "metrics": {},
+      "error_message": "'ForgeOrchestrator' object has no attribute '_get_current_time'",
+      "warnings": [],
+      "todos": []
+    },
+    "prompt_baking": {
+      "phase_type": "prompt_baking",
+      "status": "failed",
+      "start_time": "2025-07-24 23:50:23.408492",
+      "end_time": null,
+      "duration_seconds": null,
+      "artifacts_produced": [],
+      "metrics": {},
+      "error_message": "'ForgeOrchestrator' object has no attribute '_get_current_time'",
+      "warnings": [],
+      "todos": []
+    },
+    "adas": {
+      "phase_type": "adas",
+      "status": "failed",
+      "start_time": "2025-07-24 23:50:23.408492",
+      "end_time": null,
+      "duration_seconds": null,
+      "artifacts_produced": [],
+      "metrics": {},
+      "error_message": "'ForgeOrchestrator' object has no attribute '_get_current_time'",
+      "warnings": [],
+      "todos": []
+    },
+    "compression": {
+      "phase_type": "compression",
+      "status": "failed",
+      "start_time": "2025-07-24 23:50:23.408492",
+      "end_time": null,
+      "duration_seconds": null,
+      "artifacts_produced": [],
+      "metrics": {},
+      "error_message": "'ForgeOrchestrator' object has no attribute '_get_current_time'",
+      "warnings": [],
+      "todos": []
+    }
+  },
+  "artifacts_produced": 0,
+  "todos": [],
+  "warnings": [],
+  "success_rate": 0.0
+}

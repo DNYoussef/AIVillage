@@ -1,0 +1,107 @@
+{
+  "run_id": "b47b9c14-7510-4440-9a82-5611d602517e",
+  "phase": "geometry",
+  "timestamp": "2025-07-25T00:10:04.253900",
+  "results": {
+    "evomerge": {
+      "phase_type": "evomerge",
+      "status": "stub_detected",
+      "start_time": "2025-07-25 00:10:04.247227",
+      "end_time": "2025-07-25 00:10:04.251026",
+      "duration_seconds": 0.003799,
+      "artifacts_produced": [
+        {
+          "phase_type": "evomerge",
+          "artifact_type": "placeholder",
+          "data": {
+            "status": "stub_implementation",
+            "input_artifacts": 0
+          },
+          "metadata": {},
+          "timestamp": "2025-07-25 00:10:04.251026",
+          "size_bytes": null,
+          "checksum": null
+        }
+      ],
+      "metrics": {
+        "duration_seconds": 0.003799,
+        "artifacts_produced": 1,
+        "warnings_count": 4,
+        "todos_count": 2
+      },
+      "error_message": null,
+      "warnings": [
+        "Stub detected: Found stub keyword: NotImplementedError",
+        "Stub detected: Found stub keyword: pass",
+        "Stub detected: Found stub keyword: raise NotImplementedError",
+        "Stub detected: Contains NotImplementedError"
+      ],
+      "todos": [
+        "Complete implementation of evomerge",
+        "Remove stub patterns: Found stub keyword: NotImplementedError, Found stub keyword: pass, Found stub keyword: raise NotImplementedError, Contains NotImplementedError"
+      ]
+    },
+    "geometry": {
+      "phase_type": "geometry",
+      "status": "stub_detected",
+      "start_time": "2025-07-25 00:10:04.253263",
+      "end_time": "2025-07-25 00:10:04.253900",
+      "duration_seconds": 0.000637,
+      "artifacts_produced": [
+        {
+          "phase_type": "geometry",
+          "artifact_type": "placeholder",
+          "data": {
+            "status": "stub_implementation",
+            "input_artifacts": 1
+          },
+          "metadata": {},
+          "timestamp": "2025-07-25 00:10:04.253900",
+          "size_bytes": null,
+          "checksum": null
+        }
+      ],
+      "metrics": {
+        "duration_seconds": 0.000637,
+        "artifacts_produced": 1,
+        "warnings_count": 2,
+        "todos_count": 2
+      },
+      "error_message": null,
+      "warnings": [
+        "Stub detected: Found stub keyword: pass",
+        "Stub detected: Found stub keyword: return None"
+      ],
+      "todos": [
+        "Complete implementation of geometry",
+        "Remove stub patterns: Found stub keyword: pass, Found stub keyword: return None"
+      ]
+    }
+  },
+  "artifacts": {
+    "evomerge_placeholder_0": {
+      "phase_type": "evomerge",
+      "artifact_type": "placeholder",
+      "data": {
+        "status": "stub_implementation",
+        "input_artifacts": 0
+      },
+      "metadata": {},
+      "timestamp": "2025-07-25 00:10:04.251026",
+      "size_bytes": null,
+      "checksum": null
+    },
+    "geometry_placeholder_1": {
+      "phase_type": "geometry",
+      "artifact_type": "placeholder",
+      "data": {
+        "status": "stub_implementation",
+        "input_artifacts": 1
+      },
+      "metadata": {},
+      "timestamp": "2025-07-25 00:10:04.253900",
+      "size_bytes": null,
+      "checksum": null
+    }
+  }
+}

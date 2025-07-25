@@ -1,0 +1,65 @@
+{
+  "run_id": "66473f02-4187-4c89-82e5-1c43120edd48",
+  "phase": "self_modeling",
+  "timestamp": "2025-07-25T00:07:32.321711",
+  "results": {
+    "evomerge": {
+      "phase_type": "evomerge",
+      "status": "skipped",
+      "start_time": "2025-07-25 00:07:32.315849",
+      "end_time": "2025-07-25 00:07:32.316370",
+      "duration_seconds": 0.000521,
+      "artifacts_produced": [],
+      "metrics": {
+        "duration_seconds": 0.000521,
+        "artifacts_produced": 0,
+        "warnings_count": 0,
+        "todos_count": 1
+      },
+      "error_message": "Phase module not discovered",
+      "warnings": [],
+      "todos": [
+        "Implement evomerge module"
+      ]
+    },
+    "geometry": {
+      "phase_type": "geometry",
+      "status": "skipped",
+      "start_time": "2025-07-25 00:07:32.318237",
+      "end_time": "2025-07-25 00:07:32.318747",
+      "duration_seconds": 0.00051,
+      "artifacts_produced": [],
+      "metrics": {
+        "duration_seconds": 0.00051,
+        "artifacts_produced": 0,
+        "warnings_count": 0,
+        "todos_count": 1
+      },
+      "error_message": "Phase module not discovered",
+      "warnings": [],
+      "todos": [
+        "Implement geometry module"
+      ]
+    },
+    "self_modeling": {
+      "phase_type": "self_modeling",
+      "status": "skipped",
+      "start_time": "2025-07-25 00:07:32.320576",
+      "end_time": "2025-07-25 00:07:32.321126",
+      "duration_seconds": 0.00055,
+      "artifacts_produced": [],
+      "metrics": {
+        "duration_seconds": 0.00055,
+        "artifacts_produced": 0,
+        "warnings_count": 0,
+        "todos_count": 1
+      },
+      "error_message": "Phase module not discovered",
+      "warnings": [],
+      "todos": [
+        "Implement self_modeling module"
+      ]
+    }
+  },
+  "artifacts": {}
+}

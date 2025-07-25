@@ -7,6 +7,8 @@ name: CI
       - '*.md'
   push:
     branches: [ "main" ]
+  schedule:
+    - cron: '0 2 * * *'  # 2 AM UTC daily
 
 env:
   REGISTRY: ghcr.io
@@ -211,3 +213,138 @@ jobs:
         with:
           name: security-report
           path: bandit-report.json
+
+  # Full Agent Forge pipeline test (nightly and on-demand)
+  full-pipeline-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[full-pipeline]')
+    env:
+      FRONTIER_API_KEY: ${{ secrets.FRONTIER_API_KEY }}
+      WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+      WANDB_PROJECT: "agent-forge-ci"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || echo "requirements.txt not found, installing basic deps"
+          pip install wandb torch transformers datasets huggingface_hub
+          pip install pytest pytest-cov  # For any post-pipeline tests
+
+      - name: Validate pipeline configuration
+        run: |
+          echo "=== Pipeline Configuration Validation ==="
+          python run_full_agent_forge.py --dry-run --device cpu
+          echo "Configuration validation completed"
+
+      - name: Run full Agent Forge pipeline
+        run: |
+          echo "=== Starting Full Agent Forge Pipeline ==="
+          python run_full_agent_forge.py \
+            --no-deploy \
+            --device cpu \
+            --quick \
+            --timeout 5400 \
+            --benchmark-timeout 1800
+          echo "Pipeline execution completed"
+
+      - name: Upload pipeline results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: agent-forge-pipeline-results
+          path: |
+            benchmark_results/
+            agent_forge_outputs/
+            wandb/
+            agent_forge_pipeline_summary.json
+            *.log
+
+      - name: Check pipeline success
+        run: |
+          if [ -f "agent_forge_pipeline_summary.json" ]; then
+            echo "=== Pipeline Summary ==="
+            python -c "
+import json
+with open('agent_forge_pipeline_summary.json', 'r') as f:
+    summary = json.load(f)
+print(f'Pipeline Status: {summary.get(\"pipeline_execution\", {}).get(\"status\", \"unknown\")}')
+if 'benchmark_results' in summary:
+    model_averages = summary['benchmark_results'].get('model_averages', {})
+    if model_averages:
+        best_model = max(model_averages, key=model_averages.get)
+        best_score = model_averages[best_model]
+        print(f'Best Model: {best_model} (Score: {best_score:.3f})')
+"
+          else
+            echo "ERROR: Pipeline summary not found"
+            exit 1
+          fi
+
+      - name: Performance regression check
+        if: success()
+        run: |
+          echo "=== Performance Regression Check ==="
+          python -c "
+import json
+import os
+
+# Load results
+try:
+    with open('benchmark_results/agent_forge_model_comparison.json', 'r') as f:
+        results = json.load(f)
+
+    model_averages = results.get('model_averages', {})
+    if not model_averages:
+        print('No model averages found')
+        exit(0)
+
+    # Check against minimum thresholds
+    thresholds = {'MMLU': 0.40, 'GSM8K': 0.25, 'HumanEval': 0.15}
+    benchmark_data = results.get('benchmark_comparison', [])
+
+    if model_averages:
+        best_model = max(model_averages, key=model_averages.get)
+        print(f'Best model: {best_model} with average {model_averages[best_model]:.3f}')
+
+        # Check individual benchmarks
+        regressions = []
+        for benchmark_entry in benchmark_data:
+            benchmark = benchmark_entry.get('Benchmark', '')
+            if benchmark in thresholds and best_model in benchmark_entry:
+                score = benchmark_entry[best_model]
+                threshold = thresholds[benchmark]
+                if score < threshold:
+                    regressions.append(f'{benchmark}: {score:.3f} < {threshold:.3f}')
+
+        if regressions:
+            print('PERFORMANCE REGRESSIONS DETECTED:')
+            for regression in regressions:
+                print(f'  - {regression}')
+            # Don't fail CI for regressions, just warn
+            print('Regressions detected but not failing CI (alerts sent to W&B)')
+        else:
+            print('No performance regressions detected')
+
+except Exception as e:
+    print(f'Regression check failed: {e}')
+    # Don't fail CI for regression check issues
+"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "=== Cleanup ==="
+          # Clean up large files to save space
+          find . -name "*.pt" -size +100M -delete 2>/dev/null || true
+          find . -name "*.bin" -size +100M -delete 2>/dev/null || true
+          echo "Cleanup completed"

@@ -1,0 +1,143 @@
+# Enhanced WhatsApp Wave Bridge Requirements
+# Part B: Agent Forge Phase 4 - Prompt Engineering Dependencies
+
+# Core web framework and API
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+pydantic==2.5.0
+
+# WhatsApp integration
+twilio==8.10.0
+
+# Experiment tracking and optimization (Enhanced)
+wandb==0.16.0
+
+# AI model APIs
+anthropic==0.7.8
+openai==1.3.5
+
+# Enhanced prompt engineering dependencies
+scipy==1.11.4          # Statistical analysis for A/B testing
+scikit-learn==1.3.2    # ML utilities for optimization
+pandas==2.1.4          # Data analysis for prompt performance
+matplotlib==3.7.4      # Visualization for W&B dashboards
+seaborn==0.12.2        # Advanced statistical visualizations
+
+# Language and translation support
+googletrans==4.0.0rc1
+langdetect==1.0.9
+polyglot==16.7.4       # Enhanced language detection
+pycountry==22.3.13     # Language/country code handling
+
+# ML and AI utilities (Enhanced)
+transformers==4.35.2
+torch==2.1.1
+numpy==1.24.3
+tokenizers==0.15.0     # Fast tokenization for prompt analysis
+
+# Statistical and optimization libraries
+statsmodels==0.14.1    # Advanced statistical modeling
+bayesian-optimization==1.4.3  # Bayesian optimization for hyperparameters
+optuna==3.4.0          # Hyperparameter optimization framework
+
+# Async and concurrency
+aiofiles==23.2.1
+httpx==0.25.2
+asyncio-throttle==1.0.2  # Rate limiting for API calls
+
+# Data processing and analysis
+jinja2==3.1.2
+python-dotenv==1.0.0
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Caching and performance
+redis==5.0.1           # Redis caching support (optional)
+aiocache==0.12.2       # Async caching utilities
+memory-profiler==0.61.0  # Memory usage monitoring
+
+# Monitoring and observability
+prometheus-client==0.19.0  # Metrics collection
+psutil==5.9.6          # System monitoring
+structlog==23.2.0      # Structured logging
+
+# Testing and validation (Enhanced)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-mock==3.12.0
+pytest-cov==4.1.0
+httpx==0.25.2          # For async HTTP testing
+factory-boy==3.3.0     # Test data generation
+
+# Security and validation
+cryptography==41.0.8
+pyjwt==2.8.0
+python-jose==3.3.0
+passlib==1.7.4
+
+# Configuration management
+pydantic-settings==2.1.0
+click==8.1.7           # CLI utilities
+rich==13.7.0           # Rich terminal output
+
+# Database support (optional)
+sqlalchemy==2.0.23     # Database ORM (if needed for analytics)
+alembic==1.13.0        # Database migrations
+aiosqlite==0.19.0      # Async SQLite support
+
+# Deployment utilities
+gunicorn==21.2.0       # Production WSGI server
+docker==6.1.3          # Docker API client
+kubernetes==28.1.0     # Kubernetes deployment utilities
+
+# Development tools
+black==23.11.0         # Code formatting
+isort==5.12.0          # Import sorting
+flake8==6.1.0          # Linting
+mypy==1.7.1            # Type checking
+pre-commit==3.6.0      # Git hooks
+
+# Documentation
+mkdocs==1.5.3          # Documentation generation
+mkdocs-material==9.4.8  # Material theme for docs
+
+# Additional utilities for enhanced features
+python-slugify==8.0.1  # URL-safe string generation
+faker==20.1.0          # Fake data generation for testing
+tqdm==4.66.1           # Progress bars
+colorlog==6.8.0        # Colored logging output
+
+# Specialized ML libraries for prompt optimization
+sentence-transformers==2.2.2  # Semantic similarity for prompt analysis
+spacy==3.7.2           # Advanced NLP for content analysis
+textstat==0.7.3        # Text readability and complexity analysis
+
+# Time series analysis for performance metrics
+prophet==1.1.5         # Time series forecasting
+plotly==5.17.0         # Interactive visualizations
+
+# Advanced caching and serialization
+msgpack==1.0.7         # Fast serialization
+lz4==4.3.2             # Fast compression
+orjson==3.9.10         # Fast JSON parsing
+
+# Network and HTTP utilities
+requests==2.31.0
+urllib3==2.1.0
+certifi==2023.11.17
+
+# Enhanced error tracking
+sentry-sdk==1.38.0     # Error monitoring and alerting
+
+# Feature flags and configuration
+launchdarkly-server-sdk==8.2.1  # Feature flag management (optional)
+
+# Performance profiling
+py-spy==0.3.14         # Python profiler
+line-profiler==4.1.1   # Line-by-line profiling
+
+# Additional language support
+polyglot==16.7.4       # Multi-language NLP
+pyicu==2.11            # Unicode and localization
+babel==2.13.1          # Internationalization utilities

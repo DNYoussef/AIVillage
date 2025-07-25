@@ -22,7 +22,7 @@ from .metrics import ResponseMetrics
 __all__ = [
     "app",
     "detect_language",
-    "auto_translate_flow", 
+    "auto_translate_flow",
     "SUPPORTED_LANGUAGES",
     "PromptTuner",
     "ABTestManager",
