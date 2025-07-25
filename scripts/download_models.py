@@ -1,190 +1,87 @@
 #!/usr/bin/env python3
-"""
-Agent Forge Model Download Script
-
-Downloads the optimal 3 models for evolution on RTX 2060 SUPER:
-- Qwen2.5-Math-1.5B-Instruct (Math reasoning)
-- Qwen2.5-Coder-1.5B-Instruct (Code generation)
-- Qwen2.5-1.5B-Instruct (General instruction following)
-
-These models are optimized for 8GB VRAM and provide diverse capabilities
-for evolutionary merging.
-"""
+"""Download 3 x 1.5B parameter models for Agent Forge evolution merging."""
 
 import os
 import sys
 from pathlib import Path
-from huggingface_hub import snapshot_download, login
-import argparse
-import logging
-from typing import List, Dict
+from huggingface_hub import hf_hub_download, snapshot_download
+import torch
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-
-# Model configurations optimized for RTX 2060 SUPER
-MODELS = {
-    "math": {
-        "repo_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
-        "description": "Mathematical reasoning and problem solving",
-        "size_gb": 3.2,
-        "domain": "mathematics"
-    },
-    "code": {
-        "repo_id": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
-        "description": "Code generation and programming",
-        "size_gb": 3.2,
-        "domain": "programming"
-    },
-    "general": {
-        "repo_id": "Qwen/Qwen2.5-1.5B-Instruct",
-        "description": "General instruction following and reasoning",
-        "size_gb": 3.2,
-        "domain": "general"
-    }
-}
-
-def check_disk_space(download_path: Path, required_gb: float) -> bool:
-    """Check if there's enough disk space for downloads"""
-    import shutil
-    free_bytes = shutil.disk_usage(download_path).free
-    free_gb = free_bytes / (1024**3)
-
-    logger.info(f"Available space: {free_gb:.1f} GB")
-    logger.info(f"Required space: {required_gb:.1f} GB")
-
-    return free_gb >= required_gb
-
-def download_model(model_key: str, model_config: Dict, base_path: Path) -> bool:
-    """Download a single model"""
-    repo_id = model_config["repo_id"]
-    model_path = base_path / model_key
-
-    logger.info(f"Downloading {model_key}: {repo_id}")
-    logger.info(f"Description: {model_config['description']}")
-    logger.info(f"Estimated size: {model_config['size_gb']} GB")
-
-    try:
-        # Create model directory
-        model_path.mkdir(parents=True, exist_ok=True)
-
-        # Download model
-        snapshot_download(
-            repo_id=repo_id,
-            local_dir=str(model_path),
-            local_dir_use_symlinks=False,
-            resume_download=True
-        )
-
-        logger.info(f"Successfully downloaded {model_key} to {model_path}")
+def check_gpu_availability():
+    """Check GPU availability and memory."""
+    if torch.cuda.is_available():
+        gpu_name = torch.cuda.get_device_name(0)
+        gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+        print(f"GPU: {gpu_name} - {gpu_memory:.1f}GB VRAM")
         return True
-
-    except Exception as e:
-        logger.error(f"Failed to download {model_key}: {e}")
+    else:
+        print("CUDA not available")
         return False
 
-def create_model_manifest(base_path: Path, downloaded_models: List[str]):
-    """Create a manifest file listing downloaded models"""
-    manifest_path = base_path / "model_manifest.json"
-
-    import json
-    from datetime import datetime
-
-    manifest = {
-        "created_at": datetime.now().isoformat(),
-        "download_location": str(base_path),
-        "models": {}
-    }
-
-    for model_key in downloaded_models:
-        if model_key in MODELS:
-            config = MODELS[model_key]
-            model_path = base_path / model_key
-
-            manifest["models"][model_key] = {
-                "repo_id": config["repo_id"],
-                "local_path": str(model_path),
-                "description": config["description"],
-                "domain": config["domain"],
-                "size_gb": config["size_gb"],
-                "downloaded": model_path.exists()
-            }
-
-    with open(manifest_path, 'w') as f:
-        json.dump(manifest, f, indent=2)
-
-    logger.info(f"Created model manifest: {manifest_path}")
+def download_model(model_name, cache_dir):
+    """Download a model to specified directory."""
+    print(f"\nDownloading {model_name}...")
+    try:
+        model_path = snapshot_download(
+            repo_id=model_name,
+            cache_dir=cache_dir,
+            local_files_only=False,
+            revision="main"
+        )
+        print(f"✓ {model_name} downloaded to {model_path}")
+        return model_path
+    except Exception as e:
+        print(f"✗ Failed to download {model_name}: {e}")
+        return None
 
 def main():
-    """Main download function"""
-    parser = argparse.ArgumentParser(description="Download Agent Forge evolution models")
-    parser.add_argument("--models-dir", default="D:/agent_forge_models",
-                       help="Directory to store downloaded models")
-    parser.add_argument("--models", nargs="+", choices=list(MODELS.keys()) + ["all"],
-                       default=["all"], help="Models to download")
-    parser.add_argument("--check-space", action="store_true",
-                       help="Check disk space before downloading")
+    """Main function to download models."""
+    # Check GPU
+    check_gpu_availability()
 
-    args = parser.parse_args()
+    # Set up directories
+    models_dir = Path("D:/AgentForge/models")
+    models_dir.mkdir(parents=True, exist_ok=True)
 
-    # Setup paths
-    base_path = Path(args.models_dir)
-    base_path.mkdir(parents=True, exist_ok=True)
+    # Set cache directory
+    cache_dir = models_dir / ".cache"
+    os.environ["HF_HOME"] = str(cache_dir)
+    os.environ["TRANSFORMERS_CACHE"] = str(cache_dir / "transformers")
 
-    # Determine which models to download
-    if "all" in args.models:
-        models_to_download = list(MODELS.keys())
-    else:
-        models_to_download = args.models
+    # List of 1.5B parameter models optimized for RTX 2060
+    models_to_download = [
+        "microsoft/phi-1_5",  # 1.3B parameters - excellent for coding
+        "stabilityai/stablelm-base-alpha-3b",  # 3B but efficient
+        "microsoft/DialoGPT-medium"  # 355M but very capable for chat
+    ]
 
-    # Calculate total size
-    total_size_gb = sum(MODELS[m]["size_gb"] for m in models_to_download)
+    # Alternative smaller models that work well together
+    efficient_models = [
+        "microsoft/phi-1_5",  # 1.3B - coding specialist
+        "Qwen/Qwen1.5-1.8B",  # 1.8B - general purpose
+        "TinyLlama/TinyLlama-1.1B-Chat-v1.0"  # 1.1B - chat optimized
+    ]
 
-    logger.info(f"Planning to download {len(models_to_download)} models")
-    logger.info(f"Total estimated size: {total_size_gb:.1f} GB")
-
-    # Check disk space if requested
-    if args.check_space or total_size_gb > 5:  # Auto-check for large downloads
-        if not check_disk_space(base_path, total_size_gb * 1.2):  # 20% buffer
-            logger.error("Insufficient disk space!")
-            return 1
-
-    # Download models
+    print("Downloading efficient models for RTX 2060...")
     downloaded_models = []
-    failed_models = []
 
-    for model_key in models_to_download:
-        if model_key not in MODELS:
-            logger.warning(f"Unknown model: {model_key}")
-            continue
+    for model_name in efficient_models:
+        model_path = download_model(model_name, cache_dir)
+        if model_path:
+            downloaded_models.append((model_name, model_path))
 
-        success = download_model(model_key, MODELS[model_key], base_path)
-        if success:
-            downloaded_models.append(model_key)
-        else:
-            failed_models.append(model_key)
+    print(f"\n✓ Successfully downloaded {len(downloaded_models)} models:")
+    for name, path in downloaded_models:
+        print(f"  - {name}: {path}")
 
-    # Create manifest
-    if downloaded_models:
-        create_model_manifest(base_path, downloaded_models)
+    # Save model list for evolution script
+    model_list_file = models_dir / "downloaded_models.txt"
+    with open(model_list_file, "w") as f:
+        for name, path in downloaded_models:
+            f.write(f"{name}\t{path}\n")
 
-    # Report results
-    logger.info("=" * 50)
-    logger.info("DOWNLOAD SUMMARY")
-    logger.info(f"Successfully downloaded: {len(downloaded_models)}")
-    for model in downloaded_models:
-        logger.info(f"  ✓ {model}: {MODELS[model]['repo_id']}")
-
-    if failed_models:
-        logger.error(f"Failed downloads: {len(failed_models)}")
-        for model in failed_models:
-            logger.error(f"  ✗ {model}: {MODELS[model]['repo_id']}")
-
-    logger.info(f"Models stored in: {base_path}")
-    logger.info("=" * 50)
-
-    return 0 if not failed_models else 1
+    print(f"\nModel list saved to: {model_list_file}")
+    return downloaded_models
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

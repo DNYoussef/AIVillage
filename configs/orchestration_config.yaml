@@ -1,0 +1,76 @@
+# Multi-Model Orchestration Configuration for Agent Forge
+# This file configures how different tasks are routed to optimal models
+
+# API Configuration
+openrouter_enabled: true
+daily_budget_usd: 50.0
+cost_tracking_enabled: true
+cost_alert_threshold: 0.8  # Alert when 80% of budget is used
+
+# Performance Settings
+enable_caching: true
+cache_ttl_seconds: 3600
+parallel_requests: 5
+fallback_timeout_seconds: 30
+
+# Model Selection Preferences
+prefer_opensource: false  # Set to true to prefer open models when quality is similar
+quality_threshold: 0.8    # Minimum quality score for model selection
+
+# Task-Specific Overrides
+task_problem_generation:
+  enabled: true
+  quality_priority: true
+  cost_sensitive: false
+  preferred_models:
+    - "anthropic/claude-3-opus-20240229"
+    - "openai/gpt-4-turbo"
+
+task_evaluation_grading:
+  enabled: true
+  quality_priority: false
+  cost_sensitive: true
+  preferred_models:
+    - "openai/gpt-4o-mini"
+    - "anthropic/claude-3-haiku-20240307"
+
+task_content_variation:
+  enabled: true
+  quality_priority: false
+  cost_sensitive: true
+  max_parallel: 3
+
+task_mathematical_reasoning:
+  enabled: true
+  quality_priority: true
+  cost_sensitive: false
+  temperature_override: 0.1
+
+# Monitoring Configuration
+wandb_enabled: true
+wandb_project: "agent-forge-orchestration"
+metrics_export_interval: 300  # Export metrics every 5 minutes
+log_level: "INFO"
+
+# Fallback Configuration
+local_model_fallback: true
+fallback_after_errors: 3
+fallback_models:
+  - "meta-llama/llama-3.1-70b-instruct"
+  - "deepseek/deepseek-coder-v2-instruct"
+
+# Rate Limiting Overrides (requests per minute)
+rate_limits:
+  "anthropic/claude-3-opus-20240229": 10
+  "openai/gpt-4-turbo": 10
+  "openai/gpt-4o-mini": 100
+  "google/gemini-pro-1.5": 20
+
+# Cost Limits per Task Type (USD)
+cost_limits:
+  problem_generation: 0.10
+  evaluation_grading: 0.01
+  content_variation: 0.02
+  research_documentation: 0.05
+  code_generation: 0.10
+  mathematical_reasoning: 0.10

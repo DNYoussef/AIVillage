@@ -1,0 +1,63 @@
+{
+  "smoke_test": {
+    "timestamp": "2025-07-25T15:54:25.230917",
+    "version": "1.0.0",
+    "timeout": 7200,
+    "dry_run": false,
+    "duration": 4.921803
+  },
+  "pipeline_execution": {
+    "status": "failed",
+    "return_code": 1,
+    "execution_time": 0.573608,
+    "stdout_lines": [
+      "2025-07-25 15:54:30,108 - INFO - Starting Agent Forge Full Pipeline",
+      "2025-07-25 15:54:30,109 - INFO - Setting up environment...",
+      "2025-07-25 15:54:30,109 - ERROR - FRONTIER_API_KEY is required for real-data pipeline execution",
+      "2025-07-25 15:54:30,109 - ERROR - Provide via --frontier-api-key argument or FRONTIER_API_KEY environment variable",
+      "2025-07-25 15:54:30,109 - ERROR - Use --dry-run flag to test configuration without API key"
+    ],
+    "error": "Pipeline failed with code 1"
+  },
+  "wandb_metrics": {
+    "status": "skipped"
+  },
+  "benchmark_validation": {
+    "status": "no_local_results",
+    "validation": {}
+  },
+  "artifacts_check": {
+    "all_present": false,
+    "artifacts": {
+      "Agent Forge Outputs": {
+        "path": "C:\\Users\\17175\\Desktop\\AIVillage\\scripts\\agent_forge_outputs",
+        "exists": false,
+        "type": "missing"
+      },
+      "Benchmark Results": {
+        "path": "C:\\Users\\17175\\Desktop\\AIVillage\\scripts\\benchmark_results",
+        "exists": true,
+        "type": "directory"
+      },
+      "Pipeline Summary": {
+        "path": "C:\\Users\\17175\\Desktop\\AIVillage\\scripts\\agent_forge_pipeline_summary.json",
+        "exists": false,
+        "type": "missing"
+      },
+      "Forge Checkpoints": {
+        "path": "C:\\Users\\17175\\Desktop\\AIVillage\\scripts\\forge_checkpoints",
+        "exists": false,
+        "type": "missing"
+      }
+    }
+  },
+  "overall_status": "FAILED",
+  "summary": {
+    "overall_status": "FAILED",
+    "execution_time": 0.573608,
+    "pipeline_success": false,
+    "artifacts_present": false,
+    "recommendations": [],
+    "wandb_available": false
+  }
+}

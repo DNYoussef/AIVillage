@@ -1,0 +1,86 @@
+{
+  "client_test": {
+    "success": true,
+    "response": "4",
+    "model": "openai/gpt-4o-mini",
+    "cost": 3.15e-06
+  },
+  "routing_test": {
+    "success": true,
+    "results": [
+      {
+        "prompt": "Generate a Python programming challenge about recu",
+        "expected": "code_generation",
+        "classified": "code_generation",
+        "correct": true,
+        "model": "anthropic/claude-3-opus-20240229",
+        "response_preview": "Certainly! Here's a Python programming challenge that involves recursion:\n\n**Challenge: Recursive St..."
+      },
+      {
+        "prompt": "Evaluate this solution and provide a grade",
+        "expected": "evaluation_grading",
+        "classified": "evaluation_grading",
+        "correct": true,
+        "model": "openai/gpt-4o-mini",
+        "response_preview": "Of course! Please provide the solution you'd like me to evaluate, and I'll be happy to assess it and..."
+      },
+      {
+        "prompt": "Prove that the sum of angles in a triangle is 180 ",
+        "expected": "mathematical_reasoning",
+        "classified": "mathematical_reasoning",
+        "correct": true,
+        "model": "anthropic/claude-3-opus-20240229",
+        "response_preview": "To prove that the sum of angles in a triangle is 180 degrees, we can use the following steps:\n\nGiven..."
+      }
+    ],
+    "accuracy": 1.0
+  },
+  "variation_test": {
+    "success": true,
+    "num_variations": 2,
+    "total_cost": 0.044745,
+    "models_used": {
+      "original": "anthropic/claude-3-opus-20240229",
+      "variations": [
+        "anthropic/claude-3-opus-20240229",
+        "anthropic/claude-3-opus-20240229"
+      ]
+    }
+  },
+  "integration_test": {
+    "success": true,
+    "question_generated": true,
+    "evaluation_completed": true,
+    "eval_result": "{'evaluation': 'Here is the assessment of the provided answer in JSON format:\\n\\n{\\n  \"correctness\": 10,\\n  \"completeness\": 5,\\n  \"clarity\": 20,\\n  \"missingElements\": [\\n    \"The answer does not actua"
+  },
+  "cost_tracking": {
+    "success": true,
+    "metrics": {
+      "total_cost": 0.04830945,
+      "cost_by_task": {
+        "problem_generation": 0.0,
+        "evaluation_grading": 9.45e-06,
+        "content_variation": 0.0,
+        "research_documentation": 0.0,
+        "code_generation": 0.04647,
+        "mathematical_reasoning": 0.0018299999999999998
+      },
+      "model_performance": {
+        "anthropic/claude-3-opus-20240229": {
+          "requests": 5,
+          "avg_latency": 1.1385487079620362,
+          "total_tokens": 3220,
+          "total_cost": 0.048299999999999996,
+          "error_rate": 0.0
+        },
+        "openai/gpt-4o-mini": {
+          "requests": 2,
+          "avg_latency": 0.63166344165802,
+          "total_tokens": 63,
+          "total_cost": 9.45e-06,
+          "error_rate": 0.0
+        }
+      }
+    }
+  }
+}
