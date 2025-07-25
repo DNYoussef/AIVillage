@@ -1,23 +1,23 @@
 {
   "smoke_test": {
-    "timestamp": "2025-07-25T08:49:44.839808",
+    "timestamp": "2025-07-25T09:58:16.698769",
     "version": "1.0.0",
     "timeout": 7200,
     "dry_run": true,
-    "duration": 5.166155
+    "duration": 6.315871
   },
   "pipeline_execution": {
     "status": "success",
     "return_code": 0,
-    "execution_time": 2.392216,
+    "execution_time": 2.975289,
     "stdout_lines": [
-      "2025-07-25 08:49:47,845 - INFO - Starting Agent Forge Full Pipeline",
-      "2025-07-25 08:49:47,846 - INFO - Dry run mode - validating configuration only",
-      "2025-07-25 08:49:47,846 - INFO - Setting up environment...",
-      "2025-07-25 08:49:47,846 - INFO - Running in dry-run mode without frontier API key",
-      "2025-07-25 08:49:49,783 - INFO - Auto-detected device: cpu",
-      "2025-07-25 08:49:49,783 - INFO - Environment configured for device: cpu",
-      "2025-07-25 08:49:49,783 - INFO - Configuration validation completed successfully",
+      "2025-07-25 09:58:20,297 - INFO - Starting Agent Forge Full Pipeline",
+      "2025-07-25 09:58:20,298 - INFO - Dry run mode - validating configuration only",
+      "2025-07-25 09:58:20,298 - INFO - Setting up environment...",
+      "2025-07-25 09:58:20,298 - INFO - Running in dry-run mode without frontier API key",
+      "2025-07-25 09:58:22,658 - INFO - Auto-detected device: cpu",
+      "2025-07-25 09:58:22,658 - INFO - Environment configured for device: cpu",
+      "2025-07-25 09:58:22,658 - INFO - Configuration validation completed successfully",
       "",
       "Agent Forge pipeline completed successfully!",
       "Check the generated summary report for detailed results."
@@ -88,7 +88,7 @@
   "overall_status": "PASSED",
   "summary": {
     "overall_status": "PASSED",
-    "execution_time": 2.392216,
+    "execution_time": 2.975289,
     "pipeline_success": true,
     "artifacts_present": true,
     "recommendations": [],
