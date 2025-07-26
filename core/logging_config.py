@@ -107,7 +107,11 @@ def create_logging_config(
         log_dir = "logs"
 
     # Ensure log directory exists
-    Path(log_dir).mkdir(parents=True, exist_ok=True)
+    try:
+        Path(log_dir).mkdir(parents=True, exist_ok=True)
+    except PermissionError:
+        # If we can't create the directory, fall back to console logging only
+        log_dir = None
 
     config = {
         "version": 1,
@@ -140,8 +144,8 @@ def create_logging_config(
         }
         config["loggers"]["AIVillage"]["handlers"].append("console")
 
-    # File handlers
-    if enable_file:
+    # File handlers (only if log_dir is available)
+    if enable_file and log_dir is not None:
         # Main application log
         config["handlers"]["file"] = {
             "class": "logging.handlers.RotatingFileHandler",

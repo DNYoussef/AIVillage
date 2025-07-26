@@ -12,7 +12,7 @@ def make_pack():
 
 def test_round_trip_dict():
     pack = make_pack()
-    data = pack.dict()
+    data = pack.model_dump()
     new = EvidencePack(**data)
     assert new == pack
 

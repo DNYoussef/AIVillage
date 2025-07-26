@@ -300,8 +300,8 @@ async def explain_endpoint(req: ExplainRequest):
         # Handle unexpected errors
         service_error = create_service_error(
             message=f"Path explanation failed: {exc!s}",
-            category=ErrorCategory.SYSTEM,
-            severity=ErrorSeverity.HIGH,
+            category=ErrorCategory.CONFIGURATION,
+            severity=ErrorSeverity.ERROR,
             operation="path_explanation",
             details={
                 "source": req.src,

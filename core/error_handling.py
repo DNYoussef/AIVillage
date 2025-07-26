@@ -199,6 +199,19 @@ class AIVillageException(Exception):
             },
         )
 
+    def to_dict(self) -> dict[str, Any]:
+        """Convert exception to dictionary format."""
+        return {
+            "type": self.__class__.__name__,
+            "message": self.message,
+            "code": f"{self.category.value.upper()}_{self.severity.value.upper()}",
+            "category": self.category.value.upper(),
+            "severity": self.severity.value.upper(),
+            "timestamp": self.context.timestamp if self.context else datetime.now(timezone.utc).isoformat(),
+            "context": self.context.__dict__ if self.context else None,
+            "original_exception": str(self.original_exception) if self.original_exception else None,
+        }
+
 
 # Legacy alias for backward compatibility
 AIVillageError = AIVillageException

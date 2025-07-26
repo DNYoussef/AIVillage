@@ -19,69 +19,75 @@ from fastapi.responses import JSONResponse
 from core.error_handling import (
     AIVillageException,
     ErrorCategory,
+    ErrorContext,
     ErrorSeverity,
 )
 
 # Service-specific error codes
 SERVICE_ERROR_CODES = {
     ErrorCategory.NETWORK: {
-        ErrorSeverity.LOW: 503,
-        ErrorSeverity.MEDIUM: 503,
-        ErrorSeverity.HIGH: 503,
+        ErrorSeverity.DEBUG: 503,
+        ErrorSeverity.INFO: 503,
+        ErrorSeverity.WARNING: 503,
+        ErrorSeverity.ERROR: 503,
         ErrorSeverity.CRITICAL: 503,
     },
     ErrorCategory.VALIDATION: {
-        ErrorSeverity.LOW: 400,
-        ErrorSeverity.MEDIUM: 400,
-        ErrorSeverity.HIGH: 422,
+        ErrorSeverity.DEBUG: 400,
+        ErrorSeverity.INFO: 400,
+        ErrorSeverity.WARNING: 400,
+        ErrorSeverity.ERROR: 422,
         ErrorSeverity.CRITICAL: 422,
     },
-    ErrorCategory.SECURITY: {
-        ErrorSeverity.LOW: 401,
-        ErrorSeverity.MEDIUM: 401,
-        ErrorSeverity.HIGH: 401,
+    ErrorCategory.ACCESS: {
+        ErrorSeverity.DEBUG: 401,
+        ErrorSeverity.INFO: 401,
+        ErrorSeverity.WARNING: 401,
+        ErrorSeverity.ERROR: 401,
         ErrorSeverity.CRITICAL: 401,
     },
     ErrorCategory.EXTERNAL_SERVICE: {
-        ErrorSeverity.LOW: 503,
-        ErrorSeverity.MEDIUM: 503,
-        ErrorSeverity.HIGH: 503,
+        ErrorSeverity.DEBUG: 503,
+        ErrorSeverity.INFO: 503,
+        ErrorSeverity.WARNING: 503,
+        ErrorSeverity.ERROR: 503,
         ErrorSeverity.CRITICAL: 503,
     },
-    ErrorCategory.SYSTEM: {
-        ErrorSeverity.LOW: 500,
-        ErrorSeverity.MEDIUM: 500,
-        ErrorSeverity.HIGH: 500,
+    ErrorCategory.CONFIGURATION: {
+        ErrorSeverity.DEBUG: 500,
+        ErrorSeverity.INFO: 500,
+        ErrorSeverity.WARNING: 500,
+        ErrorSeverity.ERROR: 500,
         ErrorSeverity.CRITICAL: 500,
     },
-    ErrorCategory.DATABASE: {
-        ErrorSeverity.LOW: 500,
-        ErrorSeverity.MEDIUM: 500,
-        ErrorSeverity.HIGH: 500,
+    ErrorCategory.EXTERNAL_SERVICE: {
+        ErrorSeverity.DEBUG: 500,
+        ErrorSeverity.INFO: 500,
+        ErrorSeverity.WARNING: 500,
         ErrorSeverity.CRITICAL: 500,
     },
-    ErrorCategory.BUSINESS_LOGIC: {
-        ErrorSeverity.LOW: 400,
-        ErrorSeverity.MEDIUM: 400,
-        ErrorSeverity.HIGH: 422,
+    ErrorCategory.PROCESSING: {
+        ErrorSeverity.DEBUG: 400,
+        ErrorSeverity.INFO: 400,
+        ErrorSeverity.ERROR: 422,
         ErrorSeverity.CRITICAL: 422,
     },
     ErrorCategory.UNKNOWN: {
-        ErrorSeverity.LOW: 500,
-        ErrorSeverity.MEDIUM: 500,
-        ErrorSeverity.HIGH: 500,
+        ErrorSeverity.DEBUG: 500,
+        ErrorSeverity.INFO: 500,
+        ErrorSeverity.ERROR: 500,
         ErrorSeverity.CRITICAL: 500,
     },
-    ErrorCategory.RESOURCE: {
-        ErrorSeverity.LOW: 404,
-        ErrorSeverity.MEDIUM: 404,
-        ErrorSeverity.HIGH: 404,
+    ErrorCategory.ACCESS: {
+        ErrorSeverity.DEBUG: 404,
+        ErrorSeverity.INFO: 404,
+        ErrorSeverity.ERROR: 404,
         ErrorSeverity.CRITICAL: 404,
     },
-    ErrorCategory.RATE_LIMIT: {
-        ErrorSeverity.LOW: 429,
-        ErrorSeverity.MEDIUM: 429,
-        ErrorSeverity.HIGH: 429,
+    ErrorCategory.TIMEOUT: {
+        ErrorSeverity.DEBUG: 429,
+        ErrorSeverity.INFO: 429,
+        ErrorSeverity.ERROR: 429,
         ErrorSeverity.CRITICAL: 429,
     },
 }
@@ -110,10 +116,13 @@ class ServiceErrorHandler:
             # Convert generic exception to AIVillageException
             av_exception = AIVillageException(
                 message=str(exception),
-                category=ErrorCategory.SYSTEM,
-                severity=ErrorSeverity.MEDIUM,
-                operation="service_operation",
-                context={"original_error": str(exception)},
+                category=ErrorCategory.CONFIGURATION,
+                severity=ErrorSeverity.INFO,
+                context=ErrorContext(
+                    component=self.service_name,
+                    operation="service_operation",
+                    details={"original_error": str(exception)}
+                ),
             )
             error_info = av_exception.to_dict()
             status_code = 500
@@ -263,8 +272,8 @@ class ServiceErrorHandler:
                     if not isinstance(exc, AIVillageException):
                         exc = AIVillageException(
                             message=str(exc),
-                            category=ErrorCategory.SYSTEM,
-                            severity=ErrorSeverity.MEDIUM,
+                            category=ErrorCategory.CONFIGURATION,
+                            severity=ErrorSeverity.INFO,
                             operation=operation,
                             context={"original_error": str(exc)},
                         )
@@ -292,8 +301,8 @@ twin_error_handler = ServiceErrorHandler("twin")
 
 def create_service_error(
     message: str,
-    category: ErrorCategory = ErrorCategory.SYSTEM,
-    severity: ErrorSeverity = ErrorSeverity.MEDIUM,
+    category: ErrorCategory = ErrorCategory.CONFIGURATION,
+    severity: ErrorSeverity = ErrorSeverity.INFO,
     operation: str = "service_operation",
     details: dict[str, Any] | None = None,
 ) -> AIVillageException:
@@ -302,8 +311,11 @@ def create_service_error(
         message=message,
         category=category,
         severity=severity,
-        operation=operation,
-        context=details or {},
+        context=ErrorContext(
+            component="service",
+            operation=operation,
+            details=details or {}
+        ),
     )
 
 
@@ -315,7 +327,7 @@ def validation_error(
     return create_service_error(
         message=message,
         category=ErrorCategory.VALIDATION,
-        severity=ErrorSeverity.MEDIUM,
+        severity=ErrorSeverity.INFO,
         operation="validation",
         details=details,
     )
@@ -328,7 +340,7 @@ def network_error(
     return create_service_error(
         message=message,
         category=ErrorCategory.NETWORK,
-        severity=ErrorSeverity.HIGH,
+        severity=ErrorSeverity.ERROR,
         operation="network_request",
         details=details,
     )
@@ -340,8 +352,8 @@ def database_error(
     """Create database error."""
     return create_service_error(
         message=message,
-        category=ErrorCategory.DATABASE,
-        severity=ErrorSeverity.HIGH,
+        category=ErrorCategory.EXTERNAL_SERVICE,
+        severity=ErrorSeverity.ERROR,
         operation="database_operation",
         details=details,
     )
@@ -353,8 +365,8 @@ def security_error(
     """Create security error."""
     return create_service_error(
         message=message,
-        category=ErrorCategory.SECURITY,
-        severity=ErrorSeverity.HIGH,
+        category=ErrorCategory.ACCESS,
+        severity=ErrorSeverity.ERROR,
         operation="security_check",
         details=details,
     )
@@ -367,7 +379,7 @@ def external_service_error(
     return create_service_error(
         message=message,
         category=ErrorCategory.EXTERNAL_SERVICE,
-        severity=ErrorSeverity.HIGH,
+        severity=ErrorSeverity.ERROR,
         operation="external_service",
         details=details,
     )
@@ -379,8 +391,8 @@ def resource_error(
     """Create resource error."""
     return create_service_error(
         message=message,
-        category=ErrorCategory.RESOURCE,
-        severity=ErrorSeverity.MEDIUM,
+        category=ErrorCategory.ACCESS,
+        severity=ErrorSeverity.INFO,
         operation="resource_access",
         details=details,
     )
@@ -392,8 +404,8 @@ def rate_limit_error(
     """Create rate limit error."""
     return create_service_error(
         message=message,
-        category=ErrorCategory.RATE_LIMIT,
-        severity=ErrorSeverity.MEDIUM,
+        category=ErrorCategory.TIMEOUT,
+        severity=ErrorSeverity.INFO,
         operation="rate_limiting",
         details=details,
     )

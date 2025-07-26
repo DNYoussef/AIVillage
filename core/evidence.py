@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, HttpUrl, validator
+from pydantic import BaseModel, Field, HttpUrl, field_validator, ConfigDict
 
 
 class ConfidenceTier(str, Enum):
@@ -22,8 +22,7 @@ class Chunk(BaseModel):
     score: float = Field(..., ge=0.0, le=1.0)
     source_uri: HttpUrl
 
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 
 class EvidencePack(BaseModel):
@@ -37,10 +36,10 @@ class EvidencePack(BaseModel):
     confidence_tier: ConfidenceTier | None = None
     meta: dict[str, Any] = Field(default_factory=dict)
 
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
-    @validator("chunks")
+    @field_validator("chunks")
+    @classmethod
     def _non_empty(cls, v: list[Chunk]) -> list[Chunk]:
         if not v:
             raise ValueError("chunks must not be empty")
@@ -48,9 +47,9 @@ class EvidencePack(BaseModel):
 
     def to_json(self) -> str:
         """Serialize pack to JSON."""
-        return self.json()
+        return self.model_dump_json()
 
     @classmethod
     def from_json(cls, s: str) -> EvidencePack:
         """Deserialize pack from JSON."""
-        return cls.parse_raw(s)
+        return cls.model_validate_json(s)

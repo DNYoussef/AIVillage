@@ -11,7 +11,7 @@ from typing import Any
 from uuid import uuid4
 
 
-class MessageType(Enum):
+class AgentMessageType(Enum):
     """Types of messages that can be sent between agents."""
 
     TASK = "TASK"
@@ -32,14 +32,14 @@ class Priority(Enum):
 
 
 @dataclass
-class Message:
+class AgentMessage:
     """A standardized message for inter-agent communication.
 
     This class provides a consistent format for all messages sent between
     agents in the AIVillage system.
     """
 
-    type: MessageType
+    type: AgentMessageType
     sender: str
     receiver: str
     content: Any
@@ -64,10 +64,10 @@ class Message:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Message":
+    def from_dict(cls, data: dict[str, Any]) -> "AgentMessage":
         """Create message from dictionary format."""
         return cls(
-            type=MessageType(data["type"]),
+            type=AgentMessageType(data["type"]),
             sender=data["sender"],
             receiver=data["receiver"],
             content=data["content"],
@@ -79,7 +79,7 @@ class Message:
         )
 
 
-class StandardCommunicationProtocol:
+class AgentCommunicationProtocol:
     """Standard communication protocol for agent messaging.
 
     This class provides a unified interface for agents to communicate with
@@ -88,7 +88,7 @@ class StandardCommunicationProtocol:
 
     def __init__(self):
         self.subscribers: dict[str, Any] = {}
-        self.message_history: list[Message] = []
+        self.message_history: list[AgentMessage] = []
         self.logger = None  # Will be set by get_component_logger
 
     def subscribe(self, agent_name: str, handler: Any):
@@ -109,7 +109,7 @@ class StandardCommunicationProtocol:
         if agent_name in self.subscribers:
             del self.subscribers[agent_name]
 
-    async def send_message(self, message: Message):
+    async def send_message(self, message: AgentMessage):
         """Send a message to a specific agent.
 
         Args:
@@ -121,7 +121,7 @@ class StandardCommunicationProtocol:
             handler = self.subscribers[message.receiver]
             await handler(message)
 
-    async def broadcast(self, message: Message, exclude: list[str] = None):
+    async def broadcast(self, message: AgentMessage, exclude: list[str] = None):
         """Broadcast a message to all subscribed agents.
 
         Args:
@@ -133,7 +133,7 @@ class StandardCommunicationProtocol:
 
         for agent_name, handler in self.subscribers.items():
             if agent_name not in exclude:
-                broadcast_message = Message(
+                broadcast_message = AgentMessage(
                     type=message.type,
                     sender=message.sender,
                     receiver=agent_name,
@@ -155,8 +155,8 @@ class StandardCommunicationProtocol:
         Returns:
             Response from the receiver
         """
-        query_message = Message(
-            type=MessageType.QUERY,
+        query_message = AgentMessage(
+            type=AgentMessageType.QUERY,
             sender=sender,
             receiver=receiver,
             content=content,
@@ -171,7 +171,7 @@ class StandardCommunicationProtocol:
 
     def get_message_history(
         self, agent_name: str = None, limit: int = 100
-    ) -> list[Message]:
+    ) -> list[AgentMessage]:
         """Get message history for an agent or all messages.
 
         Args:

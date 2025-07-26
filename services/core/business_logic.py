@@ -13,6 +13,7 @@ import uuid
 from core.error_handling import (
     AIVillageException,
     ErrorCategory,
+    ErrorContext,
     ErrorSeverity,
     get_component_logger,
 )
@@ -50,18 +51,24 @@ class ChatBusinessLogic(ChatServiceInterface):
             raise AIVillageException(
                 message="Message cannot be empty",
                 category=ErrorCategory.VALIDATION,
-                severity=ErrorSeverity.MEDIUM,
-                operation="process_chat",
-                context={"message": request.message},
+                severity=ErrorSeverity.INFO,
+                context=ErrorContext(
+                    component="ChatBusinessLogic",
+                    operation="process_chat",
+                    details={"message": request.message}
+                ),
             )
 
         if len(request.message) > self.max_message_length:
             raise AIVillageException(
                 message=f"Message exceeds maximum length of {self.max_message_length}",
                 category=ErrorCategory.VALIDATION,
-                severity=ErrorSeverity.MEDIUM,
-                operation="process_chat",
-                context={"message_length": len(request.message)},
+                severity=ErrorSeverity.INFO,
+                context=ErrorContext(
+                    component="ChatBusinessLogic",
+                    operation="process_chat",
+                    details={"message_length": len(request.message)}
+                ),
             )
 
         # Generate conversation ID if not provided
@@ -143,8 +150,12 @@ class QueryBusinessLogic(QueryServiceInterface):
             raise AIVillageException(
                 message="Query cannot be empty",
                 category=ErrorCategory.VALIDATION,
-                severity=ErrorSeverity.MEDIUM,
-                operation="execute_query",
+                severity=ErrorSeverity.INFO,
+                context=ErrorContext(
+                    component="QueryBusinessLogic",
+                    operation="execute_query",
+                    details={}
+                ),
             )
 
         # Process with RAG pipeline if available
@@ -191,9 +202,12 @@ class UploadBusinessLogic(UploadServiceInterface):
             raise AIVillageException(
                 message=validation_result.error["message"],
                 category=ErrorCategory.VALIDATION,
-                severity=ErrorSeverity.MEDIUM,
-                operation="process_upload",
-                context=validation_result.error,
+                severity=ErrorSeverity.INFO,
+                context=ErrorContext(
+                    component="UploadBusinessLogic",
+                    operation="process_upload",
+                    details=validation_result.error
+                ),
             )
 
         # Generate file ID

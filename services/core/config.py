@@ -175,7 +175,7 @@ class ConfigManager:
         except Exception as e:
             raise AIVillageException(
                 message=f"Failed to load configuration: {e!s}",
-                category=ErrorCategory.SYSTEM,
+                category=ErrorCategory.CONFIGURATION,
                 severity=ErrorSeverity.CRITICAL,
                 operation="load_config",
                 context={

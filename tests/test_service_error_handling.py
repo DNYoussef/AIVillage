@@ -12,6 +12,7 @@ import pytest
 from core.error_handling import (
     AIVillageException,
     ErrorCategory,
+    ErrorContext,
     ErrorSeverity,
 )
 from services.core.service_error_handler import (
@@ -36,9 +37,12 @@ class TestServiceErrorHandler:
         exception = AIVillageException(
             message="Test error",
             category=ErrorCategory.VALIDATION,
-            severity=ErrorSeverity.MEDIUM,
-            operation="test_operation",
-            context={"field": "test"},
+            severity=ErrorSeverity.INFO,
+            context=ErrorContext(
+                component="test-service",
+                operation="test_operation",
+                details={"field": "test"}
+            ),
         )
 
         response = handler.create_error_response(exception)
@@ -46,7 +50,7 @@ class TestServiceErrorHandler:
         assert response["error"]["type"] == "AIVillageException"
         assert response["error"]["message"] == "Test error"
         assert response["error"]["category"] == "VALIDATION"
-        assert response["error"]["severity"] == "MEDIUM"
+        assert response["error"]["severity"] == "INFO"
         assert response["error"]["service"] == "test-service"
         assert "timestamp" in response["error"]
         assert "code" in response["error"]
@@ -60,8 +64,8 @@ class TestServiceErrorHandler:
 
         assert response["error"]["type"] == "AIVillageException"
         assert response["error"]["message"] == "Generic error"
-        assert response["error"]["category"] == "SYSTEM"
-        assert response["error"]["severity"] == "MEDIUM"
+        assert response["error"]["category"] == "CONFIGURATION"
+        assert response["error"]["severity"] == "INFO"
 
     def test_create_error_response_with_request_context(self):
         """Test creating error response with request context."""
@@ -70,8 +74,12 @@ class TestServiceErrorHandler:
         exception = AIVillageException(
             message="Test error",
             category=ErrorCategory.NETWORK,
-            severity=ErrorSeverity.HIGH,
-            operation="test_operation",
+            severity=ErrorSeverity.ERROR,
+            context=ErrorContext(
+                component="test-service",
+                operation="test_operation",
+                details={}
+            ),
         )
 
         # Mock request
@@ -95,18 +103,18 @@ class TestErrorFactories:
         """Test create_service_error factory."""
         error = create_service_error(
             message="Test service error",
-            category=ErrorCategory.SECURITY,
-            severity=ErrorSeverity.HIGH,
+            category=ErrorCategory.ACCESS,
+            severity=ErrorSeverity.ERROR,
             operation="login",
             details={"username": "test"},
         )
 
         assert isinstance(error, AIVillageException)
         assert error.message == "Test service error"
-        assert error.category == ErrorCategory.SECURITY
-        assert error.severity == ErrorSeverity.HIGH
-        assert error.operation == "login"
-        assert error.context["username"] == "test"
+        assert error.category == ErrorCategory.ACCESS
+        assert error.severity == ErrorSeverity.ERROR
+        assert error.context.operation == "login"
+        assert error.context.details["username"] == "test"
 
     def test_validation_error(self):
         """Test validation_error factory."""
@@ -114,9 +122,9 @@ class TestErrorFactories:
 
         assert isinstance(error, AIVillageException)
         assert error.category == ErrorCategory.VALIDATION
-        assert error.severity == ErrorSeverity.MEDIUM
-        assert error.operation == "validation"
-        assert error.context["field"] == "email"
+        assert error.severity == ErrorSeverity.INFO
+        assert error.context.operation == "validation"
+        assert error.context.details["field"] == "email"
 
     def test_network_error(self):
         """Test network_error factory."""
@@ -124,24 +132,24 @@ class TestErrorFactories:
 
         assert isinstance(error, AIVillageException)
         assert error.category == ErrorCategory.NETWORK
-        assert error.severity == ErrorSeverity.HIGH
-        assert error.operation == "network_request"
+        assert error.severity == ErrorSeverity.ERROR
+        assert error.context.operation == "network_request"
 
     def test_resource_error(self):
         """Test resource_error factory."""
         error = resource_error("Resource not found", {"id": "123"})
 
         assert isinstance(error, AIVillageException)
-        assert error.category == ErrorCategory.RESOURCE
-        assert error.severity == ErrorSeverity.MEDIUM
+        assert error.category == ErrorCategory.ACCESS
+        assert error.severity == ErrorSeverity.INFO
 
     def test_rate_limit_error(self):
         """Test rate_limit_error factory."""
         error = rate_limit_error("Too many requests", {"limit": 100})
 
         assert isinstance(error, AIVillageException)
-        assert error.category == ErrorCategory.RATE_LIMIT
-        assert error.severity == ErrorSeverity.MEDIUM
+        assert error.category == ErrorCategory.TIMEOUT
+        assert error.severity == ErrorSeverity.INFO
 
 
 class TestServiceIntegration:
@@ -179,7 +187,7 @@ class TestServiceIntegration:
         error = response.json()["error"]
         assert error["type"] == "AIVillageException"
         assert error["category"] == "VALIDATION"
-        assert error["severity"] == "MEDIUM"
+        assert error["severity"] == "INFO"
         assert "validation_errors" in error
 
     def test_twin_service_explain_validation(self):
@@ -248,7 +256,7 @@ class TestErrorResponseFormat:
 
         exception = AIVillageException(
             message="Test error",
-            category=ErrorCategory.SYSTEM,
+            category=ErrorCategory.CONFIGURATION,
             severity=ErrorSeverity.CRITICAL,
         )
 
@@ -286,13 +294,17 @@ class TestServiceErrorHandlingWithFixtures:
     async def test_chat_service_error_handling(self, mock_chat_service):
         """Test error handling in chat service."""
         # Make the service raise an exception
-        from core.error_handling import AIVillageException, ErrorCategory, ErrorSeverity
+        from core.error_handling import AIVillageException, ErrorCategory, ErrorContext, ErrorSeverity
 
         test_exception = AIVillageException(
             message="Chat processing failed",
-            category=ErrorCategory.SYSTEM,
-            severity=ErrorSeverity.HIGH,
-            operation="process_chat",
+            category=ErrorCategory.CONFIGURATION,
+            severity=ErrorSeverity.ERROR,
+            context=ErrorContext(
+                component="chat-service",
+                operation="process_chat",
+                details={}
+            ),
         )
 
         mock_chat_service.process_chat.side_effect = test_exception
@@ -305,18 +317,22 @@ class TestServiceErrorHandlingWithFixtures:
             await mock_chat_service.process_chat(request)
 
         assert exc_info.value.message == "Chat processing failed"
-        assert exc_info.value.category == ErrorCategory.SYSTEM
+        assert exc_info.value.category == ErrorCategory.CONFIGURATION
 
     @pytest.mark.asyncio
     async def test_query_service_error_handling(self, mock_query_service):
         """Test error handling in query service."""
-        from core.error_handling import AIVillageException, ErrorCategory, ErrorSeverity
+        from core.error_handling import AIVillageException, ErrorCategory, ErrorContext, ErrorSeverity
 
         test_exception = AIVillageException(
             message="Query execution failed",
-            category=ErrorCategory.RESOURCE,
-            severity=ErrorSeverity.MEDIUM,
-            operation="execute_query",
+            category=ErrorCategory.ACCESS,
+            severity=ErrorSeverity.INFO,
+            context=ErrorContext(
+                component="query-service",
+                operation="execute_query",
+                details={}
+            ),
         )
 
         mock_query_service.execute_query.side_effect = test_exception
@@ -328,7 +344,7 @@ class TestServiceErrorHandlingWithFixtures:
             await mock_query_service.execute_query(request)
 
         assert exc_info.value.message == "Query execution failed"
-        assert exc_info.value.category == ErrorCategory.RESOURCE
+        assert exc_info.value.category == ErrorCategory.ACCESS
 
     def test_error_handler_with_test_config(self, test_config):
         """Test error handler creation with test configuration."""
@@ -337,7 +353,7 @@ class TestServiceErrorHandlingWithFixtures:
         exception = AIVillageException(
             message="Configuration test error",
             category=ErrorCategory.VALIDATION,
-            severity=ErrorSeverity.LOW,
+            severity=ErrorSeverity.DEBUG,
         )
 
         response = handler.create_error_response(exception)

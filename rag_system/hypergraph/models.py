@@ -5,7 +5,7 @@ Core data structures for the dual-memory hypergraph knowledge system.
 Implements Hyperedge for n-ary relationships and HippoNode for episodic memory.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Any, Dict
 from pydantic import BaseModel, Field, validator
 import numpy as np
@@ -27,7 +27,7 @@ class Hyperedge(BaseModel):
     entities: List[str] = Field(min_items=2, description="List of entity IDs (minimum 2)")
     relation: str = Field(description="Relationship type connecting the entities")
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence score [0.0, 1.0]")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     source_docs: List[str] = Field(default_factory=list, description="Source document IDs")
     embedding: Optional[np.ndarray] = Field(default=None, description="Vector embedding")
 
@@ -122,8 +122,8 @@ class HippoNode(BaseModel):
     id: str = Field(description="Unique node identifier")
     content: str = Field(description="Node content/data")
     episodic: bool = Field(default=True, description="Whether this is episodic memory")
-    created: datetime = Field(default_factory=datetime.utcnow)
-    last_accessed: datetime = Field(default_factory=datetime.utcnow)
+    created: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_accessed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     access_pattern: Optional[np.ndarray] = Field(default=None, description="Access pattern for PPR")
 
     # Session and context tracking
@@ -175,7 +175,7 @@ class HippoNode(BaseModel):
 
     def update_access(self) -> None:
         """Update access tracking"""
-        self.last_accessed = datetime.utcnow()
+        self.last_accessed = datetime.now(timezone.utc)
         self.access_count += 1
 
         # Update relevance decay based on time since creation
@@ -186,7 +186,7 @@ class HippoNode(BaseModel):
     def calculate_consolidation_score(self) -> float:
         """Calculate score for consolidating to semantic memory"""
         # Factors: access frequency, age, relevance
-        age_hours = (datetime.utcnow() - self.created).total_seconds() / 3600.0
+        age_hours = (datetime.now(timezone.utc) - self.created).total_seconds() / 3600.0
 
         # Higher score for frequently accessed, moderately aged content
         frequency_score = min(self.access_count / 10.0, 1.0)  # Normalize to [0,1]
@@ -205,7 +205,7 @@ class HippoNode(BaseModel):
     def mark_consolidated(self) -> None:
         """Mark node as consolidated to semantic memory"""
         self.consolidated = True
-        self.consolidation_timestamp = datetime.utcnow()
+        self.consolidation_timestamp = datetime.now(timezone.utc)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for storage"""
