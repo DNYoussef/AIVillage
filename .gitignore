@@ -56,6 +56,16 @@ models/
 
 # Claude development files
 .claude/
+.claude_analysis/
+.claude_cleanup/
+
+# WandB experiment tracking files
+wandb/
+wandb_offline/
+
+# Temporary and generated files
+core/nul
+baseline_test_results.txt
 
 vendor/wheels/*.whl
 vendor/wheels/*.tar.gz
