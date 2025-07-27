@@ -5,35 +5,36 @@ import yaml
 import sys
 from pathlib import Path
 
+
 def analyze_workflow(workflow_path):
     """Analyze a single workflow file."""
     print(f"Analyzing {workflow_path}")
 
     try:
-        with open(workflow_path, encoding='utf-8') as f:
+        with open(workflow_path, encoding="utf-8") as f:
             workflow = yaml.safe_load(f)
 
         issues = []
 
         # Check required fields
-        if 'name' not in workflow:
+        if "name" not in workflow:
             issues.append("Missing 'name' field")
 
-        if 'on' not in workflow:
+        if "on" not in workflow:
             issues.append("Missing 'on' trigger field")
 
-        if 'jobs' not in workflow:
+        if "jobs" not in workflow:
             issues.append("Missing 'jobs' field")
-        elif not workflow['jobs']:
+        elif not workflow["jobs"]:
             issues.append("No jobs defined")
 
         # Check each job
-        if 'jobs' in workflow:
-            for job_name, job in workflow['jobs'].items():
-                if 'runs-on' not in job:
+        if "jobs" in workflow:
+            for job_name, job in workflow["jobs"].items():
+                if "runs-on" not in job:
                     issues.append(f"Job '{job_name}' missing 'runs-on'")
 
-                if 'steps' not in job:
+                if "steps" not in job:
                     issues.append(f"Job '{job_name}' missing 'steps'")
 
         # Report results
@@ -43,7 +44,9 @@ def analyze_workflow(workflow_path):
                 print(f"    - {issue}")
             return False
         else:
-            print(f"  VALID: {workflow.get('name', 'Unnamed')} - {len(workflow.get('jobs', {}))} jobs")
+            print(
+                f"  VALID: {workflow.get('name', 'Unnamed')} - {len(workflow.get('jobs', {}))} jobs"
+            )
             return True
 
     except yaml.YAMLError as e:
@@ -52,6 +55,7 @@ def analyze_workflow(workflow_path):
     except Exception as e:
         print(f"  ERROR: {e}")
         return False
+
 
 def main():
     """Analyze all workflows."""
@@ -81,6 +85,7 @@ def main():
     else:
         print("Some workflows have issues that need fixing")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -35,7 +35,7 @@ def run_performance_benchmark(threshold_percent=40):
     test_cases = [
         (256, 512, "Small Linear"),
         (512, 1024, "Medium Linear"),
-        (1024, 2048, "Large Linear")
+        (1024, 2048, "Large Linear"),
     ]
 
     results = []
@@ -72,36 +72,36 @@ def run_performance_benchmark(threshold_percent=40):
 
             # Quality check
             mse = torch.mean((test_weight - reconstructed) ** 2).item()
-            compression_ratio = compressed_data.get('compression_ratio', 0)
+            compression_ratio = compressed_data.get("compression_ratio", 0)
 
             meets_requirement = throughput_drop_percent <= threshold_percent
             if meets_requirement:
                 passed_tests += 1
 
             result = {
-                'test_case': name,
-                'fp16_time_ms': fp16_time * 1000,
-                'compressed_time_ms': total_compressed_time * 1000,
-                'throughput_factor': throughput_factor,
-                'throughput_drop_percent': throughput_drop_percent,
-                'meets_requirement': meets_requirement,
-                'mse': mse,
-                'compression_ratio': compression_ratio
+                "test_case": name,
+                "fp16_time_ms": fp16_time * 1000,
+                "compressed_time_ms": total_compressed_time * 1000,
+                "throughput_factor": throughput_factor,
+                "throughput_drop_percent": throughput_drop_percent,
+                "meets_requirement": meets_requirement,
+                "mse": mse,
+                "compression_ratio": compression_ratio,
             }
             results.append(result)
 
             status = "PASS" if meets_requirement else "FAIL"
             print(f"   {status} - {throughput_drop_percent:+.1f}% throughput change")
-            print(f"   FP16: {fp16_time*1000:.1f}ms | Compressed: {total_compressed_time*1000:.1f}ms")
+            print(
+                f"   FP16: {fp16_time*1000:.1f}ms | Compressed: {total_compressed_time*1000:.1f}ms"
+            )
             print(f"   Quality: {mse:.6f} MSE, {compression_ratio:.1f}x ratio")
 
         except Exception as e:
             print(f"   ERROR - {e}")
-            results.append({
-                'test_case': name,
-                'error': str(e),
-                'meets_requirement': False
-            })
+            results.append(
+                {"test_case": name, "error": str(e), "meets_requirement": False}
+            )
 
     # Summary
     total_tests = len(test_cases)
@@ -113,15 +113,19 @@ def run_performance_benchmark(threshold_percent=40):
 
     # Save results for CI
     try:
-        with open('compression_regression_results.json', 'w') as f:
-            json.dump({
-                'threshold_percent': threshold_percent,
-                'passed_tests': passed_tests,
-                'total_tests': total_tests,
-                'pass_rate': pass_rate,
-                'results': results,
-                'timestamp': time.time()
-            }, f, indent=2)
+        with open("compression_regression_results.json", "w") as f:
+            json.dump(
+                {
+                    "threshold_percent": threshold_percent,
+                    "passed_tests": passed_tests,
+                    "total_tests": total_tests,
+                    "pass_rate": pass_rate,
+                    "results": results,
+                    "timestamp": time.time(),
+                },
+                f,
+                indent=2,
+            )
         print(f"   Results saved to: compression_regression_results.json")
     except Exception as e:
         print(f"   Warning: Could not save results - {e}")
@@ -138,11 +142,20 @@ def run_performance_benchmark(threshold_percent=40):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Check compression performance regression')
-    parser.add_argument('--threshold', type=int, default=40,
-                      help='Maximum allowed throughput drop percentage (default: 40)')
-    parser.add_argument('--strict', action='store_true',
-                      help='Fail if any test fails (default: require 80% pass rate)')
+    parser = argparse.ArgumentParser(
+        description="Check compression performance regression"
+    )
+    parser.add_argument(
+        "--threshold",
+        type=int,
+        default=40,
+        help="Maximum allowed throughput drop percentage (default: 40)",
+    )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Fail if any test fails (default: require 80% pass rate)",
+    )
 
     args = parser.parse_args()
 
@@ -163,9 +176,10 @@ def main():
     except Exception as e:
         print(f"\nRegression check failed with error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

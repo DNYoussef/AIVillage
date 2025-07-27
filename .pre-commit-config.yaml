@@ -46,6 +46,31 @@ repos:
         args: [--maxfail=5, -q, --tb=short]
         pass_filenames: false
 
+      - id: automation-style-guide
+        name: Automation Scripts Style Guide Enforcement
+        entry: python scripts/enforce_style_guide.py
+        language: system
+        files: '^scripts/.*\.py$'
+        args: [--fix]
+        pass_filenames: false
+
+      # Sprint 1: Technical debt cleanup
+      - id: no-misleading-stubs
+        name: Check for misleading stub implementations
+        entry: python scripts/audit_stubs.py
+        language: system
+        types: [python]
+        args: [--check]
+        pass_filenames: false
+
+      - id: documentation-accuracy
+        name: Verify documentation matches implementation
+        entry: python scripts/align_documentation.py
+        language: system
+        files: \.(md|rst)$
+        args: [--verify]
+        pass_filenames: false
+
   # Temporarily disabled compression hooks to fix CI failures
   # Re-enable after fixing import and test issues
   # - repo: local

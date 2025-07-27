@@ -53,7 +53,7 @@ __all__ = [
     "with_error_handling",
     # Communication classes (renamed to avoid conflicts)
     "AgentMessage",
-    "AgentMessageType", 
+    "AgentMessageType",
     "AgentCommunicationProtocol",
     "Priority",
 ]

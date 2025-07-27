@@ -7,25 +7,26 @@ import signal
 import subprocess
 import tempfile
 
-# Windows compatibility for resource limits
 try:
     import resource
 
     HAS_RESOURCE = True
 except ImportError:
-    # Windows doesn't have resource module
     HAS_RESOURCE = False
 
-    # Create stub resource module for Windows
     class resource:
         RLIMIT_AS = "RLIMIT_AS"
         RLIMIT_CPU = "RLIMIT_CPU"
 
         @staticmethod
         def setrlimit(resource_type, limits):
-            # On Windows, we can't set these limits at the process level
-            # This is a no-op for compatibility
-            pass
+            """Setrlimit - Planned feature not yet implemented.
+
+            This functionality is part of the Atlantis roadmap.
+            """
+            raise NotImplementedError(
+                "'setrlimit' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-setrlimit"
+            )
 
 
 from contextlib import contextmanager
@@ -59,24 +60,7 @@ class ADASTask(Task):
 
     def generate_prompt(self, archive: list[dict]) -> str:
         archive_str = ",\n".join([str(agent) for agent in archive])
-
-        return f"""
-        Your objective is to create an optimal agent for the following task:
-
-        {self.task_description}
-
-        Here is the archive of discovered architectures:
-
-        [{archive_str}]
-
-        Design a new agent that improves upon these existing architectures. Be creative and think outside the box.
-        Your response should be a JSON object with the following fields:
-        - thought: Your reasoning behind the agent design
-        - name: A name for your proposed agent architecture
-        - code: The complete Python code for the forward() function of your agent
-
-        Ensure your code uses the Langroid ChatAgent class and follows the correct structure.
-        """
+        return f"\n        Your objective is to create an optimal agent for the following task:\n\n        {self.task_description}\n\n        Here is the archive of discovered architectures:\n\n        [{archive_str}]\n\n        Design a new agent that improves upon these existing architectures. Be creative and think outside the box.\n        Your response should be a JSON object with the following fields:\n        - thought: Your reasoning behind the agent design\n        - name: A name for your proposed agent architecture\n        - code: The complete Python code for the forward() function of your agent\n\n        Ensure your code uses the Langroid ChatAgent class and follows the correct structure.\n        "
 
     def create_new_agent(self) -> dict[str, Any]:
         prompt = self.generate_prompt(self.archive)
@@ -93,65 +77,41 @@ class ADASTask(Task):
                 agent = json.loads(agent)
             except json.JSONDecodeError:
                 return 0.0
-
         code = agent.get("code", "")
-
-        # Static code analysis scoring
         score = 0.0
-
-        # Basic syntax check
         try:
             import ast
 
             tree = ast.parse(code)
-            score += 0.2  # Valid syntax
+            score += 0.2
         except SyntaxError:
             return 0.0
-
-        # Code quality metrics
         lines = code.splitlines()
-
-        # Reasonable length (not too short, not too long)
         if 10 <= len(lines) <= 200:
             score += 0.2
-
-        # Has docstrings
         if any('"""' in line or "'''" in line for line in lines):
             score += 0.1
-
-        # Uses type hints
         if any("->" in line or ": " in line for line in lines):
             score += 0.1
-
-        # Has error handling
         if any(keyword in code for keyword in ["try:", "except:", "finally:"]):
             score += 0.2
-
-        # Uses logging
         if "log" in code.lower():
             score += 0.1
-
-        # Has main function
         if "def forward(" in code or "def run(" in code:
             score += 0.1
-
         return min(score, 1.0)
 
     async def run(self):
         num_iterations = 10
         for i in range(num_iterations):
             print(f"Iteration {i + 1}/{num_iterations}")
-
             new_agent = self.create_new_agent()
             performance = self.evaluate_agent(new_agent)
-
             if performance > self.best_performance:
                 self.best_agent = new_agent
                 self.best_performance = performance
                 print(f"New best agent found! Performance: {performance}")
-
             self.archive.append(new_agent)
-
         print(f"Evolution complete. Best agent performance: {self.best_performance}")
         return self.best_agent
 
@@ -166,21 +126,18 @@ class SecureCodeRunner:
     def _timeout(self, seconds: int):
         """Context manager for timeout (Unix/Linux only)."""
         if platform.system() == "Windows":
-            # Windows doesn't support SIGALRM, just yield without timeout
-            # Subprocess timeout is handled by subprocess.run(timeout=...)
             yield
         else:
 
             def timeout_handler(signum, frame):
                 raise TimeoutError(f"Code execution exceeded {seconds} seconds")
 
-            # Set the signal handler and alarm
             signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(seconds)
             try:
                 yield
             finally:
-                signal.alarm(0)  # Disable the alarm
+                signal.alarm(0)
 
     def run_code_sandbox(
         self,
@@ -202,68 +159,22 @@ class SecureCodeRunner:
         Returns:
             Score between 0.0 and 1.0
         """
-        # Create a wrapper script that will be executed in subprocess
-        wrapper_code = f"""
-import sys
-import json
-import os
-import platform
-
-# Set resource limits (Unix/Linux only)
-try:
-    import resource
-    resource.setrlimit(resource.RLIMIT_AS, ({memory_limit_mb} * 1024 * 1024, {memory_limit_mb} * 1024 * 1024))
-    resource.setrlimit(resource.RLIMIT_CPU, ({timeout}, {timeout}))
-except ImportError:
-    # Windows doesn't support resource limits - use timeout instead
-    pass
-
-# Restrict file system access (cross-platform)
-if platform.system() == "Windows":
-    import tempfile
-    os.chdir(tempfile.gettempdir())
-else:
-    os.chdir("/tmp")
-
-# User code
-{code}
-
-# Execute the run function
-if __name__ == "__main__":
-    import tempfile
-    model_path = sys.argv[1]
-    params = json.loads(sys.argv[2])
-
-    with tempfile.TemporaryDirectory() as work_dir:
-        try:
-            score = run(model_path, work_dir, params)
-            print(json.dumps({{"success": True, "score": float(score)}}))
-        except Exception as e:
-            print(json.dumps({{"success": False, "error": str(e)}}))
-"""
-
+        wrapper_code = f"""\nimport sys\nimport json\nimport os\nimport platform\n\n# Set resource limits (Unix/Linux only)\ntry:\n    import resource\n    resource.setrlimit(resource.RLIMIT_AS, ({memory_limit_mb} * 1024 * 1024, {memory_limit_mb} * 1024 * 1024))\n    resource.setrlimit(resource.RLIMIT_CPU, ({timeout}, {timeout}))\nexcept ImportError:\n    # Windows doesn't support resource limits - use timeout instead\n    pass\n\n# Restrict file system access (cross-platform)\nif platform.system() == "Windows":\n    import tempfile\n    os.chdir(tempfile.gettempdir())\nelse:\n    os.chdir("/tmp")\n\n# User code\n{code}\n\n# Execute the run function\nif __name__ == "__main__":\n    import tempfile\n    model_path = sys.argv[1]\n    params = json.loads(sys.argv[2])\n\n    with tempfile.TemporaryDirectory() as work_dir:\n        try:\n            score = run(model_path, work_dir, params)\n            print(json.dumps({{"success": True, "score": float(score)}}))\n        except Exception as e:\n            print(json.dumps({{"success": False, "error": str(e)}}))\n"""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(wrapper_code)
             script_path = f.name
-
         try:
-            # Run in subprocess with restrictions
             result = subprocess.run(
                 [sys.executable, "-u", script_path, model_path, json.dumps(params)],
                 check=False,
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                env={
-                    "PYTHONPATH": "",  # Clear PYTHONPATH
-                    "PATH": os.environ.get("PATH", ""),  # Minimal PATH
-                },
+                env={"PYTHONPATH": "", "PATH": os.environ.get("PATH", "")},
             )
-
             if result.returncode != 0:
                 self.logger.error(f"Code execution failed: {result.stderr}")
                 return 0.0
-
             try:
                 output = json.loads(result.stdout)
                 if output.get("success"):
@@ -273,7 +184,6 @@ if __name__ == "__main__":
             except json.JSONDecodeError:
                 self.logger.error(f"Invalid output: {result.stdout}")
                 return 0.0
-
         except subprocess.TimeoutExpired:
             self.logger.error("Code execution timeout")
             return 0.0
@@ -301,26 +211,20 @@ class AgentTechnique(ToolMessage):
         """Validate code for basic safety checks."""
         import ast
 
-        # Check syntax
         try:
             tree = ast.parse(code)
         except SyntaxError:
             return False
-
-        # Must have a run function
         has_run_function = False
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name == "run":
                 has_run_function = True
                 break
-
         if not has_run_function:
             self.logger.error(
                 "Code must define a run(model_path, work_dir, params) function"
             )
             return False
-
-        # No obvious malicious patterns
         dangerous_patterns = [
             "__import__",
             "eval",
@@ -332,14 +236,12 @@ class AgentTechnique(ToolMessage):
             "os.system",
             "socket",
         ]
-
         for pattern in dangerous_patterns:
             if pattern in code:
                 self.logger.error(
                     f"Code contains potentially dangerous pattern: {pattern}"
                 )
                 return False
-
         return True
 
     def handle(self, model_path: str, params: dict[str, Any]) -> float:
@@ -351,7 +253,6 @@ class AgentTechnique(ToolMessage):
         if not self.validate_code(self.code):
             self.logger.error("Technique %s failed validation", self.technique_name)
             return 0.0
-
         try:
             score = self.runner.run_code_sandbox(
                 self.code, model_path, params, timeout=30, memory_limit_mb=512
@@ -365,13 +266,11 @@ class AgentTechnique(ToolMessage):
             return 0.0
 
 
-# Example usage
 if __name__ == "__main__":
     task_description = (
         "Design an agent that can solve abstract reasoning tasks in the ARC challenge."
     )
     adas_task = ADASTask(task_description)
     best_agent = adas_task.run()
-
     print("Best Agent:")
     print(best_agent)

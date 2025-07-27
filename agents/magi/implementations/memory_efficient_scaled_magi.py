@@ -39,24 +39,24 @@ logger = logging.getLogger(__name__)
 
 class MemoryEfficientScaledMagi:
     """Memory-efficient scaled Magi specialization within proven constraints."""
-    
+
     def __init__(self):
         self.start_time = datetime.now()
         self.run_id = f"memory_efficient_magi_{self.start_time.strftime('%Y%m%d_%H%M%S')}"
         self.output_dir = Path(f"D:/AgentForge/{self.run_id}")
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Scaled parameters within memory constraints
         self.levels = 10
         self.questions_per_level = 1000
         self.total_questions = 10000
-        
+
         # Advanced features based on proven implementation
         self.specialization_areas = [
             "python_programming", "algorithm_design", "mathematical_proofs",
             "computational_complexity", "data_structures", "numerical_analysis"
         ]
-        
+
         logger.info("=" * 80)
         logger.info("MEMORY-EFFICIENT SCALED MAGI SPECIALIZATION (10,000 QUESTIONS)")
         logger.info("=" * 80)
@@ -64,11 +64,11 @@ class MemoryEfficientScaledMagi:
         logger.info(f"Scaling from 300 to {self.total_questions:,} questions")
         logger.info(f"Memory Available: {memory_manager.get_memory_stats()['system_ram_available_gb']:.2f} GB")
         logger.info(f"Advanced Features: Geometric awareness, self-modification, sleep cycles")
-        
+
     def initialize_wandb_tracking(self):
         """Initialize W&B for memory-efficient scaled run."""
         logger.info("Initializing W&B tracking for memory-efficient scaled Magi...")
-        
+
         success = init_wandb(
             project="memory-efficient-magi-10k",
             name=f"magi_10k_memory_efficient_{self.start_time.strftime('%Y%m%d_%H%M%S')}",
@@ -86,7 +86,7 @@ class MemoryEfficientScaledMagi:
                 "memory_available_gb": memory_manager.get_memory_stats()['system_ram_available_gb']
             }
         )
-        
+
         if success:
             logger.info("W&B tracking initialized for memory-efficient scaled run")
             log_metrics({
@@ -95,33 +95,33 @@ class MemoryEfficientScaledMagi:
                 "memory_constraint_respected": True,
                 "execution_start_time": time.time()
             })
-        
+
         return success
-    
+
     def load_evolved_model_config(self):
         """Load the proven evolved model configuration."""
         logger.info("Loading proven evolved model configuration...")
-        
+
         evolution_results_path = Path("D:/AgentForge/historic_real_run_20250726_030005/evolution_50gen_results.json")
         if evolution_results_path.exists():
             with open(evolution_results_path, 'r') as f:
                 evolution_data = json.load(f)
-                
+
             best_config = evolution_data["evolution_summary"]["best_configuration"]
             logger.info(f"Evolved model configuration loaded:")
             logger.info(f"  Method: {best_config['merge_method']}")
             logger.info(f"  Fitness: {best_config['fitness']:.4f}")
             logger.info(f"  Parameters: {best_config['parameters']}")
-            
+
             return best_config
         else:
             logger.info("Using default configuration")
             return {"merge_method": "slerp", "fitness": 0.8914, "parameters": {"t": 0.523}}
-    
+
     async def generate_curriculum_questions(self):
         """Generate structured 10,000 question curriculum."""
         logger.info(f"Generating {self.total_questions:,} question curriculum...")
-        
+
         curriculum = {}
         question_templates = {
             "python_programming": [
@@ -167,21 +167,21 @@ class MemoryEfficientScaledMagi:
                 "Optimize {} for numerical precision"
             ]
         }
-        
+
         for level in range(1, self.levels + 1):
             level_questions = []
             questions_per_area = self.questions_per_level // len(self.specialization_areas)
-            
+
             for area in self.specialization_areas:
                 templates = question_templates[area]
-                
+
                 for q_idx in range(questions_per_area):
                     template = random.choice(templates)
-                    
+
                     # Generate level-appropriate parameters
                     complexity_level = min(level * 10, 100)
                     difficulty_params = self.generate_difficulty_params(area, level, complexity_level)
-                    
+
                     question = {
                         "level": level,
                         "area": area,
@@ -190,19 +190,19 @@ class MemoryEfficientScaledMagi:
                         "question_id": f"L{level}_{area}_{q_idx}",
                         "parameters": difficulty_params
                     }
-                    
+
                     level_questions.append(question)
-            
+
             curriculum[f"level_{level}"] = level_questions
             logger.info(f"Level {level}: Generated {len(level_questions)} questions")
-            
+
             # Memory cleanup
             if level % 3 == 0:
                 memory_manager.cleanup_memory()
-        
+
         logger.info(f"Curriculum generation complete: {self.total_questions:,} questions across {self.levels} levels")
         return curriculum
-    
+
     def generate_difficulty_params(self, area, level, complexity):
         """Generate appropriate difficulty parameters for questions."""
         base_params = {
@@ -210,7 +210,7 @@ class MemoryEfficientScaledMagi:
             "complexity": complexity,
             "advanced": level > 5
         }
-        
+
         if area == "python_programming":
             algorithms = ["sorting", "searching", "graph traversal", "dynamic programming"]
             complexities = ["O(n)", "O(n log n)", "O(n^2)", "O(2^n)"]
@@ -218,7 +218,7 @@ class MemoryEfficientScaledMagi:
                 "algorithm": random.choice(algorithms),
                 "time_complexity": complexities[min(level//3, len(complexities)-1)]
             })
-        
+
         elif area == "algorithm_design":
             problems = ["optimization", "pathfinding", "scheduling", "matching"]
             approaches = ["greedy", "dynamic programming", "divide-and-conquer", "backtracking"]
@@ -226,20 +226,20 @@ class MemoryEfficientScaledMagi:
                 "problem_type": random.choice(problems),
                 "approach": random.choice(approaches)
             })
-        
+
         elif area == "mathematical_proofs":
             methods = ["induction", "contradiction", "construction", "combinatorial"]
             base_params.update({
                 "proof_method": random.choice(methods),
                 "theorem_complexity": level * 5
             })
-        
+
         return base_params
-    
+
     async def execute_curriculum_training(self, curriculum, evolved_config):
         """Execute the 10,000 question curriculum training."""
         logger.info("STARTING CURRICULUM TRAINING - 10,000 QUESTIONS")
-        
+
         training_results = {
             "level_results": [],
             "capability_progression": {},
@@ -247,7 +247,7 @@ class MemoryEfficientScaledMagi:
             "self_modifications": [],
             "sleep_cycles": 0
         }
-        
+
         # Initialize capabilities based on evolved model
         base_fitness = evolved_config['fitness']
         capabilities = {
@@ -258,53 +258,53 @@ class MemoryEfficientScaledMagi:
             "problem_solving": 0.68 + (base_fitness - 0.8) * 0.4,
             "data_structures": 0.65 + (base_fitness - 0.8) * 0.3
         }
-        
+
         questions_processed = 0
-        
+
         for level in range(1, self.levels + 1):
             logger.info(f"=== LEVEL {level}/{self.levels} TRAINING ===")
             level_questions = curriculum[f"level_{level}"]
-            
+
             level_start_time = time.time()
             level_improvements = {}
-            
+
             # Process questions in batches for memory efficiency
             batch_size = 100
             for batch_start in range(0, len(level_questions), batch_size):
                 batch_end = min(batch_start + batch_size, len(level_questions))
                 batch_questions = level_questions[batch_start:batch_end]
-                
+
                 # Simulate sophisticated processing
                 await asyncio.sleep(0.1)  # Realistic processing time
-                
+
                 # Update capabilities based on training
                 for question in batch_questions:
                     area = question['area']
                     difficulty = question['difficulty']
-                    
+
                     # Capability improvement based on difficulty and level
                     improvement = 0.001 * (difficulty / 100) * (level / 10)
-                    
+
                     if area in capabilities:
                         capabilities[area] += improvement
                         capabilities[area] = min(capabilities[area], 0.95)  # Cap at 95%
-                
+
                 questions_processed += len(batch_questions)
-                
+
                 # Memory cleanup every batch
                 memory_manager.cleanup_memory()
-                
+
                 # Progress logging
                 if questions_processed % 500 == 0:
                     overall_capability = sum(capabilities.values()) / len(capabilities)
                     logger.info(f"Progress: {questions_processed:,}/10,000 questions - Overall: {overall_capability:.3f}")
-                    
+
                     log_metrics({
                         f"questions_processed": questions_processed,
                         f"overall_capability": overall_capability,
                         **{f"capability_{k}": v for k, v in capabilities.items()}
                     })
-                
+
                 # Geometric self-awareness simulation (every 100 questions)
                 if questions_processed % 100 == 0:
                     geometric_snapshot = {
@@ -314,7 +314,7 @@ class MemoryEfficientScaledMagi:
                         "geometric_understanding": 0.4 + (questions_processed / 10000) * 0.4
                     }
                     training_results["geometric_snapshots"].append(geometric_snapshot)
-                
+
                 # Self-modification events (every 1000 questions)
                 if questions_processed % 1000 == 0 and questions_processed > 0:
                     modification = {
@@ -325,17 +325,17 @@ class MemoryEfficientScaledMagi:
                     }
                     training_results["self_modifications"].append(modification)
                     logger.info(f"Self-modification event: Enhanced capabilities at {questions_processed:,} questions")
-                
+
                 # Sleep/dream cycles (every 500 questions)
                 if questions_processed % 500 == 0 and questions_processed > 0:
                     logger.info(f"Sleep/dream cycle: Memory consolidation at {questions_processed:,} questions")
                     training_results["sleep_cycles"] += 1
                     await asyncio.sleep(0.05)  # Simulate consolidation
-            
+
             # Level completion
             level_duration = time.time() - level_start_time
             overall_capability = sum(capabilities.values()) / len(capabilities)
-            
+
             level_result = {
                 "level": level,
                 "questions_completed": len(level_questions),
@@ -344,56 +344,56 @@ class MemoryEfficientScaledMagi:
                 "capabilities": capabilities.copy(),
                 "questions_total": questions_processed
             }
-            
+
             training_results["level_results"].append(level_result)
-            
+
             logger.info(f"Level {level} Complete:")
             logger.info(f"  Duration: {level_duration:.1f}s")
             logger.info(f"  Overall Capability: {overall_capability:.3f}")
             logger.info(f"  Questions Processed: {questions_processed:,}/10,000")
-            
+
             log_metrics({
                 f"level_{level}_completed": 1,
                 f"level_{level}_capability": overall_capability,
                 f"level_{level}_duration": level_duration
             })
-        
+
         # Final capabilities
         final_specialization_score = sum(capabilities.values()) / len(capabilities)
         training_results["final_specialization_score"] = final_specialization_score
         training_results["final_capabilities"] = capabilities
         training_results["questions_processed"] = questions_processed
-        
+
         logger.info("CURRICULUM TRAINING COMPLETE!")
         logger.info(f"Final Specialization Score: {final_specialization_score:.3f}")
         logger.info(f"Improvement over baseline: {final_specialization_score - 0.774:.3f}")
-        
+
         return training_results
 
 async def main():
     """Main execution function for memory-efficient scaled Magi."""
     logger.info("STARTING MEMORY-EFFICIENT SCALED MAGI SPECIALIZATION")
-    
+
     runner = MemoryEfficientScaledMagi()
-    
+
     try:
         # Initialize tracking
         wandb_success = runner.initialize_wandb_tracking()
-        
+
         # Load evolved model configuration
         evolved_config = runner.load_evolved_model_config()
-        
+
         # Generate curriculum
         logger.info("Generating 10,000 question curriculum...")
         curriculum = await runner.generate_curriculum_questions()
-        
+
         # Execute training
         logger.info("Executing scaled curriculum training...")
         results = await runner.execute_curriculum_training(curriculum, evolved_config)
-        
+
         if results:
             duration = (datetime.now() - runner.start_time).total_seconds()
-            
+
             logger.info("=" * 80)
             logger.info("MEMORY-EFFICIENT SCALED MAGI SUCCESS!")
             logger.info("=" * 80)
@@ -404,7 +404,7 @@ async def main():
             logger.info(f"Geometric Snapshots: {len(results['geometric_snapshots'])}")
             logger.info(f"Self-Modifications: {len(results['self_modifications'])}")
             logger.info(f"Sleep Cycles: {results['sleep_cycles']}")
-            
+
             # Final W&B logging
             log_metrics({
                 "memory_efficient_magi_completed": 1,
@@ -416,7 +416,7 @@ async def main():
                 "sleep_cycles": results['sleep_cycles'],
                 "scaling_success": True
             })
-            
+
             # Save results
             final_results = {
                 "run_id": runner.run_id,
@@ -427,16 +427,16 @@ async def main():
                 "baseline_score": 0.774,
                 "results": results
             }
-            
+
             results_file = runner.output_dir / "memory_efficient_scaled_results.json"
             with open(results_file, 'w') as f:
                 json.dump(final_results, f, indent=2, default=str)
-            
+
             return results
         else:
             logger.error("Memory-efficient scaled Magi failed")
             return None
-            
+
     except Exception as e:
         logger.error(f"Memory-efficient scaled execution failed: {e}")
         return None
@@ -447,7 +447,7 @@ async def main():
 if __name__ == "__main__":
     # Execute the memory-efficient scaled Magi specialization
     result = asyncio.run(main())
-    
+
     if result:
         print("\nMEMORY-EFFICIENT SCALED MAGI SUCCESS!")
         print(f"10,000 questions processed successfully!")

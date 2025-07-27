@@ -1,0 +1,6 @@
+-rwxr-xr-x 1 17175 197611  6380 Jul 18 12:09 main.py
+-rwxr-xr-x 1 17175 197611  8695 Jul 26 14:49 memory_constrained_evolution.py
+-rw-r--r-- 1 17175 197611 13049 Jul 16 12:59 server.py
+-rwxr-xr-x 1 17175 197611  3062 Jul 25 00:16 setup.py
+-rwxr-xr-x 1 17175 197611  5109 Jul 25 15:55 test_dashboard.py
+-rwxr-xr-x 1 17175 197611  7663 Jul 26 14:49 test_real_fixes.py

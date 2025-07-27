@@ -88,11 +88,11 @@ jobs:
           echo "Installing from requirements-dev.txt"
           pip install -r requirements-dev.txt || echo "requirements-dev.txt installation failed, trying basic deps"
         fi
-        
+
         # Fallback to basic dependencies if requirements-dev.txt fails
         echo "Installing core dependencies"
         pip install pytest pytest-cov pytest-xdist numpy scikit-learn torch transformers || echo "Some core dependencies failed"
-        
+
         # Install specific packages for Agent Forge
         pip install wandb pydantic fastapi aiohttp tiktoken || echo "Some Agent Forge dependencies failed"
 
@@ -271,17 +271,17 @@ jobs:
           if [ -f "agent_forge_pipeline_summary.json" ]; then
             echo "=== Pipeline Summary ==="
             python -c "
-import json
-with open('agent_forge_pipeline_summary.json', 'r') as f:
-    summary = json.load(f)
-print(f'Pipeline Status: {summary.get(\"pipeline_execution\", {}).get(\"status\", \"unknown\")}')
-if 'benchmark_results' in summary:
-    model_averages = summary['benchmark_results'].get('model_averages', {})
-    if model_averages:
-        best_model = max(model_averages, key=model_averages.get)
-        best_score = model_averages[best_model]
-        print(f'Best Model: {best_model} (Score: {best_score:.3f})')
-"
+          import json
+          with open('agent_forge_pipeline_summary.json', 'r') as f:
+              summary = json.load(f)
+          print(f'Pipeline Status: {summary.get(\"pipeline_execution\", {}).get(\"status\", \"unknown\")}')
+          if 'benchmark_results' in summary:
+              model_averages = summary['benchmark_results'].get('model_averages', {})
+              if model_averages:
+                  best_model = max(model_averages, key=model_averages.get)
+                  best_score = model_averages[best_model]
+                  print(f'Best Model: {best_model} (Score: {best_score:.3f})')
+          "
           else
             echo "ERROR: Pipeline summary not found"
             exit 1

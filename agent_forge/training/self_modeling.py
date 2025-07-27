@@ -7,38 +7,51 @@ from torch import nn, optim
 from tqdm import tqdm
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
-# shared training state from geometry feedback loop
 state = dict(G={"ID_nl": 0.0}, pre_grok=False)
-
-# Import enhanced geometry feedback
 try:
     from agent_forge.geometry_feedback import GeometryTracker, UDaimonicCompass
 except ImportError:
-    # Fallback compass implementation
+
     class UDaimonicCompass:
-        def __init__(self, truth_seeking=0.5, beauty_appreciation=0.5, goodness_orientation=0.5, unity_understanding=0.5):
+        def __init__(
+            self,
+            truth_seeking=0.5,
+            beauty_appreciation=0.5,
+            goodness_orientation=0.5,
+            unity_understanding=0.5,
+        ):
             self.truth_seeking = truth_seeking
             self.beauty_appreciation = beauty_appreciation
             self.goodness_orientation = goodness_orientation
             self.unity_understanding = unity_understanding
+
         def get_primary_direction(self):
             return "Truth"
+
         def get_magnitude(self):
             return 0.7
 
     class GeometryTracker:
         def __init__(self, *args, **kwargs):
             self.compass = UDaimonicCompass()
+
         def update(self, *args, **kwargs):
             return None
+
 
 try:
     from grokfast import GrokFastTask
 except ImportError:
-    # Stub implementation for missing grokfast dependency
+
     class GrokFastTask:
         def __init__(self, *args, **kwargs):
-            pass
+            """__init__ - Planned feature not yet implemented.
+
+            This functionality is part of the Atlantis roadmap.
+            """
+            raise NotImplementedError(
+                "'__init__' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-__init__"
+            )
 
         def run(self, *args, **kwargs):
             return {"status": "stub", "message": "GrokFast not available"}
@@ -47,14 +60,26 @@ except ImportError:
 try:
     from sleep_and_dream import DreamNet, SleepNet
 except ImportError:
-    # Stub implementations for missing sleep_and_dream dependency
+
     class SleepNet:
         def __init__(self, *args, **kwargs):
-            pass
+            """__init__ - Planned feature not yet implemented.
+
+            This functionality is part of the Atlantis roadmap.
+            """
+            raise NotImplementedError(
+                "'__init__' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-__init__"
+            )
 
     class DreamNet:
         def __init__(self, *args, **kwargs):
-            pass
+            """__init__ - Planned feature not yet implemented.
+
+            This functionality is part of the Atlantis roadmap.
+            """
+            raise NotImplementedError(
+                "'__init__' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-__init__"
+            )
 
 
 from agent_forge.model_compression.bitlinearization import quantize_weights
@@ -103,20 +128,14 @@ class SelfModelingTask(Task):
             num_dream_blocks=3,
         )
         self.grokfast_task = GrokFastTask(agent, self.model)
-        self.avg_difficulty = 50  # Start with an average difficulty of 50
-
-        # Initialize enhanced geometry tracking with UDaimonic compass
+        self.avg_difficulty = 50
         self.geometry_tracker = GeometryTracker(
             self.model,
             update_interval=25,
-            output_dir=f"geometry_output_{model_name.replace('/', '_')}"
+            output_dir=f"geometry_output_{model_name.replace('/', '_')}",
         )
         self.compass_history = []
-
-        # Quantize the initial model weights
         self.quantize_model()
-
-        # predictor for self-modeling loss
         h = self.model.config.hidden_size
         self.hidden_pred = nn.Sequential(
             nn.Linear(h, h), nn.ReLU(), nn.Linear(h, h)
@@ -129,16 +148,15 @@ class SelfModelingTask(Task):
                 param.data = quantize_weights(param.data)
 
     async def generate_text(self, prompt: str, temperature: float) -> str:
-        # Get current compass direction for self-awareness
         compass_direction = "Unknown"
         compass_magnitude = 0.0
-
-        if hasattr(self.geometry_tracker, 'compass_history') and self.geometry_tracker.compass_history:
+        if (
+            hasattr(self.geometry_tracker, "compass_history")
+            and self.geometry_tracker.compass_history
+        ):
             latest_compass = self.geometry_tracker.compass_history[-1]
             compass_direction = latest_compass.get_primary_direction()
             compass_magnitude = latest_compass.get_magnitude()
-
-        # Enhanced metadata with UDaimonic compass
         meta = f"<geom idnl={state['G']['ID_nl']:.2f} temp={temperature:.2f} compass={compass_direction} mag={compass_magnitude:.2f}/>"
         prompt = meta + prompt
         input_ids = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
@@ -150,18 +168,14 @@ class SelfModelingTask(Task):
                 do_sample=True,
                 temperature=temperature,
                 output_hidden_states=True,
-                return_dict_in_generate=True
+                return_dict_in_generate=True,
             )
-
-        # Update geometry tracking with hidden states
-        if hasattr(output, 'hidden_states') and output.hidden_states:
-            final_hidden = output.hidden_states[-1][-1]  # Last layer, last token
+        if hasattr(output, "hidden_states") and output.hidden_states:
+            final_hidden = output.hidden_states[-1][-1]
             metrics = self.geometry_tracker.update(final_hidden)
             if metrics:
-                # Update global state with latest compass info
-                state['compass_direction'] = metrics.compass_direction
-                state['compass_magnitude'] = metrics.compass_magnitude
-
+                state["compass_direction"] = metrics.compass_direction
+                state["compass_magnitude"] = metrics.compass_magnitude
         return self.tokenizer.decode(output.sequences[0], skip_special_tokens=True)
 
     def mask_and_fill(
@@ -172,7 +186,6 @@ class SelfModelingTask(Task):
         )
         input_ids = inputs.input_ids.to(self.device)
         labels = input_ids.clone()
-
         mask_candidates = [
             i
             for i in range(len(input_ids[0]))
@@ -183,15 +196,12 @@ class SelfModelingTask(Task):
                 self.tokenizer.pad_token_id,
             ]
         ]
-
         mask_indices = random.sample(
             mask_candidates, min(num_masks, len(mask_candidates))
         )
-
         for idx in mask_indices:
             input_ids[0][idx] = self.tokenizer.mask_token_id
-
-        return input_ids, labels, mask_indices
+        return (input_ids, labels, mask_indices)
 
     async def train_step(
         self, input_ids: torch.Tensor, labels: torch.Tensor, mask_indices: list[int]
@@ -203,34 +213,24 @@ class SelfModelingTask(Task):
         L_self = torch.nn.functional.mse_loss(pred_hidden, outputs.hidden_states[-1])
         loss = outputs.loss + self.beta * L_self
         loss.backward()
-
-        # Quantize gradients
         for param in self.model.parameters():
             if param.grad is not None:
                 param.grad.data = quantize_weights(param.grad.data)
-
         self.optimizer.step(amplify=state["pre_grok"])
-
-        # Quantize updated weights
         with torch.no_grad():
             for param in self.model.parameters():
                 param.data = quantize_weights(param.data)
-
         self.optimizer.zero_grad()
-
-        # Calculate accuracy of masked token predictions
         predictions = torch.argmax(outputs.logits, dim=-1)
         correct_predictions = sum(
             predictions[0][idx] == labels[0][idx] for idx in mask_indices
         )
         accuracy = correct_predictions / len(mask_indices)
-
-        return loss.item(), accuracy
+        return (loss.item(), accuracy)
 
     async def self_modeling_cycle(self, curriculum_level: int, num_cycles: int = 100):
         task_generation = CodingTaskGenerationTask(self.agent)
         tasks = await task_generation.generate_coding_tasks(1000, self.avg_difficulty)
-
         temperature_ranges = [
             (0.0, 0.05),
             (0.2, 0.3),
@@ -238,18 +238,14 @@ class SelfModelingTask(Task):
             (0.7, 0.8),
             (0.95, 1.0),
         ]
-
         delta = 0.1 * curriculum_level
         temperature_ranges = [
             (max(0, r[0] - delta), min(1, r[1] + delta)) for r in temperature_ranges
         ]
-
-        self.optimizer = optim.AdamW(self.model.parameters(), lr=1e-5)
-
+        self.optimizer = optim.AdamW(self.model.parameters(), lr=1e-05)
         base_masks = 1
         masks_per_level = 1
         num_masks = base_masks + (curriculum_level - 1) * masks_per_level
-
         for cycle in tqdm(
             range(num_cycles), desc=f"Self-modeling cycle (Level {curriculum_level})"
         ):
@@ -260,39 +256,25 @@ class SelfModelingTask(Task):
                     generated_text = await self.generate_text(
                         original_prompt, temperature
                     )
-
-                    self_modeling_prompt = f"""I am an AI model engaging in self-modeling.
-                    In the past, I generated the following text based on this coding task: "{task.description}"
-                    Generated text: "{generated_text}"
-                    Now, I will try to predict my own masked tokens to understand my thought process better."""
-
+                    self_modeling_prompt = f'I am an AI model engaging in self-modeling.\n                    In the past, I generated the following text based on this coding task: "{task.description}"\n                    Generated text: "{generated_text}"\n                    Now, I will try to predict my own masked tokens to understand my thought process better.'
                     input_ids, labels, mask_indices = self.mask_and_fill(
                         generated_text, num_masks
                     )
-
                     self_modeling_input = self.tokenizer.encode(
                         self_modeling_prompt, return_tensors="pt"
                     ).to(self.device)
-                    self.model(
-                        input_ids=self_modeling_input
-                    )  # Inform the model about the self-modeling task
-
+                    self.model(input_ids=self_modeling_input)
                     loss, accuracy = await self.train_step(
                         input_ids, labels, mask_indices
                     )
-
-                    # Enhanced logging with compass information
                     compass_info = ""
-                    if hasattr(state, 'compass_direction'):
+                    if hasattr(state, "compass_direction"):
                         compass_info = f", Compass: {state.get('compass_direction', 'Unknown')} ({state.get('compass_magnitude', 0.0):.2f})"
-
                     print(
                         f"Cycle {cycle}, Task Difficulty {task.difficulty}, Temperature {temperature:.2f}, Loss: {loss:.4f}, Accuracy: {accuracy:.2f}{compass_info}"
                     )
-
-                    if cycle > 50 and loss < 0.01:  # Simple overfitting detection
+                    if cycle > 50 and loss < 0.01:
                         await self.grokfast_task.filter_gradients()
-
                     if cycle % 10 == 0:
                         with torch.no_grad():
                             hidden_states = self.model.base_model.encoder(
@@ -309,40 +291,35 @@ class SelfModelingTask(Task):
         for level in range(1, num_levels + 1):
             print(f"Starting curriculum level {level}")
             await self.self_modeling_cycle(curriculum_level=level)
-
             eval_loader = [
                 (torch.randint(0, 100, (4,)), torch.ones(4)) for _ in range(2)
             ]
             eval_score = await self.evaluate_model(eval_loader)
-
-            # Get geometry feedback and recommendations
-            if hasattr(self.geometry_tracker, 'get_learning_recommendations'):
+            if hasattr(self.geometry_tracker, "get_learning_recommendations"):
                 recommendations = self.geometry_tracker.get_learning_recommendations()
                 print(f"Geometry recommendations: {recommendations}")
-
-            # Get compass summary
             compass_summary = "No compass data"
-            if hasattr(self.geometry_tracker, 'compass_history') and self.geometry_tracker.compass_history:
+            if (
+                hasattr(self.geometry_tracker, "compass_history")
+                and self.geometry_tracker.compass_history
+            ):
                 latest_compass = self.geometry_tracker.compass_history[-1]
                 compass_summary = f"{latest_compass.get_primary_direction()} ({latest_compass.get_magnitude():.2f})"
-
-            print(f"Level {level} complete - Score: {eval_score:.4f}, Compass: {compass_summary}")
-
+            print(
+                f"Level {level} complete - Score: {eval_score:.4f}, Compass: {compass_summary}"
+            )
             self.avg_difficulty = max(
                 1, min(100, int(self.avg_difficulty + (eval_score - 0.5) * 10))
             )
-
-            # Enhanced checkpoint with compass data
             checkpoint_data = {
-                'model_state_dict': self.model.state_dict(),
-                'level': level,
-                'eval_score': eval_score,
-                'avg_difficulty': self.avg_difficulty,
-                'compass_direction': state.get('compass_direction', 'Unknown'),
-                'compass_magnitude': state.get('compass_magnitude', 0.0),
-                'geometry_id': state['G']['ID_nl']
+                "model_state_dict": self.model.state_dict(),
+                "level": level,
+                "eval_score": eval_score,
+                "avg_difficulty": self.avg_difficulty,
+                "compass_direction": state.get("compass_direction", "Unknown"),
+                "compass_magnitude": state.get("compass_magnitude", 0.0),
+                "geometry_id": state["G"]["ID_nl"],
             }
-
             torch.save(checkpoint_data, f"self_model_checkpoint_level_{level}.pth")
 
     async def evaluate_model(self, val_loader) -> float:
@@ -384,17 +361,15 @@ class SelfModelingTask(Task):
         return "Self-modeling completed successfully"
 
 
-# Usage example
 if __name__ == "__main__":
     import asyncio
 
     async def main():
         config = ChatAgentConfig(
-            name="SelfModelingAgent",
-            llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),
+            name="SelfModelingAgent", llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo")
         )
         agent = ChatAgent(config)
-        model_name = "bert-base-uncased"  # You can change this to any suitable model
+        model_name = "bert-base-uncased"
         task = SelfModelingTask(agent, model_name)
         result = await task.run()
         print(result)

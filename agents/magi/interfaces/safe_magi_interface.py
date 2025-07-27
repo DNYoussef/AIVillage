@@ -13,16 +13,16 @@ from agent_forge.interface_buffer_fix import BufferedOutputHandler, SafeMagiInte
 
 class ConversationalMagi(SafeMagiInterface):
     """Enhanced Magi interface with conversation capabilities."""
-    
+
     def __init__(self):
         super().__init__()
         self.conversation_history = []
         self.max_history = 10  # Limit history to prevent memory issues
-        
+
     def analyze_query(self, user_input: str) -> tuple:
         """Analyze user input to determine relevant Magi capabilities."""
         relevant_caps = []
-        
+
         # Check for capability keywords
         capability_checks = {
             'python_programming': ['python', 'code', 'programming', 'script', 'function', 'class'],
@@ -32,24 +32,24 @@ class ConversationalMagi(SafeMagiInterface):
             'mathematical_analysis': ['math', 'calculate', 'equation', 'formula', 'compute'],
             'technical_reasoning': ['technical', 'engineering', 'system', 'design', 'architecture']
         }
-        
+
         input_lower = user_input.lower()
         for capability, keywords in capability_checks.items():
             if any(word in input_lower for word in keywords):
                 score = self.capabilities.get(capability, 0.7)
                 relevant_caps.append((capability, score))
-        
+
         # Default to technical reasoning if no specific match
         if not relevant_caps:
             relevant_caps.append(('technical_reasoning', self.capabilities.get('technical_reasoning', 0.7)))
-        
+
         # Return the strongest capability
         return max(relevant_caps, key=lambda x: x[1])
-    
+
     def get_response(self, user_input: str) -> str:
         """Generate Magi response based on specialized capabilities."""
         capability_name, capability_score = self.analyze_query(user_input)
-        
+
         # Determine expertise level
         if capability_score >= 0.90:
             level = "MASTERY"
@@ -60,7 +60,7 @@ class ConversationalMagi(SafeMagiInterface):
         else:
             level = "ADVANCED"
             confidence = "With advanced understanding"
-        
+
         # Build response
         response_parts = [
             f"\n[MAGI ANALYSIS - {capability_name.replace('_', ' ').upper()}]",
@@ -68,7 +68,7 @@ class ConversationalMagi(SafeMagiInterface):
             "-" * 50,
             f"\n{confidence}, I can help you with this."
         ]
-        
+
         # Add specific guidance based on capability
         if capability_name == 'python_programming' and capability_score >= 0.90:
             response_parts.extend([
@@ -94,22 +94,22 @@ class ConversationalMagi(SafeMagiInterface):
                 "• Concurrent data structures",
                 "• Performance analysis"
             ])
-        
+
         response_parts.append("\nHow can I assist you with this specific question?")
-        
+
         # Store in history (with size limit)
         self.conversation_history.append({
             "user": user_input,
             "capability": capability_name,
             "score": capability_score
         })
-        
+
         # Trim history if too long
         if len(self.conversation_history) > self.max_history:
             self.conversation_history = self.conversation_history[-self.max_history:]
-        
+
         return "\n".join(response_parts)
-    
+
     def show_capabilities(self):
         """Display Magi capabilities in a clean format."""
         print("\nMAGI SPECIALIZED CAPABILITIES:")
@@ -120,40 +120,40 @@ class ConversationalMagi(SafeMagiInterface):
             print(f"  {cap_name:<25} {score:.3f}  [{level}]")
         print(f"\nOverall Specialization Score: {self.specialization_score:.3f}")
         print("=" * 50)
-    
+
     def run(self):
         """Run the interactive Magi session."""
         print("\n" + "="*60)
         print("MAGI AI AGENT - SPECIALIZED TECHNICAL ASSISTANT")
         print("="*60)
-        
+
         # Load capabilities safely
         if not self.load_magi_data_safely():
             print("Error: Could not load Magi capabilities")
             return
-        
+
         print("\nCommands:")
         print("  'capabilities' - Show my specialized skills")
         print("  'history' - Show recent conversation topics")
         print("  'quit' - Exit the session")
         print("\nAsk me technical questions and I'll apply my specialized knowledge!")
         print("-"*60)
-        
+
         while True:
             try:
                 user_input = input("\nYOU: ").strip()
-                
+
                 if not user_input:
                     continue
-                
+
                 if user_input.lower() in ['quit', 'exit', 'bye']:
                     print("\nMAGI: Thank you for our conversation. My capabilities remain at your service!")
                     break
-                
+
                 if user_input.lower() == 'capabilities':
                     self.show_capabilities()
                     continue
-                
+
                 if user_input.lower() == 'history':
                     if self.conversation_history:
                         print(f"\nRECENT TOPICS ({len(self.conversation_history)} exchanges):")
@@ -162,11 +162,11 @@ class ConversationalMagi(SafeMagiInterface):
                     else:
                         print("\nNo conversation history yet.")
                     continue
-                
+
                 # Get and display response
                 response = self.get_response(user_input)
                 print(f"\nMAGI: {response}")
-                
+
             except KeyboardInterrupt:
                 print("\n\nSession interrupted. Goodbye!")
                 break

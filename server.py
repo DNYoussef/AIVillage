@@ -1,3 +1,15 @@
+#!/usr/bin/env python3
+"""
+⚠️ DEVELOPMENT SERVER ONLY ⚠️
+
+This server is for development and testing purposes only.
+- Set AIVILLAGE_DEV_MODE=true to suppress warnings
+- For production, use Gateway and Twin microservices in services/
+- See docs/architecture.md for production deployment guide
+
+WARNING: This server is NOT production-ready despite being shown in quick start guides.
+"""
+
 from collections import defaultdict
 import html
 import mimetypes

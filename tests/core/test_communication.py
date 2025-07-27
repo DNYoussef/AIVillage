@@ -4,15 +4,16 @@ This module tests the communication protocol classes before cleanup to ensure
 no regressions during the class renaming process.
 """
 
-import pytest
 from datetime import datetime
 from unittest.mock import AsyncMock
 
+import pytest
+
 from core.communication import (
+    AgentCommunicationProtocol,
+    AgentMessage,
     AgentMessageType,
     Priority,
-    AgentMessage,
-    AgentCommunicationProtocol,
 )
 
 
@@ -59,9 +60,9 @@ class TestAgentMessage:
             type=AgentMessageType.TASK,
             sender="agent1",
             receiver="agent2",
-            content="test content"
+            content="test content",
         )
-        
+
         assert message.type == AgentMessageType.TASK
         assert message.sender == "agent1"
         assert message.receiver == "agent2"
@@ -77,9 +78,9 @@ class TestAgentMessage:
             sender="agent1",
             receiver="agent2",
             content="error message",
-            priority=Priority.CRITICAL
+            priority=Priority.CRITICAL,
         )
-        
+
         assert message.priority == Priority.CRITICAL
 
     def test_message_with_parent_id(self):
@@ -88,17 +89,17 @@ class TestAgentMessage:
             type=AgentMessageType.QUERY,
             sender="agent1",
             receiver="agent2",
-            content="query"
+            content="query",
         )
-        
+
         response_message = AgentMessage(
             type=AgentMessageType.RESPONSE,
             sender="agent2",
             receiver="agent1",
             content="response",
-            parent_id=parent_message.id
+            parent_id=parent_message.id,
         )
-        
+
         assert response_message.parent_id == parent_message.id
 
     def test_message_to_dict(self):
@@ -108,11 +109,11 @@ class TestAgentMessage:
             sender="system",
             receiver="agent1",
             content={"key": "value"},
-            priority=Priority.HIGH
+            priority=Priority.HIGH,
         )
-        
+
         data = message.to_dict()
-        
+
         assert data["type"] == "NOTIFICATION"
         assert data["sender"] == "system"
         assert data["receiver"] == "agent1"
@@ -127,12 +128,12 @@ class TestAgentMessage:
             type=AgentMessageType.TASK,
             sender="agent1",
             receiver="agent2",
-            content="test"
+            content="test",
         )
-        
+
         data = message.to_dict()
         restored_message = AgentMessage.from_dict(data)
-        
+
         assert restored_message.type == message.type
         assert restored_message.sender == message.sender
         assert restored_message.receiver == message.receiver
@@ -148,12 +149,12 @@ class TestAgentMessage:
             receiver="all",
             content={"type": "shutdown", "reason": "maintenance"},
             priority=Priority.CRITICAL,
-            metadata={"urgent": True}
+            metadata={"urgent": True},
         )
-        
+
         data = original.to_dict()
         restored = AgentMessage.from_dict(data)
-        
+
         assert original.type == restored.type
         assert original.sender == restored.sender
         assert original.receiver == restored.receiver
@@ -168,7 +169,7 @@ class TestAgentCommunicationProtocol:
     def test_protocol_initialization(self):
         """Test protocol initialization."""
         protocol = AgentCommunicationProtocol()
-        
+
         assert protocol.subscribers == {}
         assert protocol.message_history == []
 
@@ -176,12 +177,12 @@ class TestAgentCommunicationProtocol:
         """Test agent subscription and unsubscription."""
         protocol = AgentCommunicationProtocol()
         handler = AsyncMock()
-        
+
         # Test subscription
         protocol.subscribe("agent1", handler)
         assert "agent1" in protocol.subscribers
         assert protocol.subscribers["agent1"] == handler
-        
+
         # Test unsubscription
         protocol.unsubscribe("agent1")
         assert "agent1" not in protocol.subscribers
@@ -189,7 +190,7 @@ class TestAgentCommunicationProtocol:
     def test_unsubscribe_nonexistent_agent(self):
         """Test unsubscribing non-existent agent doesn't raise error."""
         protocol = AgentCommunicationProtocol()
-        
+
         # Should not raise exception
         protocol.unsubscribe("nonexistent_agent")
 
@@ -199,20 +200,20 @@ class TestAgentCommunicationProtocol:
         protocol = AgentCommunicationProtocol()
         handler = AsyncMock()
         protocol.subscribe("agent2", handler)
-        
+
         message = AgentMessage(
             type=AgentMessageType.TASK,
             sender="agent1",
             receiver="agent2",
-            content="test task"
+            content="test task",
         )
-        
+
         await protocol.send_message(message)
-        
+
         # Check message was added to history
         assert len(protocol.message_history) == 1
         assert protocol.message_history[0] == message
-        
+
         # Check handler was called
         handler.assert_called_once_with(message)
 
@@ -220,16 +221,16 @@ class TestAgentCommunicationProtocol:
     async def test_send_message_no_subscriber(self):
         """Test sending message when receiver is not subscribed."""
         protocol = AgentCommunicationProtocol()
-        
+
         message = AgentMessage(
             type=AgentMessageType.TASK,
             sender="agent1",
             receiver="nonexistent",
-            content="test task"
+            content="test task",
         )
-        
+
         await protocol.send_message(message)
-        
+
         # AgentMessage should still be added to history
         assert len(protocol.message_history) == 1
         assert protocol.message_history[0] == message
@@ -241,25 +242,25 @@ class TestAgentCommunicationProtocol:
         handler1 = AsyncMock()
         handler2 = AsyncMock()
         handler3 = AsyncMock()
-        
+
         protocol.subscribe("agent1", handler1)
         protocol.subscribe("agent2", handler2)
         protocol.subscribe("agent3", handler3)
-        
+
         message = AgentMessage(
             type=AgentMessageType.SYSTEM,
             sender="system",
             receiver="all",
-            content="broadcast message"
+            content="broadcast message",
         )
-        
+
         await protocol.broadcast(message)
-        
+
         # Check all handlers were called
         assert handler1.call_count == 1
         assert handler2.call_count == 1
         assert handler3.call_count == 1
-        
+
         # Check message was added to history
         assert len(protocol.message_history) == 1
 
@@ -270,20 +271,20 @@ class TestAgentCommunicationProtocol:
         handler1 = AsyncMock()
         handler2 = AsyncMock()
         handler3 = AsyncMock()
-        
+
         protocol.subscribe("agent1", handler1)
         protocol.subscribe("agent2", handler2)
         protocol.subscribe("agent3", handler3)
-        
+
         message = AgentMessage(
             type=AgentMessageType.NOTIFICATION,
             sender="system",
             receiver="all",
-            content="notification"
+            content="notification",
         )
-        
+
         await protocol.broadcast(message, exclude=["agent2"])
-        
+
         # Check only non-excluded handlers were called
         assert handler1.call_count == 1
         assert handler2.call_count == 0  # excluded
@@ -295,9 +296,9 @@ class TestAgentCommunicationProtocol:
         protocol = AgentCommunicationProtocol()
         handler = AsyncMock()
         protocol.subscribe("agent2", handler)
-        
+
         response = await protocol.query("agent1", "agent2", "test query")
-        
+
         # Check query message was sent
         assert len(protocol.message_history) == 1
         query_message = protocol.message_history[0]
@@ -306,10 +307,10 @@ class TestAgentCommunicationProtocol:
         assert query_message.receiver == "agent2"
         assert query_message.content == "test query"
         assert query_message.priority == Priority.HIGH
-        
+
         # Check handler was called
         handler.assert_called_once_with(query_message)
-        
+
         # Check response format
         assert response["status"] == "query_sent"
         assert response["query_id"] == query_message.id
@@ -317,14 +318,14 @@ class TestAgentCommunicationProtocol:
     def test_get_message_history_all(self):
         """Test getting all message history."""
         protocol = AgentCommunicationProtocol()
-        
+
         # Add some messages manually
         msg1 = AgentMessage(AgentMessageType.TASK, "agent1", "agent2", "content1")
         msg2 = AgentMessage(AgentMessageType.RESPONSE, "agent2", "agent1", "content2")
         protocol.message_history = [msg1, msg2]
-        
+
         history = protocol.get_message_history()
-        
+
         assert len(history) == 2
         assert history[0] == msg1
         assert history[1] == msg2
@@ -332,16 +333,16 @@ class TestAgentCommunicationProtocol:
     def test_get_message_history_filtered(self):
         """Test getting filtered message history."""
         protocol = AgentCommunicationProtocol()
-        
+
         # Add messages
         msg1 = AgentMessage(AgentMessageType.TASK, "agent1", "agent2", "content1")
         msg2 = AgentMessage(AgentMessageType.RESPONSE, "agent2", "agent3", "content2")
         msg3 = AgentMessage(AgentMessageType.QUERY, "agent3", "agent1", "content3")
         protocol.message_history = [msg1, msg2, msg3]
-        
+
         # Get history for agent1
         history = protocol.get_message_history("agent1")
-        
+
         assert len(history) == 2  # msg1 (sender) and msg3 (receiver)
         assert msg1 in history
         assert msg3 in history
@@ -350,14 +351,16 @@ class TestAgentCommunicationProtocol:
     def test_get_message_history_with_limit(self):
         """Test getting message history with limit."""
         protocol = AgentCommunicationProtocol()
-        
+
         # Add multiple messages
         for i in range(5):
-            msg = AgentMessage(AgentMessageType.TASK, f"agent{i}", "target", f"content{i}")
+            msg = AgentMessage(
+                AgentMessageType.TASK, f"agent{i}", "target", f"content{i}"
+            )
             protocol.message_history.append(msg)
-        
+
         history = protocol.get_message_history(limit=3)
-        
+
         assert len(history) == 3
         # Should get the last 3 messages
         assert history[0].content == "content2"
@@ -367,28 +370,28 @@ class TestAgentCommunicationProtocol:
     def test_clear_history_all(self):
         """Test clearing all message history."""
         protocol = AgentCommunicationProtocol()
-        
+
         # Add messages
         msg1 = AgentMessage(AgentMessageType.TASK, "agent1", "agent2", "content1")
         msg2 = AgentMessage(AgentMessageType.RESPONSE, "agent2", "agent1", "content2")
         protocol.message_history = [msg1, msg2]
-        
+
         protocol.clear_history()
-        
+
         assert len(protocol.message_history) == 0
 
     def test_clear_history_filtered(self):
         """Test clearing message history for specific agent."""
         protocol = AgentCommunicationProtocol()
-        
+
         # Add messages
         msg1 = AgentMessage(AgentMessageType.TASK, "agent1", "agent2", "content1")
         msg2 = AgentMessage(AgentMessageType.RESPONSE, "agent2", "agent3", "content2")
         msg3 = AgentMessage(AgentMessageType.QUERY, "agent3", "agent1", "content3")
         protocol.message_history = [msg1, msg2, msg3]
-        
+
         protocol.clear_history("agent1")
-        
+
         # Only msg2 should remain (doesn't involve agent1)
         assert len(protocol.message_history) == 1
         assert protocol.message_history[0] == msg2
