@@ -2,10 +2,11 @@
 """Download 3 x 1.5B parameter models for Agent Forge evolution merging."""
 
 import os
-import sys
 from pathlib import Path
-from huggingface_hub import hf_hub_download, snapshot_download
+
+from huggingface_hub import snapshot_download
 import torch
+
 
 def check_gpu_availability():
     """Check GPU availability and memory."""
@@ -14,9 +15,9 @@ def check_gpu_availability():
         gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
         print(f"GPU: {gpu_name} - {gpu_memory:.1f}GB VRAM")
         return True
-    else:
-        print("CUDA not available")
-        return False
+    print("CUDA not available")
+    return False
+
 
 def download_model(model_name, cache_dir):
     """Download a model to specified directory."""
@@ -26,13 +27,14 @@ def download_model(model_name, cache_dir):
             repo_id=model_name,
             cache_dir=cache_dir,
             local_files_only=False,
-            revision="main"
+            revision="main",
         )
         print(f"✓ {model_name} downloaded to {model_path}")
         return model_path
     except Exception as e:
         print(f"✗ Failed to download {model_name}: {e}")
         return None
+
 
 def main():
     """Main function to download models."""
@@ -52,14 +54,14 @@ def main():
     models_to_download = [
         "microsoft/phi-1_5",  # 1.3B parameters - excellent for coding
         "stabilityai/stablelm-base-alpha-3b",  # 3B but efficient
-        "microsoft/DialoGPT-medium"  # 355M but very capable for chat
+        "microsoft/DialoGPT-medium",  # 355M but very capable for chat
     ]
 
     # Alternative smaller models that work well together
     efficient_models = [
         "microsoft/phi-1_5",  # 1.3B - coding specialist
         "Qwen/Qwen1.5-1.8B",  # 1.8B - general purpose
-        "TinyLlama/TinyLlama-1.1B-Chat-v1.0"  # 1.1B - chat optimized
+        "TinyLlama/TinyLlama-1.1B-Chat-v1.0",  # 1.1B - chat optimized
     ]
 
     print("Downloading efficient models for RTX 2060...")
@@ -82,6 +84,7 @@ def main():
 
     print(f"\nModel list saved to: {model_list_file}")
     return downloaded_models
+
 
 if __name__ == "__main__":
     main()

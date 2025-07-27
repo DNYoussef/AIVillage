@@ -2,18 +2,17 @@
 Tests for HypeRAG LoRA Registry
 """
 
-import pytest
-import json
-import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
-import hashlib
 
 # Import the registry module
 import sys
+import tempfile
+
+import pytest
+
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from mcp_servers.hyperag.lora.registry import LoRARegistry, AdapterEntry
+from mcp_servers.hyperag.lora.registry import AdapterEntry, LoRARegistry
 
 
 class MockGuardianGate:
@@ -29,20 +28,19 @@ class MockGuardianGate:
                 "decision": "APPLY",
                 "confidence": 0.95,
                 "reason": "Adapter meets quality standards",
-                "signature": "guardian_v1:mock_signature_12345"
+                "signature": "guardian_v1:mock_signature_12345",
             }
-        elif accuracy >= 0.6:
+        if accuracy >= 0.6:
             return {
                 "decision": "QUARANTINE",
                 "confidence": 0.6,
-                "reason": "Metrics close to minimum thresholds"
+                "reason": "Metrics close to minimum thresholds",
             }
-        else:
-            return {
-                "decision": "REJECT",
-                "confidence": 0.9,
-                "reason": "Metrics below threshold"
-            }
+        return {
+            "decision": "REJECT",
+            "confidence": 0.9,
+            "reason": "Metrics below threshold",
+        }
 
     def verify_signature(self, data, signature):
         """Mock signature verification"""
@@ -52,7 +50,7 @@ class MockGuardianGate:
 @pytest.fixture
 def temp_registry():
     """Create a temporary registry file"""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         registry_path = Path(f.name)
 
     yield registry_path
@@ -83,20 +81,16 @@ def sample_adapter_entry():
         "sha256": "abc123def456",
         "domain": "medical",
         "base_model": "microsoft/phi-2",
-        "metrics": {
-            "accuracy": 0.85,
-            "perplexity": 45.2,
-            "eval_loss": 0.234
-        },
+        "metrics": {"accuracy": 0.85, "perplexity": 45.2, "eval_loss": 0.234},
         "training_config": {
             "peft_type": "lora",
             "r": 16,
             "lora_alpha": 32,
             "target_modules": ["q_proj", "v_proj"],
-            "lora_dropout": 0.1
+            "lora_dropout": 0.1,
         },
         "created_at": "2024-01-15T12:00:00",
-        "status": "pending"
+        "status": "pending",
     }
 
 
@@ -132,21 +126,25 @@ class TestLoRARegistry:
         assert len(registry.entries) == 0
         assert temp_registry.exists()
 
-    def test_register_adapter_success(self, temp_registry, mock_adapter_path, sample_adapter_entry):
+    def test_register_adapter_success(
+        self, temp_registry, mock_adapter_path, sample_adapter_entry
+    ):
         """Test successful adapter registration"""
         # Create registry with mock Guardian
         guardian = MockGuardianGate()
         registry = LoRARegistry(temp_registry, guardian_gate=guardian)
 
         # Update entry with correct hash
-        sample_adapter_entry["sha256"] = registry._compute_adapter_hash(mock_adapter_path)
+        sample_adapter_entry["sha256"] = registry._compute_adapter_hash(
+            mock_adapter_path
+        )
         sample_adapter_entry["metrics"]["accuracy"] = 0.85  # High accuracy for approval
 
         # Register adapter
         adapter_id = registry.register_adapter(
             adapter_path=mock_adapter_path,
             entry_data=sample_adapter_entry,
-            require_guardian_approval=True
+            require_guardian_approval=True,
         )
 
         # Check registration
@@ -156,44 +154,54 @@ class TestLoRARegistry:
         assert entry.status == "approved"
         assert entry.guardian_signature == "guardian_v1:mock_signature_12345"
 
-    def test_register_adapter_rejection(self, temp_registry, mock_adapter_path, sample_adapter_entry):
+    def test_register_adapter_rejection(
+        self, temp_registry, mock_adapter_path, sample_adapter_entry
+    ):
         """Test adapter rejection by Guardian"""
         guardian = MockGuardianGate()
         registry = LoRARegistry(temp_registry, guardian_gate=guardian)
 
         # Low accuracy for rejection
-        sample_adapter_entry["sha256"] = registry._compute_adapter_hash(mock_adapter_path)
+        sample_adapter_entry["sha256"] = registry._compute_adapter_hash(
+            mock_adapter_path
+        )
         sample_adapter_entry["metrics"]["accuracy"] = 0.5
 
         adapter_id = registry.register_adapter(
             adapter_path=mock_adapter_path,
             entry_data=sample_adapter_entry,
-            require_guardian_approval=True
+            require_guardian_approval=True,
         )
 
         entry = registry.get_adapter(adapter_id)
         assert entry.status == "rejected"
         assert entry.guardian_signature is None
 
-    def test_register_adapter_quarantine(self, temp_registry, mock_adapter_path, sample_adapter_entry):
+    def test_register_adapter_quarantine(
+        self, temp_registry, mock_adapter_path, sample_adapter_entry
+    ):
         """Test adapter quarantine by Guardian"""
         guardian = MockGuardianGate()
         registry = LoRARegistry(temp_registry, guardian_gate=guardian)
 
         # Medium accuracy for quarantine
-        sample_adapter_entry["sha256"] = registry._compute_adapter_hash(mock_adapter_path)
+        sample_adapter_entry["sha256"] = registry._compute_adapter_hash(
+            mock_adapter_path
+        )
         sample_adapter_entry["metrics"]["accuracy"] = 0.65
 
         adapter_id = registry.register_adapter(
             adapter_path=mock_adapter_path,
             entry_data=sample_adapter_entry,
-            require_guardian_approval=True
+            require_guardian_approval=True,
         )
 
         entry = registry.get_adapter(adapter_id)
         assert entry.status == "quarantine"
 
-    def test_hash_verification_failure(self, temp_registry, mock_adapter_path, sample_adapter_entry):
+    def test_hash_verification_failure(
+        self, temp_registry, mock_adapter_path, sample_adapter_entry
+    ):
         """Test adapter registration with wrong hash"""
         registry = LoRARegistry(temp_registry)
 
@@ -204,20 +212,24 @@ class TestLoRARegistry:
             registry.register_adapter(
                 adapter_path=mock_adapter_path,
                 entry_data=sample_adapter_entry,
-                require_guardian_approval=False
+                require_guardian_approval=False,
             )
 
-    def test_duplicate_adapter_registration(self, temp_registry, mock_adapter_path, sample_adapter_entry):
+    def test_duplicate_adapter_registration(
+        self, temp_registry, mock_adapter_path, sample_adapter_entry
+    ):
         """Test preventing duplicate adapter registration"""
         registry = LoRARegistry(temp_registry)
 
-        sample_adapter_entry["sha256"] = registry._compute_adapter_hash(mock_adapter_path)
+        sample_adapter_entry["sha256"] = registry._compute_adapter_hash(
+            mock_adapter_path
+        )
 
         # First registration
         registry.register_adapter(
             adapter_path=mock_adapter_path,
             entry_data=sample_adapter_entry,
-            require_guardian_approval=False
+            require_guardian_approval=False,
         )
 
         # Second registration should fail
@@ -225,7 +237,7 @@ class TestLoRARegistry:
             registry.register_adapter(
                 adapter_path=mock_adapter_path,
                 entry_data=sample_adapter_entry,
-                require_guardian_approval=False
+                require_guardian_approval=False,
             )
 
     def test_list_adapters_filtering(self, temp_registry, mock_adapter_path):
@@ -237,7 +249,7 @@ class TestLoRARegistry:
             {"adapter_id": "medical_1", "domain": "medical", "status": "approved"},
             {"adapter_id": "medical_2", "domain": "medical", "status": "quarantine"},
             {"adapter_id": "movies_1", "domain": "movies", "status": "approved"},
-            {"adapter_id": "finance_1", "domain": "finance", "status": "rejected"}
+            {"adapter_id": "finance_1", "domain": "finance", "status": "rejected"},
         ]
 
         for adapter_data in adapters_data:
@@ -247,12 +259,12 @@ class TestLoRARegistry:
                 "base_model": "test",
                 "metrics": {},
                 "training_config": {},
-                "created_at": "2024-01-15T12:00:00"
+                "created_at": "2024-01-15T12:00:00",
             }
             registry.register_adapter(
                 adapter_path=mock_adapter_path,
                 entry_data=entry_data,
-                require_guardian_approval=False
+                require_guardian_approval=False,
             )
 
         # Test domain filtering
@@ -268,19 +280,23 @@ class TestLoRARegistry:
         assert len(approved_medical) == 1
         assert approved_medical[0].adapter_id == "medical_1"
 
-    def test_verify_adapter_integrity(self, temp_registry, mock_adapter_path, sample_adapter_entry):
+    def test_verify_adapter_integrity(
+        self, temp_registry, mock_adapter_path, sample_adapter_entry
+    ):
         """Test adapter integrity verification"""
         guardian = MockGuardianGate()
         registry = LoRARegistry(temp_registry, guardian_gate=guardian)
 
         # Register adapter
-        sample_adapter_entry["sha256"] = registry._compute_adapter_hash(mock_adapter_path)
+        sample_adapter_entry["sha256"] = registry._compute_adapter_hash(
+            mock_adapter_path
+        )
         sample_adapter_entry["metrics"]["accuracy"] = 0.85
 
         adapter_id = registry.register_adapter(
             adapter_path=mock_adapter_path,
             entry_data=sample_adapter_entry,
-            require_guardian_approval=True
+            require_guardian_approval=True,
         )
 
         # Verify integrity
@@ -293,16 +309,20 @@ class TestLoRARegistry:
 
         assert registry.verify_adapter(adapter_id, wrong_path) is False
 
-    def test_revoke_adapter(self, temp_registry, mock_adapter_path, sample_adapter_entry):
+    def test_revoke_adapter(
+        self, temp_registry, mock_adapter_path, sample_adapter_entry
+    ):
         """Test adapter revocation"""
         registry = LoRARegistry(temp_registry)
 
         # Register adapter
-        sample_adapter_entry["sha256"] = registry._compute_adapter_hash(mock_adapter_path)
+        sample_adapter_entry["sha256"] = registry._compute_adapter_hash(
+            mock_adapter_path
+        )
         adapter_id = registry.register_adapter(
             adapter_path=mock_adapter_path,
             entry_data=sample_adapter_entry,
-            require_guardian_approval=False
+            require_guardian_approval=False,
         )
 
         # Revoke adapter
@@ -328,12 +348,12 @@ class TestLoRARegistry:
                 "metrics": {"accuracy": accuracy},
                 "training_config": {},
                 "created_at": f"2024-01-15T12:0{i}:00",
-                "status": "approved"
+                "status": "approved",
             }
             registry.register_adapter(
                 adapter_path=mock_adapter_path,
                 entry_data=entry_data,
-                require_guardian_approval=False
+                require_guardian_approval=False,
             )
 
         # Get best adapter
@@ -350,7 +370,7 @@ class TestLoRARegistry:
         domains = ["medical", "medical", "movies", "finance"]
         statuses = ["approved", "quarantine", "approved", "rejected"]
 
-        for i, (domain, status) in enumerate(zip(domains, statuses)):
+        for i, (domain, status) in enumerate(zip(domains, statuses, strict=False)):
             entry_data = {
                 "adapter_id": f"{domain}_{i}",
                 "sha256": registry._compute_adapter_hash(mock_adapter_path),
@@ -359,12 +379,12 @@ class TestLoRARegistry:
                 "metrics": {"accuracy": 0.8},
                 "training_config": {},
                 "created_at": "2024-01-15T12:00:00",
-                "status": status
+                "status": status,
             }
             registry.register_adapter(
                 adapter_path=mock_adapter_path,
                 entry_data=entry_data,
-                require_guardian_approval=False
+                require_guardian_approval=False,
             )
 
         # Export to YAML
@@ -375,22 +395,27 @@ class TestLoRARegistry:
 
         # Verify export content
         import yaml
-        with open(export_path, 'r') as f:
+
+        with open(export_path) as f:
             exported = yaml.safe_load(f)
 
         assert exported["total_adapters"] == 4
         assert exported["adapters_by_domain"]["medical"] == 2
         assert exported["adapters_by_status"]["approved"] == 2
 
-    def test_registry_persistence(self, temp_registry, mock_adapter_path, sample_adapter_entry):
+    def test_registry_persistence(
+        self, temp_registry, mock_adapter_path, sample_adapter_entry
+    ):
         """Test registry persistence across instances"""
         # First instance - register adapter
         registry1 = LoRARegistry(temp_registry)
-        sample_adapter_entry["sha256"] = registry1._compute_adapter_hash(mock_adapter_path)
+        sample_adapter_entry["sha256"] = registry1._compute_adapter_hash(
+            mock_adapter_path
+        )
         adapter_id = registry1.register_adapter(
             adapter_path=mock_adapter_path,
             entry_data=sample_adapter_entry,
-            require_guardian_approval=False
+            require_guardian_approval=False,
         )
 
         # Second instance - should load existing data

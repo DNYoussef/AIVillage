@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Agent Forge Complete Execution Script
+"""Agent Forge Complete Execution Script
 
 Master script that sets up and runs the complete Agent Forge pipeline.
 This script handles:
@@ -11,25 +10,26 @@ This script handles:
 5. Results reporting
 """
 
-import asyncio
 import argparse
+import asyncio
+from datetime import datetime
 import logging
+from pathlib import Path
 import subprocess
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('agent_forge_execution.log')
-    ]
+        logging.FileHandler("agent_forge_execution.log"),
+    ],
 )
 logger = logging.getLogger(__name__)
+
 
 class AgentForgeRunner:
     """Complete Agent Forge execution manager"""
@@ -52,9 +52,10 @@ class AgentForgeRunner:
 
             # Check key dependencies
             try:
+                import datasets
                 import torch
                 import transformers
-                import datasets
+
                 logger.info("✅ Core dependencies available")
             except ImportError as e:
                 logger.error(f"❌ Missing dependencies: {e}")
@@ -62,6 +63,7 @@ class AgentForgeRunner:
 
             # Check GPU
             import torch
+
             if torch.cuda.is_available():
                 device_name = torch.cuda.get_device_name(0)
                 memory_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
@@ -74,12 +76,13 @@ class AgentForgeRunner:
 
             # Check disk space
             import shutil
-            free_gb = shutil.disk_usage('.').free / (1024**3)
+
+            free_gb = shutil.disk_usage(".").free / (1024**3)
             if free_gb < 20:
                 logger.error(f"❌ Insufficient disk space: {free_gb:.1f} GB free")
                 return False
 
-            logger.info(f"✅ Environment validation passed")
+            logger.info("✅ Environment validation passed")
             return True
 
         except Exception as e:
@@ -96,17 +99,18 @@ class AgentForgeRunner:
             if skip_downloads:
                 setup_cmd.append("--skip-downloads")
 
-            result = subprocess.run(setup_cmd, capture_output=True, text=True)
+            result = subprocess.run(
+                setup_cmd, check=False, capture_output=True, text=True
+            )
 
             if result.returncode == 0:
                 logger.info("✅ Environment setup completed")
                 logger.info(result.stdout)
                 self.setup_success = True
                 return True
-            else:
-                logger.error("❌ Environment setup failed")
-                logger.error(result.stderr)
-                return False
+            logger.error("❌ Environment setup failed")
+            logger.error(result.stderr)
+            return False
 
         except Exception as e:
             logger.error(f"❌ Setup error: {e}")
@@ -121,11 +125,19 @@ class AgentForgeRunner:
         # Download models
         try:
             logger.info("Downloading models...")
-            result = subprocess.run([
-                sys.executable, "scripts/download_models.py",
-                "--models-dir", "D:/agent_forge_models",
-                "--check-space"
-            ], capture_output=True, text=True, timeout=1800)  # 30 min timeout
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/download_models.py",
+                    "--models-dir",
+                    "D:/agent_forge_models",
+                    "--check-space",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=1800,
+            )  # 30 min timeout
 
             if result.returncode == 0:
                 logger.info("✅ Models downloaded successfully")
@@ -143,9 +155,13 @@ class AgentForgeRunner:
         # Download benchmarks
         try:
             logger.info("Downloading benchmarks...")
-            result = subprocess.run([
-                sys.executable, "scripts/download_benchmarks.py"
-            ], capture_output=True, text=True, timeout=600)  # 10 min timeout
+            result = subprocess.run(
+                [sys.executable, "scripts/download_benchmarks.py"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )  # 10 min timeout
 
             if result.returncode == 0:
                 logger.info("✅ Benchmarks downloaded successfully")
@@ -176,15 +192,16 @@ class AgentForgeRunner:
             total_phases = len(results)
             success_rate = completed_phases / total_phases if total_phases > 0 else 0
 
-            logger.info(f"Pipeline completed: {completed_phases}/{total_phases} phases ({success_rate:.1%})")
+            logger.info(
+                f"Pipeline completed: {completed_phases}/{total_phases} phases ({success_rate:.1%})"
+            )
 
             if success_rate >= 0.6:  # 60% success threshold
                 logger.info("✅ Pipeline execution successful")
                 self.pipeline_success = True
                 return True
-            else:
-                logger.warning("⚠️ Pipeline had significant issues")
-                return False
+            logger.warning("⚠️ Pipeline had significant issues")
+            return False
 
         except Exception as e:
             logger.error(f"❌ Pipeline execution failed: {e}")
@@ -198,9 +215,7 @@ class AgentForgeRunner:
             # Launch dashboard in background
             dashboard_cmd = [sys.executable, "scripts/run_dashboard.py"]
             self.dashboard_process = subprocess.Popen(
-                dashboard_cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                dashboard_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
 
             # Give it a moment to start
@@ -209,9 +224,8 @@ class AgentForgeRunner:
             if self.dashboard_process.poll() is None:
                 logger.info("✅ Dashboard launched at http://localhost:8501")
                 return True
-            else:
-                logger.error("❌ Dashboard failed to start")
-                return False
+            logger.error("❌ Dashboard failed to start")
+            return False
 
         except Exception as e:
             logger.error(f"❌ Dashboard launch error: {e}")
@@ -223,28 +237,30 @@ class AgentForgeRunner:
         duration = end_time - self.start_time
 
         report = f"""
-{'='*60}
+{"=" * 60}
 AGENT FORGE EXECUTION SUMMARY
-{'='*60}
+{"=" * 60}
 
-Execution Time: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')} - {end_time.strftime('%Y-%m-%d %H:%M:%S')}
+Execution Time: {self.start_time.strftime("%Y-%m-%d %H:%M:%S")} - {end_time.strftime("%Y-%m-%d %H:%M:%S")}
 Total Duration: {duration}
 
-Environment Setup: {'✅ SUCCESS' if self.setup_success else '❌ FAILED'}
-Pipeline Execution: {'✅ SUCCESS' if self.pipeline_success else '❌ FAILED'}
-Dashboard Status: {'✅ RUNNING' if self.dashboard_process and self.dashboard_process.poll() is None else '❌ NOT RUNNING'}
+Environment Setup: {"✅ SUCCESS" if self.setup_success else "❌ FAILED"}
+Pipeline Execution: {"✅ SUCCESS" if self.pipeline_success else "❌ FAILED"}
+Dashboard Status: {"✅ RUNNING" if self.dashboard_process and self.dashboard_process.poll() is None else "❌ NOT RUNNING"}
 
 NEXT STEPS:
 {self.get_next_steps()}
 
-{'='*60}
+{"=" * 60}
         """
 
         logger.info(report)
 
         # Save report to file
-        report_file = f"agent_forge_report_{self.start_time.strftime('%Y%m%d_%H%M%S')}.txt"
-        with open(report_file, 'w') as f:
+        report_file = (
+            f"agent_forge_report_{self.start_time.strftime('%Y%m%d_%H%M%S')}.txt"
+        )
+        with open(report_file, "w") as f:
             f.write(report)
 
         logger.info(f"📄 Full report saved to: {report_file}")
@@ -259,7 +275,7 @@ NEXT STEPS:
 4. 📈 Monitor W&B runs for detailed metrics
 5. 🧪 Run evaluation: python benchmarks/evaluate_model.py
 """
-        elif self.setup_success:
+        if self.setup_success:
             return """
 1. ✅ Environment setup completed
 2. ⚠️ Pipeline had issues - check logs for details
@@ -267,8 +283,7 @@ NEXT STEPS:
 4. 📊 Dashboard available at: http://localhost:8501
 5. 🐛 Debug issues using the monitoring dashboard
 """
-        else:
-            return """
+        return """
 1. ❌ Environment setup failed
 2. 🔧 Run setup manually: python scripts/setup_environment.py
 3. 📋 Check requirements: pip install -r agent_forge/requirements.txt
@@ -286,19 +301,25 @@ NEXT STEPS:
             except:
                 self.dashboard_process.kill()
 
+
 async def main():
     """Main execution function"""
     parser = argparse.ArgumentParser(description="Run complete Agent Forge pipeline")
-    parser.add_argument("--skip-setup", action="store_true",
-                       help="Skip environment setup")
-    parser.add_argument("--skip-downloads", action="store_true",
-                       help="Skip model/benchmark downloads")
-    parser.add_argument("--skip-pipeline", action="store_true",
-                       help="Skip pipeline execution")
-    parser.add_argument("--skip-dashboard", action="store_true",
-                       help="Skip dashboard launch")
-    parser.add_argument("--validate-only", action="store_true",
-                       help="Only validate environment")
+    parser.add_argument(
+        "--skip-setup", action="store_true", help="Skip environment setup"
+    )
+    parser.add_argument(
+        "--skip-downloads", action="store_true", help="Skip model/benchmark downloads"
+    )
+    parser.add_argument(
+        "--skip-pipeline", action="store_true", help="Skip pipeline execution"
+    )
+    parser.add_argument(
+        "--skip-dashboard", action="store_true", help="Skip dashboard launch"
+    )
+    parser.add_argument(
+        "--validate-only", action="store_true", help="Only validate environment"
+    )
 
     args = parser.parse_args()
 
@@ -338,9 +359,11 @@ async def main():
         runner.generate_report()
 
         # Keep dashboard running if successful
-        if (runner.dashboard_process and
-            runner.dashboard_process.poll() is None and
-            runner.pipeline_success):
+        if (
+            runner.dashboard_process
+            and runner.dashboard_process.poll() is None
+            and runner.pipeline_success
+        ):
             logger.info("🎉 Agent Forge execution completed successfully!")
             logger.info("📊 Dashboard running at http://localhost:8501")
             logger.info("Press Ctrl+C to stop and exit")
@@ -361,6 +384,7 @@ async def main():
         return 1
     finally:
         runner.cleanup()
+
 
 if __name__ == "__main__":
     sys.exit(asyncio.run(main()))

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""
-Compression Performance Regression Check
+"""Compression Performance Regression Check
 Validates that compression performance meets the ≤40% throughput drop requirement.
 """
 
 import argparse
 import json
+from pathlib import Path
 import sys
 import time
+
 import torch
-from pathlib import Path
 
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -23,12 +23,11 @@ except ImportError:
 
 def run_performance_benchmark(threshold_percent=40):
     """Run compression performance benchmark and check against threshold"""
-
     if SeedLMCompressor is None:
         print("ERROR: SeedLM compressor not available - skipping regression check")
         return True  # Don't fail CI if module is missing
 
-    print(f"Running compression performance regression check...")
+    print("Running compression performance regression check...")
     print(f"   Threshold: <={threshold_percent}% throughput drop vs FP16")
 
     # Test configurations
@@ -93,7 +92,7 @@ def run_performance_benchmark(threshold_percent=40):
             status = "PASS" if meets_requirement else "FAIL"
             print(f"   {status} - {throughput_drop_percent:+.1f}% throughput change")
             print(
-                f"   FP16: {fp16_time*1000:.1f}ms | Compressed: {total_compressed_time*1000:.1f}ms"
+                f"   FP16: {fp16_time * 1000:.1f}ms | Compressed: {total_compressed_time * 1000:.1f}ms"
             )
             print(f"   Quality: {mse:.6f} MSE, {compression_ratio:.1f}x ratio")
 
@@ -107,7 +106,7 @@ def run_performance_benchmark(threshold_percent=40):
     total_tests = len(test_cases)
     pass_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
 
-    print(f"\nREGRESSION CHECK SUMMARY:")
+    print("\nREGRESSION CHECK SUMMARY:")
     print(f"   Tests passed: {passed_tests}/{total_tests} ({pass_rate:.1f}%)")
     print(f"   Threshold: <={threshold_percent}% throughput drop")
 
@@ -126,7 +125,7 @@ def run_performance_benchmark(threshold_percent=40):
                 f,
                 indent=2,
             )
-        print(f"   Results saved to: compression_regression_results.json")
+        print("   Results saved to: compression_regression_results.json")
     except Exception as e:
         print(f"   Warning: Could not save results - {e}")
 
@@ -134,11 +133,10 @@ def run_performance_benchmark(threshold_percent=40):
     regression_passed = pass_rate >= 80  # 80% of tests must pass
 
     if regression_passed:
-        print(f"   REGRESSION CHECK PASSED!")
+        print("   REGRESSION CHECK PASSED!")
         return True
-    else:
-        print(f"   REGRESSION CHECK FAILED - Performance degraded!")
-        return False
+    print("   REGRESSION CHECK FAILED - Performance degraded!")
+    return False
 
 
 def main():
@@ -163,10 +161,10 @@ def main():
         success = run_performance_benchmark(args.threshold)
 
         if success:
-            print(f"\nCompression performance meets requirements")
+            print("\nCompression performance meets requirements")
             sys.exit(0)
         else:
-            print(f"\nCompression performance regression detected")
+            print("\nCompression performance regression detected")
             if args.strict:
                 sys.exit(1)
             else:

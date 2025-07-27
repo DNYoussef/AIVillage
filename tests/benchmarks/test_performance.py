@@ -1,12 +1,13 @@
 """Performance benchmarks for AI Village components."""
 
-import pytest
-import time
-import sys
 from pathlib import Path
+import sys
+
+import pytest
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 
 # Performance benchmark tests
 @pytest.mark.benchmark
@@ -17,12 +18,17 @@ def test_basic_import_performance(benchmark):
         # Test import performance of core modules
         try:
             import importlib
-            import types
 
             # Simulate importing key modules
             modules_to_test = [
-                'json', 'sys', 'os', 'pathlib', 'datetime',
-                'collections', 'itertools', 'functools'
+                "json",
+                "sys",
+                "os",
+                "pathlib",
+                "datetime",
+                "collections",
+                "itertools",
+                "functools",
             ]
 
             for module_name in modules_to_test:
@@ -37,6 +43,7 @@ def test_basic_import_performance(benchmark):
 
     assert result > 0, "Should import at least some modules"
 
+
 @pytest.mark.benchmark
 def test_file_io_performance(benchmark, tmp_path):
     """Benchmark file I/O operations."""
@@ -46,11 +53,11 @@ def test_file_io_performance(benchmark, tmp_path):
         data = "test data " * 1000  # 9KB of test data
 
         # Write operation
-        with open(test_file, 'w') as f:
+        with open(test_file, "w") as f:
             f.write(data)
 
         # Read operation
-        with open(test_file, 'r') as f:
+        with open(test_file) as f:
             read_data = f.read()
 
         assert len(read_data) == len(data)
@@ -60,6 +67,7 @@ def test_file_io_performance(benchmark, tmp_path):
         result = file_io_operations()
 
     assert result > 0, "Should process some data"
+
 
 @pytest.mark.benchmark
 def test_json_processing_performance(benchmark):
@@ -74,12 +82,12 @@ def test_json_processing_performance(benchmark):
                     "name": f"test_{i}",
                     "status": "passed" if i % 2 == 0 else "failed",
                     "duration": i * 0.1,
-                    "metadata": {"category": "unit", "module": f"module_{i // 10}"}
+                    "metadata": {"category": "unit", "module": f"module_{i // 10}"},
                 }
                 for i in range(100)
             ],
             "summary": {"total": 100, "passed": 50, "failed": 50},
-            "timestamp": "2025-01-23T10:00:00Z"
+            "timestamp": "2025-01-23T10:00:00Z",
         }
 
         # Serialize to JSON
@@ -95,6 +103,7 @@ def test_json_processing_performance(benchmark):
         result = json_operations()
 
     assert result > 0, "Should process JSON data"
+
 
 @pytest.mark.benchmark
 def test_data_processing_performance(benchmark):
@@ -115,6 +124,7 @@ def test_data_processing_performance(benchmark):
         result = data_processing()
 
     assert result > 0, "Should produce a result"
+
 
 @pytest.mark.benchmark
 def test_string_processing_performance(benchmark):
@@ -140,6 +150,7 @@ def test_string_processing_performance(benchmark):
 
     assert result == 100, "Should process all strings"
 
+
 @pytest.mark.benchmark
 def test_monitoring_simulation_performance(benchmark):
     """Benchmark monitoring system simulation."""
@@ -153,7 +164,7 @@ def test_monitoring_simulation_performance(benchmark):
                 "name": f"test_module_{i // 10}::test_function_{i}",
                 "status": "passed" if i % 3 != 0 else "failed",
                 "duration": 0.1 + (i % 10) * 0.05,
-                "module": f"module_{i // 10}"
+                "module": f"module_{i // 10}",
             }
             test_results.append(test_result)
 
@@ -183,6 +194,7 @@ def test_monitoring_simulation_performance(benchmark):
 
     assert result > 0, "Should analyze some modules"
 
+
 # Conditional benchmarks that only run if certain modules are available
 @pytest.mark.benchmark
 def test_hyperag_simulation_performance(benchmark):
@@ -204,21 +216,25 @@ def test_hyperag_simulation_performance(benchmark):
         # Simulate similarity calculation (dot product)
         similarities = []
         for vector in vectors:
-            similarity = sum(a * b for a, b in zip(query_vector, vector))
+            similarity = sum(a * b for a, b in zip(query_vector, vector, strict=False))
             similarities.append(similarity)
 
         # Sort by similarity
-        sorted_indices = sorted(range(len(similarities)),
-                              key=lambda i: similarities[i], reverse=True)
+        sorted_indices = sorted(
+            range(len(similarities)), key=lambda i: similarities[i], reverse=True
+        )
 
         # Return top 10
         top_results = sorted_indices[:10]
         return len(top_results)
 
-    with benchmark.measure("hyperag_simulation_performance", {"vectors": 100, "dims": 50}):
+    with benchmark.measure(
+        "hyperag_simulation_performance", {"vectors": 100, "dims": 50}
+    ):
         result = hyperag_simulation()
 
     assert result == 10, "Should return top 10 results"
+
 
 @pytest.mark.slow_benchmark
 def test_large_data_processing_performance(benchmark):
@@ -230,7 +246,7 @@ def test_large_data_processing_performance(benchmark):
 
         # Multiple processing steps
         step1 = [x for x in data if x % 3 == 0]
-        step2 = [x ** 2 for x in step1]
+        step2 = [x**2 for x in step1]
         step3 = [x for x in step2 if x < 1000000]
         result = sum(step3)
 
@@ -240,6 +256,7 @@ def test_large_data_processing_performance(benchmark):
         result = large_data_processing()
 
     assert result > 0, "Should process large dataset"
+
 
 @pytest.mark.memory_benchmark
 def test_memory_usage_simulation(benchmark):
@@ -262,10 +279,13 @@ def test_memory_usage_simulation(benchmark):
 
         return total_elements
 
-    with benchmark.measure("memory_usage_simulation", {"chunks": 100, "chunk_size": 100}):
+    with benchmark.measure(
+        "memory_usage_simulation", {"chunks": 100, "chunk_size": 100}
+    ):
         result = memory_simulation()
 
     assert result == 10000, "Should allocate and process 10k elements"
+
 
 # Example of conditional benchmark based on available modules
 def test_optional_dependency_performance(benchmark):
@@ -275,6 +295,7 @@ def test_optional_dependency_performance(benchmark):
         try:
             # Try to use a real library if available
             import json
+
             data = {"test": True, "values": list(range(100))}
             serialized = json.dumps(data)
             deserialized = json.loads(serialized)

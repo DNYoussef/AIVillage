@@ -5,17 +5,16 @@ This script runs all benchmark tests multiple times to establish
 performance baselines that can be used for regression detection.
 """
 
-import json
-import subprocess
-import statistics
-import sys
-from pathlib import Path
-from typing import Dict, List, Any
 import argparse
+import json
+from pathlib import Path
+import statistics
+import subprocess
+import sys
 
-def run_benchmarks(iterations: int = 5) -> Dict[str, List[float]]:
+
+def run_benchmarks(iterations: int = 5) -> dict[str, list[float]]:
     """Run benchmark tests multiple times and collect results."""
-
     print(f"Running benchmarks {iterations} times to collect baselines...")
 
     # Results storage
@@ -26,16 +25,21 @@ def run_benchmarks(iterations: int = 5) -> Dict[str, List[float]]:
 
         # Run pytest with benchmark marker
         cmd = [
-            sys.executable, "-m", "pytest",
+            sys.executable,
+            "-m",
+            "pytest",
             "tests/benchmarks/",
             "-v",
-            "-m", "benchmark and not slow_benchmark",  # Skip slow tests for baseline
-            "--tb=short"
+            "-m",
+            "benchmark and not slow_benchmark",  # Skip slow tests for baseline
+            "--tb=short",
         ]
 
         try:
             # Run the tests
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            result = subprocess.run(
+                cmd, check=False, capture_output=True, text=True, timeout=300
+            )
 
             if result.returncode == 0:
                 print(f"✅ Iteration {i + 1} completed successfully")
@@ -47,13 +51,13 @@ def run_benchmarks(iterations: int = 5) -> Dict[str, List[float]]:
             results_file = Path("tests/benchmarks/benchmark_results.json")
             if results_file.exists():
                 try:
-                    with open(results_file, 'r') as f:
+                    with open(results_file) as f:
                         data = json.load(f)
 
                     # Extract latest results from this run
                     for result_data in data:
-                        test_name = result_data['test_name']
-                        duration = result_data['duration']
+                        test_name = result_data["test_name"]
+                        duration = result_data["duration"]
 
                         if test_name not in all_results:
                             all_results[test_name] = []
@@ -72,9 +76,9 @@ def run_benchmarks(iterations: int = 5) -> Dict[str, List[float]]:
 
     return all_results
 
-def calculate_baselines(results: Dict[str, List[float]]) -> Dict[str, Dict[str, float]]:
-    """Calculate baseline statistics from multiple runs."""
 
+def calculate_baselines(results: dict[str, list[float]]) -> dict[str, dict[str, float]]:
+    """Calculate baseline statistics from multiple runs."""
     baselines = {}
 
     for test_name, durations in results.items():
@@ -98,39 +102,43 @@ def calculate_baselines(results: Dict[str, List[float]]) -> Dict[str, Dict[str, 
             baseline = max_duration
 
         baselines[test_name] = {
-            'baseline': baseline,
-            'mean': mean_duration,
-            'median': median_duration,
-            'min': min_duration,
-            'max': max_duration,
-            'samples': len(durations),
-            'raw_durations': durations
+            "baseline": baseline,
+            "mean": mean_duration,
+            "median": median_duration,
+            "min": min_duration,
+            "max": max_duration,
+            "samples": len(durations),
+            "raw_durations": durations,
         }
 
         print(f"{test_name}:")
         print(f"  Baseline: {baseline:.4f}s")
-        print(f"  Mean: {mean_duration:.4f}s ± {stdev:.4f}s" if len(durations) >= 3 else f"  Mean: {mean_duration:.4f}s")
+        print(
+            f"  Mean: {mean_duration:.4f}s ± {stdev:.4f}s"
+            if len(durations) >= 3
+            else f"  Mean: {mean_duration:.4f}s"
+        )
         print(f"  Range: {min_duration:.4f}s - {max_duration:.4f}s")
 
     return baselines
 
-def save_baselines(baselines: Dict[str, Dict[str, float]], output_file: Path):
-    """Save baselines to JSON file."""
 
+def save_baselines(baselines: dict[str, dict[str, float]], output_file: Path):
+    """Save baselines to JSON file."""
     # Prepare data for saving
     baseline_data = {
-        'baselines': {name: stats['baseline'] for name, stats in baselines.items()},
-        'detailed_stats': baselines,
-        'metadata': {
-            'created_at': '2025-01-23T10:00:00Z',  # Would use actual timestamp
-            'total_tests': len(baselines),
-            'description': 'Performance baselines for regression detection'
-        }
+        "baselines": {name: stats["baseline"] for name, stats in baselines.items()},
+        "detailed_stats": baselines,
+        "metadata": {
+            "created_at": "2025-01-23T10:00:00Z",  # Would use actual timestamp
+            "total_tests": len(baselines),
+            "description": "Performance baselines for regression detection",
+        },
     }
 
     try:
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(baseline_data, f, indent=2)
 
         print(f"\n✅ Baselines saved to {output_file}")
@@ -139,22 +147,24 @@ def save_baselines(baselines: Dict[str, Dict[str, float]], output_file: Path):
     except Exception as e:
         print(f"❌ Failed to save baselines: {e}")
 
-def load_existing_baselines(baselines_file: Path) -> Dict[str, float]:
+
+def load_existing_baselines(baselines_file: Path) -> dict[str, float]:
     """Load existing baselines for comparison."""
     if not baselines_file.exists():
         return {}
 
     try:
-        with open(baselines_file, 'r') as f:
+        with open(baselines_file) as f:
             data = json.load(f)
-        return data.get('baselines', {})
+        return data.get("baselines", {})
     except Exception:
         return {}
 
-def compare_with_existing(new_baselines: Dict[str, Dict[str, float]],
-                         existing_baselines: Dict[str, float]) -> None:
-    """Compare new baselines with existing ones."""
 
+def compare_with_existing(
+    new_baselines: dict[str, dict[str, float]], existing_baselines: dict[str, float]
+) -> None:
+    """Compare new baselines with existing ones."""
     if not existing_baselines:
         print("\nNo existing baselines to compare with.")
         return
@@ -163,7 +173,7 @@ def compare_with_existing(new_baselines: Dict[str, Dict[str, float]],
     print("-" * 50)
 
     for test_name, stats in new_baselines.items():
-        new_baseline = stats['baseline']
+        new_baseline = stats["baseline"]
         old_baseline = existing_baselines.get(test_name)
 
         if old_baseline:
@@ -184,21 +194,26 @@ def compare_with_existing(new_baselines: Dict[str, Dict[str, float]],
             print(f"🆕 {test_name}: {new_baseline:.4f}s (new benchmark)")
         print()
 
+
 def main():
     """Main baseline collection process."""
     parser = argparse.ArgumentParser(description="Collect performance baselines")
     parser.add_argument(
-        "--iterations", "-i", type=int, default=5,
-        help="Number of iterations to run (default: 5)"
+        "--iterations",
+        "-i",
+        type=int,
+        default=5,
+        help="Number of iterations to run (default: 5)",
     )
     parser.add_argument(
-        "--output", "-o", type=Path,
+        "--output",
+        "-o",
+        type=Path,
         default=Path("tests/benchmarks/baselines.json"),
-        help="Output file for baselines"
+        help="Output file for baselines",
     )
     parser.add_argument(
-        "--compare", action="store_true",
-        help="Compare with existing baselines"
+        "--compare", action="store_true", help="Compare with existing baselines"
     )
 
     args = parser.parse_args()
@@ -237,7 +252,7 @@ def main():
         save_baselines(baselines, args.output)
 
         print("\n🎯 Baseline collection completed successfully!")
-        print(f"Use these baselines to detect performance regressions in future runs.")
+        print("Use these baselines to detect performance regressions in future runs.")
 
         return 0
 
@@ -247,6 +262,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Baseline collection failed: {e}")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

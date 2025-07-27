@@ -3,29 +3,28 @@ Integration Test Suite for WhatsApp Multi-Language Tutoring Flow
 Part B: Agent Forge Phase 4 - Comprehensive Testing
 """
 
-import pytest
-import asyncio
-import time
-import wandb
-import httpx
-from unittest.mock import Mock, patch, AsyncMock
-import json
-from typing import Dict, Any
-
 # Import modules from the WhatsApp Wave Bridge
 import sys
-sys.path.append('services/wave_bridge')
+import time
+
+import httpx
+import pytest
+
+import wandb
+
+sys.path.append("services/wave_bridge")
 
 from app import app
-from language_support import detect_language, auto_translate_flow, SUPPORTED_LANGUAGES
-from agent_forge.prompt_engineering.tutor_prompts import TutorPromptEngineer
+
 from agent_forge.prompt_engineering.ab_testing import PromptABTest
 from agent_forge.prompt_engineering.prompt_baker import PromptBaker
+from agent_forge.prompt_engineering.tutor_prompts import TutorPromptEngineer
 
 # Test configuration
 TEST_BASE_URL = "http://localhost:8000"
 PERFORMANCE_TARGET = 5.0  # seconds
 RESPONSE_QUALITY_THRESHOLD = 0.8
+
 
 class TestMultiLanguageTutoringFlow:
     """Comprehensive integration tests for multi-language tutoring"""
@@ -41,8 +40,8 @@ class TestMultiLanguageTutoringFlow:
             config={
                 "test_case": "spanish_math_tutoring",
                 "language": "es",
-                "subject": "mathematics"
-            }
+                "subject": "mathematics",
+            },
         )
 
         try:
@@ -50,67 +49,96 @@ class TestMultiLanguageTutoringFlow:
             start_time = time.time()
 
             async with httpx.AsyncClient(app=app) as client:
-                response = await client.post("/whatsapp/webhook", data={
-                    "Body": "Hola, no entiendo fracciones. ¿Me puedes ayudar con 3/4 + 1/2?",
-                    "From": "whatsapp:+521234567890",
-                    "MessageSid": "test_spanish_math_001",
-                    "To": "whatsapp:+14155238886"
-                })
+                response = await client.post(
+                    "/whatsapp/webhook",
+                    data={
+                        "Body": "Hola, no entiendo fracciones. ¿Me puedes ayudar con 3/4 + 1/2?",
+                        "From": "whatsapp:+521234567890",
+                        "MessageSid": "test_spanish_math_001",
+                        "To": "whatsapp:+14155238886",
+                    },
+                )
 
             response_time = time.time() - start_time
 
             # Basic response validation
             assert response.status_code == 200
-            assert 'application/xml' in response.headers['content-type']
+            assert "application/xml" in response.headers["content-type"]
 
             # Parse TwiML response
             response_text = response.text
-            assert '<Response>' in response_text
-            assert '<Message>' in response_text
-            assert '<Body>' in response_text
+            assert "<Response>" in response_text
+            assert "<Message>" in response_text
+            assert "<Body>" in response_text
 
             # Extract actual message body
-            body_start = response_text.find('<Body>') + 6
-            body_end = response_text.find('</Body>')
+            body_start = response_text.find("<Body>") + 6
+            body_end = response_text.find("</Body>")
             message_body = response_text[body_start:body_end]
 
             # Verify Spanish language maintenance
-            spanish_indicators = ["fracción", "suma", "resultado", "ejemplo", "matemáticas"]
-            assert any(word in message_body.lower() for word in spanish_indicators), \
+            spanish_indicators = [
+                "fracción",
+                "suma",
+                "resultado",
+                "ejemplo",
+                "matemáticas",
+            ]
+            assert any(word in message_body.lower() for word in spanish_indicators), (
                 f"Response should contain Spanish mathematical terms: {message_body}"
+            )
 
             # Verify tutoring approach
-            tutoring_indicators = ["ejemplo", "imagina", "piensa", "paso a paso", "veamos"]
-            assert any(phrase in message_body.lower() for phrase in tutoring_indicators), \
-                f"Response should use tutoring language: {message_body}"
+            tutoring_indicators = [
+                "ejemplo",
+                "imagina",
+                "piensa",
+                "paso a paso",
+                "veamos",
+            ]
+            assert any(
+                phrase in message_body.lower() for phrase in tutoring_indicators
+            ), f"Response should use tutoring language: {message_body}"
 
             # Performance validation
-            assert response_time < PERFORMANCE_TARGET, \
+            assert response_time < PERFORMANCE_TARGET, (
                 f"Response took {response_time:.2f}s, target is {PERFORMANCE_TARGET}s"
+            )
 
             # Evaluate response quality
             response_quality = await self.evaluate_response_quality(
                 message_body, "es", "mathematics", "fracciones"
             )
 
-            assert response_quality > RESPONSE_QUALITY_THRESHOLD, \
+            assert response_quality > RESPONSE_QUALITY_THRESHOLD, (
                 f"Response quality {response_quality:.2f} below threshold {RESPONSE_QUALITY_THRESHOLD}"
+            )
 
             # Log test results to W&B
-            wandb.log({
-                "test_case": "spanish_fractions",
-                "response_time": response_time,
-                "response_quality": response_quality,
-                "language_consistency": self.check_language_consistency(message_body, "es"),
-                "tutoring_approach_detected": any(phrase in message_body.lower() for phrase in tutoring_indicators),
-                "mathematical_accuracy": self.check_math_content(message_body, "fractions"),
-                "performance_target_met": response_time < PERFORMANCE_TARGET,
-                "overall_success": True
-            })
+            wandb.log(
+                {
+                    "test_case": "spanish_fractions",
+                    "response_time": response_time,
+                    "response_quality": response_quality,
+                    "language_consistency": self.check_language_consistency(
+                        message_body, "es"
+                    ),
+                    "tutoring_approach_detected": any(
+                        phrase in message_body.lower() for phrase in tutoring_indicators
+                    ),
+                    "mathematical_accuracy": self.check_math_content(
+                        message_body, "fractions"
+                    ),
+                    "performance_target_met": response_time < PERFORMANCE_TARGET,
+                    "overall_success": True,
+                }
+            )
 
             print(f"✅ Spanish math tutoring test passed in {response_time:.2f}s")
             print(f"   Response quality: {response_quality:.2f}")
-            print(f"   Language consistency: {self.check_language_consistency(message_body, 'es')}")
+            print(
+                f"   Language consistency: {self.check_language_consistency(message_body, 'es')}"
+            )
 
         finally:
             run.finish()
@@ -125,20 +153,23 @@ class TestMultiLanguageTutoringFlow:
             config={
                 "test_case": "hindi_science_tutoring",
                 "language": "hi",
-                "subject": "science"
-            }
+                "subject": "science",
+            },
         )
 
         try:
             start_time = time.time()
 
             async with httpx.AsyncClient(app=app) as client:
-                response = await client.post("/whatsapp/webhook", data={
-                    "Body": "नमस्ते, मुझे प्रकाश संश्लेषण के बारे में समझाएं। यह कैसे काम करता है?",
-                    "From": "whatsapp:+911234567890",
-                    "MessageSid": "test_hindi_science_001",
-                    "To": "whatsapp:+14155238886"
-                })
+                response = await client.post(
+                    "/whatsapp/webhook",
+                    data={
+                        "Body": "नमस्ते, मुझे प्रकाश संश्लेषण के बारे में समझाएं। यह कैसे काम करता है?",
+                        "From": "whatsapp:+911234567890",
+                        "MessageSid": "test_hindi_science_001",
+                        "To": "whatsapp:+14155238886",
+                    },
+                )
 
             response_time = time.time() - start_time
 
@@ -147,41 +178,55 @@ class TestMultiLanguageTutoringFlow:
 
             # Extract message body
             response_text = response.text
-            body_start = response_text.find('<Body>') + 6
-            body_end = response_text.find('</Body>')
+            body_start = response_text.find("<Body>") + 6
+            body_end = response_text.find("</Body>")
             message_body = response_text[body_start:body_end]
 
             # Verify Hindi language elements
             hindi_indicators = ["प्रकाश", "पौधे", "ऑक्सीजन", "कार्बन", "सूर्य"]
-            assert any(word in message_body for word in hindi_indicators), \
+            assert any(word in message_body for word in hindi_indicators), (
                 f"Response should contain Hindi scientific terms: {message_body}"
+            )
 
             # Check for English fallback (acceptable if translation fails)
-            english_science_terms = ["photosynthesis", "plants", "oxygen", "carbon dioxide", "sunlight"]
-            has_english_terms = any(term in message_body.lower() for term in english_science_terms)
+            english_science_terms = [
+                "photosynthesis",
+                "plants",
+                "oxygen",
+                "carbon dioxide",
+                "sunlight",
+            ]
+            has_english_terms = any(
+                term in message_body.lower() for term in english_science_terms
+            )
 
             # Either Hindi terms or English terms should be present
             has_hindi_terms = any(word in message_body for word in hindi_indicators)
-            assert has_hindi_terms or has_english_terms, \
+            assert has_hindi_terms or has_english_terms, (
                 "Response should contain scientific terms in Hindi or English"
+            )
 
             # Performance check
             assert response_time < PERFORMANCE_TARGET
 
             # Log results
-            wandb.log({
-                "test_case": "hindi_photosynthesis",
-                "response_time": response_time,
-                "hindi_terms_present": has_hindi_terms,
-                "english_fallback_used": has_english_terms and not has_hindi_terms,
-                "performance_target_met": response_time < PERFORMANCE_TARGET,
-                "response_length": len(message_body),
-                "overall_success": True
-            })
+            wandb.log(
+                {
+                    "test_case": "hindi_photosynthesis",
+                    "response_time": response_time,
+                    "hindi_terms_present": has_hindi_terms,
+                    "english_fallback_used": has_english_terms and not has_hindi_terms,
+                    "performance_target_met": response_time < PERFORMANCE_TARGET,
+                    "response_length": len(message_body),
+                    "overall_success": True,
+                }
+            )
 
             print(f"✅ Hindi science tutoring test passed in {response_time:.2f}s")
             print(f"   Hindi terms present: {has_hindi_terms}")
-            print(f"   English fallback used: {has_english_terms and not has_hindi_terms}")
+            print(
+                f"   English fallback used: {has_english_terms and not has_hindi_terms}"
+            )
 
         finally:
             run.finish()
@@ -196,20 +241,23 @@ class TestMultiLanguageTutoringFlow:
             config={
                 "test_case": "french_programming_tutoring",
                 "language": "fr",
-                "subject": "programming"
-            }
+                "subject": "programming",
+            },
         )
 
         try:
             start_time = time.time()
 
             async with httpx.AsyncClient(app=app) as client:
-                response = await client.post("/whatsapp/webhook", data={
-                    "Body": "Bonjour, pouvez-vous m'expliquer comment créer une fonction en Python?",
-                    "From": "whatsapp:+331234567890",
-                    "MessageSid": "test_french_programming_001",
-                    "To": "whatsapp:+14155238886"
-                })
+                response = await client.post(
+                    "/whatsapp/webhook",
+                    data={
+                        "Body": "Bonjour, pouvez-vous m'expliquer comment créer une fonction en Python?",
+                        "From": "whatsapp:+331234567890",
+                        "MessageSid": "test_french_programming_001",
+                        "To": "whatsapp:+14155238886",
+                    },
+                )
 
             response_time = time.time() - start_time
 
@@ -218,18 +266,27 @@ class TestMultiLanguageTutoringFlow:
 
             # Extract message body
             response_text = response.text
-            body_start = response_text.find('<Body>') + 6
-            body_end = response_text.find('</Body>')
+            body_start = response_text.find("<Body>") + 6
+            body_end = response_text.find("</Body>")
             message_body = response_text[body_start:body_end]
 
             # Verify French programming context
-            french_programming_terms = ["fonction", "Python", "code", "exemple", "programmation"]
-            assert any(term in message_body.lower() for term in french_programming_terms), \
-                f"Response should contain French programming terms: {message_body}"
+            french_programming_terms = [
+                "fonction",
+                "Python",
+                "code",
+                "exemple",
+                "programmation",
+            ]
+            assert any(
+                term in message_body.lower() for term in french_programming_terms
+            ), f"Response should contain French programming terms: {message_body}"
 
             # Check for code examples (should be present for programming)
             code_indicators = ["def ", "print(", "return", ":", "python"]
-            has_code_example = any(indicator in message_body.lower() for indicator in code_indicators)
+            has_code_example = any(
+                indicator in message_body.lower() for indicator in code_indicators
+            )
 
             # Programming responses should include practical examples
             assert has_code_example, "Programming response should include code examples"
@@ -238,15 +295,20 @@ class TestMultiLanguageTutoringFlow:
             assert response_time < PERFORMANCE_TARGET
 
             # Log results
-            wandb.log({
-                "test_case": "french_python_functions",
-                "response_time": response_time,
-                "french_terms_present": any(term in message_body.lower() for term in french_programming_terms),
-                "code_example_included": has_code_example,
-                "performance_target_met": response_time < PERFORMANCE_TARGET,
-                "response_length": len(message_body),
-                "overall_success": True
-            })
+            wandb.log(
+                {
+                    "test_case": "french_python_functions",
+                    "response_time": response_time,
+                    "french_terms_present": any(
+                        term in message_body.lower()
+                        for term in french_programming_terms
+                    ),
+                    "code_example_included": has_code_example,
+                    "performance_target_met": response_time < PERFORMANCE_TARGET,
+                    "response_length": len(message_body),
+                    "overall_success": True,
+                }
+            )
 
             print(f"✅ French programming tutoring test passed in {response_time:.2f}s")
             print(f"   Code example included: {has_code_example}")
@@ -264,20 +326,23 @@ class TestMultiLanguageTutoringFlow:
             config={
                 "test_case": "arabic_history_tutoring",
                 "language": "ar",
-                "subject": "history"
-            }
+                "subject": "history",
+            },
         )
 
         try:
             start_time = time.time()
 
             async with httpx.AsyncClient(app=app) as client:
-                response = await client.post("/whatsapp/webhook", data={
-                    "Body": "مرحبا، هل يمكنك أن تشرح لي عن الحضارة الإسلامية في الأندلس؟",
-                    "From": "whatsapp:+971234567890",
-                    "MessageSid": "test_arabic_history_001",
-                    "To": "whatsapp:+14155238886"
-                })
+                response = await client.post(
+                    "/whatsapp/webhook",
+                    data={
+                        "Body": "مرحبا، هل يمكنك أن تشرح لي عن الحضارة الإسلامية في الأندلس؟",
+                        "From": "whatsapp:+971234567890",
+                        "MessageSid": "test_arabic_history_001",
+                        "To": "whatsapp:+14155238886",
+                    },
+                )
 
             response_time = time.time() - start_time
 
@@ -286,34 +351,53 @@ class TestMultiLanguageTutoringFlow:
 
             # Extract message body
             response_text = response.text
-            body_start = response_text.find('<Body>') + 6
-            body_end = response_text.find('</Body>')
+            body_start = response_text.find("<Body>") + 6
+            body_end = response_text.find("</Body>")
             message_body = response_text[body_start:body_end]
 
             # Check for Arabic or English historical content
-            arabic_history_terms = ["الأندلس", "الحضارة", "الإسلامية", "التاريخ", "قرطبة"]
-            english_history_terms = ["andalusia", "islamic", "civilization", "history", "cordoba"]
+            arabic_history_terms = [
+                "الأندلس",
+                "الحضارة",
+                "الإسلامية",
+                "التاريخ",
+                "قرطبة",
+            ]
+            english_history_terms = [
+                "andalusia",
+                "islamic",
+                "civilization",
+                "history",
+                "cordoba",
+            ]
 
-            has_arabic_terms = any(term in message_body for term in arabic_history_terms)
-            has_english_terms = any(term in message_body.lower() for term in english_history_terms)
+            has_arabic_terms = any(
+                term in message_body for term in arabic_history_terms
+            )
+            has_english_terms = any(
+                term in message_body.lower() for term in english_history_terms
+            )
 
             # Either Arabic or English historical terms should be present
-            assert has_arabic_terms or has_english_terms, \
+            assert has_arabic_terms or has_english_terms, (
                 "Response should contain historical terms in Arabic or English"
+            )
 
             # Performance check
             assert response_time < PERFORMANCE_TARGET
 
             # Log results
-            wandb.log({
-                "test_case": "arabic_islamic_history",
-                "response_time": response_time,
-                "arabic_terms_present": has_arabic_terms,
-                "english_fallback_used": has_english_terms and not has_arabic_terms,
-                "performance_target_met": response_time < PERFORMANCE_TARGET,
-                "response_length": len(message_body),
-                "overall_success": True
-            })
+            wandb.log(
+                {
+                    "test_case": "arabic_islamic_history",
+                    "response_time": response_time,
+                    "arabic_terms_present": has_arabic_terms,
+                    "english_fallback_used": has_english_terms and not has_arabic_terms,
+                    "performance_target_met": response_time < PERFORMANCE_TARGET,
+                    "response_length": len(message_body),
+                    "overall_success": True,
+                }
+            )
 
             print(f"✅ Arabic history tutoring test passed in {response_time:.2f}s")
             print(f"   Arabic terms present: {has_arabic_terms}")
@@ -330,8 +414,8 @@ class TestMultiLanguageTutoringFlow:
             job_type="integration_test",
             config={
                 "test_case": "multilanguage_greeting_variants",
-                "languages_tested": ["en", "es", "hi", "fr", "ar"]
-            }
+                "languages_tested": ["en", "es", "hi", "fr", "ar"],
+            },
         )
 
         try:
@@ -340,7 +424,7 @@ class TestMultiLanguageTutoringFlow:
                 ("Hola, necesito ayuda", "es", "whatsapp:+521234567890"),
                 ("नमस्ते, मुझे मदद चाहिए", "hi", "whatsapp:+911234567890"),
                 ("Bonjour, j'ai besoin d'aide", "fr", "whatsapp:+331234567890"),
-                ("مرحبا، أحتاج مساعدة", "ar", "whatsapp:+971234567890")
+                ("مرحبا، أحتاج مساعدة", "ar", "whatsapp:+971234567890"),
             ]
 
             greeting_results = []
@@ -349,19 +433,22 @@ class TestMultiLanguageTutoringFlow:
                 start_time = time.time()
 
                 async with httpx.AsyncClient(app=app) as client:
-                    response = await client.post("/whatsapp/webhook", data={
-                        "Body": message,
-                        "From": phone_number,
-                        "MessageSid": f"test_greeting_{expected_lang}_{int(time.time())}",
-                        "To": "whatsapp:+14155238886"
-                    })
+                    response = await client.post(
+                        "/whatsapp/webhook",
+                        data={
+                            "Body": message,
+                            "From": phone_number,
+                            "MessageSid": f"test_greeting_{expected_lang}_{int(time.time())}",
+                            "To": "whatsapp:+14155238886",
+                        },
+                    )
 
                 response_time = time.time() - start_time
 
                 # Extract response
                 response_text = response.text
-                body_start = response_text.find('<Body>') + 6
-                body_end = response_text.find('</Body>')
+                body_start = response_text.find("<Body>") + 6
+                body_end = response_text.find("</Body>")
                 message_body = response_text[body_start:body_end]
 
                 # Analyze greeting style
@@ -373,42 +460,58 @@ class TestMultiLanguageTutoringFlow:
                     "greeting_style": greeting_style,
                     "has_encouragement": self.has_encouragement(message_body),
                     "response_length": len(message_body),
-                    "performance_met": response_time < PERFORMANCE_TARGET
+                    "performance_met": response_time < PERFORMANCE_TARGET,
                 }
 
                 greeting_results.append(result)
 
                 # Log individual greeting test
-                wandb.log({
-                    "greeting_test": True,
-                    "language": expected_lang,
-                    "response_time": response_time,
-                    "greeting_style": greeting_style,
-                    "encouragement_present": result["has_encouragement"],
-                    "performance_target_met": result["performance_met"]
-                })
+                wandb.log(
+                    {
+                        "greeting_test": True,
+                        "language": expected_lang,
+                        "response_time": response_time,
+                        "greeting_style": greeting_style,
+                        "encouragement_present": result["has_encouragement"],
+                        "performance_target_met": result["performance_met"],
+                    }
+                )
 
             # Analyze overall greeting performance
-            avg_response_time = sum(r["response_time"] for r in greeting_results) / len(greeting_results)
-            encouragement_rate = sum(r["has_encouragement"] for r in greeting_results) / len(greeting_results)
-            performance_rate = sum(r["performance_met"] for r in greeting_results) / len(greeting_results)
+            avg_response_time = sum(r["response_time"] for r in greeting_results) / len(
+                greeting_results
+            )
+            encouragement_rate = sum(
+                r["has_encouragement"] for r in greeting_results
+            ) / len(greeting_results)
+            performance_rate = sum(
+                r["performance_met"] for r in greeting_results
+            ) / len(greeting_results)
 
             # Validate acceptance criteria
-            assert avg_response_time < PERFORMANCE_TARGET, f"Average response time {avg_response_time:.2f}s exceeds target"
-            assert encouragement_rate >= 0.95, f"Encouragement rate {encouragement_rate:.1%} below 95% requirement"
-            assert performance_rate >= 0.95, f"Performance rate {performance_rate:.1%} below 95% requirement"
+            assert avg_response_time < PERFORMANCE_TARGET, (
+                f"Average response time {avg_response_time:.2f}s exceeds target"
+            )
+            assert encouragement_rate >= 0.95, (
+                f"Encouragement rate {encouragement_rate:.1%} below 95% requirement"
+            )
+            assert performance_rate >= 0.95, (
+                f"Performance rate {performance_rate:.1%} below 95% requirement"
+            )
 
             # Log summary
-            wandb.log({
-                "multilanguage_greeting_summary": True,
-                "languages_tested": len(greeting_messages),
-                "avg_response_time": avg_response_time,
-                "encouragement_rate": encouragement_rate,
-                "performance_rate": performance_rate,
-                "all_criteria_met": True
-            })
+            wandb.log(
+                {
+                    "multilanguage_greeting_summary": True,
+                    "languages_tested": len(greeting_messages),
+                    "avg_response_time": avg_response_time,
+                    "encouragement_rate": encouragement_rate,
+                    "performance_rate": performance_rate,
+                    "all_criteria_met": True,
+                }
+            )
 
-            print(f"✅ Multi-language greeting variants test passed")
+            print("✅ Multi-language greeting variants test passed")
             print(f"   Languages tested: {len(greeting_messages)}")
             print(f"   Average response time: {avg_response_time:.2f}s")
             print(f"   Encouragement rate: {encouragement_rate:.1%}")
@@ -426,8 +529,8 @@ class TestMultiLanguageTutoringFlow:
             job_type="integration_test",
             config={
                 "test_case": "prompt_engineering_integration",
-                "components": ["tutor_prompts", "ab_testing", "prompt_baker"]
-            }
+                "components": ["tutor_prompts", "ab_testing", "prompt_baker"],
+            },
         )
 
         try:
@@ -440,7 +543,7 @@ class TestMultiLanguageTutoringFlow:
                 hint_complexity="guided",
                 example_type="real-world",
                 encouragement_frequency=0.3,
-                subject="mathematics"
+                subject="mathematics",
             )
 
             assert template is not None
@@ -456,7 +559,7 @@ class TestMultiLanguageTutoringFlow:
                 user_id="test_user_123",
                 test_type="greeting_style",
                 language="en",
-                context={"session_id": "test_session"}
+                context={"session_id": "test_session"},
             )
 
             assert interaction is not None
@@ -477,7 +580,7 @@ class TestMultiLanguageTutoringFlow:
                 interaction_count=150,
                 statistical_significance=0.95,
                 configuration={"greeting_style": "friendly"},
-                optimization_history=[]
+                optimization_history=[],
             )
 
             # Test weight optimization
@@ -488,15 +591,17 @@ class TestMultiLanguageTutoringFlow:
             assert len(weights.greeting_style_weights) > 0
 
             # Log integration test results
-            wandb.log({
-                "prompt_engineering_integration": True,
-                "template_generated": template is not None,
-                "ab_test_completed": interaction is not None,
-                "weights_optimized": weights is not None,
-                "all_components_working": True
-            })
+            wandb.log(
+                {
+                    "prompt_engineering_integration": True,
+                    "template_generated": template is not None,
+                    "ab_test_completed": interaction is not None,
+                    "weights_optimized": weights is not None,
+                    "all_components_working": True,
+                }
+            )
 
-            print(f"✅ Prompt engineering integration test passed")
+            print("✅ Prompt engineering integration test passed")
             print(f"   Template variant: {template.variant_id}")
             print(f"   A/B test response time: {interaction.response_time:.2f}s")
             print(f"   Weights confidence: {weights.confidence_level:.2f}")
@@ -506,11 +611,9 @@ class TestMultiLanguageTutoringFlow:
 
     # Helper methods
 
-    async def evaluate_response_quality(self,
-                                      response: str,
-                                      language: str,
-                                      subject: str,
-                                      topic: str) -> float:
+    async def evaluate_response_quality(
+        self, response: str, language: str, subject: str, topic: str
+    ) -> float:
         """Evaluate response quality based on multiple criteria"""
 
         score = 0.0
@@ -524,7 +627,16 @@ class TestMultiLanguageTutoringFlow:
 
         # Subject relevance
         if subject == "mathematics":
-            math_terms = ["número", "suma", "resta", "multiplicación", "división", "+", "-", "="]
+            math_terms = [
+                "número",
+                "suma",
+                "resta",
+                "multiplicación",
+                "división",
+                "+",
+                "-",
+                "=",
+            ]
             if any(term in response.lower() for term in math_terms):
                 score += 0.3
         elif subject == "science":
@@ -544,14 +656,16 @@ class TestMultiLanguageTutoringFlow:
 
         return min(1.0, score)
 
-    def check_language_consistency(self, response: str, expected_language: str) -> float:
+    def check_language_consistency(
+        self, response: str, expected_language: str
+    ) -> float:
         """Check if response maintains expected language"""
 
         language_patterns = {
             "es": ["el", "la", "de", "que", "y", "a", "en", "un", "es", "se"],
             "hi": ["के", "में", "का", "की", "को", "से", "पर", "है", "हैं", "था"],
             "fr": ["le", "de", "et", "à", "un", "il", "être", "et", "en", "avoir"],
-            "ar": ["في", "من", "إلى", "على", "مع", "عن", "هذا", "هذه", "التي", "الذي"]
+            "ar": ["في", "من", "إلى", "على", "مع", "عن", "هذا", "هذه", "التي", "الذي"],
         }
 
         if expected_language not in language_patterns:
@@ -570,7 +684,9 @@ class TestMultiLanguageTutoringFlow:
 
         if math_topic == "fractions":
             fraction_indicators = ["/", "numerador", "denominador", "fracción", "común"]
-            return float(any(indicator in response.lower() for indicator in fraction_indicators))
+            return float(
+                any(indicator in response.lower() for indicator in fraction_indicators)
+            )
 
         return 1.0  # Default to correct for other topics
 
@@ -580,26 +696,39 @@ class TestMultiLanguageTutoringFlow:
         if any(emoji in response for emoji in ["😊", "🚀", "✨", "🎉"]):
             if "aventura" in response.lower() or "explorar" in response.lower():
                 return "playful"
-            else:
-                return "friendly"
-        elif "excelente" in response.lower() or "gran paso" in response.lower():
+            return "friendly"
+        if "excelente" in response.lower() or "gran paso" in response.lower():
             return "encouraging"
-        elif "hola" in response.lower() and "ayudar" in response.lower():
+        if "hola" in response.lower() and "ayudar" in response.lower():
             return "formal"
-        else:
-            return "unknown"
+        return "unknown"
 
     def has_encouragement(self, response: str) -> bool:
         """Check if response contains encouragement"""
 
         encouraging_phrases = [
-            "excelente", "muy bien", "buen trabajo", "perfecto", "correcto",
-            "gran pregunta", "sigue así", "lo estás haciendo bien", "genial",
-            "excellent", "great job", "well done", "perfect", "good question",
-            "keep going", "you're doing great", "fantastic", "brilliant"
+            "excelente",
+            "muy bien",
+            "buen trabajo",
+            "perfecto",
+            "correcto",
+            "gran pregunta",
+            "sigue así",
+            "lo estás haciendo bien",
+            "genial",
+            "excellent",
+            "great job",
+            "well done",
+            "perfect",
+            "good question",
+            "keep going",
+            "you're doing great",
+            "fantastic",
+            "brilliant",
         ]
 
         return any(phrase in response.lower() for phrase in encouraging_phrases)
+
 
 # Comprehensive integration test suite
 @pytest.mark.integration
@@ -617,9 +746,9 @@ async def test_acceptance_criteria_validation():
                 "wandb_tracking_active",
                 "ab_tests_running",
                 "daily_wandb_reports",
-                "95_percent_encouragement"
-            ]
-        }
+                "95_percent_encouragement",
+            ],
+        },
     )
 
     try:
@@ -629,7 +758,7 @@ async def test_acceptance_criteria_validation():
             "wandb_tracking_active": False,
             "ab_tests_running": 0,
             "encouragement_rate": 0.0,
-            "all_criteria_met": False
+            "all_criteria_met": False,
         }
 
         # Test response time across multiple languages
@@ -645,26 +774,29 @@ async def test_acceptance_criteria_validation():
                 "fr": "Aidez-moi avec les maths",
                 "ar": "ساعدني في الرياضيات",
                 "pt": "Me ajude com matemática",
-                "sw": "Nisaidie na hisabati"
+                "sw": "Nisaidie na hisabati",
             }
 
             start_time = time.time()
 
             async with httpx.AsyncClient(app=app) as client:
-                response = await client.post("/whatsapp/webhook", data={
-                    "Body": test_messages.get(lang, "Help me"),
-                    "From": f"whatsapp:+{i+1}234567890",
-                    "MessageSid": f"test_acceptance_{lang}_{int(time.time())}",
-                    "To": "whatsapp:+14155238886"
-                })
+                response = await client.post(
+                    "/whatsapp/webhook",
+                    data={
+                        "Body": test_messages.get(lang, "Help me"),
+                        "From": f"whatsapp:+{i + 1}234567890",
+                        "MessageSid": f"test_acceptance_{lang}_{int(time.time())}",
+                        "To": "whatsapp:+14155238886",
+                    },
+                )
 
             response_time = time.time() - start_time
             response_times.append(response_time)
 
             # Extract response body
             response_text = response.text
-            body_start = response_text.find('<Body>') + 6
-            body_end = response_text.find('</Body>')
+            body_start = response_text.find("<Body>") + 6
+            body_end = response_text.find("</Body>")
             message_body = response_text[body_start:body_end]
 
             # Check for encouragement
@@ -681,29 +813,39 @@ async def test_acceptance_criteria_validation():
 
         # Overall success
         results["all_criteria_met"] = (
-            results["response_time_under_5s"] and
-            results["languages_auto_detected"] >= 7 and
-            results["wandb_tracking_active"] and
-            results["ab_tests_running"] >= 4 and
-            results["encouragement_rate"] >= 0.95
+            results["response_time_under_5s"]
+            and results["languages_auto_detected"] >= 7
+            and results["wandb_tracking_active"]
+            and results["ab_tests_running"] >= 4
+            and results["encouragement_rate"] >= 0.95
         )
 
         # Log final results
-        wandb.log({
-            "acceptance_criteria_validation": True,
-            **results,
-            "avg_response_time": avg_response_time,
-            "tested_languages": len(test_languages)
-        })
+        wandb.log(
+            {
+                "acceptance_criteria_validation": True,
+                **results,
+                "avg_response_time": avg_response_time,
+                "tested_languages": len(test_languages),
+            }
+        )
 
         # Assertions for test validation
-        assert results["response_time_under_5s"], f"Average response time {avg_response_time:.2f}s exceeds 5s target"
-        assert results["languages_auto_detected"] >= 7, f"Only {results['languages_auto_detected']} languages tested, need 7+"
+        assert results["response_time_under_5s"], (
+            f"Average response time {avg_response_time:.2f}s exceeds 5s target"
+        )
+        assert results["languages_auto_detected"] >= 7, (
+            f"Only {results['languages_auto_detected']} languages tested, need 7+"
+        )
         assert results["wandb_tracking_active"], "W&B tracking not active"
-        assert results["ab_tests_running"] >= 4, f"Only {results['ab_tests_running']} A/B tests running, need 4+"
-        assert results["encouragement_rate"] >= 0.95, f"Encouragement rate {results['encouragement_rate']:.1%} below 95%"
+        assert results["ab_tests_running"] >= 4, (
+            f"Only {results['ab_tests_running']} A/B tests running, need 4+"
+        )
+        assert results["encouragement_rate"] >= 0.95, (
+            f"Encouragement rate {results['encouragement_rate']:.1%} below 95%"
+        )
 
-        print(f"✅ All acceptance criteria validated successfully!")
+        print("✅ All acceptance criteria validated successfully!")
         print(f"   Average response time: {avg_response_time:.2f}s")
         print(f"   Languages tested: {results['languages_auto_detected']}")
         print(f"   A/B tests running: {results['ab_tests_running']}")
@@ -711,6 +853,7 @@ async def test_acceptance_criteria_validation():
 
     finally:
         run.finish()
+
 
 if __name__ == "__main__":
     # Run the comprehensive test suite

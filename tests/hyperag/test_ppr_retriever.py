@@ -8,20 +8,20 @@ Test cases:
 4. Performance targets: ≤ 150ms latency, < 10MB memory overhead
 """
 
-import asyncio
-import pytest
-import time
-import uuid
 from datetime import datetime
+import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import numpy as np
+import pytest
 
 from mcp_servers.hyperag.memory.hippo_index import HippoIndex, HippoNode
 from mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG, SemanticNode
 from mcp_servers.hyperag.models import QueryPlan
 from mcp_servers.hyperag.retrieval.ppr_retriever import (
-    PersonalizedPageRank, PPRResults, AlphaProfile, AlphaProfileStore
+    AlphaProfile,
+    AlphaProfileStore,
+    PersonalizedPageRank,
+    PPRResults,
 )
 
 
@@ -35,16 +35,12 @@ class TestPersonalizedPageRank:
 
         # Mock recent nodes
         mock_nodes = [
-            HippoNode(content=f"Recent node {i}", user_id="test_user")
-            for i in range(5)
+            HippoNode(content=f"Recent node {i}", user_id="test_user") for i in range(5)
         ]
         hippo.get_recent_nodes.return_value = mock_nodes
 
         # Mock vector similarity search
-        mock_results = [
-            (mock_nodes[0], 0.9),
-            (mock_nodes[1], 0.8)
-        ]
+        mock_results = [(mock_nodes[0], 0.9), (mock_nodes[1], 0.8)]
         hippo.vector_similarity_search.return_value = mock_results
 
         return hippo
@@ -55,19 +51,16 @@ class TestPersonalizedPageRank:
         hypergraph = AsyncMock(spec=HypergraphKG)
 
         # Mock PageRank computation
-        mock_ppr_scores = {
-            f"node_{i}": 0.1 + (i * 0.05) for i in range(10)
-        }
+        mock_ppr_scores = {f"node_{i}": 0.1 + (i * 0.05) for i in range(10)}
         hypergraph.personalized_pagerank.return_value = mock_ppr_scores
 
         # Mock semantic similarity search
         mock_semantic_nodes = [
-            SemanticNode(content=f"Semantic node {i}", confidence=0.8)
-            for i in range(3)
+            SemanticNode(content=f"Semantic node {i}", confidence=0.8) for i in range(3)
         ]
         mock_semantic_results = [
             (mock_semantic_nodes[0], 0.85),
-            (mock_semantic_nodes[1], 0.75)
+            (mock_semantic_nodes[1], 0.75),
         ]
         hypergraph.semantic_similarity_search.return_value = mock_semantic_results
 
@@ -81,34 +74,28 @@ class TestPersonalizedPageRank:
         # Mock alpha profile
         mock_profile = AlphaProfile(
             user_id="test_user",
-            relation_weights={
-                "related_to": 1.5,
-                "influences": 1.2,
-                "causes": 0.8
-            },
+            relation_weights={"related_to": 1.5, "influences": 1.2, "causes": 0.8},
             last_updated=datetime.now(),
-            confidence=0.9
+            confidence=0.9,
         )
         alpha_store.get_profile.return_value = mock_profile
 
         # Mock alpha scores
-        mock_alpha_scores = {
-            "node_0": 1.2,
-            "node_1": 1.5,
-            "node_2": 0.8
-        }
+        mock_alpha_scores = {"node_0": 1.2, "node_1": 1.5, "node_2": 0.8}
         alpha_store.get_top_alpha.return_value = mock_alpha_scores
 
         return alpha_store
 
     @pytest.fixture
-    async def ppr_retriever(self, mock_hippo_index, mock_hypergraph_kg, mock_alpha_store):
+    async def ppr_retriever(
+        self, mock_hippo_index, mock_hypergraph_kg, mock_alpha_store
+    ):
         """Create PersonalizedPageRank retriever for testing"""
         return PersonalizedPageRank(
             hippo_index=mock_hippo_index,
             hypergraph=mock_hypergraph_kg,
             alpha_store=mock_alpha_store,
-            damping=0.85
+            damping=0.85,
         )
 
     @pytest.fixture
@@ -131,7 +118,7 @@ class TestPersonalizedPageRank:
             query_seeds=query_seeds,
             user_id=user_id,
             plan=sample_query_plan,
-            creative_mode=False
+            creative_mode=False,
         )
 
         # Verify result structure
@@ -151,7 +138,9 @@ class TestPersonalizedPageRank:
         assert result.metadata["user_id"] == user_id
         assert "alpha_fusion" in result.metadata
 
-    async def test_ppr_vs_iterative_recall_parity(self, ppr_retriever, sample_query_plan):
+    async def test_ppr_vs_iterative_recall_parity(
+        self, ppr_retriever, sample_query_plan
+    ):
         """Test baseline: PPR vs iterative recall parity on small KG"""
         query_seeds = ["node_0", "node_1"]
 
@@ -160,7 +149,7 @@ class TestPersonalizedPageRank:
             query_seeds=query_seeds,
             user_id="test_user",
             plan=sample_query_plan,
-            creative_mode=False
+            creative_mode=False,
         )
 
         # Simulate iterative retrieval (simplified)
@@ -191,7 +180,7 @@ class TestPersonalizedPageRank:
             query_seeds=query_seeds,
             user_id="test_user",  # Triggers α-fusion
             plan=sample_query_plan,
-            creative_mode=False
+            creative_mode=False,
         )
 
         # Test without α-fusion
@@ -199,7 +188,7 @@ class TestPersonalizedPageRank:
             query_seeds=query_seeds,
             user_id=None,  # No α-fusion
             plan=sample_query_plan,
-            creative_mode=False
+            creative_mode=False,
         )
 
         # Compare scores (simplified MAP calculation)
@@ -230,17 +219,23 @@ class TestPersonalizedPageRank:
         # Calculate improvement
         if map_without_alpha > 0:
             improvement = (map_with_alpha - map_without_alpha) / map_without_alpha
-            assert improvement >= 0.05, f"α-fusion MAP improvement {improvement:.3f} below 5% threshold"
+            assert improvement >= 0.05, (
+                f"α-fusion MAP improvement {improvement:.3f} below 5% threshold"
+            )
         else:
             # If baseline MAP is 0, just check that α-fusion gives positive MAP
-            assert map_with_alpha > 0, "α-fusion should produce positive MAP when baseline is 0"
+            assert map_with_alpha > 0, (
+                "α-fusion should produce positive MAP when baseline is 0"
+            )
 
     async def test_creative_mode_routing(self, ppr_retriever, sample_query_plan):
         """Test creative mode routes to DivergentRetriever"""
         query_seeds = ["node_0", "node_1"]
 
         # Mock DivergentRetriever
-        with patch('mcp_servers.hyperag.retrieval.ppr_retriever.DivergentRetriever') as mock_divergent:
+        with patch(
+            "mcp_servers.hyperag.retrieval.ppr_retriever.DivergentRetriever"
+        ) as mock_divergent:
             mock_instance = AsyncMock()
             mock_creative_result = PPRResults(
                 nodes=[{"id": "creative_node", "score": 0.9}],
@@ -248,7 +243,7 @@ class TestPersonalizedPageRank:
                 scores={"creative_node": 0.9},
                 reasoning_trace=["Creative retrieval executed"],
                 query_time_ms=50.0,
-                metadata={"creative_mode": True}
+                metadata={"creative_mode": True},
             )
             mock_instance.retrieve_creative.return_value = mock_creative_result
             mock_divergent.return_value = mock_instance
@@ -258,7 +253,7 @@ class TestPersonalizedPageRank:
                 query_seeds=query_seeds,
                 user_id="test_user",
                 plan=sample_query_plan,
-                creative_mode=True
+                creative_mode=True,
             )
 
             # Verify creative mode was triggered
@@ -275,11 +270,13 @@ class TestPersonalizedPageRank:
             query_seeds=query_seeds,
             user_id="test_user",
             plan=sample_query_plan,
-            creative_mode=True
+            creative_mode=True,
         )
 
         # Should fall back to standard retrieval
-        assert "not available" in str(result.reasoning_trace) or "falling back" in str(result.reasoning_trace)
+        assert "not available" in str(result.reasoning_trace) or "falling back" in str(
+            result.reasoning_trace
+        )
         assert len(result.scores) > 0  # Should still return results
 
     async def test_performance_latency_target(self, ppr_retriever, sample_query_plan):
@@ -291,7 +288,7 @@ class TestPersonalizedPageRank:
             query_seeds=query_seeds,
             user_id="test_user",
             plan=sample_query_plan,
-            creative_mode=False
+            creative_mode=False,
         )
 
         # Measure latency
@@ -300,18 +297,23 @@ class TestPersonalizedPageRank:
             query_seeds=query_seeds,
             user_id="test_user",
             plan=sample_query_plan,
-            creative_mode=False
+            creative_mode=False,
         )
         actual_latency = (time.time() - start_time) * 1000
 
         # Check both actual and reported latency
-        assert actual_latency <= 150, f"Actual latency {actual_latency:.2f}ms exceeds 150ms target"
-        assert result.query_time_ms <= 150, f"Reported latency {result.query_time_ms:.2f}ms exceeds 150ms target"
+        assert actual_latency <= 150, (
+            f"Actual latency {actual_latency:.2f}ms exceeds 150ms target"
+        )
+        assert result.query_time_ms <= 150, (
+            f"Reported latency {result.query_time_ms:.2f}ms exceeds 150ms target"
+        )
 
     async def test_memory_overhead_limit(self, ppr_retriever, sample_query_plan):
         """Test performance target: < 10MB memory overhead"""
-        import psutil
         import os
+
+        import psutil
 
         process = psutil.Process(os.getpid())
         baseline_memory = process.memory_info().rss / 1024 / 1024  # MB
@@ -323,13 +325,15 @@ class TestPersonalizedPageRank:
             query_seeds=query_seeds,
             user_id="test_user",
             plan=sample_query_plan,
-            creative_mode=False
+            creative_mode=False,
         )
 
         current_memory = process.memory_info().rss / 1024 / 1024  # MB
         memory_overhead = current_memory - baseline_memory
 
-        assert memory_overhead < 10, f"Memory overhead {memory_overhead:.2f}MB exceeds 10MB limit"
+        assert memory_overhead < 10, (
+            f"Memory overhead {memory_overhead:.2f}MB exceeds 10MB limit"
+        )
 
     async def test_uncertainty_weighting(self, ppr_retriever, sample_query_plan):
         """Test uncertainty weighting and pruning"""
@@ -339,7 +343,7 @@ class TestPersonalizedPageRank:
             query_seeds=query_seeds,
             user_id="test_user",
             plan=sample_query_plan,
-            creative_mode=False
+            creative_mode=False,
         )
 
         # Verify uncertainty is applied
@@ -359,7 +363,7 @@ class TestPersonalizedPageRank:
             query_seeds=[],
             user_id="test_user",
             plan=sample_query_plan,
-            creative_mode=False
+            creative_mode=False,
         )
 
         # Should handle gracefully
@@ -372,7 +376,7 @@ class TestPersonalizedPageRank:
         ppr = PersonalizedPageRank(
             hippo_index=AsyncMock(),
             hypergraph=AsyncMock(),
-            config_path="/nonexistent/path.yaml"
+            config_path="/nonexistent/path.yaml",
         )
 
         # Should fall back to defaults
@@ -390,7 +394,7 @@ class TestPersonalizedPageRank:
                 query_seeds=[f"node_{i}"],
                 user_id="test_user",
                 plan=sample_query_plan,
-                creative_mode=False
+                creative_mode=False,
             )
 
         final_stats = ppr_retriever.get_performance_stats()
@@ -413,7 +417,7 @@ class TestAlphaProfileStore:
         profile = AlphaProfile(
             user_id="test_user",
             relation_weights={"test_relation": 1.5},
-            last_updated=datetime.now()
+            last_updated=datetime.now(),
         )
 
         # Store profile
@@ -432,7 +436,7 @@ class TestAlphaProfileStore:
         profile = AlphaProfile(
             user_id="cached_user",
             relation_weights={"cached_relation": 0.8},
-            last_updated=datetime.now()
+            last_updated=datetime.now(),
         )
 
         # Store in cache
@@ -445,6 +449,7 @@ class TestAlphaProfileStore:
 
 
 # Performance benchmarks
+
 
 @pytest.mark.benchmark
 class TestPPRPerformanceBenchmarks:

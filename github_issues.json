@@ -10,7 +10,7 @@
   },
   {
     "title": "Clean up 2 stub implementations in tests\\conftest_root.py",
-    "body": "## File: `tests\\conftest_root.py`\n\n### Stubs to Fix:\n\n- [ ] Line 97: `step()` - Empty function with pass\n- [ ] Line 98: `zero_grad()` - Empty function with pass\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "body": "## File: `tests\\conftest_root.py`\n\n### Stubs to Fix:\n\n- [ ] Line 112: `step()` - Empty function with pass\n- [ ] Line 115: `zero_grad()` - Empty function with pass\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
     "labels": [
       "technical-debt",
       "cleanup",
@@ -81,15 +81,6 @@
     ]
   },
   {
-    "title": "Clean up 1 stub implementations in agents\\king\\analytics\\base_analytics.py",
-    "body": "## File: `agents\\king\\analytics\\base_analytics.py`\n\n### Stubs to Fix:\n\n- [ ] Line 33: `generate_analytics_report()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
-    "labels": [
-      "technical-debt",
-      "cleanup",
-      "sprint-1"
-    ]
-  },
-  {
     "title": "Clean up 1 stub implementations in agent_forge\\adas\\adas.py",
     "body": "## File: `agent_forge\\adas\\adas.py`\n\n### Stubs to Fix:\n\n- [ ] Line 22: `setrlimit()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
     "labels": [
@@ -99,35 +90,8 @@
     ]
   },
   {
-    "title": "Clean up 1 stub implementations in agent_forge\\evomerge\\merger.py",
-    "body": "## File: `agent_forge\\evomerge\\merger.py`\n\n### Stubs to Fix:\n\n- [ ] Line 109: `_merge_compatible_models()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
-    "labels": [
-      "technical-debt",
-      "cleanup",
-      "sprint-1"
-    ]
-  },
-  {
-    "title": "Clean up 3 stub implementations in agent_forge\\training\\self_modeling.py",
-    "body": "## File: `agent_forge\\training\\self_modeling.py`\n\n### Stubs to Fix:\n\n- [ ] Line 47: `__init__()` - Raises NotImplementedError\n- [ ] Line 65: `__init__()` - Raises NotImplementedError\n- [ ] Line 75: `__init__()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
-    "labels": [
-      "technical-debt",
-      "cleanup",
-      "sprint-1"
-    ]
-  },
-  {
     "title": "Clean up 1 stub implementations in agent_forge\\utils\\tool_message.py",
     "body": "## File: `agent_forge\\utils\\tool_message.py`\n\n### Stubs to Fix:\n\n- [ ] Line 8: `handle()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
-    "labels": [
-      "technical-debt",
-      "cleanup",
-      "sprint-1"
-    ]
-  },
-  {
-    "title": "Clean up 1 stub implementations in agent_forge\\evomerge\\merging\\merger.py",
-    "body": "## File: `agent_forge\\evomerge\\merging\\merger.py`\n\n### Stubs to Fix:\n\n- [ ] Line 109: `_merge_compatible_models()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
     "labels": [
       "technical-debt",
       "cleanup",
@@ -25155,6 +25119,24 @@
     ]
   },
   {
+    "title": "Clean up 1 stub implementations in experimental\\agents\\agents\\king\\analytics\\base_analytics.py",
+    "body": "## File: `experimental\\agents\\agents\\king\\analytics\\base_analytics.py`\n\n### Stubs to Fix:\n\n- [ ] Line 33: `generate_analytics_report()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "labels": [
+      "technical-debt",
+      "cleanup",
+      "sprint-1"
+    ]
+  },
+  {
+    "title": "Clean up 3 stub implementations in experimental\\training\\training\\self_modeling.py",
+    "body": "## File: `experimental\\training\\training\\self_modeling.py`\n\n### Stubs to Fix:\n\n- [ ] Line 47: `__init__()` - Raises NotImplementedError\n- [ ] Line 65: `__init__()` - Raises NotImplementedError\n- [ ] Line 75: `__init__()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "labels": [
+      "technical-debt",
+      "cleanup",
+      "sprint-1"
+    ]
+  },
+  {
     "title": "Clean up 4 stub implementations in mcp_servers\\hyperag\\guardian\\metrics.py",
     "body": "## File: `mcp_servers\\hyperag\\guardian\\metrics.py`\n\n### Stubs to Fix:\n\n- [ ] Line 23: `inc()` - Empty function with pass\n- [ ] Line 26: `observe()` - Empty function with pass\n- [ ] Line 29: `set()` - Empty function with pass\n- [ ] Line 32: `info()` - Empty function with pass\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
     "labels": [
@@ -42939,8 +42921,26 @@
     ]
   },
   {
-    "title": "Clean up 1 stub implementations in rag_system\\utils\\relation_extraction.py",
-    "body": "## File: `rag_system\\utils\\relation_extraction.py`\n\n### Stubs to Fix:\n\n- [ ] Line 3: `extract()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "title": "Clean up 1 stub implementations in production\\evolution\\evomerge\\merger.py",
+    "body": "## File: `production\\evolution\\evomerge\\merger.py`\n\n### Stubs to Fix:\n\n- [ ] Line 109: `_merge_compatible_models()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "labels": [
+      "technical-debt",
+      "cleanup",
+      "sprint-1"
+    ]
+  },
+  {
+    "title": "Clean up 1 stub implementations in production\\evolution\\evomerge\\merging\\merger.py",
+    "body": "## File: `production\\evolution\\evomerge\\merging\\merger.py`\n\n### Stubs to Fix:\n\n- [ ] Line 109: `_merge_compatible_models()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "labels": [
+      "technical-debt",
+      "cleanup",
+      "sprint-1"
+    ]
+  },
+  {
+    "title": "Clean up 1 stub implementations in production\\rag\\rag_system\\utils\\relation_extraction.py",
+    "body": "## File: `production\\rag\\rag_system\\utils\\relation_extraction.py`\n\n### Stubs to Fix:\n\n- [ ] Line 3: `extract()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
     "labels": [
       "technical-debt",
       "cleanup",
@@ -42958,7 +42958,7 @@
   },
   {
     "title": "Clean up 1 stub implementations in tests\\rag_system\\test_hypergraph_schema.py",
-    "body": "## File: `tests\\rag_system\\test_hypergraph_schema.py`\n\n### Stubs to Fix:\n\n- [ ] Line 33: `run_cypher_migrations()` - Empty function with pass\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "body": "## File: `tests\\rag_system\\test_hypergraph_schema.py`\n\n### Stubs to Fix:\n\n- [ ] Line 34: `run_cypher_migrations()` - Empty function with pass\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
     "labels": [
       "technical-debt",
       "cleanup",

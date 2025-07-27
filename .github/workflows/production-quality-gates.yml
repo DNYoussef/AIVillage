@@ -1,0 +1,186 @@
+name: Production Quality Gates
+
+on:
+  pull_request:
+    paths:
+      - 'production/**'
+  push:
+    branches: [main]
+    paths:
+      - 'production/**'
+
+jobs:
+  production-standards:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest pytest-cov pytest-benchmark mypy bandit safety
+    
+    - name: Check no experimental imports in production
+      run: |
+        echo "Checking for experimental imports in production code..."
+        if grep -r "from experimental" production/ --include="*.py" || grep -r "import experimental" production/ --include="*.py"; then
+          echo "❌ Production code cannot import from experimental!"
+          exit 1
+        else
+          echo "✅ No experimental imports found in production code"
+        fi
+    
+    - name: Check no TODOs in production
+      run: |
+        echo "Checking for TODOs in production code..."
+        if grep -r "TODO\|FIXME\|XXX" production/ --include="*.py"; then
+          echo "❌ Production code cannot contain TODOs!"
+          exit 1
+        else
+          echo "✅ No TODOs found in production code"
+        fi
+    
+    - name: Run production tests with coverage
+      run: |
+        cd production
+        pytest tests/ -v --cov=. --cov-fail-under=70 --cov-report=xml --cov-report=term-missing
+    
+    - name: Type checking
+      run: |
+        echo "Running type checking on production code..."
+        # Run mypy on production code with relaxed settings initially
+        mypy production/ --ignore-missing-imports --check-untyped-defs || echo "Type checking completed with warnings"
+    
+    - name: Security scan
+      run: |
+        echo "Running security scan on production code..."
+        bandit -r production/ -f json -o bandit-report.json || echo "Security scan completed"
+        bandit -r production/ || echo "Security scan completed with warnings"
+    
+    - name: Safety check
+      run: |
+        echo "Running safety check..."
+        safety check --continue-on-error || echo "Safety check completed with warnings"
+    
+    - name: Upload coverage report
+      if: always()
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./production/coverage.xml
+        flags: production
+        fail_ci_if_error: false
+
+  experimental-checks:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.changed_files, 'experimental/') || github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest
+    
+    - name: Run experimental tests (allowed to fail)
+      continue-on-error: true
+      run: |
+        if [ -d "experimental/tests" ]; then
+          pytest experimental/tests/ -v
+        else
+          echo "No experimental tests found"
+        fi
+    
+    - name: Check experimental warnings
+      run: |
+        echo "Checking that experimental code has proper warnings..."
+        warning_count=0
+        for file in experimental/**/*.py; do
+          if [ -f "$file" ]; then
+            if grep -l "warnings.warn\|ExperimentalWarning\|warn_experimental" "$file" >/dev/null; then
+              echo "✅ $file has experimental warning"
+              warning_count=$((warning_count + 1))
+            else
+              echo "⚠️  $file missing experimental warning"
+            fi
+          fi
+        done
+        echo "Found warnings in $warning_count experimental files"
+
+  import-separation-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check import separation
+      run: |
+        echo "=== Checking Import Separation ==="
+        
+        # Check that production doesn't import experimental
+        echo "Checking production → experimental imports..."
+        if find production/ -name "*.py" -exec grep -l "from experimental\|import experimental" {} \; 2>/dev/null | head -1; then
+          echo "❌ Production code imports experimental code!"
+          find production/ -name "*.py" -exec grep -l "from experimental\|import experimental" {} \; 2>/dev/null
+          exit 1
+        fi
+        
+        # Check that production doesn't import deprecated
+        echo "Checking production → deprecated imports..."
+        if find production/ -name "*.py" -exec grep -l "from deprecated\|import deprecated" {} \; 2>/dev/null | head -1; then
+          echo "❌ Production code imports deprecated code!"
+          find production/ -name "*.py" -exec grep -l "from deprecated\|import deprecated" {} \; 2>/dev/null
+          exit 1
+        fi
+        
+        echo "✅ Import separation verified"
+    
+    - name: Generate import map
+      run: |
+        echo "=== Generating Import Map ==="
+        echo "# Current Import Structure" > import_analysis.md
+        echo "" >> import_analysis.md
+        echo "## Production Imports" >> import_analysis.md
+        find production/ -name "*.py" -exec grep -H "^from \|^import " {} \; 2>/dev/null | head -20 >> import_analysis.md || true
+        echo "" >> import_analysis.md
+        echo "## Experimental Imports" >> import_analysis.md
+        find experimental/ -name "*.py" -exec grep -H "^from \|^import " {} \; 2>/dev/null | head -20 >> import_analysis.md || true
+    
+    - name: Upload import analysis
+      uses: actions/upload-artifact@v3
+      with:
+        name: import-analysis
+        path: import_analysis.md
+
+  quality-report:
+    needs: [production-standards, experimental-checks, import-separation-check]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Generate quality report
+      run: |
+        echo "# Sprint 2 Quality Gate Report" > quality_report.md
+        echo "" >> quality_report.md
+        echo "## Production Standards: ${{ needs.production-standards.result }}" >> quality_report.md
+        echo "## Experimental Checks: ${{ needs.experimental-checks.result }}" >> quality_report.md  
+        echo "## Import Separation: ${{ needs.import-separation-check.result }}" >> quality_report.md
+        echo "" >> quality_report.md
+        echo "Generated: $(date)" >> quality_report.md
+    
+    - name: Upload quality report
+      uses: actions/upload-artifact@v3
+      with:
+        name: quality-report
+        path: quality_report.md

@@ -106,7 +106,7 @@ jobs:
         echo "=== Test Summary for Python ${{ matrix.python-version }} ===" >> test-summary.md
 
         if [ -f "test-results-py${{ matrix.python-version }}.json" ]; then
-          python -c "
+          cat > test_summary.py << 'EOF'
 import json
 with open('test-results-py${{ matrix.python-version }}.json', 'r') as f:
     data = json.load(f)
@@ -119,8 +119,9 @@ with open('test-results-py${{ matrix.python-version }}.json', 'r') as f:
     print(f'**Python ${{ matrix.python-version }}**:')
     print(f'- Success Rate: {success_rate:.1f}%')
     print(f'- Tests: {total} total, {passed} passed, {failed} failed')
-    print(f'- Duration: {data.get(\"duration\", 0):.1f}s')
-" >> test-summary.md
+    print(f'- Duration: {data.get("duration", 0):.1f}s')
+EOF
+          python test_summary.py >> test-summary.md
         else
           echo "- Test results not available" >> test-summary.md
         fi

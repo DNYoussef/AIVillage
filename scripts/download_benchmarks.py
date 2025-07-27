@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Benchmark Dataset Download Script for Agent Forge
+"""Benchmark Dataset Download Script for Agent Forge
 
 Downloads standard math benchmarking datasets for evaluating
 evolutionary model performance:
@@ -12,16 +11,17 @@ These datasets provide comprehensive evaluation across different
 mathematical reasoning capabilities.
 """
 
-import os
-import sys
+import argparse
 import json
 import logging
 from pathlib import Path
-from datasets import load_dataset
-import argparse
-from typing import Dict, List
+import sys
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from datasets import load_dataset
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 BENCHMARKS = {
@@ -31,7 +31,7 @@ BENCHMARKS = {
         "splits": ["train", "test"],
         "description": "Grade School Math 8K - arithmetic word problems",
         "metrics": ["accuracy", "step_accuracy"],
-        "difficulty": "elementary"
+        "difficulty": "elementary",
     },
     "math": {
         "dataset_id": "hendrycks/math",
@@ -39,7 +39,7 @@ BENCHMARKS = {
         "splits": ["train", "test"],
         "description": "MATH dataset - competition mathematics problems",
         "metrics": ["accuracy", "subject_accuracy"],
-        "difficulty": "advanced"
+        "difficulty": "advanced",
     },
     "mathqa": {
         "dataset_id": "math_qa",
@@ -47,11 +47,12 @@ BENCHMARKS = {
         "splits": ["train", "validation", "test"],
         "description": "MathQA - multiple choice math questions",
         "metrics": ["accuracy", "category_accuracy"],
-        "difficulty": "intermediate"
-    }
+        "difficulty": "intermediate",
+    },
 }
 
-def download_benchmark(benchmark_key: str, config: Dict, base_path: Path) -> bool:
+
+def download_benchmark(benchmark_key: str, config: dict, base_path: Path) -> bool:
     """Download a single benchmark dataset"""
     dataset_id = config["dataset_id"]
     benchmark_path = base_path / benchmark_key
@@ -78,7 +79,7 @@ def download_benchmark(benchmark_key: str, config: Dict, base_path: Path) -> boo
                 for example in dataset[split]:
                     split_data.append(dict(example))
 
-                with open(split_path, 'w') as f:
+                with open(split_path, "w") as f:
                     json.dump(split_data, f, indent=2)
 
                 logger.info(f"Saved {split} split: {len(split_data)} examples")
@@ -93,11 +94,11 @@ def download_benchmark(benchmark_key: str, config: Dict, base_path: Path) -> boo
             "metrics": config["metrics"],
             "difficulty": config["difficulty"],
             "splits_available": list(dataset.keys()),
-            "total_examples": sum(len(dataset[split]) for split in dataset.keys())
+            "total_examples": sum(len(dataset[split]) for split in dataset.keys()),
         }
 
         metadata_path = benchmark_path / "metadata.json"
-        with open(metadata_path, 'w') as f:
+        with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2)
 
         logger.info(f"Successfully downloaded {benchmark_key}")
@@ -107,7 +108,8 @@ def download_benchmark(benchmark_key: str, config: Dict, base_path: Path) -> boo
         logger.error(f"Failed to download {benchmark_key}: {e}")
         return False
 
-def create_benchmark_manifest(base_path: Path, downloaded_benchmarks: List[str]):
+
+def create_benchmark_manifest(base_path: Path, downloaded_benchmarks: list[str]):
     """Create manifest file for benchmark datasets"""
     manifest_path = base_path / "benchmark_manifest.json"
 
@@ -116,7 +118,7 @@ def create_benchmark_manifest(base_path: Path, downloaded_benchmarks: List[str])
     manifest = {
         "created_at": datetime.now().isoformat(),
         "download_location": str(base_path),
-        "benchmarks": {}
+        "benchmarks": {},
     }
 
     for benchmark_key in downloaded_benchmarks:
@@ -132,7 +134,7 @@ def create_benchmark_manifest(base_path: Path, downloaded_benchmarks: List[str])
                 split_file = benchmark_path / f"{split}.json"
                 if split_file.exists():
                     try:
-                        with open(split_file, 'r') as f:
+                        with open(split_file) as f:
                             split_data = json.load(f)
                             split_count = len(split_data)
                             splits_info[split] = split_count
@@ -148,13 +150,14 @@ def create_benchmark_manifest(base_path: Path, downloaded_benchmarks: List[str])
                 "metrics": config["metrics"],
                 "total_examples": total_examples,
                 "splits": splits_info,
-                "downloaded": benchmark_path.exists()
+                "downloaded": benchmark_path.exists(),
             }
 
-    with open(manifest_path, 'w') as f:
+    with open(manifest_path, "w") as f:
         json.dump(manifest, f, indent=2)
 
     logger.info(f"Created benchmark manifest: {manifest_path}")
+
 
 def create_evaluation_script(base_path: Path):
     """Create evaluation script template"""
@@ -233,18 +236,29 @@ if __name__ == "__main__":
     main()
 '''
 
-    with open(eval_script, 'w') as f:
+    with open(eval_script, "w") as f:
         f.write(script_content)
 
     logger.info(f"Created evaluation script template: {eval_script}")
 
+
 def main():
     """Main download function"""
-    parser = argparse.ArgumentParser(description="Download Agent Forge benchmark datasets")
-    parser.add_argument("--benchmarks-dir", default="./benchmarks",
-                       help="Directory to store downloaded benchmarks")
-    parser.add_argument("--benchmarks", nargs="+", choices=list(BENCHMARKS.keys()) + ["all"],
-                       default=["all"], help="Benchmarks to download")
+    parser = argparse.ArgumentParser(
+        description="Download Agent Forge benchmark datasets"
+    )
+    parser.add_argument(
+        "--benchmarks-dir",
+        default="./benchmarks",
+        help="Directory to store downloaded benchmarks",
+    )
+    parser.add_argument(
+        "--benchmarks",
+        nargs="+",
+        choices=list(BENCHMARKS.keys()) + ["all"],
+        default=["all"],
+        help="Benchmarks to download",
+    )
 
     args = parser.parse_args()
 
@@ -258,7 +272,9 @@ def main():
     else:
         benchmarks_to_download = args.benchmarks
 
-    logger.info(f"Planning to download {len(benchmarks_to_download)} benchmark datasets")
+    logger.info(
+        f"Planning to download {len(benchmarks_to_download)} benchmark datasets"
+    )
 
     # Download benchmarks
     downloaded_benchmarks = []
@@ -269,7 +285,9 @@ def main():
             logger.warning(f"Unknown benchmark: {benchmark_key}")
             continue
 
-        success = download_benchmark(benchmark_key, BENCHMARKS[benchmark_key], base_path)
+        success = download_benchmark(
+            benchmark_key, BENCHMARKS[benchmark_key], base_path
+        )
         if success:
             downloaded_benchmarks.append(benchmark_key)
         else:
@@ -296,6 +314,7 @@ def main():
     logger.info("=" * 50)
 
     return 0 if not failed_benchmarks else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

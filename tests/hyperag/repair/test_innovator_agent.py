@@ -2,21 +2,26 @@
 Unit tests for Innovator Repair Agent
 """
 
-import pytest
-import asyncio
-import json
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
-
-import sys
+import json
 from pathlib import Path
+import sys
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from mcp_servers.hyperag.repair.innovator_agent import (
-    InnovatorAgent, RepairOperation, RepairProposal, RepairOperationType, PromptComposer
+    InnovatorAgent,
+    PromptComposer,
+    RepairOperation,
+    RepairOperationType,
+    RepairProposal,
 )
-from mcp_servers.hyperag.repair.templates import TemplateEncoder, ViolationTemplate
-from mcp_servers.hyperag.repair.llm_driver import LLMDriver, ModelConfig, GenerationResponse
+from mcp_servers.hyperag.repair.llm_driver import (
+    GenerationResponse,
+)
 
 
 class TestRepairOperation:
@@ -30,7 +35,7 @@ class TestRepairOperation:
             rationale="Remove unsafe relationship",
             confidence=0.9,
             source_id="node_1",
-            relationship_type="PRESCRIBES"
+            relationship_type="PRESCRIBES",
         )
 
         assert op.operation_type == RepairOperationType.DELETE_EDGE
@@ -49,7 +54,7 @@ class TestRepairOperation:
             rationale="Fix dosage",
             confidence=0.8,
             property_name="dosage",
-            property_value="500mg"
+            property_value="500mg",
         )
 
         op_dict = op.to_dict()
@@ -69,7 +74,7 @@ class TestRepairOperation:
             "rationale": "Add missing relationship",
             "confidence": 0.7,
             "source_id": "node_A",
-            "relationship_type": "RELATES_TO"
+            "relationship_type": "RELATES_TO",
         }
 
         op = RepairOperation.from_dict(op_data)
@@ -88,7 +93,7 @@ class TestRepairOperation:
             target_id="node_1",
             rationale="Merge duplicates",
             confidence=0.6,
-            merge_target_id="node_2"
+            merge_target_id="node_2",
         )
 
         jsonl = op.to_jsonl()
@@ -109,20 +114,18 @@ class TestRepairProposal:
                 operation_type=RepairOperationType.DELETE_EDGE,
                 target_id="edge_1",
                 rationale="Remove bad edge",
-                confidence=0.9
+                confidence=0.9,
             ),
             RepairOperation(
                 operation_type=RepairOperationType.ADD_EDGE,
                 target_id="edge_2",
                 rationale="Add good edge",
-                confidence=0.8
-            )
+                confidence=0.8,
+            ),
         ]
 
         proposal = RepairProposal(
-            violation_id="VIO_001",
-            gdc_rule="test_rule",
-            operations=operations
+            violation_id="VIO_001", gdc_rule="test_rule", operations=operations
         )
 
         assert proposal.violation_id == "VIO_001"
@@ -138,18 +141,16 @@ class TestRepairProposal:
                 operation_type=RepairOperationType.UPDATE_ATTR,
                 target_id="node_1",
                 rationale="Update property",
-                confidence=0.7
+                confidence=0.7,
             )
         ]
 
         proposal = RepairProposal(
-            violation_id="VIO_002",
-            gdc_rule="attr_rule",
-            operations=operations
+            violation_id="VIO_002", gdc_rule="attr_rule", operations=operations
         )
 
         jsonl = proposal.to_jsonl()
-        lines = jsonl.strip().split('\n')
+        lines = jsonl.strip().split("\n")
 
         assert len(lines) == 1
         parsed = json.loads(lines[0])
@@ -164,21 +165,19 @@ class TestRepairProposal:
                 target_id="edge_1",
                 rationale="Safety critical",
                 confidence=0.9,
-                safety_critical=True
+                safety_critical=True,
             ),
             RepairOperation(
                 operation_type=RepairOperationType.UPDATE_ATTR,
                 target_id="node_1",
                 rationale="Minor fix",
                 confidence=0.8,
-                safety_critical=False
-            )
+                safety_critical=False,
+            ),
         ]
 
         proposal = RepairProposal(
-            violation_id="VIO_003",
-            gdc_rule="quality_rule",
-            operations=operations
+            violation_id="VIO_003", gdc_rule="quality_rule", operations=operations
         )
 
         assert proposal.overall_confidence == 0.85
@@ -190,7 +189,7 @@ class TestRepairProposal:
         operations = [
             RepairOperation(RepairOperationType.DELETE_EDGE, "e1", "high conf", 0.9),
             RepairOperation(RepairOperationType.ADD_EDGE, "e2", "medium conf", 0.7),
-            RepairOperation(RepairOperationType.UPDATE_ATTR, "n1", "low conf", 0.5)
+            RepairOperation(RepairOperationType.UPDATE_ATTR, "n1", "low conf", 0.5),
         ]
 
         proposal = RepairProposal("VIO_004", "test_rule", operations)
@@ -221,7 +220,7 @@ class TestPromptComposer:
         assert isinstance(medical_prompt, str)
         # Medical prompt should be different (or same if fallback)
 
-    @patch('mcp_servers.hyperag.repair.templates.TemplateEncoder')
+    @patch("mcp_servers.hyperag.repair.templates.TemplateEncoder")
     def test_repair_prompt_composition(self, mock_encoder):
         """Test repair prompt composition"""
         # Mock violation template
@@ -234,7 +233,7 @@ class TestPromptComposer:
 
         context = {
             "entity_analysis": {"Patient": [{"id": "P1"}]},
-            "relationship_analysis": {"PRESCRIBES": [{"id": "R1"}]}
+            "relationship_analysis": {"PRESCRIBES": [{"id": "R1"}]},
         }
 
         prompt = composer.compose_repair_prompt(mock_violation, context)
@@ -277,7 +276,7 @@ class TestInnovatorAgent:
             llm_driver=mock_llm_driver,
             template_encoder=mock_template_encoder,
             prompt_composer=mock_prompt_composer,
-            domain="general"
+            domain="general",
         )
 
     @pytest.mark.asyncio
@@ -293,13 +292,12 @@ class TestInnovatorAgent:
         assert result == mock_violation
 
     @pytest.mark.asyncio
-    async def test_generate_repair_proposals_success(self, agent, mock_llm_driver, mock_template_encoder, mock_prompt_composer):
+    async def test_generate_repair_proposals_success(
+        self, agent, mock_llm_driver, mock_template_encoder, mock_prompt_composer
+    ):
         """Test successful repair proposal generation"""
         # Mock violation data
-        violation_data = {
-            "violation_id": "VIO_007",
-            "rule_name": "test_rule"
-        }
+        violation_data = {"violation_id": "VIO_007", "rule_name": "test_rule"}
 
         # Mock template encoder
         mock_violation = MagicMock()
@@ -314,7 +312,7 @@ class TestInnovatorAgent:
             finish_reason="completed",
             usage={"total_tokens": 50},
             model="test_model",
-            latency_ms=100.0
+            latency_ms=100.0,
         )
         mock_llm_driver.generate.return_value = mock_response
 
@@ -328,12 +326,11 @@ class TestInnovatorAgent:
         assert proposal.operations[0].confidence == 0.8
 
     @pytest.mark.asyncio
-    async def test_generate_repair_proposals_parsing_error(self, agent, mock_llm_driver, mock_template_encoder, mock_prompt_composer):
+    async def test_generate_repair_proposals_parsing_error(
+        self, agent, mock_llm_driver, mock_template_encoder, mock_prompt_composer
+    ):
         """Test handling of LLM response parsing errors"""
-        violation_data = {
-            "violation_id": "VIO_008",
-            "rule_name": "test_rule"
-        }
+        violation_data = {"violation_id": "VIO_008", "rule_name": "test_rule"}
 
         # Mock template encoder
         mock_violation = MagicMock()
@@ -348,7 +345,7 @@ class TestInnovatorAgent:
             finish_reason="completed",
             usage={"total_tokens": 20},
             model="test_model",
-            latency_ms=100.0
+            latency_ms=100.0,
         )
         mock_llm_driver.generate.return_value = mock_response
 
@@ -360,9 +357,9 @@ class TestInnovatorAgent:
 
     def test_parse_repair_operations_valid(self, agent):
         """Test parsing valid repair operations"""
-        response_text = '''{"op":"delete_edge","target_id":"edge_1","rationale":"Remove bad edge","confidence":0.9}
+        response_text = """{"op":"delete_edge","target_id":"edge_1","rationale":"Remove bad edge","confidence":0.9}
 {"op":"add_edge","target_id":"edge_2","source_id":"node_1","rationale":"Add good edge","confidence":0.8}
-{"op":"update_attr","target_id":"node_1","property_name":"status","property_value":"active","rationale":"Update status","confidence":0.7}'''
+{"op":"update_attr","target_id":"node_1","property_name":"status","property_value":"active","rationale":"Update status","confidence":0.7}"""
 
         operations = agent._parse_repair_operations(response_text)
 
@@ -376,12 +373,12 @@ class TestInnovatorAgent:
 
     def test_parse_repair_operations_mixed_content(self, agent):
         """Test parsing operations with mixed valid/invalid content"""
-        response_text = '''Here are the repair operations:
+        response_text = """Here are the repair operations:
 {"op":"delete_edge","target_id":"edge_1","rationale":"Remove bad edge","confidence":0.9}
 This is explanatory text that should be ignored.
 {"invalid": "json"}
 {"op":"update_attr","target_id":"node_1","property_name":"status","property_value":"fixed","rationale":"Fix it","confidence":0.8}
-Final explanatory text.'''
+Final explanatory text."""
 
         operations = agent._parse_repair_operations(response_text)
 
@@ -399,7 +396,7 @@ Final explanatory text.'''
             "edge_1",
             "Remove prescription",
             0.9,
-            relationship_type="PRESCRIBES"
+            relationship_type="PRESCRIBES",
         )
 
         # Safety critical: allergy-related operation
@@ -407,15 +404,12 @@ Final explanatory text.'''
             RepairOperationType.UPDATE_ATTR,
             "node_1",
             "Patient has allergy to penicillin",
-            0.8
+            0.8,
         )
 
         # Not safety critical: general update
         op3 = RepairOperation(
-            RepairOperationType.UPDATE_ATTR,
-            "node_2",
-            "Update contact information",
-            0.7
+            RepairOperationType.UPDATE_ATTR, "node_2", "Update contact information", 0.7
         )
 
         assert agent._is_safety_critical(op1) == True
@@ -447,10 +441,7 @@ Final explanatory text.'''
         # Valid proposal
         operations = [
             RepairOperation(
-                RepairOperationType.UPDATE_ATTR,
-                "node_1",
-                "Good rationale",
-                0.8
+                RepairOperationType.UPDATE_ATTR, "node_1", "Good rationale", 0.8
             )
         ]
         proposal = RepairProposal("VIO_009", "test_rule", operations)
@@ -466,7 +457,7 @@ Final explanatory text.'''
                 RepairOperationType.UPDATE_ATTR,
                 "",  # Empty target_id
                 "Bad operation",
-                0.5
+                0.5,
             )
         ]
         bad_proposal = RepairProposal("VIO_010", "test_rule", bad_operations)
@@ -491,7 +482,7 @@ Final explanatory text.'''
                 "operations_count": 2,
                 "overall_confidence": 0.8,
                 "safety_score": 0.9,
-                "generation_time_ms": 150.0
+                "generation_time_ms": 150.0,
             },
             {
                 "timestamp": datetime.now(),
@@ -500,8 +491,8 @@ Final explanatory text.'''
                 "operations_count": 1,
                 "overall_confidence": 0.7,
                 "safety_score": 1.0,
-                "generation_time_ms": 100.0
-            }
+                "generation_time_ms": 100.0,
+            },
         ]
 
         stats = agent.get_performance_stats()

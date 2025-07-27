@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Agent Forge Environment Setup Script
+"""Agent Forge Environment Setup Script
 
 Comprehensive setup script that prepares the environment for Agent Forge:
 1. Downloads models optimized for RTX 2060 SUPER
@@ -11,17 +10,19 @@ Comprehensive setup script that prepares the environment for Agent Forge:
 6. Creates configuration files
 """
 
-import os
-import sys
-import subprocess
+import argparse
+import json
 import logging
 from pathlib import Path
-import json
-import argparse
+import subprocess
+import sys
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 def check_gpu_setup():
     """Check GPU and CUDA availability"""
@@ -48,19 +49,18 @@ def check_gpu_setup():
             if "2060" in device_name and memory_gb >= 7.5:
                 logger.info("✅ RTX 2060 SUPER detected - optimal for 1.5B models")
                 return True, {"device": device_name, "memory_gb": memory_gb}
-            elif memory_gb >= 6.0:
+            if memory_gb >= 6.0:
                 logger.info(f"✅ GPU has sufficient memory ({memory_gb:.1f} GB)")
                 return True, {"device": device_name, "memory_gb": memory_gb}
-            else:
-                logger.warning(f"⚠️ GPU memory may be insufficient ({memory_gb:.1f} GB)")
-                return False, {"device": device_name, "memory_gb": memory_gb}
-        else:
-            logger.warning("⚠️ CUDA not available - will use CPU")
-            return False, {"device": "CPU", "memory_gb": 0}
+            logger.warning(f"⚠️ GPU memory may be insufficient ({memory_gb:.1f} GB)")
+            return False, {"device": device_name, "memory_gb": memory_gb}
+        logger.warning("⚠️ CUDA not available - will use CPU")
+        return False, {"device": "CPU", "memory_gb": 0}
 
     except ImportError:
         logger.error("❌ PyTorch not installed")
         return False, {"device": "Unknown", "memory_gb": 0}
+
 
 def install_dependencies():
     """Install required dependencies"""
@@ -82,14 +82,17 @@ def install_dependencies():
         "pytest>=7.4.0",
         "black>=23.0.0",
         "isort>=5.12.0",
-        "flake8>=6.0.0"
+        "flake8>=6.0.0",
     ]
 
     try:
         for req in requirements:
             logger.info(f"Installing {req}...")
-            subprocess.run([sys.executable, "-m", "pip", "install", req],
-                         check=True, capture_output=True)
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", req],
+                check=True,
+                capture_output=True,
+            )
 
         logger.info("✅ All dependencies installed successfully")
         return True
@@ -97,6 +100,7 @@ def install_dependencies():
     except subprocess.CalledProcessError as e:
         logger.error(f"❌ Dependency installation failed: {e}")
         return False
+
 
 def setup_directory_structure():
     """Create necessary directory structure"""
@@ -109,7 +113,7 @@ def setup_directory_structure():
         "forge_checkpoints_enhanced",
         "tests/integration",
         "logs",
-        "wandb"
+        "wandb",
     ]
 
     created_dirs = []
@@ -123,6 +127,7 @@ def setup_directory_structure():
             logger.error(f"❌ Failed to create {dir_path}: {e}")
 
     return created_dirs
+
 
 def create_config_files():
     """Create configuration files"""
@@ -140,12 +145,12 @@ def create_config_files():
         "recommended_models": [
             "Qwen/Qwen2.5-Math-1.5B-Instruct",
             "Qwen/Qwen2.5-Coder-1.5B-Instruct",
-            "Qwen/Qwen2.5-1.5B-Instruct"
-        ]
+            "Qwen/Qwen2.5-1.5B-Instruct",
+        ],
     }
 
     config_path = Path("agent_forge_config.json")
-    with open(config_path, 'w') as f:
+    with open(config_path, "w") as f:
         json.dump(env_config, f, indent=2)
 
     logger.info(f"✅ Created configuration: {config_path}")
@@ -180,12 +185,13 @@ def create_config_files():
 """
 
     precommit_path = Path(".pre-commit-config.yaml")
-    with open(precommit_path, 'w') as f:
+    with open(precommit_path, "w") as f:
         f.write(precommit_config)
 
     logger.info(f"✅ Created pre-commit config: {precommit_path}")
 
     return [config_path, precommit_path]
+
 
 def download_models_and_benchmarks():
     """Download models and benchmarks"""
@@ -196,8 +202,9 @@ def download_models_and_benchmarks():
     # Download models
     try:
         logger.info("Downloading models...")
-        subprocess.run([sys.executable, "scripts/download_models.py", "--check-space"],
-                      check=True)
+        subprocess.run(
+            [sys.executable, "scripts/download_models.py", "--check-space"], check=True
+        )
         logger.info("✅ Models downloaded successfully")
     except subprocess.CalledProcessError as e:
         logger.error(f"❌ Model download failed: {e}")
@@ -206,14 +213,14 @@ def download_models_and_benchmarks():
     # Download benchmarks
     try:
         logger.info("Downloading benchmarks...")
-        subprocess.run([sys.executable, "scripts/download_benchmarks.py"],
-                      check=True)
+        subprocess.run([sys.executable, "scripts/download_benchmarks.py"], check=True)
         logger.info("✅ Benchmarks downloaded successfully")
     except subprocess.CalledProcessError as e:
         logger.error(f"❌ Benchmark download failed: {e}")
         success = False
 
     return success
+
 
 def validate_setup():
     """Validate the complete setup"""
@@ -225,7 +232,7 @@ def validate_setup():
         "directories": False,
         "models": False,
         "benchmarks": False,
-        "configuration": False
+        "configuration": False,
     }
 
     # Check GPU setup
@@ -234,7 +241,12 @@ def validate_setup():
 
     # Check dependencies
     try:
-        import torch, transformers, datasets, wandb
+        import datasets
+        import torch
+        import transformers
+
+        import wandb
+
         validation_results["dependencies"] = True
         logger.info("✅ Key dependencies available")
     except ImportError as e:
@@ -253,7 +265,7 @@ def validate_setup():
     # Check models
     model_manifest = Path("D:/agent_forge_models/model_manifest.json")
     if model_manifest.exists():
-        with open(model_manifest, 'r') as f:
+        with open(model_manifest) as f:
             manifest = json.load(f)
         model_count = len([m for m in manifest["models"].values() if m["downloaded"]])
         validation_results["models"] = model_count >= 2
@@ -280,15 +292,21 @@ def validate_setup():
 
     return validation_results
 
+
 def main():
     """Main setup function"""
     parser = argparse.ArgumentParser(description="Set up Agent Forge environment")
-    parser.add_argument("--skip-downloads", action="store_true",
-                       help="Skip model and benchmark downloads")
-    parser.add_argument("--skip-deps", action="store_true",
-                       help="Skip dependency installation")
-    parser.add_argument("--validate-only", action="store_true",
-                       help="Only run validation")
+    parser.add_argument(
+        "--skip-downloads",
+        action="store_true",
+        help="Skip model and benchmark downloads",
+    )
+    parser.add_argument(
+        "--skip-deps", action="store_true", help="Skip dependency installation"
+    )
+    parser.add_argument(
+        "--validate-only", action="store_true", help="Only run validation"
+    )
 
     args = parser.parse_args()
 
@@ -377,6 +395,7 @@ def main():
         return 1
 
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

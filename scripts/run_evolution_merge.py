@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 """Run Agent Forge Evolution Merge with real benchmarking for 10 generations."""
 
-import os
-import sys
+from datetime import datetime
 import json
-import time
-import torch
 import logging
 from pathlib import Path
-from datetime import datetime
-from typing import List, Dict, Any, Optional
-import subprocess
 import random
-import numpy as np
+import time
+from typing import Any
+
+import torch
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 class EvolutionMerger:
     """Agent Forge Evolution Merger with real benchmarking."""
@@ -39,13 +39,9 @@ class EvolutionMerger:
         self.benchmark_history = []
 
         # Benchmarking thresholds
-        self.benchmark_thresholds = {
-            "mmlu": 0.60,
-            "gsm8k": 0.40,
-            "humaneval": 0.25
-        }
+        self.benchmark_thresholds = {"mmlu": 0.60, "gsm8k": 0.40, "humaneval": 0.25}
 
-    def initialize_population(self) -> List[Dict[str, Any]]:
+    def initialize_population(self) -> list[dict[str, Any]]:
         """Initialize population with available models or create synthetic configs."""
         population = []
 
@@ -57,7 +53,7 @@ class EvolutionMerger:
                 "models": ["microsoft/phi-1_5", "TinyLlama/TinyLlama-1.1B-Chat-v1.0"],
                 "parameters": {"t": 0.5},
                 "fitness": 0.0,
-                "generation": 0
+                "generation": 0,
             },
             {
                 "merge_method": "linear",
@@ -65,7 +61,7 @@ class EvolutionMerger:
                 "models": ["TinyLlama/TinyLlama-1.1B-Chat-v1.0", "microsoft/phi-1_5"],
                 "parameters": {"weight": 0.6},
                 "fitness": 0.0,
-                "generation": 0
+                "generation": 0,
             },
             {
                 "merge_method": "task_arithmetic",
@@ -73,8 +69,8 @@ class EvolutionMerger:
                 "models": ["microsoft/phi-1_5"],
                 "parameters": {"scaling_coefficient": 1.2},
                 "fitness": 0.0,
-                "generation": 0
-            }
+                "generation": 0,
+            },
         ]
 
         # Expand to population size with variations
@@ -86,28 +82,41 @@ class EvolutionMerger:
 
         return population
 
-    def mutate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def mutate_config(self, config: dict[str, Any]) -> dict[str, Any]:
         """Mutate a configuration."""
         mutated = config.copy()
 
         if random.random() < self.mutation_rate:
             if mutated["merge_method"] == "slerp":
-                mutated["parameters"]["t"] = max(0.1, min(0.9,
-                    mutated["parameters"]["t"] + random.gauss(0, 0.2)))
+                mutated["parameters"]["t"] = max(
+                    0.1, min(0.9, mutated["parameters"]["t"] + random.gauss(0, 0.2))
+                )
             elif mutated["merge_method"] == "linear":
-                mutated["parameters"]["weight"] = max(0.1, min(0.9,
-                    mutated["parameters"]["weight"] + random.gauss(0, 0.2)))
+                mutated["parameters"]["weight"] = max(
+                    0.1,
+                    min(0.9, mutated["parameters"]["weight"] + random.gauss(0, 0.2)),
+                )
             elif mutated["merge_method"] == "task_arithmetic":
-                mutated["parameters"]["scaling_coefficient"] = max(0.5, min(2.0,
-                    mutated["parameters"]["scaling_coefficient"] + random.gauss(0, 0.3)))
+                mutated["parameters"]["scaling_coefficient"] = max(
+                    0.5,
+                    min(
+                        2.0,
+                        mutated["parameters"]["scaling_coefficient"]
+                        + random.gauss(0, 0.3),
+                    ),
+                )
 
         return mutated
 
-    def crossover_configs(self, parent1: Dict[str, Any], parent2: Dict[str, Any]) -> Dict[str, Any]:
+    def crossover_configs(
+        self, parent1: dict[str, Any], parent2: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create offspring via crossover."""
         if random.random() < self.crossover_rate:
             child = parent1.copy()
-            child["merge_method"] = random.choice([parent1["merge_method"], parent2["merge_method"]])
+            child["merge_method"] = random.choice(
+                [parent1["merge_method"], parent2["merge_method"]]
+            )
 
             # Blend parameters
             if child["merge_method"] == "slerp":
@@ -120,10 +129,9 @@ class EvolutionMerger:
                 child["parameters"] = {"weight": (p1_w + p2_w) / 2}
 
             return child
-        else:
-            return random.choice([parent1, parent2]).copy()
+        return random.choice([parent1, parent2]).copy()
 
-    def benchmark_model(self, config: Dict[str, Any]) -> Dict[str, float]:
+    def benchmark_model(self, config: dict[str, Any]) -> dict[str, float]:
         """Benchmark a model configuration."""
         logger.info(f"Benchmarking model: {config['id']}")
 
@@ -161,7 +169,7 @@ class EvolutionMerger:
         logger.info(f"Benchmark results: {results}")
         return results
 
-    def calculate_fitness(self, benchmark_results: Dict[str, float]) -> float:
+    def calculate_fitness(self, benchmark_results: dict[str, float]) -> float:
         """Calculate fitness score from benchmark results."""
         # Weighted fitness calculation
         weights = {"mmlu": 0.4, "gsm8k": 0.35, "humaneval": 0.25}
@@ -176,7 +184,7 @@ class EvolutionMerger:
 
         return fitness
 
-    def select_parents(self) -> List[Dict[str, Any]]:
+    def select_parents(self) -> list[dict[str, Any]]:
         """Select parents for next generation using tournament selection."""
         parents = []
         tournament_size = 3
@@ -204,12 +212,16 @@ class EvolutionMerger:
 
         # Log generation results
         best_individual = self.population[0]
-        avg_fitness = sum(ind["fitness"] for ind in self.population) / len(self.population)
+        avg_fitness = sum(ind["fitness"] for ind in self.population) / len(
+            self.population
+        )
 
         logger.info(f"Generation {self.generation} Results:")
         logger.info(f"Best fitness: {best_individual['fitness']:.3f}")
         logger.info(f"Average fitness: {avg_fitness:.3f}")
-        logger.info(f"Best config: {best_individual['merge_method']} - {best_individual['parameters']}")
+        logger.info(
+            f"Best config: {best_individual['merge_method']} - {best_individual['parameters']}"
+        )
 
         # Save generation results
         gen_results = {
@@ -217,7 +229,7 @@ class EvolutionMerger:
             "population": self.population.copy(),
             "best_fitness": best_individual["fitness"],
             "average_fitness": avg_fitness,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         results_file = self.output_dir / f"generation_{self.generation}.json"
@@ -234,7 +246,7 @@ class EvolutionMerger:
         self.generation += 1
 
         # Keep elite individuals
-        new_population = self.population[:self.elite_size].copy()
+        new_population = self.population[: self.elite_size].copy()
 
         # Select parents and create offspring
         parents = self.select_parents()
@@ -271,7 +283,7 @@ class EvolutionMerger:
         # Final results
         best_overall = max(
             [ind for gen in self.benchmark_history for ind in gen["population"]],
-            key=lambda x: x["fitness"]
+            key=lambda x: x["fitness"],
         )
 
         logger.info("=== Evolution Complete ===")
@@ -285,10 +297,10 @@ class EvolutionMerger:
                 "generations_completed": self.generation,
                 "duration_seconds": duration,
                 "best_fitness": best_overall["fitness"],
-                "best_configuration": best_overall
+                "best_configuration": best_overall,
             },
             "generation_history": self.benchmark_history,
-            "final_population": self.population
+            "final_population": self.population,
         }
 
         final_file = self.output_dir / "evolution_results.json"
@@ -297,6 +309,7 @@ class EvolutionMerger:
 
         logger.info(f"Results saved to: {final_file}")
         return best_overall
+
 
 def main():
     """Main execution function."""
@@ -314,6 +327,7 @@ def main():
 
     logger.info("Agent Forge Evolution Merge completed successfully!")
     return best_config
+
 
 if __name__ == "__main__":
     main()

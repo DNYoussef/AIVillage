@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Prompt Baking Phase - Production Implementation
+"""Prompt Baking Phase - Production Implementation
 
 Implements advanced prompt optimization and baking techniques:
 - A/B testing harness for prompt variants
@@ -14,23 +13,21 @@ patterns through systematic testing and parameter adjustment.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import time
 import traceback
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-import numpy as np
-import random
+from typing import Any
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from transformers import AutoTokenizer, AutoModelForCausalLM, AdamW
-import wandb
 from pydantic import BaseModel, Field, validator
+import torch
+from torch import nn
 from tqdm import tqdm
+from transformers import AdamW, AutoModelForCausalLM, AutoTokenizer
+
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +35,10 @@ logger = logging.getLogger(__name__)
 # Configuration Models
 # ============================================================================
 
+
 class PromptVariant(BaseModel):
     """A single prompt variant for A/B testing"""
+
     id: str
     name: str
     template: str
@@ -47,6 +46,7 @@ class PromptVariant(BaseModel):
     actual_performance: float = 0.0
     test_count: int = 0
     success_count: int = 0
+
 
 class PromptBakingConfig(BaseModel):
     """Configuration for prompt baking phase"""
@@ -57,34 +57,38 @@ class PromptBakingConfig(BaseModel):
 
     # A/B Testing configuration
     ab_test_samples: int = Field(default=100, ge=10, le=1000)
-    prompt_variants: List[str] = Field(default_factory=lambda: [
-        "You are a helpful AI assistant. {task}",
-        "As an expert AI, please help with: {task}",
-        "I'll help you with this task: {task}",
-        "Let me assist you: {task}",
-        "Here's how I can help: {task}"
-    ])
+    prompt_variants: list[str] = Field(
+        default_factory=lambda: [
+            "You are a helpful AI assistant. {task}",
+            "As an expert AI, please help with: {task}",
+            "I'll help you with this task: {task}",
+            "Let me assist you: {task}",
+            "Here's how I can help: {task}",
+        ]
+    )
 
     # Weight baking parameters
     baking_learning_rate: float = Field(default=1e-6, ge=1e-8, le=1e-4)
     baking_epochs: int = Field(default=3, ge=1, le=10)
-    prompt_embedding_layers: List[int] = Field(default_factory=lambda: [0, 1, 2])
+    prompt_embedding_layers: list[int] = Field(default_factory=lambda: [0, 1, 2])
     baking_strength: float = Field(default=0.1, ge=0.01, le=1.0)
 
     # Evaluation configuration
-    evaluation_tasks: List[str] = Field(default_factory=lambda: [
-        "Solve this math problem: 2 + 2 = ?",
-        "Write a short poem about AI",
-        "Explain photosynthesis briefly",
-        "What is the capital of France?",
-        "Code a simple hello world function"
-    ])
+    evaluation_tasks: list[str] = Field(
+        default_factory=lambda: [
+            "Solve this math problem: 2 + 2 = ?",
+            "Write a short poem about AI",
+            "Explain photosynthesis briefly",
+            "What is the capital of France?",
+            "Code a simple hello world function",
+        ]
+    )
 
     # Tool integration
     enable_tool_integration: bool = Field(default=True)
-    available_tools: List[str] = Field(default_factory=lambda: [
-        "calculator", "search", "code_executor"
-    ])
+    available_tools: list[str] = Field(
+        default_factory=lambda: ["calculator", "search", "code_executor"]
+    )
 
     # System configuration
     device: str = Field(default="auto")
@@ -93,18 +97,22 @@ class PromptBakingConfig(BaseModel):
 
     # W&B configuration
     wandb_project: str = Field(default="agent-forge")
-    wandb_entity: Optional[str] = None
-    wandb_tags: List[str] = Field(default_factory=lambda: ["prompt_baking", "optimization"])
+    wandb_entity: str | None = None
+    wandb_tags: list[str] = Field(
+        default_factory=lambda: ["prompt_baking", "optimization"]
+    )
 
-    @validator('device')
+    @validator("device")
     def validate_device(cls, v):
         if v == "auto":
             return "cuda" if torch.cuda.is_available() else "cpu"
         return v
 
+
 # ============================================================================
 # A/B Testing Harness
 # ============================================================================
+
 
 class ABTestHarness:
     """A/B testing system for prompt variants"""
@@ -117,13 +125,11 @@ class ABTestHarness:
         # Create prompt variants
         for i, template in enumerate(config.prompt_variants):
             variant = PromptVariant(
-                id=f"variant_{i}",
-                name=f"Prompt Variant {i+1}",
-                template=template
+                id=f"variant_{i}", name=f"Prompt Variant {i + 1}", template=template
             )
             self.variants.append(variant)
 
-    async def run_ab_test(self, model, tokenizer) -> Dict[str, Any]:
+    async def run_ab_test(self, model, tokenizer) -> dict[str, Any]:
         """Run A/B test on all prompt variants"""
         logger.info(f"Running A/B test with {len(self.variants)} variants")
 
@@ -138,7 +144,7 @@ class ABTestHarness:
                 "template": variant.template,
                 "performance": performance,
                 "test_count": variant.test_count,
-                "success_count": variant.success_count
+                "success_count": variant.success_count,
             }
 
             logger.info(f"Variant {variant.id}: {performance:.3f} performance")
@@ -161,7 +167,9 @@ class ABTestHarness:
                 prompt = variant.template.format(task=task)
 
                 # Generate response
-                inputs = tokenizer.encode(prompt, return_tensors="pt").to(self.config.device)
+                inputs = tokenizer.encode(prompt, return_tensors="pt").to(
+                    self.config.device
+                )
 
                 with torch.no_grad():
                     outputs = model.generate(
@@ -169,7 +177,7 @@ class ABTestHarness:
                         max_length=inputs.size(1) + 100,
                         temperature=0.7,
                         do_sample=True,
-                        pad_token_id=tokenizer.eos_token_id
+                        pad_token_id=tokenizer.eos_token_id,
                     )
 
                 response = tokenizer.decode(outputs[0], skip_special_tokens=True)
@@ -184,7 +192,9 @@ class ABTestHarness:
                     variant.success_count += 1
 
             except Exception as e:
-                logger.warning(f"Test failed for variant {variant.id} on task '{task[:30]}...': {e}")
+                logger.warning(
+                    f"Test failed for variant {variant.id} on task '{task[:30]}...': {e}"
+                )
                 variant.test_count += 1
 
         return total_score / max(successful_tests, 1)
@@ -211,7 +221,7 @@ class ABTestHarness:
 
         elif "poem" in task.lower():
             # Look for poetic elements
-            lines = response.split('\n')
+            lines = response.split("\n")
             if len(lines) > 2:
                 score += 0.2
             if any(len(line) > 20 for line in lines):
@@ -219,7 +229,10 @@ class ABTestHarness:
 
         elif "code" in task.lower():
             # Look for code elements
-            if any(keyword in response for keyword in ["def ", "function", "print", "return"]):
+            if any(
+                keyword in response
+                for keyword in ["def ", "function", "print", "return"]
+            ):
                 score += 0.3
             if "{" in response or "(" in response:
                 score += 0.2
@@ -235,9 +248,11 @@ class ABTestHarness:
 
         return min(score, 1.0)
 
+
 # ============================================================================
 # Weight Baking System
 # ============================================================================
+
 
 class PromptWeightBaker:
     """Bakes optimal prompts into model weights"""
@@ -245,7 +260,9 @@ class PromptWeightBaker:
     def __init__(self, config: PromptBakingConfig):
         self.config = config
 
-    async def bake_prompt_weights(self, model, tokenizer, best_prompt_template: str) -> nn.Module:
+    async def bake_prompt_weights(
+        self, model, tokenizer, best_prompt_template: str
+    ) -> nn.Module:
         """Bake prompt patterns into model weights"""
         logger.info("Starting prompt weight baking")
 
@@ -255,14 +272,16 @@ class PromptWeightBaker:
         # Create optimizer for specific layers
         baking_params = []
         for layer_idx in self.config.prompt_embedding_layers:
-            if hasattr(model, 'transformer') and hasattr(model.transformer, 'h'):
+            if hasattr(model, "transformer") and hasattr(model.transformer, "h"):
                 if layer_idx < len(model.transformer.h):
                     layer = model.transformer.h[layer_idx]
                     baking_params.extend(list(layer.parameters()))
 
         if not baking_params:
-            logger.warning("No suitable layers found for baking, using embedding parameters")
-            if hasattr(model, 'transformer') and hasattr(model.transformer, 'wte'):
+            logger.warning(
+                "No suitable layers found for baking, using embedding parameters"
+            )
+            if hasattr(model, "transformer") and hasattr(model.transformer, "wte"):
                 baking_params = list(model.transformer.wte.parameters())
 
         optimizer = AdamW(baking_params, lr=self.config.baking_learning_rate)
@@ -274,7 +293,10 @@ class PromptWeightBaker:
         for epoch in range(self.config.baking_epochs):
             epoch_loss = 0.0
 
-            for batch in tqdm(training_data, desc=f"Baking epoch {epoch+1}/{self.config.baking_epochs}"):
+            for batch in tqdm(
+                training_data,
+                desc=f"Baking epoch {epoch + 1}/{self.config.baking_epochs}",
+            ):
                 try:
                     # Tokenize batch
                     inputs = tokenizer(
@@ -282,7 +304,7 @@ class PromptWeightBaker:
                         padding=True,
                         truncation=True,
                         max_length=self.config.max_sequence_length,
-                        return_tensors="pt"
+                        return_tensors="pt",
                     ).to(self.config.device)
 
                     # Forward pass
@@ -302,7 +324,9 @@ class PromptWeightBaker:
 
             avg_epoch_loss = epoch_loss / len(training_data)
             total_loss += avg_epoch_loss
-            logger.info(f"Baking epoch {epoch+1} completed, loss: {avg_epoch_loss:.4f}")
+            logger.info(
+                f"Baking epoch {epoch + 1} completed, loss: {avg_epoch_loss:.4f}"
+            )
 
         model.eval()
         avg_total_loss = total_loss / self.config.baking_epochs
@@ -310,7 +334,7 @@ class PromptWeightBaker:
 
         return model
 
-    def prepare_baking_data(self, prompt_template: str) -> List[List[str]]:
+    def prepare_baking_data(self, prompt_template: str) -> list[list[str]]:
         """Prepare training data for prompt baking"""
         training_examples = []
 
@@ -325,21 +349,23 @@ class PromptWeightBaker:
             "Describe the water cycle",
             "What is Python programming?",
             "Explain renewable energy",
-            "How does photosynthesis work?"
+            "How does photosynthesis work?",
         ]
 
         # Create batches
         batch_size = self.config.batch_size
         for i in range(0, len(sample_tasks), batch_size):
-            batch_tasks = sample_tasks[i:i+batch_size]
+            batch_tasks = sample_tasks[i : i + batch_size]
             batch_prompts = [prompt_template.format(task=task) for task in batch_tasks]
             training_examples.append(batch_prompts)
 
         return training_examples
 
+
 # ============================================================================
 # Tool Integration System
 # ============================================================================
+
 
 class ToolIntegrationSystem:
     """Integrates tools with prompt-optimized models"""
@@ -349,10 +375,10 @@ class ToolIntegrationSystem:
         self.available_tools = {
             "calculator": self.calculator_tool,
             "search": self.search_tool,
-            "code_executor": self.code_executor_tool
+            "code_executor": self.code_executor_tool,
         }
 
-    async def integrate_tools(self, model, tokenizer) -> Dict[str, Any]:
+    async def integrate_tools(self, model, tokenizer) -> dict[str, Any]:
         """Test tool integration capabilities"""
         if not self.config.enable_tool_integration:
             return {"tool_integration": "disabled"}
@@ -364,7 +390,9 @@ class ToolIntegrationSystem:
         for tool_name in self.config.available_tools:
             if tool_name in self.available_tools:
                 try:
-                    result = await self.test_tool_integration(tool_name, model, tokenizer)
+                    result = await self.test_tool_integration(
+                        tool_name, model, tokenizer
+                    )
                     integration_results[tool_name] = result
                     logger.info(f"Tool '{tool_name}' integration: {result['success']}")
                 except Exception as e:
@@ -373,13 +401,15 @@ class ToolIntegrationSystem:
 
         return integration_results
 
-    async def test_tool_integration(self, tool_name: str, model, tokenizer) -> Dict[str, Any]:
+    async def test_tool_integration(
+        self, tool_name: str, model, tokenizer
+    ) -> dict[str, Any]:
         """Test integration with a specific tool"""
         # Create tool-specific test prompt
         test_prompts = {
             "calculator": "Use the calculator to compute 25 * 18 + 7",
             "search": "Search for information about machine learning",
-            "code_executor": "Execute this Python code: print('Hello, World!')"
+            "code_executor": "Execute this Python code: print('Hello, World!')",
         }
 
         prompt = test_prompts.get(tool_name, f"Use the {tool_name} tool")
@@ -393,7 +423,7 @@ class ToolIntegrationSystem:
                 max_length=inputs.size(1) + 100,
                 temperature=0.7,
                 do_sample=True,
-                pad_token_id=tokenizer.eos_token_id
+                pad_token_id=tokenizer.eos_token_id,
             )
 
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
@@ -405,7 +435,7 @@ class ToolIntegrationSystem:
             "success": True,
             "response": response,
             "tool_result": tool_result,
-            "integration_score": 0.8  # Simplified scoring
+            "integration_score": 0.8,  # Simplified scoring
         }
 
     async def calculator_tool(self, prompt: str) -> str:
@@ -428,9 +458,11 @@ class ToolIntegrationSystem:
             return "Output: Hello, World!"
         return "Code executed"
 
+
 # ============================================================================
 # Main Prompt Baking Pipeline
 # ============================================================================
+
 
 class PromptBakingPipeline:
     """Main pipeline for prompt baking optimization"""
@@ -450,14 +482,14 @@ class PromptBakingPipeline:
                 entity=self.config.wandb_entity,
                 job_type="prompt_baking",
                 tags=self.config.wandb_tags,
-                config=self.config.dict()
+                config=self.config.dict(),
             )
             logger.info(f"W&B initialized: {self.wandb_run.url}")
         except Exception as e:
             logger.error(f"W&B initialization failed: {e}")
             self.wandb_run = None
 
-    async def run_prompt_baking_pipeline(self) -> Dict[str, Any]:
+    async def run_prompt_baking_pipeline(self) -> dict[str, Any]:
         """Run the complete prompt baking pipeline"""
         try:
             # Initialize W&B
@@ -472,8 +504,10 @@ class PromptBakingPipeline:
 
             model = AutoModelForCausalLM.from_pretrained(
                 self.config.input_model_path,
-                torch_dtype=torch.float16 if self.config.device == "cuda" else torch.float32,
-                device_map=self.config.device
+                torch_dtype=torch.float16
+                if self.config.device == "cuda"
+                else torch.float32,
+                device_map=self.config.device,
             )
 
             results = {}
@@ -488,7 +522,9 @@ class PromptBakingPipeline:
 
             # Phase 2: Bake best prompt into weights
             best_variant_id = ab_results["best_variant"]
-            best_variant = next(v for v in self.ab_harness.variants if v.id == best_variant_id)
+            best_variant = next(
+                v for v in self.ab_harness.variants if v.id == best_variant_id
+            )
 
             logger.info(f"Phase 2: Baking best prompt variant: {best_variant.name}")
             baked_model = await self.weight_baker.bake_prompt_weights(
@@ -497,7 +533,9 @@ class PromptBakingPipeline:
 
             # Phase 3: Test tool integration
             logger.info("Phase 3: Testing tool integration")
-            tool_results = await self.tool_integration.integrate_tools(baked_model, tokenizer)
+            tool_results = await self.tool_integration.integrate_tools(
+                baked_model, tokenizer
+            )
             results["tool_integration"] = tool_results
 
             if self.wandb_run:
@@ -512,13 +550,15 @@ class PromptBakingPipeline:
             tokenizer.save_pretrained(output_path)
 
             # Final results
-            results.update({
-                "success": True,
-                "best_prompt_template": best_variant.template,
-                "best_performance": ab_results["best_performance"],
-                "output_model_path": str(output_path),
-                "baking_config": self.config.dict()
-            })
+            results.update(
+                {
+                    "success": True,
+                    "best_prompt_template": best_variant.template,
+                    "best_performance": ab_results["best_performance"],
+                    "output_model_path": str(output_path),
+                    "baking_config": self.config.dict(),
+                }
+            )
 
             logger.info("Prompt baking pipeline completed successfully")
             return results
@@ -527,23 +567,20 @@ class PromptBakingPipeline:
             logger.error(f"Prompt baking pipeline failed: {e}")
             logger.error(traceback.format_exc())
 
-            return {
-                "success": False,
-                "error": str(e),
-                "output_model_path": None
-            }
+            return {"success": False, "error": str(e), "output_model_path": None}
 
         finally:
             if self.wandb_run:
                 self.wandb_run.finish()
 
+
 # ============================================================================
 # Orchestrator Integration
 # ============================================================================
 
-async def run_prompt_baking(config: Dict[str, Any]) -> 'PhaseResult':
-    """
-    Orchestrator entry point for Prompt Baking phase.
+
+async def run_prompt_baking(config: dict[str, Any]) -> "PhaseResult":
+    """Orchestrator entry point for Prompt Baking phase.
 
     Args:
         config: Configuration dictionary with prompt baking parameters
@@ -551,7 +588,12 @@ async def run_prompt_baking(config: Dict[str, Any]) -> 'PhaseResult':
     Returns:
         PhaseResult with status, artifacts, and metrics
     """
-    from agent_forge.forge_orchestrator import PhaseResult, PhaseStatus, PhaseType, PhaseArtifact
+    from agent_forge.forge_orchestrator import (
+        PhaseArtifact,
+        PhaseResult,
+        PhaseStatus,
+        PhaseType,
+    )
 
     start_time = time.time()
 
@@ -567,44 +609,47 @@ async def run_prompt_baking(config: Dict[str, Any]) -> 'PhaseResult':
 
         duration = time.time() - start_time
 
-        if results['success']:
+        if results["success"]:
             # Success - create artifacts
             artifacts = [
                 PhaseArtifact(
                     phase_type=PhaseType.PROMPT_BAKING,
                     artifact_type="baked_model",
                     data={
-                        "model_path": results['output_model_path'],
-                        "best_prompt_template": results['best_prompt_template'],
-                        "best_performance": results['best_performance'],
-                        "ab_test_results": results.get('ab_test', {}),
-                        "tool_integration": results.get('tool_integration', {})
+                        "model_path": results["output_model_path"],
+                        "best_prompt_template": results["best_prompt_template"],
+                        "best_performance": results["best_performance"],
+                        "ab_test_results": results.get("ab_test", {}),
+                        "tool_integration": results.get("tool_integration", {}),
                     },
                     metadata={
                         "baking_config": baking_config.dict(),
-                        "baking_method": "weight_optimization"
-                    }
+                        "baking_method": "weight_optimization",
+                    },
                 )
             ]
 
             # Create metrics summary
             metrics = {
-                "best_prompt_performance": results['best_performance'],
+                "best_prompt_performance": results["best_performance"],
                 "execution_time": duration,
                 "success": True,
                 "variants_tested": len(baking_config.prompt_variants),
                 "tool_integration_enabled": baking_config.enable_tool_integration,
                 "ab_test_samples": baking_config.ab_test_samples,
-                "baking_epochs": baking_config.baking_epochs
+                "baking_epochs": baking_config.baking_epochs,
             }
 
             # Add A/B test metrics
-            if 'ab_test' in results:
-                ab_data = results['ab_test']
-                metrics.update({
-                    "best_variant_id": ab_data.get('best_variant'),
-                    "performance_improvement": ab_data.get('best_performance', 0) - 0.5  # vs baseline
-                })
+            if "ab_test" in results:
+                ab_data = results["ab_test"]
+                metrics.update(
+                    {
+                        "best_variant_id": ab_data.get("best_variant"),
+                        "performance_improvement": ab_data.get("best_performance", 0)
+                        - 0.5,  # vs baseline
+                    }
+                )
 
             logger.info(f"Prompt Baking completed successfully in {duration:.1f}s")
 
@@ -615,23 +660,24 @@ async def run_prompt_baking(config: Dict[str, Any]) -> 'PhaseResult':
                 end_time=datetime.now(),
                 duration_seconds=duration,
                 artifacts_produced=artifacts,
-                metrics=metrics
+                metrics=metrics,
             )
-        else:
-            # Failed prompt baking
-            return PhaseResult(
-                phase_type=PhaseType.PROMPT_BAKING,
-                status=PhaseStatus.FAILED,
-                start_time=datetime.fromtimestamp(start_time),
-                end_time=datetime.now(),
-                duration_seconds=duration,
-                error_message=results.get('error', 'Prompt baking failed with unknown error'),
-                metrics={"execution_time": duration}
-            )
+        # Failed prompt baking
+        return PhaseResult(
+            phase_type=PhaseType.PROMPT_BAKING,
+            status=PhaseStatus.FAILED,
+            start_time=datetime.fromtimestamp(start_time),
+            end_time=datetime.now(),
+            duration_seconds=duration,
+            error_message=results.get(
+                "error", "Prompt baking failed with unknown error"
+            ),
+            metrics={"execution_time": duration},
+        )
 
     except Exception as e:
         duration = time.time() - start_time
-        error_msg = f"Prompt Baking phase failed: {str(e)}"
+        error_msg = f"Prompt Baking phase failed: {e!s}"
         logger.error(error_msg)
         logger.error(traceback.format_exc())
 
@@ -642,8 +688,9 @@ async def run_prompt_baking(config: Dict[str, Any]) -> 'PhaseResult':
             end_time=datetime.now(),
             duration_seconds=duration,
             error_message=error_msg,
-            metrics={"execution_time": duration}
+            metrics={"execution_time": duration},
         )
+
 
 # Make the entry point discoverable
 run = run_prompt_baking  # Alias for orchestrator discovery
@@ -666,13 +713,12 @@ if __name__ == "__main__":
     try:
         # Load configuration
         if args.config and Path(args.config).exists():
-            with open(args.config, 'r') as f:
+            with open(args.config) as f:
                 config_data = json.load(f)
             config = PromptBakingConfig(**config_data)
         else:
             config = PromptBakingConfig(
-                input_model_path=args.input_model,
-                output_model_path=args.output_model
+                input_model_path=args.input_model, output_model_path=args.output_model
             )
 
         # Run pipeline
@@ -681,13 +727,13 @@ if __name__ == "__main__":
         logger.info("Starting prompt baking pipeline...")
         results = asyncio.run(pipeline.run_prompt_baking_pipeline())
 
-        if results['success']:
+        if results["success"]:
             logger.info("Prompt baking completed successfully!")
             logger.info(f"Baked model: {results['output_model_path']}")
             logger.info(f"Best performance: {results['best_performance']:.3f}")
         else:
             logger.error("Prompt baking failed!")
-            logger.error(results.get('error', 'Unknown error'))
+            logger.error(results.get("error", "Unknown error"))
 
     except Exception as e:
         logger.error(f"Prompt baking pipeline failed: {e}")

@@ -2,20 +2,28 @@
 Unit tests for Enhanced Innovator Repair Agent
 """
 
-import pytest
 import asyncio
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
-
-import sys
 from pathlib import Path
+import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from mcp_servers.hyperag.repair.innovator_agent import (
-    InnovatorAgent, RepairOperation, RepairProposalSet, RepairOperationType
+    InnovatorAgent,
+    RepairOperation,
+    RepairOperationType,
+    RepairProposalSet,
 )
-from mcp_servers.hyperag.repair.llm_driver import LLMDriver, ModelConfig, GenerationResponse, ModelBackend
+from mcp_servers.hyperag.repair.llm_driver import (
+    GenerationResponse,
+    LLMDriver,
+    ModelBackend,
+    ModelConfig,
+)
 
 
 class TestRepairProposalSet:
@@ -28,20 +36,18 @@ class TestRepairProposalSet:
                 operation_type=RepairOperationType.DELETE_EDGE,
                 target_id="edge_1",
                 rationale="Remove bad edge",
-                confidence=0.9
+                confidence=0.9,
             ),
             RepairOperation(
                 operation_type=RepairOperationType.ADD_EDGE,
                 target_id="edge_2",
                 rationale="Add good edge",
-                confidence=0.8
-            )
+                confidence=0.8,
+            ),
         ]
 
         proposal_set = RepairProposalSet(
-            proposals=operations,
-            violation_id="VIO_001",
-            gdc_rule="test_rule"
+            proposals=operations, violation_id="VIO_001", gdc_rule="test_rule"
         )
 
         assert proposal_set.violation_id == "VIO_001"
@@ -56,10 +62,7 @@ class TestRepairProposalSet:
         # Valid proposals
         valid_ops = [
             RepairOperation(
-                RepairOperationType.UPDATE_ATTR,
-                "node_1",
-                "Good rationale",
-                0.8
+                RepairOperationType.UPDATE_ATTR, "node_1", "Good rationale", 0.8
             )
         ]
         valid_set = RepairProposalSet(valid_ops, "VIO_002", "test_rule")
@@ -74,7 +77,7 @@ class TestRepairProposalSet:
                 RepairOperationType.UPDATE_ATTR,
                 "",  # Empty target_id
                 "Bad operation",
-                0.5
+                0.5,
             )
         ]
         invalid_set = RepairProposalSet(invalid_ops, "VIO_003", "test_rule")
@@ -87,10 +90,7 @@ class TestRepairProposalSet:
         """Test JSON array serialization"""
         operations = [
             RepairOperation(
-                RepairOperationType.DELETE_EDGE,
-                "edge_1",
-                "Delete operation",
-                0.9
+                RepairOperationType.DELETE_EDGE, "edge_1", "Delete operation", 0.9
             )
         ]
 
@@ -109,7 +109,7 @@ class TestRepairProposalSet:
         operations = [
             RepairOperation(RepairOperationType.DELETE_EDGE, "e1", "high conf", 0.9),
             RepairOperation(RepairOperationType.ADD_EDGE, "e2", "medium conf", 0.7),
-            RepairOperation(RepairOperationType.UPDATE_ATTR, "n1", "low conf", 0.5)
+            RepairOperation(RepairOperationType.UPDATE_ATTR, "n1", "low conf", 0.5),
         ]
 
         proposal_set = RepairProposalSet(operations, "VIO_005", "test_rule")
@@ -129,7 +129,7 @@ class TestEnhancedLLMDriver:
             model_name="test_model",
             backend=ModelBackend.OLLAMA,
             requests_per_minute=60,
-            max_concurrent_requests=3
+            max_concurrent_requests=3,
         )
 
     def test_lmstudio_backend_creation(self, mock_config):
@@ -139,6 +139,7 @@ class TestEnhancedLLMDriver:
 
         assert driver.config.backend == ModelBackend.LMSTUDIO
         from mcp_servers.hyperag.repair.llm_driver import LMStudioBackend
+
         assert isinstance(driver.backend, LMStudioBackend)
 
     @pytest.mark.asyncio
@@ -146,11 +147,16 @@ class TestEnhancedLLMDriver:
         """Test rate limiting functionality"""
         mock_config.requests_per_minute = 2  # Very low limit for testing
 
-        with patch('mcp_servers.hyperag.repair.llm_driver.OllamaBackend') as MockBackend:
+        with patch(
+            "mcp_servers.hyperag.repair.llm_driver.OllamaBackend"
+        ) as MockBackend:
             mock_backend = AsyncMock()
             mock_response = GenerationResponse(
-                text="test", finish_reason="completed",
-                usage={"total_tokens": 10}, model="test", latency_ms=100
+                text="test",
+                finish_reason="completed",
+                usage={"total_tokens": 10},
+                model="test",
+                latency_ms=100,
             )
             mock_backend.generate.return_value = mock_response
             MockBackend.return_value = mock_backend
@@ -179,7 +185,7 @@ class TestEnhancedLLMDriver:
             finish_reason="completed",
             usage={"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
             model="test_model",
-            latency_ms=100.0
+            latency_ms=100.0,
         )
 
         # Log a request
@@ -210,7 +216,7 @@ class TestEnhancedLLMDriver:
                 finish_reason="completed",
                 usage={"total_tokens": 10 + i},
                 model="test_model",
-                latency_ms=100.0 + i * 10
+                latency_ms=100.0 + i * 10,
             )
             driver._log_request(f"prompt {i}", None, mock_response)
 
@@ -234,14 +240,14 @@ class TestEnhancedInnovatorAgent:
     @pytest.fixture
     def agent(self, mock_llm_driver):
         """Create enhanced InnovatorAgent"""
-        from mcp_servers.hyperag.repair.templates import TemplateEncoder
         from mcp_servers.hyperag.repair.innovator_agent import PromptComposer
+        from mcp_servers.hyperag.repair.templates import TemplateEncoder
 
         return InnovatorAgent(
             llm_driver=mock_llm_driver,
             template_encoder=TemplateEncoder(),
             prompt_composer=PromptComposer(),
-            domain="general"
+            domain="general",
         )
 
     def test_enhanced_json_parsing_array_format(self, agent):
@@ -267,8 +273,8 @@ That's the complete set of operations."""
     def test_enhanced_json_parsing_fallback_jsonl(self, agent):
         """Test fallback to JSONL parsing"""
         # Test JSONL format fallback
-        response_text = '''{"op":"delete_edge","target_id":"edge_1","rationale":"Remove bad edge","confidence":0.9}
-{"op":"update_attr","target_id":"node_1","property_name":"status","property_value":"fixed","rationale":"Fix it","confidence":0.8}'''
+        response_text = """{"op":"delete_edge","target_id":"edge_1","rationale":"Remove bad edge","confidence":0.9}
+{"op":"update_attr","target_id":"node_1","property_name":"status","property_value":"fixed","rationale":"Fix it","confidence":0.8}"""
 
         operations = agent._parse_repair_operations_enhanced(response_text)
 
@@ -279,11 +285,11 @@ That's the complete set of operations."""
     def test_confidence_validation_in_parsing(self, agent):
         """Test confidence validation during parsing"""
         # Test with invalid confidence values
-        response_text = '''[
+        response_text = """[
   {"op":"delete_edge","target":"edge_1","rationale":"test","confidence":"invalid"},
   {"op":"add_edge","target":"edge_2","rationale":"test","confidence":1.5},
   {"op":"update_attr","target":"node_1","rationale":"test","confidence":-0.1}
-]'''
+]"""
 
         operations = agent._parse_repair_operations_enhanced(response_text)
 
@@ -299,7 +305,7 @@ That's the complete set of operations."""
         violation_data = {
             "violation_id": "VIO_007",
             "rule_name": "test_rule",
-            "subgraph": {"nodes": [], "edges": []}
+            "subgraph": {"nodes": [], "edges": []},
         }
 
         # Mock LLM response with JSON array
@@ -308,7 +314,7 @@ That's the complete set of operations."""
             finish_reason="completed",
             usage={"total_tokens": 50},
             model="test_model",
-            latency_ms=100.0
+            latency_ms=100.0,
         )
         mock_llm_driver.generate.return_value = mock_response
 
@@ -321,7 +327,9 @@ That's the complete set of operations."""
         assert proposal_set.gdc_rule == "test_rule"
         assert len(proposal_set.proposals) == 1
         assert proposal_set.is_valid is True
-        assert proposal_set.proposals[0].operation_type == RepairOperationType.DELETE_EDGE
+        assert (
+            proposal_set.proposals[0].operation_type == RepairOperationType.DELETE_EDGE
+        )
 
     @pytest.mark.asyncio
     async def test_proposal_set_validation_integration(self, agent, mock_llm_driver):
@@ -329,7 +337,7 @@ That's the complete set of operations."""
         violation_data = {
             "violation_id": "VIO_008",
             "rule_name": "test_rule",
-            "subgraph": {"nodes": [], "edges": []}
+            "subgraph": {"nodes": [], "edges": []},
         }
 
         # Mock LLM response with invalid operation
@@ -338,7 +346,7 @@ That's the complete set of operations."""
             finish_reason="completed",
             usage={"total_tokens": 30},
             model="test_model",
-            latency_ms=100.0
+            latency_ms=100.0,
         )
         mock_llm_driver.generate.return_value = mock_response
 
@@ -353,7 +361,7 @@ That's the complete set of operations."""
         config = ModelConfig(
             model_name="test_model",
             backend=ModelBackend.LMSTUDIO,
-            api_endpoint="http://localhost:1234"
+            api_endpoint="http://localhost:1234",
         )
 
         driver = LLMDriver(config)
@@ -361,6 +369,7 @@ That's the complete set of operations."""
 
         # Test that the backend was created properly
         from mcp_servers.hyperag.repair.llm_driver import LMStudioBackend
+
         assert isinstance(driver.backend, LMStudioBackend)
         assert driver.backend.base_url == "http://localhost:1234"
 

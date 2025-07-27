@@ -4,18 +4,21 @@ Unit tests for GDC Registry
 Tests the GDC specification loading and management system.
 """
 
-import pytest
-import tempfile
-import yaml
 from pathlib import Path
-from unittest.mock import patch
-
 import sys
+import tempfile
+
+import pytest
+import yaml
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from mcp_servers.hyperag.gdc.registry import (
-    load_gdc_registry, get_gdcs_by_category, get_gdcs_by_severity,
-    get_enabled_gdcs, validate_registry
+    get_enabled_gdcs,
+    get_gdcs_by_category,
+    get_gdcs_by_severity,
+    load_gdc_registry,
+    validate_registry,
 )
 from mcp_servers.hyperag.gdc.specs import GDCSpec
 
@@ -34,7 +37,7 @@ class TestGDCRegistry:
                 "severity": "high",
                 "suggested_action": "normalize_confidence",
                 "category": "data_quality",
-                "enabled": True
+                "enabled": True,
             },
             {
                 "id": "GDC_ORPHANED_HYPEREDGE",
@@ -43,7 +46,7 @@ class TestGDCRegistry:
                 "severity": "medium",
                 "suggested_action": "delete_hyperedge",
                 "category": "structural",
-                "enabled": True
+                "enabled": True,
             },
             {
                 "id": "GDC_DISABLED_TEST",
@@ -52,14 +55,14 @@ class TestGDCRegistry:
                 "severity": "low",
                 "suggested_action": "test_action",
                 "category": "test",
-                "enabled": False
-            }
+                "enabled": False,
+            },
         ]
 
     @pytest.fixture
     def temp_yaml_file(self, sample_gdc_yaml):
         """Create temporary YAML file with sample GDC configuration"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(sample_gdc_yaml, f)
             return Path(f.name)
 
@@ -89,7 +92,7 @@ class TestGDCRegistry:
 
     def test_load_gdc_registry_invalid_yaml(self):
         """Test handling of invalid YAML content"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write("invalid: yaml: content: [")
             temp_file = Path(f.name)
 
@@ -100,7 +103,7 @@ class TestGDCRegistry:
 
     def test_load_gdc_registry_not_list(self):
         """Test handling of YAML that's not a list"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump({"not": "a list"}, f)
             temp_file = Path(f.name)
 
@@ -119,7 +122,7 @@ class TestGDCRegistry:
             }
         ]
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(incomplete_spec, f)
             temp_file = Path(f.name)
 
@@ -136,18 +139,18 @@ class TestGDCRegistry:
                 "description": "First duplicate",
                 "cypher": "MATCH (n) RETURN n",
                 "severity": "low",
-                "suggested_action": "action1"
+                "suggested_action": "action1",
             },
             {
                 "id": "GDC_DUPLICATE",
                 "description": "Second duplicate",
                 "cypher": "MATCH (m) RETURN m",
                 "severity": "high",
-                "suggested_action": "action2"
-            }
+                "suggested_action": "action2",
+            },
         ]
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(duplicate_specs, f)
             temp_file = Path(f.name)
 
@@ -224,7 +227,7 @@ class TestGDCRegistry:
                 description="GDC with write operation",
                 cypher="CREATE (n:BadNode) RETURN n",
                 severity="high",
-                suggested_action="test"
+                suggested_action="test",
             )
         }
 
@@ -242,7 +245,7 @@ class TestGDCRegistry:
                 description="GDC with empty cypher",
                 cypher="   ",  # Empty/whitespace only
                 severity="medium",
-                suggested_action="test"
+                suggested_action="test",
             )
         }
 
@@ -260,14 +263,16 @@ class TestGDCRegistry:
                 description="Only low severity GDC",
                 cypher="MATCH (n) RETURN n",
                 severity="low",
-                suggested_action="test"
+                suggested_action="test",
             )
         }
 
         issues = validate_registry(registry)
 
         # Should detect missing high-severity GDCs
-        high_severity_issues = [issue for issue in issues if "No high-severity" in issue]
+        high_severity_issues = [
+            issue for issue in issues if "No high-severity" in issue
+        ]
         assert len(high_severity_issues) > 0
 
     def test_registry_reload_functionality(self, temp_yaml_file):
@@ -303,7 +308,7 @@ class TestGDCSpecValidation:
             severity="medium",
             suggested_action="test_action",
             category="test",
-            enabled=True
+            enabled=True,
         )
 
         assert spec.id == "GDC_VALID_TEST"
@@ -318,7 +323,7 @@ class TestGDCSpecValidation:
             description="Test defaults",
             cypher="MATCH (n) RETURN n",
             severity="low",
-            suggested_action="test"
+            suggested_action="test",
         )
 
         # Check default values
@@ -334,7 +339,7 @@ class TestGDCSpecValidation:
                 description="Invalid ID",
                 cypher="MATCH (n) RETURN n",
                 severity="low",
-                suggested_action="test"
+                suggested_action="test",
             )
 
     def test_gdc_spec_invalid_severity(self):
@@ -345,7 +350,7 @@ class TestGDCSpecValidation:
                 description="Invalid severity",
                 cypher="MATCH (n) RETURN n",
                 severity="extreme",
-                suggested_action="test"
+                suggested_action="test",
             )
 
 

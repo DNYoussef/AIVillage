@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-HypeRAG Graph-Doctor CLI Scanner
+"""HypeRAG Graph-Doctor CLI Scanner
 
 Command-line interface for detecting Graph Denial Constraint (GDC) violations
 in Neo4j knowledge graphs.
@@ -14,18 +13,17 @@ Usage:
 import argparse
 import asyncio
 import csv
+from datetime import datetime, timezone
 import json
 import logging
-import sys
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+import sys
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from mcp_servers.hyperag.gdc.extractor import GDCExtractor, GDCExtractorContext
+from mcp_servers.hyperag.gdc.extractor import GDCExtractorContext
 from mcp_servers.hyperag.gdc.registry import GDC_REGISTRY, validate_registry
 from mcp_servers.hyperag.gdc.specs import Violation
 
@@ -37,12 +35,14 @@ def setup_logging(level: str = "INFO") -> None:
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(sys.stdout),
-            logging.FileHandler(f"gdc_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
-        ]
+            logging.FileHandler(
+                f"gdc_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+            ),
+        ],
     )
 
 
-def format_violation_summary(violations: List[Violation]) -> str:
+def format_violation_summary(violations: list[Violation]) -> str:
     """Create a human-readable summary of violations"""
     if not violations:
         return "✅ No violations detected!"
@@ -79,64 +79,72 @@ def format_violation_summary(violations: List[Violation]) -> str:
     return summary
 
 
-def save_violations_json(violations: List[Violation], output_path: Path) -> None:
+def save_violations_json(violations: list[Violation], output_path: Path) -> None:
     """Save violations to JSON file"""
     data = {
         "scan_timestamp": datetime.now(timezone.utc).isoformat(),
         "total_violations": len(violations),
-        "violations": [v.to_dict() for v in violations]
+        "violations": [v.to_dict() for v in violations],
     }
 
-    with output_path.open('w', encoding='utf-8') as f:
+    with output_path.open("w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, default=str)
 
     print(f"💾 Saved {len(violations)} violations to {output_path}")
 
 
-def save_violations_csv(violations: List[Violation], output_path: Path) -> None:
+def save_violations_csv(violations: list[Violation], output_path: Path) -> None:
     """Save violations to CSV file"""
     if not violations:
         print("No violations to save")
         return
 
-    with output_path.open('w', newline='', encoding='utf-8') as f:
+    with output_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
 
         # Write header
-        writer.writerow([
-            "violation_id", "gdc_id", "severity", "detected_at",
-            "suggested_repair", "confidence_score", "node_count",
-            "relationship_count", "description"
-        ])
+        writer.writerow(
+            [
+                "violation_id",
+                "gdc_id",
+                "severity",
+                "detected_at",
+                "suggested_repair",
+                "confidence_score",
+                "node_count",
+                "relationship_count",
+                "description",
+            ]
+        )
 
         # Write violation data
         for v in violations:
-            writer.writerow([
-                v.violation_id,
-                v.gdc_id,
-                v.severity,
-                v.detected_at.isoformat(),
-                v.suggested_repair,
-                v.confidence_score,
-                len(v.nodes),
-                len(v.relationships),
-                v.metadata.get("gdc_description", "")
-            ])
+            writer.writerow(
+                [
+                    v.violation_id,
+                    v.gdc_id,
+                    v.severity,
+                    v.detected_at.isoformat(),
+                    v.suggested_repair,
+                    v.confidence_score,
+                    len(v.nodes),
+                    len(v.relationships),
+                    v.metadata.get("gdc_description", ""),
+                ]
+            )
 
     print(f"💾 Saved {len(violations)} violations to {output_path}")
 
 
 async def run_scan(args: argparse.Namespace) -> None:
     """Execute the GDC scan"""
-
     # Initialize extractor
     async with GDCExtractorContext(
         neo4j_uri=args.neo4j_uri,
         neo4j_auth=(args.neo4j_user, args.neo4j_password),
         max_concurrent_queries=args.max_concurrent,
-        default_limit=args.limit
+        default_limit=args.limit,
     ) as extractor:
-
         # Health check
         health = await extractor.health_check()
         if health["status"] != "healthy":
@@ -149,10 +157,12 @@ async def run_scan(args: argparse.Namespace) -> None:
         if args.verbose:
             stats = await extractor.get_graph_stats()
             if stats and "total_nodes" in stats:
-                print(f"📊 Graph stats: {stats['total_nodes']} nodes, {stats['total_relationships']} relationships")
+                print(
+                    f"📊 Graph stats: {stats['total_nodes']} nodes, {stats['total_relationships']} relationships"
+                )
 
         # Execute scan
-        print(f"🔍 Starting GDC scan...")
+        print("🔍 Starting GDC scan...")
         start_time = datetime.now()
 
         if args.gdc and args.gdc != "ALL":
@@ -163,7 +173,7 @@ async def run_scan(args: argparse.Namespace) -> None:
             violations = await extractor.scan_all(
                 limit=args.limit,
                 enabled_only=not args.include_disabled,
-                severity_filter=args.severity
+                severity_filter=args.severity,
             )
 
         scan_duration = (datetime.now() - start_time).total_seconds()
@@ -248,24 +258,18 @@ Examples:
 
   # List all available GDCs
   python scripts/hyperag_scan_gdc.py --list-gdcs
-        """
+        """,
     )
 
     # GDC selection
-    parser.add_argument(
-        "--gdc",
-        default="ALL",
-        help="GDC ID to scan (default: ALL)"
-    )
+    parser.add_argument("--gdc", default="ALL", help="GDC ID to scan (default: ALL)")
     parser.add_argument(
         "--severity",
         choices=["low", "medium", "high"],
-        help="Only scan GDCs with specified severity"
+        help="Only scan GDCs with specified severity",
     )
     parser.add_argument(
-        "--include-disabled",
-        action="store_true",
-        help="Include disabled GDCs in scan"
+        "--include-disabled", action="store_true", help="Include disabled GDCs in scan"
     )
 
     # Scan parameters
@@ -273,65 +277,54 @@ Examples:
         "--limit",
         type=int,
         default=1000,
-        help="Maximum violations per GDC (default: 1000)"
+        help="Maximum violations per GDC (default: 1000)",
     )
     parser.add_argument(
         "--max-concurrent",
         type=int,
         default=5,
-        help="Maximum concurrent queries (default: 5)"
+        help="Maximum concurrent queries (default: 5)",
     )
 
     # Neo4j connection
     parser.add_argument(
         "--neo4j-uri",
         default="bolt://localhost:7687",
-        help="Neo4j connection URI (default: bolt://localhost:7687)"
+        help="Neo4j connection URI (default: bolt://localhost:7687)",
     )
     parser.add_argument(
-        "--neo4j-user",
-        default="neo4j",
-        help="Neo4j username (default: neo4j)"
+        "--neo4j-user", default="neo4j", help="Neo4j username (default: neo4j)"
     )
     parser.add_argument(
         "--neo4j-password",
         default="password",
-        help="Neo4j password (default: password)"
+        help="Neo4j password (default: password)",
     )
 
     # Output options
-    parser.add_argument(
-        "--output", "--out",
-        help="Output file path"
-    )
+    parser.add_argument("--output", "--out", help="Output file path")
     parser.add_argument(
         "--format",
         choices=["json", "csv"],
         default="json",
-        help="Output format (default: json)"
+        help="Output format (default: json)",
     )
 
     # Control options
     parser.add_argument(
         "--fail-on-violations",
         action="store_true",
-        help="Exit with error code if violations found"
+        help="Exit with error code if violations found",
     )
     parser.add_argument(
-        "--list-gdcs",
-        action="store_true",
-        help="List all available GDCs and exit"
+        "--list-gdcs", action="store_true", help="List all available GDCs and exit"
     )
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Verbose output"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
     parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         default="INFO",
-        help="Logging level (default: INFO)"
+        help="Logging level (default: INFO)",
     )
 
     args = parser.parse_args()

@@ -1,5 +1,4 @@
-"""
-MCP (Model Context Protocol) Refiner
+"""MCP (Model Context Protocol) Refiner
 
 Implements tool prompt refinement and optimization for MCP integration:
 - Automatic tool prompt optimization
@@ -10,43 +9,45 @@ Implements tool prompt refinement and optimization for MCP integration:
 """
 
 import asyncio
+from collections import Counter, defaultdict
+from dataclasses import dataclass
 import json
 import logging
+from pathlib import Path
 import re
 import time
-from collections import defaultdict, Counter
-from dataclasses import dataclass, asdict
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Set
+from typing import Any
+
 import numpy as np
-
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import wandb
-from langroid import ChatAgent, ChatAgentConfig, Task
-from langroid.language_models.openai_gpt import OpenAIGPTConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from agent_forge.geometry_feedback import GeometryTracker, UDaimonicCompass
+from agent_forge.geometry_feedback import GeometryTracker
+import wandb
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ToolUsagePattern:
     """Represents a pattern of tool usage."""
+
     tool_name: str
-    parameter_patterns: Dict[str, Any]
-    context_patterns: List[str]
+    parameter_patterns: dict[str, Any]
+    context_patterns: list[str]
     success_rate: float
     frequency: int
     avg_response_time: float
-    error_patterns: List[str]
+    error_patterns: list[str]
+
 
 @dataclass
 class PromptCandidate:
     """A candidate prompt for optimization."""
+
     prompt_text: str
     tool_name: str
-    parameters: Dict[str, str]
+    parameters: dict[str, str]
     performance_score: float
     usage_count: int
     success_count: int
@@ -58,9 +59,11 @@ class PromptCandidate:
     def success_rate(self) -> float:
         return self.success_count / max(1, self.usage_count)
 
+
 @dataclass
 class MCPRefinementConfig:
     """Configuration for MCP refinement."""
+
     model_path: str
     output_dir: str
     max_prompt_length: int = 512
@@ -71,6 +74,7 @@ class MCPRefinementConfig:
     evaluation_samples: int = 100
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
     wandb_project: str = "mcp-refinement"
+
 
 class ToolAnalyzer:
     """Analyzes tool usage patterns and performance."""
@@ -84,31 +88,33 @@ class ToolAnalyzer:
         self,
         tool_name: str,
         prompt: str,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
         success: bool,
         response_time: float,
         response_quality: float,
-        error_message: Optional[str] = None
+        error_message: str | None = None,
     ):
         """Log a tool usage event."""
         usage_event = {
-            'tool_name': tool_name,
-            'prompt': prompt,
-            'parameters': parameters,
-            'success': success,
-            'response_time': response_time,
-            'response_quality': response_quality,
-            'error_message': error_message,
-            'timestamp': time.time()
+            "tool_name": tool_name,
+            "prompt": prompt,
+            "parameters": parameters,
+            "success": success,
+            "response_time": response_time,
+            "response_quality": response_quality,
+            "error_message": error_message,
+            "timestamp": time.time(),
         }
 
         self.usage_logs.append(usage_event)
         self.tool_patterns[tool_name].append(usage_event)
-        self.performance_metrics[tool_name].append({
-            'success': success,
-            'response_time': response_time,
-            'response_quality': response_quality
-        })
+        self.performance_metrics[tool_name].append(
+            {
+                "success": success,
+                "response_time": response_time,
+                "response_quality": response_quality,
+            }
+        )
 
     def analyze_tool_patterns(self, tool_name: str) -> ToolUsagePattern:
         """Analyze usage patterns for a specific tool."""
@@ -120,7 +126,7 @@ class ToolAnalyzer:
                 success_rate=0.0,
                 frequency=0,
                 avg_response_time=0.0,
-                error_patterns=[]
+                error_patterns=[],
             )
 
         events = self.tool_patterns[tool_name]
@@ -129,7 +135,7 @@ class ToolAnalyzer:
         # Analyze parameter patterns
         param_patterns = defaultdict(Counter)
         for event in events:
-            for param, value in event['parameters'].items():
+            for param, value in event["parameters"].items():
                 if isinstance(value, str) and len(value) < 100:
                     param_patterns[param][value] += 1
 
@@ -137,10 +143,10 @@ class ToolAnalyzer:
         context_patterns = []
         for event in events:
             # Extract patterns from prompts
-            words = re.findall(r'\b\w+\b', event['prompt'].lower())
+            words = re.findall(r"\b\w+\b", event["prompt"].lower())
             if len(words) >= 3:
                 for i in range(len(words) - 2):
-                    trigram = ' '.join(words[i:i+3])
+                    trigram = " ".join(words[i : i + 3])
                     context_patterns.append(trigram)
 
         # Get most common context patterns
@@ -150,12 +156,12 @@ class ToolAnalyzer:
         # Analyze errors
         error_patterns = []
         for event in events:
-            if not event['success'] and event['error_message']:
-                error_patterns.append(event['error_message'])
+            if not event["success"] and event["error_message"]:
+                error_patterns.append(event["error_message"])
 
         # Calculate metrics
-        success_rate = sum(1 for m in metrics if m['success']) / len(metrics)
-        avg_response_time = np.mean([m['response_time'] for m in metrics])
+        success_rate = sum(1 for m in metrics if m["success"]) / len(metrics)
+        avg_response_time = np.mean([m["response_time"] for m in metrics])
 
         return ToolUsagePattern(
             tool_name=tool_name,
@@ -164,22 +170,23 @@ class ToolAnalyzer:
             success_rate=success_rate,
             frequency=len(events),
             avg_response_time=avg_response_time,
-            error_patterns=error_patterns[:10]  # Top 10 error patterns
+            error_patterns=error_patterns[:10],  # Top 10 error patterns
         )
 
-    def get_underperforming_tools(self, min_usage: int = 10) -> List[str]:
+    def get_underperforming_tools(self, min_usage: int = 10) -> list[str]:
         """Get list of tools that are underperforming."""
         underperforming = []
 
         for tool_name, metrics in self.performance_metrics.items():
             if len(metrics) >= min_usage:
-                success_rate = sum(1 for m in metrics if m['success']) / len(metrics)
-                avg_quality = np.mean([m['response_quality'] for m in metrics])
+                success_rate = sum(1 for m in metrics if m["success"]) / len(metrics)
+                avg_quality = np.mean([m["response_quality"] for m in metrics])
 
                 if success_rate < 0.7 or avg_quality < 0.6:
                     underperforming.append(tool_name)
 
         return underperforming
+
 
 class PromptEvolver:
     """Evolves and optimizes tool prompts using genetic algorithms."""
@@ -200,8 +207,10 @@ class PromptEvolver:
 
         self.model = AutoModelForCausalLM.from_pretrained(
             self.config.model_path,
-            torch_dtype=torch.float16 if self.config.device == "cuda" else torch.float32,
-            device_map="auto" if self.config.device == "cuda" else None
+            torch_dtype=torch.float16
+            if self.config.device == "cuda"
+            else torch.float32,
+            device_map="auto" if self.config.device == "cuda" else None,
         )
 
         if self.config.device == "cpu":
@@ -211,45 +220,46 @@ class PromptEvolver:
         self.geometry_tracker = GeometryTracker(
             self.model,
             update_interval=10,
-            output_dir=f"{self.config.output_dir}/geometry"
+            output_dir=f"{self.config.output_dir}/geometry",
         )
 
     def generate_initial_population(
-        self,
-        base_prompt: str,
-        tool_name: str,
-        tool_pattern: ToolUsagePattern
-    ) -> List[PromptCandidate]:
+        self, base_prompt: str, tool_name: str, tool_pattern: ToolUsagePattern
+    ) -> list[PromptCandidate]:
         """Generate initial population of prompt candidates."""
         population = []
 
         # Include original prompt
-        population.append(PromptCandidate(
-            prompt_text=base_prompt,
-            tool_name=tool_name,
-            parameters={},
-            performance_score=0.5,
-            usage_count=1,
-            success_count=1,
-            error_count=0,
-            avg_response_quality=0.5,
-            compass_alignment="Unknown"
-        ))
+        population.append(
+            PromptCandidate(
+                prompt_text=base_prompt,
+                tool_name=tool_name,
+                parameters={},
+                performance_score=0.5,
+                usage_count=1,
+                success_count=1,
+                error_count=0,
+                avg_response_quality=0.5,
+                compass_alignment="Unknown",
+            )
+        )
 
         # Generate variations
         for _ in range(self.config.population_size - 1):
             variant = self._mutate_prompt(base_prompt, tool_pattern)
-            population.append(PromptCandidate(
-                prompt_text=variant,
-                tool_name=tool_name,
-                parameters={},
-                performance_score=0.0,
-                usage_count=0,
-                success_count=0,
-                error_count=0,
-                avg_response_quality=0.0,
-                compass_alignment="Unknown"
-            ))
+            population.append(
+                PromptCandidate(
+                    prompt_text=variant,
+                    tool_name=tool_name,
+                    parameters={},
+                    performance_score=0.0,
+                    usage_count=0,
+                    success_count=0,
+                    error_count=0,
+                    avg_response_quality=0.0,
+                    compass_alignment="Unknown",
+                )
+            )
 
         return population
 
@@ -261,7 +271,7 @@ class PromptEvolver:
             self._add_error_prevention,
             self._simplify_language,
             self._add_examples,
-            self._restructure_format
+            self._restructure_format,
         ]
 
         # Apply random mutations
@@ -303,21 +313,26 @@ class PromptEvolver:
         """Simplify language for better clarity."""
         # Replace complex words with simpler alternatives
         replacements = {
-            'utilize': 'use',
-            'facilitate': 'help',
-            'implement': 'do',
-            'demonstrate': 'show',
-            'establish': 'set up',
-            'determine': 'find',
-            'subsequent': 'next',
-            'aforementioned': 'mentioned',
-            'nevertheless': 'however',
-            'consequently': 'so'
+            "utilize": "use",
+            "facilitate": "help",
+            "implement": "do",
+            "demonstrate": "show",
+            "establish": "set up",
+            "determine": "find",
+            "subsequent": "next",
+            "aforementioned": "mentioned",
+            "nevertheless": "however",
+            "consequently": "so",
         }
 
         simplified = prompt
         for complex_word, simple_word in replacements.items():
-            simplified = re.sub(r'\b' + complex_word + r'\b', simple_word, simplified, flags=re.IGNORECASE)
+            simplified = re.sub(
+                r"\b" + complex_word + r"\b",
+                simple_word,
+                simplified,
+                flags=re.IGNORECASE,
+            )
 
         return simplified
 
@@ -336,7 +351,7 @@ class PromptEvolver:
 
     def _restructure_format(self, prompt: str, pattern: ToolUsagePattern) -> str:
         """Restructure prompt format for better readability."""
-        lines = prompt.split('\n')
+        lines = prompt.split("\n")
 
         # Add headers and structure
         if len(lines) > 3:
@@ -353,14 +368,16 @@ class PromptEvolver:
             if len(lines) > 2:
                 structured.extend(["## Usage Notes"] + lines[2:])
 
-            return '\n'.join(structured)
+            return "\n".join(structured)
 
         return prompt
 
-    def crossover_prompts(self, parent1: PromptCandidate, parent2: PromptCandidate) -> str:
+    def crossover_prompts(
+        self, parent1: PromptCandidate, parent2: PromptCandidate
+    ) -> str:
         """Create offspring prompt by crossing over two parents."""
-        lines1 = parent1.prompt_text.split('\n')
-        lines2 = parent2.prompt_text.split('\n')
+        lines1 = parent1.prompt_text.split("\n")
+        lines2 = parent2.prompt_text.split("\n")
 
         # Mix lines from both parents
         offspring_lines = []
@@ -377,12 +394,10 @@ class PromptEvolver:
 
             offspring_lines.append(line)
 
-        return '\n'.join(offspring_lines)
+        return "\n".join(offspring_lines)
 
     async def evaluate_prompt(
-        self,
-        candidate: PromptCandidate,
-        test_scenarios: List[Dict[str, Any]]
+        self, candidate: PromptCandidate, test_scenarios: list[dict[str, Any]]
     ) -> float:
         """Evaluate a prompt candidate on test scenarios."""
         if not test_scenarios:
@@ -407,10 +422,12 @@ class PromptEvolver:
         # Update geometry tracking
         if self.geometry_tracker and self.model:
             # Get hidden states from model
-            inputs = self.tokenizer.encode(candidate.prompt_text, return_tensors="pt").to(self.config.device)
+            inputs = self.tokenizer.encode(
+                candidate.prompt_text, return_tensors="pt"
+            ).to(self.config.device)
             with torch.no_grad():
                 outputs = self.model(inputs, output_hidden_states=True)
-                if hasattr(outputs, 'hidden_states'):
+                if hasattr(outputs, "hidden_states"):
                     hidden_states = outputs.hidden_states[-1]
                     metrics = self.geometry_tracker.update(hidden_states)
 
@@ -420,13 +437,13 @@ class PromptEvolver:
         return avg_score
 
     async def _evaluate_single_scenario(
-        self,
-        candidate: PromptCandidate,
-        scenario: Dict[str, Any]
+        self, candidate: PromptCandidate, scenario: dict[str, Any]
     ) -> float:
         """Evaluate prompt on a single test scenario."""
         # Simulate prompt evaluation
-        prompt_with_scenario = f"{candidate.prompt_text}\n\nScenario: {scenario.get('description', '')}"
+        prompt_with_scenario = (
+            f"{candidate.prompt_text}\n\nScenario: {scenario.get('description', '')}"
+        )
 
         # Tokenize and check length
         tokens = self.tokenizer.encode(prompt_with_scenario)
@@ -445,11 +462,14 @@ class PromptEvolver:
             base_score += 0.1
 
         # Penalty for too much complexity
-        complex_words = ['utilize', 'facilitate', 'implement', 'demonstrate']
-        complexity_penalty = sum(0.02 for word in complex_words if word in candidate.prompt_text.lower())
+        complex_words = ["utilize", "facilitate", "implement", "demonstrate"]
+        complexity_penalty = sum(
+            0.02 for word in complex_words if word in candidate.prompt_text.lower()
+        )
         base_score -= complexity_penalty
 
         return max(0.0, min(1.0, base_score + np.random.normal(0, 0.1)))
+
 
 class MCPRefiner:
     """Main MCP refinement orchestrator."""
@@ -472,7 +492,7 @@ class MCPRefiner:
             wandb.init(
                 project=config.wandb_project,
                 config=config.__dict__,
-                job_type="mcp_refinement"
+                job_type="mcp_refinement",
             )
 
     async def initialize(self):
@@ -482,9 +502,9 @@ class MCPRefiner:
 
     async def refine_tool_prompts(
         self,
-        tool_definitions: Dict[str, Dict[str, Any]],
-        usage_logs: List[Dict[str, Any]] = None
-    ) -> Dict[str, str]:
+        tool_definitions: dict[str, dict[str, Any]],
+        usage_logs: list[dict[str, Any]] = None,
+    ) -> dict[str, str]:
         """Refine prompts for multiple tools."""
         logger.info(f"Starting MCP refinement for {len(tool_definitions)} tools")
 
@@ -503,7 +523,7 @@ class MCPRefiner:
                 pattern = self.tool_analyzer.analyze_tool_patterns(tool_name)
 
                 # Get base prompt
-                base_prompt = tool_def.get('description', f"Use the {tool_name} tool.")
+                base_prompt = tool_def.get("description", f"Use the {tool_name} tool.")
 
                 # Generate test scenarios
                 test_scenarios = self._generate_test_scenarios(tool_def, pattern)
@@ -516,16 +536,20 @@ class MCPRefiner:
                 refined_prompts[tool_name] = best_prompt
 
                 # Log results
-                wandb.log({
-                    f"tools/{tool_name}/refinement_complete": True,
-                    f"tools/{tool_name}/original_length": len(base_prompt),
-                    f"tools/{tool_name}/refined_length": len(best_prompt),
-                    f"tools/{tool_name}/success_rate": pattern.success_rate
-                })
+                wandb.log(
+                    {
+                        f"tools/{tool_name}/refinement_complete": True,
+                        f"tools/{tool_name}/original_length": len(base_prompt),
+                        f"tools/{tool_name}/refined_length": len(best_prompt),
+                        f"tools/{tool_name}/success_rate": pattern.success_rate,
+                    }
+                )
 
             except Exception as e:
                 logger.error(f"Failed to refine prompts for {tool_name}: {e}")
-                refined_prompts[tool_name] = tool_def.get('description', f"Use the {tool_name} tool.")
+                refined_prompts[tool_name] = tool_def.get(
+                    "description", f"Use the {tool_name} tool."
+                )
 
         # Save results
         await self._save_refinement_results(refined_prompts)
@@ -534,45 +558,51 @@ class MCPRefiner:
         return refined_prompts
 
     def _generate_test_scenarios(
-        self,
-        tool_def: Dict[str, Any],
-        pattern: ToolUsagePattern
-    ) -> List[Dict[str, Any]]:
+        self, tool_def: dict[str, Any], pattern: ToolUsagePattern
+    ) -> list[dict[str, Any]]:
         """Generate test scenarios for prompt evaluation."""
         scenarios = []
 
         # Base scenarios from tool definition
-        if 'examples' in tool_def:
-            for example in tool_def['examples']:
-                scenarios.append({
-                    'description': example.get('description', ''),
-                    'parameters': example.get('parameters', {}),
-                    'expected_outcome': example.get('expected_outcome', 'success')
-                })
+        if "examples" in tool_def:
+            for example in tool_def["examples"]:
+                scenarios.append(
+                    {
+                        "description": example.get("description", ""),
+                        "parameters": example.get("parameters", {}),
+                        "expected_outcome": example.get("expected_outcome", "success"),
+                    }
+                )
 
         # Scenarios from usage patterns
         for context in pattern.context_patterns[:5]:
-            scenarios.append({
-                'description': f"Context involving {context}",
-                'parameters': {},
-                'expected_outcome': 'success'
-            })
+            scenarios.append(
+                {
+                    "description": f"Context involving {context}",
+                    "parameters": {},
+                    "expected_outcome": "success",
+                }
+            )
 
         # Error scenarios
         for error in pattern.error_patterns[:3]:
-            scenarios.append({
-                'description': f"Scenario that might cause: {error}",
-                'parameters': {},
-                'expected_outcome': 'error_prevention'
-            })
+            scenarios.append(
+                {
+                    "description": f"Scenario that might cause: {error}",
+                    "parameters": {},
+                    "expected_outcome": "error_prevention",
+                }
+            )
 
         # Generate additional synthetic scenarios
         for _ in range(10):
-            scenarios.append({
-                'description': f"Generic usage scenario {len(scenarios) + 1}",
-                'parameters': {},
-                'expected_outcome': 'success'
-            })
+            scenarios.append(
+                {
+                    "description": f"Generic usage scenario {len(scenarios) + 1}",
+                    "parameters": {},
+                    "expected_outcome": "success",
+                }
+            )
 
         return scenarios
 
@@ -581,7 +611,7 @@ class MCPRefiner:
         base_prompt: str,
         tool_name: str,
         pattern: ToolUsagePattern,
-        test_scenarios: List[Dict[str, Any]]
+        test_scenarios: list[dict[str, Any]],
     ) -> str:
         """Evolve a prompt using genetic algorithm."""
         # Initialize population
@@ -593,11 +623,15 @@ class MCPRefiner:
         best_score = 0.0
 
         for generation in range(self.config.num_optimization_rounds):
-            logger.info(f"Generation {generation + 1}/{self.config.num_optimization_rounds} for {tool_name}")
+            logger.info(
+                f"Generation {generation + 1}/{self.config.num_optimization_rounds} for {tool_name}"
+            )
 
             # Evaluate population
             for candidate in population:
-                score = await self.prompt_evolver.evaluate_prompt(candidate, test_scenarios)
+                score = await self.prompt_evolver.evaluate_prompt(
+                    candidate, test_scenarios
+                )
                 candidate.performance_score = score
 
                 if score > best_score:
@@ -606,11 +640,13 @@ class MCPRefiner:
 
             # Log generation results
             avg_score = np.mean([c.performance_score for c in population])
-            wandb.log({
-                f"evolution/{tool_name}/generation": generation,
-                f"evolution/{tool_name}/best_score": best_score,
-                f"evolution/{tool_name}/avg_score": avg_score
-            })
+            wandb.log(
+                {
+                    f"evolution/{tool_name}/generation": generation,
+                    f"evolution/{tool_name}/best_score": best_score,
+                    f"evolution/{tool_name}/avg_score": avg_score,
+                }
+            )
 
             # Selection and reproduction
             if generation < self.config.num_optimization_rounds - 1:
@@ -619,10 +655,8 @@ class MCPRefiner:
         return best_candidate.prompt_text if best_candidate else base_prompt
 
     def _evolve_population(
-        self,
-        population: List[PromptCandidate],
-        pattern: ToolUsagePattern
-    ) -> List[PromptCandidate]:
+        self, population: list[PromptCandidate], pattern: ToolUsagePattern
+    ) -> list[PromptCandidate]:
         """Evolve population for next generation."""
         # Sort by performance
         sorted_pop = sorted(population, key=lambda x: x.performance_score, reverse=True)
@@ -645,7 +679,9 @@ class MCPRefiner:
 
             # Mutation
             if np.random.random() < self.config.mutation_rate:
-                offspring_text = self.prompt_evolver._mutate_prompt(offspring_text, pattern)
+                offspring_text = self.prompt_evolver._mutate_prompt(
+                    offspring_text, pattern
+                )
 
             # Create new candidate
             offspring = PromptCandidate(
@@ -657,7 +693,7 @@ class MCPRefiner:
                 success_count=0,
                 error_count=0,
                 avg_response_quality=0.0,
-                compass_alignment="Unknown"
+                compass_alignment="Unknown",
             )
 
             new_population.append(offspring)
@@ -665,24 +701,24 @@ class MCPRefiner:
         return new_population
 
     def _tournament_selection(
-        self,
-        population: List[PromptCandidate],
-        tournament_size: int = 3
+        self, population: list[PromptCandidate], tournament_size: int = 3
     ) -> PromptCandidate:
         """Tournament selection for parent selection."""
-        tournament = np.random.choice(population, size=min(tournament_size, len(population)), replace=False)
+        tournament = np.random.choice(
+            population, size=min(tournament_size, len(population)), replace=False
+        )
         return max(tournament, key=lambda x: x.performance_score)
 
-    async def _save_refinement_results(self, refined_prompts: Dict[str, str]):
+    async def _save_refinement_results(self, refined_prompts: dict[str, str]):
         """Save refinement results."""
         results = {
-            'refined_prompts': refined_prompts,
-            'refinement_config': self.config.__dict__,
-            'timestamp': time.time()
+            "refined_prompts": refined_prompts,
+            "refinement_config": self.config.__dict__,
+            "timestamp": time.time(),
         }
 
         results_path = self.output_dir / "mcp_refined_prompts.json"
-        with open(results_path, 'w') as f:
+        with open(results_path, "w") as f:
             json.dump(results, f, indent=2)
 
         logger.info(f"Refinement results saved: {results_path}")
@@ -693,11 +729,11 @@ class MCPRefiner:
 
         for tool_name, prompt in refined_prompts.items():
             prompt_file = prompts_dir / f"{tool_name}_refined.md"
-            with open(prompt_file, 'w') as f:
+            with open(prompt_file, "w") as f:
                 f.write(f"# {tool_name} - Refined Prompt\n\n")
                 f.write(prompt)
 
-    def get_refinement_summary(self) -> Dict[str, Any]:
+    def get_refinement_summary(self) -> dict[str, Any]:
         """Get refinement summary statistics."""
         underperforming = self.tool_analyzer.get_underperforming_tools()
 
@@ -705,18 +741,19 @@ class MCPRefiner:
         for tool_name in self.tool_analyzer.tool_patterns.keys():
             pattern = self.tool_analyzer.analyze_tool_patterns(tool_name)
             tool_stats[tool_name] = {
-                'success_rate': pattern.success_rate,
-                'frequency': pattern.frequency,
-                'avg_response_time': pattern.avg_response_time,
-                'error_count': len(pattern.error_patterns)
+                "success_rate": pattern.success_rate,
+                "frequency": pattern.frequency,
+                "avg_response_time": pattern.avg_response_time,
+                "error_count": len(pattern.error_patterns),
             }
 
         return {
-            'total_tools_analyzed': len(self.tool_analyzer.tool_patterns),
-            'underperforming_tools': underperforming,
-            'tool_statistics': tool_stats,
-            'total_usage_events': len(self.tool_analyzer.usage_logs)
+            "total_tools_analyzed": len(self.tool_analyzer.tool_patterns),
+            "underperforming_tools": underperforming,
+            "tool_statistics": tool_stats,
+            "total_usage_events": len(self.tool_analyzer.usage_logs),
         }
+
 
 # CLI and usage
 async def main():
@@ -726,7 +763,9 @@ async def main():
     parser = argparse.ArgumentParser(description="MCP Tool Prompt Refinement")
     parser.add_argument("--model-path", required=True, help="Path to model")
     parser.add_argument("--output-dir", required=True, help="Output directory")
-    parser.add_argument("--tool-definitions", required=True, help="Path to tool definitions JSON")
+    parser.add_argument(
+        "--tool-definitions", required=True, help="Path to tool definitions JSON"
+    )
     parser.add_argument("--usage-logs", help="Path to usage logs JSON")
     parser.add_argument("--rounds", type=int, default=30, help="Optimization rounds")
     parser.add_argument("--population", type=int, default=15, help="Population size")
@@ -735,13 +774,13 @@ async def main():
     args = parser.parse_args()
 
     # Load tool definitions
-    with open(args.tool_definitions, 'r') as f:
+    with open(args.tool_definitions) as f:
         tool_definitions = json.load(f)
 
     # Load usage logs if provided
     usage_logs = None
     if args.usage_logs:
-        with open(args.usage_logs, 'r') as f:
+        with open(args.usage_logs) as f:
             usage_logs = json.load(f)
 
     # Create configuration
@@ -750,7 +789,7 @@ async def main():
         output_dir=args.output_dir,
         num_optimization_rounds=args.rounds,
         population_size=args.population,
-        device=args.device
+        device=args.device,
     )
 
     # Initialize refiner
@@ -762,12 +801,15 @@ async def main():
 
     # Print summary
     summary = refiner.get_refinement_summary()
-    print(f"\nRefinement Summary:")
+    print("\nRefinement Summary:")
     print(f"Tools analyzed: {summary['total_tools_analyzed']}")
     print(f"Underperforming tools: {len(summary['underperforming_tools'])}")
     print(f"Usage events processed: {summary['total_usage_events']}")
 
-    print(f"\nRefined prompts for {len(refined_prompts)} tools saved to {args.output_dir}")
+    print(
+        f"\nRefined prompts for {len(refined_prompts)} tools saved to {args.output_dir}"
+    )
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,5 +1,4 @@
-"""
-Automated Publication-Ready Reporting System
+"""Automated Publication-Ready Reporting System
 
 Generates professional reports from Agent Forge benchmark results:
 - Publication-ready Markdown with LaTeX tables
@@ -10,28 +9,30 @@ Generates professional reports from Agent Forge benchmark results:
 """
 
 import asyncio
+from dataclasses import dataclass
+from datetime import datetime
 import json
 import logging
 import os
-import time
-from dataclasses import dataclass, asdict
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-import numpy as np
-from jinja2 import Template
 import subprocess
+import time
+from typing import Any
+
+from jinja2 import Template
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 
 from agent_forge.results_analyzer import ResultsAnalyzer
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ReportConfig:
     """Configuration for automated reporting."""
+
     results_dir: str
     output_dir: str
     report_title: str = "Agent Forge Performance Analysis"
@@ -41,7 +42,8 @@ class ReportConfig:
     include_latex: bool = True
     include_visualizations: bool = True
     auto_publish: bool = False
-    github_repo: Optional[str] = None
+    github_repo: str | None = None
+
 
 class PublicationReportGenerator:
     """Generates publication-ready reports from benchmark results."""
@@ -54,10 +56,10 @@ class PublicationReportGenerator:
         self.analyzer = ResultsAnalyzer(config.results_dir)
 
         # Setup plotting style
-        plt.style.use('seaborn-v0_8-paper')
+        plt.style.use("seaborn-v0_8-paper")
         sns.set_palette("husl")
 
-    async def generate_complete_report(self) -> Dict[str, str]:
+    async def generate_complete_report(self) -> dict[str, str]:
         """Generate complete publication-ready report."""
         logger.info("Generating complete publication report")
 
@@ -68,18 +70,22 @@ class PublicationReportGenerator:
         report_files = {}
 
         # 1. Executive Summary
-        report_files['executive_summary'] = await self._generate_executive_summary(analysis)
+        report_files["executive_summary"] = await self._generate_executive_summary(
+            analysis
+        )
 
         # 2. Technical Report (Markdown)
-        report_files['technical_report'] = await self._generate_technical_report(analysis)
+        report_files["technical_report"] = await self._generate_technical_report(
+            analysis
+        )
 
         # 3. LaTeX Academic Paper
         if self.config.include_latex:
-            report_files['latex_paper'] = await self._generate_latex_paper(analysis)
+            report_files["latex_paper"] = await self._generate_latex_paper(analysis)
 
         # 4. Presentation Slides
         if self.config.include_slides:
-            report_files['slides'] = await self._generate_presentation_slides(analysis)
+            report_files["slides"] = await self._generate_presentation_slides(analysis)
 
         # 5. Performance Visualizations
         if self.config.include_visualizations:
@@ -91,15 +97,16 @@ class PublicationReportGenerator:
         report_files.update(data_files)
 
         # 7. README for GitHub
-        report_files['readme'] = await self._generate_github_readme(analysis, report_files)
+        report_files["readme"] = await self._generate_github_readme(
+            analysis, report_files
+        )
 
         logger.info(f"Generated {len(report_files)} report files")
         return report_files
 
-    async def _generate_executive_summary(self, analysis: Dict[str, Any]) -> str:
+    async def _generate_executive_summary(self, analysis: dict[str, Any]) -> str:
         """Generate executive summary."""
-
-        insights = analysis.get('insights', {})
+        insights = analysis.get("insights", {})
 
         template = Template("""# {{ title }} - Executive Summary
 
@@ -151,43 +158,46 @@ No significant performance jumps detected across pipeline phases.
 """)
 
         # Extract data for template
-        best_model = insights.get('best_performing_phase', 'Unknown')
-        performance_trends = analysis.get('json_analysis', {}).get('performance_trends', {})
-        performance_score = performance_trends.get('best_score', 0.0)
+        best_model = insights.get("best_performing_phase", "Unknown")
+        performance_trends = analysis.get("json_analysis", {}).get(
+            "performance_trends", {}
+        )
+        performance_score = performance_trends.get("best_score", 0.0)
 
         highlights = [
             f"Achieved {performance_score:.3f} overall performance score",
             f"Successfully evaluated across {len(analysis.get('phase_analysis', {}))} pipeline phases",
             "Comprehensive statistical analysis with significance testing",
-            "Production-ready deployment recommendations"
+            "Production-ready deployment recommendations",
         ]
 
-        if insights.get('top_benchmarks'):
-            highlights.append(f"Strong performance in {', '.join(insights['top_benchmarks'][:3])}")
+        if insights.get("top_benchmarks"):
+            highlights.append(
+                f"Strong performance in {', '.join(insights['top_benchmarks'][:3])}"
+            )
 
         content = template.render(
             title=self.config.report_title,
-            date=datetime.now().strftime('%Y-%m-%d'),
+            date=datetime.now().strftime("%Y-%m-%d"),
             best_model=best_model,
             performance_score=performance_score,
-            deployment_rec=insights.get('deployment_recommendation', 'Review required'),
-            confidence=insights.get('confidence_level', 'medium'),
+            deployment_rec=insights.get("deployment_recommendation", "Review required"),
+            confidence=insights.get("confidence_level", "medium"),
             highlights=highlights,
-            biggest_jump=insights.get('biggest_performance_jump'),
-            recommendations=analysis.get('recommendations', []),
-            models_evaluated=len(analysis.get('phase_analysis', {}))
+            biggest_jump=insights.get("biggest_performance_jump"),
+            recommendations=analysis.get("recommendations", []),
+            models_evaluated=len(analysis.get("phase_analysis", {})),
         )
 
         # Save executive summary
         summary_file = self.output_dir / "executive_summary.md"
-        with open(summary_file, 'w') as f:
+        with open(summary_file, "w") as f:
             f.write(content)
 
         return str(summary_file)
 
-    async def _generate_technical_report(self, analysis: Dict[str, Any]) -> str:
+    async def _generate_technical_report(self, analysis: dict[str, Any]) -> str:
         """Generate detailed technical report."""
-
         template = Template("""# {{ title }}
 
 *{{ author }}, {{ institution }}*
@@ -325,49 +335,55 @@ Complete performance data and statistical analysis results are available in the 
 """)
 
         # Extract data for template
-        phase_analysis = analysis.get('phase_analysis', {})
-        statistical_analysis = analysis.get('statistical_analysis', {})
-        insights = analysis.get('insights', {})
+        phase_analysis = analysis.get("phase_analysis", {})
+        statistical_analysis = analysis.get("statistical_analysis", {})
+        insights = analysis.get("insights", {})
 
         # Get hardware info
-        hardware_info = "CUDA GPU" if os.environ.get('CUDA_VISIBLE_DEVICES') else "CPU"
+        hardware_info = "CUDA GPU" if os.environ.get("CUDA_VISIBLE_DEVICES") else "CPU"
 
         key_insights = [
-            f"Pipeline approach yields consistent improvements across benchmarks",
+            "Pipeline approach yields consistent improvements across benchmarks",
             f"Best performing phase: {insights.get('best_performing_phase', 'Unknown')}",
-            f"Statistical significance achieved in key benchmark comparisons"
+            "Statistical significance achieved in key benchmark comparisons",
         ]
 
-        if insights.get('concerning_trends'):
-            key_insights.extend([f"Concerning trend: {trend}" for trend in insights['concerning_trends']])
+        if insights.get("concerning_trends"):
+            key_insights.extend(
+                [
+                    f"Concerning trend: {trend}"
+                    for trend in insights["concerning_trends"]
+                ]
+            )
 
         content = template.render(
             title=self.config.report_title,
             author=self.config.author,
             institution=self.config.institution,
-            date=datetime.now().strftime('%Y-%m-%d'),
+            date=datetime.now().strftime("%Y-%m-%d"),
             total_benchmarks=5,  # MMLU, GSM8K, HumanEval, HellaSwag, ARC
             models_evaluated=len(phase_analysis),
             phase_analysis=phase_analysis,
             statistical_analysis=statistical_analysis,
             hardware_info=hardware_info,
-            biggest_jump=insights.get('biggest_performance_jump'),
-            best_model=insights.get('best_performing_phase'),
-            best_score=analysis.get('json_analysis', {}).get('performance_trends', {}).get('best_score', 0.0),
+            biggest_jump=insights.get("biggest_performance_jump"),
+            best_model=insights.get("best_performing_phase"),
+            best_score=analysis.get("json_analysis", {})
+            .get("performance_trends", {})
+            .get("best_score", 0.0),
             key_insights=key_insights,
-            recommendations=analysis.get('recommendations', [])
+            recommendations=analysis.get("recommendations", []),
         )
 
         # Save technical report
         report_file = self.output_dir / "technical_report.md"
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             f.write(content)
 
         return str(report_file)
 
-    async def _generate_latex_paper(self, analysis: Dict[str, Any]) -> str:
+    async def _generate_latex_paper(self, analysis: dict[str, Any]) -> str:
         """Generate LaTeX academic paper."""
-
         template = Template(r"""
 \documentclass[11pt,twocolumn]{article}
 \usepackage[utf8]{inputenc}
@@ -442,51 +458,64 @@ The Agent Forge pipeline demonstrates significant performance improvements acros
 """)
 
         # Extract and format data for LaTeX
-        phase_analysis = analysis.get('phase_analysis', {})
-        insights = analysis.get('insights', {})
+        phase_analysis = analysis.get("phase_analysis", {})
+        insights = analysis.get("insights", {})
 
         # Format phase results for table
         phase_results = {}
         for phase, data in phase_analysis.items():
             benchmark_scores = data.benchmark_scores
-            phase_results[phase] = type('', (), {
-                'avg': data.average_score,
-                'mmlu': benchmark_scores.get('MMLU', 0.0),
-                'gsm8k': benchmark_scores.get('GSM8K', 0.0),
-                'humaneval': benchmark_scores.get('HumanEval', 0.0),
-                'hellaswag': benchmark_scores.get('HellaSwag', 0.0),
-                'arc': benchmark_scores.get('ARC', 0.0)
-            })()
+            phase_results[phase] = type(
+                "",
+                (),
+                {
+                    "avg": data.average_score,
+                    "mmlu": benchmark_scores.get("MMLU", 0.0),
+                    "gsm8k": benchmark_scores.get("GSM8K", 0.0),
+                    "humaneval": benchmark_scores.get("HumanEval", 0.0),
+                    "hellaswag": benchmark_scores.get("HellaSwag", 0.0),
+                    "arc": benchmark_scores.get("ARC", 0.0),
+                },
+            )()
 
         # Count significant benchmarks
-        statistical_analysis = analysis.get('statistical_analysis', {})
-        significant_benchmarks = sum(1 for stats in statistical_analysis.values()
-                                   if stats.get('baseline_ttest', {}).get('significant', False))
+        statistical_analysis = analysis.get("statistical_analysis", {})
+        significant_benchmarks = sum(
+            1
+            for stats in statistical_analysis.values()
+            if stats.get("baseline_ttest", {}).get("significant", False)
+        )
 
         content = template.render(
             title=self.config.report_title,
             author=self.config.author,
             institution=self.config.institution,
-            date=datetime.now().strftime('%B %d, %Y'),
-            best_score=analysis.get('json_analysis', {}).get('performance_trends', {}).get('best_score', 0.0),
+            date=datetime.now().strftime("%B %d, %Y"),
+            best_score=analysis.get("json_analysis", {})
+            .get("performance_trends", {})
+            .get("best_score", 0.0),
             models_evaluated=len(phase_analysis),
             total_benchmarks=5,
             phase_names=list(phase_analysis.keys()),
             phase_results=phase_results,
             significant_benchmarks=significant_benchmarks,
-            biggest_jump=insights.get('biggest_performance_jump'),
-            best_model=insights.get('best_performing_phase', 'unknown')
+            biggest_jump=insights.get("biggest_performance_jump"),
+            best_model=insights.get("best_performing_phase", "unknown"),
         )
 
         # Save LaTeX paper
         latex_file = self.output_dir / "paper.tex"
-        with open(latex_file, 'w') as f:
+        with open(latex_file, "w") as f:
             f.write(content)
 
         # Try to compile PDF if pdflatex is available
         try:
-            result = subprocess.run(['pdflatex', '-interaction=nonstopmode', str(latex_file)],
-                                  cwd=self.output_dir, capture_output=True)
+            result = subprocess.run(
+                ["pdflatex", "-interaction=nonstopmode", str(latex_file)],
+                check=False,
+                cwd=self.output_dir,
+                capture_output=True,
+            )
             if result.returncode == 0:
                 logger.info("LaTeX paper compiled successfully")
             else:
@@ -496,9 +525,8 @@ The Agent Forge pipeline demonstrates significant performance improvements acros
 
         return str(latex_file)
 
-    async def _generate_presentation_slides(self, analysis: Dict[str, Any]) -> str:
+    async def _generate_presentation_slides(self, analysis: dict[str, Any]) -> str:
         """Generate presentation slides in Markdown format."""
-
         template = Template("""---
 title: "{{ title }}"
 author: "{{ author }}"
@@ -630,47 +658,51 @@ output:
 """)
 
         # Extract data for slides
-        insights = analysis.get('insights', {})
-        phase_analysis = analysis.get('phase_analysis', {})
-        statistical_analysis = analysis.get('statistical_analysis', {})
+        insights = analysis.get("insights", {})
+        phase_analysis = analysis.get("phase_analysis", {})
+        statistical_analysis = analysis.get("statistical_analysis", {})
 
         key_insights = [
             f"Achieved {analysis.get('json_analysis', {}).get('performance_trends', {}).get('best_score', 0.0):.3f} overall performance",
             f"Significant improvements in {sum(1 for s in statistical_analysis.values() if s.get('baseline_ttest', {}).get('significant', False))} benchmarks",
             "Pipeline approach outperforms individual components",
-            "Production-ready with comprehensive evaluation"
+            "Production-ready with comprehensive evaluation",
         ]
 
         content = template.render(
             title=self.config.report_title,
             author=self.config.author,
             institution=self.config.institution,
-            date=datetime.now().strftime('%B %d, %Y'),
-            best_model=insights.get('best_performing_phase', 'Unknown'),
-            best_score=analysis.get('json_analysis', {}).get('performance_trends', {}).get('best_score', 0.0),
-            deployment_rec=insights.get('deployment_recommendation', 'Review required'),
+            date=datetime.now().strftime("%B %d, %Y"),
+            best_model=insights.get("best_performing_phase", "Unknown"),
+            best_score=analysis.get("json_analysis", {})
+            .get("performance_trends", {})
+            .get("best_score", 0.0),
+            deployment_rec=insights.get("deployment_recommendation", "Review required"),
             phase_names=list(phase_analysis.keys()),
-            hardware="CUDA GPU" if os.environ.get('CUDA_VISIBLE_DEVICES') else "CPU",
+            hardware="CUDA GPU" if os.environ.get("CUDA_VISIBLE_DEVICES") else "CPU",
             phase_analysis=phase_analysis,
             key_insights=key_insights,
-            biggest_jump=insights.get('biggest_performance_jump'),
+            biggest_jump=insights.get("biggest_performance_jump"),
             statistical_analysis=statistical_analysis,
-            recommendations=analysis.get('recommendations', [])
+            recommendations=analysis.get("recommendations", []),
         )
 
         # Save slides
         slides_file = self.output_dir / "presentation.md"
-        with open(slides_file, 'w') as f:
+        with open(slides_file, "w") as f:
             f.write(content)
 
         return str(slides_file)
 
-    async def _generate_visualizations(self, analysis: Dict[str, Any]) -> Dict[str, str]:
+    async def _generate_visualizations(
+        self, analysis: dict[str, Any]
+    ) -> dict[str, str]:
         """Generate performance visualizations."""
         logger.info("Generating performance visualizations")
 
         viz_files = {}
-        phase_analysis = analysis.get('phase_analysis', {})
+        phase_analysis = analysis.get("phase_analysis", {})
 
         if not phase_analysis:
             return viz_files
@@ -686,24 +718,34 @@ output:
         scores = [data.average_score for data in phase_analysis.values()]
 
         bars = ax.bar(phases, scores, color=sns.color_palette("husl", len(phases)))
-        ax.set_title('Agent Forge Pipeline Performance Comparison', fontsize=16, fontweight='bold')
-        ax.set_xlabel('Pipeline Phase', fontsize=12)
-        ax.set_ylabel('Average Performance Score', fontsize=12)
+        ax.set_title(
+            "Agent Forge Pipeline Performance Comparison",
+            fontsize=16,
+            fontweight="bold",
+        )
+        ax.set_xlabel("Pipeline Phase", fontsize=12)
+        ax.set_ylabel("Average Performance Score", fontsize=12)
         ax.set_ylim(0, 1.0)
 
         # Add value labels on bars
-        for bar, score in zip(bars, scores):
-            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                   f'{score:.3f}', ha='center', va='bottom', fontweight='bold')
+        for bar, score in zip(bars, scores, strict=False):
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                bar.get_height() + 0.01,
+                f"{score:.3f}",
+                ha="center",
+                va="bottom",
+                fontweight="bold",
+            )
 
-        plt.xticks(rotation=45, ha='right')
+        plt.xticks(rotation=45, ha="right")
         plt.tight_layout()
 
         performance_chart = viz_dir / "performance_comparison.png"
-        plt.savefig(performance_chart, dpi=300, bbox_inches='tight')
+        plt.savefig(performance_chart, dpi=300, bbox_inches="tight")
         plt.close()
 
-        viz_files['performance_comparison'] = str(performance_chart)
+        viz_files["performance_comparison"] = str(performance_chart)
 
         # 2. Benchmark heatmap
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -725,32 +767,41 @@ output:
             benchmark_data.append(row)
 
         # Create heatmap
-        im = ax.imshow(benchmark_data, cmap='RdYlBu_r', aspect='auto', vmin=0, vmax=1)
+        im = ax.imshow(benchmark_data, cmap="RdYlBu_r", aspect="auto", vmin=0, vmax=1)
 
         # Set ticks and labels
         ax.set_xticks(range(len(benchmark_names)))
-        ax.set_xticklabels(benchmark_names, rotation=45, ha='right')
+        ax.set_xticklabels(benchmark_names, rotation=45, ha="right")
         ax.set_yticks(range(len(phases)))
-        ax.set_yticklabels([p.replace('_', ' ').title() for p in phases])
+        ax.set_yticklabels([p.replace("_", " ").title() for p in phases])
 
         # Add colorbar
         cbar = plt.colorbar(im, ax=ax)
-        cbar.set_label('Performance Score', rotation=270, labelpad=20)
+        cbar.set_label("Performance Score", rotation=270, labelpad=20)
 
         # Add text annotations
         for i in range(len(phases)):
             for j in range(len(benchmark_names)):
-                text = ax.text(j, i, f'{benchmark_data[i][j]:.3f}',
-                             ha="center", va="center", color="black", fontweight='bold')
+                text = ax.text(
+                    j,
+                    i,
+                    f"{benchmark_data[i][j]:.3f}",
+                    ha="center",
+                    va="center",
+                    color="black",
+                    fontweight="bold",
+                )
 
-        ax.set_title('Performance Heatmap Across Benchmarks', fontsize=16, fontweight='bold')
+        ax.set_title(
+            "Performance Heatmap Across Benchmarks", fontsize=16, fontweight="bold"
+        )
         plt.tight_layout()
 
         heatmap_file = viz_dir / "benchmark_heatmap.png"
-        plt.savefig(heatmap_file, dpi=300, bbox_inches='tight')
+        plt.savefig(heatmap_file, dpi=300, bbox_inches="tight")
         plt.close()
 
-        viz_files['benchmark_heatmap'] = str(heatmap_file)
+        viz_files["benchmark_heatmap"] = str(heatmap_file)
 
         # 3. Performance evolution line plot
         if len(phases) > 1:
@@ -762,46 +813,58 @@ output:
                     score = phase_analysis[phase].benchmark_scores.get(benchmark, 0.0)
                     benchmark_scores.append(score)
 
-                ax.plot(range(len(phases)), benchmark_scores, marker='o', linewidth=2,
-                       label=benchmark, markersize=8)
+                ax.plot(
+                    range(len(phases)),
+                    benchmark_scores,
+                    marker="o",
+                    linewidth=2,
+                    label=benchmark,
+                    markersize=8,
+                )
 
-            ax.set_title('Performance Evolution Across Pipeline Phases', fontsize=16, fontweight='bold')
-            ax.set_xlabel('Pipeline Phase', fontsize=12)
-            ax.set_ylabel('Performance Score', fontsize=12)
+            ax.set_title(
+                "Performance Evolution Across Pipeline Phases",
+                fontsize=16,
+                fontweight="bold",
+            )
+            ax.set_xlabel("Pipeline Phase", fontsize=12)
+            ax.set_ylabel("Performance Score", fontsize=12)
             ax.set_xticks(range(len(phases)))
-            ax.set_xticklabels([p.replace('_', ' ').title() for p in phases], rotation=45, ha='right')
-            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            ax.set_xticklabels(
+                [p.replace("_", " ").title() for p in phases], rotation=45, ha="right"
+            )
+            ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
             ax.grid(True, alpha=0.3)
             ax.set_ylim(0, 1.0)
 
             plt.tight_layout()
 
             evolution_file = viz_dir / "performance_evolution.png"
-            plt.savefig(evolution_file, dpi=300, bbox_inches='tight')
+            plt.savefig(evolution_file, dpi=300, bbox_inches="tight")
             plt.close()
 
-            viz_files['performance_evolution'] = str(evolution_file)
+            viz_files["performance_evolution"] = str(evolution_file)
 
         logger.info(f"Generated {len(viz_files)} visualizations")
         return viz_files
 
-    async def _generate_data_tables(self, analysis: Dict[str, Any]) -> Dict[str, str]:
+    async def _generate_data_tables(self, analysis: dict[str, Any]) -> dict[str, str]:
         """Generate data tables in various formats."""
         logger.info("Generating data tables")
 
         data_files = {}
 
         # 1. Performance summary CSV
-        phase_analysis = analysis.get('phase_analysis', {})
+        phase_analysis = analysis.get("phase_analysis", {})
 
         if phase_analysis:
             # Create performance DataFrame
             rows = []
             for phase, data in phase_analysis.items():
                 row = {
-                    'Phase': phase,
-                    'Average_Score': data.average_score,
-                    **data.benchmark_scores
+                    "Phase": phase,
+                    "Average_Score": data.average_score,
+                    **data.benchmark_scores,
                 }
                 rows.append(row)
 
@@ -809,25 +872,27 @@ output:
 
             csv_file = self.output_dir / "performance_data.csv"
             df.to_csv(csv_file, index=False)
-            data_files['performance_csv'] = str(csv_file)
+            data_files["performance_csv"] = str(csv_file)
 
             # Also save as JSON
             json_file = self.output_dir / "performance_data.json"
-            with open(json_file, 'w') as f:
+            with open(json_file, "w") as f:
                 json.dump(rows, f, indent=2)
-            data_files['performance_json'] = str(json_file)
+            data_files["performance_json"] = str(json_file)
 
         # 2. Statistical analysis table
-        statistical_analysis = analysis.get('statistical_analysis', {})
+        statistical_analysis = analysis.get("statistical_analysis", {})
         if statistical_analysis:
             stats_rows = []
             for benchmark, stats in statistical_analysis.items():
                 row = {
-                    'Benchmark': benchmark,
-                    'Target_Score': stats.get('target_score', 0.0),
-                    'Baseline_Mean': stats.get('baseline_mean', 0.0),
-                    'Baseline_Percentile': stats.get('baseline_percentile', 0.0),
-                    'Statistical_Significant': stats.get('baseline_ttest', {}).get('significant', False)
+                    "Benchmark": benchmark,
+                    "Target_Score": stats.get("target_score", 0.0),
+                    "Baseline_Mean": stats.get("baseline_mean", 0.0),
+                    "Baseline_Percentile": stats.get("baseline_percentile", 0.0),
+                    "Statistical_Significant": stats.get("baseline_ttest", {}).get(
+                        "significant", False
+                    ),
                 }
                 stats_rows.append(row)
 
@@ -835,13 +900,14 @@ output:
 
             stats_csv = self.output_dir / "statistical_analysis.csv"
             stats_df.to_csv(stats_csv, index=False)
-            data_files['statistics_csv'] = str(stats_csv)
+            data_files["statistics_csv"] = str(stats_csv)
 
         return data_files
 
-    async def _generate_github_readme(self, analysis: Dict[str, Any], report_files: Dict[str, str]) -> str:
+    async def _generate_github_readme(
+        self, analysis: dict[str, Any], report_files: dict[str, str]
+    ) -> str:
         """Generate GitHub README with results."""
-
         template = Template("""# {{ title }}
 
 *{{ author }}, {{ institution }}*
@@ -946,40 +1012,43 @@ python agent_forge/automated_reporting.py \\
 """)
 
         # Extract data for README
-        insights = analysis.get('insights', {})
-        phase_analysis = analysis.get('phase_analysis', {})
+        insights = analysis.get("insights", {})
+        phase_analysis = analysis.get("phase_analysis", {})
 
         key_insights = [
             f"Comprehensive evaluation across {len(phase_analysis)} pipeline phases",
-            f"Statistical significance testing confirms improvements",
-            f"Production-ready deployment recommendations",
-            f"Open-source reproducible evaluation framework"
+            "Statistical significance testing confirms improvements",
+            "Production-ready deployment recommendations",
+            "Open-source reproducible evaluation framework",
         ]
 
         content = template.render(
             title=self.config.report_title,
             author=self.config.author,
             institution=self.config.institution,
-            date=datetime.now().strftime('%Y-%m-%d'),
-            deployment_rec=insights.get('deployment_recommendation', 'Review required'),
-            best_score=analysis.get('json_analysis', {}).get('performance_trends', {}).get('best_score', 0.0),
-            best_model=insights.get('best_performing_phase', 'Unknown'),
-            confidence=insights.get('confidence_level', 'medium'),
+            date=datetime.now().strftime("%Y-%m-%d"),
+            deployment_rec=insights.get("deployment_recommendation", "Review required"),
+            best_score=analysis.get("json_analysis", {})
+            .get("performance_trends", {})
+            .get("best_score", 0.0),
+            best_model=insights.get("best_performing_phase", "Unknown"),
+            confidence=insights.get("confidence_level", "medium"),
             phase_analysis=phase_analysis,
             key_insights=key_insights,
-            biggest_jump=insights.get('biggest_performance_jump'),
+            biggest_jump=insights.get("biggest_performance_jump"),
             report_files=report_files,
-            hardware="CUDA GPU" if os.environ.get('CUDA_VISIBLE_DEVICES') else "CPU",
-            recommendations=analysis.get('recommendations', []),
-            datetime=datetime
+            hardware="CUDA GPU" if os.environ.get("CUDA_VISIBLE_DEVICES") else "CPU",
+            recommendations=analysis.get("recommendations", []),
+            datetime=datetime,
         )
 
         # Save README
         readme_file = self.output_dir / "README.md"
-        with open(readme_file, 'w') as f:
+        with open(readme_file, "w") as f:
             f.write(content)
 
         return str(readme_file)
+
 
 # CLI interface
 async def main():
@@ -987,12 +1056,18 @@ async def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Automated Publication Reporting")
-    parser.add_argument("--results-dir", default="./benchmark_results", help="Results directory")
+    parser.add_argument(
+        "--results-dir", default="./benchmark_results", help="Results directory"
+    )
     parser.add_argument("--output-dir", default="./reports", help="Output directory")
-    parser.add_argument("--title", default="Agent Forge Performance Analysis", help="Report title")
+    parser.add_argument(
+        "--title", default="Agent Forge Performance Analysis", help="Report title"
+    )
     parser.add_argument("--author", default="Agent Forge Team", help="Author name")
     parser.add_argument("--institution", default="AI Village", help="Institution")
-    parser.add_argument("--no-slides", action="store_true", help="Skip slide generation")
+    parser.add_argument(
+        "--no-slides", action="store_true", help="Skip slide generation"
+    )
     parser.add_argument("--no-latex", action="store_true", help="Skip LaTeX generation")
     parser.add_argument("--no-viz", action="store_true", help="Skip visualizations")
 
@@ -1007,15 +1082,15 @@ async def main():
         institution=args.institution,
         include_slides=not args.no_slides,
         include_latex=not args.no_latex,
-        include_visualizations=not args.no_viz
+        include_visualizations=not args.no_viz,
     )
 
     # Generate reports
     generator = PublicationReportGenerator(config)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("GENERATING PUBLICATION-READY REPORTS")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     start_time = time.time()
 
@@ -1027,11 +1102,11 @@ async def main():
         print(f"\n✅ Report generation completed in {generation_time:.1f} seconds")
         print(f"📁 Output directory: {args.output_dir}")
 
-        print(f"\n📋 Generated Files:")
+        print("\n📋 Generated Files:")
         for file_type, file_path in report_files.items():
             print(f"  {file_type}: {file_path}")
 
-        print(f"\n🎯 Key Reports:")
+        print("\n🎯 Key Reports:")
         print(f"  📊 Executive Summary: {args.output_dir}/executive_summary.md")
         print(f"  📝 Technical Report: {args.output_dir}/technical_report.md")
         print(f"  🐙 GitHub README: {args.output_dir}/README.md")
@@ -1047,6 +1122,7 @@ async def main():
         return 1
 
     return 0
+
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())

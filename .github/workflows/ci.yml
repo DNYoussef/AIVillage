@@ -291,7 +291,7 @@ jobs:
         if: success()
         run: |
           echo "=== Performance Regression Check ==="
-          python -c "
+          cat > regression_check.py << 'EOF'
 import json
 import os
 
@@ -335,7 +335,8 @@ try:
 except Exception as e:
     print(f'Regression check failed: {e}')
     # Don't fail CI for regression check issues
-"
+EOF
+          python regression_check.py
 
       - name: Cleanup
         if: always()

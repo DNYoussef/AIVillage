@@ -1,8 +1,9 @@
-import os
 import json
-import requests
-import subprocess
+import os
 import re
+import subprocess
+
+import requests
 
 WEBHOOK = os.getenv("SLACK_WEBHOOK")
 CHANNEL = os.getenv("SLACK_CHANNEL", "#atlantis-dev")

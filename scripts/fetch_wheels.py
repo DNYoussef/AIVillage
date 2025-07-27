@@ -11,6 +11,7 @@ With no arguments (or ``--fetch``), the script downloads wheels listed in
 existing wheels against the manifest. ``--approve`` records the hash of a new
 wheel in the manifest for CI use.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -69,7 +70,6 @@ def approve(path: pathlib.Path) -> None:
 
 def fetch() -> None:
     """Download wheels and regenerate the manifest."""
-
     lines = [
         line.strip()
         for line in REQ_FILE.read_text().splitlines()

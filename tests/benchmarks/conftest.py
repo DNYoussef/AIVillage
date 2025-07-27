@@ -1,22 +1,26 @@
 """Performance benchmark test configuration."""
 
-import pytest
-import time
+from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
+import time
+from typing import Any
+
+import pytest
+
 
 @dataclass
 class BenchmarkResult:
     """Single benchmark measurement result."""
+
     test_name: str
     duration: float
     timestamp: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
 
 class PerformanceBenchmark:
     """Track test performance over time and detect regressions."""
@@ -25,26 +29,26 @@ class PerformanceBenchmark:
         self.baselines_file = Path(__file__).parent / "baselines.json"
         self.results_file = Path(__file__).parent / "benchmark_results.json"
         self.baselines = self._load_baselines()
-        self.current_results: List[BenchmarkResult] = []
+        self.current_results: list[BenchmarkResult] = []
 
         # Performance thresholds
         self.regression_threshold = 1.5  # 50% slower than baseline
-        self.warning_threshold = 1.2     # 20% slower than baseline
+        self.warning_threshold = 1.2  # 20% slower than baseline
 
-    def _load_baselines(self) -> Dict[str, float]:
+    def _load_baselines(self) -> dict[str, float]:
         """Load performance baselines from file."""
         if not self.baselines_file.exists():
             return {}
 
         try:
-            with open(self.baselines_file, 'r') as f:
+            with open(self.baselines_file) as f:
                 data = json.load(f)
-            return data.get('baselines', {})
+            return data.get("baselines", {})
         except Exception as e:
             print(f"Warning: Could not load baselines: {e}")
             return {}
 
-    def measure(self, test_name: str, metadata: Optional[Dict[str, Any]] = None):
+    def measure(self, test_name: str, metadata: dict[str, Any] | None = None):
         """Context manager for measuring test performance."""
         return BenchmarkContext(self, test_name, metadata or {})
 
@@ -64,7 +68,7 @@ class PerformanceBenchmark:
             pytest.warns(
                 UserWarning,
                 match=f"Performance warning for {result.test_name}: "
-                     f"{result.duration:.3f}s vs baseline {baseline:.3f}s"
+                f"{result.duration:.3f}s vs baseline {baseline:.3f}s",
             )
 
     def save_results(self):
@@ -75,7 +79,7 @@ class PerformanceBenchmark:
             # Load existing results
             existing_results = []
             if self.results_file.exists():
-                with open(self.results_file, 'r') as f:
+                with open(self.results_file) as f:
                     existing_results = json.load(f)
 
             # Add new results
@@ -84,7 +88,7 @@ class PerformanceBenchmark:
             # Keep only last 100 results per test
             results_by_test = {}
             for result in all_results:
-                test_name = result['test_name']
+                test_name = result["test_name"]
                 if test_name not in results_by_test:
                     results_by_test[test_name] = []
                 results_by_test[test_name].append(result)
@@ -93,19 +97,22 @@ class PerformanceBenchmark:
             trimmed_results = []
             for test_results in results_by_test.values():
                 # Sort by timestamp and keep last 100
-                sorted_results = sorted(test_results, key=lambda x: x['timestamp'])
+                sorted_results = sorted(test_results, key=lambda x: x["timestamp"])
                 trimmed_results.extend(sorted_results[-100:])
 
-            with open(self.results_file, 'w') as f:
+            with open(self.results_file, "w") as f:
                 json.dump(trimmed_results, f, indent=2)
 
         except Exception as e:
             print(f"Warning: Could not save benchmark results: {e}")
 
+
 class BenchmarkContext:
     """Context manager for benchmark measurements."""
 
-    def __init__(self, benchmark: PerformanceBenchmark, test_name: str, metadata: Dict[str, Any]):
+    def __init__(
+        self, benchmark: PerformanceBenchmark, test_name: str, metadata: dict[str, Any]
+    ):
         self.benchmark = benchmark
         self.test_name = test_name
         self.metadata = metadata
@@ -120,14 +127,16 @@ class BenchmarkContext:
             duration = time.perf_counter() - self.start_time
 
             from datetime import datetime, timezone
+
             result = BenchmarkResult(
                 test_name=self.test_name,
                 duration=duration,
                 timestamp=datetime.now(timezone.utc).isoformat(),
-                metadata=self.metadata
+                metadata=self.metadata,
             )
 
             self.benchmark.record_result(result)
+
 
 @pytest.fixture(scope="session")
 def benchmark():
@@ -138,28 +147,29 @@ def benchmark():
     # Save results at end of session
     bench.save_results()
 
+
 @pytest.fixture(scope="session")
 def performance_config():
     """Performance test configuration."""
     return {
-        'timeout_seconds': 30,
-        'max_iterations': 1000,
-        'min_duration': 0.001,
-        'sample_sizes': [100, 1000, 10000]
+        "timeout_seconds": 30,
+        "max_iterations": 1000,
+        "min_duration": 0.001,
+        "sample_sizes": [100, 1000, 10000],
     }
+
 
 # Benchmark markers
 def pytest_configure(config):
     """Configure benchmark markers."""
-    config.addinivalue_line(
-        "markers", "benchmark: mark test as performance benchmark"
-    )
+    config.addinivalue_line("markers", "benchmark: mark test as performance benchmark")
     config.addinivalue_line(
         "markers", "slow_benchmark: mark test as slow performance benchmark"
     )
     config.addinivalue_line(
         "markers", "memory_benchmark: mark test as memory performance benchmark"
     )
+
 
 def pytest_collection_modifyitems(config, items):
     """Add benchmark markers based on test location."""

@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 """Generate JSON schema for EvidencePack."""
+
 from __future__ import annotations
+
+import argparse
 import json
 from pathlib import Path
-import argparse
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]

@@ -23,6 +23,7 @@ except ImportError:
 
     # Exit early to avoid the rest of the file
     import sys
+
     sys.exit(0)
 
 

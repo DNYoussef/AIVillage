@@ -22,9 +22,7 @@ class TestAIVillageException:
     def test_exception_creation(self):
         """Test basic exception creation."""
         context = ErrorContext(
-            component="test",
-            operation="test_operation",
-            details={"key": "value"}
+            component="test", operation="test_operation", details={"key": "value"}
         )
         exc = AIVillageException(
             "Test error",
@@ -43,11 +41,7 @@ class TestAIVillageException:
     def test_exception_with_cause(self):
         """Test exception with underlying cause."""
         original_error = ValueError("Original error")
-        context = ErrorContext(
-            component="test",
-            operation="test_operation",
-            details={}
-        )
+        context = ErrorContext(component="test", operation="test_operation", details={})
         exc = AIVillageException(
             "Wrapped error",
             context=context,
@@ -58,11 +52,7 @@ class TestAIVillageException:
 
     def test_exception_serialization(self):
         """Test exception serialization for logging."""
-        context = ErrorContext(
-            component="test",
-            operation="test_operation",
-            details={}
-        )
+        context = ErrorContext(component="test", operation="test_operation", details={})
         exc = AIVillageException(
             "Test error",
             severity=ErrorSeverity.WARNING,
@@ -122,7 +112,9 @@ class TestWithErrorHandlingDecorator:
         """Test decorator with exception."""
 
         @with_error_handling(
-            component="test", operation="error_operation", severity=ErrorSeverity.CRITICAL
+            component="test",
+            operation="error_operation",
+            severity=ErrorSeverity.CRITICAL,
         )
         def error_function():
             raise ValueError("Test error")
@@ -152,6 +144,7 @@ class TestWithErrorHandlingDecorator:
 
     def test_decorator_with_retries(self):
         """Test decorator with retry functionality."""
+
         # Note: Current implementation may not support retries
         @with_error_handling(component="test", operation="retry_operation")
         def retry_function():

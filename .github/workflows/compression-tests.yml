@@ -148,7 +148,7 @@ jobs:
             || echo "Some compression tests failed"
         else
           echo "No unit tests found, creating basic validation test"
-          python -c "
+          cat > compression_validation.py << 'EOF'
 import sys
 import importlib.util
 
@@ -171,7 +171,8 @@ for module_name in modules_to_check:
         print(f'⚠️  {module_name}: {e}')
 
 print('Validation complete')
-"
+EOF
+          python compression_validation.py
         fi
 
     - name: Run integration tests

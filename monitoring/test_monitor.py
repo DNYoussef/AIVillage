@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 __version__ = "1.0.0"
 
 @dataclass
-class TestStats:
+class MonitorStats:
     """Test statistics for a single run"""
     timestamp: str
     total_tests: int
@@ -33,8 +33,8 @@ class TestStats:
     modules: Dict[str, Dict[str, Any]]
 
     @classmethod
-    def from_pytest_json(cls, report_data: Dict[str, Any]) -> 'TestStats':
-        """Create TestStats from pytest JSON report"""
+    def from_pytest_json(cls, report_data: Dict[str, Any]) -> 'MonitorStats':
+        """Create MonitorStats from pytest JSON report"""
         summary = report_data.get('summary', {})
 
         total = summary.get('total', 0)
@@ -84,7 +84,7 @@ class TestStats:
             modules=modules
         )
 
-class TestMonitor:
+class HealthMonitor:
     """Automated test health monitoring system"""
 
     def __init__(self, base_dir: Path = None):
@@ -92,7 +92,7 @@ class TestMonitor:
         self.history_file = self.base_dir / "test_history.json"
         self.dashboard_path = Path("test_health_dashboard.md")
         self.alert_threshold = 95.0  # 95% success rate
-        self.history: List[TestStats] = []
+        self.history: List[MonitorStats] = []
 
         # Load existing history
         self._load_history()
@@ -103,7 +103,7 @@ class TestMonitor:
             try:
                 with open(self.history_file, 'r') as f:
                     data = json.load(f)
-                    self.history = [TestStats(**item) for item in data]
+                    self.history = [MonitorStats(**item) for item in data]
                 logger.info(f"Loaded {len(self.history)} historical test runs")
             except Exception as e:
                 logger.error(f"Failed to load history: {e}")
@@ -127,7 +127,7 @@ class TestMonitor:
             with open(pytest_json_report, 'r') as f:
                 report_data = json.load(f)
 
-            stats = TestStats.from_pytest_json(report_data)
+            stats = MonitorStats.from_pytest_json(report_data)
             self.history.append(stats)
 
             # Keep last 100 runs
@@ -383,7 +383,7 @@ async def main():
 
     args = parser.parse_args()
 
-    monitor = TestMonitor()
+    monitor = HealthMonitor()
 
     if args.capture:
         await monitor.capture_test_results(args.capture)

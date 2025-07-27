@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Quiet-STaR Baker - Reasoning Token Injection and Baking
+"""Quiet-STaR Baker - Reasoning Token Injection and Baking
 
 Implements Quiet-STaR (Self-Taught Reasoner) methodology:
 - Injects thought tokens (<|startofthought|> / <|endofthought|>) during forward pass
@@ -14,32 +13,32 @@ Based on "Quiet-STaR: Language Models Can Teach Themselves to Think Before Speak
 import asyncio
 import json
 import logging
-import time
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+import time
+from typing import Any
+
 import click
+from datasets import load_dataset
 import numpy as np
+from pydantic import BaseModel, Field, validator
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
-import wandb
-from pydantic import BaseModel, Field, validator
 from tqdm import tqdm
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
+    DataCollatorForLanguageModeling,
     Trainer,
     TrainingArguments,
-    DataCollatorForLanguageModeling
 )
-from datasets import load_dataset
+
+import wandb
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -47,13 +46,16 @@ logger = logging.getLogger(__name__)
 # Configuration
 # ============================================================================
 
+
 class QuietSTaRConfig(BaseModel):
     """Configuration for Quiet-STaR baking"""
 
     # Model configuration
     model_path: str = Field(..., description="Path to champion model from EvoMerge")
     output_path: str = Field(..., description="Path for baked model output")
-    tokenizer_path: Optional[str] = Field(None, description="Custom tokenizer path (defaults to model_path)")
+    tokenizer_path: str | None = Field(
+        None, description="Custom tokenizer path (defaults to model_path)"
+    )
 
     # Thought tokens
     start_thought_token: str = Field(default="<|startofthought|>")
@@ -85,18 +87,20 @@ class QuietSTaRConfig(BaseModel):
 
     # W&B configuration
     wandb_project: str = Field(default="agent-forge")
-    wandb_entity: Optional[str] = None
-    wandb_tags: List[str] = Field(default_factory=lambda: ["quietstar", "reasoning"])
+    wandb_entity: str | None = None
+    wandb_tags: list[str] = Field(default_factory=lambda: ["quietstar", "reasoning"])
 
-    @validator('device')
+    @validator("device")
     def validate_device(cls, v):
         if v == "auto":
             return "cuda" if torch.cuda.is_available() else "cpu"
         return v
 
+
 # ============================================================================
 # Thought Token Injection
 # ============================================================================
+
 
 class ThoughtInjector(nn.Module):
     """Injects thought tokens into model forward pass"""
@@ -111,18 +115,24 @@ class ThoughtInjector(nn.Module):
         self.add_thought_tokens()
 
         # Thought token IDs
-        self.start_thought_id = self.tokenizer.convert_tokens_to_ids(config.start_thought_token)
-        self.end_thought_id = self.tokenizer.convert_tokens_to_ids(config.end_thought_token)
+        self.start_thought_id = self.tokenizer.convert_tokens_to_ids(
+            config.start_thought_token
+        )
+        self.end_thought_id = self.tokenizer.convert_tokens_to_ids(
+            config.end_thought_token
+        )
 
-        logger.info(f"Thought tokens initialized: {config.start_thought_token} ({self.start_thought_id}), "
-                   f"{config.end_thought_token} ({self.end_thought_id})")
+        logger.info(
+            f"Thought tokens initialized: {config.start_thought_token} ({self.start_thought_id}), "
+            f"{config.end_thought_token} ({self.end_thought_id})"
+        )
 
     def add_thought_tokens(self):
         """Add thought tokens to tokenizer"""
         special_tokens = {
             "additional_special_tokens": [
                 self.config.start_thought_token,
-                self.config.end_thought_token
+                self.config.end_thought_token,
             ]
         }
 
@@ -133,7 +143,9 @@ class ThoughtInjector(nn.Module):
             self.model.resize_token_embeddings(len(self.tokenizer))
             logger.info(f"Added {num_added} special tokens and resized embeddings")
 
-    def inject_thoughts(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def inject_thoughts(
+        self, input_ids: torch.Tensor, attention_mask: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Inject thought tokens into input sequences"""
         batch_size, seq_len = input_ids.shape
         device = input_ids.device
@@ -166,7 +178,9 @@ class ThoughtInjector(nn.Module):
                 new_mask.extend(mask[last_idx:point].tolist())
 
                 # Add thought tokens
-                thought_length = np.random.randint(8, min(self.config.max_thought_length, 32))
+                thought_length = np.random.randint(
+                    8, min(self.config.max_thought_length, 32)
+                )
                 new_seq.append(self.start_thought_id)
                 new_mask.append(1)
 
@@ -191,7 +205,7 @@ class ThoughtInjector(nn.Module):
         padded_sequences = []
         padded_masks = []
 
-        for seq, mask in zip(new_sequences, new_masks):
+        for seq, mask in zip(new_sequences, new_masks, strict=False):
             pad_len = max_len - len(seq)
             if pad_len > 0:
                 seq = F.pad(seq, (0, pad_len), value=self.tokenizer.pad_token_id)
@@ -201,7 +215,7 @@ class ThoughtInjector(nn.Module):
 
         return torch.stack(padded_sequences), torch.stack(padded_masks)
 
-    def find_injection_points(self, input_ids: torch.Tensor) -> List[List[int]]:
+    def find_injection_points(self, input_ids: torch.Tensor) -> list[list[int]]:
         """Find suitable points for thought injection"""
         batch_size = input_ids.shape[0]
         injection_points = []
@@ -213,13 +227,15 @@ class ThoughtInjector(nn.Module):
             # Find sentence boundaries (periods, questions, etc.)
             for i in range(1, len(seq) - 1):
                 token_text = self.tokenizer.decode([seq[i].item()])
-                if any(punct in token_text for punct in ['.', '?', '!', '\n']):
+                if any(punct in token_text for punct in [".", "?", "!", "\n"]):
                     points.append(i + 1)
 
             # Limit injection points
             if len(points) > 3:
                 # Sample random subset
-                points = sorted(np.random.choice(points, size=3, replace=False).tolist())
+                points = sorted(
+                    np.random.choice(points, size=3, replace=False).tolist()
+                )
 
             injection_points.append(points)
 
@@ -228,18 +244,18 @@ class ThoughtInjector(nn.Module):
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor, **kwargs):
         """Forward pass with thought injection"""
         # Inject thoughts into sequences
-        thought_input_ids, thought_attention_mask = self.inject_thoughts(input_ids, attention_mask)
+        thought_input_ids, thought_attention_mask = self.inject_thoughts(
+            input_ids, attention_mask
+        )
 
         # Forward through model
         outputs = self.model(
-            input_ids=thought_input_ids,
-            attention_mask=thought_attention_mask,
-            **kwargs
+            input_ids=thought_input_ids, attention_mask=thought_attention_mask, **kwargs
         )
 
         return outputs, thought_input_ids, thought_attention_mask
 
-    def extract_thoughts(self, generated_ids: torch.Tensor) -> List[str]:
+    def extract_thoughts(self, generated_ids: torch.Tensor) -> list[str]:
         """Extract generated thoughts from output"""
         thoughts = []
 
@@ -255,7 +271,9 @@ class ThoughtInjector(nn.Module):
                 elif token_id == self.end_thought_id and in_thought:
                     in_thought = False
                     if current_thought:
-                        thought_text = self.tokenizer.decode(current_thought, skip_special_tokens=True)
+                        thought_text = self.tokenizer.decode(
+                            current_thought, skip_special_tokens=True
+                        )
                         seq_thoughts.append(thought_text)
                 elif in_thought:
                     current_thought.append(token_id.item())
@@ -264,14 +282,18 @@ class ThoughtInjector(nn.Module):
 
         return thoughts
 
+
 # ============================================================================
 # Evaluation Dataset
 # ============================================================================
 
+
 class ReasoningEvalDataset(Dataset):
     """Dataset for evaluating reasoning capabilities"""
 
-    def __init__(self, dataset_name: str, num_samples: int, tokenizer, max_length: int = 512):
+    def __init__(
+        self, dataset_name: str, num_samples: int, tokenizer, max_length: int = 512
+    ):
         self.tokenizer = tokenizer
         self.max_length = max_length
 
@@ -287,7 +309,7 @@ class ReasoningEvalDataset(Dataset):
 
         logger.info(f"Loaded {len(self.examples)} examples from {dataset_name}")
 
-    def prepare_gsm8k(self, dataset, num_samples: int) -> List[Dict]:
+    def prepare_gsm8k(self, dataset, num_samples: int) -> list[dict]:
         """Prepare GSM8K examples"""
         examples = []
 
@@ -306,15 +328,17 @@ class ReasoningEvalDataset(Dataset):
             else:
                 numerical_answer = answer.strip()
 
-            examples.append({
-                "input": f"Question: {question}\nAnswer:",
-                "target": answer,
-                "numerical_answer": numerical_answer
-            })
+            examples.append(
+                {
+                    "input": f"Question: {question}\nAnswer:",
+                    "target": answer,
+                    "numerical_answer": numerical_answer,
+                }
+            )
 
         return examples
 
-    def prepare_math(self, dataset, num_samples: int) -> List[Dict]:
+    def prepare_math(self, dataset, num_samples: int) -> list[dict]:
         """Prepare MATH dataset examples"""
         examples = []
 
@@ -325,11 +349,13 @@ class ReasoningEvalDataset(Dataset):
             problem = item["problem"]
             solution = item["solution"]
 
-            examples.append({
-                "input": f"Problem: {problem}\nSolution:",
-                "target": solution,
-                "numerical_answer": self.extract_math_answer(solution)
-            })
+            examples.append(
+                {
+                    "input": f"Problem: {problem}\nSolution:",
+                    "target": solution,
+                    "numerical_answer": self.extract_math_answer(solution),
+                }
+            )
 
         return examples
 
@@ -337,14 +363,15 @@ class ReasoningEvalDataset(Dataset):
         """Extract final answer from MATH solution"""
         # Look for boxed answer
         import re
-        boxed_pattern = r'\\boxed\{([^}]+)\}'
+
+        boxed_pattern = r"\\boxed\{([^}]+)\}"
         match = re.search(boxed_pattern, solution)
 
         if match:
             return match.group(1)
 
         # Fallback: last number in solution
-        numbers = re.findall(r'-?\d+\.?\d*', solution)
+        numbers = re.findall(r"-?\d+\.?\d*", solution)
         return numbers[-1] if numbers else ""
 
     def __len__(self):
@@ -359,25 +386,32 @@ class ReasoningEvalDataset(Dataset):
             truncation=True,
             padding="max_length",
             max_length=self.max_length,
-            return_tensors="pt"
+            return_tensors="pt",
         )
 
         return {
             "input_ids": encoding["input_ids"].squeeze(),
             "attention_mask": encoding["attention_mask"].squeeze(),
             "target": example["target"],
-            "numerical_answer": example["numerical_answer"]
+            "numerical_answer": example["numerical_answer"],
         }
+
 
 # ============================================================================
 # A/B Testing Harness
 # ============================================================================
 
+
 class ABTestHarness:
     """A/B testing harness for comparing with/without thought tokens"""
 
-    def __init__(self, model: nn.Module, thought_model: ThoughtInjector,
-                 tokenizer, config: QuietSTaRConfig):
+    def __init__(
+        self,
+        model: nn.Module,
+        thought_model: ThoughtInjector,
+        tokenizer,
+        config: QuietSTaRConfig,
+    ):
         self.model = model
         self.thought_model = thought_model
         self.tokenizer = tokenizer
@@ -391,10 +425,10 @@ class ABTestHarness:
         # Evaluation metrics
         self.metrics = {
             "baseline": {"accuracy": [], "perplexity": [], "time": []},
-            "with_thoughts": {"accuracy": [], "perplexity": [], "time": []}
+            "with_thoughts": {"accuracy": [], "perplexity": [], "time": []},
         }
 
-    async def run_ab_test(self, eval_dataset: ReasoningEvalDataset) -> Dict[str, Any]:
+    async def run_ab_test(self, eval_dataset: ReasoningEvalDataset) -> dict[str, Any]:
         """Run A/B test comparing baseline vs thought-injected model"""
         logger.info(f"Starting A/B test with {len(eval_dataset)} examples")
 
@@ -403,7 +437,7 @@ class ABTestHarness:
             eval_dataset,
             batch_size=self.config.eval_batch_size,
             shuffle=False,
-            collate_fn=self.collate_fn
+            collate_fn=self.collate_fn,
         )
 
         # Run multiple rounds
@@ -415,7 +449,7 @@ class ABTestHarness:
                 self.model,
                 dataloader,
                 use_thoughts=False,
-                desc=f"Baseline R{round_idx+1}"
+                desc=f"Baseline R{round_idx + 1}",
             )
 
             # Test with thoughts
@@ -423,29 +457,40 @@ class ABTestHarness:
                 self.thought_model,
                 dataloader,
                 use_thoughts=True,
-                desc=f"Thoughts R{round_idx+1}"
+                desc=f"Thoughts R{round_idx + 1}",
             )
 
             # Record metrics
             self.metrics["baseline"]["accuracy"].append(baseline_results["accuracy"])
-            self.metrics["baseline"]["perplexity"].append(baseline_results["perplexity"])
+            self.metrics["baseline"]["perplexity"].append(
+                baseline_results["perplexity"]
+            )
             self.metrics["baseline"]["time"].append(baseline_results["avg_time"])
 
-            self.metrics["with_thoughts"]["accuracy"].append(thought_results["accuracy"])
-            self.metrics["with_thoughts"]["perplexity"].append(thought_results["perplexity"])
+            self.metrics["with_thoughts"]["accuracy"].append(
+                thought_results["accuracy"]
+            )
+            self.metrics["with_thoughts"]["perplexity"].append(
+                thought_results["perplexity"]
+            )
             self.metrics["with_thoughts"]["time"].append(thought_results["avg_time"])
 
             # Log round results
-            logger.info(f"Round {round_idx + 1} - Baseline Accuracy: {baseline_results['accuracy']:.3f}")
-            logger.info(f"Round {round_idx + 1} - Thoughts Accuracy: {thought_results['accuracy']:.3f}")
+            logger.info(
+                f"Round {round_idx + 1} - Baseline Accuracy: {baseline_results['accuracy']:.3f}"
+            )
+            logger.info(
+                f"Round {round_idx + 1} - Thoughts Accuracy: {thought_results['accuracy']:.3f}"
+            )
 
         # Analyze results
         analysis = self.analyze_results()
 
         return analysis
 
-    async def evaluate_model(self, model: nn.Module, dataloader: DataLoader,
-                           use_thoughts: bool, desc: str) -> Dict[str, float]:
+    async def evaluate_model(
+        self, model: nn.Module, dataloader: DataLoader, use_thoughts: bool, desc: str
+    ) -> dict[str, float]:
         """Evaluate model on dataset"""
         model.eval()
 
@@ -466,7 +511,9 @@ class ABTestHarness:
 
                 if use_thoughts:
                     # Generate with thought injection
-                    outputs, thought_ids, thought_mask = model(input_ids, attention_mask)
+                    outputs, thought_ids, thought_mask = model(
+                        input_ids, attention_mask
+                    )
 
                     # Generate response
                     generated = model.model.generate(
@@ -475,7 +522,7 @@ class ABTestHarness:
                         max_new_tokens=100,
                         temperature=0.1,
                         do_sample=True,
-                        pad_token_id=self.tokenizer.pad_token_id
+                        pad_token_id=self.tokenizer.pad_token_id,
                     )
 
                     # Extract thoughts
@@ -489,15 +536,19 @@ class ABTestHarness:
                         max_new_tokens=100,
                         temperature=0.1,
                         do_sample=True,
-                        pad_token_id=self.tokenizer.pad_token_id
+                        pad_token_id=self.tokenizer.pad_token_id,
                     )
 
                 end_time = time.time()
-                total_time += (end_time - start_time)
+                total_time += end_time - start_time
 
                 # Decode and evaluate
-                for i, (gen, target, num_answer) in enumerate(zip(generated, targets, numerical_answers)):
-                    generated_text = self.tokenizer.decode(gen, skip_special_tokens=True)
+                for i, (gen, target, num_answer) in enumerate(
+                    zip(generated, targets, numerical_answers, strict=False)
+                ):
+                    generated_text = self.tokenizer.decode(
+                        gen, skip_special_tokens=True
+                    )
 
                     # Check if answer is correct
                     if self.check_answer(generated_text, num_answer):
@@ -508,14 +559,16 @@ class ABTestHarness:
         # Calculate metrics
         accuracy = total_correct / total_samples if total_samples > 0 else 0.0
         avg_time = total_time / len(dataloader) if len(dataloader) > 0 else 0.0
-        perplexity = np.exp(total_loss / total_samples) if total_samples > 0 else float('inf')
+        perplexity = (
+            np.exp(total_loss / total_samples) if total_samples > 0 else float("inf")
+        )
 
         results = {
             "accuracy": accuracy,
             "perplexity": perplexity,
             "avg_time": avg_time,
             "total_samples": total_samples,
-            "thought_traces": thought_traces if use_thoughts else []
+            "thought_traces": thought_traces if use_thoughts else [],
         }
 
         return results
@@ -524,7 +577,8 @@ class ABTestHarness:
         """Check if generated answer matches target"""
         # Extract numbers from generated text
         import re
-        generated_numbers = re.findall(r'-?\d+\.?\d*', generated_text)
+
+        generated_numbers = re.findall(r"-?\d+\.?\d*", generated_text)
 
         # Check if target answer appears in generated numbers
         return target_answer in generated_numbers
@@ -535,10 +589,10 @@ class ABTestHarness:
             "input_ids": torch.stack([item["input_ids"] for item in batch]),
             "attention_mask": torch.stack([item["attention_mask"] for item in batch]),
             "target": [item["target"] for item in batch],
-            "numerical_answer": [item["numerical_answer"] for item in batch]
+            "numerical_answer": [item["numerical_answer"] for item in batch],
         }
 
-    def analyze_results(self) -> Dict[str, Any]:
+    def analyze_results(self) -> dict[str, Any]:
         """Analyze A/B test results"""
         # Calculate statistics
         baseline_acc_mean = np.mean(self.metrics["baseline"]["accuracy"])
@@ -551,9 +605,10 @@ class ABTestHarness:
 
         # Statistical significance test (paired t-test)
         from scipy import stats
+
         t_stat, p_value = stats.ttest_rel(
             self.metrics["with_thoughts"]["accuracy"],
-            self.metrics["baseline"]["accuracy"]
+            self.metrics["baseline"]["accuracy"],
         )
 
         # Determine winner
@@ -567,28 +622,38 @@ class ABTestHarness:
             "thoughts_accuracy": thoughts_acc_mean,
             "thoughts_std": thoughts_acc_std,
             "improvement": improvement,
-            "improvement_percent": (improvement / baseline_acc_mean * 100) if baseline_acc_mean > 0 else 0,
+            "improvement_percent": (improvement / baseline_acc_mean * 100)
+            if baseline_acc_mean > 0
+            else 0,
             "p_value": p_value,
             "is_significant": is_significant,
             "winner": winner,
             "baseline_perplexity": np.mean(self.metrics["baseline"]["perplexity"]),
             "thoughts_perplexity": np.mean(self.metrics["with_thoughts"]["perplexity"]),
             "baseline_time": np.mean(self.metrics["baseline"]["time"]),
-            "thoughts_time": np.mean(self.metrics["with_thoughts"]["time"])
+            "thoughts_time": np.mean(self.metrics["with_thoughts"]["time"]),
         }
 
-        logger.info(f"A/B Test Results:")
-        logger.info(f"  Baseline Accuracy: {baseline_acc_mean:.3f} ± {baseline_acc_std:.3f}")
-        logger.info(f"  Thoughts Accuracy: {thoughts_acc_mean:.3f} ± {thoughts_acc_std:.3f}")
-        logger.info(f"  Improvement: {improvement:.3f} ({analysis['improvement_percent']:.1f}%)")
+        logger.info("A/B Test Results:")
+        logger.info(
+            f"  Baseline Accuracy: {baseline_acc_mean:.3f} ± {baseline_acc_std:.3f}"
+        )
+        logger.info(
+            f"  Thoughts Accuracy: {thoughts_acc_mean:.3f} ± {thoughts_acc_std:.3f}"
+        )
+        logger.info(
+            f"  Improvement: {improvement:.3f} ({analysis['improvement_percent']:.1f}%)"
+        )
         logger.info(f"  P-value: {p_value:.4f}")
         logger.info(f"  Winner: {winner}")
 
         return analysis
 
+
 # ============================================================================
 # Weight Baking
 # ============================================================================
+
 
 class WeightBaker:
     """Bakes reasoning patterns into model weights via fine-tuning"""
@@ -599,11 +664,13 @@ class WeightBaker:
         self.config = config
         self.device = torch.device(config.device)
 
-    def prepare_baking_dataset(self, examples: List[Dict], thought_traces: List[List[str]]) -> Dataset:
+    def prepare_baking_dataset(
+        self, examples: list[dict], thought_traces: list[list[str]]
+    ) -> Dataset:
         """Prepare dataset for baking thoughts into weights"""
         baking_examples = []
 
-        for example, thoughts in zip(examples, thought_traces):
+        for example, thoughts in zip(examples, thought_traces, strict=False):
             if not thoughts:
                 continue
 
@@ -614,17 +681,14 @@ class WeightBaker:
             # Insert thoughts at appropriate positions
             thought_augmented = self.insert_thoughts_in_text(input_text, thoughts)
 
-            baking_examples.append({
-                "input": thought_augmented,
-                "target": target_text
-            })
+            baking_examples.append({"input": thought_augmented, "target": target_text})
 
         return BakingDataset(baking_examples, self.tokenizer, max_length=512)
 
-    def insert_thoughts_in_text(self, text: str, thoughts: List[str]) -> str:
+    def insert_thoughts_in_text(self, text: str, thoughts: list[str]) -> str:
         """Insert thought tokens into text"""
         # Simple insertion after sentences
-        sentences = text.split('. ')
+        sentences = text.split(". ")
         augmented = []
 
         for i, sentence in enumerate(sentences):
@@ -634,7 +698,7 @@ class WeightBaker:
                 thought_text = f" {self.config.start_thought_token} {thoughts[i]} {self.config.end_thought_token}"
                 augmented.append(thought_text)
 
-        return '. '.join(augmented)
+        return ". ".join(augmented)
 
     async def bake_weights(self, baking_dataset: Dataset) -> nn.Module:
         """Fine-tune model to internalize reasoning patterns"""
@@ -658,13 +722,12 @@ class WeightBaker:
             report_to=["wandb"] if wandb.run else [],
             fp16=self.config.mixed_precision and self.device.type == "cuda",
             dataloader_drop_last=False,
-            seed=self.config.seed
+            seed=self.config.seed,
         )
 
         # Data collator
         data_collator = DataCollatorForLanguageModeling(
-            tokenizer=self.tokenizer,
-            mlm=False
+            tokenizer=self.tokenizer, mlm=False
         )
 
         # Create trainer
@@ -673,7 +736,7 @@ class WeightBaker:
             args=training_args,
             train_dataset=baking_dataset,
             data_collator=data_collator,
-            tokenizer=self.tokenizer
+            tokenizer=self.tokenizer,
         )
 
         # Fine-tune
@@ -686,10 +749,11 @@ class WeightBaker:
 
         return self.model
 
+
 class BakingDataset(Dataset):
     """Dataset for weight baking"""
 
-    def __init__(self, examples: List[Dict], tokenizer, max_length: int = 512):
+    def __init__(self, examples: list[dict], tokenizer, max_length: int = 512):
         self.examples = examples
         self.tokenizer = tokenizer
         self.max_length = max_length
@@ -709,7 +773,7 @@ class BakingDataset(Dataset):
             truncation=True,
             padding="max_length",
             max_length=self.max_length,
-            return_tensors="pt"
+            return_tensors="pt",
         )
 
         # Labels are same as input_ids for language modeling
@@ -718,12 +782,14 @@ class BakingDataset(Dataset):
         return {
             "input_ids": encoding["input_ids"].squeeze(),
             "attention_mask": encoding["attention_mask"].squeeze(),
-            "labels": encoding["labels"].squeeze()
+            "labels": encoding["labels"].squeeze(),
         }
+
 
 # ============================================================================
 # Main Pipeline
 # ============================================================================
+
 
 class QuietSTaRBaker:
     """Main Quiet-STaR baking pipeline"""
@@ -746,7 +812,7 @@ class QuietSTaRBaker:
                 entity=self.config.wandb_entity,
                 job_type="quietstar",
                 tags=self.config.wandb_tags,
-                config=self.config.dict()
+                config=self.config.dict(),
             )
 
             logger.info(f"W&B initialized: {self.wandb_run.url}")
@@ -755,7 +821,7 @@ class QuietSTaRBaker:
             logger.error(f"W&B initialization failed: {e}")
             self.wandb_run = None
 
-    async def run_baking_pipeline(self) -> Dict[str, Any]:
+    async def run_baking_pipeline(self) -> dict[str, Any]:
         """Run complete Quiet-STaR baking pipeline"""
         try:
             # Initialize W&B
@@ -772,7 +838,9 @@ class QuietSTaRBaker:
 
             model = AutoModelForCausalLM.from_pretrained(
                 self.config.model_path,
-                torch_dtype=torch.float16 if self.config.device == "cuda" else torch.float32
+                torch_dtype=torch.float16
+                if self.config.device == "cuda"
+                else torch.float32,
             )
 
             # Create thought injector
@@ -780,9 +848,7 @@ class QuietSTaRBaker:
 
             # Load evaluation dataset
             eval_dataset = ReasoningEvalDataset(
-                self.config.eval_dataset,
-                self.config.eval_samples,
-                tokenizer
+                self.config.eval_dataset, self.config.eval_samples, tokenizer
             )
 
             # Run A/B test
@@ -791,22 +857,36 @@ class QuietSTaRBaker:
 
             # Log A/B results to W&B
             if self.wandb_run:
-                self.wandb_run.log({
-                    "baseline_accuracy": ab_results["baseline_accuracy"],
-                    "thoughts_accuracy": ab_results["thoughts_accuracy"],
-                    "improvement": ab_results["improvement"],
-                    "improvement_percent": ab_results["improvement_percent"],
-                    "p_value": ab_results["p_value"],
-                    "winner": ab_results["winner"]
-                })
+                self.wandb_run.log(
+                    {
+                        "baseline_accuracy": ab_results["baseline_accuracy"],
+                        "thoughts_accuracy": ab_results["thoughts_accuracy"],
+                        "improvement": ab_results["improvement"],
+                        "improvement_percent": ab_results["improvement_percent"],
+                        "p_value": ab_results["p_value"],
+                        "winner": ab_results["winner"],
+                    }
+                )
 
                 # Create accuracy comparison chart
                 import matplotlib.pyplot as plt
 
                 fig, ax = plt.subplots(figsize=(10, 6))
                 x = range(self.config.ab_test_rounds)
-                ax.plot(x, ab_harness.metrics["baseline"]["accuracy"], 'b-', label="Baseline", marker='o')
-                ax.plot(x, ab_harness.metrics["with_thoughts"]["accuracy"], 'r-', label="With Thoughts", marker='s')
+                ax.plot(
+                    x,
+                    ab_harness.metrics["baseline"]["accuracy"],
+                    "b-",
+                    label="Baseline",
+                    marker="o",
+                )
+                ax.plot(
+                    x,
+                    ab_harness.metrics["with_thoughts"]["accuracy"],
+                    "r-",
+                    label="With Thoughts",
+                    marker="s",
+                )
                 ax.set_xlabel("Round")
                 ax.set_ylabel("Accuracy")
                 ax.set_title("Reasoning Accuracy: Baseline vs Thoughts")
@@ -820,33 +900,36 @@ class QuietSTaRBaker:
             baked_model = None
 
             if ab_results["winner"] == "thoughts":
-                logger.info("Thought injection improved performance - proceeding with weight baking")
+                logger.info(
+                    "Thought injection improved performance - proceeding with weight baking"
+                )
 
                 # Prepare baking dataset
                 weight_baker = WeightBaker(thought_model.model, tokenizer, self.config)
 
                 # Get thought traces from best round
-                best_round_idx = np.argmax(ab_harness.metrics["with_thoughts"]["accuracy"])
+                best_round_idx = np.argmax(
+                    ab_harness.metrics["with_thoughts"]["accuracy"]
+                )
 
                 # Re-run best round to get thought traces
                 dataloader = DataLoader(
                     eval_dataset,
                     batch_size=self.config.eval_batch_size,
                     shuffle=False,
-                    collate_fn=ab_harness.collate_fn
+                    collate_fn=ab_harness.collate_fn,
                 )
 
                 best_round_results = await ab_harness.evaluate_model(
                     thought_model,
                     dataloader,
                     use_thoughts=True,
-                    desc="Collecting thought traces"
+                    desc="Collecting thought traces",
                 )
 
                 # Create baking dataset
                 baking_dataset = weight_baker.prepare_baking_dataset(
-                    eval_dataset.examples,
-                    best_round_results["thought_traces"]
+                    eval_dataset.examples, best_round_results["thought_traces"]
                 )
 
                 # Bake weights
@@ -857,26 +940,34 @@ class QuietSTaRBaker:
                     artifact = wandb.Artifact(
                         "baked_quietstar_model",
                         type="model",
-                        description=f"QuietSTaR baked model with {ab_results['improvement_percent']:.1f}% improvement"
+                        description=f"QuietSTaR baked model with {ab_results['improvement_percent']:.1f}% improvement",
                     )
                     artifact.add_dir(self.config.output_path)
                     self.wandb_run.log_artifact(artifact)
 
                     # Log trace quality
-                    trace_quality_scores = self.evaluate_trace_quality(best_round_results["thought_traces"])
-                    self.wandb_run.log({
-                        "trace_quality_mean": np.mean(trace_quality_scores),
-                        "trace_quality_std": np.std(trace_quality_scores)
-                    })
+                    trace_quality_scores = self.evaluate_trace_quality(
+                        best_round_results["thought_traces"]
+                    )
+                    self.wandb_run.log(
+                        {
+                            "trace_quality_mean": np.mean(trace_quality_scores),
+                            "trace_quality_std": np.std(trace_quality_scores),
+                        }
+                    )
 
                     # Create trace quality histogram
                     fig, ax = plt.subplots(figsize=(10, 6))
-                    ax.hist(trace_quality_scores, bins=20, alpha=0.7, color='green')
+                    ax.hist(trace_quality_scores, bins=20, alpha=0.7, color="green")
                     ax.set_xlabel("Trace Quality Score")
                     ax.set_ylabel("Count")
                     ax.set_title("Distribution of Thought Trace Quality")
-                    ax.axvline(np.mean(trace_quality_scores), color='red', linestyle='--',
-                             label=f'Mean: {np.mean(trace_quality_scores):.2f}')
+                    ax.axvline(
+                        np.mean(trace_quality_scores),
+                        color="red",
+                        linestyle="--",
+                        label=f"Mean: {np.mean(trace_quality_scores):.2f}",
+                    )
                     ax.legend()
 
                     self.wandb_run.log({"trace_quality_distribution": wandb.Image(fig)})
@@ -884,7 +975,9 @@ class QuietSTaRBaker:
 
                 logger.info(f"Baked model saved to {self.config.output_path}")
             else:
-                logger.info("Thought injection did not improve performance - skipping weight baking")
+                logger.info(
+                    "Thought injection did not improve performance - skipping weight baking"
+                )
                 # Save original model
                 model.save_pretrained(self.config.output_path)
                 tokenizer.save_pretrained(self.config.output_path)
@@ -894,7 +987,7 @@ class QuietSTaRBaker:
                 "ab_test_results": ab_results,
                 "baked_model_path": self.config.output_path if baked_model else None,
                 "improvement": ab_results["improvement_percent"],
-                "winner": ab_results["winner"]
+                "winner": ab_results["winner"],
             }
 
             logger.info("QuietSTaR baking pipeline completed successfully")
@@ -908,7 +1001,7 @@ class QuietSTaRBaker:
             if self.wandb_run:
                 self.wandb_run.finish()
 
-    def evaluate_trace_quality(self, thought_traces: List[List[str]]) -> List[float]:
+    def evaluate_trace_quality(self, thought_traces: list[list[str]]) -> list[float]:
         """Evaluate quality of generated thought traces"""
         quality_scores = []
 
@@ -927,7 +1020,15 @@ class QuietSTaRBaker:
                     trace_score += 0.3
 
                 # Contains reasoning indicators
-                reasoning_words = ["because", "therefore", "since", "if", "then", "so", "thus"]
+                reasoning_words = [
+                    "because",
+                    "therefore",
+                    "since",
+                    "if",
+                    "then",
+                    "so",
+                    "thus",
+                ]
                 if any(word in trace.lower() for word in reasoning_words):
                     trace_score += 0.4
 
@@ -941,30 +1042,33 @@ class QuietSTaRBaker:
 
         return quality_scores
 
+
 # ============================================================================
 # CLI Interface
 # ============================================================================
 
+
 @click.group()
 def forge():
     """Agent Forge CLI"""
-    pass
+
 
 @forge.command()
-@click.option('--model', required=True, help='Path to champion model from EvoMerge')
-@click.option('--out', required=True, help='Output path for baked model')
-@click.option('--tokenizer', help='Custom tokenizer path (defaults to model path)')
-@click.option('--eval-dataset', default='gsm8k', help='Evaluation dataset (gsm8k, math)')
-@click.option('--eval-samples', default=100, help='Number of evaluation samples')
-@click.option('--device', default='auto', help='Device to use (auto, cuda, cpu)')
-@click.option('--config', help='Configuration JSON file')
+@click.option("--model", required=True, help="Path to champion model from EvoMerge")
+@click.option("--out", required=True, help="Output path for baked model")
+@click.option("--tokenizer", help="Custom tokenizer path (defaults to model path)")
+@click.option(
+    "--eval-dataset", default="gsm8k", help="Evaluation dataset (gsm8k, math)"
+)
+@click.option("--eval-samples", default=100, help="Number of evaluation samples")
+@click.option("--device", default="auto", help="Device to use (auto, cuda, cpu)")
+@click.option("--config", help="Configuration JSON file")
 def bake_quietstar(model, out, tokenizer, eval_dataset, eval_samples, device, config):
     """Bake Quiet-STaR reasoning into model weights"""
-
     try:
         # Load configuration
         if config and Path(config).exists():
-            with open(config, 'r') as f:
+            with open(config) as f:
                 config_data = json.load(f)
             quietstar_config = QuietSTaRConfig(**config_data)
         else:
@@ -975,7 +1079,7 @@ def bake_quietstar(model, out, tokenizer, eval_dataset, eval_samples, device, co
                 tokenizer_path=tokenizer,
                 eval_dataset=eval_dataset,
                 eval_samples=eval_samples,
-                device=device
+                device=device,
             )
 
         # Run baking pipeline
@@ -985,22 +1089,23 @@ def bake_quietstar(model, out, tokenizer, eval_dataset, eval_samples, device, co
         results = asyncio.run(baker.run_baking_pipeline())
 
         # Print results
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("QUIET-STAR BAKING RESULTS")
-        print("="*60)
+        print("=" * 60)
         print(f"Winner: {results['winner']}")
         print(f"Improvement: {results['improvement']:.1f}%")
 
-        if results['baked_model_path']:
+        if results["baked_model_path"]:
             print(f"Baked model saved to: {results['baked_model_path']}")
         else:
             print("Original model saved (no improvement from thoughts)")
 
-        print("="*60)
+        print("=" * 60)
 
     except Exception as e:
         logger.error(f"Quiet-STaR baking failed: {e}")
         raise click.ClickException(str(e))
+
 
 if __name__ == "__main__":
     forge()

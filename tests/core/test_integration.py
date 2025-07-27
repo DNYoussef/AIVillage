@@ -7,6 +7,7 @@ the various components integrate correctly without breaking each other.
 import logging
 
 import pytest
+from services.core.business_logic import ChatBusinessLogic
 
 from core import (
     AgentCommunicationProtocol,
@@ -21,7 +22,6 @@ from core import (
 )
 from core.evidence import Chunk, EvidencePack
 from core.logging_config import setup_aivillage_logging
-from services.core.business_logic import ChatBusinessLogic
 
 
 class TestLoggingErrorHandlingIntegration:

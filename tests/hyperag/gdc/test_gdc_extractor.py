@@ -4,19 +4,17 @@ Unit tests for GDC Extractor
 Tests the Graph Denial Constraint violation detection engine.
 """
 
-import asyncio
-import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Dict, List
-
-import sys
 from pathlib import Path
+import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from mcp_servers.hyperag.gdc.extractor import GDCExtractor, GDCExtractorContext
 from mcp_servers.hyperag.gdc.specs import GDCSpec, Violation
-from mcp_servers.hyperag.gdc.registry import GDC_REGISTRY
 
 
 class TestGDCExtractor:
@@ -40,7 +38,7 @@ class TestGDCExtractor:
             cypher="MATCH (n:TestNode) WHERE n.invalid = true RETURN n",
             severity="high",
             suggested_action="fix_test_violation",
-            category="test"
+            category="test",
         )
 
     @pytest.fixture
@@ -69,7 +67,7 @@ class TestGDCExtractor:
             neo4j_uri="bolt://localhost:7687",
             neo4j_auth=("neo4j", "password"),
             max_concurrent_queries=3,
-            default_limit=500
+            default_limit=500,
         )
 
         assert extractor.neo4j_uri == "bolt://localhost:7687"
@@ -83,7 +81,7 @@ class TestGDCExtractor:
         """Test connection initialization and cleanup"""
         driver, session = mock_neo4j_driver
 
-        with patch('mcp_servers.hyperag.gdc.extractor.AsyncGraphDatabase') as mock_db:
+        with patch("mcp_servers.hyperag.gdc.extractor.AsyncGraphDatabase") as mock_db:
             mock_db.driver.return_value = driver
 
             extractor = GDCExtractor("bolt://localhost:7687", ("neo4j", "password"))
@@ -91,7 +89,9 @@ class TestGDCExtractor:
             # Test initialization
             await extractor.initialize()
             assert extractor.driver is not None
-            mock_db.driver.assert_called_once_with("bolt://localhost:7687", auth=("neo4j", "password"))
+            mock_db.driver.assert_called_once_with(
+                "bolt://localhost:7687", auth=("neo4j", "password")
+            )
 
             # Test connection test
             session.run.return_value = AsyncMock()
@@ -101,7 +101,9 @@ class TestGDCExtractor:
             driver.close.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_record_to_violation_conversion(self, mock_neo4j_driver, sample_gdc_spec, mock_neo4j_node):
+    async def test_record_to_violation_conversion(
+        self, mock_neo4j_driver, sample_gdc_spec, mock_neo4j_node
+    ):
         """Test conversion of Neo4j records to Violation objects"""
         driver, session = mock_neo4j_driver
 
@@ -123,7 +125,9 @@ class TestGDCExtractor:
         assert violation.nodes[0]["_neo4j_id"] == 123
 
     @pytest.mark.asyncio
-    async def test_single_gdc_scan(self, mock_neo4j_driver, sample_gdc_spec, mock_neo4j_node):
+    async def test_single_gdc_scan(
+        self, mock_neo4j_driver, sample_gdc_spec, mock_neo4j_node
+    ):
         """Test scanning for violations of a single GDC"""
         driver, session = mock_neo4j_driver
 
@@ -154,15 +158,18 @@ class TestGDCExtractor:
         mock_result.data.return_value = []
         session.run.return_value = mock_result
 
-        with patch.dict('mcp_servers.hyperag.gdc.registry.GDC_REGISTRY', {
-            "GDC_TEST": GDCSpec(
-                id="GDC_TEST",
-                description="Test GDC",
-                cypher="MATCH (n) RETURN n",
-                severity="low",
-                suggested_action="test_action"
-            )
-        }):
+        with patch.dict(
+            "mcp_servers.hyperag.gdc.registry.GDC_REGISTRY",
+            {
+                "GDC_TEST": GDCSpec(
+                    id="GDC_TEST",
+                    description="Test GDC",
+                    cypher="MATCH (n) RETURN n",
+                    severity="low",
+                    suggested_action="test_action",
+                )
+            },
+        ):
             extractor = GDCExtractor("bolt://localhost:7687", ("neo4j", "password"))
             extractor.driver = driver
 
@@ -216,10 +223,12 @@ class TestGDCExtractor:
         """Test GDCExtractorContext context manager"""
         driver, session = mock_neo4j_driver
 
-        with patch('mcp_servers.hyperag.gdc.extractor.AsyncGraphDatabase') as mock_db:
+        with patch("mcp_servers.hyperag.gdc.extractor.AsyncGraphDatabase") as mock_db:
             mock_db.driver.return_value = driver
 
-            async with GDCExtractorContext("bolt://localhost:7687", ("neo4j", "password")) as extractor:
+            async with GDCExtractorContext(
+                "bolt://localhost:7687", ("neo4j", "password")
+            ) as extractor:
                 assert isinstance(extractor, GDCExtractor)
                 assert extractor.driver is not None
 
@@ -257,16 +266,24 @@ class TestGDCExtractor:
         # Create test registry
         test_gdcs = {
             "GDC_TEST1": GDCSpec(
-                id="GDC_TEST1", description="Test 1", cypher="MATCH (n) RETURN n",
-                severity="high", suggested_action="action1", enabled=True
+                id="GDC_TEST1",
+                description="Test 1",
+                cypher="MATCH (n) RETURN n",
+                severity="high",
+                suggested_action="action1",
+                enabled=True,
             ),
             "GDC_TEST2": GDCSpec(
-                id="GDC_TEST2", description="Test 2", cypher="MATCH (n) RETURN n",
-                severity="low", suggested_action="action2", enabled=True
-            )
+                id="GDC_TEST2",
+                description="Test 2",
+                cypher="MATCH (n) RETURN n",
+                severity="low",
+                suggested_action="action2",
+                enabled=True,
+            ),
         }
 
-        with patch.dict('mcp_servers.hyperag.gdc.registry.GDC_REGISTRY', test_gdcs):
+        with patch.dict("mcp_servers.hyperag.gdc.registry.GDC_REGISTRY", test_gdcs):
             extractor = GDCExtractor("bolt://localhost:7687", ("neo4j", "password"))
             extractor.driver = driver
 
@@ -283,6 +300,7 @@ class TestGDCExtractor:
 
         # Mock query failure
         from neo4j.exceptions import Neo4jError
+
         session.run.side_effect = Neo4jError("Test error")
 
         extractor = GDCExtractor("bolt://localhost:7687", ("neo4j", "password"))
@@ -302,7 +320,7 @@ class TestViolationObject:
             gdc_id="GDC_TEST",
             nodes=[{"id": "node1", "type": "TestNode"}],
             severity="high",
-            suggested_repair="test_repair"
+            suggested_repair="test_repair",
         )
 
         assert violation.gdc_id == "GDC_TEST"
@@ -324,9 +342,7 @@ class TestViolationObject:
     def test_violation_to_dict(self):
         """Test Violation serialization to dictionary"""
         violation = Violation(
-            gdc_id="GDC_TEST",
-            nodes=[{"id": "node1"}],
-            severity="medium"
+            gdc_id="GDC_TEST", nodes=[{"id": "node1"}], severity="medium"
         )
 
         data = violation.to_dict()
@@ -343,7 +359,7 @@ class TestViolationObject:
             "nodes": [{"id": "node1"}],
             "severity": "low",
             "detected_at": "2025-07-22T12:00:00",
-            "confidence_score": 0.8
+            "confidence_score": 0.8,
         }
 
         violation = Violation.from_dict(data)
@@ -358,11 +374,9 @@ class TestViolationObject:
         violation = Violation(
             nodes=[
                 {"id": "node1", "type": "TestNode"},
-                {"id": "node2", "type": "TestNode"}
+                {"id": "node2", "type": "TestNode"},
             ],
-            edges=[
-                {"id": "edge1", "type": "TEST_REL"}
-            ]
+            edges=[{"id": "edge1", "type": "TEST_REL"}],
         )
 
         node_ids = violation.get_affected_node_ids()
@@ -392,7 +406,7 @@ class TestGDCSpec:
             description="Valid test GDC",
             cypher="MATCH (n) RETURN n",
             severity="medium",
-            suggested_action="test_action"
+            suggested_action="test_action",
         )
 
         assert spec.id == "GDC_VALID_TEST"
@@ -407,7 +421,7 @@ class TestGDCSpec:
                 description="Invalid ID test",
                 cypher="MATCH (n) RETURN n",
                 severity="low",
-                suggested_action="test"
+                suggested_action="test",
             )
 
     def test_invalid_severity(self):
@@ -418,7 +432,7 @@ class TestGDCSpec:
                 description="Invalid severity test",
                 cypher="MATCH (n) RETURN n",
                 severity="extreme",
-                suggested_action="test"
+                suggested_action="test",
             )
 
 

@@ -18,13 +18,11 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict
+from typing import Any
 
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
-
 from rag_system.vector_store import FaissAdapter
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("qdrant-migrator")
@@ -37,7 +35,6 @@ DIMENSION = 768
 
 def ensure_collection(client: QdrantClient, delete_existing: bool) -> None:
     """Create the destination collection if needed."""
-
     collections = {c.name for c in client.get_collections().collections}
     if delete_existing and COLLECTION in collections:
         logger.info("Deleting existing collection %s", COLLECTION)
@@ -54,9 +51,8 @@ def ensure_collection(client: QdrantClient, delete_existing: bool) -> None:
         )
 
 
-def migrate(dry_run: bool, delete_existing: bool) -> Dict[str, Any]:
+def migrate(dry_run: bool, delete_existing: bool) -> dict[str, Any]:
     """Perform the migration and return a report."""
-
     start = time.time()
     adapter = FaissAdapter()
     client = QdrantClient(url=QDRANT_URL, timeout=60)
@@ -74,7 +70,7 @@ def migrate(dry_run: bool, delete_existing: bool) -> Dict[str, Any]:
             collection_name=COLLECTION,
             points=[
                 models.PointStruct(id=i, vector=v, payload=p)
-                for i, v, p in zip(ids, vectors, payload)
+                for i, v, p in zip(ids, vectors, payload, strict=False)
             ],
         )
         written += len(ids)

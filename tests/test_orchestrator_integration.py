@@ -6,19 +6,25 @@ Tests that the orchestrator can discover and execute all phase modules
 with their new entry points, and that they return valid PhaseResult objects.
 """
 
-import pytest
 import asyncio
-import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+import sys
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from agent_forge.forge_orchestrator import (
-    ForgeOrchestrator, OrchestratorConfig, PhaseResult, PhaseStatus, PhaseType
+    ForgeOrchestrator,
+    OrchestratorConfig,
+    PhaseResult,
+    PhaseStatus,
+    PhaseType,
 )
+
 
 class TestOrchestratorIntegration:
     """Test orchestrator integration with real phase modules."""
@@ -32,7 +38,7 @@ class TestOrchestratorIntegration:
             device="cpu",
             quick_mode=True,
             output_dir=Path("./test_output"),
-            checkpoint_dir=Path("./test_checkpoints")
+            checkpoint_dir=Path("./test_checkpoints"),
         )
 
     @pytest.fixture
@@ -59,10 +65,12 @@ class TestOrchestratorIntegration:
             PhaseType.COMPRESSION,
             PhaseType.GEOMETRY,
             PhaseType.SELF_MODELING,
-            PhaseType.PROMPT_BAKING
+            PhaseType.PROMPT_BAKING,
         }
 
-        discovered_types = {phase.phase_type for phase in orchestrator.discovered_phases.values()}
+        discovered_types = {
+            phase.phase_type for phase in orchestrator.discovered_phases.values()
+        }
 
         # At least some expected phases should be discovered
         assert len(expected_phases.intersection(discovered_types)) > 0
@@ -70,7 +78,8 @@ class TestOrchestratorIntegration:
     def test_evomerge_entry_point_exists(self):
         """Test that EvoMerge phase has discoverable entry point."""
         try:
-            from agent_forge.evomerge_pipeline import run_evomerge, run, execute
+            from agent_forge.evomerge_pipeline import execute, run, run_evomerge
+
             assert callable(run_evomerge)
             assert callable(run)
             assert callable(execute)
@@ -80,7 +89,8 @@ class TestOrchestratorIntegration:
     def test_compression_entry_point_exists(self):
         """Test that Compression phase has discoverable entry point."""
         try:
-            from agent_forge.compression_pipeline import run_compression, run, execute
+            from agent_forge.compression_pipeline import execute, run, run_compression
+
             assert callable(run_compression)
             assert callable(run)
             assert callable(execute)
@@ -90,7 +100,8 @@ class TestOrchestratorIntegration:
     def test_geometry_entry_point_exists(self):
         """Test that Geometry phase has discoverable entry point."""
         try:
-            from agent_forge.geometry_feedback import run_geometry, run, execute
+            from agent_forge.geometry_feedback import execute, run, run_geometry
+
             assert callable(run_geometry)
             assert callable(run)
             assert callable(execute)
@@ -100,7 +111,8 @@ class TestOrchestratorIntegration:
     def test_self_modeling_entry_point_exists(self):
         """Test that Self-Modeling phase has discoverable entry point."""
         try:
-            from agent_forge.mastery_loop import run_self_modeling, run, execute
+            from agent_forge.mastery_loop import execute, run, run_self_modeling
+
             assert callable(run_self_modeling)
             assert callable(run)
             assert callable(execute)
@@ -110,7 +122,8 @@ class TestOrchestratorIntegration:
     def test_prompt_baking_entry_point_exists(self):
         """Test that Prompt Baking phase has discoverable entry point."""
         try:
-            from agent_forge.prompt_baking import run_prompt_baking, run, execute
+            from agent_forge.prompt_baking import execute, run, run_prompt_baking
+
             assert callable(run_prompt_baking)
             assert callable(run)
             assert callable(execute)
@@ -129,11 +142,11 @@ class TestOrchestratorIntegration:
                 {"name": "test1", "path": "microsoft/DialoGPT-medium"},
             ],
             "device": "cpu",
-            "output_dir": "./test_evomerge"
+            "output_dir": "./test_evomerge",
         }
 
         # Mock the heavy computation parts
-        with patch('agent_forge.evomerge_pipeline.EvoMergePipeline') as mock_pipeline:
+        with patch("agent_forge.evomerge_pipeline.EvoMergePipeline") as mock_pipeline:
             mock_instance = MagicMock()
             mock_pipeline.return_value = mock_instance
 
@@ -180,22 +193,26 @@ class TestOrchestratorIntegration:
             "input_model_path": "./test_input",
             "output_model_path": "./test_output",
             "device": "cpu",
-            "ab_test_samples": 10
+            "ab_test_samples": 10,
         }
 
         # Mock the compression pipeline
-        with patch('agent_forge.compression_pipeline.CompressionPipeline') as mock_pipeline:
+        with patch(
+            "agent_forge.compression_pipeline.CompressionPipeline"
+        ) as mock_pipeline:
             mock_instance = MagicMock()
             mock_pipeline.return_value = mock_instance
 
             # Mock successful compression
-            mock_instance.run_compression_pipeline = asyncio.coroutine(lambda: {
-                'success': True,
-                'model_path': './test_compressed',
-                'compression_ratio': 4.0,
-                'memory_savings_mb': 100.0,
-                'evaluation_metrics': {'test': 0.8}
-            })
+            mock_instance.run_compression_pipeline = asyncio.coroutine(
+                lambda: {
+                    "success": True,
+                    "model_path": "./test_compressed",
+                    "compression_ratio": 4.0,
+                    "memory_savings_mb": 100.0,
+                    "evaluation_metrics": {"test": 0.8},
+                }
+            )
 
             result = await run_compression(config)
 
@@ -215,23 +232,25 @@ class TestOrchestratorIntegration:
             "output_model_path": "./test_output",
             "device": "cpu",
             "ab_test_samples": 5,
-            "baking_epochs": 1
+            "baking_epochs": 1,
         }
 
         # Mock the prompt baking pipeline
-        with patch('agent_forge.prompt_baking.PromptBakingPipeline') as mock_pipeline:
+        with patch("agent_forge.prompt_baking.PromptBakingPipeline") as mock_pipeline:
             mock_instance = MagicMock()
             mock_pipeline.return_value = mock_instance
 
             # Mock successful baking
-            mock_instance.run_prompt_baking_pipeline = asyncio.coroutine(lambda: {
-                'success': True,
-                'output_model_path': './test_baked',
-                'best_prompt_template': 'Test template: {task}',
-                'best_performance': 0.85,
-                'ab_test': {'best_variant': 'variant_0', 'best_performance': 0.85},
-                'tool_integration': {'calculator': {'success': True}}
-            })
+            mock_instance.run_prompt_baking_pipeline = asyncio.coroutine(
+                lambda: {
+                    "success": True,
+                    "output_model_path": "./test_baked",
+                    "best_prompt_template": "Test template: {task}",
+                    "best_performance": 0.85,
+                    "ab_test": {"best_variant": "variant_0", "best_performance": 0.85},
+                    "tool_integration": {"calculator": {"success": True}},
+                }
+            )
 
             result = await run_prompt_baking(config)
 
@@ -246,8 +265,7 @@ class TestOrchestratorIntegration:
         """Test full orchestrator execution flow with mocked phases."""
 
         # Mock W&B to avoid initialization issues
-        with patch('wandb.init'), patch('wandb.log'), patch('wandb.finish'):
-
+        with patch("wandb.init"), patch("wandb.log"), patch("wandb.finish"):
             # Mock phase execution to avoid heavy computation
             original_execute = orchestrator.execute_phase
 
@@ -260,7 +278,7 @@ class TestOrchestratorIntegration:
                     end_time=orchestrator._get_current_time(),
                     duration_seconds=1.0,
                     artifacts_produced=[],
-                    metrics={"test": True}
+                    metrics={"test": True},
                 )
 
             orchestrator.execute_phase = mock_execute_phase
@@ -269,12 +287,13 @@ class TestOrchestratorIntegration:
             results = await orchestrator.run_pipeline()
 
             # Validate results
-            assert 'pipeline_duration_seconds' in results
-            assert 'phases_completed' in results
-            assert 'success_rate' in results
+            assert "pipeline_duration_seconds" in results
+            assert "phases_completed" in results
+            assert "success_rate" in results
 
             # Restore original method
             orchestrator.execute_phase = original_execute
+
 
 class TestPhaseContracts:
     """Test that all phases follow the expected contract."""
@@ -290,20 +309,20 @@ class TestPhaseContracts:
             end_time=datetime.now(),
             duration_seconds=10.0,
             artifacts_produced=[],
-            metrics={}
+            metrics={},
         )
 
         # Test required attributes exist
-        assert hasattr(result, 'phase_type')
-        assert hasattr(result, 'status')
-        assert hasattr(result, 'start_time')
-        assert hasattr(result, 'end_time')
-        assert hasattr(result, 'duration_seconds')
-        assert hasattr(result, 'artifacts_produced')
-        assert hasattr(result, 'metrics')
-        assert hasattr(result, 'error_message')
-        assert hasattr(result, 'warnings')
-        assert hasattr(result, 'todos')
+        assert hasattr(result, "phase_type")
+        assert hasattr(result, "status")
+        assert hasattr(result, "start_time")
+        assert hasattr(result, "end_time")
+        assert hasattr(result, "duration_seconds")
+        assert hasattr(result, "artifacts_produced")
+        assert hasattr(result, "metrics")
+        assert hasattr(result, "error_message")
+        assert hasattr(result, "warnings")
+        assert hasattr(result, "todos")
 
         # Test success property
         assert result.success is True
@@ -315,7 +334,7 @@ class TestPhaseContracts:
             start_time=datetime.now(),
             end_time=datetime.now(),
             duration_seconds=5.0,
-            error_message="Test error"
+            error_message="Test error",
         )
 
         assert failed_result.success is False
@@ -328,7 +347,7 @@ class TestPhaseContracts:
             "self_modeling",
             "prompt_baking",
             "adas",
-            "compression"
+            "compression",
         ]
 
         for phase_type in expected_types:
@@ -342,11 +361,12 @@ class TestPhaseContracts:
             "completed",
             "failed",
             "skipped",
-            "stub_detected"
+            "stub_detected",
         ]
 
         for status in expected_statuses:
             assert hasattr(PhaseStatus, status.upper())
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

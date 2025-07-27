@@ -8,13 +8,6 @@ from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 import pytest
-
-from core.error_handling import (
-    AIVillageException,
-    ErrorCategory,
-    ErrorContext,
-    ErrorSeverity,
-)
 from services.core.service_error_handler import (
     ServiceErrorHandler,
     create_service_error,
@@ -22,6 +15,13 @@ from services.core.service_error_handler import (
     rate_limit_error,
     resource_error,
     validation_error,
+)
+
+from core.error_handling import (
+    AIVillageException,
+    ErrorCategory,
+    ErrorContext,
+    ErrorSeverity,
 )
 
 # Import test fixtures
@@ -41,7 +41,7 @@ class TestServiceErrorHandler:
             context=ErrorContext(
                 component="test-service",
                 operation="test_operation",
-                details={"field": "test"}
+                details={"field": "test"},
             ),
         )
 
@@ -76,9 +76,7 @@ class TestServiceErrorHandler:
             category=ErrorCategory.NETWORK,
             severity=ErrorSeverity.ERROR,
             context=ErrorContext(
-                component="test-service",
-                operation="test_operation",
-                details={}
+                component="test-service", operation="test_operation", details={}
             ),
         )
 
@@ -294,16 +292,19 @@ class TestServiceErrorHandlingWithFixtures:
     async def test_chat_service_error_handling(self, mock_chat_service):
         """Test error handling in chat service."""
         # Make the service raise an exception
-        from core.error_handling import AIVillageException, ErrorCategory, ErrorContext, ErrorSeverity
+        from core.error_handling import (
+            AIVillageException,
+            ErrorCategory,
+            ErrorContext,
+            ErrorSeverity,
+        )
 
         test_exception = AIVillageException(
             message="Chat processing failed",
             category=ErrorCategory.CONFIGURATION,
             severity=ErrorSeverity.ERROR,
             context=ErrorContext(
-                component="chat-service",
-                operation="process_chat",
-                details={}
+                component="chat-service", operation="process_chat", details={}
             ),
         )
 
@@ -322,16 +323,19 @@ class TestServiceErrorHandlingWithFixtures:
     @pytest.mark.asyncio
     async def test_query_service_error_handling(self, mock_query_service):
         """Test error handling in query service."""
-        from core.error_handling import AIVillageException, ErrorCategory, ErrorContext, ErrorSeverity
+        from core.error_handling import (
+            AIVillageException,
+            ErrorCategory,
+            ErrorContext,
+            ErrorSeverity,
+        )
 
         test_exception = AIVillageException(
             message="Query execution failed",
             category=ErrorCategory.ACCESS,
             severity=ErrorSeverity.INFO,
             context=ErrorContext(
-                component="query-service",
-                operation="execute_query",
-                details={}
+                component="query-service", operation="execute_query", details={}
             ),
         )
 

@@ -1,7 +1,8 @@
+import importlib.machinery
+import importlib.util
 import sys
 import types
-import importlib.util
-import importlib.machinery
+
 import pytest
 
 _STUBBED_MODULES = set()
@@ -26,23 +27,32 @@ def _ensure_module(name: str, attrs: dict | None = None):
 # Minimal stubs for heavy optional dependencies
 _ensure_module("faiss", {"IndexFlatL2": lambda *a, **k: object()})
 
+
 # Create a more complete torch stub
 class MockTensor:
     def __init__(self, *args, **kwargs):
         self.shape = (10, 10) if not args else args
+
     def __getattr__(self, name):
         return lambda *a, **k: self
+
     def item(self):
         return 0.5
+
     def numpy(self):
         import numpy as np
+
         return np.zeros(self.shape)
+
     def to(self, *args, **kwargs):
         return self
+
     def cpu(self):
         return self
+
     def detach(self):
         return self
+
 
 torch_mod = _ensure_module(
     "torch",
@@ -83,8 +93,12 @@ _ensure_module("sklearn.metrics")
 _ensure_module("sklearn.metrics.pairwise", {"cosine_similarity": lambda a, b: []})
 _ensure_module("sklearn.linear_model", {"LogisticRegression": object})
 _ensure_module("sklearn.ensemble", {"RandomForestClassifier": object})
-_ensure_module("sklearn.model_selection", {"train_test_split": lambda *args, **kwargs: ([], [], [], [])})
+_ensure_module(
+    "sklearn.model_selection",
+    {"train_test_split": lambda *args, **kwargs: ([], [], [], [])},
+)
 _ensure_module("sklearn.preprocessing", {"StandardScaler": object})
+
 
 # Add grokfast stub
 class AugmentedAdam:
@@ -94,10 +108,16 @@ class AugmentedAdam:
         self.slow_freq = slow_freq
         self.boost = boost
         self._slow_cache = {}
-    def step(self): pass
-    def zero_grad(self): pass
+
+    def step(self):
+        pass
+
+    def zero_grad(self):
+        pass
+
 
 _ensure_module("grokfast", {"AugmentedAdam": AugmentedAdam})
+
 
 # Add numba stub
 def jit(*args, **kwargs):
@@ -106,19 +126,26 @@ def jit(*args, **kwargs):
         return args[0]  # Function was passed directly
     return lambda func: func  # Decorator with arguments
 
+
 _ensure_module("numba", {"jit": jit})
+
 
 # Add tiktoken stub
 class MockEncoding:
     def encode(self, text, *args, **kwargs):
         return [1, 2, 3]  # Mock token ids
+
     def decode(self, tokens, *args, **kwargs):
         return "mock decoded text"
 
-_ensure_module("tiktoken", {
-    "encoding_for_model": lambda model: MockEncoding(),
-    "get_encoding": lambda encoding: MockEncoding(),
-})
+
+_ensure_module(
+    "tiktoken",
+    {
+        "encoding_for_model": lambda model: MockEncoding(),
+        "get_encoding": lambda encoding: MockEncoding(),
+    },
+)
 
 _real_find_spec = importlib.util.find_spec
 

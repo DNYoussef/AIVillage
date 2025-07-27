@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-EvoMerge Pipeline Testing Script
+"""EvoMerge Pipeline Testing Script
 
 Comprehensive test suite for the evolutionary merging pipeline.
 Tests all components including model loading, merging operators,
@@ -8,25 +7,31 @@ evaluation, and the complete evolution process.
 """
 
 import asyncio
-import json
-import shutil
-import tempfile
-import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import torch
-import numpy as np
-from transformers import AutoConfig, AutoModelForCausalLM
+import shutil
 
 # Import our pipeline components
 import sys
+import tempfile
+import unittest
+from unittest.mock import MagicMock, patch
+
+import torch
+from transformers import AutoConfig, AutoModelForCausalLM
+
 sys.path.append(str(Path(__file__).parent.parent / "agent_forge"))
 
 from evomerge_pipeline import (
-    EvolutionConfig, BaseModelConfig, ModelCandidate, EvolutionState,
-    MergeOperators, CodeEvaluator, MathEvaluator, EvoMergePipeline
+    BaseModelConfig,
+    CodeEvaluator,
+    EvolutionConfig,
+    EvolutionState,
+    EvoMergePipeline,
+    MathEvaluator,
+    MergeOperators,
+    ModelCandidate,
 )
+
 
 class TestEvoMergePipeline(unittest.TestCase):
     """Test suite for EvoMerge pipeline"""
@@ -40,7 +45,7 @@ class TestEvoMergePipeline(unittest.TestCase):
             base_models=[
                 BaseModelConfig(name="test1", path="gpt2", weight=1.0),
                 BaseModelConfig(name="test2", path="gpt2", weight=1.0),
-                BaseModelConfig(name="test3", path="gpt2", weight=1.0)
+                BaseModelConfig(name="test3", path="gpt2", weight=1.0),
             ],
             max_generations=2,
             population_size=4,
@@ -48,7 +53,7 @@ class TestEvoMergePipeline(unittest.TestCase):
             output_dir=self.temp_dir / "output",
             checkpoint_dir=self.temp_dir / "checkpoints",
             models_cache_dir=self.temp_dir / "cache",
-            wandb_project="test-evomerge"
+            wandb_project="test-evomerge",
         )
 
         # Create test directories
@@ -73,7 +78,6 @@ class TestEvoMergePipeline(unittest.TestCase):
 
     def test_config_validation(self):
         """Test configuration validation"""
-
         # Test valid configuration
         config = EvolutionConfig()
         self.assertEqual(len(config.base_models), 3)
@@ -81,20 +85,19 @@ class TestEvoMergePipeline(unittest.TestCase):
 
         # Test invalid base models count
         with self.assertRaises(ValueError):
-            EvolutionConfig(base_models=[
-                BaseModelConfig(name="test1", path="gpt2")
-            ])
+            EvolutionConfig(base_models=[BaseModelConfig(name="test1", path="gpt2")])
 
         # Test invalid evaluation weights
         with self.assertRaises(ValueError):
-            EvolutionConfig(evaluation_weights={
-                "code": 0.5,
-                "math": 0.3  # Doesn't sum to 1.0
-            })
+            EvolutionConfig(
+                evaluation_weights={
+                    "code": 0.5,
+                    "math": 0.3,  # Doesn't sum to 1.0
+                }
+            )
 
     def test_merge_operators(self):
         """Test merge operators with dummy models"""
-
         # Create test models
         models = [self.create_dummy_model() for _ in range(3)]
         merge_ops = MergeOperators()
@@ -126,15 +129,16 @@ class TestEvoMergePipeline(unittest.TestCase):
 
         print("✅ All merge operators working correctly")
 
-    @patch('evomerge_pipeline.AutoTokenizer')
-    @patch('evomerge_pipeline.AutoModelForCausalLM')
+    @patch("evomerge_pipeline.AutoTokenizer")
+    @patch("evomerge_pipeline.AutoModelForCausalLM")
     async def test_evaluators(self, mock_model_cls, mock_tokenizer_cls):
         """Test model evaluators with mocked components"""
-
         # Mock tokenizer
         mock_tokenizer = MagicMock()
         mock_tokenizer.encode.return_value = [1, 2, 3]
-        mock_tokenizer.decode.return_value = "def factorial(n): return 1 if n <= 1 else n * factorial(n-1)"
+        mock_tokenizer.decode.return_value = (
+            "def factorial(n): return 1 if n <= 1 else n * factorial(n-1)"
+        )
         mock_tokenizer.eos_token_id = 0
         mock_tokenizer_cls.from_pretrained.return_value = mock_tokenizer
 
@@ -162,32 +166,30 @@ class TestEvoMergePipeline(unittest.TestCase):
 
     def test_model_candidate(self):
         """Test ModelCandidate functionality"""
-
         candidate = ModelCandidate(
             generation=1,
             merge_recipe={"continuous": "linear", "ensemble": "ties"},
-            fitness_scores={"code": 0.8, "math": 0.7, "multilingual": 0.6}
+            fitness_scores={"code": 0.8, "math": 0.7, "multilingual": 0.6},
         )
 
         # Test fitness calculation
         weights = {"code": 0.4, "math": 0.4, "multilingual": 0.2}
         overall_fitness = candidate.calculate_overall_fitness(weights)
 
-        expected_fitness = (0.8 * 0.4 + 0.7 * 0.4 + 0.6 * 0.2)
+        expected_fitness = 0.8 * 0.4 + 0.7 * 0.4 + 0.6 * 0.2
         self.assertAlmostEqual(overall_fitness, expected_fitness, places=3)
 
         print("✅ ModelCandidate working correctly")
 
     def test_evolution_state(self):
         """Test EvolutionState functionality"""
-
         state = EvolutionState()
 
         # Create test candidates
         candidates = [
             ModelCandidate(generation=0, overall_fitness=0.8),
             ModelCandidate(generation=0, overall_fitness=0.6),
-            ModelCandidate(generation=0, overall_fitness=0.9)
+            ModelCandidate(generation=0, overall_fitness=0.9),
         ]
 
         state.population = candidates
@@ -199,7 +201,7 @@ class TestEvoMergePipeline(unittest.TestCase):
         state.fitness_history = [
             {"best_fitness": 0.5},
             {"best_fitness": 0.51},
-            {"best_fitness": 0.505}
+            {"best_fitness": 0.505},
         ]
 
         self.assertTrue(state.check_plateau(threshold=0.02))
@@ -207,10 +209,9 @@ class TestEvoMergePipeline(unittest.TestCase):
 
         print("✅ EvolutionState working correctly")
 
-    @patch('evomerge_pipeline.wandb')
+    @patch("evomerge_pipeline.wandb")
     def test_pipeline_initialization(self, mock_wandb):
         """Test pipeline initialization"""
-
         # Mock W&B
         mock_run = MagicMock()
         mock_run.id = "test_run_123"
@@ -235,7 +236,6 @@ class TestEvoMergePipeline(unittest.TestCase):
 
     def test_seed_generation_logic(self):
         """Test seed candidate generation logic"""
-
         pipeline = EvoMergePipeline(self.config)
 
         # Test merge combination generation
@@ -259,24 +259,23 @@ class TestEvoMergePipeline(unittest.TestCase):
 
     def test_checkpoint_functionality(self):
         """Test checkpoint save/load"""
-
         pipeline = EvoMergePipeline(self.config)
 
         # Create test state
         pipeline.state.current_generation = 5
-        pipeline.state.population = [
-            ModelCandidate(generation=5, overall_fitness=0.8)
-        ]
+        pipeline.state.population = [ModelCandidate(generation=5, overall_fitness=0.8)]
         pipeline.state.fitness_history = [
             {"generation": 0, "best_fitness": 0.5},
-            {"generation": 1, "best_fitness": 0.6}
+            {"generation": 1, "best_fitness": 0.6},
         ]
 
         # Save checkpoint
         pipeline.save_checkpoint()
 
         # Verify checkpoint file exists
-        checkpoint_files = list(self.config.checkpoint_dir.glob("evolution_checkpoint_*.json"))
+        checkpoint_files = list(
+            self.config.checkpoint_dir.glob("evolution_checkpoint_*.json")
+        )
         self.assertTrue(len(checkpoint_files) > 0)
 
         # Create new pipeline and load checkpoint
@@ -291,7 +290,6 @@ class TestEvoMergePipeline(unittest.TestCase):
 
     def test_mutation_and_selection(self):
         """Test mutation and selection logic"""
-
         pipeline = EvoMergePipeline(self.config)
 
         # Create test candidates with different fitness scores
@@ -300,7 +298,11 @@ class TestEvoMergePipeline(unittest.TestCase):
             candidate = ModelCandidate(
                 generation=0,
                 overall_fitness=0.5 + i * 0.05,  # Increasing fitness
-                merge_recipe={"continuous": "linear", "ensemble": "ties", "structured": "frankenmerge"}
+                merge_recipe={
+                    "continuous": "linear",
+                    "ensemble": "ties",
+                    "structured": "frankenmerge",
+                },
             )
             # Create dummy model path
             model_path = self.config.output_dir / f"test_model_{i}"
@@ -317,30 +319,34 @@ class TestEvoMergePipeline(unittest.TestCase):
         candidates.sort(key=lambda x: x.overall_fitness, reverse=True)
 
         # Verify top candidates have highest fitness
-        self.assertGreater(candidates[0].overall_fitness, candidates[-1].overall_fitness)
-        self.assertGreater(candidates[1].overall_fitness, candidates[-2].overall_fitness)
+        self.assertGreater(
+            candidates[0].overall_fitness, candidates[-1].overall_fitness
+        )
+        self.assertGreater(
+            candidates[1].overall_fitness, candidates[-2].overall_fitness
+        )
 
         print("✅ Selection logic working correctly")
+
 
 class TestCLIIntegration(unittest.TestCase):
     """Test CLI integration"""
 
     def test_cli_command_parsing(self):
         """Test CLI command parsing"""
-
         # Import CLI components
         from evomerge_pipeline import forge
 
         # Test that the CLI group exists
         self.assertIsNotNone(forge)
-        self.assertTrue(hasattr(forge, 'commands'))
-        self.assertIn('evo', forge.commands)
+        self.assertTrue(hasattr(forge, "commands"))
+        self.assertIn("evo", forge.commands)
 
         print("✅ CLI integration working correctly")
 
+
 def run_quick_integration_test():
     """Run a quick integration test of the full pipeline"""
-
     print("🧪 Running quick integration test...")
 
     # Create temporary directory
@@ -352,14 +358,14 @@ def run_quick_integration_test():
             base_models=[
                 BaseModelConfig(name="test1", path="gpt2"),
                 BaseModelConfig(name="test2", path="gpt2"),
-                BaseModelConfig(name="test3", path="gpt2")
+                BaseModelConfig(name="test3", path="gpt2"),
             ],
             max_generations=1,  # Just one generation
             population_size=2,  # Minimal population
             device="cpu",
             output_dir=temp_dir / "output",
             checkpoint_dir=temp_dir / "checkpoints",
-            models_cache_dir=temp_dir / "cache"
+            models_cache_dir=temp_dir / "cache",
         )
 
         # Create directories
@@ -381,6 +387,7 @@ def run_quick_integration_test():
     finally:
         # Cleanup
         shutil.rmtree(temp_dir, ignore_errors=True)
+
 
 async def main():
     """Main test runner"""
@@ -417,16 +424,21 @@ async def main():
     print(f"Integration Test: {'✅ PASSED' if integration_success else '❌ FAILED'}")
 
     overall_success = unit_success and cli_success and integration_success
-    print(f"\nOverall: {'✅ ALL TESTS PASSED' if overall_success else '❌ SOME TESTS FAILED'}")
+    print(
+        f"\nOverall: {'✅ ALL TESTS PASSED' if overall_success else '❌ SOME TESTS FAILED'}"
+    )
 
     if overall_success:
         print("\n🎉 EvoMerge pipeline is ready for production!")
         print("\nNext steps:")
         print("1. Install package: pip install -e .")
-        print("2. Run evolution: forge evo --gens 10 --base-models deepseek,nemotron,qwen2")
+        print(
+            "2. Run evolution: forge evo --gens 10 --base-models deepseek,nemotron,qwen2"
+        )
         print("3. Monitor progress with W&B dashboard")
 
     return 0 if overall_success else 1
+
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())

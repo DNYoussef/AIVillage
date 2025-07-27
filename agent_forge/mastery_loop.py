@@ -1,5 +1,4 @@
-"""
-Mastery Training Loop - Comprehensive Implementation
+"""Mastery Training Loop - Comprehensive Implementation
 
 Integrates all training components:
 - Calibration with frontier API
@@ -13,30 +12,28 @@ Integrates all training components:
 """
 
 import asyncio
+from dataclasses import dataclass
 import json
 import logging
+from pathlib import Path
 import random
 import sys
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
 import time
+from typing import Any
 
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader, Dataset
-from transformers import AutoModel, AutoTokenizer, AutoModelForCausalLM
-import wandb
 from langroid import ChatAgent, ChatAgentConfig
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
+import torch
 from tqdm import tqdm
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from agent_forge.geometry.id_twonn import twonn
+from agent_forge.training.grokfast import GrokFastTask
+from agent_forge.training.self_modeling import SelfModelingTask
 
 # Import existing training components
-from agent_forge.training.sleep_and_dream import SleepNet, DreamNet, SleepAndDreamTask
-from agent_forge.training.self_modeling import SelfModelingTask
-from agent_forge.training.grokfast import GrokFastTask
-from agent_forge.geometry.id_twonn import twonn
-from agent_forge.model_compression.bitlinearization import quantize_weights
+from agent_forge.training.sleep_and_dream import SleepAndDreamTask
+import wandb
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -45,18 +42,22 @@ logger = logging.getLogger(__name__)
 # Global state for geometry feedback
 state = {"G": {"ID_nl": 0.0}, "pre_grok": False, "mastery_level": 1}
 
+
 @dataclass
 class Task:
     """A single task with difficulty and domain."""
+
     prompt: str
     expected_output: str
     difficulty: int  # 1-100
     domain: str
-    metadata: Optional[Dict] = None
+    metadata: dict | None = None
+
 
 @dataclass
 class MasteryConfig:
     """Configuration for mastery training loop."""
+
     model_path: str
     output_dir: str
     domain: str = "math"
@@ -67,10 +68,11 @@ class MasteryConfig:
     sleep_dream_interval: int = 500
     geometry_update_interval: int = 100
     max_mastery_levels: int = 10
-    frontier_api_key: Optional[str] = None
+    frontier_api_key: str | None = None
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
     wandb_project: str = "agent-forge-mastery"
     save_checkpoints: bool = True
+
 
 class TaskGenerator:
     """Generates tasks using frontier API (GPT-4) for calibration."""
@@ -79,7 +81,9 @@ class TaskGenerator:
         self.config = config
         self.agent = agent
 
-    async def generate_calibration_tasks(self, domain: str, count: int = 100) -> List[Task]:
+    async def generate_calibration_tasks(
+        self, domain: str, count: int = 100
+    ) -> list[Task]:
         """Generate 100 tasks with difficulties 1-100 for calibration."""
         tasks = []
 
@@ -109,22 +113,25 @@ Return JSON format:
                     expected_output=task_data["expected_output"],
                     difficulty=difficulty,
                     domain=domain,
-                    metadata=task_data.get("metadata", {})
+                    metadata=task_data.get("metadata", {}),
                 )
                 tasks.append(task)
 
             except Exception as e:
-                logger.warning(f"Failed to generate task for difficulty {difficulty}: {e}")
+                logger.warning(
+                    f"Failed to generate task for difficulty {difficulty}: {e}"
+                )
                 # Fallback task
                 task = Task(
                     prompt=f"Solve this {domain} problem (difficulty {difficulty}): What is {difficulty} + {difficulty}?",
                     expected_output=f"{difficulty * 2}",
                     difficulty=difficulty,
-                    domain=domain
+                    domain=domain,
                 )
                 tasks.append(task)
 
         return tasks
+
 
 class MasteryEvaluator:
     """Evaluates model performance on tasks and determines mastery levels."""
@@ -134,11 +141,13 @@ class MasteryEvaluator:
         self.tokenizer = tokenizer
         self.device = device
 
-    async def evaluate_task(self, task: Task) -> Tuple[bool, str, float]:
+    async def evaluate_task(self, task: Task) -> tuple[bool, str, float]:
         """Evaluate a single task. Returns (success, response, confidence)."""
         try:
             # Prepare input with metadata
-            geom_info = f"<geom idnl={state['G']['ID_nl']:.2f} level={state['mastery_level']}/>"
+            geom_info = (
+                f"<geom idnl={state['G']['ID_nl']:.2f} level={state['mastery_level']}/>"
+            )
             prompt = f"{geom_info}\n{task.prompt}\n\nAnswer:"
 
             inputs = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
@@ -151,11 +160,13 @@ class MasteryEvaluator:
                     do_sample=True,
                     pad_token_id=self.tokenizer.eos_token_id,
                     return_dict_in_generate=True,
-                    output_scores=True
+                    output_scores=True,
                 )
 
-            response = self.tokenizer.decode(outputs.sequences[0], skip_special_tokens=True)
-            response = response[len(prompt):].strip()
+            response = self.tokenizer.decode(
+                outputs.sequences[0], skip_special_tokens=True
+            )
+            response = response[len(prompt) :].strip()
 
             # Simple success detection (could be enhanced with semantic similarity)
             success = self._check_correctness(response, task.expected_output)
@@ -191,6 +202,7 @@ class MasteryEvaluator:
 
         return sum(probs) / len(probs) if probs else 0.5
 
+
 class GeometryFeedback:
     """Tracks intrinsic dimensionality and provides geometry-based feedback."""
 
@@ -225,15 +237,23 @@ class GeometryFeedback:
                 # Detect grokking patterns
                 if len(self.id_history) > 10:
                     recent_trend = self.id_history[-5:]
-                    if all(a > b for a, b in zip(recent_trend[1:], recent_trend[:-1])):
+                    if all(
+                        a > b
+                        for a, b in zip(
+                            recent_trend[1:], recent_trend[:-1], strict=False
+                        )
+                    ):
                         state["pre_grok"] = True
                     else:
                         state["pre_grok"] = False
 
-                logger.info(f"Geometry update: ID_nl={id_estimate:.3f}, pre_grok={state['pre_grok']}")
+                logger.info(
+                    f"Geometry update: ID_nl={id_estimate:.3f}, pre_grok={state['pre_grok']}"
+                )
 
             except Exception as e:
                 logger.warning(f"Geometry update failed: {e}")
+
 
 class MasteryLoop:
     """Main mastery training loop implementation."""
@@ -255,9 +275,8 @@ class MasteryLoop:
         agent_config = ChatAgentConfig(
             name="MasteryAgent",
             llm=OpenAIGPTConfig(
-                chat_model="gpt-4-turbo-preview",
-                api_key=config.frontier_api_key
-            )
+                chat_model="gpt-4-turbo-preview", api_key=config.frontier_api_key
+            ),
         )
         self.agent = ChatAgent(agent_config)
         self.task_generator = TaskGenerator(config, self.agent)
@@ -275,7 +294,7 @@ class MasteryLoop:
             wandb.init(
                 project=config.wandb_project,
                 config=config.__dict__,
-                job_type="mastery_loop"
+                job_type="mastery_loop",
             )
 
     def setup_logging(self):
@@ -284,9 +303,9 @@ class MasteryLoop:
         log_dir.mkdir(parents=True, exist_ok=True)
 
         handler = logging.FileHandler(log_dir / "mastery_loop.log")
-        handler.setFormatter(logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        ))
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
         logger.addHandler(handler)
 
     async def initialize_model(self):
@@ -299,15 +318,19 @@ class MasteryLoop:
 
         self.model = AutoModelForCausalLM.from_pretrained(
             self.config.model_path,
-            torch_dtype=torch.float16 if self.config.device == "cuda" else torch.float32,
-            device_map="auto" if self.config.device == "cuda" else None
+            torch_dtype=torch.float16
+            if self.config.device == "cuda"
+            else torch.float32,
+            device_map="auto" if self.config.device == "cuda" else None,
         )
 
         if self.config.device == "cpu":
             self.model = self.model.to(self.config.device)
 
         # Initialize components
-        self.evaluator = MasteryEvaluator(self.model, self.tokenizer, self.config.device)
+        self.evaluator = MasteryEvaluator(
+            self.model, self.tokenizer, self.config.device
+        )
         self.geometry = GeometryFeedback(self.model)
 
         # Initialize training modules
@@ -346,7 +369,7 @@ class MasteryLoop:
             success_rates[task.difficulty].append(success)
 
             # Update geometry tracking
-            if hasattr(self.model, 'get_hidden_states'):
+            if hasattr(self.model, "get_hidden_states"):
                 hidden_states = self.model.get_hidden_states()
                 await self.geometry.update_geometry(hidden_states)
 
@@ -358,18 +381,22 @@ class MasteryLoop:
         # Find k where success rate is closest to baseline_threshold (50%)
         target_diff = min(
             level_performance.keys(),
-            key=lambda k: abs(level_performance[k] - self.config.baseline_threshold)
+            key=lambda k: abs(level_performance[k] - self.config.baseline_threshold),
         )
 
         self.baseline_k = target_diff
-        logger.info(f"Baseline established: Level {self.baseline_k} (success rate: {level_performance[target_diff]:.2f})")
+        logger.info(
+            f"Baseline established: Level {self.baseline_k} (success rate: {level_performance[target_diff]:.2f})"
+        )
 
         # Log calibration results
-        wandb.log({
-            "calibration/baseline_level": self.baseline_k,
-            "calibration/baseline_success_rate": level_performance[target_diff],
-            "calibration/geometry_id": state["G"]["ID_nl"]
-        })
+        wandb.log(
+            {
+                "calibration/baseline_level": self.baseline_k,
+                "calibration/baseline_success_rate": level_performance[target_diff],
+                "calibration/geometry_id": state["G"]["ID_nl"],
+            }
+        )
 
         return self.baseline_k
 
@@ -397,7 +424,8 @@ class MasteryLoop:
         for level, difficulty in level_mapping.items():
             # Use calibration tasks near this difficulty
             level_tasks = [
-                task for task in self.calibration_tasks
+                task
+                for task in self.calibration_tasks
                 if abs(task.difficulty - difficulty) <= 5
             ]
 
@@ -443,13 +471,15 @@ class MasteryLoop:
             success_rate = successes / attempts
 
             # Log attempt
-            wandb.log({
-                f"level_{level}/attempt": attempts,
-                f"level_{level}/success_rate": success_rate,
-                f"level_{level}/confidence": confidence,
-                "global/attempt_count": self.attempt_count,
-                "global/geometry_id": state["G"]["ID_nl"]
-            })
+            wandb.log(
+                {
+                    f"level_{level}/attempt": attempts,
+                    f"level_{level}/success_rate": success_rate,
+                    f"level_{level}/confidence": confidence,
+                    "global/attempt_count": self.attempt_count,
+                    "global/geometry_id": state["G"]["ID_nl"],
+                }
+            )
 
             # Check for mastery (80% success rate over recent window)
             if attempts >= 50 and attempts % 10 == 0:
@@ -466,7 +496,9 @@ class MasteryLoop:
                 recent_success_rate = recent_successes / 10
 
                 if recent_success_rate >= self.config.mastery_threshold:
-                    logger.info(f"Mastery achieved for level {level}! Success rate: {recent_success_rate:.2f}")
+                    logger.info(
+                        f"Mastery achieved for level {level}! Success rate: {recent_success_rate:.2f}"
+                    )
                     wandb.log({f"mastery/level_{level}_achieved": True})
                     return True
 
@@ -478,7 +510,9 @@ class MasteryLoop:
             if self.attempt_count % self.config.geometry_update_interval == 0:
                 # Get hidden states from last forward pass
                 with torch.no_grad():
-                    inputs = self.tokenizer.encode(task.prompt, return_tensors="pt").to(self.config.device)
+                    inputs = self.tokenizer.encode(task.prompt, return_tensors="pt").to(
+                        self.config.device
+                    )
                     outputs = self.model(inputs, output_hidden_states=True)
                     await self.geometry.update_geometry(outputs.hidden_states[-1])
 
@@ -490,7 +524,9 @@ class MasteryLoop:
             if attempts % 100 == 0:
                 await self.self_modeling_integration(level)
 
-        logger.info(f"Max attempts reached for level {level}. Final success rate: {success_rate:.2f}")
+        logger.info(
+            f"Max attempts reached for level {level}. Final success rate: {success_rate:.2f}"
+        )
         return False
 
     async def sleep_dream_cycle(self):
@@ -501,7 +537,9 @@ class MasteryLoop:
             # Extract hidden states for consolidation
             with torch.no_grad():
                 # Use a representative input
-                dummy_input = torch.randn(1, self.model.config.hidden_size).to(self.config.device)
+                dummy_input = torch.randn(1, self.model.config.hidden_size).to(
+                    self.config.device
+                )
                 dream_output = await self.sleep_dream_task.run(dummy_input)
 
             # Apply dream output as weight update
@@ -510,7 +548,11 @@ class MasteryLoop:
                     if param.requires_grad and param.dim() >= 2:
                         # Apply small update based on dream output
                         update_scale = 0.001
-                        param.data += update_scale * torch.randn_like(param) * dream_output.mean().item()
+                        param.data += (
+                            update_scale
+                            * torch.randn_like(param)
+                            * dream_output.mean().item()
+                        )
 
             logger.info("Sleep/dream cycle completed")
             wandb.log({"sleep_dream/cycle_completed": self.attempt_count})
@@ -526,18 +568,20 @@ class MasteryLoop:
             # Run a mini self-modeling cycle
             await self.self_modeling_task.self_modeling_cycle(
                 curriculum_level=level,
-                num_cycles=5  # Mini cycle
+                num_cycles=5,  # Mini cycle
             )
 
-            wandb.log({
-                "self_modeling/integration_completed": self.attempt_count,
-                "self_modeling/level": level
-            })
+            wandb.log(
+                {
+                    "self_modeling/integration_completed": self.attempt_count,
+                    "self_modeling/level": level,
+                }
+            )
 
         except Exception as e:
             logger.warning(f"Self-modeling integration failed: {e}")
 
-    async def run_mastery_training(self) -> Dict[str, Any]:
+    async def run_mastery_training(self) -> dict[str, Any]:
         """Run the complete mastery training loop."""
         start_time = time.time()
 
@@ -555,15 +599,17 @@ class MasteryLoop:
             mastery_results = {}
 
             for level in range(1, self.config.max_mastery_levels + 1):
-                logger.info(f"\n{'='*50}")
+                logger.info(f"\n{'=' * 50}")
                 logger.info(f"MASTERY LEVEL {level}")
-                logger.info(f"{'='*50}")
+                logger.info(f"{'=' * 50}")
 
                 mastery_achieved = await self.mastery_cycle(level)
                 mastery_results[level] = mastery_achieved
 
                 if not mastery_achieved:
-                    logger.info(f"Mastery not achieved for level {level}, stopping progression")
+                    logger.info(
+                        f"Mastery not achieved for level {level}, stopping progression"
+                    )
                     break
 
                 # Save checkpoint
@@ -579,19 +625,23 @@ class MasteryLoop:
                 "total_time_hours": total_time / 3600,
                 "levels_mastered": sum(mastery_results.values()),
                 "final_geometry_id": state["G"]["ID_nl"],
-                "level_mapping": self.level_mapping
+                "level_mapping": self.level_mapping,
             }
 
             # Log final summary
-            wandb.log({
-                "summary/levels_mastered": summary["levels_mastered"],
-                "summary/total_attempts": summary["total_attempts"],
-                "summary/total_time_hours": summary["total_time_hours"],
-                "summary/final_geometry_id": summary["final_geometry_id"]
-            })
+            wandb.log(
+                {
+                    "summary/levels_mastered": summary["levels_mastered"],
+                    "summary/total_attempts": summary["total_attempts"],
+                    "summary/total_time_hours": summary["total_time_hours"],
+                    "summary/final_geometry_id": summary["final_geometry_id"],
+                }
+            )
 
-            logger.info(f"\nMastery training complete!")
-            logger.info(f"Levels mastered: {summary['levels_mastered']}/{self.config.max_mastery_levels}")
+            logger.info("\nMastery training complete!")
+            logger.info(
+                f"Levels mastered: {summary['levels_mastered']}/{self.config.max_mastery_levels}"
+            )
             logger.info(f"Total attempts: {summary['total_attempts']}")
             logger.info(f"Total time: {summary['total_time_hours']:.2f} hours")
 
@@ -612,18 +662,17 @@ class MasteryLoop:
             "baseline_k": self.baseline_k,
             "level_mapping": self.level_mapping,
             "geometry_state": state,
-            "model_state_dict": self.model.state_dict() if self.model else None
+            "model_state_dict": self.model.state_dict() if self.model else None,
         }
 
         checkpoint_path = checkpoint_dir / f"mastery_level_{level}.json"
 
         # Save non-tensor data
         serializable_checkpoint = {
-            k: v for k, v in checkpoint.items()
-            if k != "model_state_dict"
+            k: v for k, v in checkpoint.items() if k != "model_state_dict"
         }
 
-        with open(checkpoint_path, 'w') as f:
+        with open(checkpoint_path, "w") as f:
             json.dump(serializable_checkpoint, f, indent=2)
 
         # Save model separately
@@ -632,6 +681,7 @@ class MasteryLoop:
             torch.save(self.model.state_dict(), model_path)
 
         logger.info(f"Checkpoint saved: {checkpoint_path}")
+
 
 # CLI integration
 async def main():
@@ -643,7 +693,9 @@ async def main():
     parser.add_argument("--output-dir", required=True, help="Output directory")
     parser.add_argument("--domain", default="math", help="Training domain")
     parser.add_argument("--frontier-api-key", help="OpenAI API key for task generation")
-    parser.add_argument("--max-levels", type=int, default=10, help="Maximum mastery levels")
+    parser.add_argument(
+        "--max-levels", type=int, default=10, help="Maximum mastery levels"
+    )
     parser.add_argument("--device", default="cuda", help="Device (cuda/cpu)")
 
     args = parser.parse_args()
@@ -654,24 +706,25 @@ async def main():
         domain=args.domain,
         frontier_api_key=args.frontier_api_key,
         max_mastery_levels=args.max_levels,
-        device=args.device
+        device=args.device,
     )
 
     mastery_loop = MasteryLoop(config)
     results = await mastery_loop.run_mastery_training()
 
-    print(f"\nTraining Summary:")
+    print("\nTraining Summary:")
     print(f"Levels mastered: {results['levels_mastered']}/{config.max_mastery_levels}")
     print(f"Total attempts: {results['total_attempts']}")
     print(f"Training time: {results['total_time_hours']:.2f} hours")
+
 
 # ============================================================================
 # Orchestrator Integration
 # ============================================================================
 
-async def run_self_modeling(config: Dict[str, Any]) -> 'PhaseResult':
-    """
-    Orchestrator entry point for Self-Modeling phase (via Mastery Loop).
+
+async def run_self_modeling(config: dict[str, Any]) -> "PhaseResult":
+    """Orchestrator entry point for Self-Modeling phase (via Mastery Loop).
 
     Args:
         config: Configuration dictionary with self-modeling parameters
@@ -679,9 +732,15 @@ async def run_self_modeling(config: Dict[str, Any]) -> 'PhaseResult':
     Returns:
         PhaseResult with status, artifacts, and metrics
     """
-    from agent_forge.forge_orchestrator import PhaseResult, PhaseStatus, PhaseType, PhaseArtifact
     from datetime import datetime
     import time
+
+    from agent_forge.forge_orchestrator import (
+        PhaseArtifact,
+        PhaseResult,
+        PhaseStatus,
+        PhaseType,
+    )
 
     start_time = time.time()
 
@@ -697,48 +756,60 @@ async def run_self_modeling(config: Dict[str, Any]) -> 'PhaseResult':
 
         duration = time.time() - start_time
 
-        if results.get('success', True):
+        if results.get("success", True):
             # Success - create artifacts
             artifacts = [
                 PhaseArtifact(
                     phase_type=PhaseType.SELF_MODELING,
                     artifact_type="trained_model",
                     data={
-                        "model_path": results.get('final_model_path', mastery_config.output_dir),
-                        "levels_mastered": results.get('levels_mastered', 0),
-                        "total_attempts": results.get('total_attempts', 0),
-                        "mastery_progression": results.get('mastery_progression', []),
-                        "self_modeling_metrics": results.get('self_modeling_metrics', {})
+                        "model_path": results.get(
+                            "final_model_path", mastery_config.output_dir
+                        ),
+                        "levels_mastered": results.get("levels_mastered", 0),
+                        "total_attempts": results.get("total_attempts", 0),
+                        "mastery_progression": results.get("mastery_progression", []),
+                        "self_modeling_metrics": results.get(
+                            "self_modeling_metrics", {}
+                        ),
                     },
                     metadata={
                         "mastery_config": mastery_config.dict(),
                         "training_domain": mastery_config.domain,
-                        "max_levels": mastery_config.max_mastery_levels
-                    }
+                        "max_levels": mastery_config.max_mastery_levels,
+                    },
                 )
             ]
 
             # Create metrics summary
             metrics = {
-                "levels_mastered": results.get('levels_mastered', 0),
-                "total_attempts": results.get('total_attempts', 0),
+                "levels_mastered": results.get("levels_mastered", 0),
+                "total_attempts": results.get("total_attempts", 0),
                 "execution_time": duration,
-                "training_time_hours": results.get('total_time_hours', duration / 3600),
-                "success_rate": results.get('success_rate', 0.0),
-                "final_mastery_level": results.get('current_mastery_level', 1),
-                "geometry_feedback_updates": results.get('geometry_updates', 0),
-                "sleep_dream_cycles": results.get('sleep_cycles', 0),
-                "grokfast_optimizations": results.get('grokfast_updates', 0)
+                "training_time_hours": results.get("total_time_hours", duration / 3600),
+                "success_rate": results.get("success_rate", 0.0),
+                "final_mastery_level": results.get("current_mastery_level", 1),
+                "geometry_feedback_updates": results.get("geometry_updates", 0),
+                "sleep_dream_cycles": results.get("sleep_cycles", 0),
+                "grokfast_optimizations": results.get("grokfast_updates", 0),
             }
 
             # Add self-modeling specific metrics
-            if 'self_modeling_metrics' in results:
-                sm_metrics = results['self_modeling_metrics']
-                metrics.update({
-                    "self_awareness_score": sm_metrics.get('self_awareness_score', 0.0),
-                    "metacognitive_accuracy": sm_metrics.get('metacognitive_accuracy', 0.0),
-                    "udaimonic_compass_direction": sm_metrics.get('compass_direction', 'unknown')
-                })
+            if "self_modeling_metrics" in results:
+                sm_metrics = results["self_modeling_metrics"]
+                metrics.update(
+                    {
+                        "self_awareness_score": sm_metrics.get(
+                            "self_awareness_score", 0.0
+                        ),
+                        "metacognitive_accuracy": sm_metrics.get(
+                            "metacognitive_accuracy", 0.0
+                        ),
+                        "udaimonic_compass_direction": sm_metrics.get(
+                            "compass_direction", "unknown"
+                        ),
+                    }
+                )
 
             logger.info(f"Self-Modeling completed successfully in {duration:.1f}s")
 
@@ -749,23 +820,22 @@ async def run_self_modeling(config: Dict[str, Any]) -> 'PhaseResult':
                 end_time=datetime.now(),
                 duration_seconds=duration,
                 artifacts_produced=artifacts,
-                metrics=metrics
+                metrics=metrics,
             )
-        else:
-            # Failed mastery training
-            return PhaseResult(
-                phase_type=PhaseType.SELF_MODELING,
-                status=PhaseStatus.FAILED,
-                start_time=datetime.fromtimestamp(start_time),
-                end_time=datetime.now(),
-                duration_seconds=duration,
-                error_message=results.get('error', 'Self-modeling training failed'),
-                metrics={"execution_time": duration}
-            )
+        # Failed mastery training
+        return PhaseResult(
+            phase_type=PhaseType.SELF_MODELING,
+            status=PhaseStatus.FAILED,
+            start_time=datetime.fromtimestamp(start_time),
+            end_time=datetime.now(),
+            duration_seconds=duration,
+            error_message=results.get("error", "Self-modeling training failed"),
+            metrics={"execution_time": duration},
+        )
 
     except Exception as e:
         duration = time.time() - start_time
-        error_msg = f"Self-Modeling phase failed: {str(e)}"
+        error_msg = f"Self-Modeling phase failed: {e!s}"
         logger.error(error_msg)
 
         return PhaseResult(
@@ -775,8 +845,9 @@ async def run_self_modeling(config: Dict[str, Any]) -> 'PhaseResult':
             end_time=datetime.now(),
             duration_seconds=duration,
             error_message=error_msg,
-            metrics={"execution_time": duration}
+            metrics={"execution_time": duration},
         )
+
 
 # Make the entry point discoverable
 run = run_self_modeling  # Alias for orchestrator discovery
@@ -785,7 +856,7 @@ execute = run_self_modeling  # Alternative alias
 if __name__ == "__main__":
     # Handle encoding for emoji output
     try:
-        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding="utf-8")
     except AttributeError:
         pass
 

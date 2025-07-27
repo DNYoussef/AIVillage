@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Analyze GitHub Actions workflows for issues."""
 
-import yaml
-import sys
 from pathlib import Path
+import sys
+
+import yaml
 
 
 def analyze_workflow(workflow_path):
@@ -39,15 +40,14 @@ def analyze_workflow(workflow_path):
 
         # Report results
         if issues:
-            print(f"  ISSUES FOUND:")
+            print("  ISSUES FOUND:")
             for issue in issues:
                 print(f"    - {issue}")
             return False
-        else:
-            print(
-                f"  VALID: {workflow.get('name', 'Unnamed')} - {len(workflow.get('jobs', {}))} jobs"
-            )
-            return True
+        print(
+            f"  VALID: {workflow.get('name', 'Unnamed')} - {len(workflow.get('jobs', {}))} jobs"
+        )
+        return True
 
     except yaml.YAMLError as e:
         print(f"  YAML SYNTAX ERROR: {e}")
@@ -82,9 +82,8 @@ def main():
     if all_valid:
         print("All workflows have valid syntax!")
         return 0
-    else:
-        print("Some workflows have issues that need fixing")
-        return 1
+    print("Some workflows have issues that need fixing")
+    return 1
 
 
 if __name__ == "__main__":

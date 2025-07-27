@@ -2,17 +2,22 @@
 Unit tests for Planning Data Structures
 """
 
-import pytest
-from datetime import datetime
-from unittest.mock import MagicMock
-
-import sys
 from pathlib import Path
+import sys
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from mcp_servers.hyperag.planning.plan_structures import (
-    QueryPlan, ExecutionStep, PlanCheckpoint, RetrievalConstraints,
-    QueryType, ReasoningStrategy, ExecutionStatus, PlanDSL
+    ExecutionStatus,
+    ExecutionStep,
+    PlanCheckpoint,
+    PlanDSL,
+    QueryPlan,
+    QueryType,
+    ReasoningStrategy,
+    RetrievalConstraints,
 )
 
 
@@ -42,7 +47,7 @@ class TestRetrievalConstraints:
             include_explanations=False,
             prefer_recent=True,
             domain_filter="science",
-            exclude_uncertainty=True
+            exclude_uncertainty=True,
         )
 
         assert constraints.max_depth == 5
@@ -67,7 +72,7 @@ class TestExecutionStep:
             parameters={"query": "test", "limit": 10},
             dependencies=["step1", "step2"],
             confidence_threshold=0.8,
-            timeout_ms=2000
+            timeout_ms=2000,
         )
 
         assert step.step_type == "retrieval"
@@ -82,9 +87,7 @@ class TestExecutionStep:
 
     def test_step_dependency_check(self):
         """Test step dependency checking"""
-        step = ExecutionStep(
-            dependencies=["step1", "step2"]
-        )
+        step = ExecutionStep(dependencies=["step1", "step2"])
 
         # Not ready - missing dependencies
         assert not step.is_ready_to_execute(set())
@@ -137,7 +140,7 @@ class TestPlanCheckpoint:
             completed_steps={"step1", "step2"},
             intermediate_results={"key": "value"},
             aggregate_confidence=0.75,
-            execution_time_ms=1500.0
+            execution_time_ms=1500.0,
         )
 
         assert checkpoint.step_index == 2
@@ -150,9 +153,7 @@ class TestPlanCheckpoint:
 
     def test_checkpoint_rollback(self):
         """Test checkpoint rollback capability"""
-        checkpoint = PlanCheckpoint(
-            completed_steps={"step1", "step2", "step3"}
-        )
+        checkpoint = PlanCheckpoint(completed_steps={"step1", "step2", "step3"})
 
         assert checkpoint.can_rollback_to("step1")
         assert checkpoint.can_rollback_to("step2")
@@ -170,7 +171,7 @@ class TestQueryPlan:
             original_query="test query",
             query_type=QueryType.CAUSAL_CHAIN,
             reasoning_strategy=ReasoningStrategy.CAUSAL_REASONING,
-            retrieval_constraints=constraints
+            retrieval_constraints=constraints,
         )
 
         assert plan.original_query == "test query"
@@ -308,14 +309,14 @@ class TestQueryPlan:
             query_type=QueryType.TEMPORAL_ANALYSIS,
             reasoning_strategy=ReasoningStrategy.TEMPORAL_REASONING,
             overall_confidence=0.85,
-            complexity_score=0.6
+            complexity_score=0.6,
         )
 
         step = ExecutionStep(
             step_type="retrieval",
             description="Test step",
             operation="test_op",
-            confidence_score=0.8
+            confidence_score=0.8,
         )
         plan.add_step(step)
 
@@ -350,9 +351,9 @@ class TestQueryPlan:
                     "parameters": {"key": "value"},
                     "dependencies": [],
                     "status": "completed",
-                    "confidence_score": 0.8
+                    "confidence_score": 0.8,
                 }
-            ]
+            ],
         }
 
         plan = QueryPlan.from_dict(plan_data)
@@ -374,10 +375,7 @@ class TestPlanDSL:
     def test_plan_serialization_to_dsl(self):
         """Test plan serialization to DSL format"""
         constraints = RetrievalConstraints(
-            max_depth=3,
-            max_nodes=50,
-            confidence_threshold=0.8,
-            time_budget_ms=3000
+            max_depth=3, max_nodes=50, confidence_threshold=0.8, time_budget_ms=3000
         )
 
         plan = QueryPlan(
@@ -386,20 +384,20 @@ class TestPlanDSL:
             query_type=QueryType.CAUSAL_CHAIN,
             reasoning_strategy=ReasoningStrategy.CAUSAL_REASONING,
             complexity_score=0.7,
-            retrieval_constraints=constraints
+            retrieval_constraints=constraints,
         )
 
         step1 = ExecutionStep(
             description="Identify causal entities",
             operation="causal_extraction",
             dependencies=[],
-            confidence_threshold=0.8
+            confidence_threshold=0.8,
         )
         step2 = ExecutionStep(
             description="Analyze causal relationships",
             operation="causal_analysis",
             dependencies=[step1.step_id],
-            confidence_threshold=0.7
+            confidence_threshold=0.7,
         )
 
         plan.add_step(step1)

@@ -4,16 +4,17 @@ Comprehensive hypergraph schema tests as specified in Sprint R-2.
 Tests hyperedge creation, Neo4j migrations, and bulk operations.
 """
 
-import pytest
 import asyncio
 from datetime import datetime, timezone
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock
+
 import numpy as np
+import pytest
 
 # Import hypergraph models (to be implemented)
 try:
-    from rag_system.hypergraph.models import Hyperedge, HippoNode
     from rag_system.hypergraph.migrations import run_cypher_migrations
+    from rag_system.hypergraph.models import HippoNode, Hyperedge
 except ImportError:
     # Models not yet implemented - create mock classes for testing
     class Hyperedge:
@@ -46,7 +47,7 @@ class TestHypergraphSchema:
             entities=["patient_123", "medication_456", "ingredient_789"],
             relation="prescribed_containing_allergen",
             confidence=0.95,
-            source_docs=["doc_001", "doc_002"]
+            source_docs=["doc_001", "doc_002"],
         )
 
         assert len(edge.entities) == 3
@@ -64,7 +65,7 @@ class TestHypergraphSchema:
             Hyperedge(
                 entities=[],  # Empty should fail
                 relation="test_relation",
-                confidence=0.5
+                confidence=0.5,
             )
 
         # Test confidence bounds
@@ -72,14 +73,14 @@ class TestHypergraphSchema:
             Hyperedge(
                 entities=["entity1", "entity2"],
                 relation="test_relation",
-                confidence=1.5  # > 1.0 should fail
+                confidence=1.5,  # > 1.0 should fail
             )
 
         with pytest.raises((ValueError, TypeError)):
             Hyperedge(
                 entities=["entity1", "entity2"],
                 relation="test_relation",
-                confidence=-0.1  # < 0.0 should fail
+                confidence=-0.1,  # < 0.0 should fail
             )
 
     def test_hyperedge_with_embedding(self):
@@ -90,7 +91,7 @@ class TestHypergraphSchema:
             entities=["concept_a", "concept_b", "concept_c"],
             relation="semantic_similarity",
             confidence=0.87,
-            embedding=embedding
+            embedding=embedding,
         )
 
         assert edge.embedding is not None
@@ -115,14 +116,19 @@ class TestHypergraphSchema:
     @pytest.mark.benchmark
     def test_bulk_edge_creation(self, benchmark):
         """Performance test for bulk operations"""
+
         def create_edges():
             edges = []
             for i in range(1000):
                 edge = Hyperedge(
-                    entities=[f"entity_{i}", f"entity_{i+1000}", f"entity_{i+2000}"],
+                    entities=[
+                        f"entity_{i}",
+                        f"entity_{i + 1000}",
+                        f"entity_{i + 2000}",
+                    ],
                     relation=f"relation_{i % 10}",
                     confidence=0.5 + (i % 50) * 0.01,
-                    source_docs=[f"doc_{i}"]
+                    source_docs=[f"doc_{i}"],
                 )
                 edges.append(edge)
             return edges
@@ -142,18 +148,22 @@ class TestHypergraphSchema:
                 "patient:john_doe_123",
                 "medication:amoxicillin_500mg",
                 "ingredient:penicillin",
-                "allergy:penicillin_allergy"
+                "allergy:penicillin_allergy",
             ],
             relation="contraindicated_prescription",
             confidence=0.92,
-            source_docs=["medical_record_456", "drug_database_entry", "allergy_test_789"],
-            metadata={"severity": "high", "risk_score": 0.95}
+            source_docs=[
+                "medical_record_456",
+                "drug_database_entry",
+                "allergy_test_789",
+            ],
+            metadata={"severity": "high", "risk_score": 0.95},
         )
 
         assert len(edge.entities) == 4
         assert edge.confidence == 0.92
-        assert edge.get_metadata('severity') == "high"
-        assert edge.get_metadata('risk_score') == 0.95
+        assert edge.get_metadata("severity") == "high"
+        assert edge.get_metadata("risk_score") == 0.95
 
 
 @pytest.mark.integration
@@ -165,7 +175,7 @@ class TestHippoNode:
         node = HippoNode(
             id="hippo_001",
             content="User asked about diabetes management",
-            episodic=True
+            episodic=True,
         )
 
         assert node.id == "hippo_001"
@@ -176,17 +186,14 @@ class TestHippoNode:
         """Test timestamp handling"""
         before_creation = datetime.now(timezone.utc)
 
-        node = HippoNode(
-            id="hippo_002",
-            content="Test content"
-        )
+        node = HippoNode(id="hippo_002", content="Test content")
 
         after_creation = datetime.now(timezone.utc)
 
         # Check that timestamps are set and reasonable
-        if hasattr(node, 'created'):
+        if hasattr(node, "created"):
             assert before_creation <= node.created <= after_creation
-        if hasattr(node, 'last_accessed'):
+        if hasattr(node, "last_accessed"):
             assert before_creation <= node.last_accessed <= after_creation
 
     def test_hippo_node_access_pattern(self):
@@ -196,10 +203,10 @@ class TestHippoNode:
         node = HippoNode(
             id="hippo_003",
             content="Frequently accessed content",
-            access_pattern=access_pattern
+            access_pattern=access_pattern,
         )
 
-        if hasattr(node, 'access_pattern') and node.access_pattern is not None:
+        if hasattr(node, "access_pattern") and node.access_pattern is not None:
             # The validator normalizes the array, so check normalized version
             normalized_pattern = access_pattern / np.sum(access_pattern)
             assert np.allclose(node.access_pattern, normalized_pattern)
@@ -268,13 +275,13 @@ class TestArchitecturalBoundaries:
         edge = Hyperedge(
             entities=["query", "document", "answer"],
             relation="retrieval_result",
-            confidence=0.85
+            confidence=0.85,
         )
 
         # Verify basic properties that RAG system expects
-        assert hasattr(edge, 'entities')
-        assert hasattr(edge, 'confidence')
-        assert hasattr(edge, 'relation')
+        assert hasattr(edge, "entities")
+        assert hasattr(edge, "confidence")
+        assert hasattr(edge, "relation")
 
         # Verify confidence is in expected range for RAG scoring
         assert 0.0 <= edge.confidence <= 1.0
@@ -283,24 +290,20 @@ class TestArchitecturalBoundaries:
         """Test clear boundary between episodic and semantic memory"""
         # Episodic node
         episodic_node = HippoNode(
-            id="episodic_001",
-            content="User session data",
-            episodic=True
+            id="episodic_001", content="User session data", episodic=True
         )
 
         # Semantic hyperedge
         semantic_edge = Hyperedge(
-            entities=["concept1", "concept2"],
-            relation="is_related_to",
-            confidence=0.7
+            entities=["concept1", "concept2"], relation="is_related_to", confidence=0.7
         )
 
         # Verify clear separation
-        if hasattr(episodic_node, 'episodic'):
+        if hasattr(episodic_node, "episodic"):
             assert episodic_node.episodic == True
 
         # Semantic edges should not have episodic flag
-        assert not hasattr(semantic_edge, 'episodic') or not semantic_edge.episodic
+        assert not hasattr(semantic_edge, "episodic") or not semantic_edge.episodic
 
     def test_performance_requirements(self):
         """Test that hypergraph operations meet performance requirements"""
@@ -315,7 +318,7 @@ class TestArchitecturalBoundaries:
             edge = Hyperedge(
                 entities=[f"e1_{i}", f"e2_{i}", f"e3_{i}"],
                 relation="test_relation",
-                confidence=0.5
+                confidence=0.5,
             )
             edges.append(edge)
 

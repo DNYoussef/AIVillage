@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""
-HypeRAG MCP Server Startup Script
+"""HypeRAG MCP Server Startup Script
 
 Simple script to start the HypeRAG MCP server with proper configuration.
 """
 
 import asyncio
 import logging
-import sys
 from pathlib import Path
+import sys
 
 # Add the project root to Python path
 project_root = Path(__file__).parent.parent
@@ -22,7 +21,7 @@ async def main():
     # Set up logging
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     logger = logging.getLogger(__name__)
@@ -44,7 +43,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("Received shutdown signal")
     except Exception as e:
-        logger.error(f"Server error: {str(e)}")
+        logger.error(f"Server error: {e!s}")
         raise
     finally:
         logger.info("Server shutdown complete")
@@ -56,5 +55,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nShutdown requested by user")
     except Exception as e:
-        print(f"Fatal error: {str(e)}")
+        print(f"Fatal error: {e!s}")
         sys.exit(1)

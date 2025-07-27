@@ -1,5 +1,4 @@
-"""
-Deploy Agent - Containerized Deployment System
+"""Deploy Agent - Containerized Deployment System
 
 Implements comprehensive deployment capabilities for Agent Forge models:
 - Docker containerization with optimization
@@ -11,28 +10,26 @@ Implements comprehensive deployment capabilities for Agent Forge models:
 """
 
 import asyncio
+from dataclasses import asdict, dataclass
 import json
 import logging
-import os
-import shutil
-import subprocess
-import time
-from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
-import yaml
+import shutil
+import time
+from typing import Any
 
 import docker
+from kubernetes import client
+from kubernetes import config as k8s_config
 import requests
-from kubernetes import client, config as k8s_config
-import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class DeploymentConfig:
     """Configuration for model deployment."""
+
     model_path: str
     deployment_name: str
     output_dir: str
@@ -50,7 +47,7 @@ class DeploymentConfig:
 
     # Environment settings
     deployment_type: str = "docker"  # docker, kubernetes, aws, azure, gcp
-    registry_url: Optional[str] = None
+    registry_url: str | None = None
     namespace: str = "default"
 
     # Model settings
@@ -64,21 +61,24 @@ class DeploymentConfig:
     log_level: str = "INFO"
     wandb_integration: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
 
 @dataclass
 class DeploymentStatus:
     """Status of a deployment."""
+
     deployment_name: str
     status: str  # pending, running, failed, stopped
-    container_ids: List[str]
-    endpoints: List[str]
+    container_ids: list[str]
+    endpoints: list[str]
     health_status: str
     created_at: float
     last_updated: float
-    resource_usage: Dict[str, Any]
-    error_message: Optional[str] = None
+    resource_usage: dict[str, Any]
+    error_message: str | None = None
+
 
 class ContainerBuilder:
     """Builds optimized containers for model deployment."""
@@ -89,7 +89,7 @@ class ContainerBuilder:
 
     def create_dockerfile(self, model_dir: Path) -> str:
         """Create optimized Dockerfile for model deployment."""
-        dockerfile_content = f'''
+        dockerfile_content = f"""
 # Multi-stage build for optimized container
 FROM {self.config.base_image} as base
 
@@ -146,17 +146,17 @@ ENV LOG_LEVEL={self.config.log_level}
 
 # Start server
 CMD ["python", "app.py"]
-'''
+"""
 
         dockerfile_path = model_dir / "Dockerfile"
-        with open(dockerfile_path, 'w') as f:
+        with open(dockerfile_path, "w") as f:
             f.write(dockerfile_content)
 
         return str(dockerfile_path)
 
     def create_app_server(self, model_dir: Path) -> str:
         """Create FastAPI server for model inference."""
-        app_content = f'''
+        app_content = '''
 import asyncio
 import logging
 import os
@@ -209,7 +209,7 @@ class ModelServer:
     def load_model(self):
         """Load model and tokenizer."""
         start_time = time.time()
-        logger.info(f"Loading model from {{self.model_path}}")
+        logger.info(f"Loading model from {self.model_path}")
 
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
@@ -228,10 +228,10 @@ class ModelServer:
 
             load_time = time.time() - start_time
             MODEL_LOAD_TIME.set(load_time)
-            logger.info(f"Model loaded successfully in {{load_time:.2f}} seconds")
+            logger.info(f"Model loaded successfully in {load_time:.2f} seconds")
 
         except Exception as e:
-            logger.error(f"Failed to load model: {{e}}")
+            logger.error(f"Failed to load model: {e}")
             raise
 
     async def generate(self, request: GenerationRequest) -> GenerationResponse:
@@ -273,17 +273,17 @@ class ModelServer:
             return GenerationResponse(
                 generated_text=generated_texts,
                 processing_time=processing_time,
-                model_info={{
+                model_info={
                     "model_path": self.model_path,
                     "device": self.device,
                     "max_length": max_length,
                     "temperature": temperature
-                }},
+                },
                 timestamp=time.time()
             )
 
         except Exception as e:
-            logger.error(f"Generation failed: {{e}}")
+            logger.error(f"Generation failed: {e}")
             raise HTTPException(status_code=500, detail=str(e))
 
     def get_health(self) -> Dict[str, Any]:
@@ -296,7 +296,7 @@ class ModelServer:
             gpu_memory = torch.cuda.memory_allocated()
             GPU_MEMORY_USAGE.set(gpu_memory)
 
-        return {{
+        return {
             "status": "healthy",
             "model_loaded": self.model is not None,
             "device": self.device,
@@ -304,7 +304,7 @@ class ModelServer:
             "gpu_available": torch.cuda.is_available(),
             "gpu_memory_mb": torch.cuda.memory_allocated() / (1024**2) if torch.cuda.is_available() else 0,
             "timestamp": time.time()
-        }}
+        }
 
 # Initialize server
 model_server = ModelServer()
@@ -332,12 +332,12 @@ async def health_check():
 @app.get("/info")
 async def model_info():
     """Get model information."""
-    return {{
+    return {
         "model_path": model_server.model_path,
         "device": model_server.device,
         "model_loaded": model_server.model is not None,
         "tokenizer_vocab_size": len(model_server.tokenizer) if model_server.tokenizer else 0
-    }}
+    }
 
 @app.get("/metrics")
 async def metrics():
@@ -350,14 +350,14 @@ if __name__ == "__main__":
 '''
 
         app_path = model_dir / "app.py"
-        with open(app_path, 'w') as f:
+        with open(app_path, "w") as f:
             f.write(app_content)
 
         return str(app_path)
 
     def create_requirements(self, model_dir: Path) -> str:
         """Create requirements.txt file."""
-        requirements = '''
+        requirements = """
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 torch>=2.0.0
@@ -367,10 +367,10 @@ prometheus-client==0.19.0
 psutil==5.9.6
 numpy>=1.24.0
 pydantic>=2.0.0
-'''
+"""
 
         requirements_path = model_dir / "requirements.txt"
-        with open(requirements_path, 'w') as f:
+        with open(requirements_path, "w") as f:
             f.write(requirements.strip())
 
         return str(requirements_path)
@@ -390,16 +390,13 @@ pydantic>=2.0.0
 
             logger.info("Building Docker image...")
             image, logs = self.docker_client.images.build(
-                path=str(model_dir),
-                tag=image_tag,
-                rm=True,
-                forcerm=True
+                path=str(model_dir), tag=image_tag, rm=True, forcerm=True
             )
 
             # Log build output
             for log_line in logs:
-                if 'stream' in log_line:
-                    logger.info(log_line['stream'].strip())
+                if "stream" in log_line:
+                    logger.info(log_line["stream"].strip())
 
             logger.info(f"Container built successfully: {image_tag}")
             return image_tag
@@ -407,6 +404,7 @@ pydantic>=2.0.0
         except Exception as e:
             logger.error(f"Container build failed: {e}")
             raise
+
 
 class KubernetesDeployer:
     """Handles Kubernetes deployments."""
@@ -421,7 +419,7 @@ class KubernetesDeployer:
         self.apps_v1 = client.AppsV1Api()
         self.core_v1 = client.CoreV1Api()
 
-    def create_deployment_manifest(self, image_tag: str) -> Dict[str, Any]:
+    def create_deployment_manifest(self, image_tag: str) -> dict[str, Any]:
         """Create Kubernetes deployment manifest."""
         return {
             "apiVersion": "apps/v1",
@@ -429,88 +427,76 @@ class KubernetesDeployer:
             "metadata": {
                 "name": self.config.deployment_name,
                 "namespace": self.config.namespace,
-                "labels": {
-                    "app": self.config.deployment_name,
-                    "version": "v1"
-                }
+                "labels": {"app": self.config.deployment_name, "version": "v1"},
             },
             "spec": {
                 "replicas": self.config.replicas,
-                "selector": {
-                    "matchLabels": {
-                        "app": self.config.deployment_name
-                    }
-                },
+                "selector": {"matchLabels": {"app": self.config.deployment_name}},
                 "template": {
-                    "metadata": {
-                        "labels": {
-                            "app": self.config.deployment_name
-                        }
-                    },
+                    "metadata": {"labels": {"app": self.config.deployment_name}},
                     "spec": {
-                        "containers": [{
-                            "name": self.config.deployment_name,
-                            "image": image_tag,
-                            "ports": [{
-                                "containerPort": self.config.port
-                            }],
-                            "resources": {
-                                "limits": {
-                                    "memory": self.config.memory_limit,
-                                    "cpu": self.config.cpu_limit
+                        "containers": [
+                            {
+                                "name": self.config.deployment_name,
+                                "image": image_tag,
+                                "ports": [{"containerPort": self.config.port}],
+                                "resources": {
+                                    "limits": {
+                                        "memory": self.config.memory_limit,
+                                        "cpu": self.config.cpu_limit,
+                                    },
+                                    "requests": {"memory": "1Gi", "cpu": "500m"},
                                 },
-                                "requests": {
-                                    "memory": "1Gi",
-                                    "cpu": "500m"
-                                }
-                            },
-                            "livenessProbe": {
-                                "httpGet": {
-                                    "path": self.config.health_check_path,
-                                    "port": self.config.port
+                                "livenessProbe": {
+                                    "httpGet": {
+                                        "path": self.config.health_check_path,
+                                        "port": self.config.port,
+                                    },
+                                    "initialDelaySeconds": 60,
+                                    "periodSeconds": 30,
                                 },
-                                "initialDelaySeconds": 60,
-                                "periodSeconds": 30
-                            },
-                            "readinessProbe": {
-                                "httpGet": {
-                                    "path": self.config.health_check_path,
-                                    "port": self.config.port
+                                "readinessProbe": {
+                                    "httpGet": {
+                                        "path": self.config.health_check_path,
+                                        "port": self.config.port,
+                                    },
+                                    "initialDelaySeconds": 30,
+                                    "periodSeconds": 10,
                                 },
-                                "initialDelaySeconds": 30,
-                                "periodSeconds": 10
-                            },
-                            "env": [
-                                {"name": "LOG_LEVEL", "value": self.config.log_level},
-                                {"name": "PORT", "value": str(self.config.port)},
-                                {"name": "BATCH_SIZE", "value": str(self.config.batch_size)}
-                            ]
-                        }]
-                    }
-                }
-            }
+                                "env": [
+                                    {
+                                        "name": "LOG_LEVEL",
+                                        "value": self.config.log_level,
+                                    },
+                                    {"name": "PORT", "value": str(self.config.port)},
+                                    {
+                                        "name": "BATCH_SIZE",
+                                        "value": str(self.config.batch_size),
+                                    },
+                                ],
+                            }
+                        ]
+                    },
+                },
+            },
         }
 
-    def create_service_manifest(self) -> Dict[str, Any]:
+    def create_service_manifest(self) -> dict[str, Any]:
         """Create Kubernetes service manifest."""
         return {
             "apiVersion": "v1",
             "kind": "Service",
             "metadata": {
                 "name": f"{self.config.deployment_name}-service",
-                "namespace": self.config.namespace
+                "namespace": self.config.namespace,
             },
             "spec": {
-                "selector": {
-                    "app": self.config.deployment_name
-                },
-                "ports": [{
-                    "port": 80,
-                    "targetPort": self.config.port,
-                    "protocol": "TCP"
-                }],
-                "type": "LoadBalancer"
-            }
+                "selector": {"app": self.config.deployment_name},
+                "ports": [
+                    {"port": 80, "targetPort": self.config.port, "protocol": "TCP"}
+                ],
+                "type": "LoadBalancer",
+            },
         }
 
     async def deploy(self, image_tag: str) -> DeploymentStatus:
@@ -523,15 +509,14 @@ class KubernetesDeployer:
 
             try:
                 self.apps_v1.create_namespaced_deployment(
-                    namespace=self.config.namespace,
-                    body=deployment_manifest
+                    namespace=self.config.namespace, body=deployment_manifest
                 )
             except client.ApiException as e:
                 if e.status == 409:  # Already exists
                     self.apps_v1.patch_namespaced_deployment(
                         name=self.config.deployment_name,
                         namespace=self.config.namespace,
-                        body=deployment_manifest
+                        body=deployment_manifest,
                     )
                 else:
                     raise
@@ -541,8 +526,7 @@ class KubernetesDeployer:
 
             try:
                 self.core_v1.create_namespaced_service(
-                    namespace=self.config.namespace,
-                    body=service_manifest
+                    namespace=self.config.namespace, body=service_manifest
                 )
             except client.ApiException as e:
                 if e.status != 409:  # Ignore if already exists
@@ -565,12 +549,13 @@ class KubernetesDeployer:
         while time.time() - start_time < timeout:
             try:
                 deployment = self.apps_v1.read_namespaced_deployment(
-                    name=self.config.deployment_name,
-                    namespace=self.config.namespace
+                    name=self.config.deployment_name, namespace=self.config.namespace
                 )
 
-                if (deployment.status.ready_replicas == self.config.replicas and
-                    deployment.status.available_replicas == self.config.replicas):
+                if (
+                    deployment.status.ready_replicas == self.config.replicas
+                    and deployment.status.available_replicas == self.config.replicas
+                ):
                     logger.info("Deployment is ready")
                     return
 
@@ -585,25 +570,27 @@ class KubernetesDeployer:
         """Get current deployment status."""
         try:
             deployment = self.apps_v1.read_namespaced_deployment(
-                name=self.config.deployment_name,
-                namespace=self.config.namespace
+                name=self.config.deployment_name, namespace=self.config.namespace
             )
 
             pods = self.core_v1.list_namespaced_pod(
                 namespace=self.config.namespace,
-                label_selector=f"app={self.config.deployment_name}"
+                label_selector=f"app={self.config.deployment_name}",
             )
 
             service = self.core_v1.read_namespaced_service(
                 name=f"{self.config.deployment_name}-service",
-                namespace=self.config.namespace
+                namespace=self.config.namespace,
             )
 
             # Determine status
             if deployment.status.ready_replicas == self.config.replicas:
                 status = "running"
                 health_status = "healthy"
-            elif deployment.status.ready_replicas and deployment.status.ready_replicas > 0:
+            elif (
+                deployment.status.ready_replicas
+                and deployment.status.ready_replicas > 0
+            ):
                 status = "partially_running"
                 health_status = "degraded"
             else:
@@ -630,8 +617,8 @@ class KubernetesDeployer:
                 resource_usage={
                     "replicas": deployment.status.replicas or 0,
                     "ready_replicas": deployment.status.ready_replicas or 0,
-                    "pods": len(pods.items)
-                }
+                    "pods": len(pods.items),
+                },
             )
 
         except Exception as e:
@@ -645,8 +632,9 @@ class KubernetesDeployer:
                 created_at=time.time(),
                 last_updated=time.time(),
                 resource_usage={},
-                error_message=str(e)
+                error_message=str(e),
             )
+
 
 class DockerDeployer:
     """Handles Docker deployments."""
@@ -662,7 +650,9 @@ class DockerDeployer:
         try:
             # Stop existing container if running
             try:
-                existing = self.docker_client.containers.get(self.config.deployment_name)
+                existing = self.docker_client.containers.get(
+                    self.config.deployment_name
+                )
                 existing.stop()
                 existing.remove()
                 logger.info("Stopped existing container")
@@ -673,15 +663,17 @@ class DockerDeployer:
             container = self.docker_client.containers.run(
                 image_tag,
                 name=self.config.deployment_name,
-                ports={f'{self.config.port}/tcp': self.config.port},
+                ports={f"{self.config.port}/tcp": self.config.port},
                 detach=True,
                 restart_policy={"Name": "unless-stopped"},
                 environment={
                     "LOG_LEVEL": self.config.log_level,
                     "PORT": str(self.config.port),
-                    "BATCH_SIZE": str(self.config.batch_size)
+                    "BATCH_SIZE": str(self.config.batch_size),
                 },
-                mem_limit=self.config.memory_limit if self.config.memory_limit != "4Gi" else "4g"
+                mem_limit=self.config.memory_limit
+                if self.config.memory_limit != "4Gi"
+                else "4g",
             )
 
             # Wait for container to be healthy
@@ -695,7 +687,7 @@ class DockerDeployer:
                 health_status="healthy",
                 created_at=time.time(),
                 last_updated=time.time(),
-                resource_usage=self._get_container_stats(container)
+                resource_usage=self._get_container_stats(container),
             )
 
         except Exception as e:
@@ -713,7 +705,7 @@ class DockerDeployer:
                     # Check health endpoint
                     response = requests.get(
                         f"http://localhost:{self.config.port}{self.config.health_check_path}",
-                        timeout=5
+                        timeout=5,
                     )
                     if response.status_code == 200:
                         logger.info("Container is healthy")
@@ -725,18 +717,21 @@ class DockerDeployer:
 
         raise TimeoutError("Container did not become healthy within timeout")
 
-    def _get_container_stats(self, container) -> Dict[str, Any]:
+    def _get_container_stats(self, container) -> dict[str, Any]:
         """Get container resource usage statistics."""
         try:
             stats = container.stats(stream=False)
             return {
-                "memory_usage": stats['memory_stats'].get('usage', 0),
-                "cpu_usage": stats['cpu_stats'].get('cpu_usage', {}).get('total_usage', 0),
-                "network_rx": stats['networks'].get('eth0', {}).get('rx_bytes', 0),
-                "network_tx": stats['networks'].get('eth0', {}).get('tx_bytes', 0)
+                "memory_usage": stats["memory_stats"].get("usage", 0),
+                "cpu_usage": stats["cpu_stats"]
+                .get("cpu_usage", {})
+                .get("total_usage", 0),
+                "network_rx": stats["networks"].get("eth0", {}).get("rx_bytes", 0),
+                "network_tx": stats["networks"].get("eth0", {}).get("tx_bytes", 0),
             }
         except Exception:
             return {}
+
 
 class DeploymentOrchestrator:
     """Main deployment orchestrator."""
@@ -774,7 +769,9 @@ class DeploymentOrchestrator:
             # Save deployment info
             await self._save_deployment_info(deployment_status, image_tag)
 
-            logger.info(f"Deployment completed successfully: {deployment_status.status}")
+            logger.info(
+                f"Deployment completed successfully: {deployment_status.status}"
+            )
             return deployment_status
 
         except Exception as e:
@@ -808,11 +805,11 @@ class DeploymentOrchestrator:
             "deployment_config": self.config.to_dict(),
             "deployment_status": asdict(status),
             "image_tag": image_tag,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         info_path = self.output_dir / f"deployment_{self.config.deployment_name}.json"
-        with open(info_path, 'w') as f:
+        with open(info_path, "w") as f:
             json.dump(deployment_info, f, indent=2)
 
         self.deployment_history.append(deployment_info)
@@ -824,17 +821,18 @@ class DeploymentOrchestrator:
 
     async def scale_deployment(self, replicas: int):
         """Scale deployment to specified number of replicas."""
-        if hasattr(self.deployer, 'scale'):
+        if hasattr(self.deployer, "scale"):
             await self.deployer.scale(replicas)
         else:
             logger.warning("Scaling not supported for this deployment type")
 
     async def stop_deployment(self):
         """Stop the deployment."""
-        if hasattr(self.deployer, 'stop'):
+        if hasattr(self.deployer, "stop"):
             await self.deployer.stop()
         else:
             logger.warning("Stop not implemented for this deployment type")
+
 
 # CLI and usage
 async def main():
@@ -845,7 +843,12 @@ async def main():
     parser.add_argument("--model-path", required=True, help="Path to model")
     parser.add_argument("--deployment-name", required=True, help="Deployment name")
     parser.add_argument("--output-dir", required=True, help="Output directory")
-    parser.add_argument("--deployment-type", default="docker", choices=["docker", "kubernetes"], help="Deployment type")
+    parser.add_argument(
+        "--deployment-type",
+        default="docker",
+        choices=["docker", "kubernetes"],
+        help="Deployment type",
+    )
     parser.add_argument("--replicas", type=int, default=1, help="Number of replicas")
     parser.add_argument("--port", type=int, default=8000, help="Service port")
     parser.add_argument("--memory-limit", default="4Gi", help="Memory limit")
@@ -864,7 +867,7 @@ async def main():
         port=args.port,
         memory_limit=args.memory_limit,
         cpu_limit=args.cpu_limit,
-        namespace=args.namespace
+        namespace=args.namespace,
     )
 
     # Initialize orchestrator
@@ -873,7 +876,7 @@ async def main():
     # Deploy model
     status = await orchestrator.deploy_model(args.model_path)
 
-    print(f"\nDeployment Status:")
+    print("\nDeployment Status:")
     print(f"Name: {status.deployment_name}")
     print(f"Status: {status.status}")
     print(f"Health: {status.health_status}")
@@ -882,7 +885,7 @@ async def main():
 
     # Test deployment if endpoints available
     if status.endpoints and status.status == "running":
-        print(f"\nTesting deployment...")
+        print("\nTesting deployment...")
         test_endpoint = status.endpoints[0]
 
         try:
@@ -895,7 +898,7 @@ async def main():
             gen_response = requests.post(
                 f"{test_endpoint}/generate",
                 json={"prompt": "Hello, world!", "max_length": 50},
-                timeout=30
+                timeout=30,
             )
             if gen_response.status_code == 200:
                 print("✅ Generation endpoint working")
@@ -907,7 +910,8 @@ async def main():
         except Exception as e:
             print(f"❌ Deployment test failed: {e}")
 
-    print(f"\nDeployment completed successfully!")
+    print("\nDeployment completed successfully!")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

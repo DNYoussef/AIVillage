@@ -2,15 +2,15 @@
 Unit tests for Query Classification System
 """
 
-import pytest
-from typing import Dict, Any
-
-import sys
 from pathlib import Path
+import sys
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from mcp_servers.hyperag.planning.query_classifier import QueryClassifier
 from mcp_servers.hyperag.planning.plan_structures import QueryType, ReasoningStrategy
+from mcp_servers.hyperag.planning.query_classifier import QueryClassifier
 
 
 class TestQueryClassifier:
@@ -36,7 +36,7 @@ class TestQueryClassifier:
             "What is the capital of France?",
             "Who invented the telephone?",
             "Define machine learning",
-            "Paris population"
+            "Paris population",
         ]
 
         for query in simple_queries:
@@ -54,7 +54,7 @@ class TestQueryClassifier:
             "When was the first computer invented?",
             "Show me the timeline of World War II",
             "What events occurred after 1950?",
-            "During the Renaissance, what art movements emerged?"
+            "During the Renaissance, what art movements emerged?",
         ]
 
         for query in temporal_queries:
@@ -72,7 +72,7 @@ class TestQueryClassifier:
             "What causes global warming?",
             "How does smoking lead to cancer?",
             "What are the reasons for inflation?",
-            "Explain the causes of the French Revolution"
+            "Explain the causes of the French Revolution",
         ]
 
         for query in causal_queries:
@@ -90,7 +90,7 @@ class TestQueryClassifier:
             "What's the difference between cats and dogs?",
             "Which is better: Mac or PC?",
             "How do electric cars compare to gas cars?",
-            "Contrast democracy versus authoritarianism"
+            "Contrast democracy versus authoritarianism",
         ]
 
         for query in comparative_queries:
@@ -108,7 +108,7 @@ class TestQueryClassifier:
             "Tell me about quantum physics",
             "How confident are you about this information?",
             "What are your sources for this data?",
-            "Summarize the key facts about climate change"
+            "Summarize the key facts about climate change",
         ]
 
         for query in meta_queries:
@@ -125,7 +125,7 @@ class TestQueryClassifier:
             "List all Nobel Prize winners in Physics",
             "What's the average temperature in July?",
             "Count the number of programming languages",
-            "Show me all movies from 2020"
+            "Show me all movies from 2020",
         ]
 
         for query in aggregation_queries:
@@ -142,7 +142,7 @@ class TestQueryClassifier:
             "Suppose we could travel faster than light",
             "Imagine if AI becomes sentient",
             "What would happen if the polar ice caps melted?",
-            "Predict the future of renewable energy"
+            "Predict the future of renewable energy",
         ]
 
         for query in hypothetical_queries:
@@ -158,14 +158,18 @@ class TestQueryClassifier:
             "How are climate change and economic policy related through environmental regulations?",
             "What's the connection between social media and political polarization via echo chambers?",
             "Trace the relationship between artificial intelligence and job displacement through automation",
-            "How does education quality affect economic growth through innovation and productivity?"
+            "How does education quality affect economic growth through innovation and productivity?",
         ]
 
         for query in multihop_queries:
             query_type, confidence, analysis = classifier.classify_query(query)
 
             # Should be classified as multi-hop or have high complexity
-            assert query_type in [QueryType.MULTI_HOP, QueryType.CAUSAL_CHAIN, QueryType.COMPARATIVE]
+            assert query_type in [
+                QueryType.MULTI_HOP,
+                QueryType.CAUSAL_CHAIN,
+                QueryType.COMPARATIVE,
+            ]
             assert analysis["complexity_score"] > 0.6
 
     def test_complexity_calculation(self, classifier):
@@ -177,9 +181,11 @@ class TestQueryClassifier:
         simple_complexity = analysis["complexity_score"]
 
         # Complex query
-        complex_query = ("How do socioeconomic factors, environmental conditions, and government policies "
-                        "interact to influence public health outcomes, and what are the long-term implications "
-                        "for healthcare systems and social inequality?")
+        complex_query = (
+            "How do socioeconomic factors, environmental conditions, and government policies "
+            "interact to influence public health outcomes, and what are the long-term implications "
+            "for healthcare systems and social inequality?"
+        )
         _, _, analysis = classifier.classify_query(complex_query)
         complex_complexity = analysis["complexity_score"]
 
@@ -197,7 +203,7 @@ class TestQueryClassifier:
             (QueryType.COMPARATIVE, 0.5, ReasoningStrategy.COMPARATIVE_ANALYSIS),
             (QueryType.META_KNOWLEDGE, 0.4, ReasoningStrategy.META_REASONING),
             (QueryType.MULTI_HOP, 0.8, ReasoningStrategy.STEP_BY_STEP),
-            (QueryType.AGGREGATION, 0.6, ReasoningStrategy.GRAPH_TRAVERSAL)
+            (QueryType.AGGREGATION, 0.6, ReasoningStrategy.GRAPH_TRAVERSAL),
         ]
 
         for query_type, complexity, expected_strategy in test_cases:
@@ -231,12 +237,16 @@ class TestQueryClassifier:
         """Test generation of reasoning hints"""
 
         # Test temporal hints
-        hints = classifier.get_reasoning_hints("When did this happen?", QueryType.TEMPORAL_ANALYSIS)
+        hints = classifier.get_reasoning_hints(
+            "When did this happen?", QueryType.TEMPORAL_ANALYSIS
+        )
         assert len(hints) > 0
         assert any("temporal" in hint.lower() for hint in hints)
 
         # Test causal hints
-        hints = classifier.get_reasoning_hints("Why did this happen?", QueryType.CAUSAL_CHAIN)
+        hints = classifier.get_reasoning_hints(
+            "Why did this happen?", QueryType.CAUSAL_CHAIN
+        )
         assert len(hints) > 0
         assert any("causal" in hint.lower() for hint in hints)
 
@@ -283,13 +293,17 @@ class TestQueryClassifier:
         first_result = results[0]
         for result in results[1:]:
             assert result[0] == first_result[0]  # Same query type
-            assert abs(result[1] - first_result[1]) < 0.01  # Same confidence (allowing for floating point)
+            assert (
+                abs(result[1] - first_result[1]) < 0.01
+            )  # Same confidence (allowing for floating point)
 
     def test_mixed_query_types(self, classifier):
         """Test queries that could match multiple types"""
 
         # Query with both temporal and causal elements
-        mixed_query = "Why did the stock market crash happen in 1929 and what were the causes?"
+        mixed_query = (
+            "Why did the stock market crash happen in 1929 and what were the causes?"
+        )
         query_type, confidence, analysis = classifier.classify_query(mixed_query)
 
         # Should identify multiple patterns

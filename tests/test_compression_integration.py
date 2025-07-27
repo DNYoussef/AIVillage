@@ -6,13 +6,11 @@ Tests that the compression phase entry point executes successfully
 and returns valid PhaseResult objects with real compression operations.
 """
 
-import pytest
-import asyncio
-import sys
-import tempfile
-import torch
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+import sys
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -42,7 +40,7 @@ class TestCompressionIntegration:
             "eval_samples": 10,
             "mixed_precision": False,  # Avoid mixed precision issues in CPU testing
             "wandb_project": "test-compression",
-            "wandb_tags": ["test"]
+            "wandb_tags": ["test"],
         }
 
     @pytest.mark.asyncio
@@ -50,27 +48,32 @@ class TestCompressionIntegration:
         """Test that run_compression executes successfully with minimal config."""
 
         # Mock heavy operations for testing
-        with patch('agent_forge.compression_pipeline.CompressionPipeline') as mock_pipeline:
+        with patch(
+            "agent_forge.compression_pipeline.CompressionPipeline"
+        ) as mock_pipeline:
             mock_instance = MagicMock()
             mock_pipeline.return_value = mock_instance
 
             # Mock successful compression - match the actual return format
             async def mock_compression():
                 return {
-                    'success': True,
-                    'model_path': compression_config["output_model_path"],  # This is the key used in the actual code
-                    'compression_ratio': 4.2,
-                    'memory_savings_mb': 150.0,
-                    'metadata': {
-                        'bitnet_layers_converted': 12,
-                        'vptq_quantization_complete': True,
-                        'evaluation_metrics': {
-                            'perplexity_before': 25.3,
-                            'perplexity_after': 26.1,
-                            'accuracy_retention': 0.94
-                        }
-                    }
+                    "success": True,
+                    "model_path": compression_config[
+                        "output_model_path"
+                    ],  # This is the key used in the actual code
+                    "compression_ratio": 4.2,
+                    "memory_savings_mb": 150.0,
+                    "metadata": {
+                        "bitnet_layers_converted": 12,
+                        "vptq_quantization_complete": True,
+                        "evaluation_metrics": {
+                            "perplexity_before": 25.3,
+                            "perplexity_after": 26.1,
+                            "accuracy_retention": 0.94,
+                        },
+                    },
                 }
+
             mock_instance.run_compression_pipeline = mock_compression
 
             # Execute compression
@@ -104,16 +107,19 @@ class TestCompressionIntegration:
         """Test compression error handling returns proper failed PhaseResult."""
 
         # Mock compression failure
-        with patch('agent_forge.compression_pipeline.CompressionPipeline') as mock_pipeline:
+        with patch(
+            "agent_forge.compression_pipeline.CompressionPipeline"
+        ) as mock_pipeline:
             mock_instance = MagicMock()
             mock_pipeline.return_value = mock_instance
 
             # Mock compression failure
             async def mock_compression_failure():
                 return {
-                    'success': False,
-                    'error': 'BitNet conversion failed: insufficient memory'
+                    "success": False,
+                    "error": "BitNet conversion failed: insufficient memory",
                 }
+
             mock_instance.run_compression_pipeline = mock_compression_failure
 
             # Execute compression
@@ -133,10 +139,10 @@ class TestCompressionIntegration:
 
         try:
             from agent_forge.compression.stage1_bitnet import (
-                convert_to_bitnet,
-                apply_hf_bitnet_finetune,
+                BitNetLinear,
                 GradualBitnetCallback,
-                BitNetLinear
+                apply_hf_bitnet_finetune,
+                convert_to_bitnet,
             )
             from agent_forge.compression.vptq import VPTQQuantizer
 
@@ -159,19 +165,22 @@ class TestCompressionIntegration:
         # Ensure CPU device
         compression_config["device"] = "cpu"
 
-        with patch('agent_forge.compression_pipeline.CompressionPipeline') as mock_pipeline:
+        with patch(
+            "agent_forge.compression_pipeline.CompressionPipeline"
+        ) as mock_pipeline:
             mock_instance = MagicMock()
             mock_pipeline.return_value = mock_instance
 
             # Mock CPU-compatible compression
             async def mock_cpu_compression():
                 return {
-                    'success': True,
-                    'output_model_path': compression_config["output_model_path"],
-                    'compression_ratio': 3.8,  # Slightly lower on CPU
-                    'memory_savings_mb': 120.0,
-                    'device_used': 'cpu'
+                    "success": True,
+                    "output_model_path": compression_config["output_model_path"],
+                    "compression_ratio": 3.8,  # Slightly lower on CPU
+                    "memory_savings_mb": 120.0,
+                    "device_used": "cpu",
                 }
+
             mock_instance.run_compression_pipeline = mock_cpu_compression
 
             result = await run_compression(compression_config)

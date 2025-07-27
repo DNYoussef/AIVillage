@@ -1,22 +1,27 @@
 """Unit tests for Guardian Gate validation layer."""
 
-import asyncio
-import pytest
-import tempfile
 import pathlib
-from unittest.mock import Mock, patch
-from typing import Any
+import tempfile
+from unittest.mock import patch
 
-from mcp_servers.hyperag.guardian.gate import GuardianGate, Decision
+import pytest
+
 from mcp_servers.hyperag.guardian import audit
+from mcp_servers.hyperag.guardian.gate import GuardianGate
 
 
 class MockProposal:
     """Mock repair proposal for testing."""
 
-    def __init__(self, operation_type: str, target_id: str, confidence: float = 0.8,
-                 relationship_type: str = None, rationale: str = "Test rationale",
-                 edge_type: str = None):
+    def __init__(
+        self,
+        operation_type: str,
+        target_id: str,
+        confidence: float = 0.8,
+        relationship_type: str = None,
+        rationale: str = "Test rationale",
+        edge_type: str = None,
+    ):
         self.operation_type = operation_type
         self.target_id = target_id
         self.confidence = confidence
@@ -32,8 +37,13 @@ class MockProposal:
 class MockViolation:
     """Mock GDC violation for testing."""
 
-    def __init__(self, id: str = "GDC_TEST", severity: str = "medium",
-                 domain: str = "general", subgraph: dict = None):
+    def __init__(
+        self,
+        id: str = "GDC_TEST",
+        severity: str = "medium",
+        domain: str = "general",
+        subgraph: dict = None,
+    ):
         self.id = id
         self.severity = severity
         self.domain = domain
@@ -51,7 +61,7 @@ class MockCreativeBridge:
 @pytest.fixture
 def temp_policies():
     """Create temporary policies file for testing."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         f.write("""
 weights:
   structural_fix: 0.4
@@ -88,16 +98,30 @@ def medical_subgraph():
     """Medical domain subgraph for testing."""
     return {
         "nodes": [
-            {"id": "patient1", "labels": ["Patient"], "properties": {"name": "John Doe"}},
+            {
+                "id": "patient1",
+                "labels": ["Patient"],
+                "properties": {"name": "John Doe"},
+            },
             {"id": "drug1", "labels": ["Drug"], "properties": {"name": "Aspirin"}},
-            {"id": "allergy1", "labels": ["Allergy"], "properties": {"type": "Drug"}}
+            {"id": "allergy1", "labels": ["Allergy"], "properties": {"type": "Drug"}},
         ],
         "edges": [
-            {"id": "edge1", "startNode": "patient1", "endNode": "drug1",
-             "type": "TAKES", "properties": {"dosage": "100mg"}},
-            {"id": "edge2", "startNode": "patient1", "endNode": "allergy1",
-             "type": "ALLERGIC_TO", "properties": {"severity": "mild"}}
-        ]
+            {
+                "id": "edge1",
+                "startNode": "patient1",
+                "endNode": "drug1",
+                "type": "TAKES",
+                "properties": {"dosage": "100mg"},
+            },
+            {
+                "id": "edge2",
+                "startNode": "patient1",
+                "endNode": "allergy1",
+                "type": "ALLERGIC_TO",
+                "properties": {"severity": "mild"},
+            },
+        ],
     }
 
 
@@ -109,15 +133,22 @@ class TestGuardianGate:
         """Test APPLY decision for high-severity violation with strong structural fix."""
         # Create proposals with high confidence
         proposals = [
-            MockProposal("add_edge", "new_edge_1", confidence=0.9,
-                        relationship_type="DIAGNOSES", rationale="Well-documented diagnosis")
+            MockProposal(
+                "add_edge",
+                "new_edge_1",
+                confidence=0.9,
+                relationship_type="DIAGNOSES",
+                rationale="Well-documented diagnosis",
+            )
         ]
 
         # High-severity violation
-        violation = MockViolation(id="GDC_MED_ALLERGY", severity="high", domain="medical")
+        violation = MockViolation(
+            id="GDC_MED_ALLERGY", severity="high", domain="medical"
+        )
 
         # Mock external fact-checking to return high confidence
-        with patch.object(guardian_gate, '_external_fact_check', return_value=1.0):
+        with patch.object(guardian_gate, "_external_fact_check", return_value=1.0):
             decision = await guardian_gate.evaluate_repair(proposals, violation)
 
         assert decision == "APPLY"
@@ -127,14 +158,18 @@ class TestGuardianGate:
         """Test QUARANTINE decision for medium score (0.5)."""
         # Create proposals with medium confidence
         proposals = [
-            MockProposal("update_attr", "node1", confidence=0.6,
-                        rationale="Moderate confidence update")
+            MockProposal(
+                "update_attr",
+                "node1",
+                confidence=0.6,
+                rationale="Moderate confidence update",
+            )
         ]
 
         violation = MockViolation(severity="medium")
 
         # Mock external fact-checking to return medium confidence
-        with patch.object(guardian_gate, '_external_fact_check', return_value=0.5):
+        with patch.object(guardian_gate, "_external_fact_check", return_value=0.5):
             decision = await guardian_gate.evaluate_repair(proposals, violation)
 
         assert decision == "QUARANTINE"
@@ -149,12 +184,21 @@ class TestGuardianGate:
         """Test REJECT decision when proposal deletes forbidden edge."""
         # Create proposal that deletes ALLERGIC_TO edge (forbidden in medical domain)
         proposals = [
-            MockProposal("delete_edge", "edge2", confidence=0.8,
-                        edge_type="ALLERGIC_TO", rationale="Remove allergy")
+            MockProposal(
+                "delete_edge",
+                "edge2",
+                confidence=0.8,
+                edge_type="ALLERGIC_TO",
+                rationale="Remove allergy",
+            )
         ]
 
-        violation = MockViolation(id="GDC_MED_ALLERGY", severity="high",
-                                domain="medical", subgraph=medical_subgraph)
+        violation = MockViolation(
+            id="GDC_MED_ALLERGY",
+            severity="high",
+            domain="medical",
+            subgraph=medical_subgraph,
+        )
 
         decision = await guardian_gate.evaluate_repair(proposals, violation)
 
@@ -182,7 +226,9 @@ class TestGuardianGate:
         bridge = MockCreativeBridge(id="IMPLAUSIBLE_BRIDGE", confidence=0.2)
 
         # Mock plausibility check to fail
-        with patch.object(guardian_gate, '_check_bridge_plausibility', return_value=0.1):
+        with patch.object(
+            guardian_gate, "_check_bridge_plausibility", return_value=0.1
+        ):
             decision = await guardian_gate.evaluate_creative(bridge)
 
         assert decision == "REJECT"
@@ -220,8 +266,11 @@ class TestGuardianGate:
         assert not any(n["id"] == "patient1" for n in simulated["nodes"])
 
         # Should remove connected edges
-        remaining_edges = [e for e in simulated["edges"]
-                          if e["startNode"] != "patient1" and e["endNode"] != "patient1"]
+        remaining_edges = [
+            e
+            for e in simulated["edges"]
+            if e["startNode"] != "patient1" and e["endNode"] != "patient1"
+        ]
         assert len(simulated["edges"]) == len(remaining_edges)
 
     def test_simulation_edge_addition(self, guardian_gate, medical_subgraph):
@@ -254,11 +303,14 @@ class TestGuardianGate:
         general_graph = {
             "nodes": [
                 {"id": "node1", "properties": {"confidence": 0.8, "source": "test"}},
-                {"id": "node2", "properties": {"confidence": 0.6}}
+                {"id": "node2", "properties": {"confidence": 0.6}},
             ],
             "edges": [
-                {"id": "edge1", "properties": {"confidence": 0.9, "timestamp": "2023-01-01"}}
-            ]
+                {
+                    "id": "edge1",
+                    "properties": {"confidence": 0.9, "timestamp": "2023-01-01"},
+                }
+            ],
         }
 
         score = guardian_gate._score_general_heuristics(general_graph)
@@ -272,7 +324,7 @@ class TestGuardianGate:
         """Test external fact checking for medical domain."""
         proposals = [
             MockProposal("add_edge", "allergy_edge", relationship_type="ALLERGIC_TO"),
-            MockProposal("add_edge", "prescription", relationship_type="PRESCRIBES")
+            MockProposal("add_edge", "prescription", relationship_type="PRESCRIBES"),
         ]
 
         violation = MockViolation(domain="medical")
@@ -289,7 +341,7 @@ class TestGuardianGate:
         violation = MockViolation()
 
         # Mock API failure
-        with patch('asyncio.sleep', side_effect=Exception("API Error")):
+        with patch("asyncio.sleep", side_effect=Exception("API Error")):
             confidence = await guardian_gate._external_fact_check(proposals, violation)
 
         # Should return 0.5 for unknown when API fails
@@ -299,10 +351,18 @@ class TestGuardianGate:
         """Test evidence strength calculation."""
         # High confidence proposals with good rationales
         strong_proposals = [
-            MockProposal("add_node", "node1", confidence=0.9,
-                        rationale="Very detailed rationale with lots of supporting evidence"),
-            MockProposal("add_edge", "edge1", confidence=0.85,
-                        rationale="Another well-documented change")
+            MockProposal(
+                "add_node",
+                "node1",
+                confidence=0.9,
+                rationale="Very detailed rationale with lots of supporting evidence",
+            ),
+            MockProposal(
+                "add_edge",
+                "edge1",
+                confidence=0.85,
+                rationale="Another well-documented change",
+            ),
         ]
 
         strong_score = guardian_gate._calculate_evidence_strength(strong_proposals)
@@ -310,7 +370,7 @@ class TestGuardianGate:
         # Weak proposals
         weak_proposals = [
             MockProposal("delete_node", "node2", confidence=0.3, rationale=""),
-            MockProposal("update_attr", "node3", confidence=0.2, rationale="Short")
+            MockProposal("update_attr", "node3", confidence=0.2, rationale="Short"),
         ]
 
         weak_score = guardian_gate._calculate_evidence_strength(weak_proposals)
@@ -350,33 +410,28 @@ class TestGuardianGate:
     def test_rationale_generation(self, guardian_gate):
         """Test rationale generation for different score combinations."""
         # High scores should generate positive rationale
-        rationale = guardian_gate._generate_rationale(
-            "APPLY", 0.85, 0.9, 0.8, 0.8
-        )
+        rationale = guardian_gate._generate_rationale("APPLY", 0.85, 0.9, 0.8, 0.8)
         assert "excellent structural fix" in rationale
         assert "high domain confidence" in rationale
         assert "strong evidence" in rationale
         assert "APPLY" in rationale.lower()
 
         # Low scores should generate negative rationale
-        rationale = guardian_gate._generate_rationale(
-            "REJECT", 0.2, 0.1, 0.2, 0.3
-        )
+        rationale = guardian_gate._generate_rationale("REJECT", 0.2, 0.1, 0.2, 0.3)
         assert "poor structural fix" in rationale
         assert "low domain confidence" in rationale
         assert "weak evidence" in rationale
         assert "REJECT" in rationale.lower()
 
         # API unknown case
-        rationale = guardian_gate._generate_rationale(
-            "QUARANTINE", 0.6, 0.7, 0.5, 0.6
-        )
+        rationale = guardian_gate._generate_rationale("QUARANTINE", 0.6, 0.7, 0.5, 0.6)
         assert "external API unknown" in rationale
 
     def test_proposal_serialization(self, guardian_gate):
         """Test proposal serialization for audit logging."""
-        proposal = MockProposal("add_edge", "test_edge", confidence=0.8,
-                               relationship_type="RELATED")
+        proposal = MockProposal(
+            "add_edge", "test_edge", confidence=0.8, relationship_type="RELATED"
+        )
 
         serialized = guardian_gate._serialize_proposal(proposal)
 
@@ -392,8 +447,7 @@ class TestGuardianGate:
         import time
 
         proposals = [
-            MockProposal("add_edge", f"edge_{i}", confidence=0.7)
-            for i in range(5)
+            MockProposal("add_edge", f"edge_{i}", confidence=0.7) for i in range(5)
         ]
         violation = MockViolation()
 
@@ -415,7 +469,7 @@ class TestAuditLogging:
         test_record = {
             "decision": "APPLY",
             "score": 0.85,
-            "rationale": "Test rationale"
+            "rationale": "Test rationale",
         }
 
         audit.log(test_record)
@@ -438,11 +492,13 @@ class TestAuditLogging:
         """Test audit statistics calculation."""
         # Log some test records
         for i, decision in enumerate(["APPLY", "QUARANTINE", "REJECT", "APPLY"]):
-            audit.log({
-                "decision": decision,
-                "score": 0.5 + i * 0.1,
-                "test_batch": "stats_test"
-            })
+            audit.log(
+                {
+                    "decision": decision,
+                    "score": 0.5 + i * 0.1,
+                    "test_batch": "stats_test",
+                }
+            )
 
         stats = audit.get_statistics(hours=1)
 

@@ -677,9 +677,9 @@ class Enhanced50GenEvolutionMerger:
                 "duration_minutes": duration / 60,
                 "best_fitness": best_overall["fitness"],
                 "best_configuration": best_overall,
-                "final_diversity": self.diversity_history[-1]
-                if self.diversity_history
-                else 0,
+                "final_diversity": (
+                    self.diversity_history[-1] if self.diversity_history else 0
+                ),
                 "stagnation_periods": self.stagnation_counter,
                 "population_size": self.population_size,
                 "available_models": self.available_models,

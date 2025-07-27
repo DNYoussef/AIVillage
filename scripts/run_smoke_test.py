@@ -24,12 +24,10 @@ from typing import Any
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("smoke_test.log")
-    ]
+    handlers=[logging.StreamHandler(), logging.FileHandler("smoke_test.log")],
 )
 logger = logging.getLogger(__name__)
+
 
 class AgentForgeSmokeTest:
     """Production smoke test for Agent Forge pipeline."""
@@ -45,7 +43,7 @@ class AgentForgeSmokeTest:
             "GSM8K": 0.40,
             "HumanEval": 0.25,
             "minimum_phases_completed": 4,  # At least 4/6 phases must succeed
-            "maximum_execution_time": args.timeout
+            "maximum_execution_time": args.timeout,
         }
 
         # W&B configuration
@@ -83,10 +81,7 @@ class AgentForgeSmokeTest:
         logger.info("Starting Agent Forge pipeline execution...")
 
         # Build command
-        cmd = [
-            sys.executable,
-            str(self.project_root / "run_full_agent_forge.py")
-        ]
+        cmd = [sys.executable, str(self.project_root / "run_full_agent_forge.py")]
 
         # Add arguments from smoke test
         if self.args.frontier_api_key:
@@ -111,7 +106,7 @@ class AgentForgeSmokeTest:
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
-                cwd=self.project_root
+                cwd=self.project_root,
             )
 
             # Monitor process with timeout
@@ -120,8 +115,7 @@ class AgentForgeSmokeTest:
             try:
                 # Wait for completion with timeout
                 stdout, _ = await asyncio.wait_for(
-                    self.pipeline_process.communicate(),
-                    timeout=self.args.timeout
+                    self.pipeline_process.communicate(), timeout=self.args.timeout
                 )
 
                 stdout_lines = stdout.decode("utf-8").splitlines() if stdout else []
@@ -141,7 +135,7 @@ class AgentForgeSmokeTest:
                     "return_code": -1,
                     "execution_time": self.args.timeout,
                     "stdout_lines": stdout_lines,
-                    "error": f"Pipeline timed out after {self.args.timeout} seconds"
+                    "error": f"Pipeline timed out after {self.args.timeout} seconds",
                 }
 
             execution_time = (datetime.now() - self.start_time).total_seconds()
@@ -158,11 +152,19 @@ class AgentForgeSmokeTest:
                 "return_code": return_code,
                 "execution_time": execution_time,
                 "stdout_lines": stdout_lines,
-                "error": None if return_code == 0 else f"Pipeline failed with code {return_code}"
+                "error": (
+                    None
+                    if return_code == 0
+                    else f"Pipeline failed with code {return_code}"
+                ),
             }
 
         except Exception as e:
-            execution_time = (datetime.now() - self.start_time).total_seconds() if self.start_time else 0
+            execution_time = (
+                (datetime.now() - self.start_time).total_seconds()
+                if self.start_time
+                else 0
+            )
             logger.error(f"Pipeline execution failed: {e}")
 
             return {
@@ -170,7 +172,7 @@ class AgentForgeSmokeTest:
                 "return_code": -1,
                 "execution_time": execution_time,
                 "stdout_lines": [],
-                "error": str(e)
+                "error": str(e),
             }
 
     def query_wandb_metrics(self) -> dict[str, Any]:
@@ -185,7 +187,7 @@ class AgentForgeSmokeTest:
             runs = self.wandb_api.runs(
                 path=f"{self.wandb_api.default_entity}/{self.wandb_project}",
                 filters={"state": "finished"},
-                order="-created_at"
+                order="-created_at",
             )
 
             if not runs:
@@ -209,7 +211,7 @@ class AgentForgeSmokeTest:
                         metric,
                         f"unified_pipeline/{metric}_score",
                         f"mastery_trained/{metric}_score",
-                        f"best_model/{metric}_score"
+                        f"best_model/{metric}_score",
                     ]
 
                     for key in possible_keys:
@@ -224,7 +226,7 @@ class AgentForgeSmokeTest:
                     possible_keys = [
                         metric,
                         f"final_{metric.lower()}",
-                        f"best_{metric.lower()}_score"
+                        f"best_{metric.lower()}_score",
                     ]
 
                     for key in possible_keys:
@@ -246,7 +248,9 @@ class AgentForgeSmokeTest:
                 "run_name": latest_run.name,
                 "metrics": metrics,
                 "pipeline_metrics": pipeline_metrics,
-                "run_duration": (latest_run.summary.get("pipeline_duration_seconds", 0))
+                "run_duration": (
+                    latest_run.summary.get("pipeline_duration_seconds", 0)
+                ),
             }
 
         except Exception as e:
@@ -258,7 +262,11 @@ class AgentForgeSmokeTest:
         logger.info("Validating benchmark results from local files...")
 
         # Check for benchmark results file
-        results_file = self.project_root / "benchmark_results" / "agent_forge_model_comparison.json"
+        results_file = (
+            self.project_root
+            / "benchmark_results"
+            / "agent_forge_model_comparison.json"
+        )
 
         if not results_file.exists():
             logger.warning(f"Benchmark results file not found: {results_file}")
@@ -300,13 +308,15 @@ class AgentForgeSmokeTest:
                     "score": score,
                     "threshold": threshold,
                     "passed": passed,
-                    "margin": score - threshold
+                    "margin": score - threshold,
                 }
 
                 if not passed:
                     overall_pass = False
 
-            logger.info(f"Benchmark validation: {'PASSED' if overall_pass else 'FAILED'}")
+            logger.info(
+                f"Benchmark validation: {'PASSED' if overall_pass else 'FAILED'}"
+            )
 
             return {
                 "status": "success",
@@ -314,7 +324,7 @@ class AgentForgeSmokeTest:
                 "best_score": best_score,
                 "validation": validation_results,
                 "overall_pass": overall_pass,
-                "all_scores": best_model_scores
+                "all_scores": best_model_scores,
             }
 
         except Exception as e:
@@ -328,8 +338,11 @@ class AgentForgeSmokeTest:
         expected_outputs = [
             ("Agent Forge Outputs", self.project_root / "agent_forge_outputs"),
             ("Benchmark Results", self.project_root / "benchmark_results"),
-            ("Pipeline Summary", self.project_root / "agent_forge_pipeline_summary.json"),
-            ("Forge Checkpoints", self.project_root / "forge_checkpoints")
+            (
+                "Pipeline Summary",
+                self.project_root / "agent_forge_pipeline_summary.json",
+            ),
+            ("Forge Checkpoints", self.project_root / "forge_checkpoints"),
         ]
 
         artifacts_status = {}
@@ -340,7 +353,9 @@ class AgentForgeSmokeTest:
             artifacts_status[name] = {
                 "path": str(path),
                 "exists": exists,
-                "type": "directory" if path.is_dir() else "file" if exists else "missing"
+                "type": (
+                    "directory" if path.is_dir() else "file" if exists else "missing"
+                ),
             }
 
             if not exists:
@@ -349,16 +364,13 @@ class AgentForgeSmokeTest:
             else:
                 logger.info(f"Found artifact: {path}")
 
-        return {
-            "all_present": all_present,
-            "artifacts": artifacts_status
-        }
+        return {"all_present": all_present, "artifacts": artifacts_status}
 
     async def run_smoke_test(self) -> dict[str, Any]:
         """Execute the complete smoke test workflow."""
-        logger.info("="*60)
+        logger.info("=" * 60)
         logger.info("AGENT FORGE PRODUCTION SMOKE TEST")
-        logger.info("="*60)
+        logger.info("=" * 60)
 
         test_start_time = datetime.now()
 
@@ -368,14 +380,14 @@ class AgentForgeSmokeTest:
                 "timestamp": test_start_time.isoformat(),
                 "version": "1.0.0",
                 "timeout": self.args.timeout,
-                "dry_run": self.args.dry_run
+                "dry_run": self.args.dry_run,
             },
             "pipeline_execution": {},
             "wandb_metrics": {},
             "benchmark_validation": {},
             "artifacts_check": {},
             "overall_status": "unknown",
-            "summary": {}
+            "summary": {},
         }
 
         try:
@@ -395,7 +407,9 @@ class AgentForgeSmokeTest:
                 wandb_result = self.query_wandb_metrics()
                 results["wandb_metrics"] = wandb_result
             else:
-                logger.info("Step 2/4: Skipping W&B metrics (not available or pipeline failed)")
+                logger.info(
+                    "Step 2/4: Skipping W&B metrics (not available or pipeline failed)"
+                )
                 results["wandb_metrics"] = {"status": "skipped"}
 
             # Step 4: Validate benchmark results
@@ -420,7 +434,7 @@ class AgentForgeSmokeTest:
             results["overall_status"] = "ERROR"
             results["summary"] = {
                 "error": str(e),
-                "execution_time": (datetime.now() - test_start_time).total_seconds()
+                "execution_time": (datetime.now() - test_start_time).total_seconds(),
             }
 
         # Calculate total test time
@@ -446,7 +460,9 @@ class AgentForgeSmokeTest:
         # Check execution time
         execution_time = results["pipeline_execution"].get("execution_time", 0)
         if execution_time > self.thresholds["maximum_execution_time"]:
-            logger.error(f"Pipeline exceeded maximum execution time: {execution_time}s > {self.thresholds['maximum_execution_time']}s")
+            logger.error(
+                f"Pipeline exceeded maximum execution time: {execution_time}s > {self.thresholds['maximum_execution_time']}s"
+            )
             return False
 
         # Check benchmark validation
@@ -471,9 +487,10 @@ class AgentForgeSmokeTest:
         summary = {
             "overall_status": results["overall_status"],
             "execution_time": results["pipeline_execution"].get("execution_time", 0),
-            "pipeline_success": results["pipeline_execution"].get("status") == "success",
+            "pipeline_success": results["pipeline_execution"].get("status")
+            == "success",
             "artifacts_present": results["artifacts_check"].get("all_present", False),
-            "recommendations": []
+            "recommendations": [],
         }
 
         # Add benchmark summary if available
@@ -507,6 +524,7 @@ class AgentForgeSmokeTest:
 
         return summary
 
+
 def main():
     """Main entry point for the smoke test."""
     parser = argparse.ArgumentParser(
@@ -522,44 +540,33 @@ Examples:
 
   # Custom timeout (default: 7200 seconds)
   python run_smoke_test.py --timeout 3600
-        """
+        """,
     )
 
     parser.add_argument(
-        "--frontier-api-key",
-        help="Frontier API key for pipeline execution"
+        "--frontier-api-key", help="Frontier API key for pipeline execution"
     )
 
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Run configuration validation only"
+        "--dry-run", action="store_true", help="Run configuration validation only"
     )
 
     parser.add_argument(
-        "--no-deploy",
-        action="store_true",
-        help="Skip deployment smoke test"
+        "--no-deploy", action="store_true", help="Skip deployment smoke test"
     )
 
     parser.add_argument(
-        "--quick",
-        action="store_true",
-        help="Run in quick mode with reduced iterations"
+        "--quick", action="store_true", help="Run in quick mode with reduced iterations"
     )
 
     parser.add_argument(
         "--timeout",
         type=int,
         default=7200,  # 2 hours
-        help="Timeout for pipeline execution in seconds (default: 7200)"
+        help="Timeout for pipeline execution in seconds (default: 7200)",
     )
 
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose logging"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 
@@ -571,9 +578,9 @@ Examples:
         results = await smoke_test.run_smoke_test()
 
         # Print final results
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("AGENT FORGE SMOKE TEST RESULTS")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         status = results["overall_status"]
         print(f"Overall Status: {status}")
@@ -583,7 +590,9 @@ Examples:
             summary = results.get("summary", {})
 
             if "best_model" in summary:
-                print(f"Best Model: {summary['best_model']} (Score: {summary.get('best_score', 0):.3f})")
+                print(
+                    f"Best Model: {summary['best_model']} (Score: {summary.get('best_score', 0):.3f})"
+                )
 
             if "execution_time" in summary:
                 print(f"Execution Time: {summary['execution_time']:.1f} seconds")
@@ -601,7 +610,7 @@ Examples:
             print("! Smoke test encountered errors - check logs for details")
 
         print(f"\nDetailed results: {smoke_test.results_file}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
         return 0 if status == "PASSED" else 1
 
@@ -615,6 +624,7 @@ Examples:
     except Exception as e:
         logger.error(f"Smoke test failed: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

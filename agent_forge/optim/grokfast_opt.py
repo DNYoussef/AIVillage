@@ -28,13 +28,16 @@ class GrokfastAdam(Adam):
         self._step_count += 1
 
         for group in self.param_groups:
-            for p in group['params']:
+            for p in group["params"]:
                 if p.grad is None:
                     continue
 
                 grad = p.grad
                 if p in self._slow_cache:
-                    self._slow_cache[p] = self._slow_cache[p] * (1 - self.slow_freq) + grad * self.slow_freq
+                    self._slow_cache[p] = (
+                        self._slow_cache[p] * (1 - self.slow_freq)
+                        + grad * self.slow_freq
+                    )
                 else:
                     self._slow_cache[p] = grad.clone()
 

@@ -2,20 +2,22 @@
 Unit tests for Query Planning System
 """
 
-import pytest
-import asyncio
+from pathlib import Path
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import sys
-from pathlib import Path
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from mcp_servers.hyperag.planning.query_planner import QueryPlanner, AgentReasoningModel
 from mcp_servers.hyperag.planning.plan_structures import (
-    QueryPlan, QueryType, ReasoningStrategy, RetrievalConstraints, ExecutionStatus
+    ExecutionStatus,
+    QueryPlan,
+    QueryType,
+    ReasoningStrategy,
+    RetrievalConstraints,
 )
-from mcp_servers.hyperag.planning.query_classifier import QueryClassifier
-from mcp_servers.hyperag.planning.strategy_selector import StrategySelector
+from mcp_servers.hyperag.planning.query_planner import AgentReasoningModel, QueryPlanner
 
 
 class TestAgentReasoningModel:
@@ -30,8 +32,8 @@ class TestAgentReasoningModel:
                 "max_complexity": 0.8,
                 "reasoning_speed": 1.2,
                 "accuracy": 0.9,
-                "memory_limit_mb": 1000
-            }
+                "memory_limit_mb": 1000,
+            },
         )
 
         assert model.model_name == "test_model"
@@ -44,14 +46,12 @@ class TestAgentReasoningModel:
     def test_agent_model_defaults(self):
         """Test default values for agent model"""
         model = AgentReasoningModel(
-            model_name="test_model",
-            capabilities=[],
-            performance_profile={}
+            model_name="test_model", capabilities=[], performance_profile={}
         )
 
         assert model.max_complexity == 0.8  # Default
         assert model.reasoning_speed == 1.0  # Default
-        assert model.accuracy == 0.85       # Default
+        assert model.accuracy == 0.85  # Default
         assert model.memory_limit_mb == 1000  # Default
 
 
@@ -63,7 +63,9 @@ class TestQueryPlanner:
         """Mock query classifier"""
         classifier = MagicMock()
         classifier.classify_query.return_value = (
-            QueryType.SIMPLE_FACT, 0.8, {"complexity_score": 0.3}
+            QueryType.SIMPLE_FACT,
+            0.8,
+            {"complexity_score": 0.3},
         )
         return classifier
 
@@ -79,8 +81,7 @@ class TestQueryPlanner:
     def planner(self, mock_classifier, mock_strategy_selector):
         """Create QueryPlanner with mocked dependencies"""
         return QueryPlanner(
-            classifier=mock_classifier,
-            strategy_selector=mock_strategy_selector
+            classifier=mock_classifier, strategy_selector=mock_strategy_selector
         )
 
     @pytest.fixture
@@ -93,8 +94,8 @@ class TestQueryPlanner:
                 "max_complexity": 0.8,
                 "reasoning_speed": 1.0,
                 "accuracy": 0.85,
-                "memory_limit_mb": 1000
-            }
+                "memory_limit_mb": 1000,
+            },
         )
 
     def test_planner_initialization(self):
@@ -109,7 +110,9 @@ class TestQueryPlanner:
         assert planner.performance_metrics["plans_created"] == 0
 
     @pytest.mark.asyncio
-    async def test_create_plan_basic(self, planner, agent_model, mock_strategy_selector):
+    async def test_create_plan_basic(
+        self, planner, agent_model, mock_strategy_selector
+    ):
         """Test basic plan creation"""
 
         # Mock strategy instance
@@ -117,7 +120,7 @@ class TestQueryPlanner:
         mock_plan = QueryPlan(
             original_query="test query",
             query_type=QueryType.SIMPLE_FACT,
-            reasoning_strategy=ReasoningStrategy.DIRECT_RETRIEVAL
+            reasoning_strategy=ReasoningStrategy.DIRECT_RETRIEVAL,
         )
         mock_strategy.create_plan.return_value = mock_plan
         mock_strategy_selector.create_strategy_instance.return_value = mock_strategy
@@ -136,10 +139,7 @@ class TestQueryPlanner:
         """Test plan creation with custom constraints"""
 
         constraints = RetrievalConstraints(
-            max_depth=5,
-            max_nodes=200,
-            confidence_threshold=0.8,
-            time_budget_ms=10000
+            max_depth=5, max_nodes=200, confidence_threshold=0.8, time_budget_ms=10000
         )
 
         # Mock strategy
@@ -148,15 +148,13 @@ class TestQueryPlanner:
             original_query="test query",
             query_type=QueryType.SIMPLE_FACT,
             reasoning_strategy=ReasoningStrategy.DIRECT_RETRIEVAL,
-            retrieval_constraints=constraints
+            retrieval_constraints=constraints,
         )
         mock_strategy.create_plan.return_value = mock_plan
         planner.strategy_selector.create_strategy_instance.return_value = mock_strategy
 
         plan = await planner.create_plan(
-            "test query",
-            agent_model,
-            constraints=constraints
+            "test query", agent_model, constraints=constraints
         )
 
         assert plan.retrieval_constraints.max_depth <= 5
@@ -173,14 +171,16 @@ class TestQueryPlanner:
             performance_profile={
                 "max_complexity": 0.3,  # Very low
                 "reasoning_speed": 0.5,  # Slow
-                "accuracy": 0.7,         # Lower accuracy
-                "memory_limit_mb": 100   # Low memory
-            }
+                "accuracy": 0.7,  # Lower accuracy
+                "memory_limit_mb": 100,  # Low memory
+            },
         )
 
         # Mock high complexity classification
         planner.classifier.classify_query.return_value = (
-            QueryType.CAUSAL_CHAIN, 0.9, {"complexity_score": 0.9}
+            QueryType.CAUSAL_CHAIN,
+            0.9,
+            {"complexity_score": 0.9},
         )
 
         mock_strategy = AsyncMock()
@@ -199,7 +199,9 @@ class TestQueryPlanner:
         """Test plan creation error handling"""
 
         # Force classifier to raise exception
-        planner.classifier.classify_query.side_effect = Exception("Classification failed")
+        planner.classifier.classify_query.side_effect = Exception(
+            "Classification failed"
+        )
 
         # Should create fallback plan
         plan = await planner.create_plan("test query", agent_model)
@@ -220,7 +222,7 @@ class TestQueryPlanner:
             original_query="test query",
             query_type=QueryType.CAUSAL_CHAIN,
             reasoning_strategy=ReasoningStrategy.CAUSAL_REASONING,
-            replan_count=0
+            replan_count=0,
         )
 
         # Mock strategy for replan
@@ -228,7 +230,7 @@ class TestQueryPlanner:
         new_plan = QueryPlan(
             original_query="test query",
             query_type=QueryType.CAUSAL_CHAIN,
-            reasoning_strategy=ReasoningStrategy.DIRECT_RETRIEVAL
+            reasoning_strategy=ReasoningStrategy.DIRECT_RETRIEVAL,
         )
         mock_strategy.create_plan.return_value = new_plan
         planner.strategy_selector.create_strategy_instance.return_value = mock_strategy
@@ -238,7 +240,7 @@ class TestQueryPlanner:
             original_plan,
             intermediate_results={},
             current_confidence=0.3,
-            failure_reason="low_confidence"
+            failure_reason="low_confidence",
         )
 
         assert replanned is not None
@@ -253,14 +255,12 @@ class TestQueryPlanner:
         # Create plan with max replans already
         original_plan = QueryPlan(
             original_query="test query",
-            replan_count=3  # At max limit
+            replan_count=3,  # At max limit
         )
 
         # Should not replan further
         result = await planner.replan(
-            original_plan,
-            intermediate_results={},
-            current_confidence=0.1
+            original_plan, intermediate_results={}, current_confidence=0.1
         )
 
         assert result == original_plan  # Returns original plan
@@ -271,10 +271,7 @@ class TestQueryPlanner:
         """Test constraint adjustment for agent capabilities"""
 
         base_constraints = RetrievalConstraints(
-            max_depth=10,
-            max_nodes=1000,
-            confidence_threshold=0.5,
-            time_budget_ms=5000
+            max_depth=10, max_nodes=1000, confidence_threshold=0.5, time_budget_ms=5000
         )
 
         # Low-capability agent
@@ -285,8 +282,8 @@ class TestQueryPlanner:
                 "max_complexity": 0.4,
                 "reasoning_speed": 0.5,
                 "accuracy": 0.7,
-                "memory_limit_mb": 200
-            }
+                "memory_limit_mb": 200,
+            },
         )
 
         adjusted = planner._adjust_constraints_for_agent(
@@ -306,22 +303,23 @@ class TestQueryPlanner:
         # Create plan with high time requirements
         plan = QueryPlan(
             original_query="test query",
-            retrieval_constraints=RetrievalConstraints(time_budget_ms=1000)
+            retrieval_constraints=RetrievalConstraints(time_budget_ms=1000),
         )
 
         # Add steps with high timeouts
         from mcp_servers.hyperag.planning.plan_structures import ExecutionStep
+
         step1 = ExecutionStep(
             step_type="retrieval",
             description="Step 1",
             operation="test_op",
-            timeout_ms=800
+            timeout_ms=800,
         )
         step2 = ExecutionStep(
             step_type="reasoning",
             description="Step 2",
             operation="test_op",
-            timeout_ms=800
+            timeout_ms=800,
         )
         plan.add_step(step1)
         plan.add_step(step2)
@@ -336,10 +334,7 @@ class TestQueryPlanner:
     def test_planning_metrics(self, planner):
         """Test planning metrics recording"""
 
-        plan = QueryPlan(
-            original_query="test query",
-            overall_confidence=0.8
-        )
+        plan = QueryPlan(original_query="test query", overall_confidence=0.8)
 
         # Record successful planning
         planner._record_planning_metrics(plan, 100.0, True)
@@ -372,7 +367,7 @@ class TestQueryPlanner:
                 "confidence": 0.8,
                 "planning_time_ms": 100,
                 "success": True,
-                "step_count": 1
+                "step_count": 1,
             },
             {
                 "query": "test2",
@@ -382,8 +377,8 @@ class TestQueryPlanner:
                 "confidence": 0.6,
                 "planning_time_ms": 200,
                 "success": False,
-                "step_count": 3
-            }
+                "step_count": 3,
+            },
         ]
         planner.performance_metrics["plans_created"] = 2
         planner.performance_metrics["successful_plans"] = 1
@@ -402,17 +397,21 @@ class TestQueryPlanner:
 
         constraints = RetrievalConstraints()
 
-        with patch('mcp_servers.hyperag.planning.strategies.SimpleFactStrategy') as mock_strategy_class:
+        with patch(
+            "mcp_servers.hyperag.planning.strategies.SimpleFactStrategy"
+        ) as mock_strategy_class:
             mock_strategy = AsyncMock()
             mock_plan = QueryPlan(
                 original_query="fallback query",
                 complexity_score=0.1,
-                overall_confidence=0.6
+                overall_confidence=0.6,
             )
             mock_strategy.create_plan.return_value = mock_plan
             mock_strategy_class.return_value = mock_strategy
 
-            fallback_plan = await planner._create_fallback_plan("fallback query", constraints)
+            fallback_plan = await planner._create_fallback_plan(
+                "fallback query", constraints
+            )
 
             assert fallback_plan.original_query == "fallback query"
             assert fallback_plan.complexity_score == 0.1
@@ -426,23 +425,24 @@ class TestQueryPlanner:
         plan = QueryPlan(
             original_query="test query",
             reasoning_strategy=ReasoningStrategy.CAUSAL_REASONING,
-            overall_confidence=0.8
+            overall_confidence=0.8,
         )
 
         from mcp_servers.hyperag.planning.plan_structures import ExecutionStep
+
         failed_step = ExecutionStep(
             step_type="retrieval",
             description="Failed step",
             operation="test_op",
             status=ExecutionStatus.FAILED,
-            error_message="Network error"
+            error_message="Network error",
         )
         success_step = ExecutionStep(
             step_type="reasoning",
             description="Success step",
             operation="test_op",
             status=ExecutionStatus.COMPLETED,
-            confidence_score=0.9
+            confidence_score=0.9,
         )
         plan.add_step(failed_step)
         plan.add_step(success_step)
@@ -451,7 +451,7 @@ class TestQueryPlanner:
             plan,
             intermediate_results={"key": "value"},
             current_confidence=0.3,
-            failure_reason="step_failure"
+            failure_reason="step_failure",
         )
 
         assert analysis["original_strategy"] == ReasoningStrategy.CAUSAL_REASONING

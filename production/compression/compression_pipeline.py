@@ -35,13 +35,13 @@ from transformers import (
 from datasets import load_dataset
 
 # Import compression modules
-from agent_forge.compression.stage1_bitnet import (
+from .compression.stage1_bitnet import (
     convert_to_bitnet,
     apply_hf_bitnet_finetune,
     GradualBitnetCallback,
     BitNetLinear
 )
-from agent_forge.compression.vptq import VPTQQuantizer
+from .compression.vptq import VPTQQuantizer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -731,7 +731,32 @@ async def run_compression(config: Dict[str, Any]) -> 'PhaseResult':
     Returns:
         PhaseResult with status, artifacts, and metrics
     """
-    from agent_forge.forge_orchestrator import PhaseResult, PhaseStatus, PhaseType, PhaseArtifact
+    try:
+        from agent_forge.forge_orchestrator import PhaseResult, PhaseStatus, PhaseType, PhaseArtifact
+    except ImportError:
+        # Fallback classes for when orchestrator is not available
+        from dataclasses import dataclass
+        from enum import Enum
+
+        class PhaseStatus(Enum):
+            SUCCESS = "success"
+            FAILURE = "failure"
+
+        class PhaseType(Enum):
+            COMPRESSION = "compression"
+
+        @dataclass
+        class PhaseArtifact:
+            name: str
+            path: str
+            metadata: dict = None
+
+        @dataclass
+        class PhaseResult:
+            status: PhaseStatus
+            phase_type: PhaseType
+            artifacts: list = None
+            metrics: dict = None
     from datetime import datetime
     import time
 
