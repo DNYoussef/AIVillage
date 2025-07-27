@@ -1,6 +1,5 @@
-from rag_system.confidence import assign_tier, score_evidence
-
 from core.evidence import Chunk, ConfidenceTier, EvidencePack
+from rag_system.confidence import assign_tier, score_evidence
 
 
 def _make(scores):

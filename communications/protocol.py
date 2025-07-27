@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from threading import Thread
 
 from .message import Message, MessageType, Priority
-from .queue import MessageQueue
+from .message_queue import MessageQueue
 
 try:
     from .a2a_protocol import send_a2a

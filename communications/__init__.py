@@ -1,6 +1,6 @@
 from .message import Message, MessageType, Priority
 from .protocol import StandardCommunicationProtocol
-from .queue import MessageQueue
+from .message_queue import MessageQueue
 
 try:
     from .credit_manager import CreditManager

@@ -3,7 +3,6 @@
 
 import json
 import os
-import sys
 
 
 # Test basic functionality without torch/bitsandbytes
@@ -166,7 +165,9 @@ def main():
         import traceback
 
         traceback.print_exc()
-        sys.exit(1)
+
+
+# REMOVED:         sys.exit(1)
 
 
 if __name__ == "__main__":

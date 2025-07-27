@@ -8,6 +8,13 @@ from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 import pytest
+
+from core.error_handling import (
+    AIVillageException,
+    ErrorCategory,
+    ErrorContext,
+    ErrorSeverity,
+)
 from services.core.service_error_handler import (
     ServiceErrorHandler,
     create_service_error,
@@ -15,13 +22,6 @@ from services.core.service_error_handler import (
     rate_limit_error,
     resource_error,
     validation_error,
-)
-
-from core.error_handling import (
-    AIVillageException,
-    ErrorCategory,
-    ErrorContext,
-    ErrorSeverity,
 )
 
 # Import test fixtures

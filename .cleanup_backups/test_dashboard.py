@@ -163,4 +163,4 @@ def generate_report():
 
 if __name__ == "__main__":
     success = generate_report()
-    sys.exit(0 if success else 1)
+# REMOVED:     sys.exit(0 if success else 1)

@@ -1,14 +1,14 @@
 {
-  "timestamp": "2025-07-25T15:56:26.303867",
-  "pass_rate": 86.66666666666667,
+  "timestamp": "2025-07-27T16:55:29.952640",
+  "pass_rate": 40.0,
   "import_tests": {
-    "agent_forge": "PASS",
-    "agent_forge.compression": "PASS",
-    "agent_forge.evomerge": "PASS",
-    "agent_forge.training": "PASS",
-    "agent_forge.orchestration": "PASS",
-    "core.evidence": "PASS",
-    "core.logging_config": "PASS"
+    "agent_forge": "FAIL: No module named 'agent_forge'",
+    "agent_forge.compression": "FAIL: No module named 'agent_forge'",
+    "agent_forge.evomerge": "FAIL: No module named 'agent_forge'",
+    "agent_forge.training": "FAIL: No module named 'agent_forge'",
+    "agent_forge.orchestration": "FAIL: No module named 'agent_forge'",
+    "core.evidence": "FAIL: No module named 'core'",
+    "core.logging_config": "FAIL: No module named 'core'"
   },
   "structure_tests": {
     "scripts/run_full_agent_forge.py": "PASS",
@@ -19,7 +19,7 @@
   },
   "functionality_tests": {
     "Agent Forge Import": "PASS",
-    "Evidence Pack Creation": "FAIL: 1 validation error for EvidencePack\nchunks.0\n  Input should be a valid dictionary or instance of Chunk [type=model_type, input_value='test chunk', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.9/v/model_type",
-    "Logging Setup": "FAIL: cannot import name 'setup_logging' from 'core.logging_config' (C:\\Users\\17175\\Desktop\\AIVillage\\core\\logging_config.py)"
+    "Evidence Pack Creation": "FAIL: No module named 'core'",
+    "Logging Setup": "FAIL: No module named 'core'"
   }
 }

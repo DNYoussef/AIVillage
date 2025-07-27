@@ -23,7 +23,7 @@ except ImportError:
 
     import sys
 
-    sys.exit(0)
+# REMOVED:     sys.exit(0)
 
 
 class TestAgentTechniqueHandle(unittest.TestCase):

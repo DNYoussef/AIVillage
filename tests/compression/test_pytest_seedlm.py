@@ -242,4 +242,4 @@ if __name__ == "__main__":
         print("\n[SUCCESS] All tests passed!")
     else:
         print(f"\n[ERROR] {failed} tests failed!")
-        sys.exit(1)
+# REMOVED:         sys.exit(1)

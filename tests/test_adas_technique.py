@@ -24,7 +24,7 @@ except ImportError:
     # Exit early to avoid the rest of the file
     import sys
 
-    sys.exit(0)
+# REMOVED:     sys.exit(0)
 
 
 class TestAgentTechniqueHandle(unittest.TestCase):

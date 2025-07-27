@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from fastapi import UploadFile
 import pytest
+
 from services.core.business_logic import (
     ChatBusinessLogic,
     HealthCheckLogic,

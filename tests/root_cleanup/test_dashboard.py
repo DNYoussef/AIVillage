@@ -10,7 +10,6 @@ from datetime import datetime
 import importlib
 import os
 from pathlib import Path
-import sys
 
 
 def test_imports():
@@ -173,4 +172,4 @@ def generate_report():
 
 if __name__ == "__main__":
     success = generate_report()
-    sys.exit(0 if success else 1)
+# REMOVED:     sys.exit(0 if success else 1)

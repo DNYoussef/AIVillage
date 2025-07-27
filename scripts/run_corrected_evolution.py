@@ -201,9 +201,9 @@ class CorrectedEvolutionMerger:
         logger.info(f"=== BREEDING GENERATION {self.generation + 1} ===")
 
         # Ensure we have exactly 8 individuals ranked by fitness
-        assert (
-            len(ranked_population) == 8
-        ), f"Expected 8 individuals, got {len(ranked_population)}"
+        assert len(ranked_population) == 8, (
+            f"Expected 8 individuals, got {len(ranked_population)}"
+        )
 
         next_generation = []
 
@@ -247,9 +247,9 @@ class CorrectedEvolutionMerger:
         logger.info(f"  {child_2['id']} from triad: {[p['id'] for p in triad_2]}")
 
         # Verify we have exactly 8 individuals
-        assert (
-            len(next_generation) == 8
-        ), f"Expected 8 individuals, got {len(next_generation)}"
+        assert len(next_generation) == 8, (
+            f"Expected 8 individuals, got {len(next_generation)}"
+        )
 
         logger.info(
             f"✅ Next generation bred: 6 mutants + 2 children = {len(next_generation)} total"
