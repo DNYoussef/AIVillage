@@ -28,8 +28,19 @@ class TestInfrastructureRepairer:
 
         for root, dirs, files in os.walk("."):
             # Skip special directories
-            dirs[:] = [d for d in dirs if d not in
-                      [".git", "__pycache__", "node_modules", ".pytest_cache", "evomerge_env", "new_env"]]
+            dirs[:] = [
+                d
+                for d in dirs
+                if d
+                not in [
+                    ".git",
+                    "__pycache__",
+                    "node_modules",
+                    ".pytest_cache",
+                    "evomerge_env",
+                    "new_env",
+                ]
+            ]
 
             # Check if directory contains Python files
             if any(f.endswith(".py") for f in files):
@@ -44,11 +55,13 @@ class TestInfrastructureRepairer:
         """Create __init__.py files in directories that need them."""
         for directory in directories:
             init_path = directory / "__init__.py"
-            init_path.write_text('''"""
+            init_path.write_text(
+                '''"""
 Auto-generated __init__.py for proper module imports.
 Created by test infrastructure repair script.
 """
-''')
+'''
+            )
             self.fixes_applied.append(f"Created {init_path}")
             print(f"[OK] Created {init_path}")
 
@@ -57,7 +70,7 @@ Created by test infrastructure repair script.
         conflicts = {
             "communications/queue.py": "communications/message_queue.py",
             "services/logging.py": "services/app_logging.py",
-            "core/types.py": "core/type_definitions.py"
+            "core/types.py": "core/type_definitions.py",
         }
 
         for old_path, new_path in conflicts.items():
@@ -87,7 +100,9 @@ Created by test infrastructure repair script.
 
                 # Update various import patterns
                 content = content.replace(f"from {old_import}", f"from {new_import}")
-                content = content.replace(f"import {old_import}", f"import {new_import}")
+                content = content.replace(
+                    f"import {old_import}", f"import {new_import}"
+                )
 
                 if content != original:
                     py_file.write_text(content)
@@ -172,7 +187,7 @@ LOG_LEVEL=DEBUG
             "agent_forge/compression/bitnet.py",
             "agent_forge/compression/vptq.py",
             "rag_system/__init__.py",
-            "services/__init__.py"
+            "services/__init__.py",
         ]
 
         missing_files = []
@@ -258,7 +273,7 @@ warnings.warn(
     stacklevel=2
 )
 
-class {module_name.title().replace('_', '')}:
+class {module_name.title().replace("_", "")}:
     """Placeholder class for testing."""
 
     def __init__(self):
@@ -304,6 +319,7 @@ cp -r {self.backup_dir}/* .
         Path("TEST_REPAIR_REPORT.md").write_text(report)
         print("\n[OK] Generated TEST_REPAIR_REPORT.md")
 
+
 def main() -> None:
     """Execute the test infrastructure repair."""
     print("Starting Test Infrastructure Repair...\n")
@@ -342,6 +358,7 @@ def main() -> None:
 
     print("\n✅ Test infrastructure repair complete!")
     print("See TEST_REPAIR_REPORT.md for details")
+
 
 if __name__ == "__main__":
     main()

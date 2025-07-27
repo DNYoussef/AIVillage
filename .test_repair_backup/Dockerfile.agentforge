@@ -1,0 +1,66 @@
+# GPU-optimized container for Agent Forge operations
+FROM nvidia/cuda:12.2-devel-ubuntu22.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_VISIBLE_DEVICES=0
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-pip \
+    python3.11-dev \
+    git \
+    wget \
+    curl \
+    unzip \
+    gcc \
+    g++ \
+    build-essential \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create symbolic links for python
+RUN ln -s /usr/bin/python3.11 /usr/bin/python && \
+    ln -s /usr/bin/pip3 /usr/bin/pip
+
+# Set working directory
+WORKDIR /workspace
+
+# Install PyTorch with CUDA support for RTX 2060
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# Install transformers and related packages
+RUN pip install transformers accelerate datasets evaluate bitsandbytes
+
+# Install benchmarking and evaluation packages
+RUN pip install wandb tensorboard matplotlib seaborn scikit-learn
+
+# Install merging and model manipulation packages
+RUN pip install mergekit safetensors huggingface_hub
+
+# Copy project files
+COPY . /workspace/
+
+# Install project dependencies
+RUN if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+RUN if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+
+# Create models directory on D: drive (mounted volume)
+RUN mkdir -p /models
+
+# Set environment variables for model storage
+ENV HF_HOME=/models/.cache
+ENV TRANSFORMERS_CACHE=/models/.cache/transformers
+ENV HF_DATASETS_CACHE=/models/.cache/datasets
+
+# Create data directory for benchmarks
+RUN mkdir -p /workspace/data/benchmarks
+
+# Expose ports for monitoring
+EXPOSE 8888 6006
+
+# Default command
+CMD ["/bin/bash"]

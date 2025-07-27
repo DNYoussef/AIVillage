@@ -31,9 +31,18 @@ class PerformanceMonitor:
 
         # Run pytest benchmarks
         subprocess.run(
-            [sys.executable, "-m", "pytest", "tests/", "-v", "--benchmark-only", "--benchmark-json=benchmark.json"],
-            check=False, capture_output=True,
-            text=True
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/",
+                "-v",
+                "--benchmark-only",
+                "--benchmark-json=benchmark.json",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
         )
 
         elapsed = time.time() - start_time
@@ -47,7 +56,7 @@ class PerformanceMonitor:
             metrics = {
                 "timestamp": datetime.now().isoformat(),
                 "elapsed_time": elapsed,
-                "benchmarks": {}
+                "benchmarks": {},
             }
 
             for bench in benchmark_data.get("benchmarks", []):
@@ -55,7 +64,7 @@ class PerformanceMonitor:
                     "mean": bench["stats"]["mean"],
                     "stddev": bench["stats"]["stddev"],
                     "min": bench["stats"]["min"],
-                    "max": bench["stats"]["max"]
+                    "max": bench["stats"]["max"],
                 }
 
             # Add to history
@@ -90,12 +99,14 @@ class PerformanceMonitor:
 
                 # Check for 20% regression
                 if curr_mean > prev_mean * 1.2:
-                    regressions.append({
-                        "name": name,
-                        "previous": prev_mean,
-                        "current": curr_mean,
-                        "regression": (curr_mean - prev_mean) / prev_mean * 100
-                    })
+                    regressions.append(
+                        {
+                            "name": name,
+                            "previous": prev_mean,
+                            "current": curr_mean,
+                            "regression": (curr_mean - prev_mean) / prev_mean * 100,
+                        }
+                    )
 
         if regressions:
             print("\n[WARN] Performance Regressions Detected!")
@@ -119,8 +130,14 @@ class PerformanceMonitor:
             ("core_communication", "tests/core/test_communication.py"),
             ("core_evidencepack", "tests/core/test_evidencepack.py"),
             ("message_tests", "tests/test_message.py"),
-            ("compression_basic", "tests/compression/test_compression_comprehensive.py::TestCompressionPipeline::test_seedlm_compression_basic"),
-            ("evolution_basic", "tests/evolution/test_evolution_comprehensive.py::TestEvolutionaryTournament::test_tournament_basic_selection")
+            (
+                "compression_basic",
+                "tests/compression/test_compression_comprehensive.py::TestCompressionPipeline::test_seedlm_compression_basic",
+            ),
+            (
+                "evolution_basic",
+                "tests/evolution/test_evolution_comprehensive.py::TestEvolutionaryTournament::test_tournament_basic_selection",
+            ),
         ]
 
         for category, test_path in test_categories:
@@ -128,8 +145,9 @@ class PerformanceMonitor:
 
             result = subprocess.run(
                 [sys.executable, "-m", "pytest", test_path, "-v", "--tb=no"],
-                check=False, capture_output=True,
-                text=True
+                check=False,
+                capture_output=True,
+                text=True,
             )
 
             category_time = time.time() - category_start
@@ -144,7 +162,11 @@ class PerformanceMonitor:
                 "passed": passed,
                 "failed": failed,
                 "errors": errors,
-                "success_rate": (passed / (passed + failed + errors)) if (passed + failed + errors) > 0 else 0
+                "success_rate": (
+                    (passed / (passed + failed + errors))
+                    if (passed + failed + errors) > 0
+                    else 0
+                ),
             }
 
         total_time = time.time() - start_time
@@ -158,8 +180,11 @@ class PerformanceMonitor:
                 "total_passed": sum(r["passed"] for r in test_results.values()),
                 "total_failed": sum(r["failed"] for r in test_results.values()),
                 "total_errors": sum(r["errors"] for r in test_results.values()),
-                "avg_execution_time": sum(r["execution_time"] for r in test_results.values()) / len(test_results)
-            }
+                "avg_execution_time": sum(
+                    r["execution_time"] for r in test_results.values()
+                )
+                / len(test_results),
+            },
         }
 
         # Save performance summary
@@ -172,9 +197,9 @@ class PerformanceMonitor:
 
     def _print_performance_summary(self, summary: dict) -> None:
         """Print formatted performance summary."""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST PERFORMANCE SUMMARY")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Timestamp: {summary['timestamp']}")
         print(f"Total Execution Time: {summary['total_execution_time']:.2f}s")
         print()
@@ -183,22 +208,35 @@ class PerformanceMonitor:
         print("-" * 40)
         for category, results in summary["test_categories"].items():
             success_rate = results["success_rate"] * 100
-            print(f"{category:20} | {results['execution_time']:6.2f}s | {results['passed']:2d}P {results['failed']:2d}F {results['errors']:2d}E | {success_rate:5.1f}%")
+            print(
+                f"{category:20} | {results['execution_time']:6.2f}s | {results['passed']:2d}P {results['failed']:2d}F {results['errors']:2d}E | {success_rate:5.1f}%"
+            )
 
         print()
         overall = summary["overall_metrics"]
         print("Overall Metrics:")
         print("-" * 40)
-        print(f"Total Tests: {overall['total_passed'] + overall['total_failed'] + overall['total_errors']}")
+        print(
+            f"Total Tests: {overall['total_passed'] + overall['total_failed'] + overall['total_errors']}"
+        )
         print(f"Passed: {overall['total_passed']}")
         print(f"Failed: {overall['total_failed']}")
         print(f"Errors: {overall['total_errors']}")
         print(f"Average Category Time: {overall['avg_execution_time']:.2f}s")
 
-        overall_success = overall["total_passed"] / (overall["total_passed"] + overall["total_failed"] + overall["total_errors"]) * 100
+        overall_success = (
+            overall["total_passed"]
+            / (
+                overall["total_passed"]
+                + overall["total_failed"]
+                + overall["total_errors"]
+            )
+            * 100
+        )
         print(f"Overall Success Rate: {overall_success:.1f}%")
 
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
+
 
 if __name__ == "__main__":
     monitor = PerformanceMonitor()

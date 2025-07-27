@@ -1,0 +1,17 @@
+groups:
+- name: ai-village
+  rules:
+  - alert: GatewayHighLatency
+    expr: histogram_quantile(0.99, sum(rate(gw_latency_seconds_bucket[5m])) by (le)) > 0.25
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      description: Gateway p99 latency >250ms for 5m
+  - alert: TwinMemoryGrowth
+    expr: increase(process_resident_memory_bytes{service="twin"}[1h]) / avg_over_time(process_resident_memory_bytes{service="twin"}[1h]) > 0.02
+    for: 1h
+    labels:
+      severity: warning
+    annotations:
+      description: Twin memory usage increased by >2% in the last hour

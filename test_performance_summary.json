@@ -1,0 +1,47 @@
+{
+  "timestamp": "2025-07-27T17:12:00.567282",
+  "total_execution_time": 29.832855224609375,
+  "test_categories": {
+    "core_communication": {
+      "execution_time": 4.608532190322876,
+      "passed": 23,
+      "failed": 0,
+      "errors": 0,
+      "success_rate": 1.0
+    },
+    "core_evidencepack": {
+      "execution_time": 3.8829119205474854,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "success_rate": 1.0
+    },
+    "message_tests": {
+      "execution_time": 3.6606128215789795,
+      "passed": 2,
+      "failed": 0,
+      "errors": 0,
+      "success_rate": 1.0
+    },
+    "compression_basic": {
+      "execution_time": 13.680344343185425,
+      "passed": 1,
+      "failed": 0,
+      "errors": 0,
+      "success_rate": 1.0
+    },
+    "evolution_basic": {
+      "execution_time": 4.000453948974609,
+      "passed": 1,
+      "failed": 0,
+      "errors": 0,
+      "success_rate": 1.0
+    }
+  },
+  "overall_metrics": {
+    "total_passed": 30,
+    "total_failed": 0,
+    "total_errors": 0,
+    "avg_execution_time": 5.966571044921875
+  }
+}

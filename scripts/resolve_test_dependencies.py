@@ -91,7 +91,8 @@ ruff>=0.0.280
         mock_dir.mkdir(exist_ok=True)
 
         # Create __init__.py
-        (mock_dir / "__init__.py").write_text('''"""
+        (mock_dir / "__init__.py").write_text(
+            '''"""
 Mock modules for testing when dependencies are unavailable.
 """
 
@@ -113,7 +114,8 @@ def install_mocks():
 
 # Auto-install mocks when imported
 install_mocks()
-''')
+'''
+        )
 
         # Create conftest.py to auto-load mocks
         conftest = Path("tests/conftest.py")
@@ -188,11 +190,7 @@ pytest_plugins = ['pytest_asyncio']
         print("\nVerifying dependency resolution...")
 
         # Try importing key modules
-        test_imports = [
-            "pytest",
-            "torch",
-            "numpy"
-        ]
+        test_imports = ["pytest", "torch", "numpy"]
 
         success = []
         failed = []
@@ -209,6 +207,7 @@ pytest_plugins = ['pytest_asyncio']
             print(f"[WARN] Failed to import: {', '.join(failed)}")
 
         return len(failed) == 0
+
 
 def main() -> None:
     """Execute dependency resolution."""
@@ -233,6 +232,7 @@ def main() -> None:
         print("\n[OK] Dependency resolution complete!")
     else:
         print("\n[WARN] Some dependencies still missing - check output above")
+
 
 if __name__ == "__main__":
     main()
