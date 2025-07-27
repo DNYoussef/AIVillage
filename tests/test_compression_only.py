@@ -41,7 +41,7 @@ def test_individual_components():
     try:
 
         class LFSRGenerator:
-            def __init__(self, seed: int, taps: list = None):
+            def __init__(self, seed: int, taps: list | None = None):
                 self.register = seed & 0xFFFF
                 self.taps = taps or [16, 14, 13, 11]
                 self.initial_seed = seed
@@ -473,7 +473,7 @@ def test_file_persistence():
             # Verify Stage 1 data integrity
             assert "compressed_state" in loaded_stage1
             assert "config" in loaded_stage1
-            assert loaded_stage1["config"]["bitnet_enabled"] == True
+            assert loaded_stage1["config"]["bitnet_enabled"]
             print("[PASS] Stage 1 save/load: OK")
 
             print("\n2. Testing Stage 2 file save/load...")

@@ -348,7 +348,7 @@ class TestEndToEndIntegration:
                 )
 
             except AIVillageException as e:
-                logger.error(
+                logger.exception(
                     "Failed to process message",
                     extra={
                         "message_id": message.id,
@@ -396,7 +396,7 @@ class TestEndToEndIntegration:
     def test_serialization_across_modules(self):
         """Test that serialization works across different core modules."""
         # Create objects from different modules
-        error_context = ErrorContext(
+        ErrorContext(
             component="serialization_test",
             operation="test_serialization",
             details={"test": True},

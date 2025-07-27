@@ -2,7 +2,6 @@
 """Test GitHub Actions workflows locally for common issues."""
 
 from pathlib import Path
-import sys
 from typing import Any
 
 import yaml

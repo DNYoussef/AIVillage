@@ -1,38 +1,36 @@
 #!/usr/bin/env python3
-"""
-Agent Forge Test Dashboard
+"""Agent Forge Test Dashboard
 ===========================
 
 Simple test dashboard to verify core components after reorganization.
 """
 
-import os
-import sys
-import time
-import importlib
-from pathlib import Path
 from datetime import datetime
+import importlib
+import os
+from pathlib import Path
+
 
 def test_imports():
     """Test core module imports"""
     results = {}
 
     test_modules = [
-        'agent_forge',
-        'agent_forge.compression',
-        'agent_forge.evomerge',
-        'agent_forge.training',
-        'agent_forge.orchestration',
-        'core.evidence',
-        'core.logging_config'
+        "agent_forge",
+        "agent_forge.compression",
+        "agent_forge.evomerge",
+        "agent_forge.training",
+        "agent_forge.orchestration",
+        "core.evidence",
+        "core.logging_config"
     ]
 
     for module in test_modules:
         try:
             importlib.import_module(module)
-            results[module] = 'PASS'
+            results[module] = "PASS"
         except Exception as e:
-            results[module] = f'FAIL: {str(e)[:50]}'
+            results[module] = f"FAIL: {str(e)[:50]}"
 
     return results
 
@@ -41,18 +39,18 @@ def test_file_structure():
     results = {}
 
     expected_structure = {
-        'scripts/run_full_agent_forge.py': 'Script moved',
-        'tests/pipeline_validation_test.py': 'Test moved',
-        'docs/AGENT_FORGE_DEPLOYMENT_READY.md': 'Doc moved',
-        'configs/orchestration_config.yaml': 'Config moved',
-        'agent_forge/__init__.py': 'Core module exists'
+        "scripts/run_full_agent_forge.py": "Script moved",
+        "tests/pipeline_validation_test.py": "Test moved",
+        "docs/AGENT_FORGE_DEPLOYMENT_READY.md": "Doc moved",
+        "configs/orchestration_config.yaml": "Config moved",
+        "agent_forge/__init__.py": "Core module exists"
     }
 
     for file_path, description in expected_structure.items():
         if Path(file_path).exists():
-            results[file_path] = 'PASS'
+            results[file_path] = "PASS"
         else:
-            results[file_path] = 'FAIL: Missing'
+            results[file_path] = "FAIL: Missing"
 
     return results
 
@@ -62,10 +60,9 @@ def test_core_functionality():
 
     # Test agent_forge import
     try:
-        import agent_forge
-        results['Agent Forge Import'] = 'PASS'
+        results["Agent Forge Import"] = "PASS"
     except Exception as e:
-        results['Agent Forge Import'] = f'FAIL: {e}'
+        results["Agent Forge Import"] = f"FAIL: {e}"
 
     # Test evidence pack
     try:
@@ -76,17 +73,17 @@ def test_core_functionality():
             chunks=["test chunk"],
             retrieved_docs=[]
         )
-        results['Evidence Pack Creation'] = 'PASS'
+        results["Evidence Pack Creation"] = "PASS"
     except Exception as e:
-        results['Evidence Pack Creation'] = f'FAIL: {e}'
+        results["Evidence Pack Creation"] = f"FAIL: {e}"
 
     # Test configuration
     try:
         from core.logging_config import setup_logging
         setup_logging()
-        results['Logging Setup'] = 'PASS'
+        results["Logging Setup"] = "PASS"
     except Exception as e:
-        results['Logging Setup'] = f'FAIL: {e}'
+        results["Logging Setup"] = f"FAIL: {e}"
 
     return results
 
@@ -104,7 +101,7 @@ def generate_report():
     print("-" * 40)
     import_results = test_imports()
     for module, status in import_results.items():
-        status_symbol = "[PASS]" if status == 'PASS' else "[FAIL]"
+        status_symbol = "[PASS]" if status == "PASS" else "[FAIL]"
         print(f"{status_symbol} {module}: {status}")
     print()
 
@@ -113,7 +110,7 @@ def generate_report():
     print("-" * 40)
     structure_results = test_file_structure()
     for file_path, status in structure_results.items():
-        status_symbol = "[PASS]" if status == 'PASS' else "[FAIL]"
+        status_symbol = "[PASS]" if status == "PASS" else "[FAIL]"
         print(f"{status_symbol} {file_path}: {status}")
     print()
 
@@ -122,13 +119,13 @@ def generate_report():
     print("-" * 40)
     function_results = test_core_functionality()
     for test_name, status in function_results.items():
-        status_symbol = "[PASS]" if status == 'PASS' else "[FAIL]"
+        status_symbol = "[PASS]" if status == "PASS" else "[FAIL]"
         print(f"{status_symbol} {test_name}: {status}")
     print()
 
     # Overall Summary
     all_results = {**import_results, **structure_results, **function_results}
-    passed = len([r for r in all_results.values() if r == 'PASS'])
+    passed = len([r for r in all_results.values() if r == "PASS"])
     total = len(all_results)
     pass_rate = (passed / total) * 100 if total > 0 else 0
 
@@ -148,13 +145,13 @@ def generate_report():
     # Save detailed results
     results_file = Path("test_dashboard_results.json")
     import json
-    with open(results_file, 'w') as f:
+    with open(results_file, "w") as f:
         json.dump({
-            'timestamp': datetime.now().isoformat(),
-            'pass_rate': pass_rate,
-            'import_tests': import_results,
-            'structure_tests': structure_results,
-            'functionality_tests': function_results
+            "timestamp": datetime.now().isoformat(),
+            "pass_rate": pass_rate,
+            "import_tests": import_results,
+            "structure_tests": structure_results,
+            "functionality_tests": function_results
         }, f, indent=2)
 
     print(f"Detailed results saved to: {results_file}")

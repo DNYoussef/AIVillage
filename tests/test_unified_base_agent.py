@@ -285,11 +285,10 @@ class TestSelfEvolvingSystem:
         """Test successful system evolution."""
         with patch.object(
             system, "analyze_agent_performance", return_value={"cap1": 0.8}
+        ), patch.object(
+            system, "generate_new_capabilities", return_value=["new_cap"]
         ):
-            with patch.object(
-                system, "generate_new_capabilities", return_value=["new_cap"]
-            ):
-                await system.evolve()
+            await system.evolve()
 
     @pytest.mark.asyncio
     async def test_analyze_agent_performance(self, system, mock_agents):
@@ -401,7 +400,7 @@ class TestHelperClasses:
         dpo.fit()
 
         # Test record limit
-        for i in range(1001):
+        for _i in range(1001):
             dpo.add_record(features, 1)
         assert len(dpo.X) <= 1000
 

@@ -154,21 +154,24 @@ def test_error_handling_invalid_input():
     # Non-tensor input
     try:
         encoder.encode("not a tensor")
-        assert False, "Should have raised exception"
+        msg = "Should have raised exception"
+        raise AssertionError(msg)
     except (SeedLMCompressionError, TypeError):
         print("Invalid input properly rejected")
 
     # Invalid compression level
     try:
         encoder.encode(torch.randn(10, 10), compression_level=1.5)
-        assert False, "Should have raised exception"
+        msg = "Should have raised exception"
+        raise AssertionError(msg)
     except (ValueError, SeedLMCompressionError):
         print("Invalid compression level properly rejected")
 
     # Corrupted compressed data
     try:
         encoder.decode({"invalid": "data"})
-        assert False, "Should have raised exception"
+        msg = "Should have raised exception"
+        raise AssertionError(msg)
     except (SeedLMDecompressionError, KeyError):
         print("Invalid compressed data properly rejected")
 

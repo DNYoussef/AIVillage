@@ -48,7 +48,7 @@ def test_file_structure():
         "agent_forge/__init__.py": "Core module exists",
     }
 
-    for file_path, description in expected_structure.items():
+    for file_path in expected_structure:
         if Path(file_path).exists():
             results[file_path] = "PASS"
         else:
@@ -71,7 +71,7 @@ def test_core_functionality():
     try:
         from core.evidence import EvidencePack
 
-        pack = EvidencePack(
+        EvidencePack(
             session_id="test",
             query="test query",
             chunks=["test chunk"],
