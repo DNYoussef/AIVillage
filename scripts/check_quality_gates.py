@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
-"""
-Local quality gate checker for Sprint 2 production/experimental separation.
+"""Local quality gate checker for Sprint 2 production/experimental separation.
 Run this before committing to ensure quality standards.
 """
 
-import os
-import subprocess
-import sys
+import json
 from pathlib import Path
 import re
-from typing import List, Tuple, Dict
-import json
+import subprocess
+import sys
 
 
 class QualityGateChecker:
@@ -51,7 +48,7 @@ class QualityGateChecker:
         forbidden_imports = []
         for py_file in production_files:
             try:
-                with open(py_file, "r", encoding="utf-8") as f:
+                with open(py_file, encoding="utf-8") as f:
                     content = f.read()
 
                 # Check for experimental imports (only actual import statements)
@@ -88,7 +85,7 @@ class QualityGateChecker:
         todo_files = []
         for py_file in production_files:
             try:
-                with open(py_file, "r", encoding="utf-8") as f:
+                with open(py_file, encoding="utf-8") as f:
                     content = f.read()
 
                 # Check for TODOs, FIXMEs, XXXs
@@ -119,7 +116,7 @@ class QualityGateChecker:
 
         for py_file in experimental_files:
             try:
-                with open(py_file, "r", encoding="utf-8") as f:
+                with open(py_file, encoding="utf-8") as f:
                     content = f.read()
 
                 # Check for warning patterns
@@ -186,6 +183,7 @@ class QualityGateChecker:
                     "-v",
                     "--tb=short",
                 ],
+                check=False,
                 capture_output=True,
                 text=True,
                 cwd=self.root_dir,
@@ -229,7 +227,7 @@ class QualityGateChecker:
             self.log_success("Pre-commit configuration found")
 
             try:
-                with open(pre_commit_config, "r") as f:
+                with open(pre_commit_config) as f:
                     content = f.read()
 
                 # Check for quality gates

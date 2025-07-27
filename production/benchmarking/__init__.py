@@ -3,7 +3,7 @@
 # Export main benchmarking classes
 try:
     from .real_benchmark import RealBenchmark
-    
+
     __all__ = ['RealBenchmark']
 except ImportError:
     # Handle missing dependencies gracefully

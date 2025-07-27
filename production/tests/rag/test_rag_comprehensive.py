@@ -16,7 +16,7 @@ except ImportError:
 
 class TestRAGSystem:
     """Test the RAG system functionality."""
-    
+
     def test_rag_imports(self):
         """Test that RAG modules can be imported."""
         try:
@@ -24,7 +24,7 @@ class TestRAGSystem:
             assert RAGSystem is not None
         except ImportError:
             pytest.skip("RAG main module not available")
-    
+
     def test_vector_store_exists(self):
         """Test that vector store exists."""
         try:
@@ -32,7 +32,7 @@ class TestRAGSystem:
             assert VectorStore is not None
         except ImportError:
             pytest.skip("VectorStore not available")
-    
+
     def test_document_indexing_concept(self):
         """Test document indexing concepts."""
         # Mock documents
@@ -41,12 +41,12 @@ class TestRAGSystem:
             "Machine learning is a subset of AI.",
             "Python is a programming language."
         ]
-        
+
         # Test basic indexing concept
         indexed = {i: doc for i, doc in enumerate(documents)}
         assert len(indexed) == 3
         assert indexed[0] == "The sky is blue."
-    
+
     def test_similarity_search_concept(self):
         """Test similarity search concepts."""
         # Mock embeddings
@@ -56,13 +56,13 @@ class TestRAGSystem:
             [0.2, 0.3, 0.4],  # Similar
             [0.9, 0.8, 0.7],  # Different
         ]
-        
+
         # Calculate similarity (dot product)
         similarities = [
             sum(q * d for q, d in zip(query_embedding, doc_emb))
             for doc_emb in doc_embeddings
         ]
-        
+
         # Find most similar
         best_match = similarities.index(max(similarities))
         assert best_match == 0  # Should be exact match
@@ -70,7 +70,7 @@ class TestRAGSystem:
 
 class TestRAGRetrieval:
     """Test RAG retrieval components."""
-    
+
     def test_faiss_backend_exists(self):
         """Test FAISS backend availability."""
         try:
@@ -78,7 +78,7 @@ class TestRAGRetrieval:
             assert FAISSBackend is not None
         except ImportError:
             pytest.skip("FAISS backend not available")
-    
+
     def test_graph_explain_exists(self):
         """Test graph explanation module."""
         try:
@@ -90,7 +90,7 @@ class TestRAGRetrieval:
 
 class TestRAGGeneration:
     """Test RAG generation capabilities."""
-    
+
     def test_generation_concept(self):
         """Test basic generation concept."""
         # Mock retrieved documents
@@ -98,12 +98,12 @@ class TestRAGGeneration:
             "Python is a high-level programming language.",
             "It was created by Guido van Rossum."
         ]
-        
+
         query = "What is Python?"
-        
+
         # Mock context creation
         context = " ".join(retrieved_docs)
         prompt = f"Context: {context}\nQuestion: {query}\nAnswer:"
-        
+
         assert "Python" in context
         assert query in prompt

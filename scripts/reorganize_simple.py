@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
-"""
-Simplified reorganization script that works with the actual codebase structure.
+"""Simplified reorganization script that works with the actual codebase structure.
 Creates production/experimental/deprecated directories and moves key components.
 """
 
-import os
-import subprocess
-from pathlib import Path
-from typing import List, Tuple
-import json
 from datetime import datetime
+from pathlib import Path
+import subprocess
 
 
 class SimpleReorganizer:
@@ -125,6 +121,7 @@ class SimpleReorganizer:
             # Try git mv first
             result = subprocess.run(
                 ["git", "mv", str(src_path), str(dst_path)],
+                check=False,
                 capture_output=True,
                 text=True,
             )
@@ -132,24 +129,23 @@ class SimpleReorganizer:
                 print(f"  Moved {src} -> {dst} (with git history)")
                 self.moves_performed.append((src, dst))
                 return True
-            else:
-                # Git mv failed, try regular move
-                import shutil
+            # Git mv failed, try regular move
+            import shutil
 
-                if src_path.is_dir():
-                    shutil.copytree(str(src_path), str(dst_path), dirs_exist_ok=True)
-                    shutil.rmtree(str(src_path))
-                else:
-                    shutil.move(str(src_path), str(dst_path))
-                print(f"  Moved {src} -> {dst} (regular move)")
-                self.moves_performed.append((src, dst))
-                return True
+            if src_path.is_dir():
+                shutil.copytree(str(src_path), str(dst_path), dirs_exist_ok=True)
+                shutil.rmtree(str(src_path))
+            else:
+                shutil.move(str(src_path), str(dst_path))
+            print(f"  Moved {src} -> {dst} (regular move)")
+            self.moves_performed.append((src, dst))
+            return True
 
         except Exception as e:
             print(f"  Error moving {src} -> {dst}: {e}")
             return False
 
-    def execute_moves(self, moves: List[Tuple[str, str]], category: str):
+    def execute_moves(self, moves: list[tuple[str, str]], category: str):
         """Execute a set of moves."""
         print(f"\nMoving {category} components...")
         for src, dst in moves:
@@ -196,7 +192,7 @@ def warn_experimental(feature_name):
         """Generate reorganization report."""
         report = f"""# Sprint 2: Code Reorganization Complete
 
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## Summary
 
@@ -209,13 +205,13 @@ Successfully reorganized AIVillage codebase into production/experimental/depreca
 - Components: model_compression, compression_pipeline
 - Status: Production-ready compression with BitNet, VPTQ
 
-### Evolution  
+### Evolution
 - Location: `production/evolution/`
 - Components: evolution system, evomerge_pipeline
 - Status: Working model evolution and merging
 
 ### RAG
-- Location: `production/rag/`  
+- Location: `production/rag/`
 - Components: Complete RAG system
 - Status: Functional retrieval-augmented generation
 
@@ -317,7 +313,7 @@ from experimental.mesh import MeshNode
         # Generate report
         self.generate_report()
 
-        print(f"\nReorganization complete!")
+        print("\nReorganization complete!")
         print(f"Moved {len(self.moves_performed)} components")
         print("Run 'pytest production/tests/' to verify")
 

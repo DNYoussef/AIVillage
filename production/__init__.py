@@ -3,7 +3,7 @@ AIVillage Production Components
 
 This package contains production-ready components that have passed Sprint 2 quality gates:
 - Compression: Model compression with 4-8x reduction
-- Evolution: Evolutionary model optimization 
+- Evolution: Evolutionary model optimization
 - RAG: Retrieval-augmented generation
 - Memory: Memory management and W&B logging
 - Benchmarking: Real benchmark evaluation
@@ -40,7 +40,7 @@ def _check_imports():
 # Production components - these should be stable APIs
 __all__ = [
     'compression',
-    'evolution', 
+    'evolution',
     'rag',
     'memory',
     'benchmarking',

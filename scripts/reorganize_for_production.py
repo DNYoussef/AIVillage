@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
-"""
-Reorganize codebase into production/experimental/deprecated.
+"""Reorganize codebase into production/experimental/deprecated.
 Maintains git history and updates all imports automatically.
 """
 
-import os
 import ast
-import subprocess
-from pathlib import Path
-from typing import Dict, List, Tuple
-import json
 from datetime import datetime
+import json
+from pathlib import Path
+import subprocess
 
 
 class ProductionOrganizer:
@@ -44,7 +41,7 @@ class ProductionOrganizer:
         self.import_mappings = {}  # Track for import updates
         self.moves_performed = []  # Track successful moves
 
-    def analyze_code_quality(self, path: Path) -> Dict[str, float]:
+    def analyze_code_quality(self, path: Path) -> dict[str, float]:
         """Analyze code quality metrics."""
         metrics = {
             "test_coverage": 0.0,
@@ -187,7 +184,7 @@ class ProductionOrganizer:
             self.moves_performed.append((src, dst))
             return True
 
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             # Not in git or move failed, use regular move
             try:
                 import shutil
@@ -315,7 +312,7 @@ class ProductionOrganizer:
 
         # Find and move backup files
         for pattern in ["**/*_backup.py", "**/*_old.py"]:
-            for file in Path(".").glob(pattern):
+            for file in Path().glob(pattern):
                 if file.exists() and "deprecated" not in str(file):
                     dst = Path("deprecated/backups") / file.name
                     self.move_with_git_history(str(file), str(dst))
@@ -341,7 +338,7 @@ class ProductionOrganizer:
         """Generate detailed report of changes."""
         report = f"""# Sprint 2: Code Reorganization Report
 
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## Summary
 
@@ -357,7 +354,7 @@ quality gates.
 - **Features**: Model compression achieving 4-8x reduction
 - **Quality**: High test coverage, documented APIs
 
-### Evolution System  
+### Evolution System
 - **Location**: `production/evolution/`
 - **Status**: 90% complete with tournament selection and model merging
 - **Features**: Evolutionary model optimization, fitness evaluation
@@ -473,7 +470,7 @@ from experimental.agents.king import KingAgent  # Will show warnings
             if "deprecated" in dst:
                 report += f"- `{src}` → `{dst}`\n"
 
-        report += f"""
+        report += """
 
 ## Next Steps
 

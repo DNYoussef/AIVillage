@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
-"""
-Generate comprehensive tests for production components.
+"""Generate comprehensive tests for production components.
 These tests verify documented claims and establish quality baselines.
 """
 
-import os
 from pathlib import Path
 
 
 def create_test_infrastructure():
     """Create complete test infrastructure for production components."""
-
     # Create test directories
     test_dirs = [
         "production/tests/compression",
@@ -50,7 +47,7 @@ except ImportError:
 
 class TestCompressionClaims:
     """Test documented compression claims."""
-    
+
     @pytest.fixture
     def sample_models(self):
         """Create models of various sizes for testing."""
@@ -78,7 +75,7 @@ class TestCompressionClaims:
             )
         }
         return models
-    
+
     def test_compression_pipeline_exists(self):
         """Test that compression pipeline can be imported and instantiated."""
         try:
@@ -87,7 +84,7 @@ class TestCompressionClaims:
             assert pipeline is not None
         except ImportError:
             pytest.skip("CompressionPipeline not available")
-    
+
     def test_model_compression_exists(self):
         """Test that model compression modules exist."""
         try:
@@ -95,49 +92,49 @@ class TestCompressionClaims:
             assert ModelCompression is not None
         except ImportError:
             pytest.skip("ModelCompression not available")
-    
+
     @pytest.mark.parametrize("model_type", ["small", "medium"])
     def test_basic_compression(self, sample_models, model_type):
         """Test basic compression functionality."""
         model = sample_models[model_type]
-        
+
         # Calculate original size
         original_size = sum(
-            p.numel() * p.element_size() 
+            p.numel() * p.element_size()
             for p in model.parameters()
         )
-        
+
         # Simple compression simulation (in absence of real implementation)
         compressed_size = original_size // 4  # Simulate 4x compression
         ratio = original_size / compressed_size
-        
+
         assert ratio >= 3.5, f"Compression ratio {ratio:.2f}x below minimum threshold"
         assert ratio <= 10, f"Compression ratio {ratio:.2f}x suspiciously high"
-    
+
     def test_memory_constraints(self, sample_models):
         """Test that compression works within memory constraints."""
         model = sample_models['mobile_sized']
-        
+
         # Monitor memory usage
         process = psutil.Process()
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
-        
+
         # Simulate compression process
         start_time = time.time()
         # In real test, would call actual compression
         time.sleep(0.1)  # Simulate processing time
         compression_time = time.time() - start_time
-        
+
         peak_memory = process.memory_info().rss / 1024 / 1024  # MB
         memory_used = peak_memory - initial_memory
-        
+
         assert memory_used < 100, f"Used {memory_used:.0f}MB, exceeds reasonable limit"
         assert compression_time < 5, f"Took {compression_time:.1f}s, too slow"
 
 
 class TestCompressionMethods:
     """Test specific compression methods."""
-    
+
     def test_seedlm_available(self):
         """Test SeedLM compression method availability."""
         try:
@@ -145,7 +142,7 @@ class TestCompressionMethods:
             assert SeedLM is not None
         except ImportError:
             pytest.skip("SeedLM not available")
-    
+
     def test_vptq_available(self):
         """Test VPTQ compression method availability."""
         try:
@@ -153,7 +150,7 @@ class TestCompressionMethods:
             assert VPTQ is not None
         except ImportError:
             pytest.skip("VPTQ not available")
-    
+
     def test_bitnet_available(self):
         """Test BitNet compression method availability."""
         try:
@@ -165,7 +162,7 @@ class TestCompressionMethods:
 
 class TestCompressionIntegration:
     """Test compression pipeline integration."""
-    
+
     def test_pipeline_configuration(self):
         """Test that compression pipeline can be configured."""
         # Test would verify pipeline accepts different compression methods
@@ -176,7 +173,7 @@ class TestCompressionIntegration:
         }
         # In real test: pipeline = CompressionPipeline(config)
         assert config['compression_ratio'] == 4.0
-    
+
     def test_compression_formats(self):
         """Test supported compression formats."""
         supported_formats = ['pt', 'safetensors', 'gguf']
@@ -211,7 +208,7 @@ except ImportError:
 
 class TestEvolutionSystem:
     """Test the evolutionary model merging system."""
-    
+
     @pytest.fixture
     def sample_population(self):
         """Create a population of models for testing."""
@@ -226,7 +223,7 @@ class TestEvolutionSystem:
                 'id': f'model_{i}'
             })
         return models
-    
+
     def test_evolution_imports(self):
         """Test that evolution modules can be imported."""
         try:
@@ -234,49 +231,49 @@ class TestEvolutionSystem:
             assert EvolutionaryTournament is not None
         except ImportError:
             pytest.skip("EvolutionaryTournament not available")
-    
+
     def test_model_merging_concepts(self):
         """Test basic model merging concepts."""
         # Create two simple models
         model1 = torch.nn.Linear(10, 5)
         model2 = torch.nn.Linear(10, 5)
-        
+
         # Initialize with known values
         torch.nn.init.constant_(model1.weight, 1.0)
         torch.nn.init.constant_(model2.weight, 2.0)
-        
+
         # Test averaging concept
         avg_weight = (model1.weight + model2.weight) / 2
         expected = torch.full_like(model1.weight, 1.5)
-        
+
         assert torch.allclose(avg_weight, expected)
-    
+
     def test_fitness_evaluation_concept(self):
         """Test fitness evaluation concepts."""
         # Mock fitness scores
         scores = [0.1, 0.5, 0.8, 0.3, 0.9]
-        
+
         # Test ranking
         ranked_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
         assert ranked_indices[0] == 4  # Index of highest score (0.9)
         assert ranked_indices[-1] == 0  # Index of lowest score (0.1)
-    
+
     def test_tournament_selection_concept(self, sample_population):
         """Test tournament selection concept."""
         # Simple tournament selection simulation
         tournament_size = 3
         population = sample_population
-        
+
         # Select random tournament
         tournament = np.random.choice(len(population), tournament_size, replace=False)
-        
+
         # Find winner (highest fitness in tournament)
         winner_idx = max(tournament, key=lambda i: population[i]['fitness'])
         winner = population[winner_idx]
-        
+
         assert 'fitness' in winner
         assert 'model' in winner
-    
+
     def test_merger_operators_exist(self):
         """Test that merger operators exist."""
         try:
@@ -284,7 +281,7 @@ class TestEvolutionSystem:
             assert MergeOperators is not None
         except ImportError:
             pytest.skip("MergeOperators not available")
-    
+
     def test_evomerge_config(self):
         """Test evomerge configuration."""
         try:
@@ -296,7 +293,7 @@ class TestEvolutionSystem:
 
 class TestEvolutionPipeline:
     """Test the evolution pipeline."""
-    
+
     def test_pipeline_exists(self):
         """Test that evolution pipeline exists."""
         try:
@@ -304,7 +301,7 @@ class TestEvolutionPipeline:
             assert EvomergePipeline is not None
         except ImportError:
             pytest.skip("EvomergePipeline not available")
-    
+
     def test_math_tutor_evolution(self):
         """Test math tutor evolution."""
         try:
@@ -336,7 +333,7 @@ except ImportError:
 
 class TestRAGSystem:
     """Test the RAG system functionality."""
-    
+
     def test_rag_imports(self):
         """Test that RAG modules can be imported."""
         try:
@@ -344,7 +341,7 @@ class TestRAGSystem:
             assert RAGSystem is not None
         except ImportError:
             pytest.skip("RAG main module not available")
-    
+
     def test_vector_store_exists(self):
         """Test that vector store exists."""
         try:
@@ -352,7 +349,7 @@ class TestRAGSystem:
             assert VectorStore is not None
         except ImportError:
             pytest.skip("VectorStore not available")
-    
+
     def test_document_indexing_concept(self):
         """Test document indexing concepts."""
         # Mock documents
@@ -361,12 +358,12 @@ class TestRAGSystem:
             "Machine learning is a subset of AI.",
             "Python is a programming language."
         ]
-        
+
         # Test basic indexing concept
         indexed = {i: doc for i, doc in enumerate(documents)}
         assert len(indexed) == 3
         assert indexed[0] == "The sky is blue."
-    
+
     def test_similarity_search_concept(self):
         """Test similarity search concepts."""
         # Mock embeddings
@@ -376,13 +373,13 @@ class TestRAGSystem:
             [0.2, 0.3, 0.4],  # Similar
             [0.9, 0.8, 0.7],  # Different
         ]
-        
+
         # Calculate similarity (dot product)
         similarities = [
             sum(q * d for q, d in zip(query_embedding, doc_emb))
             for doc_emb in doc_embeddings
         ]
-        
+
         # Find most similar
         best_match = similarities.index(max(similarities))
         assert best_match == 0  # Should be exact match
@@ -390,7 +387,7 @@ class TestRAGSystem:
 
 class TestRAGRetrieval:
     """Test RAG retrieval components."""
-    
+
     def test_faiss_backend_exists(self):
         """Test FAISS backend availability."""
         try:
@@ -398,7 +395,7 @@ class TestRAGRetrieval:
             assert FAISSBackend is not None
         except ImportError:
             pytest.skip("FAISS backend not available")
-    
+
     def test_graph_explain_exists(self):
         """Test graph explanation module."""
         try:
@@ -410,7 +407,7 @@ class TestRAGRetrieval:
 
 class TestRAGGeneration:
     """Test RAG generation capabilities."""
-    
+
     def test_generation_concept(self):
         """Test basic generation concept."""
         # Mock retrieved documents
@@ -418,13 +415,13 @@ class TestRAGGeneration:
             "Python is a high-level programming language.",
             "It was created by Guido van Rossum."
         ]
-        
+
         query = "What is Python?"
-        
+
         # Mock context creation
         context = " ".join(retrieved_docs)
         prompt = f"Context: {context}\\nQuestion: {query}\\nAnswer:"
-        
+
         assert "Python" in context
         assert query in prompt
 '''
@@ -453,7 +450,7 @@ except ImportError:
 
 class TestMemoryManager:
     """Test memory management functionality."""
-    
+
     def test_memory_manager_exists(self):
         """Test that memory manager can be imported."""
         try:
@@ -461,24 +458,24 @@ class TestMemoryManager:
             assert MemoryManager is not None
         except ImportError:
             pytest.skip("MemoryManager not available")
-    
+
     def test_memory_monitoring(self):
         """Test basic memory monitoring."""
         # Get current memory usage
         process = psutil.Process()
         memory_info = process.memory_info()
-        
+
         assert memory_info.rss > 0  # Should have some memory usage
         assert memory_info.vms > 0  # Should have virtual memory
-    
+
     def test_memory_limits(self):
         """Test memory limit concepts."""
         # Test memory limit checking
         current_memory = psutil.virtual_memory().used / (1024**3)  # GB
         total_memory = psutil.virtual_memory().total / (1024**3)   # GB
-        
+
         memory_limit = 2.0  # 2GB limit
-        
+
         # Check if we can determine if we're within limits
         within_limit = current_memory < memory_limit
         # This is just a concept test - actual implementation may vary
@@ -487,7 +484,7 @@ class TestMemoryManager:
 
 class TestWandbManager:
     """Test Weights & Biases integration."""
-    
+
     def test_wandb_manager_exists(self):
         """Test that wandb manager can be imported."""
         try:
@@ -495,26 +492,26 @@ class TestWandbManager:
             assert WandbManager is not None
         except ImportError:
             pytest.skip("WandbManager not available")
-    
+
     @patch('wandb.init')
     def test_wandb_initialization_concept(self, mock_wandb_init):
         """Test W&B initialization concept."""
         # Mock W&B initialization
         mock_wandb_init.return_value = Mock()
-        
+
         # Test initialization parameters
         config = {
             'project': 'agent-forge',
             'entity': 'ai-village',
             'name': 'test-run'
         }
-        
+
         # In real implementation, would initialize wandb
         # wandb.init(**config)
         mock_wandb_init.assert_not_called()  # Since we're just testing concept
-        
+
         assert config['project'] == 'agent-forge'
-    
+
     def test_logging_concept(self):
         """Test logging concept."""
         # Mock metrics logging
@@ -523,7 +520,7 @@ class TestWandbManager:
             'accuracy': 0.95,
             'epoch': 1
         }
-        
+
         # Test that metrics are properly formatted
         assert all(isinstance(k, str) for k in metrics.keys())
         assert all(isinstance(v, (int, float)) for v in metrics.values())
@@ -531,19 +528,19 @@ class TestWandbManager:
 
 class TestResourceMonitoring:
     """Test resource monitoring capabilities."""
-    
+
     def test_cpu_monitoring(self):
         """Test CPU monitoring."""
         cpu_percent = psutil.cpu_percent(interval=0.1)
         assert 0 <= cpu_percent <= 100
-    
+
     def test_disk_monitoring(self):
         """Test disk monitoring."""
         disk_usage = psutil.disk_usage('.')
         assert disk_usage.total > 0
         assert disk_usage.used >= 0
         assert disk_usage.free >= 0
-    
+
     def test_gpu_availability(self):
         """Test GPU availability detection."""
         try:
@@ -578,7 +575,7 @@ except ImportError:
 
 class TestRealBenchmark:
     """Test real benchmarking functionality."""
-    
+
     def test_real_benchmark_exists(self):
         """Test that real benchmark can be imported."""
         try:
@@ -586,7 +583,7 @@ class TestRealBenchmark:
             assert RealBenchmark is not None
         except ImportError:
             pytest.skip("RealBenchmark not available")
-    
+
     def test_benchmark_metrics(self):
         """Test benchmark metrics concepts."""
         # Mock benchmark results
@@ -597,11 +594,11 @@ class TestRealBenchmark:
             'hellaswag': 0.70,
             'arc': 0.55
         }
-        
+
         # Test metric validation
         for metric, score in results.items():
             assert 0.0 <= score <= 1.0, f"Score {score} for {metric} out of range"
-    
+
     def test_benchmark_thresholds(self):
         """Test benchmark threshold concepts."""
         thresholds = {
@@ -611,19 +608,19 @@ class TestRealBenchmark:
             'hellaswag': 0.70,
             'arc': 0.55
         }
-        
+
         # Test threshold checking
         results = {
             'mmlu': 0.70,  # Above threshold
             'gsm8k': 0.40,  # Below threshold
             'humaneval': 0.35,  # Above threshold
         }
-        
-        passed = sum(1 for metric, score in results.items() 
+
+        passed = sum(1 for metric, score in results.items()
                     if score >= thresholds.get(metric, 0))
-        
+
         assert passed == 2  # mmlu and humaneval pass
-    
+
     def test_fitness_calculation(self):
         """Test fitness calculation concept."""
         scores = {
@@ -633,7 +630,7 @@ class TestRealBenchmark:
             'hellaswag': 0.75,
             'arc': 0.60
         }
-        
+
         weights = {
             'mmlu': 0.25,
             'gsm8k': 0.25,
@@ -641,30 +638,30 @@ class TestRealBenchmark:
             'hellaswag': 0.15,
             'arc': 0.15
         }
-        
+
         # Calculate weighted score
-        fitness = sum(scores.get(metric, 0) * weight 
+        fitness = sum(scores.get(metric, 0) * weight
                      for metric, weight in weights.items())
-        
+
         assert 0.0 <= fitness <= 1.0
 
 
 class TestBenchmarkIntegration:
     """Test benchmark integration capabilities."""
-    
+
     def test_model_evaluation_concept(self):
         """Test model evaluation concept."""
         # Mock model evaluation
         model_outputs = ["Answer A", "Answer B", "Answer C"]
         correct_answers = ["Answer A", "Answer B", "Answer D"]
-        
+
         # Calculate accuracy
-        correct = sum(1 for pred, true in zip(model_outputs, correct_answers) 
+        correct = sum(1 for pred, true in zip(model_outputs, correct_answers)
                      if pred == true)
         accuracy = correct / len(correct_answers)
-        
+
         assert accuracy == 2/3  # 2 out of 3 correct
-    
+
     def test_benchmark_categories(self):
         """Test benchmark categories."""
         categories = {
@@ -673,12 +670,12 @@ class TestBenchmarkIntegration:
             'coding': ['humaneval'],
             'comprehension': ['hellaswag']
         }
-        
+
         # Test category organization
         all_benchmarks = set()
         for benchmark_list in categories.values():
             all_benchmarks.update(benchmark_list)
-        
+
         assert 'mmlu' in all_benchmarks
         assert 'gsm8k' in all_benchmarks
         assert len(all_benchmarks) == 5
@@ -710,7 +707,7 @@ except ImportError:
 
 class TestGeometryFeedback:
     """Test geometry feedback functionality."""
-    
+
     def test_geometry_feedback_exists(self):
         """Test that geometry feedback can be imported."""
         try:
@@ -718,45 +715,45 @@ class TestGeometryFeedback:
             assert GeometryFeedback is not None
         except ImportError:
             pytest.skip("GeometryFeedback not available")
-    
+
     def test_geometric_analysis_concept(self):
         """Test basic geometric analysis concepts."""
         # Create sample weight tensors
         weights1 = torch.randn(10, 10)
         weights2 = torch.randn(10, 10)
-        
+
         # Test distance calculation
         distance = torch.norm(weights1 - weights2).item()
         assert distance >= 0
-        
+
         # Test cosine similarity
         flat1 = weights1.flatten()
         flat2 = weights2.flatten()
-        
+
         cos_sim = torch.nn.functional.cosine_similarity(
             flat1.unsqueeze(0), flat2.unsqueeze(0)
         ).item()
-        
+
         assert -1 <= cos_sim <= 1
-    
+
     def test_weight_space_analysis(self):
         """Test weight space analysis concepts."""
         # Mock model weights
         model_weights = torch.randn(100, 50)
-        
+
         # Test weight statistics
         mean_weight = model_weights.mean().item()
         std_weight = model_weights.std().item()
         max_weight = model_weights.max().item()
         min_weight = model_weights.min().item()
-        
+
         assert std_weight >= 0
         assert max_weight >= mean_weight >= min_weight
 
 
 class TestGeometrySnapshot:
     """Test geometry snapshot functionality."""
-    
+
     def test_snapshot_concept(self):
         """Test snapshot concept."""
         try:
@@ -764,30 +761,30 @@ class TestGeometrySnapshot:
             assert Snapshot is not None
         except ImportError:
             pytest.skip("Snapshot not available")
-    
+
     def test_model_state_capture(self):
         """Test model state capture concept."""
         # Create a simple model
         model = torch.nn.Linear(10, 5)
-        
+
         # Capture state
         state_dict = model.state_dict()
-        
+
         # Verify state capture
         assert 'weight' in state_dict
         assert 'bias' in state_dict
         assert state_dict['weight'].shape == (5, 10)
         assert state_dict['bias'].shape == (5,)
-    
+
     def test_geometric_properties(self):
         """Test geometric property calculation."""
         # Mock weight matrix
         weights = torch.randn(50, 100)
-        
+
         # Calculate geometric properties
         frobenius_norm = torch.norm(weights, p='fro').item()
         spectral_norm = torch.norm(weights, p=2).item()
-        
+
         assert frobenius_norm >= spectral_norm  # Frobenius >= spectral norm
         assert frobenius_norm >= 0
         assert spectral_norm >= 0
@@ -795,42 +792,42 @@ class TestGeometrySnapshot:
 
 class TestGeometryIntegration:
     """Test geometry integration with other components."""
-    
+
     def test_training_geometry_tracking(self):
         """Test geometry tracking during training."""
         # Mock training steps
         initial_weights = torch.randn(10, 10)
-        
+
         # Simulate training updates
         learning_rate = 0.01
         gradient = torch.randn(10, 10)
-        
+
         updated_weights = initial_weights - learning_rate * gradient
-        
+
         # Calculate geometry change
         weight_change = torch.norm(updated_weights - initial_weights).item()
         expected_change = learning_rate * torch.norm(gradient).item()
-        
+
         assert abs(weight_change - expected_change) < 1e-6
-    
+
     def test_model_evolution_tracking(self):
         """Test tracking model evolution geometry."""
         # Create sequence of model states
         states = []
         current_state = torch.randn(20, 20)
-        
+
         for i in range(5):
             # Simulate evolution step
             noise = torch.randn_like(current_state) * 0.1
             current_state = current_state + noise
             states.append(current_state.clone())
-        
+
         # Calculate evolution trajectory
         distances = []
         for i in range(1, len(states)):
             dist = torch.norm(states[i] - states[i-1]).item()
             distances.append(dist)
-        
+
         assert len(distances) == 4
         assert all(d >= 0 for d in distances)
 '''
@@ -863,7 +860,7 @@ except ImportError:
 
 class TestProductionIntegration:
     """Test integration between all production components."""
-    
+
     def test_all_production_imports(self):
         """Test that all production components can be imported."""
         import_tests = [
@@ -874,7 +871,7 @@ class TestProductionIntegration:
             ('production.benchmarking.real_benchmark', 'RealBenchmark'),
             ('production.geometry.geometry_feedback', 'GeometryFeedback'),
         ]
-        
+
         imported_count = 0
         for module_name, class_name in import_tests:
             try:
@@ -884,10 +881,10 @@ class TestProductionIntegration:
                 imported_count += 1
             except (ImportError, AttributeError):
                 pass  # Skip missing components
-        
+
         # At least some components should be importable
         assert imported_count >= 0
-    
+
     def test_pipeline_integration_concept(self):
         """Test pipeline integration concept."""
         # Mock pipeline flow
@@ -900,16 +897,16 @@ class TestProductionIntegration:
             'benchmarking',
             'geometry_analysis'
         ]
-        
+
         # Test pipeline execution concept
         results = {}
         for step in pipeline_steps:
             # Mock each step
             results[step] = f"completed_{step}"
-        
+
         assert len(results) == len(pipeline_steps)
         assert all(step in results for step in pipeline_steps)
-    
+
     def test_component_compatibility(self):
         """Test component compatibility."""
         # Test data format compatibility
@@ -921,36 +918,36 @@ class TestProductionIntegration:
                 'parameters': 110  # 10*10 + 10
             }
         }
-        
+
         # Test that components can work with common data formats
         assert 'weights' in model_data
         assert 'metadata' in model_data
         assert model_data['metadata']['parameters'] == 110
-    
+
     def test_error_handling_integration(self):
         """Test error handling across components."""
         # Test error propagation concept
         errors = []
-        
+
         def mock_component_call(component_name, should_fail=False):
             if should_fail:
                 error = f"{component_name}_error"
                 errors.append(error)
                 return None
             return f"{component_name}_success"
-        
+
         # Simulate pipeline with some failures
         results = []
         for component in ['rag', 'compression', 'evolution']:
             result = mock_component_call(component, component == 'compression')
             if result:
                 results.append(result)
-        
+
         # Should have 2 successes and 1 error
         assert len(results) == 2
         assert len(errors) == 1
         assert 'compression_error' in errors
-    
+
     def test_memory_integration(self):
         """Test memory management integration."""
         # Test memory tracking across components
@@ -961,11 +958,11 @@ class TestProductionIntegration:
             'after_evolution': 180,
             'after_benchmarking': 160
         }
-        
+
         # Test memory efficiency
         compression_efficiency = memory_usage['after_compression'] < memory_usage['after_rag']
         assert compression_efficiency, "Compression should reduce memory usage"
-    
+
     def test_benchmarking_integration(self):
         """Test benchmarking integration with other components."""
         # Test benchmark data flow
@@ -974,18 +971,18 @@ class TestProductionIntegration:
             'dataset': 'test_dataset',
             'metrics': ['accuracy', 'latency']
         }
-        
+
         benchmark_output = {
             'accuracy': 0.85,
             'latency': 0.1,  # seconds
             'model_size': 1.2  # MB after compression
         }
-        
+
         # Test benchmark result validation
         assert benchmark_output['accuracy'] > 0.8
         assert benchmark_output['latency'] < 0.5
         assert benchmark_output['model_size'] < 5.0  # Reasonable size
-    
+
     def test_end_to_end_concept(self):
         """Test end-to-end pipeline concept."""
         # Mock end-to-end flow
@@ -998,44 +995,44 @@ class TestProductionIntegration:
             'benchmark_results': {'accuracy': 0.8},
             'geometry_snapshot': 'model_state'
         }
-        
+
         # Verify complete pipeline state
         required_components = [
-            'rag_context', 'model_response', 'compressed_model', 
+            'rag_context', 'model_response', 'compressed_model',
             'fitness_score', 'benchmark_results'
         ]
-        
+
         assert all(component in pipeline_state for component in required_components)
 
 
 class TestProductionQualityGates:
     """Test production quality gates."""
-    
+
     def test_no_experimental_imports(self):
         """Test that production code doesn't import experimental."""
         # This test would scan production modules for experimental imports
         # For now, just test the concept
         forbidden_imports = ['experimental', 'deprecated']
         test_import = 'production.compression'
-        
+
         # In real test, would scan actual import statements
         assert not any(forbidden in test_import for forbidden in forbidden_imports)
-    
+
     def test_documentation_coverage(self):
         """Test documentation coverage concept."""
         # Mock documentation check
         components = [
-            'compression', 'evolution', 'rag', 
+            'compression', 'evolution', 'rag',
             'memory', 'benchmarking', 'geometry'
         ]
-        
+
         documented_components = [
             'compression', 'evolution', 'rag', 'memory'
         ]
-        
+
         coverage = len(documented_components) / len(components)
         assert coverage >= 0.7  # 70% documentation coverage
-    
+
     def test_performance_requirements(self):
         """Test performance requirements."""
         # Mock performance metrics
@@ -1045,7 +1042,7 @@ class TestProductionQualityGates:
             'evolution_generations': 10,
             'rag_retrieval_time': 0.5  # seconds
         }
-        
+
         # Test performance thresholds
         assert 4.0 <= performance_metrics['compression_ratio'] <= 8.0
         assert performance_metrics['compression_time'] < 60
@@ -1144,7 +1141,7 @@ testpaths = production/tests
 python_files = test_*.py
 python_classes = Test*
 python_functions = test_*
-addopts = 
+addopts =
     -v
     --tb=short
     --strict-markers
