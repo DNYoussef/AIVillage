@@ -32437,7 +32437,7 @@
   },
   {
     "title": "Clean up 1 stub implementations in experimental\\agents\\agents\\king\\analytics\\base_analytics.py",
-    "body": "## File: `experimental\\agents\\agents\\king\\analytics\\base_analytics.py`\n\n### Stubs to Fix:\n\n- [ ] Line 33: `generate_analytics_report()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "body": "## File: `experimental\\agents\\agents\\king\\analytics\\base_analytics.py`\n\n### Stubs to Fix:\n\n- [ ] Line 35: `generate_analytics_report()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
     "labels": [
       "technical-debt",
       "cleanup",
@@ -32455,7 +32455,7 @@
   },
   {
     "title": "Clean up 4 stub implementations in mcp_servers\\hyperag\\guardian\\metrics.py",
-    "body": "## File: `mcp_servers\\hyperag\\guardian\\metrics.py`\n\n### Stubs to Fix:\n\n- [ ] Line 23: `inc()` - Empty function with pass\n- [ ] Line 26: `observe()` - Empty function with pass\n- [ ] Line 29: `set()` - Empty function with pass\n- [ ] Line 32: `info()` - Empty function with pass\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "body": "## File: `mcp_servers\\hyperag\\guardian\\metrics.py`\n\n### Stubs to Fix:\n\n- [ ] Line 22: `inc()` - Empty function with pass\n- [ ] Line 25: `observe()` - Empty function with pass\n- [ ] Line 28: `set()` - Empty function with pass\n- [ ] Line 31: `info()` - Empty function with pass\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
     "labels": [
       "technical-debt",
       "cleanup",
@@ -50257,7 +50257,7 @@
   },
   {
     "title": "Clean up 1 stub implementations in production\\rag\\rag_system\\utils\\relation_extraction.py",
-    "body": "## File: `production\\rag\\rag_system\\utils\\relation_extraction.py`\n\n### Stubs to Fix:\n\n- [ ] Line 3: `extract()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "body": "## File: `production\\rag\\rag_system\\utils\\relation_extraction.py`\n\n### Stubs to Fix:\n\n- [ ] Line 2: `extract()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
     "labels": [
       "technical-debt",
       "cleanup",
