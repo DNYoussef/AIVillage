@@ -402,9 +402,11 @@ class FederatedLearningServer:
                 {
                     "round_number": round_info.round_number,
                     "num_clients": len(round_info.participating_clients),
-                    "duration": (round_info.end_time - round_info.start_time)
-                    if round_info.end_time
-                    else None,
+                    "duration": (
+                        (round_info.end_time - round_info.start_time)
+                        if round_info.end_time
+                        else None
+                    ),
                     "metrics": round_info.aggregated_metrics,
                 }
             )

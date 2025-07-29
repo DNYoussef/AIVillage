@@ -5,14 +5,13 @@ Tests the complete distributed infrastructure.
 """
 
 import asyncio
-import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import torch
 
 # Add current directory to path to import our implementations
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(str(Path(__file__).resolve().parent))
 
 # Import our implementations
 from implement_federated_learning import (
@@ -36,9 +35,9 @@ class TestMeshNetworking:
         await simulator.create_network()
 
         # Verify network formed
-        assert len(simulator.nodes) == 5, (
-            f"Expected 5 nodes, got {len(simulator.nodes)}"
-        )
+        assert (
+            len(simulator.nodes) == 5
+        ), f"Expected 5 nodes, got {len(simulator.nodes)}"
 
         # Check connectivity
         total_connections = sum(
@@ -154,9 +153,9 @@ class TestFederatedLearning:
         # Check round completed
         history = server.get_round_history()
         assert len(history) >= 1, "No rounds in history"
-        assert history[0]["num_clients"] >= 2, (
-            f"Expected >= 2 clients, got {history[0]['num_clients']}"
-        )
+        assert (
+            history[0]["num_clients"] >= 2
+        ), f"Expected >= 2 clients, got {history[0]['num_clients']}"
 
         print(f"  - Round completed with {history[0]['num_clients']} clients")
         print(f"  - Duration: {history[0]['duration']:.1f}s")
@@ -168,8 +167,8 @@ class TestFederatedLearning:
         print("Testing federated learning convergence...")
 
         # Create synthetic dataset
-        X = torch.randn(1000, 10)
-        y = (X.sum(dim=1) > 0).long()
+        x_data = torch.randn(1000, 10)
+        y = (x_data.sum(dim=1) > 0).long()
 
         # Create model
         model = torch.nn.Sequential(
@@ -178,7 +177,7 @@ class TestFederatedLearning:
 
         # Get initial performance
         with torch.no_grad():
-            initial_output = model(X)
+            initial_output = model(x_data)
             initial_loss = torch.nn.functional.cross_entropy(initial_output, y)
 
         # Create FL server
@@ -189,9 +188,9 @@ class TestFederatedLearning:
         for i in range(3):
             # Split data among clients
             start_idx = i * 300
-            end_idx = min((i + 1) * 300, len(X))
+            end_idx = min((i + 1) * 300, len(x_data))
             client_data = torch.utils.data.TensorDataset(
-                X[start_idx:end_idx], y[start_idx:end_idx]
+                x_data[start_idx:end_idx], y[start_idx:end_idx]
             )
             dataloader = torch.utils.data.DataLoader(client_data, batch_size=32)
 
@@ -220,7 +219,7 @@ class TestFederatedLearning:
         # Get final performance
         final_model, _ = server.get_current_model()
         with torch.no_grad():
-            final_output = final_model(X)
+            final_output = final_model(x_data)
             final_loss = torch.nn.functional.cross_entropy(final_output, y)
 
         print(f"  - Initial loss: {initial_loss:.4f}")
@@ -228,9 +227,9 @@ class TestFederatedLearning:
         print(f"  - Improvement: {(initial_loss - final_loss):.4f}")
 
         # Verify improvement (or at least no degradation)
-        assert final_loss <= initial_loss + 0.1, (
-            f"Model degraded: {final_loss} > {initial_loss + 0.1}"
-        )
+        assert (
+            final_loss <= initial_loss + 0.1
+        ), f"Model degraded: {final_loss} > {initial_loss + 0.1}"
 
         return True
 
