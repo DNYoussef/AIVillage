@@ -2,10 +2,10 @@ torch==2.3.0
 transformers==4.41.2
 accelerate==0.28.0
 # research repos pinned for reproducibility
--git+https://github.com/SakanaAI/self-adaptive-llms@1b9d1c2
--git+https://github.com/syp2ysy/SVF@9a77be1
--git+https://github.com/VRehnberg/torch-twonn@bda2c1f
--git+https://github.com/ironjr/grokfast@5d6e21c
--git+https://github.com/vandijklab/Intelligence_at_the_edge_of_chaos@c9ce7ce
--git+https://github.com/agencyenterprise/unexpected-benefits-of-self-modeling@7e0f4c8
--git+https://github.com/dream-ai-lab/sleep-dream-net@a3f19b1
+git+https://github.com/SakanaAI/self-adaptive-llms@1b9d1c2
+git+https://github.com/syp2ysy/SVF@9a77be1
+git+https://github.com/VRehnberg/torch-twonn@bda2c1f
+git+https://github.com/ironjr/grokfast@5d6e21c
+git+https://github.com/vandijklab/Intelligence_at_the_edge_of_chaos@c9ce7ce
+git+https://github.com/agencyenterprise/unexpected-benefits-of-self-modeling@7e0f4c8
+git+https://github.com/dream-ai-lab/sleep-dream-net@a3f19b1
