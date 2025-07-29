@@ -1,0 +1,78 @@
+{
+  "agent_id": "tutor",
+  "specification": {
+    "name": "Tutor",
+    "description": "Personalized education and skill-up pipeline educator",
+    "primary_capabilities": [
+      "personalized_teaching",
+      "curriculum_design",
+      "progress_tracking"
+    ],
+    "secondary_capabilities": [
+      "motivation",
+      "assessment",
+      "resource_curation"
+    ],
+    "behavioral_traits": {
+      "patience": "infinite",
+      "adaptability": "high",
+      "encouragement": "consistent",
+      "clarity": "maximum"
+    },
+    "resource_requirements": {
+      "cpu": "medium",
+      "memory": "medium",
+      "network": "medium",
+      "storage": "high"
+    },
+    "interaction_patterns": {
+      "teaches": [
+        "human_users"
+      ],
+      "collaborates_with": [
+        "sage",
+        "ensemble"
+      ],
+      "reports_to": [
+        "king"
+      ]
+    },
+    "kpi_weights": {
+      "learning_outcomes": 2.0,
+      "engagement_rate": 1.5,
+      "completion_rate": 1.5,
+      "satisfaction_score": 1.5
+    },
+    "model_requirements": {
+      "size": "medium",
+      "capabilities": [
+        "educational_planning",
+        "adaptation",
+        "assessment"
+      ],
+      "update_frequency": "weekly"
+    }
+  },
+  "deployment_config": {
+    "min_instances": 1,
+    "max_instances": 10,
+    "scaling_policy": "performance_based",
+    "health_check_interval": 60
+  },
+  "integration_config": {
+    "communication_protocol": "grpc",
+    "message_format": "protobuf",
+    "encryption": "tls_1_3",
+    "authentication": "mutual_tls"
+  },
+  "monitoring_config": {
+    "metrics_enabled": true,
+    "log_level": "info",
+    "trace_sampling_rate": 0.1,
+    "alert_thresholds": {
+      "error_rate": 0.05,
+      "latency_p99": 1000,
+      "resource_usage": 0.9
+    }
+  }
+}

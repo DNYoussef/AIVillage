@@ -1,0 +1,77 @@
+{
+  "agent_id": "shaman",
+  "specification": {
+    "name": "Shaman",
+    "description": "Alignment, psychology, religion, philosophy guide",
+    "primary_capabilities": [
+      "ethical_reasoning",
+      "psychological_analysis",
+      "philosophical_guidance"
+    ],
+    "secondary_capabilities": [
+      "conflict_mediation",
+      "well_being_assessment",
+      "cultural_sensitivity"
+    ],
+    "behavioral_traits": {
+      "empathy_level": "high",
+      "wisdom_approach": "balanced",
+      "communication_style": "compassionate",
+      "perspective": "holistic"
+    },
+    "resource_requirements": {
+      "cpu": "medium",
+      "memory": "medium",
+      "network": "low",
+      "storage": "medium"
+    },
+    "interaction_patterns": {
+      "guides": [
+        "all_agents"
+      ],
+      "mediates_between": [
+        "conflicting_agents"
+      ],
+      "aligns_with": [
+        "human_values"
+      ]
+    },
+    "kpi_weights": {
+      "alignment_score": 2.0,
+      "well_being_impact": 1.5,
+      "conflict_resolution": 1.5,
+      "ethical_compliance": 2.0
+    },
+    "model_requirements": {
+      "size": "medium",
+      "capabilities": [
+        "ethical_reasoning",
+        "empathy",
+        "cultural_understanding"
+      ],
+      "update_frequency": "monthly"
+    }
+  },
+  "deployment_config": {
+    "min_instances": 1,
+    "max_instances": 10,
+    "scaling_policy": "performance_based",
+    "health_check_interval": 60
+  },
+  "integration_config": {
+    "communication_protocol": "grpc",
+    "message_format": "protobuf",
+    "encryption": "tls_1_3",
+    "authentication": "mutual_tls"
+  },
+  "monitoring_config": {
+    "metrics_enabled": true,
+    "log_level": "info",
+    "trace_sampling_rate": 0.1,
+    "alert_thresholds": {
+      "error_rate": 0.05,
+      "latency_p99": 1000,
+      "resource_usage": 0.9
+    }
+  }
+}

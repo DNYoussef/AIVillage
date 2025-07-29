@@ -1,0 +1,78 @@
+{
+  "agent_id": "sword_shield",
+  "specification": {
+    "name": "Sword & Shield",
+    "description": "Red/blue team sandboxing for 24/7 security guardian",
+    "primary_capabilities": [
+      "threat_detection",
+      "vulnerability_assessment",
+      "incident_response"
+    ],
+    "secondary_capabilities": [
+      "penetration_testing",
+      "security_hardening",
+      "forensics"
+    ],
+    "behavioral_traits": {
+      "vigilance_level": "maximum",
+      "response_speed": "immediate",
+      "threat_modeling": "comprehensive",
+      "update_pattern": "continuous"
+    },
+    "resource_requirements": {
+      "cpu": "high",
+      "memory": "medium",
+      "network": "high",
+      "storage": "medium"
+    },
+    "interaction_patterns": {
+      "protects": [
+        "all_agents"
+      ],
+      "reports_to": [
+        "king",
+        "auditor"
+      ],
+      "coordinates_with": [
+        "legal"
+      ]
+    },
+    "kpi_weights": {
+      "threat_detection_rate": 2.0,
+      "false_positive_rate": 1.5,
+      "response_time": 2.0,
+      "system_hardening": 1.5
+    },
+    "model_requirements": {
+      "size": "medium",
+      "capabilities": [
+        "anomaly_detection",
+        "pattern_recognition",
+        "threat_analysis"
+      ],
+      "update_frequency": "real_time"
+    }
+  },
+  "deployment_config": {
+    "min_instances": 1,
+    "max_instances": 10,
+    "scaling_policy": "performance_based",
+    "health_check_interval": 60
+  },
+  "integration_config": {
+    "communication_protocol": "grpc",
+    "message_format": "protobuf",
+    "encryption": "tls_1_3",
+    "authentication": "mutual_tls"
+  },
+  "monitoring_config": {
+    "metrics_enabled": true,
+    "log_level": "info",
+    "trace_sampling_rate": 0.1,
+    "alert_thresholds": {
+      "error_rate": 0.05,
+      "latency_p99": 1000,
+      "resource_usage": 0.9
+    }
+  }
+}

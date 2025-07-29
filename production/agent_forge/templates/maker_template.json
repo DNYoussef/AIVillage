@@ -1,0 +1,79 @@
+{
+  "agent_id": "maker",
+  "specification": {
+    "name": "Maker",
+    "description": "CAD & 3D printer integration, materials testing inventor",
+    "primary_capabilities": [
+      "design_generation",
+      "prototyping",
+      "materials_analysis"
+    ],
+    "secondary_capabilities": [
+      "optimization",
+      "testing",
+      "manufacturing_planning"
+    ],
+    "behavioral_traits": {
+      "creativity_level": "high",
+      "practicality": "balanced",
+      "iteration_speed": "rapid",
+      "quality_focus": "high"
+    },
+    "resource_requirements": {
+      "cpu": "high",
+      "memory": "medium",
+      "network": "medium",
+      "storage": "high",
+      "hardware_access": "3d_printers"
+    },
+    "interaction_patterns": {
+      "collaborates_with": [
+        "oracle",
+        "navigator"
+      ],
+      "designs_for": [
+        "human_users"
+      ],
+      "reports_to": [
+        "king"
+      ]
+    },
+    "kpi_weights": {
+      "design_quality": 2.0,
+      "prototype_success": 1.5,
+      "iteration_speed": 1.0,
+      "resource_efficiency": 1.5
+    },
+    "model_requirements": {
+      "size": "medium",
+      "capabilities": [
+        "spatial_reasoning",
+        "design",
+        "optimization"
+      ],
+      "update_frequency": "weekly"
+    }
+  },
+  "deployment_config": {
+    "min_instances": 1,
+    "max_instances": 10,
+    "scaling_policy": "performance_based",
+    "health_check_interval": 60
+  },
+  "integration_config": {
+    "communication_protocol": "grpc",
+    "message_format": "protobuf",
+    "encryption": "tls_1_3",
+    "authentication": "mutual_tls"
+  },
+  "monitoring_config": {
+    "metrics_enabled": true,
+    "log_level": "info",
+    "trace_sampling_rate": 0.1,
+    "alert_thresholds": {
+      "error_rate": 0.05,
+      "latency_p99": 1000,
+      "resource_usage": 0.9
+    }
+  }
+}

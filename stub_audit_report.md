@@ -1,8 +1,8 @@
 # Stub Implementation Audit
 
-Total stubs found: 15867
+Total stubs found: 15871
 
-## Empty function with pass (6480)
+## Empty function with pass (6483)
 
 - `communications\protocol.py:57` - subscribe()
 - `tests\conftest_root.py:112` - step()
@@ -1217,6 +1217,8 @@ Total stubs found: 15867
 - `evomerge_env\Lib\site-packages\cffi\vengine_gen.py:127` - _loaded_noop()
 - `evomerge_env\Lib\site-packages\click\core.py:2412` - get_help_record()
 - `evomerge_env\Lib\site-packages\click\utils.py:204` - __exit__()
+- `evomerge_env\Lib\site-packages\coverage\debug.py:194` - short_filename()
+- `evomerge_env\Lib\site-packages\coverage\debug.py:198` - short_filename()
 - `evomerge_env\Lib\site-packages\dill\_objects.py:77` - _method()
 - `evomerge_env\Lib\site-packages\dill\_objects.py:86` - __call__()
 - `evomerge_env\Lib\site-packages\dill\_objects.py:90` - _method()
@@ -1315,6 +1317,7 @@ Total stubs found: 15867
 - `evomerge_env\Lib\site-packages\pyreadline3\rlmain.py:447` - redisplay()
 - `evomerge_env\Lib\site-packages\pyreadline3\rlmain.py:582` - nop()
 - `evomerge_env\Lib\site-packages\pytest_benchmark\cli.py:174` - ensure_newline()
+- `evomerge_env\Lib\site-packages\pytest_cov\engine.py:32` - write()
 - `evomerge_env\Lib\site-packages\python_multipart\multipart.py:646` - close()
 - `evomerge_env\Lib\site-packages\python_multipart\multipart.py:649` - finalize()
 - `evomerge_env\Lib\site-packages\python_multipart\multipart.py:1589` - on_field_start()
@@ -6484,7 +6487,7 @@ Total stubs found: 15867
 - `new_env\Lib\site-packages\_pytest\mark\structures.py:347` - __call__()
 - `tests\core\test_chat_engine.py:9` - raise_for_status()
 - `tests\rag_system\test_hypergraph_schema.py:34` - run_cypher_migrations()
-## Raises NotImplementedError (9387)
+## Raises NotImplementedError (9388)
 
 - `.test_repair_backup\new_env\Lib\site-packages\absl\app.py:453` - handle()
 - `.test_repair_backup\new_env\Lib\site-packages\accelerate\accelerator.py:247` - __init__()
@@ -8010,6 +8013,7 @@ Total stubs found: 15867
 - `evomerge_env\Lib\site-packages\click\core.py:2201` - _parse_decls()
 - `evomerge_env\Lib\site-packages\click\core.py:2272` - add_to_parser()
 - `evomerge_env\Lib\site-packages\click\types.py:160` - arity()
+- `evomerge_env\Lib\site-packages\coverage\misc.py:199` - _needs_to_implement()
 - `evomerge_env\Lib\site-packages\datasets\arrow_dataset.py:329` - to_tf_dataset()
 - `evomerge_env\Lib\site-packages\datasets\arrow_dataset.py:5358` - to_iterable_dataset()
 - `evomerge_env\Lib\site-packages\datasets\arrow_dataset.py:5622` - push_to_hub()

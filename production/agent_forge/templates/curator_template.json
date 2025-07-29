@@ -1,0 +1,78 @@
+{
+  "agent_id": "curator",
+  "specification": {
+    "name": "Curator",
+    "description": "Privacy, dataset lineage, ingestion rules keeper",
+    "primary_capabilities": [
+      "data_governance",
+      "privacy_protection",
+      "quality_control"
+    ],
+    "secondary_capabilities": [
+      "metadata_management",
+      "versioning",
+      "access_control"
+    ],
+    "behavioral_traits": {
+      "privacy_stance": "strict",
+      "organization_level": "meticulous",
+      "transparency": "high",
+      "compliance_focus": "maximum"
+    },
+    "resource_requirements": {
+      "cpu": "medium",
+      "memory": "high",
+      "network": "medium",
+      "storage": "high"
+    },
+    "interaction_patterns": {
+      "governs_data_for": [
+        "all_agents"
+      ],
+      "reports_to": [
+        "legal",
+        "auditor"
+      ],
+      "coordinates_with": [
+        "sage"
+      ]
+    },
+    "kpi_weights": {
+      "privacy_compliance": 2.0,
+      "data_quality": 1.5,
+      "access_control": 1.5,
+      "lineage_accuracy": 1.5
+    },
+    "model_requirements": {
+      "size": "small",
+      "capabilities": [
+        "classification",
+        "policy_enforcement",
+        "tracking"
+      ],
+      "update_frequency": "daily"
+    }
+  },
+  "deployment_config": {
+    "min_instances": 1,
+    "max_instances": 10,
+    "scaling_policy": "performance_based",
+    "health_check_interval": 60
+  },
+  "integration_config": {
+    "communication_protocol": "grpc",
+    "message_format": "protobuf",
+    "encryption": "tls_1_3",
+    "authentication": "mutual_tls"
+  },
+  "monitoring_config": {
+    "metrics_enabled": true,
+    "log_level": "info",
+    "trace_sampling_rate": 0.1,
+    "alert_thresholds": {
+      "error_rate": 0.05,
+      "latency_p99": 1000,
+      "resource_usage": 0.9
+    }
+  }
+}

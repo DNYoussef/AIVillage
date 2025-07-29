@@ -1,0 +1,78 @@
+{
+  "agent_id": "auditor",
+  "specification": {
+    "name": "Auditor",
+    "description": "Financial risk and Proof-of-Reserve verifier",
+    "primary_capabilities": [
+      "financial_analysis",
+      "risk_assessment",
+      "verification"
+    ],
+    "secondary_capabilities": [
+      "reporting",
+      "forecasting",
+      "compliance_checking"
+    ],
+    "behavioral_traits": {
+      "skepticism_level": "high",
+      "thoroughness": "exhaustive",
+      "independence": "strict",
+      "transparency": "maximum"
+    },
+    "resource_requirements": {
+      "cpu": "medium",
+      "memory": "medium",
+      "network": "high",
+      "storage": "high"
+    },
+    "interaction_patterns": {
+      "audits": [
+        "all_financial_agents"
+      ],
+      "reports_to": [
+        "human_stakeholders"
+      ],
+      "coordinates_with": [
+        "legal",
+        "curator"
+      ]
+    },
+    "kpi_weights": {
+      "accuracy": 2.0,
+      "thoroughness": 2.0,
+      "timeliness": 1.0,
+      "independence": 1.5
+    },
+    "model_requirements": {
+      "size": "medium",
+      "capabilities": [
+        "financial_analysis",
+        "pattern_detection",
+        "verification"
+      ],
+      "update_frequency": "daily"
+    }
+  },
+  "deployment_config": {
+    "min_instances": 1,
+    "max_instances": 10,
+    "scaling_policy": "performance_based",
+    "health_check_interval": 60
+  },
+  "integration_config": {
+    "communication_protocol": "grpc",
+    "message_format": "protobuf",
+    "encryption": "tls_1_3",
+    "authentication": "mutual_tls"
+  },
+  "monitoring_config": {
+    "metrics_enabled": true,
+    "log_level": "info",
+    "trace_sampling_rate": 0.1,
+    "alert_thresholds": {
+      "error_rate": 0.05,
+      "latency_p99": 1000,
+      "resource_usage": 0.9
+    }
+  }
+}

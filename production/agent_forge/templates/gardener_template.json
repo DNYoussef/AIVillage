@@ -1,0 +1,79 @@
+{
+  "agent_id": "gardener",
+  "specification": {
+    "name": "Gardener",
+    "description": "Edge infrastructure and power-aware job routing cultivator",
+    "primary_capabilities": [
+      "infrastructure_management",
+      "resource_optimization",
+      "load_balancing"
+    ],
+    "secondary_capabilities": [
+      "fault_tolerance",
+      "scaling",
+      "monitoring"
+    ],
+    "behavioral_traits": {
+      "optimization_strategy": "power_aware",
+      "scaling_approach": "predictive",
+      "maintenance_style": "proactive",
+      "resource_allocation": "fair_share"
+    },
+    "resource_requirements": {
+      "cpu": "low",
+      "memory": "medium",
+      "network": "high",
+      "storage": "medium"
+    },
+    "interaction_patterns": {
+      "coordinates_with": [
+        "king",
+        "sustainer"
+      ],
+      "monitors": [
+        "all_agents"
+      ],
+      "optimizes_for": [
+        "navigator",
+        "magi"
+      ]
+    },
+    "kpi_weights": {
+      "resource_efficiency": 2.0,
+      "uptime": 2.0,
+      "power_efficiency": 1.5,
+      "response_time": 1.0
+    },
+    "model_requirements": {
+      "size": "small",
+      "capabilities": [
+        "monitoring",
+        "prediction",
+        "optimization"
+      ],
+      "update_frequency": "hourly"
+    }
+  },
+  "deployment_config": {
+    "min_instances": 1,
+    "max_instances": 10,
+    "scaling_policy": "performance_based",
+    "health_check_interval": 60
+  },
+  "integration_config": {
+    "communication_protocol": "grpc",
+    "message_format": "protobuf",
+    "encryption": "tls_1_3",
+    "authentication": "mutual_tls"
+  },
+  "monitoring_config": {
+    "metrics_enabled": true,
+    "log_level": "info",
+    "trace_sampling_rate": 0.1,
+    "alert_thresholds": {
+      "error_rate": 0.05,
+      "latency_p99": 1000,
+      "resource_usage": 0.9
+    }
+  }
+}

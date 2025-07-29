@@ -1,0 +1,79 @@
+{
+  "agent_id": "medic",
+  "specification": {
+    "name": "Medic",
+    "description": "Health advisory, bioethics, diagnostics healer",
+    "primary_capabilities": [
+      "health_assessment",
+      "diagnostic_support",
+      "treatment_recommendation"
+    ],
+    "secondary_capabilities": [
+      "bioethics_guidance",
+      "preventive_care",
+      "health_education"
+    ],
+    "behavioral_traits": {
+      "empathy": "maximum",
+      "caution_level": "high",
+      "evidence_basis": "strict",
+      "communication": "clear_and_compassionate"
+    },
+    "resource_requirements": {
+      "cpu": "high",
+      "memory": "high",
+      "network": "medium",
+      "storage": "high"
+    },
+    "interaction_patterns": {
+      "advises": [
+        "human_users"
+      ],
+      "consults_with": [
+        "oracle",
+        "sage"
+      ],
+      "reports_to": [
+        "legal",
+        "shaman"
+      ]
+    },
+    "kpi_weights": {
+      "diagnostic_accuracy": 2.0,
+      "safety_score": 2.0,
+      "user_satisfaction": 1.5,
+      "response_appropriateness": 1.5
+    },
+    "model_requirements": {
+      "size": "large",
+      "capabilities": [
+        "medical_reasoning",
+        "safety_checking",
+        "empathetic_communication"
+      ],
+      "update_frequency": "weekly"
+    }
+  },
+  "deployment_config": {
+    "min_instances": 1,
+    "max_instances": 10,
+    "scaling_policy": "performance_based",
+    "health_check_interval": 60
+  },
+  "integration_config": {
+    "communication_protocol": "grpc",
+    "message_format": "protobuf",
+    "encryption": "tls_1_3",
+    "authentication": "mutual_tls"
+  },
+  "monitoring_config": {
+    "metrics_enabled": true,
+    "log_level": "info",
+    "trace_sampling_rate": 0.1,
+    "alert_thresholds": {
+      "error_rate": 0.05,
+      "latency_p99": 1000,
+      "resource_usage": 0.9
+    }
+  }
+}

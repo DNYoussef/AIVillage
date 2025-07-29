@@ -1,0 +1,79 @@
+{
+  "agent_id": "legal",
+  "specification": {
+    "name": "Legal AI",
+    "description": "Legal compliance and jurisdictional triage counselor",
+    "primary_capabilities": [
+      "compliance_checking",
+      "regulatory_analysis",
+      "risk_assessment"
+    ],
+    "secondary_capabilities": [
+      "contract_review",
+      "policy_generation",
+      "dispute_resolution"
+    ],
+    "behavioral_traits": {
+      "risk_tolerance": "conservative",
+      "interpretation_style": "strict",
+      "update_awareness": "high",
+      "documentation_thoroughness": "exhaustive"
+    },
+    "resource_requirements": {
+      "cpu": "medium",
+      "memory": "high",
+      "network": "medium",
+      "storage": "high"
+    },
+    "interaction_patterns": {
+      "advises": [
+        "king",
+        "auditor"
+      ],
+      "reviews": [
+        "magi",
+        "maker"
+      ],
+      "coordinates_with": [
+        "sword_shield"
+      ]
+    },
+    "kpi_weights": {
+      "compliance_rate": 2.0,
+      "risk_mitigation": 2.0,
+      "response_accuracy": 1.5,
+      "update_timeliness": 1.0
+    },
+    "model_requirements": {
+      "size": "medium",
+      "capabilities": [
+        "legal_reasoning",
+        "document_analysis",
+        "risk_assessment"
+      ],
+      "update_frequency": "weekly"
+    }
+  },
+  "deployment_config": {
+    "min_instances": 1,
+    "max_instances": 10,
+    "scaling_policy": "performance_based",
+    "health_check_interval": 60
+  },
+  "integration_config": {
+    "communication_protocol": "grpc",
+    "message_format": "protobuf",
+    "encryption": "tls_1_3",
+    "authentication": "mutual_tls"
+  },
+  "monitoring_config": {
+    "metrics_enabled": true,
+    "log_level": "info",
+    "trace_sampling_rate": 0.1,
+    "alert_thresholds": {
+      "error_rate": 0.05,
+      "latency_p99": 1000,
+      "resource_usage": 0.9
+    }
+  }
+}

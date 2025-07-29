@@ -7785,6 +7785,24 @@
     ]
   },
   {
+    "title": "Clean up 2 stub implementations in evomerge_env\\Lib\\site-packages\\coverage\\debug.py",
+    "body": "## File: `evomerge_env\\Lib\\site-packages\\coverage\\debug.py`\n\n### Stubs to Fix:\n\n- [ ] Line 194: `short_filename()` - Empty function with pass\n- [ ] Line 198: `short_filename()` - Empty function with pass\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "labels": [
+      "technical-debt",
+      "cleanup",
+      "sprint-1"
+    ]
+  },
+  {
+    "title": "Clean up 1 stub implementations in evomerge_env\\Lib\\site-packages\\coverage\\misc.py",
+    "body": "## File: `evomerge_env\\Lib\\site-packages\\coverage\\misc.py`\n\n### Stubs to Fix:\n\n- [ ] Line 199: `_needs_to_implement()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "labels": [
+      "technical-debt",
+      "cleanup",
+      "sprint-1"
+    ]
+  },
+  {
     "title": "Clean up 3 stub implementations in evomerge_env\\Lib\\site-packages\\datasets\\arrow_dataset.py",
     "body": "## File: `evomerge_env\\Lib\\site-packages\\datasets\\arrow_dataset.py`\n\n### Stubs to Fix:\n\n- [ ] Line 329: `to_tf_dataset()` - Raises NotImplementedError\n- [ ] Line 5358: `to_iterable_dataset()` - Raises NotImplementedError\n- [ ] Line 5622: `push_to_hub()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
     "labels": [
@@ -9236,6 +9254,15 @@
   {
     "title": "Clean up 1 stub implementations in evomerge_env\\Lib\\site-packages\\pytest_benchmark\\plugin.py",
     "body": "## File: `evomerge_env\\Lib\\site-packages\\pytest_benchmark\\plugin.py`\n\n### Stubs to Fix:\n\n- [ ] Line 346: `pytest_benchmark_group_stats()` - Raises NotImplementedError\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
+    "labels": [
+      "technical-debt",
+      "cleanup",
+      "sprint-1"
+    ]
+  },
+  {
+    "title": "Clean up 1 stub implementations in evomerge_env\\Lib\\site-packages\\pytest_cov\\engine.py",
+    "body": "## File: `evomerge_env\\Lib\\site-packages\\pytest_cov\\engine.py`\n\n### Stubs to Fix:\n\n- [ ] Line 32: `write()` - Empty function with pass\n\n### Acceptance Criteria:\n- [ ] All misleading implementations replaced with clear NotImplementedError\n- [ ] Each NotImplementedError includes tracking issue URL\n- [ ] Documentation updated to reflect actual status\n",
     "labels": [
       "technical-debt",
       "cleanup",
