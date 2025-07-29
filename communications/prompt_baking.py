@@ -14,7 +14,7 @@ class PromptBank(nn.Module):
         self.tokenizer = AutoTokenizer.from_pretrained(
             tokenizer_name,
             revision="main",  # Pin to main branch for security
-            trust_remote_code=False  # Disable remote code execution
+            trust_remote_code=False,  # Disable remote code execution
         )
         token_ids = self.tokenizer(prompt_text)["input_ids"]
         self.register_buffer("prompt_ids", torch.tensor(token_ids))

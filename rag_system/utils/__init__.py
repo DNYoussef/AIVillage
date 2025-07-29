@@ -1,5 +1,4 @@
-"""RAG System utilities stub.
-"""
+"""RAG System utilities stub."""
 
 from .logging import get_logger, setup_logger
 

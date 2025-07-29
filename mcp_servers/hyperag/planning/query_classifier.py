@@ -34,7 +34,7 @@ class QueryClassifier:
             QueryType.META_KNOWLEDGE: 0.85,
             QueryType.AGGREGATION: 0.75,
             QueryType.MULTI_HOP: 0.6,
-            QueryType.HYPOTHETICAL: 0.8
+            QueryType.HYPOTHETICAL: 0.8,
         }
 
     def classify_query(self, query: str) -> tuple[QueryType, float, dict[str, Any]]:
@@ -52,7 +52,7 @@ class QueryClassifier:
             "normalized_query": query_lower,
             "pattern_matches": {},
             "complexity_indicators": [],
-            "reasoning_hints": []
+            "reasoning_hints": [],
         }
 
         # Score each query type
@@ -126,13 +126,16 @@ class QueryClassifier:
         analysis["final_type"] = query_type.value
         analysis["final_confidence"] = confidence
 
-        logger.debug(f"Classified query '{query[:50]}...' as {query_type.value} "
-                    f"with confidence {confidence:.3f}")
+        logger.debug(
+            f"Classified query '{query[:50]}...' as {query_type.value} "
+            f"with confidence {confidence:.3f}"
+        )
 
         return query_type, confidence, analysis
 
-    def suggest_strategy(self, query_type: QueryType,
-                        complexity_score: float) -> ReasoningStrategy:
+    def suggest_strategy(
+        self, query_type: QueryType, complexity_score: float
+    ) -> ReasoningStrategy:
         """Suggest reasoning strategy based on query type and complexity"""
         strategy_map = {
             QueryType.SIMPLE_FACT: ReasoningStrategy.DIRECT_RETRIEVAL,
@@ -142,7 +145,7 @@ class QueryClassifier:
             QueryType.META_KNOWLEDGE: ReasoningStrategy.META_REASONING,
             QueryType.AGGREGATION: ReasoningStrategy.GRAPH_TRAVERSAL,
             QueryType.HYPOTHETICAL: ReasoningStrategy.STEP_BY_STEP,
-            QueryType.MULTI_HOP: ReasoningStrategy.STEP_BY_STEP
+            QueryType.MULTI_HOP: ReasoningStrategy.STEP_BY_STEP,
         }
 
         base_strategy = strategy_map.get(query_type, ReasoningStrategy.DIRECT_RETRIEVAL)
@@ -161,7 +164,7 @@ class QueryClassifier:
             r"\b(timeline|chronology|sequence|order|history)\b",
             r"\b(\d{4}|\d{1,2}/\d{1,2}/\d{4}|january|february|march|april|may|june|july|august|september|october|november|december)\b",
             r"\b(yesterday|today|tomorrow|recently|currently)\b",
-            r"\b(then|now|eventually|finally|initially)\b"
+            r"\b(then|now|eventually|finally|initially)\b",
         ]
 
     def _build_causal_patterns(self) -> list[str]:
@@ -172,7 +175,7 @@ class QueryClassifier:
             r"\b(lead to|leads to|led to|due to|thanks to)\b",
             r"\b(therefore|thus|hence|consequently|as a result)\b",
             r"\b(trigger|triggered|triggers|enable|enables|prevent|prevents)\b",
-            r"\b(explain|explanation|responsible for|blame)\b"
+            r"\b(explain|explanation|responsible for|blame)\b",
         ]
 
     def _build_comparative_patterns(self) -> list[str]:
@@ -183,7 +186,7 @@ class QueryClassifier:
             r"\b(better|worse|best|worst|more|less|most|least)\b",
             r"\b(higher|lower|greater|smaller|larger)\b",
             r"\b(advantage|disadvantage|pros|cons|benefits|drawbacks)\b",
-            r"\b(alternative|alternatives|option|options|choice|choices)\b"
+            r"\b(alternative|alternatives|option|options|choice|choices)\b",
         ]
 
     def _build_meta_patterns(self) -> list[str]:
@@ -194,7 +197,7 @@ class QueryClassifier:
             r"\b(source|sources|reference|references|citation|evidence)\b",
             r"\b(confidence|certainty|reliability|credibility|trust)\b",
             r"\b(knowledge|data|information|facts|details)\b",
-            r"\b(summarize|summary|overview|explain|describe)\b"
+            r"\b(summarize|summary|overview|explain|describe)\b",
         ]
 
     def _build_aggregation_patterns(self) -> list[str]:
@@ -204,7 +207,7 @@ class QueryClassifier:
             r"\b(all|every|each|any|none|some|many|few)\b",
             r"\b(list|listing|enumerate|show me all|find all)\b",
             r"\b(statistics|stats|numbers|data|metrics)\b",
-            r"\b(how many|how much|percentage|proportion|ratio)\b"
+            r"\b(how many|how much|percentage|proportion|ratio)\b",
         ]
 
     def _build_complexity_indicators(self) -> list[str]:
@@ -215,7 +218,7 @@ class QueryClassifier:
             r"\b(multiple|several|various|different|numerous)\b",
             r"\?.*\?",  # Multiple questions
             r"\b(step by step|process|procedure|method|approach)\b",
-            r"\b(analyze|analysis|evaluate|assessment|review)\b"
+            r"\b(analyze|analysis|evaluate|assessment|review)\b",
         ]
 
     def _check_temporal_patterns(self, query: str) -> float:
@@ -244,7 +247,7 @@ class QueryClassifier:
             r"\b(what if|suppose|assuming|imagine|hypothetically)\b",
             r"\b(would|could|might|may|should)\b",
             r"\b(scenario|situation|case|example|instance)\b",
-            r"\b(predict|prediction|forecast|estimate)\b"
+            r"\b(predict|prediction|forecast|estimate)\b",
         ]
         return self._pattern_score(query, hypothetical_patterns)
 
@@ -254,14 +257,14 @@ class QueryClassifier:
             r"\b(related to|connected to|associated with|linked to)\b",
             r"\b(through|via|by way of|using|utilizing)\b",
             r"\b(network|graph|relationship|connection|link)\b",
-            r"\b(indirect|intermediate|pathway|route|chain)\b"
+            r"\b(indirect|intermediate|pathway|route|chain)\b",
         ]
 
         # Also check for complex sentence structure
         complex_score = 0.0
         if len(query.split(",")) > 2:  # Multiple clauses
             complex_score += 0.3
-        if len(query.split()) > 15:    # Long query
+        if len(query.split()) > 15:  # Long query
             complex_score += 0.2
 
         pattern_score = self._pattern_score(query, multihop_patterns)
@@ -287,7 +290,9 @@ class QueryClassifier:
 
         return min(density + coverage, 1.0)
 
-    def _calculate_complexity(self, query: str, type_scores: dict[QueryType, float]) -> float:
+    def _calculate_complexity(
+        self, query: str, type_scores: dict[QueryType, float]
+    ) -> float:
         """Calculate overall query complexity score"""
         base_complexity = 0.1
 
@@ -314,7 +319,7 @@ class QueryClassifier:
             QueryType.META_KNOWLEDGE: 0.3,
             QueryType.AGGREGATION: 0.4,
             QueryType.MULTI_HOP: 0.8,
-            QueryType.HYPOTHETICAL: 0.7
+            QueryType.HYPOTHETICAL: 0.7,
         }
 
         if type_scores:
@@ -337,39 +342,49 @@ class QueryClassifier:
         query_lower = query.lower()
 
         if query_type == QueryType.TEMPORAL_ANALYSIS:
-            hints.extend([
-                "Consider temporal ordering of events",
-                "Look for time-based relationships",
-                "Check for chronological dependencies"
-            ])
+            hints.extend(
+                [
+                    "Consider temporal ordering of events",
+                    "Look for time-based relationships",
+                    "Check for chronological dependencies",
+                ]
+            )
 
         elif query_type == QueryType.CAUSAL_CHAIN:
-            hints.extend([
-                "Identify cause-effect relationships",
-                "Look for causal mechanisms",
-                "Consider multiple causal factors"
-            ])
+            hints.extend(
+                [
+                    "Identify cause-effect relationships",
+                    "Look for causal mechanisms",
+                    "Consider multiple causal factors",
+                ]
+            )
 
         elif query_type == QueryType.COMPARATIVE:
-            hints.extend([
-                "Gather comparable entities",
-                "Identify comparison dimensions",
-                "Look for contrasting features"
-            ])
+            hints.extend(
+                [
+                    "Gather comparable entities",
+                    "Identify comparison dimensions",
+                    "Look for contrasting features",
+                ]
+            )
 
         elif query_type == QueryType.META_KNOWLEDGE:
-            hints.extend([
-                "Consider knowledge sources",
-                "Evaluate information confidence",
-                "Provide context and explanations"
-            ])
+            hints.extend(
+                [
+                    "Consider knowledge sources",
+                    "Evaluate information confidence",
+                    "Provide context and explanations",
+                ]
+            )
 
         elif query_type == QueryType.MULTI_HOP:
-            hints.extend([
-                "Plan multi-step reasoning path",
-                "Consider intermediate results",
-                "Build evidence chain"
-            ])
+            hints.extend(
+                [
+                    "Plan multi-step reasoning path",
+                    "Consider intermediate results",
+                    "Build evidence chain",
+                ]
+            )
 
         # Add specific hints based on query content
         if "uncertainty" in query_lower or "confidence" in query_lower:

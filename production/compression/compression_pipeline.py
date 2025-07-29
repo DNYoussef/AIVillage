@@ -39,14 +39,14 @@ from .compression.stage1_bitnet import (
 )
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # ============================================================================
 # Configuration
 # ============================================================================
+
 
 class CompressionConfig(BaseModel):
     """Configuration for the compression pipeline"""
@@ -63,11 +63,15 @@ class CompressionConfig(BaseModel):
     bitnet_warmup_ratio: float = Field(default=0.4, ge=0.0, le=1.0)
 
     # Calibration dataset
-    calibration_dataset: str = Field(default="wikitext", description="Dataset for calibration")
+    calibration_dataset: str = Field(
+        default="wikitext", description="Dataset for calibration"
+    )
     calibration_samples: int = Field(default=1000, ge=100, le=10000)
 
     # Evaluation configuration
-    eval_before_after: bool = Field(default=True, description="Evaluate before/after compression")
+    eval_before_after: bool = Field(
+        default=True, description="Evaluate before/after compression"
+    )
     eval_samples: int = Field(default=100, ge=10, le=500)
     eval_datasets: list[str] = Field(default_factory=lambda: ["gsm8k"])
 
@@ -86,9 +90,11 @@ class CompressionConfig(BaseModel):
             return "cuda" if torch.cuda.is_available() else "cpu"
         return v
 
+
 # ============================================================================
 # Model Analysis
 # ============================================================================
+
 
 class ModelAnalyzer:
     """Analyzes model characteristics for optimal compression"""
@@ -107,7 +113,7 @@ class ModelAnalyzer:
             "layer_count": 0,
             "hidden_size": 0,
             "vocab_size": 0,
-            "compression_potential": 0.0
+            "compression_potential": 0.0,
         }
 
         # Count parameters by type
@@ -131,12 +137,18 @@ class ModelAnalyzer:
         # Estimate compression potential (linear layers compress best)
         if analysis["total_parameters"] > 0:
             linear_ratio = analysis["linear_parameters"] / analysis["total_parameters"]
-            analysis["compression_potential"] = linear_ratio * 0.8  # ~80% reduction for linear layers
+            analysis["compression_potential"] = (
+                linear_ratio * 0.8
+            )  # ~80% reduction for linear layers
 
         logger.info("Model Analysis:")
         logger.info(f"  Total Parameters: {analysis['total_parameters']:,}")
-        logger.info(f"  Linear Parameters: {analysis['linear_parameters']:,} ({analysis['linear_parameters']/analysis['total_parameters']*100:.1f}%)")
-        logger.info(f"  Compression Potential: {analysis['compression_potential']*100:.1f}%")
+        logger.info(
+            f"  Linear Parameters: {analysis['linear_parameters']:,} ({analysis['linear_parameters'] / analysis['total_parameters'] * 100:.1f}%)"
+        )
+        logger.info(
+            f"  Compression Potential: {analysis['compression_potential'] * 100:.1f}%"
+        )
 
         return analysis
 
@@ -161,9 +173,9 @@ class ModelAnalyzer:
 
         # Ternary weights: ~0.25 bytes per param + scaling factors
         bitnet_size_mb = (
-            (linear_params * 0.25) +  # Ternary weights
-            (linear_params * 2 / 8) +  # Scaling factors (FP16)
-            (other_params * 2)  # Other params remain FP16
+            (linear_params * 0.25)  # Ternary weights
+            + (linear_params * 2 / 8)  # Scaling factors (FP16)
+            + (other_params * 2)  # Other params remain FP16
         ) / (1024**2)
 
         compression_ratio = fp16_size_mb / bitnet_size_mb if bitnet_size_mb > 0 else 1.0
@@ -173,7 +185,7 @@ class ModelAnalyzer:
             "fp16_mb": fp16_size_mb,
             "bitnet_mb": bitnet_size_mb,
             "compression_ratio": compression_ratio,
-            "memory_savings_mb": fp16_size_mb - bitnet_size_mb
+            "memory_savings_mb": fp16_size_mb - bitnet_size_mb,
         }
 
         logger.info("Memory Estimation:")
@@ -184,9 +196,11 @@ class ModelAnalyzer:
 
         return memory_usage
 
+
 # ============================================================================
 # Evaluation Suite
 # ============================================================================
+
 
 class CompressionEvaluator:
     """Evaluates model performance before/after compression"""
@@ -195,8 +209,9 @@ class CompressionEvaluator:
         self.config = config
         self.device = torch.device(config.device)
 
-    async def evaluate_model(self, model: nn.Module, tokenizer,
-                           model_name: str = "model") -> dict[str, float]:
+    async def evaluate_model(
+        self, model: nn.Module, tokenizer, model_name: str = "model"
+    ) -> dict[str, float]:
         """Evaluate model on configured datasets"""
         model.eval()
         results = {}
@@ -222,7 +237,7 @@ class CompressionEvaluator:
         try:
             # Load dataset
             dataset = load_dataset("gsm8k", "main", split="test")
-            samples = list(dataset)[:self.config.eval_samples]
+            samples = list(dataset)[: self.config.eval_samples]
 
             correct = 0
             total = len(samples)
@@ -248,11 +263,13 @@ class CompressionEvaluator:
                         max_new_tokens=100,
                         temperature=0.1,
                         do_sample=True,
-                        pad_token_id=tokenizer.eos_token_id
+                        pad_token_id=tokenizer.eos_token_id,
                     )
 
-                    response = tokenizer.decode(generated[0][inputs.input_ids.shape[1]:],
-                                             skip_special_tokens=True)
+                    response = tokenizer.decode(
+                        generated[0][inputs.input_ids.shape[1] :],
+                        skip_special_tokens=True,
+                    )
 
                     # Check if answer is correct
                     if target_answer in response:
@@ -268,7 +285,7 @@ class CompressionEvaluator:
         """Evaluate on MATH dataset"""
         try:
             dataset = load_dataset("hendrycks/math", split="test")
-            samples = list(dataset)[:self.config.eval_samples]
+            samples = list(dataset)[: self.config.eval_samples]
 
             correct = 0
             total = len(samples)
@@ -287,11 +304,13 @@ class CompressionEvaluator:
                         max_new_tokens=150,
                         temperature=0.1,
                         do_sample=True,
-                        pad_token_id=tokenizer.eos_token_id
+                        pad_token_id=tokenizer.eos_token_id,
                     )
 
-                    response = tokenizer.decode(generated[0][inputs.input_ids.shape[1]:],
-                                             skip_special_tokens=True)
+                    response = tokenizer.decode(
+                        generated[0][inputs.input_ids.shape[1] :],
+                        skip_special_tokens=True,
+                    )
 
                     # Simple correctness check (could be improved)
                     if self.extract_final_answer(solution) in response:
@@ -306,6 +325,7 @@ class CompressionEvaluator:
     def extract_final_answer(self, solution: str) -> str:
         """Extract final answer from MATH solution"""
         import re
+
         boxed_pattern = r"\\boxed\{([^}]+)\}"
         match = re.search(boxed_pattern, solution)
 
@@ -316,14 +336,18 @@ class CompressionEvaluator:
         numbers = re.findall(r"-?\d+\.?\d*", solution)
         return numbers[-1] if numbers else ""
 
+
 # ============================================================================
 # Calibration Dataset
 # ============================================================================
 
+
 class CalibrationDataset:
     """Creates calibration dataset for compression"""
 
-    def __init__(self, dataset_name: str, num_samples: int, tokenizer, max_length: int = 512):
+    def __init__(
+        self, dataset_name: str, num_samples: int, tokenizer, max_length: int = 512
+    ):
         self.tokenizer = tokenizer
         self.max_length = max_length
 
@@ -358,7 +382,7 @@ class CalibrationDataset:
             return [
                 "The quick brown fox jumps over the lazy dog. This is a test sentence for model calibration.",
                 "Machine learning models require careful calibration to achieve optimal performance in production environments.",
-                "Natural language processing has revolutionized how we interact with artificial intelligence systems."
+                "Natural language processing has revolutionized how we interact with artificial intelligence systems.",
             ] * (num_samples // 3 + 1)
 
     def load_openwebtext(self, num_samples: int) -> list[str]:
@@ -391,22 +415,26 @@ class CalibrationDataset:
                 truncation=True,
                 padding="max_length",
                 max_length=self.max_length,
-                return_tensors="pt"
+                return_tensors="pt",
             )
 
             # For language modeling, labels = input_ids
             encoding["labels"] = encoding["input_ids"].clone()
-            encoded_examples.append({
-                "input_ids": encoding["input_ids"].squeeze(),
-                "attention_mask": encoding["attention_mask"].squeeze(),
-                "labels": encoding["labels"].squeeze()
-            })
+            encoded_examples.append(
+                {
+                    "input_ids": encoding["input_ids"].squeeze(),
+                    "attention_mask": encoding["attention_mask"].squeeze(),
+                    "labels": encoding["labels"].squeeze(),
+                }
+            )
 
         return encoded_examples
+
 
 # ============================================================================
 # Main Compression Pipeline
 # ============================================================================
+
 
 class CompressionPipeline:
     """Main compression pipeline orchestrator"""
@@ -428,7 +456,7 @@ class CompressionPipeline:
                 entity=self.config.wandb_entity,
                 job_type="compression",
                 tags=self.config.wandb_tags,
-                config=self.config.dict()
+                config=self.config.dict(),
             )
 
             logger.info(f"W&B initialized: {self.wandb_run.url}")
@@ -451,7 +479,9 @@ class CompressionPipeline:
 
             model = AutoModelForCausalLM.from_pretrained(
                 self.config.input_model_path,
-                torch_dtype=torch.float16 if self.config.device == "cuda" else torch.float32
+                torch_dtype=torch.float16
+                if self.config.device == "cuda"
+                else torch.float32,
             ).to(self.device)
 
             # Analyze model structure
@@ -461,14 +491,20 @@ class CompressionPipeline:
 
             # Log analysis to W&B
             if self.wandb_run:
-                self.wandb_run.log({
-                    "model_parameters": model_analysis["total_parameters"],
-                    "linear_parameters": model_analysis["linear_parameters"],
-                    "compression_potential": model_analysis["compression_potential"],
-                    "original_size_mb": memory_analysis["fp16_mb"],
-                    "estimated_compressed_mb": memory_analysis["bitnet_mb"],
-                    "estimated_compression_ratio": memory_analysis["compression_ratio"]
-                })
+                self.wandb_run.log(
+                    {
+                        "model_parameters": model_analysis["total_parameters"],
+                        "linear_parameters": model_analysis["linear_parameters"],
+                        "compression_potential": model_analysis[
+                            "compression_potential"
+                        ],
+                        "original_size_mb": memory_analysis["fp16_mb"],
+                        "estimated_compressed_mb": memory_analysis["bitnet_mb"],
+                        "estimated_compression_ratio": memory_analysis[
+                            "compression_ratio"
+                        ],
+                    }
+                )
 
             # Evaluate before compression (if requested)
             pre_compression_results = {}
@@ -517,10 +553,12 @@ class CompressionPipeline:
                 "actual_compression": actual_memory,
                 "pre_compression_eval": pre_compression_results,
                 "post_compression_eval": post_compression_results,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
-            metadata_path = Path(self.config.output_model_path) / "compression_metadata.json"
+            metadata_path = (
+                Path(self.config.output_model_path) / "compression_metadata.json"
+            )
             with open(metadata_path, "w") as f:
                 json.dump(compression_metadata, f, indent=2, default=str)
 
@@ -530,11 +568,18 @@ class CompressionPipeline:
                 if pre_compression_results and post_compression_results:
                     for dataset in self.config.eval_datasets:
                         metric_name = f"{dataset}_accuracy"
-                        if metric_name in pre_compression_results and metric_name in post_compression_results:
+                        if (
+                            metric_name in pre_compression_results
+                            and metric_name in post_compression_results
+                        ):
                             pre_score = pre_compression_results[metric_name]
                             post_score = post_compression_results[metric_name]
-                            retention = (post_score / pre_score * 100) if pre_score > 0 else 0
-                            self.wandb_run.log({f"{dataset}_performance_retention": retention})
+                            retention = (
+                                (post_score / pre_score * 100) if pre_score > 0 else 0
+                            )
+                            self.wandb_run.log(
+                                {f"{dataset}_performance_retention": retention}
+                            )
 
                 self.wandb_run.log(actual_memory)
 
@@ -542,7 +587,7 @@ class CompressionPipeline:
                 artifact = wandb.Artifact(
                     "compressed_model",
                     type="model",
-                    description=f"BitNet compressed model with {actual_memory.get('compression_ratio', 1.0):.1f}x compression"
+                    description=f"BitNet compressed model with {actual_memory.get('compression_ratio', 1.0):.1f}x compression",
                 )
                 artifact.add_dir(self.config.output_model_path)
                 self.wandb_run.log_artifact(artifact)
@@ -553,7 +598,7 @@ class CompressionPipeline:
                 "compression_ratio": actual_memory.get("compression_ratio", 1.0),
                 "memory_savings_mb": actual_memory.get("memory_savings_mb", 0),
                 "model_path": self.config.output_model_path,
-                "metadata": compression_metadata
+                "metadata": compression_metadata,
             }
 
             logger.info("Compression pipeline completed successfully!")
@@ -572,13 +617,13 @@ class CompressionPipeline:
         logger.info("Converting model to BitNet...")
 
         # Convert model to BitNet
-        compressed_model = convert_to_bitnet(model, threshold=self.config.bitnet_zero_threshold)
+        compressed_model = convert_to_bitnet(
+            model, threshold=self.config.bitnet_zero_threshold
+        )
 
         # Prepare calibration dataset
         calibration_dataset = CalibrationDataset(
-            self.config.calibration_dataset,
-            self.config.calibration_samples,
-            tokenizer
+            self.config.calibration_dataset, self.config.calibration_samples, tokenizer
         )
 
         # Fine-tune with BitNet
@@ -595,13 +640,16 @@ class CompressionPipeline:
         mock_config = MockConfig(self.config)
 
         # Apply fine-tuning
-        compressed_model = apply_hf_bitnet_finetune(compressed_model, torch_dataset, mock_config)
+        compressed_model = apply_hf_bitnet_finetune(
+            compressed_model, torch_dataset, mock_config
+        )
 
         logger.info("BitNet compression completed")
         return compressed_model
 
-    def calculate_actual_compression(self, original_model: nn.Module,
-                                   compressed_model: nn.Module) -> dict[str, float]:
+    def calculate_actual_compression(
+        self, original_model: nn.Module, compressed_model: nn.Module
+    ) -> dict[str, float]:
         """Calculate actual compression metrics"""
         # Count parameters
         original_params = sum(p.numel() for p in original_model.parameters())
@@ -625,12 +673,16 @@ class CompressionPipeline:
 
         # BitNet memory: ternary weights + scaling factors + regular params
         compressed_memory_mb = (
-            (bitnet_params * 0.25) +  # Ternary weights (~2 bits each)
-            (bitnet_params * 2 / 8) +  # Scaling factors
-            (regular_params * 2)  # Regular params in FP16
+            (bitnet_params * 0.25)  # Ternary weights (~2 bits each)
+            + (bitnet_params * 2 / 8)  # Scaling factors
+            + (regular_params * 2)  # Regular params in FP16
         ) / (1024**2)
 
-        compression_ratio = original_memory_mb / compressed_memory_mb if compressed_memory_mb > 0 else 1.0
+        compression_ratio = (
+            original_memory_mb / compressed_memory_mb
+            if compressed_memory_mb > 0
+            else 1.0
+        )
         memory_savings = original_memory_mb - compressed_memory_mb
 
         metrics = {
@@ -642,35 +694,55 @@ class CompressionPipeline:
             "compressed_memory_mb": compressed_memory_mb,
             "compression_ratio": compression_ratio,
             "memory_savings_mb": memory_savings,
-            "compression_efficiency": (memory_savings / original_memory_mb * 100) if original_memory_mb > 0 else 0
+            "compression_efficiency": (memory_savings / original_memory_mb * 100)
+            if original_memory_mb > 0
+            else 0,
         }
 
         logger.info("Actual Compression Metrics:")
         logger.info(f"  Original: {original_memory_mb:.1f} MB")
         logger.info(f"  Compressed: {compressed_memory_mb:.1f} MB")
         logger.info(f"  Ratio: {compression_ratio:.1f}x")
-        logger.info(f"  Savings: {memory_savings:.1f} MB ({metrics['compression_efficiency']:.1f}%)")
+        logger.info(
+            f"  Savings: {memory_savings:.1f} MB ({metrics['compression_efficiency']:.1f}%)"
+        )
 
         return metrics
+
 
 # ============================================================================
 # CLI Interface
 # ============================================================================
 
+
 @click.group()
 def forge():
     """Agent Forge CLI"""
 
+
 @forge.command()
 @click.option("--input-model", required=True, help="Path to Quiet-STaR baked model")
 @click.option("--output-model", required=True, help="Path for compressed model output")
-@click.option("--calibration-dataset", default="wikitext", help="Calibration dataset (wikitext, openwebtext)")
-@click.option("--calibration-samples", default=1000, help="Number of calibration samples")
+@click.option(
+    "--calibration-dataset",
+    default="wikitext",
+    help="Calibration dataset (wikitext, openwebtext)",
+)
+@click.option(
+    "--calibration-samples", default=1000, help="Number of calibration samples"
+)
 @click.option("--eval-samples", default=100, help="Number of evaluation samples")
 @click.option("--device", default="auto", help="Device to use (auto, cuda, cpu)")
 @click.option("--config", help="Configuration JSON file")
-def compress(input_model, output_model, calibration_dataset, calibration_samples,
-             eval_samples, device, config):
+def compress(
+    input_model,
+    output_model,
+    calibration_dataset,
+    calibration_samples,
+    eval_samples,
+    device,
+    config,
+):
     """Apply BitNet compression to Quiet-STaR baked model"""
     try:
         # Load configuration
@@ -686,7 +758,7 @@ def compress(input_model, output_model, calibration_dataset, calibration_samples
                 calibration_dataset=calibration_dataset,
                 calibration_samples=calibration_samples,
                 eval_samples=eval_samples,
-                device=device
+                device=device,
             )
 
         # Run compression pipeline
@@ -696,22 +768,24 @@ def compress(input_model, output_model, calibration_dataset, calibration_samples
         results = asyncio.run(pipeline.run_compression_pipeline())
 
         # Print results
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("COMPRESSION PIPELINE RESULTS")
-        print("="*60)
+        print("=" * 60)
         print(f"Success: {results['success']}")
         print(f"Compression Ratio: {results['compression_ratio']:.1f}x")
         print(f"Memory Savings: {results['memory_savings_mb']:.1f} MB")
         print(f"Compressed Model: {results['model_path']}")
-        print("="*60)
+        print("=" * 60)
 
     except Exception as e:
         logger.error(f"Compression pipeline failed: {e}")
         raise click.ClickException(str(e))
 
+
 # ============================================================================
 # Orchestrator Integration
 # ============================================================================
+
 
 async def run_compression(config: dict[str, Any]) -> "PhaseResult":
     """Orchestrator entry point for Compression phase.
@@ -753,6 +827,7 @@ async def run_compression(config: dict[str, Any]) -> "PhaseResult":
             phase_type: PhaseType
             artifacts: list = None
             metrics: dict = None
+
     from datetime import datetime
 
     start_time = time.time()
@@ -780,12 +855,12 @@ async def run_compression(config: dict[str, Any]) -> "PhaseResult":
                         "compression_ratio": results["compression_ratio"],
                         "memory_savings_mb": results["memory_savings_mb"],
                         "original_size_mb": results.get("original_size_mb", 0),
-                        "compressed_size_mb": results.get("compressed_size_mb", 0)
+                        "compressed_size_mb": results.get("compressed_size_mb", 0),
                     },
                     metadata={
                         "bitnet_config": compression_config.dict(),
-                        "compression_method": "BitNet"
-                    }
+                        "compression_method": "BitNet",
+                    },
                 )
             ]
 
@@ -796,7 +871,7 @@ async def run_compression(config: dict[str, Any]) -> "PhaseResult":
                 "execution_time": duration,
                 "success": True,
                 "evaluation_metrics": results.get("evaluation_metrics", {}),
-                "calibration_samples": compression_config.calibration_samples
+                "calibration_samples": compression_config.calibration_samples,
             }
 
             logger.info(f"Compression completed successfully in {duration:.1f}s")
@@ -808,7 +883,7 @@ async def run_compression(config: dict[str, Any]) -> "PhaseResult":
                 end_time=datetime.now(),
                 duration_seconds=duration,
                 artifacts_produced=artifacts,
-                metrics=metrics
+                metrics=metrics,
             )
         # Failed compression
         return PhaseResult(
@@ -818,7 +893,7 @@ async def run_compression(config: dict[str, Any]) -> "PhaseResult":
             end_time=datetime.now(),
             duration_seconds=duration,
             error_message=results.get("error", "Compression failed with unknown error"),
-            metrics={"execution_time": duration}
+            metrics={"execution_time": duration},
         )
 
     except Exception as e:
@@ -833,8 +908,9 @@ async def run_compression(config: dict[str, Any]) -> "PhaseResult":
             end_time=datetime.now(),
             duration_seconds=duration,
             error_message=error_msg,
-            metrics={"execution_time": duration}
+            metrics={"execution_time": duration},
         )
+
 
 # Make the entry point discoverable
 run = run_compression  # Alias for orchestrator discovery

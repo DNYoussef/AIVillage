@@ -26,11 +26,13 @@ class ImportanceFlow:
     def __init__(self, damping: float = 0.85):
         self.damping = damping
 
-    def compute_pagerank_sparse(self,
-                               adjacency_matrix: csr_matrix,
-                               personalization: np.ndarray | None = None,
-                               max_iterations: int = 100,
-                               tolerance: float = 1e-6) -> np.ndarray:
+    def compute_pagerank_sparse(
+        self,
+        adjacency_matrix: csr_matrix,
+        personalization: np.ndarray | None = None,
+        max_iterations: int = 100,
+        tolerance: float = 1e-6,
+    ) -> np.ndarray:
         """Compute PageRank using sparse matrix operations
 
         Args:
@@ -65,8 +67,10 @@ class ImportanceFlow:
             prev_pagerank = pagerank.copy()
 
             # PageRank update: r = d * M * r + (1-d) * p
-            pagerank = (self.damping * transition_matrix.T.dot(pagerank) +
-                       (1 - self.damping) * personalization)
+            pagerank = (
+                self.damping * transition_matrix.T.dot(pagerank)
+                + (1 - self.damping) * personalization
+            )
 
             # Check convergence
             diff = norm(pagerank - prev_pagerank, ord=1)
@@ -76,10 +80,12 @@ class ImportanceFlow:
 
         return pagerank
 
-    def hyperedge_importance_distribution(self,
-                                        hyperedge_participants: list[str],
-                                        node_scores: dict[str, float],
-                                        distribution_method: str = "proportional") -> dict[str, float]:
+    def hyperedge_importance_distribution(
+        self,
+        hyperedge_participants: list[str],
+        node_scores: dict[str, float],
+        distribution_method: str = "proportional",
+    ) -> dict[str, float]:
         """Distribute importance across hyperedge participants
 
         Args:
@@ -94,8 +100,7 @@ class ImportanceFlow:
             return {}
 
         participant_scores = {
-            node_id: node_scores.get(node_id, 0.0)
-            for node_id in hyperedge_participants
+            node_id: node_scores.get(node_id, 0.0) for node_id in hyperedge_participants
         }
 
         if distribution_method == "uniform":
@@ -132,11 +137,13 @@ class ImportanceFlow:
 
         raise ValueError(f"Unknown distribution method: {distribution_method}")
 
-    def uncertainty_propagation(self,
-                              source_uncertainties: dict[str, float],
-                              edge_confidences: dict[tuple[str, str], float],
-                              propagation_steps: int = 3,
-                              decay_factor: float = 0.8) -> dict[str, float]:
+    def uncertainty_propagation(
+        self,
+        source_uncertainties: dict[str, float],
+        edge_confidences: dict[tuple[str, str], float],
+        propagation_steps: int = 3,
+        decay_factor: float = 0.8,
+    ) -> dict[str, float]:
         """Propagate uncertainty through the graph
 
         Args:
@@ -159,12 +166,13 @@ class ImportanceFlow:
 
                 # Propagate uncertainty along edge
                 # Higher confidence edges propagate less uncertainty
-                propagated_uncertainty = source_uncertainty * (1.0 - confidence) * decay_factor
+                propagated_uncertainty = (
+                    source_uncertainty * (1.0 - confidence) * decay_factor
+                )
 
                 # Update target uncertainty (take maximum)
                 new_uncertainties[target] = max(
-                    new_uncertainties.get(target, 0.0),
-                    propagated_uncertainty
+                    new_uncertainties.get(target, 0.0), propagated_uncertainty
                 )
 
             current_uncertainties = new_uncertainties
@@ -172,12 +180,14 @@ class ImportanceFlow:
 
         return current_uncertainties
 
-    def random_walk_sampling(self,
-                           start_nodes: list[str],
-                           adjacency_dict: dict[str, list[tuple[str, float]]],
-                           walk_length: int = 10,
-                           num_walks: int = 100,
-                           restart_probability: float = 0.15) -> dict[str, int]:
+    def random_walk_sampling(
+        self,
+        start_nodes: list[str],
+        adjacency_dict: dict[str, list[tuple[str, float]]],
+        walk_length: int = 10,
+        num_walks: int = 100,
+        restart_probability: float = 0.15,
+    ) -> dict[str, int]:
         """Sample nodes using random walks for importance estimation
 
         Args:
@@ -222,9 +232,9 @@ class ImportanceFlow:
 
         return visit_counts
 
-    def compute_centrality_measures(self,
-                                  adjacency_matrix: csr_matrix,
-                                  node_ids: list[str]) -> dict[str, dict[str, float]]:
+    def compute_centrality_measures(
+        self, adjacency_matrix: csr_matrix, node_ids: list[str]
+    ) -> dict[str, dict[str, float]]:
         """Compute various centrality measures
 
         Args:
@@ -256,16 +266,22 @@ class ImportanceFlow:
         for i, node_id in enumerate(node_ids):
             # Simplified using degree and PageRank
             degree_norm = degrees[i] / np.max(degrees) if np.max(degrees) > 0 else 0.0
-            pagerank_norm = pagerank_scores[i] / np.max(pagerank_scores) if np.max(pagerank_scores) > 0 else 0.0
+            pagerank_norm = (
+                pagerank_scores[i] / np.max(pagerank_scores)
+                if np.max(pagerank_scores) > 0
+                else 0.0
+            )
             centralities[node_id]["betweenness"] = (degree_norm + pagerank_norm) / 2
 
         return centralities
 
-    def flow_based_ranking(self,
-                         source_nodes: list[str],
-                         target_nodes: list[str],
-                         flow_matrix: np.ndarray,
-                         node_ids: list[str]) -> dict[str, float]:
+    def flow_based_ranking(
+        self,
+        source_nodes: list[str],
+        target_nodes: list[str],
+        flow_matrix: np.ndarray,
+        node_ids: list[str],
+    ) -> dict[str, float]:
         """Rank nodes based on flow from sources to targets
 
         Args:
@@ -280,8 +296,12 @@ class ImportanceFlow:
         node_to_idx = {node_id: i for i, node_id in enumerate(node_ids)}
 
         # Get source and target indices
-        source_indices = [node_to_idx[node_id] for node_id in source_nodes if node_id in node_to_idx]
-        target_indices = [node_to_idx[node_id] for node_id in target_nodes if node_id in node_to_idx]
+        source_indices = [
+            node_to_idx[node_id] for node_id in source_nodes if node_id in node_to_idx
+        ]
+        target_indices = [
+            node_to_idx[node_id] for node_id in target_nodes if node_id in node_to_idx
+        ]
 
         if not source_indices or not target_indices:
             return dict.fromkeys(node_ids, 0.0)
@@ -301,10 +321,9 @@ class ImportanceFlow:
 
         return flow_scores
 
-    def compute_resistance_distance(self,
-                                  adjacency_matrix: csr_matrix,
-                                  source_idx: int,
-                                  target_idx: int) -> float:
+    def compute_resistance_distance(
+        self, adjacency_matrix: csr_matrix, source_idx: int, target_idx: int
+    ) -> float:
         """Compute resistance distance between two nodes (simplified)
 
         Args:
@@ -332,7 +351,11 @@ class ImportanceFlow:
             # Would typically use pseudoinverse of Laplacian
             try:
                 inv_laplacian = np.linalg.pinv(laplacian)
-                resistance = inv_laplacian[source_idx, source_idx] + inv_laplacian[target_idx, target_idx] - 2 * inv_laplacian[source_idx, target_idx]
+                resistance = (
+                    inv_laplacian[source_idx, source_idx]
+                    + inv_laplacian[target_idx, target_idx]
+                    - 2 * inv_laplacian[source_idx, target_idx]
+                )
                 return max(0.0, resistance)
             except:
                 # Fallback to simple distance measure
@@ -342,9 +365,9 @@ class ImportanceFlow:
             logger.warning(f"Resistance distance computation failed: {e!s}")
             return 1.0  # Default distance
 
-    def normalize_scores(self,
-                        scores: dict[str, float],
-                        method: str = "minmax") -> dict[str, float]:
+    def normalize_scores(
+        self, scores: dict[str, float], method: str = "minmax"
+    ) -> dict[str, float]:
         """Normalize scores using various methods
 
         Args:
@@ -384,15 +407,16 @@ class ImportanceFlow:
             raise ValueError(f"Unknown normalization method: {method}")
 
         return {
-            node_id: normalized_values[i]
-            for i, node_id in enumerate(scores.keys())
+            node_id: normalized_values[i] for i, node_id in enumerate(scores.keys())
         }
 
 
 # Utility functions
 
-def build_sparse_adjacency(edges: list[tuple[str, str, float]],
-                         node_ids: list[str]) -> csr_matrix:
+
+def build_sparse_adjacency(
+    edges: list[tuple[str, str, float]], node_ids: list[str]
+) -> csr_matrix:
     """Build sparse adjacency matrix from edge list"""
     node_to_idx = {node_id: i for i, node_id in enumerate(node_ids)}
     n = len(node_ids)

@@ -1,5 +1,4 @@
-"""Configuration for WhatsApp Wave Bridge
-"""
+"""Configuration for WhatsApp Wave Bridge"""
 
 import os
 from typing import Any
@@ -9,13 +8,16 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+
 class Config:
     """Configuration settings for WhatsApp Wave Bridge"""
 
     # Twilio Configuration
     TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
     TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-    TWILIO_WHATSAPP_NUMBER = os.getenv("TWILIO_WHATSAPP_NUMBER", "whatsapp:+14155238886")
+    TWILIO_WHATSAPP_NUMBER = os.getenv(
+        "TWILIO_WHATSAPP_NUMBER", "whatsapp:+14155238886"
+    )
 
     # AI Model Configuration
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
@@ -33,7 +35,9 @@ class Config:
 
     # Language Settings
     DEFAULT_LANGUAGE = os.getenv("DEFAULT_LANGUAGE", "en")
-    ENABLE_AUTO_TRANSLATION = os.getenv("ENABLE_AUTO_TRANSLATION", "true").lower() == "true"
+    ENABLE_AUTO_TRANSLATION = (
+        os.getenv("ENABLE_AUTO_TRANSLATION", "true").lower() == "true"
+    )
 
     # A/B Testing Settings
     ENABLE_AB_TESTING = os.getenv("ENABLE_AB_TESTING", "true").lower() == "true"
@@ -50,40 +54,47 @@ class Config:
     @classmethod
     def validate_config(cls) -> dict[str, Any]:
         """Validate required configuration"""
-        validation_results = {
-            "valid": True,
-            "errors": [],
-            "warnings": []
-        }
+        validation_results = {"valid": True, "errors": [], "warnings": []}
 
         # Required settings
         required_settings = [
             ("TWILIO_ACCOUNT_SID", cls.TWILIO_ACCOUNT_SID),
             ("TWILIO_AUTH_TOKEN", cls.TWILIO_AUTH_TOKEN),
-            ("WANDB_API_KEY", cls.WANDB_API_KEY)
+            ("WANDB_API_KEY", cls.WANDB_API_KEY),
         ]
 
         for setting_name, setting_value in required_settings:
             if not setting_value:
-                validation_results["errors"].append(f"Missing required setting: {setting_name}")
+                validation_results["errors"].append(
+                    f"Missing required setting: {setting_name}"
+                )
                 validation_results["valid"] = False
 
         # AI Model settings (at least one required)
         if not cls.ANTHROPIC_API_KEY and not cls.OPENAI_API_KEY:
-            validation_results["errors"].append("At least one AI model API key required (ANTHROPIC_API_KEY or OPENAI_API_KEY)")
+            validation_results["errors"].append(
+                "At least one AI model API key required (ANTHROPIC_API_KEY or OPENAI_API_KEY)"
+            )
             validation_results["valid"] = False
 
         # Warnings for optional but recommended settings
         if not cls.ANTHROPIC_API_KEY:
-            validation_results["warnings"].append("ANTHROPIC_API_KEY not set - will use OpenAI as primary model")
+            validation_results["warnings"].append(
+                "ANTHROPIC_API_KEY not set - will use OpenAI as primary model"
+            )
 
         if not cls.OPENAI_API_KEY:
-            validation_results["warnings"].append("OPENAI_API_KEY not set - no fallback model available")
+            validation_results["warnings"].append(
+                "OPENAI_API_KEY not set - no fallback model available"
+            )
 
         if not cls.WEBHOOK_SECRET:
-            validation_results["warnings"].append("WEBHOOK_SECRET not set - webhooks will not be validated")
+            validation_results["warnings"].append(
+                "WEBHOOK_SECRET not set - webhooks will not be validated"
+            )
 
         return validation_results
+
 
 # Global config instance
 config = Config()
@@ -95,6 +106,7 @@ if not config_validation["valid"]:
 
 if config_validation["warnings"]:
     import logging
+
     logger = logging.getLogger(__name__)
     for warning in config_validation["warnings"]:
         logger.warning(f"Configuration warning: {warning}")

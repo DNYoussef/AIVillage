@@ -23,11 +23,13 @@ class GDCExtractor:
     Supports both batch scanning and targeted GDC analysis.
     """
 
-    def __init__(self,
-                 neo4j_uri: str,
-                 neo4j_auth: tuple[str, str],
-                 max_concurrent_queries: int = 5,
-                 default_limit: int = 1000):
+    def __init__(
+        self,
+        neo4j_uri: str,
+        neo4j_auth: tuple[str, str],
+        max_concurrent_queries: int = 5,
+        default_limit: int = 1000,
+    ):
         """Initialize GDC extractor
 
         Args:
@@ -48,8 +50,7 @@ class GDCExtractor:
         """Initialize Neo4j driver connection"""
         try:
             self.driver = AsyncGraphDatabase.driver(
-                self.neo4j_uri,
-                auth=self.neo4j_auth
+                self.neo4j_uri, auth=self.neo4j_auth
             )
             # Test connection
             async with self.driver.session() as session:
@@ -65,10 +66,12 @@ class GDCExtractor:
             await self.driver.close()
             logger.info("Neo4j connection closed")
 
-    async def scan_all(self,
-                      limit: int = None,
-                      enabled_only: bool = True,
-                      severity_filter: str | None = None) -> list[Violation]:
+    async def scan_all(
+        self,
+        limit: int = None,
+        enabled_only: bool = True,
+        severity_filter: str | None = None,
+    ) -> list[Violation]:
         """Scan for all GDC violations
 
         Args:
@@ -92,7 +95,9 @@ class GDCExtractor:
 
         # Apply severity filter
         if severity_filter:
-            gdcs_to_scan = [gdc for gdc in gdcs_to_scan if gdc.severity == severity_filter]
+            gdcs_to_scan = [
+                gdc for gdc in gdcs_to_scan if gdc.severity == severity_filter
+            ]
 
         if not gdcs_to_scan:
             logger.warning("No GDCs match scan criteria")
@@ -101,10 +106,7 @@ class GDCExtractor:
         logger.info(f"Scanning {len(gdcs_to_scan)} GDCs with limit {limit}")
 
         # Execute scans concurrently
-        tasks = [
-            self._scan_single_gdc(gdc, limit)
-            for gdc in gdcs_to_scan
-        ]
+        tasks = [self._scan_single_gdc(gdc, limit) for gdc in gdcs_to_scan]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -154,14 +156,16 @@ class GDCExtractor:
                 logger.error(f"Error scanning {gdc_spec.id}: {e}")
                 return []
 
-    async def _execute_gdc_query(self,
-                                session: AsyncSession,
-                                gdc_spec: GDCSpec,
-                                limit: int) -> list[Violation]:
+    async def _execute_gdc_query(
+        self, session: AsyncSession, gdc_spec: GDCSpec, limit: int
+    ) -> list[Violation]:
         """Execute a GDC Cypher query and convert results to violations"""
         # Add LIMIT to query if not present
         cypher = gdc_spec.cypher.strip()
-        if not cypher.lower().endswith(f"limit {limit}") and "limit" not in cypher.lower():
+        if (
+            not cypher.lower().endswith(f"limit {limit}")
+            and "limit" not in cypher.lower()
+        ):
             cypher += f" LIMIT {limit}"
 
         try:
@@ -179,7 +183,9 @@ class GDCExtractor:
             logger.error(f"Cypher error in {gdc_spec.id}: {e}")
             return []
 
-    async def _record_to_violation(self, record: dict[str, Any], gdc_spec: GDCSpec) -> Violation:
+    async def _record_to_violation(
+        self, record: dict[str, Any], gdc_spec: GDCSpec
+    ) -> Violation:
         """Convert a Cypher query result record to a Violation object"""
         nodes = []
         edges = []
@@ -229,8 +235,8 @@ class GDCExtractor:
                 "gdc_description": gdc_spec.description,
                 "gdc_category": gdc_spec.category,
                 "cypher_query": gdc_spec.cypher,
-                "record_keys": list(record.keys())
-            }
+                "record_keys": list(record.keys()),
+            },
         )
 
         return violation
@@ -266,7 +272,9 @@ class GDCExtractor:
                     YIELD value
                     RETURN label, value.count as count
                 """)
-                node_counts = {record["label"]: record["count"] async for record in node_result}
+                node_counts = {
+                    record["label"]: record["count"] async for record in node_result
+                }
 
                 # Get relationship counts by type
                 rel_result = await session.run("""
@@ -275,13 +283,16 @@ class GDCExtractor:
                     YIELD value
                     RETURN relationshipType, value.count as count
                 """)
-                rel_counts = {record["relationshipType"]: record["count"] async for record in rel_result}
+                rel_counts = {
+                    record["relationshipType"]: record["count"]
+                    async for record in rel_result
+                }
 
                 return {
                     "node_counts": node_counts,
                     "relationship_counts": rel_counts,
                     "total_nodes": sum(node_counts.values()),
-                    "total_relationships": sum(rel_counts.values())
+                    "total_relationships": sum(rel_counts.values()),
                 }
 
         except Exception as e:

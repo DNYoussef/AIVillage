@@ -9,7 +9,13 @@ class BayesNet:
         self.nodes: dict[str, dict[str, Any]] = {}
         self.edges: dict[str, dict[str, float]] = defaultdict(dict)
 
-    def add_node(self, node_id: str, content: str, probability: float = 0.5, uncertainty: float = 0.1) -> None:
+    def add_node(
+        self,
+        node_id: str,
+        content: str,
+        probability: float = 0.5,
+        uncertainty: float = 0.1,
+    ) -> None:
         self.nodes[node_id] = {
             "content": content,
             "probability": probability,

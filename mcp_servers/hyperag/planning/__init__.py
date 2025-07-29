@@ -22,22 +22,19 @@ __all__ = [
     "QueryPlanner",
     "QueryClassifier",
     "StrategySelector",
-
     # Data structures
     "QueryPlan",
     "ExecutionStep",
     "PlanCheckpoint",
     "QueryType",
     "ReasoningStrategy",
-
     # Strategies
     "SimpleFactStrategy",
     "TemporalStrategy",
     "CausalStrategy",
     "ComparativeStrategy",
     "MetaQueryStrategy",
-
     # Learning
     "PlanLearner",
-    "StrategyFeedback"
+    "StrategyFeedback",
 ]

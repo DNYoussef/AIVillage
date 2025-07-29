@@ -15,10 +15,14 @@ class HybridRetriever:
         self.config = config
         self.vector_store = VectorStore()
         self.graph_store = GraphStore()
-        self.llm = None  # This should be initialized with the appropriate language model
+        self.llm = (
+            None  # This should be initialized with the appropriate language model
+        )
         self.agent = None  # This should be initialized with the appropriate agent
 
-    async def retrieve(self, query: str, k: int, timestamp: datetime | None = None) -> list[RetrievalResult]:
+    async def retrieve(
+        self, query: str, k: int, timestamp: datetime | None = None
+    ) -> list[RetrievalResult]:
         """Retrieve documents based on the query using the dual-level retrieval approach.
 
         :param query: The user's query string.
@@ -28,7 +32,9 @@ class HybridRetriever:
         """
         return await self.dual_level_retrieve(query, k, timestamp)
 
-    async def dual_level_retrieve(self, query: str, k: int, timestamp: datetime | None = None) -> list[RetrievalResult]:
+    async def dual_level_retrieve(
+        self, query: str, k: int, timestamp: datetime | None = None
+    ) -> list[RetrievalResult]:
         """Implement dual-level retrieval as described in LightRAG.
 
         :param query: The user's query string.
@@ -42,7 +48,9 @@ class HybridRetriever:
         combined_results = self.merge_results(low_level_results, high_level_results)
         return combined_results[:k]
 
-    async def low_level_retrieve(self, query: str, k: int, timestamp: datetime | None = None) -> list[RetrievalResult]:
+    async def low_level_retrieve(
+        self, query: str, k: int, timestamp: datetime | None = None
+    ) -> list[RetrievalResult]:
         """Implement specific entity and relation retrieval.
 
         :param query: The user's query string.
@@ -54,7 +62,9 @@ class HybridRetriever:
         graph_results = await self.graph_store.retrieve(query, k, timestamp)
         return graph_results
 
-    async def high_level_retrieve(self, query: str, k: int, timestamp: datetime | None = None) -> list[RetrievalResult]:
+    async def high_level_retrieve(
+        self, query: str, k: int, timestamp: datetime | None = None
+    ) -> list[RetrievalResult]:
         """Implement broader topic and theme retrieval.
 
         :param query: The user's query string.
@@ -67,7 +77,11 @@ class HybridRetriever:
         vector_results = await self.vector_store.retrieve(query_vector, k, timestamp)
         return vector_results
 
-    def merge_results(self, low_level_results: list[RetrievalResult], high_level_results: list[RetrievalResult]) -> list[RetrievalResult]:
+    def merge_results(
+        self,
+        low_level_results: list[RetrievalResult],
+        high_level_results: list[RetrievalResult],
+    ) -> list[RetrievalResult]:
         """Merge and deduplicate low-level and high-level retrieval results.
 
         :param low_level_results: Results from low-level retrieval.
@@ -85,12 +99,19 @@ class HybridRetriever:
         """
         unique_results = {}
         for result in results:
-            if result.id not in unique_results or result.score > unique_results[result.id].score:
+            if (
+                result.id not in unique_results
+                or result.score > unique_results[result.id].score
+            ):
                 unique_results[result.id] = result
-        sorted_results = sorted(unique_results.values(), key=lambda x: x.score, reverse=True)
+        sorted_results = sorted(
+            unique_results.values(), key=lambda x: x.score, reverse=True
+        )
         return sorted_results
 
-    async def active_retrieve(self, query: str, k: int, timestamp: datetime | None = None) -> list[RetrievalResult]:
+    async def active_retrieve(
+        self, query: str, k: int, timestamp: datetime | None = None
+    ) -> list[RetrievalResult]:
         """Active retrieval with feedback iterations.
 
         :param query: The user's query string.
@@ -110,7 +131,9 @@ class HybridRetriever:
 
         return current_results
 
-    def _generate_feedback(self, query: str, results: list[RetrievalResult]) -> dict[str, Any]:
+    def _generate_feedback(
+        self, query: str, results: list[RetrievalResult]
+    ) -> dict[str, Any]:
         """Generate feedback for query refinement.
 
         :param query: The original query.
@@ -138,7 +161,9 @@ class HybridRetriever:
 
         return feedback
 
-    def _refine_query(self, original_query: str, feedback: dict[str, Any]) -> tuple[str, list[float]]:
+    def _refine_query(
+        self, original_query: str, feedback: dict[str, Any]
+    ) -> tuple[str, list[float]]:
         """Refine the query based on feedback.
 
         :param original_query: The original query string.
@@ -162,7 +187,9 @@ class HybridRetriever:
         refined_vector: list[float] = []
         return refined_query, refined_vector
 
-    def _merge_results(self, old_results: list[RetrievalResult], new_results: list[RetrievalResult]) -> list[RetrievalResult]:
+    def _merge_results(
+        self, old_results: list[RetrievalResult], new_results: list[RetrievalResult]
+    ) -> list[RetrievalResult]:
         """Merge old and new retrieval results.
 
         :param old_results: Previous retrieval results.
@@ -173,7 +200,9 @@ class HybridRetriever:
         deduplicated = self._combine_results(combined)
         return deduplicated
 
-    async def plan_aware_retrieve(self, query: str, k: int, plan: RetrievalPlan, timestamp: datetime | None = None) -> list[RetrievalResult]:
+    async def plan_aware_retrieve(
+        self, query: str, k: int, plan: RetrievalPlan, timestamp: datetime | None = None
+    ) -> list[RetrievalResult]:
         """Retrieve documents using a given retrieval plan.
 
         :param query: The user's query string.
@@ -186,7 +215,9 @@ class HybridRetriever:
         filtered_results = self._apply_plan(initial_results, plan)
         return filtered_results
 
-    def _apply_plan(self, results: list[RetrievalResult], plan: RetrievalPlan) -> list[RetrievalResult]:
+    def _apply_plan(
+        self, results: list[RetrievalResult], plan: RetrievalPlan
+    ) -> list[RetrievalResult]:
         """Apply the retrieval plan to filter and rank results.
 
         :param results: List of retrieval results.
@@ -197,14 +228,24 @@ class HybridRetriever:
 
         # Apply filters from the plan
         if plan.filters.get("keywords"):
-            filtered_results = [r for r in filtered_results if any(kw in r.content for kw in plan.filters["keywords"])]
+            filtered_results = [
+                r
+                for r in filtered_results
+                if any(kw in r.content for kw in plan.filters["keywords"])
+            ]
 
         if plan.filters.get("date_range"):
             start_date, end_date = plan.filters["date_range"]
-            filtered_results = [r for r in filtered_results if start_date <= r.timestamp <= end_date]
+            filtered_results = [
+                r for r in filtered_results if start_date <= r.timestamp <= end_date
+            ]
 
         if plan.filters.get("source_types"):
-            filtered_results = [r for r in filtered_results if r.source_type in plan.filters["source_types"]]
+            filtered_results = [
+                r
+                for r in filtered_results
+                if r.source_type in plan.filters["source_types"]
+            ]
 
         # Apply custom ranking strategy if specified in the plan
         if plan.strategy == "recency":
@@ -216,9 +257,13 @@ class HybridRetriever:
         if plan.use_linearization:
             graph = self.graph_store.get_graph()
             linearized_nodes = distance_sensitive_linearization(graph, plan.query)
-            filtered_results.sort(key=lambda x: linearized_nodes.index(x.id) if x.id in linearized_nodes else float("inf"))
+            filtered_results.sort(
+                key=lambda x: linearized_nodes.index(x.id)
+                if x.id in linearized_nodes
+                else float("inf")
+            )
 
-        return filtered_results[:self.config.MAX_RESULTS]
+        return filtered_results[: self.config.MAX_RESULTS]
 
     async def generate_plan(self, query: str) -> RetrievalPlan:
         """Generate a retrieval plan for a given query.
@@ -241,7 +286,9 @@ class HybridRetriever:
         )
         return plan
 
-    async def refine_plan(self, query: str, current_plan: RetrievalPlan, results: list[RetrievalResult]) -> RetrievalPlan:
+    async def refine_plan(
+        self, query: str, current_plan: RetrievalPlan, results: list[RetrievalResult]
+    ) -> RetrievalPlan:
         """Refine the retrieval plan based on results.
 
         :param query: The user's query string.
@@ -274,7 +321,9 @@ class HybridRetriever:
         )
         return refined_plan
 
-    def _apply_upo(self, results: list[RetrievalResult], query: str) -> list[RetrievalResult]:
+    def _apply_upo(
+        self, results: list[RetrievalResult], query: str
+    ) -> list[RetrievalResult]:
         """Apply uncertainty-aware probabilistic ordering (UPO) to results.
 
         :param results: List of retrieval results.
@@ -288,13 +337,17 @@ class HybridRetriever:
 
             # Apply time decay
             time_diff = (datetime.now() - result.timestamp).total_seconds()
-            decay_factor = 1 / (1 + time_diff / self.config.TEMPORAL_GRANULARITY.total_seconds())
+            decay_factor = 1 / (
+                1 + time_diff / self.config.TEMPORAL_GRANULARITY.total_seconds()
+            )
             result.score *= decay_factor
 
         # Re-sort results based on the new scores
         return sorted(results, key=lambda x: x.score, reverse=True)
 
-    def _causal_retrieval(self, query: str, initial_results: list[RetrievalResult]) -> list[RetrievalResult]:
+    def _causal_retrieval(
+        self, query: str, initial_results: list[RetrievalResult]
+    ) -> list[RetrievalResult]:
         """Apply causal retrieval adjustments to results.
 
         :param query: The original query.

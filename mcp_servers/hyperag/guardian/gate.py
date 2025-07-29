@@ -27,10 +27,12 @@ except ImportError:
     RepairOperation = Any
     Violation = Any
 
+
 # CreativeBridge type - define locally since it's referenced in requirements
 @dataclass
 class CreativeBridge:
     """Creative bridge structure for validation."""
+
     id: str
     confidence: float = 0.7
     bridge_type: str = "semantic"
@@ -56,11 +58,17 @@ class GuardianGate:
         self.metrics = get_guardian_metrics()
 
         # Initialize policy info in metrics
-        self.metrics.set_policy_info({
-            "version": "1.0",
-            "confidence_threshold": self.policies.get("thresholds", {}).get("apply", 0.8),
-            "quarantine_threshold": self.policies.get("thresholds", {}).get("quarantine", 0.4)
-        })
+        self.metrics.set_policy_info(
+            {
+                "version": "1.0",
+                "confidence_threshold": self.policies.get("thresholds", {}).get(
+                    "apply", 0.8
+                ),
+                "quarantine_threshold": self.policies.get("thresholds", {}).get(
+                    "quarantine", 0.4
+                ),
+            }
+        )
 
     def _load_policies(self) -> dict[str, Any]:
         """Load policies from YAML configuration file."""
@@ -72,24 +80,19 @@ class GuardianGate:
                 "weights": {
                     "structural_fix": 0.4,
                     "domain_veracity": 0.4,
-                    "evidence_strength": 0.2
+                    "evidence_strength": 0.2,
                 },
-                "thresholds": {
-                    "apply": 0.80,
-                    "quarantine": 0.40
-                },
+                "thresholds": {"apply": 0.80, "quarantine": 0.40},
                 "domain_heuristics": {
                     "medical": {
                         "must_preserve_edges": ["TAKES", "DIAGNOSED_WITH"],
-                        "forbidden_deletes": ["ALLERGIC_TO"]
+                        "forbidden_deletes": ["ALLERGIC_TO"],
                     }
-                }
+                },
             }
 
     async def evaluate_repair(
-        self,
-        proposals: list[RepairOperation],
-        violation: Violation
+        self, proposals: list[RepairOperation], violation: Violation
     ) -> Decision:
         """Validate Innovator Repair set and return decision."""
         start_time = time.time()
@@ -111,9 +114,9 @@ class GuardianGate:
         # 4. Calculate impact score
         weights = self.policies["weights"]
         score = (
-            structural_fix * weights["structural_fix"] +
-            domain_veracity * weights["domain_veracity"] +
-            evidence_strength * weights["evidence_strength"]
+            structural_fix * weights["structural_fix"]
+            + domain_veracity * weights["domain_veracity"]
+            + evidence_strength * weights["evidence_strength"]
         )
 
         # 5. Apply decision thresholds with severity consideration
@@ -136,17 +139,14 @@ class GuardianGate:
             "components": {
                 "structural_fix": structural_fix,
                 "domain_veracity": domain_veracity,
-                "evidence_strength": evidence_strength
-            }
+                "evidence_strength": evidence_strength,
+            },
         }
         audit.log(audit_record)
 
         return decision
 
-    async def evaluate_creative(
-        self,
-        bridge: CreativeBridge
-    ) -> Decision:
+    async def evaluate_creative(self, bridge: CreativeBridge) -> Decision:
         """Validate creative bridge before exposing to agents."""
         # Simplified evaluation for creative bridges
         structural_fix = 0.7  # Assume moderate structural value
@@ -155,13 +155,15 @@ class GuardianGate:
 
         weights = self.policies["weights"]
         score = (
-            structural_fix * weights["structural_fix"] +
-            domain_veracity * weights["domain_veracity"] +
-            evidence_strength * weights["evidence_strength"]
+            structural_fix * weights["structural_fix"]
+            + domain_veracity * weights["domain_veracity"]
+            + evidence_strength * weights["evidence_strength"]
         )
 
         decision = self._apply_thresholds(score, "medium")
-        rationale = f"Creative bridge plausibility: {domain_veracity:.2f}, score: {score:.2f}"
+        rationale = (
+            f"Creative bridge plausibility: {domain_veracity:.2f}, score: {score:.2f}"
+        )
 
         # Log audit record
         audit_record = {
@@ -173,17 +175,15 @@ class GuardianGate:
             "components": {
                 "structural_fix": structural_fix,
                 "domain_veracity": domain_veracity,
-                "evidence_strength": evidence_strength
-            }
+                "evidence_strength": evidence_strength,
+            },
         }
         audit.log(audit_record)
 
         return decision
 
     async def _calculate_structural_fix(
-        self,
-        proposals: list[Any],
-        violation: Any
+        self, proposals: list[Any], violation: Any
     ) -> float:
         """Calculate how well proposals fix the structural issue."""
         # Apply proposals in-memory to a copy of the violating subgraph
@@ -199,10 +199,12 @@ class GuardianGate:
         penalty = 0.0
         for proposal in proposals:
             # Check for forbidden edge deletions
-            if (hasattr(proposal, "operation_type") and
-                proposal.operation_type == "delete_edge" and
-                hasattr(proposal, "edge_type") and
-                proposal.edge_type in forbidden_deletes):
+            if (
+                hasattr(proposal, "operation_type")
+                and proposal.operation_type == "delete_edge"
+                and hasattr(proposal, "edge_type")
+                and proposal.edge_type in forbidden_deletes
+            ):
                 penalty += 0.5  # Heavy penalty for forbidden operations
 
             # Apply proposal to simulated graph
@@ -221,7 +223,7 @@ class GuardianGate:
         domain_score = self._score_domain_heuristics(simulated_graph, domain)
 
         # Combine scores with penalty
-        base_score = (preservation_score * 0.6 + domain_score * 0.4)
+        base_score = preservation_score * 0.6 + domain_score * 0.4
         final_score = max(0.0, base_score - penalty)
 
         return min(1.0, final_score)
@@ -242,9 +244,14 @@ class GuardianGate:
             graph["nodes"] = [n for n in nodes if n.get("id") != proposal.target_id]
             # Remove connected edges
             edges = graph.get("edges", [])
-            graph["edges"] = [e for e in edges
-                             if (e.get("startNode") != proposal.target_id and
-                                 e.get("endNode") != proposal.target_id)]
+            graph["edges"] = [
+                e
+                for e in edges
+                if (
+                    e.get("startNode") != proposal.target_id
+                    and e.get("endNode") != proposal.target_id
+                )
+            ]
 
         elif operation == "add_edge":
             new_edge = {
@@ -252,7 +259,7 @@ class GuardianGate:
                 "startNode": getattr(proposal, "source_id", None),
                 "endNode": getattr(proposal, "dest_id", None),
                 "type": getattr(proposal, "relationship_type", "RELATED"),
-                "properties": getattr(proposal, "properties", {})
+                "properties": getattr(proposal, "properties", {}),
             }
             graph.setdefault("edges", []).append(new_edge)
 
@@ -260,7 +267,7 @@ class GuardianGate:
             new_node = {
                 "id": getattr(proposal, "target_id", str(uuid.uuid4())),
                 "labels": [getattr(proposal, "node_type", "Unknown")],
-                "properties": getattr(proposal, "properties", {})
+                "properties": getattr(proposal, "properties", {}),
             }
             graph.setdefault("nodes", []).append(new_node)
 
@@ -321,11 +328,7 @@ class GuardianGate:
 
         return min(1.0, score)
 
-    async def _external_fact_check(
-        self,
-        proposals: list[Any],
-        violation: Any
-    ) -> float:
+    async def _external_fact_check(self, proposals: list[Any], violation: Any) -> float:
         """Call domain adapter for external verification."""
         domain = getattr(violation, "domain", "general")
 
@@ -401,7 +404,9 @@ class GuardianGate:
                 rationale_bonus = min(0.3, len(proposal.rationale) / 100.0)
                 strength_factors.append(rationale_bonus)
 
-        return sum(strength_factors) / len(strength_factors) if strength_factors else 0.5
+        return (
+            sum(strength_factors) / len(strength_factors) if strength_factors else 0.5
+        )
 
     def _apply_thresholds(self, score: float, severity: str) -> Decision:
         """Apply decision thresholds based on score and severity."""
@@ -424,7 +429,7 @@ class GuardianGate:
         score: float,
         structural_fix: float,
         domain_veracity: float,
-        evidence_strength: float
+        evidence_strength: float,
     ) -> str:
         """Generate human-readable rationale for the decision."""
         components = []
@@ -462,7 +467,7 @@ class GuardianGate:
             "operation": getattr(proposal, "operation_type", "unknown"),
             "target_id": getattr(proposal, "target_id", "unknown"),
             "confidence": getattr(proposal, "confidence", 0.5),
-            "details": str(proposal)
+            "details": str(proposal),
         }
 
     def validate_adapter(self, adapter_info: dict[str, Any]) -> dict[str, Any]:
@@ -475,8 +480,16 @@ class GuardianGate:
         perplexity = metrics.get("perplexity", float("inf"))
 
         # Domain-specific thresholds
-        min_accuracy = self.policies.get("adapter_thresholds", {}).get(domain, {}).get("min_accuracy", 0.7)
-        max_perplexity = self.policies.get("adapter_thresholds", {}).get(domain, {}).get("max_perplexity", 100)
+        min_accuracy = (
+            self.policies.get("adapter_thresholds", {})
+            .get(domain, {})
+            .get("min_accuracy", 0.7)
+        )
+        max_perplexity = (
+            self.policies.get("adapter_thresholds", {})
+            .get(domain, {})
+            .get("max_perplexity", 100)
+        )
 
         # Make decision
         if accuracy < min_accuracy or perplexity > max_perplexity:
@@ -504,7 +517,7 @@ class GuardianGate:
             "decision": decision,
             "confidence": confidence,
             "reason": reason,
-            "signature": signature
+            "signature": signature,
         }
 
     def _generate_signature(self, data: dict[str, Any]) -> str:
@@ -522,13 +535,17 @@ class GuardianGate:
         expected_signature = self._generate_signature(data)
         return signature == expected_signature
 
-    async def validate_query_result(self, query_context: dict[str, Any], result: dict[str, Any]) -> Decision:
+    async def validate_query_result(
+        self, query_context: dict[str, Any], result: dict[str, Any]
+    ) -> Decision:
         """Validate query results before returning to user."""
         domain = query_context.get("domain", "general")
         confidence = result.get("confidence", 0.5)
 
         # High-risk domains require higher confidence
-        high_risk_domains = self.policies.get("high_risk_domains", ["medical", "financial"])
+        high_risk_domains = self.policies.get(
+            "high_risk_domains", ["medical", "financial"]
+        )
 
         if domain in high_risk_domains and confidence < 0.7:
             decision = "QUARANTINE"
@@ -550,7 +567,7 @@ class GuardianGate:
             "type": "query_validation",
             "domain": domain,
             "confidence": confidence,
-            "rationale": reason
+            "rationale": reason,
         }
         audit.log(audit_record)
 

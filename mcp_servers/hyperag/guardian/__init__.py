@@ -7,9 +7,4 @@ Provides semantic utility scoring, fact checking, and decision gating.
 from . import audit
 from .gate import CreativeBridge, Decision, GuardianGate
 
-__all__ = [
-    "CreativeBridge",
-    "Decision",
-    "GuardianGate",
-    "audit"
-]
+__all__ = ["CreativeBridge", "Decision", "GuardianGate", "audit"]

@@ -12,7 +12,12 @@ class ErrorController:
         self.error_counts: dict[str, int] = {}
         self.total_errors: int = 0
 
-    def handle_error(self, error_message: str, exception: Exception, context: dict[str, Any] | None = None):
+    def handle_error(
+        self,
+        error_message: str,
+        exception: Exception,
+        context: dict[str, Any] | None = None,
+    ):
         """Handle errors in a centralized manner.
 
         :param error_message: A descriptive message about the error
@@ -34,7 +39,9 @@ class ErrorController:
 
         self._attempt_recovery(exception, context)
 
-    def _attempt_recovery(self, exception: Exception, context: dict[str, Any] | None = None):
+    def _attempt_recovery(
+        self, exception: Exception, context: dict[str, Any] | None = None
+    ):
         """Attempt to recover from the error and update error statistics."""
         error_type = type(exception).__name__
         self.total_errors += 1
@@ -47,7 +54,9 @@ class ErrorController:
                 self.logger.info("Using fallback value provided in context.")
                 return context["fallback"]
         elif isinstance(exception, IOError):
-            self.logger.info("Attempting basic recovery from IOError by retrying callback if available...")
+            self.logger.info(
+                "Attempting basic recovery from IOError by retrying callback if available..."
+            )
             retry_cb = context.get("retry_callback") if context else None
             if callable(retry_cb):
                 try:

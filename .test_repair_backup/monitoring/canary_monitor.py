@@ -15,9 +15,11 @@ from typing import Any
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class CanaryTest:
     """Represents a canary test and its expected behavior"""
+
     name: str
     path: str
     expected_status: str  # 'xfail', 'skip', 'fail'
@@ -26,15 +28,18 @@ class CanaryTest:
     last_change: str | None = None
     monitored_since: str | None = None
 
+
 @dataclass
 class CanaryChange:
     """Represents a change in canary test behavior"""
+
     timestamp: str
     test_name: str
     old_status: str
     new_status: str
     reason: str
     alert_level: str  # 'info', 'warning', 'critical'
+
 
 class CanaryMonitor:
     """Monitor canary tests for unexpected changes"""
@@ -79,22 +84,22 @@ class CanaryMonitor:
                 "path": "tests/compression/test_stage1.py::test_bitnet_quantization_accuracy",
                 "expected_status": "xfail",
                 "reason": "BitNet quantization not implemented - architectural canary",
-                "monitored_since": datetime.now(timezone.utc).isoformat()
+                "monitored_since": datetime.now(timezone.utc).isoformat(),
             },
             {
                 "name": "evo_merge_tests",
                 "path": "tests/evo_merge/test_*.py",
                 "expected_status": "collection_error",
                 "reason": "EvoMerge architecture not available - architectural canary",
-                "monitored_since": datetime.now(timezone.utc).isoformat()
-            }
+                "monitored_since": datetime.now(timezone.utc).isoformat(),
+            },
         ]
 
         config = {
             "canary_tests": default_canaries,
             "monitoring_enabled": True,
             "alert_on_unexpected_pass": True,
-            "alert_on_status_change": True
+            "alert_on_status_change": True,
         }
 
         try:
@@ -134,7 +139,7 @@ class CanaryMonitor:
                         "old_status": change.old_status,
                         "new_status": change.new_status,
                         "reason": change.reason,
-                        "alert_level": change.alert_level
+                        "alert_level": change.alert_level,
                     }
                     for change in self.change_history
                 ]
@@ -164,7 +169,9 @@ class CanaryMonitor:
 
             # Check for status changes
             if canary.last_seen_status and canary.last_seen_status != current_status:
-                alert_level = self._determine_alert_level(canary, canary.last_seen_status, current_status)
+                alert_level = self._determine_alert_level(
+                    canary, canary.last_seen_status, current_status
+                )
 
                 change = CanaryChange(
                     timestamp=timestamp,
@@ -172,7 +179,7 @@ class CanaryMonitor:
                     old_status=canary.last_seen_status,
                     new_status=current_status,
                     reason=f"Canary test status changed from {canary.last_seen_status} to {current_status}",
-                    alert_level=alert_level
+                    alert_level=alert_level,
                 )
 
                 changes.append(change)
@@ -220,7 +227,9 @@ class CanaryMonitor:
             return "xpass"  # Expected fail but passed - important!
         return outcome
 
-    def _determine_alert_level(self, canary: CanaryTest, old_status: str, new_status: str) -> str:
+    def _determine_alert_level(
+        self, canary: CanaryTest, old_status: str, new_status: str
+    ) -> str:
         """Determine alert level for status changes"""
         # Expected fail → Pass = Critical (architecture changed!)
         if canary.expected_status == "xfail" and new_status == "passed":
@@ -253,13 +262,13 @@ class CanaryMonitor:
                         "reason": canary.reason,
                         "last_seen_status": canary.last_seen_status,
                         "last_change": canary.last_change,
-                        "monitored_since": canary.monitored_since
+                        "monitored_since": canary.monitored_since,
                     }
                     for canary in self.known_canaries.values()
                 ],
                 "monitoring_enabled": True,
                 "alert_on_unexpected_pass": True,
-                "alert_on_status_change": True
+                "alert_on_status_change": True,
             }
 
             with open(self.canary_config_file, "w") as f:
@@ -290,24 +299,39 @@ class CanaryMonitor:
         """Get summary of canary test status"""
         summary = {
             "total_canaries": len(self.known_canaries),
-            "recent_changes": len([c for c in self.change_history if c.alert_level in ["warning", "critical"]]),
-            "critical_alerts": len([c for c in self.change_history if c.alert_level == "critical"]),
-            "canary_status": {}
+            "recent_changes": len(
+                [
+                    c
+                    for c in self.change_history
+                    if c.alert_level in ["warning", "critical"]
+                ]
+            ),
+            "critical_alerts": len(
+                [c for c in self.change_history if c.alert_level == "critical"]
+            ),
+            "canary_status": {},
         }
 
         for name, canary in self.known_canaries.items():
-            status_emoji = "🔴" if canary.last_seen_status in ["failed", "error"] else \
-                          "🟡" if canary.last_seen_status in ["skipped", "xfail"] else \
-                          "🟢" if canary.last_seen_status == "passed" else "⚪"
+            status_emoji = (
+                "🔴"
+                if canary.last_seen_status in ["failed", "error"]
+                else "🟡"
+                if canary.last_seen_status in ["skipped", "xfail"]
+                else "🟢"
+                if canary.last_seen_status == "passed"
+                else "⚪"
+            )
 
             summary["canary_status"][name] = {
                 "status": canary.last_seen_status or "unknown",
                 "expected": canary.expected_status,
                 "emoji": status_emoji,
-                "last_change": canary.last_change
+                "last_change": canary.last_change,
             }
 
         return summary
+
 
 def main():
     """CLI interface for canary monitoring"""
@@ -346,15 +370,20 @@ def main():
         print(f"  Critical alerts: {summary['critical_alerts']}")
         print("\nCanary Status:")
         for name, status in summary["canary_status"].items():
-            print(f"  {status['emoji']} {name}: {status['status']} (expected: {status['expected']})")
+            print(
+                f"  {status['emoji']} {name}: {status['status']} (expected: {status['expected']})"
+            )
 
     elif args.history:
         if monitor.change_history:
             print("Canary Change History:")
             for change in monitor.change_history[-10:]:  # Last 10 changes
-                print(f"  {change.timestamp} [{change.alert_level.upper()}] {change.test_name}: {change.old_status} → {change.new_status}")
+                print(
+                    f"  {change.timestamp} [{change.alert_level.upper()}] {change.test_name}: {change.old_status} → {change.new_status}"
+                )
         else:
             print("No canary changes recorded")
+
 
 if __name__ == "__main__":
     main()

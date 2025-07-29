@@ -21,10 +21,14 @@ from ..core.structures import RetrievalResult
 
 DEFAULT_DIMENSION = 768
 
+
 class VectorStore:
-    def __init__(self, config: UnifiedConfig | None = None,
-                 dimension: int = DEFAULT_DIMENSION,
-                 embedding_model: Any | None = None):
+    def __init__(
+        self,
+        config: UnifiedConfig | None = None,
+        dimension: int = DEFAULT_DIMENSION,
+        embedding_model: Any | None = None,
+    ):
         """Create a VectorStore.
 
         The previous version of :class:`VectorStore` required ``config`` and
@@ -35,15 +39,23 @@ class VectorStore:
         """
         self.config = config or UnifiedConfig()
         self.embedding_model = embedding_model
-        self.dimension = getattr(embedding_model, "hidden_size", dimension) if embedding_model is not None else dimension
+        self.dimension = (
+            getattr(embedding_model, "hidden_size", dimension)
+            if embedding_model is not None
+            else dimension
+        )
         self.documents: list[dict[str, Any]] = []
         if USE_QDRANT and QdrantClient is not None:
-            self.qdrant = QdrantClient(url=os.getenv("QDRANT_URL", "http://localhost:6333"))
+            self.qdrant = QdrantClient(
+                url=os.getenv("QDRANT_URL", "http://localhost:6333")
+            )
             self.collection = "documents"
             try:  # pragma: no cover - network side effects
                 self.qdrant.get_collection(self.collection)
             except Exception:
-                self.qdrant.recreate_collection(self.collection, vector_size=self.dimension, distance="Cosine")
+                self.qdrant.recreate_collection(
+                    self.collection, vector_size=self.dimension, distance="Cosine"
+                )
             self.index = None
         else:
             self.index = faiss.IndexFlatL2(self.dimension)
@@ -80,12 +92,14 @@ class VectorStore:
             else:
                 vec = np.random.rand(self.dimension).astype("float32")
 
-            docs.append({
-                "id": str(uuid.uuid4()),
-                "content": text,
-                "embedding": vec,
-                "timestamp": datetime.now(),
-            })
+            docs.append(
+                {
+                    "id": str(uuid.uuid4()),
+                    "content": text,
+                    "embedding": vec,
+                    "timestamp": datetime.now(),
+                }
+            )
         self.add_documents(docs)
 
     def update_document(self, doc_id: str, new_doc: dict[str, Any]):
@@ -105,36 +119,51 @@ class VectorStore:
                 del self.documents[i]
                 break
 
-    async def retrieve(self, query_vector: list[float], k: int, timestamp: datetime | None = None, metadata_filter: dict[str, Any] | None = None) -> list[RetrievalResult]:
+    async def retrieve(
+        self,
+        query_vector: list[float],
+        k: int,
+        timestamp: datetime | None = None,
+        metadata_filter: dict[str, Any] | None = None,
+    ) -> list[RetrievalResult]:
         if USE_QDRANT and QdrantClient is not None:
             try:  # pragma: no cover - network side effects
-                resp = self.qdrant.search(collection_name=self.collection, query_vector=query_vector, limit=k)
+                resp = self.qdrant.search(
+                    collection_name=self.collection, query_vector=query_vector, limit=k
+                )
                 entries = [(p.payload.get("content", ""), p.score, p.id) for p in resp]
             except Exception:
                 entries = []
             distances = [1.0 - s for _, s, _ in entries]
             indices = list(range(len(entries)))
             for content, _s, pid in entries:
-                self.documents.append({
-                    "id": pid,
-                    "content": content,
-                    "embedding": query_vector,
-                    "timestamp": datetime.now(),
-                })
+                self.documents.append(
+                    {
+                        "id": pid,
+                        "content": content,
+                        "embedding": query_vector,
+                        "timestamp": datetime.now(),
+                    }
+                )
         else:
             query_vector_np = np.array([query_vector]).astype("float32")
             distances, indices = self.index.search(query_vector_np, k)
 
         results = []
-        for i, idx in enumerate(indices[0] if isinstance(indices, np.ndarray) else indices):
+        for i, idx in enumerate(
+            indices[0] if isinstance(indices, np.ndarray) else indices
+        ):
             doc = self.documents[idx]
-            if (timestamp is None or doc["timestamp"] <= timestamp) and \
-               (metadata_filter is None or all(doc.get(key) == value for key, value in metadata_filter.items())):
+            if (timestamp is None or doc["timestamp"] <= timestamp) and (
+                metadata_filter is None
+                or all(doc.get(key) == value for key, value in metadata_filter.items())
+            ):
                 result = RetrievalResult(
                     id=doc["id"],
                     content=doc["content"],
-                    score=1 / (1 + distances[0][i]),  # Convert distance to similarity score
-                    timestamp=doc["timestamp"]
+                    score=1
+                    / (1 + distances[0][i]),  # Convert distance to similarity score
+                    timestamp=doc["timestamp"],
                 )
                 results.append(result)
 
@@ -154,11 +183,13 @@ class VectorStore:
         return len(self.documents)
 
     def save(self, file_path: str):
-        index_bytes = faiss.serialize_index(self.index) if self.index is not None else b""
+        index_bytes = (
+            faiss.serialize_index(self.index) if self.index is not None else b""
+        )
         data = {
             "index": base64.b64encode(index_bytes).decode("utf-8"),
             "documents": self.documents,
-            "dimension": self.dimension
+            "dimension": self.dimension,
         }
         with open(file_path, "w") as f:
             json.dump(data, f)

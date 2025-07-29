@@ -14,21 +14,27 @@ class KnowledgeEvolutionTracker:
         self.graph_store = graph_store
         self.change_log: list[dict[str, Any]] = []
 
-    async def track_change(self, entity_id: str, old_state: Any, new_state: Any, timestamp: datetime):
+    async def track_change(
+        self, entity_id: str, old_state: Any, new_state: Any, timestamp: datetime
+    ):
         change_record = {
             "entity_id": entity_id,
             "old_state": old_state,
             "new_state": new_state,
-            "timestamp": timestamp
+            "timestamp": timestamp,
         }
         self.change_log.append(change_record)
 
         await self._store_change_record(change_record)
 
-    async def get_evolution(self, entity_id: str, start_time: datetime, end_time: datetime) -> list[dict[str, Any]]:
+    async def get_evolution(
+        self, entity_id: str, start_time: datetime, end_time: datetime
+    ) -> list[dict[str, Any]]:
         evolution = [
-            change for change in self.change_log
-            if change["entity_id"] == entity_id and start_time <= change["timestamp"] <= end_time
+            change
+            for change in self.change_log
+            if change["entity_id"] == entity_id
+            and start_time <= change["timestamp"] <= end_time
         ]
         return sorted(evolution, key=lambda x: x["timestamp"])
 
@@ -39,13 +45,14 @@ class KnowledgeEvolutionTracker:
         return {
             "timestamp": timestamp,
             "vector_knowledge": vector_snapshot,
-            "graph_knowledge": graph_snapshot
+            "graph_knowledge": graph_snapshot,
         }
 
     async def _store_change_record(self, record: dict[str, Any]):
         """Persist a change record to a simple JSONL log for now."""
         import json
         import os
+
         log_path = os.path.join(os.path.dirname(__file__), "evolution.log")
         async with asyncio.Lock():
             with open(log_path, "a", encoding="utf-8") as f:

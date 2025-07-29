@@ -14,14 +14,17 @@ import sys
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
 
+
 def validate_magi_creation():
     """Validate the Magi agent creation success."""
-    print("="*70)
+    print("=" * 70)
     print("MAGI AGENT VALIDATION REPORT")
-    print("="*70)
+    print("=" * 70)
 
     # Check for results file
-    results_path = Path("D:/AgentForge/memory_efficient_magi_20250726_033506/memory_efficient_scaled_results.json")
+    results_path = Path(
+        "D:/AgentForge/memory_efficient_magi_20250726_033506/memory_efficient_scaled_results.json"
+    )
 
     if not results_path.exists():
         print("❌ ERROR: Magi results file not found")
@@ -44,7 +47,7 @@ def validate_magi_creation():
     print("\n📊 TRAINING SCALE VALIDATION:")
     print(f"  Questions Processed: {questions:,} {'✅' if questions >= 9960 else '❌'}")
     print(f"  Training Duration: {duration:.1f} seconds")
-    print(f"  Processing Rate: {questions/duration:.1f} questions/second")
+    print(f"  Processing Rate: {questions / duration:.1f} questions/second")
 
     # Validate specialization achievement
     spec_score = results["final_specialization_score"]
@@ -62,7 +65,9 @@ def validate_magi_creation():
 
     mastery_count = 0
     for cap, score in capabilities.items():
-        level = "MASTERY" if score >= 0.90 else "EXPERT" if score >= 0.75 else "ADVANCED"
+        level = (
+            "MASTERY" if score >= 0.90 else "EXPERT" if score >= 0.75 else "ADVANCED"
+        )
         if score >= 0.90:
             mastery_count += 1
         status = "✅" if score >= 0.75 else "⚠️" if score >= 0.60 else "❌"
@@ -78,8 +83,10 @@ def validate_magi_creation():
     # Show progression
     print("\n  Level Progression:")
     for i, level in enumerate(results["level_results"]):
-        print(f"    Level {i}: Score={level['overall_capability']:.4f}, "
-              f"Questions={level['questions_completed']}")
+        print(
+            f"    Level {i}: Score={level['overall_capability']:.4f}, "
+            f"Questions={level['questions_completed']}"
+        )
 
     # Validate memory efficiency
     print("\n💾 MEMORY EFFICIENCY:")
@@ -91,7 +98,7 @@ def validate_magi_creation():
         print("  Memory stats not recorded")
 
     # Final validation summary
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("VALIDATION SUMMARY:")
 
     validations = [
@@ -99,7 +106,7 @@ def validate_magi_creation():
         ("Specialization Score", spec_score >= 0.80),
         ("Mastery Capabilities", mastery_count >= 3),
         ("Geometric Progression", len(results["geometric_snapshots"]) > 0),
-        ("Completion Time", duration < 300)  # Under 5 minutes
+        ("Completion Time", duration < 300),  # Under 5 minutes
     ]
 
     all_passed = True
@@ -109,14 +116,14 @@ def validate_magi_creation():
         if not passed:
             all_passed = False
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     if all_passed:
         print("🎉 MAGI AGENT CREATION: FULLY VALIDATED AND OPERATIONAL")
         print("🧙 The first AI Village agent is ready for deployment!")
     else:
         print("⚠️  Some validations failed - review needed")
 
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     # Save validation report
     report = {
@@ -128,7 +135,7 @@ def validate_magi_creation():
         "improvement_percentage": improvement,
         "capabilities": capabilities,
         "mastery_count": mastery_count,
-        "all_validations_passed": all_passed
+        "all_validations_passed": all_passed,
     }
 
     report_path = Path("magi_validation_report.json")
@@ -138,6 +145,7 @@ def validate_magi_creation():
     print(f"\n📄 Validation report saved to: {report_path}")
 
     return all_passed
+
 
 if __name__ == "__main__":
     success = validate_magi_creation()

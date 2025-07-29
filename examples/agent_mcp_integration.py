@@ -48,7 +48,7 @@ class HypeRAGMCPClient:
             "jsonrpc": "2.0",
             "method": method,
             "params": params,
-            "id": f"{self.agent_id}_{self.request_id}"
+            "id": f"{self.agent_id}_{self.request_id}",
         }
 
         # Send request
@@ -76,45 +76,54 @@ class KingAgent:
         logger.info(f"King performing comprehensive analysis on: {topic}")
 
         # 1. Initial query with high confidence threshold
-        query_result = await self.mcp.call("hyperag/query", {
-            "query": f"Provide comprehensive analysis of {topic}",
-            "mode": "NORMAL",
-            "plan_hints": {
-                "max_depth": 5,
-                "time_budget_ms": 5000,
-                "confidence_threshold": 0.8,
-                "include_explanations": True
-            }
-        })
+        query_result = await self.mcp.call(
+            "hyperag/query",
+            {
+                "query": f"Provide comprehensive analysis of {topic}",
+                "mode": "NORMAL",
+                "plan_hints": {
+                    "max_depth": 5,
+                    "time_budget_ms": 5000,
+                    "confidence_threshold": 0.8,
+                    "include_explanations": True,
+                },
+            },
+        )
 
         # 2. Creative exploration for innovative insights
-        creative_result = await self.mcp.call("hyperag/creative", {
-            "source_concept": topic,
-            "creativity_parameters": {
-                "mode": "divergent",
-                "max_hops": 5,
-                "min_surprise": 0.7
-            }
-        })
+        creative_result = await self.mcp.call(
+            "hyperag/creative",
+            {
+                "source_concept": topic,
+                "creativity_parameters": {
+                    "mode": "divergent",
+                    "max_hops": 5,
+                    "min_surprise": 0.7,
+                },
+            },
+        )
 
         # 3. Check for potential repairs needed
         # (In a real implementation, this would check specific violations)
 
         # 4. Add strategic knowledge
-        await self.mcp.call("hyperag/knowledge/add", {
-            "content": f"Strategic analysis of {topic} completed by King Agent",
-            "content_type": "analysis",
-            "metadata": {
-                "agent": "king",
-                "analysis_type": "comprehensive",
-                "topic": topic
-            }
-        })
+        await self.mcp.call(
+            "hyperag/knowledge/add",
+            {
+                "content": f"Strategic analysis of {topic} completed by King Agent",
+                "content_type": "analysis",
+                "metadata": {
+                    "agent": "king",
+                    "analysis_type": "comprehensive",
+                    "topic": topic,
+                },
+            },
+        )
 
         return {
             "analysis": query_result,
             "creative_insights": creative_result,
-            "status": "comprehensive_analysis_complete"
+            "status": "comprehensive_analysis_complete",
         }
 
 
@@ -130,43 +139,50 @@ class SageAgent:
         logger.info(f"Sage performing strategic research: {research_question}")
 
         # 1. Search existing knowledge
-        search_results = await self.mcp.call("hyperag/knowledge/search", {
-            "query": research_question,
-            "limit": 20,
-            "filters": {
-                "content_type": ["research", "analysis", "document"]
-            }
-        })
+        search_results = await self.mcp.call(
+            "hyperag/knowledge/search",
+            {
+                "query": research_question,
+                "limit": 20,
+                "filters": {"content_type": ["research", "analysis", "document"]},
+            },
+        )
 
         # 2. Analytical query
-        analysis = await self.mcp.call("hyperag/query", {
-            "query": f"Analyze the strategic implications of: {research_question}",
-            "mode": "NORMAL",
-            "plan_hints": {
-                "max_depth": 4,
-                "confidence_threshold": 0.75,
-                "prefer_analysis": True
-            }
-        })
+        analysis = await self.mcp.call(
+            "hyperag/query",
+            {
+                "query": f"Analyze the strategic implications of: {research_question}",
+                "mode": "NORMAL",
+                "plan_hints": {
+                    "max_depth": 4,
+                    "confidence_threshold": 0.75,
+                    "prefer_analysis": True,
+                },
+            },
+        )
 
         # 3. Web research simulation (in real implementation)
         # web_data = await self.perform_web_research(research_question)
 
         # 4. Add research findings
-        await self.mcp.call("hyperag/knowledge/add", {
-            "content": f"Research findings: {research_question}",
-            "content_type": "research",
-            "metadata": {
-                "agent": "sage",
-                "research_type": "strategic",
-                "confidence": analysis.get("result", {}).get("confidence", 0.0)
-            }
-        })
+        await self.mcp.call(
+            "hyperag/knowledge/add",
+            {
+                "content": f"Research findings: {research_question}",
+                "content_type": "research",
+                "metadata": {
+                    "agent": "sage",
+                    "research_type": "strategic",
+                    "confidence": analysis.get("result", {}).get("confidence", 0.0),
+                },
+            },
+        )
 
         return {
             "existing_knowledge": search_results,
             "analysis": analysis,
-            "status": "strategic_research_complete"
+            "status": "strategic_research_complete",
         }
 
 
@@ -182,40 +198,47 @@ class MagiAgent:
         logger.info(f"Magi handling technical query: {technical_question}")
 
         # 1. Technical-focused query
-        tech_result = await self.mcp.call("hyperag/query", {
-            "query": technical_question,
-            "mode": "NORMAL",
-            "plan_hints": {
-                "max_depth": 3,
-                "confidence_threshold": 0.7,
-                "domain_filter": "technical"
-            }
-        })
+        tech_result = await self.mcp.call(
+            "hyperag/query",
+            {
+                "query": technical_question,
+                "mode": "NORMAL",
+                "plan_hints": {
+                    "max_depth": 3,
+                    "confidence_threshold": 0.7,
+                    "domain_filter": "technical",
+                },
+            },
+        )
 
         # 2. Search for existing technical documentation
-        docs_search = await self.mcp.call("hyperag/knowledge/search", {
-            "query": technical_question,
-            "limit": 10,
-            "filters": {
-                "content_type": ["code", "documentation", "technical"]
-            }
-        })
+        docs_search = await self.mcp.call(
+            "hyperag/knowledge/search",
+            {
+                "query": technical_question,
+                "limit": 10,
+                "filters": {"content_type": ["code", "documentation", "technical"]},
+            },
+        )
 
         # 3. Add technical documentation (Magi has write_code_docs permission)
-        await self.mcp.call("hyperag/knowledge/add", {
-            "content": f"Technical documentation: {technical_question}",
-            "content_type": "documentation",
-            "metadata": {
-                "agent": "magi",
-                "doc_type": "technical",
-                "programming_related": True
-            }
-        })
+        await self.mcp.call(
+            "hyperag/knowledge/add",
+            {
+                "content": f"Technical documentation: {technical_question}",
+                "content_type": "documentation",
+                "metadata": {
+                    "agent": "magi",
+                    "doc_type": "technical",
+                    "programming_related": True,
+                },
+            },
+        )
 
         return {
             "technical_analysis": tech_result,
             "existing_docs": docs_search,
-            "status": "technical_query_complete"
+            "status": "technical_query_complete",
         }
 
 
@@ -227,20 +250,20 @@ async def demonstrate_agent_integration():
             "id": "king_001",
             "api_key": "hrag_prod_king456",
             "class": KingAgent,
-            "task": "artificial intelligence governance"
+            "task": "artificial intelligence governance",
         },
         {
             "id": "sage_001",
             "api_key": "hrag_prod_sage789",
             "class": SageAgent,
-            "task": "future of machine learning research"
+            "task": "future of machine learning research",
         },
         {
             "id": "magi_001",
             "api_key": "hrag_dev_test123",  # Note: limited permissions
             "class": MagiAgent,
-            "task": "implementing neural network architectures"
-        }
+            "task": "implementing neural network architectures",
+        },
     ]
 
     mcp_uri = "ws://localhost:8765"
@@ -265,21 +288,17 @@ async def demonstrate_agent_integration():
             else:
                 result = {"error": "Unknown agent type"}
 
-            results.append({
-                "agent": config["id"],
-                "task": config["task"],
-                "result": result
-            })
+            results.append(
+                {"agent": config["id"], "task": config["task"], "result": result}
+            )
 
             await client.disconnect()
 
         except Exception as e:
             logger.error(f"Error with agent {config['id']}: {e!s}")
-            results.append({
-                "agent": config["id"],
-                "task": config["task"],
-                "error": str(e)
-            })
+            results.append(
+                {"agent": config["id"], "task": config["task"], "error": str(e)}
+            )
 
     return results
 
@@ -296,34 +315,33 @@ async def test_permission_system():
             "method": "hyperag/repair",  # Should fail - no repair permissions
             "params": {
                 "violation_type": "test",
-                "details": {"description": "test repair"}
+                "details": {"description": "test repair"},
             },
-            "should_fail": True
+            "should_fail": True,
         },
         {
             "agent": "king",
             "api_key": "hrag_prod_king456",
             "method": "hyperag/metrics",  # Should succeed - king has monitor permission
             "params": {},
-            "should_fail": False
+            "should_fail": False,
         },
         {
             "agent": "sage",
             "api_key": "hrag_prod_sage789",
             "method": "hyperag/adapter/upload",  # Should fail - sage can't manage adapters
-            "params": {
-                "name": "test_adapter",
-                "description": "test"
-            },
-            "should_fail": True
-        }
+            "params": {"name": "test_adapter", "description": "test"},
+            "should_fail": True,
+        },
     ]
 
     results = []
 
     for test_case in test_cases:
         try:
-            client = HypeRAGMCPClient("ws://localhost:8765", test_case["agent"], test_case["api_key"])
+            client = HypeRAGMCPClient(
+                "ws://localhost:8765", test_case["agent"], test_case["api_key"]
+            )
             await client.connect()
 
             try:
@@ -337,24 +355,28 @@ async def test_permission_system():
             # Check if result matches expectation
             test_passed = (not success) == test_case["should_fail"]
 
-            results.append({
-                "agent": test_case["agent"],
-                "method": test_case["method"],
-                "expected_failure": test_case["should_fail"],
-                "actual_failure": not success,
-                "test_passed": test_passed,
-                "error": error
-            })
+            results.append(
+                {
+                    "agent": test_case["agent"],
+                    "method": test_case["method"],
+                    "expected_failure": test_case["should_fail"],
+                    "actual_failure": not success,
+                    "test_passed": test_passed,
+                    "error": error,
+                }
+            )
 
             await client.disconnect()
 
         except Exception as e:
-            results.append({
-                "agent": test_case["agent"],
-                "method": test_case["method"],
-                "test_passed": False,
-                "connection_error": str(e)
-            })
+            results.append(
+                {
+                    "agent": test_case["agent"],
+                    "method": test_case["method"],
+                    "test_passed": False,
+                    "connection_error": str(e),
+                }
+            )
 
     return results
 

@@ -18,8 +18,9 @@ from ..core.structures import RetrievalResult
 
 
 class GraphStore:
-    def __init__(self, config: UnifiedConfig | None = None,
-                 embedding_model: Any | None = None):
+    def __init__(
+        self, config: UnifiedConfig | None = None, embedding_model: Any | None = None
+    ):
         """Create a GraphStore.
 
         Similar to :class:`VectorStore`, older code instantiated ``GraphStore``
@@ -89,7 +90,9 @@ class GraphStore:
                 if hasattr(self.graph, "add_edge"):
                     self.graph.add_edge(doc["id"], other["id"], weight=sim)
 
-    async def retrieve(self, query: str, k: int, timestamp: datetime = None) -> list[RetrievalResult]:
+    async def retrieve(
+        self, query: str, k: int, timestamp: datetime = None
+    ) -> list[RetrievalResult]:
         """Return nodes that match ``query``.
 
         When ``self.driver`` is provided it should be an instance of
@@ -136,7 +139,9 @@ class GraphStore:
                         v.uncertainty as uncertainty, v.timestamp as timestamp,
                         v.version as version
                     """,
-                    query=query, timestamp=timestamp, k=k
+                    query=query,
+                    timestamp=timestamp,
+                    k=k,
                 )
             else:
                 result = session.run(
@@ -151,7 +156,8 @@ class GraphStore:
                         v.uncertainty as uncertainty, v.timestamp as timestamp,
                         v.version as version
                     """,
-                    query=query, k=k
+                    query=query,
+                    k=k,
                 )
 
         return [
@@ -161,16 +167,20 @@ class GraphStore:
                 score=record["score"],
                 uncertainty=record["uncertainty"],
                 timestamp=record["timestamp"],
-                version=record["version"]
+                version=record["version"],
             )
             for record in result
         ]
 
-    def update_causal_strength(self, source: str, target: str, observed_probability: float):
+    def update_causal_strength(
+        self, source: str, target: str, observed_probability: float
+    ):
         edge = self.causal_edges.get((source, target))
         if edge:
             learning_rate = 0.1
-            edge.strength = (1 - learning_rate) * edge.strength + learning_rate * observed_probability
+            edge.strength = (
+                1 - learning_rate
+            ) * edge.strength + learning_rate * observed_probability
 
     def close(self):
         if self.driver:
@@ -204,7 +214,9 @@ class GraphStore:
             "edges": list(snapshot.edges(data=True)),
         }
 
-    async def beam_search(self, query: str, beam_width: int, max_depth: int) -> list[tuple[list[str], float]]:
+    async def beam_search(
+        self, query: str, beam_width: int, max_depth: int
+    ) -> list[tuple[list[str], float]]:
         initial_entities = await self.get_initial_entities(query)
         beams = [[entity] for entity in initial_entities]
 

@@ -1,4 +1,3 @@
-
 import torch
 
 from communications.federated_client import FederatedClient

@@ -7,10 +7,13 @@ Provides brain-inspired dual-memory architecture with creativity, repair, and sa
 __version__ = "1.0.0"
 __author__ = "AIVillage Team"
 
+
 # Delayed imports to avoid dependency issues during testing
 def get_server():
     from .server import HypeRAGMCPServer
+
     return HypeRAGMCPServer
+
 
 # Only import what's essential
 try:
@@ -36,5 +39,5 @@ __all__ = [
     "MCPProtocolHandler",
     "ModelRegistry",
     "PermissionManager",
-    "get_server"
+    "get_server",
 ]

@@ -1,4 +1,5 @@
 """Very simple JSONL event logger."""
+
 import json
 from pathlib import Path
 

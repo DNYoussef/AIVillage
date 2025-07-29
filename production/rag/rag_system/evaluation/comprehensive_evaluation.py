@@ -12,6 +12,7 @@ from rag_system.utils.advanced_analytics import AdvancedAnalytics
 
 logger = logging.getLogger(__name__)
 
+
 class ComprehensiveEvaluationFramework:
     def __init__(self, advanced_analytics: AdvancedAnalytics):
         self.advanced_analytics = advanced_analytics
@@ -28,7 +29,9 @@ class ComprehensiveEvaluationFramework:
 
     def record_metric(self, name: str, value: float):
         if name not in self.metrics:
-            logger.warning(f"Metric '{name}' not found. Adding it with a default description.")
+            logger.warning(
+                f"Metric '{name}' not found. Adding it with a default description."
+            )
             self.add_metric(name, "No description provided")
 
         self.metrics[name].append(value)
@@ -48,7 +51,7 @@ class ComprehensiveEvaluationFramework:
             "median": np.median(values),
             "std": np.std(values),
             "min": np.min(values),
-            "max": np.max(values)
+            "max": np.max(values),
         }
 
     def get_metric_trend(self, name: str, window: int = 10) -> float:
@@ -68,7 +71,7 @@ class ComprehensiveEvaluationFramework:
             report[name] = {
                 "description": self.metric_descriptions[name],
                 "stats": self.get_metric_stats(name),
-                "trend": self.get_metric_trend(name)
+                "trend": self.get_metric_trend(name),
             }
         return report
 
@@ -108,18 +111,26 @@ class ComprehensiveEvaluationFramework:
         visualizations = self.generate_visualizations()
 
         # Calculate overall performance score (this is a simplified example)
-        metric_scores = [stats["stats"]["latest"] for stats in performance_report.values() if stats["stats"]["latest"] is not None]
+        metric_scores = [
+            stats["stats"]["latest"]
+            for stats in performance_report.values()
+            if stats["stats"]["latest"] is not None
+        ]
         overall_score = np.mean(metric_scores) if metric_scores else None
 
         return {
             "timestamp": datetime.now().isoformat(),
             "overall_performance_score": overall_score,
             "metric_reports": performance_report,
-            "visualizations": visualizations
+            "visualizations": visualizations,
         }
 
     def log_evaluation_results(self, results: dict[str, Any]):
         logger.info(f"Evaluation Results at {results['timestamp']}:")
-        logger.info(f"Overall Performance Score: {results['overall_performance_score']}")
+        logger.info(
+            f"Overall Performance Score: {results['overall_performance_score']}"
+        )
         for metric, report in results["metric_reports"].items():
-            logger.info(f"{metric}: Latest = {report['stats']['latest']}, Trend = {report['trend']}")
+            logger.info(
+                f"{metric}: Latest = {report['stats']['latest']}, Trend = {report['trend']}"
+            )

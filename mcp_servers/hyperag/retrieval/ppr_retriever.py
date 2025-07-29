@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PPRResults:
     """Results from Personalized PageRank retrieval"""
+
     nodes: list[dict[str, Any]]
     edges: list[dict[str, Any]]
     scores: dict[str, float]
@@ -42,6 +43,7 @@ class PPRResults:
 @dataclass
 class AlphaProfile:
     """User's α-weight profile for relation personalization"""
+
     user_id: str
     relation_weights: dict[str, float]  # relation -> α-weight
     last_updated: datetime
@@ -78,7 +80,7 @@ class AlphaProfileStore:
                         relation_weights=data["relation_weights"],
                         last_updated=datetime.fromisoformat(data["last_updated"]),
                         interaction_count=data.get("interaction_count", 0),
-                        confidence=data.get("confidence", 1.0)
+                        confidence=data.get("confidence", 1.0),
                     )
                     self.profiles_cache[user_id] = profile
                     return profile
@@ -87,7 +89,9 @@ class AlphaProfileStore:
 
         return None
 
-    async def get_top_alpha(self, user_id: str, node_ids: list[str]) -> dict[str, float]:
+    async def get_top_alpha(
+        self, user_id: str, node_ids: list[str]
+    ) -> dict[str, float]:
         """Get α-weights for specific nodes based on their relations"""
         profile = await self.get_profile(user_id)
         if not profile:
@@ -114,13 +118,13 @@ class AlphaProfileStore:
                     "relation_weights": profile.relation_weights,
                     "last_updated": profile.last_updated.isoformat(),
                     "interaction_count": profile.interaction_count,
-                    "confidence": profile.confidence
+                    "confidence": profile.confidence,
                 }
 
                 await self.redis_client.setex(
                     f"hyperag:alpha:{profile.user_id}",
                     self.cache_ttl,
-                    json.dumps(profile_data)
+                    json.dumps(profile_data),
                 )
 
             return True
@@ -141,12 +145,14 @@ class PersonalizedPageRank:
     5) Return scored Node / Hyperedge list
     """
 
-    def __init__(self,
-                 hippo_index: HippoIndex,
-                 hypergraph: HypergraphKG,
-                 alpha_store: AlphaProfileStore | None = None,
-                 damping: float = 0.85,
-                 config_path: str | None = None):
+    def __init__(
+        self,
+        hippo_index: HippoIndex,
+        hypergraph: HypergraphKG,
+        alpha_store: AlphaProfileStore | None = None,
+        damping: float = 0.85,
+        config_path: str | None = None,
+    ):
         self.hippo_index = hippo_index
         self.hypergraph = hypergraph
         self.alpha_store = alpha_store
@@ -164,12 +170,14 @@ class PersonalizedPageRank:
 
         logger.info(f"PersonalizedPageRank initialized with damping={self.damping}")
 
-    async def retrieve(self,
-                      query_seeds: list[str],
-                      user_id: str | None,
-                      plan: QueryPlan,
-                      *,
-                      creative_mode: bool = False) -> PPRResults:
+    async def retrieve(
+        self,
+        query_seeds: list[str],
+        user_id: str | None,
+        plan: QueryPlan,
+        *,
+        creative_mode: bool = False,
+    ) -> PPRResults:
         """Parameters
         ----------
         query_seeds : initial entity ids
@@ -187,8 +195,12 @@ class PersonalizedPageRank:
         try:
             # Handle creative mode delegation
             if creative_mode:
-                reasoning_trace.append("Routing to DivergentRetriever for creative mode")
-                return await self._route_to_creative(query_seeds, user_id, plan, reasoning_trace)
+                reasoning_trace.append(
+                    "Routing to DivergentRetriever for creative mode"
+                )
+                return await self._route_to_creative(
+                    query_seeds, user_id, plan, reasoning_trace
+                )
 
             # 1. Standard dense k-NN on Hippo-Index for recency boost
             reasoning_trace.append("Fetching recency nodes from HippoIndex")
@@ -199,12 +211,16 @@ class PersonalizedPageRank:
             all_seeds = query_seeds + recency_nodes
             reasoning_trace.append(f"Running PPR with {len(all_seeds)} total seeds")
             base_scores = await self._pagerank(all_seeds, plan)
-            reasoning_trace.append(f"PPR completed with {len(base_scores)} scored nodes")
+            reasoning_trace.append(
+                f"PPR completed with {len(base_scores)} scored nodes"
+            )
 
             # 3. α-weight fusion if profile exists
             if user_id and self.alpha_store:
                 reasoning_trace.append(f"Applying α-weight fusion for user {user_id}")
-                alpha_scores = await self.alpha_store.get_top_alpha(user_id, list(base_scores.keys()))
+                alpha_scores = await self.alpha_store.get_top_alpha(
+                    user_id, list(base_scores.keys())
+                )
                 fusion_scores = self._fuse_with_alpha(base_scores, alpha_scores)
                 reasoning_trace.append(f"α-fusion applied to {len(alpha_scores)} nodes")
             else:
@@ -231,9 +247,10 @@ class PersonalizedPageRank:
                     "query_seeds": query_seeds,
                     "user_id": user_id,
                     "recency_boost": len(recency_nodes),
-                    "alpha_fusion": user_id is not None and self.alpha_store is not None,
-                    "total_scored_items": len(fusion_scores)
-                }
+                    "alpha_fusion": user_id is not None
+                    and self.alpha_store is not None,
+                    "total_scored_items": len(fusion_scores),
+                },
             )
 
         except Exception as e:
@@ -243,10 +260,12 @@ class PersonalizedPageRank:
             reasoning_trace.append(error_msg)
 
             return PPRResults(
-                nodes=[], edges=[], scores={},
+                nodes=[],
+                edges=[],
+                scores={},
                 reasoning_trace=reasoning_trace,
                 query_time_ms=query_time,
-                metadata={"error": str(e)}
+                metadata={"error": str(e)},
             )
 
     async def _knn_hippo(self, query_seeds: list[str], plan: QueryPlan) -> list[str]:
@@ -264,20 +283,24 @@ class PersonalizedPageRank:
             recent_nodes = await self.hippo_index.get_recent_nodes(
                 hours=max_age_hours,
                 user_id=getattr(plan, "user_id", None),
-                limit=knn_limit
+                limit=knn_limit,
             )
 
             # Extract node IDs
             recency_node_ids = [node.id for node in recent_nodes[:knn_limit]]
 
-            logger.debug(f"Retrieved {len(recency_node_ids)} recent nodes from HippoIndex")
+            logger.debug(
+                f"Retrieved {len(recency_node_ids)} recent nodes from HippoIndex"
+            )
             return recency_node_ids
 
         except Exception as e:
             logger.warning(f"Failed to get recency nodes: {e!s}")
             return []
 
-    async def _pagerank(self, seed_nodes: list[str], plan: QueryPlan) -> dict[str, float]:
+    async def _pagerank(
+        self, seed_nodes: list[str], plan: QueryPlan
+    ) -> dict[str, float]:
         """Run Personalized PageRank on the hypergraph"""
         try:
             ppr_config = self.config.get("pagerank", {})
@@ -292,15 +315,18 @@ class PersonalizedPageRank:
                     user_id=getattr(plan, "user_id", None),
                     alpha=1 - self.damping,  # Convert to restart probability
                     max_iterations=max_iterations,
-                    tolerance=convergence_tolerance
+                    tolerance=convergence_tolerance,
                 )
             else:
                 # Fallback implementation
-                scores = await self._pagerank_iteration(seed_nodes, max_iterations, convergence_tolerance)
+                scores = await self._pagerank_iteration(
+                    seed_nodes, max_iterations, convergence_tolerance
+                )
 
             # Filter by minimum score threshold
             filtered_scores = {
-                node_id: score for node_id, score in scores.items()
+                node_id: score
+                for node_id, score in scores.items()
                 if score >= min_score_threshold
             }
 
@@ -310,15 +336,14 @@ class PersonalizedPageRank:
         except Exception as e:
             logger.error(f"PageRank computation failed: {e!s}")
             # Return uniform scores for seeds as fallback
-            return {node_id: 1.0/len(seed_nodes) for node_id in seed_nodes}
+            return {node_id: 1.0 / len(seed_nodes) for node_id in seed_nodes}
 
-    async def _pagerank_iteration(self,
-                                 seed_nodes: list[str],
-                                 max_iterations: int,
-                                 tolerance: float) -> dict[str, float]:
+    async def _pagerank_iteration(
+        self, seed_nodes: list[str], max_iterations: int, tolerance: float
+    ) -> dict[str, float]:
         """Fallback PPR implementation with uncertainty decay"""
         # Initialize scores
-        scores = {node_id: 1.0/len(seed_nodes) for node_id in seed_nodes}
+        scores = {node_id: 1.0 / len(seed_nodes) for node_id in seed_nodes}
         personalization = scores.copy()
 
         uncertainty_config = self.config.get("uncertainty", {})
@@ -341,8 +366,9 @@ class PersonalizedPageRank:
                 new_scores[node_id] = new_score
 
             # Check convergence
-            max_diff = max(abs(new_scores[node_id] - scores[node_id])
-                          for node_id in scores)
+            max_diff = max(
+                abs(new_scores[node_id] - scores[node_id]) for node_id in scores
+            )
 
             scores = new_scores
 
@@ -352,11 +378,10 @@ class PersonalizedPageRank:
 
         return scores
 
-    def _fuse_with_alpha(self,
-                        base_scores: dict[str, float],
-                        alpha_scores: dict[str, float]) -> dict[str, float]:
-        """Fuse base PPR scores with α-weights: score = base + λ₁·α - λ₂·popularity_rank
-        """
+    def _fuse_with_alpha(
+        self, base_scores: dict[str, float], alpha_scores: dict[str, float]
+    ) -> dict[str, float]:
+        """Fuse base PPR scores with α-weights: score = base + λ₁·α - λ₂·popularity_rank"""
         fusion_config = self.config.get("alpha_fusion", {})
         base_weight = fusion_config.get("base_weight", 1.0)
         alpha_weight = fusion_config.get("alpha_weight", 0.3)
@@ -385,9 +410,9 @@ class PersonalizedPageRank:
         logger.debug(f"α-fusion applied to {len(fusion_scores)} nodes")
         return fusion_scores
 
-    async def _apply_uncertainty(self,
-                               scores: dict[str, float],
-                               plan: QueryPlan) -> dict[str, Any]:
+    async def _apply_uncertainty(
+        self, scores: dict[str, float], plan: QueryPlan
+    ) -> dict[str, Any]:
         """Apply uncertainty weighting and convert to result format"""
         uncertainty_config = self.config.get("uncertainty", {})
         max_uncertainty = uncertainty_config.get("max_uncertainty", 0.8)
@@ -408,12 +433,14 @@ class PersonalizedPageRank:
                 confidence = 1.0 - uncertainty
                 adjusted_score = score * (1.0 + confidence_weight * confidence)
 
-                filtered_items.append({
-                    "id": node_id,
-                    "score": adjusted_score,
-                    "uncertainty": uncertainty,
-                    "confidence": confidence
-                })
+                filtered_items.append(
+                    {
+                        "id": node_id,
+                        "score": adjusted_score,
+                        "uncertainty": uncertainty,
+                        "confidence": confidence,
+                    }
+                )
 
         # Sort by score and limit results
         filtered_items.sort(key=lambda x: x["score"], reverse=True)
@@ -429,33 +456,35 @@ class PersonalizedPageRank:
 
             # Simulate node/edge classification
             if hash(item["id"]) % 2 == 0:
-                nodes.append({
-                    "id": item["id"],
-                    "score": item["score"],
-                    "uncertainty": item["uncertainty"],
-                    "confidence": item["confidence"],
-                    "type": "node"
-                })
+                nodes.append(
+                    {
+                        "id": item["id"],
+                        "score": item["score"],
+                        "uncertainty": item["uncertainty"],
+                        "confidence": item["confidence"],
+                        "type": "node",
+                    }
+                )
             else:
-                edges.append({
-                    "id": item["id"],
-                    "score": item["score"],
-                    "uncertainty": item["uncertainty"],
-                    "confidence": item["confidence"],
-                    "type": "edge"
-                })
+                edges.append(
+                    {
+                        "id": item["id"],
+                        "score": item["score"],
+                        "uncertainty": item["uncertainty"],
+                        "confidence": item["confidence"],
+                        "type": "edge",
+                    }
+                )
 
-        return {
-            "nodes": nodes,
-            "edges": edges,
-            "scores": final_scores
-        }
+        return {"nodes": nodes, "edges": edges, "scores": final_scores}
 
-    async def _route_to_creative(self,
-                               query_seeds: list[str],
-                               user_id: str | None,
-                               plan: QueryPlan,
-                               reasoning_trace: list[str]) -> PPRResults:
+    async def _route_to_creative(
+        self,
+        query_seeds: list[str],
+        user_id: str | None,
+        plan: QueryPlan,
+        reasoning_trace: list[str],
+    ) -> PPRResults:
         """Route to DivergentRetriever for creative mode"""
         try:
             # Dynamic import to avoid circular dependencies
@@ -463,15 +492,12 @@ class PersonalizedPageRank:
 
             # Create divergent retriever instance
             divergent = DivergentRetriever(
-                hypergraph=self.hypergraph,
-                config=self.config.get("creative_mode", {})
+                hypergraph=self.hypergraph, config=self.config.get("creative_mode", {})
             )
 
             # Delegate to creative retrieval
             creative_results = await divergent.retrieve_creative(
-                query_seeds=query_seeds,
-                user_id=user_id,
-                plan=plan
+                query_seeds=query_seeds, user_id=user_id, plan=plan
             )
 
             reasoning_trace.extend(creative_results.reasoning_trace)
@@ -479,7 +505,9 @@ class PersonalizedPageRank:
 
         except ImportError:
             # DivergentRetriever not yet implemented
-            reasoning_trace.append("DivergentRetriever not available, falling back to standard PPR")
+            reasoning_trace.append(
+                "DivergentRetriever not available, falling back to standard PPR"
+            )
 
             # Fall back to standard retrieval
             temp_plan = plan
@@ -487,7 +515,7 @@ class PersonalizedPageRank:
                 query_seeds=query_seeds,
                 user_id=user_id,
                 plan=temp_plan,
-                creative_mode=False
+                creative_mode=False,
             )
         except Exception as e:
             error_msg = f"Creative mode routing failed: {e!s}"
@@ -496,10 +524,12 @@ class PersonalizedPageRank:
 
             # Return empty results
             return PPRResults(
-                nodes=[], edges=[], scores={},
+                nodes=[],
+                edges=[],
+                scores={},
                 reasoning_trace=reasoning_trace,
                 query_time_ms=0.0,
-                metadata={"creative_mode_error": str(e)}
+                metadata={"creative_mode_error": str(e)},
             )
 
     def _load_config(self, config_path: str | None = None) -> dict[str, Any]:
@@ -523,34 +553,39 @@ class PersonalizedPageRank:
                 "alpha_fusion": {"base_weight": 1.0, "alpha_weight": 0.3},
                 "recency_boost": {"enabled": True, "knn_limit": 20},
                 "uncertainty": {"max_uncertainty": 0.8, "confidence_weight": 0.5},
-                "performance": {"max_nodes_per_query": 1000}
+                "performance": {"max_nodes_per_query": 1000},
             }
 
     def get_performance_stats(self) -> dict[str, Any]:
         """Get performance statistics"""
-        avg_time = self.total_time_ms / self.query_count if self.query_count > 0 else 0.0
+        avg_time = (
+            self.total_time_ms / self.query_count if self.query_count > 0 else 0.0
+        )
 
         return {
             "query_count": self.query_count,
             "total_time_ms": self.total_time_ms,
             "average_time_ms": avg_time,
             "damping_factor": self.damping,
-            "alpha_store_enabled": self.alpha_store is not None
+            "alpha_store_enabled": self.alpha_store is not None,
         }
 
 
 # Factory functions
 
-def create_ppr_retriever(hippo_index: HippoIndex,
-                        hypergraph_kg: HypergraphKG,
-                        alpha_store: AlphaProfileStore | None = None,
-                        config_path: str | None = None) -> PersonalizedPageRank:
+
+def create_ppr_retriever(
+    hippo_index: HippoIndex,
+    hypergraph_kg: HypergraphKG,
+    alpha_store: AlphaProfileStore | None = None,
+    config_path: str | None = None,
+) -> PersonalizedPageRank:
     """Create a PersonalizedPageRank retriever with the given backends"""
     return PersonalizedPageRank(
         hippo_index=hippo_index,
         hypergraph=hypergraph_kg,
         alpha_store=alpha_store,
-        config_path=config_path
+        config_path=config_path,
     )
 
 

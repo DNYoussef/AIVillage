@@ -202,9 +202,7 @@ class AgentForgeTrainingLoop:
 
             # Geometry snapshot
             hidden_states = logits.detach()  # Use logits as proxy for hidden states
-            self.state["G"] = snapshot(
-                hidden_states.view(-1, hidden_states.size(-1))
-            )
+            self.state["G"] = snapshot(hidden_states.view(-1, hidden_states.size(-1)))
 
             # Calculate reward
             reward = self.calculate_reward(logits, target, step, thought_logits)

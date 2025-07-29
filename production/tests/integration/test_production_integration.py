@@ -2,7 +2,6 @@
 Tests the full pipeline from RAG to compression to evolution.
 """
 
-
 import pytest
 import torch
 
@@ -55,7 +54,7 @@ class TestProductionIntegration:
             "compression",
             "evolution",
             "benchmarking",
-            "geometry_analysis"
+            "geometry_analysis",
         ]
 
         # Test pipeline execution concept
@@ -75,8 +74,8 @@ class TestProductionIntegration:
             "bias": torch.randn(10),
             "metadata": {
                 "architecture": "linear",
-                "parameters": 110  # 10*10 + 10
-            }
+                "parameters": 110,  # 10*10 + 10
+            },
         }
 
         # Test that components can work with common data formats
@@ -116,11 +115,13 @@ class TestProductionIntegration:
             "after_rag": 150,
             "after_compression": 120,  # Should decrease after compression
             "after_evolution": 180,
-            "after_benchmarking": 160
+            "after_benchmarking": 160,
         }
 
         # Test memory efficiency
-        compression_efficiency = memory_usage["after_compression"] < memory_usage["after_rag"]
+        compression_efficiency = (
+            memory_usage["after_compression"] < memory_usage["after_rag"]
+        )
         assert compression_efficiency, "Compression should reduce memory usage"
 
     def test_benchmarking_integration(self):
@@ -129,13 +130,13 @@ class TestProductionIntegration:
         benchmark_input = {
             "model": "test_model",
             "dataset": "test_dataset",
-            "metrics": ["accuracy", "latency"]
+            "metrics": ["accuracy", "latency"],
         }
 
         benchmark_output = {
             "accuracy": 0.85,
             "latency": 0.1,  # seconds
-            "model_size": 1.2  # MB after compression
+            "model_size": 1.2,  # MB after compression
         }
 
         # Test benchmark result validation
@@ -153,13 +154,16 @@ class TestProductionIntegration:
             "compressed_model": "optimized_model",
             "fitness_score": 0.75,
             "benchmark_results": {"accuracy": 0.8},
-            "geometry_snapshot": "model_state"
+            "geometry_snapshot": "model_state",
         }
 
         # Verify complete pipeline state
         required_components = [
-            "rag_context", "model_response", "compressed_model",
-            "fitness_score", "benchmark_results"
+            "rag_context",
+            "model_response",
+            "compressed_model",
+            "fitness_score",
+            "benchmark_results",
         ]
 
         assert all(component in pipeline_state for component in required_components)
@@ -182,13 +186,15 @@ class TestProductionQualityGates:
         """Test documentation coverage concept."""
         # Mock documentation check
         components = [
-            "compression", "evolution", "rag",
-            "memory", "benchmarking", "geometry"
+            "compression",
+            "evolution",
+            "rag",
+            "memory",
+            "benchmarking",
+            "geometry",
         ]
 
-        documented_components = [
-            "compression", "evolution", "rag", "memory"
-        ]
+        documented_components = ["compression", "evolution", "rag", "memory"]
 
         coverage = len(documented_components) / len(components)
         assert coverage >= 0.7  # 70% documentation coverage
@@ -198,9 +204,9 @@ class TestProductionQualityGates:
         # Mock performance metrics
         performance_metrics = {
             "compression_ratio": 4.5,  # 4-8x claimed
-            "compression_time": 30,    # seconds
+            "compression_time": 30,  # seconds
             "evolution_generations": 10,
-            "rag_retrieval_time": 0.5  # seconds
+            "rag_retrieval_time": 0.5,  # seconds
         }
 
         # Test performance thresholds

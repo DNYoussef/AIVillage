@@ -2,7 +2,6 @@
 Verifies retrieval and generation capabilities.
 """
 
-
 import pytest
 
 try:
@@ -20,6 +19,7 @@ class TestRAGSystem:
         """Test that RAG modules can be imported."""
         try:
             from production.rag.rag_system.main import RAGSystem
+
             assert RAGSystem is not None
         except ImportError:
             pytest.skip("RAG main module not available")
@@ -28,6 +28,7 @@ class TestRAGSystem:
         """Test that vector store exists."""
         try:
             from production.rag.rag_system.vector_store import VectorStore
+
             assert VectorStore is not None
         except ImportError:
             pytest.skip("VectorStore not available")
@@ -38,7 +39,7 @@ class TestRAGSystem:
         documents = [
             "The sky is blue.",
             "Machine learning is a subset of AI.",
-            "Python is a programming language."
+            "Python is a programming language.",
         ]
 
         # Test basic indexing concept
@@ -74,6 +75,7 @@ class TestRAGRetrieval:
         """Test FAISS backend availability."""
         try:
             from production.rag.rag_system.faiss_backend import FAISSBackend
+
             assert FAISSBackend is not None
         except ImportError:
             pytest.skip("FAISS backend not available")
@@ -82,6 +84,7 @@ class TestRAGRetrieval:
         """Test graph explanation module."""
         try:
             from production.rag.rag_system.graph_explain import GraphExplain
+
             assert GraphExplain is not None
         except ImportError:
             pytest.skip("Graph explain not available")
@@ -95,7 +98,7 @@ class TestRAGGeneration:
         # Mock retrieved documents
         retrieved_docs = [
             "Python is a high-level programming language.",
-            "It was created by Guido van Rossum."
+            "It was created by Guido van Rossum.",
         ]
 
         query = "What is Python?"

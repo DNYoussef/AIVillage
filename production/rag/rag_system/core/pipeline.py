@@ -13,9 +13,13 @@ from rag_system.utils.error_handling import log_and_handle_errors
 # Global BayesNet instance shared across pipelines
 shared_bayes_net = BayesNet()
 
+
 class EnhancedRAGPipeline(BaseComponent):
-    def __init__(self, config: UnifiedConfig | None = None,
-                 knowledge_tracker: UnifiedKnowledgeTracker | None = None):
+    def __init__(
+        self,
+        config: UnifiedConfig | None = None,
+        knowledge_tracker: UnifiedKnowledgeTracker | None = None,
+    ):
         """Initialize the RAG pipeline with an optional configuration."""
         self.config = config or UnifiedConfig()
         self.latent_space_activation = LatentSpaceActivation()
@@ -38,22 +42,28 @@ class EnhancedRAGPipeline(BaseComponent):
         activated_knowledge = await self.latent_space_activation.activate(query)
 
         # Retrieval
-        retrieved_info = await self.hybrid_retriever.retrieve(query, activated_knowledge)
+        retrieved_info = await self.hybrid_retriever.retrieve(
+            query, activated_knowledge
+        )
         if self.knowledge_tracker is not None:
             self.knowledge_tracker.record_retrieval(query, retrieved_info)
 
         # Reasoning
-        reasoning_result = await self.reasoning_engine.reason(query, retrieved_info, activated_knowledge)
+        reasoning_result = await self.reasoning_engine.reason(
+            query, retrieved_info, activated_knowledge
+        )
 
         # Cognitive integration
-        integrated_result = await self.cognitive_nexus.integrate(query, reasoning_result, activated_knowledge)
+        integrated_result = await self.cognitive_nexus.integrate(
+            query, reasoning_result, activated_knowledge
+        )
 
         return {
             "query": query,
             "activated_knowledge": activated_knowledge,
             "retrieved_info": retrieved_info,
             "reasoning_result": reasoning_result,
-            "integrated_result": integrated_result
+            "integrated_result": integrated_result,
         }
 
     # Compatibility wrapper for legacy calls
@@ -85,9 +95,13 @@ class EnhancedRAGPipeline(BaseComponent):
         # Update other components as needed
 
     # New methods for BayesNet interaction
-    async def update_bayes_net(self, node_id: str, content: str,
-                               probability: float = 0.5,
-                               uncertainty: float = 0.1) -> None:
+    async def update_bayes_net(
+        self,
+        node_id: str,
+        content: str,
+        probability: float = 0.5,
+        uncertainty: float = 0.1,
+    ) -> None:
         """Add or update a node in the shared BayesNet."""
         self.bayes_net.add_node(node_id, content, probability, uncertainty)
 

@@ -28,32 +28,38 @@ class BaseStrategy(ABC):
         self.config = kwargs
 
     @abstractmethod
-    async def create_plan(self,
-                         query: str,
-                         query_type: QueryType,
-                         constraints: RetrievalConstraints,
-                         context: dict[str, Any]) -> QueryPlan:
+    async def create_plan(
+        self,
+        query: str,
+        query_type: QueryType,
+        constraints: RetrievalConstraints,
+        context: dict[str, Any],
+    ) -> QueryPlan:
         """Create execution plan for the query"""
 
-    def _create_base_plan(self,
-                         query: str,
-                         query_type: QueryType,
-                         strategy: ReasoningStrategy,
-                         constraints: RetrievalConstraints) -> QueryPlan:
+    def _create_base_plan(
+        self,
+        query: str,
+        query_type: QueryType,
+        strategy: ReasoningStrategy,
+        constraints: RetrievalConstraints,
+    ) -> QueryPlan:
         """Create base plan structure"""
         return QueryPlan(
             original_query=query,
             query_type=query_type,
             reasoning_strategy=strategy,
-            retrieval_constraints=constraints
+            retrieval_constraints=constraints,
         )
 
-    def _add_retrieval_step(self,
-                           plan: QueryPlan,
-                           description: str,
-                           operation: str,
-                           parameters: dict[str, Any],
-                           dependencies: list[str] = None) -> str:
+    def _add_retrieval_step(
+        self,
+        plan: QueryPlan,
+        description: str,
+        operation: str,
+        parameters: dict[str, Any],
+        dependencies: list[str] = None,
+    ) -> str:
         """Add a retrieval step to the plan"""
         step = ExecutionStep(
             step_type="retrieval",
@@ -62,17 +68,19 @@ class BaseStrategy(ABC):
             parameters=parameters,
             dependencies=dependencies or [],
             confidence_threshold=plan.retrieval_constraints.confidence_threshold,
-            timeout_ms=min(plan.retrieval_constraints.time_budget_ms // 2, 2000)
+            timeout_ms=min(plan.retrieval_constraints.time_budget_ms // 2, 2000),
         )
         plan.add_step(step)
         return step.step_id
 
-    def _add_reasoning_step(self,
-                           plan: QueryPlan,
-                           description: str,
-                           operation: str,
-                           parameters: dict[str, Any],
-                           dependencies: list[str] = None) -> str:
+    def _add_reasoning_step(
+        self,
+        plan: QueryPlan,
+        description: str,
+        operation: str,
+        parameters: dict[str, Any],
+        dependencies: list[str] = None,
+    ) -> str:
         """Add a reasoning step to the plan"""
         step = ExecutionStep(
             step_type="reasoning",
@@ -81,17 +89,19 @@ class BaseStrategy(ABC):
             parameters=parameters,
             dependencies=dependencies or [],
             confidence_threshold=0.6,  # Lower threshold for reasoning steps
-            timeout_ms=min(plan.retrieval_constraints.time_budget_ms // 3, 3000)
+            timeout_ms=min(plan.retrieval_constraints.time_budget_ms // 3, 3000),
         )
         plan.add_step(step)
         return step.step_id
 
-    def _add_verification_step(self,
-                              plan: QueryPlan,
-                              description: str,
-                              operation: str,
-                              parameters: dict[str, Any],
-                              dependencies: list[str] = None) -> str:
+    def _add_verification_step(
+        self,
+        plan: QueryPlan,
+        description: str,
+        operation: str,
+        parameters: dict[str, Any],
+        dependencies: list[str] = None,
+    ) -> str:
         """Add a verification step to the plan"""
         step = ExecutionStep(
             step_type="verification",
@@ -100,7 +110,7 @@ class BaseStrategy(ABC):
             parameters=parameters,
             dependencies=dependencies or [],
             confidence_threshold=0.8,  # Higher threshold for verification
-            timeout_ms=1000
+            timeout_ms=1000,
         )
         plan.add_step(step)
         return step.step_id
@@ -111,13 +121,16 @@ class SimpleFactStrategy(BaseStrategy):
 
     description = "Direct retrieval for simple factual queries"
 
-    async def create_plan(self,
-                         query: str,
-                         query_type: QueryType,
-                         constraints: RetrievalConstraints,
-                         context: dict[str, Any]) -> QueryPlan:
-
-        plan = self._create_base_plan(query, query_type, ReasoningStrategy.DIRECT_RETRIEVAL, constraints)
+    async def create_plan(
+        self,
+        query: str,
+        query_type: QueryType,
+        constraints: RetrievalConstraints,
+        context: dict[str, Any],
+    ) -> QueryPlan:
+        plan = self._create_base_plan(
+            query, query_type, ReasoningStrategy.DIRECT_RETRIEVAL, constraints
+        )
         plan.complexity_score = 0.2
 
         # Single retrieval step for simple facts
@@ -129,8 +142,8 @@ class SimpleFactStrategy(BaseStrategy):
                 "query": query,
                 "limit": min(constraints.max_nodes, 20),
                 "confidence_threshold": constraints.confidence_threshold,
-                "include_explanations": constraints.include_explanations
-            }
+                "include_explanations": constraints.include_explanations,
+            },
         )
 
         return plan
@@ -141,13 +154,16 @@ class TemporalStrategy(BaseStrategy):
 
     description = "Temporal reasoning with chronological analysis"
 
-    async def create_plan(self,
-                         query: str,
-                         query_type: QueryType,
-                         constraints: RetrievalConstraints,
-                         context: dict[str, Any]) -> QueryPlan:
-
-        plan = self._create_base_plan(query, query_type, ReasoningStrategy.TEMPORAL_REASONING, constraints)
+    async def create_plan(
+        self,
+        query: str,
+        query_type: QueryType,
+        constraints: RetrievalConstraints,
+        context: dict[str, Any],
+    ) -> QueryPlan:
+        plan = self._create_base_plan(
+            query, query_type, ReasoningStrategy.TEMPORAL_REASONING, constraints
+        )
         plan.complexity_score = 0.6
 
         # Step 1: Extract temporal entities and events
@@ -159,8 +175,8 @@ class TemporalStrategy(BaseStrategy):
                 "query": query,
                 "extract_dates": True,
                 "extract_events": True,
-                "temporal_relations": True
-            }
+                "temporal_relations": True,
+            },
         )
 
         # Step 2: Build temporal graph
@@ -170,9 +186,9 @@ class TemporalStrategy(BaseStrategy):
             operation="temporal_graph_construction",
             parameters={
                 "temporal_entities": "from_previous_step",
-                "ordering_rules": ["chronological", "causal"]
+                "ordering_rules": ["chronological", "causal"],
             },
-            dependencies=[temporal_step]
+            dependencies=[temporal_step],
         )
 
         # Step 3: Temporal reasoning
@@ -183,9 +199,9 @@ class TemporalStrategy(BaseStrategy):
             parameters={
                 "temporal_graph": "from_previous_step",
                 "query": query,
-                "reasoning_type": "chronological_analysis"
+                "reasoning_type": "chronological_analysis",
             },
-            dependencies=[graph_step]
+            dependencies=[graph_step],
         )
 
         return plan
@@ -196,13 +212,16 @@ class CausalStrategy(BaseStrategy):
 
     description = "Causal reasoning and cause-effect analysis"
 
-    async def create_plan(self,
-                         query: str,
-                         query_type: QueryType,
-                         constraints: RetrievalConstraints,
-                         context: dict[str, Any]) -> QueryPlan:
-
-        plan = self._create_base_plan(query, query_type, ReasoningStrategy.CAUSAL_REASONING, constraints)
+    async def create_plan(
+        self,
+        query: str,
+        query_type: QueryType,
+        constraints: RetrievalConstraints,
+        context: dict[str, Any],
+    ) -> QueryPlan:
+        plan = self._create_base_plan(
+            query, query_type, ReasoningStrategy.CAUSAL_REASONING, constraints
+        )
         plan.complexity_score = 0.7
 
         # Step 1: Identify causal entities
@@ -214,8 +233,8 @@ class CausalStrategy(BaseStrategy):
                 "query": query,
                 "extract_causes": True,
                 "extract_effects": True,
-                "causal_indicators": ["because", "due to", "leads to", "causes"]
-            }
+                "causal_indicators": ["because", "due to", "leads to", "causes"],
+            },
         )
 
         # Step 2: Retrieve causal relationships
@@ -226,9 +245,9 @@ class CausalStrategy(BaseStrategy):
             parameters={
                 "entities": "from_previous_step",
                 "relation_types": ["causes", "prevents", "enables", "triggers"],
-                "max_depth": 3
+                "max_depth": 3,
             },
-            dependencies=[entity_step]
+            dependencies=[entity_step],
         )
 
         # Step 3: Causal analysis
@@ -239,9 +258,9 @@ class CausalStrategy(BaseStrategy):
             parameters={
                 "causal_graph": "from_previous_step",
                 "query": query,
-                "analysis_type": "chain_reasoning"
+                "analysis_type": "chain_reasoning",
             },
-            dependencies=[causal_step]
+            dependencies=[causal_step],
         )
 
         # Step 4: Verify causal relationships
@@ -251,9 +270,9 @@ class CausalStrategy(BaseStrategy):
             operation="causal_verification",
             parameters={
                 "causal_chains": "from_previous_step",
-                "evidence_threshold": 0.7
+                "evidence_threshold": 0.7,
             },
-            dependencies=[analysis_step]
+            dependencies=[analysis_step],
         )
 
         return plan
@@ -264,13 +283,16 @@ class ComparativeStrategy(BaseStrategy):
 
     description = "Comparative analysis and contrast reasoning"
 
-    async def create_plan(self,
-                         query: str,
-                         query_type: QueryType,
-                         constraints: RetrievalConstraints,
-                         context: dict[str, Any]) -> QueryPlan:
-
-        plan = self._create_base_plan(query, query_type, ReasoningStrategy.COMPARATIVE_ANALYSIS, constraints)
+    async def create_plan(
+        self,
+        query: str,
+        query_type: QueryType,
+        constraints: RetrievalConstraints,
+        context: dict[str, Any],
+    ) -> QueryPlan:
+        plan = self._create_base_plan(
+            query, query_type, ReasoningStrategy.COMPARATIVE_ANALYSIS, constraints
+        )
         plan.complexity_score = 0.6
 
         # Step 1: Extract comparison entities
@@ -281,8 +303,8 @@ class ComparativeStrategy(BaseStrategy):
             parameters={
                 "query": query,
                 "comparison_indicators": ["vs", "versus", "compared to", "between"],
-                "extract_attributes": True
-            }
+                "extract_attributes": True,
+            },
         )
 
         # Step 2: Retrieve comparison data
@@ -294,9 +316,9 @@ class ComparativeStrategy(BaseStrategy):
                 "entities": "from_previous_step",
                 "comparison_dimensions": "auto_detect",
                 "include_attributes": True,
-                "include_relationships": True
+                "include_relationships": True,
             },
-            dependencies=[entity_step]
+            dependencies=[entity_step],
         )
 
         # Step 3: Comparative analysis
@@ -307,9 +329,9 @@ class ComparativeStrategy(BaseStrategy):
             parameters={
                 "comparison_data": "from_previous_step",
                 "query": query,
-                "analysis_type": "similarity_contrast"
+                "analysis_type": "similarity_contrast",
             },
-            dependencies=[data_step]
+            dependencies=[data_step],
         )
 
         return plan
@@ -320,13 +342,16 @@ class MetaQueryStrategy(BaseStrategy):
 
     description = "Meta-reasoning about knowledge and information"
 
-    async def create_plan(self,
-                         query: str,
-                         query_type: QueryType,
-                         constraints: RetrievalConstraints,
-                         context: dict[str, Any]) -> QueryPlan:
-
-        plan = self._create_base_plan(query, query_type, ReasoningStrategy.META_REASONING, constraints)
+    async def create_plan(
+        self,
+        query: str,
+        query_type: QueryType,
+        constraints: RetrievalConstraints,
+        context: dict[str, Any],
+    ) -> QueryPlan:
+        plan = self._create_base_plan(
+            query, query_type, ReasoningStrategy.META_REASONING, constraints
+        )
         plan.complexity_score = 0.4
 
         # Step 1: Knowledge source analysis
@@ -338,8 +363,8 @@ class MetaQueryStrategy(BaseStrategy):
                 "query": query,
                 "analyze_confidence": True,
                 "analyze_coverage": True,
-                "analyze_recency": True
-            }
+                "analyze_recency": True,
+            },
         )
 
         # Step 2: Meta-information retrieval
@@ -351,9 +376,9 @@ class MetaQueryStrategy(BaseStrategy):
                 "query": query,
                 "include_provenance": True,
                 "include_confidence_scores": True,
-                "include_source_quality": True
+                "include_source_quality": True,
             },
-            dependencies=[source_step]
+            dependencies=[source_step],
         )
 
         # Step 3: Meta-reasoning
@@ -364,9 +389,9 @@ class MetaQueryStrategy(BaseStrategy):
             parameters={
                 "meta_information": "from_previous_step",
                 "query": query,
-                "reasoning_type": "knowledge_assessment"
+                "reasoning_type": "knowledge_assessment",
             },
-            dependencies=[meta_step]
+            dependencies=[meta_step],
         )
 
         return plan
@@ -377,13 +402,16 @@ class MultiHopStrategy(BaseStrategy):
 
     description = "Step-by-step multi-hop reasoning"
 
-    async def create_plan(self,
-                         query: str,
-                         query_type: QueryType,
-                         constraints: RetrievalConstraints,
-                         context: dict[str, Any]) -> QueryPlan:
-
-        plan = self._create_base_plan(query, query_type, ReasoningStrategy.STEP_BY_STEP, constraints)
+    async def create_plan(
+        self,
+        query: str,
+        query_type: QueryType,
+        constraints: RetrievalConstraints,
+        context: dict[str, Any],
+    ) -> QueryPlan:
+        plan = self._create_base_plan(
+            query, query_type, ReasoningStrategy.STEP_BY_STEP, constraints
+        )
         plan.complexity_score = 0.8
 
         # Step 1: Query decomposition
@@ -394,8 +422,8 @@ class MultiHopStrategy(BaseStrategy):
             parameters={
                 "query": query,
                 "max_subqueries": 5,
-                "dependency_analysis": True
-            }
+                "dependency_analysis": True,
+            },
         )
 
         # Step 2: Initial retrieval
@@ -406,9 +434,9 @@ class MultiHopStrategy(BaseStrategy):
             parameters={
                 "subqueries": "from_previous_step",
                 "max_depth": 1,
-                "confidence_threshold": constraints.confidence_threshold
+                "confidence_threshold": constraints.confidence_threshold,
             },
-            dependencies=[decomp_step]
+            dependencies=[decomp_step],
         )
 
         # Step 3: Iterative reasoning
@@ -420,9 +448,9 @@ class MultiHopStrategy(BaseStrategy):
                 "initial_results": "from_previous_step",
                 "subqueries": "from_decomposition_step",
                 "max_hops": constraints.max_depth,
-                "convergence_threshold": 0.1
+                "convergence_threshold": 0.1,
             },
-            dependencies=[initial_step]
+            dependencies=[initial_step],
         )
 
         # Step 4: Result synthesis
@@ -433,9 +461,9 @@ class MultiHopStrategy(BaseStrategy):
             parameters={
                 "reasoning_results": "from_previous_step",
                 "original_query": query,
-                "synthesis_method": "evidence_aggregation"
+                "synthesis_method": "evidence_aggregation",
             },
-            dependencies=[reasoning_step]
+            dependencies=[reasoning_step],
         )
 
         return plan
@@ -446,13 +474,16 @@ class AggregationStrategy(BaseStrategy):
 
     description = "Graph traversal for aggregation queries"
 
-    async def create_plan(self,
-                         query: str,
-                         query_type: QueryType,
-                         constraints: RetrievalConstraints,
-                         context: dict[str, Any]) -> QueryPlan:
-
-        plan = self._create_base_plan(query, query_type, ReasoningStrategy.GRAPH_TRAVERSAL, constraints)
+    async def create_plan(
+        self,
+        query: str,
+        query_type: QueryType,
+        constraints: RetrievalConstraints,
+        context: dict[str, Any],
+    ) -> QueryPlan:
+        plan = self._create_base_plan(
+            query, query_type, ReasoningStrategy.GRAPH_TRAVERSAL, constraints
+        )
         plan.complexity_score = 0.5
 
         # Step 1: Identify aggregation target
@@ -463,8 +494,8 @@ class AggregationStrategy(BaseStrategy):
             parameters={
                 "query": query,
                 "aggregation_types": ["count", "sum", "average", "list"],
-                "target_entities": "auto_detect"
-            }
+                "target_entities": "auto_detect",
+            },
         )
 
         # Step 2: Graph traversal
@@ -476,9 +507,9 @@ class AggregationStrategy(BaseStrategy):
                 "start_entities": "from_previous_step",
                 "traversal_rules": "aggregation_focused",
                 "max_depth": constraints.max_depth,
-                "collect_all_paths": True
+                "collect_all_paths": True,
             },
-            dependencies=[target_step]
+            dependencies=[target_step],
         )
 
         # Step 3: Aggregation computation
@@ -489,9 +520,9 @@ class AggregationStrategy(BaseStrategy):
             parameters={
                 "traversal_results": "from_previous_step",
                 "query": query,
-                "aggregation_method": "auto_detect"
+                "aggregation_method": "auto_detect",
             },
-            dependencies=[traversal_step]
+            dependencies=[traversal_step],
         )
 
         return plan
@@ -502,13 +533,16 @@ class HypotheticalStrategy(BaseStrategy):
 
     description = "Hypothetical reasoning and scenario analysis"
 
-    async def create_plan(self,
-                         query: str,
-                         query_type: QueryType,
-                         constraints: RetrievalConstraints,
-                         context: dict[str, Any]) -> QueryPlan:
-
-        plan = self._create_base_plan(query, query_type, ReasoningStrategy.STEP_BY_STEP, constraints)
+    async def create_plan(
+        self,
+        query: str,
+        query_type: QueryType,
+        constraints: RetrievalConstraints,
+        context: dict[str, Any],
+    ) -> QueryPlan:
+        plan = self._create_base_plan(
+            query, query_type, ReasoningStrategy.STEP_BY_STEP, constraints
+        )
         plan.complexity_score = 0.7
 
         # Step 1: Extract scenario conditions
@@ -519,8 +553,8 @@ class HypotheticalStrategy(BaseStrategy):
             parameters={
                 "query": query,
                 "hypothetical_indicators": ["what if", "suppose", "imagine"],
-                "condition_analysis": True
-            }
+                "condition_analysis": True,
+            },
         )
 
         # Step 2: Baseline knowledge retrieval
@@ -531,9 +565,9 @@ class HypotheticalStrategy(BaseStrategy):
             parameters={
                 "scenario_entities": "from_previous_step",
                 "include_current_state": True,
-                "include_historical_data": True
+                "include_historical_data": True,
             },
-            dependencies=[scenario_step]
+            dependencies=[scenario_step],
         )
 
         # Step 3: Scenario simulation
@@ -544,9 +578,9 @@ class HypotheticalStrategy(BaseStrategy):
             parameters={
                 "baseline_knowledge": "from_previous_step",
                 "scenario_conditions": "from_scenario_step",
-                "simulation_method": "rule_based_projection"
+                "simulation_method": "rule_based_projection",
             },
-            dependencies=[baseline_step]
+            dependencies=[baseline_step],
         )
 
         # Step 4: Impact analysis
@@ -557,9 +591,9 @@ class HypotheticalStrategy(BaseStrategy):
             parameters={
                 "simulation_results": "from_previous_step",
                 "query": query,
-                "analysis_scope": "comprehensive"
+                "analysis_scope": "comprehensive",
             },
-            dependencies=[simulation_step]
+            dependencies=[simulation_step],
         )
 
         return plan
@@ -570,13 +604,16 @@ class HybridStrategy(BaseStrategy):
 
     description = "Hybrid approach combining multiple reasoning strategies"
 
-    async def create_plan(self,
-                         query: str,
-                         query_type: QueryType,
-                         constraints: RetrievalConstraints,
-                         context: dict[str, Any]) -> QueryPlan:
-
-        plan = self._create_base_plan(query, query_type, ReasoningStrategy.HYBRID, constraints)
+    async def create_plan(
+        self,
+        query: str,
+        query_type: QueryType,
+        constraints: RetrievalConstraints,
+        context: dict[str, Any],
+    ) -> QueryPlan:
+        plan = self._create_base_plan(
+            query, query_type, ReasoningStrategy.HYBRID, constraints
+        )
         plan.complexity_score = 0.9
 
         # Step 1: Multi-strategy analysis
@@ -589,8 +626,8 @@ class HybridStrategy(BaseStrategy):
                 "detect_temporal": True,
                 "detect_causal": True,
                 "detect_comparative": True,
-                "strategy_weights": True
-            }
+                "strategy_weights": True,
+            },
         )
 
         # Step 2: Parallel strategy execution
@@ -601,9 +638,9 @@ class HybridStrategy(BaseStrategy):
             parameters={
                 "strategy_analysis": "from_previous_step",
                 "max_parallel_strategies": 3,
-                "timeout_per_strategy": constraints.time_budget_ms // 3
+                "timeout_per_strategy": constraints.time_budget_ms // 3,
             },
-            dependencies=[analysis_step]
+            dependencies=[analysis_step],
         )
 
         # Step 3: Result integration
@@ -614,9 +651,9 @@ class HybridStrategy(BaseStrategy):
             parameters={
                 "parallel_results": "from_previous_step",
                 "integration_method": "weighted_consensus",
-                "confidence_weighting": True
+                "confidence_weighting": True,
             },
-            dependencies=[parallel_step]
+            dependencies=[parallel_step],
         )
 
         # Step 4: Consistency verification
@@ -627,9 +664,9 @@ class HybridStrategy(BaseStrategy):
             parameters={
                 "integrated_results": "from_previous_step",
                 "consistency_threshold": 0.8,
-                "conflict_resolution": "evidence_based"
+                "conflict_resolution": "evidence_based",
             },
-            dependencies=[integration_step]
+            dependencies=[integration_step],
         )
 
         return plan

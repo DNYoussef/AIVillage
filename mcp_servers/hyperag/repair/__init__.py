@@ -21,5 +21,5 @@ __all__ = [
     "RepairProposal",
     "RepairProposalSet",
     "TemplateEncoder",
-    "ViolationTemplate"
+    "ViolationTemplate",
 ]

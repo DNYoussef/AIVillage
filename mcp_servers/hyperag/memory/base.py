@@ -1,5 +1,4 @@
-"""Base classes and types for HypeRAG dual-memory system
-"""
+"""Base classes and types for HypeRAG dual-memory system"""
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -13,22 +12,25 @@ import numpy as np
 
 class MemoryType(Enum):
     """Types of memory storage"""
-    EPISODIC = "episodic"      # Short-term, recent events
-    SEMANTIC = "semantic"      # Long-term, consolidated knowledge
-    WORKING = "working"        # Active processing
+
+    EPISODIC = "episodic"  # Short-term, recent events
+    SEMANTIC = "semantic"  # Long-term, consolidated knowledge
+    WORKING = "working"  # Active processing
 
 
 class ConfidenceType(Enum):
     """Types of confidence measurements"""
-    BAYESIAN = "bayesian"      # Prior/posterior updates
-    FREQUENCY = "frequency"    # Usage-based confidence
-    TEMPORAL = "temporal"      # Time-decay confidence
-    SOCIAL = "social"         # Community consensus
+
+    BAYESIAN = "bayesian"  # Prior/posterior updates
+    FREQUENCY = "frequency"  # Usage-based confidence
+    TEMPORAL = "temporal"  # Time-decay confidence
+    SOCIAL = "social"  # Community consensus
 
 
 @dataclass
 class Document:
     """Base document class for memory storage"""
+
     id: str
     content: str
     doc_type: str
@@ -48,6 +50,7 @@ class Document:
 @dataclass
 class Node:
     """Enhanced node with memory-specific properties"""
+
     id: str
     content: str
     node_type: str
@@ -111,6 +114,7 @@ class Node:
 @dataclass
 class Edge:
     """Enhanced edge with hypergraph and memory properties"""
+
     id: str
     source_id: str
     target_id: str
@@ -171,7 +175,9 @@ class Edge:
     def update_bayesian_confidence(self, prior: float, likelihood: float):
         """Update confidence using Bayesian inference"""
         # Simple Bayesian update: posterior ∝ likelihood × prior
-        posterior = (likelihood * prior) / ((likelihood * prior) + ((1 - likelihood) * (1 - prior)))
+        posterior = (likelihood * prior) / (
+            (likelihood * prior) + ((1 - likelihood) * (1 - prior))
+        )
         self.confidence = posterior
 
     def is_hyperedge(self) -> bool:
@@ -198,6 +204,7 @@ class MemoryBackend(ABC):
 @dataclass
 class QueryResult:
     """Result of a memory query"""
+
     nodes: list[Node]
     edges: list[Edge]
     total_count: int
@@ -209,6 +216,7 @@ class QueryResult:
 @dataclass
 class ConsolidationBatch:
     """Batch of items for consolidation"""
+
     id: str
     nodes: list[Node]
     edges: list[Edge]
@@ -226,6 +234,7 @@ class ConsolidationBatch:
 @dataclass
 class MemoryStats:
     """Statistics about memory usage"""
+
     total_nodes: int
     total_edges: int
     episodic_nodes: int
@@ -259,10 +268,9 @@ class EmbeddingManager:
             return 0.0
         return dot_product / (norm_a * norm_b)
 
-    def find_similar(self,
-                    query_embedding: np.ndarray,
-                    candidates: list[np.ndarray],
-                    top_k: int = 10) -> list[tuple]:
+    def find_similar(
+        self, query_embedding: np.ndarray, candidates: list[np.ndarray], top_k: int = 10
+    ) -> list[tuple]:
         """Find most similar embeddings"""
         if not candidates:
             return []
@@ -277,9 +285,9 @@ class EmbeddingManager:
         return similarities[:top_k]
 
 
-def create_episodic_node(content: str,
-                        user_id: str | None = None,
-                        ttl_hours: int = 168) -> Node:  # 7 days default
+def create_episodic_node(
+    content: str, user_id: str | None = None, ttl_hours: int = 168
+) -> Node:  # 7 days default
     """Create a new episodic memory node"""
     return Node(
         id=str(uuid.uuid4()),
@@ -290,7 +298,7 @@ def create_episodic_node(content: str,
         ttl=ttl_hours * 3600,  # Convert to seconds
         importance_score=0.3,  # Lower for episodic
         decay_rate=0.2,  # Faster decay
-        confidence_type=ConfidenceType.TEMPORAL
+        confidence_type=ConfidenceType.TEMPORAL,
     )
 
 
@@ -304,14 +312,16 @@ def create_semantic_node(content: str, confidence: float = 0.8) -> Node:
         confidence=confidence,
         importance_score=0.8,  # Higher for semantic
         decay_rate=0.01,  # Slower decay
-        confidence_type=ConfidenceType.BAYESIAN
+        confidence_type=ConfidenceType.BAYESIAN,
     )
 
 
-def create_hyperedge(participants: list[str],
-                    relation: str,
-                    confidence: float = 1.0,
-                    user_id: str | None = None) -> Edge:
+def create_hyperedge(
+    participants: list[str],
+    relation: str,
+    confidence: float = 1.0,
+    user_id: str | None = None,
+) -> Edge:
     """Create a hyperedge connecting multiple nodes"""
     # Use first two participants as source/target for compatibility
     source_id = participants[0] if participants else str(uuid.uuid4())
@@ -325,5 +335,5 @@ def create_hyperedge(participants: list[str],
         confidence=confidence,
         participants=participants.copy(),
         user_id=user_id,
-        evidence_count=1
+        evidence_count=1,
     )

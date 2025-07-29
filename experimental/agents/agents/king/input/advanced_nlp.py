@@ -14,18 +14,13 @@ class AdvancedNLP:
         self.tokenizer = BertTokenizer.from_pretrained(
             "bert-base-uncased",
             revision="main",  # Pin to main branch for security
-            trust_remote_code=False  # Disable remote code execution
+            trust_remote_code=False,  # Disable remote code execution
         )
         self.model = BertModel.from_pretrained(
-            "bert-base-uncased",
-            revision="main",
-            trust_remote_code=False
+            "bert-base-uncased", revision="main", trust_remote_code=False
         )
         self.classifier = BertForSequenceClassification.from_pretrained(
-            "bert-base-uncased",
-            num_labels=2,
-            revision="main",
-            trust_remote_code=False
+            "bert-base-uncased", num_labels=2, revision="main", trust_remote_code=False
         )
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)

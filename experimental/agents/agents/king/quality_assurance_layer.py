@@ -19,12 +19,10 @@ class EudaimoniaTriangulator:
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_name,
             revision="main",  # Pin to main branch for security
-            trust_remote_code=False  # Disable remote code execution
+            trust_remote_code=False,  # Disable remote code execution
         )
         self.model = AutoModel.from_pretrained(
-            model_name,
-            revision="main",
-            trust_remote_code=False
+            model_name, revision="main", trust_remote_code=False
         )
         self.empathy_vector = self.get_embedding(
             "Empathy and compassion for all living things"

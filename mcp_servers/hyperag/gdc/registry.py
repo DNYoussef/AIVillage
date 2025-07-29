@@ -13,7 +13,9 @@ from .specs import GDCSpec
 logger = logging.getLogger(__name__)
 
 # Default path to GDC rules configuration
-_DEFAULT_GDC_YAML = pathlib.Path(__file__).parent.parent.parent.parent / "config" / "gdc_rules.yaml"
+_DEFAULT_GDC_YAML = (
+    pathlib.Path(__file__).parent.parent.parent.parent / "config" / "gdc_rules.yaml"
+)
 
 
 def load_gdc_registry(config_path: pathlib.Path | None = None) -> dict[str, GDCSpec]:
@@ -49,10 +51,18 @@ def load_gdc_registry(config_path: pathlib.Path | None = None) -> dict[str, GDCS
     for spec_data in raw_specs:
         try:
             # Validate required fields
-            required_fields = ["id", "description", "cypher", "severity", "suggested_action"]
+            required_fields = [
+                "id",
+                "description",
+                "cypher",
+                "severity",
+                "suggested_action",
+            ]
             for field in required_fields:
                 if field not in spec_data:
-                    raise ValueError(f"Missing required field '{field}' in GDC spec: {spec_data}")
+                    raise ValueError(
+                        f"Missing required field '{field}' in GDC spec: {spec_data}"
+                    )
 
             # Create GDCSpec object
             spec = GDCSpec(**spec_data)
@@ -124,8 +134,14 @@ def validate_registry(registry: dict[str, GDCSpec]) -> list[str]:
 
         # Basic Cypher validation
         cypher_lower = spec.cypher.lower()
-        if "create " in cypher_lower or "delete " in cypher_lower or "merge " in cypher_lower:
-            issues.append(f"GDC {spec.id} contains write operation - should be read-only")
+        if (
+            "create " in cypher_lower
+            or "delete " in cypher_lower
+            or "merge " in cypher_lower
+        ):
+            issues.append(
+                f"GDC {spec.id} contains write operation - should be read-only"
+            )
 
     # Check severity distribution
     severities = [spec.severity for spec in registry.values()]

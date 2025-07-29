@@ -16,12 +16,10 @@ class AgentRouter(nn.Module):
         self.bert = AutoModel.from_pretrained(
             model_name,
             revision="main",  # Pin to main branch for security
-            trust_remote_code=False  # Disable remote code execution
+            trust_remote_code=False,  # Disable remote code execution
         )
         self.tokenizer = AutoTokenizer.from_pretrained(
-            model_name,
-            revision="main",
-            trust_remote_code=False
+            model_name, revision="main", trust_remote_code=False
         )
         self.cache_size = cache_size
         self.confidence_threshold = confidence_threshold

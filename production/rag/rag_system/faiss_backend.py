@@ -19,7 +19,9 @@ DEFAULT_DIM = 768
 class FaissAdapter:
     """Thin wrapper around a FAISS index with optional disk loading."""
 
-    def __init__(self, path: str | None = DEFAULT_STORE_PATH, dimension: int = DEFAULT_DIM) -> None:
+    def __init__(
+        self, path: str | None = DEFAULT_STORE_PATH, dimension: int = DEFAULT_DIM
+    ) -> None:
         self.dimension = dimension
         self.index = faiss.IndexFlatL2(self.dimension)
         self.metadata: list[dict[str, Any]] = []
@@ -40,14 +42,13 @@ class FaissAdapter:
             batch_meta = self.metadata[i : i + batch_size]
             ids = [d["id"] for d in batch_meta]
             vecs = [self.index.reconstruct(j) for j in range(i, i + len(batch_meta))]
-            payload = [
-                {k: v for k, v in d.items() if k != "id"}
-                for d in batch_meta
-            ]
+            payload = [{k: v for k, v in d.items() if k != "id"} for d in batch_meta]
             yield ids, vecs, payload
 
     # ----------------------------- add/search ----------------------------
-    def add(self, ids: list[str], embeddings: np.ndarray, payload: list[dict[str, Any]]) -> None:
+    def add(
+        self, ids: list[str], embeddings: np.ndarray, payload: list[dict[str, Any]]
+    ) -> None:
         vecs = np.asarray(embeddings, dtype="float32")
         self.index.add(vecs)
         for pid, meta in zip(ids, payload, strict=False):

@@ -13,6 +13,7 @@ class KnowledgeChange:
     timestamp: datetime
     source: str
 
+
 class KnowledgeTracker:
     def __init__(self):
         self.changes = []

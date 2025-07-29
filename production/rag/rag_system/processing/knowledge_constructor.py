@@ -11,7 +11,9 @@ class DefaultKnowledgeConstructor:
     def __init__(self, config: RAGConfig):
         self.config = config
 
-    async def construct(self, query: str, retrieved_docs: list[RetrievalResult], timestamp: datetime) -> dict[str, Any]:
+    async def construct(
+        self, query: str, retrieved_docs: list[RetrievalResult], timestamp: datetime
+    ) -> dict[str, Any]:
         constructed_knowledge = {
             "query": query,
             "timestamp": timestamp,
@@ -19,7 +21,7 @@ class DefaultKnowledgeConstructor:
             "inferred_concepts": [],
             "relationships": [],
             "uncertainty": 0.0,
-            "temporal_relevance": 0.0
+            "temporal_relevance": 0.0,
         }
 
         total_uncertainty = 0.0
@@ -27,26 +29,40 @@ class DefaultKnowledgeConstructor:
 
         for doc in retrieved_docs:
             # Add relevant facts
-            constructed_knowledge["relevant_facts"].append({
-                "content": doc.content,
-                "source_id": doc.id,
-                "timestamp": doc.timestamp,
-                "uncertainty": doc.uncertainty
-            })
+            constructed_knowledge["relevant_facts"].append(
+                {
+                    "content": doc.content,
+                    "source_id": doc.id,
+                    "timestamp": doc.timestamp,
+                    "uncertainty": doc.uncertainty,
+                }
+            )
 
             # Infer concepts (this is a simplified example, you might want to use NLP techniques here)
             concepts = self._extract_concepts(doc.content)
-            constructed_knowledge["inferred_concepts"].extend([
-                {"concept": concept, "source_id": doc.id, "uncertainty": doc.uncertainty}
-                for concept in concepts
-            ])
+            constructed_knowledge["inferred_concepts"].extend(
+                [
+                    {
+                        "concept": concept,
+                        "source_id": doc.id,
+                        "uncertainty": doc.uncertainty,
+                    }
+                    for concept in concepts
+                ]
+            )
 
             # Identify relationships (again, this is simplified)
             relationships = self._identify_relationships(doc.content, concepts)
-            constructed_knowledge["relationships"].extend([
-                {"relationship": rel, "source_id": doc.id, "uncertainty": doc.uncertainty}
-                for rel in relationships
-            ])
+            constructed_knowledge["relationships"].extend(
+                [
+                    {
+                        "relationship": rel,
+                        "source_id": doc.id,
+                        "uncertainty": doc.uncertainty,
+                    }
+                    for rel in relationships
+                ]
+            )
 
             # Calculate weighted uncertainty
             weight = doc.score  # Assuming higher score means more relevance
@@ -57,12 +73,15 @@ class DefaultKnowledgeConstructor:
         if total_weight > 0:
             constructed_knowledge["uncertainty"] = total_uncertainty / total_weight
         else:
-            constructed_knowledge["uncertainty"] = 1.0  # Maximum uncertainty if no weights
+            constructed_knowledge["uncertainty"] = (
+                1.0  # Maximum uncertainty if no weights
+            )
 
         # Calculate temporal relevance
-        constructed_knowledge["temporal_relevance"] = self._calculate_temporal_relevance(
-            [doc.timestamp for doc in retrieved_docs],
-            timestamp
+        constructed_knowledge["temporal_relevance"] = (
+            self._calculate_temporal_relevance(
+                [doc.timestamp for doc in retrieved_docs], timestamp
+            )
         )
 
         return constructed_knowledge
@@ -77,9 +96,15 @@ class DefaultKnowledgeConstructor:
         # Implement relationship identification logic
         # This could use dependency parsing or other NLP techniques
         # For simplicity, let's just create pairs of concepts
-        return [f"{concepts[i]}-{concepts[j]}" for i in range(len(concepts)) for j in range(i+1, len(concepts))]
+        return [
+            f"{concepts[i]}-{concepts[j]}"
+            for i in range(len(concepts))
+            for j in range(i + 1, len(concepts))
+        ]
 
-    def _calculate_temporal_relevance(self, doc_timestamps: list[datetime], current_timestamp: datetime) -> float:
+    def _calculate_temporal_relevance(
+        self, doc_timestamps: list[datetime], current_timestamp: datetime
+    ) -> float:
         # Calculate how relevant the documents are based on their age
         time_diffs = [(current_timestamp - ts).total_seconds() for ts in doc_timestamps]
         max_diff = max(time_diffs) if time_diffs else 1

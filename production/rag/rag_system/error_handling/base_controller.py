@@ -14,5 +14,4 @@ class BaseErrorController(ABC):
 
     @abstractmethod
     def reset(self):
-        """Reset the error controller to its initial state.
-        """
+        """Reset the error controller to its initial state."""

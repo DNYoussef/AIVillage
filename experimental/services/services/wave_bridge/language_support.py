@@ -24,7 +24,7 @@ SUPPORTED_LANGUAGES = {
     "fr": {"name": "French", "native": "Français", "priority": 7},
     "de": {"name": "German", "native": "Deutsch", "priority": 8},
     "it": {"name": "Italian", "native": "Italiano", "priority": 9},
-    "zh": {"name": "Chinese", "native": "中文", "priority": 10}
+    "zh": {"name": "Chinese", "native": "中文", "priority": 10},
 }
 
 # Edge model availability (fastest response)
@@ -35,8 +35,9 @@ TRANSLATION_MODELS = {
     "edge": "google-translate-edge",
     "cloud": "google-translate-cloud",
     "anthropic": "claude-3-haiku",
-    "openai": "gpt-3.5-turbo"
+    "openai": "gpt-3.5-turbo",
 }
+
 
 class LanguageDetector:
     """Fast language detection with caching"""
@@ -69,13 +70,15 @@ class LanguageDetector:
             self.cache[text_hash] = detected
 
             # Log detection to W&B
-            wandb.log({
-                "language_detection": {
-                    "detected": detected,
-                    "confidence": confidence,
-                    "text_length": len(text)
+            wandb.log(
+                {
+                    "language_detection": {
+                        "detected": detected,
+                        "confidence": confidence,
+                        "text_length": len(text),
+                    }
                 }
-            })
+            )
 
             return detected
 
@@ -125,41 +128,49 @@ class LanguageDetector:
 
         return language_families.get(lang_code, "en")
 
+
 # Global language detector instance
 language_detector = LanguageDetector()
+
 
 async def detect_language(text: str) -> str:
     """Detect language of input text"""
     return await language_detector.detect_language(text)
 
+
 def edge_model_available(language: str) -> bool:
     """Check if edge translation model is available for language"""
     return language in EDGE_SUPPORTED
+
 
 class TranslationEngine:
     """Multi-tier translation engine with fallback cascade"""
 
     def __init__(self):
         self.google_translator = Translator()
-        self.anthropic_client = anthropic.Anthropic() if hasattr(anthropic, "Anthropic") else None
+        self.anthropic_client = (
+            anthropic.Anthropic() if hasattr(anthropic, "Anthropic") else None
+        )
         self.openai_client = openai.OpenAI() if hasattr(openai, "OpenAI") else None
 
-    async def edge_translate(self, text: str, target_lang: str, source_lang: str = "en") -> str:
+    async def edge_translate(
+        self, text: str, target_lang: str, source_lang: str = "en"
+    ) -> str:
         """Fast edge translation using Google Translate"""
         try:
             # Use Google Translate for edge cases
             result = self.google_translator.translate(
-                text,
-                src=source_lang,
-                dest=target_lang
+                text, src=source_lang, dest=target_lang
             )
 
-            wandb.log({
-                "translation_method": "edge",
-                "source_lang": source_lang,
-                "target_lang": target_lang,
-                "success": True
-            })
+            wandb.log(
+                {
+                    "translation_method": "edge",
+                    "source_lang": source_lang,
+                    "target_lang": target_lang,
+                    "success": True,
+                }
+            )
 
             return result.text
 
@@ -167,12 +178,14 @@ class TranslationEngine:
             logger.warning(f"Edge translation failed: {e}")
             raise
 
-    async def cloud_translate(self, text: str, target_lang: str, source_lang: str = "en") -> str:
+    async def cloud_translate(
+        self, text: str, target_lang: str, source_lang: str = "en"
+    ) -> str:
         """High-quality cloud translation using AI models"""
         # Try Anthropic first for quality
         if self.anthropic_client:
             try:
-                prompt = f"""Translate the following text from {SUPPORTED_LANGUAGES.get(source_lang, {}).get('name', source_lang)} to {SUPPORTED_LANGUAGES.get(target_lang, {}).get('name', target_lang)}.
+                prompt = f"""Translate the following text from {SUPPORTED_LANGUAGES.get(source_lang, {}).get("name", source_lang)} to {SUPPORTED_LANGUAGES.get(target_lang, {}).get("name", target_lang)}.
 
 Maintain the original tone, context, and cultural nuances. For educational content, preserve technical accuracy.
 
@@ -184,17 +197,19 @@ Translation:"""
                     model="claude-3-haiku-20240307",
                     max_tokens=1000,
                     temperature=0.1,
-                    messages=[{"role": "user", "content": prompt}]
+                    messages=[{"role": "user", "content": prompt}],
                 )
 
                 translation = response.content[0].text.strip()
 
-                wandb.log({
-                    "translation_method": "anthropic",
-                    "source_lang": source_lang,
-                    "target_lang": target_lang,
-                    "success": True
-                })
+                wandb.log(
+                    {
+                        "translation_method": "anthropic",
+                        "source_lang": source_lang,
+                        "target_lang": target_lang,
+                        "success": True,
+                    }
+                )
 
                 return translation
 
@@ -207,21 +222,26 @@ Translation:"""
                 response = await self.openai_client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[
-                        {"role": "system", "content": f"You are a professional translator. Translate text from {source_lang} to {target_lang} while preserving meaning, tone, and cultural context."},
-                        {"role": "user", "content": text}
+                        {
+                            "role": "system",
+                            "content": f"You are a professional translator. Translate text from {source_lang} to {target_lang} while preserving meaning, tone, and cultural context.",
+                        },
+                        {"role": "user", "content": text},
                     ],
                     temperature=0.1,
-                    max_tokens=800
+                    max_tokens=800,
                 )
 
                 translation = response.choices[0].message.content.strip()
 
-                wandb.log({
-                    "translation_method": "openai",
-                    "source_lang": source_lang,
-                    "target_lang": target_lang,
-                    "success": True
-                })
+                wandb.log(
+                    {
+                        "translation_method": "openai",
+                        "source_lang": source_lang,
+                        "target_lang": target_lang,
+                        "success": True,
+                    }
+                )
 
                 return translation
 
@@ -231,12 +251,15 @@ Translation:"""
         # Final fallback to Google Translate
         return await self.edge_translate(text, target_lang, source_lang)
 
+
 # Global translation engine
 translation_engine = TranslationEngine()
 
-async def auto_translate_flow(message: str, target_lang: str, source_lang: str = "en") -> str:
-    """Translate with fallback options prioritizing speed and quality
-    """
+
+async def auto_translate_flow(
+    message: str, target_lang: str, source_lang: str = "en"
+) -> str:
+    """Translate with fallback options prioritizing speed and quality"""
     # Skip translation if same language
     if source_lang == target_lang:
         return message
@@ -247,14 +270,18 @@ async def auto_translate_flow(message: str, target_lang: str, source_lang: str =
         # Try edge model first (fastest)
         if edge_model_available(target_lang):
             try:
-                result = await translation_engine.edge_translate(message, target_lang, source_lang)
+                result = await translation_engine.edge_translate(
+                    message, target_lang, source_lang
+                )
                 translation_time = (datetime.now() - start_time).total_seconds()
 
-                wandb.log({
-                    "translation_time": translation_time,
-                    "translation_tier": "edge",
-                    "success": True
-                })
+                wandb.log(
+                    {
+                        "translation_time": translation_time,
+                        "translation_tier": "edge",
+                        "success": True,
+                    }
+                )
 
                 return result
 
@@ -262,30 +289,37 @@ async def auto_translate_flow(message: str, target_lang: str, source_lang: str =
                 logger.info(f"Edge translation failed, trying cloud: {e}")
 
         # Fallback to cloud translation (higher quality)
-        result = await translation_engine.cloud_translate(message, target_lang, source_lang)
+        result = await translation_engine.cloud_translate(
+            message, target_lang, source_lang
+        )
         translation_time = (datetime.now() - start_time).total_seconds()
 
-        wandb.log({
-            "translation_time": translation_time,
-            "translation_tier": "cloud",
-            "success": True
-        })
+        wandb.log(
+            {
+                "translation_time": translation_time,
+                "translation_tier": "cloud",
+                "success": True,
+            }
+        )
 
         return result
 
     except Exception as e:
         logger.error(f"All translation methods failed: {e}")
 
-        wandb.log({
-            "translation_time": (datetime.now() - start_time).total_seconds(),
-            "translation_tier": "failed",
-            "success": False,
-            "error": str(e)
-        })
+        wandb.log(
+            {
+                "translation_time": (datetime.now() - start_time).total_seconds(),
+                "translation_tier": "failed",
+                "success": False,
+                "error": str(e),
+            }
+        )
 
         # Return original message with language note
         lang_name = SUPPORTED_LANGUAGES.get(target_lang, {}).get("native", target_lang)
         return f"[Translation to {lang_name} unavailable] {message}"
+
 
 def get_language_greeting(language: str) -> str:
     """Get culturally appropriate greeting for language"""
@@ -299,18 +333,21 @@ def get_language_greeting(language: str) -> str:
         "fr": "Bonjour! Je suis votre tuteur IA. Comment puis-je vous aider à apprendre aujourd'hui?",
         "de": "Hallo! Ich bin Ihr KI-Tutor. Wie kann ich Ihnen heute beim Lernen helfen?",
         "it": "Ciao! Sono il tuo tutor AI. Come posso aiutarti a imparare oggi?",
-        "zh": "你好！我是你的AI导师。今天我如何帮助你学习？"
+        "zh": "你好！我是你的AI导师。今天我如何帮助你学习？",
     }
 
     return greetings.get(language, greetings["en"])
 
+
 def get_supported_languages_list(user_language: str = "en") -> str:
     """Get formatted list of supported languages"""
     if user_language == "en":
-        return "I support: " + ", ".join([
-            f"{info['native']} ({info['name']})"
-            for info in SUPPORTED_LANGUAGES.values()
-        ])
+        return "I support: " + ", ".join(
+            [
+                f"{info['native']} ({info['name']})"
+                for info in SUPPORTED_LANGUAGES.values()
+            ]
+        )
     # Return in user's language
     intro_text = {
         "es": "Apoyo: ",
@@ -321,13 +358,16 @@ def get_supported_languages_list(user_language: str = "en") -> str:
         "fr": "Je supporte: ",
         "de": "Ich unterstütze: ",
         "it": "Supporto: ",
-        "zh": "我支持: "
+        "zh": "我支持: ",
     }
 
     intro = intro_text.get(user_language, "I support: ")
     return intro + ", ".join([info["native"] for info in SUPPORTED_LANGUAGES.values()])
 
-async def validate_translation_quality(original: str, translated: str, target_lang: str) -> float:
+
+async def validate_translation_quality(
+    original: str, translated: str, target_lang: str
+) -> float:
     """Validate translation quality using back-translation
     Returns confidence score 0-1
     """
@@ -347,14 +387,16 @@ async def validate_translation_quality(original: str, translated: str, target_la
 
         similarity = intersection / union if union > 0 else 0.0
 
-        wandb.log({
-            "translation_validation": {
-                "similarity_score": similarity,
-                "target_language": target_lang,
-                "original_length": len(original),
-                "translated_length": len(translated)
+        wandb.log(
+            {
+                "translation_validation": {
+                    "similarity_score": similarity,
+                    "target_language": target_lang,
+                    "original_length": len(original),
+                    "translated_length": len(translated),
+                }
             }
-        })
+        )
 
         return similarity
 

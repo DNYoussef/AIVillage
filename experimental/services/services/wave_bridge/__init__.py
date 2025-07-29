@@ -26,5 +26,5 @@ __all__ = [
     "ResponseMetrics",
     "app",
     "auto_translate_flow",
-    "detect_language"
+    "detect_language",
 ]

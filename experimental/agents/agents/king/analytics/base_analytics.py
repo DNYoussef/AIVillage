@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
-class BaseAnalytics(ABC):
 
+class BaseAnalytics(ABC):
     def __init__(self):
         self.metrics: dict[str, list[float]] = {}
 
@@ -37,7 +37,9 @@ class BaseAnalytics(ABC):
 
         This functionality is part of the Atlantis roadmap.
         """
-        raise NotImplementedError("'generate_analytics_report' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-generate_analytics_report")
+        raise NotImplementedError(
+            "'generate_analytics_report' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-generate_analytics_report"
+        )
 
     def save(self, path: str):
         raise NotImplementedError

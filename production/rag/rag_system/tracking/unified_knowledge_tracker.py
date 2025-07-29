@@ -16,6 +16,7 @@ class KnowledgeChange:
     timestamp: datetime
     source: str
 
+
 class UnifiedKnowledgeTracker:
     def __init__(self, vector_store, graph_store):
         self.vector_store = vector_store
@@ -38,7 +39,7 @@ class UnifiedKnowledgeTracker:
                 old_value=self.knowledge_graph.get(key, {}).get("value"),
                 new_value=value,
                 timestamp=timestamp,
-                source="result_processing"
+                source="result_processing",
             )
             self.record_change(change)
 
@@ -124,14 +125,18 @@ class UnifiedKnowledgeTracker:
         summary = {
             "total_changes": len(self.knowledge_changes),
             "entities_changed": len({c.entity for c in self.knowledge_changes}),
-            "last_update": max((c.timestamp for c in self.knowledge_changes), default=None),
+            "last_update": max(
+                (c.timestamp for c in self.knowledge_changes), default=None
+            ),
         }
 
         if not self.knowledge_changes:
-            summary.update({
-                "most_changed_entity": None,
-                "average_time_between_changes": None,
-            })
+            summary.update(
+                {
+                    "most_changed_entity": None,
+                    "average_time_between_changes": None,
+                }
+            )
             return summary
 
         # Determine which entity has been modified the most
@@ -145,16 +150,20 @@ class UnifiedKnowledgeTracker:
         sorted_changes = sorted(self.knowledge_changes, key=lambda c: c.timestamp)
         if len(sorted_changes) > 1:
             diffs = [
-                (sorted_changes[i].timestamp - sorted_changes[i - 1].timestamp).total_seconds()
+                (
+                    sorted_changes[i].timestamp - sorted_changes[i - 1].timestamp
+                ).total_seconds()
                 for i in range(1, len(sorted_changes))
             ]
             avg_diff = sum(diffs) / len(diffs)
         else:
             avg_diff = None
 
-        summary.update({
-            "most_changed_entity": most_changed_entity,
-            "average_time_between_changes": avg_diff,
-        })
+        summary.update(
+            {
+                "most_changed_entity": most_changed_entity,
+                "average_time_between_changes": avg_diff,
+            }
+        )
 
         return summary

@@ -30,19 +30,15 @@ import warnings
 def _check_imports():
     """Check that no experimental modules are imported."""
     for module_name in sys.modules:
-        if module_name.startswith("experimental.") or module_name.startswith("deprecated."):
+        if module_name.startswith("experimental.") or module_name.startswith(
+            "deprecated."
+        ):
             warnings.warn(
                 f"Production code should not import {module_name}",
                 UserWarning,
-                stacklevel=2
+                stacklevel=2,
             )
 
+
 # Production components - these should be stable APIs
-__all__ = [
-    "benchmarking",
-    "compression",
-    "evolution",
-    "geometry",
-    "memory",
-    "rag"
-]
+__all__ = ["benchmarking", "compression", "evolution", "geometry", "memory", "rag"]

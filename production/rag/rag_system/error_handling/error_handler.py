@@ -7,6 +7,7 @@ from typing import Any
 class AIVillageException(Exception):
     """Custom exception class for AI Village errors."""
 
+
 class ErrorHandler:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ class ErrorHandler:
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            filename="ai_village.log"
+            filename="ai_village.log",
         )
 
     def log_error(self, error: Exception, context: dict[str, Any] | None = None):
@@ -29,24 +30,34 @@ class ErrorHandler:
 
     def handle_error(self, func):
         """Decorator to handle errors in functions."""
+
         @wraps(func)
         async def wrapper(*args, **kwargs):
             try:
                 return await func(*args, **kwargs)
             except Exception as e:
-                self.log_error(e, {"function": func.__name__, "args": args, "kwargs": kwargs})
+                self.log_error(
+                    e, {"function": func.__name__, "args": args, "kwargs": kwargs}
+                )
                 raise AIVillageException(f"Error in {func.__name__}: {e!s}")
+
         return wrapper
+
 
 error_handler = ErrorHandler()
 
+
 def safe_execute(func):
     """Decorator to safely execute a function and handle any errors."""
+
     @wraps(func)
     async def wrapper(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
         except Exception as e:
-            error_handler.log_error(e, {"function": func.__name__, "args": args, "kwargs": kwargs})
+            error_handler.log_error(
+                e, {"function": func.__name__, "args": args, "kwargs": kwargs}
+            )
             return {"error": str(e), "traceback": traceback.format_exc()}
+
     return wrapper

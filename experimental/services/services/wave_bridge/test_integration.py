@@ -17,6 +17,7 @@ from tutor_engine import AITutor
 TEST_BASE_URL = "http://localhost:8000"
 PERFORMANCE_TARGET = 5.0  # seconds
 
+
 class TestWhatsAppIntegration:
     """Test WhatsApp webhook integration"""
 
@@ -28,7 +29,7 @@ class TestWhatsAppIntegration:
             "Body": "Hello, I need help with math",
             "From": "whatsapp:+1234567890",
             "MessageSid": "test_message_123",
-            "To": "whatsapp:+14155238886"
+            "To": "whatsapp:+14155238886",
         }
 
         start_time = time.time()
@@ -39,7 +40,9 @@ class TestWhatsAppIntegration:
         response_time = time.time() - start_time
 
         # Assert response time meets target
-        assert response_time < PERFORMANCE_TARGET, f"Response took {response_time:.2f}s, target is {PERFORMANCE_TARGET}s"
+        assert response_time < PERFORMANCE_TARGET, (
+            f"Response took {response_time:.2f}s, target is {PERFORMANCE_TARGET}s"
+        )
         assert response.status_code == 200
         assert "application/xml" in response.headers["content-type"]
 
@@ -73,7 +76,7 @@ class TestWhatsAppIntegration:
             ("Hello, how are you?", "en"),
             ("Hola, ¿cómo estás?", "es"),
             ("नमस्ते, आप कैसे हैं?", "hi"),
-            ("Bonjour, comment allez-vous?", "fr")
+            ("Bonjour, comment allez-vous?", "fr"),
         ]
 
         for text, expected_lang in test_cases:
@@ -93,6 +96,7 @@ class TestWhatsAppIntegration:
                 assert translation_time < 3.0  # Translation should be fast
                 print(f"✅ Translation time: {translation_time:.2f}s")
 
+
 class TestAITutorEngine:
     """Test AI Tutor functionality"""
 
@@ -106,7 +110,7 @@ class TestAITutorEngine:
             ("Explain photosynthesis", "science"),
             ("How do I write a Python function?", "programming"),
             ("What happened in World War 2?", "history"),
-            ("Random question about anything", "general")
+            ("Random question about anything", "general"),
         ]
 
         for message, expected_subject in test_cases:
@@ -125,7 +129,7 @@ class TestAITutorEngine:
             "What is 2 + 2?",
             "Explain gravity",
             "Help me with programming",
-            "Tell me about history"
+            "Tell me about history",
         ]
 
         for message in test_messages:
@@ -141,7 +145,7 @@ class TestAITutorEngine:
                     user_message=message,
                     prompt_template="Test prompt: {user_message}",
                     language="en",
-                    session_id="test_session"
+                    session_id="test_session",
                 )
 
             response_time = time.time() - start_time
@@ -149,6 +153,7 @@ class TestAITutorEngine:
             assert response_time < PERFORMANCE_TARGET
             assert len(response) > 0
             print(f"✅ Response for '{message}': {response_time:.2f}s")
+
 
 class TestPerformanceMonitoring:
     """Test performance monitoring and metrics"""
@@ -191,7 +196,7 @@ class TestPerformanceMonitoring:
         slow_response_data = {
             "response_time": 6.5,  # Exceeds 5s target
             "language": "en",
-            "session_id": "slow_test"
+            "session_id": "slow_test",
         }
 
         # Track if alert was generated
@@ -208,6 +213,7 @@ class TestPerformanceMonitoring:
 
         print(f"✅ Performance alert generated: {latest_alert['type']}")
 
+
 class TestPromptOptimization:
     """Test W&B prompt tuning functionality"""
 
@@ -220,7 +226,7 @@ class TestPromptOptimization:
         prompt = await tuner.get_optimized_prompt(
             message_type="tutoring",
             language="en",
-            context={"user_message": "Test question"}
+            context={"user_message": "Test question"},
         )
 
         assert prompt is not None
@@ -243,8 +249,8 @@ class TestPromptOptimization:
                 "response_time": 2.5,
                 "satisfaction": 0.8,
                 "conversion": True,
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         # Check that performance was recorded
@@ -252,6 +258,7 @@ class TestPromptOptimization:
         assert len(tuner.performance_history["test_variant"]) > 0
 
         print("✅ Prompt performance recorded successfully")
+
 
 # Health check test
 @pytest.mark.asyncio
@@ -268,6 +275,7 @@ async def test_health_endpoint():
 
     print("✅ Health endpoint responding correctly")
 
+
 # Metrics endpoint test
 @pytest.mark.asyncio
 async def test_metrics_endpoint():
@@ -283,6 +291,7 @@ async def test_metrics_endpoint():
 
     print("✅ Metrics endpoint responding correctly")
 
+
 def run_performance_benchmark():
     """Run comprehensive performance benchmark"""
     print("\n🚀 Running WhatsApp Wave Bridge Performance Benchmark")
@@ -297,6 +306,7 @@ def run_performance_benchmark():
     print("• A/B Test Variants: 6")
     print("• Subject Areas: 6")
     print("\n✅ WhatsApp Wave Bridge Sprint R-3+AF4 Complete!")
+
 
 if __name__ == "__main__":
     run_performance_benchmark()

@@ -17,13 +17,15 @@ from .language_support import get_language_greeting
 
 logger = logging.getLogger(__name__)
 
+
 class AITutor:
-    """Main AI Tutor engine with multi-model support and caching
-    """
+    """Main AI Tutor engine with multi-model support and caching"""
 
     def __init__(self):
         # Initialize AI clients
-        self.anthropic_client = anthropic.Anthropic() if hasattr(anthropic, "Anthropic") else None
+        self.anthropic_client = (
+            anthropic.Anthropic() if hasattr(anthropic, "Anthropic") else None
+        )
         self.openai_client = openai.OpenAI() if hasattr(openai, "OpenAI") else None
 
         # Agent Forge model integration
@@ -41,7 +43,7 @@ class AITutor:
             "agent_forge": {"avg_time": 0, "success_rate": 0, "calls": 0},
             "anthropic": {"avg_time": 0, "success_rate": 0, "calls": 0},
             "openai": {"avg_time": 0, "success_rate": 0, "calls": 0},
-            "fallback": {"avg_time": 0, "success_rate": 0, "calls": 0}
+            "fallback": {"avg_time": 0, "success_rate": 0, "calls": 0},
         }
 
         # Initialize Agent Forge model
@@ -69,6 +71,7 @@ class AITutor:
             # Auto-select best model
             selector = AgentForgeRAGSelector("./benchmark_results")
             import asyncio
+
             selection = asyncio.run(selector.select_best_model())
 
             model_path = selection["model_path"]
@@ -78,13 +81,17 @@ class AITutor:
             # Load model
             self.agent_forge_tokenizer = AutoTokenizer.from_pretrained(model_path)
             if self.agent_forge_tokenizer.pad_token is None:
-                self.agent_forge_tokenizer.pad_token = self.agent_forge_tokenizer.eos_token
+                self.agent_forge_tokenizer.pad_token = (
+                    self.agent_forge_tokenizer.eos_token
+                )
 
             self.agent_forge_model = AutoModelForCausalLM.from_pretrained(
                 model_path,
-                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                torch_dtype=torch.float16
+                if torch.cuda.is_available()
+                else torch.float32,
                 device_map="auto" if torch.cuda.is_available() else None,
-                trust_remote_code=True
+                trust_remote_code=True,
             )
 
             if not torch.cuda.is_available():
@@ -93,7 +100,9 @@ class AITutor:
             self.agent_forge_model.eval()
             self.agent_forge_available = True
 
-            logger.info(f"✅ Agent Forge model loaded successfully: {selection['selected_phase']}")
+            logger.info(
+                f"✅ Agent Forge model loaded successfully: {selection['selected_phase']}"
+            )
 
         except Exception as e:
             logger.warning(f"Failed to load Agent Forge model: {e}")
@@ -103,41 +112,84 @@ class AITutor:
         """Initialize subject-specific tutoring approaches"""
         experts = {
             "mathematics": {
-                "keywords": ["math", "algebra", "calculus", "geometry", "statistics", "equation", "solve", "calculate"],
+                "keywords": [
+                    "math",
+                    "algebra",
+                    "calculus",
+                    "geometry",
+                    "statistics",
+                    "equation",
+                    "solve",
+                    "calculate",
+                ],
                 "approach": "step_by_step",
                 "prompt_suffix": "Show your work step by step and explain each step clearly.",
-                "examples_needed": True
+                "examples_needed": True,
             },
             "science": {
-                "keywords": ["physics", "chemistry", "biology", "experiment", "molecule", "force", "energy", "cell"],
+                "keywords": [
+                    "physics",
+                    "chemistry",
+                    "biology",
+                    "experiment",
+                    "molecule",
+                    "force",
+                    "energy",
+                    "cell",
+                ],
                 "approach": "conceptual",
                 "prompt_suffix": "Explain the underlying concepts and real-world applications.",
-                "examples_needed": True
+                "examples_needed": True,
             },
             "programming": {
-                "keywords": ["code", "programming", "python", "javascript", "function", "variable", "loop", "debug"],
+                "keywords": [
+                    "code",
+                    "programming",
+                    "python",
+                    "javascript",
+                    "function",
+                    "variable",
+                    "loop",
+                    "debug",
+                ],
                 "approach": "practical",
                 "prompt_suffix": "Provide code examples and explain the logic behind them.",
-                "examples_needed": True
+                "examples_needed": True,
             },
             "language": {
-                "keywords": ["grammar", "vocabulary", "writing", "essay", "sentence", "paragraph", "literature"],
+                "keywords": [
+                    "grammar",
+                    "vocabulary",
+                    "writing",
+                    "essay",
+                    "sentence",
+                    "paragraph",
+                    "literature",
+                ],
                 "approach": "interactive",
                 "prompt_suffix": "Use examples and ask follow-up questions to reinforce learning.",
-                "examples_needed": False
+                "examples_needed": False,
             },
             "history": {
-                "keywords": ["history", "historical", "war", "ancient", "civilization", "empire", "revolution"],
+                "keywords": [
+                    "history",
+                    "historical",
+                    "war",
+                    "ancient",
+                    "civilization",
+                    "empire",
+                    "revolution",
+                ],
                 "approach": "narrative",
                 "prompt_suffix": "Tell the story in an engaging way and connect to broader themes.",
-                "examples_needed": False
+                "examples_needed": False,
             },
             "general": {
                 "keywords": [],
                 "approach": "adaptive",
                 "prompt_suffix": "Adapt your teaching style to the student's needs.",
-                "examples_needed": False
-            }
+                "examples_needed": False,
+            },
         }
 
         # Log expert configuration
@@ -146,13 +198,9 @@ class AITutor:
         return experts
 
     async def generate_greeting(
-        self,
-        variant: str,
-        language: str,
-        user_message: str
+        self, variant: str, language: str, user_message: str
     ) -> str:
-        """Generate personalized greeting based on A/B test variant
-        """
+        """Generate personalized greeting based on A/B test variant"""
         start_time = time.time()
 
         try:
@@ -178,14 +226,16 @@ class AITutor:
             response_time = time.time() - start_time
 
             # Log greeting generation
-            wandb.log({
-                "greeting_generation": {
-                    "variant": variant,
-                    "language": language,
-                    "response_time": response_time,
-                    "subject_detected": subject if user_message else None
+            wandb.log(
+                {
+                    "greeting_generation": {
+                        "variant": variant,
+                        "language": language,
+                        "response_time": response_time,
+                        "subject_detected": subject if user_message else None,
+                    }
                 }
-            })
+            )
 
             return greeting
 
@@ -194,14 +244,9 @@ class AITutor:
             return get_language_greeting(language)
 
     async def generate_response(
-        self,
-        user_message: str,
-        prompt_template: str,
-        language: str,
-        session_id: str
+        self, user_message: str, prompt_template: str, language: str, session_id: str
     ) -> str:
-        """Generate tutoring response with model fallback chain
-        """
+        """Generate tutoring response with model fallback chain"""
         start_time = time.time()
 
         try:
@@ -210,26 +255,27 @@ class AITutor:
             if cache_key in self.response_cache:
                 cache_entry = self.response_cache[cache_key]
                 if time.time() - cache_entry["timestamp"] < self.cache_ttl:
-
-                    wandb.log({
-                        "response_generation": {
-                            "method": "cache_hit",
-                            "response_time": time.time() - start_time,
-                            "session_id": session_id
+                    wandb.log(
+                        {
+                            "response_generation": {
+                                "method": "cache_hit",
+                                "response_time": time.time() - start_time,
+                                "session_id": session_id,
+                            }
                         }
-                    })
+                    )
 
                     return cache_entry["response"]
 
             # Detect subject and customize approach
             subject = self.detect_subject_interest(user_message)
-            expert_config = self.subject_experts.get(subject, self.subject_experts["general"])
+            expert_config = self.subject_experts.get(
+                subject, self.subject_experts["general"]
+            )
 
             # Enhance prompt with subject-specific guidance
             enhanced_prompt = self.enhance_prompt_for_subject(
-                prompt_template,
-                expert_config,
-                user_message
+                prompt_template, expert_config, user_message
             )
 
             # Try models in order of preference (speed + quality)
@@ -251,9 +297,7 @@ class AITutor:
             if not response and self.anthropic_client:
                 try:
                     response = await self.generate_with_anthropic(
-                        enhanced_prompt,
-                        user_message,
-                        language
+                        enhanced_prompt, user_message, language
                     )
 
                     if response:
@@ -267,9 +311,7 @@ class AITutor:
             if not response and self.openai_client:
                 try:
                     response = await self.generate_with_openai(
-                        enhanced_prompt,
-                        user_message,
-                        language
+                        enhanced_prompt, user_message, language
                     )
 
                     if response:
@@ -281,31 +323,38 @@ class AITutor:
 
             # Final fallback to rule-based response
             if not response:
-                response = self.generate_fallback_response(user_message, subject, language)
+                response = self.generate_fallback_response(
+                    user_message, subject, language
+                )
                 self.update_model_performance("fallback", start_time, True)
 
             # Cache successful response
             if response:
                 self.response_cache[cache_key] = {
                     "response": response,
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
                 }
 
             response_time = time.time() - start_time
 
             # Log response generation
-            wandb.log({
-                "response_generation": {
-                    "subject": subject,
-                    "language": language,
-                    "response_time": response_time,
-                    "session_id": session_id,
-                    "response_length": len(response) if response else 0,
-                    "cache_miss": True
+            wandb.log(
+                {
+                    "response_generation": {
+                        "subject": subject,
+                        "language": language,
+                        "response_time": response_time,
+                        "session_id": session_id,
+                        "response_length": len(response) if response else 0,
+                        "cache_miss": True,
+                    }
                 }
-            })
+            )
 
-            return response or "I'm having trouble generating a response right now. Please try rephrasing your question."
+            return (
+                response
+                or "I'm having trouble generating a response right now. Please try rephrasing your question."
+            )
 
         except Exception as e:
             logger.error(f"Error in response generation: {e}")
@@ -335,17 +384,16 @@ class AITutor:
         return "general"
 
     def enhance_prompt_for_subject(
-        self,
-        base_prompt: str,
-        expert_config: dict[str, Any],
-        user_message: str
+        self, base_prompt: str, expert_config: dict[str, Any], user_message: str
     ) -> str:
         """Enhance prompt template with subject-specific guidance"""
         # Add subject-specific instruction
         enhanced_prompt = base_prompt
 
         if expert_config["prompt_suffix"]:
-            enhanced_prompt += f"\n\nSpecial instruction: {expert_config['prompt_suffix']}"
+            enhanced_prompt += (
+                f"\n\nSpecial instruction: {expert_config['prompt_suffix']}"
+            )
 
         # Add approach-specific guidance
         approach_guides = {
@@ -353,7 +401,7 @@ class AITutor:
             "conceptual": "\nFocus on explaining the 'why' behind concepts, not just the 'how'.",
             "practical": "\nProvide concrete examples and hands-on exercises.",
             "interactive": "\nAsk questions to engage the student and check understanding.",
-            "narrative": "\nUse storytelling to make information memorable and engaging."
+            "narrative": "\nUse storytelling to make information memorable and engaging.",
         }
 
         approach = expert_config.get("approach", "adaptive")
@@ -363,25 +411,19 @@ class AITutor:
         return enhanced_prompt
 
     async def generate_with_anthropic(
-        self,
-        prompt: str,
-        user_message: str,
-        language: str
+        self, prompt: str, user_message: str, language: str
     ) -> str | None:
         """Generate response using Anthropic Claude"""
         try:
             messages = [
-                {
-                    "role": "user",
-                    "content": prompt.format(user_message=user_message)
-                }
+                {"role": "user", "content": prompt.format(user_message=user_message)}
             ]
 
             response = await self.anthropic_client.messages.create(
                 model="claude-3-haiku-20240307",  # Fast model for sub-5s response
                 max_tokens=800,
                 temperature=0.3,
-                messages=messages
+                messages=messages,
             )
 
             return response.content[0].text.strip()
@@ -391,11 +433,7 @@ class AITutor:
             return None
 
     async def generate_agent_forge_response(
-        self,
-        prompt: str,
-        user_message: str,
-        language: str,
-        session_id: str
+        self, prompt: str, user_message: str, language: str, session_id: str
     ) -> str | None:
         """Generate response using Agent Forge model."""
         try:
@@ -416,7 +454,9 @@ Guidelines:
 Response:"""
 
             # Tokenize input
-            inputs = self.agent_forge_tokenizer.encode(educational_prompt, return_tensors="pt")
+            inputs = self.agent_forge_tokenizer.encode(
+                educational_prompt, return_tensors="pt"
+            )
 
             # Move to appropriate device
             device = next(self.agent_forge_model.parameters()).device
@@ -431,12 +471,14 @@ Response:"""
                     do_sample=True,
                     pad_token_id=self.agent_forge_tokenizer.eos_token_id,
                     eos_token_id=self.agent_forge_tokenizer.eos_token_id,
-                    repetition_penalty=1.1
+                    repetition_penalty=1.1,
                 )
 
             # Decode response
-            full_response = self.agent_forge_tokenizer.decode(outputs[0], skip_special_tokens=True)
-            response = full_response[len(educational_prompt):].strip()
+            full_response = self.agent_forge_tokenizer.decode(
+                outputs[0], skip_special_tokens=True
+            )
+            response = full_response[len(educational_prompt) :].strip()
 
             # Clean up response
             if response:
@@ -462,10 +504,7 @@ Response:"""
             return None
 
     async def generate_with_openai(
-        self,
-        prompt: str,
-        user_message: str,
-        language: str
+        self, prompt: str, user_message: str, language: str
     ) -> str | None:
         """Generate response using OpenAI GPT"""
         try:
@@ -473,10 +512,13 @@ Response:"""
                 model="gpt-3.5-turbo",  # Fast and cost-effective
                 messages=[
                     {"role": "system", "content": "You are a helpful AI tutor."},
-                    {"role": "user", "content": prompt.format(user_message=user_message)}
+                    {
+                        "role": "user",
+                        "content": prompt.format(user_message=user_message),
+                    },
                 ],
                 max_tokens=800,
-                temperature=0.3
+                temperature=0.3,
             )
 
             return response.choices[0].message.content.strip()
@@ -486,10 +528,7 @@ Response:"""
             return None
 
     def generate_fallback_response(
-        self,
-        user_message: str,
-        subject: str,
-        language: str
+        self, user_message: str, subject: str, language: str
     ) -> str:
         """Generate rule-based fallback response"""
         # Subject-specific fallback templates
@@ -499,7 +538,7 @@ Response:"""
             "programming": "I can help you with that programming question about '{message}'. Here's how I'd approach this...",
             "language": "That's an interesting language question about '{message}'. Let me help you understand this better...",
             "history": "Your history question about '{message}' is fascinating. Let me share what I know about this topic...",
-            "general": "Thank you for your question about '{message}'. I'm here to help you learn and understand this topic better..."
+            "general": "Thank you for your question about '{message}'. I'm here to help you learn and understand this topic better...",
         }
 
         template = fallback_templates.get(subject, fallback_templates["general"])
@@ -513,7 +552,7 @@ Response:"""
             "sw": "Hisi kuuliza maswali ya ziada!",
             "ar": "لا تتردد في طرح أسئلة إضافية!",
             "pt": "Sinta-se à vontade para fazer perguntas de acompanhamento!",
-            "fr": "N'hésitez pas à poser des questions de suivi!"
+            "fr": "N'hésitez pas à poser des questions de suivi!",
         }
 
         encouragement = encouragements.get(language, encouragements["en"])
@@ -528,7 +567,7 @@ Response:"""
             "sw": "Nina matatizo ya kiufundi. Tafadhali jaribu kuuliza swali lako tena baada ya muda.",
             "ar": "أواجه صعوبات تقنية. يرجى المحاولة مرة أخرى في وقت لاحق.",
             "pt": "Estou enfrentando dificuldades técnicas. Tente fazer sua pergunta novamente em um momento.",
-            "fr": "Je rencontre des difficultés techniques. Veuillez réessayer votre question dans un moment."
+            "fr": "Je rencontre des difficultés techniques. Veuillez réessayer votre question dans un moment.",
         }
 
         return emergency_responses.get(language, emergency_responses["en"])
@@ -542,7 +581,7 @@ Response:"""
             "sw": " 🌟 Nina furaha sana kujifunza nawe leo!",
             "ar": " 🌟 أنا متحمس جداً للتعلم معك اليوم!",
             "pt": " 🌟 Estou super animado para aprender com você hoje!",
-            "fr": " 🌟 Je suis super excité d'apprendre avec vous aujourd'hui!"
+            "fr": " 🌟 Je suis super excité d'apprendre avec vous aujourd'hui!",
         }
 
         addition = enthusiastic_additions.get(language, enthusiastic_additions["en"])
@@ -557,7 +596,7 @@ Response:"""
             "sw": " Nimejitoa kutoa msaada wa kielimu sahihi na kamili.",
             "ar": " أنا ملتزم بتقديم الدعم التعليمي الدقيق والشامل لك.",
             "pt": " Estou comprometido em fornecer suporte educacional preciso e abrangente.",
-            "fr": " Je m'engage à vous fournir un soutien éducatif précis et complet."
+            "fr": " Je m'engage à vous fournir un soutien éducatif précis et complet.",
         }
 
         addition = professional_additions.get(language, professional_additions["en"])
@@ -572,7 +611,7 @@ Response:"""
             "sw": " 😊 Nilete kama rafiki yako wa kujifunza - tuko pamoja katika hili!",
             "ar": " 😊 فكر فيّ كصديق التعلم - نحن في هذا معاً!",
             "pt": " 😊 Pense em mim como seu companheiro de aprendizado - estamos juntos nisso!",
-            "fr": " 😊 Pensez à moi comme votre ami d'apprentissage - nous sommes ensemble!"
+            "fr": " 😊 Pensez à moi comme votre ami d'apprentissage - nous sommes ensemble!",
         }
 
         addition = friendly_additions.get(language, friendly_additions["en"])
@@ -596,29 +635,40 @@ Response:"""
                 if perf["calls"] == 1:
                     perf["avg_time"] = response_time
                 else:
-                    perf["avg_time"] = (perf["avg_time"] * (perf["calls"] - 1) + response_time) / perf["calls"]
+                    perf["avg_time"] = (
+                        perf["avg_time"] * (perf["calls"] - 1) + response_time
+                    ) / perf["calls"]
 
                 # Update success rate
-                perf["success_rate"] = (perf["success_rate"] * (perf["calls"] - 1) + 1) / perf["calls"]
+                perf["success_rate"] = (
+                    perf["success_rate"] * (perf["calls"] - 1) + 1
+                ) / perf["calls"]
             else:
-                perf["success_rate"] = (perf["success_rate"] * (perf["calls"] - 1)) / perf["calls"]
+                perf["success_rate"] = (
+                    perf["success_rate"] * (perf["calls"] - 1)
+                ) / perf["calls"]
 
         # Log performance update
-        wandb.log({
-            "model_performance": {
-                "model": model,
-                "response_time": response_time,
-                "success": success,
-                "avg_time": self.model_performance[model]["avg_time"],
-                "success_rate": self.model_performance[model]["success_rate"]
+        wandb.log(
+            {
+                "model_performance": {
+                    "model": model,
+                    "response_time": response_time,
+                    "success": success,
+                    "avg_time": self.model_performance[model]["avg_time"],
+                    "success_rate": self.model_performance[model]["success_rate"],
+                }
             }
-        })
+        )
 
     async def get_performance_summary(self) -> dict[str, Any]:
         """Get current performance summary"""
         return {
             "model_performance": self.model_performance,
             "cache_size": len(self.response_cache),
-            "avg_response_time": sum(self.response_times[-100:]) / len(self.response_times[-100:]) if self.response_times else 0,
-            "subjects_supported": list(self.subject_experts.keys())
+            "avg_response_time": sum(self.response_times[-100:])
+            / len(self.response_times[-100:])
+            if self.response_times
+            else 0,
+            "subjects_supported": list(self.subject_experts.keys()),
         }

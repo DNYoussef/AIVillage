@@ -42,7 +42,7 @@ async def demo_query_classification():
         "What if artificial intelligence becomes sentient?",
         "Explain the causes of climate change and their effects on weather patterns",
         "What do you know about quantum computing?",
-        "How are social media algorithms related to political polarization through echo chambers?"
+        "How are social media algorithms related to political polarization through echo chambers?",
     ]
 
     for query in test_queries:
@@ -54,7 +54,9 @@ async def demo_query_classification():
         print(f"   Complexity: {analysis['complexity_score']:.3f}")
 
         if analysis["pattern_matches"]:
-            patterns = ", ".join(f"{k}({v:.2f})" for k, v in analysis["pattern_matches"].items())
+            patterns = ", ".join(
+                f"{k}({v:.2f})" for k, v in analysis["pattern_matches"].items()
+            )
             print(f"   Patterns: {patterns}")
 
         strategy = classifier.suggest_strategy(query_type, analysis["complexity_score"])
@@ -75,25 +77,32 @@ async def demo_strategic_planning():
                 "max_complexity": 0.6,
                 "reasoning_speed": 1.2,
                 "accuracy": 0.8,
-                "memory_limit_mb": 500
-            }
+                "memory_limit_mb": 500,
+            },
         ),
         AgentReasoningModel(
             model_name="AdvancedAgent",
-            capabilities=["retrieval", "reasoning", "causal_analysis", "temporal_reasoning"],
+            capabilities=[
+                "retrieval",
+                "reasoning",
+                "causal_analysis",
+                "temporal_reasoning",
+            ],
             performance_profile={
                 "max_complexity": 0.9,
                 "reasoning_speed": 0.8,
                 "accuracy": 0.95,
-                "memory_limit_mb": 2000
-            }
-        )
+                "memory_limit_mb": 2000,
+            },
+        ),
     ]
 
     planner = QueryPlanner()
 
-    complex_query = ("How did the invention of the printing press influence the Scientific Revolution, "
-                    "and what were the cascading effects on modern democratic institutions?")
+    complex_query = (
+        "How did the invention of the printing press influence the Scientific Revolution, "
+        "and what were the cascading effects on modern democratic institutions?"
+    )
 
     for agent in agents:
         print(f"\n🤖 Planning for {agent.model_name}")
@@ -126,10 +135,16 @@ async def demo_plan_adaptation():
     agent = AgentReasoningModel(
         model_name="AdaptiveAgent",
         capabilities=["retrieval", "reasoning"],
-        performance_profile={"max_complexity": 0.8, "reasoning_speed": 1.0, "accuracy": 0.85}
+        performance_profile={
+            "max_complexity": 0.8,
+            "reasoning_speed": 1.0,
+            "accuracy": 0.85,
+        },
     )
 
-    query = "Analyze the causal relationships between economic inequality and social unrest"
+    query = (
+        "Analyze the causal relationships between economic inequality and social unrest"
+    )
 
     # Create initial plan
     print("📋 Creating initial plan...")
@@ -143,7 +158,10 @@ async def demo_plan_adaptation():
 
     intermediate_results = {
         "retrieved_entities": ["economic_inequality", "social_unrest", "protests"],
-        "partial_relationships": ["inequality -> frustration", "frustration -> protests"]
+        "partial_relationships": [
+            "inequality -> frustration",
+            "frustration -> protests",
+        ],
     }
 
     # Trigger replanning
@@ -151,7 +169,7 @@ async def demo_plan_adaptation():
         original_plan,
         intermediate_results,
         current_confidence=0.3,
-        failure_reason="causal_analysis_low_confidence"
+        failure_reason="causal_analysis_low_confidence",
     )
 
     print(f"   🔄 Replanned Strategy: {new_plan.reasoning_strategy.value}")
@@ -175,20 +193,26 @@ async def demo_strategy_comparison():
         print(f"\n🌡️  Complexity Level: {complexity:.1f}")
 
         # Test different query types
-        query_types = [QueryType.TEMPORAL_ANALYSIS, QueryType.CAUSAL_CHAIN, QueryType.COMPARATIVE]
+        query_types = [
+            QueryType.TEMPORAL_ANALYSIS,
+            QueryType.CAUSAL_CHAIN,
+            QueryType.COMPARATIVE,
+        ]
 
         for query_type in query_types:
             strategy = selector.select_strategy(
                 query_type,
                 complexity,
                 RetrievalConstraints(),
-                {"prefer_accurate": True}
+                {"prefer_accurate": True},
             )
 
             requirements = selector.get_strategy_requirements(strategy)
 
-            print(f"   {query_type.value:20} -> {strategy.value:20} "
-                  f"(~{requirements['estimated_time_ms']}ms)")
+            print(
+                f"   {query_type.value:20} -> {strategy.value:20} "
+                f"(~{requirements['estimated_time_ms']}ms)"
+            )
 
 
 async def demo_plan_dsl():
@@ -206,11 +230,8 @@ async def demo_plan_dsl():
         reasoning_strategy=ReasoningStrategy.COMPARATIVE_ANALYSIS,
         complexity_score=0.6,
         retrieval_constraints=RetrievalConstraints(
-            max_depth=4,
-            max_nodes=150,
-            confidence_threshold=0.75,
-            time_budget_ms=8000
-        )
+            max_depth=4, max_nodes=150, confidence_threshold=0.75, time_budget_ms=8000
+        ),
     )
 
     # Add execution steps
@@ -219,22 +240,22 @@ async def demo_plan_dsl():
             description="Extract renewable energy types",
             operation="entity_extraction",
             parameters={"focus": "renewable_energy"},
-            confidence_threshold=0.8
+            confidence_threshold=0.8,
         ),
         ExecutionStep(
             description="Retrieve environmental impact data",
             operation="impact_data_retrieval",
             parameters={"impact_types": ["carbon", "land_use", "water"]},
             dependencies=[],
-            confidence_threshold=0.75
+            confidence_threshold=0.75,
         ),
         ExecutionStep(
             description="Compare environmental benefits",
             operation="comparative_analysis",
             parameters={"analysis_type": "environmental_comparison"},
             dependencies=[],
-            confidence_threshold=0.7
-        )
+            confidence_threshold=0.7,
+        ),
     ]
 
     for step in steps:
@@ -254,7 +275,6 @@ async def demo_learning_system():
     print("\n\n🧠 Learning System Demo")
     print("=" * 50)
 
-
     from mcp_servers.hyperag.planning.learning import PlanLearner, StrategyFeedback
 
     learner = PlanLearner()
@@ -270,7 +290,7 @@ async def demo_learning_system():
             execution_time_ms=2500,
             steps_completed=4,
             steps_failed=0,
-            result_quality=0.9
+            result_quality=0.9,
         ),
         StrategyFeedback(
             strategy=ReasoningStrategy.DIRECT_RETRIEVAL,
@@ -281,7 +301,7 @@ async def demo_learning_system():
             execution_time_ms=800,
             steps_completed=1,
             steps_failed=0,
-            result_quality=0.85
+            result_quality=0.85,
         ),
         StrategyFeedback(
             strategy=ReasoningStrategy.STEP_BY_STEP,
@@ -292,16 +312,15 @@ async def demo_learning_system():
             execution_time_ms=5000,
             steps_completed=2,
             steps_failed=3,
-            result_quality=0.4
-        )
+            result_quality=0.4,
+        ),
     ]
 
     # Record feedback
     for feedback in feedback_examples:
         # Create dummy plan for feedback
         plan = QueryPlan(
-            query_type=feedback.query_type,
-            reasoning_strategy=feedback.strategy
+            query_type=feedback.query_type, reasoning_strategy=feedback.strategy
         )
 
         learner.record_execution_feedback(plan, feedback)
@@ -312,26 +331,34 @@ async def demo_learning_system():
     test_scenarios = [
         (QueryType.CAUSAL_CHAIN, 0.6),
         (QueryType.SIMPLE_FACT, 0.3),
-        (QueryType.MULTI_HOP, 0.8)
+        (QueryType.MULTI_HOP, 0.8),
     ]
 
     for query_type, complexity in test_scenarios:
-        strategy, confidence = learner.get_strategy_recommendation(query_type, complexity)
-        print(f"   {query_type.value:15} (complexity {complexity:.1f}) -> "
-              f"{strategy.value:20} (confidence: {confidence:.3f})")
+        strategy, confidence = learner.get_strategy_recommendation(
+            query_type, complexity
+        )
+        print(
+            f"   {query_type.value:15} (complexity {complexity:.1f}) -> "
+            f"{strategy.value:20} (confidence: {confidence:.3f})"
+        )
 
     # Get learning insights
     insights = learner.get_learning_insights()
     print("\n📊 Learning Statistics:")
     print(f"   Total Feedback: {insights['learning_stats']['total_feedback_received']}")
-    print(f"   Successful Adaptations: {insights['learning_stats']['successful_adaptations']}")
+    print(
+        f"   Successful Adaptations: {insights['learning_stats']['successful_adaptations']}"
+    )
 
     if insights["top_performing_strategies"]:
         print("\n🏆 Top Performing Strategies:")
         for strategy_info in insights["top_performing_strategies"][:3]:
-            print(f"   {strategy_info['strategy']:20} - "
-                  f"Success: {strategy_info['success_rate']:.2f}, "
-                  f"Confidence: {strategy_info['avg_confidence']:.2f}")
+            print(
+                f"   {strategy_info['strategy']:20} - "
+                f"Success: {strategy_info['success_rate']:.2f}, "
+                f"Confidence: {strategy_info['avg_confidence']:.2f}"
+            )
 
 
 async def main():
@@ -359,14 +386,12 @@ async def main():
     except Exception as e:
         print(f"\n❌ Demo failed: {e}")
         import traceback
+
         traceback.print_exc()
 
 
 if __name__ == "__main__":
     # Set up logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(levelname)s: %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     asyncio.run(main())

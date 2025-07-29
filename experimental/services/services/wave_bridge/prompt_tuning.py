@@ -16,9 +16,11 @@ import wandb
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class PromptVariant:
     """Represents a prompt variant for A/B testing"""
+
     id: str
     template: str
     description: str
@@ -29,9 +31,11 @@ class PromptVariant:
     created_at: str
     active: bool = True
 
+
 @dataclass
 class ABTestResult:
     """Results from A/B testing"""
+
     variant_id: str
     user_hash: str
     session_id: str
@@ -41,9 +45,9 @@ class ABTestResult:
     language: str
     timestamp: str
 
+
 class PromptTuner:
-    """Manages prompt optimization using W&B experiment tracking
-    """
+    """Manages prompt optimization using W&B experiment tracking"""
 
     def __init__(self):
         self.variants_cache = {}
@@ -69,7 +73,6 @@ Provide a helpful response that:
 4. Asks a follow-up question to check understanding
 
 Response:""",
-
                 "conversational": """Hi! I'm here to help you learn 📚
 
 You asked: {user_message}
@@ -77,7 +80,6 @@ You asked: {user_message}
 Let me break this down for you step by step, and then I'll ask you a question to make sure you've got it!
 
 """,
-
                 "socratic": """Great question! Instead of giving you the answer directly, let me guide you to discover it yourself.
 
 Your question: {user_message}
@@ -86,41 +88,36 @@ Think about this: {guiding_question}
 
 What do you think? Let's work through this together!
 
-"""
+""",
             },
-
             "greeting_en": {
                 "enthusiastic": """🌟 Hey there! I'm your AI tutor and I'm so excited to help you learn today!
 
 What subject or topic would you like to explore? I'm here to make learning fun and easy! 📚✨""",
-
                 "professional": """Hello! I'm your AI tutoring assistant. I'm here to help you understand any topic you're curious about.
 
 Please share what you'd like to learn, and I'll provide clear, comprehensive explanations tailored to your level.""",
-
                 "friendly": """Hi! 👋 Ready to learn something new today?
 
-I'm your AI tutor, and I love helping students discover new things. What's on your mind?"""
-            }
+I'm your AI tutor, and I love helping students discover new things. What's on your mind?""",
+            },
         }
 
         # Store in W&B config
-        wandb.config.update({
-            "base_prompts": base_prompts,
-            "prompt_categories": list(base_prompts.keys()),
-            "optimization_enabled": True
-        })
+        wandb.config.update(
+            {
+                "base_prompts": base_prompts,
+                "prompt_categories": list(base_prompts.keys()),
+                "optimization_enabled": True,
+            }
+        )
 
         self.base_prompts = base_prompts
 
     async def get_optimized_prompt(
-        self,
-        message_type: str,
-        language: str = "en",
-        context: dict[str, Any] = None
+        self, message_type: str, language: str = "en", context: dict[str, Any] = None
     ) -> str:
-        """Get the best-performing prompt variant for given context
-        """
+        """Get the best-performing prompt variant for given context"""
         category_key = f"{message_type}_{language}"
 
         # Get variants for this category
@@ -134,14 +131,18 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
         best_variant = await self.select_best_variant(variants)
 
         # Log variant selection to W&B
-        wandb.log({
-            "prompt_selection": {
-                "category": category_key,
-                "selected_variant": best_variant.id,
-                "variant_description": best_variant.description,
-                "performance_score": best_variant.performance_metrics.get("avg_score", 0.0)
+        wandb.log(
+            {
+                "prompt_selection": {
+                    "category": category_key,
+                    "selected_variant": best_variant.id,
+                    "variant_description": best_variant.description,
+                    "performance_score": best_variant.performance_metrics.get(
+                        "avg_score", 0.0
+                    ),
+                }
             }
-        })
+        )
 
         # Format prompt with context
         formatted_prompt = self.format_prompt(best_variant.template, context or {})
@@ -170,7 +171,7 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
                         category=category,
                         parameters={},
                         performance_metrics={"avg_score": 0.5, "sample_count": 0},
-                        created_at=datetime.now().isoformat()
+                        created_at=datetime.now().isoformat(),
                     )
                     variants.append(variant)
 
@@ -184,13 +185,14 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
             return []
 
     async def select_best_variant(self, variants: list[PromptVariant]) -> PromptVariant:
-        """Select best performing variant using multi-armed bandit approach
-        """
+        """Select best performing variant using multi-armed bandit approach"""
         if len(variants) == 1:
             return variants[0]
 
         # Calculate upper confidence bounds for each variant
-        total_samples = sum(v.performance_metrics.get("sample_count", 0) for v in variants)
+        total_samples = sum(
+            v.performance_metrics.get("sample_count", 0) for v in variants
+        )
 
         if total_samples < self.min_samples_for_optimization:
             # Random selection during exploration phase
@@ -215,15 +217,21 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
         selected_variant = variants[best_idx]
 
         # Log selection reasoning
-        wandb.log({
-            "variant_selection": {
-                "selected_id": selected_variant.id,
-                "ucb_score": ucb_scores[best_idx],
-                "avg_score": selected_variant.performance_metrics.get("avg_score", 0.0),
-                "sample_count": selected_variant.performance_metrics.get("sample_count", 0),
-                "total_samples": total_samples
+        wandb.log(
+            {
+                "variant_selection": {
+                    "selected_id": selected_variant.id,
+                    "ucb_score": ucb_scores[best_idx],
+                    "avg_score": selected_variant.performance_metrics.get(
+                        "avg_score", 0.0
+                    ),
+                    "sample_count": selected_variant.performance_metrics.get(
+                        "sample_count", 0
+                    ),
+                    "total_samples": total_samples,
+                }
             }
-        })
+        )
 
         return selected_variant
 
@@ -235,8 +243,7 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
 Student question: {user_message}
 
 Your response:""",
-
-            "greeting": """Hello! I'm your AI tutor. How can I help you learn today?"""
+            "greeting": """Hello! I'm your AI tutor. How can I help you learn today?""",
         }
 
         return defaults.get(message_type, defaults["tutoring"])
@@ -250,7 +257,9 @@ Your response:""",
 
             # Generate guiding questions for Socratic method
             if "guiding_question" not in context and "user_message" in context:
-                context["guiding_question"] = self.generate_guiding_question(context["user_message"])
+                context["guiding_question"] = self.generate_guiding_question(
+                    context["user_message"]
+                )
 
             return template.format(**context)
 
@@ -269,7 +278,7 @@ Your response:""",
             "How might you approach",
             "What patterns do you notice in",
             "Can you think of a similar situation where",
-            "What would you expect if"
+            "What would you expect if",
         ]
 
         starter = random.choice(question_starters)
@@ -280,7 +289,7 @@ Your response:""",
         variant_id: str,
         session_id: str,
         user_hash: str,
-        performance_metrics: dict[str, float]
+        performance_metrics: dict[str, float],
     ):
         """Record performance metrics for a prompt variant"""
         try:
@@ -293,14 +302,16 @@ Your response:""",
                 user_satisfaction=performance_metrics.get("satisfaction", 0.5),
                 conversion=performance_metrics.get("conversion", False),
                 language=performance_metrics.get("language", "en"),
-                timestamp=datetime.now().isoformat()
+                timestamp=datetime.now().isoformat(),
             )
 
             # Log to W&B
-            wandb.log({
-                "prompt_performance": asdict(result),
-                "metrics_summary": performance_metrics
-            })
+            wandb.log(
+                {
+                    "prompt_performance": asdict(result),
+                    "metrics_summary": performance_metrics,
+                }
+            )
 
             # Update local performance tracking
             self.performance_history[variant_id].append(result)
@@ -334,7 +345,8 @@ Your response:""",
             "avg_satisfaction": np.mean(satisfactions),
             "conversion_rate": np.mean(conversions),
             "sample_count": len(results),
-            "avg_score": np.mean(satisfactions) * 0.7 + (1 - np.mean(response_times) / 10) * 0.3  # Weighted score
+            "avg_score": np.mean(satisfactions) * 0.7
+            + (1 - np.mean(response_times) / 10) * 0.3,  # Weighted score
         }
 
         # Update variant in cache
@@ -344,16 +356,11 @@ Your response:""",
                     variant.performance_metrics.update(metrics)
 
         # Log updated metrics
-        wandb.log({
-            "variant_metrics_update": {
-                "variant_id": variant_id,
-                **metrics
-            }
-        })
+        wandb.log({"variant_metrics_update": {"variant_id": variant_id, **metrics}})
+
 
 class ABTestManager:
-    """Manages A/B testing for greeting messages and other interactions
-    """
+    """Manages A/B testing for greeting messages and other interactions"""
 
     def __init__(self):
         self.test_assignments = {}  # user_hash -> variant mapping
@@ -366,15 +373,14 @@ class ABTestManager:
                 "variants": ["enthusiastic", "professional", "friendly"],
                 "weights": [0.33, 0.33, 0.34],  # Equal distribution
                 "active": True,
-                "success_metric": "user_satisfaction"
+                "success_metric": "user_satisfaction",
             },
-
             "tutoring_approach": {
                 "variants": ["formal", "conversational", "socratic"],
                 "weights": [0.3, 0.4, 0.3],  # Favor conversational
                 "active": True,
-                "success_metric": "conversion_rate"
-            }
+                "success_metric": "conversion_rate",
+            },
         }
 
         # Log test configs to W&B
@@ -391,8 +397,7 @@ class ABTestManager:
         return self.get_test_variant("tutoring_approach", user_identifier)
 
     def get_test_variant(self, test_name: str, user_identifier: str) -> str:
-        """Get consistent test variant for user using deterministic assignment
-        """
+        """Get consistent test variant for user using deterministic assignment"""
         if test_name not in self.test_configs:
             logger.warning(f"Unknown test: {test_name}")
             return "default"
@@ -414,14 +419,16 @@ class ABTestManager:
                 selected_variant = config["variants"][i]
 
                 # Log assignment
-                wandb.log({
-                    "ab_test_assignment": {
-                        "test_name": test_name,
-                        "user_hash": user_hash[:8],
-                        "variant": selected_variant,
-                        "random_value": random_value
+                wandb.log(
+                    {
+                        "ab_test_assignment": {
+                            "test_name": test_name,
+                            "user_hash": user_hash[:8],
+                            "variant": selected_variant,
+                            "random_value": random_value,
+                        }
                     }
-                })
+                )
 
                 return selected_variant
 
@@ -434,7 +441,7 @@ class ABTestManager:
         variant: str,
         user_identifier: str,
         session_id: str,
-        success_metrics: dict[str, float]
+        success_metrics: dict[str, float],
     ):
         """Record A/B test result"""
         try:
@@ -442,10 +449,12 @@ class ABTestManager:
                 "ab_test_result": {
                     "test_name": test_name,
                     "variant": variant,
-                    "user_hash": hashlib.sha256(user_identifier.encode()).hexdigest()[:8],
+                    "user_hash": hashlib.sha256(user_identifier.encode()).hexdigest()[
+                        :8
+                    ],
                     "session_id": session_id,
                     "timestamp": datetime.now().isoformat(),
-                    **success_metrics
+                    **success_metrics,
                 }
             }
 
@@ -456,8 +465,7 @@ class ABTestManager:
             logger.error(f"Error recording A/B test result: {e}")
 
     async def analyze_test_results(self, test_name: str) -> dict[str, Any]:
-        """Analyze A/B test results to determine winning variant
-        """
+        """Analyze A/B test results to determine winning variant"""
         try:
             # In production, this would query W&B API for historical results
             # For now, return mock analysis
@@ -466,11 +474,19 @@ class ABTestManager:
                 "test_name": test_name,
                 "status": "running",
                 "variants": self.test_configs.get(test_name, {}).get("variants", []),
-                "sample_sizes": {"enthusiastic": 150, "professional": 145, "friendly": 155},
-                "conversion_rates": {"enthusiastic": 0.68, "professional": 0.72, "friendly": 0.65},
+                "sample_sizes": {
+                    "enthusiastic": 150,
+                    "professional": 145,
+                    "friendly": 155,
+                },
+                "conversion_rates": {
+                    "enthusiastic": 0.68,
+                    "professional": 0.72,
+                    "friendly": 0.65,
+                },
                 "statistical_significance": False,
                 "recommended_action": "continue_test",
-                "confidence_level": 0.85
+                "confidence_level": 0.85,
             }
 
             # Log analysis
@@ -481,6 +497,7 @@ class ABTestManager:
         except Exception as e:
             logger.error(f"Error analyzing A/B test results: {e}")
             return {"error": str(e)}
+
 
 # Global instances
 prompt_tuner = PromptTuner()

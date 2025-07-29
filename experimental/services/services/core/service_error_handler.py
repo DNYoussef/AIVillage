@@ -121,7 +121,7 @@ class ServiceErrorHandler:
                 context=ErrorContext(
                     component=self.service_name,
                     operation="service_operation",
-                    details={"original_error": str(exception)}
+                    details={"original_error": str(exception)},
                 ),
             )
             error_info = av_exception.to_dict()
@@ -312,9 +312,7 @@ def create_service_error(
         category=category,
         severity=severity,
         context=ErrorContext(
-            component="service",
-            operation=operation,
-            details=details or {}
+            component="service", operation=operation, details=details or {}
         ),
     )
 

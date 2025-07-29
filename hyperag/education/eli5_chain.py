@@ -18,6 +18,7 @@ import wandb
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class CulturalExample:
     """Cultural example for concept explanation"""
@@ -33,6 +34,7 @@ class CulturalExample:
     usage_count: int = 0
     cultural_sensitivity: float = 1.0  # 0-1 score
 
+
 @dataclass
 class ExplanationTemplate:
     """Template for generating explanations"""
@@ -44,6 +46,7 @@ class ExplanationTemplate:
     template_structure: str
     cultural_adaptability: float
     effectiveness_metrics: dict[str, float]
+
 
 @dataclass
 class ExplanationResult:
@@ -62,12 +65,15 @@ class ExplanationResult:
     generation_time: float
     timestamp: str
 
+
 class CulturallyAwareELI5:
     """Generate culturally relevant, age-appropriate explanations"""
 
     def __init__(self, project_name: str = "aivillage-education"):
         self.project_name = project_name
-        self.cultural_examples = defaultdict(list)  # (region, concept) -> List[CulturalExample]
+        self.cultural_examples = defaultdict(
+            list
+        )  # (region, concept) -> List[CulturalExample]
         self.explanation_templates = {}  # template_id -> ExplanationTemplate
         self.regional_contexts = {}  # region -> context data
         self.language_adaptations = {}  # language -> adaptation rules
@@ -96,14 +102,38 @@ class CulturallyAwareELI5:
                     "eli5_version": "1.0.0",
                     "supported_ages": "3-18",
                     "cultural_regions": [
-                        "north_america", "latin_america", "europe", "south_asia",
-                        "east_asia", "southeast_asia", "middle_east", "africa", "oceania"
+                        "north_america",
+                        "latin_america",
+                        "europe",
+                        "south_asia",
+                        "east_asia",
+                        "southeast_asia",
+                        "middle_east",
+                        "africa",
+                        "oceania",
                     ],
                     "supported_languages": [
-                        "en", "es", "hi", "fr", "ar", "pt", "sw", "de", "it", "zh", "ja", "ko"
+                        "en",
+                        "es",
+                        "hi",
+                        "fr",
+                        "ar",
+                        "pt",
+                        "sw",
+                        "de",
+                        "it",
+                        "zh",
+                        "ja",
+                        "ko",
                     ],
-                    "explanation_types": ["scientific", "mathematical", "historical", "literary", "social"]
-                }
+                    "explanation_types": [
+                        "scientific",
+                        "mathematical",
+                        "historical",
+                        "literary",
+                        "social",
+                    ],
+                },
             )
 
             logger.info("W&B ELI5 tracking initialized")
@@ -132,47 +162,155 @@ class CulturallyAwareELI5:
         if region == "north_america":
             examples = [
                 # Mathematics
-                ("fractions", "en", "Think of pizza slices! If you cut a pizza into 4 equal pieces and eat 2, you ate 2/4 or 1/2 of the pizza!", "food", 6),
-                ("multiplication", "en", "If each football team has 11 players, and there are 2 teams on the field, that's 11 × 2 = 22 players total!", "sport", 7),
-                ("geometry", "en", "A square is like a baseball diamond - 4 equal sides and 4 corners (bases)!", "sport", 8),
-
+                (
+                    "fractions",
+                    "en",
+                    "Think of pizza slices! If you cut a pizza into 4 equal pieces and eat 2, you ate 2/4 or 1/2 of the pizza!",
+                    "food",
+                    6,
+                ),
+                (
+                    "multiplication",
+                    "en",
+                    "If each football team has 11 players, and there are 2 teams on the field, that's 11 × 2 = 22 players total!",
+                    "sport",
+                    7,
+                ),
+                (
+                    "geometry",
+                    "en",
+                    "A square is like a baseball diamond - 4 equal sides and 4 corners (bases)!",
+                    "sport",
+                    8,
+                ),
                 # Science
-                ("photosynthesis", "en", "Plants eat sunlight like we eat breakfast! They use sunlight, water, and air to make their own food and give us oxygen to breathe.", "daily_life", 8),
-                ("gravity", "en", "Gravity is like an invisible friend that always pulls things down - that's why your basketball falls when you drop it!", "daily_life", 6),
-                ("ecosystem", "en", "An ecosystem is like your neighborhood - different animals and plants live together and help each other, like how bees help flowers and flowers help bees!", "daily_life", 9),
-
+                (
+                    "photosynthesis",
+                    "en",
+                    "Plants eat sunlight like we eat breakfast! They use sunlight, water, and air to make their own food and give us oxygen to breathe.",
+                    "daily_life",
+                    8,
+                ),
+                (
+                    "gravity",
+                    "en",
+                    "Gravity is like an invisible friend that always pulls things down - that's why your basketball falls when you drop it!",
+                    "daily_life",
+                    6,
+                ),
+                (
+                    "ecosystem",
+                    "en",
+                    "An ecosystem is like your neighborhood - different animals and plants live together and help each other, like how bees help flowers and flowers help bees!",
+                    "daily_life",
+                    9,
+                ),
                 # History
-                ("american_revolution", "en", "The American Revolution was like kids deciding they didn't want to follow their parents' rules anymore and wanted to make their own family rules!", "daily_life", 10),
-                ("westward_expansion", "en", "Imagine your family decided to pack everything and move across the country to build a new house - that's what many families did in the 1800s!", "daily_life", 9)
+                (
+                    "american_revolution",
+                    "en",
+                    "The American Revolution was like kids deciding they didn't want to follow their parents' rules anymore and wanted to make their own family rules!",
+                    "daily_life",
+                    10,
+                ),
+                (
+                    "westward_expansion",
+                    "en",
+                    "Imagine your family decided to pack everything and move across the country to build a new house - that's what many families did in the 1800s!",
+                    "daily_life",
+                    9,
+                ),
             ]
 
         elif region == "latin_america":
             examples = [
                 # Mathematics
-                ("fractions", "es", "¡Piensa en empanadas! Si mamá hace 8 empanadas y tú comes 2, comiste 2/8 o 1/4 de las empanadas.", "food", 6),
-                ("multiplication", "es", "Si cada equipo de fútbol tiene 11 jugadores y hay 2 equipos, son 11 × 2 = 22 jugadores en total!", "sport", 7),
-
+                (
+                    "fractions",
+                    "es",
+                    "¡Piensa en empanadas! Si mamá hace 8 empanadas y tú comes 2, comiste 2/8 o 1/4 de las empanadas.",
+                    "food",
+                    6,
+                ),
+                (
+                    "multiplication",
+                    "es",
+                    "Si cada equipo de fútbol tiene 11 jugadores y hay 2 equipos, son 11 × 2 = 22 jugadores en total!",
+                    "sport",
+                    7,
+                ),
                 # Science
-                ("photosynthesis", "es", "Las plantas comen luz solar como nosotros comemos tortillas! Usan el sol, agua y aire para hacer su comida y nos dan oxígeno.", "food", 8),
-                ("rain_cycle", "es", "El ciclo del agua es como cuando mamá hierve frijoles - el vapor sube, se convierte en nubes, y luego llueve!", "daily_life", 7),
-
+                (
+                    "photosynthesis",
+                    "es",
+                    "Las plantas comen luz solar como nosotros comemos tortillas! Usan el sol, agua y aire para hacer su comida y nos dan oxígeno.",
+                    "food",
+                    8,
+                ),
+                (
+                    "rain_cycle",
+                    "es",
+                    "El ciclo del agua es como cuando mamá hierve frijoles - el vapor sube, se convierte en nubes, y luego llueve!",
+                    "daily_life",
+                    7,
+                ),
                 # History
-                ("aztec_empire", "es", "Los aztecas construyeron Tenochtitlan en un lago, como construir una ciudad flotante con canales en lugar de calles!", "tradition", 10),
-                ("day_of_dead", "es", "El Día de los Muertos es cuando recordamos a nuestros abuelos con amor, decorando altares con sus comidas favoritas.", "tradition", 8)
+                (
+                    "aztec_empire",
+                    "es",
+                    "Los aztecas construyeron Tenochtitlan en un lago, como construir una ciudad flotante con canales en lugar de calles!",
+                    "tradition",
+                    10,
+                ),
+                (
+                    "day_of_dead",
+                    "es",
+                    "El Día de los Muertos es cuando recordamos a nuestros abuelos con amor, decorando altares con sus comidas favoritas.",
+                    "tradition",
+                    8,
+                ),
             ]
 
         elif region == "south_asia":
             examples = [
                 # Mathematics
-                ("fractions", "hi", "रोटी के टुकड़ों की तरह सोचो! अगर रोटी को 4 बराबर हिस्सों में काटें और 2 खाएं, तो आपने 2/4 या 1/2 रोटी खाई!", "food", 6),
-                ("place_value", "hi", "संख्याओं के स्थान बिल्कुल क्रिकेट टीम की तरह हैं - हर खिलाड़ी की अपनी जगह होती है!", "sport", 8),
-
+                (
+                    "fractions",
+                    "hi",
+                    "रोटी के टुकड़ों की तरह सोचो! अगर रोटी को 4 बराबर हिस्सों में काटें और 2 खाएं, तो आपने 2/4 या 1/2 रोटी खाई!",
+                    "food",
+                    6,
+                ),
+                (
+                    "place_value",
+                    "hi",
+                    "संख्याओं के स्थान बिल्कुल क्रिकेट टीम की तरह हैं - हर खिलाड़ी की अपनी जगह होती है!",
+                    "sport",
+                    8,
+                ),
                 # Science
-                ("monsoon", "hi", "मानसून बारिश आसमान का त्योहार है - जैसे होली में रंग बरसता है, वैसे ही बादल पानी बरसाते हैं!", "tradition", 7),
-                ("digestion", "hi", "पेट में खाना पचना दाल बनाने जैसा है - सब कुछ मिलकर शरीर के लिए ताकत बनता है!", "food", 8),
-
+                (
+                    "monsoon",
+                    "hi",
+                    "मानसून बारिश आसमान का त्योहार है - जैसे होली में रंग बरसता है, वैसे ही बादल पानी बरसाते हैं!",
+                    "tradition",
+                    7,
+                ),
+                (
+                    "digestion",
+                    "hi",
+                    "पेट में खाना पचना दाल बनाने जैसा है - सब कुछ मिलकर शरीर के लिए ताकत बनता है!",
+                    "food",
+                    8,
+                ),
                 # History
-                ("ancient_india", "hi", "प्राचीन भारत में महान राजा थे जो न्याय करते थे, जैसे पंचायत में बुजुर्ग फैसला करते हैं!", "tradition", 10)
+                (
+                    "ancient_india",
+                    "hi",
+                    "प्राचीन भारत में महान राजा थे जो न्याय करते थे, जैसे पंचायत में बुजुर्ग फैसला करते हैं!",
+                    "tradition",
+                    10,
+                ),
             ]
 
         # Store examples
@@ -185,18 +323,20 @@ class CulturallyAwareELI5:
                 example_text=example_text,
                 context_type=context_type,
                 age_appropriateness=min_age,
-                cultural_sensitivity=1.0
+                cultural_sensitivity=1.0,
             )
 
             self.cultural_examples[(region, concept)].append(example)
 
         # Log to W&B
-        wandb.log({
-            f"cultural_examples/{region}": len([ex for ex in examples]),
-            "cultural_database_updated": True,
-            "region": region,
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        })
+        wandb.log(
+            {
+                f"cultural_examples/{region}": len([ex for ex in examples]),
+                "cultural_database_updated": True,
+                "region": region,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
     async def initialize_explanation_templates(self):
         """Initialize explanation templates for different concepts and ages"""
@@ -215,9 +355,8 @@ class CulturallyAwareELI5:
                 Remember: {simple_rule}
                 """,
                 cultural_adaptability=0.9,
-                effectiveness_metrics={"engagement": 0.8, "comprehension": 0.7}
+                effectiveness_metrics={"engagement": 0.8, "comprehension": 0.7},
             ),
-
             # Elementary (7-10)
             ExplanationTemplate(
                 template_id="elementary_detailed",
@@ -236,9 +375,8 @@ class CulturallyAwareELI5:
                 Try this: {simple_activity}
                 """,
                 cultural_adaptability=0.85,
-                effectiveness_metrics={"engagement": 0.85, "comprehension": 0.8}
+                effectiveness_metrics={"engagement": 0.85, "comprehension": 0.8},
             ),
-
             # Middle school (11-14)
             ExplanationTemplate(
                 template_id="middle_comprehensive",
@@ -260,9 +398,8 @@ class CulturallyAwareELI5:
                 **Try it yourself:** {hands_on_activity}
                 """,
                 cultural_adaptability=0.8,
-                effectiveness_metrics={"engagement": 0.82, "comprehension": 0.85}
+                effectiveness_metrics={"engagement": 0.82, "comprehension": 0.85},
             ),
-
             # High school (15-18)
             ExplanationTemplate(
                 template_id="high_analytical",
@@ -285,8 +422,8 @@ class CulturallyAwareELI5:
                 **Critical Thinking:** {discussion_questions}
                 """,
                 cultural_adaptability=0.75,
-                effectiveness_metrics={"engagement": 0.78, "comprehension": 0.88}
-            )
+                effectiveness_metrics={"engagement": 0.78, "comprehension": 0.88},
+            ),
         ]
 
         for template in templates:
@@ -312,9 +449,8 @@ class CulturallyAwareELI5:
                 Recuerda: {simple_rule}
                 """,
                 cultural_adaptability=0.9,
-                effectiveness_metrics={"engagement": 0.8, "comprehension": 0.7}
+                effectiveness_metrics={"engagement": 0.8, "comprehension": 0.7},
             ),
-
             ExplanationTemplate(
                 template_id="elementary_detailed_es",
                 concept_category="general",
@@ -332,8 +468,8 @@ class CulturallyAwareELI5:
                 Prueba esto: {simple_activity}
                 """,
                 cultural_adaptability=0.85,
-                effectiveness_metrics={"engagement": 0.85, "comprehension": 0.8}
-            )
+                effectiveness_metrics={"engagement": 0.85, "comprehension": 0.8},
+            ),
         ]
 
         # Hindi templates
@@ -351,20 +487,22 @@ class CulturallyAwareELI5:
                 याद रखो: {simple_rule}
                 """,
                 cultural_adaptability=0.9,
-                effectiveness_metrics={"engagement": 0.8, "comprehension": 0.7}
+                effectiveness_metrics={"engagement": 0.8, "comprehension": 0.7},
             )
         ]
 
         for template in spanish_templates + hindi_templates:
             self.explanation_templates[template.template_id] = template
 
-    async def explain(self,
-                     concept: str,
-                     age: int,
-                     language: str,
-                     region: str,
-                     learning_style: str = "balanced",
-                     complexity_preference: str = "auto") -> ExplanationResult:
+    async def explain(
+        self,
+        concept: str,
+        age: int,
+        language: str,
+        region: str,
+        learning_style: str = "balanced",
+        complexity_preference: str = "auto",
+    ) -> ExplanationResult:
         """Generate culturally relevant, age-appropriate explanation"""
         start_time = asyncio.get_event_loop().time()
 
@@ -387,13 +525,17 @@ class CulturallyAwareELI5:
                 base_explanation=base_explanation,
                 cultural_examples=local_examples,
                 template=template,
-                learning_style=learning_style
+                learning_style=learning_style,
             )
 
             # Calculate metrics
             generation_time = asyncio.get_event_loop().time() - start_time
-            readability_score = self.calculate_readability_score(adapted_explanation, age)
-            cultural_relevance_score = self.calculate_cultural_relevance(adapted_explanation, region)
+            readability_score = self.calculate_readability_score(
+                adapted_explanation, age
+            )
+            cultural_relevance_score = self.calculate_cultural_relevance(
+                adapted_explanation, region
+            )
             engagement_score = self.calculate_engagement_score(adapted_explanation, age)
 
             # Create result
@@ -409,7 +551,7 @@ class CulturallyAwareELI5:
                 cultural_relevance_score=cultural_relevance_score,
                 engagement_score=engagement_score,
                 generation_time=generation_time,
-                timestamp=datetime.now(timezone.utc).isoformat()
+                timestamp=datetime.now(timezone.utc).isoformat(),
             )
 
             # Store result and update metrics
@@ -417,20 +559,24 @@ class CulturallyAwareELI5:
             await self.update_effectiveness_metrics(result)
 
             # Log to W&B
-            wandb.log({
-                "eli5/concept": concept,
-                "eli5/age": age,
-                "eli5/language": language,
-                "eli5/region": region,
-                "eli5/examples_used": len(local_examples),
-                "eli5/readability_score": readability_score,
-                "eli5/cultural_relevance": cultural_relevance_score,
-                "eli5/engagement_score": engagement_score,
-                "eli5/generation_time": generation_time,
-                "timestamp": datetime.now(timezone.utc).isoformat()
-            })
+            wandb.log(
+                {
+                    "eli5/concept": concept,
+                    "eli5/age": age,
+                    "eli5/language": language,
+                    "eli5/region": region,
+                    "eli5/examples_used": len(local_examples),
+                    "eli5/readability_score": readability_score,
+                    "eli5/cultural_relevance": cultural_relevance_score,
+                    "eli5/engagement_score": engagement_score,
+                    "eli5/generation_time": generation_time,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            )
 
-            logger.info(f"Generated ELI5 explanation for '{concept}' (age {age}, {language}, {region})")
+            logger.info(
+                f"Generated ELI5 explanation for '{concept}' (age {age}, {language}, {region})"
+            )
 
             return result
 
@@ -438,7 +584,9 @@ class CulturallyAwareELI5:
             logger.error(f"Error generating ELI5 explanation: {e}")
 
             # Return fallback explanation
-            fallback_explanation = await self.get_fallback_explanation(concept, age, language)
+            fallback_explanation = await self.get_fallback_explanation(
+                concept, age, language
+            )
 
             return ExplanationResult(
                 concept=concept,
@@ -452,7 +600,7 @@ class CulturallyAwareELI5:
                 cultural_relevance_score=0.3,
                 engagement_score=0.4,
                 generation_time=0.1,
-                timestamp=datetime.now(timezone.utc).isoformat()
+                timestamp=datetime.now(timezone.utc).isoformat(),
             )
 
     async def get_base_explanation(self, concept: str, age: int, language: str) -> str:
@@ -478,7 +626,7 @@ class CulturallyAwareELI5:
             response = await self.anthropic_client.messages.create(
                 model="claude-3-haiku-20240307",
                 max_tokens=500,
-                messages=[{"role": "user", "content": prompt}]
+                messages=[{"role": "user", "content": prompt}],
             )
 
             return response.content[0].text.strip()
@@ -491,7 +639,7 @@ class CulturallyAwareELI5:
                 response = await self.openai_client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     max_tokens=500,
-                    messages=[{"role": "user", "content": prompt}]
+                    messages=[{"role": "user", "content": prompt}],
                 )
 
                 return response.choices[0].message.content.strip()
@@ -512,14 +660,17 @@ class CulturallyAwareELI5:
             return "a high school student"
         return "a young adult"
 
-    def get_cultural_examples(self, region: str, concept: str, age: int, language: str) -> list[CulturalExample]:
+    def get_cultural_examples(
+        self, region: str, concept: str, age: int, language: str
+    ) -> list[CulturalExample]:
         """Get relevant cultural examples for the concept"""
         # Direct match
         direct_examples = self.cultural_examples.get((region, concept), [])
 
         # Filter by age appropriateness and language
         suitable_examples = [
-            ex for ex in direct_examples
+            ex
+            for ex in direct_examples
             if ex.age_appropriateness <= age and ex.language == language
         ]
 
@@ -529,10 +680,13 @@ class CulturallyAwareELI5:
             region_examples = []
             for (r, c), examples in self.cultural_examples.items():
                 if r == region:
-                    region_examples.extend([
-                        ex for ex in examples
-                        if ex.age_appropriateness <= age and ex.language == language
-                    ])
+                    region_examples.extend(
+                        [
+                            ex
+                            for ex in examples
+                            if ex.age_appropriateness <= age and ex.language == language
+                        ]
+                    )
 
             # Select most relevant ones (simple heuristic)
             suitable_examples = region_examples[:2]
@@ -542,40 +696,53 @@ class CulturallyAwareELI5:
 
         return suitable_examples[:3]  # Return top 3 examples
 
-    def select_explanation_template(self, age: int, language: str, concept: str) -> ExplanationTemplate | None:
+    def select_explanation_template(
+        self, age: int, language: str, concept: str
+    ) -> ExplanationTemplate | None:
         """Select most appropriate explanation template"""
         # Filter templates by age range and language
         suitable_templates = [
-            template for template in self.explanation_templates.values()
-            if (template.age_range[0] <= age <= template.age_range[1] and
-                template.language == language)
+            template
+            for template in self.explanation_templates.values()
+            if (
+                template.age_range[0] <= age <= template.age_range[1]
+                and template.language == language
+            )
         ]
 
         if not suitable_templates:
             # Fallback to English templates if no language match
             suitable_templates = [
-                template for template in self.explanation_templates.values()
-                if (template.age_range[0] <= age <= template.age_range[1] and
-                    template.language == "en")
+                template
+                for template in self.explanation_templates.values()
+                if (
+                    template.age_range[0] <= age <= template.age_range[1]
+                    and template.language == "en"
+                )
             ]
 
         if not suitable_templates:
             return None
 
         # Select template with highest effectiveness for this type
-        best_template = max(suitable_templates, key=lambda t: t.effectiveness_metrics.get("comprehension", 0.5))
+        best_template = max(
+            suitable_templates,
+            key=lambda t: t.effectiveness_metrics.get("comprehension", 0.5),
+        )
 
         return best_template
 
-    async def generate_adapted_explanation(self,
-                                         concept: str,
-                                         age: int,
-                                         language: str,
-                                         region: str,
-                                         base_explanation: str,
-                                         cultural_examples: list[CulturalExample],
-                                         template: ExplanationTemplate | None,
-                                         learning_style: str) -> str:
+    async def generate_adapted_explanation(
+        self,
+        concept: str,
+        age: int,
+        language: str,
+        region: str,
+        base_explanation: str,
+        cultural_examples: list[CulturalExample],
+        template: ExplanationTemplate | None,
+        learning_style: str,
+    ) -> str:
         """Generate culturally adapted explanation using template and examples"""
         # Prepare cultural examples text
         examples_text = ""
@@ -608,16 +775,20 @@ class CulturallyAwareELI5:
             response = await self.anthropic_client.messages.create(
                 model="claude-3-haiku-20240307",
                 max_tokens=800,
-                messages=[{"role": "user", "content": adaptation_prompt}]
+                messages=[{"role": "user", "content": adaptation_prompt}],
             )
 
             adapted_explanation = response.content[0].text.strip()
 
             # Post-process for learning style
             if learning_style == "visual":
-                adapted_explanation = await self.add_visual_elements(adapted_explanation, concept)
+                adapted_explanation = await self.add_visual_elements(
+                    adapted_explanation, concept
+                )
             elif learning_style == "kinesthetic":
-                adapted_explanation = await self.add_hands_on_activities(adapted_explanation, concept, age)
+                adapted_explanation = await self.add_hands_on_activities(
+                    adapted_explanation, concept, age
+                )
 
             return adapted_explanation
 
@@ -635,26 +806,28 @@ class CulturallyAwareELI5:
             "Picture this:",
             "Imagine you can see:",
             "Visualize:",
-            "Draw in your mind:"
+            "Draw in your mind:",
         ]
 
         visual_element = f"\n\n{random.choice(visual_prompts)} {explanation.split('.')[0].lower()}..."
 
         return explanation + visual_element
 
-    async def add_hands_on_activities(self, explanation: str, concept: str, age: int) -> str:
+    async def add_hands_on_activities(
+        self, explanation: str, concept: str, age: int
+    ) -> str:
         """Add kinesthetic learning activities"""
         if age <= 8:
             activity_starters = [
                 "Try this with your hands:",
                 "You can practice by:",
-                "Move your body to show:"
+                "Move your body to show:",
             ]
         else:
             activity_starters = [
                 "Hands-on activity:",
                 "Try this experiment:",
-                "Practice by doing:"
+                "Practice by doing:",
             ]
 
         activity_prompt = f"\n\n{random.choice(activity_starters)} [Simple activity related to {concept}]"
@@ -682,7 +855,12 @@ class CulturallyAwareELI5:
             ideal_words_per_sentence = 20
 
         # Score based on how close to ideal
-        score = max(0.0, 1.0 - abs(avg_words_per_sentence - ideal_words_per_sentence) / ideal_words_per_sentence)
+        score = max(
+            0.0,
+            1.0
+            - abs(avg_words_per_sentence - ideal_words_per_sentence)
+            / ideal_words_per_sentence,
+        )
 
         return score
 
@@ -690,9 +868,15 @@ class CulturallyAwareELI5:
         """Calculate cultural relevance score"""
         # Simple heuristic based on presence of cultural indicators
         cultural_indicators = {
-            "north_america": ["pizza", "football", "baseball", "neighborhood", "school"],
+            "north_america": [
+                "pizza",
+                "football",
+                "baseball",
+                "neighborhood",
+                "school",
+            ],
             "latin_america": ["empanada", "fútbol", "familia", "mamá", "tortilla"],
-            "south_asia": ["रोटी", "cricket", "family", "festival", "tradition"]
+            "south_asia": ["रोटी", "cricket", "family", "festival", "tradition"],
         }
 
         indicators = cultural_indicators.get(region, [])
@@ -745,41 +929,51 @@ class CulturallyAwareELI5:
                         example.usage_count += 1
                         # Update effectiveness score (simple moving average)
                         alpha = 0.1  # Learning rate
-                        new_score = (result.engagement_score + result.cultural_relevance_score) / 2
-                        example.effectiveness_score = (1 - alpha) * example.effectiveness_score + alpha * new_score
+                        new_score = (
+                            result.engagement_score + result.cultural_relevance_score
+                        ) / 2
+                        example.effectiveness_score = (
+                            1 - alpha
+                        ) * example.effectiveness_score + alpha * new_score
 
         # Update template effectiveness
         if result.template_used in self.explanation_templates:
             template = self.explanation_templates[result.template_used]
             alpha = 0.05
             template.effectiveness_metrics["comprehension"] = (
-                (1 - alpha) * template.effectiveness_metrics.get("comprehension", 0.5) +
-                alpha * result.readability_score
-            )
+                1 - alpha
+            ) * template.effectiveness_metrics.get(
+                "comprehension", 0.5
+            ) + alpha * result.readability_score
             template.effectiveness_metrics["engagement"] = (
-                (1 - alpha) * template.effectiveness_metrics.get("engagement", 0.5) +
-                alpha * result.engagement_score
-            )
+                1 - alpha
+            ) * template.effectiveness_metrics.get(
+                "engagement", 0.5
+            ) + alpha * result.engagement_score
 
         # Store metrics for analysis
-        self.effectiveness_metrics[result.concept].append({
-            "age": result.age,
-            "region": result.region,
-            "language": result.language,
-            "scores": {
-                "readability": result.readability_score,
-                "cultural_relevance": result.cultural_relevance_score,
-                "engagement": result.engagement_score
-            },
-            "timestamp": result.timestamp
-        })
+        self.effectiveness_metrics[result.concept].append(
+            {
+                "age": result.age,
+                "region": result.region,
+                "language": result.language,
+                "scores": {
+                    "readability": result.readability_score,
+                    "cultural_relevance": result.cultural_relevance_score,
+                    "engagement": result.engagement_score,
+                },
+                "timestamp": result.timestamp,
+            }
+        )
 
-    async def get_fallback_explanation(self, concept: str, age: int, language: str) -> str:
+    async def get_fallback_explanation(
+        self, concept: str, age: int, language: str
+    ) -> str:
         """Generate simple fallback explanation"""
         fallback_templates = {
             "en": f"Let me explain {concept} in a simple way for someone who is {age} years old. This is an important topic that helps us understand the world around us.",
             "es": f"Te voy a explicar {concept} de manera simple para alguien de {age} años. Este es un tema importante que nos ayuda a entender el mundo.",
-            "hi": f"मैं {concept} को {age} साल के बच्चे के लिए आसान तरीके से समझाता हूँ। यह एक महत्वपूर्ण विषय है।"
+            "hi": f"मैं {concept} को {age} साल के बच्चे के लिए आसान तरीके से समझाता हूँ। यह एक महत्वपूर्ण विषय है।",
         }
 
         return fallback_templates.get(language, fallback_templates["en"])
@@ -798,10 +992,10 @@ class CulturallyAwareELI5:
             "average_scores": {
                 "readability": 0.0,
                 "cultural_relevance": 0.0,
-                "engagement": 0.0
+                "engagement": 0.0,
             },
             "effectiveness_trends": {},
-            "top_cultural_examples": []
+            "top_cultural_examples": [],
         }
 
         # Analyze explanations
@@ -824,33 +1018,45 @@ class CulturallyAwareELI5:
 
             # Concept breakdown
             if result.concept not in analytics["concepts"]:
-                analytics["concepts"][result.concept] = {"count": 0, "avg_engagement": 0.0}
+                analytics["concepts"][result.concept] = {
+                    "count": 0,
+                    "avg_engagement": 0.0,
+                }
             analytics["concepts"][result.concept]["count"] += 1
 
         # Calculate average scores
         if self.explanation_history:
-            analytics["average_scores"]["readability"] = sum(r.readability_score for r in self.explanation_history) / len(self.explanation_history)
-            analytics["average_scores"]["cultural_relevance"] = sum(r.cultural_relevance_score for r in self.explanation_history) / len(self.explanation_history)
-            analytics["average_scores"]["engagement"] = sum(r.engagement_score for r in self.explanation_history) / len(self.explanation_history)
+            analytics["average_scores"]["readability"] = sum(
+                r.readability_score for r in self.explanation_history
+            ) / len(self.explanation_history)
+            analytics["average_scores"]["cultural_relevance"] = sum(
+                r.cultural_relevance_score for r in self.explanation_history
+            ) / len(self.explanation_history)
+            analytics["average_scores"]["engagement"] = sum(
+                r.engagement_score for r in self.explanation_history
+            ) / len(self.explanation_history)
 
         # Top cultural examples by usage
         all_examples = []
         for examples_list in self.cultural_examples.values():
             all_examples.extend(examples_list)
 
-        top_examples = sorted(all_examples, key=lambda x: x.usage_count, reverse=True)[:10]
+        top_examples = sorted(all_examples, key=lambda x: x.usage_count, reverse=True)[
+            :10
+        ]
         analytics["top_cultural_examples"] = [
             {
                 "example_id": ex.example_id,
                 "concept": ex.concept,
                 "region": ex.region,
                 "usage_count": ex.usage_count,
-                "effectiveness_score": ex.effectiveness_score
+                "effectiveness_score": ex.effectiveness_score,
             }
             for ex in top_examples
         ]
 
         return analytics
+
 
 # Global ELI5 instance
 culturally_aware_eli5 = CulturallyAwareELI5()

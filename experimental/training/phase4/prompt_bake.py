@@ -1,4 +1,5 @@
 """Wrapper around ``RAGPromptBaker`` for quick prompt freezing."""
+
 from ..tool_baking.rag_prompt_baker import RAGPromptBaker, get_rag_prompts
 
 

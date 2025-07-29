@@ -19,6 +19,7 @@ from typing import Any
 
 class ModelBackend(Enum):
     """Supported model backends"""
+
     OLLAMA = "ollama"
     LMSTUDIO = "lmstudio"
     HUGGINGFACE = "huggingface"
@@ -30,6 +31,7 @@ class ModelBackend(Enum):
 @dataclass
 class ModelConfig:
     """Configuration for LLM model"""
+
     model_name: str
     backend: ModelBackend
     model_path: str | None = None
@@ -67,13 +69,14 @@ class ModelConfig:
             "top_p": self.top_p,
             "stop_sequences": self.stop_sequences,
             "context_length": self.context_length,
-            "timeout_seconds": self.timeout_seconds
+            "timeout_seconds": self.timeout_seconds,
         }
 
 
 @dataclass
 class GenerationRequest:
     """Request for LLM generation"""
+
     prompt: str
     system_prompt: str | None = None
     max_tokens: int | None = None
@@ -90,13 +93,14 @@ class GenerationRequest:
             "temperature": self.temperature or config.temperature,
             "top_p": config.top_p,
             "stop_sequences": self.stop_sequences or config.stop_sequences,
-            "stream": self.stream
+            "stream": self.stream,
         }
 
 
 @dataclass
 class GenerationResponse:
     """Response from LLM generation"""
+
     text: str
     finish_reason: str
     usage: dict[str, int]
@@ -116,7 +120,7 @@ class GenerationResponse:
             "model": self.model,
             "latency_ms": self.latency_ms,
             "confidence_score": self.confidence_score,
-            "quality_score": self.quality_score
+            "quality_score": self.quality_score,
         }
 
 
@@ -166,8 +170,8 @@ class OllamaBackend(LLMBackend):
                 "num_predict": request.max_tokens or self.config.max_tokens,
                 "temperature": request.temperature or self.config.temperature,
                 "top_p": self.config.top_p,
-                "stop": request.stop_sequences or self.config.stop_sequences
-            }
+                "stop": request.stop_sequences or self.config.stop_sequences,
+            },
         }
 
         if request.system_prompt:
@@ -178,7 +182,7 @@ class OllamaBackend(LLMBackend):
                 async with session.post(
                     f"{self.base_url}/api/generate",
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
                 ) as response:
                     response.raise_for_status()
                     result = await response.json()
@@ -191,10 +195,11 @@ class OllamaBackend(LLMBackend):
                 usage={
                     "prompt_tokens": result.get("prompt_eval_count", 0),
                     "completion_tokens": result.get("eval_count", 0),
-                    "total_tokens": result.get("prompt_eval_count", 0) + result.get("eval_count", 0)
+                    "total_tokens": result.get("prompt_eval_count", 0)
+                    + result.get("eval_count", 0),
                 },
                 model=self.config.model_name,
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
 
         except Exception as e:
@@ -212,8 +217,8 @@ class OllamaBackend(LLMBackend):
             "options": {
                 "num_predict": request.max_tokens or self.config.max_tokens,
                 "temperature": request.temperature or self.config.temperature,
-                "top_p": self.config.top_p
-            }
+                "top_p": self.config.top_p,
+            },
         }
 
         if request.system_prompt:
@@ -224,7 +229,7 @@ class OllamaBackend(LLMBackend):
                 async with session.post(
                     f"{self.base_url}/api/generate",
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
                 ) as response:
                     response.raise_for_status()
 
@@ -266,8 +271,7 @@ class OllamaBackend(LLMBackend):
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    f"{self.base_url}/api/show",
-                    json={"name": self.config.model_name}
+                    f"{self.base_url}/api/show", json={"name": self.config.model_name}
                 ) as response:
                     if response.status == 200:
                         return await response.json()
@@ -302,7 +306,7 @@ class LMStudioBackend(LLMBackend):
             "temperature": request.temperature or self.config.temperature,
             "top_p": self.config.top_p,
             "stop": request.stop_sequences or self.config.stop_sequences,
-            "stream": False
+            "stream": False,
         }
 
         try:
@@ -310,7 +314,7 @@ class LMStudioBackend(LLMBackend):
                 async with session.post(
                     f"{self.base_url}/v1/chat/completions",
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
                 ) as response:
                     response.raise_for_status()
                     result = await response.json()
@@ -324,13 +328,12 @@ class LMStudioBackend(LLMBackend):
             return GenerationResponse(
                 text=content,
                 finish_reason=choice.get("finish_reason", "completed"),
-                usage=result.get("usage", {
-                    "prompt_tokens": 0,
-                    "completion_tokens": 0,
-                    "total_tokens": 0
-                }),
+                usage=result.get(
+                    "usage",
+                    {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+                ),
                 model=self.config.model_name,
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
 
         except Exception as e:
@@ -352,7 +355,7 @@ class LMStudioBackend(LLMBackend):
             "max_tokens": request.max_tokens or self.config.max_tokens,
             "temperature": request.temperature or self.config.temperature,
             "top_p": self.config.top_p,
-            "stream": True
+            "stream": True,
         }
 
         try:
@@ -360,7 +363,7 @@ class LMStudioBackend(LLMBackend):
                 async with session.post(
                     f"{self.base_url}/v1/chat/completions",
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds)
+                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
                 ) as response:
                     response.raise_for_status()
 
@@ -436,7 +439,7 @@ class HuggingFaceBackend(LLMBackend):
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.config.model_path or self.config.model_name,
                     torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-                    device_map="auto" if device == "cuda" else None
+                    device_map="auto" if device == "cuda" else None,
                 )
 
                 if self.tokenizer.pad_token is None:
@@ -476,13 +479,12 @@ class HuggingFaceBackend(LLMBackend):
                 top_p=self.config.top_p,
                 do_sample=True,
                 pad_token_id=self.tokenizer.eos_token_id,
-                eos_token_id=self.tokenizer.eos_token_id
+                eos_token_id=self.tokenizer.eos_token_id,
             )
 
         # Decode response
         generated_text = self.tokenizer.decode(
-            outputs[0][inputs.shape[-1]:],
-            skip_special_tokens=True
+            outputs[0][inputs.shape[-1] :], skip_special_tokens=True
         )
 
         latency_ms = (time.time() - start_time) * 1000
@@ -493,10 +495,10 @@ class HuggingFaceBackend(LLMBackend):
             usage={
                 "prompt_tokens": inputs.shape[-1],
                 "completion_tokens": outputs.shape[-1] - inputs.shape[-1],
-                "total_tokens": outputs.shape[-1]
+                "total_tokens": outputs.shape[-1],
             },
             model=self.config.model_name,
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
 
     async def generate_stream(self, request: GenerationRequest) -> AsyncIterator[str]:
@@ -509,6 +511,7 @@ class HuggingFaceBackend(LLMBackend):
         try:
             import torch
             import transformers
+
             return True
         except ImportError:
             return False
@@ -520,7 +523,9 @@ class HuggingFaceBackend(LLMBackend):
             "model_name": self.config.model_name,
             "model_type": type(self.model).__name__,
             "parameters": sum(p.numel() for p in self.model.parameters()),
-            "device": str(self.model.device) if hasattr(self.model, "device") else "unknown"
+            "device": str(self.model.device)
+            if hasattr(self.model, "device")
+            else "unknown",
         }
 
 
@@ -569,12 +574,16 @@ class LLMDriver:
 
         # Check concurrent requests
         if self._concurrent_requests >= self.config.max_concurrent_requests:
-            raise RuntimeError(f"Max concurrent requests ({self.config.max_concurrent_requests}) exceeded")
+            raise RuntimeError(
+                f"Max concurrent requests ({self.config.max_concurrent_requests}) exceeded"
+            )
 
         # Record this request
         self._request_times.append(now)
 
-    def _log_request(self, prompt: str, system_prompt: str | None, response: GenerationResponse):
+    def _log_request(
+        self, prompt: str, system_prompt: str | None, response: GenerationResponse
+    ):
         """Log request for audit trail"""
         log_entry = {
             "timestamp": datetime.now().isoformat(),
@@ -584,7 +593,7 @@ class LLMDriver:
             "response_length": len(response.text),
             "usage": response.usage,
             "latency_ms": response.latency_ms,
-            "finish_reason": response.finish_reason
+            "finish_reason": response.finish_reason,
         }
 
         self._audit_log.append(log_entry)
@@ -593,7 +602,9 @@ class LLMDriver:
         if len(self._audit_log) > 1000:
             self._audit_log = self._audit_log[-500:]
 
-    async def generate(self, prompt: str, system_prompt: str | None = None, **kwargs) -> GenerationResponse:
+    async def generate(
+        self, prompt: str, system_prompt: str | None = None, **kwargs
+    ) -> GenerationResponse:
         """Generate text from prompt with rate limiting and audit logging
 
         Args:
@@ -608,9 +619,7 @@ class LLMDriver:
         await self._check_rate_limit()
 
         request = GenerationRequest(
-            prompt=prompt,
-            system_prompt=system_prompt,
-            **kwargs
+            prompt=prompt, system_prompt=system_prompt, **kwargs
         )
 
         self._concurrent_requests += 1
@@ -625,14 +634,20 @@ class LLMDriver:
                     return response
                 except Exception as e:
                     if attempt == self.config.retry_attempts - 1:
-                        self.logger.error(f"Generation failed after {self.config.retry_attempts} attempts: {e}")
+                        self.logger.error(
+                            f"Generation failed after {self.config.retry_attempts} attempts: {e}"
+                        )
                         raise
-                    self.logger.warning(f"Generation attempt {attempt + 1} failed: {e}, retrying...")
+                    self.logger.warning(
+                        f"Generation attempt {attempt + 1} failed: {e}, retrying..."
+                    )
                     await asyncio.sleep(1)
         finally:
             self._concurrent_requests -= 1
 
-    async def generate_stream(self, prompt: str, system_prompt: str | None = None, **kwargs) -> AsyncIterator[str]:
+    async def generate_stream(
+        self, prompt: str, system_prompt: str | None = None, **kwargs
+    ) -> AsyncIterator[str]:
         """Generate text with streaming
 
         Args:
@@ -644,10 +659,7 @@ class LLMDriver:
             Text chunks
         """
         request = GenerationRequest(
-            prompt=prompt,
-            system_prompt=system_prompt,
-            stream=True,
-            **kwargs
+            prompt=prompt, system_prompt=system_prompt, stream=True, **kwargs
         )
 
         async for chunk in self.backend.generate_stream(request):
@@ -678,7 +690,7 @@ class LLMDriver:
             r'confidence_score["\s]*:?\s*([0-9.]+)',
             r'"confidence"\s*:\s*([0-9.]+)',
             r"I am (\d+(?:\.\d+)?)% confident",
-            r"confidence level:?\s*([0-9.]+)"
+            r"confidence level:?\s*([0-9.]+)",
         ]
 
         for pattern in confidence_patterns:
@@ -707,8 +719,12 @@ class LLMDriver:
         recent_entries = self._audit_log[-100:]  # Last 100 requests
 
         total_requests = len(recent_entries)
-        total_tokens = sum(entry["usage"].get("total_tokens", 0) for entry in recent_entries)
-        avg_latency = sum(entry["latency_ms"] for entry in recent_entries) / total_requests
+        total_tokens = sum(
+            entry["usage"].get("total_tokens", 0) for entry in recent_entries
+        )
+        avg_latency = (
+            sum(entry["latency_ms"] for entry in recent_entries) / total_requests
+        )
 
         return {
             "total_requests": total_requests,
@@ -716,11 +732,13 @@ class LLMDriver:
             "average_latency_ms": avg_latency,
             "requests_per_minute_limit": self.config.requests_per_minute,
             "current_requests_in_window": len(self._request_times),
-            "concurrent_requests": self._concurrent_requests
+            "concurrent_requests": self._concurrent_requests,
         }
 
     @classmethod
-    def create_default_config(cls, model_name: str, backend: ModelBackend = ModelBackend.OLLAMA) -> ModelConfig:
+    def create_default_config(
+        cls, model_name: str, backend: ModelBackend = ModelBackend.OLLAMA
+    ) -> ModelConfig:
         """Create default configuration for common models
 
         Args:
@@ -737,7 +755,7 @@ class LLMDriver:
             temperature=0.1,
             top_p=0.9,
             context_length=4096,
-            timeout_seconds=30
+            timeout_seconds=30,
         )
 
     @classmethod
@@ -754,7 +772,7 @@ class LLMDriver:
             "7b": "llama3.2:3b",
             "8b": "llama3.2:8b",
             "13b": "llama2:13b",
-            "70b": "llama2:70b"
+            "70b": "llama2:70b",
         }
 
         model_name = model_mapping.get(model_size, "llama3.2:3b")
@@ -766,5 +784,5 @@ class LLMDriver:
             temperature=0.05,  # Lower temperature for more consistent repairs
             top_p=0.9,
             context_length=8192 if model_size in ["13b", "70b"] else 4096,
-            timeout_seconds=60 if model_size in ["13b", "70b"] else 30
+            timeout_seconds=60 if model_size in ["13b", "70b"] else 30,
         )

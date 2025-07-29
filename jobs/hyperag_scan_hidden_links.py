@@ -32,15 +32,20 @@ try:
     from mcp_servers.hyperag.retrieval.hybrid_retriever import HybridRetriever
 except ImportError as e:
     print(f"Warning: HypeRAG modules not available: {e}")
+
     # Mock classes for development
     class HybridRetriever:
         pass
+
     class InnovatorAgent:
         pass
+
     class GuardianGate:
         pass
+
     class CreativeBridge:
         pass
+
     class Violation:
         pass
 
@@ -48,6 +53,7 @@ except ImportError as e:
 @dataclass
 class CoMentionPair:
     """Entity pair with co-mention statistics."""
+
     entity1: str
     entity2: str
     co_mention_count: int
@@ -65,6 +71,7 @@ class CoMentionPair:
 @dataclass
 class CandidateEdge:
     """Candidate missing edge discovered by scanner."""
+
     source_entity: str
     target_entity: str
     relationship_type: str
@@ -77,6 +84,7 @@ class CandidateEdge:
 @dataclass
 class ScanMetrics:
     """Metrics for hidden link scan run."""
+
     scan_id: str
     start_time: datetime
     end_time: datetime | None = None
@@ -114,25 +122,25 @@ class ScanMetrics:
             "input_metrics": {
                 "hippo_log_entries_processed": self.hippo_log_entries_processed,
                 "co_mention_pairs_found": self.co_mention_pairs_found,
-                "high_confidence_pairs": self.high_confidence_pairs
+                "high_confidence_pairs": self.high_confidence_pairs,
             },
             "retrieval_metrics": {
                 "divergent_retrieval_calls": self.divergent_retrieval_calls,
-                "candidate_edges_discovered": self.candidate_edges_discovered
+                "candidate_edges_discovered": self.candidate_edges_discovered,
             },
             "pipeline_metrics": {
                 "innovator_proposals_generated": self.innovator_proposals_generated,
                 "guardian_evaluations": self.guardian_evaluations,
                 "guardian_approved": self.guardian_approved,
                 "guardian_quarantined": self.guardian_quarantined,
-                "guardian_rejected": self.guardian_rejected
+                "guardian_rejected": self.guardian_rejected,
             },
             "performance": {
                 "total_time_seconds": self.total_time_seconds,
-                "avg_retrieval_time_ms": self.avg_retrieval_time_ms
+                "avg_retrieval_time_ms": self.avg_retrieval_time_ms,
             },
             "errors": self.errors,
-            "warnings": self.warnings
+            "warnings": self.warnings,
         }
 
 
@@ -176,7 +184,9 @@ class HippoIndexAnalyzer:
 
         for log_file in log_files:
             try:
-                self._process_log_file(log_file, co_mention_counts, pair_contexts, pair_last_seen)
+                self._process_log_file(
+                    log_file, co_mention_counts, pair_contexts, pair_last_seen
+                )
             except Exception as e:
                 self.logger.warning(f"Failed to process {log_file}: {e}")
 
@@ -193,14 +203,16 @@ class HippoIndexAnalyzer:
                     co_mention_count=count,
                     confidence=confidence,
                     contexts=pair_contexts[pair_key][:5],  # Keep top 5 contexts
-                    last_seen=pair_last_seen.get(pair_key, datetime.now())
+                    last_seen=pair_last_seen.get(pair_key, datetime.now()),
                 )
                 pairs.append(pair)
 
         # Sort by co-mention count descending
         pairs.sort(key=lambda p: p.co_mention_count, reverse=True)
 
-        self.logger.info(f"Found {len(pairs)} high co-mention pairs (min: {min_co_mentions})")
+        self.logger.info(
+            f"Found {len(pairs)} high co-mention pairs (min: {min_co_mentions})"
+        )
         return pairs
 
     def _find_recent_log_files(self, cutoff_time: datetime) -> list[Path]:
@@ -220,8 +232,13 @@ class HippoIndexAnalyzer:
 
         return sorted(log_files, key=lambda f: f.stat().st_mtime, reverse=True)
 
-    def _process_log_file(self, log_file: Path, co_mention_counts: dict,
-                         pair_contexts: dict, pair_last_seen: dict):
+    def _process_log_file(
+        self,
+        log_file: Path,
+        co_mention_counts: dict,
+        pair_contexts: dict,
+        pair_last_seen: dict,
+    ):
         """Process a single log file for co-mentions."""
         with open(log_file, encoding="utf-8") as f:
             for line_num, line in enumerate(f, 1):
@@ -253,10 +270,14 @@ class HippoIndexAnalyzer:
                         # Create pairs from entities in same line
                         for i in range(len(entities)):
                             for j in range(i + 1, len(entities)):
-                                entity1, entity2 = sorted([entities[i].strip(), entities[j].strip()])
+                                entity1, entity2 = sorted(
+                                    [entities[i].strip(), entities[j].strip()]
+                                )
                                 pair_key = f"{entity1}|{entity2}"
 
-                                co_mention_counts[pair_key] += 0.5  # Lower weight for implicit co-mention
+                                co_mention_counts[pair_key] += (
+                                    0.5  # Lower weight for implicit co-mention
+                                )
 
                                 context = line.strip()[:200]
                                 if context not in pair_contexts[pair_key]:
@@ -265,7 +286,9 @@ class HippoIndexAnalyzer:
                                 pair_last_seen[pair_key] = datetime.now()
 
                 except Exception as e:
-                    self.logger.debug(f"Error processing line {line_num} in {log_file}: {e}")
+                    self.logger.debug(
+                        f"Error processing line {line_num} in {log_file}: {e}"
+                    )
 
 
 class DivergentRetrieverScanner:
@@ -280,8 +303,9 @@ class DivergentRetrieverScanner:
         self.retriever = retriever
         self.logger = logging.getLogger(f"{__name__}.DivergentScanner")
 
-    async def scan_entity_pairs(self, pairs: list[CoMentionPair],
-                               n_candidates: int = 3) -> list[CandidateEdge]:
+    async def scan_entity_pairs(
+        self, pairs: list[CoMentionPair], n_candidates: int = 3
+    ) -> list[CandidateEdge]:
         """Scan entity pairs using DivergentRetriever.
 
         Args:
@@ -311,7 +335,9 @@ class DivergentRetrieverScanner:
                 candidate_edges.extend(candidates)
 
                 elapsed_ms = (time.time() - start_time) * 1000
-                self.logger.debug(f"Scanned pair {pair.pair_key}: {len(candidates)} candidates ({elapsed_ms:.1f}ms)")
+                self.logger.debug(
+                    f"Scanned pair {pair.pair_key}: {len(candidates)} candidates ({elapsed_ms:.1f}ms)"
+                )
 
             except Exception as e:
                 self.logger.error(f"Failed to scan pair {pair.pair_key}: {e}")
@@ -319,8 +345,9 @@ class DivergentRetrieverScanner:
         self.logger.info(f"Found {len(candidate_edges)} total candidate edges")
         return candidate_edges
 
-    async def _mock_divergent_retrieval(self, query: str, pair: CoMentionPair,
-                                       n_candidates: int) -> list[CandidateEdge]:
+    async def _mock_divergent_retrieval(
+        self, query: str, pair: CoMentionPair, n_candidates: int
+    ) -> list[CandidateEdge]:
         """Mock divergent retrieval (replace with actual implementation).
 
         Args:
@@ -338,8 +365,10 @@ class DivergentRetrieverScanner:
         relationship_types = ["RELATED_TO", "ASSOCIATED_WITH", "INFLUENCES"]
 
         # For medical entities, add medical relationships
-        if any(term in f"{pair.entity1} {pair.entity2}".lower()
-               for term in ["drug", "patient", "treatment", "disease"]):
+        if any(
+            term in f"{pair.entity1} {pair.entity2}".lower()
+            for term in ["drug", "patient", "treatment", "disease"]
+        ):
             relationship_types.extend(["TREATS", "PRESCRIBED_FOR", "DIAGNOSED_WITH"])
 
         candidates = []
@@ -352,7 +381,7 @@ class DivergentRetrieverScanner:
                 relationship_type=relationship_types[i],
                 confidence=confidence,
                 evidence=pair.contexts[:2],  # Use co-mention contexts as evidence
-                scan_id=f"scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                scan_id=f"scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
             )
             candidates.append(candidate)
 
@@ -374,20 +403,20 @@ class HiddenLinkScanner:
         # Initialize components
         self.hippo_analyzer = HippoIndexAnalyzer(
             log_path=Path(config.get("hippo_log_path", "data/hippo_logs")),
-            lookback_hours=config.get("lookback_hours", 24)
+            lookback_hours=config.get("lookback_hours", 24),
         )
 
         # Initialize HypeRAG components (would be real in production)
         self.retriever = None  # HybridRetriever()
         self.innovator = None  # InnovatorAgent.create_default()
-        self.guardian = None   # GuardianGate()
+        self.guardian = None  # GuardianGate()
 
         self.divergent_scanner = DivergentRetrieverScanner(self.retriever)
 
         # Metrics
         self.metrics = ScanMetrics(
             scan_id=f"scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            start_time=datetime.now()
+            start_time=datetime.now(),
         )
 
     async def run_scan(self, dry_run: bool = False) -> ScanMetrics:
@@ -424,7 +453,9 @@ class HiddenLinkScanner:
                 self.metrics.end_time - self.metrics.start_time
             ).total_seconds()
 
-        self.logger.info(f"Scan {self.metrics.scan_id} completed in {self.metrics.total_time_seconds:.1f}s")
+        self.logger.info(
+            f"Scan {self.metrics.scan_id} completed in {self.metrics.total_time_seconds:.1f}s"
+        )
         return self.metrics
 
     async def _step1_analyze_logs(self):
@@ -435,9 +466,9 @@ class HiddenLinkScanner:
         self.co_mention_pairs = self.hippo_analyzer.analyze_logs(min_co_mentions)
 
         self.metrics.co_mention_pairs_found = len(self.co_mention_pairs)
-        self.metrics.high_confidence_pairs = len([
-            p for p in self.co_mention_pairs if p.confidence >= 0.7
-        ])
+        self.metrics.high_confidence_pairs = len(
+            [p for p in self.co_mention_pairs if p.confidence >= 0.7]
+        )
 
         self.logger.info(f"Found {len(self.co_mention_pairs)} co-mention pairs")
 
@@ -459,8 +490,9 @@ class HiddenLinkScanner:
 
         return candidate_edges
 
-    async def _step3_pipeline_processing(self, candidate_edges: list[CandidateEdge],
-                                        dry_run: bool):
+    async def _step3_pipeline_processing(
+        self, candidate_edges: list[CandidateEdge], dry_run: bool
+    ):
         """Step 3: Process candidates through Innovator -> Guardian pipeline."""
         self.logger.info("Step 3: Processing through Innovator -> Guardian pipeline")
 
@@ -475,7 +507,9 @@ class HiddenLinkScanner:
                 self.metrics.innovator_proposals_generated += 1
 
                 # Evaluate with Guardian Gate
-                decision = await self._evaluate_with_guardian(candidate, proposal, dry_run)
+                decision = await self._evaluate_with_guardian(
+                    candidate, proposal, dry_run
+                )
                 self.metrics.guardian_evaluations += 1
 
                 # Track decision
@@ -487,7 +521,9 @@ class HiddenLinkScanner:
                     self.metrics.guardian_rejected += 1
 
             except Exception as e:
-                self.logger.warning(f"Failed to process candidate {candidate.source_entity}->{candidate.target_entity}: {e}")
+                self.logger.warning(
+                    f"Failed to process candidate {candidate.source_entity}->{candidate.target_entity}: {e}"
+                )
                 self.metrics.errors.append(str(e))
 
     async def _step4_generate_metrics(self):
@@ -495,7 +531,9 @@ class HiddenLinkScanner:
         self.logger.info("Step 4: Generating metrics and reports")
 
         # Write metrics to file
-        metrics_path = Path("data/scan_metrics") / f"{self.metrics.scan_id}_metrics.json"
+        metrics_path = (
+            Path("data/scan_metrics") / f"{self.metrics.scan_id}_metrics.json"
+        )
         metrics_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(metrics_path, "w") as f:
@@ -531,15 +569,18 @@ Hidden Link Scan Summary ({self.metrics.scan_id}):
             "target_entity": candidate.target_entity,
             "relationship_type": candidate.relationship_type,
             "confidence": candidate.confidence,
-            "rationale": f"Hidden link discovered via co-mention analysis: {candidate.evidence[:1]}"
+            "rationale": f"Hidden link discovered via co-mention analysis: {candidate.evidence[:1]}",
         }
 
-    async def _evaluate_with_guardian(self, candidate: CandidateEdge, proposal: dict,
-                                     dry_run: bool) -> str:
+    async def _evaluate_with_guardian(
+        self, candidate: CandidateEdge, proposal: dict, dry_run: bool
+    ) -> str:
         """Evaluate candidate with Guardian Gate."""
         # Mock implementation - would use actual GuardianGate in production
         if dry_run:
-            self.logger.debug(f"DRY RUN: Would evaluate {candidate.relationship_type} edge")
+            self.logger.debug(
+                f"DRY RUN: Would evaluate {candidate.relationship_type} edge"
+            )
 
         # Mock decision based on confidence
         if candidate.confidence >= 0.8:
@@ -562,10 +603,8 @@ def load_config(config_path: str | None = None) -> dict[str, Any]:
         "min_co_mentions": 3,
         "max_pairs_to_scan": 50,
         "candidates_per_pair": 3,
-        "guardian": {
-            "policy_path": "mcp_servers/hyperag/guardian/policies.yaml"
-        },
-        "dry_run": False
+        "guardian": {"policy_path": "mcp_servers/hyperag/guardian/policies.yaml"},
+        "dry_run": False,
     }
 
 
@@ -589,8 +628,13 @@ async def main():
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(),
-            logging.FileHandler(str(log_dir / f"hidden_link_scan_{datetime.now().strftime('%Y%m%d')}.log"))
-        ]
+            logging.FileHandler(
+                str(
+                    log_dir
+                    / f"hidden_link_scan_{datetime.now().strftime('%Y%m%d')}.log"
+                )
+            ),
+        ],
     )
 
     # Load configuration
@@ -607,10 +651,13 @@ async def main():
         print(f"Scan completed with {len(metrics.errors)} errors")
         return 1
 
-    print(f"Scan completed successfully: {metrics.guardian_approved} approved, {metrics.guardian_quarantined} quarantined")
+    print(
+        f"Scan completed successfully: {metrics.guardian_approved} approved, {metrics.guardian_quarantined} quarantined"
+    )
     return 0
 
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(asyncio.run(main()))

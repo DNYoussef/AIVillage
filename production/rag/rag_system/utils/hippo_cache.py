@@ -25,6 +25,6 @@ class HippoCache:
         sorted_items = sorted(
             self.cache.items(),
             key=lambda x: (x[1]["frequency"], x[1]["timestamp"]),
-            reverse=True
+            reverse=True,
         )
-        self.cache = dict(sorted_items[:self.max_size - 1])
+        self.cache = dict(sorted_items[: self.max_size - 1])

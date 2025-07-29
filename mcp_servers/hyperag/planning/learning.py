@@ -32,9 +32,9 @@ class StrategyFeedback:
     steps_failed: int
 
     # Quality metrics
-    result_quality: float | None = None      # Agent assessment of result quality
-    user_satisfaction: float | None = None   # User feedback
-    correctness: bool | None = None          # Ground truth correctness
+    result_quality: float | None = None  # Agent assessment of result quality
+    user_satisfaction: float | None = None  # User feedback
+    correctness: bool | None = None  # Ground truth correctness
 
     # Context
     agent_model: str | None = None
@@ -78,8 +78,12 @@ class PlanLearner:
         self.min_samples = min_samples
 
         # Strategy performance tracking
-        self.strategy_metrics: dict[tuple[ReasoningStrategy, QueryType], LearningMetrics] = {}
-        self.global_strategy_weights: dict[ReasoningStrategy, float] = dict.fromkeys(ReasoningStrategy, 1.0)
+        self.strategy_metrics: dict[
+            tuple[ReasoningStrategy, QueryType], LearningMetrics
+        ] = {}
+        self.global_strategy_weights: dict[ReasoningStrategy, float] = dict.fromkeys(
+            ReasoningStrategy, 1.0
+        )
 
         # Feedback history
         self.feedback_history: list[StrategyFeedback] = []
@@ -90,20 +94,20 @@ class PlanLearner:
             "total_feedback_received": 0,
             "successful_adaptations": 0,
             "strategy_weight_updates": 0,
-            "last_learning_update": datetime.now(timezone.utc)
+            "last_learning_update": datetime.now(timezone.utc),
         }
 
         # Pattern recognition
         self.query_patterns: dict[str, list[tuple[ReasoningStrategy, float]]] = {}
 
-    def record_execution_feedback(self,
-                                 plan: QueryPlan,
-                                 feedback: StrategyFeedback) -> None:
+    def record_execution_feedback(
+        self, plan: QueryPlan, feedback: StrategyFeedback
+    ) -> None:
         """Record feedback from plan execution"""
         # Store feedback
         self.feedback_history.append(feedback)
         if len(self.feedback_history) > self.max_history_size:
-            self.feedback_history = self.feedback_history[-self.max_history_size:]
+            self.feedback_history = self.feedback_history[-self.max_history_size :]
 
         # Update strategy metrics
         self._update_strategy_metrics(feedback)
@@ -121,13 +125,17 @@ class PlanLearner:
         if feedback.success:
             self.learning_stats["successful_adaptations"] += 1
 
-        logger.debug(f"Recorded feedback for {feedback.strategy.value} on "
-                    f"{feedback.query_type.value} (success: {feedback.success})")
+        logger.debug(
+            f"Recorded feedback for {feedback.strategy.value} on "
+            f"{feedback.query_type.value} (success: {feedback.success})"
+        )
 
-    def get_strategy_recommendation(self,
-                                   query_type: QueryType,
-                                   complexity_score: float,
-                                   context: dict[str, Any] | None = None) -> tuple[ReasoningStrategy, float]:
+    def get_strategy_recommendation(
+        self,
+        query_type: QueryType,
+        complexity_score: float,
+        context: dict[str, Any] | None = None,
+    ) -> tuple[ReasoningStrategy, float]:
         """Get strategy recommendation based on learned performance"""
         context = context or {}
 
@@ -150,15 +158,16 @@ class PlanLearner:
         # Fallback to direct retrieval
         return ReasoningStrategy.DIRECT_RETRIEVAL, 0.5
 
-    def analyze_strategy_performance(self,
-                                   strategy: ReasoningStrategy | None = None,
-                                   query_type: QueryType | None = None,
-                                   time_window_hours: int = 24) -> dict[str, Any]:
+    def analyze_strategy_performance(
+        self,
+        strategy: ReasoningStrategy | None = None,
+        query_type: QueryType | None = None,
+        time_window_hours: int = 24,
+    ) -> dict[str, Any]:
         """Analyze strategy performance over time window"""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=time_window_hours)
         recent_feedback = [
-            f for f in self.feedback_history
-            if f.timestamp >= cutoff_time
+            f for f in self.feedback_history if f.timestamp >= cutoff_time
         ]
 
         if strategy:
@@ -177,7 +186,9 @@ class PlanLearner:
         avg_confidence = np.mean([f.confidence_achieved for f in recent_feedback])
         avg_time = np.mean([f.execution_time_ms for f in recent_feedback])
 
-        quality_scores = [f.result_quality for f in recent_feedback if f.result_quality is not None]
+        quality_scores = [
+            f.result_quality for f in recent_feedback if f.result_quality is not None
+        ]
         avg_quality = np.mean(quality_scores) if quality_scores else None
 
         # Analyze trends
@@ -187,8 +198,12 @@ class PlanLearner:
             first_half = recent_feedback[:mid_point]
             second_half = recent_feedback[mid_point:]
 
-            first_success_rate = sum(1 for f in first_half if f.success) / len(first_half)
-            second_success_rate = sum(1 for f in second_half if f.success) / len(second_half)
+            first_success_rate = sum(1 for f in first_half if f.success) / len(
+                first_half
+            )
+            second_success_rate = sum(1 for f in second_half if f.success) / len(
+                second_half
+            )
 
             success_trend = second_success_rate - first_success_rate
         else:
@@ -203,7 +218,7 @@ class PlanLearner:
             "avg_result_quality": avg_quality,
             "success_trend": success_trend,
             "strategy_filter": strategy.value if strategy else "all",
-            "query_type_filter": query_type.value if query_type else "all"
+            "query_type_filter": query_type.value if query_type else "all",
         }
 
         return analysis
@@ -215,7 +230,7 @@ class PlanLearner:
             "top_performing_strategies": self._get_top_strategies(),
             "problematic_combinations": self._get_problematic_combinations(),
             "query_pattern_insights": self._get_pattern_insights(),
-            "recommendations": self._generate_recommendations()
+            "recommendations": self._generate_recommendations(),
         }
 
         return insights
@@ -226,8 +241,7 @@ class PlanLearner:
 
         if key not in self.strategy_metrics:
             self.strategy_metrics[key] = LearningMetrics(
-                strategy=feedback.strategy,
-                query_type=feedback.query_type
+                strategy=feedback.strategy, query_type=feedback.query_type
             )
 
         metrics = self.strategy_metrics[key]
@@ -242,25 +256,23 @@ class PlanLearner:
 
         if feedback.confidence_achieved > 0:
             metrics.avg_confidence = (
-                (1 - alpha) * metrics.avg_confidence +
-                alpha * feedback.confidence_achieved
-            )
+                1 - alpha
+            ) * metrics.avg_confidence + alpha * feedback.confidence_achieved
 
         if feedback.execution_time_ms > 0:
             metrics.avg_execution_time_ms = (
-                (1 - alpha) * metrics.avg_execution_time_ms +
-                alpha * feedback.execution_time_ms
-            )
+                1 - alpha
+            ) * metrics.avg_execution_time_ms + alpha * feedback.execution_time_ms
 
         if feedback.result_quality is not None:
             metrics.avg_result_quality = (
-                (1 - alpha) * metrics.avg_result_quality +
-                alpha * feedback.result_quality
-            )
+                1 - alpha
+            ) * metrics.avg_result_quality + alpha * feedback.result_quality
 
         # Update recent success rate (last 20 executions)
         recent_feedback = [
-            f for f in self.feedback_history[-20:]
+            f
+            for f in self.feedback_history[-20:]
             if f.strategy == feedback.strategy and f.query_type == feedback.query_type
         ]
 
@@ -271,8 +283,12 @@ class PlanLearner:
             # Calculate trend
             if len(recent_feedback) >= 10:
                 mid = len(recent_feedback) // 2
-                first_half_success = sum(1 for f in recent_feedback[:mid] if f.success) / mid
-                second_half_success = sum(1 for f in recent_feedback[mid:] if f.success) / (len(recent_feedback) - mid)
+                first_half_success = (
+                    sum(1 for f in recent_feedback[:mid] if f.success) / mid
+                )
+                second_half_success = sum(
+                    1 for f in recent_feedback[mid:] if f.success
+                ) / (len(recent_feedback) - mid)
                 metrics.success_trend = second_half_success - first_half_success
 
         metrics.last_updated = datetime.now(timezone.utc)
@@ -305,9 +321,13 @@ class PlanLearner:
 
         if abs(adjustment) > 0.01:
             self.learning_stats["strategy_weight_updates"] += 1
-            logger.debug(f"Updated {strategy.value} weight: {current_weight:.3f} -> {new_weight:.3f}")
+            logger.debug(
+                f"Updated {strategy.value} weight: {current_weight:.3f} -> {new_weight:.3f}"
+            )
 
-    def _learn_query_patterns(self, plan: QueryPlan, feedback: StrategyFeedback) -> None:
+    def _learn_query_patterns(
+        self, plan: QueryPlan, feedback: StrategyFeedback
+    ) -> None:
         """Learn patterns from successful query-strategy combinations"""
         # Extract query features for pattern recognition
         query_features = self._extract_query_features(plan.original_query)
@@ -331,11 +351,15 @@ class PlanLearner:
                 if existing_idx is not None:
                     # Update existing score
                     old_score = strategy_scores[existing_idx][1]
-                    new_score = (1 - self.learning_rate) * old_score + self.learning_rate * feedback.confidence_achieved
+                    new_score = (
+                        1 - self.learning_rate
+                    ) * old_score + self.learning_rate * feedback.confidence_achieved
                     strategy_scores[existing_idx] = (feedback.strategy, new_score)
                 else:
                     # Add new entry
-                    strategy_scores.append((feedback.strategy, feedback.confidence_achieved))
+                    strategy_scores.append(
+                        (feedback.strategy, feedback.confidence_achieved)
+                    )
 
                 # Keep only top strategies per feature
                 strategy_scores.sort(key=lambda x: x[1], reverse=True)
@@ -383,26 +407,54 @@ class PlanLearner:
 
         return features
 
-    def _get_candidate_strategies(self, query_type: QueryType) -> list[ReasoningStrategy]:
+    def _get_candidate_strategies(
+        self, query_type: QueryType
+    ) -> list[ReasoningStrategy]:
         """Get candidate strategies for query type"""
         type_strategy_map = {
-            QueryType.SIMPLE_FACT: [ReasoningStrategy.DIRECT_RETRIEVAL, ReasoningStrategy.META_REASONING],
-            QueryType.TEMPORAL_ANALYSIS: [ReasoningStrategy.TEMPORAL_REASONING, ReasoningStrategy.STEP_BY_STEP],
-            QueryType.CAUSAL_CHAIN: [ReasoningStrategy.CAUSAL_REASONING, ReasoningStrategy.GRAPH_TRAVERSAL],
-            QueryType.COMPARATIVE: [ReasoningStrategy.COMPARATIVE_ANALYSIS, ReasoningStrategy.GRAPH_TRAVERSAL],
-            QueryType.META_KNOWLEDGE: [ReasoningStrategy.META_REASONING, ReasoningStrategy.DIRECT_RETRIEVAL],
-            QueryType.MULTI_HOP: [ReasoningStrategy.STEP_BY_STEP, ReasoningStrategy.GRAPH_TRAVERSAL],
-            QueryType.AGGREGATION: [ReasoningStrategy.GRAPH_TRAVERSAL, ReasoningStrategy.STEP_BY_STEP],
-            QueryType.HYPOTHETICAL: [ReasoningStrategy.STEP_BY_STEP, ReasoningStrategy.HYBRID]
+            QueryType.SIMPLE_FACT: [
+                ReasoningStrategy.DIRECT_RETRIEVAL,
+                ReasoningStrategy.META_REASONING,
+            ],
+            QueryType.TEMPORAL_ANALYSIS: [
+                ReasoningStrategy.TEMPORAL_REASONING,
+                ReasoningStrategy.STEP_BY_STEP,
+            ],
+            QueryType.CAUSAL_CHAIN: [
+                ReasoningStrategy.CAUSAL_REASONING,
+                ReasoningStrategy.GRAPH_TRAVERSAL,
+            ],
+            QueryType.COMPARATIVE: [
+                ReasoningStrategy.COMPARATIVE_ANALYSIS,
+                ReasoningStrategy.GRAPH_TRAVERSAL,
+            ],
+            QueryType.META_KNOWLEDGE: [
+                ReasoningStrategy.META_REASONING,
+                ReasoningStrategy.DIRECT_RETRIEVAL,
+            ],
+            QueryType.MULTI_HOP: [
+                ReasoningStrategy.STEP_BY_STEP,
+                ReasoningStrategy.GRAPH_TRAVERSAL,
+            ],
+            QueryType.AGGREGATION: [
+                ReasoningStrategy.GRAPH_TRAVERSAL,
+                ReasoningStrategy.STEP_BY_STEP,
+            ],
+            QueryType.HYPOTHETICAL: [
+                ReasoningStrategy.STEP_BY_STEP,
+                ReasoningStrategy.HYBRID,
+            ],
         }
 
         return type_strategy_map.get(query_type, [ReasoningStrategy.DIRECT_RETRIEVAL])
 
-    def _calculate_strategy_score(self,
-                                 strategy: ReasoningStrategy,
-                                 query_type: QueryType,
-                                 complexity_score: float,
-                                 context: dict[str, Any]) -> float:
+    def _calculate_strategy_score(
+        self,
+        strategy: ReasoningStrategy,
+        query_type: QueryType,
+        complexity_score: float,
+        context: dict[str, Any],
+    ) -> float:
         """Calculate score for strategy based on learned performance"""
         # Base score from global weight
         base_score = self.global_strategy_weights.get(strategy, 1.0)
@@ -416,22 +468,38 @@ class PlanLearner:
                 # Use learned performance
                 success_score = metrics.recent_success_rate * 0.4
                 confidence_score = metrics.avg_confidence * 0.3
-                quality_score = metrics.avg_result_quality * 0.2 if metrics.avg_result_quality > 0 else 0.1
+                quality_score = (
+                    metrics.avg_result_quality * 0.2
+                    if metrics.avg_result_quality > 0
+                    else 0.1
+                )
                 trend_score = max(metrics.success_trend, 0) * 0.1
 
-                learned_score = success_score + confidence_score + quality_score + trend_score
+                learned_score = (
+                    success_score + confidence_score + quality_score + trend_score
+                )
                 base_score = (base_score + learned_score) / 2
 
         # Adjust for complexity
         complexity_adjustment = 1.0
         if complexity_score > 0.8 and strategy in [ReasoningStrategy.DIRECT_RETRIEVAL]:
-            complexity_adjustment = 0.7  # Penalize simple strategies for complex queries
-        elif complexity_score < 0.3 and strategy in [ReasoningStrategy.HYBRID, ReasoningStrategy.STEP_BY_STEP]:
-            complexity_adjustment = 0.8  # Penalize complex strategies for simple queries
+            complexity_adjustment = (
+                0.7  # Penalize simple strategies for complex queries
+            )
+        elif complexity_score < 0.3 and strategy in [
+            ReasoningStrategy.HYBRID,
+            ReasoningStrategy.STEP_BY_STEP,
+        ]:
+            complexity_adjustment = (
+                0.8  # Penalize complex strategies for simple queries
+            )
 
         # Context adjustments
         if context.get("prefer_fast", False):
-            if strategy in [ReasoningStrategy.DIRECT_RETRIEVAL, ReasoningStrategy.META_REASONING]:
+            if strategy in [
+                ReasoningStrategy.DIRECT_RETRIEVAL,
+                ReasoningStrategy.META_REASONING,
+            ]:
                 complexity_adjustment *= 1.2
             elif strategy in [ReasoningStrategy.HYBRID, ReasoningStrategy.STEP_BY_STEP]:
                 complexity_adjustment *= 0.8
@@ -444,24 +512,32 @@ class PlanLearner:
 
         for strategy in ReasoningStrategy:
             # Calculate overall performance
-            relevant_feedback = [f for f in self.feedback_history if f.strategy == strategy]
+            relevant_feedback = [
+                f for f in self.feedback_history if f.strategy == strategy
+            ]
 
             if len(relevant_feedback) >= self.min_samples:
-                success_rate = sum(1 for f in relevant_feedback if f.success) / len(relevant_feedback)
-                avg_confidence = np.mean([f.confidence_achieved for f in relevant_feedback])
+                success_rate = sum(1 for f in relevant_feedback if f.success) / len(
+                    relevant_feedback
+                )
+                avg_confidence = np.mean(
+                    [f.confidence_achieved for f in relevant_feedback]
+                )
 
-                strategy_performance.append({
-                    "strategy": strategy.value,
-                    "success_rate": success_rate,
-                    "avg_confidence": avg_confidence,
-                    "execution_count": len(relevant_feedback),
-                    "global_weight": self.global_strategy_weights[strategy]
-                })
+                strategy_performance.append(
+                    {
+                        "strategy": strategy.value,
+                        "success_rate": success_rate,
+                        "avg_confidence": avg_confidence,
+                        "execution_count": len(relevant_feedback),
+                        "global_weight": self.global_strategy_weights[strategy],
+                    }
+                )
 
         # Sort by composite score
         strategy_performance.sort(
             key=lambda x: x["success_rate"] * 0.6 + x["avg_confidence"] * 0.4,
-            reverse=True
+            reverse=True,
         )
 
         return strategy_performance[:5]
@@ -475,13 +551,15 @@ class PlanLearner:
                 success_rate = metrics.successful_executions / metrics.total_executions
 
                 if success_rate < 0.5 or metrics.avg_confidence < 0.6:
-                    problematic.append({
-                        "strategy": key[0].value,
-                        "query_type": key[1].value,
-                        "success_rate": success_rate,
-                        "avg_confidence": metrics.avg_confidence,
-                        "execution_count": metrics.total_executions
-                    })
+                    problematic.append(
+                        {
+                            "strategy": key[0].value,
+                            "query_type": key[1].value,
+                            "success_rate": success_rate,
+                            "avg_confidence": metrics.avg_confidence,
+                            "execution_count": metrics.total_executions,
+                        }
+                    )
 
         problematic.sort(key=lambda x: x["success_rate"])
         return problematic[:5]
@@ -491,7 +569,7 @@ class PlanLearner:
         insights = {
             "total_patterns": len(self.query_patterns),
             "most_reliable_patterns": [],
-            "emerging_patterns": []
+            "emerging_patterns": [],
         }
 
         # Find most reliable patterns
@@ -499,13 +577,17 @@ class PlanLearner:
             if strategies:
                 best_strategy, best_score = strategies[0]
                 if best_score > 0.8:
-                    insights["most_reliable_patterns"].append({
-                        "pattern": feature,
-                        "best_strategy": best_strategy.value,
-                        "confidence": best_score
-                    })
+                    insights["most_reliable_patterns"].append(
+                        {
+                            "pattern": feature,
+                            "best_strategy": best_strategy.value,
+                            "confidence": best_score,
+                        }
+                    )
 
-        insights["most_reliable_patterns"].sort(key=lambda x: x["confidence"], reverse=True)
+        insights["most_reliable_patterns"].sort(
+            key=lambda x: x["confidence"], reverse=True
+        )
         insights["most_reliable_patterns"] = insights["most_reliable_patterns"][:5]
 
         return insights
@@ -516,18 +598,26 @@ class PlanLearner:
 
         # Check for consistently failing strategies
         for key, metrics in self.strategy_metrics.items():
-            if (metrics.total_executions >= self.min_samples and
-                metrics.recent_success_rate < 0.4):
+            if (
+                metrics.total_executions >= self.min_samples
+                and metrics.recent_success_rate < 0.4
+            ):
                 recommendations.append(
                     f"Consider avoiding {key[0].value} for {key[1].value} queries "
                     f"(recent success rate: {metrics.recent_success_rate:.2f})"
                 )
 
         # Check for underutilized high-performing strategies
-        recent_feedback = self.feedback_history[-100:] if len(self.feedback_history) >= 100 else self.feedback_history
+        recent_feedback = (
+            self.feedback_history[-100:]
+            if len(self.feedback_history) >= 100
+            else self.feedback_history
+        )
         strategy_usage = {}
         for feedback in recent_feedback:
-            strategy_usage[feedback.strategy] = strategy_usage.get(feedback.strategy, 0) + 1
+            strategy_usage[feedback.strategy] = (
+                strategy_usage.get(feedback.strategy, 0) + 1
+            )
 
         for strategy, weight in self.global_strategy_weights.items():
             usage = strategy_usage.get(strategy, 0)

@@ -16,6 +16,7 @@ import wandb
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class MathProblem:
     """Mathematical problem for evaluation"""
@@ -31,6 +32,7 @@ class MathProblem:
     scoring_criteria: dict[str, float]
     cultural_context: str = "general"
     language: str = "en"
+
 
 @dataclass
 class EvaluationResult:
@@ -48,6 +50,7 @@ class EvaluationResult:
     feedback: str
     timestamp: str = ""
 
+
 class MathFitnessEvaluator:
     """Comprehensive evaluation system for math tutoring model fitness"""
 
@@ -63,7 +66,7 @@ class MathFitnessEvaluator:
             "step_by_step": 0.25,
             "explanation_quality": 0.20,
             "encouragement": 0.10,
-            "cultural_sensitivity": 0.10
+            "cultural_sensitivity": 0.10,
         }
 
         # Performance thresholds
@@ -71,7 +74,7 @@ class MathFitnessEvaluator:
             "excellent": 0.85,
             "good": 0.70,
             "acceptable": 0.55,
-            "poor": 0.40
+            "poor": 0.40,
         }
 
         # Initialize test problems
@@ -92,7 +95,7 @@ class MathFitnessEvaluator:
                 expected_answer="8",
                 solution_steps=["Count 5", "Add 3 more", "Total is 8"],
                 keywords=["addition", "sum", "plus"],
-                scoring_criteria={"correct_answer": 0.6, "method_shown": 0.4}
+                scoring_criteria={"correct_answer": 0.6, "method_shown": 0.4},
             ),
             MathProblem(
                 problem_id="arith_002",
@@ -103,7 +106,11 @@ class MathFitnessEvaluator:
                 expected_answer="7",
                 solution_steps=["Start with 12", "Subtract 5", "12 - 5 = 7"],
                 keywords=["subtraction", "take away", "difference"],
-                scoring_criteria={"correct_answer": 0.5, "method_shown": 0.3, "word_problem": 0.2}
+                scoring_criteria={
+                    "correct_answer": 0.5,
+                    "method_shown": 0.3,
+                    "word_problem": 0.2,
+                },
             ),
             MathProblem(
                 problem_id="arith_003",
@@ -112,10 +119,14 @@ class MathFitnessEvaluator:
                 difficulty=0.4,
                 problem_text="What is 6 × 4?",
                 expected_answer="24",
-                solution_steps=["6 groups of 4", "4 + 4 + 4 + 4 + 4 + 4 = 24", "Or 6 × 4 = 24"],
+                solution_steps=[
+                    "6 groups of 4",
+                    "4 + 4 + 4 + 4 + 4 + 4 = 24",
+                    "Or 6 × 4 = 24",
+                ],
                 keywords=["multiplication", "times", "groups"],
-                scoring_criteria={"correct_answer": 0.6, "method_shown": 0.4}
-            )
+                scoring_criteria={"correct_answer": 0.6, "method_shown": 0.4},
+            ),
         ]
 
         # Algebra problems (Grades 4-8)
@@ -132,10 +143,14 @@ class MathFitnessEvaluator:
                     "2x = 13 - 5",
                     "2x = 8",
                     "x = 8 ÷ 2",
-                    "x = 4"
+                    "x = 4",
                 ],
                 keywords=["variable", "solve", "equation"],
-                scoring_criteria={"correct_answer": 0.4, "steps_shown": 0.4, "isolation": 0.2}
+                scoring_criteria={
+                    "correct_answer": 0.4,
+                    "steps_shown": 0.4,
+                    "isolation": 0.2,
+                },
             ),
             MathProblem(
                 problem_id="alg_002",
@@ -144,15 +159,14 @@ class MathFitnessEvaluator:
                 difficulty=0.6,
                 problem_text="What is the value of 3x + 2 when x = 5?",
                 expected_answer="17",
-                solution_steps=[
-                    "Substitute x = 5",
-                    "3(5) + 2",
-                    "15 + 2",
-                    "17"
-                ],
+                solution_steps=["Substitute x = 5", "3(5) + 2", "15 + 2", "17"],
                 keywords=["substitute", "evaluate", "expression"],
-                scoring_criteria={"correct_answer": 0.5, "substitution": 0.3, "calculation": 0.2}
-            )
+                scoring_criteria={
+                    "correct_answer": 0.5,
+                    "substitution": 0.3,
+                    "calculation": 0.2,
+                },
+            ),
         ]
 
         # Geometry problems (Grades 3-8)
@@ -167,10 +181,10 @@ class MathFitnessEvaluator:
                 solution_steps=[
                     "Area = length × width",
                     "Area = 6 × 4",
-                    "Area = 24 square units"
+                    "Area = 24 square units",
                 ],
                 keywords=["area", "rectangle", "formula"],
-                scoring_criteria={"correct_answer": 0.4, "formula": 0.3, "units": 0.3}
+                scoring_criteria={"correct_answer": 0.4, "formula": 0.3, "units": 0.3},
             ),
             MathProblem(
                 problem_id="geom_002",
@@ -183,11 +197,15 @@ class MathFitnessEvaluator:
                     "Circumference = 2πr",
                     "C = 2 × 3.14 × 3",
                     "C = 6.28 × 3",
-                    "C = 18.84 units"
+                    "C = 18.84 units",
                 ],
                 keywords=["circumference", "circle", "pi", "radius"],
-                scoring_criteria={"correct_answer": 0.4, "formula": 0.4, "calculation": 0.2}
-            )
+                scoring_criteria={
+                    "correct_answer": 0.4,
+                    "formula": 0.4,
+                    "calculation": 0.2,
+                },
+            ),
         ]
 
         # Word problems (Grades 2-8)
@@ -203,10 +221,15 @@ class MathFitnessEvaluator:
                     "Total apples = 24",
                     "Apples per bag = 6",
                     "Number of bags = 24 ÷ 6",
-                    "Number of bags = 4"
+                    "Number of bags = 4",
                 ],
                 keywords=["division", "equal groups", "how many"],
-                scoring_criteria={"correct_answer": 0.3, "understanding": 0.3, "operation": 0.2, "reasoning": 0.2}
+                scoring_criteria={
+                    "correct_answer": 0.3,
+                    "understanding": 0.3,
+                    "operation": 0.2,
+                    "reasoning": 0.2,
+                },
             ),
             MathProblem(
                 problem_id="word_002",
@@ -219,11 +242,15 @@ class MathFitnessEvaluator:
                     "Flour per batch = 2.5 cups",
                     "Number of batches = 3",
                     "Total flour = 2.5 × 3",
-                    "Total flour = 7.5 cups"
+                    "Total flour = 7.5 cups",
                 ],
                 keywords=["decimals", "multiplication", "recipe"],
-                scoring_criteria={"correct_answer": 0.4, "setup": 0.3, "calculation": 0.3}
-            )
+                scoring_criteria={
+                    "correct_answer": 0.4,
+                    "setup": 0.3,
+                    "calculation": 0.3,
+                },
+            ),
         ]
 
         # Fractions problems (Grades 3-8)
@@ -238,10 +265,14 @@ class MathFitnessEvaluator:
                 solution_steps=[
                     "Find common denominator: 4",
                     "1/2 = 2/4",
-                    "2/4 + 1/4 = 3/4"
+                    "2/4 + 1/4 = 3/4",
                 ],
                 keywords=["fractions", "addition", "common denominator"],
-                scoring_criteria={"correct_answer": 0.4, "common_denominator": 0.3, "steps": 0.3}
+                scoring_criteria={
+                    "correct_answer": 0.4,
+                    "common_denominator": 0.3,
+                    "steps": 0.3,
+                },
             ),
             MathProblem(
                 problem_id="frac_002",
@@ -255,11 +286,15 @@ class MathFitnessEvaluator:
                     "GCD = 6",
                     "12 ÷ 6 = 2",
                     "18 ÷ 6 = 3",
-                    "12/18 = 2/3"
+                    "12/18 = 2/3",
                 ],
                 keywords=["simplify", "lowest terms", "GCD"],
-                scoring_criteria={"correct_answer": 0.5, "process": 0.3, "explanation": 0.2}
-            )
+                scoring_criteria={
+                    "correct_answer": 0.5,
+                    "process": 0.3,
+                    "explanation": 0.2,
+                },
+            ),
         ]
 
         # Store problems by category
@@ -268,27 +303,29 @@ class MathFitnessEvaluator:
             "algebra": algebra_problems,
             "geometry": geometry_problems,
             "word_problems": word_problems,
-            "fractions": fraction_problems
+            "fractions": fraction_problems,
         }
 
         # Log test suite initialization
         total_problems = sum(len(problems) for problems in self.test_suite.values())
 
-        wandb.log({
-            "test_suite_initialized": True,
-            "total_problems": total_problems,
-            "categories": list(self.test_suite.keys()),
-            "grade_range": "K-8",
-            "difficulty_range": "0.2-0.7"
-        })
+        wandb.log(
+            {
+                "test_suite_initialized": True,
+                "total_problems": total_problems,
+                "categories": list(self.test_suite.keys()),
+                "grade_range": "K-8",
+                "difficulty_range": "0.2-0.7",
+            }
+        )
 
-        logger.info(f"Test suite initialized with {total_problems} problems across {len(self.test_suite)} categories")
+        logger.info(
+            f"Test suite initialized with {total_problems} problems across {len(self.test_suite)} categories"
+        )
 
-    async def evaluate(self,
-                      model,
-                      tokenizer,
-                      individual_id: str = None,
-                      log_details: bool = True) -> float:
+    async def evaluate(
+        self, model, tokenizer, individual_id: str = None, log_details: bool = True
+    ) -> float:
         """Comprehensive fitness evaluation of a math tutoring model"""
         logger.info(f"Evaluating model {individual_id or 'unknown'}")
 
@@ -297,7 +334,10 @@ class MathFitnessEvaluator:
         # Check cache
         if individual_id and individual_id in self.model_performance_cache:
             cached_result = self.model_performance_cache[individual_id]
-            if (datetime.now(timezone.utc) - datetime.fromisoformat(cached_result["timestamp"])).seconds < 3600:
+            if (
+                datetime.now(timezone.utc)
+                - datetime.fromisoformat(cached_result["timestamp"])
+            ).seconds < 3600:
                 logger.info(f"Using cached evaluation for {individual_id}")
                 return cached_result["fitness_score"]
 
@@ -315,13 +355,15 @@ class MathFitnessEvaluator:
                     all_evaluations.append(evaluation)
 
                     if log_details:
-                        wandb.log({
-                            f"evaluation/{category}/{problem.problem_id}/score": evaluation.total_score,
-                            f"evaluation/{category}/{problem.problem_id}/correctness": evaluation.correctness_score,
-                            f"evaluation/{category}/{problem.problem_id}/explanation": evaluation.explanation_quality,
-                            f"evaluation/{category}/{problem.problem_id}/encouragement": evaluation.encouragement_score,
-                            "model_id": individual_id or "unknown"
-                        })
+                        wandb.log(
+                            {
+                                f"evaluation/{category}/{problem.problem_id}/score": evaluation.total_score,
+                                f"evaluation/{category}/{problem.problem_id}/correctness": evaluation.correctness_score,
+                                f"evaluation/{category}/{problem.problem_id}/explanation": evaluation.explanation_quality,
+                                f"evaluation/{category}/{problem.problem_id}/encouragement": evaluation.encouragement_score,
+                                "model_id": individual_id or "unknown",
+                            }
+                        )
 
                 except Exception as e:
                     logger.error(f"Error evaluating problem {problem.problem_id}: {e}")
@@ -336,14 +378,16 @@ class MathFitnessEvaluator:
                         cultural_sensitivity=0.0,
                         response_time=0.0,
                         total_score=0.0,
-                        feedback="Evaluation failed"
+                        feedback="Evaluation failed",
                     )
                     category_evaluations.append(evaluation)
                     all_evaluations.append(evaluation)
 
             # Calculate category score
             if category_evaluations:
-                category_scores[category] = statistics.mean([eval.total_score for eval in category_evaluations])
+                category_scores[category] = statistics.mean(
+                    [eval.total_score for eval in category_evaluations]
+                )
             else:
                 category_scores[category] = 0.0
 
@@ -352,7 +396,11 @@ class MathFitnessEvaluator:
 
         # Calculate additional metrics
         evaluation_time = asyncio.get_event_loop().time() - start_time
-        avg_response_time = statistics.mean([eval.response_time for eval in all_evaluations]) if all_evaluations else 0.0
+        avg_response_time = (
+            statistics.mean([eval.response_time for eval in all_evaluations])
+            if all_evaluations
+            else 0.0
+        )
 
         # Store in cache
         if individual_id:
@@ -361,25 +409,34 @@ class MathFitnessEvaluator:
                 "category_scores": category_scores,
                 "evaluation_time": evaluation_time,
                 "avg_response_time": avg_response_time,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         # Log comprehensive results
         if log_details:
-            wandb.log({
-                "fitness/total_score": fitness_score,
-                "fitness/evaluation_time": evaluation_time,
-                "fitness/avg_response_time": avg_response_time,
-                **{f"fitness/{category}": score for category, score in category_scores.items()},
-                "model_id": individual_id or "unknown",
-                "problems_evaluated": len(all_evaluations)
-            })
+            wandb.log(
+                {
+                    "fitness/total_score": fitness_score,
+                    "fitness/evaluation_time": evaluation_time,
+                    "fitness/avg_response_time": avg_response_time,
+                    **{
+                        f"fitness/{category}": score
+                        for category, score in category_scores.items()
+                    },
+                    "model_id": individual_id or "unknown",
+                    "problems_evaluated": len(all_evaluations),
+                }
+            )
 
-        logger.info(f"Model evaluation complete: fitness={fitness_score:.3f}, time={evaluation_time:.2f}s")
+        logger.info(
+            f"Model evaluation complete: fitness={fitness_score:.3f}, time={evaluation_time:.2f}s"
+        )
 
         return fitness_score
 
-    async def evaluate_problem(self, model, tokenizer, problem: MathProblem) -> EvaluationResult:
+    async def evaluate_problem(
+        self, model, tokenizer, problem: MathProblem
+    ) -> EvaluationResult:
         """Evaluate model performance on a single math problem"""
         start_time = asyncio.get_event_loop().time()
 
@@ -388,30 +445,39 @@ class MathFitnessEvaluator:
 
         try:
             # Generate model response
-            model_response = await self.generate_model_response(model, tokenizer, prompt)
+            model_response = await self.generate_model_response(
+                model, tokenizer, prompt
+            )
 
             response_time = asyncio.get_event_loop().time() - start_time
 
             # Evaluate different aspects
             correctness_score = self.evaluate_correctness(model_response, problem)
             step_by_step_score = self.evaluate_step_by_step(model_response, problem)
-            explanation_quality = self.evaluate_explanation_quality(model_response, problem)
+            explanation_quality = self.evaluate_explanation_quality(
+                model_response, problem
+            )
             encouragement_score = self.evaluate_encouragement(model_response)
-            cultural_sensitivity = self.evaluate_cultural_sensitivity(model_response, problem)
+            cultural_sensitivity = self.evaluate_cultural_sensitivity(
+                model_response, problem
+            )
 
             # Calculate total score
             total_score = (
-                correctness_score * self.scoring_weights["correctness"] +
-                step_by_step_score * self.scoring_weights["step_by_step"] +
-                explanation_quality * self.scoring_weights["explanation_quality"] +
-                encouragement_score * self.scoring_weights["encouragement"] +
-                cultural_sensitivity * self.scoring_weights["cultural_sensitivity"]
+                correctness_score * self.scoring_weights["correctness"]
+                + step_by_step_score * self.scoring_weights["step_by_step"]
+                + explanation_quality * self.scoring_weights["explanation_quality"]
+                + encouragement_score * self.scoring_weights["encouragement"]
+                + cultural_sensitivity * self.scoring_weights["cultural_sensitivity"]
             )
 
             # Generate feedback
             feedback = self.generate_feedback(
-                correctness_score, step_by_step_score, explanation_quality,
-                encouragement_score, cultural_sensitivity
+                correctness_score,
+                step_by_step_score,
+                explanation_quality,
+                encouragement_score,
+                cultural_sensitivity,
             )
 
             return EvaluationResult(
@@ -425,7 +491,7 @@ class MathFitnessEvaluator:
                 response_time=response_time,
                 total_score=total_score,
                 feedback=feedback,
-                timestamp=datetime.now(timezone.utc).isoformat()
+                timestamp=datetime.now(timezone.utc).isoformat(),
             )
 
         except Exception as e:
@@ -440,7 +506,7 @@ class MathFitnessEvaluator:
                 cultural_sensitivity=0.0,
                 response_time=0.0,
                 total_score=0.0,
-                feedback="Evaluation failed due to error"
+                feedback="Evaluation failed due to error",
             )
 
     def create_tutoring_prompt(self, problem: MathProblem) -> str:
@@ -466,16 +532,26 @@ Your response:"""
         if grade_level == 0:
             return "a kindergarten student"
         if grade_level <= 3:
-            return f"a {grade_level}rd grade student" if grade_level == 3 else f"a {grade_level}st grade student" if grade_level == 1 else f"a {grade_level}nd grade student"
+            return (
+                f"a {grade_level}rd grade student"
+                if grade_level == 3
+                else f"a {grade_level}st grade student"
+                if grade_level == 1
+                else f"a {grade_level}nd grade student"
+            )
         if grade_level <= 5 or grade_level <= 8:
             return f"a {grade_level}th grade student"
         return "a student"
 
-    async def generate_model_response(self, model, tokenizer, prompt: str, max_length: int = 200) -> str:
+    async def generate_model_response(
+        self, model, tokenizer, prompt: str, max_length: int = 200
+    ) -> str:
         """Generate response from model"""
         try:
             # Tokenize input
-            inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+            inputs = tokenizer(
+                prompt, return_tensors="pt", truncation=True, max_length=512
+            )
 
             # Move to model device
             if hasattr(model, "device"):
@@ -489,13 +565,12 @@ Your response:"""
                     temperature=0.7,
                     do_sample=True,
                     pad_token_id=tokenizer.eos_token_id,
-                    repetition_penalty=1.1
+                    repetition_penalty=1.1,
                 )
 
             # Decode response (only new tokens)
             response = tokenizer.decode(
-                outputs[0][inputs["input_ids"].shape[1]:],
-                skip_special_tokens=True
+                outputs[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True
             ).strip()
 
             return response
@@ -548,11 +623,23 @@ Your response:"""
 
         # Check for step indicators
         step_indicators = [
-            "step", "first", "then", "next", "finally",
-            "1.", "2.", "3.", "•", "-", "start by", "now"
+            "step",
+            "first",
+            "then",
+            "next",
+            "finally",
+            "1.",
+            "2.",
+            "3.",
+            "•",
+            "-",
+            "start by",
+            "now",
         ]
 
-        step_count = sum(1 for indicator in step_indicators if indicator in response_lower)
+        step_count = sum(
+            1 for indicator in step_indicators if indicator in response_lower
+        )
         if step_count >= 2:
             score += 0.4
         elif step_count >= 1:
@@ -560,8 +647,15 @@ Your response:"""
 
         # Check for mathematical process words
         process_words = [
-            "add", "subtract", "multiply", "divide", "equals",
-            "solve", "calculate", "find", "substitute"
+            "add",
+            "subtract",
+            "multiply",
+            "divide",
+            "equals",
+            "solve",
+            "calculate",
+            "find",
+            "substitute",
         ]
 
         process_count = sum(1 for word in process_words if word in response_lower)
@@ -586,7 +680,9 @@ Your response:"""
 
         return min(1.0, score)
 
-    def evaluate_explanation_quality(self, response: str, problem: MathProblem) -> float:
+    def evaluate_explanation_quality(
+        self, response: str, problem: MathProblem
+    ) -> float:
         """Evaluate overall quality of explanation"""
         response_lower = response.lower()
         score = 0.0
@@ -602,8 +698,13 @@ Your response:"""
 
         # Clarity indicators
         clarity_words = [
-            "let me explain", "here's how", "think of it", "imagine",
-            "for example", "like this", "in other words"
+            "let me explain",
+            "here's how",
+            "think of it",
+            "imagine",
+            "for example",
+            "like this",
+            "in other words",
         ]
 
         if any(phrase in response_lower for phrase in clarity_words):
@@ -617,17 +718,28 @@ Your response:"""
                 score += 0.2
         else:
             # More sophisticated language for older students
-            advanced_indicators = ["analyze", "understand", "concept", "method", "approach"]
+            advanced_indicators = [
+                "analyze",
+                "understand",
+                "concept",
+                "method",
+                "approach",
+            ]
             if any(word in response_lower for word in advanced_indicators):
                 score += 0.2
 
         # Engagement elements
         engagement_indicators = ["you", "your", "we", "let's", "try", "can you"]
-        engagement_count = sum(1 for phrase in engagement_indicators if phrase in response_lower)
+        engagement_count = sum(
+            1 for phrase in engagement_indicators if phrase in response_lower
+        )
         score += min(0.2, engagement_count * 0.05)
 
         # Completeness (addresses the problem fully)
-        if len(response_lower) > 50 and problem.problem_text.lower()[:20] in response_lower:
+        if (
+            len(response_lower) > 50
+            and problem.problem_text.lower()[:20] in response_lower
+        ):
             score += 0.1
 
         return min(1.0, score)
@@ -639,9 +751,20 @@ Your response:"""
 
         # Positive words
         positive_words = [
-            "great", "good", "excellent", "well done", "nice work",
-            "fantastic", "awesome", "perfect", "brilliant", "wonderful",
-            "you can do it", "keep trying", "good job", "way to go"
+            "great",
+            "good",
+            "excellent",
+            "well done",
+            "nice work",
+            "fantastic",
+            "awesome",
+            "perfect",
+            "brilliant",
+            "wonderful",
+            "you can do it",
+            "keep trying",
+            "good job",
+            "way to go",
         ]
 
         positive_count = sum(1 for word in positive_words if word in response_lower)
@@ -649,18 +772,33 @@ Your response:"""
 
         # Encouraging phrases
         encouraging_phrases = [
-            "don't worry", "it's okay", "that's normal", "everyone makes mistakes",
-            "you're learning", "keep practicing", "you're doing well",
-            "let's work together", "i'm here to help"
+            "don't worry",
+            "it's okay",
+            "that's normal",
+            "everyone makes mistakes",
+            "you're learning",
+            "keep practicing",
+            "you're doing well",
+            "let's work together",
+            "i'm here to help",
         ]
 
-        encouraging_count = sum(1 for phrase in encouraging_phrases if phrase in response_lower)
+        encouraging_count = sum(
+            1 for phrase in encouraging_phrases if phrase in response_lower
+        )
         score += min(0.3, encouraging_count * 0.15)
 
         # Growth mindset language
         growth_words = [
-            "practice", "learn", "improve", "grow", "develop",
-            "progress", "effort", "try again", "keep going"
+            "practice",
+            "learn",
+            "improve",
+            "grow",
+            "develop",
+            "progress",
+            "effort",
+            "try again",
+            "keep going",
         ]
 
         growth_count = sum(1 for word in growth_words if word in response_lower)
@@ -672,15 +810,24 @@ Your response:"""
 
         return min(1.0, score)
 
-    def evaluate_cultural_sensitivity(self, response: str, problem: MathProblem) -> float:
+    def evaluate_cultural_sensitivity(
+        self, response: str, problem: MathProblem
+    ) -> float:
         """Evaluate cultural sensitivity and inclusiveness"""
         response_lower = response.lower()
         score = 0.8  # Start with high baseline
 
         # Check for potentially problematic content
         problematic_terms = [
-            "stupid", "dumb", "idiot", "easy", "obvious", "simple",
-            "everyone knows", "of course", "obviously"
+            "stupid",
+            "dumb",
+            "idiot",
+            "easy",
+            "obvious",
+            "simple",
+            "everyone knows",
+            "of course",
+            "obviously",
         ]
 
         for term in problematic_terms:
@@ -689,8 +836,12 @@ Your response:"""
 
         # Positive inclusivity indicators
         inclusive_language = [
-            "different ways", "various methods", "multiple approaches",
-            "some people", "many students", "different students"
+            "different ways",
+            "various methods",
+            "multiple approaches",
+            "some people",
+            "many students",
+            "different students",
         ]
 
         if any(phrase in response_lower for phrase in inclusive_language):
@@ -706,8 +857,14 @@ Your response:"""
 
         return max(0.0, min(1.0, score))
 
-    def generate_feedback(self, correctness: float, steps: float, explanation: float,
-                         encouragement: float, cultural: float) -> str:
+    def generate_feedback(
+        self,
+        correctness: float,
+        steps: float,
+        explanation: float,
+        encouragement: float,
+        cultural: float,
+    ) -> str:
         """Generate detailed feedback on model performance"""
         feedback_parts = []
 
@@ -757,11 +914,11 @@ Your response:"""
         """Calculate overall weighted fitness score from category scores"""
         # Category weights based on importance for math tutoring
         category_weights = {
-            "arithmetic": 0.25,    # Foundational skills
-            "algebra": 0.25,       # Problem-solving skills
-            "geometry": 0.20,      # Spatial reasoning
-            "word_problems": 0.20, # Application skills
-            "fractions": 0.10      # Specific skill area
+            "arithmetic": 0.25,  # Foundational skills
+            "algebra": 0.25,  # Problem-solving skills
+            "geometry": 0.20,  # Spatial reasoning
+            "word_problems": 0.20,  # Application skills
+            "fractions": 0.10,  # Specific skill area
         }
 
         weighted_score = 0.0
@@ -801,26 +958,39 @@ Your response:"""
             "performance_distribution": {},
             "category_performance": {},
             "recent_trends": {},
-            "cached_models": len(self.model_performance_cache)
+            "cached_models": len(self.model_performance_cache),
         }
 
         # Calculate average scores
         all_scores = [eval.total_score for eval in self.evaluation_history]
         analytics["average_scores"] = {
             "overall": statistics.mean(all_scores),
-            "correctness": statistics.mean([eval.correctness_score for eval in self.evaluation_history]),
-            "step_by_step": statistics.mean([eval.step_by_step_score for eval in self.evaluation_history]),
-            "explanation": statistics.mean([eval.explanation_quality for eval in self.evaluation_history]),
-            "encouragement": statistics.mean([eval.encouragement_score for eval in self.evaluation_history]),
-            "cultural_sensitivity": statistics.mean([eval.cultural_sensitivity for eval in self.evaluation_history])
+            "correctness": statistics.mean(
+                [eval.correctness_score for eval in self.evaluation_history]
+            ),
+            "step_by_step": statistics.mean(
+                [eval.step_by_step_score for eval in self.evaluation_history]
+            ),
+            "explanation": statistics.mean(
+                [eval.explanation_quality for eval in self.evaluation_history]
+            ),
+            "encouragement": statistics.mean(
+                [eval.encouragement_score for eval in self.evaluation_history]
+            ),
+            "cultural_sensitivity": statistics.mean(
+                [eval.cultural_sensitivity for eval in self.evaluation_history]
+            ),
         }
 
         # Performance distribution
         for threshold_name, threshold_value in self.performance_thresholds.items():
             count = sum(1 for score in all_scores if score >= threshold_value)
-            analytics["performance_distribution"][threshold_name] = count / len(all_scores)
+            analytics["performance_distribution"][threshold_name] = count / len(
+                all_scores
+            )
 
         return analytics
+
 
 # Global fitness evaluator instance
 math_fitness_evaluator = MathFitnessEvaluator()

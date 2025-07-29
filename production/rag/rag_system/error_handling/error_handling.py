@@ -7,22 +7,28 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 class RAGSystemError(Exception):
     """Base exception class for RAG system errors."""
+
     def __init__(self, message: str, error_code: str, details: dict[str, Any] = None):
         self.message = message
         self.error_code = error_code
         self.details = details or {}
         super().__init__(self.message)
 
+
 class InputError(RAGSystemError):
     """Exception raised for errors in the input."""
+
 
 class ProcessingError(RAGSystemError):
     """Exception raised for errors during processing."""
 
+
 class OutputError(RAGSystemError):
     """Exception raised for errors in the output."""
+
 
 def log_error(error: Exception, context: dict[str, Any] = None):
     """Log the error with additional context."""
@@ -35,8 +41,10 @@ def log_error(error: Exception, context: dict[str, Any] = None):
         logger.error(f"Error Context: {context}")
     logger.error(f"Traceback: {''.join(traceback.format_tb(error.__traceback__))}")
 
+
 def error_handler(func: Callable):
     """Decorator for handling errors in functions."""
+
     @wraps(func)
     async def wrapper(*args, **kwargs):
         try:
@@ -49,11 +57,18 @@ def error_handler(func: Callable):
             raise
         except Exception as e:
             # For unexpected errors, wrap them in a ProcessingError
-            error = ProcessingError(f"Unexpected error in {func.__name__}: {e!s}", "UNEXPECTED_ERROR",
-                                    {"original_error": str(e), "error_type": type(e).__name__})
-            log_error(error, {"function": func.__name__, "args": args, "kwargs": kwargs})
+            error = ProcessingError(
+                f"Unexpected error in {func.__name__}: {e!s}",
+                "UNEXPECTED_ERROR",
+                {"original_error": str(e), "error_type": type(e).__name__},
+            )
+            log_error(
+                error, {"function": func.__name__, "args": args, "kwargs": kwargs}
+            )
             raise error
+
     return wrapper
+
 
 class ErrorHandler:
     @staticmethod
@@ -71,7 +86,10 @@ class ErrorHandler:
             # Handle output errors (e.g., errors in formatting the response)
             return {"error": "Output error", "details": error.details}
         # Handle unexpected errors
-        return {"error": "An unexpected error occurred", "details": {"message": str(error)}}
+        return {
+            "error": "An unexpected error occurred",
+            "details": {"message": str(error)},
+        }
 
     @staticmethod
     def raise_input_error(message: str, details: dict[str, Any] = None):

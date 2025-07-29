@@ -1,4 +1,5 @@
 """Simple ADAS integration wrapper."""
+
 from ..adas.system import ADASystem
 
 

@@ -9,6 +9,7 @@ from typing import Any
 
 try:
     from prometheus_client import Counter, Gauge, Histogram, Info
+
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     # Fallback implementations for environments without prometheus_client
@@ -42,26 +43,28 @@ class GuardianMetrics:
         self.enabled = enabled and PROMETHEUS_AVAILABLE
 
         if not self.enabled:
-            logger.warning("Prometheus metrics disabled (prometheus_client not available)")
+            logger.warning(
+                "Prometheus metrics disabled (prometheus_client not available)"
+            )
             return
 
         # Decision counters
         self.guardian_blocks_total = Counter(
             "hyperag_guardian_blocks_total",
             "Total number of Guardian Gate blocks",
-            ["decision_type", "domain", "component"]
+            ["decision_type", "domain", "component"],
         )
 
         self.guardian_quarantine_total = Counter(
             "hyperag_guardian_quarantine_total",
             "Total number of Guardian Gate quarantines",
-            ["domain", "component", "reason"]
+            ["domain", "component", "reason"],
         )
 
         self.guardian_autoapply_total = Counter(
             "hyperag_guardian_autoapply_total",
             "Total number of Guardian Gate auto-approvals",
-            ["domain", "component"]
+            ["domain", "component"],
         )
 
         # Performance metrics
@@ -69,68 +72,70 @@ class GuardianMetrics:
             "hyperag_guardian_decision_duration_seconds",
             "Time taken for Guardian Gate decisions",
             ["decision_type", "domain"],
-            buckets=[0.001, 0.005, 0.010, 0.020, 0.050, 0.100, 0.200, 0.500, 1.0]
+            buckets=[0.001, 0.005, 0.010, 0.020, 0.050, 0.100, 0.200, 0.500, 1.0],
         )
 
         self.guardian_confidence_score = Histogram(
             "hyperag_guardian_confidence_score",
             "Confidence scores from Guardian evaluations",
             ["component", "domain"],
-            buckets=[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+            buckets=[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         )
 
         # System health gauges
         self.guardian_active_quarantines = Gauge(
             "hyperag_guardian_active_quarantines",
             "Number of items currently in quarantine",
-            ["domain"]
+            ["domain"],
         )
 
         self.guardian_policy_version = Info(
             "hyperag_guardian_policy_version",
-            "Current Guardian policy version and configuration"
+            "Current Guardian policy version and configuration",
         )
 
         # Error tracking
         self.guardian_errors_total = Counter(
             "hyperag_guardian_errors_total",
             "Total number of Guardian Gate errors",
-            ["error_type", "component"]
+            ["error_type", "component"],
         )
 
         # Component-specific metrics
         self.query_guardian_validations = Counter(
             "hyperag_query_guardian_validations_total",
             "Query pipeline Guardian validations",
-            ["domain", "decision", "confidence_tier"]
+            ["domain", "decision", "confidence_tier"],
         )
 
         self.repair_guardian_validations = Counter(
             "hyperag_repair_guardian_validations_total",
             "Repair pipeline Guardian validations",
-            ["domain", "decision", "operation_count"]
+            ["domain", "decision", "operation_count"],
         )
 
         self.consolidation_guardian_validations = Counter(
             "hyperag_consolidation_guardian_validations_total",
             "Consolidation pipeline Guardian validations",
-            ["domain", "decision", "item_type"]
+            ["domain", "decision", "item_type"],
         )
 
         self.adapter_load_validations = Counter(
             "hyperag_adapter_load_validations_total",
             "LoRA adapter load validations",
-            ["domain", "verification_result"]
+            ["domain", "verification_result"],
         )
 
         logger.info("Guardian metrics initialized")
 
-    def record_decision(self,
-                       decision: str,
-                       domain: str = "general",
-                       component: str = "unknown",
-                       duration_seconds: float = 0.0,
-                       confidence: float = 0.0):
+    def record_decision(
+        self,
+        decision: str,
+        domain: str = "general",
+        component: str = "unknown",
+        duration_seconds: float = 0.0,
+        confidence: float = 0.0,
+    ):
         """Record a Guardian Gate decision
 
         Args:
@@ -149,40 +154,29 @@ class GuardianMetrics:
                 self.guardian_autoapply_total.inc(domain=domain, component=component)
             elif decision == "QUARANTINE":
                 self.guardian_quarantine_total.inc(
-                    domain=domain,
-                    component=component,
-                    reason="low_confidence"
+                    domain=domain, component=component, reason="low_confidence"
                 )
             elif decision == "REJECT":
                 self.guardian_blocks_total.inc(
-                    decision_type="reject",
-                    domain=domain,
-                    component=component
+                    decision_type="reject", domain=domain, component=component
                 )
 
             # Record timing
             if duration_seconds > 0:
                 self.guardian_decision_duration.observe(
-                    duration_seconds,
-                    decision_type=decision.lower(),
-                    domain=domain
+                    duration_seconds, decision_type=decision.lower(), domain=domain
                 )
 
             # Record confidence
             if confidence > 0:
                 self.guardian_confidence_score.observe(
-                    confidence,
-                    component=component,
-                    domain=domain
+                    confidence, component=component, domain=domain
                 )
 
         except Exception as e:
             logger.error(f"Failed to record Guardian decision metrics: {e}")
 
-    def record_query_validation(self,
-                               domain: str,
-                               decision: str,
-                               confidence: float):
+    def record_query_validation(self, domain: str, decision: str, confidence: float):
         """Record query pipeline validation"""
         if not self.enabled:
             return
@@ -192,15 +186,14 @@ class GuardianMetrics:
             self.query_guardian_validations.inc(
                 domain=domain,
                 decision=decision.lower(),
-                confidence_tier=confidence_tier
+                confidence_tier=confidence_tier,
             )
         except Exception as e:
             logger.error(f"Failed to record query validation metrics: {e}")
 
-    def record_repair_validation(self,
-                                domain: str,
-                                decision: str,
-                                operation_count: int):
+    def record_repair_validation(
+        self, domain: str, decision: str, operation_count: int
+    ):
         """Record repair pipeline validation"""
         if not self.enabled:
             return
@@ -210,39 +203,33 @@ class GuardianMetrics:
             self.repair_guardian_validations.inc(
                 domain=domain,
                 decision=decision.lower(),
-                operation_count=op_count_bucket
+                operation_count=op_count_bucket,
             )
         except Exception as e:
             logger.error(f"Failed to record repair validation metrics: {e}")
 
-    def record_consolidation_validation(self,
-                                      domain: str,
-                                      decision: str,
-                                      item_type: str):
+    def record_consolidation_validation(
+        self, domain: str, decision: str, item_type: str
+    ):
         """Record consolidation pipeline validation"""
         if not self.enabled:
             return
 
         try:
             self.consolidation_guardian_validations.inc(
-                domain=domain,
-                decision=decision.lower(),
-                item_type=item_type
+                domain=domain, decision=decision.lower(), item_type=item_type
             )
         except Exception as e:
             logger.error(f"Failed to record consolidation validation metrics: {e}")
 
-    def record_adapter_validation(self,
-                                 domain: str,
-                                 verification_result: str):
+    def record_adapter_validation(self, domain: str, verification_result: str):
         """Record adapter load validation"""
         if not self.enabled:
             return
 
         try:
             self.adapter_load_validations.inc(
-                domain=domain,
-                verification_result=verification_result
+                domain=domain, verification_result=verification_result
             )
         except Exception as e:
             logger.error(f"Failed to record adapter validation metrics: {e}")
@@ -256,36 +243,26 @@ class GuardianMetrics:
             # Update the generic counters based on decision
             if decision == "REJECT":
                 self.guardian_blocks_total.inc(
-                    decision_type="reject",
-                    domain=domain,
-                    component=validation_type
+                    decision_type="reject", domain=domain, component=validation_type
                 )
             elif decision == "QUARANTINE":
                 self.guardian_quarantine_total.inc(
-                    domain=domain,
-                    component=validation_type,
-                    reason="validation_failed"
+                    domain=domain, component=validation_type, reason="validation_failed"
                 )
             elif decision == "APPLY":
                 self.guardian_autoapply_total.inc(
-                    domain=domain,
-                    component=validation_type
+                    domain=domain, component=validation_type
                 )
         except Exception as e:
             logger.error(f"Failed to record validation metrics: {e}")
 
-    def record_error(self,
-                    error_type: str,
-                    component: str):
+    def record_error(self, error_type: str, component: str):
         """Record Guardian error"""
         if not self.enabled:
             return
 
         try:
-            self.guardian_errors_total.inc(
-                error_type=error_type,
-                component=component
-            )
+            self.guardian_errors_total.inc(error_type=error_type, component=component)
         except Exception as e:
             logger.error(f"Failed to record Guardian error metrics: {e}")
 
@@ -307,7 +284,8 @@ class GuardianMetrics:
         try:
             # Convert values to strings for Info metric
             string_info = {
-                key: str(value) for key, value in policy_info.items()
+                key: str(value)
+                for key, value in policy_info.items()
                 if isinstance(value, (str, int, float, bool))
             }
             self.guardian_policy_version.info(string_info)
@@ -344,12 +322,13 @@ class GuardianMetrics:
         return {
             "status": "enabled",
             "prometheus_available": PROMETHEUS_AVAILABLE,
-            "metrics_initialized": True
+            "metrics_initialized": True,
         }
 
 
 # Global metrics instance
 _metrics_instance: GuardianMetrics | None = None
+
 
 def get_guardian_metrics() -> GuardianMetrics:
     """Get global Guardian metrics instance"""
@@ -359,6 +338,7 @@ def get_guardian_metrics() -> GuardianMetrics:
         _metrics_instance = GuardianMetrics()
 
     return _metrics_instance
+
 
 def init_guardian_metrics(enabled: bool = True) -> GuardianMetrics:
     """Initialize Guardian metrics with specific configuration"""

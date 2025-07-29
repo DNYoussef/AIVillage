@@ -16,9 +16,11 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class AdapterEntry:
     """Registry entry for a LoRA adapter."""
+
     adapter_id: str
     sha256: str
     domain: str
@@ -74,7 +76,7 @@ class LoRARegistry:
         data = {
             "version": "1.0",
             "updated_at": datetime.now(timezone.utc).isoformat(),
-            "adapters": {k: v.to_dict() for k, v in self.entries.items()}
+            "adapters": {k: v.to_dict() for k, v in self.entries.items()},
         }
 
         with open(self.registry_path, "w", encoding="utf-8") as f:
@@ -82,10 +84,12 @@ class LoRARegistry:
 
         logger.info(f"Saved registry with {len(self.entries)} adapters")
 
-    def register_adapter(self,
-                         adapter_path: Path,
-                         entry_data: dict[str, Any],
-                         require_guardian_approval: bool = True) -> str:
+    def register_adapter(
+        self,
+        adapter_path: Path,
+        entry_data: dict[str, Any],
+        require_guardian_approval: bool = True,
+    ) -> str:
         """Register a new adapter."""
         # Create entry
         entry = AdapterEntry.from_dict(entry_data)
@@ -93,7 +97,9 @@ class LoRARegistry:
         # Verify adapter hash
         computed_hash = self._compute_adapter_hash(adapter_path)
         if computed_hash != entry.sha256:
-            raise ValueError(f"Adapter hash mismatch: expected {entry.sha256}, got {computed_hash}")
+            raise ValueError(
+                f"Adapter hash mismatch: expected {entry.sha256}, got {computed_hash}"
+            )
 
         # Check for duplicates
         if entry.adapter_id in self.entries:
@@ -109,7 +115,7 @@ class LoRARegistry:
                 "domain": entry.domain,
                 "metrics": entry.metrics,
                 "base_model": entry.base_model,
-                "training_config": entry.training_config
+                "training_config": entry.training_config,
             }
 
             # Get Guardian decision
@@ -117,10 +123,14 @@ class LoRARegistry:
 
             if decision["decision"] == "REJECT":
                 entry.status = "rejected"
-                logger.warning(f"Guardian rejected adapter {entry.adapter_id}: {decision['reason']}")
+                logger.warning(
+                    f"Guardian rejected adapter {entry.adapter_id}: {decision['reason']}"
+                )
             elif decision["decision"] == "QUARANTINE":
                 entry.status = "quarantine"
-                logger.info(f"Guardian quarantined adapter {entry.adapter_id}: {decision['reason']}")
+                logger.info(
+                    f"Guardian quarantined adapter {entry.adapter_id}: {decision['reason']}"
+                )
             else:  # APPLY
                 entry.status = "approved"
                 entry.guardian_signature = decision.get("signature")
@@ -135,16 +145,18 @@ class LoRARegistry:
         self.entries[entry.adapter_id] = entry
         self._save_registry()
 
-        logger.info(f"Registered adapter {entry.adapter_id} with status: {entry.status}")
+        logger.info(
+            f"Registered adapter {entry.adapter_id} with status: {entry.status}"
+        )
         return entry.adapter_id
 
     def get_adapter(self, adapter_id: str) -> AdapterEntry | None:
         """Get adapter by ID."""
         return self.entries.get(adapter_id)
 
-    def list_adapters(self,
-                      domain: str | None = None,
-                      status: str | None = None) -> list[AdapterEntry]:
+    def list_adapters(
+        self, domain: str | None = None, status: str | None = None
+    ) -> list[AdapterEntry]:
         """List adapters with optional filtering."""
         adapters = list(self.entries.values())
 
@@ -171,14 +183,15 @@ class LoRARegistry:
 
         # Verify hash matches
         if current_hash != entry.sha256:
-            logger.error(f"Adapter {adapter_id} hash mismatch: expected {entry.sha256}, got {current_hash}")
+            logger.error(
+                f"Adapter {adapter_id} hash mismatch: expected {entry.sha256}, got {current_hash}"
+            )
             return False
 
         # Verify Guardian signature if present
         if entry.guardian_signature and self.guardian_gate:
             signature_valid = self.guardian_gate.verify_signature(
-                data=entry.to_dict(),
-                signature=entry.guardian_signature
+                data=entry.to_dict(), signature=entry.guardian_signature
             )
             if not signature_valid:
                 logger.error(f"Invalid Guardian signature for adapter {adapter_id}")
@@ -199,10 +212,13 @@ class LoRARegistry:
         logger.warning(f"Revoked adapter {adapter_id}: {reason}")
         return True
 
-    def get_best_adapter(self, domain: str, metric: str = "accuracy") -> AdapterEntry | None:
+    def get_best_adapter(
+        self, domain: str, metric: str = "accuracy"
+    ) -> AdapterEntry | None:
         """Get the best performing approved adapter for a domain."""
         domain_adapters = [
-            a for a in self.entries.values()
+            a
+            for a in self.entries.values()
             if a.domain == domain and a.status == "approved"
         ]
 
@@ -210,10 +226,7 @@ class LoRARegistry:
             return None
 
         # Sort by metric (higher is better)
-        domain_adapters.sort(
-            key=lambda a: a.metrics.get(metric, 0),
-            reverse=True
-        )
+        domain_adapters.sort(key=lambda a: a.metrics.get(metric, 0), reverse=True)
 
         return domain_adapters[0]
 
@@ -222,7 +235,9 @@ class LoRARegistry:
         sha256_hash = hashlib.sha256()
 
         # Hash all weight files
-        weight_files = list(adapter_path.glob("*.bin")) + list(adapter_path.glob("*.safetensors"))
+        weight_files = list(adapter_path.glob("*.bin")) + list(
+            adapter_path.glob("*.safetensors")
+        )
 
         for weight_file in sorted(weight_files):
             with open(weight_file, "rb") as f:
@@ -239,7 +254,7 @@ class LoRARegistry:
             "total_adapters": len(self.entries),
             "adapters_by_domain": {},
             "adapters_by_status": {},
-            "adapters": []
+            "adapters": [],
         }
 
         # Aggregate statistics
@@ -255,13 +270,15 @@ class LoRARegistry:
             data["adapters_by_status"][entry.status] += 1
 
             # Add adapter summary
-            data["adapters"].append({
-                "id": entry.adapter_id,
-                "domain": entry.domain,
-                "status": entry.status,
-                "metrics": entry.metrics,
-                "created_at": entry.created_at
-            })
+            data["adapters"].append(
+                {
+                    "id": entry.adapter_id,
+                    "domain": entry.domain,
+                    "status": entry.status,
+                    "metrics": entry.metrics,
+                    "created_at": entry.created_at,
+                }
+            )
 
         # Export based on format
         if format == "yaml":

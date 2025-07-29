@@ -14,6 +14,7 @@ class BayesianNode:
     timestamp: datetime
     version: int
 
+
 @dataclass(frozen=True)
 class VectorEntry:
     id: str
@@ -21,6 +22,7 @@ class VectorEntry:
     metadata: dict[str, Any]
     timestamp: datetime
     version: int
+
 
 @dataclass(frozen=True)
 class RetrievalResult:
@@ -30,6 +32,7 @@ class RetrievalResult:
     uncertainty: float
     timestamp: datetime
     version: int
+
 
 # Add a new structure for representing a plan
 @dataclass(frozen=True)

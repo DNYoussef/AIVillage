@@ -12,5 +12,5 @@ __all__ = [
     "TutorPromptEngineer",
     "prompt_ab_test",
     "prompt_baker",
-    "tutor_prompt_engineer"
+    "tutor_prompt_engineer",
 ]

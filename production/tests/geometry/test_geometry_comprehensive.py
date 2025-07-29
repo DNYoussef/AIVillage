@@ -21,6 +21,7 @@ class TestGeometryFeedback:
         """Test that geometry feedback can be imported."""
         try:
             from production.geometry.geometry_feedback import GeometryFeedback
+
             assert GeometryFeedback is not None
         except ImportError:
             pytest.skip("GeometryFeedback not available")
@@ -67,6 +68,7 @@ class TestGeometrySnapshot:
         """Test snapshot concept."""
         try:
             from production.geometry.geometry.snapshot import Snapshot
+
             assert Snapshot is not None
         except ImportError:
             pytest.skip("Snapshot not available")
@@ -134,7 +136,7 @@ class TestGeometryIntegration:
         # Calculate evolution trajectory
         distances = []
         for i in range(1, len(states)):
-            dist = torch.norm(states[i] - states[i-1]).item()
+            dist = torch.norm(states[i] - states[i - 1]).item()
             distances.append(dist)
 
         assert len(distances) == 4

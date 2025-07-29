@@ -23,11 +23,15 @@ class Hyperedge(BaseModel):
     """
 
     id: str = Field(default_factory=lambda: f"edge_{uuid.uuid4().hex[:8]}")
-    entities: list[str] = Field(min_items=2, description="List of entity IDs (minimum 2)")
+    entities: list[str] = Field(
+        min_items=2, description="List of entity IDs (minimum 2)"
+    )
     relation: str = Field(description="Relationship type connecting the entities")
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence score [0.0, 1.0]")
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    source_docs: list[str] = Field(default_factory=list, description="Source document IDs")
+    source_docs: list[str] = Field(
+        default_factory=list, description="Source document IDs"
+    )
     embedding: np.ndarray | None = Field(default=None, description="Vector embedding")
 
     # Additional metadata fields for different domains
@@ -44,7 +48,7 @@ class Hyperedge(BaseModel):
                 "entities": ["patient_123", "medication_456", "ingredient_789"],
                 "relation": "prescribed_containing_allergen",
                 "confidence": 0.95,
-                "source_docs": ["medical_record_001", "drug_database"]
+                "source_docs": ["medical_record_001", "drug_database"],
             }
         }
 
@@ -92,7 +96,7 @@ class Hyperedge(BaseModel):
             "confidence": self.confidence,
             "timestamp": self.timestamp.isoformat(),
             "source_docs": self.source_docs,
-            "entity_count": len(self.entities)
+            "entity_count": len(self.entities),
         }
 
         # Add metadata fields
@@ -122,21 +126,29 @@ class HippoNode(BaseModel):
     episodic: bool = Field(default=True, description="Whether this is episodic memory")
     created: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_accessed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    access_pattern: np.ndarray | None = Field(default=None, description="Access pattern for PPR")
+    access_pattern: np.ndarray | None = Field(
+        default=None, description="Access pattern for PPR"
+    )
 
     # Session and context tracking
     session_id: str | None = Field(default=None, description="User session ID")
     user_id: str | None = Field(default=None, description="User identifier")
-    context_type: str = Field(default="general", description="Type of context (query, response, etc.)")
+    context_type: str = Field(
+        default="general", description="Type of context (query, response, etc.)"
+    )
 
     # Consolidation tracking
     consolidation_score: float = Field(default=0.0, ge=0.0, le=1.0)
-    consolidated: bool = Field(default=False, description="Whether consolidated to semantic memory")
+    consolidated: bool = Field(
+        default=False, description="Whether consolidated to semantic memory"
+    )
     consolidation_timestamp: datetime | None = Field(default=None)
 
     # Performance tracking
     access_count: int = Field(default=1, ge=1, description="Number of accesses")
-    relevance_decay: float = Field(default=1.0, ge=0.0, le=1.0, description="Time-based relevance decay")
+    relevance_decay: float = Field(
+        default=1.0, ge=0.0, le=1.0, description="Time-based relevance decay"
+    )
 
     class Config:
         arbitrary_types_allowed = True
@@ -145,7 +157,7 @@ class HippoNode(BaseModel):
                 "id": "hippo_session_001",
                 "content": "User asked about diabetes management options",
                 "session_id": "user_session_12345",
-                "context_type": "query"
+                "context_type": "query",
             }
         }
 
@@ -193,9 +205,7 @@ class HippoNode(BaseModel):
 
         # Weighted combination
         self.consolidation_score = (
-            0.4 * frequency_score +
-            0.3 * age_score +
-            0.3 * relevance_score
+            0.4 * frequency_score + 0.3 * age_score + 0.3 * relevance_score
         )
 
         return self.consolidation_score
@@ -219,7 +229,7 @@ class HippoNode(BaseModel):
             "consolidation_score": self.consolidation_score,
             "consolidated": self.consolidated,
             "access_count": self.access_count,
-            "relevance_decay": self.relevance_decay
+            "relevance_decay": self.relevance_decay,
         }
 
         if self.consolidation_timestamp:
@@ -233,12 +243,13 @@ class HippoNode(BaseModel):
 
 # Utility functions for working with hypergraph structures
 
+
 def create_medical_hyperedge(
     patient_id: str,
     medication_id: str,
     allergen_id: str,
     confidence: float,
-    severity: str = "medium"
+    severity: str = "medium",
 ) -> Hyperedge:
     """Create a medical contraindication hyperedge"""
     return Hyperedge(
@@ -248,16 +259,13 @@ def create_medical_hyperedge(
         metadata={
             "domain": "medical",
             "severity": severity,
-            "requires_review": severity in ["high", "critical"]
-        }
+            "requires_review": severity in ["high", "critical"],
+        },
     )
 
 
 def create_query_response_hyperedge(
-    query_id: str,
-    document_ids: list[str],
-    response_id: str,
-    confidence: float
+    query_id: str, document_ids: list[str], response_id: str, confidence: float
 ) -> Hyperedge:
     """Create a query-document-response hyperedge for RAG tracking"""
     entities = [query_id] + document_ids + [response_id]
@@ -269,16 +277,13 @@ def create_query_response_hyperedge(
         metadata={
             "domain": "rag",
             "num_documents": len(document_ids),
-            "response_type": "generated"
-        }
+            "response_type": "generated",
+        },
     )
 
 
 def create_session_hippo_node(
-    session_id: str,
-    user_id: str,
-    content: str,
-    context_type: str = "interaction"
+    session_id: str, user_id: str, content: str, context_type: str = "interaction"
 ) -> HippoNode:
     """Create a session-specific episodic memory node"""
     return HippoNode(
@@ -286,5 +291,5 @@ def create_session_hippo_node(
         content=content,
         session_id=session_id,
         user_id=user_id,
-        context_type=context_type
+        context_type=context_type,
     )

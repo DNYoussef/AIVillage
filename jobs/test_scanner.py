@@ -55,9 +55,13 @@ async def test_hippo_analyzer():
 
         print(f"Found {len(pairs)} co-mention pairs:")
         for pair in pairs:
-            print(f"  {pair.entity1} <-> {pair.entity2}: {pair.co_mention_count} mentions (confidence: {pair.confidence:.2f})")
+            print(
+                f"  {pair.entity1} <-> {pair.entity2}: {pair.co_mention_count} mentions (confidence: {pair.confidence:.2f})"
+            )
 
-        assert len(pairs) >= 2, "Should find at least aspirin-headache and ibuprofen-headache pairs"
+        assert len(pairs) >= 2, (
+            "Should find at least aspirin-headache and ibuprofen-headache pairs"
+        )
         print("+ HippoIndexAnalyzer test passed")
 
 
@@ -67,8 +71,12 @@ async def test_divergent_scanner():
 
     # Create mock co-mention pairs
     pairs = [
-        CoMentionPair(entity1="aspirin", entity2="headache", co_mention_count=3, confidence=0.8),
-        CoMentionPair(entity1="ibuprofen", entity2="headache", co_mention_count=2, confidence=0.6)
+        CoMentionPair(
+            entity1="aspirin", entity2="headache", co_mention_count=3, confidence=0.8
+        ),
+        CoMentionPair(
+            entity1="ibuprofen", entity2="headache", co_mention_count=2, confidence=0.6
+        ),
     ]
 
     scanner = DivergentRetrieverScanner(None)  # Mock retriever
@@ -76,7 +84,9 @@ async def test_divergent_scanner():
 
     print(f"Found {len(candidates)} candidate edges:")
     for candidate in candidates:
-        print(f"  {candidate.source_entity} -{candidate.relationship_type}-> {candidate.target_entity} (confidence: {candidate.confidence:.2f})")
+        print(
+            f"  {candidate.source_entity} -{candidate.relationship_type}-> {candidate.target_entity} (confidence: {candidate.confidence:.2f})"
+        )
 
     assert len(candidates) >= 2, "Should find candidates for each pair"
     print("+ DivergentRetrieverScanner test passed")
@@ -96,7 +106,7 @@ async def test_full_scanner():
             "min_co_mentions": 1,
             "max_pairs_to_scan": 10,
             "candidates_per_pair": 2,
-            "dry_run": True
+            "dry_run": True,
         }
 
         scanner = HiddenLinkScanner(config)

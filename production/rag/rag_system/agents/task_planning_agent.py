@@ -6,8 +6,7 @@ from rag_system.core.agent_interface import AgentInterface
 
 
 class TaskPlanningAgent(AgentInterface):
-    """Agent responsible for planning tasks based on user intent and extracted concepts.
-    """
+    """Agent responsible for planning tasks based on user intent and extracted concepts."""
 
     def __init__(self):
         super().__init__()
@@ -32,13 +31,11 @@ class TaskPlanningAgent(AgentInterface):
         # Plan tasks based on intent and concepts
         tasks = self._generate_task_plan(intent, concepts)
 
-        return {
-            "intent": intent,
-            "concepts": concepts,
-            "tasks": tasks
-        }
+        return {"intent": intent, "concepts": concepts, "tasks": tasks}
 
-    def _generate_task_plan(self, intent: dict[str, Any], concepts: dict[str, Any]) -> dict[str, Any]:
+    def _generate_task_plan(
+        self, intent: dict[str, Any], concepts: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate a task plan based on interpreted intent and extracted concepts.
 
         Args:
@@ -50,12 +47,18 @@ class TaskPlanningAgent(AgentInterface):
         """
         # Collate search terms from both keywords and entity texts
         keywords = concepts.get("keywords", [])
-        entities = [e.get("text") for e in concepts.get("entities", []) if isinstance(e, dict)]
+        entities = [
+            e.get("text") for e in concepts.get("entities", []) if isinstance(e, dict)
+        ]
         search_terms = [t for t in keywords + entities if t]
 
         # Fall back to intent information if no explicit concepts were found
         if not search_terms:
-            topic = intent.get("topic") or intent.get("primary_intent") or intent.get("type")
+            topic = (
+                intent.get("topic")
+                or intent.get("primary_intent")
+                or intent.get("type")
+            )
             if topic:
                 search_terms.append(topic)
 
@@ -77,6 +80,6 @@ class TaskPlanningAgent(AgentInterface):
                 {"action": "retrieve_information", "parameters": search_terms},
                 {"action": action, "parameters": intent},
                 {"action": "generate_response", "parameters": intent},
-            ]
+            ],
         }
         return task_plan

@@ -25,24 +25,38 @@ class MagiInterface:
 
     def load_magi_capabilities(self):
         """Load the specialized capabilities from the Magi training results."""
-        results_path = Path("D:/AgentForge/memory_efficient_magi_20250726_033506/memory_efficient_scaled_results.json")
+        results_path = Path(
+            "D:/AgentForge/memory_efficient_magi_20250726_033506/memory_efficient_scaled_results.json"
+        )
 
         if results_path.exists():
             with open(results_path) as f:
                 self.magi_data = json.load(f)
 
             self.capabilities = self.magi_data["results"]["final_capabilities"]
-            self.specialization_score = self.magi_data["results"]["final_specialization_score"]
+            self.specialization_score = self.magi_data["results"][
+                "final_specialization_score"
+            ]
 
             print("🧙 MAGI AI AGENT LOADED")
             print("=" * 50)
             print(f"Specialization Score: {self.specialization_score:.3f}")
-            print(f"Training Questions: {self.magi_data['results']['questions_processed']:,}")
-            print(f"Training Duration: {self.magi_data['duration_seconds']:.1f} seconds")
+            print(
+                f"Training Questions: {self.magi_data['results']['questions_processed']:,}"
+            )
+            print(
+                f"Training Duration: {self.magi_data['duration_seconds']:.1f} seconds"
+            )
             print()
             print("SPECIALIZED CAPABILITIES:")
             for capability, score in self.capabilities.items():
-                level = "🔥 MASTERY" if score >= 0.90 else "⭐ EXPERT" if score >= 0.75 else "📈 ADVANCED"
+                level = (
+                    "🔥 MASTERY"
+                    if score >= 0.90
+                    else "⭐ EXPERT"
+                    if score >= 0.75
+                    else "📈 ADVANCED"
+                )
                 print(f"  {capability.replace('_', ' ').title()}: {score:.3f} {level}")
             print("=" * 50)
         else:
@@ -54,27 +68,68 @@ class MagiInterface:
         """Generate a response using Magi's specialized capabilities."""
         # Analyze user input to determine relevant capabilities
         relevant_caps = []
-        if any(word in user_input.lower() for word in ["python", "code", "programming", "script"]):
-            relevant_caps.append(("python_programming", self.capabilities.get("python_programming", 0.7)))
+        if any(
+            word in user_input.lower()
+            for word in ["python", "code", "programming", "script"]
+        ):
+            relevant_caps.append(
+                ("python_programming", self.capabilities.get("python_programming", 0.7))
+            )
 
-        if any(word in user_input.lower() for word in ["algorithm", "complexity", "optimize", "efficient"]):
-            relevant_caps.append(("algorithm_design", self.capabilities.get("algorithm_design", 0.7)))
+        if any(
+            word in user_input.lower()
+            for word in ["algorithm", "complexity", "optimize", "efficient"]
+        ):
+            relevant_caps.append(
+                ("algorithm_design", self.capabilities.get("algorithm_design", 0.7))
+            )
 
-        if any(word in user_input.lower() for word in ["data", "structure", "array", "tree", "graph"]):
-            relevant_caps.append(("data_structures", self.capabilities.get("data_structures", 0.7)))
+        if any(
+            word in user_input.lower()
+            for word in ["data", "structure", "array", "tree", "graph"]
+        ):
+            relevant_caps.append(
+                ("data_structures", self.capabilities.get("data_structures", 0.7))
+            )
 
-        if any(word in user_input.lower() for word in ["solve", "problem", "solution", "approach"]):
-            relevant_caps.append(("problem_solving", self.capabilities.get("problem_solving", 0.7)))
+        if any(
+            word in user_input.lower()
+            for word in ["solve", "problem", "solution", "approach"]
+        ):
+            relevant_caps.append(
+                ("problem_solving", self.capabilities.get("problem_solving", 0.7))
+            )
 
-        if any(word in user_input.lower() for word in ["math", "calculate", "equation", "formula"]):
-            relevant_caps.append(("mathematical_analysis", self.capabilities.get("mathematical_analysis", 0.7)))
+        if any(
+            word in user_input.lower()
+            for word in ["math", "calculate", "equation", "formula"]
+        ):
+            relevant_caps.append(
+                (
+                    "mathematical_analysis",
+                    self.capabilities.get("mathematical_analysis", 0.7),
+                )
+            )
 
-        if any(word in user_input.lower() for word in ["technical", "engineering", "system", "design"]):
-            relevant_caps.append(("technical_reasoning", self.capabilities.get("technical_reasoning", 0.7)))
+        if any(
+            word in user_input.lower()
+            for word in ["technical", "engineering", "system", "design"]
+        ):
+            relevant_caps.append(
+                (
+                    "technical_reasoning",
+                    self.capabilities.get("technical_reasoning", 0.7),
+                )
+            )
 
         # If no specific capability detected, use general technical reasoning
         if not relevant_caps:
-            relevant_caps.append(("technical_reasoning", self.capabilities.get("technical_reasoning", 0.7)))
+            relevant_caps.append(
+                (
+                    "technical_reasoning",
+                    self.capabilities.get("technical_reasoning", 0.7),
+                )
+            )
 
         # Generate response based on strongest relevant capability
         strongest_cap = max(relevant_caps, key=lambda x: x[1])
@@ -132,7 +187,9 @@ class MagiInterface:
             response += "I can analyze complexity, suggest optimizations, and design efficient solutions.\n\n"
 
         elif "data" in user_input.lower():
-            response += "This relates to data structures. With my 0.95 mastery in this area, "
+            response += (
+                "This relates to data structures. With my 0.95 mastery in this area, "
+            )
             response += "I can recommend the optimal data structure and implementation approach.\n\n"
 
         else:
@@ -142,12 +199,14 @@ class MagiInterface:
         response += "Please provide more specific details about what you'd like me to help with, and I'll apply my specialized capabilities to give you the best possible guidance."
 
         # Store in conversation history
-        self.conversation_history.append({
-            "user": user_input,
-            "magi": response,
-            "capability_used": capability_name,
-            "capability_score": capability_score
-        })
+        self.conversation_history.append(
+            {
+                "user": user_input,
+                "magi": response,
+                "capability_used": capability_name,
+                "capability_score": capability_score,
+            }
+        )
 
         return response
 
@@ -163,20 +222,28 @@ class MagiInterface:
                 user_input = input("🗣️  YOU: ").strip()
 
                 if user_input.lower() in ["quit", "exit", "bye"]:
-                    print("\n🧙 MAGI: Thank you for using my specialized capabilities. Farewell!")
+                    print(
+                        "\n🧙 MAGI: Thank you for using my specialized capabilities. Farewell!"
+                    )
                     break
 
                 if user_input.lower() == "capabilities":
                     print("\n🧙 MAGI SPECIALIZATIONS:")
                     for cap, score in self.capabilities.items():
                         print(f"  {cap.replace('_', ' ').title()}: {score:.3f}")
-                    print(f"\nOverall Specialization Score: {self.specialization_score:.3f}")
+                    print(
+                        f"\nOverall Specialization Score: {self.specialization_score:.3f}"
+                    )
                     continue
 
                 if user_input.lower() == "history":
-                    print(f"\n📚 CONVERSATION HISTORY ({len(self.conversation_history)} exchanges):")
+                    print(
+                        f"\n📚 CONVERSATION HISTORY ({len(self.conversation_history)} exchanges):"
+                    )
                     for i, exchange in enumerate(self.conversation_history[-3:], 1):
-                        print(f"{i}. Used {exchange['capability_used']} ({exchange['capability_score']:.3f})")
+                        print(
+                            f"{i}. Used {exchange['capability_used']} ({exchange['capability_score']:.3f})"
+                        )
                     continue
 
                 if not user_input:
@@ -188,11 +255,14 @@ class MagiInterface:
                 print()
 
             except KeyboardInterrupt:
-                print("\n\n🧙 MAGI: Session terminated. My capabilities remain available!")
+                print(
+                    "\n\n🧙 MAGI: Session terminated. My capabilities remain available!"
+                )
                 break
             except Exception as e:
                 print(f"\n⚠️  Error: {e}")
                 continue
+
 
 def main():
     """Main function to start the Magi interface."""
@@ -207,6 +277,7 @@ def main():
 
     interface = MagiInterface()
     interface.run_interactive_session()
+
 
 if __name__ == "__main__":
     main()

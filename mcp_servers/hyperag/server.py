@@ -50,10 +50,12 @@ class HypeRAGMCPServer:
         await self._load_config()
 
         # Initialize permission manager
-        jwt_secret = self.config.get("auth", {}).get("jwt_secret", "dev-secret-change-in-production")
+        jwt_secret = self.config.get("auth", {}).get(
+            "jwt_secret", "dev-secret-change-in-production"
+        )
         self.permission_manager = PermissionManager(
             jwt_secret=jwt_secret,
-            enable_audit=self.config.get("audit", {}).get("enabled", True)
+            enable_audit=self.config.get("audit", {}).get("enabled", True),
         )
 
         # Initialize model registry
@@ -63,7 +65,7 @@ class HypeRAGMCPServer:
         self.protocol_handler = MCPProtocolHandler(
             permission_manager=self.permission_manager,
             model_registry=self.model_registry,
-            storage_backend=None  # TODO: Initialize storage backend
+            storage_backend=None,  # TODO: Initialize storage backend
         )
 
         # Set start time for metrics
@@ -80,7 +82,9 @@ class HypeRAGMCPServer:
                     self.config = yaml.safe_load(f) or {}
                 logger.info(f"Loaded configuration from {self.config_path}")
             else:
-                logger.warning(f"Configuration file {self.config_path} not found, using defaults")
+                logger.warning(
+                    f"Configuration file {self.config_path} not found, using defaults"
+                )
                 self.config = self._get_default_config()
         except Exception as e:
             logger.error(f"Failed to load configuration: {e!s}")
@@ -94,25 +98,19 @@ class HypeRAGMCPServer:
                 "port": 8765,
                 "max_connections": 100,
                 "ping_interval": 30,
-                "ping_timeout": 10
+                "ping_timeout": 10,
             },
             "auth": {
                 "jwt_secret": "dev-secret-change-in-production",
                 "api_keys_enabled": True,
-                "session_timeout_hours": 24
+                "session_timeout_hours": 24,
             },
-            "audit": {
-                "enabled": True,
-                "max_entries": 10000
-            },
-            "models": {
-                "default_agent_type": "default",
-                "warmup_on_start": True
-            },
+            "audit": {"enabled": True, "max_entries": 10000},
+            "models": {"default_agent_type": "default", "warmup_on_start": True},
             "logging": {
                 "level": "INFO",
-                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            }
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            },
         }
 
     async def start(self) -> None:
@@ -140,7 +138,7 @@ class HypeRAGMCPServer:
             ping_interval=self.config.get("server", {}).get("ping_interval", 30),
             ping_timeout=self.config.get("server", {}).get("ping_timeout", 10),
             max_size=1024 * 1024,  # 1MB max message size
-            compression=None
+            compression=None,
         )
 
         logger.info(f"HypeRAG MCP Server started on ws://{host}:{port}")
@@ -148,7 +146,9 @@ class HypeRAGMCPServer:
         # Wait for shutdown
         await self.shutdown_event.wait()
 
-    async def handle_connection(self, websocket: WebSocketServerProtocol, path: str) -> None:
+    async def handle_connection(
+        self, websocket: WebSocketServerProtocol, path: str
+    ) -> None:
         """Handle new WebSocket connection"""
         connection_id = f"conn_{int(time.time() * 1000)}_{id(websocket)}"
         self.active_connections[connection_id] = websocket
@@ -170,7 +170,9 @@ class HypeRAGMCPServer:
                 await self.permission_manager.invalidate_session(context.session_id)
                 del self.connection_contexts[connection_id]
 
-    async def _handle_client_session(self, connection_id: str, websocket: WebSocketServerProtocol) -> None:
+    async def _handle_client_session(
+        self, connection_id: str, websocket: WebSocketServerProtocol
+    ) -> None:
         """Handle client session"""
         context: AuthContext | None = None
 
@@ -181,7 +183,9 @@ class HypeRAGMCPServer:
 
                 # Validate JSON-RPC format
                 if not isinstance(data, dict) or data.get("jsonrpc") != "2.0":
-                    await self._send_error(websocket, "INVALID_REQUEST", "Invalid JSON-RPC format")
+                    await self._send_error(
+                        websocket, "INVALID_REQUEST", "Invalid JSON-RPC format"
+                    )
                     continue
 
                 method = data.get("method")
@@ -189,20 +193,33 @@ class HypeRAGMCPServer:
                 request_id = data.get("id")
 
                 if not method:
-                    await self._send_error(websocket, "INVALID_REQUEST", "Missing method", request_id)
+                    await self._send_error(
+                        websocket, "INVALID_REQUEST", "Missing method", request_id
+                    )
                     continue
 
                 # Create MCP request
-                request = MCPRequest(method=method, params=params, request_id=request_id)
+                request = MCPRequest(
+                    method=method, params=params, request_id=request_id
+                )
 
                 # Handle authentication
                 if not context and method != "hyperag/health":
-                    context = await self._authenticate_request(params, websocket.remote_address[0])
+                    context = await self._authenticate_request(
+                        params, websocket.remote_address[0]
+                    )
                     if context:
                         self.connection_contexts[connection_id] = context
-                        logger.info(f"Authenticated connection {connection_id} as {context.user_id}")
+                        logger.info(
+                            f"Authenticated connection {connection_id} as {context.user_id}"
+                        )
                     else:
-                        await self._send_error(websocket, "AUTH_REQUIRED", "Authentication required", request_id)
+                        await self._send_error(
+                            websocket,
+                            "AUTH_REQUIRED",
+                            "Authentication required",
+                            request_id,
+                        )
                         continue
 
                 # Handle request
@@ -215,9 +232,13 @@ class HypeRAGMCPServer:
                 await self._send_error(websocket, "PARSE_ERROR", "Invalid JSON")
             except Exception as e:
                 logger.error(f"Error processing message from {connection_id}: {e!s}")
-                await self._send_error(websocket, "INTERNAL_ERROR", f"Internal error: {e!s}")
+                await self._send_error(
+                    websocket, "INTERNAL_ERROR", f"Internal error: {e!s}"
+                )
 
-    async def _authenticate_request(self, params: dict[str, Any], ip_address: str) -> AuthContext | None:
+    async def _authenticate_request(
+        self, params: dict[str, Any], ip_address: str
+    ) -> AuthContext | None:
         """Authenticate a request"""
         try:
             # Check for JWT token
@@ -229,7 +250,9 @@ class HypeRAGMCPServer:
             # Check for API key
             api_key = params.get("api_key") or params.get("x-api-key", "")
             if api_key:
-                return await self.permission_manager.authenticate_api_key(api_key, ip_address)
+                return await self.permission_manager.authenticate_api_key(
+                    api_key, ip_address
+                )
 
             return None
 
@@ -242,16 +265,13 @@ class HypeRAGMCPServer:
         websocket: WebSocketServerProtocol,
         code: str,
         message: str,
-        request_id: str | None = None
+        request_id: str | None = None,
     ) -> None:
         """Send error response"""
         error_response = {
             "jsonrpc": "2.0",
-            "error": {
-                "code": code,
-                "message": message
-            },
-            "id": request_id
+            "error": {"code": code, "message": message},
+            "id": request_id,
         }
         await websocket.send(json.dumps(error_response))
 
@@ -284,8 +304,14 @@ class HypeRAGMCPServer:
 
     async def get_server_stats(self) -> dict[str, Any]:
         """Get server statistics"""
-        active_sessions = await self.permission_manager.get_active_sessions() if self.permission_manager else []
-        model_stats = self.model_registry.get_model_stats() if self.model_registry else {}
+        active_sessions = (
+            await self.permission_manager.get_active_sessions()
+            if self.permission_manager
+            else []
+        )
+        model_stats = (
+            self.model_registry.get_model_stats() if self.model_registry else {}
+        )
 
         return {
             "uptime_seconds": time.time() - self.start_time,
@@ -294,10 +320,16 @@ class HypeRAGMCPServer:
             "registered_models": len(model_stats),
             "config_loaded": bool(self.config),
             "components": {
-                "permission_manager": "initialized" if self.permission_manager else "not_initialized",
-                "model_registry": "initialized" if self.model_registry else "not_initialized",
-                "protocol_handler": "initialized" if self.protocol_handler else "not_initialized"
-            }
+                "permission_manager": "initialized"
+                if self.permission_manager
+                else "not_initialized",
+                "model_registry": "initialized"
+                if self.model_registry
+                else "not_initialized",
+                "protocol_handler": "initialized"
+                if self.protocol_handler
+                else "not_initialized",
+            },
         }
 
 
@@ -306,7 +338,7 @@ async def main():
     # Set up logging
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     # Create and start server

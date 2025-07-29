@@ -75,8 +75,12 @@ class Message:
     content: Any
     sender: str
     recipient: str
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    message_id: str = field(default_factory=lambda: str(datetime.now(timezone.utc).timestamp()))
+    timestamp: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
+    message_id: str = field(
+        default_factory=lambda: str(datetime.now(timezone.utc).timestamp())
+    )
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -100,7 +104,9 @@ class Message:
             sender=data["sender"],
             recipient=data["recipient"],
             timestamp=data.get("timestamp", datetime.now(timezone.utc).isoformat()),
-            message_id=data.get("message_id", str(datetime.now(timezone.utc).timestamp())),
+            message_id=data.get(
+                "message_id", str(datetime.now(timezone.utc).timestamp())
+            ),
             metadata=data.get("metadata", {}),
         )
 
@@ -207,9 +213,13 @@ class AIVillageException(Exception):
             "code": f"{self.category.value.upper()}_{self.severity.value.upper()}",
             "category": self.category.value.upper(),
             "severity": self.severity.value.upper(),
-            "timestamp": self.context.timestamp if self.context else datetime.now(timezone.utc).isoformat(),
+            "timestamp": self.context.timestamp
+            if self.context
+            else datetime.now(timezone.utc).isoformat(),
             "context": self.context.__dict__ if self.context else None,
-            "original_exception": str(self.original_exception) if self.original_exception else None,
+            "original_exception": str(self.original_exception)
+            if self.original_exception
+            else None,
         }
 
 

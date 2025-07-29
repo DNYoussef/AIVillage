@@ -26,9 +26,7 @@ class NamedEntityRecognizer:
             logger.debug("spaCy model loaded for NER")
         except Exception:  # pragma: no cover - best effort to load spaCy
             self._nlp = None
-            logger.warning(
-                "spaCy model not available; falling back to regex based NER"
-            )
+            logger.warning("spaCy model not available; falling back to regex based NER")
 
         # Regex matches sequences of capitalised words as a naive entity
         self._regex = re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b")
@@ -54,10 +52,7 @@ class NamedEntityRecognizer:
         # Use spaCy when available for more robust entity extraction
         if self._nlp is not None:
             doc = self._nlp(text)
-            return [
-                {"text": ent.text, "label": ent.label_}
-                for ent in doc.ents
-            ]
+            return [{"text": ent.text, "label": ent.label_} for ent in doc.ents]
 
         # Fallback regex based entity recognition
         entities = []

@@ -13,9 +13,9 @@ import wandb
 
 logger = logging.getLogger(__name__)
 
+
 class ResponseMetrics:
-    """Comprehensive response time and performance metrics tracking
-    """
+    """Comprehensive response time and performance metrics tracking"""
 
     def __init__(self):
         # Response time tracking
@@ -25,23 +25,27 @@ class ResponseMetrics:
 
         # Performance targets
         self.target_response_time = 5.0  # seconds
-        self.warning_threshold = 4.0    # seconds
+        self.warning_threshold = 4.0  # seconds
         self.excellent_threshold = 2.0  # seconds
 
         # Language-specific metrics
-        self.language_metrics = defaultdict(lambda: {
-            "response_times": deque(maxlen=100),
-            "success_rate": 0.0,
-            "total_requests": 0,
-            "avg_response_time": 0.0
-        })
+        self.language_metrics = defaultdict(
+            lambda: {
+                "response_times": deque(maxlen=100),
+                "success_rate": 0.0,
+                "total_requests": 0,
+                "avg_response_time": 0.0,
+            }
+        )
 
         # Subject-specific metrics
-        self.subject_metrics = defaultdict(lambda: {
-            "response_times": deque(maxlen=100),
-            "complexity_scores": deque(maxlen=100),
-            "satisfaction_scores": deque(maxlen=100)
-        })
+        self.subject_metrics = defaultdict(
+            lambda: {
+                "response_times": deque(maxlen=100),
+                "complexity_scores": deque(maxlen=100),
+                "satisfaction_scores": deque(maxlen=100),
+            }
+        )
 
         # Error tracking
         self.error_counts = defaultdict(int)
@@ -64,25 +68,25 @@ class ResponseMetrics:
                 {
                     "title": "Response Time Distribution",
                     "type": "histogram",
-                    "data": "response_time"
+                    "data": "response_time",
                 },
                 {
                     "title": "Performance Target Achievement",
                     "type": "line",
-                    "data": ["target_met_rate", "warning_rate", "excellent_rate"]
+                    "data": ["target_met_rate", "warning_rate", "excellent_rate"],
                 },
                 {
                     "title": "Language Performance",
                     "type": "bar",
-                    "data": "language_avg_time"
+                    "data": "language_avg_time",
                 },
                 {
                     "title": "Error Rates",
                     "type": "pie",
-                    "data": ["success_rate", "timeout_rate", "error_rate"]
-                }
+                    "data": ["success_rate", "timeout_rate", "error_rate"],
+                },
             ],
-            "refresh_interval": 30  # seconds
+            "refresh_interval": 30,  # seconds
         }
 
         wandb.config.update({"dashboard_config": dashboard_config})
@@ -112,7 +116,9 @@ class ResponseMetrics:
             lang_metrics["total_requests"] += 1
 
             if lang_metrics["response_times"]:
-                lang_metrics["avg_response_time"] = statistics.mean(lang_metrics["response_times"])
+                lang_metrics["avg_response_time"] = statistics.mean(
+                    lang_metrics["response_times"]
+                )
 
             # Track fallback usage
             if is_fallback:
@@ -127,7 +133,9 @@ class ResponseMetrics:
         except Exception as e:
             logger.error(f"Error updating metrics: {e}")
 
-    async def check_performance_alerts(self, response_time: float, language: str, session_id: str):
+    async def check_performance_alerts(
+        self, response_time: float, language: str, session_id: str
+    ):
         """Check for performance issues and generate alerts"""
         current_time = time.time()
 
@@ -135,15 +143,17 @@ class ResponseMetrics:
         if response_time > self.target_response_time:
             alert_type = "response_time_exceeded"
             if self.should_send_alert(alert_type, current_time):
-                await self.send_alert({
-                    "type": alert_type,
-                    "severity": "high" if response_time > 8.0 else "medium",
-                    "response_time": response_time,
-                    "target": self.target_response_time,
-                    "language": language,
-                    "session_id": session_id,
-                    "timestamp": datetime.now().isoformat()
-                })
+                await self.send_alert(
+                    {
+                        "type": alert_type,
+                        "severity": "high" if response_time > 8.0 else "medium",
+                        "response_time": response_time,
+                        "target": self.target_response_time,
+                        "language": language,
+                        "session_id": session_id,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
         # Check recent performance trends
         if len(self.response_times) >= 10:
@@ -151,14 +161,16 @@ class ResponseMetrics:
             if recent_avg > self.warning_threshold:
                 alert_type = "performance_degradation"
                 if self.should_send_alert(alert_type, current_time):
-                    await self.send_alert({
-                        "type": alert_type,
-                        "severity": "medium",
-                        "recent_avg": recent_avg,
-                        "threshold": self.warning_threshold,
-                        "sample_size": 10,
-                        "timestamp": datetime.now().isoformat()
-                    })
+                    await self.send_alert(
+                        {
+                            "type": alert_type,
+                            "severity": "medium",
+                            "recent_avg": recent_avg,
+                            "threshold": self.warning_threshold,
+                            "sample_size": 10,
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    )
 
         # Check error rate alerts
         total_requests = len(self.response_times)
@@ -167,14 +179,16 @@ class ResponseMetrics:
             if error_rate > 0.1:  # 10% error rate
                 alert_type = "high_error_rate"
                 if self.should_send_alert(alert_type, current_time):
-                    await self.send_alert({
-                        "type": alert_type,
-                        "severity": "high",
-                        "error_rate": error_rate,
-                        "total_requests": total_requests,
-                        "errors": dict(self.error_counts),
-                        "timestamp": datetime.now().isoformat()
-                    })
+                    await self.send_alert(
+                        {
+                            "type": alert_type,
+                            "severity": "high",
+                            "error_rate": error_rate,
+                            "total_requests": total_requests,
+                            "errors": dict(self.error_counts),
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    )
 
     def should_send_alert(self, alert_type: str, current_time: float) -> bool:
         """Check if alert should be sent (respects cooldown)"""
@@ -208,28 +222,41 @@ class ResponseMetrics:
                 "performance_level": self.get_performance_level(response_time),
                 "language": metrics_data.get("language", "en"),
                 "session_id": metrics_data.get("session_id", ""),
-                "is_fallback": metrics_data.get("is_fallback", False)
+                "is_fallback": metrics_data.get("is_fallback", False),
             }
 
             # Add aggregate metrics if we have enough data
             if len(self.response_times) >= 10:
                 recent_times = list(self.response_times)[-10:]
-                performance_data.update({
-                    "avg_response_time_10": statistics.mean(recent_times),
-                    "median_response_time_10": statistics.median(recent_times),
-                    "p95_response_time_10": self.percentile(recent_times, 95),
-                    "target_achievement_rate_10": sum(1 for t in recent_times if t < self.target_response_time) / len(recent_times)
-                })
+                performance_data.update(
+                    {
+                        "avg_response_time_10": statistics.mean(recent_times),
+                        "median_response_time_10": statistics.median(recent_times),
+                        "p95_response_time_10": self.percentile(recent_times, 95),
+                        "target_achievement_rate_10": sum(
+                            1 for t in recent_times if t < self.target_response_time
+                        )
+                        / len(recent_times),
+                    }
+                )
 
             # Add hourly performance if available
             current_hour = datetime.now().strftime("%Y-%m-%d-%H")
-            if current_hour in self.hourly_metrics and len(self.hourly_metrics[current_hour]) >= 5:
+            if (
+                current_hour in self.hourly_metrics
+                and len(self.hourly_metrics[current_hour]) >= 5
+            ):
                 hourly_times = self.hourly_metrics[current_hour]
-                performance_data.update({
-                    "hourly_avg_response_time": statistics.mean(hourly_times),
-                    "hourly_target_achievement": sum(1 for t in hourly_times if t < self.target_response_time) / len(hourly_times),
-                    "hourly_request_count": len(hourly_times)
-                })
+                performance_data.update(
+                    {
+                        "hourly_avg_response_time": statistics.mean(hourly_times),
+                        "hourly_target_achievement": sum(
+                            1 for t in hourly_times if t < self.target_response_time
+                        )
+                        / len(hourly_times),
+                        "hourly_request_count": len(hourly_times),
+                    }
+                )
 
             # Log to W&B
             wandb.log(performance_data)
@@ -260,7 +287,9 @@ class ResponseMetrics:
         lower_index = int(index)
         upper_index = lower_index + 1
         weight = index - lower_index
-        return sorted_data[lower_index] * (1 - weight) + sorted_data[upper_index] * weight
+        return (
+            sorted_data[lower_index] * (1 - weight) + sorted_data[upper_index] * weight
+        )
 
     async def get_summary(self) -> dict[str, Any]:
         """Get comprehensive performance summary"""
@@ -268,7 +297,7 @@ class ResponseMetrics:
             if not self.response_times:
                 return {
                     "status": "no_data",
-                    "message": "No response time data available yet"
+                    "message": "No response time data available yet",
                 }
 
             recent_times = list(self.response_times)
@@ -283,41 +312,54 @@ class ResponseMetrics:
                     "max_response_time": max(recent_times),
                     "p95_response_time": self.percentile(recent_times, 95),
                     "p99_response_time": self.percentile(recent_times, 99),
-                    "target_achievement_rate": sum(1 for t in recent_times if t < self.target_response_time) / len(recent_times),
-                    "excellent_rate": sum(1 for t in recent_times if t <= self.excellent_threshold) / len(recent_times),
-                    "warning_rate": sum(1 for t in recent_times if t > self.warning_threshold) / len(recent_times)
+                    "target_achievement_rate": sum(
+                        1 for t in recent_times if t < self.target_response_time
+                    )
+                    / len(recent_times),
+                    "excellent_rate": sum(
+                        1 for t in recent_times if t <= self.excellent_threshold
+                    )
+                    / len(recent_times),
+                    "warning_rate": sum(
+                        1 for t in recent_times if t > self.warning_threshold
+                    )
+                    / len(recent_times),
                 },
-
                 # Performance targets
                 "targets": {
                     "target_response_time": self.target_response_time,
                     "warning_threshold": self.warning_threshold,
-                    "excellent_threshold": self.excellent_threshold
+                    "excellent_threshold": self.excellent_threshold,
                 },
-
                 # Language breakdown
                 "language_performance": {},
-
                 # Recent hourly performance
                 "hourly_performance": {},
-
                 # Error summary
                 "error_summary": {
                     "total_errors": sum(self.error_counts.values()),
                     "error_breakdown": dict(self.error_counts),
                     "timeout_count": self.timeout_count,
                     "fallback_usage": self.fallback_usage,
-                    "error_rate": sum(self.error_counts.values()) / len(recent_times) if recent_times else 0
+                    "error_rate": sum(self.error_counts.values()) / len(recent_times)
+                    if recent_times
+                    else 0,
                 },
-
                 # Alert summary
                 "alerts": {
-                    "recent_alerts": len([a for a in self.alert_history if
-                                         datetime.fromisoformat(a["timestamp"]) > datetime.now() - timedelta(hours=24)]),
-                    "total_alert_types": len(set(a["type"] for a in self.alert_history))
+                    "recent_alerts": len(
+                        [
+                            a
+                            for a in self.alert_history
+                            if datetime.fromisoformat(a["timestamp"])
+                            > datetime.now() - timedelta(hours=24)
+                        ]
+                    ),
+                    "total_alert_types": len(
+                        set(a["type"] for a in self.alert_history)
+                    ),
                 },
-
-                "last_updated": datetime.now().isoformat()
+                "last_updated": datetime.now().isoformat(),
             }
 
             # Add language-specific metrics
@@ -326,7 +368,12 @@ class ResponseMetrics:
                     summary["language_performance"][language] = {
                         "avg_response_time": statistics.mean(metrics["response_times"]),
                         "total_requests": metrics["total_requests"],
-                        "target_achievement_rate": sum(1 for t in metrics["response_times"] if t < self.target_response_time) / len(metrics["response_times"])
+                        "target_achievement_rate": sum(
+                            1
+                            for t in metrics["response_times"]
+                            if t < self.target_response_time
+                        )
+                        / len(metrics["response_times"]),
                     }
 
             # Add recent hourly performance
@@ -338,7 +385,10 @@ class ResponseMetrics:
                     summary["hourly_performance"][hour_key] = {
                         "request_count": len(hourly_data),
                         "avg_response_time": statistics.mean(hourly_data),
-                        "target_achievement_rate": sum(1 for t in hourly_data if t < self.target_response_time) / len(hourly_data)
+                        "target_achievement_rate": sum(
+                            1 for t in hourly_data if t < self.target_response_time
+                        )
+                        / len(hourly_data),
                     }
 
             return summary
@@ -352,14 +402,16 @@ class ResponseMetrics:
         self.error_counts[error_type] += 1
 
         # Log error to W&B
-        wandb.log({
-            "error_occurrence": {
-                "error_type": error_type,
-                "session_id": session_id,
-                "timestamp": datetime.now().isoformat(),
-                "total_count": self.error_counts[error_type]
+        wandb.log(
+            {
+                "error_occurrence": {
+                    "error_type": error_type,
+                    "session_id": session_id,
+                    "timestamp": datetime.now().isoformat(),
+                    "total_count": self.error_counts[error_type],
+                }
             }
-        })
+        )
 
     def record_timeout(self, session_id: str = None):
         """Record a timeout occurrence"""
@@ -380,34 +432,42 @@ class ResponseMetrics:
 
         report = f"""
 📊 **WhatsApp Wave Bridge Performance Report**
-Generated: {summary['last_updated']}
+Generated: {summary["last_updated"]}
 
 🎯 **Overall Performance**
-• Total Requests: {overall['total_requests']:,}
-• Average Response Time: {overall['avg_response_time']:.2f}s
-• Target Achievement: {overall['target_achievement_rate']:.1%}
-• Excellent Performance: {overall['excellent_rate']:.1%}
+• Total Requests: {overall["total_requests"]:,}
+• Average Response Time: {overall["avg_response_time"]:.2f}s
+• Target Achievement: {overall["target_achievement_rate"]:.1%}
+• Excellent Performance: {overall["excellent_rate"]:.1%}
 
 ⚡ **Response Time Breakdown**
-• Median: {overall['median_response_time']:.2f}s
-• 95th Percentile: {overall['p95_response_time']:.2f}s
-• 99th Percentile: {overall['p99_response_time']:.2f}s
-• Range: {overall['min_response_time']:.2f}s - {overall['max_response_time']:.2f}s
+• Median: {overall["median_response_time"]:.2f}s
+• 95th Percentile: {overall["p95_response_time"]:.2f}s
+• 99th Percentile: {overall["p99_response_time"]:.2f}s
+• Range: {overall["min_response_time"]:.2f}s - {overall["max_response_time"]:.2f}s
 
 🌍 **Language Performance**
 """
 
         for lang, perf in summary["language_performance"].items():
-            lang_name = {"en": "English", "es": "Spanish", "hi": "Hindi", "sw": "Swahili", "ar": "Arabic", "pt": "Portuguese", "fr": "French"}.get(lang, lang)
+            lang_name = {
+                "en": "English",
+                "es": "Spanish",
+                "hi": "Hindi",
+                "sw": "Swahili",
+                "ar": "Arabic",
+                "pt": "Portuguese",
+                "fr": "French",
+            }.get(lang, lang)
             report += f"• {lang_name}: {perf['avg_response_time']:.2f}s avg ({perf['total_requests']} requests)\n"
 
         error_summary = summary["error_summary"]
         report += f"""
 🚨 **Error Summary**
-• Total Errors: {error_summary['total_errors']}
-• Error Rate: {error_summary['error_rate']:.1%}
-• Timeouts: {error_summary['timeout_count']}
-• Fallback Usage: {error_summary['fallback_usage']}
+• Total Errors: {error_summary["total_errors"]}
+• Error Rate: {error_summary["error_rate"]:.1%}
+• Timeouts: {error_summary["timeout_count"]}
+• Fallback Usage: {error_summary["fallback_usage"]}
 
 📈 **Performance Status**
 """
@@ -422,6 +482,7 @@ Generated: {summary['last_updated']}
             report += "🔴 **CRITICAL** - Consistently missing response time targets"
 
         return report
+
 
 # Global metrics instance
 metrics = ResponseMetrics()

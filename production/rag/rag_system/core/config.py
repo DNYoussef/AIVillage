@@ -48,10 +48,12 @@ class UnifiedConfig(BaseModel):
             return getattr(self, key)
         return self.extra_params.get(key, default)
 
+
 class RAGConfig(UnifiedConfig):
     # Add RAG-specific configuration parameters here
     num_documents: int = 5
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
 
 # You can add more specific config classes as needed
 

@@ -15,5 +15,5 @@ __all__ = [
     "HybridRetriever",
     "ImportanceFlow",
     "PPRResults",
-    "PersonalizedPageRank"
+    "PersonalizedPageRank",
 ]

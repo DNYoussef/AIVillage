@@ -23,6 +23,7 @@ class TestMemoryManager:
         """Test that memory manager can be imported."""
         try:
             from production.memory.memory_manager import MemoryManager
+
             assert MemoryManager is not None
         except ImportError:
             pytest.skip("MemoryManager not available")
@@ -40,7 +41,7 @@ class TestMemoryManager:
         """Test memory limit concepts."""
         # Test memory limit checking
         current_memory = psutil.virtual_memory().used / (1024**3)  # GB
-        total_memory = psutil.virtual_memory().total / (1024**3)   # GB
+        total_memory = psutil.virtual_memory().total / (1024**3)  # GB
 
         memory_limit = 2.0  # 2GB limit
 
@@ -57,6 +58,7 @@ class TestWandbManager:
         """Test that wandb manager can be imported."""
         try:
             from production.memory.wandb_manager import WandbManager
+
             assert WandbManager is not None
         except ImportError:
             pytest.skip("WandbManager not available")
@@ -68,11 +70,7 @@ class TestWandbManager:
         mock_wandb_init.return_value = Mock()
 
         # Test initialization parameters
-        config = {
-            "project": "agent-forge",
-            "entity": "ai-village",
-            "name": "test-run"
-        }
+        config = {"project": "agent-forge", "entity": "ai-village", "name": "test-run"}
 
         # In real implementation, would initialize wandb
         # wandb.init(**config)
@@ -83,11 +81,7 @@ class TestWandbManager:
     def test_logging_concept(self):
         """Test logging concept."""
         # Mock metrics logging
-        metrics = {
-            "loss": 0.1,
-            "accuracy": 0.95,
-            "epoch": 1
-        }
+        metrics = {"loss": 0.1, "accuracy": 0.95, "epoch": 1}
 
         # Test that metrics are properly formatted
         assert all(isinstance(k, str) for k in metrics)
@@ -113,6 +107,7 @@ class TestResourceMonitoring:
         """Test GPU availability detection."""
         try:
             import torch
+
             gpu_available = torch.cuda.is_available()
             if gpu_available:
                 gpu_count = torch.cuda.device_count()

@@ -39,7 +39,7 @@ class SemanticNode(Node):
             content=content,
             node_type=node_type,
             memory_type=MemoryType.SEMANTIC,
-            **kwargs
+            **kwargs,
         )
         # Semantic-specific defaults
         if self.confidence == 1.0:  # Base class default
@@ -71,23 +71,27 @@ class Hyperedge(Edge):
             relation=relation,
             participants=participants.copy(),
             memory_type=MemoryType.SEMANTIC,
-            **kwargs
+            **kwargs,
         )
 
         # Hypergraph-specific properties
         self.hyperedge_type: str = "n-ary" if len(participants) > 2 else "binary"
         self.semantic_role: str | None = None  # Subject, predicate, object, etc.
-        self.consolidation_source: list[str] = []  # IDs of episodic edges that formed this
+        self.consolidation_source: list[
+            str
+        ] = []  # IDs of episodic edges that formed this
 
 
 class Subgraph:
     """A connected subgraph for retrieval and reasoning"""
 
-    def __init__(self,
-                 nodes: list[SemanticNode],
-                 edges: list[Hyperedge],
-                 center_node_id: str | None = None,
-                 confidence: float = 1.0):
+    def __init__(
+        self,
+        nodes: list[SemanticNode],
+        edges: list[Hyperedge],
+        center_node_id: str | None = None,
+        confidence: float = 1.0,
+    ):
         self.id = str(uuid.uuid4())
         self.nodes = nodes
         self.edges = edges
@@ -147,13 +151,15 @@ class HypergraphKG(MemoryBackend):
     - Redis for caching
     """
 
-    def __init__(self,
-                 neo4j_uri: str = "bolt://localhost:7687",
-                 neo4j_user: str = "neo4j",
-                 neo4j_password: str = "password",
-                 qdrant_url: str = "http://localhost:6333",
-                 redis_url: str = "redis://localhost:6379",
-                 embedding_dim: int = 768):
+    def __init__(
+        self,
+        neo4j_uri: str = "bolt://localhost:7687",
+        neo4j_user: str = "neo4j",
+        neo4j_password: str = "password",
+        qdrant_url: str = "http://localhost:6333",
+        redis_url: str = "redis://localhost:6379",
+        embedding_dim: int = 768,
+    ):
         self.neo4j_uri = neo4j_uri
         self.neo4j_user = neo4j_user
         self.neo4j_password = neo4j_password
@@ -182,8 +188,7 @@ class HypergraphKG(MemoryBackend):
         try:
             # Initialize Neo4j
             self.neo4j_driver = AsyncGraphDatabase.driver(
-                self.neo4j_uri,
-                auth=(self.neo4j_user, self.neo4j_password)
+                self.neo4j_uri, auth=(self.neo4j_user, self.neo4j_password)
             )
             await self._setup_neo4j_schema()
 
@@ -246,7 +251,9 @@ class HypergraphKG(MemoryBackend):
 
         return health
 
-    async def store_semantic_node(self, node: SemanticNode, generate_embedding: bool = True) -> bool:
+    async def store_semantic_node(
+        self, node: SemanticNode, generate_embedding: bool = True
+    ) -> bool:
         """Store a semantic node in the knowledge graph"""
         try:
             # Generate embedding if needed
@@ -255,7 +262,8 @@ class HypergraphKG(MemoryBackend):
 
             # Store in Neo4j
             async with self.neo4j_driver.session() as session:
-                await session.run("""
+                await session.run(
+                    """
                     MERGE (n:SemanticNode {id: $id})
                     SET n.content = $content,
                         n.node_type = $node_type,
@@ -270,22 +278,24 @@ class HypergraphKG(MemoryBackend):
                         n.pagerank_score = $pagerank_score,
                         n.consolidation_count = $consolidation_count,
                         n.metadata = $metadata
-                """, {
-                    "id": node.id,
-                    "content": node.content,
-                    "node_type": node.node_type,
-                    "confidence": node.confidence,
-                    "created_at": node.created_at.isoformat(),
-                    "importance_score": node.importance_score,
-                    "popularity_rank": node.popularity_rank,
-                    "gdc_flags": node.gdc_flags,
-                    "uncertainty": node.uncertainty,
-                    "user_id": node.user_id,
-                    "community_id": getattr(node, "community_id", None),
-                    "pagerank_score": getattr(node, "pagerank_score", 0.0),
-                    "consolidation_count": getattr(node, "consolidation_count", 0),
-                    "metadata": json.dumps(node.metadata)
-                })
+                """,
+                    {
+                        "id": node.id,
+                        "content": node.content,
+                        "node_type": node.node_type,
+                        "confidence": node.confidence,
+                        "created_at": node.created_at.isoformat(),
+                        "importance_score": node.importance_score,
+                        "popularity_rank": node.popularity_rank,
+                        "gdc_flags": node.gdc_flags,
+                        "uncertainty": node.uncertainty,
+                        "user_id": node.user_id,
+                        "community_id": getattr(node, "community_id", None),
+                        "pagerank_score": getattr(node, "pagerank_score", 0.0),
+                        "consolidation_count": getattr(node, "consolidation_count", 0),
+                        "metadata": json.dumps(node.metadata),
+                    },
+                )
 
             # Store embedding in Qdrant
             if node.embedding is not None:
@@ -299,13 +309,12 @@ class HypergraphKG(MemoryBackend):
                         "created_at": node.created_at.isoformat(),
                         "node_type": node.node_type,
                         "popularity_rank": node.popularity_rank,
-                        "community_id": getattr(node, "community_id", None)
-                    }
+                        "community_id": getattr(node, "community_id", None),
+                    },
                 )
 
                 self.qdrant_client.upsert(
-                    collection_name="semantic_embeddings",
-                    points=[point]
+                    collection_name="semantic_embeddings", points=[point]
                 )
 
             # Cache in Redis
@@ -323,7 +332,8 @@ class HypergraphKG(MemoryBackend):
         try:
             async with self.neo4j_driver.session() as session:
                 # Create the hyperedge node
-                await session.run("""
+                await session.run(
+                    """
                     MERGE (h:Hyperedge {id: $id})
                     SET h.relation = $relation,
                         h.confidence = $confidence,
@@ -339,40 +349,49 @@ class HypergraphKG(MemoryBackend):
                         h.semantic_role = $semantic_role,
                         h.consolidation_source = $consolidation_source,
                         h.metadata = $metadata
-                """, {
-                    "id": hyperedge.id,
-                    "relation": hyperedge.relation,
-                    "confidence": hyperedge.confidence,
-                    "created_at": hyperedge.created_at.isoformat(),
-                    "participants": hyperedge.participants,
-                    "popularity_rank": hyperedge.popularity_rank,
-                    "evidence_count": hyperedge.evidence_count,
-                    "gdc_flags": hyperedge.gdc_flags,
-                    "uncertainty": hyperedge.uncertainty,
-                    "alpha_weight": hyperedge.alpha_weight,
-                    "user_id": hyperedge.user_id,
-                    "hyperedge_type": getattr(hyperedge, "hyperedge_type", "binary"),
-                    "semantic_role": getattr(hyperedge, "semantic_role", None),
-                    "consolidation_source": getattr(hyperedge, "consolidation_source", []),
-                    "metadata": json.dumps(hyperedge.metadata)
-                })
+                """,
+                    {
+                        "id": hyperedge.id,
+                        "relation": hyperedge.relation,
+                        "confidence": hyperedge.confidence,
+                        "created_at": hyperedge.created_at.isoformat(),
+                        "participants": hyperedge.participants,
+                        "popularity_rank": hyperedge.popularity_rank,
+                        "evidence_count": hyperedge.evidence_count,
+                        "gdc_flags": hyperedge.gdc_flags,
+                        "uncertainty": hyperedge.uncertainty,
+                        "alpha_weight": hyperedge.alpha_weight,
+                        "user_id": hyperedge.user_id,
+                        "hyperedge_type": getattr(
+                            hyperedge, "hyperedge_type", "binary"
+                        ),
+                        "semantic_role": getattr(hyperedge, "semantic_role", None),
+                        "consolidation_source": getattr(
+                            hyperedge, "consolidation_source", []
+                        ),
+                        "metadata": json.dumps(hyperedge.metadata),
+                    },
+                )
 
                 # Connect all participants to the hyperedge
                 for i, participant_id in enumerate(hyperedge.participants):
-                    await session.run("""
+                    await session.run(
+                        """
                         MATCH (n:SemanticNode {id: $participant_id})
                         MATCH (h:Hyperedge {id: $hyperedge_id})
                         MERGE (n)-[r:PARTICIPATES]->(h)
                         SET r.role = $role,
                             r.confidence = $confidence,
                             r.position = $position
-                    """, {
-                        "participant_id": participant_id,
-                        "hyperedge_id": hyperedge.id,
-                        "role": "participant",
-                        "confidence": hyperedge.confidence,
-                        "position": i
-                    })
+                    """,
+                        {
+                            "participant_id": participant_id,
+                            "hyperedge_id": hyperedge.id,
+                            "role": "participant",
+                            "confidence": hyperedge.confidence,
+                            "position": i,
+                        },
+                    )
 
             # Cache the hyperedge
             await self._cache_hyperedge(hyperedge)
@@ -384,12 +403,14 @@ class HypergraphKG(MemoryBackend):
             logger.error(f"Failed to store hyperedge {hyperedge.id}: {e!s}")
             return False
 
-    async def personalized_pagerank(self,
-                                   start_nodes: list[str],
-                                   user_id: str | None = None,
-                                   alpha: float = 0.15,
-                                   max_iterations: int = 50,
-                                   tolerance: float = 1e-6) -> dict[str, float]:
+    async def personalized_pagerank(
+        self,
+        start_nodes: list[str],
+        user_id: str | None = None,
+        alpha: float = 0.15,
+        max_iterations: int = 50,
+        tolerance: float = 1e-6,
+    ) -> dict[str, float]:
         """Compute Personalized PageRank from start nodes
 
         Args:
@@ -407,10 +428,13 @@ class HypergraphKG(MemoryBackend):
                 # Get user's α-profile for relation weighting
                 alpha_profile = {}
                 if user_id:
-                    alpha_result = await session.run("""
+                    alpha_result = await session.run(
+                        """
                         MATCH (u:User {id: $user_id})
                         RETURN u.alpha_profile as profile
-                    """, {"user_id": user_id})
+                    """,
+                        {"user_id": user_id},
+                    )
                     record = await alpha_result.single()
                     if record and record["profile"]:
                         alpha_profile = record["profile"]
@@ -437,27 +461,37 @@ class HypergraphKG(MemoryBackend):
                     node_id = record["node_id"]
                     edges = record["edges"] or []
 
-                    nodes[node_id] = 1.0 / len(start_nodes) if node_id in start_nodes else 0.0
+                    nodes[node_id] = (
+                        1.0 / len(start_nodes) if node_id in start_nodes else 0.0
+                    )
                     adjacency[node_id] = []
 
                     for edge in edges:
                         if edge["target"]:
                             # Apply user's α-profile weighting
                             relation_weight = alpha_profile.get(edge["relation"], 1.0)
-                            edge_weight = edge["confidence"] * edge["alpha_weight"] * relation_weight
+                            edge_weight = (
+                                edge["confidence"]
+                                * edge["alpha_weight"]
+                                * relation_weight
+                            )
                             adjacency[node_id].append((edge["target"], edge_weight))
 
                 # Normalize adjacency weights
                 for node_id in adjacency:
                     total_weight = sum(weight for _, weight in adjacency[node_id])
                     if total_weight > 0:
-                        adjacency[node_id] = [(target, weight/total_weight)
-                                            for target, weight in adjacency[node_id]]
+                        adjacency[node_id] = [
+                            (target, weight / total_weight)
+                            for target, weight in adjacency[node_id]
+                        ]
 
                 # Initialize PageRank scores
-                current_scores = {node_id: 1.0/len(nodes) for node_id in nodes}
-                personalization = {node_id: 1.0/len(start_nodes) if node_id in start_nodes else 0.0
-                                 for node_id in nodes}
+                current_scores = {node_id: 1.0 / len(nodes) for node_id in nodes}
+                personalization = {
+                    node_id: 1.0 / len(start_nodes) if node_id in start_nodes else 0.0
+                    for node_id in nodes
+                }
 
                 # Iterative computation
                 for iteration in range(max_iterations):
@@ -471,13 +505,17 @@ class HypergraphKG(MemoryBackend):
                         for source_id, edges in adjacency.items():
                             for target_id, weight in edges:
                                 if target_id == node_id:
-                                    score += (1 - alpha) * current_scores[source_id] * weight
+                                    score += (
+                                        (1 - alpha) * current_scores[source_id] * weight
+                                    )
 
                         new_scores[node_id] = score
 
                     # Check convergence
-                    max_diff = max(abs(new_scores[node_id] - current_scores[node_id])
-                                 for node_id in nodes)
+                    max_diff = max(
+                        abs(new_scores[node_id] - current_scores[node_id])
+                        for node_id in nodes
+                    )
 
                     current_scores = new_scores
 
@@ -491,11 +529,13 @@ class HypergraphKG(MemoryBackend):
             logger.error(f"Failed to compute Personalized PageRank: {e!s}")
             return {}
 
-    async def query_subgraph(self,
-                            center_nodes: list[str],
-                            max_depth: int = 2,
-                            min_confidence: float = 0.5,
-                            max_nodes: int = 50) -> Subgraph | None:
+    async def query_subgraph(
+        self,
+        center_nodes: list[str],
+        max_depth: int = 2,
+        min_confidence: float = 0.5,
+        max_nodes: int = 50,
+    ) -> Subgraph | None:
         """Extract a subgraph around center nodes for reasoning
 
         Args:
@@ -510,7 +550,8 @@ class HypergraphKG(MemoryBackend):
         try:
             async with self.neo4j_driver.session() as session:
                 # Extract subgraph using Cypher
-                subgraph_result = await session.run("""
+                subgraph_result = await session.run(
+                    """
                     MATCH (center:SemanticNode)
                     WHERE center.id IN $center_nodes
 
@@ -554,12 +595,14 @@ class HypergraphKG(MemoryBackend):
                             hyperedge_type: h.hyperedge_type,
                             metadata: h.metadata
                         }) as edges
-                """, {
-                    "center_nodes": center_nodes,
-                    "max_depth": max_depth,
-                    "min_confidence": min_confidence,
-                    "max_nodes": max_nodes
-                })
+                """,
+                    {
+                        "center_nodes": center_nodes,
+                        "max_depth": max_depth,
+                        "min_confidence": min_confidence,
+                        "max_nodes": max_nodes,
+                    },
+                )
 
                 record = await subgraph_result.single()
                 if not record:
@@ -569,8 +612,7 @@ class HypergraphKG(MemoryBackend):
                 nodes = []
                 for node_data in record["nodes"]:
                     node = SemanticNode(
-                        content=node_data["content"],
-                        node_type=node_data["node_type"]
+                        content=node_data["content"], node_type=node_data["node_type"]
                     )
                     node.id = node_data["id"]
                     node.confidence = node_data["confidence"]
@@ -579,14 +621,18 @@ class HypergraphKG(MemoryBackend):
                     node.popularity_rank = node_data["popularity_rank"]
                     node.community_id = node_data.get("community_id")
                     node.pagerank_score = node_data.get("pagerank_score", 0.0)
-                    node.metadata = json.loads(node_data["metadata"]) if node_data["metadata"] else {}
+                    node.metadata = (
+                        json.loads(node_data["metadata"])
+                        if node_data["metadata"]
+                        else {}
+                    )
                     nodes.append(node)
 
                 edges = []
                 for edge_data in record["edges"]:
                     edge = Hyperedge(
                         participants=edge_data["participants"],
-                        relation=edge_data["relation"]
+                        relation=edge_data["relation"],
                     )
                     edge.id = edge_data["id"]
                     edge.confidence = edge_data["confidence"]
@@ -594,18 +640,24 @@ class HypergraphKG(MemoryBackend):
                     edge.popularity_rank = edge_data["popularity_rank"]
                     edge.evidence_count = edge_data["evidence_count"]
                     edge.hyperedge_type = edge_data.get("hyperedge_type", "binary")
-                    edge.metadata = json.loads(edge_data["metadata"]) if edge_data["metadata"] else {}
+                    edge.metadata = (
+                        json.loads(edge_data["metadata"])
+                        if edge_data["metadata"]
+                        else {}
+                    )
                     edges.append(edge)
 
                 # Create subgraph
                 center_node_id = center_nodes[0] if center_nodes else None
-                avg_confidence = np.mean([e.confidence for e in edges]) if edges else 0.0
+                avg_confidence = (
+                    np.mean([e.confidence for e in edges]) if edges else 0.0
+                )
 
                 subgraph = Subgraph(
                     nodes=nodes,
                     edges=edges,
                     center_node_id=center_node_id,
-                    confidence=avg_confidence
+                    confidence=avg_confidence,
                 )
 
                 return subgraph
@@ -614,11 +666,13 @@ class HypergraphKG(MemoryBackend):
             logger.error(f"Failed to query subgraph: {e!s}")
             return None
 
-    async def semantic_similarity_search(self,
-                                       query_text: str,
-                                       limit: int = 10,
-                                       score_threshold: float = 0.7,
-                                       community_filter: str | None = None) -> list[tuple[SemanticNode, float]]:
+    async def semantic_similarity_search(
+        self,
+        query_text: str,
+        limit: int = 10,
+        score_threshold: float = 0.7,
+        community_filter: str | None = None,
+    ) -> list[tuple[SemanticNode, float]]:
         """Perform semantic similarity search using vector embeddings"""
         try:
             # Generate query embedding
@@ -635,7 +689,7 @@ class HypergraphKG(MemoryBackend):
                 query_vector=query_embedding.tolist(),
                 limit=limit,
                 score_threshold=score_threshold,
-                query_filter=filter_conditions if filter_conditions else None
+                query_filter=filter_conditions if filter_conditions else None,
             )
 
             # Retrieve full node data from Neo4j
@@ -644,7 +698,8 @@ class HypergraphKG(MemoryBackend):
                 node_id = result.id
 
                 async with self.neo4j_driver.session() as session:
-                    node_result = await session.run("""
+                    node_result = await session.run(
+                        """
                         MATCH (n:SemanticNode {id: $node_id})
                         RETURN n.id as id, n.content as content, n.node_type as node_type,
                                n.confidence as confidence, n.created_at as created_at,
@@ -653,13 +708,14 @@ class HypergraphKG(MemoryBackend):
                                n.community_id as community_id,
                                n.pagerank_score as pagerank_score,
                                n.metadata as metadata
-                    """, {"node_id": node_id})
+                    """,
+                        {"node_id": node_id},
+                    )
 
                     record = await node_result.single()
                     if record:
                         node = SemanticNode(
-                            content=record["content"],
-                            node_type=record["node_type"]
+                            content=record["content"], node_type=record["node_type"]
                         )
                         node.id = record["id"]
                         node.confidence = record["confidence"]
@@ -668,7 +724,9 @@ class HypergraphKG(MemoryBackend):
                         node.popularity_rank = record["popularity_rank"]
                         node.community_id = record.get("community_id")
                         node.pagerank_score = record.get("pagerank_score", 0.0)
-                        node.metadata = json.loads(record["metadata"]) if record["metadata"] else {}
+                        node.metadata = (
+                            json.loads(record["metadata"]) if record["metadata"] else {}
+                        )
 
                         results.append((node, result.score))
 
@@ -712,12 +770,17 @@ class HypergraphKG(MemoryBackend):
 
                 # Update nodes with community IDs
                 for node_id, community_id in communities.items():
-                    await session.run("""
+                    await session.run(
+                        """
                         MATCH (n:SemanticNode {id: $node_id})
                         SET n.community_id = $community_id
-                    """, {"node_id": node_id, "community_id": community_id})
+                    """,
+                        {"node_id": node_id, "community_id": community_id},
+                    )
 
-                logger.info(f"Detected {len(set(communities.values()))} communities using {algorithm}")
+                logger.info(
+                    f"Detected {len(set(communities.values()))} communities using {algorithm}"
+                )
                 return communities
 
         except Exception as e:
@@ -747,15 +810,20 @@ class HypergraphKG(MemoryBackend):
                     avg_confidence=record["avg_confidence"] or 0.0,
                     memory_usage_mb=0.0,  # TODO: Calculate actual usage
                     last_consolidation=None,  # TODO: Track consolidation
-                    pending_consolidations=0
+                    pending_consolidations=0,
                 )
 
         except Exception as e:
             logger.error(f"Failed to get memory stats: {e!s}")
             return MemoryStats(
-                total_nodes=0, total_edges=0, episodic_nodes=0,
-                semantic_nodes=0, avg_confidence=0.0, memory_usage_mb=0.0,
-                last_consolidation=None, pending_consolidations=0
+                total_nodes=0,
+                total_edges=0,
+                episodic_nodes=0,
+                semantic_nodes=0,
+                avg_confidence=0.0,
+                memory_usage_mb=0.0,
+                last_consolidation=None,
+                pending_consolidations=0,
             )
 
     # Private helper methods
@@ -789,7 +857,9 @@ class HypergraphKG(MemoryBackend):
                 try:
                     await session.run(cypher)
                 except Exception as e:
-                    logger.debug(f"Sample data creation (expected to fail if data exists): {e!s}")
+                    logger.debug(
+                        f"Sample data creation (expected to fail if data exists): {e!s}"
+                    )
 
         logger.info("Neo4j schema setup complete")
 
@@ -801,25 +871,30 @@ class HypergraphKG(MemoryBackend):
             if collection_name in ["semantic_embeddings", "user_profiles"]:
                 try:
                     existing_collections = self.qdrant_client.get_collections()
-                    if collection_name not in [c.name for c in existing_collections.collections]:
+                    if collection_name not in [
+                        c.name for c in existing_collections.collections
+                    ]:
                         self.qdrant_client.create_collection(
                             collection_name=collection_name,
                             vectors_config=VectorParams(
-                                size=config["vectors"]["size"],
-                                distance=Distance.COSINE
-                            )
+                                size=config["vectors"]["size"], distance=Distance.COSINE
+                            ),
                         )
                         logger.info(f"Created Qdrant collection: {collection_name}")
 
                 except Exception as e:
-                    logger.error(f"Failed to setup Qdrant collection {collection_name}: {e!s}")
+                    logger.error(
+                        f"Failed to setup Qdrant collection {collection_name}: {e!s}"
+                    )
 
         logger.info("Qdrant semantic collections setup complete")
 
     async def _cache_semantic_node(self, node: SemanticNode) -> None:
         """Cache semantic node in Redis"""
         try:
-            cache_key = self.redis_schema.get_key_patterns()["node"].format(node_id=node.id)
+            cache_key = self.redis_schema.get_key_patterns()["node"].format(
+                node_id=node.id
+            )
 
             node_data = {
                 "id": node.id,
@@ -829,13 +904,15 @@ class HypergraphKG(MemoryBackend):
                 "node_type": node.node_type,
                 "memory_type": "semantic",
                 "community_id": getattr(node, "community_id", None),
-                "pagerank_score": getattr(node, "pagerank_score", 0.0)
+                "pagerank_score": getattr(node, "pagerank_score", 0.0),
             }
 
             await self.redis_client.setex(
                 cache_key,
-                self.cache_ttl.get("user_profile", 86400),  # Cache semantic nodes longer
-                json.dumps(node_data)
+                self.cache_ttl.get(
+                    "user_profile", 86400
+                ),  # Cache semantic nodes longer
+                json.dumps(node_data),
             )
 
         except Exception as e:
@@ -844,7 +921,9 @@ class HypergraphKG(MemoryBackend):
     async def _cache_hyperedge(self, edge: Hyperedge) -> None:
         """Cache hyperedge in Redis"""
         try:
-            cache_key = self.redis_schema.get_key_patterns()["edge"].format(edge_id=edge.id)
+            cache_key = self.redis_schema.get_key_patterns()["edge"].format(
+                edge_id=edge.id
+            )
 
             edge_data = {
                 "id": edge.id,
@@ -852,13 +931,13 @@ class HypergraphKG(MemoryBackend):
                 "confidence": edge.confidence,
                 "participants": edge.participants,
                 "hyperedge_type": getattr(edge, "hyperedge_type", "binary"),
-                "evidence_count": edge.evidence_count
+                "evidence_count": edge.evidence_count,
             }
 
             await self.redis_client.setex(
                 cache_key,
                 self.cache_ttl.get("popular_edges", 21600),
-                json.dumps(edge_data)
+                json.dumps(edge_data),
             )
 
         except Exception as e:
@@ -867,9 +946,10 @@ class HypergraphKG(MemoryBackend):
 
 # Factory functions for creating semantic memory components
 
-def create_semantic_node(content: str,
-                        node_type: str = "concept",
-                        confidence: float = 0.8) -> SemanticNode:
+
+def create_semantic_node(
+    content: str, node_type: str = "concept", confidence: float = 0.8
+) -> SemanticNode:
     """Create a semantic node for consolidated knowledge"""
     return SemanticNode(
         content=content,
@@ -877,20 +957,22 @@ def create_semantic_node(content: str,
         confidence=confidence,
         importance_score=0.8,
         decay_rate=0.01,  # Very slow decay for semantic
-        confidence_type=ConfidenceType.BAYESIAN
+        confidence_type=ConfidenceType.BAYESIAN,
     )
 
 
-def create_hyperedge(participants: list[str],
-                    relation: str,
-                    confidence: float = 0.8,
-                    evidence_count: int = 1) -> Hyperedge:
+def create_hyperedge(
+    participants: list[str],
+    relation: str,
+    confidence: float = 0.8,
+    evidence_count: int = 1,
+) -> Hyperedge:
     """Create a hyperedge for n-ary semantic relationships"""
     edge = Hyperedge(
         participants=participants,
         relation=relation,
         confidence=confidence,
-        evidence_count=evidence_count
+        evidence_count=evidence_count,
     )
     edge.hyperedge_type = "n-ary" if len(participants) > 2 else "binary"
     return edge

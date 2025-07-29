@@ -48,7 +48,9 @@ def get_recent_records(hours: int = 24, limit: int = 100) -> list:
         List of audit records sorted by timestamp (newest first)
     """
     records = []
-    cutoff_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=hours)
+    cutoff_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        hours=hours
+    )
 
     # Read from individual JSON files
     for json_file in _AUDIT_PATH.glob("*.json"):
@@ -103,10 +105,7 @@ def get_statistics(hours: int = 24) -> dict[str, Any]:
     records = get_recent_records(hours=hours, limit=10000)
 
     if not records:
-        return {
-            "total_validations": 0,
-            "time_window_hours": hours
-        }
+        return {"total_validations": 0, "time_window_hours": hours}
 
     # Count decisions
     decisions = {"APPLY": 0, "QUARANTINE": 0, "REJECT": 0}
@@ -131,13 +130,13 @@ def get_statistics(hours: int = 24) -> dict[str, Any]:
         "decision_rates": {
             "apply_rate": decisions["APPLY"] / total if total > 0 else 0.0,
             "quarantine_rate": decisions["QUARANTINE"] / total if total > 0 else 0.0,
-            "reject_rate": decisions["REJECT"] / total if total > 0 else 0.0
+            "reject_rate": decisions["REJECT"] / total if total > 0 else 0.0,
         },
         "average_score": avg_score,
         "score_range": {
             "min": min(scores) if scores else 0.0,
-            "max": max(scores) if scores else 0.0
-        }
+            "max": max(scores) if scores else 0.0,
+        },
     }
 
 
@@ -147,7 +146,9 @@ def cleanup_old_records(days: int = 30):
     Args:
         days: Records older than this will be deleted
     """
-    cutoff_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days)
+    cutoff_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
+        days=days
+    )
     deleted_count = 0
 
     # Clean individual JSON files

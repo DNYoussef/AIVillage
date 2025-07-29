@@ -22,12 +22,45 @@ class ConversationalMagi(SafeMagiInterface):
 
         # Check for capability keywords
         capability_checks = {
-            "python_programming": ["python", "code", "programming", "script", "function", "class"],
-            "algorithm_design": ["algorithm", "complexity", "optimize", "efficient", "performance"],
-            "data_structures": ["data", "structure", "array", "tree", "graph", "list", "dict"],
+            "python_programming": [
+                "python",
+                "code",
+                "programming",
+                "script",
+                "function",
+                "class",
+            ],
+            "algorithm_design": [
+                "algorithm",
+                "complexity",
+                "optimize",
+                "efficient",
+                "performance",
+            ],
+            "data_structures": [
+                "data",
+                "structure",
+                "array",
+                "tree",
+                "graph",
+                "list",
+                "dict",
+            ],
             "problem_solving": ["solve", "problem", "solution", "approach", "strategy"],
-            "mathematical_analysis": ["math", "calculate", "equation", "formula", "compute"],
-            "technical_reasoning": ["technical", "engineering", "system", "design", "architecture"]
+            "mathematical_analysis": [
+                "math",
+                "calculate",
+                "equation",
+                "formula",
+                "compute",
+            ],
+            "technical_reasoning": [
+                "technical",
+                "engineering",
+                "system",
+                "design",
+                "architecture",
+            ],
         }
 
         input_lower = user_input.lower()
@@ -38,7 +71,12 @@ class ConversationalMagi(SafeMagiInterface):
 
         # Default to technical reasoning if no specific match
         if not relevant_caps:
-            relevant_caps.append(("technical_reasoning", self.capabilities.get("technical_reasoning", 0.7)))
+            relevant_caps.append(
+                (
+                    "technical_reasoning",
+                    self.capabilities.get("technical_reasoning", 0.7),
+                )
+            )
 
         # Return the strongest capability
         return max(relevant_caps, key=lambda x: x[1])
@@ -63,47 +101,55 @@ class ConversationalMagi(SafeMagiInterface):
             f"\n[MAGI ANALYSIS - {capability_name.replace('_', ' ').upper()}]",
             f"[Capability Level: {capability_score:.3f} - {level}]",
             "-" * 50,
-            f"\n{confidence}, I can help you with this."
+            f"\n{confidence}, I can help you with this.",
         ]
 
         # Add specific guidance based on capability
         if capability_name == "python_programming" and capability_score >= 0.90:
-            response_parts.extend([
-                "\nPYTHON MASTERY AREAS:",
-                "• Advanced algorithms and optimization",
-                "• Clean, maintainable code architecture",
-                "• Performance profiling and debugging",
-                "• Best practices and design patterns"
-            ])
+            response_parts.extend(
+                [
+                    "\nPYTHON MASTERY AREAS:",
+                    "• Advanced algorithms and optimization",
+                    "• Clean, maintainable code architecture",
+                    "• Performance profiling and debugging",
+                    "• Best practices and design patterns",
+                ]
+            )
         elif capability_name == "algorithm_design" and capability_score >= 0.90:
-            response_parts.extend([
-                "\nALGORITHM DESIGN MASTERY:",
-                "• Time/space complexity analysis",
-                "• Optimization strategy development",
-                "• Custom algorithm creation",
-                "• Performance benchmarking"
-            ])
+            response_parts.extend(
+                [
+                    "\nALGORITHM DESIGN MASTERY:",
+                    "• Time/space complexity analysis",
+                    "• Optimization strategy development",
+                    "• Custom algorithm creation",
+                    "• Performance benchmarking",
+                ]
+            )
         elif capability_name == "data_structures" and capability_score >= 0.90:
-            response_parts.extend([
-                "\nDATA STRUCTURES MASTERY:",
-                "• Optimal structure selection",
-                "• Memory-efficient implementations",
-                "• Concurrent data structures",
-                "• Performance analysis"
-            ])
+            response_parts.extend(
+                [
+                    "\nDATA STRUCTURES MASTERY:",
+                    "• Optimal structure selection",
+                    "• Memory-efficient implementations",
+                    "• Concurrent data structures",
+                    "• Performance analysis",
+                ]
+            )
 
         response_parts.append("\nHow can I assist you with this specific question?")
 
         # Store in history (with size limit)
-        self.conversation_history.append({
-            "user": user_input,
-            "capability": capability_name,
-            "score": capability_score
-        })
+        self.conversation_history.append(
+            {
+                "user": user_input,
+                "capability": capability_name,
+                "score": capability_score,
+            }
+        )
 
         # Trim history if too long
         if len(self.conversation_history) > self.max_history:
-            self.conversation_history = self.conversation_history[-self.max_history:]
+            self.conversation_history = self.conversation_history[-self.max_history :]
 
         return "\n".join(response_parts)
 
@@ -111,8 +157,16 @@ class ConversationalMagi(SafeMagiInterface):
         """Display Magi capabilities in a clean format."""
         print("\nMAGI SPECIALIZED CAPABILITIES:")
         print("=" * 50)
-        for cap, score in sorted(self.capabilities.items(), key=lambda x: x[1], reverse=True):
-            level = "MASTERY" if score >= 0.90 else "EXPERT" if score >= 0.75 else "ADVANCED"
+        for cap, score in sorted(
+            self.capabilities.items(), key=lambda x: x[1], reverse=True
+        ):
+            level = (
+                "MASTERY"
+                if score >= 0.90
+                else "EXPERT"
+                if score >= 0.75
+                else "ADVANCED"
+            )
             cap_name = cap.replace("_", " ").title()
             print(f"  {cap_name:<25} {score:.3f}  [{level}]")
         print(f"\nOverall Specialization Score: {self.specialization_score:.3f}")
@@ -120,9 +174,9 @@ class ConversationalMagi(SafeMagiInterface):
 
     def run(self):
         """Run the interactive Magi session."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("MAGI AI AGENT - SPECIALIZED TECHNICAL ASSISTANT")
-        print("="*60)
+        print("=" * 60)
 
         # Load capabilities safely
         if not self.load_magi_data_safely():
@@ -134,7 +188,7 @@ class ConversationalMagi(SafeMagiInterface):
         print("  'history' - Show recent conversation topics")
         print("  'quit' - Exit the session")
         print("\nAsk me technical questions and I'll apply my specialized knowledge!")
-        print("-"*60)
+        print("-" * 60)
 
         while True:
             try:
@@ -144,7 +198,9 @@ class ConversationalMagi(SafeMagiInterface):
                     continue
 
                 if user_input.lower() in ["quit", "exit", "bye"]:
-                    print("\nMAGI: Thank you for our conversation. My capabilities remain at your service!")
+                    print(
+                        "\nMAGI: Thank you for our conversation. My capabilities remain at your service!"
+                    )
                     break
 
                 if user_input.lower() == "capabilities":
@@ -153,9 +209,13 @@ class ConversationalMagi(SafeMagiInterface):
 
                 if user_input.lower() == "history":
                     if self.conversation_history:
-                        print(f"\nRECENT TOPICS ({len(self.conversation_history)} exchanges):")
+                        print(
+                            f"\nRECENT TOPICS ({len(self.conversation_history)} exchanges):"
+                        )
                         for i, item in enumerate(self.conversation_history[-5:], 1):
-                            print(f"  {i}. {item['capability']} (score: {item['score']:.3f})")
+                            print(
+                                f"  {i}. {item['capability']} (score: {item['score']:.3f})"
+                            )
                     else:
                         print("\nNo conversation history yet.")
                     continue
@@ -171,11 +231,13 @@ class ConversationalMagi(SafeMagiInterface):
                 print(f"\nError: {e}")
                 print("Let me try to continue...")
 
+
 def main():
     """Launch the safe Magi interface."""
     print("Initializing Safe Magi Interface...")
     magi = ConversationalMagi()
     magi.run()
+
 
 if __name__ == "__main__":
     main()

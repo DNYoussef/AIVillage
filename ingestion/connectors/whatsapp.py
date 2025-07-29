@@ -92,7 +92,9 @@ def run(user_id: str, chroma_client: PersistentClient) -> int:
                 if n >= limit:
                     break
 
-            logger.info("Successfully processed %s messages for user %s", n, safe_user_id)
+            logger.info(
+                "Successfully processed %s messages for user %s", n, safe_user_id
+            )
             return n
     except Exception as exc:  # pragma: no cover - external lib calls
         logger.error("WhatsApp connector failed: %s", exc)

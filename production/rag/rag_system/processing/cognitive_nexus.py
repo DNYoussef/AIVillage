@@ -10,7 +10,11 @@ from ..processing.self_referential_query_processor import (
 
 
 class CognitiveNexus:
-    def __init__(self, reasoning_engine: ReasoningEngine, self_ref_processor: SelfReferentialQueryProcessor):
+    def __init__(
+        self,
+        reasoning_engine: ReasoningEngine,
+        self_ref_processor: SelfReferentialQueryProcessor,
+    ):
         self.reasoning_engine = reasoning_engine
         self.self_ref_processor = self_ref_processor
 
@@ -20,7 +24,14 @@ class CognitiveNexus:
         # Use the reasoning engine for non-self-referential queries
         return await self.reasoning_engine.reason(query, context)
 
-    async def integrate(self, query: str, constructed_knowledge: dict[str, Any], final_plan: dict[str, Any], retrieval_history: list[dict[str, Any]], agent: AgentInterface) -> str:
+    async def integrate(
+        self,
+        query: str,
+        constructed_knowledge: dict[str, Any],
+        final_plan: dict[str, Any],
+        retrieval_history: list[dict[str, Any]],
+        agent: AgentInterface,
+    ) -> str:
         prompt = f"""
         Cognitive Integration Task:
 

@@ -15,8 +15,11 @@ import logging
 import sys
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 async def test_memory_management():
     """Test memory management utilities."""
@@ -39,6 +42,7 @@ async def test_memory_management():
     except Exception as e:
         logger.error(f"❌ Memory management test failed: {e}")
         return False
+
 
 async def test_wandb_manager():
     """Test W&B manager with graceful fallback."""
@@ -65,6 +69,7 @@ async def test_wandb_manager():
     except Exception as e:
         logger.error(f"❌ W&B manager test failed: {e}")
         return False
+
 
 async def test_real_benchmark():
     """Test real benchmarking (minimal)."""
@@ -95,6 +100,7 @@ async def test_real_benchmark():
         logger.error(f"❌ Real benchmark test failed: {e}")
         return False
 
+
 async def test_quietstar_fixes():
     """Test Quiet-STaR fixes without full execution."""
     logger.info("Testing Quiet-STaR fixes...")
@@ -107,7 +113,7 @@ async def test_quietstar_fixes():
             model_path="microsoft/DialoGPT-small",  # Small model for testing
             output_path="./test_output",
             eval_samples=5,  # Minimal samples
-            max_thought_length=16  # Reduced for testing
+            max_thought_length=16,  # Reduced for testing
         )
 
         # Test baker initialization
@@ -124,6 +130,7 @@ async def test_quietstar_fixes():
     except Exception as e:
         logger.error(f"❌ Quiet-STaR fixes test failed: {e}")
         return False
+
 
 async def test_evolution_fixes():
     """Test evolution benchmarking fixes without full run."""
@@ -144,6 +151,7 @@ async def test_evolution_fixes():
         # Test that it's using async now
         if hasattr(merger, "enhanced_benchmark_model"):
             import inspect
+
             is_async = inspect.iscoroutinefunction(merger.enhanced_benchmark_model)
             logger.info(f"Benchmarking is async: {is_async}")
 
@@ -159,6 +167,7 @@ async def test_evolution_fixes():
         logger.error(f"❌ Evolution fixes test failed: {e}")
         return False
 
+
 async def run_comprehensive_test():
     """Run all tests to verify fixes."""
     logger.info("=" * 60)
@@ -173,7 +182,7 @@ async def run_comprehensive_test():
         ("W&B Manager", test_wandb_manager),
         ("Real Benchmark", test_real_benchmark),
         ("Quiet-STaR Fixes", test_quietstar_fixes),
-        ("Evolution Fixes", test_evolution_fixes)
+        ("Evolution Fixes", test_evolution_fixes),
     ]
 
     for test_name, test_func in tests:
@@ -207,6 +216,7 @@ async def run_comprehensive_test():
 
     return passed == len(test_results)
 
+
 if __name__ == "__main__":
     # Run the comprehensive test
     success = asyncio.run(run_comprehensive_test())
@@ -215,7 +225,9 @@ if __name__ == "__main__":
         print("\n🚀 READY FOR REAL EXECUTION!")
         print("The fixes are working. You can now run:")
         print("1. Real evolution: python scripts/run_50gen_evolution.py")
-        print("2. Real magi training: python -m agent_forge.training.magi_specialization")
+        print(
+            "2. Real magi training: python -m agent_forge.training.magi_specialization"
+        )
         print("3. Real benchmarking: python -m agent_forge.real_benchmark")
     else:
         print("\n⚠️ ISSUES DETECTED!")

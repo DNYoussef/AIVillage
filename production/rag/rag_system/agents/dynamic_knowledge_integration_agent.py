@@ -5,8 +5,7 @@ from rag_system.retrieval.graph_store import GraphStore
 
 
 class DynamicKnowledgeIntegrationAgent(AgentInterface):
-    """Agent responsible for updating the knowledge graph with new relations discovered during interactions.
-    """
+    """Agent responsible for updating the knowledge graph with new relations discovered during interactions."""
 
     def __init__(self, graph_store: GraphStore):
         super().__init__()

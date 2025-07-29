@@ -26,5 +26,5 @@ __all__ = [
     "MemoryConsolidator",
     "Node",
     "SemanticNode",
-    "Subgraph"
+    "Subgraph",
 ]

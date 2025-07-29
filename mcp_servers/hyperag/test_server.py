@@ -33,7 +33,9 @@ class MCPTestClient:
             await self.websocket.close()
             logger.info("Disconnected")
 
-    async def send_request(self, method: str, params: dict[str, Any], request_id: str = None) -> dict[str, Any]:
+    async def send_request(
+        self, method: str, params: dict[str, Any], request_id: str = None
+    ) -> dict[str, Any]:
         """Send a request and get response"""
         if not self.websocket:
             raise RuntimeError("Not connected")
@@ -42,7 +44,7 @@ class MCPTestClient:
             "jsonrpc": "2.0",
             "method": method,
             "params": params,
-            "id": request_id or method.replace("/", "_")
+            "id": request_id or method.replace("/", "_"),
         }
 
         # Send request
@@ -72,20 +74,23 @@ async def test_server():
 
         # Test 2: Query without auth (should fail)
         logger.info("=== Testing query without auth ===")
-        response = await client.send_request("hyperag/query", {
-            "query": "What is machine learning?"
-        })
+        response = await client.send_request(
+            "hyperag/query", {"query": "What is machine learning?"}
+        )
         assert "error" in response
         assert response["error"]["code"] == "AUTH_REQUIRED"
         print("✓ Auth required check passed")
 
         # Test 3: Query with API key
         logger.info("=== Testing query with API key ===")
-        response = await client.send_request("hyperag/query", {
-            "api_key": "hrag_dev_test123",
-            "query": "What is machine learning?",
-            "mode": "NORMAL"
-        })
+        response = await client.send_request(
+            "hyperag/query",
+            {
+                "api_key": "hrag_dev_test123",
+                "query": "What is machine learning?",
+                "mode": "NORMAL",
+            },
+        )
 
         if "error" in response:
             print(f"✗ Query with auth failed: {response['error']['message']}")
@@ -95,11 +100,10 @@ async def test_server():
 
         # Test 4: Knowledge search
         logger.info("=== Testing knowledge search ===")
-        response = await client.send_request("hyperag/knowledge/search", {
-            "api_key": "hrag_dev_test123",
-            "query": "test search",
-            "limit": 5
-        })
+        response = await client.send_request(
+            "hyperag/knowledge/search",
+            {"api_key": "hrag_dev_test123", "query": "test search", "limit": 5},
+        )
 
         if "error" in response:
             print(f"✗ Knowledge search failed: {response['error']['message']}")
@@ -108,15 +112,15 @@ async def test_server():
 
         # Test 5: Creative query
         logger.info("=== Testing creative query ===")
-        response = await client.send_request("hyperag/creative", {
-            "api_key": "hrag_dev_test123",
-            "source_concept": "computer",
-            "target_concept": "brain",
-            "creativity_parameters": {
-                "mode": "analogical",
-                "max_hops": 3
-            }
-        })
+        response = await client.send_request(
+            "hyperag/creative",
+            {
+                "api_key": "hrag_dev_test123",
+                "source_concept": "computer",
+                "target_concept": "brain",
+                "creativity_parameters": {"mode": "analogical", "max_hops": 3},
+            },
+        )
 
         if "error" in response:
             print(f"✗ Creative query failed: {response['error']['message']}")
@@ -125,9 +129,9 @@ async def test_server():
 
         # Test 6: List adapters
         logger.info("=== Testing adapter list ===")
-        response = await client.send_request("hyperag/adapter/list", {
-            "api_key": "hrag_dev_test123"
-        })
+        response = await client.send_request(
+            "hyperag/adapter/list", {"api_key": "hrag_dev_test123"}
+        )
 
         if "error" in response:
             print(f"✗ Adapter list failed: {response['error']['message']}")
@@ -136,9 +140,12 @@ async def test_server():
 
         # Test 7: Metrics (requires auth)
         logger.info("=== Testing metrics ===")
-        response = await client.send_request("hyperag/metrics", {
-            "api_key": "hrag_prod_king456"  # King role needed for metrics
-        })
+        response = await client.send_request(
+            "hyperag/metrics",
+            {
+                "api_key": "hrag_prod_king456"  # King role needed for metrics
+            },
+        )
 
         if "error" in response:
             print(f"✗ Metrics failed: {response['error']['message']}")

@@ -27,9 +27,11 @@ from migration.vector_converter import EntityExtractor
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class BootstrapConfig:
     """Configuration for knowledge graph bootstrapping"""
+
     entity_similarity_threshold: float = 0.8
     relationship_confidence_threshold: float = 0.5
     max_entities_per_document: int = 50
@@ -37,9 +39,11 @@ class BootstrapConfig:
     confidence_decay_factor: float = 0.95
     temporal_weight: float = 0.1
 
+
 @dataclass
 class BootstrapMetrics:
     """Metrics for bootstrapping process"""
+
     total_sources: int
     entities_extracted: int
     entities_after_resolution: int
@@ -47,6 +51,7 @@ class BootstrapMetrics:
     confidence_scores_initialized: int
     duplicate_entities_merged: int
     bootstrap_time: float
+
 
 class EntityResolver:
     """Resolves entity references across documents"""
@@ -84,7 +89,9 @@ class EntityResolver:
 
         return intersection / union if union > 0 else 0.0
 
-    def resolve_entities(self, entities: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    def resolve_entities(
+        self, entities: list[dict[str, Any]]
+    ) -> dict[str, dict[str, Any]]:
         """Resolve entity references and merge duplicates"""
         resolved_entities = {}
         entity_id_counter = 0
@@ -100,7 +107,9 @@ class EntityResolver:
             # Find similar existing entities
             matched_cluster = None
             for existing_signature, cluster_entities in self.entity_clusters.items():
-                similarity = self._calculate_string_similarity(signature, existing_signature)
+                similarity = self._calculate_string_similarity(
+                    signature, existing_signature
+                )
 
                 if similarity >= self.similarity_threshold:
                     matched_cluster = existing_signature
@@ -149,11 +158,14 @@ class EntityResolver:
                 "confidence": merged_confidence,
                 "cluster_size": len(cluster_entities),
                 "signature": signature,
-                "resolved_at": datetime.now(timezone.utc).isoformat()
+                "resolved_at": datetime.now(timezone.utc).isoformat(),
             }
 
-        logger.info(f"Resolved {len(entities)} entities into {len(resolved_entities)} unique entities")
+        logger.info(
+            f"Resolved {len(entities)} entities into {len(resolved_entities)} unique entities"
+        )
         return resolved_entities
+
 
 class RelationshipExtractor:
     """Extracts relationships from various data sources"""
@@ -165,28 +177,65 @@ class RelationshipExtractor:
         """Load patterns for relationship extraction"""
         return {
             "hierarchical": [
-                "is a", "is an", "are a", "are an", "type of", "kind of", "subclass of",
-                "instance of", "example of", "category of"
+                "is a",
+                "is an",
+                "are a",
+                "are an",
+                "type of",
+                "kind of",
+                "subclass of",
+                "instance of",
+                "example of",
+                "category of",
             ],
             "compositional": [
-                "contains", "includes", "comprises", "consists of", "made of",
-                "part of", "component of", "member of", "belongs to"
+                "contains",
+                "includes",
+                "comprises",
+                "consists of",
+                "made of",
+                "part of",
+                "component of",
+                "member of",
+                "belongs to",
             ],
             "temporal": [
-                "before", "after", "during", "while", "when", "since", "until",
-                "preceded by", "followed by", "concurrent with"
+                "before",
+                "after",
+                "during",
+                "while",
+                "when",
+                "since",
+                "until",
+                "preceded by",
+                "followed by",
+                "concurrent with",
             ],
             "causal": [
-                "causes", "caused by", "leads to", "results in", "due to",
-                "because of", "triggers", "influences", "affects"
+                "causes",
+                "caused by",
+                "leads to",
+                "results in",
+                "due to",
+                "because of",
+                "triggers",
+                "influences",
+                "affects",
             ],
             "associative": [
-                "related to", "associated with", "connected to", "linked to",
-                "similar to", "compared to", "contrasted with"
-            ]
+                "related to",
+                "associated with",
+                "connected to",
+                "linked to",
+                "similar to",
+                "compared to",
+                "contrasted with",
+            ],
         }
 
-    def extract_from_text(self, text: str, entities: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    def extract_from_text(
+        self, text: str, entities: dict[str, dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Extract relationships from text using entities"""
         relationships = []
 
@@ -196,41 +245,47 @@ class RelationshipExtractor:
             for name in entity_data["aliases"]:
                 if name.lower() in text.lower():
                     start_pos = text.lower().find(name.lower())
-                    entity_mentions.append({
-                        "entity_id": entity_id,
-                        "name": name,
-                        "start": start_pos,
-                        "end": start_pos + len(name)
-                    })
+                    entity_mentions.append(
+                        {
+                            "entity_id": entity_id,
+                            "name": name,
+                            "start": start_pos,
+                            "end": start_pos + len(name),
+                        }
+                    )
 
         # Sort by position
         entity_mentions.sort(key=lambda x: x["start"])
 
         # Extract relationships between nearby entities
         for i, mention1 in enumerate(entity_mentions):
-            for mention2 in entity_mentions[i+1:]:
+            for mention2 in entity_mentions[i + 1 :]:
                 # Check if entities are close enough
                 distance = mention2["start"] - mention1["end"]
                 if distance > 200:  # Too far apart
                     break
 
                 # Extract text between entities
-                between_text = text[mention1["end"]:mention2["start"]].lower().strip()
+                between_text = text[mention1["end"] : mention2["start"]].lower().strip()
 
                 # Classify relationship
                 relationship_type = self._classify_relationship(between_text)
 
                 if relationship_type:
-                    confidence = self._calculate_relationship_confidence(between_text, relationship_type)
+                    confidence = self._calculate_relationship_confidence(
+                        between_text, relationship_type
+                    )
 
-                    relationships.append({
-                        "source": mention1["entity_id"],
-                        "target": mention2["entity_id"],
-                        "type": relationship_type,
-                        "confidence": confidence,
-                        "context": text[mention1["start"]:mention2["end"]],
-                        "extracted_from": "text_analysis"
-                    })
+                    relationships.append(
+                        {
+                            "source": mention1["entity_id"],
+                            "target": mention2["entity_id"],
+                            "type": relationship_type,
+                            "confidence": confidence,
+                            "context": text[mention1["start"] : mention2["end"]],
+                            "extracted_from": "text_analysis",
+                        }
+                    )
 
         return relationships
 
@@ -270,7 +325,9 @@ class RelationshipExtractor:
 
         return min(max(base_confidence, 0.1), 0.95)
 
-    def extract_from_hyperedges(self, hyperedges: list[Hyperedge]) -> list[dict[str, Any]]:
+    def extract_from_hyperedges(
+        self, hyperedges: list[Hyperedge]
+    ) -> list[dict[str, Any]]:
         """Extract relationships from hyperedge data"""
         relationships = []
 
@@ -278,17 +335,20 @@ class RelationshipExtractor:
             if len(hyperedge.entities) >= 2:
                 # Create pairwise relationships from hyperedge
                 for i, entity1 in enumerate(hyperedge.entities):
-                    for entity2 in hyperedge.entities[i+1:]:
-                        relationships.append({
-                            "source": f"entity_{entity1.replace(' ', '_').lower()}",
-                            "target": f"entity_{entity2.replace(' ', '_').lower()}",
-                            "type": hyperedge.relationship_type,
-                            "confidence": hyperedge.confidence,
-                            "context": hyperedge.context,
-                            "extracted_from": f"hyperedge_{hyperedge.hyperedge_id}"
-                        })
+                    for entity2 in hyperedge.entities[i + 1 :]:
+                        relationships.append(
+                            {
+                                "source": f"entity_{entity1.replace(' ', '_').lower()}",
+                                "target": f"entity_{entity2.replace(' ', '_').lower()}",
+                                "type": hyperedge.relationship_type,
+                                "confidence": hyperedge.confidence,
+                                "context": hyperedge.context,
+                                "extracted_from": f"hyperedge_{hyperedge.hyperedge_id}",
+                            }
+                        )
 
         return relationships
+
 
 class ConfidenceBootstrapper:
     """Initializes confidence scores for entities and relationships"""
@@ -303,7 +363,7 @@ class ConfidenceBootstrapper:
             "blog": 0.7,
             "government": 0.9,
             "corporate": 0.8,
-            "unknown": 0.5
+            "unknown": 0.5,
         }
 
     def calculate_source_confidence(self, source: str) -> float:
@@ -316,7 +376,9 @@ class ConfidenceBootstrapper:
 
         return self.source_reliability["unknown"]
 
-    def calculate_frequency_confidence(self, entity_id: str, entity_data: dict[str, Any]) -> float:
+    def calculate_frequency_confidence(
+        self, entity_id: str, entity_data: dict[str, Any]
+    ) -> float:
         """Calculate confidence based on entity frequency"""
         cluster_size = entity_data.get("cluster_size", 1)
         sources_count = len(entity_data.get("sources", []))
@@ -346,7 +408,9 @@ class ConfidenceBootstrapper:
         except:
             return 1.0
 
-    def bootstrap_entity_confidence(self, entities: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    def bootstrap_entity_confidence(
+        self, entities: dict[str, dict[str, Any]]
+    ) -> dict[str, dict[str, Any]]:
         """Initialize confidence scores for entities"""
         for entity_id, entity_data in entities.items():
             # Base confidence from entity resolution
@@ -355,10 +419,14 @@ class ConfidenceBootstrapper:
             # Source-based confidence
             sources = entity_data.get("sources", [])
             source_confidences = [self.calculate_source_confidence(s) for s in sources]
-            avg_source_confidence = np.mean(source_confidences) if source_confidences else 0.5
+            avg_source_confidence = (
+                np.mean(source_confidences) if source_confidences else 0.5
+            )
 
             # Frequency-based confidence
-            frequency_confidence = self.calculate_frequency_confidence(entity_id, entity_data)
+            frequency_confidence = self.calculate_frequency_confidence(
+                entity_id, entity_data
+            )
 
             # Temporal confidence
             temporal_confidence = self.calculate_temporal_confidence(
@@ -367,10 +435,10 @@ class ConfidenceBootstrapper:
 
             # Combined confidence
             final_confidence = (
-                base_confidence * 0.4 +
-                avg_source_confidence * 0.3 +
-                frequency_confidence * 0.2 +
-                temporal_confidence * 0.1
+                base_confidence * 0.4
+                + avg_source_confidence * 0.3
+                + frequency_confidence * 0.2
+                + temporal_confidence * 0.1
             )
 
             entity_data["confidence"] = min(max(final_confidence, 0.1), 0.99)
@@ -378,12 +446,14 @@ class ConfidenceBootstrapper:
                 "base": base_confidence,
                 "source": avg_source_confidence,
                 "frequency": frequency_confidence,
-                "temporal": temporal_confidence
+                "temporal": temporal_confidence,
             }
 
         return entities
 
-    def bootstrap_relationship_confidence(self, relationships: list[dict[str, Any]], entities: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    def bootstrap_relationship_confidence(
+        self, relationships: list[dict[str, Any]], entities: dict[str, dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Initialize confidence scores for relationships"""
         for relationship in relationships:
             # Base confidence from extraction
@@ -399,7 +469,9 @@ class ConfidenceBootstrapper:
             if target_entity:
                 entity_confidences.append(target_entity["confidence"])
 
-            avg_entity_confidence = np.mean(entity_confidences) if entity_confidences else 0.5
+            avg_entity_confidence = (
+                np.mean(entity_confidences) if entity_confidences else 0.5
+            )
 
             # Extraction method confidence
             extraction_method = relationship.get("extracted_from", "")
@@ -411,10 +483,10 @@ class ConfidenceBootstrapper:
 
             # Combined confidence
             final_confidence = (
-                base_confidence * 0.5 +
-                avg_entity_confidence * 0.2 +
-                method_confidence * 0.2 +
-                context_confidence * 0.1
+                base_confidence * 0.5
+                + avg_entity_confidence * 0.2
+                + method_confidence * 0.2
+                + context_confidence * 0.1
             )
 
             relationship["confidence"] = min(max(final_confidence, 0.1), 0.95)
@@ -422,10 +494,11 @@ class ConfidenceBootstrapper:
                 "base": base_confidence,
                 "entities": avg_entity_confidence,
                 "method": method_confidence,
-                "context": context_confidence
+                "context": context_confidence,
             }
 
         return relationships
+
 
 class KnowledgeGraphBootstrapper:
     """Main bootstrapping system"""
@@ -437,7 +510,9 @@ class KnowledgeGraphBootstrapper:
         self.confidence_bootstrapper = ConfidenceBootstrapper(self.config)
         self.metrics = BootstrapMetrics(0, 0, 0, 0, 0, 0, 0.0)
 
-    def load_data_sources(self, source_configs: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[Hyperedge]]:
+    def load_data_sources(
+        self, source_configs: list[dict[str, Any]]
+    ) -> tuple[list[dict[str, Any]], list[Hyperedge]]:
         """Load data from multiple sources"""
         all_entities = []
         all_hyperedges = []
@@ -458,10 +533,14 @@ class KnowledgeGraphBootstrapper:
                     with open(source_path) as f:
                         documents = json.load(f)
                 else:
-                    documents = [{"content": source_path.read_text(), "source": str(source_path)}]
+                    documents = [
+                        {"content": source_path.read_text(), "source": str(source_path)}
+                    ]
 
                 for doc in documents:
-                    doc_entities = entity_extractor.extract_entities(doc.get("content", ""))
+                    doc_entities = entity_extractor.extract_entities(
+                        doc.get("content", "")
+                    )
                     for entity in doc_entities:
                         entity["source"] = doc.get("source", str(source_path))
                     all_entities.extend(doc_entities)
@@ -485,17 +564,23 @@ class KnowledgeGraphBootstrapper:
                     for item in data:
                         for key, value in item.items():
                             if isinstance(value, str) and len(value.strip()) > 0:
-                                all_entities.append({
-                                    "text": value,
-                                    "type": key.upper(),
-                                    "source": str(source_path),
-                                    "confidence": 0.8
-                                })
+                                all_entities.append(
+                                    {
+                                        "text": value,
+                                        "type": key.upper(),
+                                        "source": str(source_path),
+                                        "confidence": 0.8,
+                                    }
+                                )
 
-        logger.info(f"Loaded {len(all_entities)} entities and {len(all_hyperedges)} hyperedges from {len(source_configs)} sources")
+        logger.info(
+            f"Loaded {len(all_entities)} entities and {len(all_hyperedges)} hyperedges from {len(source_configs)} sources"
+        )
         return all_entities, all_hyperedges
 
-    def bootstrap_knowledge_graph(self, source_configs: list[dict[str, Any]], output_path: Path) -> BootstrapMetrics:
+    def bootstrap_knowledge_graph(
+        self, source_configs: list[dict[str, Any]], output_path: Path
+    ) -> BootstrapMetrics:
         """Bootstrap complete knowledge graph from sources"""
         start_time = datetime.now()
 
@@ -509,14 +594,18 @@ class KnowledgeGraphBootstrapper:
         logger.info("Resolving entity references...")
         resolved_entities = self.entity_resolver.resolve_entities(all_entities_raw)
         self.metrics.entities_after_resolution = len(resolved_entities)
-        self.metrics.duplicate_entities_merged = self.metrics.entities_extracted - self.metrics.entities_after_resolution
+        self.metrics.duplicate_entities_merged = (
+            self.metrics.entities_extracted - self.metrics.entities_after_resolution
+        )
 
         # Step 3: Extract relationships
         logger.info("Extracting relationships...")
         relationships = []
 
         # From hyperedges
-        hyperedge_relationships = self.relationship_extractor.extract_from_hyperedges(all_hyperedges)
+        hyperedge_relationships = self.relationship_extractor.extract_from_hyperedges(
+            all_hyperedges
+        )
         relationships.extend(hyperedge_relationships)
 
         # From text (if available)
@@ -524,18 +613,30 @@ class KnowledgeGraphBootstrapper:
             if source_config["type"] == "documents":
                 source_path = Path(source_config["path"])
                 if source_path.exists():
-                    text_content = source_path.read_text() if source_path.is_file() else ""
+                    text_content = (
+                        source_path.read_text() if source_path.is_file() else ""
+                    )
                     if text_content:
-                        text_relationships = self.relationship_extractor.extract_from_text(text_content, resolved_entities)
+                        text_relationships = (
+                            self.relationship_extractor.extract_from_text(
+                                text_content, resolved_entities
+                            )
+                        )
                         relationships.extend(text_relationships)
 
         self.metrics.relationships_extracted = len(relationships)
 
         # Step 4: Bootstrap confidence scores
         logger.info("Initializing confidence scores...")
-        resolved_entities = self.confidence_bootstrapper.bootstrap_entity_confidence(resolved_entities)
-        relationships = self.confidence_bootstrapper.bootstrap_relationship_confidence(relationships, resolved_entities)
-        self.metrics.confidence_scores_initialized = len(resolved_entities) + len(relationships)
+        resolved_entities = self.confidence_bootstrapper.bootstrap_entity_confidence(
+            resolved_entities
+        )
+        relationships = self.confidence_bootstrapper.bootstrap_relationship_confidence(
+            relationships, resolved_entities
+        )
+        self.metrics.confidence_scores_initialized = len(resolved_entities) + len(
+            relationships
+        )
 
         # Step 5: Create knowledge graph
         logger.info("Building knowledge graph...")
@@ -543,22 +644,30 @@ class KnowledgeGraphBootstrapper:
 
         # Add entities
         for entity_id, entity_data in resolved_entities.items():
-            kg.add_node(entity_id, {
-                "type": "entity",
-                "name": entity_data["primary_name"],
-                "aliases": entity_data["aliases"],
-                "entity_types": entity_data["types"],
-                "confidence": entity_data["confidence"],
-                "sources": entity_data["sources"],
-                "cluster_size": entity_data["cluster_size"],
-                "bootstrapped_at": datetime.now(timezone.utc).isoformat(),
-                "confidence_components": entity_data.get("confidence_components", {})
-            })
+            kg.add_node(
+                entity_id,
+                {
+                    "type": "entity",
+                    "name": entity_data["primary_name"],
+                    "aliases": entity_data["aliases"],
+                    "entity_types": entity_data["types"],
+                    "confidence": entity_data["confidence"],
+                    "sources": entity_data["sources"],
+                    "cluster_size": entity_data["cluster_size"],
+                    "bootstrapped_at": datetime.now(timezone.utc).isoformat(),
+                    "confidence_components": entity_data.get(
+                        "confidence_components", {}
+                    ),
+                },
+            )
 
         # Add relationships
         for relationship in relationships:
             # Filter out relationships below confidence threshold
-            if relationship["confidence"] >= self.config.relationship_confidence_threshold:
+            if (
+                relationship["confidence"]
+                >= self.config.relationship_confidence_threshold
+            ):
                 kg.add_edge(
                     relationship["source"],
                     relationship["target"],
@@ -567,8 +676,10 @@ class KnowledgeGraphBootstrapper:
                         "confidence": relationship["confidence"],
                         "context": relationship.get("context", ""),
                         "extracted_from": relationship.get("extracted_from", ""),
-                        "confidence_components": relationship.get("confidence_components", {})
-                    }
+                        "confidence_components": relationship.get(
+                            "confidence_components", {}
+                        ),
+                    },
                 )
 
         # Save knowledge graph
@@ -578,7 +689,9 @@ class KnowledgeGraphBootstrapper:
         self.metrics.bootstrap_time = (datetime.now() - start_time).total_seconds()
 
         logger.info("Knowledge graph bootstrapping completed!")
-        logger.info(f"Created knowledge graph with {len(resolved_entities)} entities and {len(relationships)} relationships")
+        logger.info(
+            f"Created knowledge graph with {len(resolved_entities)} entities and {len(relationships)} relationships"
+        )
 
         return self.metrics
 
@@ -588,20 +701,32 @@ class KnowledgeGraphBootstrapper:
             "bootstrap_metadata": {
                 "bootstrap_timestamp": datetime.now(timezone.utc).isoformat(),
                 "config": asdict(self.config),
-                "bootstrap_time_seconds": self.metrics.bootstrap_time
+                "bootstrap_time_seconds": self.metrics.bootstrap_time,
             },
             "metrics": asdict(self.metrics),
             "entity_resolution_stats": {
                 "original_entities": self.metrics.entities_extracted,
                 "resolved_entities": self.metrics.entities_after_resolution,
-                "merge_ratio": self.metrics.duplicate_entities_merged / self.metrics.entities_extracted if self.metrics.entities_extracted > 0 else 0,
-                "entities_per_cluster": self.metrics.entities_extracted / self.metrics.entities_after_resolution if self.metrics.entities_after_resolution > 0 else 1
+                "merge_ratio": self.metrics.duplicate_entities_merged
+                / self.metrics.entities_extracted
+                if self.metrics.entities_extracted > 0
+                else 0,
+                "entities_per_cluster": self.metrics.entities_extracted
+                / self.metrics.entities_after_resolution
+                if self.metrics.entities_after_resolution > 0
+                else 1,
             },
             "knowledge_graph_stats": {
                 "entity_count": self.metrics.entities_after_resolution,
                 "relationship_count": self.metrics.relationships_extracted,
-                "graph_density": (2 * self.metrics.relationships_extracted) / (self.metrics.entities_after_resolution * (self.metrics.entities_after_resolution - 1)) if self.metrics.entities_after_resolution > 1 else 0
-            }
+                "graph_density": (2 * self.metrics.relationships_extracted)
+                / (
+                    self.metrics.entities_after_resolution
+                    * (self.metrics.entities_after_resolution - 1)
+                )
+                if self.metrics.entities_after_resolution > 1
+                else 0,
+            },
         }
 
         with open(output_path, "w") as f:
@@ -609,10 +734,17 @@ class KnowledgeGraphBootstrapper:
 
         logger.info(f"Bootstrap report saved to {output_path}")
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Bootstrap HypeRAG knowledge graph from multiple sources")
-    parser.add_argument("--config", required=True, help="Configuration file with data sources")
-    parser.add_argument("--output", required=True, help="Output path for knowledge graph")
+    parser = argparse.ArgumentParser(
+        description="Bootstrap HypeRAG knowledge graph from multiple sources"
+    )
+    parser.add_argument(
+        "--config", required=True, help="Configuration file with data sources"
+    )
+    parser.add_argument(
+        "--output", required=True, help="Output path for knowledge graph"
+    )
     parser.add_argument("--report", help="Path to save bootstrap report")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
@@ -621,7 +753,7 @@ def main():
     # Configure logging
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     try:
@@ -636,7 +768,9 @@ def main():
         bootstrapper = KnowledgeGraphBootstrapper(bootstrap_config)
 
         # Bootstrap knowledge graph
-        metrics = bootstrapper.bootstrap_knowledge_graph(source_configs, Path(args.output))
+        metrics = bootstrapper.bootstrap_knowledge_graph(
+            source_configs, Path(args.output)
+        )
 
         # Save report if requested
         if args.report:
@@ -649,15 +783,22 @@ def main():
         print(f"  Entities after resolution: {metrics.entities_after_resolution}")
         print(f"  Duplicate entities merged: {metrics.duplicate_entities_merged}")
         print(f"  Relationships extracted: {metrics.relationships_extracted}")
-        print(f"  Confidence scores initialized: {metrics.confidence_scores_initialized}")
+        print(
+            f"  Confidence scores initialized: {metrics.confidence_scores_initialized}"
+        )
         print(f"  Bootstrap time: {metrics.bootstrap_time:.2f} seconds")
 
-        reduction_ratio = metrics.duplicate_entities_merged / metrics.entities_extracted if metrics.entities_extracted > 0 else 0
+        reduction_ratio = (
+            metrics.duplicate_entities_merged / metrics.entities_extracted
+            if metrics.entities_extracted > 0
+            else 0
+        )
         print(f"  Entity reduction ratio: {reduction_ratio:.1%}")
 
     except Exception as e:
         logger.error(f"Knowledge graph bootstrapping failed: {e}")
         raise
+
 
 if __name__ == "__main__":
     main()

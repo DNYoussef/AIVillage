@@ -3,6 +3,7 @@
 A connector = any module that exposes:
     def run(user_id:str, chroma_client) -> int   # returns # docs indexed
 """
+
 import importlib
 from pathlib import Path
 import re
