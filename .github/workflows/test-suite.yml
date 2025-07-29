@@ -44,6 +44,9 @@ jobs:
           pip install -r requirements-test.txt
         fi
 
+        # Install the project in editable mode so imports work
+        pip install -e .
+
     - name: Verify test infrastructure
       run: |
         echo "Verifying test infrastructure..."
