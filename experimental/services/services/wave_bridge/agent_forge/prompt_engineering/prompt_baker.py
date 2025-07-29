@@ -1,21 +1,19 @@
-"""
-Prompt Baker - Prepare winning prompts for weight integration
+"""Prompt Baker - Prepare winning prompts for weight integration
 Part B: Agent Forge Phase 4 - Prompt Engineering
 """
 
-import wandb
-import asyncio
-import json
-import hashlib
-import statistics
-from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime, timezone, timedelta
 from collections import defaultdict
-from dataclasses import dataclass, asdict
-import numpy as np
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+import json
 import logging
-import os
 from pathlib import Path
+import statistics
+from typing import Any
+
+import numpy as np
+
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +27,8 @@ class WinningPrompt:
     confidence_score: float
     interaction_count: int
     statistical_significance: float
-    configuration: Dict[str, Any]
-    optimization_history: List[Dict[str, Any]]
+    configuration: dict[str, Any]
+    optimization_history: list[dict[str, Any]]
     deployment_ready: bool = False
     baked_at: str = ""
 
@@ -38,12 +36,12 @@ class WinningPrompt:
 class PromptWeights:
     """Optimized weights for prompt parameters"""
 
-    greeting_style_weights: Dict[str, float]
-    hint_complexity_weights: Dict[str, float]
-    example_type_weights: Dict[str, float]
+    greeting_style_weights: dict[str, float]
+    hint_complexity_weights: dict[str, float]
+    example_type_weights: dict[str, float]
     encouragement_frequency: float
     response_length_target: str
-    subject_specialization: Dict[str, float]
+    subject_specialization: dict[str, float]
     confidence_level: float = 0.0
 
 class PromptBaker:
@@ -74,7 +72,6 @@ class PromptBaker:
 
     def initialize_wandb_api(self):
         """Initialize W&B API for data querying"""
-
         try:
             self.wandb_api = wandb.Api()
             logger.info("W&B API initialized for prompt baking")
@@ -84,7 +81,6 @@ class PromptBaker:
 
     def setup_prompt_directories(self):
         """Create directory structure for baked prompt artifacts"""
-
         base_path = Path("services/wave_bridge/agent_forge/baked_prompts")
 
         directories = [
@@ -98,9 +94,8 @@ class PromptBaker:
             directory.mkdir(parents=True, exist_ok=True)
             logger.info(f"Created directory: {directory}")
 
-    async def identify_winners(self, min_interactions: int = None) -> List[WinningPrompt]:
+    async def identify_winners(self, min_interactions: int = None) -> list[WinningPrompt]:
         """Find best performing prompt templates from W&B data"""
-
         min_interactions = min_interactions or self.min_interactions
 
         if not self.wandb_api:
@@ -202,7 +197,6 @@ class PromptBaker:
                                  performance_score: float,
                                  variance: float) -> float:
         """Calculate confidence score based on sample size and performance consistency"""
-
         # Sample size factor (diminishing returns)
         sample_factor = min(1.0, np.log(sample_size) / np.log(1000))
 
@@ -221,9 +215,8 @@ class PromptBaker:
 
         return min(1.0, confidence)
 
-    async def extract_optimization_history(self, run) -> List[Dict[str, Any]]:
+    async def extract_optimization_history(self, run) -> list[dict[str, Any]]:
         """Extract optimization history from W&B run"""
-
         try:
             history = []
 
@@ -245,7 +238,6 @@ class PromptBaker:
 
     async def version_winning_template(self, winning_prompt: WinningPrompt):
         """Version winning template as W&B artifact"""
-
         try:
             # Create artifact
             artifact = wandb.Artifact(
@@ -285,9 +277,8 @@ class PromptBaker:
         except Exception as e:
             logger.error(f"Error versioning template {winning_prompt.variant_id}: {e}")
 
-    async def optimize_prompt_weights(self, winners: List[WinningPrompt]) -> PromptWeights:
+    async def optimize_prompt_weights(self, winners: list[WinningPrompt]) -> PromptWeights:
         """Optimize weights based on winning prompt characteristics"""
-
         if not winners:
             logger.warning("No winners provided for weight optimization")
             return self.get_default_weights()
@@ -362,9 +353,8 @@ class PromptBaker:
 
         return optimized_weights
 
-    def calculate_category_weights(self, category_scores: Dict[str, List[float]]) -> Dict[str, float]:
+    def calculate_category_weights(self, category_scores: dict[str, list[float]]) -> dict[str, float]:
         """Calculate normalized weights for a category based on performance scores"""
-
         if not category_scores:
             return {}
 
@@ -390,9 +380,8 @@ class PromptBaker:
 
         return weights
 
-    def calculate_entropy(self, weights: Dict[str, float]) -> float:
+    def calculate_entropy(self, weights: dict[str, float]) -> float:
         """Calculate entropy of weight distribution (higher = more diverse)"""
-
         if not weights:
             return 0.0
 
@@ -411,7 +400,6 @@ class PromptBaker:
 
     def get_default_weights(self) -> PromptWeights:
         """Get default weights when no winners are available"""
-
         return PromptWeights(
             greeting_style_weights={"friendly": 0.4, "encouraging": 0.3, "playful": 0.2, "formal": 0.1},
             hint_complexity_weights={"guided": 0.5, "socratic": 0.3, "direct": 0.2},
@@ -424,7 +412,6 @@ class PromptBaker:
 
     async def save_optimized_weights(self, weights: PromptWeights):
         """Save optimized weights to file and W&B artifact"""
-
         try:
             # Save to local file
             weights_path = "services/wave_bridge/agent_forge/baked_prompts/weights/optimized_weights.json"
@@ -452,10 +439,9 @@ class PromptBaker:
             logger.error(f"Error saving optimized weights: {e}")
 
     async def prepare_deployment_package(self,
-                                       winners: List[WinningPrompt],
-                                       weights: PromptWeights) -> Dict[str, Any]:
+                                       winners: list[WinningPrompt],
+                                       weights: PromptWeights) -> dict[str, Any]:
         """Prepare complete deployment package with winning prompts and weights"""
-
         deployment_package = {
             "version": "1.0.0",
             "created_at": datetime.now(timezone.utc).isoformat(),
@@ -519,9 +505,8 @@ class PromptBaker:
 
         return deployment_package
 
-    async def validate_deployment_readiness(self, winners: List[WinningPrompt]) -> Dict[str, Any]:
+    async def validate_deployment_readiness(self, winners: list[WinningPrompt]) -> dict[str, Any]:
         """Validate that winning prompts are ready for production deployment"""
-
         validation_results = {
             "deployment_ready": True,
             "validation_passed": [],
@@ -595,7 +580,6 @@ class PromptBaker:
 
     async def generate_baking_report(self) -> str:
         """Generate comprehensive prompt baking report"""
-
         # Identify winners
         winners = await self.identify_winners()
 

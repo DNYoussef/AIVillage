@@ -1,5 +1,4 @@
-"""
-HypeRAG MCP Server
+"""HypeRAG MCP Server
 
 A Model Context Protocol server for HypeRAG knowledge retrieval and reasoning.
 Provides brain-inspired dual-memory architecture with creativity, repair, and safety validation.
@@ -32,10 +31,10 @@ except ImportError:
     MCPProtocolHandler = None
 
 __all__ = [
-    "get_server",
-    "HypeRAGPermissions",
-    "PermissionManager",
     "AgentReasoningModel",
+    "HypeRAGPermissions",
+    "MCPProtocolHandler",
     "ModelRegistry",
-    "MCPProtocolHandler"
+    "PermissionManager",
+    "get_server"
 ]

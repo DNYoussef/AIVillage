@@ -1,7 +1,6 @@
-"""
-RAG System utilities stub.
+"""RAG System utilities stub.
 """
 
-from .logging import setup_logger, get_logger
+from .logging import get_logger, setup_logger
 
-__all__ = ['setup_logger', 'get_logger']
+__all__ = ["get_logger", "setup_logger"]

@@ -1,11 +1,11 @@
-from pathlib import Path
 import json
 import os
-from llama_cpp import Llama
-from chromadb import PersistentClient
-from ingestion.vector_ds import personal_ds
-import peft
 from pathlib import Path
+
+from chromadb import PersistentClient
+from llama_cpp import Llama
+import peft
+
 try:
     from transformers import LlamaConfig, LlamaForCausalLM
 except Exception:  # transformers optional in test env

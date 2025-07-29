@@ -1,12 +1,10 @@
-"""
-GDC Registry
+"""GDC Registry
 
 Loads and manages Graph Denial Constraint specifications from YAML configuration.
 """
 
 import logging
 import pathlib
-from typing import Dict, List, Optional
 
 import yaml
 
@@ -18,9 +16,8 @@ logger = logging.getLogger(__name__)
 _DEFAULT_GDC_YAML = pathlib.Path(__file__).parent.parent.parent.parent / "config" / "gdc_rules.yaml"
 
 
-def load_gdc_registry(config_path: Optional[pathlib.Path] = None) -> Dict[str, GDCSpec]:
-    """
-    Load GDC specifications from YAML file
+def load_gdc_registry(config_path: pathlib.Path | None = None) -> dict[str, GDCSpec]:
+    """Load GDC specifications from YAML file
 
     Args:
         config_path: Path to GDC rules YAML file (optional)
@@ -39,7 +36,7 @@ def load_gdc_registry(config_path: Optional[pathlib.Path] = None) -> Dict[str, G
         raise FileNotFoundError(f"GDC rules file not found: {config_path}")
 
     try:
-        with config_path.open('r', encoding='utf-8') as f:
+        with config_path.open("r", encoding="utf-8") as f:
             raw_specs = yaml.safe_load(f)
     except yaml.YAMLError as e:
         raise ValueError(f"Invalid YAML in GDC rules file: {e}")
@@ -75,17 +72,17 @@ def load_gdc_registry(config_path: Optional[pathlib.Path] = None) -> Dict[str, G
     return registry
 
 
-def get_gdcs_by_category(registry: Dict[str, GDCSpec], category: str) -> List[GDCSpec]:
+def get_gdcs_by_category(registry: dict[str, GDCSpec], category: str) -> list[GDCSpec]:
     """Get all GDCs in a specific category"""
     return [spec for spec in registry.values() if spec.category == category]
 
 
-def get_gdcs_by_severity(registry: Dict[str, GDCSpec], severity: str) -> List[GDCSpec]:
+def get_gdcs_by_severity(registry: dict[str, GDCSpec], severity: str) -> list[GDCSpec]:
     """Get all GDCs with a specific severity level"""
     return [spec for spec in registry.values() if spec.severity == severity]
 
 
-def get_enabled_gdcs(registry: Dict[str, GDCSpec]) -> List[GDCSpec]:
+def get_enabled_gdcs(registry: dict[str, GDCSpec]) -> list[GDCSpec]:
     """Get all enabled GDCs"""
     return [spec for spec in registry.values() if spec.enabled]
 
@@ -101,15 +98,14 @@ except Exception as e:
     GDC_REGISTRY = {}
 
 
-def reload_registry(config_path: Optional[pathlib.Path] = None) -> None:
+def reload_registry(config_path: pathlib.Path | None = None) -> None:
     """Reload the global GDC registry"""
     global GDC_REGISTRY
     GDC_REGISTRY = load_gdc_registry(config_path)
 
 
-def validate_registry(registry: Dict[str, GDCSpec]) -> List[str]:
-    """
-    Validate a GDC registry for common issues
+def validate_registry(registry: dict[str, GDCSpec]) -> list[str]:
+    """Validate a GDC registry for common issues
 
     Returns:
         List of validation warnings/errors

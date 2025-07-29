@@ -1,6 +1,7 @@
-from torch.utils.data import Dataset
-from chromadb import PersistentClient
 import os
+
+from chromadb import PersistentClient
+from torch.utils.data import Dataset
 
 
 class PersonalDataset(Dataset):

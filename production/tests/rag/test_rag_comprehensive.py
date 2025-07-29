@@ -1,10 +1,9 @@
-"""
-Tests for RAG (Retrieval-Augmented Generation) system.
+"""Tests for RAG (Retrieval-Augmented Generation) system.
 Verifies retrieval and generation capabilities.
 """
 
+
 import pytest
-from unittest.mock import Mock, patch
 
 try:
     from production.rag import RAGPipeline
@@ -59,7 +58,7 @@ class TestRAGSystem:
 
         # Calculate similarity (dot product)
         similarities = [
-            sum(q * d for q, d in zip(query_embedding, doc_emb))
+            sum(q * d for q, d in zip(query_embedding, doc_emb, strict=False))
             for doc_emb in doc_embeddings
         ]
 

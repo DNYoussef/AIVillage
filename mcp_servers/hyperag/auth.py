@@ -1,19 +1,16 @@
-"""
-HypeRAG MCP Server Authentication and Authorization
+"""HypeRAG MCP Server Authentication and Authorization
 
 Implements role-based access control with granular permissions for different agent types.
 """
 
-import asyncio
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from enum import Enum
-from typing import Dict, List, Optional, Set, Any
-import jwt
 import logging
-from pathlib import Path
+import time
+from typing import Any
+
+import jwt
 
 logger = logging.getLogger(__name__)
 
@@ -86,11 +83,11 @@ class AuthContext:
     user_id: str
     agent_id: str
     role: str
-    permissions: Set[str]
+    permissions: set[str]
     session_id: str
     expires_at: datetime
-    ip_address: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    ip_address: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 @dataclass
@@ -104,18 +101,16 @@ class AuditLogEntry:
     permission_required: str
     granted: bool
     reason: str
-    ip_address: Optional[str] = None
-    session_id: Optional[str] = None
+    ip_address: str | None = None
+    session_id: str | None = None
 
 
 class AuthenticationError(Exception):
     """Raised when authentication fails"""
-    pass
 
 
 class AuthorizationError(Exception):
     """Raised when authorization fails"""
-    pass
 
 
 class PermissionChecker(ABC):
@@ -126,23 +121,22 @@ class PermissionChecker(ABC):
         self,
         context: AuthContext,
         permission: str,
-        resource: Optional[str] = None
+        resource: str | None = None
     ) -> bool:
         """Check if the context has the required permission"""
-        pass
 
 
 class RoleBasedPermissionChecker(PermissionChecker):
     """Role-based permission checker"""
 
-    def __init__(self, permissions_config: Dict[str, List[str]]):
+    def __init__(self, permissions_config: dict[str, list[str]]):
         self.permissions_config = permissions_config
 
     async def check_permission(
         self,
         context: AuthContext,
         permission: str,
-        resource: Optional[str] = None
+        resource: str | None = None
     ) -> bool:
         """Check if the role has the required permission"""
         return permission in context.permissions
@@ -158,7 +152,7 @@ class ResourceBasedPermissionChecker(PermissionChecker):
         self,
         context: AuthContext,
         permission: str,
-        resource: Optional[str] = None
+        resource: str | None = None
     ) -> bool:
         """Check permission with resource ownership rules"""
         # Check base permission first
@@ -181,7 +175,7 @@ class ResourceBasedPermissionChecker(PermissionChecker):
 class TimeBasedPermissionChecker(PermissionChecker):
     """Time-based permission checker with business hours restrictions"""
 
-    def __init__(self, base_checker: PermissionChecker, business_hours: Optional[tuple] = None):
+    def __init__(self, base_checker: PermissionChecker, business_hours: tuple | None = None):
         self.base_checker = base_checker
         self.business_hours = business_hours or (9, 17)  # 9 AM to 5 PM
 
@@ -189,7 +183,7 @@ class TimeBasedPermissionChecker(PermissionChecker):
         self,
         context: AuthContext,
         permission: str,
-        resource: Optional[str] = None
+        resource: str | None = None
     ) -> bool:
         """Check permission with time-based restrictions"""
         # Check base permission first
@@ -213,14 +207,14 @@ class PermissionManager:
     def __init__(
         self,
         jwt_secret: str,
-        permissions_config: Optional[Dict[str, List[str]]] = None,
+        permissions_config: dict[str, list[str]] | None = None,
         enable_audit: bool = True
     ):
         self.jwt_secret = jwt_secret
         self.permissions_config = permissions_config or HypeRAGPermissions.AGENT_PERMISSIONS
         self.enable_audit = enable_audit
-        self.audit_log: List[AuditLogEntry] = []
-        self.active_sessions: Dict[str, AuthContext] = {}
+        self.audit_log: list[AuditLogEntry] = []
+        self.active_sessions: dict[str, AuthContext] = {}
 
         # Set up permission checker chain
         base_checker = RoleBasedPermissionChecker(self.permissions_config)
@@ -228,10 +222,10 @@ class PermissionManager:
         self.permission_checker = TimeBasedPermissionChecker(resource_checker)
 
         # Rate limiting
-        self.rate_limits: Dict[str, List[float]] = {}
+        self.rate_limits: dict[str, list[float]] = {}
         self.max_requests_per_minute = 1000
 
-    async def authenticate_jwt(self, token: str, ip_address: Optional[str] = None) -> AuthContext:
+    async def authenticate_jwt(self, token: str, ip_address: str | None = None) -> AuthContext:
         """Authenticate using JWT token"""
         try:
             payload = jwt.decode(token, self.jwt_secret, algorithms=["HS256"])
@@ -271,9 +265,9 @@ class PermissionManager:
             return context
 
         except jwt.InvalidTokenError as e:
-            raise AuthenticationError(f"Invalid token: {str(e)}")
+            raise AuthenticationError(f"Invalid token: {e!s}")
 
-    async def authenticate_api_key(self, api_key: str, ip_address: Optional[str] = None) -> AuthContext:
+    async def authenticate_api_key(self, api_key: str, ip_address: str | None = None) -> AuthContext:
         """Authenticate using API key (simplified for demo)"""
         # In production, this would lookup the API key in a secure store
         key_mapping = {
@@ -310,7 +304,7 @@ class PermissionManager:
         self,
         context: AuthContext,
         permission: str,
-        resource: Optional[str] = None
+        resource: str | None = None
     ) -> bool:
         """Check if the context has the required permission"""
         # Check rate limiting
@@ -342,7 +336,7 @@ class PermissionManager:
         self,
         context: AuthContext,
         permission: str,
-        resource: Optional[str] = None
+        resource: str | None = None
     ) -> None:
         """Require permission or raise AuthorizationError"""
         if not await self.check_permission(context, permission, resource):
@@ -358,7 +352,7 @@ class PermissionManager:
             await self._audit_log(context, "logout", "system", "session", True, "Session invalidated")
             logger.info(f"Invalidated session {session_id}")
 
-    async def get_active_sessions(self) -> List[AuthContext]:
+    async def get_active_sessions(self) -> list[AuthContext]:
         """Get list of active sessions"""
         now = datetime.now()
         # Clean up expired sessions
@@ -434,9 +428,9 @@ class PermissionManager:
 
     async def get_audit_log(
         self,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         limit: int = 100
-    ) -> List[AuditLogEntry]:
+    ) -> list[AuditLogEntry]:
         """Get audit log entries"""
         entries = self.audit_log
 
@@ -445,7 +439,7 @@ class PermissionManager:
 
         return entries[-limit:]
 
-    async def update_permissions(self, role: str, permissions: List[str]) -> None:
+    async def update_permissions(self, role: str, permissions: list[str]) -> None:
         """Update permissions for a role (admin only)"""
         self.permissions_config[role] = permissions
 
@@ -458,7 +452,7 @@ class PermissionManager:
 
 
 # Decorators for easy permission checking
-def require_permission(permission: str, resource_param: Optional[str] = None):
+def require_permission(permission: str, resource_param: str | None = None):
     """Decorator to require permission for a method"""
     def decorator(func):
         async def wrapper(self, context: AuthContext, *args, **kwargs):
@@ -481,7 +475,7 @@ def audit_operation(operation: str):
                 return result
             except Exception as e:
                 duration = time.time() - start_time
-                logger.error(f"Operation {operation} failed for {context.user_id} in {duration:.3f}s: {str(e)}")
+                logger.error(f"Operation {operation} failed for {context.user_id} in {duration:.3f}s: {e!s}")
                 raise
         return wrapper
     return decorator

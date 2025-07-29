@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
-"""
-Test script for HypeRAG Hidden-Link Scanner
+"""Test script for HypeRAG Hidden-Link Scanner
 
 Validates scanner components with mock data to ensure functionality.
 """
 
 import asyncio
-import json
-import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
+import tempfile
 
 from hyperag_scan_hidden_links import (
-    HippoIndexAnalyzer,
+    CoMentionPair,
     DivergentRetrieverScanner,
     HiddenLinkScanner,
-    CoMentionPair,
-    load_config
+    HippoIndexAnalyzer,
+    load_config,
 )
 
 
@@ -37,9 +35,9 @@ def create_mock_hippo_logs(log_dir: Path):
         "2025-07-23T01:21:00Z Multiple mentions: [ENTITY:aspirin] [ENTITY:ibuprofen] [ENTITY:headache]",
     ]
 
-    with open(log_file, 'w') as f:
+    with open(log_file, "w") as f:
         for entry in mock_entries:
-            f.write(entry + '\n')
+            f.write(entry + "\n")
 
     print(f"Created mock log file: {log_file}")
 

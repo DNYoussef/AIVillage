@@ -1,6 +1,7 @@
 from pathlib import Path
-from tiktoken.load import load_tiktoken_bpe
+
 from tiktoken import Encoding
+from tiktoken.load import load_tiktoken_bpe
 
 TOKEN_FILE = Path(__file__).resolve().parent / "token_data" / "cl100k_base.tiktoken"
 

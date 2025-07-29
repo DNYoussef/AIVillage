@@ -1,10 +1,10 @@
 from collections.abc import Iterable
 
+import torch
+
 from ..geometry.snapshot import snapshot
 from ..meta.geo2z_policy import Geo2Z
 from ..optim.augmented_adam import AugmentedAdam
-import torch
-
 from .pid_edgechaos import EdgePID
 from .svf_ops import apply_svf
 

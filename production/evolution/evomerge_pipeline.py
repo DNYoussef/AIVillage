@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-EvoMerge Pipeline - Production-Ready Evolutionary Model Merging
+"""EvoMerge Pipeline - Production-Ready Evolutionary Model Merging
 
 Implements a sophisticated evolutionary algorithm for merging language models:
 - Generates 8 seed candidates from 3 base models using 2³ merge combinations
@@ -15,33 +14,32 @@ Usage:
 """
 
 import asyncio
-import hashlib
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import random
-import shutil
 import sys
 import traceback
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any
 from uuid import uuid4
-import click
 
+import click
 import numpy as np
-import torch
-import wandb
 from pydantic import BaseModel, Field, validator
+import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+import wandb
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('evomerge_pipeline.log')
+        logging.FileHandler("evomerge_pipeline.log")
     ]
 )
 logger = logging.getLogger(__name__)
@@ -55,7 +53,7 @@ class BaseModelConfig(BaseModel):
     name: str
     path: str
     weight: float = Field(default=1.0, ge=0.0, le=1.0)
-    domain_specialty: Optional[str] = None
+    domain_specialty: str | None = None
 
 class MergeOperatorConfig(BaseModel):
     """Configuration for merge operators"""
@@ -64,14 +62,14 @@ class MergeOperatorConfig(BaseModel):
     ties_threshold: float = Field(default=0.1, ge=0.0, le=1.0)
     dare_threshold: float = Field(default=0.1, ge=0.0, le=1.0)
     dare_amplification: float = Field(default=2.0, ge=1.0, le=5.0)
-    frankenmerge_layers: List[int] = Field(default_factory=lambda: [0, 1, 2])
+    frankenmerge_layers: list[int] = Field(default_factory=lambda: [0, 1, 2])
     dfs_merge_ratio: float = Field(default=0.3, ge=0.0, le=1.0)
 
 class EvolutionConfig(BaseModel):
     """Main evolution configuration"""
 
     # Base models
-    base_models: List[BaseModelConfig] = Field(
+    base_models: list[BaseModelConfig] = Field(
         default_factory=lambda: [
             BaseModelConfig(name="deepseek", path="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B", domain_specialty="reasoning"),
             BaseModelConfig(name="nemotron", path="nvidia/Nemotron-Research-Reasoning-Qwen-1.5B", domain_specialty="reasoning"),
@@ -91,7 +89,7 @@ class EvolutionConfig(BaseModel):
     merge_operators: MergeOperatorConfig = Field(default_factory=MergeOperatorConfig)
 
     # Evaluation weights
-    evaluation_weights: Dict[str, float] = Field(default_factory=lambda: {
+    evaluation_weights: dict[str, float] = Field(default_factory=lambda: {
         "code": 0.25,
         "math": 0.25,
         "multilingual": 0.25,
@@ -107,21 +105,21 @@ class EvolutionConfig(BaseModel):
 
     # W&B configuration
     wandb_project: str = Field(default="agent-forge")
-    wandb_entity: Optional[str] = None
-    wandb_tags: List[str] = Field(default_factory=lambda: ["evomerge", "evolution"])
+    wandb_entity: str | None = None
+    wandb_tags: list[str] = Field(default_factory=lambda: ["evomerge", "evolution"])
 
     # Resume configuration
-    resume_from_checkpoint: Optional[str] = None
+    resume_from_checkpoint: str | None = None
     save_intermediate_models: bool = Field(default=True)
     cleanup_failed_models: bool = Field(default=True)
 
-    @validator('base_models')
+    @validator("base_models")
     def validate_base_models(cls, v):
         if len(v) != 3:
             raise ValueError("Exactly 3 base models required")
         return v
 
-    @validator('evaluation_weights')
+    @validator("evaluation_weights")
     def validate_evaluation_weights(cls, v):
         total = sum(v.values())
         if abs(total - 1.0) > 0.01:
@@ -144,21 +142,21 @@ class ModelCandidate(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid4())[:8])
     generation: int
-    parent_ids: List[str] = Field(default_factory=list)
-    merge_recipe: Dict[str, Any]
-    model_path: Optional[str] = None
-    fitness_scores: Dict[str, float] = Field(default_factory=dict)
+    parent_ids: list[str] = Field(default_factory=list)
+    merge_recipe: dict[str, Any]
+    model_path: str | None = None
+    fitness_scores: dict[str, float] = Field(default_factory=dict)
     overall_fitness: float = 0.0
-    evaluation_time: Optional[float] = None
+    evaluation_time: float | None = None
     creation_time: datetime = Field(default_factory=datetime.now)
     is_seed: bool = False
-    mutation_applied: Optional[str] = None
+    mutation_applied: str | None = None
 
     @property
     def short_id(self) -> str:
         return self.id[:6]
 
-    def calculate_overall_fitness(self, weights: Dict[str, float]) -> float:
+    def calculate_overall_fitness(self, weights: dict[str, float]) -> float:
         """Calculate weighted overall fitness"""
         if not self.fitness_scores:
             return 0.0
@@ -178,12 +176,12 @@ class EvolutionState(BaseModel):
     """Tracks the current state of evolution"""
 
     current_generation: int = 0
-    population: List[ModelCandidate] = Field(default_factory=list)
-    best_candidate: Optional[ModelCandidate] = None
-    fitness_history: List[Dict[str, float]] = Field(default_factory=list)
+    population: list[ModelCandidate] = Field(default_factory=list)
+    best_candidate: ModelCandidate | None = None
+    fitness_history: list[dict[str, float]] = Field(default_factory=list)
     plateau_count: int = 0
     start_time: datetime = Field(default_factory=datetime.now)
-    wandb_run_id: Optional[str] = None
+    wandb_run_id: str | None = None
 
     def update_best_candidate(self):
         """Update the best candidate from current population"""
@@ -207,7 +205,7 @@ class MergeOperators:
     """Implementation of model merging operators"""
 
     @staticmethod
-    def linear_interpolation(models: List[torch.nn.Module], weights: List[float]) -> torch.nn.Module:
+    def linear_interpolation(models: list[torch.nn.Module], weights: list[float]) -> torch.nn.Module:
         """Linear interpolation between models"""
         if len(models) != len(weights):
             raise ValueError("Number of models must match number of weights")
@@ -225,7 +223,7 @@ class MergeOperators:
         for key in ref_state_dict.keys():
             merged_param = torch.zeros_like(ref_state_dict[key])
 
-            for model, weight in zip(models, weights):
+            for model, weight in zip(models, weights, strict=False):
                 model_state = model.state_dict()
                 if key in model_state:
                     merged_param += weight * model_state[key]
@@ -272,7 +270,7 @@ class MergeOperators:
         return merged_model
 
     @staticmethod
-    def ties_merge(models: List[torch.nn.Module], threshold: float = 0.1) -> torch.nn.Module:
+    def ties_merge(models: list[torch.nn.Module], threshold: float = 0.1) -> torch.nn.Module:
         """TIES merging algorithm"""
         merged_model = models[0].__class__(models[0].config)
         merged_state_dict = {}
@@ -312,7 +310,7 @@ class MergeOperators:
         return merged_model
 
     @staticmethod
-    def dare_merge(models: List[torch.nn.Module], threshold: float = 0.1, amplification: float = 2.0) -> torch.nn.Module:
+    def dare_merge(models: list[torch.nn.Module], threshold: float = 0.1, amplification: float = 2.0) -> torch.nn.Module:
         """DARE merging algorithm"""
         merged_model = models[0].__class__(models[0].config)
         merged_state_dict = {}
@@ -347,7 +345,7 @@ class MergeOperators:
         return merged_model
 
     @staticmethod
-    def frankenmerge(models: List[torch.nn.Module], layer_assignment: List[int]) -> torch.nn.Module:
+    def frankenmerge(models: list[torch.nn.Module], layer_assignment: list[int]) -> torch.nn.Module:
         """Frankenmerge - layer-wise model combination"""
         if len(models) != 3:
             raise ValueError("Frankenmerge requires exactly 3 models")
@@ -379,7 +377,7 @@ class MergeOperators:
         return merged_model
 
     @staticmethod
-    def dfs_merge(models: List[torch.nn.Module], merge_ratio: float = 0.3) -> torch.nn.Module:
+    def dfs_merge(models: list[torch.nn.Module], merge_ratio: float = 0.3) -> torch.nn.Module:
         """Depth-First Search merge strategy"""
         merged_model = models[0].__class__(models[0].config)
         merged_state_dict = {}
@@ -503,7 +501,7 @@ class MathEvaluator(BaseEvaluator):
 
             scores = []
 
-            for problem, expected in zip(self.test_problems, self.expected_answers):
+            for problem, expected in zip(self.test_problems, self.expected_answers, strict=False):
                 try:
                     inputs = tokenizer(f"Problem: {problem}\nSolution:", return_tensors="pt").to(self.device)
 
@@ -693,7 +691,7 @@ class EvoMergePipeline:
             logger.error(f"W&B initialization failed: {e}")
             self.wandb_run = None
 
-    def load_base_models(self) -> List[torch.nn.Module]:
+    def load_base_models(self) -> list[torch.nn.Module]:
         """Load the base models"""
         models = []
 
@@ -716,7 +714,7 @@ class EvoMergePipeline:
 
         return models
 
-    def generate_seed_candidates(self, base_models: List[torch.nn.Module]) -> List[ModelCandidate]:
+    def generate_seed_candidates(self, base_models: list[torch.nn.Module]) -> list[ModelCandidate]:
         """Generate 8 seed candidates using 2³ combinations"""
         candidates = []
 
@@ -771,9 +769,8 @@ class EvoMergePipeline:
         logger.info(f"Generated {len(candidates)} seed candidates")
         return candidates
 
-    def apply_merge_sequence(self, models: List[torch.nn.Module], continuous: str, ensemble: str, structured: str) -> torch.nn.Module:
+    def apply_merge_sequence(self, models: list[torch.nn.Module], continuous: str, ensemble: str, structured: str) -> torch.nn.Module:
         """Apply a sequence of merge operations"""
-
         # Step 1: Continuous interpolation
         if continuous == "linear":
             weights = [1.0/3, 1.0/3, 1.0/3]  # Equal weights
@@ -807,7 +804,7 @@ class EvoMergePipeline:
 
         return merged
 
-    async def evaluate_candidates(self, candidates: List[ModelCandidate]) -> List[ModelCandidate]:
+    async def evaluate_candidates(self, candidates: list[ModelCandidate]) -> list[ModelCandidate]:
         """Evaluate all candidates"""
         logger.info(f"Evaluating {len(candidates)} candidates")
 
@@ -835,9 +832,8 @@ class EvoMergePipeline:
         candidates.sort(key=lambda x: x.overall_fitness, reverse=True)
         return candidates
 
-    def select_and_mutate(self, candidates: List[ModelCandidate]) -> List[ModelCandidate]:
+    def select_and_mutate(self, candidates: list[ModelCandidate]) -> list[ModelCandidate]:
         """Selection and mutation for next generation"""
-
         # Select top 2 candidates
         top_candidates = candidates[:2]
         logger.info(f"Selected top candidates: {[c.short_id for c in top_candidates]}")
@@ -861,7 +857,6 @@ class EvoMergePipeline:
 
     def create_mutant(self, parent: ModelCandidate, mutation_id: int) -> ModelCandidate:
         """Create a mutant from a parent candidate"""
-
         # Load parent model
         parent_model = AutoModelForCausalLM.from_pretrained(parent.model_path)
 
@@ -903,7 +898,6 @@ class EvoMergePipeline:
 
     def apply_parameter_noise(self, model: torch.nn.Module, noise_scale: float) -> torch.nn.Module:
         """Apply random noise to model parameters"""
-
         with torch.no_grad():
             for param in model.parameters():
                 if param.requires_grad:
@@ -912,9 +906,8 @@ class EvoMergePipeline:
 
         return model
 
-    def create_failure_children(self, failure_candidates: List[ModelCandidate]) -> List[ModelCandidate]:
+    def create_failure_children(self, failure_candidates: list[ModelCandidate]) -> list[ModelCandidate]:
         """Create children from failure candidates by merging triples"""
-
         children = []
 
         # Group into triples and merge
@@ -970,7 +963,7 @@ class EvoMergePipeline:
         }
 
         try:
-            with open(checkpoint_path, 'w') as f:
+            with open(checkpoint_path, "w") as f:
                 json.dump(checkpoint_data, f, indent=2, default=str)
 
             logger.info(f"Checkpoint saved: {checkpoint_path}")
@@ -981,7 +974,7 @@ class EvoMergePipeline:
     def load_checkpoint(self, checkpoint_path: str) -> bool:
         """Load evolution checkpoint"""
         try:
-            with open(checkpoint_path, 'r') as f:
+            with open(checkpoint_path) as f:
                 checkpoint_data = json.load(f)
 
             # Load state
@@ -1121,31 +1114,29 @@ class EvoMergePipeline:
 @click.group()
 def forge():
     """Agent Forge CLI"""
-    pass
 
 @forge.command()
-@click.option('--gens', '--generations', default=50, help='Number of generations')
-@click.option('--base-models', default='deepseek,nemotron,qwen2', help='Comma-separated base model names')
-@click.option('--config', help='Configuration file path')
-@click.option('--resume', help='Resume from checkpoint')
-@click.option('--output-dir', default='./evomerge_output', help='Output directory')
-@click.option('--device', default='auto', help='Device to use (auto, cuda, cpu)')
+@click.option("--gens", "--generations", default=50, help="Number of generations")
+@click.option("--base-models", default="deepseek,nemotron,qwen2", help="Comma-separated base model names")
+@click.option("--config", help="Configuration file path")
+@click.option("--resume", help="Resume from checkpoint")
+@click.option("--output-dir", default="./evomerge_output", help="Output directory")
+@click.option("--device", default="auto", help="Device to use (auto, cuda, cpu)")
 def evo(gens, base_models, config, resume, output_dir, device):
     """Run evolutionary model merging"""
-
     try:
         # Load configuration
         if config and Path(config).exists():
-            with open(config, 'r') as f:
+            with open(config) as f:
                 config_data = json.load(f)
             evolution_config = EvolutionConfig(**config_data)
         else:
             # Create default configuration
-            base_model_names = base_models.split(',')
+            base_model_names = base_models.split(",")
             model_mapping = {
-                'deepseek': 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
-                'nemotron': 'nvidia/Nemotron-Research-Reasoning-Qwen-1.5B',
-                'qwen2': 'Qwen/Qwen2-1.5B-Instruct'
+                "deepseek": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+                "nemotron": "nvidia/Nemotron-Research-Reasoning-Qwen-1.5B",
+                "qwen2": "Qwen/Qwen2-1.5B-Instruct"
             }
 
             base_model_configs = []
@@ -1171,7 +1162,7 @@ def evo(gens, base_models, config, resume, output_dir, device):
         best_candidate = asyncio.run(pipeline.run_evolution())
 
         if best_candidate:
-            logger.info(f"Evolution completed successfully!")
+            logger.info("Evolution completed successfully!")
             logger.info(f"Best model: {best_candidate.model_path}")
             logger.info(f"Fitness: {best_candidate.overall_fitness:.3f}")
         else:
@@ -1187,9 +1178,8 @@ def evo(gens, base_models, config, resume, output_dir, device):
 # Orchestrator Integration
 # ============================================================================
 
-async def run_evomerge(config: Dict[str, Any]) -> 'PhaseResult':
-    """
-    Orchestrator entry point for EvoMerge phase.
+async def run_evomerge(config: dict[str, Any]) -> "PhaseResult":
+    """Orchestrator entry point for EvoMerge phase.
 
     Args:
         config: Configuration dictionary with evomerge parameters
@@ -1197,7 +1187,12 @@ async def run_evomerge(config: Dict[str, Any]) -> 'PhaseResult':
     Returns:
         PhaseResult with status, artifacts, and metrics
     """
-    from agent_forge.forge_orchestrator import PhaseResult, PhaseStatus, PhaseType, PhaseArtifact
+    from agent_forge.forge_orchestrator import (
+        PhaseArtifact,
+        PhaseResult,
+        PhaseStatus,
+        PhaseType,
+    )
 
     start_time = time.time()
 
@@ -1254,21 +1249,20 @@ async def run_evomerge(config: Dict[str, Any]) -> 'PhaseResult':
                 artifacts_produced=artifacts,
                 metrics=metrics
             )
-        else:
-            # Failed to produce a valid candidate
-            return PhaseResult(
-                phase_type=PhaseType.EVOMERGE,
-                status=PhaseStatus.FAILED,
-                start_time=datetime.fromtimestamp(start_time),
-                end_time=datetime.now(),
-                duration_seconds=duration,
-                error_message="Failed to produce a valid best candidate",
-                metrics={"execution_time": duration}
-            )
+        # Failed to produce a valid candidate
+        return PhaseResult(
+            phase_type=PhaseType.EVOMERGE,
+            status=PhaseStatus.FAILED,
+            start_time=datetime.fromtimestamp(start_time),
+            end_time=datetime.now(),
+            duration_seconds=duration,
+            error_message="Failed to produce a valid best candidate",
+            metrics={"execution_time": duration}
+        )
 
     except Exception as e:
         duration = time.time() - start_time
-        error_msg = f"EvoMerge phase failed: {str(e)}"
+        error_msg = f"EvoMerge phase failed: {e!s}"
         logger.error(error_msg)
         logger.error(traceback.format_exc())
 

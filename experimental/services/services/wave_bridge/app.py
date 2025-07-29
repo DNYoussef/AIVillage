@@ -1,25 +1,24 @@
-"""
-WhatsApp Wave Bridge for AI Village Tutoring
+"""WhatsApp Wave Bridge for AI Village Tutoring
 Sprint R-3+AF4 Implementation with W&B Prompt Tuning
 """
 
-from fastapi import FastAPI, Request, BackgroundTasks, HTTPException
+import asyncio
+from datetime import datetime, timezone
+import hashlib
+import logging
+import time
+from typing import Any
+
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from twilio.twiml.messaging_response import MessagingResponse
-import wandb
-import time
-import asyncio
-import logging
-from typing import Dict, Any, Optional
-import json
-import hashlib
-from datetime import datetime, timezone
-import os
 
-from .language_support import detect_language, auto_translate_flow, SUPPORTED_LANGUAGES
-from .prompt_tuning import PromptTuner, ABTestManager
-from .tutor_engine import AITutor
+import wandb
+
+from .language_support import SUPPORTED_LANGUAGES, auto_translate_flow, detect_language
 from .metrics import ResponseMetrics
+from .prompt_tuning import ABTestManager, PromptTuner
+from .tutor_engine import AITutor
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -46,8 +45,7 @@ wandb.init(
 
 @app.post("/whatsapp/webhook")
 async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
-    """
-    Handle WhatsApp messages with W&B tracking and prompt optimization
+    """Handle WhatsApp messages with W&B tracking and prompt optimization
     Target: <5 second response time
     """
     start_time = time.time()
@@ -55,9 +53,9 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     try:
         # Parse Twilio webhook data
         form_data = await request.form()
-        incoming_msg = form_data.get('Body', '').strip()
-        from_number = form_data.get('From', '')
-        message_sid = form_data.get('MessageSid', '')
+        incoming_msg = form_data.get("Body", "").strip()
+        from_number = form_data.get("From", "")
+        message_sid = form_data.get("MessageSid", "")
 
         logger.info(f"Received WhatsApp message from {from_number}: {incoming_msg[:50]}...")
 
@@ -111,7 +109,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         return PlainTextResponse(content=str(twiml_response), media_type="application/xml")
 
     except Exception as e:
-        logger.error(f"Error processing WhatsApp webhook: {str(e)}")
+        logger.error(f"Error processing WhatsApp webhook: {e!s}")
 
         # Log error to W&B
         wandb.log({
@@ -129,11 +127,9 @@ async def get_tutor_response(
     from_number: str,
     session_id: str,
     detected_lang: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
+    """Generate tutoring response with W&B prompt optimization
     """
-    Generate tutoring response with W&B prompt optimization
-    """
-
     # Check if this is a greeting (new conversation)
     is_greeting = is_greeting_message(message, detected_lang)
 
@@ -169,7 +165,7 @@ async def get_tutor_response(
         )
 
     # Handle translation if needed
-    if detected_lang != 'en' and detected_lang in SUPPORTED_LANGUAGES:
+    if detected_lang != "en" and detected_lang in SUPPORTED_LANGUAGES:
         response = await auto_translate_flow(response, detected_lang)
 
     return {
@@ -187,41 +183,41 @@ def generate_session_id(from_number: str, message_sid: str) -> str:
 def is_greeting_message(message: str, language: str) -> bool:
     """Detect if message is a greeting"""
     greeting_patterns = {
-        'en': ['hello', 'hi', 'hey', 'start', 'help'],
-        'es': ['hola', 'buenos', 'ayuda'],
-        'hi': ['नमस्ते', 'हैलो', 'मदद'],
-        'sw': ['hujambo', 'habari', 'msaada'],
-        'ar': ['مرحبا', 'السلام', 'مساعدة'],
-        'pt': ['olá', 'oi', 'ajuda'],
-        'fr': ['bonjour', 'salut', 'aide']
+        "en": ["hello", "hi", "hey", "start", "help"],
+        "es": ["hola", "buenos", "ayuda"],
+        "hi": ["नमस्ते", "हैलो", "मदद"],
+        "sw": ["hujambo", "habari", "msaada"],
+        "ar": ["مرحبا", "السلام", "مساعدة"],
+        "pt": ["olá", "oi", "ajuda"],
+        "fr": ["bonjour", "salut", "aide"]
     }
 
-    patterns = greeting_patterns.get(language, greeting_patterns['en'])
+    patterns = greeting_patterns.get(language, greeting_patterns["en"])
     message_lower = message.lower()
 
     return any(pattern in message_lower for pattern in patterns)
 
-def format_whatsapp_response(response_data: Dict[str, Any]) -> str:
+def format_whatsapp_response(response_data: dict[str, Any]) -> str:
     """Format response for Twilio WhatsApp"""
     response = MessagingResponse()
     message = response.message()
     message.body(response_data["text"])
     return str(response)
 
-def get_fallback_response(language: str) -> Dict[str, Any]:
+def get_fallback_response(language: str) -> dict[str, Any]:
     """Fallback response for timeouts"""
     fallback_messages = {
-        'en': "I'm processing your message. Please wait a moment...",
-        'es': "Estoy procesando tu mensaje. Por favor espera un momento...",
-        'hi': "मैं आपका संदेश प्रोसेस कर रहा हूं। कृपया एक क्षण प्रतीक्षा करें...",
-        'sw': "Ninachakata ujumbe wako. Tafadhali subiri kidogo...",
-        'ar': "أقوم بمعالجة رسالتك. يرجى الانتظار لحظة...",
-        'pt': "Estou processando sua mensagem. Por favor, aguarde um momento...",
-        'fr': "Je traite votre message. Veuillez patienter un moment..."
+        "en": "I'm processing your message. Please wait a moment...",
+        "es": "Estoy procesando tu mensaje. Por favor espera un momento...",
+        "hi": "मैं आपका संदेश प्रोसेस कर रहा हूं। कृपया एक क्षण प्रतीक्षा करें...",
+        "sw": "Ninachakata ujumbe wako. Tafadhali subiri kidogo...",
+        "ar": "أقوم بمعالجة رسالتك. يرجى الانتظار لحظة...",
+        "pt": "Estou processando sua mensagem. Por favor, aguarde um momento...",
+        "fr": "Je traite votre message. Veuillez patienter un moment..."
     }
 
     return {
-        "text": fallback_messages.get(language, fallback_messages['en']),
+        "text": fallback_messages.get(language, fallback_messages["en"]),
         "language": language,
         "is_fallback": True
     }
@@ -234,13 +230,12 @@ def get_error_response() -> str:
     return str(response)
 
 async def log_response_metrics(
-    response: Dict[str, Any],
+    response: dict[str, Any],
     response_time: float,
     session_id: str,
     language: str
 ):
     """Log detailed response metrics to W&B"""
-
     # Core metrics
     metrics_data = {
         "response_time": response_time,

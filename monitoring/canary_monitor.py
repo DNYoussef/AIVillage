@@ -5,12 +5,12 @@ Canary tests are expected to fail but serve as indicators of
 architectural changes when they start passing or fail differently.
 """
 
+from dataclasses import dataclass
+from datetime import datetime, timezone
 import json
 import logging
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
+from typing import Any
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,9 +22,9 @@ class CanaryTest:
     path: str
     expected_status: str  # 'xfail', 'skip', 'fail'
     reason: str
-    last_seen_status: Optional[str] = None
-    last_change: Optional[str] = None
-    monitored_since: Optional[str] = None
+    last_seen_status: str | None = None
+    last_change: str | None = None
+    monitored_since: str | None = None
 
 @dataclass
 class CanaryChange:
@@ -44,8 +44,8 @@ class CanaryMonitor:
         self.canary_config_file = self.base_dir / "canary_tests.json"
         self.canary_history_file = self.base_dir / "canary_history.json"
 
-        self.known_canaries: Dict[str, CanaryTest] = {}
-        self.change_history: List[CanaryChange] = []
+        self.known_canaries: dict[str, CanaryTest] = {}
+        self.change_history: list[CanaryChange] = []
 
         self._load_canary_config()
         self._load_change_history()
@@ -57,11 +57,11 @@ class CanaryMonitor:
             return
 
         try:
-            with open(self.canary_config_file, 'r') as f:
+            with open(self.canary_config_file) as f:
                 data = json.load(f)
 
             self.known_canaries = {}
-            for canary_data in data.get('canary_tests', []):
+            for canary_data in data.get("canary_tests", []):
                 canary = CanaryTest(**canary_data)
                 self.known_canaries[canary.name] = canary
 
@@ -99,7 +99,7 @@ class CanaryMonitor:
 
         try:
             self.canary_config_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.canary_config_file, 'w') as f:
+            with open(self.canary_config_file, "w") as f:
                 json.dump(config, f, indent=2)
             logger.info(f"Created default canary config: {self.canary_config_file}")
         except Exception as e:
@@ -112,7 +112,7 @@ class CanaryMonitor:
             return
 
         try:
-            with open(self.canary_history_file, 'r') as f:
+            with open(self.canary_history_file) as f:
                 data = json.load(f)
 
             self.change_history = [CanaryChange(**change) for change in data]
@@ -126,15 +126,15 @@ class CanaryMonitor:
         """Save canary change history"""
         try:
             self.canary_history_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.canary_history_file, 'w') as f:
+            with open(self.canary_history_file, "w") as f:
                 data = [
                     {
-                        'timestamp': change.timestamp,
-                        'test_name': change.test_name,
-                        'old_status': change.old_status,
-                        'new_status': change.new_status,
-                        'reason': change.reason,
-                        'alert_level': change.alert_level
+                        "timestamp": change.timestamp,
+                        "test_name": change.test_name,
+                        "old_status": change.old_status,
+                        "new_status": change.new_status,
+                        "reason": change.reason,
+                        "alert_level": change.alert_level
                     }
                     for change in self.change_history
                 ]
@@ -142,17 +142,17 @@ class CanaryMonitor:
         except Exception as e:
             logger.error(f"Failed to save change history: {e}")
 
-    def check_canary_status(self, test_results: Dict[str, Any]) -> List[CanaryChange]:
+    def check_canary_status(self, test_results: dict[str, Any]) -> list[CanaryChange]:
         """Check canary tests for unexpected changes"""
         changes = []
         timestamp = datetime.now(timezone.utc).isoformat()
 
         # Extract test results
-        tests = test_results.get('tests', [])
+        tests = test_results.get("tests", [])
 
         for test in tests:
-            test_id = test.get('nodeid', '')
-            outcome = test.get('outcome', 'unknown')
+            test_id = test.get("nodeid", "")
+            outcome = test.get("outcome", "unknown")
 
             # Check if this is a known canary test
             canary = self._find_canary_for_test(test_id)
@@ -192,55 +192,54 @@ class CanaryMonitor:
 
         return changes
 
-    def _find_canary_for_test(self, test_id: str) -> Optional[CanaryTest]:
+    def _find_canary_for_test(self, test_id: str) -> CanaryTest | None:
         """Find canary test configuration for a given test ID"""
         for canary in self.known_canaries.values():
             if canary.path in test_id or canary.name in test_id:
                 return canary
 
             # Handle wildcard patterns
-            if '*' in canary.path:
-                path_pattern = canary.path.replace('*', '')
-                if path_pattern.rstrip('/') in test_id:
+            if "*" in canary.path:
+                path_pattern = canary.path.replace("*", "")
+                if path_pattern.rstrip("/") in test_id:
                     return canary
 
         return None
 
-    def _normalize_test_status(self, outcome: str, test_data: Dict[str, Any]) -> str:
+    def _normalize_test_status(self, outcome: str, test_data: dict[str, Any]) -> str:
         """Normalize pytest outcomes to consistent status strings"""
-        if outcome == 'passed':
-            return 'passed'
-        elif outcome == 'failed':
-            return 'failed'
-        elif outcome == 'skipped':
-            return 'skipped'
-        elif outcome == 'xfail':
-            return 'xfail'
-        elif outcome == 'xpass':
-            return 'xpass'  # Expected fail but passed - important!
-        else:
-            return outcome
+        if outcome == "passed":
+            return "passed"
+        if outcome == "failed":
+            return "failed"
+        if outcome == "skipped":
+            return "skipped"
+        if outcome == "xfail":
+            return "xfail"
+        if outcome == "xpass":
+            return "xpass"  # Expected fail but passed - important!
+        return outcome
 
     def _determine_alert_level(self, canary: CanaryTest, old_status: str, new_status: str) -> str:
         """Determine alert level for status changes"""
         # Expected fail → Pass = Critical (architecture changed!)
-        if canary.expected_status == 'xfail' and new_status == 'passed':
-            return 'critical'
+        if canary.expected_status == "xfail" and new_status == "passed":
+            return "critical"
 
         # Expected fail → xpass = Critical (architecture changed!)
-        if canary.expected_status == 'xfail' and new_status == 'xpass':
-            return 'critical'
+        if canary.expected_status == "xfail" and new_status == "xpass":
+            return "critical"
 
         # Collection error → Success = Critical (dependencies resolved!)
-        if canary.expected_status == 'collection_error' and new_status == 'passed':
-            return 'critical'
+        if canary.expected_status == "collection_error" and new_status == "passed":
+            return "critical"
 
         # Any pass → fail = Warning (regression?)
-        if old_status == 'passed' and new_status in ['failed', 'error']:
-            return 'warning'
+        if old_status == "passed" and new_status in ["failed", "error"]:
+            return "warning"
 
         # Other changes = Info
-        return 'info'
+        return "info"
 
     def _update_canary_config(self):
         """Update canary configuration with latest status"""
@@ -263,7 +262,7 @@ class CanaryMonitor:
                 "alert_on_status_change": True
             }
 
-            with open(self.canary_config_file, 'w') as f:
+            with open(self.canary_config_file, "w") as f:
                 json.dump(config, f, indent=2)
 
         except Exception as e:
@@ -271,15 +270,15 @@ class CanaryMonitor:
 
     def alert_canary_change(self, change: CanaryChange):
         """Send alert for canary test change"""
-        if change.alert_level == 'critical':
+        if change.alert_level == "critical":
             logger.critical(f"CANARY ALERT: {change.test_name} - {change.reason}")
-            print(f"\n🚨 CRITICAL CANARY ALERT 🚨")
+            print("\n🚨 CRITICAL CANARY ALERT 🚨")
             print(f"Test: {change.test_name}")
             print(f"Change: {change.old_status} → {change.new_status}")
-            print(f"This may indicate significant architectural changes!")
-            print(f"Please investigate immediately.\n")
+            print("This may indicate significant architectural changes!")
+            print("Please investigate immediately.\n")
 
-        elif change.alert_level == 'warning':
+        elif change.alert_level == "warning":
             logger.warning(f"CANARY WARNING: {change.test_name} - {change.reason}")
             print(f"\n⚠️  CANARY WARNING: {change.test_name}")
             print(f"Status changed: {change.old_status} → {change.new_status}\n")
@@ -287,25 +286,25 @@ class CanaryMonitor:
         else:
             logger.info(f"CANARY INFO: {change.test_name} - {change.reason}")
 
-    def get_canary_summary(self) -> Dict[str, Any]:
+    def get_canary_summary(self) -> dict[str, Any]:
         """Get summary of canary test status"""
         summary = {
-            'total_canaries': len(self.known_canaries),
-            'recent_changes': len([c for c in self.change_history if c.alert_level in ['warning', 'critical']]),
-            'critical_alerts': len([c for c in self.change_history if c.alert_level == 'critical']),
-            'canary_status': {}
+            "total_canaries": len(self.known_canaries),
+            "recent_changes": len([c for c in self.change_history if c.alert_level in ["warning", "critical"]]),
+            "critical_alerts": len([c for c in self.change_history if c.alert_level == "critical"]),
+            "canary_status": {}
         }
 
         for name, canary in self.known_canaries.items():
-            status_emoji = "🔴" if canary.last_seen_status in ['failed', 'error'] else \
-                          "🟡" if canary.last_seen_status in ['skipped', 'xfail'] else \
-                          "🟢" if canary.last_seen_status == 'passed' else "⚪"
+            status_emoji = "🔴" if canary.last_seen_status in ["failed", "error"] else \
+                          "🟡" if canary.last_seen_status in ["skipped", "xfail"] else \
+                          "🟢" if canary.last_seen_status == "passed" else "⚪"
 
-            summary['canary_status'][name] = {
-                'status': canary.last_seen_status or 'unknown',
-                'expected': canary.expected_status,
-                'emoji': status_emoji,
-                'last_change': canary.last_change
+            summary["canary_status"][name] = {
+                "status": canary.last_seen_status or "unknown",
+                "expected": canary.expected_status,
+                "emoji": status_emoji,
+                "last_change": canary.last_change
             }
 
         return summary
@@ -325,7 +324,7 @@ def main():
 
     if args.check:
         try:
-            with open(args.check, 'r') as f:
+            with open(args.check) as f:
                 test_results = json.load(f)
 
             changes = monitor.check_canary_status(test_results)
@@ -341,12 +340,12 @@ def main():
 
     elif args.summary:
         summary = monitor.get_canary_summary()
-        print(f"Canary Test Summary:")
+        print("Canary Test Summary:")
         print(f"  Total canaries: {summary['total_canaries']}")
         print(f"  Recent changes: {summary['recent_changes']}")
         print(f"  Critical alerts: {summary['critical_alerts']}")
         print("\nCanary Status:")
-        for name, status in summary['canary_status'].items():
+        for name, status in summary["canary_status"].items():
             print(f"  {status['emoji']} {name}: {status['status']} (expected: {status['expected']})")
 
     elif args.history:

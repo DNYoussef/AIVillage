@@ -1,21 +1,19 @@
-"""
-Model Merge Operators with Evolutionary Strategies
+"""Model Merge Operators with Evolutionary Strategies
 Sprint R-4+AF1: Agent Forge Phase 1 - Task B.2
 """
 
-import wandb
-import torch
 import asyncio
-import logging
-import numpy as np
-from typing import Dict, List, Optional, Any, Tuple, Callable
-from datetime import datetime, timezone
-from dataclasses import dataclass, asdict
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch.nn.functional as F
-from pathlib import Path
-import json
 import copy
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+import logging
+from typing import Any
+
+import numpy as np
+import torch
+import torch.nn.functional as F
+
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +25,10 @@ class MergeResult:
     parent1_id: str
     parent2_id: str
     merge_strategy: str
-    merge_config: Dict[str, Any]
+    merge_config: dict[str, Any]
     success: bool
-    merged_model: Optional[Any] = None
-    performance_metrics: Dict[str, float] = None
+    merged_model: Any | None = None
+    performance_metrics: dict[str, float] = None
     merge_time: float = 0.0
     model_size_mb: float = 0.0
     parameters_changed: int = 0
@@ -92,7 +90,6 @@ class MergeOperator:
 
     def initialize_merge_tracking(self):
         """Initialize W&B tracking for merge operations"""
-
         try:
             # Use existing wandb run or create new one
             if wandb.run is None:
@@ -113,11 +110,10 @@ class MergeOperator:
             logger.error(f"Failed to initialize merge tracking: {e}")
 
     async def merge_population(self,
-                              population: List[Dict[str, Any]],
+                              population: list[dict[str, Any]],
                               generation: int,
-                              merge_config: MergeConfig = None) -> List[MergeResult]:
+                              merge_config: MergeConfig = None) -> list[MergeResult]:
         """Create next generation through strategic merging"""
-
         logger.info(f"Merging population for generation {generation}")
 
         if not merge_config:
@@ -188,9 +184,8 @@ class MergeOperator:
 
         return offspring_results
 
-    def select_merge_pairs(self, population: List[Dict[str, Any]]) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
+    def select_merge_pairs(self, population: list[dict[str, Any]]) -> list[tuple[dict[str, Any], dict[str, Any]]]:
         """Select optimal pairs for merging based on fitness and diversity"""
-
         pairs = []
 
         # Sort population by fitness
@@ -219,9 +214,8 @@ class MergeOperator:
 
         return pairs
 
-    def select_optimal_strategy(self, parent1: Dict[str, Any], parent2: Dict[str, Any]) -> str:
+    def select_optimal_strategy(self, parent1: dict[str, Any], parent2: dict[str, Any]) -> str:
         """Select optimal merge strategy based on parent characteristics and history"""
-
         # Get strategy performance history
         strategy_scores = {}
         for strategy, history in self.strategy_performance.items():
@@ -239,21 +233,19 @@ class MergeOperator:
         if fitness_gap < 0.1:
             # Similar fitness - use linear or evolutionary
             return "linear" if strategy_scores["linear"] > strategy_scores["evolutionary"] else "evolutionary"
-        elif fitness_gap > 0.3:
+        if fitness_gap > 0.3:
             # Very different fitness - use DARE or attention-guided
             return "dare" if strategy_scores["dare"] > strategy_scores["attention_guided"] else "attention_guided"
-        else:
-            # Moderate difference - use SLERP or layer-wise
-            return "slerp" if strategy_scores["slerp"] > strategy_scores["layer_wise"] else "layer_wise"
+        # Moderate difference - use SLERP or layer-wise
+        return "slerp" if strategy_scores["slerp"] > strategy_scores["layer_wise"] else "layer_wise"
 
     async def perform_merge(self,
-                          parent1: Dict[str, Any],
-                          parent2: Dict[str, Any],
+                          parent1: dict[str, Any],
+                          parent2: dict[str, Any],
                           strategy: str,
                           merge_config: MergeConfig,
                           generation: int) -> MergeResult:
         """Perform model merge using specified strategy"""
-
         start_time = asyncio.get_event_loop().time()
 
         # Generate merge ID
@@ -323,7 +315,6 @@ class MergeOperator:
 
     async def linear_merge(self, model1, model2, config: MergeConfig):
         """Linear interpolation merge: merged = α * model1 + (1-α) * model2"""
-
         try:
             alpha = config.linear_alpha
 
@@ -333,7 +324,7 @@ class MergeOperator:
             # Linear interpolation of parameters
             with torch.no_grad():
                 for (name1, param1), (name2, param2) in zip(
-                    model1.named_parameters(), model2.named_parameters()
+                    model1.named_parameters(), model2.named_parameters(), strict=False
                 ):
                     if name1 == name2 and param1.shape == param2.shape:
                         # Linear interpolation
@@ -350,7 +341,6 @@ class MergeOperator:
 
     async def slerp_merge(self, model1, model2, config: MergeConfig):
         """Spherical Linear Interpolation merge for smoother blending"""
-
         try:
             t = config.slerp_interpolation_factor
 
@@ -358,7 +348,7 @@ class MergeOperator:
 
             with torch.no_grad():
                 for (name1, param1), (name2, param2) in zip(
-                    model1.named_parameters(), model2.named_parameters()
+                    model1.named_parameters(), model2.named_parameters(), strict=False
                 ):
                     if name1 == name2 and param1.shape == param2.shape:
                         # Flatten parameters for SLERP
@@ -399,7 +389,6 @@ class MergeOperator:
 
     async def dare_merge(self, model1, model2, config: MergeConfig):
         """DARE (Drop And REscale) merge with random parameter selection"""
-
         try:
             drop_rate = config.dare_drop_rate
             rescale = config.dare_rescale
@@ -412,7 +401,7 @@ class MergeOperator:
 
             with torch.no_grad():
                 for (name1, param1), (name2, param2) in zip(
-                    model1.named_parameters(), model2.named_parameters()
+                    model1.named_parameters(), model2.named_parameters(), strict=False
                 ):
                     if name1 == name2 and param1.shape == param2.shape:
                         # Calculate delta
@@ -441,7 +430,6 @@ class MergeOperator:
 
     async def evolutionary_merge(self, model1, model2, config: MergeConfig):
         """Evolutionary merge with mutation and selection pressure"""
-
         try:
             mutation_strength = config.mutation_strength
             selection_prob = config.parameter_selection_prob
@@ -450,7 +438,7 @@ class MergeOperator:
 
             with torch.no_grad():
                 for (name1, param1), (name2, param2) in zip(
-                    model1.named_parameters(), model2.named_parameters()
+                    model1.named_parameters(), model2.named_parameters(), strict=False
                 ):
                     if name1 == name2 and param1.shape == param2.shape:
                         # Random selection between parents
@@ -475,7 +463,6 @@ class MergeOperator:
 
     async def layer_wise_merge(self, model1, model2, config: MergeConfig):
         """Layer-wise merge with adaptive blending"""
-
         try:
             merged_model = copy.deepcopy(model1)
 
@@ -485,7 +472,7 @@ class MergeOperator:
 
             with torch.no_grad():
                 for i, ((name1, param1), (name2, param2)) in enumerate(zip(
-                    model1.named_parameters(), model2.named_parameters()
+                    model1.named_parameters(), model2.named_parameters(), strict=False
                 )):
                     if name1 == name2 and param1.shape == param2.shape:
                         # Calculate layer-specific blend ratio
@@ -509,13 +496,12 @@ class MergeOperator:
 
     async def attention_guided_merge(self, model1, model2, config: MergeConfig):
         """Attention-guided merge focusing on important parameters"""
-
         try:
             merged_model = copy.deepcopy(model1)
 
             with torch.no_grad():
                 for (name1, param1), (name2, param2) in zip(
-                    model1.named_parameters(), model2.named_parameters()
+                    model1.named_parameters(), model2.named_parameters(), strict=False
                 ):
                     if name1 == name2 and param1.shape == param2.shape:
                         # Calculate parameter importance (simple heuristic)
@@ -539,9 +525,8 @@ class MergeOperator:
             logger.error(f"Error in attention-guided merge: {e}")
             return None
 
-    async def calculate_merge_quality(self, merged_model, model1, model2, parent1_info: Dict, parent2_info: Dict) -> float:
+    async def calculate_merge_quality(self, merged_model, model1, model2, parent1_info: dict, parent2_info: dict) -> float:
         """Calculate quality score for merged model"""
-
         try:
             quality_score = 0.0
 
@@ -567,7 +552,6 @@ class MergeOperator:
 
     async def calculate_parameter_diversity(self, merged_model, model1, model2) -> float:
         """Calculate how diverse the merged model is from its parents"""
-
         try:
             total_similarity = 0.0
             param_count = 0
@@ -576,7 +560,7 @@ class MergeOperator:
                 for (merged_name, merged_param), (name1, param1), (name2, param2) in zip(
                     merged_model.named_parameters(),
                     model1.named_parameters(),
-                    model2.named_parameters()
+                    model2.named_parameters(), strict=False
                 ):
                     if merged_name == name1 == name2 and merged_param.shape == param1.shape == param2.shape:
                         # Calculate cosine similarity with both parents
@@ -602,7 +586,6 @@ class MergeOperator:
 
     async def calculate_model_stability(self, model) -> float:
         """Calculate stability metrics for merged model"""
-
         try:
             stability_metrics = []
 
@@ -629,7 +612,6 @@ class MergeOperator:
 
     async def count_parameter_changes(self, merged_model, model1, model2) -> int:
         """Count how many parameters were significantly changed in merge"""
-
         try:
             changed_params = 0
             threshold = 1e-6
@@ -638,7 +620,7 @@ class MergeOperator:
                 for (merged_name, merged_param), (name1, param1), (name2, param2) in zip(
                     merged_model.named_parameters(),
                     model1.named_parameters(),
-                    model2.named_parameters()
+                    model2.named_parameters(), strict=False
                 ):
                     if merged_name == name1 == name2:
                         # Check if merged param is different from both parents
@@ -654,9 +636,8 @@ class MergeOperator:
             logger.error(f"Error counting parameter changes: {e}")
             return 0
 
-    def update_merge_analytics(self, merge_results: List[MergeResult]):
+    def update_merge_analytics(self, merge_results: list[MergeResult]):
         """Update analytics based on merge results"""
-
         for result in merge_results:
             # Update strategy performance
             if result.success:
@@ -674,12 +655,10 @@ class MergeOperator:
                 self.merge_analytics["avg_merge_time"] = new_avg_time
 
                 # Update best quality
-                if result.merge_quality_score > self.merge_analytics["best_merge_quality"]:
-                    self.merge_analytics["best_merge_quality"] = result.merge_quality_score
+                self.merge_analytics["best_merge_quality"] = max(self.merge_analytics["best_merge_quality"], result.merge_quality_score)
 
-    async def merge_models(self, model1, model2, strategy: str, generation: int) -> Optional[Any]:
+    async def merge_models(self, model1, model2, strategy: str, generation: int) -> Any | None:
         """Simple interface for merging two models"""
-
         config = MergeConfig()
 
         # Create mock parent info for merge
@@ -690,9 +669,8 @@ class MergeOperator:
 
         return result.merged_model if result.success else None
 
-    def get_merge_analytics(self) -> Dict[str, Any]:
+    def get_merge_analytics(self) -> dict[str, Any]:
         """Get comprehensive merge analytics"""
-
         analytics = {
             "merge_summary": self.merge_analytics,
             "strategy_performance": {

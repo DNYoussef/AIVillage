@@ -1,5 +1,4 @@
-"""
-Example: Agent Integration with HypeRAG MCP Server
+"""Example: Agent Integration with HypeRAG MCP Server
 
 Shows how different agents (King, Sage, Magi) would interact with the MCP server.
 """
@@ -7,7 +6,8 @@ Shows how different agents (King, Sage, Magi) would interact with the MCP server
 import asyncio
 import json
 import logging
-from typing import Dict, Any, Optional
+from typing import Any
+
 import websockets
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class HypeRAGMCPClient:
             await self.websocket.close()
             logger.info(f"Agent {self.agent_id} disconnected")
 
-    async def call(self, method: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def call(self, method: str, params: dict[str, Any]) -> dict[str, Any]:
         """Call an MCP method"""
         if not self.websocket:
             raise RuntimeError("Not connected to server")
@@ -71,7 +71,7 @@ class KingAgent:
         self.mcp = mcp_client
         self.name = "King Agent"
 
-    async def comprehensive_analysis(self, topic: str) -> Dict[str, Any]:
+    async def comprehensive_analysis(self, topic: str) -> dict[str, Any]:
         """Perform comprehensive analysis using King's full privileges"""
         logger.info(f"King performing comprehensive analysis on: {topic}")
 
@@ -125,7 +125,7 @@ class SageAgent:
         self.mcp = mcp_client
         self.name = "Sage Agent"
 
-    async def strategic_research(self, research_question: str) -> Dict[str, Any]:
+    async def strategic_research(self, research_question: str) -> dict[str, Any]:
         """Perform strategic research"""
         logger.info(f"Sage performing strategic research: {research_question}")
 
@@ -177,7 +177,7 @@ class MagiAgent:
         self.mcp = mcp_client
         self.name = "Magi Agent"
 
-    async def technical_query(self, technical_question: str) -> Dict[str, Any]:
+    async def technical_query(self, technical_question: str) -> dict[str, Any]:
         """Handle technical queries and documentation"""
         logger.info(f"Magi handling technical query: {technical_question}")
 
@@ -221,7 +221,6 @@ class MagiAgent:
 
 async def demonstrate_agent_integration():
     """Demonstrate how different agents integrate with MCP server"""
-
     # Agent configurations
     agents_config = [
         {
@@ -275,7 +274,7 @@ async def demonstrate_agent_integration():
             await client.disconnect()
 
         except Exception as e:
-            logger.error(f"Error with agent {config['id']}: {str(e)}")
+            logger.error(f"Error with agent {config['id']}: {e!s}")
             results.append({
                 "agent": config["id"],
                 "task": config["task"],
@@ -392,7 +391,7 @@ async def main():
         print("\n=== Demo Complete ===")
 
     except Exception as e:
-        print(f"Demo failed: {str(e)}")
+        print(f"Demo failed: {e!s}")
         print("Make sure the HypeRAG MCP Server is running on ws://localhost:8765")
 
 

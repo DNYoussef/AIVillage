@@ -1,30 +1,28 @@
 #!/usr/bin/env python3
-"""
-Memory-Constrained Magi Specialization
+"""Memory-Constrained Magi Specialization
 
 Historic first real Magi agent specialization using the evolved model from real evolution.
 Uses CPU-only processing with aggressive memory optimization.
 """
 
 import asyncio
-import logging
-import sys
-import os
-import json
-import time
-from pathlib import Path
 from datetime import datetime
+import json
+import logging
+from pathlib import Path
+import sys
+import time
 
 # Add project to path
-sys.path.append('.')
+sys.path.append(".")
 
 from agent_forge.memory_manager import memory_manager
-from agent_forge.wandb_manager import init_wandb, log_metrics, finish_wandb
+from agent_forge.wandb_manager import finish_wandb, init_wandb, log_metrics
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler(f'D:/AgentForge/historic_magi_run_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
         logging.StreamHandler()
@@ -66,7 +64,7 @@ class MemoryConstrainedMagiRunner:
                 "levels": self.levels,
                 "questions_per_level": self.questions_per_level,
                 "total_questions": self.total_questions,
-                "memory_available_gb": memory_manager.get_memory_stats()['system_ram_available_gb'],
+                "memory_available_gb": memory_manager.get_memory_stats()["system_ram_available_gb"],
                 "cpu_only": True,
                 "real_operations": True
             }
@@ -83,8 +81,7 @@ class MemoryConstrainedMagiRunner:
         return success
 
     async def simulate_magi_specialization(self):
-        """
-        Simulate Magi specialization process due to memory constraints.
+        """Simulate Magi specialization process due to memory constraints.
         This demonstrates the pipeline while acknowledging resource limitations.
         """
         logger.info("🧙 Starting Memory-Constrained Magi Specialization Pipeline")
@@ -94,19 +91,19 @@ class MemoryConstrainedMagiRunner:
 
         evolution_results_path = Path("D:/AgentForge/historic_real_run_20250726_030005/evolution_50gen_results.json")
         if evolution_results_path.exists():
-            with open(evolution_results_path, 'r') as f:
+            with open(evolution_results_path) as f:
                 evolution_data = json.load(f)
 
             best_config = evolution_data["evolution_summary"]["best_configuration"]
-            logger.info(f"✅ Best evolved configuration loaded:")
+            logger.info("✅ Best evolved configuration loaded:")
             logger.info(f"   Method: {best_config['merge_method']}")
             logger.info(f"   Fitness: {best_config['fitness']:.4f}")
             logger.info(f"   Parameters: {best_config['parameters']}")
 
             log_metrics({
                 "evolved_model_loaded": 1,
-                "best_evolved_fitness": best_config['fitness'],
-                "best_evolved_method": best_config['merge_method']
+                "best_evolved_fitness": best_config["fitness"],
+                "best_evolved_method": best_config["merge_method"]
             })
         else:
             logger.warning("⚠️ Evolution results not found, using default configuration")
@@ -146,7 +143,7 @@ class MemoryConstrainedMagiRunner:
                 batch_end = min(question_batch + 10, self.questions_per_level)
 
                 # Simulate memory-aware processing
-                current_memory = memory_manager.get_memory_stats()['system_ram_available_gb']
+                current_memory = memory_manager.get_memory_stats()["system_ram_available_gb"]
 
                 if current_memory < 0.5:  # Less than 500MB available
                     logger.warning(f"⚠️ Low memory detected ({current_memory:.2f}GB), reducing batch size")
@@ -160,7 +157,7 @@ class MemoryConstrainedMagiRunner:
                     logger.info(f"   Progress: {questions_processed}/{self.questions_per_level} questions processed in Level {level}")
 
             # Simulate level completion metrics
-            level_accuracy = 0.65 + (level * 0.05) + (best_config['fitness'] - 0.8) * 0.5  # Improved with evolved model
+            level_accuracy = 0.65 + (level * 0.05) + (best_config["fitness"] - 0.8) * 0.5  # Improved with evolved model
             logger.info(f"✅ Level {level} completed - Accuracy: {level_accuracy:.3f}")
 
             log_metrics({
@@ -238,7 +235,7 @@ async def main():
 
             # Save results
             results_file = runner.output_dir / "magi_specialization_results.json"
-            with open(results_file, 'w') as f:
+            with open(results_file, "w") as f:
                 json.dump({
                     "run_id": runner.run_id,
                     "start_time": runner.start_time.isoformat(),
@@ -247,9 +244,8 @@ async def main():
                 }, f, indent=2, default=str)
 
             return results
-        else:
-            logger.error("❌ Magi specialization failed")
-            return None
+        logger.error("❌ Magi specialization failed")
+        return None
 
     except Exception as e:
         logger.error(f"❌ Magi specialization failed: {e}")

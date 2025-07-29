@@ -1,6 +1,7 @@
-from chromadb import PersistentClient
 import mailbox
 import os
+
+from chromadb import PersistentClient
 from langdetect import detect
 
 from ingestion import add_text

@@ -1,18 +1,19 @@
-"""
-Execution Strategies
+"""Execution Strategies
 
 Concrete implementations of reasoning strategies for different query types.
 Each strategy defines how to break down and execute specific types of queries.
 """
 
-import asyncio
-import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+import logging
+from typing import Any
 
 from .plan_structures import (
-    QueryPlan, ExecutionStep, RetrievalConstraints, QueryType,
-    ReasoningStrategy, ExecutionStatus
+    ExecutionStep,
+    QueryPlan,
+    QueryType,
+    ReasoningStrategy,
+    RetrievalConstraints,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,9 +32,8 @@ class BaseStrategy(ABC):
                          query: str,
                          query_type: QueryType,
                          constraints: RetrievalConstraints,
-                         context: Dict[str, Any]) -> QueryPlan:
+                         context: dict[str, Any]) -> QueryPlan:
         """Create execution plan for the query"""
-        pass
 
     def _create_base_plan(self,
                          query: str,
@@ -52,8 +52,8 @@ class BaseStrategy(ABC):
                            plan: QueryPlan,
                            description: str,
                            operation: str,
-                           parameters: Dict[str, Any],
-                           dependencies: List[str] = None) -> str:
+                           parameters: dict[str, Any],
+                           dependencies: list[str] = None) -> str:
         """Add a retrieval step to the plan"""
         step = ExecutionStep(
             step_type="retrieval",
@@ -71,8 +71,8 @@ class BaseStrategy(ABC):
                            plan: QueryPlan,
                            description: str,
                            operation: str,
-                           parameters: Dict[str, Any],
-                           dependencies: List[str] = None) -> str:
+                           parameters: dict[str, Any],
+                           dependencies: list[str] = None) -> str:
         """Add a reasoning step to the plan"""
         step = ExecutionStep(
             step_type="reasoning",
@@ -90,8 +90,8 @@ class BaseStrategy(ABC):
                               plan: QueryPlan,
                               description: str,
                               operation: str,
-                              parameters: Dict[str, Any],
-                              dependencies: List[str] = None) -> str:
+                              parameters: dict[str, Any],
+                              dependencies: list[str] = None) -> str:
         """Add a verification step to the plan"""
         step = ExecutionStep(
             step_type="verification",
@@ -115,7 +115,7 @@ class SimpleFactStrategy(BaseStrategy):
                          query: str,
                          query_type: QueryType,
                          constraints: RetrievalConstraints,
-                         context: Dict[str, Any]) -> QueryPlan:
+                         context: dict[str, Any]) -> QueryPlan:
 
         plan = self._create_base_plan(query, query_type, ReasoningStrategy.DIRECT_RETRIEVAL, constraints)
         plan.complexity_score = 0.2
@@ -145,7 +145,7 @@ class TemporalStrategy(BaseStrategy):
                          query: str,
                          query_type: QueryType,
                          constraints: RetrievalConstraints,
-                         context: Dict[str, Any]) -> QueryPlan:
+                         context: dict[str, Any]) -> QueryPlan:
 
         plan = self._create_base_plan(query, query_type, ReasoningStrategy.TEMPORAL_REASONING, constraints)
         plan.complexity_score = 0.6
@@ -200,7 +200,7 @@ class CausalStrategy(BaseStrategy):
                          query: str,
                          query_type: QueryType,
                          constraints: RetrievalConstraints,
-                         context: Dict[str, Any]) -> QueryPlan:
+                         context: dict[str, Any]) -> QueryPlan:
 
         plan = self._create_base_plan(query, query_type, ReasoningStrategy.CAUSAL_REASONING, constraints)
         plan.complexity_score = 0.7
@@ -268,7 +268,7 @@ class ComparativeStrategy(BaseStrategy):
                          query: str,
                          query_type: QueryType,
                          constraints: RetrievalConstraints,
-                         context: Dict[str, Any]) -> QueryPlan:
+                         context: dict[str, Any]) -> QueryPlan:
 
         plan = self._create_base_plan(query, query_type, ReasoningStrategy.COMPARATIVE_ANALYSIS, constraints)
         plan.complexity_score = 0.6
@@ -324,7 +324,7 @@ class MetaQueryStrategy(BaseStrategy):
                          query: str,
                          query_type: QueryType,
                          constraints: RetrievalConstraints,
-                         context: Dict[str, Any]) -> QueryPlan:
+                         context: dict[str, Any]) -> QueryPlan:
 
         plan = self._create_base_plan(query, query_type, ReasoningStrategy.META_REASONING, constraints)
         plan.complexity_score = 0.4
@@ -381,7 +381,7 @@ class MultiHopStrategy(BaseStrategy):
                          query: str,
                          query_type: QueryType,
                          constraints: RetrievalConstraints,
-                         context: Dict[str, Any]) -> QueryPlan:
+                         context: dict[str, Any]) -> QueryPlan:
 
         plan = self._create_base_plan(query, query_type, ReasoningStrategy.STEP_BY_STEP, constraints)
         plan.complexity_score = 0.8
@@ -450,7 +450,7 @@ class AggregationStrategy(BaseStrategy):
                          query: str,
                          query_type: QueryType,
                          constraints: RetrievalConstraints,
-                         context: Dict[str, Any]) -> QueryPlan:
+                         context: dict[str, Any]) -> QueryPlan:
 
         plan = self._create_base_plan(query, query_type, ReasoningStrategy.GRAPH_TRAVERSAL, constraints)
         plan.complexity_score = 0.5
@@ -506,7 +506,7 @@ class HypotheticalStrategy(BaseStrategy):
                          query: str,
                          query_type: QueryType,
                          constraints: RetrievalConstraints,
-                         context: Dict[str, Any]) -> QueryPlan:
+                         context: dict[str, Any]) -> QueryPlan:
 
         plan = self._create_base_plan(query, query_type, ReasoningStrategy.STEP_BY_STEP, constraints)
         plan.complexity_score = 0.7
@@ -574,7 +574,7 @@ class HybridStrategy(BaseStrategy):
                          query: str,
                          query_type: QueryType,
                          constraints: RetrievalConstraints,
-                         context: Dict[str, Any]) -> QueryPlan:
+                         context: dict[str, Any]) -> QueryPlan:
 
         plan = self._create_base_plan(query, query_type, ReasoningStrategy.HYBRID, constraints)
         plan.complexity_score = 0.9

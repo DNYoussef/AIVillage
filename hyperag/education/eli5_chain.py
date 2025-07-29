@@ -1,22 +1,20 @@
-"""
-Culturally Aware ELI5 Explanation Chain
+"""Culturally Aware ELI5 Explanation Chain
 Sprint R-4+AF1: Education Core System - Task A.2
 """
 
-import wandb
 import asyncio
-import json
-import logging
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime, timezone
 from collections import defaultdict
-from dataclasses import dataclass, asdict
-import hashlib
+from dataclasses import dataclass
+from datetime import datetime, timezone
+import logging
 import random
+from typing import Any
 
 # Import AI model clients
 from anthropic import AsyncAnthropic
 from openai import AsyncOpenAI
+
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +39,11 @@ class ExplanationTemplate:
 
     template_id: str
     concept_category: str
-    age_range: Tuple[int, int]
+    age_range: tuple[int, int]
     language: str
     template_structure: str
     cultural_adaptability: float
-    effectiveness_metrics: Dict[str, float]
+    effectiveness_metrics: dict[str, float]
 
 @dataclass
 class ExplanationResult:
@@ -56,7 +54,7 @@ class ExplanationResult:
     language: str
     region: str
     explanation: str
-    cultural_examples_used: List[str]
+    cultural_examples_used: list[str]
     template_used: str
     readability_score: float
     cultural_relevance_score: float
@@ -90,7 +88,6 @@ class CulturallyAwareELI5:
 
     def initialize_wandb_tracking(self):
         """Initialize W&B tracking for ELI5 explanations"""
-
         try:
             wandb.init(
                 project=self.project_name,
@@ -116,7 +113,6 @@ class CulturallyAwareELI5:
 
     async def initialize_cultural_database(self):
         """Initialize database of cultural examples and regional contexts"""
-
         # North American examples
         await self.add_cultural_examples_region("north_america")
 
@@ -133,7 +129,6 @@ class CulturallyAwareELI5:
 
     async def add_cultural_examples_region(self, region: str):
         """Add cultural examples for a specific region"""
-
         if region == "north_america":
             examples = [
                 # Mathematics
@@ -205,7 +200,6 @@ class CulturallyAwareELI5:
 
     async def initialize_explanation_templates(self):
         """Initialize explanation templates for different concepts and ages"""
-
         templates = [
             # Young children (3-6)
             ExplanationTemplate(
@@ -303,7 +297,6 @@ class CulturallyAwareELI5:
 
     async def create_multilingual_templates(self):
         """Create templates for different languages"""
-
         # Spanish templates
         spanish_templates = [
             ExplanationTemplate(
@@ -373,7 +366,6 @@ class CulturallyAwareELI5:
                      learning_style: str = "balanced",
                      complexity_preference: str = "auto") -> ExplanationResult:
         """Generate culturally relevant, age-appropriate explanation"""
-
         start_time = asyncio.get_event_loop().time()
 
         try:
@@ -465,7 +457,6 @@ class CulturallyAwareELI5:
 
     async def get_base_explanation(self, concept: str, age: int, language: str) -> str:
         """Get base explanation for concept"""
-
         # Create age-appropriate prompt
         age_descriptor = self.get_age_descriptor(age)
 
@@ -511,21 +502,18 @@ class CulturallyAwareELI5:
 
     def get_age_descriptor(self, age: int) -> str:
         """Get age-appropriate descriptor"""
-
         if age <= 5:
             return "a very young child"
-        elif age <= 8:
+        if age <= 8:
             return "an elementary school child"
-        elif age <= 12:
+        if age <= 12:
             return "a middle school student"
-        elif age <= 16:
+        if age <= 16:
             return "a high school student"
-        else:
-            return "a young adult"
+        return "a young adult"
 
-    def get_cultural_examples(self, region: str, concept: str, age: int, language: str) -> List[CulturalExample]:
+    def get_cultural_examples(self, region: str, concept: str, age: int, language: str) -> list[CulturalExample]:
         """Get relevant cultural examples for the concept"""
-
         # Direct match
         direct_examples = self.cultural_examples.get((region, concept), [])
 
@@ -554,9 +542,8 @@ class CulturallyAwareELI5:
 
         return suitable_examples[:3]  # Return top 3 examples
 
-    def select_explanation_template(self, age: int, language: str, concept: str) -> Optional[ExplanationTemplate]:
+    def select_explanation_template(self, age: int, language: str, concept: str) -> ExplanationTemplate | None:
         """Select most appropriate explanation template"""
-
         # Filter templates by age range and language
         suitable_templates = [
             template for template in self.explanation_templates.values()
@@ -586,11 +573,10 @@ class CulturallyAwareELI5:
                                          language: str,
                                          region: str,
                                          base_explanation: str,
-                                         cultural_examples: List[CulturalExample],
-                                         template: Optional[ExplanationTemplate],
+                                         cultural_examples: list[CulturalExample],
+                                         template: ExplanationTemplate | None,
                                          learning_style: str) -> str:
         """Generate culturally adapted explanation using template and examples"""
-
         # Prepare cultural examples text
         examples_text = ""
         if cultural_examples:
@@ -641,12 +627,10 @@ class CulturallyAwareELI5:
             # Simple fallback: combine base explanation with examples
             if cultural_examples:
                 return f"{base_explanation}\n\n{cultural_examples[0].example_text}"
-            else:
-                return base_explanation
+            return base_explanation
 
     async def add_visual_elements(self, explanation: str, concept: str) -> str:
         """Add visual learning elements to explanation"""
-
         visual_prompts = [
             "Picture this:",
             "Imagine you can see:",
@@ -660,7 +644,6 @@ class CulturallyAwareELI5:
 
     async def add_hands_on_activities(self, explanation: str, concept: str, age: int) -> str:
         """Add kinesthetic learning activities"""
-
         if age <= 8:
             activity_starters = [
                 "Try this with your hands:",
@@ -680,9 +663,8 @@ class CulturallyAwareELI5:
 
     def calculate_readability_score(self, text: str, age: int) -> float:
         """Calculate age-appropriate readability score"""
-
         words = text.split()
-        sentences = text.count('.') + text.count('!') + text.count('?')
+        sentences = text.count(".") + text.count("!") + text.count("?")
 
         if sentences == 0:
             sentences = 1
@@ -706,7 +688,6 @@ class CulturallyAwareELI5:
 
     def calculate_cultural_relevance(self, text: str, region: str) -> float:
         """Calculate cultural relevance score"""
-
         # Simple heuristic based on presence of cultural indicators
         cultural_indicators = {
             "north_america": ["pizza", "football", "baseball", "neighborhood", "school"],
@@ -726,30 +707,29 @@ class CulturallyAwareELI5:
 
     def calculate_engagement_score(self, text: str, age: int) -> float:
         """Calculate engagement score based on content"""
-
         engagement_factors = 0.0
 
         # Question presence (encourages thinking)
-        if '?' in text:
+        if "?" in text:
             engagement_factors += 0.2
 
         # Exclamation marks (excitement)
-        exclamation_count = text.count('!')
+        exclamation_count = text.count("!")
         engagement_factors += min(0.2, exclamation_count * 0.1)
 
         # Personal pronouns (relatability)
-        personal_words = ['you', 'your', 'we', 'us', 'I']
+        personal_words = ["you", "your", "we", "us", "I"]
         personal_count = sum(1 for word in personal_words if word in text.lower())
         engagement_factors += min(0.2, personal_count * 0.05)
 
         # Action words for younger kids
         if age <= 10:
-            action_words = ['try', 'do', 'make', 'play', 'see', 'touch']
+            action_words = ["try", "do", "make", "play", "see", "touch"]
             action_count = sum(1 for word in action_words if word in text.lower())
             engagement_factors += min(0.2, action_count * 0.05)
 
         # Analogies and comparisons
-        comparison_words = ['like', 'as', 'similar', 'imagine', 'picture']
+        comparison_words = ["like", "as", "similar", "imagine", "picture"]
         comparison_count = sum(1 for word in comparison_words if word in text.lower())
         engagement_factors += min(0.2, comparison_count * 0.1)
 
@@ -757,7 +737,6 @@ class CulturallyAwareELI5:
 
     async def update_effectiveness_metrics(self, result: ExplanationResult):
         """Update effectiveness metrics based on explanation result"""
-
         # Update cultural example effectiveness
         for example_id in result.cultural_examples_used:
             for examples_list in self.cultural_examples.values():
@@ -797,7 +776,6 @@ class CulturallyAwareELI5:
 
     async def get_fallback_explanation(self, concept: str, age: int, language: str) -> str:
         """Generate simple fallback explanation"""
-
         fallback_templates = {
             "en": f"Let me explain {concept} in a simple way for someone who is {age} years old. This is an important topic that helps us understand the world around us.",
             "es": f"Te voy a explicar {concept} de manera simple para alguien de {age} años. Este es un tema importante que nos ayuda a entender el mundo.",
@@ -806,9 +784,8 @@ class CulturallyAwareELI5:
 
         return fallback_templates.get(language, fallback_templates["en"])
 
-    async def get_explanation_analytics(self) -> Dict[str, Any]:
+    async def get_explanation_analytics(self) -> dict[str, Any]:
         """Get comprehensive analytics on explanation effectiveness"""
-
         if not self.explanation_history:
             return {"message": "No explanations generated yet"}
 

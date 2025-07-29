@@ -1,27 +1,29 @@
-"""
-HypergraphKG: Deep semantic memory storage
+"""HypergraphKG: Deep semantic memory storage
 
 Brain-inspired neocortical memory system for consolidated semantic knowledge
 with hypergraph relationships, personalized PageRank, and community detection.
 """
 
-import asyncio
+from datetime import datetime
 import json
 import logging
-import time
+from typing import Any
 import uuid
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-import numpy as np
 from neo4j import AsyncGraphDatabase
+import numpy as np
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
+from qdrant_client.models import Distance, PointStruct, VectorParams
 import redis.asyncio as redis
 
 from .base import (
-    Document, Node, Edge, MemoryBackend, MemoryType, ConfidenceType,
-    QueryResult, MemoryStats, EmbeddingManager
+    ConfidenceType,
+    Edge,
+    EmbeddingManager,
+    MemoryBackend,
+    MemoryStats,
+    MemoryType,
+    Node,
 )
 from .schemas import HypergraphSchema, QdrantSchema, RedisSchema
 
@@ -49,7 +51,7 @@ class SemanticNode(Node):
         self.confidence_type = ConfidenceType.BAYESIAN  # Use Bayesian for semantic
 
         # Semantic-specific properties
-        self.community_id: Optional[str] = None
+        self.community_id: str | None = None
         self.pagerank_score: float = 0.0
         self.consolidation_count: int = 0
 
@@ -57,7 +59,7 @@ class SemanticNode(Node):
 class Hyperedge(Edge):
     """Enhanced edge supporting true hypergraph relationships"""
 
-    def __init__(self, participants: List[str], relation: str, **kwargs):
+    def __init__(self, participants: list[str], relation: str, **kwargs):
         # Use first two participants as source/target for compatibility
         source_id = participants[0] if participants else str(uuid.uuid4())
         target_id = participants[1] if len(participants) > 1 else str(uuid.uuid4())
@@ -74,17 +76,17 @@ class Hyperedge(Edge):
 
         # Hypergraph-specific properties
         self.hyperedge_type: str = "n-ary" if len(participants) > 2 else "binary"
-        self.semantic_role: Optional[str] = None  # Subject, predicate, object, etc.
-        self.consolidation_source: List[str] = []  # IDs of episodic edges that formed this
+        self.semantic_role: str | None = None  # Subject, predicate, object, etc.
+        self.consolidation_source: list[str] = []  # IDs of episodic edges that formed this
 
 
 class Subgraph:
     """A connected subgraph for retrieval and reasoning"""
 
     def __init__(self,
-                 nodes: List[SemanticNode],
-                 edges: List[Hyperedge],
-                 center_node_id: Optional[str] = None,
+                 nodes: list[SemanticNode],
+                 edges: list[Hyperedge],
+                 center_node_id: str | None = None,
                  confidence: float = 1.0):
         self.id = str(uuid.uuid4())
         self.nodes = nodes
@@ -98,7 +100,7 @@ class Subgraph:
         self.edge_relations = {edge.relation for edge in edges}
         self.avg_confidence = np.mean([e.confidence for e in edges]) if edges else 0.0
 
-    def get_neighbors(self, node_id: str) -> Set[str]:
+    def get_neighbors(self, node_id: str) -> set[str]:
         """Get all nodes connected to the given node"""
         neighbors = set()
         for edge in self.edges:
@@ -133,8 +135,7 @@ class Subgraph:
 
 
 class HypergraphKG(MemoryBackend):
-    """
-    Deep semantic memory - like neocortex
+    """Deep semantic memory - like neocortex
 
     Features:
     - Consolidated semantic knowledge
@@ -162,8 +163,8 @@ class HypergraphKG(MemoryBackend):
 
         # Connections
         self.neo4j_driver = None
-        self.qdrant_client: Optional[QdrantClient] = None
-        self.redis_client: Optional[redis.Redis] = None
+        self.qdrant_client: QdrantClient | None = None
+        self.redis_client: redis.Redis | None = None
         self.embedding_manager = EmbeddingManager(embedding_dim)
 
         # Schemas
@@ -197,7 +198,7 @@ class HypergraphKG(MemoryBackend):
             logger.info("HypergraphKG initialization complete")
 
         except Exception as e:
-            logger.error(f"Failed to initialize HypergraphKG: {str(e)}")
+            logger.error(f"Failed to initialize HypergraphKG: {e!s}")
             raise
 
     async def close(self) -> None:
@@ -211,9 +212,9 @@ class HypergraphKG(MemoryBackend):
                 await self.redis_client.close()
             logger.info("HypergraphKG connections closed")
         except Exception as e:
-            logger.error(f"Error closing HypergraphKG: {str(e)}")
+            logger.error(f"Error closing HypergraphKG: {e!s}")
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Check health of all backend systems"""
         health = {"status": "healthy", "backends": {}}
 
@@ -224,7 +225,7 @@ class HypergraphKG(MemoryBackend):
                 record = await result.single()
                 health["backends"]["neo4j"] = "healthy" if record else "unhealthy"
         except Exception as e:
-            health["backends"]["neo4j"] = f"error: {str(e)}"
+            health["backends"]["neo4j"] = f"error: {e!s}"
             health["status"] = "degraded"
 
         try:
@@ -232,7 +233,7 @@ class HypergraphKG(MemoryBackend):
             collections = self.qdrant_client.get_collections()
             health["backends"]["qdrant"] = "healthy"
         except Exception as e:
-            health["backends"]["qdrant"] = f"error: {str(e)}"
+            health["backends"]["qdrant"] = f"error: {e!s}"
             health["status"] = "degraded"
 
         try:
@@ -240,7 +241,7 @@ class HypergraphKG(MemoryBackend):
             await self.redis_client.ping()
             health["backends"]["redis"] = "healthy"
         except Exception as e:
-            health["backends"]["redis"] = f"error: {str(e)}"
+            health["backends"]["redis"] = f"error: {e!s}"
             health["status"] = "degraded"
 
         return health
@@ -280,9 +281,9 @@ class HypergraphKG(MemoryBackend):
                     "gdc_flags": node.gdc_flags,
                     "uncertainty": node.uncertainty,
                     "user_id": node.user_id,
-                    "community_id": getattr(node, 'community_id', None),
-                    "pagerank_score": getattr(node, 'pagerank_score', 0.0),
-                    "consolidation_count": getattr(node, 'consolidation_count', 0),
+                    "community_id": getattr(node, "community_id", None),
+                    "pagerank_score": getattr(node, "pagerank_score", 0.0),
+                    "consolidation_count": getattr(node, "consolidation_count", 0),
                     "metadata": json.dumps(node.metadata)
                 })
 
@@ -298,7 +299,7 @@ class HypergraphKG(MemoryBackend):
                         "created_at": node.created_at.isoformat(),
                         "node_type": node.node_type,
                         "popularity_rank": node.popularity_rank,
-                        "community_id": getattr(node, 'community_id', None)
+                        "community_id": getattr(node, "community_id", None)
                     }
                 )
 
@@ -314,7 +315,7 @@ class HypergraphKG(MemoryBackend):
             return True
 
         except Exception as e:
-            logger.error(f"Failed to store semantic node {node.id}: {str(e)}")
+            logger.error(f"Failed to store semantic node {node.id}: {e!s}")
             return False
 
     async def store_hyperedge(self, hyperedge: Hyperedge) -> bool:
@@ -350,9 +351,9 @@ class HypergraphKG(MemoryBackend):
                     "uncertainty": hyperedge.uncertainty,
                     "alpha_weight": hyperedge.alpha_weight,
                     "user_id": hyperedge.user_id,
-                    "hyperedge_type": getattr(hyperedge, 'hyperedge_type', 'binary'),
-                    "semantic_role": getattr(hyperedge, 'semantic_role', None),
-                    "consolidation_source": getattr(hyperedge, 'consolidation_source', []),
+                    "hyperedge_type": getattr(hyperedge, "hyperedge_type", "binary"),
+                    "semantic_role": getattr(hyperedge, "semantic_role", None),
+                    "consolidation_source": getattr(hyperedge, "consolidation_source", []),
                     "metadata": json.dumps(hyperedge.metadata)
                 })
 
@@ -380,17 +381,16 @@ class HypergraphKG(MemoryBackend):
             return True
 
         except Exception as e:
-            logger.error(f"Failed to store hyperedge {hyperedge.id}: {str(e)}")
+            logger.error(f"Failed to store hyperedge {hyperedge.id}: {e!s}")
             return False
 
     async def personalized_pagerank(self,
-                                   start_nodes: List[str],
-                                   user_id: Optional[str] = None,
+                                   start_nodes: list[str],
+                                   user_id: str | None = None,
                                    alpha: float = 0.15,
                                    max_iterations: int = 50,
-                                   tolerance: float = 1e-6) -> Dict[str, float]:
-        """
-        Compute Personalized PageRank from start nodes
+                                   tolerance: float = 1e-6) -> dict[str, float]:
+        """Compute Personalized PageRank from start nodes
 
         Args:
             start_nodes: List of node IDs to start from
@@ -488,16 +488,15 @@ class HypergraphKG(MemoryBackend):
                 return current_scores
 
         except Exception as e:
-            logger.error(f"Failed to compute Personalized PageRank: {str(e)}")
+            logger.error(f"Failed to compute Personalized PageRank: {e!s}")
             return {}
 
     async def query_subgraph(self,
-                            center_nodes: List[str],
+                            center_nodes: list[str],
                             max_depth: int = 2,
                             min_confidence: float = 0.5,
-                            max_nodes: int = 50) -> Optional[Subgraph]:
-        """
-        Extract a subgraph around center nodes for reasoning
+                            max_nodes: int = 50) -> Subgraph | None:
+        """Extract a subgraph around center nodes for reasoning
 
         Args:
             center_nodes: Starting nodes for subgraph extraction
@@ -612,14 +611,14 @@ class HypergraphKG(MemoryBackend):
                 return subgraph
 
         except Exception as e:
-            logger.error(f"Failed to query subgraph: {str(e)}")
+            logger.error(f"Failed to query subgraph: {e!s}")
             return None
 
     async def semantic_similarity_search(self,
                                        query_text: str,
                                        limit: int = 10,
                                        score_threshold: float = 0.7,
-                                       community_filter: Optional[str] = None) -> List[Tuple[SemanticNode, float]]:
+                                       community_filter: str | None = None) -> list[tuple[SemanticNode, float]]:
         """Perform semantic similarity search using vector embeddings"""
         try:
             # Generate query embedding
@@ -676,12 +675,11 @@ class HypergraphKG(MemoryBackend):
             return results
 
         except Exception as e:
-            logger.error(f"Semantic similarity search failed: {str(e)}")
+            logger.error(f"Semantic similarity search failed: {e!s}")
             return []
 
-    async def detect_communities(self, algorithm: str = "louvain") -> Dict[str, str]:
-        """
-        Detect communities in the semantic graph
+    async def detect_communities(self, algorithm: str = "louvain") -> dict[str, str]:
+        """Detect communities in the semantic graph
 
         Args:
             algorithm: Community detection algorithm ('louvain', 'label_propagation')
@@ -723,7 +721,7 @@ class HypergraphKG(MemoryBackend):
                 return communities
 
         except Exception as e:
-            logger.error(f"Community detection failed: {str(e)}")
+            logger.error(f"Community detection failed: {e!s}")
             return {}
 
     async def get_memory_stats(self) -> MemoryStats:
@@ -753,7 +751,7 @@ class HypergraphKG(MemoryBackend):
                 )
 
         except Exception as e:
-            logger.error(f"Failed to get memory stats: {str(e)}")
+            logger.error(f"Failed to get memory stats: {e!s}")
             return MemoryStats(
                 total_nodes=0, total_edges=0, episodic_nodes=0,
                 semantic_nodes=0, avg_confidence=0.0, memory_usage_mb=0.0,
@@ -770,20 +768,20 @@ class HypergraphKG(MemoryBackend):
                 try:
                     await session.run(constraint)
                 except Exception as e:
-                    logger.warning(f"Failed to create constraint: {str(e)}")
+                    logger.warning(f"Failed to create constraint: {e!s}")
 
             for constraint in self.schema.get_relationship_constraints():
                 try:
                     await session.run(constraint)
                 except Exception as e:
-                    logger.warning(f"Failed to create relationship constraint: {str(e)}")
+                    logger.warning(f"Failed to create relationship constraint: {e!s}")
 
             # Create indexes
             for index in self.schema.get_indexes():
                 try:
                     await session.run(index)
                 except Exception as e:
-                    logger.warning(f"Failed to create index: {str(e)}")
+                    logger.warning(f"Failed to create index: {e!s}")
 
             # Create sample data if needed
             sample_data = self.schema.get_sample_data_cypher()
@@ -791,7 +789,7 @@ class HypergraphKG(MemoryBackend):
                 try:
                     await session.run(cypher)
                 except Exception as e:
-                    logger.debug(f"Sample data creation (expected to fail if data exists): {str(e)}")
+                    logger.debug(f"Sample data creation (expected to fail if data exists): {e!s}")
 
         logger.info("Neo4j schema setup complete")
 
@@ -814,7 +812,7 @@ class HypergraphKG(MemoryBackend):
                         logger.info(f"Created Qdrant collection: {collection_name}")
 
                 except Exception as e:
-                    logger.error(f"Failed to setup Qdrant collection {collection_name}: {str(e)}")
+                    logger.error(f"Failed to setup Qdrant collection {collection_name}: {e!s}")
 
         logger.info("Qdrant semantic collections setup complete")
 
@@ -830,8 +828,8 @@ class HypergraphKG(MemoryBackend):
                 "created_at": node.created_at.isoformat(),
                 "node_type": node.node_type,
                 "memory_type": "semantic",
-                "community_id": getattr(node, 'community_id', None),
-                "pagerank_score": getattr(node, 'pagerank_score', 0.0)
+                "community_id": getattr(node, "community_id", None),
+                "pagerank_score": getattr(node, "pagerank_score", 0.0)
             }
 
             await self.redis_client.setex(
@@ -841,7 +839,7 @@ class HypergraphKG(MemoryBackend):
             )
 
         except Exception as e:
-            logger.warning(f"Failed to cache semantic node {node.id}: {str(e)}")
+            logger.warning(f"Failed to cache semantic node {node.id}: {e!s}")
 
     async def _cache_hyperedge(self, edge: Hyperedge) -> None:
         """Cache hyperedge in Redis"""
@@ -853,7 +851,7 @@ class HypergraphKG(MemoryBackend):
                 "relation": edge.relation,
                 "confidence": edge.confidence,
                 "participants": edge.participants,
-                "hyperedge_type": getattr(edge, 'hyperedge_type', 'binary'),
+                "hyperedge_type": getattr(edge, "hyperedge_type", "binary"),
                 "evidence_count": edge.evidence_count
             }
 
@@ -864,7 +862,7 @@ class HypergraphKG(MemoryBackend):
             )
 
         except Exception as e:
-            logger.warning(f"Failed to cache hyperedge {edge.id}: {str(e)}")
+            logger.warning(f"Failed to cache hyperedge {edge.id}: {e!s}")
 
 
 # Factory functions for creating semantic memory components
@@ -883,7 +881,7 @@ def create_semantic_node(content: str,
     )
 
 
-def create_hyperedge(participants: List[str],
+def create_hyperedge(participants: list[str],
                     relation: str,
                     confidence: float = 0.8,
                     evidence_count: int = 1) -> Hyperedge:

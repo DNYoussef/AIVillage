@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
-"""
-Validate Magi Agent Success and Capabilities
+"""Validate Magi Agent Success and Capabilities
 
 This script validates the successful creation of the Magi agent
 and confirms all achievements from the Agent Forge pipeline.
 """
 
-import json
-import sys
-from pathlib import Path
 from datetime import datetime
+import json
+from pathlib import Path
+import sys
 
 # Force UTF-8 encoding for Windows
-if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8')
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 def validate_magi_creation():
     """Validate the Magi agent creation success."""
@@ -29,37 +28,37 @@ def validate_magi_creation():
         return False
 
     # Load and validate results
-    with open(results_path, 'r') as f:
+    with open(results_path) as f:
         data = json.load(f)
 
-    print(f"\n✅ MAGI CREATION CONFIRMED")
+    print("\n✅ MAGI CREATION CONFIRMED")
     print(f"Run ID: {data['run_id']}")
-    if 'timestamp' in data:
+    if "timestamp" in data:
         print(f"Timestamp: {data['timestamp']}")
 
     # Validate training scale
-    results = data['results']
-    questions = results['questions_processed']
-    duration = data['duration_seconds']
+    results = data["results"]
+    questions = results["questions_processed"]
+    duration = data["duration_seconds"]
 
-    print(f"\n📊 TRAINING SCALE VALIDATION:")
+    print("\n📊 TRAINING SCALE VALIDATION:")
     print(f"  Questions Processed: {questions:,} {'✅' if questions >= 9960 else '❌'}")
     print(f"  Training Duration: {duration:.1f} seconds")
     print(f"  Processing Rate: {questions/duration:.1f} questions/second")
 
     # Validate specialization achievement
-    spec_score = results['final_specialization_score']
-    baseline = results['level_results'][0]['overall_capability']
+    spec_score = results["final_specialization_score"]
+    baseline = results["level_results"][0]["overall_capability"]
     improvement = (spec_score - baseline) / baseline * 100
 
-    print(f"\n🎯 SPECIALIZATION ACHIEVEMENT:")
+    print("\n🎯 SPECIALIZATION ACHIEVEMENT:")
     print(f"  Final Score: {spec_score:.4f} {'✅' if spec_score >= 0.80 else '❌'}")
     print(f"  Baseline Score: {baseline:.4f}")
     print(f"  Improvement: {improvement:.1f}%")
 
     # Validate capabilities
-    capabilities = results['final_capabilities']
-    print(f"\n🔥 CAPABILITY VALIDATION:")
+    capabilities = results["final_capabilities"]
+    print("\n🔥 CAPABILITY VALIDATION:")
 
     mastery_count = 0
     for cap, score in capabilities.items():
@@ -72,20 +71,20 @@ def validate_magi_creation():
     print(f"\n  Mastery Level Skills: {mastery_count}/6")
 
     # Validate geometric progression
-    print(f"\n📈 GEOMETRIC PROGRESSION VALIDATION:")
+    print("\n📈 GEOMETRIC PROGRESSION VALIDATION:")
     print(f"  Levels Completed: {len(results['level_results'])}")
     print(f"  Snapshots Recorded: {len(results['geometric_snapshots'])}")
 
     # Show progression
     print("\n  Level Progression:")
-    for i, level in enumerate(results['level_results']):
+    for i, level in enumerate(results["level_results"]):
         print(f"    Level {i}: Score={level['overall_capability']:.4f}, "
               f"Questions={level['questions_completed']}")
 
     # Validate memory efficiency
-    print(f"\n💾 MEMORY EFFICIENCY:")
-    if 'memory_stats' in data:
-        mem = data['memory_stats']
+    print("\n💾 MEMORY EFFICIENCY:")
+    if "memory_stats" in data:
+        mem = data["memory_stats"]
         print(f"  Peak Memory: {mem.get('peak_memory_mb', 'N/A')} MB")
         print(f"  Average Memory: {mem.get('avg_memory_mb', 'N/A')} MB")
     else:
@@ -99,7 +98,7 @@ def validate_magi_creation():
         ("Scale Achievement", questions >= 9960),
         ("Specialization Score", spec_score >= 0.80),
         ("Mastery Capabilities", mastery_count >= 3),
-        ("Geometric Progression", len(results['geometric_snapshots']) > 0),
+        ("Geometric Progression", len(results["geometric_snapshots"]) > 0),
         ("Completion Time", duration < 300)  # Under 5 minutes
     ]
 
@@ -122,7 +121,7 @@ def validate_magi_creation():
     # Save validation report
     report = {
         "validation_timestamp": datetime.now().isoformat(),
-        "magi_run_id": data['run_id'],
+        "magi_run_id": data["run_id"],
         "training_duration": duration,
         "questions_processed": questions,
         "specialization_score": spec_score,
@@ -133,7 +132,7 @@ def validate_magi_creation():
     }
 
     report_path = Path("magi_validation_report.json")
-    with open(report_path, 'w') as f:
+    with open(report_path, "w") as f:
         json.dump(report, f, indent=2)
 
     print(f"\n📄 Validation report saved to: {report_path}")

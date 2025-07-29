@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=10_000)
     user_id: str = Field(..., description="Unique user identifier")
-    conversation_id: Optional[str] = None
-    context: Dict[str, Any] = Field(default_factory=dict)
+    conversation_id: str | None = None
+    context: dict[str, Any] = Field(default_factory=dict)
 
 
 class ChatResponse(BaseModel):
@@ -18,7 +18,7 @@ class ChatResponse(BaseModel):
     conversation_id: str
     timestamp: datetime
     processing_time_ms: float
-    calibrated_prob: Optional[float] = Field(
+    calibrated_prob: float | None = Field(
         default=None,
         ge=0.0,
         le=1.0,

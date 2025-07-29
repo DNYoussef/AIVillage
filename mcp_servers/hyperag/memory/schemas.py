@@ -1,10 +1,8 @@
-"""
-Storage schemas for HypeRAG dual-memory system
+"""Storage schemas for HypeRAG dual-memory system
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +11,7 @@ class HippoSchema:
     """Schema definition for Hippo-Index (DuckDB)"""
 
     @staticmethod
-    def get_create_tables_sql() -> List[str]:
+    def get_create_tables_sql() -> list[str]:
         """Get SQL statements to create Hippo-Index tables"""
         return [
             # Episodic nodes table
@@ -117,7 +115,7 @@ class HippoSchema:
         ]
 
     @staticmethod
-    def get_create_indexes_sql() -> List[str]:
+    def get_create_indexes_sql() -> list[str]:
         """Get SQL statements to create indexes for performance"""
         return [
             # Node indexes
@@ -148,7 +146,7 @@ class HippoSchema:
         ]
 
     @staticmethod
-    def get_materialized_views_sql() -> List[str]:
+    def get_materialized_views_sql() -> list[str]:
         """Get SQL for materialized views for common queries"""
         return [
             # Recent nodes by user
@@ -199,7 +197,7 @@ class HypergraphSchema:
     """Schema definition for Hypergraph-KG (Neo4j)"""
 
     @staticmethod
-    def get_node_constraints() -> List[str]:
+    def get_node_constraints() -> list[str]:
         """Get Cypher statements to create node constraints"""
         return [
             "CREATE CONSTRAINT semantic_node_id IF NOT EXISTS FOR (n:SemanticNode) REQUIRE n.id IS UNIQUE",
@@ -210,7 +208,7 @@ class HypergraphSchema:
         ]
 
     @staticmethod
-    def get_relationship_constraints() -> List[str]:
+    def get_relationship_constraints() -> list[str]:
         """Get Cypher statements for relationship constraints"""
         return [
             # Ensure hyperedge relationships have valid confidence
@@ -229,7 +227,7 @@ class HypergraphSchema:
         ]
 
     @staticmethod
-    def get_indexes() -> List[str]:
+    def get_indexes() -> list[str]:
         """Get Cypher statements to create indexes"""
         return [
             # Node property indexes
@@ -267,7 +265,7 @@ class HypergraphSchema:
         ]
 
     @staticmethod
-    def get_sample_data_cypher() -> List[str]:
+    def get_sample_data_cypher() -> list[str]:
         """Get Cypher statements to create sample data structure"""
         return [
             # Create semantic nodes
@@ -343,7 +341,7 @@ class QdrantSchema:
     """Schema for Qdrant vector collections"""
 
     @staticmethod
-    def get_collection_configs() -> Dict[str, Dict[str, Any]]:
+    def get_collection_configs() -> dict[str, dict[str, Any]]:
         """Get Qdrant collection configurations"""
         return {
             "hippo_embeddings": {
@@ -394,7 +392,7 @@ class QdrantSchema:
         }
 
     @staticmethod
-    def get_hnsw_configs() -> Dict[str, Dict[str, Any]]:
+    def get_hnsw_configs() -> dict[str, dict[str, Any]]:
         """Get HNSW index configurations for collections"""
         return {
             "hippo_embeddings": {
@@ -421,7 +419,7 @@ class RedisSchema:
     """Schema for Redis caching layer"""
 
     @staticmethod
-    def get_key_patterns() -> Dict[str, str]:
+    def get_key_patterns() -> dict[str, str]:
         """Get Redis key patterns for different data types"""
         return {
             # Node caching
@@ -453,7 +451,7 @@ class RedisSchema:
         }
 
     @staticmethod
-    def get_ttl_configs() -> Dict[str, int]:
+    def get_ttl_configs() -> dict[str, int]:
         """Get TTL configurations for different data types (seconds)"""
         return {
             "query_result": 3600,      # 1 hour

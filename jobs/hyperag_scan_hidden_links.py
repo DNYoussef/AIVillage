@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-HypeRAG Hidden-Link Batch Scanner
+"""HypeRAG Hidden-Link Batch Scanner
 
 Nightly cron job to surface candidate missing edges through co-mention analysis
 and divergent retrieval. Processes high co-mention entity pairs and validates
@@ -10,24 +9,27 @@ Usage:
     python jobs/hyperag_scan_hidden_links.py [--config CONFIG_PATH] [--dry-run]
 """
 
-import asyncio
 import argparse
+import asyncio
+from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 import json
 import logging
-import time
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Tuple, Any, Optional
-from dataclasses import dataclass, field
-from collections import defaultdict, Counter
 import re
+import time
+from typing import Any
 
 # HypeRAG imports
 try:
-    from mcp_servers.hyperag.retrieval.hybrid_retriever import HybridRetriever
-    from mcp_servers.hyperag.repair.innovator_agent import InnovatorAgent, RepairOperation
-    from mcp_servers.hyperag.guardian.gate import GuardianGate, CreativeBridge
     from mcp_servers.hyperag.gdc.specs import Violation
+    from mcp_servers.hyperag.guardian.gate import CreativeBridge, GuardianGate
+    from mcp_servers.hyperag.repair.innovator_agent import (
+        InnovatorAgent,
+        RepairOperation,
+    )
+    from mcp_servers.hyperag.retrieval.hybrid_retriever import HybridRetriever
 except ImportError as e:
     print(f"Warning: HypeRAG modules not available: {e}")
     # Mock classes for development
@@ -50,7 +52,7 @@ class CoMentionPair:
     entity2: str
     co_mention_count: int
     confidence: float
-    contexts: List[str] = field(default_factory=list)
+    contexts: list[str] = field(default_factory=list)
     last_seen: datetime = field(default_factory=datetime.now)
 
     @property
@@ -67,7 +69,7 @@ class CandidateEdge:
     target_entity: str
     relationship_type: str
     confidence: float
-    evidence: List[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
     scan_id: str = ""
     discovered_at: datetime = field(default_factory=datetime.now)
 
@@ -77,7 +79,7 @@ class ScanMetrics:
     """Metrics for hidden link scan run."""
     scan_id: str
     start_time: datetime
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
 
     # Input metrics
     hippo_log_entries_processed: int = 0
@@ -100,10 +102,10 @@ class ScanMetrics:
     avg_retrieval_time_ms: float = 0.0
 
     # Errors
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metrics to dictionary for JSON serialization."""
         return {
             "scan_id": self.scan_id,
@@ -138,8 +140,7 @@ class HippoIndexAnalyzer:
     """Analyzes Hippo-Index logs for high co-mention entity pairs."""
 
     def __init__(self, log_path: Path, lookback_hours: int = 24):
-        """
-        Initialize analyzer.
+        """Initialize analyzer.
 
         Args:
             log_path: Path to Hippo-Index log directory
@@ -150,12 +151,11 @@ class HippoIndexAnalyzer:
         self.logger = logging.getLogger(f"{__name__}.HippoAnalyzer")
 
         # Co-mention patterns
-        self.entity_pattern = re.compile(r'\[ENTITY:([^\]]+)\]')
-        self.co_mention_pattern = re.compile(r'\[COMENTION:([^\]]+)\|([^\]]+)\]')
+        self.entity_pattern = re.compile(r"\[ENTITY:([^\]]+)\]")
+        self.co_mention_pattern = re.compile(r"\[COMENTION:([^\]]+)\|([^\]]+)\]")
 
-    def analyze_logs(self, min_co_mentions: int = 3) -> List[CoMentionPair]:
-        """
-        Analyze Hippo-Index logs for entity co-mentions.
+    def analyze_logs(self, min_co_mentions: int = 3) -> list[CoMentionPair]:
+        """Analyze Hippo-Index logs for entity co-mentions.
 
         Args:
             min_co_mentions: Minimum co-mentions to consider a pair
@@ -184,7 +184,7 @@ class HippoIndexAnalyzer:
         pairs = []
         for pair_key, count in co_mention_counts.items():
             if count >= min_co_mentions:
-                entity1, entity2 = pair_key.split('|')
+                entity1, entity2 = pair_key.split("|")
                 confidence = min(1.0, count / 10.0)  # Simple confidence scoring
 
                 pair = CoMentionPair(
@@ -203,7 +203,7 @@ class HippoIndexAnalyzer:
         self.logger.info(f"Found {len(pairs)} high co-mention pairs (min: {min_co_mentions})")
         return pairs
 
-    def _find_recent_log_files(self, cutoff_time: datetime) -> List[Path]:
+    def _find_recent_log_files(self, cutoff_time: datetime) -> list[Path]:
         """Find log files modified since cutoff time."""
         if not self.log_path.exists():
             self.logger.warning(f"Log path does not exist: {self.log_path}")
@@ -223,7 +223,7 @@ class HippoIndexAnalyzer:
     def _process_log_file(self, log_file: Path, co_mention_counts: dict,
                          pair_contexts: dict, pair_last_seen: dict):
         """Process a single log file for co-mentions."""
-        with open(log_file, 'r', encoding='utf-8') as f:
+        with open(log_file, encoding="utf-8") as f:
             for line_num, line in enumerate(f, 1):
                 try:
                     # Parse timestamp
@@ -272,8 +272,7 @@ class DivergentRetrieverScanner:
     """Scanner using DivergentRetriever in scan mode."""
 
     def __init__(self, retriever: HybridRetriever):
-        """
-        Initialize scanner.
+        """Initialize scanner.
 
         Args:
             retriever: HybridRetriever instance
@@ -281,10 +280,9 @@ class DivergentRetrieverScanner:
         self.retriever = retriever
         self.logger = logging.getLogger(f"{__name__}.DivergentScanner")
 
-    async def scan_entity_pairs(self, pairs: List[CoMentionPair],
-                               n_candidates: int = 3) -> List[CandidateEdge]:
-        """
-        Scan entity pairs using DivergentRetriever.
+    async def scan_entity_pairs(self, pairs: list[CoMentionPair],
+                               n_candidates: int = 3) -> list[CandidateEdge]:
+        """Scan entity pairs using DivergentRetriever.
 
         Args:
             pairs: Co-mention pairs to scan
@@ -322,9 +320,8 @@ class DivergentRetrieverScanner:
         return candidate_edges
 
     async def _mock_divergent_retrieval(self, query: str, pair: CoMentionPair,
-                                       n_candidates: int) -> List[CandidateEdge]:
-        """
-        Mock divergent retrieval (replace with actual implementation).
+                                       n_candidates: int) -> list[CandidateEdge]:
+        """Mock divergent retrieval (replace with actual implementation).
 
         Args:
             query: Scan query
@@ -365,9 +362,8 @@ class DivergentRetrieverScanner:
 class HiddenLinkScanner:
     """Main hidden link scanner orchestrating the full pipeline."""
 
-    def __init__(self, config: Dict[str, Any]):
-        """
-        Initialize scanner.
+    def __init__(self, config: dict[str, Any]):
+        """Initialize scanner.
 
         Args:
             config: Scanner configuration
@@ -395,8 +391,7 @@ class HiddenLinkScanner:
         )
 
     async def run_scan(self, dry_run: bool = False) -> ScanMetrics:
-        """
-        Run complete hidden link scan.
+        """Run complete hidden link scan.
 
         Args:
             dry_run: If True, don't actually apply changes
@@ -446,7 +441,7 @@ class HiddenLinkScanner:
 
         self.logger.info(f"Found {len(self.co_mention_pairs)} co-mention pairs")
 
-    async def _step2_divergent_scan(self) -> List[CandidateEdge]:
+    async def _step2_divergent_scan(self) -> list[CandidateEdge]:
         """Step 2: Call DivergentRetriever in scan mode."""
         self.logger.info("Step 2: Scanning with DivergentRetriever")
 
@@ -464,7 +459,7 @@ class HiddenLinkScanner:
 
         return candidate_edges
 
-    async def _step3_pipeline_processing(self, candidate_edges: List[CandidateEdge],
+    async def _step3_pipeline_processing(self, candidate_edges: list[CandidateEdge],
                                         dry_run: bool):
         """Step 3: Process candidates through Innovator -> Guardian pipeline."""
         self.logger.info("Step 3: Processing through Innovator -> Guardian pipeline")
@@ -503,7 +498,7 @@ class HiddenLinkScanner:
         metrics_path = Path("data/scan_metrics") / f"{self.metrics.scan_id}_metrics.json"
         metrics_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(metrics_path, 'w') as f:
+        with open(metrics_path, "w") as f:
             json.dump(self.metrics.to_dict(), f, indent=2)
 
         self.logger.info(f"Metrics written to {metrics_path}")
@@ -549,13 +544,12 @@ Hidden Link Scan Summary ({self.metrics.scan_id}):
         # Mock decision based on confidence
         if candidate.confidence >= 0.8:
             return "APPLY"
-        elif candidate.confidence >= 0.5:
+        if candidate.confidence >= 0.5:
             return "QUARANTINE"
-        else:
-            return "REJECT"
+        return "REJECT"
 
 
-def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
+def load_config(config_path: str | None = None) -> dict[str, Any]:
     """Load scanner configuration."""
     if config_path and Path(config_path).exists():
         with open(config_path) as f:
@@ -592,7 +586,7 @@ async def main():
     log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(
         level=log_level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(),
             logging.FileHandler(str(log_dir / f"hidden_link_scan_{datetime.now().strftime('%Y%m%d')}.log"))

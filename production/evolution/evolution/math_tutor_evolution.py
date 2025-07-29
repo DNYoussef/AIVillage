@@ -1,26 +1,25 @@
-"""
-Mathematical Tutor Evolution System - Agent Forge Phase 1
+"""Mathematical Tutor Evolution System - Agent Forge Phase 1
 Sprint R-4+AF1: Model Merging and Evolution - Task B.1
 """
 
-import wandb
-import asyncio
-import torch
-import logging
-from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from dataclasses import dataclass, asdict
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    AutoConfig,
-    BitsAndBytesConfig
-)
 import gc
 import hashlib
 import json
-import numpy as np
+import logging
 from pathlib import Path
+from typing import Any
+
+import numpy as np
+import torch
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+)
+
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -30,15 +29,15 @@ class ModelIndividual:
 
     individual_id: str
     model_name: str
-    model_path: Optional[str]
-    lineage: List[str]  # Parent models
+    model_path: str | None
+    lineage: list[str]  # Parent models
     generation: int
     fitness_score: float
-    performance_metrics: Dict[str, float]
+    performance_metrics: dict[str, float]
     model_size_mb: float
     parameters_count: int
-    quantization_config: Dict[str, Any]
-    merge_strategy: Optional[str] = None
+    quantization_config: dict[str, Any]
+    merge_strategy: str | None = None
     created_at: str = ""
     evaluated_at: str = ""
 
@@ -54,8 +53,8 @@ class EvolutionConfig:
     elitism_count: int = 1
     fitness_threshold: float = 0.85
     max_model_size_mb: float = 500.0
-    target_subjects: List[str] = None
-    target_grade_levels: List[int] = None
+    target_subjects: list[str] = None
+    target_grade_levels: list[int] = None
 
 class MathTutorEvolution:
     """Evolve specialized math tutoring models through genetic algorithms"""
@@ -87,7 +86,6 @@ class MathTutorEvolution:
 
     def initialize_wandb_tracking(self):
         """Initialize W&B tracking for evolution process"""
-
         try:
             wandb.init(
                 project=self.project_name,
@@ -108,9 +106,8 @@ class MathTutorEvolution:
         except Exception as e:
             logger.error(f"Failed to initialize W&B tracking: {e}")
 
-    async def initialize_population(self) -> List[ModelIndividual]:
+    async def initialize_population(self) -> list[ModelIndividual]:
         """Initialize population with diverse base models optimized for math tutoring"""
-
         logger.info("Initializing evolution population with base models")
 
         # Curated base models for mathematical reasoning
@@ -207,9 +204,8 @@ class MathTutorEvolution:
 
         return self.population
 
-    async def create_individual_from_base(self, model_info: Dict[str, Any], generation: int) -> Optional[ModelIndividual]:
+    async def create_individual_from_base(self, model_info: dict[str, Any], generation: int) -> ModelIndividual | None:
         """Create individual from base model with quantization and evaluation"""
-
         model_name = model_info["name"]
 
         try:
@@ -272,9 +268,8 @@ class MathTutorEvolution:
             logger.error(f"Failed to create individual from {model_name}: {e}")
             return None
 
-    async def quick_fitness_evaluation(self, model, tokenizer, model_info: Dict[str, Any]) -> float:
+    async def quick_fitness_evaluation(self, model, tokenizer, model_info: dict[str, Any]) -> float:
         """Quick fitness evaluation for initial population"""
-
         try:
             # Simple math problems for quick evaluation
             test_problems = [
@@ -306,7 +301,7 @@ class MathTutorEvolution:
                     )
 
                 # Decode response
-                response = tokenizer.decode(outputs[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True)
+                response = tokenizer.decode(outputs[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
 
                 # Simple scoring heuristics
                 if self.evaluate_math_response(problem, response):
@@ -333,7 +328,6 @@ class MathTutorEvolution:
 
     def evaluate_math_response(self, problem: str, response: str) -> bool:
         """Simple heuristic evaluation of math response quality"""
-
         response_lower = response.lower()
 
         # Check for basic math indicators
@@ -359,9 +353,8 @@ class MathTutorEvolution:
 
         return False
 
-    async def create_model_variation(self, base_individual: ModelIndividual) -> Optional[ModelIndividual]:
+    async def create_model_variation(self, base_individual: ModelIndividual) -> ModelIndividual | None:
         """Create a variation of an existing individual through parameter perturbation"""
-
         try:
             # Create variation ID
             variation_id = hashlib.md5(f"{base_individual.individual_id}_variation_{datetime.now().isoformat()}".encode()).hexdigest()[:12]
@@ -397,9 +390,8 @@ class MathTutorEvolution:
 
         return None
 
-    async def evolve_generation(self, generation: int) -> List[ModelIndividual]:
+    async def evolve_generation(self, generation: int) -> list[ModelIndividual]:
         """Evolve population for one generation using genetic algorithms"""
-
         logger.info(f"Evolving generation {generation}")
 
         # Evaluate current population fitness
@@ -427,13 +419,12 @@ class MathTutorEvolution:
                 child = await self.crossover(parent1, parent2, generation)
                 if child:
                     offspring.append(child)
-            else:
-                # Mutation
-                if parents:
-                    parent = np.random.choice(parents)
-                    mutated = await self.mutate(parent, generation)
-                    if mutated:
-                        offspring.append(mutated)
+            # Mutation
+            elif parents:
+                parent = np.random.choice(parents)
+                mutated = await self.mutate(parent, generation)
+                if mutated:
+                    offspring.append(mutated)
 
         # Trim to population size
         offspring = offspring[:self.config.population_size]
@@ -466,7 +457,6 @@ class MathTutorEvolution:
 
     async def evaluate_population_fitness(self):
         """Evaluate fitness for all individuals in population"""
-
         logger.info("Evaluating population fitness")
 
         # Import fitness evaluator
@@ -499,9 +489,8 @@ class MathTutorEvolution:
                 logger.error(f"Error evaluating fitness for {individual.individual_id}: {e}")
                 individual.fitness_score = 0.1  # Low fitness for failed evaluation
 
-    def select_parents(self) -> List[ModelIndividual]:
+    def select_parents(self) -> list[ModelIndividual]:
         """Select parents for reproduction using tournament selection"""
-
         # Sort population by fitness
         sorted_population = sorted(self.population, key=lambda x: x.fitness_score, reverse=True)
 
@@ -517,9 +506,8 @@ class MathTutorEvolution:
 
         return selected_parents
 
-    async def crossover(self, parent1: ModelIndividual, parent2: ModelIndividual, generation: int) -> Optional[ModelIndividual]:
+    async def crossover(self, parent1: ModelIndividual, parent2: ModelIndividual, generation: int) -> ModelIndividual | None:
         """Create offspring through model crossover/merging"""
-
         try:
             # Import merge operator
             from .merge_operators import MergeOperator
@@ -573,9 +561,8 @@ class MathTutorEvolution:
 
         return None
 
-    async def mutate(self, parent: ModelIndividual, generation: int) -> Optional[ModelIndividual]:
+    async def mutate(self, parent: ModelIndividual, generation: int) -> ModelIndividual | None:
         """Create offspring through mutation"""
-
         if np.random.random() > self.config.mutation_rate:
             return None
 
@@ -601,7 +588,6 @@ class MathTutorEvolution:
 
     async def run_evolution(self) -> ModelIndividual:
         """Run complete evolution process"""
-
         logger.info(f"Starting evolution with {self.config.max_generations} generations")
 
         # Initialize population
@@ -647,7 +633,6 @@ class MathTutorEvolution:
 
     async def cleanup_old_models(self, current_generation: int):
         """Clean up old models to manage memory"""
-
         # Keep only recent generations and best individuals
         generations_to_keep = 2
         min_generation = max(0, current_generation - generations_to_keep)
@@ -678,7 +663,6 @@ class MathTutorEvolution:
 
     async def save_champion_model(self, champion: ModelIndividual):
         """Save the champion model for deployment"""
-
         try:
             # Create save directory
             save_dir = Path("models/evolved_math_tutors")
@@ -730,9 +714,8 @@ class MathTutorEvolution:
         except Exception as e:
             logger.error(f"Error saving champion model: {e}")
 
-    def get_evolution_summary(self) -> Dict[str, Any]:
+    def get_evolution_summary(self) -> dict[str, Any]:
         """Get comprehensive evolution summary"""
-
         summary = {
             "evolution_config": asdict(self.config),
             "population_size": len(self.population),

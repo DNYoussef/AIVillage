@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import List, Dict
-
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +34,7 @@ class NamedEntityRecognizer:
         self._regex = re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b")
         self._stop_words = {"The", "A", "An"}
 
-    def recognize(self, text: str) -> List[Dict[str, str]]:
+    def recognize(self, text: str) -> list[dict[str, str]]:
         """Extract entities from ``text``.
 
         Parameters
@@ -44,13 +42,12 @@ class NamedEntityRecognizer:
         text: str
             The input text from which to extract entities.
 
-        Returns
+        Returns:
         -------
         List[Dict[str, str]]
             A list of recognised entities.  Each entity is represented as a
             dictionary with ``text`` and ``label`` keys.
         """
-
         if not text:
             return []
 

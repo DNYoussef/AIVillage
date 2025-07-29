@@ -1,19 +1,18 @@
-"""
-W&B Prompt Tuning System for WhatsApp Tutoring
+"""W&B Prompt Tuning System for WhatsApp Tutoring
 Implements A/B testing and prompt optimization
 """
 
-import wandb
-import json
-import hashlib
-import random
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime, timedelta
-import logging
-from dataclasses import dataclass, asdict
-import numpy as np
 from collections import defaultdict, deque
-import asyncio
+from dataclasses import asdict, dataclass
+from datetime import datetime
+import hashlib
+import logging
+import random
+from typing import Any
+
+import numpy as np
+
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +24,8 @@ class PromptVariant:
     description: str
     language: str
     category: str  # 'greeting', 'tutoring', 'clarification', etc.
-    parameters: Dict[str, Any]
-    performance_metrics: Dict[str, float]
+    parameters: dict[str, Any]
+    performance_metrics: dict[str, float]
     created_at: str
     active: bool = True
 
@@ -43,8 +42,7 @@ class ABTestResult:
     timestamp: str
 
 class PromptTuner:
-    """
-    Manages prompt optimization using W&B experiment tracking
+    """Manages prompt optimization using W&B experiment tracking
     """
 
     def __init__(self):
@@ -58,10 +56,9 @@ class PromptTuner:
 
     def initialize_base_prompts(self):
         """Initialize base prompt templates for different scenarios"""
-
         base_prompts = {
-            'tutoring_en': {
-                'formal': """You are an expert AI tutor helping a student learn. Be encouraging, clear, and educational.
+            "tutoring_en": {
+                "formal": """You are an expert AI tutor helping a student learn. Be encouraging, clear, and educational.
 
 Student question: {user_message}
 
@@ -73,7 +70,7 @@ Provide a helpful response that:
 
 Response:""",
 
-                'conversational': """Hi! I'm here to help you learn 📚
+                "conversational": """Hi! I'm here to help you learn 📚
 
 You asked: {user_message}
 
@@ -81,7 +78,7 @@ Let me break this down for you step by step, and then I'll ask you a question to
 
 """,
 
-                'socratic': """Great question! Instead of giving you the answer directly, let me guide you to discover it yourself.
+                "socratic": """Great question! Instead of giving you the answer directly, let me guide you to discover it yourself.
 
 Your question: {user_message}
 
@@ -92,16 +89,16 @@ What do you think? Let's work through this together!
 """
             },
 
-            'greeting_en': {
-                'enthusiastic': """🌟 Hey there! I'm your AI tutor and I'm so excited to help you learn today!
+            "greeting_en": {
+                "enthusiastic": """🌟 Hey there! I'm your AI tutor and I'm so excited to help you learn today!
 
 What subject or topic would you like to explore? I'm here to make learning fun and easy! 📚✨""",
 
-                'professional': """Hello! I'm your AI tutoring assistant. I'm here to help you understand any topic you're curious about.
+                "professional": """Hello! I'm your AI tutoring assistant. I'm here to help you understand any topic you're curious about.
 
 Please share what you'd like to learn, and I'll provide clear, comprehensive explanations tailored to your level.""",
 
-                'friendly': """Hi! 👋 Ready to learn something new today?
+                "friendly": """Hi! 👋 Ready to learn something new today?
 
 I'm your AI tutor, and I love helping students discover new things. What's on your mind?"""
             }
@@ -119,13 +116,11 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
     async def get_optimized_prompt(
         self,
         message_type: str,
-        language: str = 'en',
-        context: Dict[str, Any] = None
+        language: str = "en",
+        context: dict[str, Any] = None
     ) -> str:
+        """Get the best-performing prompt variant for given context
         """
-        Get the best-performing prompt variant for given context
-        """
-
         category_key = f"{message_type}_{language}"
 
         # Get variants for this category
@@ -144,7 +139,7 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
                 "category": category_key,
                 "selected_variant": best_variant.id,
                 "variant_description": best_variant.description,
-                "performance_score": best_variant.performance_metrics.get('avg_score', 0.0)
+                "performance_score": best_variant.performance_metrics.get("avg_score", 0.0)
             }
         })
 
@@ -153,9 +148,8 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
 
         return formatted_prompt
 
-    async def get_active_variants(self, category: str) -> List[PromptVariant]:
+    async def get_active_variants(self, category: str) -> list[PromptVariant]:
         """Get all active variants for a category"""
-
         # Check cache first
         cache_key = f"variants_{category}"
         if cache_key in self.variants_cache:
@@ -172,10 +166,10 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
                         id=f"{category}_{variant_name}",
                         template=template,
                         description=f"{variant_name.title()} {category} prompt",
-                        language='en',  # TODO: Multi-language support
+                        language="en",  # TODO: Multi-language support
                         category=category,
                         parameters={},
-                        performance_metrics={'avg_score': 0.5, 'sample_count': 0},
+                        performance_metrics={"avg_score": 0.5, "sample_count": 0},
                         created_at=datetime.now().isoformat()
                     )
                     variants.append(variant)
@@ -189,16 +183,14 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
             logger.error(f"Error getting variants for {category}: {e}")
             return []
 
-    async def select_best_variant(self, variants: List[PromptVariant]) -> PromptVariant:
+    async def select_best_variant(self, variants: list[PromptVariant]) -> PromptVariant:
+        """Select best performing variant using multi-armed bandit approach
         """
-        Select best performing variant using multi-armed bandit approach
-        """
-
         if len(variants) == 1:
             return variants[0]
 
         # Calculate upper confidence bounds for each variant
-        total_samples = sum(v.performance_metrics.get('sample_count', 0) for v in variants)
+        total_samples = sum(v.performance_metrics.get("sample_count", 0) for v in variants)
 
         if total_samples < self.min_samples_for_optimization:
             # Random selection during exploration phase
@@ -207,11 +199,11 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
         # UCB1 algorithm for balanced exploration/exploitation
         ucb_scores = []
         for variant in variants:
-            avg_score = variant.performance_metrics.get('avg_score', 0.0)
-            sample_count = variant.performance_metrics.get('sample_count', 1)
+            avg_score = variant.performance_metrics.get("avg_score", 0.0)
+            sample_count = variant.performance_metrics.get("sample_count", 1)
 
             if sample_count == 0:
-                ucb_score = float('inf')  # Prioritize unexplored variants
+                ucb_score = float("inf")  # Prioritize unexplored variants
             else:
                 confidence_bound = np.sqrt(2 * np.log(total_samples) / sample_count)
                 ucb_score = avg_score + confidence_bound
@@ -227,40 +219,38 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
             "variant_selection": {
                 "selected_id": selected_variant.id,
                 "ucb_score": ucb_scores[best_idx],
-                "avg_score": selected_variant.performance_metrics.get('avg_score', 0.0),
-                "sample_count": selected_variant.performance_metrics.get('sample_count', 0),
+                "avg_score": selected_variant.performance_metrics.get("avg_score", 0.0),
+                "sample_count": selected_variant.performance_metrics.get("sample_count", 0),
                 "total_samples": total_samples
             }
         })
 
         return selected_variant
 
-    def get_default_prompt(self, message_type: str, language: str = 'en') -> str:
+    def get_default_prompt(self, message_type: str, language: str = "en") -> str:
         """Get default prompt when no variants available"""
-
         defaults = {
-            'tutoring': """You are a helpful AI tutor. Answer the student's question clearly and encouragingly.
+            "tutoring": """You are a helpful AI tutor. Answer the student's question clearly and encouragingly.
 
 Student question: {user_message}
 
 Your response:""",
 
-            'greeting': """Hello! I'm your AI tutor. How can I help you learn today?"""
+            "greeting": """Hello! I'm your AI tutor. How can I help you learn today?"""
         }
 
-        return defaults.get(message_type, defaults['tutoring'])
+        return defaults.get(message_type, defaults["tutoring"])
 
-    def format_prompt(self, template: str, context: Dict[str, Any]) -> str:
+    def format_prompt(self, template: str, context: dict[str, Any]) -> str:
         """Format prompt template with context variables"""
-
         try:
             # Add default context variables
-            context.setdefault('user_message', '')
-            context.setdefault('timestamp', datetime.now().strftime('%Y-%m-%d %H:%M'))
+            context.setdefault("user_message", "")
+            context.setdefault("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M"))
 
             # Generate guiding questions for Socratic method
-            if 'guiding_question' not in context and 'user_message' in context:
-                context['guiding_question'] = self.generate_guiding_question(context['user_message'])
+            if "guiding_question" not in context and "user_message" in context:
+                context["guiding_question"] = self.generate_guiding_question(context["user_message"])
 
             return template.format(**context)
 
@@ -273,7 +263,6 @@ Your response:""",
 
     def generate_guiding_question(self, user_message: str) -> str:
         """Generate Socratic guiding question"""
-
         # Simple heuristic-based question generation
         question_starters = [
             "What do you think happens when",
@@ -291,20 +280,19 @@ Your response:""",
         variant_id: str,
         session_id: str,
         user_hash: str,
-        performance_metrics: Dict[str, float]
+        performance_metrics: dict[str, float]
     ):
         """Record performance metrics for a prompt variant"""
-
         try:
             # Create performance record
             result = ABTestResult(
                 variant_id=variant_id,
                 user_hash=user_hash,
                 session_id=session_id,
-                response_time=performance_metrics.get('response_time', 0.0),
-                user_satisfaction=performance_metrics.get('satisfaction', 0.5),
-                conversion=performance_metrics.get('conversion', False),
-                language=performance_metrics.get('language', 'en'),
+                response_time=performance_metrics.get("response_time", 0.0),
+                user_satisfaction=performance_metrics.get("satisfaction", 0.5),
+                conversion=performance_metrics.get("conversion", False),
+                language=performance_metrics.get("language", "en"),
                 timestamp=datetime.now().isoformat()
             )
 
@@ -329,7 +317,6 @@ Your response:""",
 
     async def update_variant_metrics(self, variant_id: str):
         """Update aggregate metrics for a variant"""
-
         if variant_id not in self.performance_history:
             return
 
@@ -343,11 +330,11 @@ Your response:""",
         conversions = [r.conversion for r in results]
 
         metrics = {
-            'avg_response_time': np.mean(response_times),
-            'avg_satisfaction': np.mean(satisfactions),
-            'conversion_rate': np.mean(conversions),
-            'sample_count': len(results),
-            'avg_score': np.mean(satisfactions) * 0.7 + (1 - np.mean(response_times) / 10) * 0.3  # Weighted score
+            "avg_response_time": np.mean(response_times),
+            "avg_satisfaction": np.mean(satisfactions),
+            "conversion_rate": np.mean(conversions),
+            "sample_count": len(results),
+            "avg_score": np.mean(satisfactions) * 0.7 + (1 - np.mean(response_times) / 10) * 0.3  # Weighted score
         }
 
         # Update variant in cache
@@ -365,8 +352,7 @@ Your response:""",
         })
 
 class ABTestManager:
-    """
-    Manages A/B testing for greeting messages and other interactions
+    """Manages A/B testing for greeting messages and other interactions
     """
 
     def __init__(self):
@@ -375,20 +361,19 @@ class ABTestManager:
 
     def initialize_test_configs(self):
         """Initialize A/B test configurations"""
-
         configs = {
-            'greeting_style': {
-                'variants': ['enthusiastic', 'professional', 'friendly'],
-                'weights': [0.33, 0.33, 0.34],  # Equal distribution
-                'active': True,
-                'success_metric': 'user_satisfaction'
+            "greeting_style": {
+                "variants": ["enthusiastic", "professional", "friendly"],
+                "weights": [0.33, 0.33, 0.34],  # Equal distribution
+                "active": True,
+                "success_metric": "user_satisfaction"
             },
 
-            'tutoring_approach': {
-                'variants': ['formal', 'conversational', 'socratic'],
-                'weights': [0.3, 0.4, 0.3],  # Favor conversational
-                'active': True,
-                'success_metric': 'conversion_rate'
+            "tutoring_approach": {
+                "variants": ["formal", "conversational", "socratic"],
+                "weights": [0.3, 0.4, 0.3],  # Favor conversational
+                "active": True,
+                "success_metric": "conversion_rate"
             }
         }
 
@@ -399,38 +384,34 @@ class ABTestManager:
 
     def get_greeting_variant(self, user_identifier: str) -> str:
         """Get consistent greeting variant for user"""
-
-        return self.get_test_variant('greeting_style', user_identifier)
+        return self.get_test_variant("greeting_style", user_identifier)
 
     def get_tutoring_variant(self, user_identifier: str) -> str:
         """Get consistent tutoring approach variant for user"""
-
-        return self.get_test_variant('tutoring_approach', user_identifier)
+        return self.get_test_variant("tutoring_approach", user_identifier)
 
     def get_test_variant(self, test_name: str, user_identifier: str) -> str:
+        """Get consistent test variant for user using deterministic assignment
         """
-        Get consistent test variant for user using deterministic assignment
-        """
-
         if test_name not in self.test_configs:
             logger.warning(f"Unknown test: {test_name}")
-            return 'default'
+            return "default"
 
         config = self.test_configs[test_name]
-        if not config['active']:
-            return config['variants'][0]  # Return first variant if test inactive
+        if not config["active"]:
+            return config["variants"][0]  # Return first variant if test inactive
 
         # Create consistent hash-based assignment
         user_hash = hashlib.md5(f"{test_name}_{user_identifier}".encode()).hexdigest()
         hash_int = int(user_hash[:8], 16)
 
         # Map hash to variant based on weights
-        cumulative_weights = np.cumsum(config['weights'])
+        cumulative_weights = np.cumsum(config["weights"])
         random_value = (hash_int % 10000) / 10000.0  # Normalize to 0-1
 
         for i, threshold in enumerate(cumulative_weights):
             if random_value <= threshold:
-                selected_variant = config['variants'][i]
+                selected_variant = config["variants"][i]
 
                 # Log assignment
                 wandb.log({
@@ -445,7 +426,7 @@ class ABTestManager:
                 return selected_variant
 
         # Fallback to last variant
-        return config['variants'][-1]
+        return config["variants"][-1]
 
     async def record_test_result(
         self,
@@ -453,10 +434,9 @@ class ABTestManager:
         variant: str,
         user_identifier: str,
         session_id: str,
-        success_metrics: Dict[str, float]
+        success_metrics: dict[str, float]
     ):
         """Record A/B test result"""
-
         try:
             result_data = {
                 "ab_test_result": {
@@ -475,11 +455,9 @@ class ABTestManager:
         except Exception as e:
             logger.error(f"Error recording A/B test result: {e}")
 
-    async def analyze_test_results(self, test_name: str) -> Dict[str, Any]:
+    async def analyze_test_results(self, test_name: str) -> dict[str, Any]:
+        """Analyze A/B test results to determine winning variant
         """
-        Analyze A/B test results to determine winning variant
-        """
-
         try:
             # In production, this would query W&B API for historical results
             # For now, return mock analysis
@@ -487,7 +465,7 @@ class ABTestManager:
             analysis = {
                 "test_name": test_name,
                 "status": "running",
-                "variants": self.test_configs.get(test_name, {}).get('variants', []),
+                "variants": self.test_configs.get(test_name, {}).get("variants", []),
                 "sample_sizes": {"enthusiastic": 150, "professional": 145, "friendly": 155},
                 "conversion_rates": {"enthusiastic": 0.68, "professional": 0.72, "friendly": 0.65},
                 "statistical_significance": False,

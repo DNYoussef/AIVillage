@@ -2,13 +2,13 @@
 
 # Export main RAG classes
 try:
-    from .rag_system.core.pipeline import EnhancedRAGPipeline
     from .rag_system.core.config import RAGConfig
+    from .rag_system.core.pipeline import EnhancedRAGPipeline
 
     # Alias for convenience
     RAGPipeline = EnhancedRAGPipeline
 
-    __all__ = ['RAGPipeline', 'EnhancedRAGPipeline', 'RAGConfig']
+    __all__ = ["EnhancedRAGPipeline", "RAGConfig", "RAGPipeline"]
 except ImportError:
     # Handle missing dependencies gracefully
     RAGPipeline = None

@@ -1,31 +1,30 @@
 #!/usr/bin/env python3
-"""
-Memory-Constrained Real Evolution Runner
+"""Memory-Constrained Real Evolution Runner
 
 Historic first real execution of Agent Forge evolution system within memory constraints.
 Uses CPU-only processing with model sharding for genuine AI agent evolution.
 """
 
 import asyncio
-import logging
-import sys
-import os
-import time
-from pathlib import Path
 from datetime import datetime
+import logging
+from pathlib import Path
+import sys
+import time
 
 # Add project to path
-sys.path.append('.')
-sys.path.append('./scripts')
+sys.path.append(".")
+sys.path.append("./scripts")
+
+from run_50gen_evolution import Enhanced50GenEvolutionMerger
 
 from agent_forge.memory_manager import memory_manager
-from agent_forge.wandb_manager import init_wandb, log_metrics, finish_wandb
-from run_50gen_evolution import Enhanced50GenEvolutionMerger
+from agent_forge.wandb_manager import finish_wandb, init_wandb, log_metrics
 
 # Configure logging for historic run
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler(f'D:/AgentForge/historic_real_run_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
         logging.StreamHandler()
@@ -52,7 +51,7 @@ class MemoryConstrainedEvolutionRunner:
         logger.info(f"Run ID: {self.run_id}")
         logger.info(f"Output Directory: {self.output_dir}")
         logger.info(f"Memory Available: {memory_manager.get_memory_stats()['system_ram_available_gb']:.2f} GB")
-        logger.info(f"CPU Cores: 12, CPU-Only Mode")
+        logger.info("CPU Cores: 12, CPU-Only Mode")
 
     def initialize_wandb_tracking(self):
         """Initialize W&B for historic real execution tracking."""
@@ -66,7 +65,7 @@ class MemoryConstrainedEvolutionRunner:
                 "run_type": "historic_first_real_execution",
                 "generations": self.generations,
                 "population_size": self.population_size,
-                "memory_available_gb": memory_manager.get_memory_stats()['system_ram_available_gb'],
+                "memory_available_gb": memory_manager.get_memory_stats()["system_ram_available_gb"],
                 "cpu_cores": 12,
                 "device": "cpu",
                 "memory_constrained": True,
@@ -80,7 +79,7 @@ class MemoryConstrainedEvolutionRunner:
             log_metrics({
                 "historic_milestone": 1,
                 "execution_start_time": time.time(),
-                "available_memory_gb": memory_manager.get_memory_stats()['system_ram_available_gb']
+                "available_memory_gb": memory_manager.get_memory_stats()["system_ram_available_gb"]
             })
         else:
             logger.info("⚠️ W&B offline - continuing with local logging")
@@ -105,7 +104,7 @@ class MemoryConstrainedEvolutionRunner:
             "distilbert-base-uncased"    # 66M parameters
         ]
 
-        logger.info(f"Evolution Configuration:")
+        logger.info("Evolution Configuration:")
         logger.info(f"  Generations: {merger.max_generations}")
         logger.info(f"  Population: {merger.population_size}")
         logger.info(f"  Models: {merger.available_models}")
@@ -129,14 +128,13 @@ class MemoryConstrainedEvolutionRunner:
                 # Log success to W&B
                 log_metrics({
                     "evolution_completed": 1,
-                    "best_fitness": best_config.get('fitness', 0),
-                    "best_method": best_config.get('merge_method', 'unknown')
+                    "best_fitness": best_config.get("fitness", 0),
+                    "best_method": best_config.get("merge_method", "unknown")
                 })
 
                 return best_config
-            else:
-                logger.error("❌ Evolution failed or returned no results")
-                return None
+            logger.error("❌ Evolution failed or returned no results")
+            return None
 
         except Exception as e:
             logger.error(f"❌ Evolution failed with error: {e}")
@@ -156,7 +154,7 @@ class MemoryConstrainedEvolutionRunner:
 
         # Check memory manager is working
         stats = memory_manager.get_memory_stats()
-        if stats['system_ram_available_gb'] > 0:
+        if stats["system_ram_available_gb"] > 0:
             logger.info("✅ Memory management validated")
             validation_results["memory_management_active"] = True
 
@@ -202,9 +200,8 @@ async def main():
             })
 
             return best_config
-        else:
-            logger.error("❌ Execution failed")
-            return None
+        logger.error("❌ Execution failed")
+        return None
 
     except KeyboardInterrupt:
         logger.info("⚠️ Execution interrupted by user")

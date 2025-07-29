@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Agent Forge Compression Pipeline
+"""Agent Forge Compression Pipeline
 
 Multi-stage compression pipeline that applies BitNet quantization (Phase 1) after Quiet-STaR baking.
 This creates production-ready models with:
@@ -12,40 +11,36 @@ Pipeline: EvoMerge → Quiet-STaR → BitNet → Deployment
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-import time
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+import time
+from typing import Any
+
 import click
-import numpy as np
-import torch
-import torch.nn as nn
-import wandb
+from datasets import load_dataset
 from pydantic import BaseModel, Field, validator
+import torch
+from torch import nn
 from tqdm import tqdm
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
-    Trainer,
-    TrainingArguments,
-    DataCollatorForLanguageModeling
 )
-from datasets import load_dataset
+
+import wandb
 
 # Import compression modules
 from .compression.stage1_bitnet import (
-    convert_to_bitnet,
+    BitNetLinear,
     apply_hf_bitnet_finetune,
-    GradualBitnetCallback,
-    BitNetLinear
+    convert_to_bitnet,
 )
-from .compression.vptq import VPTQQuantizer
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -74,7 +69,7 @@ class CompressionConfig(BaseModel):
     # Evaluation configuration
     eval_before_after: bool = Field(default=True, description="Evaluate before/after compression")
     eval_samples: int = Field(default=100, ge=10, le=500)
-    eval_datasets: List[str] = Field(default_factory=lambda: ["gsm8k"])
+    eval_datasets: list[str] = Field(default_factory=lambda: ["gsm8k"])
 
     # System configuration
     device: str = Field(default="auto")
@@ -82,10 +77,10 @@ class CompressionConfig(BaseModel):
 
     # W&B configuration
     wandb_project: str = Field(default="agent-forge")
-    wandb_entity: Optional[str] = None
-    wandb_tags: List[str] = Field(default_factory=lambda: ["compression", "bitnet"])
+    wandb_entity: str | None = None
+    wandb_tags: list[str] = Field(default_factory=lambda: ["compression", "bitnet"])
 
-    @validator('device')
+    @validator("device")
     def validate_device(cls, v):
         if v == "auto":
             return "cuda" if torch.cuda.is_available() else "cpu"
@@ -103,7 +98,7 @@ class ModelAnalyzer:
         self.tokenizer = tokenizer
         self.device = next(model.parameters()).device
 
-    def analyze_model_structure(self) -> Dict[str, Any]:
+    def analyze_model_structure(self) -> dict[str, Any]:
         """Analyze model structure and parameters"""
         analysis = {
             "total_parameters": 0,
@@ -127,25 +122,25 @@ class ModelAnalyzer:
                 analysis["attention_parameters"] += param_count
 
         # Extract model config if available
-        if hasattr(self.model, 'config'):
+        if hasattr(self.model, "config"):
             config = self.model.config
-            analysis["layer_count"] = getattr(config, 'num_hidden_layers', 0)
-            analysis["hidden_size"] = getattr(config, 'hidden_size', 0)
-            analysis["vocab_size"] = getattr(config, 'vocab_size', 0)
+            analysis["layer_count"] = getattr(config, "num_hidden_layers", 0)
+            analysis["hidden_size"] = getattr(config, "hidden_size", 0)
+            analysis["vocab_size"] = getattr(config, "vocab_size", 0)
 
         # Estimate compression potential (linear layers compress best)
         if analysis["total_parameters"] > 0:
             linear_ratio = analysis["linear_parameters"] / analysis["total_parameters"]
             analysis["compression_potential"] = linear_ratio * 0.8  # ~80% reduction for linear layers
 
-        logger.info(f"Model Analysis:")
+        logger.info("Model Analysis:")
         logger.info(f"  Total Parameters: {analysis['total_parameters']:,}")
         logger.info(f"  Linear Parameters: {analysis['linear_parameters']:,} ({analysis['linear_parameters']/analysis['total_parameters']*100:.1f}%)")
         logger.info(f"  Compression Potential: {analysis['compression_potential']*100:.1f}%")
 
         return analysis
 
-    def estimate_memory_usage(self) -> Dict[str, float]:
+    def estimate_memory_usage(self) -> dict[str, float]:
         """Estimate memory usage before/after compression"""
         total_params = sum(p.numel() for p in self.model.parameters())
 
@@ -181,7 +176,7 @@ class ModelAnalyzer:
             "memory_savings_mb": fp16_size_mb - bitnet_size_mb
         }
 
-        logger.info(f"Memory Estimation:")
+        logger.info("Memory Estimation:")
         logger.info(f"  FP16: {fp16_size_mb:.1f} MB")
         logger.info(f"  BitNet: {bitnet_size_mb:.1f} MB")
         logger.info(f"  Compression Ratio: {compression_ratio:.1f}x")
@@ -201,7 +196,7 @@ class CompressionEvaluator:
         self.device = torch.device(config.device)
 
     async def evaluate_model(self, model: nn.Module, tokenizer,
-                           model_name: str = "model") -> Dict[str, float]:
+                           model_name: str = "model") -> dict[str, float]:
         """Evaluate model on configured datasets"""
         model.eval()
         results = {}
@@ -311,14 +306,14 @@ class CompressionEvaluator:
     def extract_final_answer(self, solution: str) -> str:
         """Extract final answer from MATH solution"""
         import re
-        boxed_pattern = r'\\boxed\{([^}]+)\}'
+        boxed_pattern = r"\\boxed\{([^}]+)\}"
         match = re.search(boxed_pattern, solution)
 
         if match:
             return match.group(1)
 
         # Fallback
-        numbers = re.findall(r'-?\d+\.?\d*', solution)
+        numbers = re.findall(r"-?\d+\.?\d*", solution)
         return numbers[-1] if numbers else ""
 
 # ============================================================================
@@ -341,7 +336,7 @@ class CalibrationDataset:
 
         logger.info(f"Loaded {len(self.examples)} calibration examples")
 
-    def load_wikitext(self, num_samples: int) -> List[str]:
+    def load_wikitext(self, num_samples: int) -> list[str]:
         """Load WikiText-2 for calibration"""
         try:
             dataset = load_dataset("wikitext", "wikitext-2-v1", split="train")
@@ -366,7 +361,7 @@ class CalibrationDataset:
                 "Natural language processing has revolutionized how we interact with artificial intelligence systems."
             ] * (num_samples // 3 + 1)
 
-    def load_openwebtext(self, num_samples: int) -> List[str]:
+    def load_openwebtext(self, num_samples: int) -> list[str]:
         """Load OpenWebText for calibration"""
         try:
             dataset = load_dataset("openwebtext", split="train")
@@ -442,7 +437,7 @@ class CompressionPipeline:
             logger.error(f"W&B initialization failed: {e}")
             self.wandb_run = None
 
-    async def run_compression_pipeline(self) -> Dict[str, Any]:
+    async def run_compression_pipeline(self) -> dict[str, Any]:
         """Run complete compression pipeline"""
         try:
             # Initialize W&B
@@ -526,7 +521,7 @@ class CompressionPipeline:
             }
 
             metadata_path = Path(self.config.output_model_path) / "compression_metadata.json"
-            with open(metadata_path, 'w') as f:
+            with open(metadata_path, "w") as f:
                 json.dump(compression_metadata, f, indent=2, default=str)
 
             # Log final metrics to W&B
@@ -606,9 +601,8 @@ class CompressionPipeline:
         return compressed_model
 
     def calculate_actual_compression(self, original_model: nn.Module,
-                                   compressed_model: nn.Module) -> Dict[str, float]:
+                                   compressed_model: nn.Module) -> dict[str, float]:
         """Calculate actual compression metrics"""
-
         # Count parameters
         original_params = sum(p.numel() for p in original_model.parameters())
         compressed_params = sum(p.numel() for p in compressed_model.parameters())
@@ -651,7 +645,7 @@ class CompressionPipeline:
             "compression_efficiency": (memory_savings / original_memory_mb * 100) if original_memory_mb > 0 else 0
         }
 
-        logger.info(f"Actual Compression Metrics:")
+        logger.info("Actual Compression Metrics:")
         logger.info(f"  Original: {original_memory_mb:.1f} MB")
         logger.info(f"  Compressed: {compressed_memory_mb:.1f} MB")
         logger.info(f"  Ratio: {compression_ratio:.1f}x")
@@ -666,24 +660,22 @@ class CompressionPipeline:
 @click.group()
 def forge():
     """Agent Forge CLI"""
-    pass
 
 @forge.command()
-@click.option('--input-model', required=True, help='Path to Quiet-STaR baked model')
-@click.option('--output-model', required=True, help='Path for compressed model output')
-@click.option('--calibration-dataset', default='wikitext', help='Calibration dataset (wikitext, openwebtext)')
-@click.option('--calibration-samples', default=1000, help='Number of calibration samples')
-@click.option('--eval-samples', default=100, help='Number of evaluation samples')
-@click.option('--device', default='auto', help='Device to use (auto, cuda, cpu)')
-@click.option('--config', help='Configuration JSON file')
+@click.option("--input-model", required=True, help="Path to Quiet-STaR baked model")
+@click.option("--output-model", required=True, help="Path for compressed model output")
+@click.option("--calibration-dataset", default="wikitext", help="Calibration dataset (wikitext, openwebtext)")
+@click.option("--calibration-samples", default=1000, help="Number of calibration samples")
+@click.option("--eval-samples", default=100, help="Number of evaluation samples")
+@click.option("--device", default="auto", help="Device to use (auto, cuda, cpu)")
+@click.option("--config", help="Configuration JSON file")
 def compress(input_model, output_model, calibration_dataset, calibration_samples,
              eval_samples, device, config):
     """Apply BitNet compression to Quiet-STaR baked model"""
-
     try:
         # Load configuration
         if config and Path(config).exists():
-            with open(config, 'r') as f:
+            with open(config) as f:
                 config_data = json.load(f)
             compression_config = CompressionConfig(**config_data)
         else:
@@ -721,9 +713,8 @@ def compress(input_model, output_model, calibration_dataset, calibration_samples
 # Orchestrator Integration
 # ============================================================================
 
-async def run_compression(config: Dict[str, Any]) -> 'PhaseResult':
-    """
-    Orchestrator entry point for Compression phase.
+async def run_compression(config: dict[str, Any]) -> "PhaseResult":
+    """Orchestrator entry point for Compression phase.
 
     Args:
         config: Configuration dictionary with compression parameters
@@ -732,7 +723,12 @@ async def run_compression(config: Dict[str, Any]) -> 'PhaseResult':
         PhaseResult with status, artifacts, and metrics
     """
     try:
-        from agent_forge.forge_orchestrator import PhaseResult, PhaseStatus, PhaseType, PhaseArtifact
+        from agent_forge.forge_orchestrator import (
+            PhaseArtifact,
+            PhaseResult,
+            PhaseStatus,
+            PhaseType,
+        )
     except ImportError:
         # Fallback classes for when orchestrator is not available
         from dataclasses import dataclass
@@ -758,7 +754,6 @@ async def run_compression(config: Dict[str, Any]) -> 'PhaseResult':
             artifacts: list = None
             metrics: dict = None
     from datetime import datetime
-    import time
 
     start_time = time.time()
 
@@ -774,18 +769,18 @@ async def run_compression(config: Dict[str, Any]) -> 'PhaseResult':
 
         duration = time.time() - start_time
 
-        if results['success']:
+        if results["success"]:
             # Success - create artifacts
             artifacts = [
                 PhaseArtifact(
                     phase_type=PhaseType.COMPRESSION,
                     artifact_type="compressed_model",
                     data={
-                        "model_path": results['model_path'],
-                        "compression_ratio": results['compression_ratio'],
-                        "memory_savings_mb": results['memory_savings_mb'],
-                        "original_size_mb": results.get('original_size_mb', 0),
-                        "compressed_size_mb": results.get('compressed_size_mb', 0)
+                        "model_path": results["model_path"],
+                        "compression_ratio": results["compression_ratio"],
+                        "memory_savings_mb": results["memory_savings_mb"],
+                        "original_size_mb": results.get("original_size_mb", 0),
+                        "compressed_size_mb": results.get("compressed_size_mb", 0)
                     },
                     metadata={
                         "bitnet_config": compression_config.dict(),
@@ -796,11 +791,11 @@ async def run_compression(config: Dict[str, Any]) -> 'PhaseResult':
 
             # Create metrics summary
             metrics = {
-                "compression_ratio": results['compression_ratio'],
-                "memory_savings_mb": results['memory_savings_mb'],
+                "compression_ratio": results["compression_ratio"],
+                "memory_savings_mb": results["memory_savings_mb"],
                 "execution_time": duration,
                 "success": True,
-                "evaluation_metrics": results.get('evaluation_metrics', {}),
+                "evaluation_metrics": results.get("evaluation_metrics", {}),
                 "calibration_samples": compression_config.calibration_samples
             }
 
@@ -815,21 +810,20 @@ async def run_compression(config: Dict[str, Any]) -> 'PhaseResult':
                 artifacts_produced=artifacts,
                 metrics=metrics
             )
-        else:
-            # Failed compression
-            return PhaseResult(
-                phase_type=PhaseType.COMPRESSION,
-                status=PhaseStatus.FAILED,
-                start_time=datetime.fromtimestamp(start_time),
-                end_time=datetime.now(),
-                duration_seconds=duration,
-                error_message=results.get('error', 'Compression failed with unknown error'),
-                metrics={"execution_time": duration}
-            )
+        # Failed compression
+        return PhaseResult(
+            phase_type=PhaseType.COMPRESSION,
+            status=PhaseStatus.FAILED,
+            start_time=datetime.fromtimestamp(start_time),
+            end_time=datetime.now(),
+            duration_seconds=duration,
+            error_message=results.get("error", "Compression failed with unknown error"),
+            metrics={"execution_time": duration}
+        )
 
     except Exception as e:
         duration = time.time() - start_time
-        error_msg = f"Compression phase failed: {str(e)}"
+        error_msg = f"Compression phase failed: {e!s}"
         logger.error(error_msg)
 
         return PhaseResult(

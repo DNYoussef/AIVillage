@@ -1,21 +1,20 @@
-"""
-A/B Testing Framework for Prompt Performance Tracking
+"""A/B Testing Framework for Prompt Performance Tracking
 Part B: Agent Forge Phase 4 - Prompt Engineering
 """
 
-import wandb
 import asyncio
-import time
-import hashlib
-import random
-import statistics
-from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime, timezone, timedelta
 from collections import defaultdict, deque
-from dataclasses import dataclass, asdict
-import json
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+import hashlib
 import logging
+import statistics
+import time
+from typing import Any
+
 import numpy as np
+
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ class TestVariant:
     variant_id: str
     variant_name: str
     prompt_template: str
-    configuration: Dict[str, Any]
+    configuration: dict[str, Any]
     weight: float = 1.0
     active: bool = True
     created_at: str = ""
@@ -41,8 +40,8 @@ class InteractionResult:
     response_text: str
     response_time: float
     language: str
-    engagement_signals: Dict[str, Any]
-    performance_metrics: Dict[str, float]
+    engagement_signals: dict[str, Any]
+    performance_metrics: dict[str, float]
     timestamp: str = ""
 
 @dataclass
@@ -54,7 +53,7 @@ class TestResults:
     avg_engagement: float
     avg_response_time: float
     conversion_rate: float
-    confidence_interval: Tuple[float, float]
+    confidence_interval: tuple[float, float]
     statistical_significance: float
     recommendation: str = ""
 
@@ -89,7 +88,6 @@ class PromptABTest:
 
     def initialize_wandb_tracking(self):
         """Initialize W&B tracking for A/B testing"""
-
         try:
             wandb.init(
                 project=self.project_name,
@@ -110,7 +108,6 @@ class PromptABTest:
 
     def setup_default_tests(self):
         """Set up default A/B test variants"""
-
         # Greeting style test
         greeting_variants = [
             TestVariant(
@@ -182,7 +179,6 @@ class PromptABTest:
 
     def get_user_variant(self, user_id: str, test_type: str) -> TestVariant:
         """Get consistent variant assignment for user using UCB1 algorithm"""
-
         # Check if user already has assignment
         user_key = f"{user_id}_{test_type}"
         if user_key in self.user_assignments:
@@ -197,7 +193,7 @@ class PromptABTest:
 
         # Calculate UCB1 scores for each variant
         best_variant = None
-        best_score = -float('inf')
+        best_score = -float("inf")
 
         for variant in variants:
             if not variant.active:
@@ -208,10 +204,10 @@ class PromptABTest:
 
             if len(variant_data) == 0:
                 # No data yet, prioritize exploration
-                score = float('inf')
+                score = float("inf")
             else:
                 # Calculate average reward (engagement score)
-                avg_reward = statistics.mean([r.performance_metrics.get('student_engagement', 0)
+                avg_reward = statistics.mean([r.performance_metrics.get("student_engagement", 0)
                                             for r in variant_data])
 
                 # Calculate confidence bound
@@ -247,9 +243,8 @@ class PromptABTest:
                                   user_id: str,
                                   test_type: str,
                                   language: str = "en",
-                                  context: Dict[str, Any] = None) -> InteractionResult:
+                                  context: dict[str, Any] = None) -> InteractionResult:
         """Test a prompt variant and log results"""
-
         context = context or {}
         start_time = time.time()
 
@@ -281,7 +276,7 @@ class PromptABTest:
 
             # Create interaction result
             interaction_result = InteractionResult(
-                session_id=context.get('session_id', ''),
+                session_id=context.get("session_id", ""),
                 variant_id=variant.variant_id,
                 user_message=student_msg,
                 response_text=response,
@@ -314,18 +309,17 @@ class PromptABTest:
     async def generate_with_prompt(self,
                                  student_msg: str,
                                  prompt_template: str,
-                                 context: Dict[str, Any]) -> str:
+                                 context: dict[str, Any]) -> str:
         """Generate response using the specified prompt template"""
-
         # This is a simplified version - in production, this would integrate with
         # the actual AI models (Anthropic/OpenAI)
 
         # Fill in template variables
         filled_prompt = prompt_template.format(
             user_message=student_msg,
-            concept=context.get('concept', 'the main idea'),
-            steps=context.get('steps', '1. Identify the problem 2. Apply the concept 3. Check your answer'),
-            hints=context.get('hints', 'Think about what you already know'),
+            concept=context.get("concept", "the main idea"),
+            steps=context.get("steps", "1. Identify the problem 2. Apply the concept 3. Check your answer"),
+            hints=context.get("hints", "Think about what you already know"),
             **context
         )
 
@@ -347,9 +341,8 @@ class PromptABTest:
     async def analyze_engagement_signals(self,
                                        student_msg: str,
                                        response: str,
-                                       context: Dict[str, Any]) -> Dict[str, Any]:
+                                       context: dict[str, Any]) -> dict[str, Any]:
         """Analyze engagement signals from the interaction"""
-
         signals = {
             "question_asked": "?" in response,
             "emoji_used": any(char in response for char in "😊🚀✨👍🎉💡"),
@@ -370,9 +363,8 @@ class PromptABTest:
     async def calculate_performance_metrics(self,
                                           response: str,
                                           response_time: float,
-                                          engagement_signals: Dict[str, Any]) -> Dict[str, float]:
+                                          engagement_signals: dict[str, Any]) -> dict[str, float]:
         """Calculate comprehensive performance metrics"""
-
         # Engagement score based on signals
         engagement_factors = [
             engagement_signals.get("question_asked", False),
@@ -418,7 +410,6 @@ class PromptABTest:
                                      interaction: InteractionResult,
                                      variant: TestVariant):
         """Log detailed interaction data to W&B"""
-
         log_data = {
             "prompt_variant": variant.variant_id,
             "variant_name": variant.variant_name,
@@ -435,10 +426,9 @@ class PromptABTest:
 
     async def update_time_based_metrics(self, interaction: InteractionResult):
         """Update daily and hourly performance metrics"""
-
         current_time = datetime.now()
-        day_key = current_time.strftime('%Y-%m-%d')
-        hour_key = current_time.strftime('%Y-%m-%d-%H')
+        day_key = current_time.strftime("%Y-%m-%d")
+        hour_key = current_time.strftime("%Y-%m-%d-%H")
 
         # Update daily metrics
         self.daily_metrics[day_key][interaction.variant_id].append(
@@ -450,9 +440,8 @@ class PromptABTest:
             interaction.performance_metrics["overall_performance"]
         )
 
-    async def analyze_test_results(self, test_type: str, min_interactions: int = None) -> List[TestResults]:
+    async def analyze_test_results(self, test_type: str, min_interactions: int = None) -> list[TestResults]:
         """Analyze A/B test results with statistical significance"""
-
         min_interactions = min_interactions or self.min_sample_size
         variants = self.active_tests.get(test_type, [])
 
@@ -466,7 +455,7 @@ class PromptABTest:
                 continue
 
             # Calculate statistics
-            engagement_scores = [r.performance_metrics.get('student_engagement', 0) for r in variant_data]
+            engagement_scores = [r.performance_metrics.get("student_engagement", 0) for r in variant_data]
             response_times = [r.response_time for r in variant_data]
 
             avg_engagement = statistics.mean(engagement_scores)
@@ -523,25 +512,22 @@ class PromptABTest:
                               avg_response_time: float,
                               sample_size: int) -> str:
         """Generate actionable recommendation based on test results"""
-
         if avg_engagement > 0.8 and conversion_rate > 0.6:
             return "WINNER - Deploy this variant"
-        elif avg_engagement > 0.7 and avg_response_time < 3.0:
+        if avg_engagement > 0.7 and avg_response_time < 3.0:
             return "STRONG PERFORMER - Consider promoting"
-        elif sample_size < 100:
+        if sample_size < 100:
             return "NEED MORE DATA - Continue testing"
-        elif avg_engagement < 0.5:
+        if avg_engagement < 0.5:
             return "POOR PERFORMER - Consider discontinuing"
-        elif avg_response_time > 4.0:
+        if avg_response_time > 4.0:
             return "OPTIMIZATION NEEDED - Improve response time"
-        else:
-            return "MODERATE PERFORMER - Monitor closely"
+        return "MODERATE PERFORMER - Monitor closely"
 
-    async def get_daily_report(self, days_back: int = 7) -> Dict[str, Any]:
+    async def get_daily_report(self, days_back: int = 7) -> dict[str, Any]:
         """Generate daily performance report"""
-
         report = {
-            "report_date": datetime.now().strftime('%Y-%m-%d'),
+            "report_date": datetime.now().strftime("%Y-%m-%d"),
             "period": f"Last {days_back} days",
             "total_interactions": self.total_interactions,
             "active_tests": len(self.active_tests),
@@ -553,7 +539,7 @@ class PromptABTest:
         # Analyze daily performance
         current_date = datetime.now()
         for i in range(days_back):
-            date_key = (current_date - timedelta(days=i)).strftime('%Y-%m-%d')
+            date_key = (current_date - timedelta(days=i)).strftime("%Y-%m-%d")
 
             if date_key in self.daily_metrics:
                 day_data = self.daily_metrics[date_key]
@@ -573,7 +559,7 @@ class PromptABTest:
         all_variant_scores = {}
         for variant_id, interactions in self.variant_performance.items():
             if len(interactions) >= 20:  # Minimum threshold
-                scores = [i.performance_metrics.get('overall_performance', 0) for i in interactions]
+                scores = [i.performance_metrics.get("overall_performance", 0) for i in interactions]
                 all_variant_scores[variant_id] = {
                     "avg_score": statistics.mean(scores),
                     "interaction_count": len(interactions),

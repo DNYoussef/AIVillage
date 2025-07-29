@@ -1,8 +1,10 @@
-import logging
-from typing import Dict, Any, List
 from datetime import datetime
+import logging
+from typing import Any
+
 import numpy as np
 import pandas as pd
+
 from rag_system.utils.advanced_analytics import AdvancedAnalytics
 
 logger = logging.getLogger(__name__)
@@ -32,7 +34,7 @@ class EvaluationMetric:
 
 class EvaluationFramework:
     def __init__(self, advanced_analytics: AdvancedAnalytics):
-        self.metrics: Dict[str, EvaluationMetric] = {}
+        self.metrics: dict[str, EvaluationMetric] = {}
         self.advanced_analytics = advanced_analytics
 
     def add_metric(self, name: str, description: str):
@@ -55,7 +57,7 @@ class EvaluationFramework:
     def get_metric_trend(self, name: str, window: int = 10) -> float:
         return self.metrics[name].get_trend(window) if name in self.metrics else None
 
-    def generate_report(self) -> Dict[str, Any]:
+    def generate_report(self) -> dict[str, Any]:
         report = {}
         for name, metric in self.metrics.items():
             report[name] = {
@@ -77,26 +79,26 @@ class EvaluationFramework:
             summary += f"  Trend: {data['trend']:.4f}\n\n"
         return summary
 
-    def generate_visualizations(self) -> Dict[str, bytes]:
+    def generate_visualizations(self) -> dict[str, bytes]:
         visualizations = {}
-        visualizations['metrics_over_time'] = self.advanced_analytics.visualize_metrics()
+        visualizations["metrics_over_time"] = self.advanced_analytics.visualize_metrics()
 
         # Generate correlation heatmap
         metric_values = {name: metric.values for name, metric in self.metrics.items()}
         df = pd.DataFrame(metric_values)
         correlation_matrix = df.corr()
-        visualizations['correlation_heatmap'] = self.advanced_analytics.generate_heatmap(
+        visualizations["correlation_heatmap"] = self.advanced_analytics.generate_heatmap(
             correlation_matrix.values.tolist(),
             correlation_matrix.index.tolist()
         )
 
         return visualizations
 
-    def evaluate_system_performance(self) -> Dict[str, Any]:
+    def evaluate_system_performance(self) -> dict[str, Any]:
         report = self.generate_report()
         visualizations = self.generate_visualizations()
 
-        overall_performance = np.mean([data['latest_value'] for data in report.values() if data['latest_value'] is not None])
+        overall_performance = np.mean([data["latest_value"] for data in report.values() if data["latest_value"] is not None])
 
         return {
             "report": report,

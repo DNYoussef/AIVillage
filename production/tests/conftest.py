@@ -2,9 +2,10 @@
 Test configuration for production components.
 """
 
-import pytest
-import sys
 from pathlib import Path
+import sys
+
+import pytest
 
 # Add production modules to path
 production_path = Path(__file__).parent.parent
@@ -60,14 +61,14 @@ def sample_data():
     """Sample data for testing."""
     import torch
     return {
-        'input': torch.randn(32, 10),
-        'target': torch.randn(32, 1),
-        'documents': [
+        "input": torch.randn(32, 10),
+        "target": torch.randn(32, 1),
+        "documents": [
             "Sample document 1",
             "Sample document 2",
             "Sample document 3"
         ],
-        'queries': [
+        "queries": [
             "What is the main topic?",
             "How does this work?",
             "What are the benefits?"

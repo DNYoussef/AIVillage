@@ -4,7 +4,7 @@
 try:
     from .real_benchmark import RealBenchmark
 
-    __all__ = ['RealBenchmark']
+    __all__ = ["RealBenchmark"]
 except ImportError:
     # Handle missing dependencies gracefully
     RealBenchmark = None

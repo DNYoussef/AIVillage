@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-HypeRAG LoRA Training Data Generator
+"""HypeRAG LoRA Training Data Generator
 
 Generates domain-specific training data for LoRA fine-tuning by:
 1. Reusing inference templates from prompt_bank.md
@@ -8,13 +7,13 @@ Generates domain-specific training data for LoRA fine-tuning by:
 3. Outputting JSONL format with prompt/completion pairs
 """
 
-import json
-import random
 import argparse
-from pathlib import Path
-from typing import Dict, List, Tuple, Any
 from datetime import datetime, timezone
+import json
 import logging
+from pathlib import Path
+import random
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -149,7 +148,7 @@ class LoRADataGenerator:
             "avg_completion_length": 0
         }
 
-    def generate_prompt(self, violation: Dict[str, Any]) -> str:
+    def generate_prompt(self, violation: dict[str, Any]) -> str:
         """Generate a complete prompt for the violation."""
         system_prompt = BASE_SYSTEM_PROMPT
         if self.domain in DOMAIN_SYSTEM_PROMPTS:
@@ -179,7 +178,7 @@ Provide your repair in JSON format:
 """
         return f"{system_prompt}\n\n{instruction}"
 
-    def generate_completion(self, violation: Dict[str, Any], repair: Dict[str, Any]) -> str:
+    def generate_completion(self, violation: dict[str, Any], repair: dict[str, Any]) -> str:
         """Generate the expected completion for the violation."""
         completion = {
             "operation": repair["operation"],
@@ -207,7 +206,7 @@ Provide your repair in JSON format:
 
         return json.dumps(completion, indent=2)
 
-    def generate_examples(self, count: int) -> List[Dict[str, str]]:
+    def generate_examples(self, count: int) -> list[dict[str, str]]:
         """Generate training examples for the domain."""
         if self.domain not in DOMAIN_VIOLATIONS:
             raise ValueError(f"Unknown domain: {self.domain}")
@@ -279,17 +278,17 @@ Provide your repair in JSON format:
 
         return examples
 
-    def save_dataset(self, examples: List[Dict[str, str]], output_path: Path):
+    def save_dataset(self, examples: list[dict[str, str]], output_path: Path):
         """Save examples to JSONL file."""
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             for example in examples:
-                f.write(json.dumps(example) + '\n')
+                f.write(json.dumps(example) + "\n")
 
         # Save stats
-        stats_path = output_path.with_suffix('.stats.json')
-        with open(stats_path, 'w', encoding='utf-8') as f:
+        stats_path = output_path.with_suffix(".stats.json")
+        with open(stats_path, "w", encoding="utf-8") as f:
             json.dump(self.stats, f, indent=2)
 
         logger.info(f"Saved {len(examples)} examples to {output_path}")
@@ -314,7 +313,7 @@ def main():
     # Configure logging
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     # Generate data
@@ -325,13 +324,13 @@ def main():
     generator.save_dataset(examples, args.out)
 
     # Print summary
-    print(f"\nGeneration Summary:")
+    print("\nGeneration Summary:")
     print(f"  Domain: {args.domain}")
     print(f"  Total examples: {generator.stats['total_examples']}")
     print(f"  Avg prompt length: {generator.stats['avg_prompt_length']:.0f} chars")
     print(f"  Avg completion length: {generator.stats['avg_completion_length']:.0f} chars")
-    print(f"\nExamples by violation type:")
-    for vtype, count in generator.stats['by_violation_type'].items():
+    print("\nExamples by violation type:")
+    for vtype, count in generator.stats["by_violation_type"].items():
         print(f"  - {vtype}: {count}")
 
 

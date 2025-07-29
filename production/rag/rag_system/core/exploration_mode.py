@@ -1,10 +1,12 @@
 import logging
-from typing import Dict, Any, List, Tuple
 import random
+from typing import Any
+
 import networkx as nx
-from rag_system.retrieval.graph_store import GraphStore
+
 from agents.language_models.openai_gpt import OpenAIGPTConfig
 from rag_system.processing.advanced_nlp import AdvancedNLP
+from rag_system.retrieval.graph_store import GraphStore
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +16,8 @@ class ExplorationMode:
         self.llm = llm_config.create()
         self.advanced_nlp = advanced_nlp
 
-    async def explore_knowledge_graph(self, start_node: str, depth: int = 3) -> Dict[str, Any]:
-        """
-        Explore the knowledge graph starting from a given node.
+    async def explore_knowledge_graph(self, start_node: str, depth: int = 3) -> dict[str, Any]:
+        """Explore the knowledge graph starting from a given node.
 
         Args:
             start_node (str): The node to start exploration from.
@@ -37,7 +38,7 @@ class ExplorationMode:
             "exploration_results": exploration_results
         }
 
-    async def _explore_recursive(self, node: str, depth: int, explored_nodes: set, exploration_results: List[Dict[str, Any]]):
+    async def _explore_recursive(self, node: str, depth: int, explored_nodes: set, exploration_results: list[dict[str, Any]]):
         if depth == 0 or node in explored_nodes:
             return
 
@@ -55,9 +56,8 @@ class ExplorationMode:
                 # Recursively explore connected nodes
                 await self._explore_recursive(connection["target"], depth - 1, explored_nodes, exploration_results)
 
-    async def _analyze_relation(self, source: str, target: str, relation_type: str) -> Dict[str, Any]:
-        """
-        Analyze the relation between two nodes.
+    async def _analyze_relation(self, source: str, target: str, relation_type: str) -> dict[str, Any]:
+        """Analyze the relation between two nodes.
 
         Args:
             source (str): The source node.
@@ -92,7 +92,7 @@ class ExplorationMode:
             "analysis": analysis
         }
 
-    def _parse_json_response(self, response: str) -> Dict[str, Any]:
+    def _parse_json_response(self, response: str) -> dict[str, Any]:
         import json
         try:
             return json.loads(response)
@@ -100,9 +100,8 @@ class ExplorationMode:
             logger.error(f"Failed to parse JSON response: {response}")
             return {"error": "Failed to parse response"}
 
-    async def discover_new_relations(self, num_attempts: int = 10) -> List[Dict[str, Any]]:
-        """
-        Attempt to discover new relations in the knowledge graph.
+    async def discover_new_relations(self, num_attempts: int = 10) -> list[dict[str, Any]]:
+        """Attempt to discover new relations in the knowledge graph.
 
         Args:
             num_attempts (int): The number of attempts to discover new relations.
@@ -121,12 +120,12 @@ class ExplorationMode:
 
         return new_relations
 
-    async def _select_random_nodes(self) -> Tuple[str, str]:
+    async def _select_random_nodes(self) -> tuple[str, str]:
         """Select two random nodes from the knowledge graph."""
         nodes = await self.graph_store.get_all_nodes()
         return random.sample(nodes, 2)
 
-    async def _propose_relation(self, source: str, target: str) -> Dict[str, Any]:
+    async def _propose_relation(self, source: str, target: str) -> dict[str, Any]:
         """Propose a potential new relation between two nodes."""
         source_info = await self.graph_store.get_node_info(source)
         target_info = await self.graph_store.get_node_info(target)
@@ -163,9 +162,8 @@ class ExplorationMode:
             "implications": proposal["implications"]
         }
 
-    async def validate_proposed_relation(self, relation: Dict[str, Any]) -> bool:
-        """
-        Validate a proposed relation using the language model and advanced NLP techniques.
+    async def validate_proposed_relation(self, relation: dict[str, Any]) -> bool:
+        """Validate a proposed relation using the language model and advanced NLP techniques.
 
         Args:
             relation (Dict[str, Any]): The proposed relation to validate.
@@ -192,19 +190,18 @@ class ExplorationMode:
         validation = self._parse_json_response(response.text)
 
         # Use advanced NLP to analyze the semantic similarity between the source and target
-        source_embedding = self.advanced_nlp.get_embeddings([relation['source']])[0]
-        target_embedding = self.advanced_nlp.get_embeddings([relation['target']])[0]
+        source_embedding = self.advanced_nlp.get_embeddings([relation["source"]])[0]
+        target_embedding = self.advanced_nlp.get_embeddings([relation["target"]])[0]
         semantic_similarity = self.advanced_nlp.calculate_similarity(source_embedding, target_embedding)
 
         # Combine LLM validation with semantic similarity
-        is_valid = validation['is_valid'] and semantic_similarity > 0.5
+        is_valid = validation["is_valid"] and semantic_similarity > 0.5
         logger.info(f"Relation validation result: {is_valid} (LLM: {validation['is_valid']}, Similarity: {semantic_similarity:.2f})")
 
         return is_valid
 
-    async def update_knowledge_graph(self, new_relations: List[Dict[str, Any]]):
-        """
-        Update the knowledge graph with newly discovered and validated relations.
+    async def update_knowledge_graph(self, new_relations: list[dict[str, Any]]):
+        """Update the knowledge graph with newly discovered and validated relations.
 
         Args:
             new_relations (List[Dict[str, Any]]): List of new relations to add to the graph.
@@ -225,9 +222,8 @@ class ExplorationMode:
             else:
                 logger.info(f"Rejected invalid relation: {relation}")
 
-    async def generate_exploration_report(self, exploration_results: Dict[str, Any]) -> str:
-        """
-        Generate a human-readable report of the exploration results.
+    async def generate_exploration_report(self, exploration_results: dict[str, Any]) -> str:
+        """Generate a human-readable report of the exploration results.
 
         Args:
             exploration_results (Dict[str, Any]): The results from the explore_knowledge_graph method.
@@ -235,27 +231,26 @@ class ExplorationMode:
         Returns:
             str: A formatted report of the exploration results.
         """
-        report = f"Exploration Report\n\n"
+        report = "Exploration Report\n\n"
         report += f"Start Node: {exploration_results['start_node']}\n"
         report += f"Exploration Depth: {exploration_results['depth']}\n"
         report += f"Nodes Explored: {len(exploration_results['explored_nodes'])}\n\n"
 
         report += "Key Findings:\n"
-        for result in exploration_results['exploration_results']:
+        for result in exploration_results["exploration_results"]:
             report += f"- Relation: {result['source']} -> {result['target']} ({result['relation_type']})\n"
             report += f"  Description: {result['analysis']['description']}\n"
             report += f"  Implications: {result['analysis']['implications']}\n"
             report += f"  Insights: {result['analysis']['insights']}\n"
-            if 'inferred_relations' in result['analysis']:
+            if "inferred_relations" in result["analysis"]:
                 report += f"  Inferred Relations: {result['analysis']['inferred_relations']}\n"
             report += "\n"
 
         return report
 
 
-    async def find_causal_paths(self, start_node: str, end_node: str, max_depth: int = 5) -> List[List[str]]:
-        """
-        Find the most direct causal path between two nodes in the knowledge graph.
+    async def find_causal_paths(self, start_node: str, end_node: str, max_depth: int = 5) -> list[list[str]]:
+        """Find the most direct causal path between two nodes in the knowledge graph.
 
         Args:
             start_node (str): The starting node.
@@ -278,9 +273,8 @@ class ExplorationMode:
 
         return sorted(causal_paths, key=len)
 
-    async def _is_causal_path(self, path: List[str]) -> bool:
-        """
-        Check if a given path is causal.
+    async def _is_causal_path(self, path: list[str]) -> bool:
+        """Check if a given path is causal.
 
         Args:
             path (List[str]): A list of node names representing a path.
@@ -290,13 +284,12 @@ class ExplorationMode:
         """
         for i in range(len(path) - 1):
             edge_data = await self.graph_store.get_edge_data(path[i], path[i+1])
-            if not edge_data.get('is_causal', False):
+            if not edge_data.get("is_causal", False):
                 return False
         return True
 
-    async def find_creative_connections(self, start_node: str, end_node: str, excluded_nodes: List[str], max_depth: int = 7) -> List[List[str]]:
-        """
-        Find creative connections between two nodes, excluding certain nodes and paths.
+    async def find_creative_connections(self, start_node: str, end_node: str, excluded_nodes: list[str], max_depth: int = 7) -> list[list[str]]:
+        """Find creative connections between two nodes, excluding certain nodes and paths.
 
         Args:
             start_node (str): The starting node.
@@ -323,9 +316,8 @@ class ExplorationMode:
 
         return [path for path, score in sorted(creative_paths, key=lambda x: x[1], reverse=True)]
 
-    async def _calculate_creativity_score(self, path: List[str]) -> float:
-        """
-        Calculate a creativity score for a given path.
+    async def _calculate_creativity_score(self, path: list[str]) -> float:
+        """Calculate a creativity score for a given path.
 
         Args:
             path (List[str]): A list of node names representing a path.
@@ -343,9 +335,8 @@ class ExplorationMode:
             return total / (len(path) - 1)
         return 0.0
 
-    async def generate_new_ideas(self, start_node: str, end_node: str) -> List[Dict[str, Any]]:
-        """
-        Generate new ideas by finding causal paths and creative connections.
+    async def generate_new_ideas(self, start_node: str, end_node: str) -> list[dict[str, Any]]:
+        """Generate new ideas by finding causal paths and creative connections.
 
         Args:
             start_node (str): The starting node.
@@ -371,9 +362,8 @@ class ExplorationMode:
 
         return new_ideas
 
-    async def _generate_idea_from_path(self, creative_path: List[str], causal_path: List[str]) -> Dict[str, Any]:
-        """
-        Generate a new idea based on a creative path and the main causal path.
+    async def _generate_idea_from_path(self, creative_path: list[str], causal_path: list[str]) -> dict[str, Any]:
+        """Generate a new idea based on a creative path and the main causal path.
 
         Args:
             creative_path (List[str]): A creative path between two nodes.
@@ -411,37 +401,35 @@ class ExplorationMode:
         response = await self.llm.complete(prompt)
         return self._parse_json_response(response.text)
 
-    async def update_graph_with_new_ideas(self, new_ideas: List[Dict[str, Any]]):
-        """
-        Update the knowledge graph with new ideas and connections.
+    async def update_graph_with_new_ideas(self, new_ideas: list[dict[str, Any]]):
+        """Update the knowledge graph with new ideas and connections.
 
         Args:
             new_ideas (List[Dict[str, Any]]): A list of new ideas to add to the graph.
         """
         for idea in new_ideas:
             # Add new nodes
-            for node in idea['nodes_to_add']:
-                await self.graph_store.add_node(node, {'type': 'concept', 'description': ''})
+            for node in idea["nodes_to_add"]:
+                await self.graph_store.add_node(node, {"type": "concept", "description": ""})
 
             # Add new edges
-            for edge in idea['edges_to_add']:
+            for edge in idea["edges_to_add"]:
                 await self.graph_store.add_edge(
-                    edge['source'],
-                    edge['target'],
-                    edge['relation'],
+                    edge["source"],
+                    edge["target"],
+                    edge["relation"],
                     {
-                        'description': edge['description'],
-                        'is_causal': False,
-                        'novelty': 0.8,
-                        'relevance': 0.7
+                        "description": edge["description"],
+                        "is_causal": False,
+                        "novelty": 0.8,
+                        "relevance": 0.7
                     }
                 )
 
         logger.info(f"Added {len(new_ideas)} new ideas to the knowledge graph")
 
-    async def creative_exploration(self, start_node: str, end_node: str) -> Dict[str, Any]:
-        """
-        Perform a creative exploration between two nodes in the knowledge graph.
+    async def creative_exploration(self, start_node: str, end_node: str) -> dict[str, Any]:
+        """Perform a creative exploration between two nodes in the knowledge graph.
 
         Args:
             start_node (str): The starting node.

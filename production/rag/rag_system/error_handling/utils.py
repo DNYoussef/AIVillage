@@ -1,11 +1,11 @@
 # rag_system/error_handling/utils.py
 
-import numpy as np
-from typing import List
 
-def compute_bonferroni_correction(overall_error_rate: float, num_steps: int) -> List[float]:
-    """
-    Compute Bonferroni correction for multiple steps.
+import numpy as np
+
+
+def compute_bonferroni_correction(overall_error_rate: float, num_steps: int) -> list[float]:
+    """Compute Bonferroni correction for multiple steps.
 
     :param overall_error_rate: The overall target error rate.
     :param num_steps: The number of steps in the process.
@@ -13,9 +13,8 @@ def compute_bonferroni_correction(overall_error_rate: float, num_steps: int) -> 
     """
     return [overall_error_rate / num_steps] * num_steps
 
-def normalize_error_rates(error_rates: List[float], target_sum: float) -> List[float]:
-    """
-    Normalize a list of error rates to sum up to a target value.
+def normalize_error_rates(error_rates: list[float], target_sum: float) -> list[float]:
+    """Normalize a list of error rates to sum up to a target value.
 
     :param error_rates: The list of error rates to normalize.
     :param target_sum: The target sum for the normalized error rates.
@@ -25,8 +24,7 @@ def normalize_error_rates(error_rates: List[float], target_sum: float) -> List[f
     return [rate * target_sum / total for rate in error_rates]
 
 def compute_confidence_interval(observed_error: float, sample_size: int, confidence_level: float) -> tuple:
-    """
-    Compute the confidence interval for an observed error rate.
+    """Compute the confidence interval for an observed error rate.
 
     :param observed_error: The observed error rate.
     :param sample_size: The size of the sample.

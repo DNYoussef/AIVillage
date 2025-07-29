@@ -1,35 +1,30 @@
 #!/usr/bin/env python3
-"""
-HypeRAG LoRA Adapter Trainer
+"""HypeRAG LoRA Adapter Trainer
 
 Trains domain-specific LoRA adapters using PEFT (Parameter-Efficient Fine-Tuning).
 Integrates with Guardian Gate for signing and validation.
 """
 
-import json
-import hashlib
 import argparse
-from pathlib import Path
-from typing import Dict, Any, Optional, Tuple
 from datetime import datetime, timezone
+import hashlib
+import json
 import logging
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+from peft import LoraConfig, TaskType, get_peft_model
+from sklearn.metrics import accuracy_score
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
-    TrainingArguments,
+    DataCollatorForLanguageModeling,
     Trainer,
-    DataCollatorForLanguageModeling
+    TrainingArguments,
 )
-from peft import (
-    LoraConfig,
-    get_peft_model,
-    TaskType,
-    PeftModel
-)
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +37,7 @@ class RepairDataset(Dataset):
         self.examples = []
 
         # Load JSONL data
-        with open(data_path, 'r', encoding='utf-8') as f:
+        with open(data_path, encoding="utf-8") as f:
             for line in f:
                 example = json.loads(line)
                 self.examples.append(example)
@@ -99,7 +94,7 @@ class LoRATrainer:
         if self.device == "cpu":
             self.model = self.model.to(self.device)
 
-    def create_lora_model(self, lora_config: Optional[Dict[str, Any]] = None):
+    def create_lora_model(self, lora_config: dict[str, Any] | None = None):
         """Create LoRA model with specified configuration."""
         if lora_config is None:
             lora_config = {
@@ -122,7 +117,7 @@ class LoRATrainer:
 
     def train(self,
               train_data_path: Path,
-              eval_data_path: Optional[Path] = None,
+              eval_data_path: Path | None = None,
               output_dir: Path = Path("./lora_output"),
               num_epochs: int = 3,
               batch_size: int = 4,
@@ -131,7 +126,6 @@ class LoRATrainer:
               logging_steps: int = 50,
               save_steps: int = 500):
         """Train the LoRA adapter."""
-
         # Create datasets
         train_dataset = RepairDataset(train_data_path, self.tokenizer)
         eval_dataset = RepairDataset(eval_data_path, self.tokenizer) if eval_data_path else None
@@ -183,7 +177,7 @@ class LoRATrainer:
 
         return trainer.state.log_history
 
-    def evaluate(self, eval_data_path: Path) -> Dict[str, float]:
+    def evaluate(self, eval_data_path: Path) -> dict[str, float]:
         """Evaluate the trained adapter."""
         logger.info("Evaluating adapter...")
 
@@ -244,7 +238,7 @@ class LoRATrainer:
     def generate_registry_entry(self,
                                 adapter_path: Path,
                                 domain: str,
-                                metrics: Dict[str, float]) -> Dict[str, Any]:
+                                metrics: dict[str, float]) -> dict[str, Any]:
         """Generate a registry entry for the trained adapter."""
         adapter_hash = self.compute_adapter_hash(adapter_path)
 
@@ -300,7 +294,7 @@ def main():
     # Configure logging
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     # Create trainer
@@ -341,19 +335,19 @@ def main():
 
     # Save registry entry
     registry_path = adapter_path / "registry_entry.json"
-    with open(registry_path, 'w', encoding='utf-8') as f:
+    with open(registry_path, "w", encoding="utf-8") as f:
         json.dump(registry_entry, f, indent=2)
 
     logger.info(f"Training complete. Adapter saved to: {adapter_path}")
     logger.info(f"Registry entry saved to: {registry_path}")
 
     # Print summary
-    print(f"\nTraining Summary:")
+    print("\nTraining Summary:")
     print(f"  Domain: {args.domain}")
     print(f"  Base Model: {args.base_model}")
     print(f"  Adapter Hash: {registry_entry['sha256']}")
     if metrics:
-        print(f"  Evaluation Metrics:")
+        print("  Evaluation Metrics:")
         for k, v in metrics.items():
             print(f"    - {k}: {v:.4f}")
 

@@ -1,15 +1,17 @@
 # rag_system/processing/knowledge_constructor.py
 
-from typing import List, Dict, Any
 from datetime import datetime
+from typing import Any
+
 from ..core.config import RAGConfig
 from ..core.structures import RetrievalResult
+
 
 class DefaultKnowledgeConstructor:
     def __init__(self, config: RAGConfig):
         self.config = config
 
-    async def construct(self, query: str, retrieved_docs: List[RetrievalResult], timestamp: datetime) -> Dict[str, Any]:
+    async def construct(self, query: str, retrieved_docs: list[RetrievalResult], timestamp: datetime) -> dict[str, Any]:
         constructed_knowledge = {
             "query": query,
             "timestamp": timestamp,
@@ -65,19 +67,19 @@ class DefaultKnowledgeConstructor:
 
         return constructed_knowledge
 
-    def _extract_concepts(self, content: str) -> List[str]:
+    def _extract_concepts(self, content: str) -> list[str]:
         # Implement concept extraction logic
         # This could use NLP techniques like named entity recognition or keyword extraction
         # For simplicity, let's just split by spaces and take unique words
         return list(set(content.split()))
 
-    def _identify_relationships(self, content: str, concepts: List[str]) -> List[str]:
+    def _identify_relationships(self, content: str, concepts: list[str]) -> list[str]:
         # Implement relationship identification logic
         # This could use dependency parsing or other NLP techniques
         # For simplicity, let's just create pairs of concepts
         return [f"{concepts[i]}-{concepts[j]}" for i in range(len(concepts)) for j in range(i+1, len(concepts))]
 
-    def _calculate_temporal_relevance(self, doc_timestamps: List[datetime], current_timestamp: datetime) -> float:
+    def _calculate_temporal_relevance(self, doc_timestamps: list[datetime], current_timestamp: datetime) -> float:
         # Calculate how relevant the documents are based on their age
         time_diffs = [(current_timestamp - ts).total_seconds() for ts in doc_timestamps]
         max_diff = max(time_diffs) if time_diffs else 1

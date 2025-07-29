@@ -1,24 +1,23 @@
-"""
-HypeRAG Innovator Repair Agent
+"""HypeRAG Innovator Repair Agent
 
 Given a GDC Violation subgraph, produces structured repair proposal lists
 without auto-applying changes. Supports pluggable local LLM models.
 """
 
-from typing import Dict, List, Any, Optional, Union, AsyncIterator
+import asyncio
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 import json
-import re
-import asyncio
 import logging
 from pathlib import Path
-from datetime import datetime
+import re
+from typing import Any
 import uuid
 
-from .templates import TemplateEncoder, ViolationTemplate, DomainField
-from .llm_driver import LLMDriver, ModelConfig, GenerationResponse
 from ..guardian.gate import GuardianGate
+from .llm_driver import LLMDriver, ModelConfig
+from .templates import TemplateEncoder, ViolationTemplate
 
 
 class RepairOperationType(Enum):
@@ -40,20 +39,20 @@ class RepairOperation:
     confidence: float
 
     # Operation-specific parameters
-    source_id: Optional[str] = None
-    relationship_type: Optional[str] = None
-    property_name: Optional[str] = None
-    property_value: Optional[Any] = None
-    merge_target_id: Optional[str] = None
-    node_type: Optional[str] = None
-    properties: Optional[Dict[str, Any]] = None
+    source_id: str | None = None
+    relationship_type: str | None = None
+    property_name: str | None = None
+    property_value: Any | None = None
+    merge_target_id: str | None = None
+    node_type: str | None = None
+    properties: dict[str, Any] | None = None
 
     # Metadata
     operation_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     safety_critical: bool = False
     estimated_impact: str = "low"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert operation to dictionary format"""
         result = {
             "op": self.operation_type.value,
@@ -88,7 +87,7 @@ class RepairOperation:
         return json.dumps(self.to_dict(), ensure_ascii=False)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'RepairOperation':
+    def from_dict(cls, data: dict[str, Any]) -> "RepairOperation":
         """Create operation from dictionary"""
         op_type = RepairOperationType(data["op"])
 
@@ -113,7 +112,7 @@ class RepairOperation:
 @dataclass
 class RepairProposalSet:
     """Set of repair proposals with validation and metadata"""
-    proposals: List[RepairOperation]
+    proposals: list[RepairOperation]
     violation_id: str
     gdc_rule: str
 
@@ -125,8 +124,8 @@ class RepairProposalSet:
 
     # Validation results
     is_valid: bool = True
-    validation_errors: List[str] = field(default_factory=list)
-    validation_warnings: List[str] = field(default_factory=list)
+    validation_errors: list[str] = field(default_factory=list)
+    validation_warnings: list[str] = field(default_factory=list)
 
     # Quality metrics
     overall_confidence: float = 0.0
@@ -135,8 +134,8 @@ class RepairProposalSet:
 
     # Analysis
     repair_summary: str = ""
-    potential_risks: List[str] = field(default_factory=list)
-    validation_notes: List[str] = field(default_factory=list)
+    potential_risks: list[str] = field(default_factory=list)
+    validation_notes: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         """Calculate derived metrics"""
@@ -145,7 +144,7 @@ class RepairProposalSet:
             self.safety_score = 1.0 - (sum(1 for op in self.proposals if op.safety_critical) / len(self.proposals))
             self.completeness_score = min(1.0, len(self.proposals) / 3.0)  # Assume ~3 ops for complete repair
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert proposal set to dictionary"""
         return {
             "proposal_set_id": self.proposal_set_id,
@@ -170,11 +169,11 @@ class RepairProposalSet:
         """Convert proposals to JSON array format"""
         return json.dumps([op.to_dict() for op in self.proposals], indent=2)
 
-    def get_high_confidence_proposals(self, threshold: float = 0.8) -> List[RepairOperation]:
+    def get_high_confidence_proposals(self, threshold: float = 0.8) -> list[RepairOperation]:
         """Get proposals with confidence above threshold"""
         return [op for op in self.proposals if op.confidence >= threshold]
 
-    def get_safety_critical_proposals(self) -> List[RepairOperation]:
+    def get_safety_critical_proposals(self) -> list[RepairOperation]:
         """Get safety-critical proposals that need extra review"""
         return [op for op in self.proposals if op.safety_critical]
 
@@ -207,7 +206,7 @@ class RepairProposal:
     """Complete repair proposal for a GDC violation (legacy compatibility)"""
     violation_id: str
     gdc_rule: str
-    operations: List[RepairOperation]
+    operations: list[RepairOperation]
 
     # Metadata
     proposal_id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -222,8 +221,8 @@ class RepairProposal:
 
     # Analysis
     repair_summary: str = ""
-    potential_risks: List[str] = field(default_factory=list)
-    validation_notes: List[str] = field(default_factory=list)
+    potential_risks: list[str] = field(default_factory=list)
+    validation_notes: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         """Calculate derived metrics"""
@@ -232,7 +231,7 @@ class RepairProposal:
             self.safety_score = 1.0 - (sum(1 for op in self.operations if op.safety_critical) / len(self.operations))
             self.completeness_score = min(1.0, len(self.operations) / 3.0)  # Assume ~3 ops for complete repair
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert proposal to dictionary"""
         return {
             "proposal_id": self.proposal_id,
@@ -257,11 +256,11 @@ class RepairProposal:
             lines.append(operation.to_jsonl())
         return "\n".join(lines)
 
-    def get_high_confidence_operations(self, threshold: float = 0.8) -> List[RepairOperation]:
+    def get_high_confidence_operations(self, threshold: float = 0.8) -> list[RepairOperation]:
         """Get operations with confidence above threshold"""
         return [op for op in self.operations if op.confidence >= threshold]
 
-    def get_safety_critical_operations(self) -> List[RepairOperation]:
+    def get_safety_critical_operations(self) -> list[RepairOperation]:
         """Get safety-critical operations that need extra review"""
         return [op for op in self.operations if op.safety_critical]
 
@@ -269,9 +268,8 @@ class RepairProposal:
 class PromptComposer:
     """Composes prompts for repair operations"""
 
-    def __init__(self, prompt_bank_path: Optional[str] = None, domain: str = "general"):
-        """
-        Initialize prompt composer
+    def __init__(self, prompt_bank_path: str | None = None, domain: str = "general"):
+        """Initialize prompt composer
 
         Args:
             prompt_bank_path: Path to prompt bank markdown file
@@ -283,20 +281,20 @@ class PromptComposer:
         )
         self.prompts = self._load_prompts()
 
-    def _load_prompts(self) -> Dict[str, str]:
+    def _load_prompts(self) -> dict[str, str]:
         """Load prompts from markdown file"""
         prompts = {}
 
         try:
             if Path(self.prompt_bank_path).exists():
-                with open(self.prompt_bank_path, 'r', encoding='utf-8') as f:
+                with open(self.prompt_bank_path, encoding="utf-8") as f:
                     content = f.read()
 
                 # Parse markdown sections
-                sections = re.split(r'^#+\s+(.+)$', content, flags=re.MULTILINE)
+                sections = re.split(r"^#+\s+(.+)$", content, flags=re.MULTILINE)
 
                 for i in range(1, len(sections), 2):
-                    section_name = sections[i].strip().lower().replace(' ', '_')
+                    section_name = sections[i].strip().lower().replace(" ", "_")
                     section_content = sections[i + 1].strip() if i + 1 < len(sections) else ""
                     prompts[section_name] = section_content
         except Exception as e:
@@ -308,7 +306,7 @@ class PromptComposer:
 
         return prompts
 
-    def _get_default_prompts(self) -> Dict[str, str]:
+    def _get_default_prompts(self) -> dict[str, str]:
         """Get default prompts if file loading fails"""
         return {
             "base_system_prompt": """You are a knowledge graph repair assistant (Innovator Agent) specializing in analyzing graph violations and proposing precise repair operations.
@@ -350,20 +348,17 @@ Provide JSONL format with one operation per line:
         if self.domain == "medical":
             return self.prompts.get("medical_domain_system_prompt",
                                   self.prompts.get("base_system_prompt", ""))
-        else:
-            return self.prompts.get("base_system_prompt", "")
+        return self.prompts.get("base_system_prompt", "")
 
     def get_repair_instructions(self) -> str:
         """Get repair instructions for the domain"""
         if self.domain == "medical":
             return self.prompts.get("medical_domain_instructions",
                                   self.prompts.get("general_repair_instructions", ""))
-        else:
-            return self.prompts.get("general_repair_instructions", "")
+        return self.prompts.get("general_repair_instructions", "")
 
-    def compose_repair_prompt(self, violation: ViolationTemplate, context: Dict[str, Any]) -> str:
-        """
-        Compose complete repair prompt
+    def compose_repair_prompt(self, violation: ViolationTemplate, context: dict[str, Any]) -> str:
+        """Compose complete repair prompt
 
         Args:
             violation: The violation template
@@ -439,12 +434,11 @@ class InnovatorAgent:
 
     def __init__(self,
                  llm_driver: LLMDriver,
-                 template_encoder: Optional[TemplateEncoder] = None,
-                 prompt_composer: Optional[PromptComposer] = None,
+                 template_encoder: TemplateEncoder | None = None,
+                 prompt_composer: PromptComposer | None = None,
                  domain: str = "general",
-                 guardian_gate: Optional[GuardianGate] = None):
-        """
-        Initialize Innovator Agent
+                 guardian_gate: GuardianGate | None = None):
+        """Initialize Innovator Agent
 
         Args:
             llm_driver: LLM driver for generating repairs
@@ -464,9 +458,8 @@ class InnovatorAgent:
         self.repair_history = []
         self.success_rate = 0.0
 
-    async def analyze_violation(self, violation_data: Dict[str, Any]) -> ViolationTemplate:
-        """
-        Analyze and encode a GDC violation
+    async def analyze_violation(self, violation_data: dict[str, Any]) -> ViolationTemplate:
+        """Analyze and encode a GDC violation
 
         Args:
             violation_data: Raw violation data from GDC extractor
@@ -477,11 +470,10 @@ class InnovatorAgent:
         return self.template_encoder.encode_violation(violation_data)
 
     async def generate_repair_proposals(self,
-                                      violation_data: Dict[str, Any],
+                                      violation_data: dict[str, Any],
                                       max_operations: int = 10,
                                       confidence_threshold: float = 0.5) -> RepairProposalSet:
-        """
-        Generate repair proposals for a GDC violation
+        """Generate repair proposals for a GDC violation
 
         Args:
             violation_data: Raw violation data
@@ -558,12 +550,11 @@ class InnovatorAgent:
                 violation_id=violation_data.get("violation_id", "unknown"),
                 gdc_rule=violation_data.get("rule_name", "unknown"),
                 operations=[],
-                repair_summary=f"Failed to generate proposals: {str(e)}"
+                repair_summary=f"Failed to generate proposals: {e!s}"
             )
 
-    def _parse_repair_operations(self, response_text: str) -> List[RepairOperation]:
-        """
-        Parse repair operations from LLM response
+    def _parse_repair_operations(self, response_text: str) -> list[RepairOperation]:
+        """Parse repair operations from LLM response
 
         Args:
             response_text: Raw LLM response
@@ -574,11 +565,11 @@ class InnovatorAgent:
         operations = []
 
         # Extract JSONL lines
-        lines = response_text.strip().split('\n')
+        lines = response_text.strip().split("\n")
 
         for line_num, line in enumerate(lines, 1):
             line = line.strip()
-            if not line or not line.startswith('{'):
+            if not line or not line.startswith("{"):
                 continue
 
             try:
@@ -624,9 +615,8 @@ class InnovatorAgent:
 
         return operations
 
-    def _parse_repair_operations_enhanced(self, response_text: str) -> List[RepairOperation]:
-        """
-        Enhanced parsing with better JSON validation and confidence extraction
+    def _parse_repair_operations_enhanced(self, response_text: str) -> list[RepairOperation]:
+        """Enhanced parsing with better JSON validation and confidence extraction
 
         Args:
             response_text: Raw LLM response
@@ -639,7 +629,7 @@ class InnovatorAgent:
         # Try to parse as JSON array first (preferred format)
         try:
             # Look for JSON array in the response
-            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+            json_match = re.search(r"\[.*\]", response_text, re.DOTALL)
             if json_match:
                 json_str = json_match.group(0)
                 operation_list = json.loads(json_str)
@@ -733,14 +723,12 @@ class InnovatorAgent:
         """Estimate impact level of operation"""
         if operation.operation_type in [RepairOperationType.DELETE_NODE, RepairOperationType.MERGE_NODES]:
             return "high"
-        elif operation.operation_type == RepairOperationType.DELETE_EDGE:
+        if operation.operation_type == RepairOperationType.DELETE_EDGE or operation.operation_type in [RepairOperationType.ADD_EDGE, RepairOperationType.ADD_NODE]:
             return "medium"
-        elif operation.operation_type in [RepairOperationType.ADD_EDGE, RepairOperationType.ADD_NODE]:
-            return "medium"
-        else:  # UPDATE_ATTR
-            return "low"
+        # UPDATE_ATTR
+        return "low"
 
-    def _generate_repair_summary(self, operations: List[RepairOperation]) -> str:
+    def _generate_repair_summary(self, operations: list[RepairOperation]) -> str:
         """Generate summary of repair operations"""
         if not operations:
             return "No repair operations proposed"
@@ -762,7 +750,7 @@ class InnovatorAgent:
 
         return f"{base_summary}. Average confidence: {confidence_desc} ({avg_confidence:.2f})"
 
-    def _assess_potential_risks(self, operations: List[RepairOperation]) -> List[str]:
+    def _assess_potential_risks(self, operations: list[RepairOperation]) -> list[str]:
         """Assess potential risks of proposed operations"""
         risks = []
 
@@ -791,7 +779,7 @@ class InnovatorAgent:
 
         return risks
 
-    def _generate_validation_notes(self, operations: List[RepairOperation], violation: ViolationTemplate) -> List[str]:
+    def _generate_validation_notes(self, operations: list[RepairOperation], violation: ViolationTemplate) -> list[str]:
         """Generate validation notes for manual review"""
         notes = []
 
@@ -841,9 +829,8 @@ class InnovatorAgent:
         if len(self.repair_history) > 100:
             self.repair_history = self.repair_history[-100:]
 
-    async def validate_proposal(self, proposal: RepairProposal) -> Dict[str, Any]:
-        """
-        Validate a repair proposal for correctness and safety
+    async def validate_proposal(self, proposal: RepairProposal) -> dict[str, Any]:
+        """Validate a repair proposal for correctness and safety
 
         Args:
             proposal: The repair proposal to validate
@@ -885,7 +872,7 @@ class InnovatorAgent:
 
         return validation
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """Get agent performance statistics"""
         if not self.repair_history:
             return {"message": "No repair history available"}
@@ -904,9 +891,8 @@ class InnovatorAgent:
     @classmethod
     async def create_default(cls,
                            model_name: str = "llama3.2:3b",
-                           domain: str = "general") -> 'InnovatorAgent':
-        """
-        Create InnovatorAgent with default configuration
+                           domain: str = "general") -> "InnovatorAgent":
+        """Create InnovatorAgent with default configuration
 
         Args:
             model_name: LLM model to use
@@ -936,9 +922,8 @@ class InnovatorAgent:
 
     async def _validate_with_guardian(self,
                                     proposal: RepairProposal,
-                                    violation: ViolationTemplate) -> Dict[str, Any]:
-        """
-        Validate repair proposal through Guardian Gate
+                                    violation: ViolationTemplate) -> dict[str, Any]:
+        """Validate repair proposal through Guardian Gate
 
         Args:
             proposal: The repair proposal to validate
@@ -949,14 +934,13 @@ class InnovatorAgent:
         """
         try:
             # Create mock violation object for Guardian Gate
-            from ..gdc.specs import Violation
 
             # Convert ViolationTemplate to Violation format expected by Guardian
-            mock_violation = type('MockViolation', (), {
-                'id': violation.violation_id,
-                'severity': getattr(violation, 'severity', 'medium'),
-                'domain': self.domain,
-                'subgraph': getattr(violation, 'subgraph', {"nodes": [], "edges": []})
+            mock_violation = type("MockViolation", (), {
+                "id": violation.violation_id,
+                "severity": getattr(violation, "severity", "medium"),
+                "domain": self.domain,
+                "subgraph": getattr(violation, "subgraph", {"nodes": [], "edges": []})
             })()
 
             # Validate repair through Guardian
@@ -986,5 +970,5 @@ class InnovatorAgent:
             self.logger.error(f"Guardian validation failed: {e}")
             return {
                 "decision": "ERROR",
-                "notes": [f"Guardian validation failed: {str(e)}"]
+                "notes": [f"Guardian validation failed: {e!s}"]
             }

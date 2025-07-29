@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Test Real Implementation Fixes
+"""Test Real Implementation Fixes
 
 Minimal test to verify that the core issues are resolved:
 1. Memory management works without segfaults
@@ -14,10 +13,9 @@ This tests the fixes before attempting full deployment.
 import asyncio
 import logging
 import sys
-from pathlib import Path
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 async def test_memory_management():
@@ -25,7 +23,7 @@ async def test_memory_management():
     logger.info("Testing memory management...")
 
     try:
-        from agent_forge.memory_manager import memory_manager, safe_model_loader
+        from agent_forge.memory_manager import memory_manager
 
         # Test memory stats
         stats = memory_manager.get_memory_stats()
@@ -47,7 +45,7 @@ async def test_wandb_manager():
     logger.info("Testing W&B manager...")
 
     try:
-        from agent_forge.wandb_manager import wandb_manager, init_wandb, log_metrics
+        from agent_forge.wandb_manager import init_wandb, log_metrics, wandb_manager
 
         # Test authentication setup (should handle missing keys gracefully)
         auth_success = wandb_manager.setup_authentication()
@@ -102,7 +100,7 @@ async def test_quietstar_fixes():
     logger.info("Testing Quiet-STaR fixes...")
 
     try:
-        from agent_forge.quietstar_baker import QuietSTaRConfig, QuietSTaRBaker
+        from agent_forge.quietstar_baker import QuietSTaRBaker, QuietSTaRConfig
 
         # Create minimal config
         config = QuietSTaRConfig(
@@ -133,7 +131,7 @@ async def test_evolution_fixes():
 
     try:
         # Import the fixed evolution class
-        sys.path.append('./scripts')
+        sys.path.append("./scripts")
         from run_50gen_evolution import Enhanced50GenEvolutionMerger
 
         # Create minimal merger for testing
@@ -144,7 +142,7 @@ async def test_evolution_fixes():
         logger.info("Evolution merger initialized")
 
         # Test that it's using async now
-        if hasattr(merger, 'enhanced_benchmark_model'):
+        if hasattr(merger, "enhanced_benchmark_model"):
             import inspect
             is_async = inspect.iscoroutinefunction(merger.enhanced_benchmark_model)
             logger.info(f"Benchmarking is async: {is_async}")

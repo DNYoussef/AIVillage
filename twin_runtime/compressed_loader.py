@@ -1,5 +1,7 @@
 import torch
-from agent_forge.compression import TwoStageCompressor, CompressionConfig
+
+from agent_forge.compression import CompressionConfig, TwoStageCompressor
+
 
 class CompressedModelLoader:
     """Reconstruct a model from multi-stage compressed weights."""

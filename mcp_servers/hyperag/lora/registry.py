@@ -1,17 +1,17 @@
-"""
-HypeRAG LoRA Adapter Registry
+"""HypeRAG LoRA Adapter Registry
 
 Manages registration, validation, and retrieval of LoRA adapters.
 Integrates with Guardian Gate for signature verification.
 """
 
-import json
-import hashlib
-from pathlib import Path
-from typing import Dict, List, Optional, Any
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+import hashlib
+import json
 import logging
-from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import Any
+
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -23,19 +23,19 @@ class AdapterEntry:
     sha256: str
     domain: str
     base_model: str
-    metrics: Dict[str, float]
-    training_config: Dict[str, Any]
+    metrics: dict[str, float]
+    training_config: dict[str, Any]
     created_at: str
-    guardian_signature: Optional[str] = None
-    signed_at: Optional[str] = None
+    guardian_signature: str | None = None
+    signed_at: str | None = None
     status: str = "pending"  # pending, approved, rejected, revoked
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'AdapterEntry':
+    def from_dict(cls, data: dict[str, Any]) -> "AdapterEntry":
         """Create from dictionary."""
         return cls(**data)
 
@@ -46,7 +46,7 @@ class LoRARegistry:
     def __init__(self, registry_path: Path, guardian_gate=None):
         self.registry_path = registry_path
         self.guardian_gate = guardian_gate
-        self.entries: Dict[str, AdapterEntry] = {}
+        self.entries: dict[str, AdapterEntry] = {}
 
         # Create registry file if it doesn't exist
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)
@@ -58,7 +58,7 @@ class LoRARegistry:
     def _load_registry(self):
         """Load registry from disk."""
         try:
-            with open(self.registry_path, 'r', encoding='utf-8') as f:
+            with open(self.registry_path, encoding="utf-8") as f:
                 data = json.load(f)
                 self.entries = {
                     k: AdapterEntry.from_dict(v)
@@ -77,14 +77,14 @@ class LoRARegistry:
             "adapters": {k: v.to_dict() for k, v in self.entries.items()}
         }
 
-        with open(self.registry_path, 'w', encoding='utf-8') as f:
+        with open(self.registry_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
 
         logger.info(f"Saved registry with {len(self.entries)} adapters")
 
     def register_adapter(self,
                          adapter_path: Path,
-                         entry_data: Dict[str, Any],
+                         entry_data: dict[str, Any],
                          require_guardian_approval: bool = True) -> str:
         """Register a new adapter."""
         # Create entry
@@ -126,11 +126,10 @@ class LoRARegistry:
                 entry.guardian_signature = decision.get("signature")
                 entry.signed_at = datetime.now(timezone.utc).isoformat()
                 logger.info(f"Guardian approved adapter {entry.adapter_id}")
-        else:
-            # Preserve original status if no Guardian (for testing)
-            # Only set signed_at for approved adapters
-            if entry.status == "approved":
-                entry.signed_at = datetime.now(timezone.utc).isoformat()
+        # Preserve original status if no Guardian (for testing)
+        # Only set signed_at for approved adapters
+        elif entry.status == "approved":
+            entry.signed_at = datetime.now(timezone.utc).isoformat()
 
         # Add to registry
         self.entries[entry.adapter_id] = entry
@@ -139,13 +138,13 @@ class LoRARegistry:
         logger.info(f"Registered adapter {entry.adapter_id} with status: {entry.status}")
         return entry.adapter_id
 
-    def get_adapter(self, adapter_id: str) -> Optional[AdapterEntry]:
+    def get_adapter(self, adapter_id: str) -> AdapterEntry | None:
         """Get adapter by ID."""
         return self.entries.get(adapter_id)
 
     def list_adapters(self,
-                      domain: Optional[str] = None,
-                      status: Optional[str] = None) -> List[AdapterEntry]:
+                      domain: str | None = None,
+                      status: str | None = None) -> list[AdapterEntry]:
         """List adapters with optional filtering."""
         adapters = list(self.entries.values())
 
@@ -200,7 +199,7 @@ class LoRARegistry:
         logger.warning(f"Revoked adapter {adapter_id}: {reason}")
         return True
 
-    def get_best_adapter(self, domain: str, metric: str = "accuracy") -> Optional[AdapterEntry]:
+    def get_best_adapter(self, domain: str, metric: str = "accuracy") -> AdapterEntry | None:
         """Get the best performing approved adapter for a domain."""
         domain_adapters = [
             a for a in self.entries.values()
@@ -266,10 +265,10 @@ class LoRARegistry:
 
         # Export based on format
         if format == "yaml":
-            with open(export_path, 'w', encoding='utf-8') as f:
+            with open(export_path, "w", encoding="utf-8") as f:
                 yaml.dump(data, f, default_flow_style=False, sort_keys=False)
         else:  # JSON
-            with open(export_path, 'w', encoding='utf-8') as f:
+            with open(export_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
         logger.info(f"Exported registry to {export_path} in {format} format")

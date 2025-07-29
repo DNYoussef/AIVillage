@@ -1,16 +1,14 @@
-"""
-Guardian Gate Prometheus Metrics
+"""Guardian Gate Prometheus Metrics
 
 Provides Prometheus metrics for monitoring Guardian Gate decisions
 and system behavior in production environments.
 """
 
 import logging
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from typing import Any
 
 try:
-    from prometheus_client import Counter, Histogram, Gauge, Info
+    from prometheus_client import Counter, Gauge, Histogram, Info
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     # Fallback implementations for environments without prometheus_client
@@ -18,7 +16,7 @@ except ImportError:
 
     class MockMetric:
         def __init__(self, *args, **kwargs):
-            self.name = kwargs.get('name', 'mock_metric')
+            self.name = kwargs.get("name", "mock_metric")
 
         def inc(self, amount=1, **labels):
             pass
@@ -49,80 +47,80 @@ class GuardianMetrics:
 
         # Decision counters
         self.guardian_blocks_total = Counter(
-            'hyperag_guardian_blocks_total',
-            'Total number of Guardian Gate blocks',
-            ['decision_type', 'domain', 'component']
+            "hyperag_guardian_blocks_total",
+            "Total number of Guardian Gate blocks",
+            ["decision_type", "domain", "component"]
         )
 
         self.guardian_quarantine_total = Counter(
-            'hyperag_guardian_quarantine_total',
-            'Total number of Guardian Gate quarantines',
-            ['domain', 'component', 'reason']
+            "hyperag_guardian_quarantine_total",
+            "Total number of Guardian Gate quarantines",
+            ["domain", "component", "reason"]
         )
 
         self.guardian_autoapply_total = Counter(
-            'hyperag_guardian_autoapply_total',
-            'Total number of Guardian Gate auto-approvals',
-            ['domain', 'component']
+            "hyperag_guardian_autoapply_total",
+            "Total number of Guardian Gate auto-approvals",
+            ["domain", "component"]
         )
 
         # Performance metrics
         self.guardian_decision_duration = Histogram(
-            'hyperag_guardian_decision_duration_seconds',
-            'Time taken for Guardian Gate decisions',
-            ['decision_type', 'domain'],
+            "hyperag_guardian_decision_duration_seconds",
+            "Time taken for Guardian Gate decisions",
+            ["decision_type", "domain"],
             buckets=[0.001, 0.005, 0.010, 0.020, 0.050, 0.100, 0.200, 0.500, 1.0]
         )
 
         self.guardian_confidence_score = Histogram(
-            'hyperag_guardian_confidence_score',
-            'Confidence scores from Guardian evaluations',
-            ['component', 'domain'],
+            "hyperag_guardian_confidence_score",
+            "Confidence scores from Guardian evaluations",
+            ["component", "domain"],
             buckets=[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
         )
 
         # System health gauges
         self.guardian_active_quarantines = Gauge(
-            'hyperag_guardian_active_quarantines',
-            'Number of items currently in quarantine',
-            ['domain']
+            "hyperag_guardian_active_quarantines",
+            "Number of items currently in quarantine",
+            ["domain"]
         )
 
         self.guardian_policy_version = Info(
-            'hyperag_guardian_policy_version',
-            'Current Guardian policy version and configuration'
+            "hyperag_guardian_policy_version",
+            "Current Guardian policy version and configuration"
         )
 
         # Error tracking
         self.guardian_errors_total = Counter(
-            'hyperag_guardian_errors_total',
-            'Total number of Guardian Gate errors',
-            ['error_type', 'component']
+            "hyperag_guardian_errors_total",
+            "Total number of Guardian Gate errors",
+            ["error_type", "component"]
         )
 
         # Component-specific metrics
         self.query_guardian_validations = Counter(
-            'hyperag_query_guardian_validations_total',
-            'Query pipeline Guardian validations',
-            ['domain', 'decision', 'confidence_tier']
+            "hyperag_query_guardian_validations_total",
+            "Query pipeline Guardian validations",
+            ["domain", "decision", "confidence_tier"]
         )
 
         self.repair_guardian_validations = Counter(
-            'hyperag_repair_guardian_validations_total',
-            'Repair pipeline Guardian validations',
-            ['domain', 'decision', 'operation_count']
+            "hyperag_repair_guardian_validations_total",
+            "Repair pipeline Guardian validations",
+            ["domain", "decision", "operation_count"]
         )
 
         self.consolidation_guardian_validations = Counter(
-            'hyperag_consolidation_guardian_validations_total',
-            'Consolidation pipeline Guardian validations',
-            ['domain', 'decision', 'item_type']
+            "hyperag_consolidation_guardian_validations_total",
+            "Consolidation pipeline Guardian validations",
+            ["domain", "decision", "item_type"]
         )
 
         self.adapter_load_validations = Counter(
-            'hyperag_adapter_load_validations_total',
-            'LoRA adapter load validations',
-            ['domain', 'verification_result']
+            "hyperag_adapter_load_validations_total",
+            "LoRA adapter load validations",
+            ["domain", "verification_result"]
         )
 
         logger.info("Guardian metrics initialized")
@@ -133,8 +131,7 @@ class GuardianMetrics:
                        component: str = "unknown",
                        duration_seconds: float = 0.0,
                        confidence: float = 0.0):
-        """
-        Record a Guardian Gate decision
+        """Record a Guardian Gate decision
 
         Args:
             decision: APPLY, QUARANTINE, or REJECT
@@ -302,7 +299,7 @@ class GuardianMetrics:
         except Exception as e:
             logger.error(f"Failed to update quarantine count metrics: {e}")
 
-    def set_policy_info(self, policy_info: Dict[str, Any]):
+    def set_policy_info(self, policy_info: dict[str, Any]):
         """Set Guardian policy information"""
         if not self.enabled:
             return
@@ -321,25 +318,23 @@ class GuardianMetrics:
         """Convert confidence to tier label"""
         if confidence >= 0.8:
             return "high"
-        elif confidence >= 0.6:
+        if confidence >= 0.6:
             return "medium"
-        elif confidence >= 0.4:
+        if confidence >= 0.4:
             return "low"
-        else:
-            return "very_low"
+        return "very_low"
 
     def _get_operation_count_bucket(self, count: int) -> str:
         """Convert operation count to bucket label"""
         if count <= 1:
             return "single"
-        elif count <= 3:
+        if count <= 3:
             return "few"
-        elif count <= 10:
+        if count <= 10:
             return "many"
-        else:
-            return "bulk"
+        return "bulk"
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """Get summary of current metrics (for debugging)"""
         if not self.enabled:
             return {"status": "disabled"}
@@ -354,7 +349,7 @@ class GuardianMetrics:
 
 
 # Global metrics instance
-_metrics_instance: Optional[GuardianMetrics] = None
+_metrics_instance: GuardianMetrics | None = None
 
 def get_guardian_metrics() -> GuardianMetrics:
     """Get global Guardian metrics instance"""

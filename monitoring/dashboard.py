@@ -1,27 +1,23 @@
 #!/usr/bin/env python3
-"""
-Agent Forge Real-Time Monitoring Dashboard
+"""Agent Forge Real-Time Monitoring Dashboard
 
 Web-based dashboard for monitoring Agent Forge pipeline execution,
 model evolution progress, and system metrics in real-time.
 """
 
-import asyncio
+from datetime import datetime, timedelta
 import json
 import logging
-import time
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
+import time
 
-import streamlit as st
-import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 import psutil
-import wandb
+import streamlit as st
 
-from agent_forge.forge_orchestrator import PhaseType, PhaseStatus
+import wandb
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,7 +35,7 @@ class AgentForgeDashboard:
         for dir_path in [self.data_dir, self.checkpoint_dir, self.logs_dir]:
             dir_path.mkdir(parents=True, exist_ok=True)
 
-    def get_system_metrics(self) -> Dict:
+    def get_system_metrics(self) -> dict:
         """Get current system metrics"""
         try:
             # CPU metrics
@@ -53,7 +49,7 @@ class AgentForgeDashboard:
             memory_percent = memory.percent
 
             # Disk metrics
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             disk_used_gb = disk.used / (1024**3)
             disk_total_gb = disk.total / (1024**3)
             disk_percent = (disk.used / disk.total) * 100
@@ -83,7 +79,7 @@ class AgentForgeDashboard:
             logger.error(f"Error getting system metrics: {e}")
             return {"error": str(e), "timestamp": datetime.now().isoformat()}
 
-    def get_gpu_metrics(self) -> Dict:
+    def get_gpu_metrics(self) -> dict:
         """Get GPU metrics if available"""
         try:
             import torch
@@ -115,15 +111,14 @@ class AgentForgeDashboard:
                         "percent": memory_percent
                     }
                 }
-            else:
-                return {"available": False, "reason": "CUDA not available"}
+            return {"available": False, "reason": "CUDA not available"}
 
         except ImportError:
             return {"available": False, "reason": "PyTorch not installed"}
         except Exception as e:
             return {"available": False, "reason": str(e)}
 
-    def get_pipeline_status(self) -> Dict:
+    def get_pipeline_status(self) -> dict:
         """Get current pipeline execution status"""
         status = {
             "active_runs": 0,
@@ -142,7 +137,7 @@ class AgentForgeDashboard:
                 # Get latest checkpoint
                 latest_checkpoint = max(checkpoint_files, key=lambda p: p.stat().st_mtime)
 
-                with open(latest_checkpoint, 'r') as f:
+                with open(latest_checkpoint) as f:
                     checkpoint_data = json.load(f)
 
                 status["latest_run"] = {
@@ -165,7 +160,7 @@ class AgentForgeDashboard:
 
             for report_file in report_files:
                 try:
-                    with open(report_file, 'r') as f:
+                    with open(report_file) as f:
                         report_data = json.load(f)
 
                     run_summary = report_data.get("run_summary", {})
@@ -185,7 +180,7 @@ class AgentForgeDashboard:
 
         return status
 
-    def get_wandb_metrics(self, project_name: str = "agent-forge-enhanced") -> Dict:
+    def get_wandb_metrics(self, project_name: str = "agent-forge-enhanced") -> dict:
         """Get metrics from Weights & Biases"""
         try:
             api = wandb.Api()
@@ -360,17 +355,17 @@ def main():
                 fig_resources.add_trace(go.Scatter(
                     x=timestamps,
                     y=cpu_data,
-                    mode='lines',
-                    name='CPU %',
-                    line=dict(color='blue')
+                    mode="lines",
+                    name="CPU %",
+                    line=dict(color="blue")
                 ))
 
                 fig_resources.add_trace(go.Scatter(
                     x=timestamps,
                     y=memory_data,
-                    mode='lines',
-                    name='Memory %',
-                    line=dict(color='red')
+                    mode="lines",
+                    name="Memory %",
+                    line=dict(color="red")
                 ))
 
                 fig_resources.update_layout(

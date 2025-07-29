@@ -1,19 +1,21 @@
-"""
-HypeRAG Planning Engine
+"""HypeRAG Planning Engine
 
 Strategic query planning system inspired by PlanRAG research for complex reasoning tasks.
 Provides adaptive planning, strategy selection, and intelligent re-planning capabilities.
 """
 
-from .query_planner import QueryPlanner
-from .query_classifier import QueryClassifier, QueryType
-from .strategy_selector import StrategySelector, ReasoningStrategy
-from .plan_structures import QueryPlan, ExecutionStep, PlanCheckpoint
-from .strategies import (
-    SimpleFactStrategy, TemporalStrategy, CausalStrategy,
-    ComparativeStrategy, MetaQueryStrategy
-)
 from .learning import PlanLearner, StrategyFeedback
+from .plan_structures import ExecutionStep, PlanCheckpoint, QueryPlan
+from .query_classifier import QueryClassifier, QueryType
+from .query_planner import QueryPlanner
+from .strategies import (
+    CausalStrategy,
+    ComparativeStrategy,
+    MetaQueryStrategy,
+    SimpleFactStrategy,
+    TemporalStrategy,
+)
+from .strategy_selector import ReasoningStrategy, StrategySelector
 
 __all__ = [
     # Core components

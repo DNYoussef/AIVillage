@@ -1,9 +1,11 @@
 # rag_system/tracking/unified_knowledge_tracker.py
 
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from ..core.structures import RetrievalResult
-from dataclasses import dataclass, field
+
 
 @dataclass
 class KnowledgeChange:
@@ -18,15 +20,15 @@ class UnifiedKnowledgeTracker:
     def __init__(self, vector_store, graph_store):
         self.vector_store = vector_store
         self.graph_store = graph_store
-        self.knowledge_changes: List[KnowledgeChange] = []
-        self.knowledge_graph: Dict[str, Dict[str, Any]] = {}
-        self.retrieval_log: List[Dict[str, Any]] = []
+        self.knowledge_changes: list[KnowledgeChange] = []
+        self.knowledge_graph: dict[str, dict[str, Any]] = {}
+        self.retrieval_log: list[dict[str, Any]] = []
 
     def record_change(self, change: KnowledgeChange):
         self.knowledge_changes.append(change)
         self._update_knowledge_graph(change)
 
-    def track_changes(self, result: Dict[str, Any], timestamp: datetime):
+    def track_changes(self, result: dict[str, Any], timestamp: datetime):
         # Implement logic to extract and record changes from the result
         # This is a simplified version and should be expanded based on your specific needs
         for key, value in result.items():
@@ -46,17 +48,17 @@ class UnifiedKnowledgeTracker:
 
         self.knowledge_graph[change.entity][change.relation] = change.new_value
 
-    def get_entity_history(self, entity: str) -> List[KnowledgeChange]:
+    def get_entity_history(self, entity: str) -> list[KnowledgeChange]:
         return [change for change in self.knowledge_changes if change.entity == entity]
 
-    def get_current_knowledge(self, entity: str) -> Dict[str, Any]:
+    def get_current_knowledge(self, entity: str) -> dict[str, Any]:
         return self.knowledge_graph.get(entity, {})
 
     def record_retrieval(
         self,
         query: str,
-        results: List["RetrievalResult"],
-        timestamp: Optional[datetime] = None,
+        results: list["RetrievalResult"],
+        timestamp: datetime | None = None,
     ) -> None:
         """Record retrieval results for auditing and analysis."""
         self.retrieval_log.append(
@@ -78,7 +80,6 @@ class UnifiedKnowledgeTracker:
         the same ``id`` already exists in the store it will be updated via
         ``update_document``; otherwise a new document is added.
         """
-
         for change in self.knowledge_changes:
             new_val = change.new_value
 
@@ -102,7 +103,6 @@ class UnifiedKnowledgeTracker:
 
     def update_graph_store(self):
         """Propagate knowledge changes to the underlying graph store."""
-
         for change in self.knowledge_changes:
             new_val = change.new_value
 
@@ -119,9 +119,8 @@ class UnifiedKnowledgeTracker:
                 # Fallback to add_documents which will create a new node
                 self.graph_store.add_documents([new_val])
 
-    def analyze_knowledge_evolution(self) -> Dict[str, Any]:
+    def analyze_knowledge_evolution(self) -> dict[str, Any]:
         """Provide simple statistics describing the evolution of knowledge."""
-
         summary = {
             "total_changes": len(self.knowledge_changes),
             "entities_changed": len({c.entity for c in self.knowledge_changes}),
@@ -136,7 +135,7 @@ class UnifiedKnowledgeTracker:
             return summary
 
         # Determine which entity has been modified the most
-        entity_counts: Dict[str, int] = {}
+        entity_counts: dict[str, int] = {}
         for change in self.knowledge_changes:
             entity_counts[change.entity] = entity_counts.get(change.entity, 0) + 1
 

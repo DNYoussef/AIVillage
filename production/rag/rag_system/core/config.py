@@ -1,8 +1,10 @@
-from pydantic import BaseModel, Field
-from typing import Dict, Any
 from datetime import timedelta
 from pathlib import Path
+from typing import Any
+
+from pydantic import BaseModel, Field
 import yaml
+
 
 class UnifiedConfig(BaseModel):
     # Add common configuration parameters here
@@ -30,7 +32,7 @@ class UnifiedConfig(BaseModel):
     chunk_overlap: int = 200
 
     # Extensible configuration dictionary for additional parameters
-    extra_params: Dict[str, Any] = Field(default_factory=dict)
+    extra_params: dict[str, Any] = Field(default_factory=dict)
 
     def update(self, **kwargs):
         # Update configuration parameters
@@ -62,7 +64,7 @@ def load_from_yaml(config_path: str) -> RAGConfig:
     config_path: str
         Path to the YAML configuration file.
 
-    Returns
+    Returns:
     -------
     RAGConfig
         Configuration populated with values from the YAML file.
@@ -70,6 +72,6 @@ def load_from_yaml(config_path: str) -> RAGConfig:
     path = Path(config_path)
     data = {}
     if path.is_file():
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
     return RAGConfig(**data)

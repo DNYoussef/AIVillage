@@ -1,31 +1,30 @@
-"""
-HypeRAG Dual-Memory System
+"""HypeRAG Dual-Memory System
 
 Brain-inspired dual-memory architecture combining:
 - HippoIndex: Fast episodic memory (hippocampus-like)
 - HypergraphKG: Deep semantic memory (neocortex-like)
 """
 
-from .hippo_index import HippoIndex, EpisodicDocument, HippoNode
-from .hypergraph_kg import HypergraphKG, SemanticNode, Hyperedge, Subgraph
-from .consolidator import MemoryConsolidator, ConsolidationConfig
+from .base import Document, Edge, MemoryBackend, Node
+from .consolidator import ConsolidationConfig, MemoryConsolidator
+from .hippo_index import EpisodicDocument, HippoIndex, HippoNode
+from .hypergraph_kg import Hyperedge, HypergraphKG, SemanticNode, Subgraph
 from .schemas import HippoSchema, HypergraphSchema
-from .base import Document, Node, Edge, MemoryBackend
 
 __all__ = [
-    "HippoIndex",
-    "HypergraphKG",
-    "MemoryConsolidator",
-    "EpisodicDocument",
-    "HippoNode",
-    "SemanticNode",
-    "Hyperedge",
-    "Subgraph",
     "ConsolidationConfig",
-    "HippoSchema",
-    "HypergraphSchema",
     "Document",
-    "Node",
     "Edge",
-    "MemoryBackend"
+    "EpisodicDocument",
+    "HippoIndex",
+    "HippoNode",
+    "HippoSchema",
+    "Hyperedge",
+    "HypergraphKG",
+    "HypergraphSchema",
+    "MemoryBackend",
+    "MemoryConsolidator",
+    "Node",
+    "SemanticNode",
+    "Subgraph"
 ]

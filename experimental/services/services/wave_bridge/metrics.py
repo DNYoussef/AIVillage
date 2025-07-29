@@ -1,23 +1,20 @@
-"""
-Response Time Monitoring and Metrics for WhatsApp Wave Bridge
+"""Response Time Monitoring and Metrics for WhatsApp Wave Bridge
 Target: <5 second response time with comprehensive tracking
 """
 
-import time
-import asyncio
-from typing import Dict, List, Any, Optional
+from collections import defaultdict, deque
 from datetime import datetime, timedelta
-from collections import deque, defaultdict
-import statistics
 import logging
+import statistics
+import time
+from typing import Any
+
 import wandb
-import json
 
 logger = logging.getLogger(__name__)
 
 class ResponseMetrics:
-    """
-    Comprehensive response time and performance metrics tracking
+    """Comprehensive response time and performance metrics tracking
     """
 
     def __init__(self):
@@ -33,17 +30,17 @@ class ResponseMetrics:
 
         # Language-specific metrics
         self.language_metrics = defaultdict(lambda: {
-            'response_times': deque(maxlen=100),
-            'success_rate': 0.0,
-            'total_requests': 0,
-            'avg_response_time': 0.0
+            "response_times": deque(maxlen=100),
+            "success_rate": 0.0,
+            "total_requests": 0,
+            "avg_response_time": 0.0
         })
 
         # Subject-specific metrics
         self.subject_metrics = defaultdict(lambda: {
-            'response_times': deque(maxlen=100),
-            'complexity_scores': deque(maxlen=100),
-            'satisfaction_scores': deque(maxlen=100)
+            "response_times": deque(maxlen=100),
+            "complexity_scores": deque(maxlen=100),
+            "satisfaction_scores": deque(maxlen=100)
         })
 
         # Error tracking
@@ -61,7 +58,6 @@ class ResponseMetrics:
 
     def initialize_dashboard(self):
         """Initialize W&B dashboard configuration"""
-
         # Define dashboard metrics
         dashboard_config = {
             "charts": [
@@ -91,33 +87,32 @@ class ResponseMetrics:
 
         wandb.config.update({"dashboard_config": dashboard_config})
 
-    async def update_metrics(self, metrics_data: Dict[str, Any]):
+    async def update_metrics(self, metrics_data: dict[str, Any]):
         """Update all metrics with new response data"""
-
         try:
-            response_time = metrics_data.get('response_time', 0.0)
-            language = metrics_data.get('language', 'en')
-            session_id = metrics_data.get('session_id', '')
-            is_fallback = metrics_data.get('is_fallback', False)
+            response_time = metrics_data.get("response_time", 0.0)
+            language = metrics_data.get("language", "en")
+            session_id = metrics_data.get("session_id", "")
+            is_fallback = metrics_data.get("is_fallback", False)
 
             # Update overall response times
             self.response_times.append(response_time)
 
             # Update hourly metrics
-            current_hour = datetime.now().strftime('%Y-%m-%d-%H')
+            current_hour = datetime.now().strftime("%Y-%m-%d-%H")
             self.hourly_metrics[current_hour].append(response_time)
 
             # Update daily metrics
-            current_day = datetime.now().strftime('%Y-%m-%d')
+            current_day = datetime.now().strftime("%Y-%m-%d")
             self.daily_metrics[current_day].append(response_time)
 
             # Update language-specific metrics
             lang_metrics = self.language_metrics[language]
-            lang_metrics['response_times'].append(response_time)
-            lang_metrics['total_requests'] += 1
+            lang_metrics["response_times"].append(response_time)
+            lang_metrics["total_requests"] += 1
 
-            if lang_metrics['response_times']:
-                lang_metrics['avg_response_time'] = statistics.mean(lang_metrics['response_times'])
+            if lang_metrics["response_times"]:
+                lang_metrics["avg_response_time"] = statistics.mean(lang_metrics["response_times"])
 
             # Track fallback usage
             if is_fallback:
@@ -134,7 +129,6 @@ class ResponseMetrics:
 
     async def check_performance_alerts(self, response_time: float, language: str, session_id: str):
         """Check for performance issues and generate alerts"""
-
         current_time = time.time()
 
         # Check response time alerts
@@ -184,13 +178,11 @@ class ResponseMetrics:
 
     def should_send_alert(self, alert_type: str, current_time: float) -> bool:
         """Check if alert should be sent (respects cooldown)"""
-
         last_sent = self.last_alert_time.get(alert_type, 0)
         return (current_time - last_sent) > self.alert_cooldown
 
-    async def send_alert(self, alert_data: Dict[str, Any]):
+    async def send_alert(self, alert_data: dict[str, Any]):
         """Send performance alert"""
-
         try:
             # Log alert to W&B
             wandb.log({"performance_alert": alert_data})
@@ -206,18 +198,17 @@ class ResponseMetrics:
         except Exception as e:
             logger.error(f"Error sending alert: {e}")
 
-    async def log_to_wandb(self, metrics_data: Dict[str, Any], response_time: float):
+    async def log_to_wandb(self, metrics_data: dict[str, Any], response_time: float):
         """Log comprehensive metrics to W&B"""
-
         try:
             # Calculate performance indicators
             performance_data = {
                 "response_time": response_time,
                 "target_met": response_time < self.target_response_time,
                 "performance_level": self.get_performance_level(response_time),
-                "language": metrics_data.get('language', 'en'),
-                "session_id": metrics_data.get('session_id', ''),
-                "is_fallback": metrics_data.get('is_fallback', False)
+                "language": metrics_data.get("language", "en"),
+                "session_id": metrics_data.get("session_id", ""),
+                "is_fallback": metrics_data.get("is_fallback", False)
             }
 
             # Add aggregate metrics if we have enough data
@@ -231,7 +222,7 @@ class ResponseMetrics:
                 })
 
             # Add hourly performance if available
-            current_hour = datetime.now().strftime('%Y-%m-%d-%H')
+            current_hour = datetime.now().strftime("%Y-%m-%d-%H")
             if current_hour in self.hourly_metrics and len(self.hourly_metrics[current_hour]) >= 5:
                 hourly_times = self.hourly_metrics[current_hour]
                 performance_data.update({
@@ -248,19 +239,16 @@ class ResponseMetrics:
 
     def get_performance_level(self, response_time: float) -> str:
         """Categorize performance level based on response time"""
-
         if response_time <= self.excellent_threshold:
             return "excellent"
-        elif response_time <= self.warning_threshold:
+        if response_time <= self.warning_threshold:
             return "good"
-        elif response_time <= self.target_response_time:
+        if response_time <= self.target_response_time:
             return "acceptable"
-        else:
-            return "poor"
+        return "poor"
 
-    def percentile(self, data: List[float], percentile: int) -> float:
+    def percentile(self, data: list[float], percentile: int) -> float:
         """Calculate percentile of response times"""
-
         if not data:
             return 0.0
 
@@ -269,15 +257,13 @@ class ResponseMetrics:
 
         if index.is_integer():
             return sorted_data[int(index)]
-        else:
-            lower_index = int(index)
-            upper_index = lower_index + 1
-            weight = index - lower_index
-            return sorted_data[lower_index] * (1 - weight) + sorted_data[upper_index] * weight
+        lower_index = int(index)
+        upper_index = lower_index + 1
+        weight = index - lower_index
+        return sorted_data[lower_index] * (1 - weight) + sorted_data[upper_index] * weight
 
-    async def get_summary(self) -> Dict[str, Any]:
+    async def get_summary(self) -> dict[str, Any]:
         """Get comprehensive performance summary"""
-
         try:
             if not self.response_times:
                 return {
@@ -327,8 +313,8 @@ class ResponseMetrics:
                 # Alert summary
                 "alerts": {
                     "recent_alerts": len([a for a in self.alert_history if
-                                         datetime.fromisoformat(a['timestamp']) > datetime.now() - timedelta(hours=24)]),
-                    "total_alert_types": len(set(a['type'] for a in self.alert_history))
+                                         datetime.fromisoformat(a["timestamp"]) > datetime.now() - timedelta(hours=24)]),
+                    "total_alert_types": len(set(a["type"] for a in self.alert_history))
                 },
 
                 "last_updated": datetime.now().isoformat()
@@ -336,17 +322,17 @@ class ResponseMetrics:
 
             # Add language-specific metrics
             for language, metrics in self.language_metrics.items():
-                if metrics['response_times']:
+                if metrics["response_times"]:
                     summary["language_performance"][language] = {
-                        "avg_response_time": statistics.mean(metrics['response_times']),
-                        "total_requests": metrics['total_requests'],
-                        "target_achievement_rate": sum(1 for t in metrics['response_times'] if t < self.target_response_time) / len(metrics['response_times'])
+                        "avg_response_time": statistics.mean(metrics["response_times"]),
+                        "total_requests": metrics["total_requests"],
+                        "target_achievement_rate": sum(1 for t in metrics["response_times"] if t < self.target_response_time) / len(metrics["response_times"])
                     }
 
             # Add recent hourly performance
             current_time = datetime.now()
             for i in range(6):  # Last 6 hours
-                hour_key = (current_time - timedelta(hours=i)).strftime('%Y-%m-%d-%H')
+                hour_key = (current_time - timedelta(hours=i)).strftime("%Y-%m-%d-%H")
                 if hour_key in self.hourly_metrics:
                     hourly_data = self.hourly_metrics[hour_key]
                     summary["hourly_performance"][hour_key] = {
@@ -363,7 +349,6 @@ class ResponseMetrics:
 
     def record_error(self, error_type: str, session_id: str = None):
         """Record an error occurrence"""
-
         self.error_counts[error_type] += 1
 
         # Log error to W&B
@@ -378,13 +363,11 @@ class ResponseMetrics:
 
     def record_timeout(self, session_id: str = None):
         """Record a timeout occurrence"""
-
         self.timeout_count += 1
         self.record_error("timeout", session_id)
 
     async def generate_performance_report(self) -> str:
         """Generate human-readable performance report"""
-
         summary = await self.get_summary()
 
         if "error" in summary:
@@ -415,7 +398,7 @@ Generated: {summary['last_updated']}
 """
 
         for lang, perf in summary["language_performance"].items():
-            lang_name = {'en': 'English', 'es': 'Spanish', 'hi': 'Hindi', 'sw': 'Swahili', 'ar': 'Arabic', 'pt': 'Portuguese', 'fr': 'French'}.get(lang, lang)
+            lang_name = {"en": "English", "es": "Spanish", "hi": "Hindi", "sw": "Swahili", "ar": "Arabic", "pt": "Portuguese", "fr": "French"}.get(lang, lang)
             report += f"• {lang_name}: {perf['avg_response_time']:.2f}s avg ({perf['total_requests']} requests)\n"
 
         error_summary = summary["error_summary"]
@@ -429,11 +412,11 @@ Generated: {summary['last_updated']}
 📈 **Performance Status**
 """
 
-        if overall['target_achievement_rate'] >= 0.95:
+        if overall["target_achievement_rate"] >= 0.95:
             report += "✅ **EXCELLENT** - Consistently meeting response time targets"
-        elif overall['target_achievement_rate'] >= 0.90:
+        elif overall["target_achievement_rate"] >= 0.90:
             report += "🟡 **GOOD** - Mostly meeting response time targets"
-        elif overall['target_achievement_rate'] >= 0.80:
+        elif overall["target_achievement_rate"] >= 0.80:
             report += "🟠 **WARNING** - Frequently missing response time targets"
         else:
             report += "🔴 **CRITICAL** - Consistently missing response time targets"

@@ -1,17 +1,15 @@
-"""
-W&B Prompt Template Tracking for AI Tutoring
+"""W&B Prompt Template Tracking for AI Tutoring
 Part B: Agent Forge Phase 4 - Prompt Engineering
 """
 
-import wandb
 import asyncio
-import time
-from typing import Dict, List, Any, Optional
+from dataclasses import dataclass
 from datetime import datetime, timezone
-import json
 import hashlib
 import logging
-from dataclasses import dataclass
+from typing import Any
+
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -40,22 +38,22 @@ class TutorPromptEngineer:
 
         # Initialize base prompt templates
         self.base_templates = {
-            'greeting': {
-                'formal': "Hello! I'm here to help you learn. What subject would you like to explore today?",
-                'friendly': "Hi there! 😊 I'm excited to learn with you today! What can I help you understand?",
-                'encouraging': "Hey! You're taking a great step by asking for help! I'm here to support your learning journey. What's on your mind?",
-                'playful': "Greetings, fellow knowledge explorer! 🚀 Ready to unlock some amazing learning today? What adventure shall we begin?"
+            "greeting": {
+                "formal": "Hello! I'm here to help you learn. What subject would you like to explore today?",
+                "friendly": "Hi there! 😊 I'm excited to learn with you today! What can I help you understand?",
+                "encouraging": "Hey! You're taking a great step by asking for help! I'm here to support your learning journey. What's on your mind?",
+                "playful": "Greetings, fellow knowledge explorer! 🚀 Ready to unlock some amazing learning today? What adventure shall we begin?"
             },
-            'hint_delivery': {
-                'direct': "Here's the key concept: {concept}. Try applying it to: {problem}",
-                'guided': "Let's think about this step by step. First, consider: {concept}. How might this relate to your problem?",
-                'socratic': "What do you think happens when {concept}? Can you find a connection to your current challenge?"
+            "hint_delivery": {
+                "direct": "Here's the key concept: {concept}. Try applying it to: {problem}",
+                "guided": "Let's think about this step by step. First, consider: {concept}. How might this relate to your problem?",
+                "socratic": "What do you think happens when {concept}? Can you find a connection to your current challenge?"
             },
-            'examples': {
-                'abstract': "Consider the mathematical relationship: {example}",
-                'real-world': "Imagine you're {scenario}. How would {concept} apply here?",
-                'visual': "Picture this: {visual_description}. Can you see how {concept} works?",
-                'story-based': "Let me tell you about {character} who faced a similar challenge with {concept}..."
+            "examples": {
+                "abstract": "Consider the mathematical relationship: {example}",
+                "real-world": "Imagine you're {scenario}. How would {concept} apply here?",
+                "visual": "Picture this: {visual_description}. Can you see how {concept} works?",
+                "story-based": "Let me tell you about {character} who faced a similar challenge with {concept}..."
             }
         }
 
@@ -64,7 +62,6 @@ class TutorPromptEngineer:
 
     def initialize_wandb_tracking(self):
         """Initialize W&B tracking for prompt engineering"""
-
         try:
             wandb.init(
                 project=self.project_name,
@@ -90,41 +87,40 @@ class TutorPromptEngineer:
 
     async def create_prompt_sweep(self) -> str:
         """Define W&B sweep for tutoring prompts optimization"""
-
         sweep_config = {
-            'method': 'bayes',
-            'metric': {
-                'name': 'student_engagement',
-                'goal': 'maximize'
+            "method": "bayes",
+            "metric": {
+                "name": "student_engagement",
+                "goal": "maximize"
             },
-            'parameters': {
-                'greeting_style': {
-                    'values': ['formal', 'friendly', 'encouraging', 'playful']
+            "parameters": {
+                "greeting_style": {
+                    "values": ["formal", "friendly", "encouraging", "playful"]
                 },
-                'hint_complexity': {
-                    'values': ['direct', 'guided', 'socratic']
+                "hint_complexity": {
+                    "values": ["direct", "guided", "socratic"]
                 },
-                'example_type': {
-                    'values': ['abstract', 'real-world', 'visual', 'story-based']
+                "example_type": {
+                    "values": ["abstract", "real-world", "visual", "story-based"]
                 },
-                'encouragement_frequency': {
-                    'min': 0.1,
-                    'max': 0.5
+                "encouragement_frequency": {
+                    "min": 0.1,
+                    "max": 0.5
                 },
-                'response_length_target': {
-                    'values': ['concise', 'moderate', 'detailed']
+                "response_length_target": {
+                    "values": ["concise", "moderate", "detailed"]
                 },
-                'personalization_level': {
-                    'values': ['generic', 'adaptive', 'highly_personalized']
+                "personalization_level": {
+                    "values": ["generic", "adaptive", "highly_personalized"]
                 },
-                'subject_expertise': {
-                    'values': ['mathematics', 'science', 'programming', 'language_arts', 'history', 'general']
+                "subject_expertise": {
+                    "values": ["mathematics", "science", "programming", "language_arts", "history", "general"]
                 }
             },
-            'early_terminate': {
-                'type': 'hyperband',
-                'min_iter': 10,
-                'eta': 2
+            "early_terminate": {
+                "type": "hyperband",
+                "min_iter": 10,
+                "eta": 2
             }
         }
 
@@ -135,8 +131,8 @@ class TutorPromptEngineer:
             wandb.log({
                 "sweep_created": True,
                 "sweep_id": sweep_id,
-                "parameter_combinations": len(sweep_config['parameters']),
-                "optimization_method": sweep_config['method'],
+                "parameter_combinations": len(sweep_config["parameters"]),
+                "optimization_method": sweep_config["method"],
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
 
@@ -153,9 +149,8 @@ class TutorPromptEngineer:
                                      example_type: str,
                                      encouragement_frequency: float,
                                      subject: str = "general",
-                                     context: Dict[str, Any] = None) -> PromptTemplate:
+                                     context: dict[str, Any] = None) -> PromptTemplate:
         """Generate a complete prompt template with specified parameters"""
-
         context = context or {}
 
         # Create variant ID for tracking
@@ -166,19 +161,19 @@ class TutorPromptEngineer:
         template_parts = []
 
         # Greeting section
-        greeting = self.base_templates['greeting'][greeting_style]
+        greeting = self.base_templates["greeting"][greeting_style]
         template_parts.append(f"GREETING: {greeting}")
 
         # Subject expertise section
-        if subject in ['mathematics', 'science', 'programming']:
+        if subject in ["mathematics", "science", "programming"]:
             template_parts.append(f"EXPERTISE: I specialize in {subject} and will provide detailed, accurate explanations.")
 
         # Hint delivery approach
-        hint_style = self.base_templates['hint_delivery'][hint_complexity]
+        hint_style = self.base_templates["hint_delivery"][hint_complexity]
         template_parts.append(f"APPROACH: {hint_style}")
 
         # Example style
-        example_style = self.base_templates['examples'][example_type]
+        example_style = self.base_templates["examples"][example_type]
         template_parts.append(f"EXAMPLES: {example_style}")
 
         # Encouragement integration
@@ -233,9 +228,8 @@ class TutorPromptEngineer:
                                         variant_id: str,
                                         response_text: str,
                                         response_time: float,
-                                        user_engagement_signals: Dict[str, Any]) -> Dict[str, float]:
+                                        user_engagement_signals: dict[str, Any]) -> dict[str, float]:
         """Evaluate prompt performance across multiple metrics"""
-
         try:
             # Calculate engagement score
             engagement_score = await self._calculate_engagement_score(
@@ -289,38 +283,36 @@ class TutorPromptEngineer:
 
     async def _calculate_engagement_score(self,
                                         response_text: str,
-                                        signals: Dict[str, Any]) -> float:
+                                        signals: dict[str, Any]) -> float:
         """Calculate student engagement score based on response content and signals"""
-
         score = 0.0
 
         # Question asking (encourages interaction)
-        if '?' in response_text:
+        if "?" in response_text:
             score += 0.2
 
         # Encouraging language
-        encouraging_words = ['great', 'excellent', 'good job', 'well done', 'keep going', 'you can do it']
+        encouraging_words = ["great", "excellent", "good job", "well done", "keep going", "you can do it"]
         if any(word in response_text.lower() for word in encouraging_words):
             score += 0.2
 
         # Interactive elements
-        interactive_phrases = ['try this', 'what do you think', 'can you', 'let\'s explore']
+        interactive_phrases = ["try this", "what do you think", "can you", "let's explore"]
         if any(phrase in response_text.lower() for phrase in interactive_phrases):
             score += 0.3
 
         # Clear structure (helps engagement)
-        if any(marker in response_text for marker in ['1.', '2.', '•', '-']):
+        if any(marker in response_text for marker in ["1.", "2.", "•", "-"]):
             score += 0.1
 
         # Examples provided
-        if any(word in response_text.lower() for word in ['example', 'for instance', 'imagine', 'picture']):
+        if any(word in response_text.lower() for word in ["example", "for instance", "imagine", "picture"]):
             score += 0.2
 
         return min(1.0, score)
 
     async def _calculate_clarity_score(self, response_text: str) -> float:
         """Calculate response clarity score"""
-
         score = 0.0
         words = response_text.split()
 
@@ -333,33 +325,32 @@ class TutorPromptEngineer:
             score += 0.2  # Too long but still okay
 
         # Clear structure indicators
-        structure_words = ['first', 'second', 'then', 'next', 'finally', 'in summary']
+        structure_words = ["first", "second", "then", "next", "finally", "in summary"]
         if any(word in response_text.lower() for word in structure_words):
             score += 0.2
 
         # Explanation indicators
-        explanation_words = ['because', 'since', 'therefore', 'this means', 'in other words']
+        explanation_words = ["because", "since", "therefore", "this means", "in other words"]
         if any(word in response_text.lower() for word in explanation_words):
             score += 0.3
 
         # Concrete examples
-        if any(word in response_text.lower() for word in ['example', 'like', 'such as']):
+        if any(word in response_text.lower() for word in ["example", "like", "such as"]):
             score += 0.2
 
         return min(1.0, score)
 
     async def _calculate_encouragement_score(self, response_text: str) -> float:
         """Calculate encouragement/positivity score"""
-
         positive_words = [
-            'great', 'excellent', 'good', 'well done', 'fantastic', 'amazing',
-            'you can do it', 'keep going', 'nice work', 'perfect', 'exactly',
-            'wonderful', 'brilliant', 'impressive', 'outstanding'
+            "great", "excellent", "good", "well done", "fantastic", "amazing",
+            "you can do it", "keep going", "nice work", "perfect", "exactly",
+            "wonderful", "brilliant", "impressive", "outstanding"
         ]
 
         encouraging_phrases = [
-            'don\'t worry', 'it\'s okay', 'that\'s normal', 'everyone struggles',
-            'you\'re learning', 'step by step', 'at your own pace', 'you got this'
+            "don't worry", "it's okay", "that's normal", "everyone struggles",
+            "you're learning", "step by step", "at your own pace", "you got this"
         ]
 
         score = 0.0
@@ -374,16 +365,15 @@ class TutorPromptEngineer:
         score += min(0.3, encouraging_count * 0.15)
 
         # Presence of emoji (indicates friendly tone)
-        if any(char in response_text for char in ['😊', '👍', '✨', '🎉', '💡', '🚀']):
+        if any(char in response_text for char in ["😊", "👍", "✨", "🎉", "💡", "🚀"]):
             score += 0.2
 
         return min(1.0, score)
 
     async def get_best_performing_template(self,
                                          subject: str = "general",
-                                         min_interactions: int = 10) -> Optional[PromptTemplate]:
+                                         min_interactions: int = 10) -> PromptTemplate | None:
         """Get the best performing template for a given subject"""
-
         # Filter templates by interaction count
         qualified_templates = [
             template for template in self.active_templates.values()
@@ -414,7 +404,6 @@ class TutorPromptEngineer:
 
         def train_prompt():
             """Single sweep run for prompt optimization"""
-
             # Initialize run with sweep parameters
             run = wandb.init()
             config = wandb.config
@@ -425,7 +414,7 @@ class TutorPromptEngineer:
                 hint_complexity=config.hint_complexity,
                 example_type=config.example_type,
                 encouragement_frequency=config.encouragement_frequency,
-                subject=config.get('subject_expertise', 'general')
+                subject=config.get("subject_expertise", "general")
             ))
 
             # Simulate interactions and log results
@@ -446,7 +435,6 @@ class TutorPromptEngineer:
 
     async def save_prompt_artifacts(self):
         """Save successful prompt templates as W&B artifacts"""
-
         try:
             # Get top performing templates
             top_templates = sorted(

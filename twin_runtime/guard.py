@@ -1,6 +1,6 @@
-from typing import Literal
 import json
-import time
+from typing import Literal
+
 import plyer
 
 THRESH = 0.65

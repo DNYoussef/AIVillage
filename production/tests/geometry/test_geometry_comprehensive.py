@@ -1,16 +1,14 @@
-"""
-Tests for geometry analysis capabilities.
+"""Tests for geometry analysis capabilities.
 Verifies geometric feedback and analysis.
 """
 
 import pytest
 import torch
-import numpy as np
 
 try:
     from production.geometry import GeometryFeedback
-    from production.geometry.geometry_feedback import GeometryFeedback as GF
     from production.geometry.geometry import Snapshot
+    from production.geometry.geometry_feedback import GeometryFeedback as GF
 except ImportError:
     # Handle missing imports gracefully
     pytest.skip("Production geometry modules not available", allow_module_level=True)
@@ -82,10 +80,10 @@ class TestGeometrySnapshot:
         state_dict = model.state_dict()
 
         # Verify state capture
-        assert 'weight' in state_dict
-        assert 'bias' in state_dict
-        assert state_dict['weight'].shape == (5, 10)
-        assert state_dict['bias'].shape == (5,)
+        assert "weight" in state_dict
+        assert "bias" in state_dict
+        assert state_dict["weight"].shape == (5, 10)
+        assert state_dict["bias"].shape == (5,)
 
     def test_geometric_properties(self):
         """Test geometric property calculation."""
@@ -93,7 +91,7 @@ class TestGeometrySnapshot:
         weights = torch.randn(50, 100)
 
         # Calculate geometric properties
-        frobenius_norm = torch.norm(weights, p='fro').item()
+        frobenius_norm = torch.norm(weights, p="fro").item()
         spectral_norm = torch.norm(weights, p=2).item()
 
         assert frobenius_norm >= spectral_norm  # Frobenius >= spectral norm

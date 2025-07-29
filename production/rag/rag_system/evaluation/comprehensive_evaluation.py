@@ -1,13 +1,13 @@
-import io
-import seaborn as sns
-import matplotlib.pyplot as plt
-from typing import List, Dict, Any
-import logging
-from rag_system.utils.advanced_analytics import AdvancedAnalytics
 from datetime import datetime
+import io
+import logging
+from typing import Any
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import seaborn as sns
+
 from rag_system.utils.advanced_analytics import AdvancedAnalytics
 
 logger = logging.getLogger(__name__)
@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 class ComprehensiveEvaluationFramework:
     def __init__(self, advanced_analytics: AdvancedAnalytics):
         self.advanced_analytics = advanced_analytics
-        self.metrics: Dict[str, List[float]] = {}
-        self.timestamps: Dict[str, List[datetime]] = {}
-        self.metric_descriptions: Dict[str, str] = {}
+        self.metrics: dict[str, list[float]] = {}
+        self.timestamps: dict[str, list[datetime]] = {}
+        self.metric_descriptions: dict[str, str] = {}
 
     def add_metric(self, name: str, description: str):
         if name not in self.metrics:
@@ -36,7 +36,7 @@ class ComprehensiveEvaluationFramework:
         self.advanced_analytics.record_metric(name, value)
         logger.debug(f"Recorded value {value} for metric {name}")
 
-    def get_metric_stats(self, name: str) -> Dict[str, float]:
+    def get_metric_stats(self, name: str) -> dict[str, float]:
         if name not in self.metrics:
             logger.error(f"Metric '{name}' not found.")
             return {}
@@ -62,7 +62,7 @@ class ComprehensiveEvaluationFramework:
         slope, _ = np.polyfit(x, y, 1)
         return slope
 
-    def generate_performance_report(self) -> Dict[str, Any]:
+    def generate_performance_report(self) -> dict[str, Any]:
         report = {}
         for name in self.metrics:
             report[name] = {
@@ -72,7 +72,7 @@ class ComprehensiveEvaluationFramework:
             }
         return report
 
-    def generate_visualizations(self) -> Dict[str, bytes]:
+    def generate_visualizations(self) -> dict[str, bytes]:
         visualizations = {}
 
         # Time series plot for all metrics
@@ -84,31 +84,31 @@ class ComprehensiveEvaluationFramework:
         plt.xlabel("Timestamp")
         plt.ylabel("Value")
         buf = io.BytesIO()
-        plt.savefig(buf, format='png')
+        plt.savefig(buf, format="png")
         buf.seek(0)
-        visualizations['metrics_over_time'] = buf.getvalue()
+        visualizations["metrics_over_time"] = buf.getvalue()
         plt.close()
 
         # Correlation heatmap
         df = pd.DataFrame(self.metrics)
         correlation_matrix = df.corr()
         plt.figure(figsize=(10, 8))
-        sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+        sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm")
         plt.title("Metric Correlation Heatmap")
         buf = io.BytesIO()
-        plt.savefig(buf, format='png')
+        plt.savefig(buf, format="png")
         buf.seek(0)
-        visualizations['correlation_heatmap'] = buf.getvalue()
+        visualizations["correlation_heatmap"] = buf.getvalue()
         plt.close()
 
         return visualizations
 
-    def evaluate_system_performance(self) -> Dict[str, Any]:
+    def evaluate_system_performance(self) -> dict[str, Any]:
         performance_report = self.generate_performance_report()
         visualizations = self.generate_visualizations()
 
         # Calculate overall performance score (this is a simplified example)
-        metric_scores = [stats['stats']['latest'] for stats in performance_report.values() if stats['stats']['latest'] is not None]
+        metric_scores = [stats["stats"]["latest"] for stats in performance_report.values() if stats["stats"]["latest"] is not None]
         overall_score = np.mean(metric_scores) if metric_scores else None
 
         return {
@@ -118,8 +118,8 @@ class ComprehensiveEvaluationFramework:
             "visualizations": visualizations
         }
 
-    def log_evaluation_results(self, results: Dict[str, Any]):
+    def log_evaluation_results(self, results: dict[str, Any]):
         logger.info(f"Evaluation Results at {results['timestamp']}:")
         logger.info(f"Overall Performance Score: {results['overall_performance_score']}")
-        for metric, report in results['metric_reports'].items():
+        for metric, report in results["metric_reports"].items():
             logger.info(f"{metric}: Latest = {report['stats']['latest']}, Trend = {report['trend']}")

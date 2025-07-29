@@ -1,10 +1,9 @@
-"""
-Tests for benchmarking system.
+"""Tests for benchmarking system.
 Verifies real benchmark functionality and metrics.
 """
 
+
 import pytest
-from unittest.mock import Mock, patch
 
 try:
     from production.benchmarking import RealBenchmark
@@ -29,11 +28,11 @@ class TestRealBenchmark:
         """Test benchmark metrics concepts."""
         # Mock benchmark results
         results = {
-            'mmlu': 0.65,
-            'gsm8k': 0.45,
-            'humaneval': 0.30,
-            'hellaswag': 0.70,
-            'arc': 0.55
+            "mmlu": 0.65,
+            "gsm8k": 0.45,
+            "humaneval": 0.30,
+            "hellaswag": 0.70,
+            "arc": 0.55
         }
 
         # Test metric validation
@@ -43,18 +42,18 @@ class TestRealBenchmark:
     def test_benchmark_thresholds(self):
         """Test benchmark threshold concepts."""
         thresholds = {
-            'mmlu': 0.65,
-            'gsm8k': 0.45,
-            'humaneval': 0.30,
-            'hellaswag': 0.70,
-            'arc': 0.55
+            "mmlu": 0.65,
+            "gsm8k": 0.45,
+            "humaneval": 0.30,
+            "hellaswag": 0.70,
+            "arc": 0.55
         }
 
         # Test threshold checking
         results = {
-            'mmlu': 0.70,  # Above threshold
-            'gsm8k': 0.40,  # Below threshold
-            'humaneval': 0.35,  # Above threshold
+            "mmlu": 0.70,  # Above threshold
+            "gsm8k": 0.40,  # Below threshold
+            "humaneval": 0.35,  # Above threshold
         }
 
         passed = sum(1 for metric, score in results.items()
@@ -65,19 +64,19 @@ class TestRealBenchmark:
     def test_fitness_calculation(self):
         """Test fitness calculation concept."""
         scores = {
-            'mmlu': 0.70,
-            'gsm8k': 0.45,
-            'humaneval': 0.35,
-            'hellaswag': 0.75,
-            'arc': 0.60
+            "mmlu": 0.70,
+            "gsm8k": 0.45,
+            "humaneval": 0.35,
+            "hellaswag": 0.75,
+            "arc": 0.60
         }
 
         weights = {
-            'mmlu': 0.25,
-            'gsm8k': 0.25,
-            'humaneval': 0.20,
-            'hellaswag': 0.15,
-            'arc': 0.15
+            "mmlu": 0.25,
+            "gsm8k": 0.25,
+            "humaneval": 0.20,
+            "hellaswag": 0.15,
+            "arc": 0.15
         }
 
         # Calculate weighted score
@@ -97,7 +96,7 @@ class TestBenchmarkIntegration:
         correct_answers = ["Answer A", "Answer B", "Answer D"]
 
         # Calculate accuracy
-        correct = sum(1 for pred, true in zip(model_outputs, correct_answers)
+        correct = sum(1 for pred, true in zip(model_outputs, correct_answers, strict=False)
                      if pred == true)
         accuracy = correct / len(correct_answers)
 
@@ -106,10 +105,10 @@ class TestBenchmarkIntegration:
     def test_benchmark_categories(self):
         """Test benchmark categories."""
         categories = {
-            'reasoning': ['mmlu', 'arc'],
-            'math': ['gsm8k'],
-            'coding': ['humaneval'],
-            'comprehension': ['hellaswag']
+            "reasoning": ["mmlu", "arc"],
+            "math": ["gsm8k"],
+            "coding": ["humaneval"],
+            "comprehension": ["hellaswag"]
         }
 
         # Test category organization
@@ -117,6 +116,6 @@ class TestBenchmarkIntegration:
         for benchmark_list in categories.values():
             all_benchmarks.update(benchmark_list)
 
-        assert 'mmlu' in all_benchmarks
-        assert 'gsm8k' in all_benchmarks
+        assert "mmlu" in all_benchmarks
+        assert "gsm8k" in all_benchmarks
         assert len(all_benchmarks) == 5

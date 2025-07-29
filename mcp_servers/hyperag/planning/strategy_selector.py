@@ -1,33 +1,36 @@
-"""
-Strategy Selection System
+"""Strategy Selection System
 
 Selects and configures reasoning strategies based on query classification and requirements.
 Manages strategy registry and provides adaptive strategy selection.
 """
 
 import logging
-from typing import Dict, List, Optional, Type, Union
 
 from .plan_structures import (
-    QueryType, ReasoningStrategy, QueryPlan, ExecutionStep,
-    RetrievalConstraints
+    QueryType,
+    ReasoningStrategy,
+    RetrievalConstraints,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class StrategySelector:
-    """
-    Selects appropriate reasoning strategies based on query analysis.
+    """Selects appropriate reasoning strategies based on query analysis.
     Maintains registry of available strategies and provides adaptive selection.
     """
 
     def __init__(self):
         # Import strategies here to avoid circular imports
         from .strategies import (
-            SimpleFactStrategy, TemporalStrategy, CausalStrategy,
-            ComparativeStrategy, MetaQueryStrategy, MultiHopStrategy,
-            AggregationStrategy, HypotheticalStrategy, HybridStrategy
+            AggregationStrategy,
+            CausalStrategy,
+            ComparativeStrategy,
+            HybridStrategy,
+            MetaQueryStrategy,
+            MultiHopStrategy,
+            SimpleFactStrategy,
+            TemporalStrategy,
         )
 
         # Strategy registry
@@ -86,10 +89,9 @@ class StrategySelector:
     def select_strategy(self,
                        query_type: QueryType,
                        complexity_score: float,
-                       constraints: Optional[RetrievalConstraints] = None,
-                       context: Optional[Dict] = None) -> ReasoningStrategy:
-        """
-        Select best reasoning strategy for the given query characteristics
+                       constraints: RetrievalConstraints | None = None,
+                       context: dict | None = None) -> ReasoningStrategy:
+        """Select best reasoning strategy for the given query characteristics
 
         Args:
             query_type: Classified query type
@@ -111,7 +113,7 @@ class StrategySelector:
             # Very complex queries benefit from hybrid or step-by-step
             if ReasoningStrategy.HYBRID in self.strategies:
                 return ReasoningStrategy.HYBRID
-            elif ReasoningStrategy.STEP_BY_STEP in candidates:
+            if ReasoningStrategy.STEP_BY_STEP in candidates:
                 return ReasoningStrategy.STEP_BY_STEP
 
         elif complexity_score < 0.3:
@@ -143,8 +145,8 @@ class StrategySelector:
         return strategy_class(**kwargs)
 
     def _select_by_performance(self,
-                              candidates: List[ReasoningStrategy],
-                              context: Dict) -> ReasoningStrategy:
+                              candidates: list[ReasoningStrategy],
+                              context: dict) -> ReasoningStrategy:
         """Select strategy based on performance metrics"""
         if not candidates:
             return ReasoningStrategy.DIRECT_RETRIEVAL
@@ -213,7 +215,7 @@ class StrategySelector:
                     f"confidence={perf['avg_confidence']:.3f}, "
                     f"time={perf['avg_time_ms']:.1f}ms")
 
-    def get_strategy_info(self, strategy: ReasoningStrategy) -> Dict:
+    def get_strategy_info(self, strategy: ReasoningStrategy) -> dict:
         """Get information about a strategy"""
         strategy_class = self.strategies.get(strategy)
         perf = self.strategy_performance.get(strategy, {})
@@ -221,19 +223,19 @@ class StrategySelector:
         return {
             "strategy": strategy.value,
             "class_name": strategy_class.__name__ if strategy_class else None,
-            "description": strategy_class.description if strategy_class and hasattr(strategy_class, 'description') else "",
+            "description": strategy_class.description if strategy_class and hasattr(strategy_class, "description") else "",
             "performance": perf,
             "suitable_for": [qt.value for qt, strategies in self.type_strategy_map.items()
                            if strategy in strategies]
         }
 
-    def list_available_strategies(self) -> List[Dict]:
+    def list_available_strategies(self) -> list[dict]:
         """List all available strategies with their information"""
         return [self.get_strategy_info(strategy) for strategy in ReasoningStrategy]
 
     def recommend_fallback_strategy(self,
                                    failed_strategy: ReasoningStrategy,
-                                   query_type: QueryType) -> Optional[ReasoningStrategy]:
+                                   query_type: QueryType) -> ReasoningStrategy | None:
         """Recommend fallback strategy when primary strategy fails"""
         candidates = self.type_strategy_map.get(query_type, [])
 
@@ -265,7 +267,7 @@ class StrategySelector:
         threshold = complexity_thresholds.get(strategy, 0.5)
         return complexity_score <= threshold
 
-    def get_strategy_requirements(self, strategy: ReasoningStrategy) -> Dict:
+    def get_strategy_requirements(self, strategy: ReasoningStrategy) -> dict:
         """Get resource requirements for a strategy"""
         requirements = {
             ReasoningStrategy.DIRECT_RETRIEVAL: {

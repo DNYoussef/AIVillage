@@ -3,8 +3,9 @@
 Setup script for Agent Forge with CLI integration
 """
 
-from setuptools import setup, find_packages
 from pathlib import Path
+
+from setuptools import find_packages, setup
 
 # Read README
 readme_path = Path(__file__).parent / "README_AGENT_FORGE.md"
@@ -13,8 +14,8 @@ long_description = readme_path.read_text(encoding="utf-8") if readme_path.exists
 # Read requirements
 requirements_path = Path(__file__).parent / "agent_forge" / "requirements.txt"
 if requirements_path.exists():
-    with open(requirements_path, 'r') as f:
-        requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+    with open(requirements_path) as f:
+        requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 else:
     requirements = [
         "torch>=2.0.0",

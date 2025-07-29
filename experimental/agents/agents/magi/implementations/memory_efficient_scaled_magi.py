@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Memory-Efficient Scaled Magi Specialization
+"""Memory-Efficient Scaled Magi Specialization
 
 Scale the proven 300-question approach to 10,000 questions while maintaining
 the memory efficiency that allowed the original success (1.6GB constraint).
@@ -10,26 +9,24 @@ demonstrates real capability enhancement through structured learning.
 """
 
 import asyncio
-import logging
-import sys
-import os
-import json
-import time
-import random
-import numpy as np
-from pathlib import Path
 from datetime import datetime
+import json
+import logging
+from pathlib import Path
+import random
+import sys
+import time
 
 # Add project to path
-sys.path.append('.')
+sys.path.append(".")
 
 from agent_forge.memory_manager import memory_manager
-from agent_forge.wandb_manager import init_wandb, log_metrics, finish_wandb
+from agent_forge.wandb_manager import finish_wandb, init_wandb, log_metrics
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler(f'D:/AgentForge/memory_efficient_magi_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
         logging.StreamHandler()
@@ -63,7 +60,7 @@ class MemoryEfficientScaledMagi:
         logger.info(f"Run ID: {self.run_id}")
         logger.info(f"Scaling from 300 to {self.total_questions:,} questions")
         logger.info(f"Memory Available: {memory_manager.get_memory_stats()['system_ram_available_gb']:.2f} GB")
-        logger.info(f"Advanced Features: Geometric awareness, self-modification, sleep cycles")
+        logger.info("Advanced Features: Geometric awareness, self-modification, sleep cycles")
 
     def initialize_wandb_tracking(self):
         """Initialize W&B for memory-efficient scaled run."""
@@ -83,7 +80,7 @@ class MemoryEfficientScaledMagi:
                 "memory_constraint_gb": 1.6,
                 "specialization_areas": len(self.specialization_areas),
                 "advanced_features": True,
-                "memory_available_gb": memory_manager.get_memory_stats()['system_ram_available_gb']
+                "memory_available_gb": memory_manager.get_memory_stats()["system_ram_available_gb"]
             }
         )
 
@@ -104,19 +101,18 @@ class MemoryEfficientScaledMagi:
 
         evolution_results_path = Path("D:/AgentForge/historic_real_run_20250726_030005/evolution_50gen_results.json")
         if evolution_results_path.exists():
-            with open(evolution_results_path, 'r') as f:
+            with open(evolution_results_path) as f:
                 evolution_data = json.load(f)
 
             best_config = evolution_data["evolution_summary"]["best_configuration"]
-            logger.info(f"Evolved model configuration loaded:")
+            logger.info("Evolved model configuration loaded:")
             logger.info(f"  Method: {best_config['merge_method']}")
             logger.info(f"  Fitness: {best_config['fitness']:.4f}")
             logger.info(f"  Parameters: {best_config['parameters']}")
 
             return best_config
-        else:
-            logger.info("Using default configuration")
-            return {"merge_method": "slerp", "fitness": 0.8914, "parameters": {"t": 0.523}}
+        logger.info("Using default configuration")
+        return {"merge_method": "slerp", "fitness": 0.8914, "parameters": {"t": 0.523}}
 
     async def generate_curriculum_questions(self):
         """Generate structured 10,000 question curriculum."""
@@ -249,7 +245,7 @@ class MemoryEfficientScaledMagi:
         }
 
         # Initialize capabilities based on evolved model
-        base_fitness = evolved_config['fitness']
+        base_fitness = evolved_config["fitness"]
         capabilities = {
             "technical_reasoning": 0.65 + (base_fitness - 0.8) * 0.5,
             "python_programming": 0.70 + (base_fitness - 0.8) * 0.4,
@@ -279,8 +275,8 @@ class MemoryEfficientScaledMagi:
 
                 # Update capabilities based on training
                 for question in batch_questions:
-                    area = question['area']
-                    difficulty = question['difficulty']
+                    area = question["area"]
+                    difficulty = question["difficulty"]
 
                     # Capability improvement based on difficulty and level
                     improvement = 0.001 * (difficulty / 100) * (level / 10)
@@ -300,8 +296,8 @@ class MemoryEfficientScaledMagi:
                     logger.info(f"Progress: {questions_processed:,}/10,000 questions - Overall: {overall_capability:.3f}")
 
                     log_metrics({
-                        f"questions_processed": questions_processed,
-                        f"overall_capability": overall_capability,
+                        "questions_processed": questions_processed,
+                        "overall_capability": overall_capability,
                         **{f"capability_{k}": v for k, v in capabilities.items()}
                     })
 
@@ -409,11 +405,11 @@ async def main():
             log_metrics({
                 "memory_efficient_magi_completed": 1,
                 "execution_duration_minutes": duration/60,
-                "final_specialization_score": results['final_specialization_score'],
-                "baseline_improvement": results['final_specialization_score'] - 0.774,
-                "geometric_snapshots": len(results['geometric_snapshots']),
-                "self_modifications": len(results['self_modifications']),
-                "sleep_cycles": results['sleep_cycles'],
+                "final_specialization_score": results["final_specialization_score"],
+                "baseline_improvement": results["final_specialization_score"] - 0.774,
+                "geometric_snapshots": len(results["geometric_snapshots"]),
+                "self_modifications": len(results["self_modifications"]),
+                "sleep_cycles": results["sleep_cycles"],
                 "scaling_success": True
             })
 
@@ -429,13 +425,12 @@ async def main():
             }
 
             results_file = runner.output_dir / "memory_efficient_scaled_results.json"
-            with open(results_file, 'w') as f:
+            with open(results_file, "w") as f:
                 json.dump(final_results, f, indent=2, default=str)
 
             return results
-        else:
-            logger.error("Memory-efficient scaled Magi failed")
-            return None
+        logger.error("Memory-efficient scaled Magi failed")
+        return None
 
     except Exception as e:
         logger.error(f"Memory-efficient scaled execution failed: {e}")
@@ -450,7 +445,7 @@ if __name__ == "__main__":
 
     if result:
         print("\nMEMORY-EFFICIENT SCALED MAGI SUCCESS!")
-        print(f"10,000 questions processed successfully!")
+        print("10,000 questions processed successfully!")
         print(f"Final specialization score: {result['final_specialization_score']:.3f}")
         print(f"Improvement: +{result['final_specialization_score'] - 0.774:.3f} over baseline")
         print("Advanced features demonstrated: geometric awareness, self-modification, sleep cycles")

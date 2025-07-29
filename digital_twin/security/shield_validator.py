@@ -1,24 +1,24 @@
-"""
-Shield Validator - AI Safety and Content Validation System
+"""Shield Validator - AI Safety and Content Validation System
 Sprint R-5: Digital Twin MVP - Task A.3
 """
 
-import wandb
 import asyncio
+from collections import defaultdict
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
+from enum import Enum
+import hashlib
 import json
 import logging
 import re
-import hashlib
-from typing import Dict, List, Optional, Any, Tuple, Set
-from datetime import datetime, timezone, timedelta
-from dataclasses import dataclass, asdict
-from enum import Enum
-import numpy as np
-from pathlib import Path
 import sqlite3
-from collections import defaultdict, deque
+from typing import Any
+
+import numpy as np
 import torch
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
+from transformers import pipeline
+
+import wandb
 
 # Content filtering imports
 try:
@@ -52,9 +52,9 @@ class ValidationRule:
     category: ValidationCategory
     severity: ValidationSeverity
     description: str
-    pattern: Optional[str] = None  # Regex pattern
-    keywords: List[str] = None  # Keywords to check
-    ml_classifier: Optional[str] = None  # ML model for validation
+    pattern: str | None = None  # Regex pattern
+    keywords: list[str] = None  # Keywords to check
+    ml_classifier: str | None = None  # ML model for validation
     age_specific: bool = False
     min_age: int = 0
     max_age: int = 18
@@ -70,13 +70,13 @@ class ValidationResult:
     content_type: str  # tutor_response, user_input, system_message
     timestamp: str
     passed: bool
-    violations: List[Dict[str, Any]]
-    warnings: List[Dict[str, Any]]
+    violations: list[dict[str, Any]]
+    warnings: list[dict[str, Any]]
     safety_score: float  # 0.0 to 1.0
     educational_value: float  # 0.0 to 1.0
     age_appropriateness: float  # 0.0 to 1.0
     privacy_compliant: bool
-    recommendations: List[str]
+    recommendations: list[str]
     processing_time_ms: float
 
 @dataclass
@@ -89,8 +89,8 @@ class ShieldMetrics:
     false_positives: int = 0
     false_negatives: int = 0
     avg_processing_time: float = 0.0
-    safety_score_distribution: Dict[str, int] = None
-    common_violations: Dict[str, int] = None
+    safety_score_distribution: dict[str, int] = None
+    common_violations: dict[str, int] = None
 
 class ShieldValidator:
     """Comprehensive AI safety and content validation system"""
@@ -140,7 +140,6 @@ class ShieldValidator:
 
     def initialize_wandb_tracking(self):
         """Initialize W&B tracking for Shield validation"""
-
         try:
             wandb.init(
                 project=self.project_name,
@@ -164,7 +163,6 @@ class ShieldValidator:
 
     def init_database(self):
         """Initialize database for validation logs"""
-
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -229,7 +227,6 @@ class ShieldValidator:
 
     async def initialize_shield_system(self):
         """Initialize shield system with rules and models"""
-
         logger.info("Initializing Shield validation system...")
 
         # Load validation rules
@@ -251,7 +248,6 @@ class ShieldValidator:
 
     async def load_validation_rules(self):
         """Load comprehensive validation rules"""
-
         # Safety rules
         safety_rules = [
             ValidationRule(
@@ -379,7 +375,6 @@ class ShieldValidator:
 
     async def initialize_ml_models(self):
         """Initialize ML models for content analysis"""
-
         try:
             # Toxicity classifier
             self.toxicity_classifier = pipeline(
@@ -402,7 +397,6 @@ class ShieldValidator:
 
     async def load_content_filters(self):
         """Load content filter lists"""
-
         # Basic profanity filter (placeholder - in production would load from secure source)
         self.profanity_filter = {
             "damn", "hell", "crap", "stupid", "dumb", "idiot", "hate", "kill", "die"
@@ -425,7 +419,6 @@ class ShieldValidator:
 
     async def initialize_nlp_processor(self):
         """Initialize NLP processor for advanced text analysis"""
-
         if SPACY_AVAILABLE:
             try:
                 import spacy
@@ -442,9 +435,8 @@ class ShieldValidator:
                              student_id: str,
                              content_type: str = "tutor_response",
                              student_age: int = 10,
-                             context: Dict[str, Any] = None) -> ValidationResult:
+                             context: dict[str, Any] = None) -> ValidationResult:
         """Comprehensive content validation"""
-
         start_time = asyncio.get_event_loop().time()
 
         # Generate content hash for caching and tracking
@@ -476,7 +468,7 @@ class ShieldValidator:
         privacy_compliant = privacy_score >= 0.8
 
         # Determine if content passes validation
-        passed = (len([v for v in violations if v['severity'] in ['critical', 'error']]) == 0 and
+        passed = (len([v for v in violations if v["severity"] in ["critical", "error"]]) == 0 and
                  overall_safety_score >= 0.7)
 
         # Generate recommendations
@@ -539,9 +531,8 @@ class ShieldValidator:
 
         return result
 
-    async def _check_safety(self, content: str, student_age: int, violations: List, warnings: List) -> float:
+    async def _check_safety(self, content: str, student_age: int, violations: list, warnings: list) -> float:
         """Check content safety"""
-
         safety_score = 1.0
         content_lower = content.lower()
 
@@ -596,21 +587,21 @@ class ShieldValidator:
         if self.toxicity_classifier:
             try:
                 result = self.toxicity_classifier(content[:512])  # Limit length for performance
-                if result[0]['label'] == 'TOXIC' and result[0]['score'] > 0.8:
+                if result[0]["label"] == "TOXIC" and result[0]["score"] > 0.8:
                     violations.append({
                         "rule_id": "ml_toxicity",
                         "severity": "error",
                         "description": "Content flagged as potentially toxic by ML model",
-                        "confidence": result[0]['score'],
+                        "confidence": result[0]["score"],
                         "category": "safety"
                     })
                     safety_score -= 0.5
-                elif result[0]['label'] == 'TOXIC' and result[0]['score'] > 0.6:
+                elif result[0]["label"] == "TOXIC" and result[0]["score"] > 0.6:
                     warnings.append({
                         "rule_id": "ml_toxicity_warning",
                         "severity": "warning",
                         "description": "Content may contain inappropriate language",
-                        "confidence": result[0]['score'],
+                        "confidence": result[0]["score"],
                         "category": "safety"
                     })
                     safety_score -= 0.2
@@ -619,9 +610,8 @@ class ShieldValidator:
 
         return max(0.0, safety_score)
 
-    async def _check_privacy(self, content: str, violations: List, warnings: List) -> float:
+    async def _check_privacy(self, content: str, violations: list, warnings: list) -> float:
         """Check privacy compliance"""
-
         privacy_score = 1.0
 
         # Check privacy rules
@@ -669,9 +659,8 @@ class ShieldValidator:
 
         return max(0.0, privacy_score)
 
-    async def _check_content_appropriateness(self, content: str, student_age: int, violations: List, warnings: List) -> float:
+    async def _check_content_appropriateness(self, content: str, student_age: int, violations: list, warnings: list) -> float:
         """Check content appropriateness"""
-
         content_score = 1.0
         content_lower = content.lower()
 
@@ -693,7 +682,7 @@ class ShieldValidator:
             # Simple readability check
             words = content.split()
             avg_word_length = np.mean([len(word) for word in words]) if words else 0
-            sentences = content.count('.') + content.count('!') + content.count('?')
+            sentences = content.count(".") + content.count("!") + content.count("?")
             avg_sentence_length = len(words) / max(sentences, 1)
 
             if avg_word_length > 6 or avg_sentence_length > 15:
@@ -709,9 +698,8 @@ class ShieldValidator:
 
         return max(0.0, content_score)
 
-    async def _check_educational_value(self, content: str, student_age: int, warnings: List) -> float:
+    async def _check_educational_value(self, content: str, student_age: int, warnings: list) -> float:
         """Check educational value of content"""
-
         educational_score = 0.5  # Start neutral
         content_lower = content.lower()
 
@@ -737,24 +725,23 @@ class ShieldValidator:
             try:
                 # Use sentiment as proxy for educational positivity
                 result = self.educational_classifier(content[:512])
-                if result[0]['label'] == 'LABEL_2':  # Positive
+                if result[0]["label"] == "LABEL_2":  # Positive
                     educational_score += 0.2
-                elif result[0]['label'] == 'LABEL_0':  # Negative
+                elif result[0]["label"] == "LABEL_0":  # Negative
                     educational_score -= 0.1
             except Exception as e:
                 logger.warning(f"Educational classification failed: {e}")
 
         # Check for mathematical content (for math tutoring)
-        math_indicators = ['equation', 'solve', 'calculate', 'answer', 'result', '+', '-', '×', '÷', '=']
+        math_indicators = ["equation", "solve", "calculate", "answer", "result", "+", "-", "×", "÷", "="]
         math_count = sum(1 for indicator in math_indicators if indicator in content_lower)
         if math_count > 0:
             educational_score += 0.2
 
         return min(1.0, max(0.0, educational_score))
 
-    async def _check_age_appropriateness(self, content: str, student_age: int, warnings: List) -> float:
+    async def _check_age_appropriateness(self, content: str, student_age: int, warnings: list) -> float:
         """Check age appropriateness of content"""
-
         age_score = 1.0
 
         # Get age guidelines
@@ -773,7 +760,7 @@ class ShieldValidator:
             return age_score
 
         avg_word_length = np.mean([len(word) for word in words])
-        sentences = max(1, content.count('.') + content.count('!') + content.count('?'))
+        sentences = max(1, content.count(".") + content.count("!") + content.count("?"))
         avg_sentence_length = len(words) / sentences
 
         # Age-specific complexity thresholds
@@ -811,9 +798,8 @@ class ShieldValidator:
 
         return max(0.0, age_score)
 
-    async def _check_technical_safety(self, content: str, violations: List, warnings: List) -> float:
+    async def _check_technical_safety(self, content: str, violations: list, warnings: list) -> float:
         """Check for technical safety issues like prompt injection"""
-
         technical_score = 1.0
 
         # Check technical rules
@@ -861,9 +847,8 @@ class ShieldValidator:
 
         return max(0.0, technical_score)
 
-    def _generate_recommendations(self, violations: List, warnings: List, safety_score: float, educational_value: float) -> List[str]:
+    def _generate_recommendations(self, violations: list, warnings: list, safety_score: float, educational_value: float) -> list[str]:
         """Generate content improvement recommendations"""
-
         recommendations = []
 
         # Safety recommendations
@@ -877,15 +862,15 @@ class ShieldValidator:
         # Specific violation recommendations
         violation_types = set()
         for violation in violations + warnings:
-            violation_types.add(violation.get('category', 'general'))
+            violation_types.add(violation.get("category", "general"))
 
-        if 'privacy' in violation_types:
+        if "privacy" in violation_types:
             recommendations.append("Remove or mask any personal information requests or sharing")
 
-        if 'content' in violation_types:
+        if "content" in violation_types:
             recommendations.append("Use more age-appropriate language and concepts")
 
-        if 'technical' in violation_types:
+        if "technical" in violation_types:
             recommendations.append("Ensure content follows proper AI interaction guidelines")
 
         # General recommendations if no specific issues
@@ -899,7 +884,6 @@ class ShieldValidator:
 
     async def _save_validation_result(self, result: ValidationResult):
         """Save validation result to database"""
-
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -934,7 +918,6 @@ class ShieldValidator:
 
     def _update_metrics(self, result: ValidationResult):
         """Update shield metrics"""
-
         self.metrics.total_validations += 1
 
         if not result.passed:
@@ -959,11 +942,10 @@ class ShieldValidator:
             self.metrics.common_violations = defaultdict(int)
 
         for violation in result.violations:
-            self.metrics.common_violations[violation.get('rule_id', 'unknown')] += 1
+            self.metrics.common_violations[violation.get("rule_id", "unknown")] += 1
 
     async def process_validation_queue(self):
         """Process validation requests from queue"""
-
         while True:
             try:
                 # Get validation request from queue
@@ -979,9 +961,8 @@ class ShieldValidator:
                 logger.error(f"Error processing validation queue: {e}")
                 await asyncio.sleep(1)
 
-    async def batch_validate(self, content_list: List[Dict[str, Any]]) -> List[ValidationResult]:
+    async def batch_validate(self, content_list: list[dict[str, Any]]) -> list[ValidationResult]:
         """Validate multiple content items efficiently"""
-
         results = []
 
         # Process in parallel with semaphore to limit concurrency
@@ -1007,9 +988,8 @@ class ShieldValidator:
 
         return valid_results
 
-    async def get_validation_analytics(self, student_id: str = None, days: int = 7) -> Dict[str, Any]:
+    async def get_validation_analytics(self, student_id: str = None, days: int = 7) -> dict[str, Any]:
         """Get validation analytics"""
-
         # Filter results by student and time period
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
 
@@ -1040,7 +1020,7 @@ class ShieldValidator:
         # Analyze violations by category
         for result in filtered_results:
             for violation in result.violations:
-                category = violation.get('category', 'unknown')
+                category = violation.get("category", "unknown")
                 analytics["violation_categories"][category] += 1
 
             # Content type breakdown
@@ -1066,7 +1046,6 @@ class ShieldValidator:
 
     async def export_validation_report(self, student_id: str, format: str = "json") -> str:
         """Export detailed validation report"""
-
         # Get student's validation history
         student_results = [r for r in self.validation_history if r.student_id == student_id]
 
@@ -1080,12 +1059,10 @@ class ShieldValidator:
 
         if format == "json":
             return json.dumps(report, indent=2, default=str)
-        else:
-            return str(report)
+        return str(report)
 
-    def get_shield_status(self) -> Dict[str, Any]:
+    def get_shield_status(self) -> dict[str, Any]:
         """Get current shield system status"""
-
         return {
             "status": "active",
             "version": "2.0.0-enterprise",

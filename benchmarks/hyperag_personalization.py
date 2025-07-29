@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-HypeRAG Personalisation Benchmark
+"""HypeRAG Personalisation Benchmark
 
 Compares retrieval performance across different personalization approaches:
 A) Base PPR (Personalized PageRank)
@@ -18,26 +17,24 @@ Datasets:
 - Domain Document Clicks: Academic paper relevance based on click patterns
 """
 
-import json
-import asyncio
-import logging
 import argparse
-from pathlib import Path
-from typing import Dict, List, Tuple, Any, Optional, Set
+import asyncio
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-import numpy as np
-from dataclasses import dataclass, asdict
-import statistics
-from collections import defaultdict
+import json
+import logging
 import math
+from pathlib import Path
+import statistics
 
 # Import HypeRAG components
 import sys
+from typing import Any
+
+import numpy as np
+
 sys.path.append(str(Path(__file__).parent.parent))
 
-from mcp_servers.hyperag.retrieval.ppr_retriever import PPRRetriever
-from mcp_servers.hyperag.retrieval.hybrid_retriever import HybridRetriever
-from mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
 
 logger = logging.getLogger(__name__)
 
@@ -60,18 +57,18 @@ class UserQuery:
     query_id: str
     user_id: str
     query_text: str
-    relevant_items: List[str]  # Ground truth relevant item IDs
-    relevance_scores: Dict[str, float]  # Item ID -> relevance score
+    relevant_items: list[str]  # Ground truth relevant item IDs
+    relevance_scores: dict[str, float]  # Item ID -> relevance score
     domain: str
 
 @dataclass
 class PersonalizationContext:
     """User personalization context"""
     user_id: str
-    preferences: Dict[str, float]  # Feature -> preference weight
-    interaction_history: List[str]  # Previously interacted item IDs
+    preferences: dict[str, float]  # Feature -> preference weight
+    interaction_history: list[str]  # Previously interacted item IDs
     domain_expertise: float  # 0.0 to 1.0
-    temporal_context: Dict[str, Any]  # Time-based context
+    temporal_context: dict[str, Any]  # Time-based context
 
 class PersonalizationDatasetGenerator:
     """Generates personalization evaluation datasets"""
@@ -80,7 +77,7 @@ class PersonalizationDatasetGenerator:
         self.movielens_queries = self._create_movielens_queries()
         self.doc_click_queries = self._create_doc_click_queries()
 
-    def _create_movielens_queries(self) -> List[UserQuery]:
+    def _create_movielens_queries(self) -> list[UserQuery]:
         """Create MovieLens-style queries"""
         queries = []
 
@@ -166,7 +163,7 @@ class PersonalizationDatasetGenerator:
 
         return queries
 
-    def _create_doc_click_queries(self) -> List[UserQuery]:
+    def _create_doc_click_queries(self) -> list[UserQuery]:
         """Create document click-based queries"""
         queries = []
 
@@ -252,7 +249,7 @@ class PersonalizationDatasetGenerator:
 
         return queries
 
-    def get_personalization_contexts(self) -> Dict[str, PersonalizationContext]:
+    def get_personalization_contexts(self) -> dict[str, PersonalizationContext]:
         """Get user personalization contexts"""
         contexts = {}
 
@@ -338,7 +335,7 @@ class PersonalizationApproach:
         self.token_costs = []
         self.retrieval_times = []
 
-    async def retrieve(self, query: UserQuery, context: PersonalizationContext, top_k: int = 20) -> List[Tuple[str, float]]:
+    async def retrieve(self, query: UserQuery, context: PersonalizationContext, top_k: int = 20) -> list[tuple[str, float]]:
         """Retrieve personalized results for a query"""
         raise NotImplementedError
 
@@ -353,7 +350,7 @@ class BasePPRApproach(PersonalizationApproach):
         super().__init__("Base PPR")
         self.ppr_retriever = None  # Would be initialized with actual retriever
 
-    async def retrieve(self, query: UserQuery, context: PersonalizationContext, top_k: int = 20) -> List[Tuple[str, float]]:
+    async def retrieve(self, query: UserQuery, context: PersonalizationContext, top_k: int = 20) -> list[tuple[str, float]]:
         """Retrieve using base PPR only"""
         start_time = datetime.now(timezone.utc)
 
@@ -398,7 +395,7 @@ class AlphaRescoredPPRApproach(PersonalizationApproach):
         super().__init__("PPR + α Rescoring")
         self.alpha_weight = 0.3  # Weight for α rescoring
 
-    async def retrieve(self, query: UserQuery, context: PersonalizationContext, top_k: int = 20) -> List[Tuple[str, float]]:
+    async def retrieve(self, query: UserQuery, context: PersonalizationContext, top_k: int = 20) -> list[tuple[str, float]]:
         """Retrieve using PPR + α rescoring"""
         start_time = datetime.now(timezone.utc)
 
@@ -473,7 +470,7 @@ class ICLEnhancedApproach(PersonalizationApproach):
         self.alpha_weight = 0.3
         self.icl_weight = 0.2
 
-    async def retrieve(self, query: UserQuery, context: PersonalizationContext, top_k: int = 20) -> List[Tuple[str, float]]:
+    async def retrieve(self, query: UserQuery, context: PersonalizationContext, top_k: int = 20) -> list[tuple[str, float]]:
         """Retrieve using PPR + α + ICL"""
         start_time = datetime.now(timezone.utc)
 
@@ -525,8 +522,8 @@ class ICLEnhancedApproach(PersonalizationApproach):
 
                 # Extract number from item_id for mock similarity
                 try:
-                    current_num = int(item_id.split('_')[1])
-                    recent_num = int(recent_item.split('_')[1])
+                    current_num = int(item_id.split("_")[1])
+                    recent_num = int(recent_item.split("_")[1])
                     similarity = 1.0 / (1.0 + abs(current_num - recent_num) * 0.1)
                     icl_score += similarity * 0.3
                 except:
@@ -572,7 +569,7 @@ class PersonalizationBenchmark:
 
         self.evaluation_results = {}
 
-    async def run_full_benchmark(self) -> Dict[str, PersonalizationMetrics]:
+    async def run_full_benchmark(self) -> dict[str, PersonalizationMetrics]:
         """Run the complete personalization benchmark"""
         logger.info("Starting HypeRAG Personalization Benchmark...")
 
@@ -603,10 +600,9 @@ class PersonalizationBenchmark:
 
     async def _evaluate_approach(self,
                                 approach: PersonalizationApproach,
-                                queries: List[UserQuery],
-                                contexts: Dict[str, PersonalizationContext]) -> PersonalizationMetrics:
+                                queries: list[UserQuery],
+                                contexts: dict[str, PersonalizationContext]) -> PersonalizationMetrics:
         """Evaluate a single personalization approach"""
-
         all_map_scores = []
         all_ndcg_scores = []
         all_recall_scores = []
@@ -649,7 +645,7 @@ class PersonalizationBenchmark:
             timestamp=datetime.now(timezone.utc).isoformat()
         )
 
-    def _calculate_map(self, query: UserQuery, retrieved_items: List[Tuple[str, float]]) -> float:
+    def _calculate_map(self, query: UserQuery, retrieved_items: list[tuple[str, float]]) -> float:
         """Calculate Mean Average Precision"""
         relevant_items = set(query.relevant_items)
 
@@ -670,9 +666,9 @@ class PersonalizationBenchmark:
 
         return precision_sum / len(relevant_items)
 
-    def _calculate_ndcg_at_k(self, query: UserQuery, retrieved_items: List[Tuple[str, float]], k: int) -> float:
+    def _calculate_ndcg_at_k(self, query: UserQuery, retrieved_items: list[tuple[str, float]], k: int) -> float:
         """Calculate Normalized Discounted Cumulative Gain at k"""
-        def dcg_at_k(relevance_scores: List[float], k: int) -> float:
+        def dcg_at_k(relevance_scores: list[float], k: int) -> float:
             """Calculate DCG at k"""
             dcg = 0.0
             for i in range(min(k, len(relevance_scores))):
@@ -697,7 +693,7 @@ class PersonalizationBenchmark:
 
         return dcg / idcg
 
-    def _calculate_recall_at_k(self, query: UserQuery, retrieved_items: List[Tuple[str, float]], k: int) -> float:
+    def _calculate_recall_at_k(self, query: UserQuery, retrieved_items: list[tuple[str, float]], k: int) -> float:
         """Calculate Recall at k"""
         relevant_items = set(query.relevant_items)
         retrieved_relevant = set()
@@ -711,7 +707,7 @@ class PersonalizationBenchmark:
 
         return len(retrieved_relevant) / len(relevant_items)
 
-    async def _save_benchmark_results(self, results: Dict[str, PersonalizationMetrics]):
+    async def _save_benchmark_results(self, results: dict[str, PersonalizationMetrics]):
         """Save benchmark results to files"""
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
@@ -727,18 +723,18 @@ class PersonalizationBenchmark:
             "comparison": self._generate_comparison_analysis(results)
         }
 
-        with open(results_file, 'w') as f:
+        with open(results_file, "w") as f:
             json.dump(detailed_results, f, indent=2)
 
         # Save metrics summary
         metrics_file = self.output_dir / f"personalization_metrics_{timestamp}.json"
-        with open(metrics_file, 'w') as f:
+        with open(metrics_file, "w") as f:
             json.dump({name: asdict(metrics) for name, metrics in results.items()}, f, indent=2)
 
         logger.info(f"Results saved to {results_file}")
         logger.info(f"Metrics saved to {metrics_file}")
 
-    def _generate_comparison_analysis(self, results: Dict[str, PersonalizationMetrics]) -> Dict[str, Any]:
+    def _generate_comparison_analysis(self, results: dict[str, PersonalizationMetrics]) -> dict[str, Any]:
         """Generate comparative analysis of approaches"""
         base_result = results.get("Base PPR")
         if not base_result:
@@ -788,7 +784,7 @@ async def main():
     # Configure logging
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     # Run benchmark

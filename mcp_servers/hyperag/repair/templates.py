@@ -1,15 +1,13 @@
-"""
-Template Encoder for GDC Violation Subgraphs
+"""Template Encoder for GDC Violation Subgraphs
 
 Converts violating subgraphs to human-readable template sentences
 including critical properties (ids, labels, domain fields).
 """
 
-from typing import Dict, List, Any, Optional, Set
 from dataclasses import dataclass
 from enum import Enum
 import json
-import re
+from typing import Any
 
 
 class DomainField(Enum):
@@ -35,8 +33,8 @@ class NodeTemplate:
     """Template representation of a graph node"""
     node_id: str
     label: str
-    properties: Dict[str, Any]
-    critical_fields: Set[DomainField]
+    properties: dict[str, Any]
+    critical_fields: set[DomainField]
 
     def to_sentence(self) -> str:
         """Convert node to human-readable sentence (research shows template > raw format)"""
@@ -62,21 +60,17 @@ class NodeTemplate:
             base = f"Patient {self.node_id}"
             if critical_props:
                 return f"{base} who is {', and '.join(critical_props)}"
-            else:
-                return f"{base} (no critical medical information)"
-        elif self.label == "Medication":
+            return f"{base} (no critical medical information)"
+        if self.label == "Medication":
             base = f"Medication {self.node_id}"
             med_name = self.properties.get("name", "unknown medication")
             if critical_props:
                 return f"{base} ({med_name}) with {', '.join(critical_props)}"
-            else:
-                return f"{base} ({med_name})"
-        else:
-            # Generic entity format
-            if critical_props:
-                return f"{self.label} {self.node_id} that has {', '.join(critical_props)}"
-            else:
-                return f"{self.label} {self.node_id}"
+            return f"{base} ({med_name})"
+        # Generic entity format
+        if critical_props:
+            return f"{self.label} {self.node_id} that has {', '.join(critical_props)}"
+        return f"{self.label} {self.node_id}"
 
 
 @dataclass
@@ -86,8 +80,8 @@ class EdgeTemplate:
     source_id: str
     target_id: str
     relationship: str
-    properties: Dict[str, Any]
-    critical_fields: Set[DomainField]
+    properties: dict[str, Any]
+    critical_fields: set[DomainField]
 
     def to_sentence(self) -> str:
         """Convert edge to human-readable sentence with natural language"""
@@ -109,18 +103,17 @@ class EdgeTemplate:
         if self.relationship == "PRESCRIBES":
             props_text = f" {', '.join(critical_props)}" if critical_props else ""
             return f"Prescription relationship where {self.source_id} prescribes {self.target_id}{props_text}"
-        elif self.relationship == "ALLERGIC_TO":
+        if self.relationship == "ALLERGIC_TO":
             severity = ""
             if critical_props:
                 severity = f" ({', '.join(critical_props)})"
             return f"Allergy relationship where {self.source_id} is allergic to {self.target_id}{severity}"
-        elif self.relationship == "TREATS":
+        if self.relationship == "TREATS":
             props_text = f" {', '.join(critical_props)}" if critical_props else ""
             return f"Treatment relationship where {self.source_id} treats condition {self.target_id}{props_text}"
-        else:
-            # Generic relationship format
-            props_text = f" with {', '.join(critical_props)}" if critical_props else ""
-            return f"Relationship {self.edge_id} where {self.source_id} {self.relationship.lower().replace('_', ' ')} {self.target_id}{props_text}"
+        # Generic relationship format
+        props_text = f" with {', '.join(critical_props)}" if critical_props else ""
+        return f"Relationship {self.edge_id} where {self.source_id} {self.relationship.lower().replace('_', ' ')} {self.target_id}{props_text}"
 
 
 @dataclass
@@ -129,9 +122,9 @@ class ViolationTemplate:
     violation_id: str
     gdc_rule: str
     violated_pattern: str
-    nodes: List[NodeTemplate]
-    edges: List[EdgeTemplate]
-    context: Dict[str, Any]
+    nodes: list[NodeTemplate]
+    edges: list[EdgeTemplate]
+    context: dict[str, Any]
 
     def to_description(self) -> str:
         """Convert entire violation to human-readable description"""
@@ -167,9 +160,8 @@ class ViolationTemplate:
 class TemplateEncoder:
     """Encodes GDC violation subgraphs into human-readable templates"""
 
-    def __init__(self, domain_config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize template encoder with domain-specific configuration
+    def __init__(self, domain_config: dict[str, Any] | None = None):
+        """Initialize template encoder with domain-specific configuration
 
         Args:
             domain_config: Configuration for domain-specific field mappings
@@ -177,7 +169,7 @@ class TemplateEncoder:
         self.domain_config = domain_config or {}
         self.field_mappings = self._load_field_mappings()
 
-    def _load_field_mappings(self) -> Dict[str, Set[DomainField]]:
+    def _load_field_mappings(self) -> dict[str, set[DomainField]]:
         """Load mappings from node/edge types to critical fields"""
         # Default mappings for HypeRAG schema
         mappings = {
@@ -207,9 +199,8 @@ class TemplateEncoder:
 
         return mappings
 
-    def encode_node(self, node_data: Dict[str, Any]) -> NodeTemplate:
-        """
-        Encode a single node into template format
+    def encode_node(self, node_data: dict[str, Any]) -> NodeTemplate:
+        """Encode a single node into template format
 
         Args:
             node_data: Node data from Neo4j result
@@ -243,9 +234,8 @@ class TemplateEncoder:
             critical_fields=critical_fields
         )
 
-    def encode_edge(self, edge_data: Dict[str, Any]) -> EdgeTemplate:
-        """
-        Encode a single edge into template format
+    def encode_edge(self, edge_data: dict[str, Any]) -> EdgeTemplate:
+        """Encode a single edge into template format
 
         Args:
             edge_data: Edge data from Neo4j result
@@ -281,9 +271,8 @@ class TemplateEncoder:
             critical_fields=critical_fields
         )
 
-    def encode_violation(self, violation_data: Dict[str, Any]) -> ViolationTemplate:
-        """
-        Encode a complete GDC violation into template format
+    def encode_violation(self, violation_data: dict[str, Any]) -> ViolationTemplate:
+        """Encode a complete GDC violation into template format
 
         Args:
             violation_data: Complete violation data including subgraph
@@ -324,9 +313,8 @@ class TemplateEncoder:
             context=context
         )
 
-    def create_repair_context(self, violation: ViolationTemplate) -> Dict[str, Any]:
-        """
-        Create structured context for repair operations
+    def create_repair_context(self, violation: ViolationTemplate) -> dict[str, Any]:
+        """Create structured context for repair operations
 
         Args:
             violation: The violation template
@@ -381,9 +369,8 @@ class TemplateEncoder:
             "domain_context": self.domain_config.get("repair_guidelines", {})
         }
 
-    def extract_critical_conflicts(self, violation: ViolationTemplate) -> List[Dict[str, Any]]:
-        """
-        Extract specific conflicts that need resolution
+    def extract_critical_conflicts(self, violation: ViolationTemplate) -> list[dict[str, Any]]:
+        """Extract specific conflicts that need resolution
 
         Args:
             violation: The violation template
@@ -436,8 +423,7 @@ class TemplateEncoder:
         return conflicts
 
     def generate_repair_summary(self, violation: ViolationTemplate) -> str:
-        """
-        Generate a concise summary for repair prompting
+        """Generate a concise summary for repair prompting
 
         Args:
             violation: The violation template

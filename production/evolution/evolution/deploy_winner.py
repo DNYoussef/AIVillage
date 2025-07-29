@@ -1,26 +1,25 @@
-"""
-Tutor Deployment System with Compression Pipeline
+"""Tutor Deployment System with Compression Pipeline
 Sprint R-4+AF1: Agent Forge Phase 1 - Task B.4
 """
 
-import wandb
-import torch
 import asyncio
-import logging
-import json
-from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from dataclasses import dataclass, asdict
-from pathlib import Path
-import numpy as np
-import shutil
 import hashlib
+import json
+import logging
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import gc
+
+import wandb
 
 # Import compression libraries (if available)
 try:
-    from peft import LoraConfig, get_peft_model, TaskType
+    from peft import LoraConfig, TaskType, get_peft_model
     PEFT_AVAILABLE = True
 except ImportError:
     PEFT_AVAILABLE = False
@@ -40,10 +39,10 @@ class CompressionResult:
     compression_ratio: float
     performance_retention: float
     compression_time: float
-    quality_metrics: Dict[str, float]
+    quality_metrics: dict[str, float]
     deployment_ready: bool
     compressed_model_path: str = ""
-    metadata: Dict[str, Any] = None
+    metadata: dict[str, Any] = None
     timestamp: str = ""
 
 @dataclass
@@ -56,13 +55,13 @@ class DeploymentPackage:
     target_platform: str  # edge, mobile, server
     model_path: str
     tokenizer_path: str
-    lora_adapter_path: Optional[str]
-    hyperrag_config: Dict[str, Any]
-    performance_benchmarks: Dict[str, float]
+    lora_adapter_path: str | None
+    hyperrag_config: dict[str, Any]
+    performance_benchmarks: dict[str, float]
     deployment_size_mb: float
-    requirements: List[str]
+    requirements: list[str]
     installation_script: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
     created_at: str = ""
 
 class TutorDeployment:
@@ -104,7 +103,6 @@ class TutorDeployment:
 
     def initialize_deployment_tracking(self):
         """Initialize W&B tracking for deployment pipeline"""
-
         try:
             # Use existing wandb run or initialize new one
             if wandb.run is None:
@@ -124,9 +122,8 @@ class TutorDeployment:
         except Exception as e:
             logger.error(f"Failed to initialize deployment tracking: {e}")
 
-    async def prepare_champion(self, champion_model: Dict[str, Any], target_platform: str = "edge_server") -> DeploymentPackage:
+    async def prepare_champion(self, champion_model: dict[str, Any], target_platform: str = "edge_server") -> DeploymentPackage:
         """Compress and optimize winning model for deployment"""
-
         logger.info(f"Preparing champion model {champion_model.get('individual_id', 'unknown')} for {target_platform} deployment")
 
         start_time = asyncio.get_event_loop().time()
@@ -200,9 +197,8 @@ class TutorDeployment:
 
         return deployment_package
 
-    async def load_champion_model(self, champion_info: Dict[str, Any]) -> Tuple[Optional[Any], Optional[Any]]:
+    async def load_champion_model(self, champion_info: dict[str, Any]) -> tuple[Any | None, Any | None]:
         """Load champion model and tokenizer"""
-
         try:
             # Check if model is already loaded
             if "model" in champion_info and champion_info["model"] is not None:
@@ -252,11 +248,10 @@ class TutorDeployment:
     async def apply_compression_pipeline(self,
                                        model: Any,
                                        tokenizer: Any,
-                                       champion_info: Dict[str, Any],
+                                       champion_info: dict[str, Any],
                                        target_platform: str,
-                                       platform_config: Dict[str, Any]) -> Tuple[Any, List[CompressionResult]]:
+                                       platform_config: dict[str, Any]) -> tuple[Any, list[CompressionResult]]:
         """Apply comprehensive compression pipeline"""
-
         logger.info(f"Applying compression pipeline for {target_platform}")
 
         compression_results = []
@@ -327,9 +322,8 @@ class TutorDeployment:
 
         return current_model, compression_results
 
-    def select_compression_techniques(self, target_platform: str, original_size: float, platform_config: Dict[str, Any]) -> List[str]:
+    def select_compression_techniques(self, target_platform: str, original_size: float, platform_config: dict[str, Any]) -> list[str]:
         """Select optimal compression techniques for target platform"""
-
         techniques = []
         max_size = platform_config["max_size_mb"]
 
@@ -354,9 +348,8 @@ class TutorDeployment:
 
         return techniques
 
-    async def apply_quantization(self, model: Any, tokenizer: Any, champion_info: Dict[str, Any], platform_config: Dict[str, Any]) -> Any:
+    async def apply_quantization(self, model: Any, tokenizer: Any, champion_info: dict[str, Any], platform_config: dict[str, Any]) -> Any:
         """Apply quantization compression"""
-
         try:
             # Dynamic quantization using PyTorch
             quantized_model = torch.quantization.quantize_dynamic(
@@ -371,9 +364,8 @@ class TutorDeployment:
             logger.error(f"Error in quantization: {e}")
             return None
 
-    async def apply_pruning(self, model: Any, tokenizer: Any, champion_info: Dict[str, Any], platform_config: Dict[str, Any]) -> Any:
+    async def apply_pruning(self, model: Any, tokenizer: Any, champion_info: dict[str, Any], platform_config: dict[str, Any]) -> Any:
         """Apply structured pruning"""
-
         try:
             # Simple magnitude-based pruning (simplified implementation)
             with torch.no_grad():
@@ -390,9 +382,8 @@ class TutorDeployment:
             logger.error(f"Error in pruning: {e}")
             return None
 
-    async def apply_distillation(self, model: Any, tokenizer: Any, champion_info: Dict[str, Any], platform_config: Dict[str, Any]) -> Any:
+    async def apply_distillation(self, model: Any, tokenizer: Any, champion_info: dict[str, Any], platform_config: dict[str, Any]) -> Any:
         """Apply knowledge distillation (simplified)"""
-
         try:
             # This is a placeholder - real distillation would require training
             # For now, return a compressed version of the model
@@ -403,9 +394,8 @@ class TutorDeployment:
             logger.error(f"Error in distillation: {e}")
             return None
 
-    async def extract_lora_adapter(self, model: Any, fitness_score: float, rank: int = 8) -> Optional[Dict[str, Any]]:
+    async def extract_lora_adapter(self, model: Any, fitness_score: float, rank: int = 8) -> dict[str, Any] | None:
         """Extract LoRA adapter for efficient deployment"""
-
         if not PEFT_AVAILABLE:
             logger.warning("PEFT not available - skipping LoRA extraction")
             return None
@@ -443,9 +433,8 @@ class TutorDeployment:
             logger.error(f"Error extracting LoRA adapter: {e}")
             return None
 
-    async def apply_bitnet_compression(self, model: Any, tokenizer: Any, champion_info: Dict[str, Any], platform_config: Dict[str, Any]) -> Any:
+    async def apply_bitnet_compression(self, model: Any, tokenizer: Any, champion_info: dict[str, Any], platform_config: dict[str, Any]) -> Any:
         """Apply BitNet-style 1-bit quantization (simplified)"""
-
         try:
             # Simplified 1-bit quantization
             with torch.no_grad():
@@ -460,9 +449,8 @@ class TutorDeployment:
             logger.error(f"Error in BitNet compression: {e}")
             return None
 
-    async def apply_vptq_compression(self, model: Any, tokenizer: Any, champion_info: Dict[str, Any], platform_config: Dict[str, Any]) -> Any:
+    async def apply_vptq_compression(self, model: Any, tokenizer: Any, champion_info: dict[str, Any], platform_config: dict[str, Any]) -> Any:
         """Apply Vector Post-Training Quantization (simplified)"""
-
         try:
             # Simplified vector quantization
             with torch.no_grad():
@@ -489,7 +477,6 @@ class TutorDeployment:
 
     def calculate_model_size_mb(self, model: Any) -> float:
         """Calculate model size in MB"""
-
         try:
             param_count = sum(p.numel() for p in model.parameters())
             # Estimate size (4 bytes per parameter for float32, 2 for float16)
@@ -500,7 +487,6 @@ class TutorDeployment:
 
     async def estimate_performance_retention(self, original_model: Any, compressed_model: Any, technique: str) -> float:
         """Estimate performance retention after compression"""
-
         # Simplified performance estimation based on technique
         retention_estimates = {
             "quantization": 0.95,
@@ -522,13 +508,12 @@ class TutorDeployment:
     async def create_deployment_package(self,
                                       model: Any,
                                       tokenizer: Any,
-                                      lora_adapter: Optional[Dict[str, Any]],
-                                      champion_info: Dict[str, Any],
-                                      compression_results: List[CompressionResult],
+                                      lora_adapter: dict[str, Any] | None,
+                                      champion_info: dict[str, Any],
+                                      compression_results: list[CompressionResult],
                                       target_platform: str,
-                                      platform_config: Dict[str, Any]) -> DeploymentPackage:
+                                      platform_config: dict[str, Any]) -> DeploymentPackage:
         """Create complete deployment package"""
-
         # Generate package ID
         package_id = f"tutor_deploy_{champion_info.get('individual_id', 'unknown')[:8]}_{target_platform}_{int(datetime.now().timestamp())}"
 
@@ -624,16 +609,14 @@ class TutorDeployment:
 
     def calculate_directory_size_mb(self, directory: Path) -> float:
         """Calculate total size of directory in MB"""
-
         try:
-            total_size = sum(f.stat().st_size for f in directory.rglob('*') if f.is_file())
+            total_size = sum(f.stat().st_size for f in directory.rglob("*") if f.is_file())
             return total_size / (1024 * 1024)
         except:
             return 0.0
 
-    def estimate_inference_time(self, model_size_mb: float, platform_config: Dict[str, Any]) -> float:
+    def estimate_inference_time(self, model_size_mb: float, platform_config: dict[str, Any]) -> float:
         """Estimate inference time in milliseconds"""
-
         # Simple heuristic based on model size and platform
         base_time = model_size_mb * 2  # 2ms per MB base
 
@@ -644,9 +627,8 @@ class TutorDeployment:
 
         return min(base_time, 5000)  # Cap at 5 seconds
 
-    def generate_requirements(self, target_platform: str, has_lora: bool) -> List[str]:
+    def generate_requirements(self, target_platform: str, has_lora: bool) -> list[str]:
         """Generate requirements list for deployment"""
-
         base_requirements = [
             "torch>=1.13.0",
             "transformers>=4.21.0",
@@ -670,9 +652,8 @@ class TutorDeployment:
 
         return base_requirements
 
-    def generate_installation_script(self, package_id: str, target_platform: str, requirements: List[str]) -> str:
+    def generate_installation_script(self, package_id: str, target_platform: str, requirements: list[str]) -> str:
         """Generate installation script for deployment package"""
-
         script = f"""#!/bin/bash
 # Installation script for {package_id}
 # Target platform: {target_platform}
@@ -713,11 +694,10 @@ echo "Installation complete! Model available at ~/.aivillage/models/{package_id}
         return script
 
     async def register_in_hyperrag(self,
-                                 adapter: Dict[str, Any],
+                                 adapter: dict[str, Any],
                                  deployment_package: DeploymentPackage,
-                                 champion_info: Dict[str, Any]):
+                                 champion_info: dict[str, Any]):
         """Register LoRA adapter in HyperRAG system"""
-
         try:
             # This would integrate with the actual HyperRAG system
             # For now, create a registration record
@@ -759,9 +739,8 @@ echo "Installation complete! Model available at ~/.aivillage/models/{package_id}
         except Exception as e:
             logger.error(f"Error registering in HyperRAG: {e}")
 
-    async def validate_deployment_package(self, package: DeploymentPackage, platform_config: Dict[str, Any]) -> Dict[str, Any]:
+    async def validate_deployment_package(self, package: DeploymentPackage, platform_config: dict[str, Any]) -> dict[str, Any]:
         """Validate deployment package meets requirements"""
-
         validation_results = {
             "valid": True,
             "checks_passed": [],
@@ -813,9 +792,8 @@ echo "Installation complete! Model available at ~/.aivillage/models/{package_id}
 
         return validation_results
 
-    def get_deployment_analytics(self) -> Dict[str, Any]:
+    def get_deployment_analytics(self) -> dict[str, Any]:
         """Get comprehensive deployment analytics"""
-
         analytics = {
             "total_packages": len(self.deployment_packages),
             "compression_history": len(self.compression_history),

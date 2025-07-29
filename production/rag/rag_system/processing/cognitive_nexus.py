@@ -1,25 +1,26 @@
 # rag_system/processing/cognitive_nexus.py
 
-from typing import Dict, Any, List
+from typing import Any
+
 from ..core.agent_interface import AgentInterface
 from ..core.interface import ReasoningEngine
 from ..processing.self_referential_query_processor import (
     SelfReferentialQueryProcessor,
 )
 
+
 class CognitiveNexus:
     def __init__(self, reasoning_engine: ReasoningEngine, self_ref_processor: SelfReferentialQueryProcessor):
         self.reasoning_engine = reasoning_engine
         self.self_ref_processor = self_ref_processor
 
-    async def process(self, query: str, context: Dict[str, Any]):
+    async def process(self, query: str, context: dict[str, Any]):
         if self._is_self_referential(query):
             return await self.self_ref_processor.process_self_query(query)
-        else:
-            # Use the reasoning engine for non-self-referential queries
-            return await self.reasoning_engine.reason(query, context)
+        # Use the reasoning engine for non-self-referential queries
+        return await self.reasoning_engine.reason(query, context)
 
-    async def integrate(self, query: str, constructed_knowledge: Dict[str, Any], final_plan: Dict[str, Any], retrieval_history: List[Dict[str, Any]], agent: AgentInterface) -> str:
+    async def integrate(self, query: str, constructed_knowledge: dict[str, Any], final_plan: dict[str, Any], retrieval_history: list[dict[str, Any]], agent: AgentInterface) -> str:
         prompt = f"""
         Cognitive Integration Task:
 
@@ -70,11 +71,11 @@ class CognitiveNexus:
         # Implement logic to detect self-referential queries
         return query.strip().upper().startswith("SELF:")
 
-    def _format_plan(self, plan: Dict[str, Any]) -> str:
+    def _format_plan(self, plan: dict[str, Any]) -> str:
         # Convert the plan dictionary into a formatted string
         return "\n".join([f"- {key}: {value}" for key, value in plan.items()])
 
-    def _format_knowledge(self, knowledge: Dict[str, Any]) -> str:
+    def _format_knowledge(self, knowledge: dict[str, Any]) -> str:
         # Convert the constructed knowledge into a formatted string
         formatted = []
         for key, value in knowledge.items():
@@ -85,13 +86,13 @@ class CognitiveNexus:
                 formatted.append(f"  {value}")
         return "\n".join(formatted)
 
-    def _format_retrieval_history(self, history: List[Dict[str, Any]]) -> str:
+    def _format_retrieval_history(self, history: list[dict[str, Any]]) -> str:
         # Format the retrieval history, showing how the search evolved
         formatted = []
         for i, step in enumerate(history, 1):
             formatted.append(f"Step {i}:")
             formatted.append(f"  Plan: {step['plan']}")
-            formatted.append(f"  Top Results:")
-            for result in step['top_results'][:3]:  # Show top 3 results for brevity
+            formatted.append("  Top Results:")
+            for result in step["top_results"][:3]:  # Show top 3 results for brevity
                 formatted.append(f"    - {result['id']}: {result['title']}")
         return "\n".join(formatted)

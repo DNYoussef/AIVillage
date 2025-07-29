@@ -1,23 +1,20 @@
-"""
-LLM Driver Abstraction for Local Models
+"""LLM Driver Abstraction for Local Models
 
 Supports pluggable local models (7B-14B) like Llama for repair proposals.
 Provides unified interface for different model backends.
 """
 
-from typing import Dict, List, Any, Optional, Union, AsyncIterator
-from dataclasses import dataclass, field
-from enum import Enum
 from abc import ABC, abstractmethod
-import json
-import re
 import asyncio
-import logging
-from pathlib import Path
-import subprocess
-import tempfile
-import time
+from collections.abc import AsyncIterator
+from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
+import json
+import logging
+import re
+import time
+from typing import Any
 
 
 class ModelBackend(Enum):
@@ -35,15 +32,15 @@ class ModelConfig:
     """Configuration for LLM model"""
     model_name: str
     backend: ModelBackend
-    model_path: Optional[str] = None
-    api_endpoint: Optional[str] = None
-    api_key: Optional[str] = None
+    model_path: str | None = None
+    api_endpoint: str | None = None
+    api_key: str | None = None
 
     # Generation parameters
     max_tokens: int = 2048
     temperature: float = 0.1
     top_p: float = 0.9
-    stop_sequences: List[str] = field(default_factory=lambda: ["\n\n", "###"])
+    stop_sequences: list[str] = field(default_factory=lambda: ["\n\n", "###"])
 
     # Model-specific parameters
     context_length: int = 4096
@@ -58,7 +55,7 @@ class ModelConfig:
     requests_per_minute: int = 60
     max_concurrent_requests: int = 3
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary"""
         return {
             "model_name": self.model_name,
@@ -78,13 +75,13 @@ class ModelConfig:
 class GenerationRequest:
     """Request for LLM generation"""
     prompt: str
-    system_prompt: Optional[str] = None
-    max_tokens: Optional[int] = None
-    temperature: Optional[float] = None
-    stop_sequences: Optional[List[str]] = None
+    system_prompt: str | None = None
+    max_tokens: int | None = None
+    temperature: float | None = None
+    stop_sequences: list[str] | None = None
     stream: bool = False
 
-    def merge_with_config(self, config: ModelConfig) -> Dict[str, Any]:
+    def merge_with_config(self, config: ModelConfig) -> dict[str, Any]:
         """Merge request parameters with model config"""
         return {
             "prompt": self.prompt,
@@ -102,15 +99,15 @@ class GenerationResponse:
     """Response from LLM generation"""
     text: str
     finish_reason: str
-    usage: Dict[str, int]
+    usage: dict[str, int]
     model: str
     latency_ms: float
 
     # Confidence and quality metrics
-    confidence_score: Optional[float] = None
-    quality_score: Optional[float] = None
+    confidence_score: float | None = None
+    quality_score: float | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert response to dictionary"""
         return {
             "text": self.text,
@@ -133,22 +130,18 @@ class LLMBackend(ABC):
     @abstractmethod
     async def generate(self, request: GenerationRequest) -> GenerationResponse:
         """Generate text from prompt"""
-        pass
 
     @abstractmethod
     async def generate_stream(self, request: GenerationRequest) -> AsyncIterator[str]:
         """Generate text with streaming"""
-        pass
 
     @abstractmethod
     async def is_available(self) -> bool:
         """Check if backend is available and functional"""
-        pass
 
     @abstractmethod
-    async def get_model_info(self) -> Dict[str, Any]:
+    async def get_model_info(self) -> dict[str, Any]:
         """Get information about the loaded model"""
-        pass
 
 
 class OllamaBackend(LLMBackend):
@@ -238,10 +231,10 @@ class OllamaBackend(LLMBackend):
                     async for line in response.content:
                         if line:
                             try:
-                                chunk = json.loads(line.decode('utf-8'))
-                                if 'response' in chunk:
-                                    yield chunk['response']
-                                if chunk.get('done', False):
+                                chunk = json.loads(line.decode("utf-8"))
+                                if "response" in chunk:
+                                    yield chunk["response"]
+                                if chunk.get("done", False):
                                     break
                             except json.JSONDecodeError:
                                 continue
@@ -266,7 +259,7 @@ class OllamaBackend(LLMBackend):
         except:
             return False
 
-    async def get_model_info(self) -> Dict[str, Any]:
+    async def get_model_info(self) -> dict[str, Any]:
         """Get Ollama model information"""
         import aiohttp
 
@@ -373,14 +366,14 @@ class LMStudioBackend(LLMBackend):
 
                     async for line in response.content:
                         if line:
-                            line_str = line.decode('utf-8').strip()
+                            line_str = line.decode("utf-8").strip()
                             if line_str.startswith("data: "):
                                 data_str = line_str[6:]
                                 if data_str == "[DONE]":
                                     break
                                 try:
                                     chunk = json.loads(data_str)
-                                    if "choices" in chunk and chunk["choices"]:
+                                    if chunk.get("choices"):
                                         delta = chunk["choices"][0].get("delta", {})
                                         if "content" in delta:
                                             yield delta["content"]
@@ -406,7 +399,7 @@ class LMStudioBackend(LLMBackend):
         except:
             return False
 
-    async def get_model_info(self) -> Dict[str, Any]:
+    async def get_model_info(self) -> dict[str, Any]:
         """Get LM Studio model information"""
         import aiohttp
 
@@ -432,8 +425,8 @@ class HuggingFaceBackend(LLMBackend):
         """Load model and tokenizer"""
         if self.model is None:
             try:
-                from transformers import AutoModelForCausalLM, AutoTokenizer
                 import torch
+                from transformers import AutoModelForCausalLM, AutoTokenizer
 
                 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -469,7 +462,7 @@ class HuggingFaceBackend(LLMBackend):
 
         # Tokenize
         inputs = self.tokenizer.encode(full_prompt, return_tensors="pt")
-        if hasattr(self.model, 'device'):
+        if hasattr(self.model, "device"):
             inputs = inputs.to(self.model.device)
 
         # Generate
@@ -514,20 +507,20 @@ class HuggingFaceBackend(LLMBackend):
     async def is_available(self) -> bool:
         """Check if HuggingFace backend is available"""
         try:
-            import transformers
             import torch
+            import transformers
             return True
         except ImportError:
             return False
 
-    async def get_model_info(self) -> Dict[str, Any]:
+    async def get_model_info(self) -> dict[str, Any]:
         """Get HuggingFace model information"""
         await self._load_model()
         return {
             "model_name": self.config.model_name,
             "model_type": type(self.model).__name__,
             "parameters": sum(p.numel() for p in self.model.parameters()),
-            "device": str(self.model.device) if hasattr(self.model, 'device') else "unknown"
+            "device": str(self.model.device) if hasattr(self.model, "device") else "unknown"
         }
 
 
@@ -535,8 +528,7 @@ class LLMDriver:
     """Main driver class for LLM operations"""
 
     def __init__(self, config: ModelConfig):
-        """
-        Initialize LLM driver with configuration
+        """Initialize LLM driver with configuration
 
         Args:
             config: Model configuration
@@ -554,12 +546,11 @@ class LLMDriver:
         """Create appropriate backend based on config"""
         if self.config.backend == ModelBackend.OLLAMA:
             return OllamaBackend(self.config)
-        elif self.config.backend == ModelBackend.LMSTUDIO:
+        if self.config.backend == ModelBackend.LMSTUDIO:
             return LMStudioBackend(self.config)
-        elif self.config.backend == ModelBackend.HUGGINGFACE:
+        if self.config.backend == ModelBackend.HUGGINGFACE:
             return HuggingFaceBackend(self.config)
-        else:
-            raise ValueError(f"Unsupported backend: {self.config.backend}")
+        raise ValueError(f"Unsupported backend: {self.config.backend}")
 
     async def _check_rate_limit(self):
         """Check and enforce rate limiting"""
@@ -583,7 +574,7 @@ class LLMDriver:
         # Record this request
         self._request_times.append(now)
 
-    def _log_request(self, prompt: str, system_prompt: Optional[str], response: GenerationResponse):
+    def _log_request(self, prompt: str, system_prompt: str | None, response: GenerationResponse):
         """Log request for audit trail"""
         log_entry = {
             "timestamp": datetime.now().isoformat(),
@@ -602,9 +593,8 @@ class LLMDriver:
         if len(self._audit_log) > 1000:
             self._audit_log = self._audit_log[-500:]
 
-    async def generate(self, prompt: str, system_prompt: Optional[str] = None, **kwargs) -> GenerationResponse:
-        """
-        Generate text from prompt with rate limiting and audit logging
+    async def generate(self, prompt: str, system_prompt: str | None = None, **kwargs) -> GenerationResponse:
+        """Generate text from prompt with rate limiting and audit logging
 
         Args:
             prompt: Input prompt
@@ -637,15 +627,13 @@ class LLMDriver:
                     if attempt == self.config.retry_attempts - 1:
                         self.logger.error(f"Generation failed after {self.config.retry_attempts} attempts: {e}")
                         raise
-                    else:
-                        self.logger.warning(f"Generation attempt {attempt + 1} failed: {e}, retrying...")
-                        await asyncio.sleep(1)
+                    self.logger.warning(f"Generation attempt {attempt + 1} failed: {e}, retrying...")
+                    await asyncio.sleep(1)
         finally:
             self._concurrent_requests -= 1
 
-    async def generate_stream(self, prompt: str, system_prompt: Optional[str] = None, **kwargs) -> AsyncIterator[str]:
-        """
-        Generate text with streaming
+    async def generate_stream(self, prompt: str, system_prompt: str | None = None, **kwargs) -> AsyncIterator[str]:
+        """Generate text with streaming
 
         Args:
             prompt: Input prompt
@@ -669,15 +657,14 @@ class LLMDriver:
         """Check if the LLM driver is ready for generation"""
         return await self.backend.is_available()
 
-    async def get_model_info(self) -> Dict[str, Any]:
+    async def get_model_info(self) -> dict[str, Any]:
         """Get information about the loaded model"""
         info = await self.backend.get_model_info()
         info["config"] = self.config.to_dict()
         return info
 
-    def parse_confidence_from_response(self, response_text: str) -> Optional[float]:
-        """
-        Parse confidence score from model response
+    def parse_confidence_from_response(self, response_text: str) -> float | None:
+        """Parse confidence score from model response
 
         Args:
             response_text: Generated text
@@ -690,8 +677,8 @@ class LLMDriver:
             r'confidence["\s]*:?\s*([0-9.]+)',
             r'confidence_score["\s]*:?\s*([0-9.]+)',
             r'"confidence"\s*:\s*([0-9.]+)',
-            r'I am (\d+(?:\.\d+)?)% confident',
-            r'confidence level:?\s*([0-9.]+)'
+            r"I am (\d+(?:\.\d+)?)% confident",
+            r"confidence level:?\s*([0-9.]+)"
         ]
 
         for pattern in confidence_patterns:
@@ -708,11 +695,11 @@ class LLMDriver:
 
         return None
 
-    def get_audit_log(self) -> List[Dict[str, Any]]:
+    def get_audit_log(self) -> list[dict[str, Any]]:
         """Get audit log of recent requests"""
         return self._audit_log.copy()
 
-    def get_usage_stats(self) -> Dict[str, Any]:
+    def get_usage_stats(self) -> dict[str, Any]:
         """Get usage statistics"""
         if not self._audit_log:
             return {"message": "No usage data available"}
@@ -734,8 +721,7 @@ class LLMDriver:
 
     @classmethod
     def create_default_config(cls, model_name: str, backend: ModelBackend = ModelBackend.OLLAMA) -> ModelConfig:
-        """
-        Create default configuration for common models
+        """Create default configuration for common models
 
         Args:
             model_name: Name of the model
@@ -756,8 +742,7 @@ class LLMDriver:
 
     @classmethod
     def create_llama_config(cls, model_size: str = "7b") -> ModelConfig:
-        """
-        Create configuration for Llama models
+        """Create configuration for Llama models
 
         Args:
             model_size: Model size (7b, 13b, 70b)

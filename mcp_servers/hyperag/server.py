@@ -1,5 +1,4 @@
-"""
-HypeRAG MCP Server Core
+"""HypeRAG MCP Server Core
 
 Main server implementation for HypeRAG Model Context Protocol server.
 """
@@ -7,18 +6,23 @@ Main server implementation for HypeRAG Model Context Protocol server.
 import asyncio
 import json
 import logging
+from pathlib import Path
 import signal
 import sys
 import time
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 import websockets
 from websockets.server import WebSocketServerProtocol
 import yaml
 
-from .auth import PermissionManager, AuthContext, AuthenticationError, AuthorizationError
+from .auth import (
+    AuthContext,
+    AuthenticationError,
+    PermissionManager,
+)
 from .models import ModelRegistry
-from .protocol import MCPProtocolHandler, MCPRequest, MCPResponse, MCPError
+from .protocol import MCPProtocolHandler, MCPRequest
 
 logger = logging.getLogger(__name__)
 
@@ -26,16 +30,16 @@ logger = logging.getLogger(__name__)
 class HypeRAGMCPServer:
     """HypeRAG MCP Server implementation"""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         self.config_path = config_path or "config/hyperag_mcp.yaml"
         self.config = {}
-        self.permission_manager: Optional[PermissionManager] = None
-        self.model_registry: Optional[ModelRegistry] = None
-        self.protocol_handler: Optional[MCPProtocolHandler] = None
+        self.permission_manager: PermissionManager | None = None
+        self.model_registry: ModelRegistry | None = None
+        self.protocol_handler: MCPProtocolHandler | None = None
         self.server = None
         self.start_time = time.time()
-        self.active_connections: Dict[str, WebSocketServerProtocol] = {}
-        self.connection_contexts: Dict[str, AuthContext] = {}
+        self.active_connections: dict[str, WebSocketServerProtocol] = {}
+        self.connection_contexts: dict[str, AuthContext] = {}
         self.shutdown_event = asyncio.Event()
 
     async def initialize(self) -> None:
@@ -72,17 +76,17 @@ class HypeRAGMCPServer:
         try:
             config_file = Path(self.config_path)
             if config_file.exists():
-                with open(config_file, 'r') as f:
+                with open(config_file) as f:
                     self.config = yaml.safe_load(f) or {}
                 logger.info(f"Loaded configuration from {self.config_path}")
             else:
                 logger.warning(f"Configuration file {self.config_path} not found, using defaults")
                 self.config = self._get_default_config()
         except Exception as e:
-            logger.error(f"Failed to load configuration: {str(e)}")
+            logger.error(f"Failed to load configuration: {e!s}")
             self.config = self._get_default_config()
 
-    def _get_default_config(self) -> Dict[str, Any]:
+    def _get_default_config(self) -> dict[str, Any]:
         """Get default configuration"""
         return {
             "server": {
@@ -156,7 +160,7 @@ class HypeRAGMCPServer:
         except websockets.exceptions.ConnectionClosed:
             logger.info(f"Connection closed: {connection_id}")
         except Exception as e:
-            logger.error(f"Error handling connection {connection_id}: {str(e)}")
+            logger.error(f"Error handling connection {connection_id}: {e!s}")
         finally:
             # Clean up connection
             if connection_id in self.active_connections:
@@ -168,7 +172,7 @@ class HypeRAGMCPServer:
 
     async def _handle_client_session(self, connection_id: str, websocket: WebSocketServerProtocol) -> None:
         """Handle client session"""
-        context: Optional[AuthContext] = None
+        context: AuthContext | None = None
 
         async for message in websocket:
             try:
@@ -210,10 +214,10 @@ class HypeRAGMCPServer:
             except json.JSONDecodeError:
                 await self._send_error(websocket, "PARSE_ERROR", "Invalid JSON")
             except Exception as e:
-                logger.error(f"Error processing message from {connection_id}: {str(e)}")
-                await self._send_error(websocket, "INTERNAL_ERROR", f"Internal error: {str(e)}")
+                logger.error(f"Error processing message from {connection_id}: {e!s}")
+                await self._send_error(websocket, "INTERNAL_ERROR", f"Internal error: {e!s}")
 
-    async def _authenticate_request(self, params: Dict[str, Any], ip_address: str) -> Optional[AuthContext]:
+    async def _authenticate_request(self, params: dict[str, Any], ip_address: str) -> AuthContext | None:
         """Authenticate a request"""
         try:
             # Check for JWT token
@@ -230,7 +234,7 @@ class HypeRAGMCPServer:
             return None
 
         except AuthenticationError as e:
-            logger.warning(f"Authentication failed from {ip_address}: {str(e)}")
+            logger.warning(f"Authentication failed from {ip_address}: {e!s}")
             return None
 
     async def _send_error(
@@ -238,7 +242,7 @@ class HypeRAGMCPServer:
         websocket: WebSocketServerProtocol,
         code: str,
         message: str,
-        request_id: Optional[str] = None
+        request_id: str | None = None
     ) -> None:
         """Send error response"""
         error_response = {
@@ -262,7 +266,7 @@ class HypeRAGMCPServer:
                 try:
                     await websocket.close()
                 except Exception as e:
-                    logger.warning(f"Error closing connection {connection_id}: {str(e)}")
+                    logger.warning(f"Error closing connection {connection_id}: {e!s}")
 
         # Stop the server
         if self.server:
@@ -278,7 +282,7 @@ class HypeRAGMCPServer:
 
         logger.info("HypeRAG MCP Server shutdown complete")
 
-    async def get_server_stats(self) -> Dict[str, Any]:
+    async def get_server_stats(self) -> dict[str, Any]:
         """Get server statistics"""
         active_sessions = await self.permission_manager.get_active_sessions() if self.permission_manager else []
         model_stats = self.model_registry.get_model_stats() if self.model_registry else {}
@@ -313,7 +317,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt")
     except Exception as e:
-        logger.error(f"Server error: {str(e)}")
+        logger.error(f"Server error: {e!s}")
     finally:
         await server.shutdown()
 

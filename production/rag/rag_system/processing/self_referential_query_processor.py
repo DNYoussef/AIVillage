@@ -1,13 +1,13 @@
 # rag_system/processing/self_referential_query_processor.py
 
-from typing import Dict, Any, List
 from ..core.pipeline import EnhancedRAGPipeline
+
 
 class SelfReferentialQueryProcessor:
     def __init__(self, rag_system: EnhancedRAGPipeline, history_limit: int = 100):
         self.rag_system = rag_system
         # Keep an in-memory list of processed queries
-        self.query_history: List[str] = []
+        self.query_history: list[str] = []
         self.history_limit = history_limit
 
     async def process_self_query(self, query: str) -> str:
@@ -19,22 +19,20 @@ class SelfReferentialQueryProcessor:
 
         if query.startswith("SELF:"):
             return await self._process_internal_query(query[5:])
-        else:
-            return await self.rag_system.process(query)
+        return await self.rag_system.process(query)
 
     async def _process_internal_query(self, query: str) -> str:
         # Implement logic to query system's internal state, knowledge, or history
         if query.startswith("STATUS"):
             return await self._get_system_status()
-        elif query.startswith("KNOWLEDGE"):
+        if query.startswith("KNOWLEDGE"):
             return await self._get_knowledge_summary()
-        elif query.startswith("HISTORY"):
+        if query.startswith("HISTORY"):
             # Parse optional limit, e.g., "HISTORY 5"
             parts = query.split()
             limit = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 5
             return await self._get_query_history(limit)
-        else:
-            return f"Unknown self-referential query: {query}"
+        return f"Unknown self-referential query: {query}"
 
     async def _get_system_status(self) -> str:
         # Implement logic to return system status

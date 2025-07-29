@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Scaled Magi Specialization - 10,000 Questions
+"""Scaled Magi Specialization - 10,000 Questions
 
 Scale the proven 300-question Magi specialization to full 10,000 questions
 using the exact pipeline that achieved 0.774 specialization score.
@@ -14,25 +13,27 @@ This builds directly on the validated implementation with all advanced features:
 """
 
 import asyncio
-import logging
-import sys
-import os
-import json
-import time
-from pathlib import Path
 from datetime import datetime
+import json
+import logging
+from pathlib import Path
+import sys
+import time
 
 # Add project to path
-sys.path.append('.')
+sys.path.append(".")
 
 from agent_forge.memory_manager import memory_manager
-from agent_forge.wandb_manager import init_wandb, log_metrics, finish_wandb
-from agent_forge.training.magi_specialization import MagiConfig, MagiSpecializationPipeline
+from agent_forge.training.magi_specialization import (
+    MagiConfig,
+    MagiSpecializationPipeline,
+)
+from agent_forge.wandb_manager import finish_wandb, init_wandb, log_metrics
 
 # Configure logging for scaled run
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler(f'D:/AgentForge/scaled_magi_10k_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
         logging.StreamHandler()
@@ -53,8 +54,8 @@ class ScaledMagiRunner:
         logger.info("AGENT FORGE - SCALED MAGI SPECIALIZATION (10,000 QUESTIONS)")
         logger.info("=" * 80)
         logger.info(f"Run ID: {self.run_id}")
-        logger.info(f"Scaling from proven 300-question success to 10,000 questions")
-        logger.info(f"Expected duration: ~6.3 minutes (33x scale-up)")
+        logger.info("Scaling from proven 300-question success to 10,000 questions")
+        logger.info("Expected duration: ~6.3 minutes (33x scale-up)")
         logger.info(f"Memory Available: {memory_manager.get_memory_stats()['system_ram_available_gb']:.2f} GB")
 
     def initialize_wandb_tracking(self):
@@ -77,7 +78,7 @@ class ScaledMagiRunner:
                 "geometric_awareness": True,
                 "self_modification": True,
                 "sleep_cycles": True,
-                "memory_available_gb": memory_manager.get_memory_stats()['system_ram_available_gb'],
+                "memory_available_gb": memory_manager.get_memory_stats()["system_ram_available_gb"],
                 "cpu_only": True
             }
         )
@@ -100,7 +101,7 @@ class ScaledMagiRunner:
         # Load the best evolved model from successful run
         evolution_results_path = Path("D:/AgentForge/historic_real_run_20250726_030005/evolution_50gen_results.json")
         if evolution_results_path.exists():
-            with open(evolution_results_path, 'r') as f:
+            with open(evolution_results_path) as f:
                 evolution_data = json.load(f)
 
             best_config = evolution_data["evolution_summary"]["best_configuration"]
@@ -185,13 +186,13 @@ class ScaledMagiRunner:
             # Execute the complete specialization
             results = await pipeline.run_magi_specialization()
 
-            if results and 'final_evaluation' in results:
+            if results and "final_evaluation" in results:
                 logger.info("SCALED MAGI SPECIALIZATION COMPLETED SUCCESSFULLY!")
 
-                final_eval = results['final_evaluation']
-                overall_accuracy = final_eval.get('overall_accuracy', 0)
+                final_eval = results["final_evaluation"]
+                overall_accuracy = final_eval.get("overall_accuracy", 0)
 
-                logger.info(f"Scaled Results:")
+                logger.info("Scaled Results:")
                 logger.info(f"  Overall Accuracy: {overall_accuracy:.3f}")
                 logger.info(f"  Deployment Ready: {final_eval.get('ready_for_deployment', False)}")
                 logger.info(f"  Area Results: {final_eval.get('area_results', {})}")
@@ -200,14 +201,13 @@ class ScaledMagiRunner:
                 log_metrics({
                     "scaled_magi_completed": 1,
                     "final_overall_accuracy": overall_accuracy,
-                    "deployment_ready": final_eval.get('ready_for_deployment', False),
+                    "deployment_ready": final_eval.get("ready_for_deployment", False),
                     "baseline_improvement": overall_accuracy - 0.774  # vs proven baseline
                 })
 
                 return results
-            else:
-                logger.error("Scaled specialization completed but returned incomplete results")
-                return None
+            logger.error("Scaled specialization completed but returned incomplete results")
+            return None
 
         except Exception as e:
             logger.error(f"Scaled Magi specialization failed: {e}")
@@ -235,8 +235,8 @@ async def main():
             logger.info("SCALED MAGI SPECIALIZATION SUCCESS!")
             logger.info("=" * 80)
             logger.info(f"Duration: {duration/60:.1f} minutes ({duration:.1f} seconds)")
-            logger.info(f"Questions Processed: 10,000")
-            logger.info(f"Scale Factor: 33.33x from proven baseline")
+            logger.info("Questions Processed: 10,000")
+            logger.info("Scale Factor: 33.33x from proven baseline")
             logger.info(f"Output Saved: {runner.output_dir}")
 
             # Final W&B logging
@@ -261,13 +261,12 @@ async def main():
             }
 
             results_file = runner.output_dir / "scaled_magi_results.json"
-            with open(results_file, 'w') as f:
+            with open(results_file, "w") as f:
                 json.dump(scaling_results, f, indent=2, default=str)
 
             return results
-        else:
-            logger.error("Scaled Magi specialization failed")
-            return None
+        logger.error("Scaled Magi specialization failed")
+        return None
 
     except Exception as e:
         logger.error(f"Scaled execution failed: {e}")

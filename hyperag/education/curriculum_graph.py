@@ -1,22 +1,19 @@
-"""
-Hypergraph-based Curriculum Graph Implementation
+"""Hypergraph-based Curriculum Graph Implementation
 Sprint R-4+AF1: Education Core System - Task A.1
 """
 
-import wandb
 import asyncio
-import json
-import hashlib
-from typing import Dict, List, Optional, Set, Tuple, Any
-from datetime import datetime, timezone
 from collections import defaultdict, deque
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
+from datetime import datetime, timezone
+import hashlib
 import logging
-import math
+from typing import Any
+
+import wandb
 
 # Import from hyperag components
-from ..core.hypergraph_kg import HypergraphKG, Hyperedge, Node
-from ..core.knowledge_graph import Entity, Relation
+from ..core.hypergraph_kg import Hyperedge, HypergraphKG, Node
 
 logger = logging.getLogger(__name__)
 
@@ -29,13 +26,13 @@ class ConceptNode:
     subject: str
     grade: int
     difficulty_level: float
-    content: Dict[str, str]  # language -> content
-    learning_objectives: List[str]
-    assessment_criteria: List[str]
+    content: dict[str, str]  # language -> content
+    learning_objectives: list[str]
+    assessment_criteria: list[str]
     estimated_time_minutes: int
-    prerequisites: List[str]
-    follow_up_concepts: List[str]
-    cultural_adaptations: Dict[str, Any]  # region -> adaptations
+    prerequisites: list[str]
+    follow_up_concepts: list[str]
+    cultural_adaptations: dict[str, Any]  # region -> adaptations
     created_at: str = ""
     updated_at: str = ""
 
@@ -46,10 +43,10 @@ class LearningPath:
     path_id: str
     name: str
     subject: str
-    grade_range: Tuple[int, int]
-    concepts: List[str]  # concept_ids in order
+    grade_range: tuple[int, int]
+    concepts: list[str]  # concept_ids in order
     estimated_duration_hours: float
-    difficulty_progression: List[float]
+    difficulty_progression: list[float]
     cultural_region: str
     language: str
     completion_rate: float = 0.0
@@ -81,7 +78,6 @@ class CurriculumGraph:
 
     def initialize_wandb_tracking(self):
         """Initialize W&B tracking for curriculum development"""
-
         try:
             wandb.init(
                 project=self.project_name,
@@ -102,7 +98,6 @@ class CurriculumGraph:
 
     async def initialize_base_curriculum(self):
         """Initialize base K-8 curriculum across subjects"""
-
         # Mathematics curriculum (K-8)
         await self.build_mathematics_curriculum()
 
@@ -127,13 +122,12 @@ class CurriculumGraph:
                          subject: str,
                          grade: int,
                          concept: str,
-                         prerequisites: List[str],
-                         content: Dict[str, str],
-                         learning_objectives: List[str] = None,
-                         cultural_adaptations: Dict[str, Any] = None,
+                         prerequisites: list[str],
+                         content: dict[str, str],
+                         learning_objectives: list[str] = None,
+                         cultural_adaptations: dict[str, Any] = None,
                          estimated_time: int = 30) -> str:
         """Add educational concept with multi-language content and cultural adaptations"""
-
         concept_id = self.generate_concept_id(subject, grade, concept)
 
         # Create concept node
@@ -196,8 +190,8 @@ class CurriculumGraph:
         # Log to W&B for curriculum coverage tracking
         wandb.log({
             f"curriculum/{subject}/grade_{grade}_concepts": len([c for c in self.concepts.values() if c.subject == subject and c.grade == grade]),
-            f"curriculum/total_concepts": len(self.concepts),
-            f"curriculum/languages_covered": len(set().union(*[c.content.keys() for c in self.concepts.values()])),
+            "curriculum/total_concepts": len(self.concepts),
+            "curriculum/languages_covered": len(set().union(*[c.content.keys() for c in self.concepts.values()])),
             "concept_added": True,
             "concept_id": concept_id,
             "timestamp": datetime.now(timezone.utc).isoformat()
@@ -209,14 +203,12 @@ class CurriculumGraph:
 
     def generate_concept_id(self, subject: str, grade: int, concept: str) -> str:
         """Generate unique concept ID"""
-
         # Create deterministic ID based on content
         content_hash = hashlib.md5(f"{subject}_{grade}_{concept}".encode()).hexdigest()[:8]
         return f"{subject.lower()}_{grade}_{content_hash}"
 
-    def estimate_difficulty(self, prerequisites: List[str], grade: int) -> float:
+    def estimate_difficulty(self, prerequisites: list[str], grade: int) -> float:
         """Estimate concept difficulty based on prerequisites and grade level"""
-
         base_difficulty = grade / 8.0  # Normalize grade to 0-1
 
         # Add complexity based on prerequisites
@@ -235,9 +227,8 @@ class CurriculumGraph:
 
         return total_difficulty
 
-    def generate_assessment_criteria(self, concept: str, grade: int) -> List[str]:
+    def generate_assessment_criteria(self, concept: str, grade: int) -> list[str]:
         """Generate assessment criteria based on concept and grade level"""
-
         base_criteria = [
             f"Student can explain {concept} in their own words",
             f"Student can identify examples of {concept}",
@@ -266,7 +257,6 @@ class CurriculumGraph:
 
     async def build_mathematics_curriculum(self):
         """Build comprehensive K-8 mathematics curriculum"""
-
         # Kindergarten Mathematics
         k_concepts = [
             ("Counting to 10", [], {"en": "Learn to count from 1 to 10", "es": "Aprende a contar del 1 al 10"}),
@@ -308,7 +298,6 @@ class CurriculumGraph:
 
     async def build_advanced_math_concepts(self):
         """Build Grade 3-8 mathematics concepts"""
-
         # Grade 3 Mathematics
         grade3_concepts = [
             ("Multiplication Tables", ["Introduction to Multiplication"], {"en": "Memorize multiplication facts 0-12", "es": "Memorizar tablas de multiplicar 0-12"}),
@@ -383,7 +372,6 @@ class CurriculumGraph:
 
     async def build_science_curriculum(self):
         """Build K-8 science curriculum with NGSS alignment"""
-
         # Physical Science concepts
         physical_science_concepts = [
             (0, "Properties of Objects", [], {"en": "Objects have properties", "es": "Los objetos tienen propiedades"}),
@@ -434,7 +422,6 @@ class CurriculumGraph:
 
     async def build_language_arts_curriculum(self):
         """Build K-8 language arts curriculum"""
-
         # Reading concepts
         reading_concepts = [
             (0, "Letter Recognition", [], {"en": "Recognize all letters", "es": "Reconocer todas las letras"}),
@@ -472,7 +459,6 @@ class CurriculumGraph:
 
     async def build_social_studies_curriculum(self):
         """Build K-8 social studies curriculum"""
-
         # History and culture concepts
         history_concepts = [
             (0, "Family History", [], {"en": "Learn about family traditions", "es": "Aprender sobre tradiciones familiares"}),
@@ -507,7 +493,6 @@ class CurriculumGraph:
 
     async def create_cross_curricular_connections(self):
         """Create connections between subjects"""
-
         # Math-Science connections
         math_science_connections = [
             ("Data and Graphs", "Weather Patterns", "graphing_weather_data"),
@@ -533,7 +518,6 @@ class CurriculumGraph:
 
     async def create_concept_connection(self, concept1_name: str, concept2_name: str, connection_type: str):
         """Create hyperedge connecting concepts across subjects"""
-
         # Find concept IDs
         concept1_id = None
         concept2_id = None
@@ -560,7 +544,6 @@ class CurriculumGraph:
 
     async def generate_adaptive_learning_paths(self):
         """Generate adaptive learning paths for different learner profiles"""
-
         subjects = ["mathematics", "science", "language_arts", "social_studies"]
 
         for subject in subjects:
@@ -596,12 +579,11 @@ class CurriculumGraph:
 
     async def create_learning_path(self,
                                  subject: str,
-                                 grade_range: Tuple[int, int],
+                                 grade_range: tuple[int, int],
                                  difficulty_preference: str,
                                  cultural_region: str,
                                  language: str) -> str:
         """Create optimized learning path for specific parameters"""
-
         # Get concepts for grade range and subject
         relevant_concepts = [
             concept for concept in self.concepts.values()
@@ -655,9 +637,8 @@ class CurriculumGraph:
 
         return path_id
 
-    async def topological_sort_concepts(self, concepts: List[ConceptNode]) -> List[ConceptNode]:
+    async def topological_sort_concepts(self, concepts: list[ConceptNode]) -> list[ConceptNode]:
         """Sort concepts by dependency order"""
-
         # Create concept lookup
         concept_lookup = {concept.concept_id: concept for concept in concepts}
 
@@ -689,30 +670,29 @@ class CurriculumGraph:
 
         return result
 
-    async def get_concept_by_id(self, concept_id: str) -> Optional[ConceptNode]:
+    async def get_concept_by_id(self, concept_id: str) -> ConceptNode | None:
         """Retrieve concept by ID"""
         return self.concepts.get(concept_id)
 
-    async def get_concepts_by_subject_grade(self, subject: str, grade: int) -> List[ConceptNode]:
+    async def get_concepts_by_subject_grade(self, subject: str, grade: int) -> list[ConceptNode]:
         """Get all concepts for a subject and grade"""
         return [
             concept for concept in self.concepts.values()
             if concept.subject == subject and concept.grade == grade
         ]
 
-    async def get_learning_path(self, path_id: str) -> Optional[LearningPath]:
+    async def get_learning_path(self, path_id: str) -> LearningPath | None:
         """Retrieve learning path by ID"""
         return self.learning_paths.get(path_id)
 
     async def find_optimal_learning_path(self,
                                        subject: str,
                                        current_grade: int,
-                                       mastered_concepts: List[str],
+                                       mastered_concepts: list[str],
                                        learning_style: str,
                                        cultural_region: str,
-                                       language: str) -> Optional[LearningPath]:
+                                       language: str) -> LearningPath | None:
         """Find optimal learning path based on student profile"""
-
         # Filter paths by criteria
         candidate_paths = []
 
@@ -749,10 +729,9 @@ class CurriculumGraph:
 
     async def calculate_path_suitability(self,
                                        path: LearningPath,
-                                       mastered_concepts: List[str],
+                                       mastered_concepts: list[str],
                                        learning_style: str) -> float:
         """Calculate how suitable a learning path is for a student"""
-
         score = 0.0
 
         # Check prerequisite mastery
@@ -800,9 +779,8 @@ class CurriculumGraph:
 
         return score
 
-    async def get_curriculum_statistics(self) -> Dict[str, Any]:
+    async def get_curriculum_statistics(self) -> dict[str, Any]:
         """Get comprehensive curriculum statistics"""
-
         stats = {
             "total_concepts": len(self.concepts),
             "subjects": {},

@@ -2,6 +2,12 @@
 Provides essential components for error handling, communication, and utilities.
 """
 
+from .communication import (
+    AgentCommunicationProtocol,
+    AgentMessage,
+    AgentMessageType,
+    Priority,
+)
 from .error_handling import (
     AIVillageError,
     AIVillageException,
@@ -22,13 +28,6 @@ from .error_handling import (
     migrate_from_legacy_exception,
     safe_execute,
     with_error_handling,
-)
-
-from .communication import (
-    AgentMessage,
-    AgentMessageType,
-    AgentCommunicationProtocol,
-    Priority,
 )
 
 __all__ = [

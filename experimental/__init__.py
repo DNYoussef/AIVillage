@@ -4,9 +4,9 @@ These components are under active development and APIs may change without notice
 """
 import warnings
 
+
 class ExperimentalWarning(UserWarning):
     """Warning for experimental features."""
-    pass
 
 def warn_experimental(feature_name):
     """Issue experimental warning."""

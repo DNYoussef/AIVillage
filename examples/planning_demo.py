@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
-"""
-HypeRAG Planning Engine Demo
+"""HypeRAG Planning Engine Demo
 
 Demonstrates the strategic query planning system with various query types
 and reasoning strategies.
 """
 
 import asyncio
-import json
 import logging
-import sys
 from pathlib import Path
+import sys
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from mcp_servers.hyperag.planning import (
-    QueryPlanner, QueryClassifier, StrategySelector,
-    QueryPlan, QueryType, ReasoningStrategy, RetrievalConstraints
+    QueryClassifier,
+    QueryPlan,
+    QueryPlanner,
+    QueryType,
+    ReasoningStrategy,
+    RetrievalConstraints,
+    StrategySelector,
 )
 from mcp_servers.hyperag.planning.query_planner import AgentReasoningModel
 
@@ -100,7 +103,7 @@ async def demo_strategic_planning():
         try:
             plan = await planner.create_plan(complex_query, agent)
 
-            print(f"   ✅ Plan Created:")
+            print("   ✅ Plan Created:")
             print(f"      Strategy: {plan.reasoning_strategy.value}")
             print(f"      Steps: {len(plan.execution_steps)}")
             print(f"      Complexity: {plan.complexity_score:.3f}")
@@ -193,7 +196,7 @@ async def demo_plan_dsl():
     print("\n\n📄 Plan DSL Demo")
     print("=" * 50)
 
-    from mcp_servers.hyperag.planning.plan_structures import PlanDSL, ExecutionStep
+    from mcp_servers.hyperag.planning.plan_structures import ExecutionStep, PlanDSL
 
     # Create a sample plan
     plan = QueryPlan(
@@ -251,8 +254,8 @@ async def demo_learning_system():
     print("\n\n🧠 Learning System Demo")
     print("=" * 50)
 
+
     from mcp_servers.hyperag.planning.learning import PlanLearner, StrategyFeedback
-    from datetime import datetime
 
     learner = PlanLearner()
 
@@ -319,13 +322,13 @@ async def demo_learning_system():
 
     # Get learning insights
     insights = learner.get_learning_insights()
-    print(f"\n📊 Learning Statistics:")
+    print("\n📊 Learning Statistics:")
     print(f"   Total Feedback: {insights['learning_stats']['total_feedback_received']}")
     print(f"   Successful Adaptations: {insights['learning_stats']['successful_adaptations']}")
 
-    if insights['top_performing_strategies']:
-        print(f"\n🏆 Top Performing Strategies:")
-        for strategy_info in insights['top_performing_strategies'][:3]:
+    if insights["top_performing_strategies"]:
+        print("\n🏆 Top Performing Strategies:")
+        for strategy_info in insights["top_performing_strategies"][:3]:
             print(f"   {strategy_info['strategy']:20} - "
                   f"Success: {strategy_info['success_rate']:.2f}, "
                   f"Confidence: {strategy_info['avg_confidence']:.2f}")

@@ -1,27 +1,30 @@
-"""
-HypeRAG MCP Protocol Handlers
+"""HypeRAG MCP Protocol Handlers
 
 Implements Model Context Protocol handlers for HypeRAG server operations.
 """
 
-import asyncio
-import json
+from dataclasses import asdict
+from datetime import datetime
 import logging
 import time
+from typing import Any
 import uuid
-from dataclasses import asdict
-from typing import Any, Dict, List, Optional, Union
-from datetime import datetime
 
-from .auth import AuthContext, PermissionManager, HypeRAGPermissions, require_permission, audit_operation
-from .models import ModelRegistry, QueryPlan, KnowledgeGraph, ReasoningResult, Node
+from .auth import (
+    AuthContext,
+    HypeRAGPermissions,
+    PermissionManager,
+    audit_operation,
+    require_permission,
+)
+from .models import ModelRegistry, Node
 
 logger = logging.getLogger(__name__)
 
 
 class MCPError(Exception):
     """Base class for MCP protocol errors"""
-    def __init__(self, code: str, message: str, data: Optional[Dict[str, Any]] = None):
+    def __init__(self, code: str, message: str, data: dict[str, Any] | None = None):
         self.code = code
         self.message = message
         self.data = data or {}
@@ -60,7 +63,7 @@ class InternalError(MCPError):
 
 class MCPRequest:
     """MCP request wrapper"""
-    def __init__(self, method: str, params: Dict[str, Any], request_id: str = None):
+    def __init__(self, method: str, params: dict[str, Any], request_id: str = None):
         self.method = method
         self.params = params
         self.request_id = request_id or str(uuid.uuid4())
@@ -69,13 +72,13 @@ class MCPRequest:
 
 class MCPResponse:
     """MCP response wrapper"""
-    def __init__(self, result: Any = None, error: Optional[MCPError] = None, request_id: str = None):
+    def __init__(self, result: Any = None, error: MCPError | None = None, request_id: str = None):
         self.result = result
         self.error = error
         self.request_id = request_id
         self.timestamp = datetime.now()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert response to dictionary"""
         response = {
             "jsonrpc": "2.0",
@@ -101,7 +104,7 @@ class MCPProtocolHandler:
         self,
         permission_manager: PermissionManager,
         model_registry: ModelRegistry,
-        storage_backend: Optional[Any] = None
+        storage_backend: Any | None = None
     ):
         self.permission_manager = permission_manager
         self.model_registry = model_registry
@@ -143,7 +146,7 @@ class MCPProtocolHandler:
     async def handle_request(
         self,
         request: MCPRequest,
-        context: Optional[AuthContext] = None
+        context: AuthContext | None = None
     ) -> MCPResponse:
         """Handle an MCP request"""
         try:
@@ -161,12 +164,11 @@ class MCPProtocolHandler:
             start_time = time.time()
             if context:
                 result = await handler(context, **request.params)
+            # Some methods like health check don't require auth
+            elif request.method in ["hyperag/health"]:
+                result = await handler(**request.params)
             else:
-                # Some methods like health check don't require auth
-                if request.method in ["hyperag/health"]:
-                    result = await handler(**request.params)
-                else:
-                    raise AuthenticationRequired()
+                raise AuthenticationRequired
 
             # Add timing metadata
             processing_time = time.time() - start_time
@@ -181,9 +183,9 @@ class MCPProtocolHandler:
             return MCPResponse(error=e, request_id=request.request_id)
 
         except Exception as e:
-            logger.error(f"Unexpected error for {request.method}: {str(e)}")
+            logger.error(f"Unexpected error for {request.method}: {e!s}")
             return MCPResponse(
-                error=InternalError(f"Unexpected error: {str(e)}"),
+                error=InternalError(f"Unexpected error: {e!s}"),
                 request_id=request.request_id
             )
 
@@ -196,10 +198,10 @@ class MCPProtocolHandler:
         context: AuthContext,
         query: str,
         mode: str = "NORMAL",
-        user_id: Optional[str] = None,
-        plan_hints: Optional[Dict[str, Any]] = None,
+        user_id: str | None = None,
+        plan_hints: dict[str, Any] | None = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle standard query request"""
         # Use user_id from context if not specified
         if not user_id:
@@ -276,10 +278,10 @@ class MCPProtocolHandler:
         self,
         context: AuthContext,
         source_concept: str,
-        target_concept: Optional[str] = None,
-        creativity_parameters: Optional[Dict[str, Any]] = None,
+        target_concept: str | None = None,
+        creativity_parameters: dict[str, Any] | None = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle creative/divergent query request"""
         creativity_params = creativity_parameters or {}
 
@@ -315,11 +317,11 @@ class MCPProtocolHandler:
         self,
         context: AuthContext,
         violation_type: str,
-        details: Dict[str, Any],
-        proposed_action: Optional[str] = None,
+        details: dict[str, Any],
+        proposed_action: str | None = None,
         priority: str = "medium",
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle graph repair request"""
         # Mock repair response
         repair_proposals = [
@@ -354,9 +356,9 @@ class MCPProtocolHandler:
         context: AuthContext,
         content: str,
         content_type: str = "text",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle add knowledge request"""
         node_id = str(uuid.uuid4())
 
@@ -374,9 +376,9 @@ class MCPProtocolHandler:
         context: AuthContext,
         query: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle search knowledge request"""
         # Mock search results
         results = [
@@ -401,10 +403,10 @@ class MCPProtocolHandler:
         self,
         context: AuthContext,
         node_id: str,
-        content: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        content: str | None = None,
+        metadata: dict[str, Any] | None = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle update knowledge request"""
         # TODO: Implement actual update
         return {
@@ -420,7 +422,7 @@ class MCPProtocolHandler:
         context: AuthContext,
         node_id: str,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle delete knowledge request"""
         # TODO: Implement actual deletion
         return {
@@ -438,9 +440,9 @@ class MCPProtocolHandler:
         context: AuthContext,
         name: str,
         description: str,
-        domain: Optional[str] = None,
+        domain: str | None = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle adapter upload request"""
         adapter_id = f"adapt_{name}_{int(time.time())}"
 
@@ -463,9 +465,9 @@ class MCPProtocolHandler:
     async def handle_list_adapters(
         self,
         context: AuthContext,
-        domain: Optional[str] = None,
+        domain: str | None = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle list adapters request"""
         # Mock adapter list
         adapters = [
@@ -498,7 +500,7 @@ class MCPProtocolHandler:
         context: AuthContext,
         adapter_id: str,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle activate adapter request"""
         return {
             "adapter_id": adapter_id,
@@ -513,7 +515,7 @@ class MCPProtocolHandler:
         context: AuthContext,
         adapter_id: str,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle deactivate adapter request"""
         return {
             "adapter_id": adapter_id,
@@ -528,11 +530,11 @@ class MCPProtocolHandler:
     async def handle_guardian_validate(
         self,
         context: AuthContext,
-        validation_request: Dict[str, Any],
+        validation_request: dict[str, Any],
         decision: str,
-        conditions: Optional[Dict[str, Any]] = None,
+        conditions: dict[str, Any] | None = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle guardian validation request"""
         validation_id = str(uuid.uuid4())
 
@@ -556,7 +558,7 @@ class MCPProtocolHandler:
         operation_id: str,
         override_reason: str,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle guardian override request"""
         return {
             "operation_id": operation_id,
@@ -567,7 +569,7 @@ class MCPProtocolHandler:
 
     # System operations
 
-    async def handle_health_check(self, **kwargs) -> Dict[str, Any]:
+    async def handle_health_check(self, **kwargs) -> dict[str, Any]:
         """Handle health check request (no auth required)"""
         return {
             "status": "healthy",
@@ -586,7 +588,7 @@ class MCPProtocolHandler:
         self,
         context: AuthContext,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle metrics request"""
         model_stats = self.model_registry.get_model_stats()
 
@@ -595,7 +597,7 @@ class MCPProtocolHandler:
             "models": model_stats,
             "active_sessions": len(await self.permission_manager.get_active_sessions()),
             "system_info": {
-                "uptime_seconds": time.time() - getattr(self, 'start_time', time.time())
+                "uptime_seconds": time.time() - getattr(self, "start_time", time.time())
             }
         }
 
@@ -604,10 +606,10 @@ class MCPProtocolHandler:
     async def handle_audit_log(
         self,
         context: AuthContext,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         limit: int = 100,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle audit log request"""
         entries = await self.permission_manager.get_audit_log(user_id, limit)
 
@@ -624,9 +626,9 @@ class MCPProtocolHandler:
         self,
         context: AuthContext,
         agent_id: str,
-        model_config: Dict[str, Any],
+        model_config: dict[str, Any],
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle model registration request"""
         # TODO: Implement actual model registration
         return {
@@ -640,9 +642,9 @@ class MCPProtocolHandler:
     async def handle_model_stats(
         self,
         context: AuthContext,
-        agent_id: Optional[str] = None,
+        agent_id: str | None = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handle model statistics request"""
         stats = self.model_registry.get_model_stats()
 

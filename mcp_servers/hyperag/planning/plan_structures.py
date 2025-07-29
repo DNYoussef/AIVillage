@@ -1,14 +1,13 @@
-"""
-Planning Data Structures
+"""Planning Data Structures
 
 Core data structures for representing query plans, execution steps, and checkpoints.
 """
 
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any
+import uuid
 
 import numpy as np
 
@@ -55,7 +54,7 @@ class RetrievalConstraints:
     time_budget_ms: int = 5000               # Time budget for execution
     include_explanations: bool = True        # Include reasoning explanations
     prefer_recent: bool = False              # Prefer recent information
-    domain_filter: Optional[str] = None      # Domain-specific filtering
+    domain_filter: str | None = None      # Domain-specific filtering
     exclude_uncertainty: bool = False        # Exclude uncertain information
 
 
@@ -67,8 +66,8 @@ class ExecutionStep:
     step_type: str = ""                      # Type of operation (retrieve, reason, verify)
     description: str = ""                    # Human-readable description
     operation: str = ""                      # Specific operation to perform
-    parameters: Dict[str, Any] = field(default_factory=dict)
-    dependencies: List[str] = field(default_factory=list)  # Step IDs this depends on
+    parameters: dict[str, Any] = field(default_factory=dict)
+    dependencies: list[str] = field(default_factory=list)  # Step IDs this depends on
     expected_output: str = ""                # Expected output description
     confidence_threshold: float = 0.7        # Required confidence for success
     timeout_ms: int = 1000                   # Step timeout
@@ -76,14 +75,14 @@ class ExecutionStep:
     status: ExecutionStatus = ExecutionStatus.PENDING
 
     # Execution results
-    actual_output: Optional[Any] = None
+    actual_output: Any | None = None
     confidence_score: float = 0.0
     execution_time_ms: float = 0.0
-    error_message: Optional[str] = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    error_message: str | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
 
-    def is_ready_to_execute(self, completed_steps: Set[str]) -> bool:
+    def is_ready_to_execute(self, completed_steps: set[str]) -> bool:
         """Check if all dependencies are satisfied"""
         return all(dep_id in completed_steps for dep_id in self.dependencies)
 
@@ -116,15 +115,15 @@ class PlanCheckpoint:
 
     checkpoint_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     step_index: int = 0                      # Index of current step
-    completed_steps: Set[str] = field(default_factory=set)
-    intermediate_results: Dict[str, Any] = field(default_factory=dict)
+    completed_steps: set[str] = field(default_factory=set)
+    intermediate_results: dict[str, Any] = field(default_factory=dict)
     aggregate_confidence: float = 1.0        # Confidence so far
     execution_time_ms: float = 0.0           # Time elapsed
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     # State for rollback
-    knowledge_graph_state: Optional[Dict[str, Any]] = None
-    retrieval_context: Dict[str, Any] = field(default_factory=dict)
+    knowledge_graph_state: dict[str, Any] | None = None
+    retrieval_context: dict[str, Any] = field(default_factory=dict)
 
     def can_rollback_to(self, target_step: str) -> bool:
         """Check if we can rollback to a specific step"""
@@ -141,8 +140,8 @@ class QueryPlan:
     reasoning_strategy: ReasoningStrategy = ReasoningStrategy.DIRECT_RETRIEVAL
 
     # Plan structure
-    execution_steps: List[ExecutionStep] = field(default_factory=list)
-    checkpoints: List[PlanCheckpoint] = field(default_factory=list)
+    execution_steps: list[ExecutionStep] = field(default_factory=list)
+    checkpoints: list[PlanCheckpoint] = field(default_factory=list)
     retrieval_constraints: RetrievalConstraints = field(default_factory=RetrievalConstraints)
 
     # Execution state
@@ -153,27 +152,27 @@ class QueryPlan:
 
     # Planning metadata
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    agent_model: Optional[str] = None        # Which agent model created this
+    agent_model: str | None = None        # Which agent model created this
     complexity_score: float = 0.5           # Estimated complexity [0,1]
     expected_steps: int = 1                  # Expected number of steps
 
     # Results
-    final_result: Optional[Any] = None
+    final_result: Any | None = None
     explanation: str = ""
-    evidence_nodes: List[str] = field(default_factory=list)
+    evidence_nodes: list[str] = field(default_factory=list)
 
     # Adaptation
     replan_count: int = 0
-    parent_plan_id: Optional[str] = None     # If this is a replan
-    adaptation_reason: Optional[str] = None
+    parent_plan_id: str | None = None     # If this is a replan
+    adaptation_reason: str | None = None
 
     def add_step(self, step: ExecutionStep) -> None:
         """Add execution step to plan"""
         self.execution_steps.append(step)
         self.expected_steps = len(self.execution_steps)
 
-    def create_checkpoint(self, completed_steps: Set[str],
-                         intermediate_results: Dict[str, Any]) -> PlanCheckpoint:
+    def create_checkpoint(self, completed_steps: set[str],
+                         intermediate_results: dict[str, Any]) -> PlanCheckpoint:
         """Create checkpoint at current execution state"""
         checkpoint = PlanCheckpoint(
             step_index=self.current_step_index,
@@ -185,7 +184,7 @@ class QueryPlan:
         self.checkpoints.append(checkpoint)
         return checkpoint
 
-    def get_next_ready_step(self, completed_steps: Set[str]) -> Optional[ExecutionStep]:
+    def get_next_ready_step(self, completed_steps: set[str]) -> ExecutionStep | None:
         """Get next step that's ready to execute"""
         for step in self.execution_steps:
             if (step.status == ExecutionStatus.PENDING and
@@ -193,7 +192,7 @@ class QueryPlan:
                 return step
         return None
 
-    def get_step_by_id(self, step_id: str) -> Optional[ExecutionStep]:
+    def get_step_by_id(self, step_id: str) -> ExecutionStep | None:
         """Find step by ID"""
         for step in self.execution_steps:
             if step.step_id == step_id:
@@ -210,7 +209,7 @@ class QueryPlan:
         return any(step.status == ExecutionStatus.FAILED
                   for step in self.execution_steps)
 
-    def get_completed_steps(self) -> Set[str]:
+    def get_completed_steps(self) -> set[str]:
         """Get IDs of completed steps"""
         return {step.step_id for step in self.execution_steps
                 if step.status == ExecutionStatus.COMPLETED}
@@ -227,7 +226,7 @@ class QueryPlan:
         confidences = [step.confidence_score for step in completed]
         return np.mean(confidences)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize plan to dictionary"""
         return {
             "plan_id": self.plan_id,
@@ -255,7 +254,7 @@ class QueryPlan:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "QueryPlan":
+    def from_dict(cls, data: dict[str, Any]) -> "QueryPlan":
         """Deserialize plan from dictionary"""
         plan = cls(
             plan_id=data["plan_id"],
@@ -330,7 +329,7 @@ class PlanDSL:
     @staticmethod
     def parse_plan(dsl_text: str) -> QueryPlan:
         """Parse plan from DSL format (simplified implementation)"""
-        lines = dsl_text.strip().split('\n')
+        lines = dsl_text.strip().split("\n")
 
         # Extract basic info
         plan_id = lines[0].split()[1] if lines[0].startswith("PLAN") else str(uuid.uuid4())

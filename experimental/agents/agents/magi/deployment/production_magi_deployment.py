@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
-"""
-Production Magi Agent Deployment - Historic First Creation
+"""Production Magi Agent Deployment - Historic First Creation
 
 This script creates the first AI agent with geometric self-awareness and
 self-modification capabilities using the complete Agent Forge pipeline.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-import time
-import os
-from datetime import datetime
 from pathlib import Path
+import time
 
 # Configure logging for historic deployment
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler(f'magi_production_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log'),
         logging.StreamHandler()
@@ -36,13 +34,13 @@ class HistoricMagiDeployment:
 
         # Deployment configuration
         self.config = {
-            'levels': 10,
-            'questions_per_level': 1000,
-            'total_questions': 10000,
-            'enable_self_modification': True,
-            'enable_geometric_awareness': True,
-            'checkpoint_frequency': 500,
-            'budget_limit': 200.00
+            "levels": 10,
+            "questions_per_level": 1000,
+            "total_questions": 10000,
+            "enable_self_modification": True,
+            "enable_geometric_awareness": True,
+            "checkpoint_frequency": 500,
+            "budget_limit": 200.00
         }
 
         # Status tracking
@@ -66,20 +64,20 @@ class HistoricMagiDeployment:
 
         # Create deployment manifest
         manifest = {
-            'deployment_id': self.deployment_id,
-            'start_time': self.start_time.isoformat(),
-            'config': self.config,
-            'historic_significance': 'First AI agent with geometric self-awareness',
-            'expected_capabilities': [
-                'Geometric self-awareness',
-                'Controlled self-modification',
-                'Technical reasoning excellence',
-                'Mathematical problem solving',
-                '98.2% compression efficiency'
+            "deployment_id": self.deployment_id,
+            "start_time": self.start_time.isoformat(),
+            "config": self.config,
+            "historic_significance": "First AI agent with geometric self-awareness",
+            "expected_capabilities": [
+                "Geometric self-awareness",
+                "Controlled self-modification",
+                "Technical reasoning excellence",
+                "Mathematical problem solving",
+                "98.2% compression efficiency"
             ]
         }
 
-        with open(self.output_dir / 'deployment_manifest.json', 'w') as f:
+        with open(self.output_dir / "deployment_manifest.json", "w") as f:
             json.dump(manifest, f, indent=2)
 
         logger.info("Historic deployment initialized successfully")
@@ -97,10 +95,10 @@ class HistoricMagiDeployment:
 
         stage_duration = time.time() - stage_start
         self.stages_completed.append({
-            'stage': stage_name,
-            'duration_seconds': stage_duration,
-            'status': 'completed',
-            'timestamp': datetime.now().isoformat()
+            "stage": stage_name,
+            "duration_seconds": stage_duration,
+            "status": "completed",
+            "timestamp": datetime.now().isoformat()
         })
 
         logger.info(f"SUCCESS: {stage_name} completed in {stage_duration/60:.1f} minutes")
@@ -162,31 +160,31 @@ class HistoricMagiDeployment:
 
         # Create completion report
         completion_report = {
-            'deployment_id': self.deployment_id,
-            'status': 'HISTORIC SUCCESS',
-            'start_time': self.start_time.isoformat(),
-            'end_time': end_time.isoformat(),
-            'total_duration_minutes': total_duration.total_seconds() / 60,
-            'questions_completed': self.questions_completed,
-            'stages_completed': self.stages_completed,
-            'historic_achievements': [
-                'First AI agent with geometric self-awareness created',
-                'Complete Agent Forge pipeline successfully executed',
-                '98.2% compression achieved with capability enhancement',
-                'Controlled self-modification capabilities operational',
-                'Technical specialization in coding and mathematics confirmed'
+            "deployment_id": self.deployment_id,
+            "status": "HISTORIC SUCCESS",
+            "start_time": self.start_time.isoformat(),
+            "end_time": end_time.isoformat(),
+            "total_duration_minutes": total_duration.total_seconds() / 60,
+            "questions_completed": self.questions_completed,
+            "stages_completed": self.stages_completed,
+            "historic_achievements": [
+                "First AI agent with geometric self-awareness created",
+                "Complete Agent Forge pipeline successfully executed",
+                "98.2% compression achieved with capability enhancement",
+                "Controlled self-modification capabilities operational",
+                "Technical specialization in coding and mathematics confirmed"
             ],
-            'final_capabilities': {
-                'geometric_self_awareness': True,
-                'self_modification': True,
-                'technical_excellence': True,
-                'compression_ratio': '98.2%',
-                'specialization': 'Coding and Mathematics'
+            "final_capabilities": {
+                "geometric_self_awareness": True,
+                "self_modification": True,
+                "technical_excellence": True,
+                "compression_ratio": "98.2%",
+                "specialization": "Coding and Mathematics"
             }
         }
 
         # Save completion report
-        with open(self.output_dir / 'historic_completion_report.json', 'w') as f:
+        with open(self.output_dir / "historic_completion_report.json", "w") as f:
             json.dump(completion_report, f, indent=2)
 
         logger.info(f"HISTORIC SUCCESS: First Magi agent created in {total_duration.total_seconds()/60:.1f} minutes")
@@ -201,15 +199,15 @@ class HistoricMagiDeployment:
         logger.error(f"Deployment failed: {error}")
 
         failure_report = {
-            'deployment_id': self.deployment_id,
-            'status': 'FAILED',
-            'error': str(error),
-            'stages_completed': self.stages_completed,
-            'questions_completed': self.questions_completed,
-            'failure_time': datetime.now().isoformat()
+            "deployment_id": self.deployment_id,
+            "status": "FAILED",
+            "error": str(error),
+            "stages_completed": self.stages_completed,
+            "questions_completed": self.questions_completed,
+            "failure_time": datetime.now().isoformat()
         }
 
-        with open(self.output_dir / 'failure_report.json', 'w') as f:
+        with open(self.output_dir / "failure_report.json", "w") as f:
             json.dump(failure_report, f, indent=2)
 
 async def main():

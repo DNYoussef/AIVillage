@@ -1,20 +1,19 @@
-"""
-Personalized Tutor Engine - Adaptive Learning Integration
+"""Personalized Tutor Engine - Adaptive Learning Integration
 Sprint R-5: Digital Twin MVP - Task A.6
 """
 
-import wandb
 import asyncio
-import json
-import logging
-import numpy as np
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime, timezone, timedelta
-from dataclasses import dataclass, asdict
-from collections import defaultdict, deque
-import hashlib
-import random
+from collections import defaultdict
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from enum import Enum
+import logging
+import random
+from typing import Any
+
+import numpy as np
+
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -41,17 +40,17 @@ class TutoringSession:
     student_id: str
     tutor_engine_id: str
     start_time: str
-    end_time: Optional[str]
+    end_time: str | None
     mode: TutoringMode
-    concepts_target: List[str]
-    concepts_covered: List[str]
-    interactions: List[Dict[str, Any]]
-    student_responses: List[Dict[str, Any]]
-    adaptations_made: List[str]
+    concepts_target: list[str]
+    concepts_covered: list[str]
+    interactions: list[dict[str, Any]]
+    student_responses: list[dict[str, Any]]
+    adaptations_made: list[str]
     engagement_score: float
     learning_progress: float
     session_outcome: str
-    next_session_recommendations: List[str]
+    next_session_recommendations: list[str]
 
 @dataclass
 class TutoringStrategy:
@@ -60,13 +59,13 @@ class TutoringStrategy:
     strategy_id: str
     name: str
     description: str
-    target_learning_styles: List[str]
-    age_range: Tuple[int, int]
+    target_learning_styles: list[str]
+    age_range: tuple[int, int]
     effectiveness_score: float
-    interaction_patterns: Dict[str, float]  # question:0.4, explanation:0.3, etc.
+    interaction_patterns: dict[str, float]  # question:0.4, explanation:0.3, etc.
     pacing_strategy: str  # slow, moderate, fast, adaptive
     difficulty_progression: str  # linear, adaptive, spiral
-    engagement_techniques: List[str]
+    engagement_techniques: list[str]
     feedback_style: str  # immediate, delayed, summary
 
 @dataclass
@@ -77,11 +76,11 @@ class LearningObjective:
     concept: str
     skill_level: str  # introduce, practice, master, apply
     target_mastery: float
-    prerequisites: List[str]
-    success_criteria: List[str]
+    prerequisites: list[str]
+    success_criteria: list[str]
     assessment_method: str
     estimated_time_minutes: int
-    adaptive_modifications: List[str]
+    adaptive_modifications: list[str]
 
 class PersonalizedTutorEngine:
     """Advanced personalized tutoring engine with real-time adaptation"""
@@ -148,7 +147,6 @@ class PersonalizedTutorEngine:
 
     def initialize_wandb_tracking(self):
         """Initialize W&B tracking for personalized tutoring"""
-
         try:
             wandb.init(
                 project=self.project_name,
@@ -175,7 +173,6 @@ class PersonalizedTutorEngine:
 
     async def initialize_tutoring_strategies(self):
         """Initialize comprehensive tutoring strategies"""
-
         strategies = [
             # Visual Learning Strategy
             TutoringStrategy(
@@ -285,12 +282,11 @@ class PersonalizedTutorEngine:
 
     async def start_tutoring_session(self,
                                    student_id: str,
-                                   target_concepts: List[str],
-                                   session_goals: List[str] = None,
+                                   target_concepts: list[str],
+                                   session_goals: list[str] = None,
                                    preferred_duration_minutes: int = 30,
                                    mode: TutoringMode = TutoringMode.PRACTICE) -> str:
         """Start a new personalized tutoring session"""
-
         # Generate session ID
         session_id = f"session_{student_id[:8]}_{int(datetime.now().timestamp())}"
 
@@ -343,9 +339,8 @@ class PersonalizedTutorEngine:
 
         return session_id
 
-    async def _get_student_profile(self, student_id: str) -> Dict[str, Any]:
+    async def _get_student_profile(self, student_id: str) -> dict[str, Any]:
         """Get comprehensive student profile"""
-
         try:
             # Import digital twin
             from digital_twin.core.digital_twin import digital_twin
@@ -395,11 +390,10 @@ class PersonalizedTutorEngine:
 
     async def _select_tutoring_strategy(self,
                                       student_id: str,
-                                      student_profile: Dict[str, Any],
-                                      target_concepts: List[str],
+                                      student_profile: dict[str, Any],
+                                      target_concepts: list[str],
                                       mode: TutoringMode) -> TutoringStrategy:
         """Select optimal tutoring strategy for student"""
-
         age = student_profile["age"]
         learning_style = student_profile["learning_style"]
 
@@ -449,11 +443,10 @@ class PersonalizedTutorEngine:
         return selected_strategy
 
     async def _create_learning_objectives(self,
-                                        target_concepts: List[str],
-                                        student_profile: Dict[str, Any],
-                                        strategy: TutoringStrategy) -> List[LearningObjective]:
+                                        target_concepts: list[str],
+                                        student_profile: dict[str, Any],
+                                        strategy: TutoringStrategy) -> list[LearningObjective]:
         """Create specific learning objectives for the session"""
-
         objectives = []
         knowledge_states = student_profile.get("knowledge_states", {})
 
@@ -503,9 +496,8 @@ class PersonalizedTutorEngine:
 
         return objectives
 
-    def _get_concept_prerequisites(self, concept: str) -> List[str]:
+    def _get_concept_prerequisites(self, concept: str) -> list[str]:
         """Get prerequisites for a concept"""
-
         # Simplified prerequisite mapping
         prerequisites = {
             "addition": ["counting"],
@@ -521,11 +513,10 @@ class PersonalizedTutorEngine:
         return prerequisites.get(concept, [])
 
     async def _generate_opening_interaction(self,
-                                          student_profile: Dict[str, Any],
+                                          student_profile: dict[str, Any],
                                           strategy: TutoringStrategy,
-                                          objectives: List[LearningObjective]) -> Dict[str, Any]:
+                                          objectives: list[LearningObjective]) -> dict[str, Any]:
         """Generate personalized opening interaction"""
-
         student_name = student_profile.get("name", "there")
         interests = student_profile.get("interests", [])
 
@@ -578,9 +569,8 @@ class PersonalizedTutorEngine:
                                      session_id: str,
                                      response_content: str,
                                      response_type: str = "text",
-                                     response_metadata: Dict[str, Any] = None) -> Dict[str, Any]:
+                                     response_metadata: dict[str, Any] = None) -> dict[str, Any]:
         """Process student response and generate next interaction"""
-
         if session_id not in self.active_sessions:
             raise ValueError(f"Session {session_id} not found")
 
@@ -636,9 +626,8 @@ class PersonalizedTutorEngine:
             "analysis": analysis
         }
 
-    async def _analyze_student_response(self, session: TutoringSession, response: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_student_response(self, session: TutoringSession, response: dict[str, Any]) -> dict[str, Any]:
         """Analyze student response for understanding and engagement"""
-
         content = response["content"].lower()
 
         analysis = {
@@ -694,9 +683,8 @@ class PersonalizedTutorEngine:
 
         return analysis
 
-    def _update_engagement_score(self, session: TutoringSession, analysis: Dict[str, Any]) -> float:
+    def _update_engagement_score(self, session: TutoringSession, analysis: dict[str, Any]) -> float:
         """Update engagement score based on response analysis"""
-
         current_engagement = session.engagement_score
         learning_rate = 0.2
 
@@ -735,9 +723,8 @@ class PersonalizedTutorEngine:
         # Keep within bounds
         return max(0.0, min(1.0, new_engagement))
 
-    def _update_learning_progress(self, session: TutoringSession, analysis: Dict[str, Any]) -> float:
+    def _update_learning_progress(self, session: TutoringSession, analysis: dict[str, Any]) -> float:
         """Update learning progress based on response analysis"""
-
         current_progress = session.learning_progress
 
         # Progress based on correctness
@@ -764,9 +751,8 @@ class PersonalizedTutorEngine:
 
         return max(0.0, min(1.0, new_progress))
 
-    async def _check_adaptations_needed(self, session: TutoringSession, analysis: Dict[str, Any]) -> List[str]:
+    async def _check_adaptations_needed(self, session: TutoringSession, analysis: dict[str, Any]) -> list[str]:
         """Check if adaptations are needed based on student performance"""
-
         adaptations = []
 
         # Low engagement adaptation
@@ -794,9 +780,8 @@ class PersonalizedTutorEngine:
 
         return adaptations
 
-    async def _apply_adaptations(self, session: TutoringSession, adaptations: List[str]):
+    async def _apply_adaptations(self, session: TutoringSession, adaptations: list[str]):
         """Apply adaptations to the tutoring session"""
-
         for adaptation in adaptations:
             if adaptation == "increase_engagement":
                 session.adaptations_made.append("Added gamification elements")
@@ -820,9 +805,8 @@ class PersonalizedTutorEngine:
 
         logger.info(f"Applied {len(adaptations)} adaptations to session {session.session_id}")
 
-    async def _generate_next_interaction(self, session: TutoringSession, analysis: Dict[str, Any]) -> Dict[str, Any]:
+    async def _generate_next_interaction(self, session: TutoringSession, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate the next tutoring interaction"""
-
         # Get tutoring strategy
         strategy = self.tutoring_strategies[session.tutor_engine_id]
 
@@ -849,10 +833,9 @@ class PersonalizedTutorEngine:
 
     def _select_interaction_type(self,
                                strategy: TutoringStrategy,
-                               analysis: Dict[str, Any],
+                               analysis: dict[str, Any],
                                session: TutoringSession) -> InteractionType:
         """Select appropriate interaction type"""
-
         # Get strategy interaction patterns
         patterns = strategy.interaction_patterns
 
@@ -865,52 +848,47 @@ class PersonalizedTutorEngine:
             return InteractionType.QUESTION
 
         # Low correctness - provide explanation or hint
-        elif correctness < 0.4:
+        if correctness < 0.4:
             if confidence < 0.3:
                 return InteractionType.EXPLANATION
-            else:
-                return InteractionType.HINT
+            return InteractionType.HINT
 
         # Good performance - encourage
-        elif correctness > 0.6:
+        if correctness > 0.6:
             return InteractionType.ENCOURAGEMENT
 
         # Default based on strategy pattern
-        else:
-            # Weighted random selection based on strategy patterns
-            total_weight = sum(patterns.values())
-            if total_weight > 0:
-                rand = random.random() * total_weight
-                cumulative = 0
+        # Weighted random selection based on strategy patterns
+        total_weight = sum(patterns.values())
+        if total_weight > 0:
+            rand = random.random() * total_weight
+            cumulative = 0
 
-                for interaction_name, weight in patterns.items():
-                    cumulative += weight
-                    if rand <= cumulative:
-                        return InteractionType(interaction_name)
+            for interaction_name, weight in patterns.items():
+                cumulative += weight
+                if rand <= cumulative:
+                    return InteractionType(interaction_name)
 
-            return InteractionType.QUESTION
+        return InteractionType.QUESTION
 
     async def _generate_interaction_content(self,
                                           interaction_type: InteractionType,
                                           session: TutoringSession,
-                                          analysis: Dict[str, Any],
+                                          analysis: dict[str, Any],
                                           strategy: TutoringStrategy) -> str:
         """Generate content for interaction"""
-
         if interaction_type == InteractionType.QUESTION:
             return await self._generate_question_content(session, strategy)
-        elif interaction_type == InteractionType.EXPLANATION:
+        if interaction_type == InteractionType.EXPLANATION:
             return await self._generate_explanation_content(session, analysis, strategy)
-        elif interaction_type == InteractionType.ENCOURAGEMENT:
+        if interaction_type == InteractionType.ENCOURAGEMENT:
             return await self._generate_encouragement_content(session, analysis)
-        elif interaction_type == InteractionType.HINT:
+        if interaction_type == InteractionType.HINT:
             return await self._generate_hint_content(session, analysis)
-        else:
-            return "Let's continue with our learning!"
+        return "Let's continue with our learning!"
 
     async def _generate_question_content(self, session: TutoringSession, strategy: TutoringStrategy) -> str:
         """Generate a question based on current learning objectives"""
-
         # Get current learning focus
         if session.concepts_target:
             current_concept = session.concepts_target[0]  # Focus on first concept
@@ -953,10 +931,9 @@ class PersonalizedTutorEngine:
 
     async def _generate_explanation_content(self,
                                           session: TutoringSession,
-                                          analysis: Dict[str, Any],
+                                          analysis: dict[str, Any],
                                           strategy: TutoringStrategy) -> str:
         """Generate explanation content"""
-
         if session.concepts_target:
             concept = session.concepts_target[0]
 
@@ -978,9 +955,8 @@ class PersonalizedTutorEngine:
 
         return explanation
 
-    async def _generate_encouragement_content(self, session: TutoringSession, analysis: Dict[str, Any]) -> str:
+    async def _generate_encouragement_content(self, session: TutoringSession, analysis: dict[str, Any]) -> str:
         """Generate encouraging content"""
-
         correctness = analysis.get("correctness", 0.5)
 
         if correctness > 0.7:
@@ -1007,9 +983,8 @@ class PersonalizedTutorEngine:
 
         return random.choice(encouragements)
 
-    async def _generate_hint_content(self, session: TutoringSession, analysis: Dict[str, Any]) -> str:
+    async def _generate_hint_content(self, session: TutoringSession, analysis: dict[str, Any]) -> str:
         """Generate helpful hint content"""
-
         hints = [
             "Here's a hint: try breaking the problem into smaller parts.",
             "Think about what you already know about this type of problem.",
@@ -1020,9 +995,8 @@ class PersonalizedTutorEngine:
 
         return random.choice(hints)
 
-    async def end_tutoring_session(self, session_id: str, session_summary: str = "") -> Dict[str, Any]:
+    async def end_tutoring_session(self, session_id: str, session_summary: str = "") -> dict[str, Any]:
         """End tutoring session and generate summary"""
-
         if session_id not in self.active_sessions:
             raise ValueError(f"Session {session_id} not found")
 
@@ -1108,9 +1082,8 @@ class PersonalizedTutorEngine:
 
         return summary
 
-    async def _generate_next_session_recommendations(self, session: TutoringSession) -> List[str]:
+    async def _generate_next_session_recommendations(self, session: TutoringSession) -> list[str]:
         """Generate recommendations for the next tutoring session"""
-
         recommendations = []
 
         # Based on learning progress
@@ -1141,7 +1114,6 @@ class PersonalizedTutorEngine:
 
     async def _update_student_adaptations(self, session: TutoringSession):
         """Update student-specific adaptations based on session results"""
-
         student_id = session.student_id
         strategy_id = session.tutor_engine_id
 
@@ -1183,9 +1155,8 @@ class PersonalizedTutorEngine:
 
         logger.info(f"Updated adaptations for student {student_id[:8]}")
 
-    def get_tutor_analytics(self) -> Dict[str, Any]:
+    def get_tutor_analytics(self) -> dict[str, Any]:
         """Get comprehensive tutoring analytics"""
-
         total_sessions = len(self.session_analytics)
         active_sessions = len(self.active_sessions)
 

@@ -1,16 +1,13 @@
-"""
-GDC Extractor Engine
+"""GDC Extractor Engine
 
 Detects Graph Denial Constraint violations in Neo4j knowledge graphs.
 """
 
 import asyncio
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
-from uuid import uuid4
+from typing import Any
 
-from neo4j import AsyncGraphDatabase, AsyncDriver, AsyncSession
+from neo4j import AsyncDriver, AsyncGraphDatabase, AsyncSession
 from neo4j.exceptions import Neo4jError
 
 from .registry import GDC_REGISTRY, get_enabled_gdcs
@@ -20,8 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class GDCExtractor:
-    """
-    Graph Denial Constraint violation detection engine
+    """Graph Denial Constraint violation detection engine
 
     Performs read-only analysis of Neo4j graphs to detect constraint violations.
     Supports both batch scanning and targeted GDC analysis.
@@ -29,11 +25,10 @@ class GDCExtractor:
 
     def __init__(self,
                  neo4j_uri: str,
-                 neo4j_auth: Tuple[str, str],
+                 neo4j_auth: tuple[str, str],
                  max_concurrent_queries: int = 5,
                  default_limit: int = 1000):
-        """
-        Initialize GDC extractor
+        """Initialize GDC extractor
 
         Args:
             neo4j_uri: Neo4j connection URI (e.g., "bolt://localhost:7687")
@@ -46,7 +41,7 @@ class GDCExtractor:
         self.max_concurrent_queries = max_concurrent_queries
         self.default_limit = default_limit
 
-        self.driver: Optional[AsyncDriver] = None
+        self.driver: AsyncDriver | None = None
         self._semaphore = asyncio.Semaphore(max_concurrent_queries)
 
     async def initialize(self) -> None:
@@ -73,9 +68,8 @@ class GDCExtractor:
     async def scan_all(self,
                       limit: int = None,
                       enabled_only: bool = True,
-                      severity_filter: Optional[str] = None) -> List[Violation]:
-        """
-        Scan for all GDC violations
+                      severity_filter: str | None = None) -> list[Violation]:
+        """Scan for all GDC violations
 
         Args:
             limit: Maximum violations per GDC (uses default_limit if None)
@@ -125,9 +119,8 @@ class GDCExtractor:
         logger.info(f"Detected {len(all_violations)} total violations")
         return all_violations
 
-    async def scan_gdc(self, gdc_id: str, limit: int = None) -> List[Violation]:
-        """
-        Scan for violations of a specific GDC
+    async def scan_gdc(self, gdc_id: str, limit: int = None) -> list[Violation]:
+        """Scan for violations of a specific GDC
 
         Args:
             gdc_id: GDC identifier to scan
@@ -151,7 +144,7 @@ class GDCExtractor:
 
         return violations
 
-    async def _scan_single_gdc(self, gdc_spec: GDCSpec, limit: int) -> List[Violation]:
+    async def _scan_single_gdc(self, gdc_spec: GDCSpec, limit: int) -> list[Violation]:
         """Scan for violations of a single GDC"""
         async with self._semaphore:
             try:
@@ -164,9 +157,8 @@ class GDCExtractor:
     async def _execute_gdc_query(self,
                                 session: AsyncSession,
                                 gdc_spec: GDCSpec,
-                                limit: int) -> List[Violation]:
+                                limit: int) -> list[Violation]:
         """Execute a GDC Cypher query and convert results to violations"""
-
         # Add LIMIT to query if not present
         cypher = gdc_spec.cypher.strip()
         if not cypher.lower().endswith(f"limit {limit}") and "limit" not in cypher.lower():
@@ -187,43 +179,42 @@ class GDCExtractor:
             logger.error(f"Cypher error in {gdc_spec.id}: {e}")
             return []
 
-    async def _record_to_violation(self, record: Dict[str, Any], gdc_spec: GDCSpec) -> Violation:
+    async def _record_to_violation(self, record: dict[str, Any], gdc_spec: GDCSpec) -> Violation:
         """Convert a Cypher query result record to a Violation object"""
-
         nodes = []
         edges = []
         relationships = []
 
         # Extract nodes, edges, and relationships from record
         for key, value in record.items():
-            if hasattr(value, 'labels'):  # Neo4j Node
+            if hasattr(value, "labels"):  # Neo4j Node
                 node_data = dict(value.items())
-                node_data['_labels'] = list(value.labels)
-                node_data['_neo4j_id'] = value.id
+                node_data["_labels"] = list(value.labels)
+                node_data["_neo4j_id"] = value.id
                 nodes.append(node_data)
 
-            elif hasattr(value, 'type'):  # Neo4j Relationship
+            elif hasattr(value, "type"):  # Neo4j Relationship
                 rel_data = dict(value.items())
-                rel_data['_type'] = value.type
-                rel_data['_start_node_id'] = value.start_node.id
-                rel_data['_end_node_id'] = value.end_node.id
-                rel_data['_neo4j_id'] = value.id
+                rel_data["_type"] = value.type
+                rel_data["_start_node_id"] = value.start_node.id
+                rel_data["_end_node_id"] = value.end_node.id
+                rel_data["_neo4j_id"] = value.id
                 relationships.append(rel_data)
 
             elif isinstance(value, list):
                 # Handle lists of nodes/relationships
                 for item in value:
-                    if hasattr(item, 'labels'):
+                    if hasattr(item, "labels"):
                         node_data = dict(item.items())
-                        node_data['_labels'] = list(item.labels)
-                        node_data['_neo4j_id'] = item.id
+                        node_data["_labels"] = list(item.labels)
+                        node_data["_neo4j_id"] = item.id
                         nodes.append(node_data)
-                    elif hasattr(item, 'type'):
+                    elif hasattr(item, "type"):
                         rel_data = dict(item.items())
-                        rel_data['_type'] = item.type
-                        rel_data['_start_node_id'] = item.start_node.id
-                        rel_data['_end_node_id'] = item.end_node.id
-                        rel_data['_neo4j_id'] = item.id
+                        rel_data["_type"] = item.type
+                        rel_data["_start_node_id"] = item.start_node.id
+                        rel_data["_end_node_id"] = item.end_node.id
+                        rel_data["_neo4j_id"] = item.id
                         relationships.append(rel_data)
 
         # Create violation object
@@ -244,7 +235,7 @@ class GDCExtractor:
 
         return violation
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Check Neo4j connection health"""
         if not self.driver:
             return {"status": "disconnected", "error": "Driver not initialized"}
@@ -256,13 +247,12 @@ class GDCExtractor:
 
                 if record and record["health"] == 1:
                     return {"status": "healthy", "neo4j_uri": self.neo4j_uri}
-                else:
-                    return {"status": "unhealthy", "error": "Invalid response"}
+                return {"status": "unhealthy", "error": "Invalid response"}
 
         except Exception as e:
             return {"status": "error", "error": str(e)}
 
-    async def get_graph_stats(self) -> Dict[str, Any]:
+    async def get_graph_stats(self) -> dict[str, Any]:
         """Get basic graph statistics for context"""
         if not self.driver:
             return {}

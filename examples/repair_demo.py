@@ -1,26 +1,23 @@
 #!/usr/bin/env python3
-"""
-HypeRAG Innovator Repair Agent Demo
+"""HypeRAG Innovator Repair Agent Demo
 
 Demonstrates the repair proposal system for GDC violations.
 Shows template encoding, LLM integration, and repair operation generation.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-import sys
 from pathlib import Path
-from datetime import datetime
+import sys
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from mcp_servers.hyperag.repair import (
-    InnovatorAgent, TemplateEncoder, RepairOperation, RepairProposalSet
-)
-from mcp_servers.hyperag.repair.llm_driver import LLMDriver, ModelConfig, ModelBackend
+from mcp_servers.hyperag.repair import InnovatorAgent, RepairOperation, TemplateEncoder
+from mcp_servers.hyperag.repair.llm_driver import LLMDriver, ModelBackend, ModelConfig
 
 
 async def demo_template_encoding():
@@ -119,7 +116,7 @@ async def demo_llm_driver():
         timeout_seconds=30
     )
 
-    print(f"📋 Configuration:")
+    print("📋 Configuration:")
     print(f"   Backend: {config.backend.value}")
     print(f"   Rate limit: {config.requests_per_minute} req/min")
     print(f"   Max concurrent: {config.max_concurrent_requests}")
@@ -151,7 +148,7 @@ Respond with a single JSON repair operation:"""
                 max_tokens=256
             )
 
-            print(f"\n🎯 Test Generation:")
+            print("\n🎯 Test Generation:")
             print(f"   Latency: {response.latency_ms:.1f}ms")
             print(f"   Tokens: {response.usage.get('total_tokens', 'unknown')}")
             print(f"   Response: {response.text[:200]}...")
@@ -174,7 +171,7 @@ Respond with a single JSON repair operation:"""
             print(f"❌ Generation failed: {e}")
 
         # Test LMStudio backend availability
-        print(f"\n🏗️  Testing LMStudio Backend:")
+        print("\n🏗️  Testing LMStudio Backend:")
         lmstudio_config = ModelConfig(
             model_name="any-model",
             backend=ModelBackend.LMSTUDIO,
@@ -274,14 +271,14 @@ async def demo_repair_proposals():
                     print(f"      Confidence: {op.confidence:.3f}")
                     print(f"      Rationale: {op.rationale}")
                     if op.safety_critical:
-                        print(f"      ⚠️  SAFETY CRITICAL")
+                        print("      ⚠️  SAFETY CRITICAL")
                     print()
 
                 print("📄 JSON Array Format:")
                 print(proposal_set.to_json_array())
 
             # Show validation results (automatically performed)
-            print(f"\n✅ Automatic Validation:")
+            print("\n✅ Automatic Validation:")
             print(f"   Valid: {proposal_set.is_valid}")
             if proposal_set.validation_errors:
                 print(f"   Errors: {len(proposal_set.validation_errors)}")
@@ -415,7 +412,7 @@ async def demo_domain_specialization():
         }
     }
 
-    print(f"\n📊 Field Analysis Comparison:")
+    print("\n📊 Field Analysis Comparison:")
 
     # Medical encoding
     medical_template = medical_encoder.encode_node(medical_node)

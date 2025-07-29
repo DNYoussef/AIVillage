@@ -1,22 +1,23 @@
-"""
-Query Planner
+"""Query Planner
 
 Strategic planning system for complex queries inspired by PlanRAG research.
 Provides adaptive planning, strategy selection, and intelligent re-planning capabilities.
 """
 
-import asyncio
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
+from ..guardian.gate import GuardianGate
 from .plan_structures import (
-    QueryPlan, ExecutionStep, PlanCheckpoint, RetrievalConstraints,
-    QueryType, ReasoningStrategy, ExecutionStatus
+    ExecutionStatus,
+    QueryPlan,
+    QueryType,
+    ReasoningStrategy,
+    RetrievalConstraints,
 )
 from .query_classifier import QueryClassifier
 from .strategy_selector import StrategySelector
-from ..guardian.gate import GuardianGate
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,8 @@ class AgentReasoningModel:
 
     def __init__(self,
                  model_name: str,
-                 capabilities: List[str],
-                 performance_profile: Dict[str, float]):
+                 capabilities: list[str],
+                 performance_profile: dict[str, float]):
         self.model_name = model_name
         self.capabilities = capabilities
         self.performance_profile = performance_profile
@@ -40,17 +41,16 @@ class AgentReasoningModel:
 
 
 class QueryPlanner:
-    """
-    Strategic planning system for complex queries.
+    """Strategic planning system for complex queries.
 
     Analyzes query structure and intent, determines retrieval strategy,
     plans reasoning approach, and enables adaptive re-planning.
     """
 
     def __init__(self,
-                 classifier: Optional[QueryClassifier] = None,
-                 strategy_selector: Optional[StrategySelector] = None,
-                 guardian_gate: Optional[GuardianGate] = None):
+                 classifier: QueryClassifier | None = None,
+                 strategy_selector: StrategySelector | None = None,
+                 guardian_gate: GuardianGate | None = None):
         self.classifier = classifier or QueryClassifier()
         self.strategy_selector = strategy_selector or StrategySelector()
         self.guardian_gate = guardian_gate or GuardianGate()
@@ -78,10 +78,9 @@ class QueryPlanner:
     async def create_plan(self,
                          query: str,
                          agent_model: AgentReasoningModel,
-                         constraints: Optional[RetrievalConstraints] = None,
-                         context: Optional[Dict[str, Any]] = None) -> QueryPlan:
-        """
-        Create a strategic execution plan for a query
+                         constraints: RetrievalConstraints | None = None,
+                         context: dict[str, Any] | None = None) -> QueryPlan:
+        """Create a strategic execution plan for a query
 
         Args:
             query: Input query string
@@ -148,11 +147,10 @@ class QueryPlanner:
 
     async def replan(self,
                     original_plan: QueryPlan,
-                    intermediate_results: Dict[str, Any],
+                    intermediate_results: dict[str, Any],
                     current_confidence: float,
-                    failure_reason: Optional[str] = None) -> QueryPlan:
-        """
-        Adaptive replanning when confidence is low or execution fails
+                    failure_reason: str | None = None) -> QueryPlan:
+        """Adaptive replanning when confidence is low or execution fails
 
         Args:
             original_plan: Original execution plan
@@ -209,7 +207,7 @@ class QueryPlanner:
             # Return original plan as fallback
             return original_plan
 
-    async def _classify_query(self, query: str) -> Tuple[QueryType, float, Dict[str, Any]]:
+    async def _classify_query(self, query: str) -> tuple[QueryType, float, dict[str, Any]]:
         """Classify query type and complexity"""
         return self.classifier.classify_query(query)
 
@@ -218,9 +216,8 @@ class QueryPlanner:
                               complexity_score: float,
                               constraints: RetrievalConstraints,
                               agent_model: AgentReasoningModel,
-                              context: Dict[str, Any]) -> ReasoningStrategy:
+                              context: dict[str, Any]) -> ReasoningStrategy:
         """Select appropriate reasoning strategy"""
-
         # Check agent capabilities
         if complexity_score > agent_model.max_complexity:
             logger.warning(f"Query complexity ({complexity_score:.2f}) exceeds agent limit "
@@ -245,7 +242,6 @@ class QueryPlanner:
                                      agent_model: AgentReasoningModel,
                                      complexity_score: float) -> RetrievalConstraints:
         """Adjust constraints based on agent capabilities"""
-
         adjusted = RetrievalConstraints(
             max_depth=min(constraints.max_depth,
                          int(agent_model.max_complexity * 10)),
@@ -272,9 +268,8 @@ class QueryPlanner:
                                    query_type: QueryType,
                                    strategy: ReasoningStrategy,
                                    constraints: RetrievalConstraints,
-                                   analysis: Dict[str, Any]) -> QueryPlan:
+                                   analysis: dict[str, Any]) -> QueryPlan:
         """Create plan using selected strategy"""
-
         # Get strategy instance
         strategy_instance = self.strategy_selector.create_strategy_instance(strategy)
 
@@ -284,7 +279,7 @@ class QueryPlanner:
         )
 
         # Add reasoning hints
-        if hasattr(self.classifier, 'get_reasoning_hints'):
+        if hasattr(self.classifier, "get_reasoning_hints"):
             hints = self.classifier.get_reasoning_hints(query, query_type)
             for step in plan.execution_steps:
                 step.parameters.setdefault("reasoning_hints", hints)
@@ -295,7 +290,6 @@ class QueryPlanner:
                                          plan: QueryPlan,
                                          agent_model: AgentReasoningModel) -> QueryPlan:
         """Validate plan feasibility and optimize"""
-
         # Check time budget
         total_estimated_time = sum(step.timeout_ms for step in plan.execution_steps)
         if total_estimated_time > plan.retrieval_constraints.time_budget_ms:
@@ -330,7 +324,6 @@ class QueryPlanner:
 
     def _optimize_step_dependencies(self, plan: QueryPlan) -> QueryPlan:
         """Optimize step dependencies for better execution"""
-
         # Simple optimization: ensure retrieval steps can run in parallel
         # where possible
         retrieval_steps = [s for s in plan.execution_steps if s.step_type == "retrieval"]
@@ -347,7 +340,6 @@ class QueryPlanner:
                                    query: str,
                                    constraints: RetrievalConstraints) -> QueryPlan:
         """Create simple fallback plan when planning fails"""
-
         from .strategies import SimpleFactStrategy
 
         strategy = SimpleFactStrategy()
@@ -362,11 +354,10 @@ class QueryPlanner:
 
     async def _analyze_replan_needs(self,
                                    original_plan: QueryPlan,
-                                   intermediate_results: Dict[str, Any],
+                                   intermediate_results: dict[str, Any],
                                    current_confidence: float,
-                                   failure_reason: Optional[str]) -> Dict[str, Any]:
+                                   failure_reason: str | None) -> dict[str, Any]:
         """Analyze what went wrong and what needs to change"""
-
         analysis = {
             "original_strategy": original_plan.reasoning_strategy,
             "failed_steps": [],
@@ -402,9 +393,8 @@ class QueryPlanner:
 
     async def _select_replan_strategy(self,
                                      original_plan: QueryPlan,
-                                     analysis: Dict[str, Any]) -> ReasoningStrategy:
+                                     analysis: dict[str, Any]) -> ReasoningStrategy:
         """Select new strategy for replanning"""
-
         original_strategy = original_plan.reasoning_strategy
 
         # Try fallback strategy first
@@ -418,20 +408,18 @@ class QueryPlanner:
         # If no fallback, use simpler strategy
         if original_strategy == ReasoningStrategy.HYBRID:
             return ReasoningStrategy.STEP_BY_STEP
-        elif original_strategy == ReasoningStrategy.STEP_BY_STEP:
+        if original_strategy == ReasoningStrategy.STEP_BY_STEP:
             return ReasoningStrategy.GRAPH_TRAVERSAL
-        elif original_strategy in [ReasoningStrategy.CAUSAL_REASONING,
+        if original_strategy in [ReasoningStrategy.CAUSAL_REASONING,
                                   ReasoningStrategy.TEMPORAL_REASONING]:
             return ReasoningStrategy.COMPARATIVE_ANALYSIS
-        else:
-            return ReasoningStrategy.DIRECT_RETRIEVAL
+        return ReasoningStrategy.DIRECT_RETRIEVAL
 
     async def _create_replan(self,
                             original_plan: QueryPlan,
                             new_strategy: ReasoningStrategy,
-                            analysis: Dict[str, Any]) -> QueryPlan:
+                            analysis: dict[str, Any]) -> QueryPlan:
         """Create new plan with different strategy"""
-
         # Create new plan with updated strategy
         new_plan = await self._create_strategy_plan(
             original_plan.original_query,
@@ -452,9 +440,8 @@ class QueryPlanner:
     async def _transfer_intermediate_results(self,
                                            original_plan: QueryPlan,
                                            new_plan: QueryPlan,
-                                           intermediate_results: Dict[str, Any]) -> None:
+                                           intermediate_results: dict[str, Any]) -> None:
         """Transfer useful intermediate results to new plan"""
-
         # Simple transfer of any successful retrieval results
         if intermediate_results:
             # Add intermediate results as context for first step
@@ -467,7 +454,6 @@ class QueryPlanner:
                                 planning_time_ms: float,
                                 success: bool) -> None:
         """Record planning performance metrics"""
-
         self.performance_metrics["plans_created"] += 1
         if success:
             self.performance_metrics["successful_plans"] += 1
@@ -495,9 +481,8 @@ class QueryPlanner:
         if len(self.planning_history) > 1000:
             self.planning_history = self.planning_history[-1000:]
 
-    def get_planning_stats(self) -> Dict[str, Any]:
+    def get_planning_stats(self) -> dict[str, Any]:
         """Get planning performance statistics"""
-
         total_plans = self.performance_metrics["plans_created"]
         if total_plans == 0:
             return {"message": "No plans created yet"}
@@ -535,9 +520,8 @@ class QueryPlanner:
     async def validate_final_answer(self,
                                   answer: str,
                                   confidence: float,
-                                  context: Dict[str, Any]) -> Tuple[bool, str]:
-        """
-        Validate final answer through Guardian Gate if confidence is low or domain is high-risk
+                                  context: dict[str, Any]) -> tuple[bool, str]:
+        """Validate final answer through Guardian Gate if confidence is low or domain is high-risk
 
         Args:
             answer: The final answer to validate
@@ -571,7 +555,7 @@ class QueryPlanner:
             )
 
             # Add answer context to bridge metadata if available
-            if hasattr(bridge, 'metadata'):
+            if hasattr(bridge, "metadata"):
                 bridge.metadata = {
                     "answer": answer[:200],  # Truncate for safety
                     "domain": domain,
@@ -585,11 +569,10 @@ class QueryPlanner:
             if decision == "APPLY":
                 self.performance_metrics["guardian_approvals"] += 1
                 return True, f"Guardian approved answer (decision: {decision})"
-            else:
-                self.performance_metrics["guardian_blocks"] += 1
-                return False, f"Guardian blocked answer (decision: {decision})"
+            self.performance_metrics["guardian_blocks"] += 1
+            return False, f"Guardian blocked answer (decision: {decision})"
 
         except Exception as e:
             logger.error(f"Guardian validation failed: {e}")
             # Default to allowing on error to avoid blocking legitimate queries
-            return True, f"Guardian validation error, defaulting to allow: {str(e)}"
+            return True, f"Guardian validation error, defaulting to allow: {e!s}"

@@ -1,15 +1,12 @@
-"""
-Comprehensive tests for compression pipeline.
+"""Comprehensive tests for compression pipeline.
 Verifies the 4-8x compression claims and production readiness.
 """
 
+import time
+
+import psutil
 import pytest
 import torch
-import numpy as np
-from pathlib import Path
-import psutil
-import time
-from unittest.mock import Mock, patch
 
 try:
     from production.compression import CompressionPipeline
@@ -24,7 +21,9 @@ try:
 
     # Also try direct import as backup
     try:
-        from production.compression.compression_pipeline import CompressionPipeline as CP
+        from production.compression.compression_pipeline import (
+            CompressionPipeline as CP,
+        )
     except ImportError:
         CP = CompressionPipeline
 
@@ -40,19 +39,19 @@ class TestCompressionClaims:
     def sample_models(self):
         """Create models of various sizes for testing."""
         models = {
-            'small': torch.nn.Sequential(
+            "small": torch.nn.Sequential(
                 torch.nn.Linear(100, 50),
                 torch.nn.ReLU(),
                 torch.nn.Linear(50, 10)
             ),
-            'medium': torch.nn.Sequential(
+            "medium": torch.nn.Sequential(
                 torch.nn.Linear(784, 256),
                 torch.nn.ReLU(),
                 torch.nn.Linear(256, 128),
                 torch.nn.ReLU(),
                 torch.nn.Linear(128, 10)
             ),
-            'mobile_sized': torch.nn.Sequential(
+            "mobile_sized": torch.nn.Sequential(
                 # Simulating a small mobile model
                 torch.nn.Conv2d(3, 16, 3),
                 torch.nn.ReLU(),
@@ -101,7 +100,7 @@ class TestCompressionClaims:
 
     def test_memory_constraints(self, sample_models):
         """Test that compression works within memory constraints."""
-        model = sample_models['mobile_sized']
+        model = sample_models["mobile_sized"]
 
         # Monitor memory usage
         process = psutil.Process()
@@ -155,15 +154,15 @@ class TestCompressionIntegration:
         """Test that compression pipeline can be configured."""
         # Test would verify pipeline accepts different compression methods
         config = {
-            'method': 'seedlm',
-            'compression_ratio': 4.0,
-            'memory_limit': '2GB'
+            "method": "seedlm",
+            "compression_ratio": 4.0,
+            "memory_limit": "2GB"
         }
         # In real test: pipeline = CompressionPipeline(config)
-        assert config['compression_ratio'] == 4.0
+        assert config["compression_ratio"] == 4.0
 
     def test_compression_formats(self):
         """Test supported compression formats."""
-        supported_formats = ['pt', 'safetensors', 'gguf']
+        supported_formats = ["pt", "safetensors", "gguf"]
         for fmt in supported_formats:
             assert fmt in supported_formats  # Placeholder test

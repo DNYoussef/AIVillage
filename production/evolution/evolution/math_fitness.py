@@ -1,21 +1,18 @@
-"""
-Mathematical Fitness Evaluator for Tutor Models
+"""Mathematical Fitness Evaluator for Tutor Models
 Sprint R-4+AF1: Agent Forge Phase 1 - Task B.3
 """
 
-import wandb
-import torch
 import asyncio
-import logging
-import numpy as np
-import re
-import json
-from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from dataclasses import dataclass, asdict
-from transformers import AutoTokenizer
+import logging
+import re
 import statistics
-import math
+from typing import Any
+
+import torch
+
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +26,9 @@ class MathProblem:
     difficulty: float  # 0.0 to 1.0
     problem_text: str
     expected_answer: str
-    solution_steps: List[str]
-    keywords: List[str]
-    scoring_criteria: Dict[str, float]
+    solution_steps: list[str]
+    keywords: list[str]
+    scoring_criteria: dict[str, float]
     cultural_context: str = "general"
     language: str = "en"
 
@@ -82,7 +79,6 @@ class MathFitnessEvaluator:
 
     async def initialize_test_suite(self):
         """Initialize comprehensive test suite for K-8 mathematics"""
-
         logger.info("Initializing mathematical fitness evaluation test suite")
 
         # Arithmetic problems (Grades K-3)
@@ -294,7 +290,6 @@ class MathFitnessEvaluator:
                       individual_id: str = None,
                       log_details: bool = True) -> float:
         """Comprehensive fitness evaluation of a math tutoring model"""
-
         logger.info(f"Evaluating model {individual_id or 'unknown'}")
 
         start_time = asyncio.get_event_loop().time()
@@ -386,7 +381,6 @@ class MathFitnessEvaluator:
 
     async def evaluate_problem(self, model, tokenizer, problem: MathProblem) -> EvaluationResult:
         """Evaluate model performance on a single math problem"""
-
         start_time = asyncio.get_event_loop().time()
 
         # Create tutoring prompt
@@ -451,7 +445,6 @@ class MathFitnessEvaluator:
 
     def create_tutoring_prompt(self, problem: MathProblem) -> str:
         """Create an appropriate tutoring prompt for the problem"""
-
         grade_descriptor = self.get_grade_descriptor(problem.grade_level)
 
         prompt = f"""You are a helpful math tutor working with {grade_descriptor}. Your goal is to help students learn by explaining concepts clearly and encouraging them.
@@ -470,27 +463,22 @@ Your response:"""
 
     def get_grade_descriptor(self, grade_level: int) -> str:
         """Get appropriate grade level descriptor"""
-
         if grade_level == 0:
             return "a kindergarten student"
-        elif grade_level <= 3:
+        if grade_level <= 3:
             return f"a {grade_level}rd grade student" if grade_level == 3 else f"a {grade_level}st grade student" if grade_level == 1 else f"a {grade_level}nd grade student"
-        elif grade_level <= 5:
+        if grade_level <= 5 or grade_level <= 8:
             return f"a {grade_level}th grade student"
-        elif grade_level <= 8:
-            return f"a {grade_level}th grade student"
-        else:
-            return "a student"
+        return "a student"
 
     async def generate_model_response(self, model, tokenizer, prompt: str, max_length: int = 200) -> str:
         """Generate response from model"""
-
         try:
             # Tokenize input
             inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
 
             # Move to model device
-            if hasattr(model, 'device'):
+            if hasattr(model, "device"):
                 inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
             # Generate response
@@ -506,7 +494,7 @@ Your response:"""
 
             # Decode response (only new tokens)
             response = tokenizer.decode(
-                outputs[0][inputs['input_ids'].shape[1]:],
+                outputs[0][inputs["input_ids"].shape[1]:],
                 skip_special_tokens=True
             ).strip()
 
@@ -518,7 +506,6 @@ Your response:"""
 
     def evaluate_correctness(self, response: str, problem: MathProblem) -> float:
         """Evaluate correctness of the mathematical answer"""
-
         response_lower = response.lower()
         expected_answer = problem.expected_answer.lower()
 
@@ -527,8 +514,8 @@ Your response:"""
             return 1.0
 
         # Extract numbers from response and expected answer
-        response_numbers = re.findall(r'-?\d+\.?\d*', response)
-        expected_numbers = re.findall(r'-?\d+\.?\d*', problem.expected_answer)
+        response_numbers = re.findall(r"-?\d+\.?\d*", response)
+        expected_numbers = re.findall(r"-?\d+\.?\d*", problem.expected_answer)
 
         if not expected_numbers:
             return 0.5  # Can't evaluate if no expected number
@@ -556,7 +543,6 @@ Your response:"""
 
     def evaluate_step_by_step(self, response: str, problem: MathProblem) -> float:
         """Evaluate quality of step-by-step explanation"""
-
         response_lower = response.lower()
         score = 0.0
 
@@ -602,7 +588,6 @@ Your response:"""
 
     def evaluate_explanation_quality(self, response: str, problem: MathProblem) -> float:
         """Evaluate overall quality of explanation"""
-
         response_lower = response.lower()
         score = 0.0
 
@@ -649,7 +634,6 @@ Your response:"""
 
     def evaluate_encouragement(self, response: str) -> float:
         """Evaluate presence and quality of encouragement"""
-
         response_lower = response.lower()
         score = 0.0
 
@@ -683,14 +667,13 @@ Your response:"""
         score += min(0.2, growth_count * 0.1)
 
         # Exclamation marks (enthusiasm)
-        exclamation_count = response.count('!')
+        exclamation_count = response.count("!")
         score += min(0.1, exclamation_count * 0.05)
 
         return min(1.0, score)
 
     def evaluate_cultural_sensitivity(self, response: str, problem: MathProblem) -> float:
         """Evaluate cultural sensitivity and inclusiveness"""
-
         response_lower = response.lower()
         score = 0.8  # Start with high baseline
 
@@ -726,7 +709,6 @@ Your response:"""
     def generate_feedback(self, correctness: float, steps: float, explanation: float,
                          encouragement: float, cultural: float) -> str:
         """Generate detailed feedback on model performance"""
-
         feedback_parts = []
 
         # Correctness feedback
@@ -771,9 +753,8 @@ Your response:"""
 
         return "; ".join(feedback_parts)
 
-    def calculate_weighted_fitness(self, category_scores: Dict[str, float]) -> float:
+    def calculate_weighted_fitness(self, category_scores: dict[str, float]) -> float:
         """Calculate overall weighted fitness score from category scores"""
-
         # Category weights based on importance for math tutoring
         category_weights = {
             "arithmetic": 0.25,    # Foundational skills
@@ -801,19 +782,16 @@ Your response:"""
 
     def get_performance_level(self, fitness_score: float) -> str:
         """Get performance level description"""
-
         if fitness_score >= self.performance_thresholds["excellent"]:
             return "excellent"
-        elif fitness_score >= self.performance_thresholds["good"]:
+        if fitness_score >= self.performance_thresholds["good"]:
             return "good"
-        elif fitness_score >= self.performance_thresholds["acceptable"]:
+        if fitness_score >= self.performance_thresholds["acceptable"]:
             return "acceptable"
-        else:
-            return "poor"
+        return "poor"
 
-    def get_evaluation_analytics(self) -> Dict[str, Any]:
+    def get_evaluation_analytics(self) -> dict[str, Any]:
         """Get comprehensive evaluation analytics"""
-
         if not self.evaluation_history:
             return {"message": "No evaluations completed yet"}
 

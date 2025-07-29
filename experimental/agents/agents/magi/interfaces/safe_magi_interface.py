@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""
-Safe Magi Interface with Buffer Overflow Protection
+"""Safe Magi Interface with Buffer Overflow Protection
 
 This interface allows conversation with the specialized Magi agent
 while preventing buffer overflow issues from large outputs.
 """
 
-import json
-import sys
-from pathlib import Path
-from agent_forge.interface_buffer_fix import BufferedOutputHandler, SafeMagiInterface
+from agent_forge.interface_buffer_fix import SafeMagiInterface
+
 
 class ConversationalMagi(SafeMagiInterface):
     """Enhanced Magi interface with conversation capabilities."""
@@ -25,12 +22,12 @@ class ConversationalMagi(SafeMagiInterface):
 
         # Check for capability keywords
         capability_checks = {
-            'python_programming': ['python', 'code', 'programming', 'script', 'function', 'class'],
-            'algorithm_design': ['algorithm', 'complexity', 'optimize', 'efficient', 'performance'],
-            'data_structures': ['data', 'structure', 'array', 'tree', 'graph', 'list', 'dict'],
-            'problem_solving': ['solve', 'problem', 'solution', 'approach', 'strategy'],
-            'mathematical_analysis': ['math', 'calculate', 'equation', 'formula', 'compute'],
-            'technical_reasoning': ['technical', 'engineering', 'system', 'design', 'architecture']
+            "python_programming": ["python", "code", "programming", "script", "function", "class"],
+            "algorithm_design": ["algorithm", "complexity", "optimize", "efficient", "performance"],
+            "data_structures": ["data", "structure", "array", "tree", "graph", "list", "dict"],
+            "problem_solving": ["solve", "problem", "solution", "approach", "strategy"],
+            "mathematical_analysis": ["math", "calculate", "equation", "formula", "compute"],
+            "technical_reasoning": ["technical", "engineering", "system", "design", "architecture"]
         }
 
         input_lower = user_input.lower()
@@ -41,7 +38,7 @@ class ConversationalMagi(SafeMagiInterface):
 
         # Default to technical reasoning if no specific match
         if not relevant_caps:
-            relevant_caps.append(('technical_reasoning', self.capabilities.get('technical_reasoning', 0.7)))
+            relevant_caps.append(("technical_reasoning", self.capabilities.get("technical_reasoning", 0.7)))
 
         # Return the strongest capability
         return max(relevant_caps, key=lambda x: x[1])
@@ -70,7 +67,7 @@ class ConversationalMagi(SafeMagiInterface):
         ]
 
         # Add specific guidance based on capability
-        if capability_name == 'python_programming' and capability_score >= 0.90:
+        if capability_name == "python_programming" and capability_score >= 0.90:
             response_parts.extend([
                 "\nPYTHON MASTERY AREAS:",
                 "• Advanced algorithms and optimization",
@@ -78,7 +75,7 @@ class ConversationalMagi(SafeMagiInterface):
                 "• Performance profiling and debugging",
                 "• Best practices and design patterns"
             ])
-        elif capability_name == 'algorithm_design' and capability_score >= 0.90:
+        elif capability_name == "algorithm_design" and capability_score >= 0.90:
             response_parts.extend([
                 "\nALGORITHM DESIGN MASTERY:",
                 "• Time/space complexity analysis",
@@ -86,7 +83,7 @@ class ConversationalMagi(SafeMagiInterface):
                 "• Custom algorithm creation",
                 "• Performance benchmarking"
             ])
-        elif capability_name == 'data_structures' and capability_score >= 0.90:
+        elif capability_name == "data_structures" and capability_score >= 0.90:
             response_parts.extend([
                 "\nDATA STRUCTURES MASTERY:",
                 "• Optimal structure selection",
@@ -116,7 +113,7 @@ class ConversationalMagi(SafeMagiInterface):
         print("=" * 50)
         for cap, score in sorted(self.capabilities.items(), key=lambda x: x[1], reverse=True):
             level = "MASTERY" if score >= 0.90 else "EXPERT" if score >= 0.75 else "ADVANCED"
-            cap_name = cap.replace('_', ' ').title()
+            cap_name = cap.replace("_", " ").title()
             print(f"  {cap_name:<25} {score:.3f}  [{level}]")
         print(f"\nOverall Specialization Score: {self.specialization_score:.3f}")
         print("=" * 50)
@@ -146,15 +143,15 @@ class ConversationalMagi(SafeMagiInterface):
                 if not user_input:
                     continue
 
-                if user_input.lower() in ['quit', 'exit', 'bye']:
+                if user_input.lower() in ["quit", "exit", "bye"]:
                     print("\nMAGI: Thank you for our conversation. My capabilities remain at your service!")
                     break
 
-                if user_input.lower() == 'capabilities':
+                if user_input.lower() == "capabilities":
                     self.show_capabilities()
                     continue
 
-                if user_input.lower() == 'history':
+                if user_input.lower() == "history":
                     if self.conversation_history:
                         print(f"\nRECENT TOPICS ({len(self.conversation_history)} exchanges):")
                         for i, item in enumerate(self.conversation_history[-5:], 1):

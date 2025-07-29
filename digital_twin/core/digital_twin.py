@@ -1,24 +1,22 @@
-"""
-Digital Twin Core System for Personalized Learning
+"""Digital Twin Core System for Personalized Learning
 Sprint R-5: Digital Twin MVP - Task A.1
 """
 
-import wandb
 import asyncio
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 import json
 import logging
-import numpy as np
-from typing import Dict, List, Optional, Any, Tuple, Set
-from datetime import datetime, timezone, timedelta
-from dataclasses import dataclass, asdict
-from collections import defaultdict, deque
-import hashlib
-import uuid
-from pathlib import Path
 import sqlite3
+from typing import Any
+import uuid
+
 from cryptography.fernet import Fernet
-import threading
-from concurrent.futures import ThreadPoolExecutor
+import numpy as np
+
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +31,14 @@ class LearningProfile:
     language: str
     region: str
     learning_style: str  # visual, auditory, kinesthetic, reading
-    strengths: List[str]  # Subject areas where student excels
-    challenges: List[str]  # Areas needing improvement
-    interests: List[str]  # Topics of interest for engagement
+    strengths: list[str]  # Subject areas where student excels
+    challenges: list[str]  # Areas needing improvement
+    interests: list[str]  # Topics of interest for engagement
     attention_span_minutes: int
-    preferred_session_times: List[str]  # "morning", "afternoon", "evening"
-    parent_constraints: Dict[str, Any]  # Screen time limits, content filters
-    accessibility_needs: List[str]  # Special accommodations
-    motivation_triggers: List[str]  # What motivates this student
+    preferred_session_times: list[str]  # "morning", "afternoon", "evening"
+    parent_constraints: dict[str, Any]  # Screen time limits, content filters
+    accessibility_needs: list[str]  # Special accommodations
+    motivation_triggers: list[str]  # What motivates this student
     created_at: str = ""
     last_updated: str = ""
 
@@ -54,13 +52,13 @@ class LearningSession:
     start_time: str
     end_time: str
     duration_minutes: int
-    concepts_covered: List[str]
+    concepts_covered: list[str]
     questions_asked: int
     questions_correct: int
     engagement_score: float
     difficulty_level: float
-    adaptations_made: List[str]
-    parent_feedback: Optional[str] = None
+    adaptations_made: list[str]
+    parent_feedback: str | None = None
     student_mood: str = "neutral"
     session_notes: str = ""
 
@@ -75,9 +73,9 @@ class KnowledgeState:
     confidence_score: float
     last_practiced: str
     practice_count: int
-    mistake_patterns: List[str]
-    prerequisite_gaps: List[str]
-    next_recommended: List[str]
+    mistake_patterns: list[str]
+    prerequisite_gaps: list[str]
+    next_recommended: list[str]
     estimated_study_time: int  # minutes to achieve mastery
     retention_decay_rate: float  # How quickly student forgets
 
@@ -135,7 +133,6 @@ class DigitalTwin:
 
     def initialize_wandb_tracking(self):
         """Initialize W&B tracking for digital twin"""
-
         try:
             wandb.init(
                 project=self.project_name,
@@ -160,7 +157,6 @@ class DigitalTwin:
 
     def init_database(self):
         """Initialize SQLite database for persistent storage"""
-
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -223,9 +219,8 @@ class DigitalTwin:
                                    language: str = "en",
                                    region: str = "north_america",
                                    parent_email: str = None,
-                                   initial_assessment: Dict[str, Any] = None) -> str:
+                                   initial_assessment: dict[str, Any] = None) -> str:
         """Create new student profile with initial assessment"""
-
         student_id = str(uuid.uuid4())
 
         # Run initial assessment if provided
@@ -302,9 +297,8 @@ class DigitalTwin:
                                        student_id: str,
                                        age: int,
                                        grade_level: int,
-                                       assessment: Dict[str, Any]) -> LearningProfile:
+                                       assessment: dict[str, Any]) -> LearningProfile:
         """Analyze initial assessment to create personalized profile"""
-
         # Extract learning style from assessment responses
         learning_style = self.detect_learning_style(assessment)
 
@@ -345,9 +339,8 @@ class DigitalTwin:
 
         return profile
 
-    def detect_learning_style(self, assessment: Dict[str, Any]) -> str:
+    def detect_learning_style(self, assessment: dict[str, Any]) -> str:
         """Detect primary learning style from assessment"""
-
         style_scores = {"visual": 0, "auditory": 0, "kinesthetic": 0, "reading": 0}
 
         # Analyze response patterns
@@ -368,9 +361,8 @@ class DigitalTwin:
 
         return max(style_scores, key=style_scores.get)
 
-    def analyze_math_abilities(self, assessment: Dict[str, Any], grade_level: int) -> Tuple[List[str], List[str]]:
+    def analyze_math_abilities(self, assessment: dict[str, Any], grade_level: int) -> tuple[list[str], list[str]]:
         """Analyze mathematical strengths and challenges"""
-
         strengths = []
         challenges = []
 
@@ -403,9 +395,8 @@ class DigitalTwin:
 
         return strengths, challenges
 
-    def extract_interests(self, assessment: Dict[str, Any]) -> List[str]:
+    def extract_interests(self, assessment: dict[str, Any]) -> list[str]:
         """Extract student interests from assessment"""
-
         interests = assessment.get("interests", [])
 
         # Analyze free-text responses for interest keywords
@@ -427,9 +418,8 @@ class DigitalTwin:
 
         return list(set(interests))
 
-    def estimate_attention_span(self, assessment: Dict[str, Any], age: int) -> int:
+    def estimate_attention_span(self, assessment: dict[str, Any], age: int) -> int:
         """Estimate attention span from assessment behavior"""
-
         # Base estimate by age
         base_minutes = max(15, min(45, age * 3))
 
@@ -440,14 +430,13 @@ class DigitalTwin:
         # If they completed assessment quickly with good quality, higher attention span
         if completion_time < base_minutes and response_quality > 0.7:
             return min(60, int(base_minutes * 1.2))
-        elif completion_time > base_minutes * 1.5:
+        if completion_time > base_minutes * 1.5:
             return max(10, int(base_minutes * 0.8))
 
         return base_minutes
 
-    def identify_motivation_triggers(self, assessment: Dict[str, Any]) -> List[str]:
+    def identify_motivation_triggers(self, assessment: dict[str, Any]) -> list[str]:
         """Identify what motivates the student"""
-
         triggers = []
 
         # Analyze responses for motivation indicators
@@ -480,7 +469,6 @@ class DigitalTwin:
 
     async def initialize_knowledge_states(self, student_id: str, grade_level: int):
         """Initialize knowledge states for grade-appropriate concepts"""
-
         # Import curriculum graph
         from hyperag.education.curriculum_graph import curriculum_graph
 
@@ -510,7 +498,6 @@ class DigitalTwin:
 
     async def record_learning_session(self, session: LearningSession):
         """Record and analyze a learning session"""
-
         # Store session
         self.session_history[session.student_id].append(session)
 
@@ -543,7 +530,6 @@ class DigitalTwin:
 
     async def update_knowledge_states_from_session(self, session: LearningSession):
         """Update knowledge states based on session performance"""
-
         accuracy = session.questions_correct / max(session.questions_asked, 1)
 
         for concept in session.concepts_covered:
@@ -576,7 +562,6 @@ class DigitalTwin:
 
     async def update_personalization_vector(self, session: LearningSession):
         """Update personalization vector based on session outcomes"""
-
         if session.student_id not in self.personalization_vectors:
             return
 
@@ -622,7 +607,6 @@ class DigitalTwin:
 
     def update_learning_patterns(self, session: LearningSession):
         """Update detected learning patterns"""
-
         student_id = session.student_id
 
         if student_id not in self.learning_patterns:
@@ -661,9 +645,8 @@ class DigitalTwin:
         for pattern_type in patterns:
             patterns[pattern_type] = patterns[pattern_type][-max_history:]
 
-    async def get_personalized_recommendations(self, student_id: str) -> Dict[str, Any]:
+    async def get_personalized_recommendations(self, student_id: str) -> dict[str, Any]:
         """Generate personalized learning recommendations"""
-
         if student_id not in self.students:
             return {"error": "Student not found"}
 
@@ -737,7 +720,7 @@ class DigitalTwin:
 
         # Session duration optimization
         patterns = self.learning_patterns.get(student_id, {})
-        if "optimal_session_length" in patterns and patterns["optimal_session_length"]:
+        if patterns.get("optimal_session_length"):
             # Find session length that maximizes engagement
             session_data = patterns["optimal_session_length"]
             best_duration = max(session_data, key=lambda x: x[1])[0]
@@ -766,9 +749,8 @@ class DigitalTwin:
                                 student_id: str,
                                 current_engagement: float,
                                 current_accuracy: float,
-                                time_in_session: int) -> Dict[str, Any]:
+                                time_in_session: int) -> dict[str, Any]:
         """Provide real-time adaptations during a session"""
-
         adaptations = {
             "difficulty_adjustment": 0,  # -1 easier, 0 same, 1 harder
             "explanation_style": "maintain",  # simpler, maintain, detailed
@@ -827,7 +809,6 @@ class DigitalTwin:
 
     async def save_student_profile(self, student_id: str):
         """Save student profile to encrypted database"""
-
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -868,7 +849,6 @@ class DigitalTwin:
 
     async def save_learning_session(self, session: LearningSession):
         """Save learning session to encrypted database"""
-
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -898,7 +878,6 @@ class DigitalTwin:
 
     async def start_background_analytics(self):
         """Start background analytics and pattern detection"""
-
         while True:
             try:
                 await asyncio.sleep(300)  # Run every 5 minutes
@@ -918,7 +897,6 @@ class DigitalTwin:
 
     async def update_retention_decay(self):
         """Update knowledge retention based on time decay"""
-
         current_time = datetime.now(timezone.utc)
 
         for student_id, knowledge_map in self.knowledge_states.items():
@@ -935,7 +913,6 @@ class DigitalTwin:
 
     async def detect_learning_patterns(self):
         """Detect and update learning patterns for all students"""
-
         for student_id in self.students:
             if student_id not in self.learning_patterns:
                 continue
@@ -943,7 +920,7 @@ class DigitalTwin:
             patterns = self.learning_patterns[student_id]
 
             # Analyze peak performance times
-            if "peak_performance_times" in patterns and patterns["peak_performance_times"]:
+            if patterns.get("peak_performance_times"):
                 time_performance = patterns["peak_performance_times"]
 
                 # Group by hour and calculate average performance
@@ -972,7 +949,6 @@ class DigitalTwin:
 
     async def generate_learning_insights(self):
         """Generate learning insights and log to W&B"""
-
         total_students = len(self.students)
         if total_students == 0:
             return
@@ -1016,9 +992,8 @@ class DigitalTwin:
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
 
-    def get_student_dashboard(self, student_id: str) -> Dict[str, Any]:
+    def get_student_dashboard(self, student_id: str) -> dict[str, Any]:
         """Generate comprehensive student dashboard data"""
-
         if student_id not in self.students:
             return {"error": "Student not found"}
 
@@ -1081,9 +1056,8 @@ class DigitalTwin:
 
         return dashboard
 
-    def calculate_improvement_trend(self, sessions: List[LearningSession]) -> str:
+    def calculate_improvement_trend(self, sessions: list[LearningSession]) -> str:
         """Calculate improvement trend from session history"""
-
         if len(sessions) < 3:
             return "insufficient_data"
 
@@ -1103,14 +1077,12 @@ class DigitalTwin:
 
         if improvement > 0.1:
             return "improving"
-        elif improvement < -0.1:
+        if improvement < -0.1:
             return "declining"
-        else:
-            return "stable"
+        return "stable"
 
-    def calculate_consistency_score(self, sessions: List[LearningSession]) -> float:
+    def calculate_consistency_score(self, sessions: list[LearningSession]) -> float:
         """Calculate consistency score based on regular study patterns"""
-
         if len(sessions) < 5:
             return 0.5
 
@@ -1129,9 +1101,8 @@ class DigitalTwin:
 
         return min(1.0, consistency)
 
-    def get_student_achievements(self, student_id: str) -> List[Dict[str, Any]]:
+    def get_student_achievements(self, student_id: str) -> list[dict[str, Any]]:
         """Get student achievements and badges"""
-
         achievements = []
         sessions = self.session_history.get(student_id, [])
         knowledge = self.knowledge_states.get(student_id, {})
@@ -1173,9 +1144,8 @@ class DigitalTwin:
 
         return achievements
 
-    def get_parent_insights(self, student_id: str) -> Dict[str, Any]:
+    def get_parent_insights(self, student_id: str) -> dict[str, Any]:
         """Generate insights for parents"""
-
         student = self.students[student_id]
         sessions = self.session_history.get(student_id, [])
 

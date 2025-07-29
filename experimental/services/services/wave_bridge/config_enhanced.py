@@ -1,11 +1,11 @@
-"""
-Enhanced Configuration for WhatsApp Wave Bridge with Prompt Engineering
+"""Enhanced Configuration for WhatsApp Wave Bridge with Prompt Engineering
 Part B: Agent Forge Phase 4 - Configuration Management
 """
 
-import os
-from typing import Dict, Any
 from dataclasses import dataclass
+import os
+from typing import Any
+
 
 @dataclass
 class PromptEngineeeringConfig:
@@ -138,7 +138,6 @@ class EnhancedAppConfig:
 
     def load_from_env(self):
         """Load configuration from environment variables"""
-
         # Prompt engineering feature flags
         pe_config = {
             "enable_enhanced_prompts": os.getenv("ENABLE_ENHANCED_PROMPTS", "true").lower() == "true",
@@ -157,9 +156,8 @@ class EnhancedAppConfig:
 
         self.prompt_engineering_env = pe_config
 
-    def validate_config(self) -> Dict[str, Any]:
+    def validate_config(self) -> dict[str, Any]:
         """Validate configuration and return validation results"""
-
         validation_results = {
             "valid": True,
             "errors": [],
@@ -203,9 +201,8 @@ class EnhancedAppConfig:
 
         return validation_results
 
-    def get_feature_flags(self) -> Dict[str, bool]:
+    def get_feature_flags(self) -> dict[str, bool]:
         """Get all feature flags for the application"""
-
         return {
             "enhanced_prompts": self.prompt_engineering.enable_enhanced_prompts,
             "real_time_optimization": self.prompt_engineering.enable_real_time_optimization,
@@ -220,9 +217,8 @@ class EnhancedAppConfig:
             "request_validation": self.security_settings["enable_request_validation"]
         }
 
-    def export_config(self) -> Dict[str, Any]:
+    def export_config(self) -> dict[str, Any]:
         """Export complete configuration as dictionary"""
-
         return {
             "app_settings": self.app_settings,
             "api_settings": self.api_settings,

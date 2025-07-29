@@ -1,17 +1,16 @@
-"""
-Tests for evolution/tournament system.
+"""Tests for evolution/tournament system.
 Verifies model merging and fitness evaluation.
 """
 
+
+import numpy as np
 import pytest
 import torch
-import numpy as np
-from unittest.mock import Mock, patch
 
 try:
     from production.evolution import EvolutionaryTournament
-    from production.evolution.evomerge import EvolutionaryTournament as ET
     from production.evolution.evolution import MathTutorEvolution
+    from production.evolution.evomerge import EvolutionaryTournament as ET
 except ImportError:
     # Handle missing imports gracefully
     pytest.skip("Production evolution modules not available", allow_module_level=True)
@@ -29,16 +28,18 @@ class TestEvolutionSystem:
             # Initialize with different weights
             torch.nn.init.normal_(model.weight, mean=i*0.1, std=0.1)
             models.append({
-                'model': model,
-                'fitness': 0.5 + i * 0.05,  # Increasing fitness
-                'id': f'model_{i}'
+                "model": model,
+                "fitness": 0.5 + i * 0.05,  # Increasing fitness
+                "id": f"model_{i}"
             })
         return models
 
     def test_evolution_imports(self):
         """Test that evolution modules can be imported."""
         try:
-            from production.evolution.evomerge.evolutionary_tournament import EvolutionaryTournament
+            from production.evolution.evomerge.evolutionary_tournament import (
+                EvolutionaryTournament,
+            )
             assert EvolutionaryTournament is not None
         except ImportError:
             pytest.skip("EvolutionaryTournament not available")
@@ -79,11 +80,11 @@ class TestEvolutionSystem:
         tournament = np.random.choice(len(population), tournament_size, replace=False)
 
         # Find winner (highest fitness in tournament)
-        winner_idx = max(tournament, key=lambda i: population[i]['fitness'])
+        winner_idx = max(tournament, key=lambda i: population[i]["fitness"])
         winner = population[winner_idx]
 
-        assert 'fitness' in winner
-        assert 'model' in winner
+        assert "fitness" in winner
+        assert "model" in winner
 
     def test_merger_operators_exist(self):
         """Test that merger operators exist."""
@@ -116,7 +117,9 @@ class TestEvolutionPipeline:
     def test_math_tutor_evolution(self):
         """Test math tutor evolution."""
         try:
-            from production.evolution.evolution.math_tutor_evolution import MathTutorEvolution
+            from production.evolution.evolution.math_tutor_evolution import (
+                MathTutorEvolution,
+            )
             assert MathTutorEvolution is not None
         except ImportError:
             pytest.skip("MathTutorEvolution not available")

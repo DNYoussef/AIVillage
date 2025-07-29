@@ -1,19 +1,18 @@
 """Guardian audit logging with persistent JSON records."""
 
+import datetime
 import json
 import pathlib
-import datetime
+from typing import Any
 import uuid
-from typing import Dict, Any
 
 # Create audit directory
 _AUDIT_PATH = pathlib.Path("data/guardian_audit")
 _AUDIT_PATH.mkdir(parents=True, exist_ok=True)
 
 
-def log(record: Dict[str, Any]):
-    """
-    Log audit record to persistent JSON file.
+def log(record: dict[str, Any]):
+    """Log audit record to persistent JSON file.
 
     Args:
         record: Dictionary containing validation decision and metadata
@@ -29,18 +28,17 @@ def log(record: Dict[str, Any]):
     file_path = _AUDIT_PATH / filename
 
     try:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(record, f, indent=2, default=str, ensure_ascii=False)
-    except Exception as e:
+    except Exception:
         # Fallback: log to a single append-only file
         fallback_path = _AUDIT_PATH / "audit_log.jsonl"
-        with open(fallback_path, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(record, default=str, ensure_ascii=False) + '\n')
+        with open(fallback_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, default=str, ensure_ascii=False) + "\n")
 
 
 def get_recent_records(hours: int = 24, limit: int = 100) -> list:
-    """
-    Get recent audit records.
+    """Get recent audit records.
 
     Args:
         hours: Hours back to search
@@ -58,7 +56,7 @@ def get_recent_records(hours: int = 24, limit: int = 100) -> list:
             continue
 
         try:
-            with open(json_file, 'r', encoding='utf-8') as f:
+            with open(json_file, encoding="utf-8") as f:
                 record = json.load(f)
 
             # Check timestamp
@@ -76,7 +74,7 @@ def get_recent_records(hours: int = 24, limit: int = 100) -> list:
     fallback_path = _AUDIT_PATH / "audit_log.jsonl"
     if fallback_path.exists():
         try:
-            with open(fallback_path, 'r', encoding='utf-8') as f:
+            with open(fallback_path, encoding="utf-8") as f:
                 for line in f:
                     record = json.loads(line.strip())
                     record_time = datetime.datetime.fromisoformat(
@@ -93,9 +91,8 @@ def get_recent_records(hours: int = 24, limit: int = 100) -> list:
     return records[:limit]
 
 
-def get_statistics(hours: int = 24) -> Dict[str, Any]:
-    """
-    Get audit statistics for the specified time window.
+def get_statistics(hours: int = 24) -> dict[str, Any]:
+    """Get audit statistics for the specified time window.
 
     Args:
         hours: Hours back to analyze
@@ -145,8 +142,7 @@ def get_statistics(hours: int = 24) -> Dict[str, Any]:
 
 
 def cleanup_old_records(days: int = 30):
-    """
-    Clean up audit records older than specified days.
+    """Clean up audit records older than specified days.
 
     Args:
         days: Records older than this will be deleted
@@ -160,7 +156,7 @@ def cleanup_old_records(days: int = 30):
             continue
 
         try:
-            with open(json_file, 'r', encoding='utf-8') as f:
+            with open(json_file, encoding="utf-8") as f:
                 record = json.load(f)
 
             record_time = datetime.datetime.fromisoformat(

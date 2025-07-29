@@ -1,24 +1,25 @@
 # rag_system/core/interfaces.py
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import Any
+
 
 class Retriever(ABC):
     @abstractmethod
-    async def retrieve(self, query: str, k: int) -> List[Dict[str, Any]]:
+    async def retrieve(self, query: str, k: int) -> list[dict[str, Any]]:
         pass
 
 class KnowledgeConstructor(ABC):
     @abstractmethod
-    async def construct(self, query: str, retrieved_docs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def construct(self, query: str, retrieved_docs: list[dict[str, Any]]) -> dict[str, Any]:
         pass
 
 class ReasoningEngine(ABC):
     @abstractmethod
-    async def reason(self, query: str, constructed_knowledge: Dict[str, Any]) -> str:
+    async def reason(self, query: str, constructed_knowledge: dict[str, Any]) -> str:
         pass
 
 class EmbeddingModel(ABC):
     @abstractmethod
-    async def get_embedding(self, text: str) -> List[float]:
+    async def get_embedding(self, text: str) -> list[float]:
         pass

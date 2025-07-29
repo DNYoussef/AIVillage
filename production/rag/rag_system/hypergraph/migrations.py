@@ -1,14 +1,13 @@
-"""
-Neo4j Database Migrations for Hypergraph Schema
+"""Neo4j Database Migrations for Hypergraph Schema
 
 Handles schema creation, constraints, and indexes for the hypergraph knowledge system.
 Includes both episodic (Hippo) and semantic (Hypergraph-KG) structures.
 """
 
 import logging
-from typing import List, Dict, Any, Optional
-from neo4j import Driver, Session, AsyncDriver, AsyncSession
-import asyncio
+from typing import Any
+
+from neo4j import AsyncSession, Driver, Session
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ class HypergraphMigrations:
         self.driver = driver
         self.migrations = self._define_migrations()
 
-    def _define_migrations(self) -> List[Dict[str, Any]]:
+    def _define_migrations(self) -> list[dict[str, Any]]:
         """Define all schema migrations in order"""
         return [
             {
@@ -121,7 +120,7 @@ class HypergraphMigrations:
             }
         ]
 
-    def run_migrations(self, target_version: Optional[str] = None) -> None:
+    def run_migrations(self, target_version: str | None = None) -> None:
         """Run migrations up to target version"""
         with self.driver.session() as session:
             # Check current version
@@ -178,7 +177,7 @@ class HypergraphMigrations:
             version=version
         )
 
-    def _run_migration(self, session: Session, migration: Dict[str, Any]) -> None:
+    def _run_migration(self, session: Session, migration: dict[str, Any]) -> None:
         """Execute migration up queries"""
         for query in migration["up"]:
             try:
@@ -189,7 +188,7 @@ class HypergraphMigrations:
                 logger.error(f"Query: {query}")
                 raise
 
-    def _rollback_migration(self, session: Session, migration: Dict[str, Any]) -> None:
+    def _rollback_migration(self, session: Session, migration: dict[str, Any]) -> None:
         """Execute migration down queries"""
         for query in migration["down"]:
             try:
@@ -201,8 +200,7 @@ class HypergraphMigrations:
 
 # Convenience function for basic setup
 def run_cypher_migrations(session: Session) -> None:
-    """
-    Run basic Cypher migrations for hypergraph schema.
+    """Run basic Cypher migrations for hypergraph schema.
     This is the function called by tests and setup scripts.
     """
     try:

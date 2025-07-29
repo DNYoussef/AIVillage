@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
-"""
-Vector to Hypergraph Converter
+"""Vector to Hypergraph Converter
 
 Converts existing vector store embeddings (FAISS/Qdrant) to HypeRAG hypergraph entities.
 Preserves semantic information while enabling graph-based reasoning.
 """
 
+import argparse
+from dataclasses import dataclass
+from datetime import datetime, timezone
 import json
 import logging
-import argparse
 from pathlib import Path
-from typing import Dict, List, Tuple, Any, Optional
-from datetime import datetime, timezone
-import numpy as np
-from dataclasses import dataclass
 import pickle
 
 # Import HypeRAG components
 import sys
+from typing import Any
+
+import numpy as np
+
 sys.path.append(str(Path(__file__).parent.parent))
 
 from mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
@@ -29,10 +30,10 @@ class VectorDocument:
     """Document with vector embedding and metadata"""
     doc_id: str
     embedding: np.ndarray
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
     content: str
     source: str
-    timestamp: Optional[str] = None
+    timestamp: str | None = None
 
 @dataclass
 class ConversionMetrics:
@@ -51,7 +52,7 @@ class VectorStoreLoader:
         self.vector_store_path = Path(vector_store_path)
         self.store_type = store_type.lower()
 
-    def load_faiss_store(self) -> List[VectorDocument]:
+    def load_faiss_store(self) -> list[VectorDocument]:
         """Load documents from FAISS vector store"""
         try:
             import faiss
@@ -68,7 +69,7 @@ class VectorStoreLoader:
             if not metadata_path.exists():
                 raise FileNotFoundError(f"Metadata file not found: {metadata_path}")
 
-            with open(metadata_path, 'r') as f:
+            with open(metadata_path) as f:
                 metadata = json.load(f)
 
             # Load embeddings
@@ -79,15 +80,15 @@ class VectorStoreLoader:
 
                 # Get document metadata
                 doc_metadata = metadata.get(str(i), {})
-                doc_id = doc_metadata.get('id', f"doc_{i}")
+                doc_id = doc_metadata.get("id", f"doc_{i}")
 
                 document = VectorDocument(
                     doc_id=doc_id,
                     embedding=embedding,
                     metadata=doc_metadata,
-                    content=doc_metadata.get('content', ''),
-                    source=doc_metadata.get('source', 'unknown'),
-                    timestamp=doc_metadata.get('timestamp')
+                    content=doc_metadata.get("content", ""),
+                    source=doc_metadata.get("source", "unknown"),
+                    timestamp=doc_metadata.get("timestamp")
                 )
                 documents.append(document)
 
@@ -101,7 +102,7 @@ class VectorStoreLoader:
             logger.error(f"Error loading FAISS store: {e}")
             raise
 
-    def load_qdrant_store(self) -> List[VectorDocument]:
+    def load_qdrant_store(self) -> list[VectorDocument]:
         """Load documents from Qdrant vector store"""
         try:
             from qdrant_client import QdrantClient
@@ -137,9 +138,9 @@ class VectorStoreLoader:
                         doc_id=str(point.id),
                         embedding=np.array(point.vector),
                         metadata=point.payload or {},
-                        content=point.payload.get('content', ''),
-                        source=point.payload.get('source', 'unknown'),
-                        timestamp=point.payload.get('timestamp')
+                        content=point.payload.get("content", ""),
+                        source=point.payload.get("source", "unknown"),
+                        timestamp=point.payload.get("timestamp")
                     )
                     documents.append(document)
 
@@ -157,23 +158,23 @@ class VectorStoreLoader:
             logger.error(f"Error loading Qdrant store: {e}")
             raise
 
-    def load_custom_store(self) -> List[VectorDocument]:
+    def load_custom_store(self) -> list[VectorDocument]:
         """Load documents from custom pickle format"""
         try:
             store_file = self.vector_store_path / "vector_store.pkl"
 
-            with open(store_file, 'rb') as f:
+            with open(store_file, "rb") as f:
                 data = pickle.load(f)
 
             documents = []
             for doc_data in data:
                 document = VectorDocument(
-                    doc_id=doc_data['id'],
-                    embedding=np.array(doc_data['embedding']),
-                    metadata=doc_data.get('metadata', {}),
-                    content=doc_data.get('content', ''),
-                    source=doc_data.get('source', 'unknown'),
-                    timestamp=doc_data.get('timestamp')
+                    doc_id=doc_data["id"],
+                    embedding=np.array(doc_data["embedding"]),
+                    metadata=doc_data.get("metadata", {}),
+                    content=doc_data.get("content", ""),
+                    source=doc_data.get("source", "unknown"),
+                    timestamp=doc_data.get("timestamp")
                 )
                 documents.append(document)
 
@@ -184,16 +185,15 @@ class VectorStoreLoader:
             logger.error(f"Error loading custom store: {e}")
             raise
 
-    def load_documents(self) -> List[VectorDocument]:
+    def load_documents(self) -> list[VectorDocument]:
         """Load documents based on store type"""
         if self.store_type == "faiss":
             return self.load_faiss_store()
-        elif self.store_type == "qdrant":
+        if self.store_type == "qdrant":
             return self.load_qdrant_store()
-        elif self.store_type == "custom":
+        if self.store_type == "custom":
             return self.load_custom_store()
-        else:
-            raise ValueError(f"Unsupported store type: {self.store_type}")
+        raise ValueError(f"Unsupported store type: {self.store_type}")
 
 class EntityExtractor:
     """Extracts entities from document content for knowledge graph"""
@@ -209,7 +209,7 @@ class EntityExtractor:
             logger.warning("SpaCy model not found. Using simple entity extraction.")
             self.nlp = None
 
-    def extract_entities(self, text: str) -> List[Dict[str, Any]]:
+    def extract_entities(self, text: str) -> list[dict[str, Any]]:
         """Extract named entities from text"""
         entities = []
 
@@ -230,7 +230,7 @@ class EntityExtractor:
             import re
 
             # Find capitalized words (potential entities)
-            capitalized_words = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', text)
+            capitalized_words = re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b", text)
 
             for i, word in enumerate(capitalized_words):
                 entities.append({
@@ -243,7 +243,7 @@ class EntityExtractor:
 
         return entities
 
-    def extract_relationships(self, text: str, entities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def extract_relationships(self, text: str, entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Extract relationships between entities"""
         relationships = []
 
@@ -459,14 +459,14 @@ class VectorToHypergraphConverter:
                 "documents_per_second": self.metrics.converted_documents / self.metrics.conversion_time if self.metrics.conversion_time > 0 else 0
             },
             "knowledge_graph_stats": {
-                "total_nodes": len(self.kg.get_all_nodes()) if hasattr(self.kg, 'get_all_nodes') else 0,
-                "total_edges": len(self.kg.get_all_edges()) if hasattr(self.kg, 'get_all_edges') else 0,
+                "total_nodes": len(self.kg.get_all_nodes()) if hasattr(self.kg, "get_all_nodes") else 0,
+                "total_edges": len(self.kg.get_all_edges()) if hasattr(self.kg, "get_all_edges") else 0,
                 "avg_entities_per_document": self.metrics.total_entities_created / self.metrics.converted_documents if self.metrics.converted_documents > 0 else 0,
                 "avg_relationships_per_document": self.metrics.total_relationships_created / self.metrics.converted_documents if self.metrics.converted_documents > 0 else 0
             }
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(report, f, indent=2)
 
         logger.info(f"Conversion report saved to: {output_path}")
@@ -487,7 +487,7 @@ def main():
     # Configure logging
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     try:
@@ -507,7 +507,7 @@ def main():
             converter.save_conversion_report(Path(args.report))
 
         # Print summary
-        print(f"\nConversion Summary:")
+        print("\nConversion Summary:")
         print(f"  Documents processed: {metrics.converted_documents}/{metrics.total_documents}")
         print(f"  Success rate: {metrics.converted_documents/metrics.total_documents:.1%}")
         print(f"  Entities created: {metrics.total_entities_created}")

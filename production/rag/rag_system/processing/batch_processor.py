@@ -1,17 +1,17 @@
 # rag_system/processing/batch_processor.py
 
-from typing import List, Tuple
-from .prompt_constructor import construct_extrapolation_prompt
+
 from .confidence_estimator import estimate_confidence
+from .prompt_constructor import construct_extrapolation_prompt
+
 
 class BatchProcessor:
     def __init__(self, knowledge_graph, llm):
         self.knowledge_graph = knowledge_graph
         self.llm = llm
 
-    async def batch_extrapolate(self, entity_pairs: List[Tuple[str, str, str]]) -> List[Tuple[str, str, str, str, float]]:
-        """
-        Perform batch extrapolation for multiple entity pairs and relations.
+    async def batch_extrapolate(self, entity_pairs: list[tuple[str, str, str]]) -> list[tuple[str, str, str, str, float]]:
+        """Perform batch extrapolation for multiple entity pairs and relations.
 
         :param entity_pairs: A list of tuples containing (entity1, relation, entity2).
         :return: A list of tuples containing (entity1, relation, entity2, extrapolation, confidence).
@@ -25,9 +25,8 @@ class BatchProcessor:
             results.append((entity1, relation, entity2, extrapolation, confidence))
         return results
 
-    async def extrapolate_group_connections(self, entity_group1: List[str], entity_group2: List[str], confidence_threshold: float) -> List[Tuple[str, str, str, float]]:
-        """
-        Extrapolate potential relations between two groups of entities.
+    async def extrapolate_group_connections(self, entity_group1: list[str], entity_group2: list[str], confidence_threshold: float) -> list[tuple[str, str, str, float]]:
+        """Extrapolate potential relations between two groups of entities.
 
         :param entity_group1: The first group of entities.
         :param entity_group2: The second group of entities.
@@ -53,9 +52,8 @@ class BatchProcessor:
 
         return extrapolated_connections
 
-    async def iterative_extrapolation(self, initial_entities: List[str], max_iterations: int = 3) -> dict:
-        """
-        Perform iterative extrapolation to discover new connections.
+    async def iterative_extrapolation(self, initial_entities: list[str], max_iterations: int = 3) -> dict:
+        """Perform iterative extrapolation to discover new connections.
 
         :param initial_entities: A list of initial entities to start the extrapolation from.
         :param max_iterations: Maximum number of iterations to perform.

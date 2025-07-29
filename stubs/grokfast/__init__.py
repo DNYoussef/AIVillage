@@ -26,7 +26,7 @@ def grokfast_optimizer(*args, **kwargs):
 
 def apply_grokfast(*args, **kwargs):
     """Stub apply function."""
-    return None
+    return
 
 
 # Additional stub functions that might be imported
@@ -50,8 +50,6 @@ class AugmentedAdam:
 
     def step(self):
         """Stub step method."""
-        pass
 
     def zero_grad(self):
         """Stub zero_grad method."""
-        pass

@@ -1,5 +1,4 @@
-"""
-Test script for HypeRAG MCP Server
+"""Test script for HypeRAG MCP Server
 
 Simple test to verify the server is working correctly.
 """
@@ -7,8 +6,9 @@ Simple test to verify the server is working correctly.
 import asyncio
 import json
 import logging
+from typing import Any
+
 import websockets
-from typing import Dict, Any
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -33,7 +33,7 @@ class MCPTestClient:
             await self.websocket.close()
             logger.info("Disconnected")
 
-    async def send_request(self, method: str, params: Dict[str, Any], request_id: str = None) -> Dict[str, Any]:
+    async def send_request(self, method: str, params: dict[str, Any], request_id: str = None) -> dict[str, Any]:
         """Send a request and get response"""
         if not self.websocket:
             raise RuntimeError("Not connected")
@@ -148,8 +148,8 @@ async def test_server():
         print("\n=== All tests completed ===")
 
     except Exception as e:
-        logger.error(f"Test failed: {str(e)}")
-        print(f"✗ Test error: {str(e)}")
+        logger.error(f"Test failed: {e!s}")
+        print(f"✗ Test error: {e!s}")
 
     finally:
         await client.disconnect()
@@ -167,7 +167,7 @@ async def run_interactive_test():
         while True:
             try:
                 user_input = input("\n> ")
-                if user_input.lower() in ['quit', 'exit', 'q']:
+                if user_input.lower() in ["quit", "exit", "q"]:
                     break
 
                 # Try to parse as JSON
@@ -184,10 +184,10 @@ async def run_interactive_test():
             except KeyboardInterrupt:
                 break
             except Exception as e:
-                print(f"Error: {str(e)}")
+                print(f"Error: {e!s}")
 
     except Exception as e:
-        print(f"Failed to connect: {str(e)}")
+        print(f"Failed to connect: {e!s}")
         print("Make sure the HypeRAG MCP Server is running on ws://localhost:8765")
 
     finally:

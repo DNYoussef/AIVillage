@@ -4,7 +4,7 @@
 try:
     from .geometry_feedback import GeometryFeedback
 
-    __all__ = ['GeometryFeedback']
+    __all__ = ["GeometryFeedback"]
 except ImportError:
     # Handle missing dependencies gracefully
     GeometryFeedback = None

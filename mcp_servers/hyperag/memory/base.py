@@ -1,16 +1,14 @@
-"""
-Base classes and types for HypeRAG dual-memory system
+"""Base classes and types for HypeRAG dual-memory system
 """
 
-import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Union
-import numpy as np
+from typing import Any
+import uuid
 
-from ..models import Node as BaseNode, Edge as BaseEdge
+import numpy as np
 
 
 class MemoryType(Enum):
@@ -35,9 +33,9 @@ class Document:
     content: str
     doc_type: str
     created_at: datetime
-    user_id: Optional[str] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    embedding: Optional[np.ndarray] = None
+    user_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    embedding: np.ndarray | None = None
     confidence: float = 1.0
 
     def __post_init__(self):
@@ -55,26 +53,26 @@ class Node:
     node_type: str
     memory_type: MemoryType
     confidence: float = 1.0
-    embedding: Optional[np.ndarray] = None
-    created_at: Optional[datetime] = None
-    last_accessed: Optional[datetime] = None
+    embedding: np.ndarray | None = None
+    created_at: datetime | None = None
+    last_accessed: datetime | None = None
     access_count: int = 0
-    user_id: Optional[str] = None
+    user_id: str | None = None
 
     # GDC support
-    gdc_flags: List[str] = field(default_factory=list)
+    gdc_flags: list[str] = field(default_factory=list)
     popularity_rank: int = 0
 
     # Temporal properties
     importance_score: float = 0.5
     decay_rate: float = 0.1
-    ttl: Optional[int] = None  # seconds
+    ttl: int | None = None  # seconds
 
     # Uncertainty tracking
     uncertainty: float = 0.0
     confidence_type: ConfidenceType = ConfidenceType.BAYESIAN
 
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         if not self.id:
@@ -87,7 +85,7 @@ class Node:
         self.last_accessed = datetime.now()
         self.access_count += 1
 
-    def calculate_recency_weight(self, current_time: Optional[datetime] = None) -> float:
+    def calculate_recency_weight(self, current_time: datetime | None = None) -> float:
         """Calculate time-based recency weight"""
         if not current_time:
             current_time = datetime.now()
@@ -98,7 +96,7 @@ class Node:
         time_diff = (current_time - self.created_at).total_seconds()
         return np.exp(-self.decay_rate * time_diff / 3600)  # Hourly decay
 
-    def is_expired(self, current_time: Optional[datetime] = None) -> bool:
+    def is_expired(self, current_time: datetime | None = None) -> bool:
         """Check if node has expired based on TTL"""
         if not self.ttl or not self.created_at:
             return False
@@ -120,30 +118,30 @@ class Edge:
     confidence: float = 1.0
 
     # Hypergraph support (n-ary relationships)
-    participants: List[str] = field(default_factory=list)  # All connected nodes
+    participants: list[str] = field(default_factory=list)  # All connected nodes
 
     # Memory properties
     memory_type: MemoryType = MemoryType.EPISODIC
-    created_at: Optional[datetime] = None
-    last_accessed: Optional[datetime] = None
+    created_at: datetime | None = None
+    last_accessed: datetime | None = None
     access_count: int = 0
 
     # GDC and popularity
-    gdc_flags: List[str] = field(default_factory=list)
+    gdc_flags: list[str] = field(default_factory=list)
     popularity_rank: int = 0
 
     # Personalization (Rel-GAT)
-    alpha_weight: Optional[float] = None
-    user_id: Optional[str] = None
+    alpha_weight: float | None = None
+    user_id: str | None = None
 
     # Uncertainty and evidence
     uncertainty: float = 0.0
     evidence_count: int = 1
-    source_docs: List[str] = field(default_factory=list)
+    source_docs: list[str] = field(default_factory=list)
 
     # Tags and metadata
-    tags: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         if not self.id:
@@ -187,36 +185,33 @@ class MemoryBackend(ABC):
     @abstractmethod
     async def initialize(self) -> None:
         """Initialize the backend"""
-        pass
 
     @abstractmethod
     async def close(self) -> None:
         """Close backend connections"""
-        pass
 
     @abstractmethod
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Check backend health"""
-        pass
 
 
 @dataclass
 class QueryResult:
     """Result of a memory query"""
-    nodes: List[Node]
-    edges: List[Edge]
+    nodes: list[Node]
+    edges: list[Edge]
     total_count: int
     query_time_ms: float
     confidence: float
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class ConsolidationBatch:
     """Batch of items for consolidation"""
     id: str
-    nodes: List[Node]
-    edges: List[Edge]
+    nodes: list[Node]
+    edges: list[Edge]
     confidence_threshold: float
     created_at: datetime
     status: str = "pending"  # pending, processing, completed, failed
@@ -237,7 +232,7 @@ class MemoryStats:
     semantic_nodes: int
     avg_confidence: float
     memory_usage_mb: float
-    last_consolidation: Optional[datetime]
+    last_consolidation: datetime | None
     pending_consolidations: int
 
 
@@ -266,8 +261,8 @@ class EmbeddingManager:
 
     def find_similar(self,
                     query_embedding: np.ndarray,
-                    candidates: List[np.ndarray],
-                    top_k: int = 10) -> List[tuple]:
+                    candidates: list[np.ndarray],
+                    top_k: int = 10) -> list[tuple]:
         """Find most similar embeddings"""
         if not candidates:
             return []
@@ -283,7 +278,7 @@ class EmbeddingManager:
 
 
 def create_episodic_node(content: str,
-                        user_id: Optional[str] = None,
+                        user_id: str | None = None,
                         ttl_hours: int = 168) -> Node:  # 7 days default
     """Create a new episodic memory node"""
     return Node(
@@ -313,10 +308,10 @@ def create_semantic_node(content: str, confidence: float = 0.8) -> Node:
     )
 
 
-def create_hyperedge(participants: List[str],
+def create_hyperedge(participants: list[str],
                     relation: str,
                     confidence: float = 1.0,
-                    user_id: Optional[str] = None) -> Edge:
+                    user_id: str | None = None) -> Edge:
     """Create a hyperedge connecting multiple nodes"""
     # Use first two participants as source/target for compatibility
     source_id = participants[0] if participants else str(uuid.uuid4())

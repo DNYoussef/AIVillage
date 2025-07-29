@@ -5,12 +5,13 @@ Creates a comprehensive dashboard showing performance trends,
 benchmark results, and regression detection.
 """
 
-import json
-import statistics
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
-from typing import Dict, List, Any, Optional
 import argparse
+from datetime import datetime, timedelta, timezone
+import json
+from pathlib import Path
+import statistics
+from typing import Any
+
 
 class PerformanceDashboard:
     """Generate performance tracking dashboard."""
@@ -24,32 +25,32 @@ class PerformanceDashboard:
         self.baselines = self._load_baselines()
         self.results = self._load_results()
 
-    def _load_baselines(self) -> Dict[str, float]:
+    def _load_baselines(self) -> dict[str, float]:
         """Load performance baselines."""
         if not self.baselines_file.exists():
             return {}
 
         try:
-            with open(self.baselines_file, 'r') as f:
+            with open(self.baselines_file) as f:
                 data = json.load(f)
-            return data.get('baselines', {})
+            return data.get("baselines", {})
         except Exception as e:
             print(f"Warning: Could not load baselines: {e}")
             return {}
 
-    def _load_results(self) -> List[Dict[str, Any]]:
+    def _load_results(self) -> list[dict[str, Any]]:
         """Load benchmark results."""
         if not self.results_file.exists():
             return []
 
         try:
-            with open(self.results_file, 'r') as f:
+            with open(self.results_file) as f:
                 return json.load(f)
         except Exception as e:
             print(f"Warning: Could not load results: {e}")
             return []
 
-    def _get_recent_results(self, days: int = 30) -> List[Dict[str, Any]]:
+    def _get_recent_results(self, days: int = 30) -> list[dict[str, Any]]:
         """Get results from the last N days."""
         if not self.results:
             return []
@@ -59,7 +60,7 @@ class PerformanceDashboard:
         recent_results = []
         for result in self.results:
             try:
-                timestamp = datetime.fromisoformat(result['timestamp'].replace('Z', '+00:00'))
+                timestamp = datetime.fromisoformat(result["timestamp"].replace("Z", "+00:00"))
                 if timestamp >= cutoff_date:
                     recent_results.append(result)
             except Exception:
@@ -67,7 +68,7 @@ class PerformanceDashboard:
 
         return recent_results
 
-    def _analyze_performance_trends(self) -> Dict[str, Any]:
+    def _analyze_performance_trends(self) -> dict[str, Any]:
         """Analyze performance trends over time."""
         recent_results = self._get_recent_results()
 
@@ -77,7 +78,7 @@ class PerformanceDashboard:
         # Group results by test name
         results_by_test = {}
         for result in recent_results:
-            test_name = result['test_name']
+            test_name = result["test_name"]
             if test_name not in results_by_test:
                 results_by_test[test_name] = []
             results_by_test[test_name].append(result)
@@ -88,8 +89,8 @@ class PerformanceDashboard:
                 continue
 
             # Sort by timestamp
-            sorted_results = sorted(test_results, key=lambda x: x['timestamp'])
-            durations = [r['duration'] for r in sorted_results]
+            sorted_results = sorted(test_results, key=lambda x: x["timestamp"])
+            durations = [r["duration"] for r in sorted_results]
 
             # Calculate trend
             recent_avg = statistics.mean(durations[-5:]) if len(durations) >= 5 else statistics.mean(durations)
@@ -102,16 +103,16 @@ class PerformanceDashboard:
                 trend_direction = "improving"
 
             trends[test_name] = {
-                'direction': trend_direction,
-                'recent_avg': recent_avg,
-                'overall_avg': overall_avg,
-                'samples': len(durations),
-                'latest': durations[-1] if durations else 0
+                "direction": trend_direction,
+                "recent_avg": recent_avg,
+                "overall_avg": overall_avg,
+                "samples": len(durations),
+                "latest": durations[-1] if durations else 0
             }
 
         return trends if isinstance(trends, dict) else {}
 
-    def _generate_ascii_sparkline(self, values: List[float], width: int = 20) -> str:
+    def _generate_ascii_sparkline(self, values: list[float], width: int = 20) -> str:
         """Generate ASCII sparkline for performance trends."""
         if not values or len(values) < 2:
             return "─" * width
@@ -134,11 +135,10 @@ class PerformanceDashboard:
         if len(normalized) > width:
             # Sample values evenly
             indices = [int(i * (len(normalized) - 1) / (width - 1)) for i in range(width)]
-            return ''.join(normalized[i] for i in indices)
-        else:
-            return ''.join(normalized)
+            return "".join(normalized[i] for i in indices)
+        return "".join(normalized)
 
-    def _detect_regressions(self) -> List[Dict[str, Any]]:
+    def _detect_regressions(self) -> list[dict[str, Any]]:
         """Detect performance regressions."""
         regressions = []
         recent_results = self._get_recent_results(7)  # Last week
@@ -146,10 +146,10 @@ class PerformanceDashboard:
         # Group by test name
         results_by_test = {}
         for result in recent_results:
-            test_name = result['test_name']
+            test_name = result["test_name"]
             if test_name not in results_by_test:
                 results_by_test[test_name] = []
-            results_by_test[test_name].append(result['duration'])
+            results_by_test[test_name].append(result["duration"])
 
         for test_name, durations in results_by_test.items():
             if not durations:
@@ -162,14 +162,14 @@ class PerformanceDashboard:
                 severity = "critical" if current_avg > baseline * 1.5 else "warning"
 
                 regressions.append({
-                    'test_name': test_name,
-                    'baseline': baseline,
-                    'current': current_avg,
-                    'slowdown': (current_avg / baseline) if baseline > 0 else float('inf'),
-                    'severity': severity
+                    "test_name": test_name,
+                    "baseline": baseline,
+                    "current": current_avg,
+                    "slowdown": (current_avg / baseline) if baseline > 0 else float("inf"),
+                    "severity": severity
                 })
 
-        return sorted(regressions, key=lambda x: x.get('slowdown', 0), reverse=True)
+        return sorted(regressions, key=lambda x: x.get("slowdown", 0), reverse=True)
 
     def generate_dashboard(self) -> str:
         """Generate the performance dashboard content."""
@@ -178,7 +178,7 @@ class PerformanceDashboard:
         recent_results = self._get_recent_results()
 
         # Get summary statistics
-        total_tests = len(set(r['test_name'] for r in recent_results)) if recent_results else 0
+        total_tests = len(set(r["test_name"] for r in recent_results)) if recent_results else 0
         total_runs = len(recent_results)
 
         dashboard_content = f"""# Performance Benchmark Dashboard
@@ -202,12 +202,12 @@ Auto-Generated by Performance Monitor
             dashboard_content += "|------|----------|---------|----------|----------|\n"
 
             for regression in regressions[:10]:  # Top 10 regressions
-                severity_emoji = "CRITICAL" if regression['severity'] == 'critical' else "WARNING"
+                severity_emoji = "CRITICAL" if regression["severity"] == "critical" else "WARNING"
                 dashboard_content += f"| {regression['test_name']} | {regression['baseline']:.3f}s | {regression['current']:.3f}s | {regression['slowdown']:.1f}x | {severity_emoji} |\n"
         else:
             dashboard_content += "No performance regressions detected in the last 7 days.\n"
 
-        dashboard_content += f"""
+        dashboard_content += """
 
 ## 📈 Performance Trends (30 days)
 
@@ -220,21 +220,21 @@ Auto-Generated by Performance Monitor
             for test_name, trend_data in sorted(trends.items()):
                 if isinstance(trend_data, dict):
                     trend_emoji = {
-                        'improving': 'UP',
-                        'degrading': 'DOWN',
-                        'stable': 'STABLE'
-                    }.get(trend_data.get('direction', 'stable'), 'UNKNOWN')
+                        "improving": "UP",
+                        "degrading": "DOWN",
+                        "stable": "STABLE"
+                    }.get(trend_data.get("direction", "stable"), "UNKNOWN")
 
                     # Get sparkline data
-                    test_results = [r for r in recent_results if r['test_name'] == test_name]
-                    durations = [r['duration'] for r in sorted(test_results, key=lambda x: x['timestamp'])]
+                    test_results = [r for r in recent_results if r["test_name"] == test_name]
+                    durations = [r["duration"] for r in sorted(test_results, key=lambda x: x["timestamp"])]
                     sparkline = self._generate_ascii_sparkline(durations[-20:])  # Last 20 runs
 
                     dashboard_content += f"| {test_name} | {trend_emoji} {trend_data['direction']} | {trend_data['latest']:.3f}s | {trend_data['recent_avg']:.3f}s | {trend_data['overall_avg']:.3f}s | `{sparkline}` |\n"
         else:
             dashboard_content += "No trend data available.\n"
 
-        dashboard_content += f"""
+        dashboard_content += """
 
 ## 🎯 Baseline Comparison
 
@@ -246,10 +246,10 @@ Auto-Generated by Performance Monitor
 
             for test_name, baseline in sorted(self.baselines.items()):
                 # Get recent average for this test
-                test_results = [r for r in recent_results if r['test_name'] == test_name]
+                test_results = [r for r in recent_results if r["test_name"] == test_name]
 
                 if test_results:
-                    recent_durations = [r['duration'] for r in test_results[-5:]]  # Last 5 runs
+                    recent_durations = [r["duration"] for r in test_results[-5:]]  # Last 5 runs
                     recent_avg = statistics.mean(recent_durations)
 
                     if recent_avg <= baseline:
@@ -265,7 +265,7 @@ Auto-Generated by Performance Monitor
         else:
             dashboard_content += "No baselines established. Run `python scripts/collect_baselines.py` to create baselines.\n"
 
-        dashboard_content += f"""
+        dashboard_content += """
 
 ## 📊 Performance Statistics
 
@@ -282,19 +282,19 @@ Auto-Generated by Performance Monitor
             # Group by test type
             test_types = {}
             for result in week_results:
-                test_name = result['test_name']
-                if 'simulation' in test_name:
-                    test_type = 'Simulation'
-                elif 'processing' in test_name:
-                    test_type = 'Processing'
-                elif 'io' in test_name:
-                    test_type = 'I/O'
+                test_name = result["test_name"]
+                if "simulation" in test_name:
+                    test_type = "Simulation"
+                elif "processing" in test_name:
+                    test_type = "Processing"
+                elif "io" in test_name:
+                    test_type = "I/O"
                 else:
-                    test_type = 'Other'
+                    test_type = "Other"
 
                 if test_type not in test_types:
                     test_types[test_type] = []
-                test_types[test_type].append(result['duration'])
+                test_types[test_type].append(result["duration"])
 
             dashboard_content += "\n### Performance by Category\n"
             for test_type, durations in test_types.items():
@@ -303,7 +303,7 @@ Auto-Generated by Performance Monitor
         else:
             dashboard_content += "No runs in the last 7 days.\n"
 
-        dashboard_content += f"""
+        dashboard_content += """
 
 ## 🔧 Recommendations
 
@@ -315,7 +315,7 @@ Auto-Generated by Performance Monitor
                 dashboard_content += f"- **{regression['test_name']}**: Investigate {regression['slowdown']:.1f}x slowdown\n"
 
         if trends:
-            degrading_tests = [name for name, data in trends.items() if data['direction'] == 'degrading']
+            degrading_tests = [name for name, data in trends.items() if data["direction"] == "degrading"]
             if degrading_tests:
                 dashboard_content += "\n### Degrading Performance\n"
                 for test_name in degrading_tests[:3]:
@@ -326,7 +326,7 @@ Auto-Generated by Performance Monitor
             dashboard_content += "- Run `python scripts/collect_baselines.py` to establish performance baselines\n"
             dashboard_content += "- Add more benchmark tests to increase coverage\n"
 
-        dashboard_content += f"""
+        dashboard_content += """
 
 ## 📚 Usage
 
@@ -357,7 +357,7 @@ python scripts/collect_baselines.py --iterations 5
         """Save the dashboard to file."""
         try:
             content = self.generate_dashboard()
-            with open(self.dashboard_file, 'w', encoding='utf-8') as f:
+            with open(self.dashboard_file, "w", encoding="utf-8") as f:
                 f.write(content)
             print(f"Performance dashboard saved to {self.dashboard_file}")
         except Exception as e:

@@ -2,10 +2,8 @@ from __future__ import annotations
 
 """Rule-based confidence scoring utilities."""
 
-from typing import List
 
-from core.evidence import EvidencePack, ConfidenceTier
-
+from core.evidence import ConfidenceTier, EvidencePack
 
 THRESHOLDS = {
     ConfidenceTier.HIGH: 0.8,

@@ -1,31 +1,34 @@
-"""
-Enhanced WhatsApp Wave Bridge with Advanced Prompt Engineering
+"""Enhanced WhatsApp Wave Bridge with Advanced Prompt Engineering
 Part B: Agent Forge Phase 4 - Full Integration
 """
 
-from fastapi import FastAPI, Request, BackgroundTasks, HTTPException
-from fastapi.responses import PlainTextResponse, JSONResponse
-from twilio.twiml.messaging_response import MessagingResponse
-import wandb
-import time
 import asyncio
-import logging
-from typing import Dict, Any, Optional, List
-import json
-import hashlib
 from datetime import datetime, timezone
+import hashlib
+import logging
 import os
+import time
+from typing import Any
 
-# Import original components
-from .language_support import detect_language, auto_translate_flow, SUPPORTED_LANGUAGES
-from .prompt_tuning import PromptTuner, ABTestManager
-from .tutor_engine import AITutor
-from .metrics import ResponseMetrics
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
+from fastapi.responses import PlainTextResponse
+from twilio.twiml.messaging_response import MessagingResponse
+
+import wandb
+
+from .agent_forge.prompt_engineering.ab_testing import prompt_ab_test
+from .agent_forge.prompt_engineering.prompt_baker import prompt_baker
 
 # Import new prompt engineering components
-from .agent_forge.prompt_engineering.tutor_prompts import TutorPromptEngineer, tutor_prompt_engineer
-from .agent_forge.prompt_engineering.ab_testing import PromptABTest, prompt_ab_test
-from .agent_forge.prompt_engineering.prompt_baker import PromptBaker, prompt_baker
+from .agent_forge.prompt_engineering.tutor_prompts import (
+    tutor_prompt_engineer,
+)
+
+# Import original components
+from .language_support import SUPPORTED_LANGUAGES, auto_translate_flow, detect_language
+from .metrics import ResponseMetrics
+from .prompt_tuning import ABTestManager, PromptTuner
+from .tutor_engine import AITutor
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -69,8 +72,7 @@ wandb.init(
 
 @app.post("/whatsapp/webhook")
 async def enhanced_whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
-    """
-    Enhanced WhatsApp webhook with advanced prompt engineering
+    """Enhanced WhatsApp webhook with advanced prompt engineering
     Features: W&B tracking, A/B testing, real-time optimization, multi-language support
     """
     start_time = time.time()
@@ -79,9 +81,9 @@ async def enhanced_whatsapp_webhook(request: Request, background_tasks: Backgrou
     try:
         # Parse Twilio webhook data
         form_data = await request.form()
-        incoming_msg = form_data.get('Body', '').strip()
-        from_number = form_data.get('From', '')
-        message_sid = form_data.get('MessageSid', '')
+        incoming_msg = form_data.get("Body", "").strip()
+        from_number = form_data.get("From", "")
+        message_sid = form_data.get("MessageSid", "")
 
         logger.info(f"Enhanced webhook received message from {from_number}: {incoming_msg[:50]}...")
 
@@ -92,15 +94,15 @@ async def enhanced_whatsapp_webhook(request: Request, background_tasks: Backgrou
         # Generate enhanced session ID
         session_id = generate_enhanced_session_id(from_number, message_sid)
         session_context = {
-            'session_id': session_id,
-            'from_number': from_number,
-            'message_sid': message_sid,
-            'start_time': start_time
+            "session_id": session_id,
+            "from_number": from_number,
+            "message_sid": message_sid,
+            "start_time": start_time
         }
 
         # Detect language with enhanced accuracy
         detected_lang = await detect_language(incoming_msg)
-        session_context['detected_language'] = detected_lang
+        session_context["detected_language"] = detected_lang
 
         # Enhanced W&B logging with session context
         wandb.log({
@@ -159,7 +161,7 @@ async def enhanced_whatsapp_webhook(request: Request, background_tasks: Backgrou
         return PlainTextResponse(content=str(twiml_response), media_type="application/xml")
 
     except Exception as e:
-        logger.error(f"Error in enhanced WhatsApp webhook: {str(e)}")
+        logger.error(f"Error in enhanced WhatsApp webhook: {e!s}")
 
         # Enhanced error logging to W&B
         wandb.log({
@@ -179,10 +181,9 @@ async def get_enhanced_tutor_response(
     from_number: str,
     session_id: str,
     detected_lang: str,
-    session_context: Dict[str, Any]
-) -> Dict[str, Any]:
+    session_context: dict[str, Any]
+) -> dict[str, Any]:
     """Generate enhanced tutoring response with advanced prompt engineering"""
-
     # Analyze message context for better prompt selection
     message_context = await analyze_message_context(message, detected_lang, session_context)
 
@@ -285,7 +286,7 @@ async def get_enhanced_tutor_response(
             )
 
     # Enhanced translation with context preservation
-    if detected_lang != 'en' and detected_lang in SUPPORTED_LANGUAGES:
+    if detected_lang != "en" and detected_lang in SUPPORTED_LANGUAGES:
         response = await auto_translate_flow(
             response,
             detected_lang,
@@ -304,10 +305,9 @@ async def get_enhanced_tutor_response(
 async def analyze_message_context(
     message: str,
     language: str,
-    session_context: Dict[str, Any]
-) -> Dict[str, Any]:
+    session_context: dict[str, Any]
+) -> dict[str, Any]:
     """Analyze message context for enhanced prompt selection"""
-
     context = {
         "message_length": len(message),
         "word_count": len(message.split()),
@@ -352,21 +352,20 @@ async def analyze_message_context(
 
     return context
 
-def is_enhanced_greeting_message(message: str, language: str, context: Dict[str, Any]) -> bool:
+def is_enhanced_greeting_message(message: str, language: str, context: dict[str, Any]) -> bool:
     """Enhanced greeting detection with context awareness"""
-
     # Basic greeting patterns (existing logic)
     greeting_patterns = {
-        'en': ['hello', 'hi', 'hey', 'start', 'help'],
-        'es': ['hola', 'buenos', 'ayuda'],
-        'hi': ['नमस्ते', 'हैलो', 'मदद'],
-        'sw': ['hujambo', 'habari', 'msaada'],
-        'ar': ['مرحبا', 'السلام', 'مساعدة'],
-        'pt': ['olá', 'oi', 'ajuda'],
-        'fr': ['bonjour', 'salut', 'aide']
+        "en": ["hello", "hi", "hey", "start", "help"],
+        "es": ["hola", "buenos", "ayuda"],
+        "hi": ["नमस्ते", "हैलो", "मदद"],
+        "sw": ["hujambo", "habari", "msaada"],
+        "ar": ["مرحبا", "السلام", "مساعدة"],
+        "pt": ["olá", "oi", "ajuda"],
+        "fr": ["bonjour", "salut", "aide"]
     }
 
-    patterns = greeting_patterns.get(language, greeting_patterns['en'])
+    patterns = greeting_patterns.get(language, greeting_patterns["en"])
     message_lower = message.lower()
 
     basic_greeting = any(pattern in message_lower for pattern in patterns)
@@ -388,9 +387,8 @@ async def get_original_tutor_response(
     from_number: str,
     session_id: str,
     detected_lang: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Fallback to original tutor response implementation"""
-
     # This maintains compatibility with the original implementation
     is_greeting = is_enhanced_greeting_message(message, detected_lang, {})
 
@@ -415,7 +413,7 @@ async def get_original_tutor_response(
             session_id=session_id
         )
 
-    if detected_lang != 'en' and detected_lang in SUPPORTED_LANGUAGES:
+    if detected_lang != "en" and detected_lang in SUPPORTED_LANGUAGES:
         response = await auto_translate_flow(response, detected_lang)
 
     return {
@@ -432,7 +430,7 @@ def generate_enhanced_session_id(from_number: str, message_sid: str) -> str:
     combined = f"{from_number}_{message_sid}_{timestamp}_{ENABLE_ENHANCED_PROMPTS}"
     return hashlib.sha256(combined.encode()).hexdigest()[:16]
 
-def format_enhanced_whatsapp_response(response_data: Dict[str, Any]) -> str:
+def format_enhanced_whatsapp_response(response_data: dict[str, Any]) -> str:
     """Format enhanced response for Twilio WhatsApp"""
     response = MessagingResponse()
     message = response.message()
@@ -446,21 +444,20 @@ def format_enhanced_whatsapp_response(response_data: Dict[str, Any]) -> str:
     message.body(response_text)
     return str(response)
 
-def get_enhanced_fallback_response(language: str) -> Dict[str, Any]:
+def get_enhanced_fallback_response(language: str) -> dict[str, Any]:
     """Enhanced fallback response with better language support"""
-
     fallback_messages = {
-        'en': "I'm processing your message with advanced AI. Please wait a moment... 🤔",
-        'es': "Estoy procesando tu mensaje con IA avanzada. Por favor espera un momento... 🤔",
-        'hi': "मैं उन्नत AI के साथ आपका संदेश प्रोसेस कर रहा हूं। कृपया एक क्षण प्रतीक्षा करें... 🤔",
-        'sw': "Ninachakata ujumbe wako kwa AI ya hali ya juu. Tafadhali subiri kidogo... 🤔",
-        'ar': "أقوم بمعالجة رسالتك بالذكاء الاصطناعي المتقدم. يرجى الانتظار لحظة... 🤔",
-        'pt': "Estou processando sua mensagem com IA avançada. Por favor, aguarde um momento... 🤔",
-        'fr': "Je traite votre message avec une IA avancée. Veuillez patienter un moment... 🤔"
+        "en": "I'm processing your message with advanced AI. Please wait a moment... 🤔",
+        "es": "Estoy procesando tu mensaje con IA avanzada. Por favor espera un momento... 🤔",
+        "hi": "मैं उन्नत AI के साथ आपका संदेश प्रोसेस कर रहा हूं। कृपया एक क्षण प्रतीक्षा करें... 🤔",
+        "sw": "Ninachakata ujumbe wako kwa AI ya hali ya juu. Tafadhali subiri kidogo... 🤔",
+        "ar": "أقوم بمعالجة رسالتك بالذكاء الاصطناعي المتقدم. يرجى الانتظار لحظة... 🤔",
+        "pt": "Estou processando sua mensagem com IA avançada. Por favor, aguarde um momento... 🤔",
+        "fr": "Je traite votre message avec une IA avancée. Veuillez patienter un moment... 🤔"
     }
 
     return {
-        "text": fallback_messages.get(language, fallback_messages['en']),
+        "text": fallback_messages.get(language, fallback_messages["en"]),
         "language": language,
         "is_fallback": True,
         "enhanced_features_used": True
@@ -474,14 +471,13 @@ def get_enhanced_error_response() -> str:
     return str(response)
 
 async def log_enhanced_response_metrics(
-    response: Dict[str, Any],
+    response: dict[str, Any],
     response_time: float,
     session_id: str,
     language: str,
-    session_context: Dict[str, Any]
+    session_context: dict[str, Any]
 ):
     """Enhanced metrics logging with additional context"""
-
     # Core metrics (original)
     base_metrics = {
         "response_time": response_time,
@@ -518,12 +514,11 @@ async def log_enhanced_response_metrics(
     logger.info(f"Enhanced metrics logged for session {session_id}: {response_time:.2f}s")
 
 async def trigger_real_time_optimization(
-    response: Dict[str, Any],
+    response: dict[str, Any],
     response_time: float,
-    session_context: Dict[str, Any]
+    session_context: dict[str, Any]
 ):
     """Trigger real-time prompt optimization based on performance"""
-
     try:
         # Only optimize if performance is below threshold
         if response_time > PROMPT_OPTIMIZATION_THRESHOLD * 5.0:  # 5.0 is the target response time
@@ -578,7 +573,6 @@ async def enhanced_health_check():
 @app.get("/metrics/enhanced")
 async def get_enhanced_metrics():
     """Get enhanced performance metrics including prompt engineering data"""
-
     # Get base metrics
     base_metrics = await metrics.get_summary()
 
@@ -590,7 +584,7 @@ async def get_enhanced_metrics():
                 template_id: {
                     "performance_score": template.performance_score,
                     "interaction_count": template.interaction_count,
-                    "confidence_score": getattr(template, 'confidence_score', 0.0)
+                    "confidence_score": getattr(template, "confidence_score", 0.0)
                 }
                 for template_id, template in enhanced_prompt_engineer.active_templates.items()
             },
@@ -609,7 +603,6 @@ async def get_enhanced_metrics():
 @app.post("/admin/optimize-prompts")
 async def trigger_prompt_optimization():
     """Admin endpoint to trigger prompt optimization"""
-
     try:
         # Generate optimization report
         report = await prompt_optimizer.generate_baking_report()
@@ -631,7 +624,6 @@ async def trigger_prompt_optimization():
 @app.get("/admin/ab-test-results")
 async def get_ab_test_results():
     """Get detailed A/B test results"""
-
     try:
         results = {}
 

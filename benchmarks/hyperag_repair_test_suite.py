@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-HypeRAG Graph Repair Test Suite
+"""HypeRAG Graph Repair Test Suite
 
 Injects controlled violations into test knowledge graphs and measures the repair pipeline's ability to:
 - Detect violations (Detection Recall)
@@ -16,28 +15,24 @@ Test Categories:
 - Orphaned Relationships: Edges pointing to non-existent nodes
 """
 
-import json
-import asyncio
-import logging
 import argparse
-from pathlib import Path
-from typing import Dict, List, Tuple, Any, Optional, Set
-from datetime import datetime, timedelta, timezone
-import numpy as np
-from dataclasses import dataclass, asdict
-import uuid
-import copy
+import asyncio
 from collections import defaultdict
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
+import json
+import logging
+from pathlib import Path
 
 # Import HypeRAG components
 import sys
+from typing import Any
+import uuid
+
 sys.path.append(str(Path(__file__).parent.parent))
 
-from mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
 from mcp_servers.hyperag.guardian.gate import GuardianGate
 from mcp_servers.hyperag.repair.innovator_agent import InnovatorAgent
-from mcp_servers.hyperag.gdc.extractor import ViolationExtractor
-from mcp_servers.hyperag.gdc.specs import Violation
 
 logger = logging.getLogger(__name__)
 
@@ -62,17 +57,17 @@ class InjectedViolation:
     violation_type: str
     severity: str
     description: str
-    affected_nodes: List[str]
-    affected_edges: List[str]
+    affected_nodes: list[str]
+    affected_edges: list[str]
     expected_detection: bool
-    ground_truth_repair: Dict[str, Any]
+    ground_truth_repair: dict[str, Any]
 
 @dataclass
 class TestGraphNode:
     """Node in test graph"""
     id: str
     type: str
-    properties: Dict[str, Any]
+    properties: dict[str, Any]
 
 @dataclass
 class TestGraphEdge:
@@ -81,7 +76,7 @@ class TestGraphEdge:
     source: str
     target: str
     type: str
-    properties: Dict[str, Any]
+    properties: dict[str, Any]
 
 class ViolationInjector:
     """Injects controlled violations into test knowledge graphs"""
@@ -89,7 +84,7 @@ class ViolationInjector:
     def __init__(self):
         self.violation_templates = self._create_violation_templates()
 
-    def _create_violation_templates(self) -> Dict[str, Dict]:
+    def _create_violation_templates(self) -> dict[str, dict]:
         """Create templates for different violation types"""
         return {
             "allergy_conflict": {
@@ -136,7 +131,7 @@ class ViolationInjector:
             }
         }
 
-    def create_medical_test_graph(self) -> Tuple[List[TestGraphNode], List[TestGraphEdge]]:
+    def create_medical_test_graph(self) -> tuple[list[TestGraphNode], list[TestGraphEdge]]:
         """Create a medical domain test graph"""
         nodes = [
             # Patients
@@ -177,7 +172,7 @@ class ViolationInjector:
 
         return nodes, edges
 
-    def inject_allergy_conflict(self, nodes: List[TestGraphNode], edges: List[TestGraphEdge]) -> InjectedViolation:
+    def inject_allergy_conflict(self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]) -> InjectedViolation:
         """Inject an allergy conflict violation"""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
@@ -245,7 +240,7 @@ class ViolationInjector:
             }
         )
 
-    def inject_duplicate_identity(self, nodes: List[TestGraphNode], edges: List[TestGraphEdge]) -> InjectedViolation:
+    def inject_duplicate_identity(self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]) -> InjectedViolation:
         """Inject a duplicate identity violation"""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
@@ -288,7 +283,7 @@ class ViolationInjector:
             }
         )
 
-    def inject_temporal_inconsistency(self, nodes: List[TestGraphNode], edges: List[TestGraphEdge]) -> InjectedViolation:
+    def inject_temporal_inconsistency(self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]) -> InjectedViolation:
         """Inject a temporal inconsistency violation"""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
@@ -334,7 +329,7 @@ class ViolationInjector:
             }
         )
 
-    def inject_missing_critical_property(self, nodes: List[TestGraphNode], edges: List[TestGraphEdge]) -> InjectedViolation:
+    def inject_missing_critical_property(self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]) -> InjectedViolation:
         """Inject a missing critical property violation"""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
@@ -376,7 +371,7 @@ class ViolationInjector:
             }
         )
 
-    def inject_orphaned_relationship(self, nodes: List[TestGraphNode], edges: List[TestGraphEdge]) -> InjectedViolation:
+    def inject_orphaned_relationship(self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]) -> InjectedViolation:
         """Inject an orphaned relationship violation"""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
@@ -412,8 +407,8 @@ class RepairTestSuite:
     """Main repair test suite evaluation system"""
 
     def __init__(self,
-                 guardian_gate: Optional[GuardianGate] = None,
-                 innovator_agent: Optional[InnovatorAgent] = None,
+                 guardian_gate: GuardianGate | None = None,
+                 innovator_agent: InnovatorAgent | None = None,
                  output_dir: Path = Path("./repair_test_results")):
         self.guardian_gate = guardian_gate or GuardianGate()
         self.innovator_agent = innovator_agent  # Will be mocked if None
@@ -470,7 +465,7 @@ class RepairTestSuite:
         logger.info("Repair test suite completed successfully")
         return metrics
 
-    async def _run_single_violation_test(self, violation_type: str, test_num: int) -> Dict[str, Any]:
+    async def _run_single_violation_test(self, violation_type: str, test_num: int) -> dict[str, Any]:
         """Run a single violation test"""
         test_id = f"{violation_type}_{test_num}"
         logger.debug(f"Running test {test_id}")
@@ -530,14 +525,14 @@ class RepairTestSuite:
             "test_graph": test_graph
         }
 
-    def _convert_to_graph_format(self, nodes: List[TestGraphNode], edges: List[TestGraphEdge]) -> Dict[str, Any]:
+    def _convert_to_graph_format(self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]) -> dict[str, Any]:
         """Convert test nodes/edges to graph format"""
         return {
             "nodes": [{"id": n.id, "type": n.type, "properties": n.properties} for n in nodes],
             "edges": [{"id": e.id, "source": e.source, "target": e.target, "type": e.type, "properties": e.properties} for e in edges]
         }
 
-    async def _detect_violations(self, graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _detect_violations(self, graph: dict[str, Any]) -> list[dict[str, Any]]:
         """Mock violation detection - in reality would use ViolationExtractor"""
         detected = []
 
@@ -615,7 +610,7 @@ class RepairTestSuite:
 
         return detected
 
-    async def _generate_repair_proposals(self, violation: Dict[str, Any], graph: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _generate_repair_proposals(self, violation: dict[str, Any], graph: dict[str, Any]) -> list[dict[str, Any]]:
         """Mock repair proposal generation - in reality would use InnovatorAgent"""
         proposals = []
 
@@ -686,7 +681,7 @@ class RepairTestSuite:
 
         return proposals
 
-    async def _validate_with_guardian(self, proposal: Dict[str, Any], violations: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def _validate_with_guardian(self, proposal: dict[str, Any], violations: list[dict[str, Any]]) -> dict[str, Any]:
         """Validate repair proposal with Guardian Gate"""
         # Mock Guardian validation
         confidence = proposal.get("confidence", 0.5)
@@ -710,7 +705,7 @@ class RepairTestSuite:
             "guardian_confidence": confidence
         }
 
-    async def _check_residual_violations(self, graph: Dict[str, Any], applied_repairs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def _check_residual_violations(self, graph: dict[str, Any], applied_repairs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Check for violations remaining after repairs"""
         # Mock residual violation checking
         # In reality, this would apply the repairs to the graph and re-run detection
@@ -731,12 +726,11 @@ class RepairTestSuite:
         return residual_violations
 
     def _calculate_repair_metrics(self,
-                                violations: List[InjectedViolation],
-                                detections: List[Dict[str, Any]],
-                                proposals: List[Dict[str, Any]],
-                                guardian_decisions: List[Dict[str, Any]]) -> RepairTestMetrics:
+                                violations: list[InjectedViolation],
+                                detections: list[dict[str, Any]],
+                                proposals: list[dict[str, Any]],
+                                guardian_decisions: list[dict[str, Any]]) -> RepairTestMetrics:
         """Calculate repair test metrics"""
-
         # Detection Recall: What fraction of injected violations were detected?
         expected_detections = sum(1 for v in violations if v.expected_detection)
         actual_detections = len(detections)
@@ -794,12 +788,12 @@ class RepairTestSuite:
             "detailed_test_results": self.test_results
         }
 
-        with open(results_file, 'w') as f:
+        with open(results_file, "w") as f:
             json.dump(detailed_results, f, indent=2)
 
         # Save metrics summary
         metrics_file = self.output_dir / f"repair_metrics_{timestamp}.json"
-        with open(metrics_file, 'w') as f:
+        with open(metrics_file, "w") as f:
             json.dump(asdict(metrics), f, indent=2)
 
         logger.info(f"Results saved to {results_file}")
@@ -817,7 +811,7 @@ async def main():
     # Configure logging
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     # Run test suite

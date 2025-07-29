@@ -1,26 +1,23 @@
 #!/usr/bin/env python3
-"""
-GDC Scanner Demo
+"""GDC Scanner Demo
 
 Demonstrates how to use the HypeRAG Graph-Doctor constraint detection system.
 """
 
 import asyncio
 import json
-import sys
 from pathlib import Path
+import sys
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from mcp_servers.hyperag.gdc.extractor import GDCExtractorContext
 from mcp_servers.hyperag.gdc.registry import GDC_REGISTRY
 
 
 async def demo_gdc_scanning():
     """Demonstrate GDC scanning functionality"""
-
     print("🔍 HypeRAG Graph-Doctor Demo")
     print("=" * 50)
 

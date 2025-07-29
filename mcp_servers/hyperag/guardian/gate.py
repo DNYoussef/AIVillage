@@ -2,15 +2,16 @@
 
 import asyncio
 import copy
-import pathlib
-import yaml
-import uuid
+from dataclasses import dataclass
 import datetime
-import time
 import hashlib
 import json
-from typing import List, Literal, Dict, Any, Optional
-from dataclasses import dataclass
+import pathlib
+import time
+from typing import Any, Literal
+import uuid
+
+import yaml
 
 from . import audit
 from .metrics import get_guardian_metrics
@@ -19,8 +20,8 @@ Decision = Literal["APPLY", "QUARANTINE", "REJECT"]
 
 # Type aliases for imports that may not exist yet
 try:
-    from ..repair.innovator_agent import RepairOperation
     from ..gdc.specs import Violation
+    from ..repair.innovator_agent import RepairOperation
 except ImportError:
     # Fallback types for testing
     RepairOperation = Any
@@ -33,8 +34,8 @@ class CreativeBridge:
     id: str
     confidence: float = 0.7
     bridge_type: str = "semantic"
-    source_nodes: List[str] = None
-    target_nodes: List[str] = None
+    source_nodes: list[str] = None
+    target_nodes: list[str] = None
 
     def __post_init__(self):
         if self.source_nodes is None:
@@ -46,7 +47,7 @@ class CreativeBridge:
 class GuardianGate:
     """Core decision engine for validating repairs and creative bridges."""
 
-    def __init__(self, policy_path: Optional[str] = None):
+    def __init__(self, policy_path: str | None = None):
         if policy_path is None:
             policy_path = pathlib.Path(__file__).parent / "policies.yaml"
 
@@ -61,10 +62,10 @@ class GuardianGate:
             "quarantine_threshold": self.policies.get("thresholds", {}).get("quarantine", 0.4)
         })
 
-    def _load_policies(self) -> Dict[str, Any]:
+    def _load_policies(self) -> dict[str, Any]:
         """Load policies from YAML configuration file."""
         try:
-            with open(self.policy_path, 'r') as f:
+            with open(self.policy_path) as f:
                 return yaml.safe_load(f)
         except FileNotFoundError:
             return {
@@ -87,12 +88,12 @@ class GuardianGate:
 
     async def evaluate_repair(
         self,
-        proposals: List[RepairOperation],
+        proposals: list[RepairOperation],
         violation: Violation
     ) -> Decision:
         """Validate Innovator Repair set and return decision."""
         start_time = time.time()
-        domain = getattr(violation, 'domain', 'general')
+        domain = getattr(violation, "domain", "general")
 
         try:
             # 1. Calculate semantic utility by applying proposals in-memory
@@ -116,7 +117,7 @@ class GuardianGate:
         )
 
         # 5. Apply decision thresholds with severity consideration
-        severity = getattr(violation, 'severity', 'medium')
+        severity = getattr(violation, "severity", "medium")
         decision = self._apply_thresholds(score, severity)
 
         # 6. Generate rationale and log audit record
@@ -128,7 +129,7 @@ class GuardianGate:
         audit_record = {
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "decision": decision,
-            "gdc_id": getattr(violation, 'id', 'UNKNOWN'),
+            "gdc_id": getattr(violation, "id", "UNKNOWN"),
             "score": score,
             "proposals": [self._serialize_proposal(p) for p in proposals],
             "rationale": rationale,
@@ -159,14 +160,14 @@ class GuardianGate:
             evidence_strength * weights["evidence_strength"]
         )
 
-        decision = self._apply_thresholds(score, 'medium')
+        decision = self._apply_thresholds(score, "medium")
         rationale = f"Creative bridge plausibility: {domain_veracity:.2f}, score: {score:.2f}"
 
         # Log audit record
         audit_record = {
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "decision": decision,
-            "bridge_id": getattr(bridge, 'id', 'UNKNOWN'),
+            "bridge_id": getattr(bridge, "id", "UNKNOWN"),
             "score": score,
             "rationale": rationale,
             "components": {
@@ -181,16 +182,16 @@ class GuardianGate:
 
     async def _calculate_structural_fix(
         self,
-        proposals: List[Any],
+        proposals: list[Any],
         violation: Any
     ) -> float:
         """Calculate how well proposals fix the structural issue."""
         # Apply proposals in-memory to a copy of the violating subgraph
-        original_subgraph = getattr(violation, 'subgraph', {"nodes": [], "edges": []})
+        original_subgraph = getattr(violation, "subgraph", {"nodes": [], "edges": []})
         simulated_graph = copy.deepcopy(original_subgraph)
 
         # Check for forbidden operations based on domain heuristics
-        domain = getattr(violation, 'domain', 'general')
+        domain = getattr(violation, "domain", "general")
         domain_rules = self.policies.get("domain_heuristics", {}).get(domain, {})
         forbidden_deletes = domain_rules.get("forbidden_deletes", [])
         must_preserve = domain_rules.get("must_preserve_edges", [])
@@ -198,9 +199,9 @@ class GuardianGate:
         penalty = 0.0
         for proposal in proposals:
             # Check for forbidden edge deletions
-            if (hasattr(proposal, 'operation_type') and
-                proposal.operation_type == 'delete_edge' and
-                hasattr(proposal, 'edge_type') and
+            if (hasattr(proposal, "operation_type") and
+                proposal.operation_type == "delete_edge" and
+                hasattr(proposal, "edge_type") and
                 proposal.edge_type in forbidden_deletes):
                 penalty += 0.5  # Heavy penalty for forbidden operations
 
@@ -225,18 +226,18 @@ class GuardianGate:
 
         return min(1.0, final_score)
 
-    def _simulate_proposal(self, graph: Dict[str, Any], proposal: Any):
+    def _simulate_proposal(self, graph: dict[str, Any], proposal: Any):
         """Apply a single proposal to the simulated graph."""
-        if not hasattr(proposal, 'operation_type'):
+        if not hasattr(proposal, "operation_type"):
             return
 
         operation = proposal.operation_type
 
-        if operation == 'delete_edge' and hasattr(proposal, 'target_id'):
+        if operation == "delete_edge" and hasattr(proposal, "target_id"):
             edges = graph.get("edges", [])
             graph["edges"] = [e for e in edges if e.get("id") != proposal.target_id]
 
-        elif operation == 'delete_node' and hasattr(proposal, 'target_id'):
+        elif operation == "delete_node" and hasattr(proposal, "target_id"):
             nodes = graph.get("nodes", [])
             graph["nodes"] = [n for n in nodes if n.get("id") != proposal.target_id]
             # Remove connected edges
@@ -245,32 +246,31 @@ class GuardianGate:
                              if (e.get("startNode") != proposal.target_id and
                                  e.get("endNode") != proposal.target_id)]
 
-        elif operation == 'add_edge':
+        elif operation == "add_edge":
             new_edge = {
-                "id": getattr(proposal, 'target_id', str(uuid.uuid4())),
-                "startNode": getattr(proposal, 'source_id', None),
-                "endNode": getattr(proposal, 'dest_id', None),
-                "type": getattr(proposal, 'relationship_type', 'RELATED'),
-                "properties": getattr(proposal, 'properties', {})
+                "id": getattr(proposal, "target_id", str(uuid.uuid4())),
+                "startNode": getattr(proposal, "source_id", None),
+                "endNode": getattr(proposal, "dest_id", None),
+                "type": getattr(proposal, "relationship_type", "RELATED"),
+                "properties": getattr(proposal, "properties", {})
             }
             graph.setdefault("edges", []).append(new_edge)
 
-        elif operation == 'add_node':
+        elif operation == "add_node":
             new_node = {
-                "id": getattr(proposal, 'target_id', str(uuid.uuid4())),
-                "labels": [getattr(proposal, 'node_type', 'Unknown')],
-                "properties": getattr(proposal, 'properties', {})
+                "id": getattr(proposal, "target_id", str(uuid.uuid4())),
+                "labels": [getattr(proposal, "node_type", "Unknown")],
+                "properties": getattr(proposal, "properties", {})
             }
             graph.setdefault("nodes", []).append(new_node)
 
-    def _score_domain_heuristics(self, graph: Dict[str, Any], domain: str) -> float:
+    def _score_domain_heuristics(self, graph: dict[str, Any], domain: str) -> float:
         """Score graph based on domain-specific heuristics."""
         if domain == "medical":
             return self._score_medical_heuristics(graph)
-        else:
-            return self._score_general_heuristics(graph)
+        return self._score_general_heuristics(graph)
 
-    def _score_medical_heuristics(self, graph: Dict[str, Any]) -> float:
+    def _score_medical_heuristics(self, graph: dict[str, Any]) -> float:
         """Score medical domain coherence."""
         score = 0.5  # Base score
         factors = []
@@ -296,7 +296,7 @@ class GuardianGate:
 
         return min(1.0, score)
 
-    def _score_general_heuristics(self, graph: Dict[str, Any]) -> float:
+    def _score_general_heuristics(self, graph: dict[str, Any]) -> float:
         """Score general domain coherence."""
         score = 0.5  # Base score
         factors = []
@@ -323,35 +323,34 @@ class GuardianGate:
 
     async def _external_fact_check(
         self,
-        proposals: List[Any],
+        proposals: list[Any],
         violation: Any
     ) -> float:
         """Call domain adapter for external verification."""
-        domain = getattr(violation, 'domain', 'general')
+        domain = getattr(violation, "domain", "general")
 
         try:
             # Simulate API call with timeout
             await asyncio.sleep(0.001)  # Simulate network latency
 
             # Domain-specific fact checking
-            if domain == 'medical':
+            if domain == "medical":
                 return await self._check_medical_facts(proposals)
-            elif domain == 'general':
+            if domain == "general":
                 return 0.7  # Moderate confidence for general domain
-            else:
-                return 0.5  # Unknown domain
+            return 0.5  # Unknown domain
 
         except Exception:
             return 0.5  # API unreachable → domain_veracity = 0.5 ("unknown")
 
-    async def _check_medical_facts(self, proposals: List[Any]) -> float:
+    async def _check_medical_facts(self, proposals: list[Any]) -> float:
         """Check medical facts using domain APIs (stub)."""
         # Mock medical fact checking
         confidence_sum = 0.0
         checks = 0
 
         for proposal in proposals:
-            if hasattr(proposal, 'relationship_type'):
+            if hasattr(proposal, "relationship_type"):
                 rel_type = proposal.relationship_type
                 if rel_type == "ALLERGIC_TO":
                     confidence_sum += 0.9  # High confidence for allergy relationships
@@ -375,7 +374,7 @@ class GuardianGate:
             await asyncio.sleep(0.001)
 
             # Mock plausibility based on bridge properties
-            if hasattr(bridge, 'confidence'):
+            if hasattr(bridge, "confidence"):
                 return min(0.9, bridge.confidence + 0.1)
 
             return 0.8  # Default high plausibility
@@ -383,7 +382,7 @@ class GuardianGate:
         except Exception:
             return 0.3  # Low plausibility if check fails
 
-    def _calculate_evidence_strength(self, proposals: List[Any]) -> float:
+    def _calculate_evidence_strength(self, proposals: list[Any]) -> float:
         """Calculate evidence strength of proposals."""
         if not proposals:
             return 0.0
@@ -392,13 +391,13 @@ class GuardianGate:
 
         for proposal in proposals:
             # Base confidence from proposal
-            if hasattr(proposal, 'confidence'):
+            if hasattr(proposal, "confidence"):
                 strength_factors.append(proposal.confidence)
             else:
                 strength_factors.append(0.5)  # Default confidence
 
             # Rationale quality bonus
-            if hasattr(proposal, 'rationale') and proposal.rationale:
+            if hasattr(proposal, "rationale") and proposal.rationale:
                 rationale_bonus = min(0.3, len(proposal.rationale) / 100.0)
                 strength_factors.append(rationale_bonus)
 
@@ -409,16 +408,15 @@ class GuardianGate:
         thresholds = self.policies["thresholds"]
 
         # High severity violations need higher confidence for APPLY
-        if severity == 'high' and score >= 0.8:
+        if severity == "high" and score >= 0.8:
             return "APPLY"
-        elif severity == 'high' and score >= thresholds["quarantine"]:
+        if severity == "high" and score >= thresholds["quarantine"]:
             return "QUARANTINE"
-        elif score >= thresholds["apply"]:
+        if score >= thresholds["apply"]:
             return "APPLY"
-        elif score >= thresholds["quarantine"]:
+        if score >= thresholds["quarantine"]:
             return "QUARANTINE"
-        else:
-            return "REJECT"
+        return "REJECT"
 
     def _generate_rationale(
         self,
@@ -457,24 +455,24 @@ class GuardianGate:
         rationale = "; ".join(components)
         return f"{decision.lower()}: {rationale} (score: {score:.2f})"
 
-    def _serialize_proposal(self, proposal: Any) -> Dict[str, Any]:
+    def _serialize_proposal(self, proposal: Any) -> dict[str, Any]:
         """Serialize proposal for audit logging."""
         return {
             "type": type(proposal).__name__,
-            "operation": getattr(proposal, 'operation_type', 'unknown'),
-            "target_id": getattr(proposal, 'target_id', 'unknown'),
-            "confidence": getattr(proposal, 'confidence', 0.5),
+            "operation": getattr(proposal, "operation_type", "unknown"),
+            "target_id": getattr(proposal, "target_id", "unknown"),
+            "confidence": getattr(proposal, "confidence", 0.5),
             "details": str(proposal)
         }
 
-    def validate_adapter(self, adapter_info: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_adapter(self, adapter_info: dict[str, Any]) -> dict[str, Any]:
         """Validate a LoRA adapter registration."""
         domain = adapter_info.get("domain", "general")
         metrics = adapter_info.get("metrics", {})
 
         # Check adapter quality metrics
         accuracy = metrics.get("accuracy", 0)
-        perplexity = metrics.get("perplexity", float('inf'))
+        perplexity = metrics.get("perplexity", float("inf"))
 
         # Domain-specific thresholds
         min_accuracy = self.policies.get("adapter_thresholds", {}).get(domain, {}).get("min_accuracy", 0.7)
@@ -509,14 +507,14 @@ class GuardianGate:
             "signature": signature
         }
 
-    def _generate_signature(self, data: Dict[str, Any]) -> str:
+    def _generate_signature(self, data: dict[str, Any]) -> str:
         """Generate a cryptographic signature for approved items."""
         # Simple signature using SHA256 - in production use proper signing
         content = json.dumps(data, sort_keys=True)
         signature = hashlib.sha256(content.encode()).hexdigest()
         return f"guardian_v1:{signature}"
 
-    def verify_signature(self, data: Dict[str, Any], signature: str) -> bool:
+    def verify_signature(self, data: dict[str, Any], signature: str) -> bool:
         """Verify a Guardian signature."""
         if not signature or not signature.startswith("guardian_v1:"):
             return False
@@ -524,7 +522,7 @@ class GuardianGate:
         expected_signature = self._generate_signature(data)
         return signature == expected_signature
 
-    async def validate_query_result(self, query_context: Dict[str, Any], result: Dict[str, Any]) -> Decision:
+    async def validate_query_result(self, query_context: dict[str, Any], result: dict[str, Any]) -> Decision:
         """Validate query results before returning to user."""
         domain = query_context.get("domain", "general")
         confidence = result.get("confidence", 0.5)
