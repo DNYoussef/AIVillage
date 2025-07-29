@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+
 @dataclass
 class KnowledgeChange:
     entity: str
@@ -12,14 +13,14 @@ class KnowledgeChange:
     timestamp: datetime
     source: str
 
+
 class KnowledgeTracker:
     def __init__(self):
         self.changes = []
         self.knowledge_graph = {}
 
     def record_change(self, change: KnowledgeChange):
-        """
-        Record a change made to the knowledge graph.
+        """Record a change made to the knowledge graph.
 
         :param change: An instance of KnowledgeChange representing the modification.
         """
@@ -28,8 +29,7 @@ class KnowledgeTracker:
         entity_data[change.relation] = change.new_value
 
     def get_entity_history(self, entity: str):
-        """
-        Retrieve the history of changes for a specific entity.
+        """Retrieve the history of changes for a specific entity.
 
         :param entity: The entity to retrieve history for.
         :return: A list of KnowledgeChange instances related to the entity.
@@ -37,8 +37,7 @@ class KnowledgeTracker:
         return [change for change in self.changes if change.entity == entity]
 
     def rollback_change(self, change_id: int):
-        """
-        Roll back a specific change by its ID.
+        """Roll back a specific change by its ID.
 
         :param change_id: The index of the change in the changes list.
         """

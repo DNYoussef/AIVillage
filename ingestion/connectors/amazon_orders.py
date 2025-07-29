@@ -1,6 +1,7 @@
-from chromadb import PersistentClient
 import csv
 import os
+
+from chromadb import PersistentClient
 
 from ingestion import add_text
 

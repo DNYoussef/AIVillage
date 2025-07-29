@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any
+
 
 @dataclass(frozen=True)
 class BayesianNode:
@@ -13,13 +14,15 @@ class BayesianNode:
     timestamp: datetime
     version: int
 
+
 @dataclass(frozen=True)
 class VectorEntry:
     id: str
-    vector: List[float]
-    metadata: Dict[str, Any]
+    vector: list[float]
+    metadata: dict[str, Any]
     timestamp: datetime
     version: int
+
 
 @dataclass(frozen=True)
 class RetrievalResult:
@@ -30,12 +33,13 @@ class RetrievalResult:
     timestamp: datetime
     version: int
 
+
 # Add a new structure for representing a plan
 @dataclass(frozen=True)
 class RetrievalPlan:
     query: str
     strategy: str
-    filters: Dict[str, Any]
+    filters: dict[str, Any]
     use_linearization: bool
     timestamp: datetime
     version: int

@@ -1,11 +1,11 @@
-"""
-Tests for memory management and logging infrastructure.
+"""Tests for memory management and logging infrastructure.
 Verifies W&B integration and resource monitoring.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
 import psutil
+import pytest
 
 try:
     from production.memory import MemoryManager, WandbManager
@@ -23,6 +23,7 @@ class TestMemoryManager:
         """Test that memory manager can be imported."""
         try:
             from production.memory.memory_manager import MemoryManager
+
             assert MemoryManager is not None
         except ImportError:
             pytest.skip("MemoryManager not available")
@@ -40,7 +41,7 @@ class TestMemoryManager:
         """Test memory limit concepts."""
         # Test memory limit checking
         current_memory = psutil.virtual_memory().used / (1024**3)  # GB
-        total_memory = psutil.virtual_memory().total / (1024**3)   # GB
+        total_memory = psutil.virtual_memory().total / (1024**3)  # GB
 
         memory_limit = 2.0  # 2GB limit
 
@@ -57,40 +58,33 @@ class TestWandbManager:
         """Test that wandb manager can be imported."""
         try:
             from production.memory.wandb_manager import WandbManager
+
             assert WandbManager is not None
         except ImportError:
             pytest.skip("WandbManager not available")
 
-    @patch('wandb.init')
+    @patch("wandb.init")
     def test_wandb_initialization_concept(self, mock_wandb_init):
         """Test W&B initialization concept."""
         # Mock W&B initialization
         mock_wandb_init.return_value = Mock()
 
         # Test initialization parameters
-        config = {
-            'project': 'agent-forge',
-            'entity': 'ai-village',
-            'name': 'test-run'
-        }
+        config = {"project": "agent-forge", "entity": "ai-village", "name": "test-run"}
 
         # In real implementation, would initialize wandb
         # wandb.init(**config)
         mock_wandb_init.assert_not_called()  # Since we're just testing concept
 
-        assert config['project'] == 'agent-forge'
+        assert config["project"] == "agent-forge"
 
     def test_logging_concept(self):
         """Test logging concept."""
         # Mock metrics logging
-        metrics = {
-            'loss': 0.1,
-            'accuracy': 0.95,
-            'epoch': 1
-        }
+        metrics = {"loss": 0.1, "accuracy": 0.95, "epoch": 1}
 
         # Test that metrics are properly formatted
-        assert all(isinstance(k, str) for k in metrics.keys())
+        assert all(isinstance(k, str) for k in metrics)
         assert all(isinstance(v, (int, float)) for v in metrics.values())
 
 
@@ -104,7 +98,7 @@ class TestResourceMonitoring:
 
     def test_disk_monitoring(self):
         """Test disk monitoring."""
-        disk_usage = psutil.disk_usage('.')
+        disk_usage = psutil.disk_usage(".")
         assert disk_usage.total > 0
         assert disk_usage.used >= 0
         assert disk_usage.free >= 0
@@ -113,6 +107,7 @@ class TestResourceMonitoring:
         """Test GPU availability detection."""
         try:
             import torch
+
             gpu_available = torch.cuda.is_available()
             if gpu_available:
                 gpu_count = torch.cuda.device_count()

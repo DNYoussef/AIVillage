@@ -1,10 +1,11 @@
 """Secure WhatsApp database ingestion connector."""
 
-from chromadb import PersistentClient
 from contextlib import contextmanager
 import logging
 import os
 import sqlite3
+
+from chromadb import PersistentClient
 
 from ingestion import add_text
 
@@ -52,7 +53,6 @@ def sanitize_message_text(text: str) -> str:
 
 def run(user_id: str, chroma_client: PersistentClient) -> int:
     """Parse local WhatsApp db -- returns # docs (secure version)."""
-
     if not isinstance(user_id, str) or not user_id.strip():
         raise ValueError("Invalid user_id")
 
@@ -92,7 +92,9 @@ def run(user_id: str, chroma_client: PersistentClient) -> int:
                 if n >= limit:
                     break
 
-            logger.info("Successfully processed %s messages for user %s", n, safe_user_id)
+            logger.info(
+                "Successfully processed %s messages for user %s", n, safe_user_id
+            )
             return n
     except Exception as exc:  # pragma: no cover - external lib calls
         logger.error("WhatsApp connector failed: %s", exc)

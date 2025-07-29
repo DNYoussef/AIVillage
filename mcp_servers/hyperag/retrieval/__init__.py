@@ -1,5 +1,4 @@
-"""
-HypeRAG Retrieval Stack
+"""HypeRAG Retrieval Stack
 
 Core retrieval components for personalized knowledge graph navigation:
 - PersonalizedPageRank: Standard PPR with α-weight fusion
@@ -7,14 +6,14 @@ Core retrieval components for personalized knowledge graph navigation:
 - ImportanceFlow: Utility mathematics for flow calculations
 """
 
-from .ppr_retriever import PersonalizedPageRank, PPRResults, AlphaProfileStore
 from .hybrid_retriever import HybridRetriever
 from .importance_flow import ImportanceFlow
+from .ppr_retriever import AlphaProfileStore, PersonalizedPageRank, PPRResults
 
 __all__ = [
-    "PersonalizedPageRank",
-    "PPRResults",
     "AlphaProfileStore",
     "HybridRetriever",
-    "ImportanceFlow"
+    "ImportanceFlow",
+    "PPRResults",
+    "PersonalizedPageRank",
 ]

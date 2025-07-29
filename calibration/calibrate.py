@@ -2,12 +2,13 @@ from __future__ import annotations
 
 """Simple conformal calibration utilities."""
 
-from typing import List, Tuple
 
 from .dataset import CalibrationDataset
 
 
-def expected_calibration_error(scores: List[float], labels: List[int], n_bins: int = 10) -> float:
+def expected_calibration_error(
+    scores: list[float], labels: list[int], n_bins: int = 10
+) -> float:
     bin_size = 1.0 / n_bins
     total = 0.0
     for b in range(n_bins):
@@ -21,7 +22,7 @@ def expected_calibration_error(scores: List[float], labels: List[int], n_bins: i
     return total
 
 
-def calibrate(dataset: CalibrationDataset) -> Tuple[List[float], float, float]:
+def calibrate(dataset: CalibrationDataset) -> tuple[list[float], float, float]:
     before = expected_calibration_error(dataset.scores, dataset.labels)
     # Simple scaling to roughly centre probabilities
     calibrated = [0.5 for _ in dataset.scores]

@@ -1,26 +1,23 @@
 #!/usr/bin/env python3
-"""
-HypeRAG Innovator Repair Agent Demo
+"""HypeRAG Innovator Repair Agent Demo
 
 Demonstrates the repair proposal system for GDC violations.
 Shows template encoding, LLM integration, and repair operation generation.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-import sys
 from pathlib import Path
-from datetime import datetime
+import sys
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from mcp_servers.hyperag.repair import (
-    InnovatorAgent, TemplateEncoder, RepairOperation, RepairProposalSet
-)
-from mcp_servers.hyperag.repair.llm_driver import LLMDriver, ModelConfig, ModelBackend
+from mcp_servers.hyperag.repair import InnovatorAgent, RepairOperation, TemplateEncoder
+from mcp_servers.hyperag.repair.llm_driver import LLMDriver, ModelBackend, ModelConfig
 
 
 async def demo_template_encoding():
@@ -46,8 +43,8 @@ async def demo_template_encoding():
                         "name": "John Doe",
                         "age": 45,
                         "allergy": ["penicillin", "sulfa"],
-                        "patient_id": "P123"
-                    }
+                        "patient_id": "P123",
+                    },
                 },
                 {
                     "id": "M456",
@@ -55,9 +52,9 @@ async def demo_template_encoding():
                     "properties": {
                         "name": "amoxicillin",
                         "drug_class": "penicillin",
-                        "dosage_form": "tablet"
-                    }
-                }
+                        "dosage_form": "tablet",
+                    },
+                },
             ],
             "edges": [
                 {
@@ -69,21 +66,23 @@ async def demo_template_encoding():
                         "dosage": "500mg",
                         "frequency": "twice daily",
                         "prescribed_date": "2024-01-15",
-                        "duration": "7 days"
-                    }
+                        "duration": "7 days",
+                    },
                 }
-            ]
-        }
+            ],
+        },
     }
 
     # Create template encoder
-    encoder = TemplateEncoder(domain_config={
-        "field_mappings": {
-            "Patient": {"allergy", "condition"},
-            "Medication": {"dosage", "medication", "allergy"},
-            "PRESCRIBES": {"dosage", "date", "medication"}
+    encoder = TemplateEncoder(
+        domain_config={
+            "field_mappings": {
+                "Patient": {"allergy", "condition"},
+                "Medication": {"dosage", "medication", "allergy"},
+                "PRESCRIBES": {"dosage", "date", "medication"},
+            }
         }
-    })
+    )
 
     # Encode violation
     violation_template = encoder.encode_violation(violation_data)
@@ -116,10 +115,10 @@ async def demo_llm_driver():
         max_tokens=1024,
         requests_per_minute=30,  # Rate limiting
         max_concurrent_requests=2,
-        timeout_seconds=30
+        timeout_seconds=30,
     )
 
-    print(f"📋 Configuration:")
+    print("📋 Configuration:")
     print(f"   Backend: {config.backend.value}")
     print(f"   Rate limit: {config.requests_per_minute} req/min")
     print(f"   Max concurrent: {config.max_concurrent_requests}")
@@ -146,12 +145,10 @@ Respond with a single JSON repair operation:"""
 
         try:
             response = await driver.generate(
-                prompt=test_prompt,
-                system_prompt=system_prompt,
-                max_tokens=256
+                prompt=test_prompt, system_prompt=system_prompt, max_tokens=256
             )
 
-            print(f"\n🎯 Test Generation:")
+            print("\n🎯 Test Generation:")
             print(f"   Latency: {response.latency_ms:.1f}ms")
             print(f"   Tokens: {response.usage.get('total_tokens', 'unknown')}")
             print(f"   Response: {response.text[:200]}...")
@@ -174,18 +171,20 @@ Respond with a single JSON repair operation:"""
             print(f"❌ Generation failed: {e}")
 
         # Test LMStudio backend availability
-        print(f"\n🏗️  Testing LMStudio Backend:")
+        print("\n🏗️  Testing LMStudio Backend:")
         lmstudio_config = ModelConfig(
             model_name="any-model",
             backend=ModelBackend.LMSTUDIO,
-            api_endpoint="http://localhost:1234"
+            api_endpoint="http://localhost:1234",
         )
         lmstudio_driver = LLMDriver(lmstudio_config)
 
         if await lmstudio_driver.is_ready():
             print("✅ LMStudio is available")
         else:
-            print("❌ LMStudio not available (make sure LMStudio is running on port 1234)")
+            print(
+                "❌ LMStudio not available (make sure LMStudio is running on port 1234)"
+            )
     else:
         print("❌ Ollama not available (make sure Ollama is running with llama3.2:3b)")
         print("   To install: ollama pull llama3.2:3b")
@@ -210,8 +209,8 @@ async def demo_repair_proposals():
                         "name": "Jane Smith",
                         "age": 67,
                         "weight": "65kg",
-                        "condition": "hypertension"
-                    }
+                        "condition": "hypertension",
+                    },
                 },
                 {
                     "id": "M789",
@@ -219,9 +218,9 @@ async def demo_repair_proposals():
                     "properties": {
                         "name": "lisinopril",
                         "drug_class": "ACE inhibitor",
-                        "strength": "10mg"
-                    }
-                }
+                        "strength": "10mg",
+                    },
+                },
             ],
             "edges": [
                 {
@@ -231,19 +230,18 @@ async def demo_repair_proposals():
                     "type": "PRESCRIBES",
                     "properties": {
                         "prescribed_date": "2024-01-20",
-                        "prescriber": "Dr. Johnson"
+                        "prescriber": "Dr. Johnson",
                         # Missing: dosage, frequency
-                    }
+                    },
                 }
-            ]
-        }
+            ],
+        },
     }
 
     try:
         # Create Innovator Agent
         agent = await InnovatorAgent.create_default(
-            model_name="llama3.2:3b",
-            domain="medical"
+            model_name="llama3.2:3b", domain="medical"
         )
 
         # Check if ready
@@ -254,7 +252,7 @@ async def demo_repair_proposals():
             proposal_set = await agent.generate_repair_proposals(
                 violation_data=violation_data,
                 max_operations=5,
-                confidence_threshold=0.3
+                confidence_threshold=0.3,
             )
 
             print(f"\n📋 Repair Proposal Set {proposal_set.proposal_set_id}")
@@ -274,14 +272,14 @@ async def demo_repair_proposals():
                     print(f"      Confidence: {op.confidence:.3f}")
                     print(f"      Rationale: {op.rationale}")
                     if op.safety_critical:
-                        print(f"      ⚠️  SAFETY CRITICAL")
+                        print("      ⚠️  SAFETY CRITICAL")
                     print()
 
                 print("📄 JSON Array Format:")
                 print(proposal_set.to_json_array())
 
             # Show validation results (automatically performed)
-            print(f"\n✅ Automatic Validation:")
+            print("\n✅ Automatic Validation:")
             print(f"   Valid: {proposal_set.is_valid}")
             if proposal_set.validation_errors:
                 print(f"   Errors: {len(proposal_set.validation_errors)}")
@@ -297,7 +295,9 @@ async def demo_repair_proposals():
             if high_conf_ops:
                 print(f"\n🏆 High Confidence Operations (≥0.8): {len(high_conf_ops)}")
                 for op in high_conf_ops:
-                    print(f"   - {op.operation_type.value} on {op.target_id} ({op.confidence:.2f})")
+                    print(
+                        f"   - {op.operation_type.value} on {op.target_id} ({op.confidence:.2f})"
+                    )
 
         else:
             print("❌ LLM not available for proposal generation")
@@ -305,6 +305,7 @@ async def demo_repair_proposals():
     except Exception as e:
         print(f"❌ Repair proposal demo failed: {e}")
         import traceback
+
         traceback.print_exc()
 
 
@@ -321,7 +322,7 @@ async def demo_operation_types():
             rationale="Remove unsafe prescription - patient allergic to penicillin",
             confidence=0.95,
             safety_critical=True,
-            estimated_impact="high"
+            estimated_impact="high",
         ),
         RepairOperation(
             operation_type=RepairOperationType.ADD_EDGE,
@@ -330,7 +331,7 @@ async def demo_operation_types():
             relationship_type="PRESCRIBES",
             rationale="Add safe alternative medication prescription",
             confidence=0.8,
-            properties={"dosage": "250mg", "frequency": "twice daily"}
+            properties={"dosage": "250mg", "frequency": "twice daily"},
         ),
         RepairOperation(
             operation_type=RepairOperationType.UPDATE_ATTR,
@@ -338,15 +339,15 @@ async def demo_operation_types():
             property_name="dosage",
             property_value="500mg twice daily",
             rationale="Add missing dosage information for complete prescription",
-            confidence=0.85
+            confidence=0.85,
         ),
         RepairOperation(
             operation_type=RepairOperationType.MERGE_NODES,
             target_id="MED_001",
             merge_target_id="MED_002",
             rationale="Merge duplicate medication entries with same active ingredient",
-            confidence=0.7
-        )
+            confidence=0.7,
+        ),
     ]
 
     print("🔧 Operation Examples:")
@@ -377,19 +378,21 @@ async def demo_domain_specialization():
     print("=" * 50)
 
     # Medical domain encoder
-    medical_encoder = TemplateEncoder(domain_config={
-        "field_mappings": {
-            "Patient": {"allergy", "condition", "age"},
-            "Medication": {"dosage", "drug_class", "contraindications"},
-            "PRESCRIBES": {"dosage", "date", "frequency"},
-            "ALLERGIC_TO": {"severity", "allergy"}
-        },
-        "repair_guidelines": {
-            "safety_first": True,
-            "require_dosage_validation": True,
-            "preserve_allergy_data": True
+    medical_encoder = TemplateEncoder(
+        domain_config={
+            "field_mappings": {
+                "Patient": {"allergy", "condition", "age"},
+                "Medication": {"dosage", "drug_class", "contraindications"},
+                "PRESCRIBES": {"dosage", "date", "frequency"},
+                "ALLERGIC_TO": {"severity", "allergy"},
+            },
+            "repair_guidelines": {
+                "safety_first": True,
+                "require_dosage_validation": True,
+                "preserve_allergy_data": True,
+            },
         }
-    })
+    )
 
     print("🏥 Medical Domain Configuration:")
     print("   Critical fields: allergy, dosage, contraindications")
@@ -411,22 +414,30 @@ async def demo_domain_specialization():
             "allergy": ["penicillin"],
             "condition": "pneumonia",
             "age": 45,
-            "insurance": "Blue Cross"
-        }
+            "insurance": "Blue Cross",
+        },
     }
 
-    print(f"\n📊 Field Analysis Comparison:")
+    print("\n📊 Field Analysis Comparison:")
 
     # Medical encoding
     medical_template = medical_encoder.encode_node(medical_node)
-    print(f"   Medical Domain Critical Fields: {[f.value for f in medical_template.critical_fields]}")
+    print(
+        f"   Medical Domain Critical Fields: {[f.value for f in medical_template.critical_fields]}"
+    )
 
     # General encoding
     general_template = general_encoder.encode_node(medical_node)
-    print(f"   General Domain Critical Fields: {[f.value for f in general_template.critical_fields]}")
+    print(
+        f"   General Domain Critical Fields: {[f.value for f in general_template.critical_fields]}"
+    )
 
-    print(f"\n   Medical template focuses on: {', '.join(f.value for f in medical_template.critical_fields)}")
-    print(f"   General template focuses on: {', '.join(f.value for f in general_template.critical_fields)}")
+    print(
+        f"\n   Medical template focuses on: {', '.join(f.value for f in medical_template.critical_fields)}"
+    )
+    print(
+        f"   General template focuses on: {', '.join(f.value for f in general_template.critical_fields)}"
+    )
 
 
 async def main():
@@ -456,14 +467,12 @@ async def main():
     except Exception as e:
         print(f"\n❌ Demo failed: {e}")
         import traceback
+
         traceback.print_exc()
 
 
 if __name__ == "__main__":
     # Set up logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(levelname)s: %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     asyncio.run(main())

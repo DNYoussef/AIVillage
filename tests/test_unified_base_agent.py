@@ -283,10 +283,11 @@ class TestSelfEvolvingSystem:
     @pytest.mark.asyncio
     async def test_evolve_system_success(self, system):
         """Test successful system evolution."""
-        with patch.object(
-            system, "analyze_agent_performance", return_value={"cap1": 0.8}
-        ), patch.object(
-            system, "generate_new_capabilities", return_value=["new_cap"]
+        with (
+            patch.object(
+                system, "analyze_agent_performance", return_value={"cap1": 0.8}
+            ),
+            patch.object(system, "generate_new_capabilities", return_value=["new_cap"]),
         ):
             await system.evolve()
 

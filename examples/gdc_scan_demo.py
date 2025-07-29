@@ -1,26 +1,23 @@
 #!/usr/bin/env python3
-"""
-GDC Scanner Demo
+"""GDC Scanner Demo
 
 Demonstrates how to use the HypeRAG Graph-Doctor constraint detection system.
 """
 
 import asyncio
 import json
-import sys
 from pathlib import Path
+import sys
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from mcp_servers.hyperag.gdc.extractor import GDCExtractorContext
 from mcp_servers.hyperag.gdc.registry import GDC_REGISTRY
 
 
 async def demo_gdc_scanning():
     """Demonstrate GDC scanning functionality"""
-
     print("🔍 HypeRAG Graph-Doctor Demo")
     print("=" * 50)
 
@@ -64,7 +61,9 @@ async def demo_gdc_scanning():
     try:
         # This would normally connect to Neo4j
         print("# Example: Connect to Neo4j and scan for violations")
-        print("async with GDCExtractorContext('bolt://localhost:7687', ('neo4j', 'password')) as extractor:")
+        print(
+            "async with GDCExtractorContext('bolt://localhost:7687', ('neo4j', 'password')) as extractor:"
+        )
         print("    violations = await extractor.scan_all(limit=50)")
         print("    print(f'Found {len(violations)} violations')")
         print("")
@@ -90,7 +89,7 @@ async def demo_gdc_scanning():
                 "id": "node-123",
                 "confidence": -0.5,  # Invalid confidence
                 "_labels": ["SemanticNode"],
-                "_neo4j_id": 12345
+                "_neo4j_id": 12345,
             }
         ],
         "edges": [],
@@ -101,8 +100,8 @@ async def demo_gdc_scanning():
         "confidence_score": 1.0,
         "metadata": {
             "gdc_description": "Node or edge has confidence value outside valid range [0,1]",
-            "gdc_category": "data_quality"
-        }
+            "gdc_category": "data_quality",
+        },
     }
 
     print(json.dumps(sample_violation, indent=2))

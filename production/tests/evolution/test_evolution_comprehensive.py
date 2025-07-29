@@ -1,17 +1,15 @@
-"""
-Tests for evolution/tournament system.
+"""Tests for evolution/tournament system.
 Verifies model merging and fitness evaluation.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
-from unittest.mock import Mock, patch
 
 try:
     from production.evolution import EvolutionaryTournament
-    from production.evolution.evomerge import EvolutionaryTournament as ET
     from production.evolution.evolution import MathTutorEvolution
+    from production.evolution.evomerge import EvolutionaryTournament as ET
 except ImportError:
     # Handle missing imports gracefully
     pytest.skip("Production evolution modules not available", allow_module_level=True)
@@ -27,18 +25,23 @@ class TestEvolutionSystem:
         for i in range(10):
             model = torch.nn.Linear(10, 5)
             # Initialize with different weights
-            torch.nn.init.normal_(model.weight, mean=i*0.1, std=0.1)
-            models.append({
-                'model': model,
-                'fitness': 0.5 + i * 0.05,  # Increasing fitness
-                'id': f'model_{i}'
-            })
+            torch.nn.init.normal_(model.weight, mean=i * 0.1, std=0.1)
+            models.append(
+                {
+                    "model": model,
+                    "fitness": 0.5 + i * 0.05,  # Increasing fitness
+                    "id": f"model_{i}",
+                }
+            )
         return models
 
     def test_evolution_imports(self):
         """Test that evolution modules can be imported."""
         try:
-            from production.evolution.evomerge.evolutionary_tournament import EvolutionaryTournament
+            from production.evolution.evomerge.evolutionary_tournament import (
+                EvolutionaryTournament,
+            )
+
             assert EvolutionaryTournament is not None
         except ImportError:
             pytest.skip("EvolutionaryTournament not available")
@@ -65,7 +68,9 @@ class TestEvolutionSystem:
         scores = [0.1, 0.5, 0.8, 0.3, 0.9]
 
         # Test ranking
-        ranked_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
+        ranked_indices = sorted(
+            range(len(scores)), key=lambda i: scores[i], reverse=True
+        )
         assert ranked_indices[0] == 4  # Index of highest score (0.9)
         assert ranked_indices[-1] == 0  # Index of lowest score (0.1)
 
@@ -79,16 +84,17 @@ class TestEvolutionSystem:
         tournament = np.random.choice(len(population), tournament_size, replace=False)
 
         # Find winner (highest fitness in tournament)
-        winner_idx = max(tournament, key=lambda i: population[i]['fitness'])
+        winner_idx = max(tournament, key=lambda i: population[i]["fitness"])
         winner = population[winner_idx]
 
-        assert 'fitness' in winner
-        assert 'model' in winner
+        assert "fitness" in winner
+        assert "model" in winner
 
     def test_merger_operators_exist(self):
         """Test that merger operators exist."""
         try:
             from production.evolution.evolution.merge_operators import MergeOperators
+
             assert MergeOperators is not None
         except ImportError:
             pytest.skip("MergeOperators not available")
@@ -97,6 +103,7 @@ class TestEvolutionSystem:
         """Test evomerge configuration."""
         try:
             from production.evolution.evomerge.config import Config
+
             assert Config is not None
         except ImportError:
             pytest.skip("Evomerge Config not available")
@@ -109,6 +116,7 @@ class TestEvolutionPipeline:
         """Test that evolution pipeline exists."""
         try:
             from production.evolution.evomerge_pipeline import EvomergePipeline
+
             assert EvomergePipeline is not None
         except ImportError:
             pytest.skip("EvomergePipeline not available")
@@ -116,7 +124,10 @@ class TestEvolutionPipeline:
     def test_math_tutor_evolution(self):
         """Test math tutor evolution."""
         try:
-            from production.evolution.evolution.math_tutor_evolution import MathTutorEvolution
+            from production.evolution.evolution.math_tutor_evolution import (
+                MathTutorEvolution,
+            )
+
             assert MathTutorEvolution is not None
         except ImportError:
             pytest.skip("MathTutorEvolution not available")

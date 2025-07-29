@@ -1,19 +1,18 @@
-"""
-Template Encoder for GDC Violation Subgraphs
+"""Template Encoder for GDC Violation Subgraphs
 
 Converts violating subgraphs to human-readable template sentences
 including critical properties (ids, labels, domain fields).
 """
 
-from typing import Dict, List, Any, Optional, Set
 from dataclasses import dataclass
 from enum import Enum
 import json
-import re
+from typing import Any
 
 
 class DomainField(Enum):
     """Domain-specific critical fields for different KG schemas"""
+
     # Medical domain
     ALLERGY = "allergy"
     DOSAGE = "dosage"
@@ -33,10 +32,11 @@ class DomainField(Enum):
 @dataclass
 class NodeTemplate:
     """Template representation of a graph node"""
+
     node_id: str
     label: str
-    properties: Dict[str, Any]
-    critical_fields: Set[DomainField]
+    properties: dict[str, Any]
+    critical_fields: set[DomainField]
 
     def to_sentence(self) -> str:
         """Convert node to human-readable sentence (research shows template > raw format)"""
@@ -47,7 +47,9 @@ class NodeTemplate:
                 value = self.properties[field.value]
                 # Natural language property descriptions
                 if field == DomainField.ALLERGY and isinstance(value, list):
-                    critical_props.append(f"allergic to {', '.join(str(v) for v in value)}")
+                    critical_props.append(
+                        f"allergic to {', '.join(str(v) for v in value)}"
+                    )
                 elif field == DomainField.DOSAGE:
                     critical_props.append(f"prescribed at {value}")
                 elif field == DomainField.CONDITION:
@@ -62,32 +64,29 @@ class NodeTemplate:
             base = f"Patient {self.node_id}"
             if critical_props:
                 return f"{base} who is {', and '.join(critical_props)}"
-            else:
-                return f"{base} (no critical medical information)"
-        elif self.label == "Medication":
+            return f"{base} (no critical medical information)"
+        if self.label == "Medication":
             base = f"Medication {self.node_id}"
             med_name = self.properties.get("name", "unknown medication")
             if critical_props:
                 return f"{base} ({med_name}) with {', '.join(critical_props)}"
-            else:
-                return f"{base} ({med_name})"
-        else:
-            # Generic entity format
-            if critical_props:
-                return f"{self.label} {self.node_id} that has {', '.join(critical_props)}"
-            else:
-                return f"{self.label} {self.node_id}"
+            return f"{base} ({med_name})"
+        # Generic entity format
+        if critical_props:
+            return f"{self.label} {self.node_id} that has {', '.join(critical_props)}"
+        return f"{self.label} {self.node_id}"
 
 
 @dataclass
 class EdgeTemplate:
     """Template representation of a graph edge"""
+
     edge_id: str
     source_id: str
     target_id: str
     relationship: str
-    properties: Dict[str, Any]
-    critical_fields: Set[DomainField]
+    properties: dict[str, Any]
+    critical_fields: set[DomainField]
 
     def to_sentence(self) -> str:
         """Convert edge to human-readable sentence with natural language"""
@@ -109,29 +108,29 @@ class EdgeTemplate:
         if self.relationship == "PRESCRIBES":
             props_text = f" {', '.join(critical_props)}" if critical_props else ""
             return f"Prescription relationship where {self.source_id} prescribes {self.target_id}{props_text}"
-        elif self.relationship == "ALLERGIC_TO":
+        if self.relationship == "ALLERGIC_TO":
             severity = ""
             if critical_props:
                 severity = f" ({', '.join(critical_props)})"
             return f"Allergy relationship where {self.source_id} is allergic to {self.target_id}{severity}"
-        elif self.relationship == "TREATS":
+        if self.relationship == "TREATS":
             props_text = f" {', '.join(critical_props)}" if critical_props else ""
             return f"Treatment relationship where {self.source_id} treats condition {self.target_id}{props_text}"
-        else:
-            # Generic relationship format
-            props_text = f" with {', '.join(critical_props)}" if critical_props else ""
-            return f"Relationship {self.edge_id} where {self.source_id} {self.relationship.lower().replace('_', ' ')} {self.target_id}{props_text}"
+        # Generic relationship format
+        props_text = f" with {', '.join(critical_props)}" if critical_props else ""
+        return f"Relationship {self.edge_id} where {self.source_id} {self.relationship.lower().replace('_', ' ')} {self.target_id}{props_text}"
 
 
 @dataclass
 class ViolationTemplate:
     """Complete template for a GDC violation subgraph"""
+
     violation_id: str
     gdc_rule: str
     violated_pattern: str
-    nodes: List[NodeTemplate]
-    edges: List[EdgeTemplate]
-    context: Dict[str, Any]
+    nodes: list[NodeTemplate]
+    edges: list[EdgeTemplate]
+    context: dict[str, Any]
 
     def to_description(self) -> str:
         """Convert entire violation to human-readable description"""
@@ -146,20 +145,20 @@ class ViolationTemplate:
         for node in self.nodes:
             lines.append(f"  - {node.to_sentence()}")
 
-        lines.extend([
-            "",
-            "Involved Edges:",
-        ])
+        lines.extend(
+            [
+                "",
+                "Involved Edges:",
+            ]
+        )
 
         for edge in self.edges:
             lines.append(f"  - {edge.to_sentence()}")
 
         if self.context:
-            lines.extend([
-                "",
-                "Additional Context:",
-                f"  {json.dumps(self.context, indent=2)}"
-            ])
+            lines.extend(
+                ["", "Additional Context:", f"  {json.dumps(self.context, indent=2)}"]
+            )
 
         return "\n".join(lines)
 
@@ -167,9 +166,8 @@ class ViolationTemplate:
 class TemplateEncoder:
     """Encodes GDC violation subgraphs into human-readable templates"""
 
-    def __init__(self, domain_config: Optional[Dict[str, Any]] = None):
-        """
-        Initialize template encoder with domain-specific configuration
+    def __init__(self, domain_config: dict[str, Any] | None = None):
+        """Initialize template encoder with domain-specific configuration
 
         Args:
             domain_config: Configuration for domain-specific field mappings
@@ -177,26 +175,36 @@ class TemplateEncoder:
         self.domain_config = domain_config or {}
         self.field_mappings = self._load_field_mappings()
 
-    def _load_field_mappings(self) -> Dict[str, Set[DomainField]]:
+    def _load_field_mappings(self) -> dict[str, set[DomainField]]:
         """Load mappings from node/edge types to critical fields"""
         # Default mappings for HypeRAG schema
         mappings = {
             # Node type mappings
-            "SemanticNode": {DomainField.CONFIDENCE, DomainField.TIMESTAMP, DomainField.SOURCE},
+            "SemanticNode": {
+                DomainField.CONFIDENCE,
+                DomainField.TIMESTAMP,
+                DomainField.SOURCE,
+            },
             "EntityNode": {DomainField.CATEGORY, DomainField.CONFIDENCE},
             "ConceptNode": {DomainField.CATEGORY, DomainField.SOURCE},
             "TemporalNode": {DomainField.DATE, DomainField.TIMESTAMP},
-
             # Medical domain extensions
             "Patient": {DomainField.ALLERGY, DomainField.CONDITION},
-            "Medication": {DomainField.DOSAGE, DomainField.MEDICATION, DomainField.ALLERGY},
+            "Medication": {
+                DomainField.DOSAGE,
+                DomainField.MEDICATION,
+                DomainField.ALLERGY,
+            },
             "Treatment": {DomainField.DOSAGE, DomainField.DATE, DomainField.MEDICATION},
             "Condition": {DomainField.SEVERITY, DomainField.DATE, DomainField.STATUS},
-
             # Edge type mappings
             "HYPERCONNECTION": {DomainField.CONFIDENCE, DomainField.TIMESTAMP},
             "RELATES_TO": {DomainField.CONFIDENCE, DomainField.SOURCE},
-            "PRESCRIBES": {DomainField.DOSAGE, DomainField.DATE, DomainField.MEDICATION},
+            "PRESCRIBES": {
+                DomainField.DOSAGE,
+                DomainField.DATE,
+                DomainField.MEDICATION,
+            },
             "ALLERGIC_TO": {DomainField.ALLERGY, DomainField.SEVERITY},
             "TREATS": {DomainField.CONDITION, DomainField.DATE},
         }
@@ -207,9 +215,8 @@ class TemplateEncoder:
 
         return mappings
 
-    def encode_node(self, node_data: Dict[str, Any]) -> NodeTemplate:
-        """
-        Encode a single node into template format
+    def encode_node(self, node_data: dict[str, Any]) -> NodeTemplate:
+        """Encode a single node into template format
 
         Args:
             node_data: Node data from Neo4j result
@@ -240,12 +247,11 @@ class TemplateEncoder:
             node_id=str(node_id),
             label=label,
             properties=properties,
-            critical_fields=critical_fields
+            critical_fields=critical_fields,
         )
 
-    def encode_edge(self, edge_data: Dict[str, Any]) -> EdgeTemplate:
-        """
-        Encode a single edge into template format
+    def encode_edge(self, edge_data: dict[str, Any]) -> EdgeTemplate:
+        """Encode a single edge into template format
 
         Args:
             edge_data: Edge data from Neo4j result
@@ -278,12 +284,11 @@ class TemplateEncoder:
             target_id=str(target_id),
             relationship=relationship,
             properties=properties,
-            critical_fields=critical_fields
+            critical_fields=critical_fields,
         )
 
-    def encode_violation(self, violation_data: Dict[str, Any]) -> ViolationTemplate:
-        """
-        Encode a complete GDC violation into template format
+    def encode_violation(self, violation_data: dict[str, Any]) -> ViolationTemplate:
+        """Encode a complete GDC violation into template format
 
         Args:
             violation_data: Complete violation data including subgraph
@@ -309,7 +314,7 @@ class TemplateEncoder:
             "confidence_score": violation_data.get("confidence_score"),
             "severity": violation_data.get("severity"),
             "timestamp": violation_data.get("detected_at"),
-            "rule_description": violation_data.get("rule_description")
+            "rule_description": violation_data.get("rule_description"),
         }
 
         # Remove None values
@@ -321,12 +326,11 @@ class TemplateEncoder:
             violated_pattern=violated_pattern,
             nodes=nodes,
             edges=edges,
-            context=context
+            context=context,
         )
 
-    def create_repair_context(self, violation: ViolationTemplate) -> Dict[str, Any]:
-        """
-        Create structured context for repair operations
+    def create_repair_context(self, violation: ViolationTemplate) -> dict[str, Any]:
+        """Create structured context for repair operations
 
         Args:
             violation: The violation template
@@ -340,50 +344,55 @@ class TemplateEncoder:
             node_type = node.label
             if node_type not in entity_summary:
                 entity_summary[node_type] = []
-            entity_summary[node_type].append({
-                "id": node.node_id,
-                "critical_props": {
-                    field.value: node.properties.get(field.value)
-                    for field in node.critical_fields
-                    if field.value in node.properties
+            entity_summary[node_type].append(
+                {
+                    "id": node.node_id,
+                    "critical_props": {
+                        field.value: node.properties.get(field.value)
+                        for field in node.critical_fields
+                        if field.value in node.properties
+                    },
                 }
-            })
+            )
 
         relationship_summary = {}
         for edge in violation.edges:
             rel_type = edge.relationship
             if rel_type not in relationship_summary:
                 relationship_summary[rel_type] = []
-            relationship_summary[rel_type].append({
-                "id": edge.edge_id,
-                "source": edge.source_id,
-                "target": edge.target_id,
-                "critical_props": {
-                    field.value: edge.properties.get(field.value)
-                    for field in edge.critical_fields
-                    if field.value in edge.properties
+            relationship_summary[rel_type].append(
+                {
+                    "id": edge.edge_id,
+                    "source": edge.source_id,
+                    "target": edge.target_id,
+                    "critical_props": {
+                        field.value: edge.properties.get(field.value)
+                        for field in edge.critical_fields
+                        if field.value in edge.properties
+                    },
                 }
-            })
+            )
 
         return {
             "violation_summary": {
                 "id": violation.violation_id,
                 "rule": violation.gdc_rule,
-                "pattern": violation.violated_pattern
+                "pattern": violation.violated_pattern,
             },
             "entity_analysis": entity_summary,
             "relationship_analysis": relationship_summary,
             "repair_constraints": {
                 "preserve_identity_edges": True,
                 "maintain_core_entities": True,
-                "require_rationale": True
+                "require_rationale": True,
             },
-            "domain_context": self.domain_config.get("repair_guidelines", {})
+            "domain_context": self.domain_config.get("repair_guidelines", {}),
         }
 
-    def extract_critical_conflicts(self, violation: ViolationTemplate) -> List[Dict[str, Any]]:
-        """
-        Extract specific conflicts that need resolution
+    def extract_critical_conflicts(
+        self, violation: ViolationTemplate
+    ) -> list[dict[str, Any]]:
+        """Extract specific conflicts that need resolution
 
         Args:
             violation: The violation template
@@ -401,22 +410,30 @@ class TemplateEncoder:
 
                     # Domain-specific conflict detection
                     if field == DomainField.ALLERGY and isinstance(value, list):
-                        conflicts.append({
-                            "type": "allergy_conflict",
-                            "entity": node.node_id,
-                            "field": field.value,
-                            "value": value,
-                            "description": f"Node {node.node_id} has allergy information that may conflict with treatments"
-                        })
+                        conflicts.append(
+                            {
+                                "type": "allergy_conflict",
+                                "entity": node.node_id,
+                                "field": field.value,
+                                "value": value,
+                                "description": f"Node {node.node_id} has allergy information that may conflict with treatments",
+                            }
+                        )
 
-                    elif field == DomainField.CONFIDENCE and isinstance(value, (int, float)) and value < 0.5:
-                        conflicts.append({
-                            "type": "low_confidence",
-                            "entity": node.node_id,
-                            "field": field.value,
-                            "value": value,
-                            "description": f"Node {node.node_id} has low confidence score: {value}"
-                        })
+                    elif (
+                        field == DomainField.CONFIDENCE
+                        and isinstance(value, (int, float))
+                        and value < 0.5
+                    ):
+                        conflicts.append(
+                            {
+                                "type": "low_confidence",
+                                "entity": node.node_id,
+                                "field": field.value,
+                                "value": value,
+                                "description": f"Node {node.node_id} has low confidence score: {value}",
+                            }
+                        )
 
         # Check for relationship conflicts
         for edge in violation.edges:
@@ -424,20 +441,24 @@ class TemplateEncoder:
                 if field.value in edge.properties:
                     value = edge.properties[field.value]
 
-                    if field == DomainField.DOSAGE and edge.relationship == "PRESCRIBES":
-                        conflicts.append({
-                            "type": "dosage_validation",
-                            "entity": edge.edge_id,
-                            "field": field.value,
-                            "value": value,
-                            "description": f"Prescription edge {edge.edge_id} specifies dosage: {value}"
-                        })
+                    if (
+                        field == DomainField.DOSAGE
+                        and edge.relationship == "PRESCRIBES"
+                    ):
+                        conflicts.append(
+                            {
+                                "type": "dosage_validation",
+                                "entity": edge.edge_id,
+                                "field": field.value,
+                                "value": value,
+                                "description": f"Prescription edge {edge.edge_id} specifies dosage: {value}",
+                            }
+                        )
 
         return conflicts
 
     def generate_repair_summary(self, violation: ViolationTemplate) -> str:
-        """
-        Generate a concise summary for repair prompting
+        """Generate a concise summary for repair prompting
 
         Args:
             violation: The violation template
@@ -453,7 +474,7 @@ class TemplateEncoder:
         summary_lines = [
             f"Violation: {violation.gdc_rule}",
             f"Scope: {node_count} nodes, {edge_count} edges",
-            f"Critical conflicts: {len(conflicts)}"
+            f"Critical conflicts: {len(conflicts)}",
         ]
 
         if conflicts:

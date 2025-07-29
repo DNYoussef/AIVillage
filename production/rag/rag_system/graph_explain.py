@@ -1,14 +1,14 @@
 """Real shortest-/semantic-path explainer with in-memory cache."""
 
-import os
-import logging
-import time
 import functools
-from typing import Dict, Any, List
+import logging
+import os
+import time
+from typing import Any
 
 import networkx as nx
-from .retrieval.graph_store import GraphStore
 
+from .retrieval.graph_store import GraphStore
 
 logger = logging.getLogger(__name__)
 
@@ -48,12 +48,12 @@ class GraphPathExplainer:
     @functools.lru_cache(maxsize=10_000)
     def explain_path(
         self, start: str, end: str, max_hops: int = MAX_HOPS
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Return the reasoning path between two nodes if it exists."""
         t0 = time.time()
 
-        nodes: List[str] = []
-        edges: List[Dict[str, Any]] = []
+        nodes: list[str] = []
+        edges: list[dict[str, Any]] = []
 
         if GRAPH_BACKEND == "neo4j" and self.graph_store.driver is not None:
             query = (
@@ -80,7 +80,7 @@ class GraphPathExplainer:
             if len(nodes) - 1 > max_hops:
                 return {"nodes": [], "edges": [], "hops": 0, "found": False}
 
-            for src, dst in zip(nodes[:-1], nodes[1:]):
+            for src, dst in zip(nodes[:-1], nodes[1:], strict=False):
                 data = dict(self.g.get_edge_data(src, dst, default={}))
                 edges.append({"source": src, "target": dst, **data})
 
@@ -100,6 +100,6 @@ class GraphPathExplainer:
 _explainer = GraphPathExplainer()
 
 
-def explain_path(start: str, end: str, max_hops: int = MAX_HOPS) -> Dict[str, Any]:
+def explain_path(start: str, end: str, max_hops: int = MAX_HOPS) -> dict[str, Any]:
     """Public wrapper used by the API layer."""
     return _explainer.explain_path(start, end, max_hops)

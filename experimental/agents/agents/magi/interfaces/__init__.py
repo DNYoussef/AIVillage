@@ -1,5 +1,4 @@
-"""
-MAGI Agent Interfaces
+"""MAGI Agent Interfaces
 
 This module contains various interface implementations for MAGI agents,
 providing different levels of functionality and safety for production use.

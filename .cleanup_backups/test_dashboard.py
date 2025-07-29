@@ -22,7 +22,7 @@ def test_imports():
         "agent_forge.training",
         "agent_forge.orchestration",
         "core.evidence",
-        "core.logging_config"
+        "core.logging_config",
     ]
 
     for module in test_modules:
@@ -34,6 +34,7 @@ def test_imports():
 
     return results
 
+
 def test_file_structure():
     """Test that files are in correct locations"""
     results = {}
@@ -43,7 +44,7 @@ def test_file_structure():
         "tests/pipeline_validation_test.py": "Test moved",
         "docs/AGENT_FORGE_DEPLOYMENT_READY.md": "Doc moved",
         "configs/orchestration_config.yaml": "Config moved",
-        "agent_forge/__init__.py": "Core module exists"
+        "agent_forge/__init__.py": "Core module exists",
     }
 
     for file_path, description in expected_structure.items():
@@ -53,6 +54,7 @@ def test_file_structure():
             results[file_path] = "FAIL: Missing"
 
     return results
+
 
 def test_core_functionality():
     """Test basic functionality"""
@@ -67,11 +69,12 @@ def test_core_functionality():
     # Test evidence pack
     try:
         from core.evidence import EvidencePack
+
         pack = EvidencePack(
             session_id="test",
             query="test query",
             chunks=["test chunk"],
-            retrieved_docs=[]
+            retrieved_docs=[],
         )
         results["Evidence Pack Creation"] = "PASS"
     except Exception as e:
@@ -80,6 +83,7 @@ def test_core_functionality():
     # Test configuration
     try:
         from core.logging_config import setup_logging
+
         setup_logging()
         results["Logging Setup"] = "PASS"
     except Exception as e:
@@ -87,11 +91,12 @@ def test_core_functionality():
 
     return results
 
+
 def generate_report():
     """Generate comprehensive test report"""
-    print("="*80)
+    print("=" * 80)
     print("AGENT FORGE TEST DASHBOARD")
-    print("="*80)
+    print("=" * 80)
     print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Working Directory: {os.getcwd()}")
     print()
@@ -140,23 +145,29 @@ def generate_report():
     else:
         print("Status: NEEDS ATTENTION - Significant issues after reorganization")
 
-    print("="*80)
+    print("=" * 80)
 
     # Save detailed results
     results_file = Path("test_dashboard_results.json")
     import json
+
     with open(results_file, "w") as f:
-        json.dump({
-            "timestamp": datetime.now().isoformat(),
-            "pass_rate": pass_rate,
-            "import_tests": import_results,
-            "structure_tests": structure_results,
-            "functionality_tests": function_results
-        }, f, indent=2)
+        json.dump(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "pass_rate": pass_rate,
+                "import_tests": import_results,
+                "structure_tests": structure_results,
+                "functionality_tests": function_results,
+            },
+            f,
+            indent=2,
+        )
 
     print(f"Detailed results saved to: {results_file}")
 
     return pass_rate >= 50
+
 
 if __name__ == "__main__":
     success = generate_report()

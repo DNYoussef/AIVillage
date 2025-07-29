@@ -1,5 +1,4 @@
-"""
-Hypergraph Knowledge System
+"""Hypergraph Knowledge System
 
 Dual-memory architecture for AI Village RAG system:
 - Hippo-Index: Fast episodic memory for recent interactions
@@ -8,7 +7,7 @@ Dual-memory architecture for AI Village RAG system:
 This module provides the foundation for Sprint R-2 implementation.
 """
 
-from .models import Hyperedge, HippoNode
 from .migrations import run_cypher_migrations
+from .models import HippoNode, Hyperedge
 
-__all__ = ['Hyperedge', 'HippoNode', 'run_cypher_migrations']
+__all__ = ["HippoNode", "Hyperedge", "run_cypher_migrations"]

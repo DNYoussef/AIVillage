@@ -1,11 +1,11 @@
-from pathlib import Path
 import json
 import os
-from llama_cpp import Llama
-from chromadb import PersistentClient
-from ingestion.vector_ds import personal_ds
-import peft
 from pathlib import Path
+
+from chromadb import PersistentClient
+from llama_cpp import Llama
+import peft
+
 try:
     from transformers import LlamaConfig, LlamaForCausalLM
 except Exception:  # transformers optional in test env
@@ -41,7 +41,7 @@ def _merge_domain_lora(prompt: str):
 
 def chat(prompt: str, **kw):
     _merge_domain_lora(prompt)
-    coll = DB.get_or_create_collection(f"user:{kw.get('user_id','default')}")
+    coll = DB.get_or_create_collection(f"user:{kw.get('user_id', 'default')}")
     ctx = coll.query(query_texts=[prompt], n_results=3)
     context = "\n".join(ctx.get("documents", [[]])[0])
     full_prompt = f"<CTX>{context}</CTX>\n\n{prompt}"

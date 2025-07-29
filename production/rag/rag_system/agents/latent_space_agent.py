@@ -1,13 +1,18 @@
-from typing import List, Dict, Any, Tuple
-from ..core.agent_interface import AgentInterface
+from typing import Any
+
+from some_embedding_library import (
+    get_embedding,  # Replace with actual embedding library
+)
 from some_llm_library import LLMModel  # Replace with actual LLM library
-from some_embedding_library import get_embedding  # Replace with actual embedding library
+
+from ..core.agent_interface import AgentInterface
+
 
 class LatentSpaceAgent(AgentInterface):
     def __init__(self, llm_model: LLMModel):
         self.llm_model = llm_model
 
-    async def activate_latent_space(self, query: str) -> Tuple[str, str]:
+    async def activate_latent_space(self, query: str) -> tuple[str, str]:
         activation_prompt = f"""
         Given the following query, provide:
         1. All relevant background knowledge you have about the topic.
@@ -30,18 +35,20 @@ class LatentSpaceAgent(AgentInterface):
     async def generate(self, prompt: str) -> str:
         return await self.llm_model.generate(prompt)
 
-    async def get_embedding(self, text: str) -> List[float]:
+    async def get_embedding(self, text: str) -> list[float]:
         return get_embedding(text)  # Use your preferred embedding method
 
-    async def rerank(self, query: str, results: List[Dict[str, Any]], k: int) -> List[Dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         for result in results:
-            result['score'] = await self._calculate_similarity(query, result['content'])
+            result["score"] = await self._calculate_similarity(query, result["content"])
 
         # Sort results by score and return top k
-        reranked_results = sorted(results, key=lambda x: x['score'], reverse=True)[:k]
+        reranked_results = sorted(results, key=lambda x: x["score"], reverse=True)[:k]
         return reranked_results
 
-    async def introspect(self) -> Dict[str, Any]:
+    async def introspect(self) -> dict[str, Any]:
         return {
             "type": "LatentSpaceAgent",
             "embedding_model": "some_embedding_library",  # Replace with actual embedding model info
@@ -49,7 +56,7 @@ class LatentSpaceAgent(AgentInterface):
             # Add other relevant state information
         }
 
-    async def communicate(self, message: str, recipient: 'AgentInterface') -> str:
+    async def communicate(self, message: str, recipient: "AgentInterface") -> str:
         response = await recipient.generate(f"Message from LatentSpaceAgent: {message}")
         return f"Sent: {message}, Received: {response}"
 
@@ -58,11 +65,14 @@ class LatentSpaceAgent(AgentInterface):
         # This could use cosine similarity between embeddings, for example
         embedding1 = await self.get_embedding(text1)
         embedding2 = await self.get_embedding(text2)
-        return cosine_similarity(embedding1, embedding2)  # Implement cosine_similarity function
+        return cosine_similarity(
+            embedding1, embedding2
+        )  # Implement cosine_similarity function
 
-def cosine_similarity(v1: List[float], v2: List[float]) -> float:
+
+def cosine_similarity(v1: list[float], v2: list[float]) -> float:
     # Implement cosine similarity calculation
-    dot_product = sum(x * y for x, y in zip(v1, v2))
+    dot_product = sum(x * y for x, y in zip(v1, v2, strict=False))
     magnitude1 = sum(x * x for x in v1) ** 0.5
     magnitude2 = sum(y * y for y in v2) ** 0.5
     return dot_product / (magnitude1 * magnitude2)

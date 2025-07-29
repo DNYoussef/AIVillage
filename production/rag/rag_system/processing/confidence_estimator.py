@@ -1,12 +1,14 @@
-from typing import Any, Dict, List
+from typing import Any
+
 
 class ConfidenceEstimator:
     def __init__(self):
-        self.history: List[float] = []
+        self.history: list[float] = []
 
-    def estimate_confidence(self, query: str, context: List[Dict[str, Any]], response: str) -> float:
-        """
-        Estimate the confidence of a given response based on the query and context.
+    def estimate_confidence(
+        self, query: str, context: list[dict[str, Any]], response: str
+    ) -> float:
+        """Estimate the confidence of a given response based on the query and context.
 
         :param query: The original query
         :param context: A list of context dictionaries used to generate the response
@@ -21,9 +23,14 @@ class ConfidenceEstimator:
         self.history.append(confidence)
         return confidence
 
-    def update_model(self, query: str, context: List[Dict[str, Any]], response: str, human_feedback: float):
-        """
-        Update the confidence estimation model based on human feedback.
+    def update_model(
+        self,
+        query: str,
+        context: list[dict[str, Any]],
+        response: str,
+        human_feedback: float,
+    ):
+        """Update the confidence estimation model based on human feedback.
 
         :param query: The original query
         :param context: A list of context dictionaries used to generate the response

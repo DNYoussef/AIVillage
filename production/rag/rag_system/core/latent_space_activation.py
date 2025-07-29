@@ -2,7 +2,9 @@ class LatentSpaceActivation:
     def __init__(self):
         self.latent_space = {}
 
-    async def activate(self, content: str, embeddings: list, entities: list, relations: list):
+    async def activate(
+        self, content: str, embeddings: list, entities: list, relations: list
+    ):
         self.latent_space[content] = {
             "embedding": embeddings,
             "entities": entities,

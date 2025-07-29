@@ -19,6 +19,6 @@ class ConformalCalibrator:
         return _clip(self.scale * prob + self.bias)
 
     @classmethod
-    def load_default(cls) -> "ConformalCalibrator":
+    def load_default(cls) -> ConformalCalibrator:
         """Load default model (placeholder)."""
         return cls()

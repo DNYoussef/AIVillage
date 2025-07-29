@@ -1,14 +1,21 @@
-from typing import Dict, Any
 from collections import defaultdict
+from typing import Any
+
 
 class BayesNet:
     """Simple Bayesian network for storing probabilistic knowledge."""
 
     def __init__(self):
-        self.nodes: Dict[str, Dict[str, Any]] = {}
-        self.edges: Dict[str, Dict[str, float]] = defaultdict(dict)
+        self.nodes: dict[str, dict[str, Any]] = {}
+        self.edges: dict[str, dict[str, float]] = defaultdict(dict)
 
-    def add_node(self, node_id: str, content: str, probability: float = 0.5, uncertainty: float = 0.1) -> None:
+    def add_node(
+        self,
+        node_id: str,
+        content: str,
+        probability: float = 0.5,
+        uncertainty: float = 0.1,
+    ) -> None:
         self.nodes[node_id] = {
             "content": content,
             "probability": probability,
@@ -23,8 +30,8 @@ class BayesNet:
             self.nodes[node_id]["probability"] = probability
             self.nodes[node_id]["uncertainty"] = uncertainty
 
-    def get_node(self, node_id: str) -> Dict[str, Any]:
+    def get_node(self, node_id: str) -> dict[str, Any]:
         return self.nodes.get(node_id, {})
 
-    def all_nodes(self) -> Dict[str, Dict[str, Any]]:
+    def all_nodes(self) -> dict[str, dict[str, Any]]:
         return self.nodes

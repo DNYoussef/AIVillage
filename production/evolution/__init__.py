@@ -2,10 +2,10 @@
 
 # Export main evolution classes
 try:
-    from .evomerge.evolutionary_tournament import EvolutionaryTournament
     from .evomerge.config import Config
+    from .evomerge.evolutionary_tournament import EvolutionaryTournament
 
-    __all__ = ['EvolutionaryTournament', 'Config']
+    __all__ = ["Config", "EvolutionaryTournament"]
 except ImportError:
     # Handle missing dependencies gracefully
     EvolutionaryTournament = None

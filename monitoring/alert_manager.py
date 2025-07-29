@@ -5,63 +5,75 @@ Handles threshold checking, alert dispatch through multiple channels,
 and automated issue creation for test degradation.
 """
 
-import json
 import asyncio
-import aiohttp
-import smtplib
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
-from email.mime.text import MIMEText, MIMEMultipart
+from email.mime.text import MIMEMultipart, MIMEText
+import json
 import logging
 import os
+from pathlib import Path
+import smtplib
+from typing import Any
+
+import aiohttp
 import yaml
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class Alert:
     """Test health alert"""
+
     timestamp: str
     severity: str  # low, medium, high, critical
     message: str
     category: str  # success_rate, performance, flaky_tests, module_degradation
-    details: Dict[str, Any]
+    details: dict[str, Any]
     resolved: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
 
 @dataclass
 class AlertConfig:
     """Alert configuration"""
+
     success_rate_threshold: float = 95.0
     performance_degradation_threshold: float = 1.5  # 50% slower
     flaky_test_threshold: float = 0.2
     consecutive_failures_threshold: int = 3
 
     @classmethod
-    def from_yaml(cls, config_path: Path) -> 'AlertConfig':
+    def from_yaml(cls, config_path: Path) -> "AlertConfig":
         """Load config from YAML file"""
         if not config_path.exists():
             return cls()
 
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path) as f:
                 data = yaml.safe_load(f)
 
-            alerts_config = data.get('alerts', {})
+            alerts_config = data.get("alerts", {})
             return cls(
-                success_rate_threshold=alerts_config.get('success_rate_threshold', 95.0),
-                performance_degradation_threshold=alerts_config.get('performance_degradation', 1.5),
-                flaky_test_threshold=alerts_config.get('flaky_test_threshold', 0.2),
-                consecutive_failures_threshold=alerts_config.get('consecutive_failures', 3)
+                success_rate_threshold=alerts_config.get(
+                    "success_rate_threshold", 95.0
+                ),
+                performance_degradation_threshold=alerts_config.get(
+                    "performance_degradation", 1.5
+                ),
+                flaky_test_threshold=alerts_config.get("flaky_test_threshold", 0.2),
+                consecutive_failures_threshold=alerts_config.get(
+                    "consecutive_failures", 3
+                ),
             )
         except Exception as e:
             logger.error(f"Failed to load alert config: {e}")
             return cls()
+
 
 class AlertManager:
     """Manage test health alerts"""
@@ -73,7 +85,7 @@ class AlertManager:
         self.active_alerts_file = self.base_dir / "active_alerts.json"
 
         self.config = AlertConfig.from_yaml(self.config_path)
-        self.active_alerts: List[Alert] = []
+        self.active_alerts: list[Alert] = []
         self.channels = []
 
         self._load_config()
@@ -86,10 +98,10 @@ class AlertManager:
             self._create_default_config()
 
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path) as f:
                 data = yaml.safe_load(f)
 
-            self.channels = data.get('channels', [])
+            self.channels = data.get("channels", [])
             logger.info(f"Loaded {len(self.channels)} alert channels")
 
         except Exception as e:
@@ -99,24 +111,21 @@ class AlertManager:
     def _create_default_config(self):
         """Create default alert configuration"""
         default_config = {
-            'alerts': {
-                'success_rate_threshold': 95.0,
-                'performance_degradation': 1.5,
-                'flaky_test_threshold': 0.2,
-                'consecutive_failures': 3
+            "alerts": {
+                "success_rate_threshold": 95.0,
+                "performance_degradation": 1.5,
+                "flaky_test_threshold": 0.2,
+                "consecutive_failures": 3,
             },
-            'channels': [
-                {
-                    'type': 'log',
-                    'path': 'monitoring/alerts.log'
-                }
+            "channels": [
+                {"type": "log", "path": "monitoring/alerts.log"}
                 # Add more channels as needed
-            ]
+            ],
         }
 
         try:
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.config_path, 'w') as f:
+            with open(self.config_path, "w") as f:
                 yaml.dump(default_config, f, default_flow_style=False)
             logger.info(f"Created default alert config: {self.config_path}")
         except Exception as e:
@@ -129,7 +138,7 @@ class AlertManager:
             return
 
         try:
-            with open(self.active_alerts_file, 'r') as f:
+            with open(self.active_alerts_file) as f:
                 data = json.load(f)
 
             self.active_alerts = [Alert(**alert_data) for alert_data in data]
@@ -143,55 +152,70 @@ class AlertManager:
         """Save active alerts to file"""
         try:
             self.active_alerts_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.active_alerts_file, 'w') as f:
-                json.dump([alert.to_dict() for alert in self.active_alerts], f, indent=2)
+            with open(self.active_alerts_file, "w") as f:
+                json.dump(
+                    [alert.to_dict() for alert in self.active_alerts], f, indent=2
+                )
         except Exception as e:
             logger.error(f"Failed to save active alerts: {e}")
 
-    def check_thresholds(self, current_stats: Dict[str, Any], history: List[Dict[str, Any]] = None) -> List[Alert]:
+    def check_thresholds(
+        self, current_stats: dict[str, Any], history: list[dict[str, Any]] = None
+    ) -> list[Alert]:
         """Check if any thresholds are breached"""
         alerts = []
         timestamp = datetime.now(timezone.utc).isoformat()
 
         # Check success rate threshold
-        success_rate = current_stats.get('success_rate', 0)
+        success_rate = current_stats.get("success_rate", 0)
         if success_rate < self.config.success_rate_threshold:
-            severity = 'critical' if success_rate < 80 else 'high' if success_rate < 90 else 'medium'
+            severity = (
+                "critical"
+                if success_rate < 80
+                else "high"
+                if success_rate < 90
+                else "medium"
+            )
 
             alert = Alert(
                 timestamp=timestamp,
                 severity=severity,
                 message=f"Success rate {success_rate:.1f}% below threshold {self.config.success_rate_threshold}%",
-                category='success_rate',
+                category="success_rate",
                 details={
-                    'current_rate': success_rate,
-                    'threshold': self.config.success_rate_threshold,
-                    'failed_tests': current_stats.get('failed', 0),
-                    'total_tests': current_stats.get('total_tests', 0)
-                }
+                    "current_rate": success_rate,
+                    "threshold": self.config.success_rate_threshold,
+                    "failed_tests": current_stats.get("failed", 0),
+                    "total_tests": current_stats.get("total_tests", 0),
+                },
             )
             alerts.append(alert)
 
         # Check consecutive failures
         if history and len(history) >= self.config.consecutive_failures_threshold:
-            recent_runs = history[-self.config.consecutive_failures_threshold:]
-            if all(run.get('success_rate', 100) < self.config.success_rate_threshold for run in recent_runs):
+            recent_runs = history[-self.config.consecutive_failures_threshold :]
+            if all(
+                run.get("success_rate", 100) < self.config.success_rate_threshold
+                for run in recent_runs
+            ):
                 alert = Alert(
                     timestamp=timestamp,
-                    severity='critical',
+                    severity="critical",
                     message=f"Success rate below threshold for {self.config.consecutive_failures_threshold} consecutive runs",
-                    category='success_rate',
+                    category="success_rate",
                     details={
-                        'consecutive_failures': self.config.consecutive_failures_threshold,
-                        'recent_rates': [run.get('success_rate', 0) for run in recent_runs]
-                    }
+                        "consecutive_failures": self.config.consecutive_failures_threshold,
+                        "recent_rates": [
+                            run.get("success_rate", 0) for run in recent_runs
+                        ],
+                    },
                 )
                 alerts.append(alert)
 
         # Check performance degradation
         if history and len(history) >= 2:
-            current_duration = current_stats.get('duration', 0)
-            current_tests = current_stats.get('total_tests', 1)
+            current_duration = current_stats.get("duration", 0)
+            current_tests = current_stats.get("total_tests", 1)
             current_avg = current_duration / current_tests if current_tests > 0 else 0
 
             # Compare with average of last 5 runs
@@ -199,50 +223,55 @@ class AlertManager:
             if recent_runs:
                 baseline_avgs = []
                 for run in recent_runs:
-                    run_duration = run.get('duration', 0)
-                    run_tests = run.get('total_tests', 1)
+                    run_duration = run.get("duration", 0)
+                    run_tests = run.get("total_tests", 1)
                     avg = run_duration / run_tests if run_tests > 0 else 0
                     if avg > 0:
                         baseline_avgs.append(avg)
 
                 if baseline_avgs:
                     baseline_avg = sum(baseline_avgs) / len(baseline_avgs)
-                    if current_avg > baseline_avg * self.config.performance_degradation_threshold:
+                    if (
+                        current_avg
+                        > baseline_avg * self.config.performance_degradation_threshold
+                    ):
                         slowdown_factor = current_avg / baseline_avg
 
                         alert = Alert(
                             timestamp=timestamp,
-                            severity='medium',
+                            severity="medium",
                             message=f"Performance degraded by {slowdown_factor:.1f}x (avg test time: {current_avg:.2f}s vs baseline {baseline_avg:.2f}s)",
-                            category='performance',
+                            category="performance",
                             details={
-                                'current_avg': current_avg,
-                                'baseline_avg': baseline_avg,
-                                'slowdown_factor': slowdown_factor,
-                                'threshold': self.config.performance_degradation_threshold
-                            }
+                                "current_avg": current_avg,
+                                "baseline_avg": baseline_avg,
+                                "slowdown_factor": slowdown_factor,
+                                "threshold": self.config.performance_degradation_threshold,
+                            },
                         )
                         alerts.append(alert)
 
         # Check module-specific issues
-        modules = current_stats.get('modules', {})
+        modules = current_stats.get("modules", {})
         for module_name, module_stats in modules.items():
-            module_success_rate = module_stats.get('success_rate', 0)
-            module_tests = module_stats.get('total', 0)
+            module_success_rate = module_stats.get("success_rate", 0)
+            module_tests = module_stats.get("total", 0)
 
             # Alert for modules with significant failures
-            if module_tests >= 3 and module_success_rate < 70:  # At least 3 tests and <70% success
+            if (
+                module_tests >= 3 and module_success_rate < 70
+            ):  # At least 3 tests and <70% success
                 alert = Alert(
                     timestamp=timestamp,
-                    severity='high' if module_success_rate < 50 else 'medium',
+                    severity="high" if module_success_rate < 50 else "medium",
                     message=f"Module '{module_name}' has low success rate: {module_success_rate:.1f}%",
-                    category='module_degradation',
+                    category="module_degradation",
                     details={
-                        'module': module_name,
-                        'success_rate': module_success_rate,
-                        'failed_tests': module_stats.get('failed', 0),
-                        'total_tests': module_tests
-                    }
+                        "module": module_name,
+                        "success_rate": module_success_rate,
+                        "failed_tests": module_stats.get("failed", 0),
+                        "total_tests": module_tests,
+                    },
                 )
                 alerts.append(alert)
 
@@ -262,13 +291,13 @@ class AlertManager:
         # Send through configured channels
         for channel in self.channels:
             try:
-                if channel['type'] == 'log':
+                if channel["type"] == "log":
                     await self._log_alert(alert)
-                elif channel['type'] == 'webhook':
+                elif channel["type"] == "webhook":
                     await self._send_webhook_alert(alert, channel)
-                elif channel['type'] == 'github':
+                elif channel["type"] == "github":
                     await self._create_github_issue(alert, channel)
-                elif channel['type'] == 'email':
+                elif channel["type"] == "email":
                     await self._send_email_alert(alert, channel)
             except Exception as e:
                 logger.error(f"Failed to send alert via {channel['type']}: {e}")
@@ -277,14 +306,16 @@ class AlertManager:
         """Log alert to file"""
         try:
             self.alerts_log.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.alerts_log, 'a', encoding='utf-8') as f:
-                f.write(f"{alert.timestamp} [{alert.severity.upper()}] {alert.category}: {alert.message}\n")
+            with open(self.alerts_log, "a", encoding="utf-8") as f:
+                f.write(
+                    f"{alert.timestamp} [{alert.severity.upper()}] {alert.category}: {alert.message}\n"
+                )
         except Exception as e:
             logger.error(f"Failed to log alert: {e}")
 
-    async def _send_webhook_alert(self, alert: Alert, channel: Dict[str, Any]):
+    async def _send_webhook_alert(self, alert: Alert, channel: dict[str, Any]):
         """Send alert via webhook"""
-        webhook_url = channel.get('url')
+        webhook_url = channel.get("url")
         if not webhook_url:
             logger.error("Webhook URL not configured")
             return
@@ -293,11 +324,11 @@ class AlertManager:
         webhook_url = os.path.expandvars(webhook_url)
 
         payload = {
-            'timestamp': alert.timestamp,
-            'severity': alert.severity,
-            'message': alert.message,
-            'category': alert.category,
-            'details': alert.details
+            "timestamp": alert.timestamp,
+            "severity": alert.severity,
+            "message": alert.message,
+            "category": alert.category,
+            "details": alert.details,
         }
 
         try:
@@ -310,15 +341,15 @@ class AlertManager:
         except Exception as e:
             logger.error(f"Failed to send webhook alert: {e}")
 
-    async def _create_github_issue(self, alert: Alert, channel: Dict[str, Any]):
+    async def _create_github_issue(self, alert: Alert, channel: dict[str, Any]):
         """Auto-create GitHub issue for test degradation"""
-        github_token = os.getenv('GITHUB_TOKEN')
+        github_token = os.getenv("GITHUB_TOKEN")
         if not github_token:
             logger.warning("GITHUB_TOKEN not set, skipping GitHub issue creation")
             return
 
-        repo = channel.get('repo', 'ai-village')
-        labels = channel.get('labels', ['test-degradation', 'automated'])
+        repo = channel.get("repo", "ai-village")
+        labels = channel.get("labels", ["test-degradation", "automated"])
 
         # Create issue title and body
         title = f"Test Alert: {alert.message}"
@@ -344,39 +375,37 @@ class AlertManager:
 *This issue was automatically created by the test monitoring system.*
 """
 
-        payload = {
-            'title': title,
-            'body': body,
-            'labels': labels
-        }
+        payload = {"title": title, "body": body, "labels": labels}
 
         try:
             async with aiohttp.ClientSession() as session:
                 headers = {
-                    'Authorization': f'token {github_token}',
-                    'Accept': 'application/vnd.github.v3+json'
+                    "Authorization": f"token {github_token}",
+                    "Accept": "application/vnd.github.v3+json",
                 }
 
                 async with session.post(
-                    f'https://api.github.com/repos/{repo}/issues',
+                    f"https://api.github.com/repos/{repo}/issues",
                     json=payload,
-                    headers=headers
+                    headers=headers,
                 ) as response:
                     if response.status == 201:
                         issue_data = await response.json()
                         logger.info(f"Created GitHub issue: {issue_data['html_url']}")
                     else:
-                        logger.error(f"GitHub issue creation failed with status {response.status}")
+                        logger.error(
+                            f"GitHub issue creation failed with status {response.status}"
+                        )
         except Exception as e:
             logger.error(f"Failed to create GitHub issue: {e}")
 
-    async def _send_email_alert(self, alert: Alert, channel: Dict[str, Any]):
+    async def _send_email_alert(self, alert: Alert, channel: dict[str, Any]):
         """Send email alert"""
-        smtp_server = channel.get('smtp_server')
-        smtp_port = channel.get('smtp_port', 587)
-        username = channel.get('username')
-        password = os.getenv('ALERT_EMAIL_PASSWORD')
-        to_emails = channel.get('to_emails', [])
+        smtp_server = channel.get("smtp_server")
+        smtp_port = channel.get("smtp_port", 587)
+        username = channel.get("username")
+        password = os.getenv("ALERT_EMAIL_PASSWORD")
+        to_emails = channel.get("to_emails", [])
 
         if not all([smtp_server, username, password, to_emails]):
             logger.warning("Email configuration incomplete, skipping email alert")
@@ -384,9 +413,9 @@ class AlertManager:
 
         try:
             msg = MIMEMultipart()
-            msg['From'] = username
-            msg['To'] = ', '.join(to_emails)
-            msg['Subject'] = f"Test Alert: {alert.severity.upper()} - {alert.message}"
+            msg["From"] = username
+            msg["To"] = ", ".join(to_emails)
+            msg["Subject"] = f"Test Alert: {alert.severity.upper()} - {alert.message}"
 
             body = f"""
 Test Health Alert
@@ -403,7 +432,7 @@ Details:
 Please investigate and resolve the issue.
 """
 
-            msg.attach(MIMEText(body, 'plain'))
+            msg.attach(MIMEText(body, "plain"))
 
             server = smtplib.SMTP(smtp_server, smtp_port)
             server.starttls()
@@ -426,9 +455,10 @@ Please investigate and resolve the issue.
                 logger.info(f"Resolved alert: {alert.message}")
                 break
 
-    def get_active_alerts(self) -> List[Alert]:
+    def get_active_alerts(self) -> list[Alert]:
         """Get list of active (unresolved) alerts"""
         return [alert for alert in self.active_alerts if not alert.resolved]
+
 
 async def main():
     """CLI interface for alert manager"""
@@ -445,7 +475,7 @@ async def main():
 
     if args.check:
         try:
-            with open(args.check, 'r') as f:
+            with open(args.check) as f:
                 stats = json.load(f)
 
             alerts = manager.check_thresholds(stats)
@@ -462,13 +492,13 @@ async def main():
     elif args.test_webhook:
         test_alert = Alert(
             timestamp=datetime.now(timezone.utc).isoformat(),
-            severity='medium',
-            message='Test webhook alert',
-            category='test',
-            details={'test': True}
+            severity="medium",
+            message="Test webhook alert",
+            category="test",
+            details={"test": True},
         )
 
-        channel = {'type': 'webhook', 'url': args.test_webhook}
+        channel = {"type": "webhook", "url": args.test_webhook}
         await manager._send_webhook_alert(test_alert, channel)
 
     elif args.list_active:
@@ -479,6 +509,7 @@ async def main():
                 print(f"- {alert.timestamp} [{alert.severity}] {alert.message}")
         else:
             print("No active alerts")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

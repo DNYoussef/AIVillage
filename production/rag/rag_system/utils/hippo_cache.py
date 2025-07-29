@@ -1,7 +1,8 @@
 # rag_system/utils/hippo_cache.py
 
-from typing import Any, Optional
 from datetime import datetime
+from typing import Any
+
 
 class HippoCache:
     def __init__(self, max_size: int = 1000):
@@ -13,7 +14,7 @@ class HippoCache:
             self._evict()
         self.cache[key] = {"value": value, "timestamp": timestamp, "frequency": 1}
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         if key in self.cache:
             self.cache[key]["frequency"] += 1
             return self.cache[key]["value"]
@@ -24,6 +25,6 @@ class HippoCache:
         sorted_items = sorted(
             self.cache.items(),
             key=lambda x: (x[1]["frequency"], x[1]["timestamp"]),
-            reverse=True
+            reverse=True,
         )
-        self.cache = dict(sorted_items[:self.max_size - 1])
+        self.cache = dict(sorted_items[: self.max_size - 1])

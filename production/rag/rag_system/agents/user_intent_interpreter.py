@@ -1,17 +1,17 @@
 import re
-from typing import Dict, Any
+from typing import Any
+
 
 class UserIntentInterpreterAgent:
     """Basic interpreter returning a simple intent structure."""
 
-    def interpret_intent(self, query: str) -> Dict[str, Any]:
+    def interpret_intent(self, query: str) -> dict[str, Any]:
         """Return a dictionary describing the user's intent.
 
         The implementation mirrors the simple keyword based patterns described
         in :doc:`docs/system_overview.md <system_overview.md>` so that the
         rest of the pipeline can rely on consistent intent labels.
         """
-
         lowered = query.lower()
         intent = "unknown"
 

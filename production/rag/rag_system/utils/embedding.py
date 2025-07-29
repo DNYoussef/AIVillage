@@ -1,9 +1,9 @@
-from typing import Tuple, List
-import torch
 import hashlib
 
+import torch
+
 try:
-    from transformers import AutoTokenizer, AutoModel
+    from transformers import AutoModel, AutoTokenizer
 except ImportError:  # transformers not installed
     AutoTokenizer = None  # type: ignore
     AutoModel = None  # type: ignore
@@ -32,7 +32,7 @@ class BERTEmbeddingModel:
             self.tokenizer = None
             self.model = None
 
-    def encode(self, text: str) -> Tuple[List[str], torch.Tensor]:
+    def encode(self, text: str) -> tuple[list[str], torch.Tensor]:
         """Encode text into token embeddings.
 
         The method returns the list of tokens and the corresponding embedding
@@ -44,12 +44,11 @@ class BERTEmbeddingModel:
         text: str
             Input text to encode.
 
-        Returns
+        Returns:
         -------
         Tuple[List[str], torch.Tensor]
             The tokens and their embeddings.
         """
-
         if self.fallback:
             tokens = text.split()
             embeddings = []

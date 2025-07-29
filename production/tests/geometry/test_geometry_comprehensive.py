@@ -1,16 +1,14 @@
-"""
-Tests for geometry analysis capabilities.
+"""Tests for geometry analysis capabilities.
 Verifies geometric feedback and analysis.
 """
 
 import pytest
 import torch
-import numpy as np
 
 try:
     from production.geometry import GeometryFeedback
-    from production.geometry.geometry_feedback import GeometryFeedback as GF
     from production.geometry.geometry import Snapshot
+    from production.geometry.geometry_feedback import GeometryFeedback as GF
 except ImportError:
     # Handle missing imports gracefully
     pytest.skip("Production geometry modules not available", allow_module_level=True)
@@ -23,6 +21,7 @@ class TestGeometryFeedback:
         """Test that geometry feedback can be imported."""
         try:
             from production.geometry.geometry_feedback import GeometryFeedback
+
             assert GeometryFeedback is not None
         except ImportError:
             pytest.skip("GeometryFeedback not available")
@@ -69,6 +68,7 @@ class TestGeometrySnapshot:
         """Test snapshot concept."""
         try:
             from production.geometry.geometry.snapshot import Snapshot
+
             assert Snapshot is not None
         except ImportError:
             pytest.skip("Snapshot not available")
@@ -82,10 +82,10 @@ class TestGeometrySnapshot:
         state_dict = model.state_dict()
 
         # Verify state capture
-        assert 'weight' in state_dict
-        assert 'bias' in state_dict
-        assert state_dict['weight'].shape == (5, 10)
-        assert state_dict['bias'].shape == (5,)
+        assert "weight" in state_dict
+        assert "bias" in state_dict
+        assert state_dict["weight"].shape == (5, 10)
+        assert state_dict["bias"].shape == (5,)
 
     def test_geometric_properties(self):
         """Test geometric property calculation."""
@@ -93,7 +93,7 @@ class TestGeometrySnapshot:
         weights = torch.randn(50, 100)
 
         # Calculate geometric properties
-        frobenius_norm = torch.norm(weights, p='fro').item()
+        frobenius_norm = torch.norm(weights, p="fro").item()
         spectral_norm = torch.norm(weights, p=2).item()
 
         assert frobenius_norm >= spectral_norm  # Frobenius >= spectral norm
@@ -136,7 +136,7 @@ class TestGeometryIntegration:
         # Calculate evolution trajectory
         distances = []
         for i in range(1, len(states)):
-            dist = torch.norm(states[i] - states[i-1]).item()
+            dist = torch.norm(states[i] - states[i - 1]).item()
             distances.append(dist)
 
         assert len(distances) == 4

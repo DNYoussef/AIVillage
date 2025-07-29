@@ -1,18 +1,16 @@
-"""
-Comprehensive tests for compression pipeline.
+"""Comprehensive tests for compression pipeline.
 Verifies the 4-8x compression claims and production readiness.
 """
 
+import time
+
+import psutil
 import pytest
 import torch
-import numpy as np
-from pathlib import Path
-import psutil
-import time
-from unittest.mock import Mock, patch
 
 try:
     from production.compression import CompressionPipeline
+
     if CompressionPipeline is None:
         raise ImportError("CompressionPipeline not available")
 
@@ -24,13 +22,17 @@ try:
 
     # Also try direct import as backup
     try:
-        from production.compression.compression_pipeline import CompressionPipeline as CP
+        from production.compression.compression_pipeline import (
+            CompressionPipeline as CP,
+        )
     except ImportError:
         CP = CompressionPipeline
 
 except ImportError as e:
     # Handle missing imports gracefully
-    pytest.skip(f"Production compression modules not available: {e}", allow_module_level=True)
+    pytest.skip(
+        f"Production compression modules not available: {e}", allow_module_level=True
+    )
 
 
 class TestCompressionClaims:
@@ -40,27 +42,25 @@ class TestCompressionClaims:
     def sample_models(self):
         """Create models of various sizes for testing."""
         models = {
-            'small': torch.nn.Sequential(
-                torch.nn.Linear(100, 50),
-                torch.nn.ReLU(),
-                torch.nn.Linear(50, 10)
+            "small": torch.nn.Sequential(
+                torch.nn.Linear(100, 50), torch.nn.ReLU(), torch.nn.Linear(50, 10)
             ),
-            'medium': torch.nn.Sequential(
+            "medium": torch.nn.Sequential(
                 torch.nn.Linear(784, 256),
                 torch.nn.ReLU(),
                 torch.nn.Linear(256, 128),
                 torch.nn.ReLU(),
-                torch.nn.Linear(128, 10)
+                torch.nn.Linear(128, 10),
             ),
-            'mobile_sized': torch.nn.Sequential(
+            "mobile_sized": torch.nn.Sequential(
                 # Simulating a small mobile model
                 torch.nn.Conv2d(3, 16, 3),
                 torch.nn.ReLU(),
                 torch.nn.Conv2d(16, 32, 3),
                 torch.nn.ReLU(),
                 torch.nn.Flatten(),
-                torch.nn.Linear(32 * 28 * 28, 10)
-            )
+                torch.nn.Linear(32 * 28 * 28, 10),
+            ),
         }
         return models
 
@@ -68,6 +68,7 @@ class TestCompressionClaims:
         """Test that compression pipeline can be imported and instantiated."""
         try:
             from production.compression.compression_pipeline import CompressionPipeline
+
             pipeline = CompressionPipeline()
             assert pipeline is not None
         except ImportError:
@@ -77,6 +78,7 @@ class TestCompressionClaims:
         """Test that model compression modules exist."""
         try:
             from production.compression.model_compression import ModelCompression
+
             assert ModelCompression is not None
         except ImportError:
             pytest.skip("ModelCompression not available")
@@ -87,10 +89,7 @@ class TestCompressionClaims:
         model = sample_models[model_type]
 
         # Calculate original size
-        original_size = sum(
-            p.numel() * p.element_size()
-            for p in model.parameters()
-        )
+        original_size = sum(p.numel() * p.element_size() for p in model.parameters())
 
         # Simple compression simulation (in absence of real implementation)
         compressed_size = original_size // 4  # Simulate 4x compression
@@ -101,7 +100,7 @@ class TestCompressionClaims:
 
     def test_memory_constraints(self, sample_models):
         """Test that compression works within memory constraints."""
-        model = sample_models['mobile_sized']
+        model = sample_models["mobile_sized"]
 
         # Monitor memory usage
         process = psutil.Process()
@@ -127,6 +126,7 @@ class TestCompressionMethods:
         """Test SeedLM compression method availability."""
         try:
             from production.compression.compression.seedlm import SeedLM
+
             assert SeedLM is not None
         except ImportError:
             pytest.skip("SeedLM not available")
@@ -135,6 +135,7 @@ class TestCompressionMethods:
         """Test VPTQ compression method availability."""
         try:
             from production.compression.compression.vptq import VPTQ
+
             assert VPTQ is not None
         except ImportError:
             pytest.skip("VPTQ not available")
@@ -143,6 +144,7 @@ class TestCompressionMethods:
         """Test BitNet compression method availability."""
         try:
             from production.compression.model_compression.bitlinearization import BitNet
+
             assert BitNet is not None
         except ImportError:
             pytest.skip("BitNet not available")
@@ -154,16 +156,12 @@ class TestCompressionIntegration:
     def test_pipeline_configuration(self):
         """Test that compression pipeline can be configured."""
         # Test would verify pipeline accepts different compression methods
-        config = {
-            'method': 'seedlm',
-            'compression_ratio': 4.0,
-            'memory_limit': '2GB'
-        }
+        config = {"method": "seedlm", "compression_ratio": 4.0, "memory_limit": "2GB"}
         # In real test: pipeline = CompressionPipeline(config)
-        assert config['compression_ratio'] == 4.0
+        assert config["compression_ratio"] == 4.0
 
     def test_compression_formats(self):
         """Test supported compression formats."""
-        supported_formats = ['pt', 'safetensors', 'gguf']
+        supported_formats = ["pt", "safetensors", "gguf"]
         for fmt in supported_formats:
             assert fmt in supported_formats  # Placeholder test

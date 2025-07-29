@@ -1,8 +1,8 @@
-from typing import List, Dict, Any
+from typing import Any
+
 
 def construct_user_intent_prompt(query: str) -> str:
-    """
-    Construct a prompt for the User Intent Interpretation Agent.
+    """Construct a prompt for the User Intent Interpretation Agent.
 
     Args:
         query (str): The user's input query.
@@ -18,9 +18,9 @@ def construct_user_intent_prompt(query: str) -> str:
     )
     return prompt
 
+
 def construct_key_concept_extraction_prompt(text: str) -> str:
-    """
-    Construct a prompt for the Key Concept Extraction Agent.
+    """Construct a prompt for the Key Concept Extraction Agent.
 
     Args:
         text (str): Input text from which to extract key concepts.
@@ -36,9 +36,11 @@ def construct_key_concept_extraction_prompt(text: str) -> str:
     )
     return prompt
 
-def construct_task_planning_prompt(intent: Dict[str, Any], concepts: Dict[str, Any]) -> str:
-    """
-    Construct a prompt for the Task Planning Agent.
+
+def construct_task_planning_prompt(
+    intent: dict[str, Any], concepts: dict[str, Any]
+) -> str:
+    """Construct a prompt for the Task Planning Agent.
 
     Args:
         intent (Dict[str, Any]): The interpreted user intent.
@@ -56,9 +58,9 @@ def construct_task_planning_prompt(intent: Dict[str, Any], concepts: Dict[str, A
     )
     return prompt
 
-def construct_response_generation_prompt(reasoning_outputs: Dict[str, Any]) -> str:
-    """
-    Construct a prompt for the Response Generation Agent.
+
+def construct_response_generation_prompt(reasoning_outputs: dict[str, Any]) -> str:
+    """Construct a prompt for the Response Generation Agent.
 
     Args:
         reasoning_outputs (Dict[str, Any]): Outputs from the reasoning agent.
@@ -74,9 +76,9 @@ def construct_response_generation_prompt(reasoning_outputs: Dict[str, Any]) -> s
     )
     return prompt
 
-def construct_knowledge_integration_prompt(new_relations: Dict[str, Any]) -> str:
-    """
-    Construct a prompt for the Dynamic Knowledge Integration Agent.
+
+def construct_knowledge_integration_prompt(new_relations: dict[str, Any]) -> str:
+    """Construct a prompt for the Dynamic Knowledge Integration Agent.
 
     Args:
         new_relations (Dict[str, Any]): New relations to be added to the knowledge graph.
@@ -92,9 +94,11 @@ def construct_knowledge_integration_prompt(new_relations: Dict[str, Any]) -> str
     )
     return prompt
 
-def construct_extrapolation_prompt(entity1: str, relation: str, entity2: str, known_facts: List[str]) -> str:
-    """
-    Construct a prompt for the LLM to extrapolate the veracity of the relation.
+
+def construct_extrapolation_prompt(
+    entity1: str, relation: str, entity2: str, known_facts: list[str]
+) -> str:
+    """Construct a prompt for the LLM to extrapolate the veracity of the relation.
 
     Args:
         entity1 (str): The first entity.

@@ -1,31 +1,28 @@
 #!/usr/bin/env python3
-"""
-Agent Forge Real-Time Monitoring Dashboard
+"""Agent Forge Real-Time Monitoring Dashboard
 
 Web-based dashboard for monitoring Agent Forge pipeline execution,
 model evolution progress, and system metrics in real-time.
 """
 
-import asyncio
+from datetime import datetime, timedelta
 import json
 import logging
-import time
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
+import time
 
-import streamlit as st
-import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 import psutil
-import wandb
+import streamlit as st
 
-from agent_forge.forge_orchestrator import PhaseType, PhaseStatus
+import wandb
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class AgentForgeDashboard:
     """Real-time monitoring dashboard for Agent Forge"""
@@ -39,7 +36,7 @@ class AgentForgeDashboard:
         for dir_path in [self.data_dir, self.checkpoint_dir, self.logs_dir]:
             dir_path.mkdir(parents=True, exist_ok=True)
 
-    def get_system_metrics(self) -> Dict:
+    def get_system_metrics(self) -> dict:
         """Get current system metrics"""
         try:
             # CPU metrics
@@ -53,7 +50,7 @@ class AgentForgeDashboard:
             memory_percent = memory.percent
 
             # Disk metrics
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             disk_used_gb = disk.used / (1024**3)
             disk_total_gb = disk.total / (1024**3)
             disk_percent = (disk.used / disk.total) * 100
@@ -63,27 +60,24 @@ class AgentForgeDashboard:
 
             return {
                 "timestamp": datetime.now().isoformat(),
-                "cpu": {
-                    "percent": cpu_percent,
-                    "count": cpu_count
-                },
+                "cpu": {"percent": cpu_percent, "count": cpu_count},
                 "memory": {
                     "used_gb": memory_used_gb,
                     "total_gb": memory_total_gb,
-                    "percent": memory_percent
+                    "percent": memory_percent,
                 },
                 "disk": {
                     "used_gb": disk_used_gb,
                     "total_gb": disk_total_gb,
-                    "percent": disk_percent
+                    "percent": disk_percent,
                 },
-                "gpu": gpu_metrics
+                "gpu": gpu_metrics,
             }
         except Exception as e:
             logger.error(f"Error getting system metrics: {e}")
             return {"error": str(e), "timestamp": datetime.now().isoformat()}
 
-    def get_gpu_metrics(self) -> Dict:
+    def get_gpu_metrics(self) -> dict:
         """Get GPU metrics if available"""
         try:
             import torch
@@ -96,7 +90,9 @@ class AgentForgeDashboard:
                 # Memory usage
                 memory_allocated = torch.cuda.memory_allocated(current_device)
                 memory_cached = torch.cuda.memory_reserved(current_device)
-                memory_total = torch.cuda.get_device_properties(current_device).total_memory
+                memory_total = torch.cuda.get_device_properties(
+                    current_device
+                ).total_memory
 
                 memory_allocated_gb = memory_allocated / (1024**3)
                 memory_cached_gb = memory_cached / (1024**3)
@@ -112,18 +108,17 @@ class AgentForgeDashboard:
                         "allocated_gb": memory_allocated_gb,
                         "cached_gb": memory_cached_gb,
                         "total_gb": memory_total_gb,
-                        "percent": memory_percent
-                    }
+                        "percent": memory_percent,
+                    },
                 }
-            else:
-                return {"available": False, "reason": "CUDA not available"}
+            return {"available": False, "reason": "CUDA not available"}
 
         except ImportError:
             return {"available": False, "reason": "PyTorch not installed"}
         except Exception as e:
             return {"available": False, "reason": str(e)}
 
-    def get_pipeline_status(self) -> Dict:
+    def get_pipeline_status(self) -> dict:
         """Get current pipeline execution status"""
         status = {
             "active_runs": 0,
@@ -131,25 +126,29 @@ class AgentForgeDashboard:
             "failed_runs": 0,
             "current_phase": None,
             "phases_completed": [],
-            "latest_run": None
+            "latest_run": None,
         }
 
         try:
             # Check for checkpoint files
-            checkpoint_files = list(self.checkpoint_dir.glob("orchestrator_checkpoint_*.json"))
+            checkpoint_files = list(
+                self.checkpoint_dir.glob("orchestrator_checkpoint_*.json")
+            )
 
             if checkpoint_files:
                 # Get latest checkpoint
-                latest_checkpoint = max(checkpoint_files, key=lambda p: p.stat().st_mtime)
+                latest_checkpoint = max(
+                    checkpoint_files, key=lambda p: p.stat().st_mtime
+                )
 
-                with open(latest_checkpoint, 'r') as f:
+                with open(latest_checkpoint) as f:
                     checkpoint_data = json.load(f)
 
                 status["latest_run"] = {
                     "run_id": checkpoint_data.get("run_id"),
                     "timestamp": checkpoint_data.get("timestamp"),
                     "phase": checkpoint_data.get("phase"),
-                    "checkpoint_file": str(latest_checkpoint)
+                    "checkpoint_file": str(latest_checkpoint),
                 }
 
                 # Count phases completed
@@ -165,11 +164,13 @@ class AgentForgeDashboard:
 
             for report_file in report_files:
                 try:
-                    with open(report_file, 'r') as f:
+                    with open(report_file) as f:
                         report_data = json.load(f)
 
                     run_summary = report_data.get("run_summary", {})
-                    if run_summary.get("phases_completed", 0) == run_summary.get("phases_attempted", 0):
+                    if run_summary.get("phases_completed", 0) == run_summary.get(
+                        "phases_attempted", 0
+                    ):
                         status["completed_runs"] += 1
                     elif run_summary.get("phases_failed", 0) > 0:
                         status["failed_runs"] += 1
@@ -185,7 +186,7 @@ class AgentForgeDashboard:
 
         return status
 
-    def get_wandb_metrics(self, project_name: str = "agent-forge-enhanced") -> Dict:
+    def get_wandb_metrics(self, project_name: str = "agent-forge-enhanced") -> dict:
         """Get metrics from Weights & Biases"""
         try:
             api = wandb.Api()
@@ -199,22 +200,25 @@ class AgentForgeDashboard:
             latest_metrics = {
                 "name": latest_run.name,
                 "state": latest_run.state,
-                "created_at": latest_run.created_at.isoformat() if latest_run.created_at else None,
+                "created_at": latest_run.created_at.isoformat()
+                if latest_run.created_at
+                else None,
                 "duration": latest_run.summary.get("pipeline_duration_seconds", 0),
                 "success_rate": latest_run.summary.get("success_rate", 0),
                 "phases_completed": latest_run.summary.get("phases_completed", 0),
-                "phases_failed": latest_run.summary.get("phases_failed", 0)
+                "phases_failed": latest_run.summary.get("phases_failed", 0),
             }
 
             return {
                 "runs": len(runs),
                 "latest_metrics": latest_metrics,
-                "project_url": f"https://wandb.ai/your-entity/{project_name}"
+                "project_url": f"https://wandb.ai/your-entity/{project_name}",
             }
 
         except Exception as e:
             logger.warning(f"Could not get W&B metrics: {e}")
             return {"error": str(e)}
+
 
 def main():
     """Main dashboard function"""
@@ -222,7 +226,7 @@ def main():
         page_title="Agent Forge Dashboard",
         page_icon="🤖",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="expanded",
     )
 
     # Dashboard title
@@ -254,21 +258,21 @@ def main():
                         st.metric(
                             "CPU Usage",
                             f"{system_metrics['cpu']['percent']:.1f}%",
-                            delta=None
+                            delta=None,
                         )
 
                     with col2:
                         st.metric(
                             "Memory Usage",
                             f"{system_metrics['memory']['used_gb']:.1f} GB",
-                            delta=f"{system_metrics['memory']['percent']:.1f}%"
+                            delta=f"{system_metrics['memory']['percent']:.1f}%",
                         )
 
                     with col3:
                         st.metric(
                             "Disk Usage",
                             f"{system_metrics['disk']['used_gb']:.0f} GB",
-                            delta=f"{system_metrics['disk']['percent']:.1f}%"
+                            delta=f"{system_metrics['disk']['percent']:.1f}%",
                         )
 
                     with col4:
@@ -277,7 +281,7 @@ def main():
                             st.metric(
                                 "GPU Memory",
                                 f"{gpu_metrics['memory']['allocated_gb']:.1f} GB",
-                                delta=f"{gpu_metrics['memory']['percent']:.1f}%"
+                                delta=f"{gpu_metrics['memory']['percent']:.1f}%",
                             )
                         else:
                             st.metric("GPU", "Not Available", delta=None)
@@ -301,9 +305,13 @@ def main():
                 # Current Phase Progress
                 if pipeline_status["current_phase"]:
                     st.subheader(f"Current Phase: {pipeline_status['current_phase']}")
-                    progress = len(pipeline_status["phases_completed"]) / 5  # 5 total phases
+                    progress = (
+                        len(pipeline_status["phases_completed"]) / 5
+                    )  # 5 total phases
                     st.progress(progress)
-                    st.write(f"Completed phases: {', '.join(pipeline_status['phases_completed'])}")
+                    st.write(
+                        f"Completed phases: {', '.join(pipeline_status['phases_completed'])}"
+                    )
 
                 # Latest Run Information
                 if pipeline_status["latest_run"]:
@@ -318,9 +326,21 @@ def main():
 
                 # Create sample phase data for visualization
                 phase_data = {
-                    "Phase": ["EvoMerge", "Geometry", "Self-Modeling", "Prompt Baking", "Compression"],
-                    "Status": ["Completed", "Completed", "In Progress", "Pending", "Pending"],
-                    "Progress": [100, 100, 60, 0, 0]
+                    "Phase": [
+                        "EvoMerge",
+                        "Geometry",
+                        "Self-Modeling",
+                        "Prompt Baking",
+                        "Compression",
+                    ],
+                    "Status": [
+                        "Completed",
+                        "Completed",
+                        "In Progress",
+                        "Pending",
+                        "Pending",
+                    ],
+                    "Progress": [100, 100, 60, 0, 0],
                 }
 
                 df_phases = pd.DataFrame(phase_data)
@@ -335,8 +355,8 @@ def main():
                         "Completed": "green",
                         "In Progress": "orange",
                         "Pending": "gray",
-                        "Failed": "red"
-                    }
+                        "Failed": "red",
+                    },
                 )
 
                 st.plotly_chart(fig_phases, use_container_width=True)
@@ -348,7 +368,7 @@ def main():
                 timestamps = pd.date_range(
                     start=datetime.now() - timedelta(hours=1),
                     end=datetime.now(),
-                    periods=60
+                    periods=60,
                 )
 
                 # Sample data
@@ -357,26 +377,30 @@ def main():
 
                 fig_resources = go.Figure()
 
-                fig_resources.add_trace(go.Scatter(
-                    x=timestamps,
-                    y=cpu_data,
-                    mode='lines',
-                    name='CPU %',
-                    line=dict(color='blue')
-                ))
+                fig_resources.add_trace(
+                    go.Scatter(
+                        x=timestamps,
+                        y=cpu_data,
+                        mode="lines",
+                        name="CPU %",
+                        line=dict(color="blue"),
+                    )
+                )
 
-                fig_resources.add_trace(go.Scatter(
-                    x=timestamps,
-                    y=memory_data,
-                    mode='lines',
-                    name='Memory %',
-                    line=dict(color='red')
-                ))
+                fig_resources.add_trace(
+                    go.Scatter(
+                        x=timestamps,
+                        y=memory_data,
+                        mode="lines",
+                        name="Memory %",
+                        line=dict(color="red"),
+                    )
+                )
 
                 fig_resources.update_layout(
                     title="System Resource Usage (Last Hour)",
                     xaxis_title="Time",
-                    yaxis_title="Usage %"
+                    yaxis_title="Usage %",
                 )
 
                 st.plotly_chart(fig_resources, use_container_width=True)
@@ -398,11 +422,13 @@ def main():
                             st.metric(
                                 "Latest Success Rate",
                                 f"{latest['success_rate']:.1%}",
-                                delta=f"{latest['phases_completed']} phases"
+                                delta=f"{latest['phases_completed']} phases",
                             )
 
                     if "project_url" in wandb_metrics:
-                        st.markdown(f"[View Full W&B Dashboard]({wandb_metrics['project_url']})")
+                        st.markdown(
+                            f"[View Full W&B Dashboard]({wandb_metrics['project_url']})"
+                        )
                 else:
                     st.warning("W&B integration not available")
 
@@ -417,6 +443,7 @@ def main():
                 time.sleep(refresh_interval)
             else:
                 break
+
 
 if __name__ == "__main__":
     main()

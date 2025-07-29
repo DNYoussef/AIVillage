@@ -1,5 +1,4 @@
-"""
-MAGI Agent System
+"""MAGI Agent System
 
 The MAGI (Machine-learning Artificial General Intelligence) agent system
 provides specialized AI agents with geometric self-awareness, self-modification
@@ -15,13 +14,9 @@ Directory Structure:
 """
 
 # Import core MAGI functionality
-from .magi_agent import *
-
 # Import specialized modules
-from . import interfaces
-from . import implementations
-from . import deployment
-from . import validation
+from . import deployment, implementations, interfaces, validation
+from .magi_agent import *
 
 __all__ = [
     # Core exports

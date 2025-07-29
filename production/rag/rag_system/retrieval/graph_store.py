@@ -1,7 +1,7 @@
-from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 import math
 import random
+from typing import Any
 
 try:  # networkx might not be installed in minimal test envs
     import networkx as nx
@@ -16,9 +16,11 @@ except Exception:  # pragma: no cover - missing torch/transformers
 from ..core.config import UnifiedConfig
 from ..core.structures import RetrievalResult
 
+
 class GraphStore:
-    def __init__(self, config: Optional[UnifiedConfig] = None,
-                 embedding_model: Optional[Any] = None):
+    def __init__(
+        self, config: UnifiedConfig | None = None, embedding_model: Any | None = None
+    ):
         """Create a GraphStore.
 
         Similar to :class:`VectorStore`, older code instantiated ``GraphStore``
@@ -26,7 +28,6 @@ class GraphStore:
         after the constructor signature changed.  The configuration parameter is
         now optional and defaults to a new :class:`UnifiedConfig` instance.
         """
-
         self.config = config or UnifiedConfig()
         self.embedding_model = embedding_model
         if self.embedding_model is None and BERTEmbeddingModel is not None:
@@ -38,12 +39,12 @@ class GraphStore:
             self.graph = nx.Graph()
         except Exception:  # pragma: no cover - fallback if networkx is stubbed
             self.graph = object()
-        self._nodes: Dict[str, Dict[str, Any]] = {}
+        self._nodes: dict[str, dict[str, Any]] = {}
         self.driver = None  # This should be initialized with a proper Neo4j driver
         self.causal_edges = {}
         self.llm = None  # This should be initialized with a proper language model
 
-    def _generate_embedding(self, text: str) -> List[float]:
+    def _generate_embedding(self, text: str) -> list[float]:
         """Return an embedding vector for ``text``.
 
         When an embedding model is available it is used; otherwise a
@@ -66,7 +67,7 @@ class GraphStore:
         rng = random.Random(abs(hash(text)) % (2**32))
         return [rng.random() for _ in range(64)]
 
-    def add_documents(self, documents: List[Dict[str, Any]]):
+    def add_documents(self, documents: list[dict[str, Any]]):
         for doc in documents:
             # Ensure each document has an embedding
             if "embedding" not in doc or doc["embedding"] is None:
@@ -81,7 +82,7 @@ class GraphStore:
             emb_i = doc.get("embedding", [])
             for other in documents[i + 1 :]:
                 emb_j = other.get("embedding", [])
-                dot = sum(a * b for a, b in zip(emb_i, emb_j))
+                dot = sum(a * b for a, b in zip(emb_i, emb_j, strict=False))
                 norm_i = math.sqrt(sum(a * a for a in emb_i))
                 norm_j = math.sqrt(sum(b * b for b in emb_j))
                 denom = norm_i * norm_j
@@ -89,7 +90,9 @@ class GraphStore:
                 if hasattr(self.graph, "add_edge"):
                     self.graph.add_edge(doc["id"], other["id"], weight=sim)
 
-    async def retrieve(self, query: str, k: int, timestamp: datetime = None) -> List[RetrievalResult]:
+    async def retrieve(
+        self, query: str, k: int, timestamp: datetime = None
+    ) -> list[RetrievalResult]:
         """Return nodes that match ``query``.
 
         When ``self.driver`` is provided it should be an instance of
@@ -99,10 +102,9 @@ class GraphStore:
         executed over ``self.graph`` by scanning the ``content`` attribute of
         each node.
         """
-
         if self.driver is None:
             query_lower = query.lower()
-            results: List[RetrievalResult] = []
+            results: list[RetrievalResult] = []
             for node_id, data in self.graph.nodes(data=True):
                 content = str(data.get("content", ""))
                 if query_lower in content.lower():
@@ -137,7 +139,9 @@ class GraphStore:
                         v.uncertainty as uncertainty, v.timestamp as timestamp,
                         v.version as version
                     """,
-                    query=query, timestamp=timestamp, k=k
+                    query=query,
+                    timestamp=timestamp,
+                    k=k,
                 )
             else:
                 result = session.run(
@@ -152,7 +156,8 @@ class GraphStore:
                         v.uncertainty as uncertainty, v.timestamp as timestamp,
                         v.version as version
                     """,
-                    query=query, k=k
+                    query=query,
+                    k=k,
                 )
 
         return [
@@ -162,22 +167,26 @@ class GraphStore:
                 score=record["score"],
                 uncertainty=record["uncertainty"],
                 timestamp=record["timestamp"],
-                version=record["version"]
+                version=record["version"],
             )
             for record in result
         ]
 
-    def update_causal_strength(self, source: str, target: str, observed_probability: float):
+    def update_causal_strength(
+        self, source: str, target: str, observed_probability: float
+    ):
         edge = self.causal_edges.get((source, target))
         if edge:
             learning_rate = 0.1
-            edge.strength = (1 - learning_rate) * edge.strength + learning_rate * observed_probability
+            edge.strength = (
+                1 - learning_rate
+            ) * edge.strength + learning_rate * observed_probability
 
     def close(self):
         if self.driver:
             self.driver.close()
 
-    async def get_snapshot(self, timestamp: datetime) -> Dict[str, Any]:
+    async def get_snapshot(self, timestamp: datetime) -> dict[str, Any]:
         """Return a snapshot of the graph up to ``timestamp``.
 
         Nodes and edges whose ``timestamp`` attribute is greater than the
@@ -185,7 +194,6 @@ class GraphStore:
         does not have a ``timestamp`` attribute it is assumed to always be
         present.
         """
-
         snapshot = nx.Graph()
 
         for node_id, data in self.graph.nodes(data=True):
@@ -206,7 +214,9 @@ class GraphStore:
             "edges": list(snapshot.edges(data=True)),
         }
 
-    async def beam_search(self, query: str, beam_width: int, max_depth: int) -> List[Tuple[List[str], float]]:
+    async def beam_search(
+        self, query: str, beam_width: int, max_depth: int
+    ) -> list[tuple[list[str], float]]:
         initial_entities = await self.get_initial_entities(query)
         beams = [[entity] for entity in initial_entities]
 
@@ -223,11 +233,10 @@ class GraphStore:
 
         return beams
 
-    async def get_initial_entities(self, query: str) -> List[str]:
+    async def get_initial_entities(self, query: str) -> list[str]:
         """Return a list of node IDs that match the query string."""
-
         query_lower = query.lower()
-        matches: List[str] = []
+        matches: list[str] = []
 
         for node_id, data in self.graph.nodes(data=True):
             content = str(data.get("content", "")).lower()
@@ -238,13 +247,13 @@ class GraphStore:
 
         return matches
 
-    async def get_neighbors(self, entity: str) -> List[str]:
+    async def get_neighbors(self, entity: str) -> list[str]:
         """Return IDs of nodes adjacent to ``entity`` in the graph."""
         if hasattr(self.graph, "has_node") and self.graph.has_node(entity):
             return list(self.graph.neighbors(entity))
         return []
 
-    def get_document_by_id(self, doc_id: str) -> Dict[str, Any]:
+    def get_document_by_id(self, doc_id: str) -> dict[str, Any]:
         if hasattr(self.graph, "has_node") and self.graph.has_node(doc_id):
             return self.graph.nodes[doc_id]
         return self._nodes.get(doc_id)

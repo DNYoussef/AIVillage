@@ -1,5 +1,4 @@
-"""
-Geometry Feedback System - Enhanced Implementation
+"""Geometry Feedback System - Enhanced Implementation
 
 Provides comprehensive geometric analysis and feedback for training:
 - Intrinsic dimensionality tracking using Two-NN estimator
@@ -9,29 +8,31 @@ Provides comprehensive geometric analysis and feedback for training:
 - Adaptive learning rate suggestions based on geometry
 """
 
+from dataclasses import asdict, dataclass
 import json
 import logging
 import math
-import time
-from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-import numpy as np
+import time
+from typing import Any
 
-import torch
-import torch.nn as nn
 import matplotlib.pyplot as plt
-import seaborn as sns
+import numpy as np
 from scipy.stats import entropy
-import wandb
+import seaborn as sns
+import torch
+from torch import nn
 
 from agent_forge.geometry.id_twonn import twonn
+import wandb
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class GeometryMetrics:
     """Comprehensive geometry metrics for training analysis."""
+
     intrinsic_dimensionality: float
     embedding_norm: float
     gradient_norm: float
@@ -44,12 +45,14 @@ class GeometryMetrics:
     learning_efficiency: float
     timestamp: float
 
+
 @dataclass
 class UDaimonicCompass:
     """UDaimonic compass for self-awareness and growth direction."""
-    truth_seeking: float      # How much the model seeks truth vs convenience
-    beauty_appreciation: float # Aesthetic and elegance in solutions
-    goodness_orientation: float # Ethical and beneficial outcomes
+
+    truth_seeking: float  # How much the model seeks truth vs convenience
+    beauty_appreciation: float  # Aesthetic and elegance in solutions
+    goodness_orientation: float  # Ethical and beneficial outcomes
     unity_understanding: float  # Holistic vs fragmented thinking
 
     def get_primary_direction(self) -> str:
@@ -58,16 +61,19 @@ class UDaimonicCompass:
             "Truth": self.truth_seeking,
             "Beauty": self.beauty_appreciation,
             "Goodness": self.goodness_orientation,
-            "Unity": self.unity_understanding
+            "Unity": self.unity_understanding,
         }
         return max(values, key=values.get)
 
     def get_magnitude(self) -> float:
         """Get overall compass magnitude."""
         return math.sqrt(
-            self.truth_seeking**2 + self.beauty_appreciation**2 +
-            self.goodness_orientation**2 + self.unity_understanding**2
+            self.truth_seeking**2
+            + self.beauty_appreciation**2
+            + self.goodness_orientation**2
+            + self.unity_understanding**2
         )
+
 
 class GeometryTracker:
     """Advanced geometry tracking with comprehensive analysis."""
@@ -78,7 +84,7 @@ class GeometryTracker:
         update_interval: int = 50,
         history_length: int = 1000,
         save_visualizations: bool = True,
-        output_dir: Optional[str] = None
+        output_dir: str | None = None,
     ):
         self.model = model
         self.update_interval = update_interval
@@ -89,8 +95,8 @@ class GeometryTracker:
 
         # Tracking state
         self.step_count = 0
-        self.metrics_history: List[GeometryMetrics] = []
-        self.compass_history: List[UDaimonicCompass] = []
+        self.metrics_history: list[GeometryMetrics] = []
+        self.compass_history: list[UDaimonicCompass] = []
 
         # Analysis state
         self.baseline_id = None
@@ -99,15 +105,15 @@ class GeometryTracker:
 
         # Visualization setup
         if save_visualizations:
-            plt.style.use('seaborn-v0_8')
+            plt.style.use("seaborn-v0_8")
             sns.set_palette("husl")
 
     def update(
         self,
         hidden_states: torch.Tensor,
-        gradients: Optional[Dict[str, torch.Tensor]] = None,
-        loss: Optional[float] = None,
-        learning_rate: Optional[float] = None
+        gradients: dict[str, torch.Tensor] | None = None,
+        loss: float | None = None,
+        learning_rate: float | None = None,
     ) -> GeometryMetrics:
         """Update geometry tracking with current model state."""
         self.step_count += 1
@@ -117,7 +123,9 @@ class GeometryTracker:
 
         try:
             # Calculate core metrics
-            metrics = self._calculate_metrics(hidden_states, gradients, loss, learning_rate)
+            metrics = self._calculate_metrics(
+                hidden_states, gradients, loss, learning_rate
+            )
 
             # Update UDaimonic compass
             compass = self._update_compass(hidden_states, metrics)
@@ -128,8 +136,8 @@ class GeometryTracker:
 
             # Trim history
             if len(self.metrics_history) > self.history_length:
-                self.metrics_history = self.metrics_history[-self.history_length:]
-                self.compass_history = self.compass_history[-self.history_length:]
+                self.metrics_history = self.metrics_history[-self.history_length :]
+                self.compass_history = self.compass_history[-self.history_length :]
 
             # Detect interesting patterns
             self._analyze_patterns()
@@ -138,7 +146,10 @@ class GeometryTracker:
             self._log_metrics(metrics, compass)
 
             # Generate visualizations
-            if self.save_visualizations and self.step_count % (self.update_interval * 10) == 0:
+            if (
+                self.save_visualizations
+                and self.step_count % (self.update_interval * 10) == 0
+            ):
                 self._generate_visualizations()
 
             return metrics
@@ -150,12 +161,11 @@ class GeometryTracker:
     def _calculate_metrics(
         self,
         hidden_states: torch.Tensor,
-        gradients: Optional[Dict[str, torch.Tensor]],
-        loss: Optional[float],
-        learning_rate: Optional[float]
+        gradients: dict[str, torch.Tensor] | None,
+        loss: float | None,
+        learning_rate: float | None,
     ) -> GeometryMetrics:
         """Calculate comprehensive geometry metrics."""
-
         # Prepare hidden states for analysis
         if hidden_states.dim() > 2:
             flat_states = hidden_states.view(-1, hidden_states.size(-1))
@@ -196,7 +206,9 @@ class GeometryTracker:
         phase_score = self.phase_analyzer.update(id_estimate, embedding_norm)
 
         # Learning efficiency
-        efficiency = self._calculate_learning_efficiency(id_estimate, loss, learning_rate)
+        efficiency = self._calculate_learning_efficiency(
+            id_estimate, loss, learning_rate
+        )
 
         return GeometryMetrics(
             intrinsic_dimensionality=id_estimate,
@@ -209,12 +221,13 @@ class GeometryTracker:
             grok_probability=grok_prob,
             phase_transition_score=phase_score,
             learning_efficiency=efficiency,
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
-    def _update_compass(self, hidden_states: torch.Tensor, metrics: GeometryMetrics) -> UDaimonicCompass:
+    def _update_compass(
+        self, hidden_states: torch.Tensor, metrics: GeometryMetrics
+    ) -> UDaimonicCompass:
         """Update UDaimonic compass based on model geometry."""
-
         # Truth seeking: Higher when ID is stable and gradients are meaningful
         truth_seeking = self._calculate_truth_seeking(metrics)
 
@@ -225,13 +238,15 @@ class GeometryTracker:
         goodness_orientation = self._calculate_goodness_orientation(metrics)
 
         # Unity understanding: Holistic patterns in hidden representations
-        unity_understanding = self._calculate_unity_understanding(hidden_states, metrics)
+        unity_understanding = self._calculate_unity_understanding(
+            hidden_states, metrics
+        )
 
         compass = UDaimonicCompass(
             truth_seeking=truth_seeking,
             beauty_appreciation=beauty_appreciation,
             goodness_orientation=goodness_orientation,
-            unity_understanding=unity_understanding
+            unity_understanding=unity_understanding,
         )
 
         # Update metrics with compass information
@@ -243,8 +258,12 @@ class GeometryTracker:
     def _calculate_truth_seeking(self, metrics: GeometryMetrics) -> float:
         """Calculate truth-seeking orientation."""
         # Truth seeking increases with stable ID and meaningful gradients
-        id_stability = 1.0 - abs(metrics.intrinsic_dimensionality - self.baseline_id) / max(self.baseline_id, 1.0)
-        gradient_meaningfulness = min(1.0, metrics.gradient_norm / 10.0)  # Normalize gradient norm
+        id_stability = 1.0 - abs(
+            metrics.intrinsic_dimensionality - self.baseline_id
+        ) / max(self.baseline_id, 1.0)
+        gradient_meaningfulness = min(
+            1.0, metrics.gradient_norm / 10.0
+        )  # Normalize gradient norm
 
         return (id_stability + gradient_meaningfulness) / 2.0
 
@@ -264,11 +283,15 @@ class GeometryTracker:
 
         recent_efficiency = [m.learning_efficiency for m in self.metrics_history[-5:]]
         consistency = 1.0 - np.std(recent_efficiency)  # Lower std = more consistent
-        improvement = (recent_efficiency[-1] - recent_efficiency[0]) / 5.0  # Rate of improvement
+        improvement = (
+            recent_efficiency[-1] - recent_efficiency[0]
+        ) / 5.0  # Rate of improvement
 
         return max(0.0, min(1.0, (consistency + improvement) / 2.0))
 
-    def _calculate_unity_understanding(self, hidden_states: torch.Tensor, metrics: GeometryMetrics) -> float:
+    def _calculate_unity_understanding(
+        self, hidden_states: torch.Tensor, metrics: GeometryMetrics
+    ) -> float:
         """Calculate unity/holistic understanding."""
         # Unity correlates with coherent representations across dimensions
         if hidden_states.size(0) < 10:
@@ -305,7 +328,11 @@ class GeometryTracker:
         # Calculate entropy across feature dimension
         entropies = []
         for i in range(min(activations.shape[-1], 100)):  # Sample features
-            feature_vals = activations[:, i] if activations.ndim == 2 else activations[:, :, i].flatten()
+            feature_vals = (
+                activations[:, i]
+                if activations.ndim == 2
+                else activations[:, :, i].flatten()
+            )
             hist, _ = np.histogram(feature_vals, bins=30, density=True)
             hist = hist + 1e-8
             entropies.append(entropy(hist))
@@ -313,10 +340,7 @@ class GeometryTracker:
         return np.mean(entropies) if entropies else 0.0
 
     def _calculate_learning_efficiency(
-        self,
-        id_estimate: float,
-        loss: Optional[float],
-        learning_rate: Optional[float]
+        self, id_estimate: float, loss: float | None, learning_rate: float | None
     ) -> float:
         """Calculate learning efficiency based on geometry and loss."""
         if loss is None or len(self.metrics_history) < 2:
@@ -350,11 +374,15 @@ class GeometryTracker:
         if len(recent_ids) >= 5:
             recent_trend = np.polyfit(range(len(recent_ids)), recent_ids, 1)[0]
             if recent_trend > 0.1:  # Rapid increase
-                logger.info(f"Potential grokking detected! ID trend: {recent_trend:.3f}")
+                logger.info(
+                    f"Potential grokking detected! ID trend: {recent_trend:.3f}"
+                )
 
         # Check for phase transitions
         if len(self.metrics_history) >= 20:
-            phase_scores = [m.phase_transition_score for m in self.metrics_history[-20:]]
+            phase_scores = [
+                m.phase_transition_score for m in self.metrics_history[-20:]
+            ]
             if max(phase_scores) > 0.8:
                 logger.info("Phase transition detected!")
 
@@ -377,7 +405,7 @@ class GeometryTracker:
             "compass/goodness_orientation": compass.goodness_orientation,
             "compass/unity_understanding": compass.unity_understanding,
             "compass/magnitude": compass.get_magnitude(),
-            "compass/primary_direction": compass.get_primary_direction()
+            "compass/primary_direction": compass.get_primary_direction(),
         }
 
         wandb.log(log_dict, step=self.step_count)
@@ -390,22 +418,28 @@ class GeometryTracker:
         try:
             # Create figure with subplots
             fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-            fig.suptitle(f'Geometry Analysis - Step {self.step_count}', fontsize=16)
+            fig.suptitle(f"Geometry Analysis - Step {self.step_count}", fontsize=16)
 
             # Plot 1: Intrinsic Dimensionality Evolution
             steps = [m.timestamp for m in self.metrics_history]
             ids = [m.intrinsic_dimensionality for m in self.metrics_history]
 
-            axes[0, 0].plot(steps, ids, linewidth=2, label='ID_nl')
-            axes[0, 0].axhline(y=self.baseline_id, color='red', linestyle='--', label='Baseline')
-            axes[0, 0].set_title('Intrinsic Dimensionality Evolution')
-            axes[0, 0].set_xlabel('Time')
-            axes[0, 0].set_ylabel('ID_nl')
+            axes[0, 0].plot(steps, ids, linewidth=2, label="ID_nl")
+            axes[0, 0].axhline(
+                y=self.baseline_id, color="red", linestyle="--", label="Baseline"
+            )
+            axes[0, 0].set_title("Intrinsic Dimensionality Evolution")
+            axes[0, 0].set_xlabel("Time")
+            axes[0, 0].set_ylabel("ID_nl")
             axes[0, 0].legend()
             axes[0, 0].grid(True, alpha=0.3)
 
             # Plot 2: UDaimonic Compass
-            compass_data = self.compass_history[-50:] if len(self.compass_history) >= 50 else self.compass_history
+            compass_data = (
+                self.compass_history[-50:]
+                if len(self.compass_history) >= 50
+                else self.compass_history
+            )
 
             truth_vals = [c.truth_seeking for c in compass_data]
             beauty_vals = [c.beauty_appreciation for c in compass_data]
@@ -414,53 +448,59 @@ class GeometryTracker:
 
             compass_steps = list(range(len(compass_data)))
 
-            axes[0, 1].plot(compass_steps, truth_vals, label='Truth', alpha=0.8)
-            axes[0, 1].plot(compass_steps, beauty_vals, label='Beauty', alpha=0.8)
-            axes[0, 1].plot(compass_steps, goodness_vals, label='Goodness', alpha=0.8)
-            axes[0, 1].plot(compass_steps, unity_vals, label='Unity', alpha=0.8)
-            axes[0, 1].set_title('UDaimonic Compass Evolution')
-            axes[0, 1].set_xlabel('Steps')
-            axes[0, 1].set_ylabel('Orientation Strength')
+            axes[0, 1].plot(compass_steps, truth_vals, label="Truth", alpha=0.8)
+            axes[0, 1].plot(compass_steps, beauty_vals, label="Beauty", alpha=0.8)
+            axes[0, 1].plot(compass_steps, goodness_vals, label="Goodness", alpha=0.8)
+            axes[0, 1].plot(compass_steps, unity_vals, label="Unity", alpha=0.8)
+            axes[0, 1].set_title("UDaimonic Compass Evolution")
+            axes[0, 1].set_xlabel("Steps")
+            axes[0, 1].set_ylabel("Orientation Strength")
             axes[0, 1].legend()
             axes[0, 1].grid(True, alpha=0.3)
 
             # Plot 3: Grokking Detection
             grok_probs = [m.grok_probability for m in self.metrics_history]
-            axes[0, 2].plot(steps, grok_probs, color='purple', linewidth=2)
-            axes[0, 2].axhline(y=0.7, color='red', linestyle='--', label='Grokking Threshold')
-            axes[0, 2].set_title('Grokking Probability')
-            axes[0, 2].set_xlabel('Time')
-            axes[0, 2].set_ylabel('Probability')
+            axes[0, 2].plot(steps, grok_probs, color="purple", linewidth=2)
+            axes[0, 2].axhline(
+                y=0.7, color="red", linestyle="--", label="Grokking Threshold"
+            )
+            axes[0, 2].set_title("Grokking Probability")
+            axes[0, 2].set_xlabel("Time")
+            axes[0, 2].set_ylabel("Probability")
             axes[0, 2].legend()
             axes[0, 2].grid(True, alpha=0.3)
 
             # Plot 4: Learning Efficiency
             efficiency = [m.learning_efficiency for m in self.metrics_history]
-            axes[1, 0].plot(steps, efficiency, color='green', linewidth=2)
-            axes[1, 0].set_title('Learning Efficiency')
-            axes[1, 0].set_xlabel('Time')
-            axes[1, 0].set_ylabel('Efficiency')
+            axes[1, 0].plot(steps, efficiency, color="green", linewidth=2)
+            axes[1, 0].set_title("Learning Efficiency")
+            axes[1, 0].set_xlabel("Time")
+            axes[1, 0].set_ylabel("Efficiency")
             axes[1, 0].grid(True, alpha=0.3)
 
             # Plot 5: Entropy Analysis
             weight_entropy = [m.weight_entropy for m in self.metrics_history]
             activation_entropy = [m.activation_entropy for m in self.metrics_history]
 
-            axes[1, 1].plot(steps, weight_entropy, label='Weight Entropy', alpha=0.8)
-            axes[1, 1].plot(steps, activation_entropy, label='Activation Entropy', alpha=0.8)
-            axes[1, 1].set_title('Entropy Evolution')
-            axes[1, 1].set_xlabel('Time')
-            axes[1, 1].set_ylabel('Entropy')
+            axes[1, 1].plot(steps, weight_entropy, label="Weight Entropy", alpha=0.8)
+            axes[1, 1].plot(
+                steps, activation_entropy, label="Activation Entropy", alpha=0.8
+            )
+            axes[1, 1].set_title("Entropy Evolution")
+            axes[1, 1].set_xlabel("Time")
+            axes[1, 1].set_ylabel("Entropy")
             axes[1, 1].legend()
             axes[1, 1].grid(True, alpha=0.3)
 
             # Plot 6: Phase Transition Analysis
             phase_scores = [m.phase_transition_score for m in self.metrics_history]
-            axes[1, 2].plot(steps, phase_scores, color='orange', linewidth=2)
-            axes[1, 2].axhline(y=0.5, color='blue', linestyle='--', label='Transition Threshold')
-            axes[1, 2].set_title('Phase Transition Score')
-            axes[1, 2].set_xlabel('Time')
-            axes[1, 2].set_ylabel('Score')
+            axes[1, 2].plot(steps, phase_scores, color="orange", linewidth=2)
+            axes[1, 2].axhline(
+                y=0.5, color="blue", linestyle="--", label="Transition Threshold"
+            )
+            axes[1, 2].set_title("Phase Transition Score")
+            axes[1, 2].set_xlabel("Time")
+            axes[1, 2].set_ylabel("Score")
             axes[1, 2].legend()
             axes[1, 2].grid(True, alpha=0.3)
 
@@ -468,19 +508,22 @@ class GeometryTracker:
 
             # Save visualization
             viz_path = self.output_dir / f"geometry_analysis_step_{self.step_count}.png"
-            plt.savefig(viz_path, dpi=300, bbox_inches='tight')
+            plt.savefig(viz_path, dpi=300, bbox_inches="tight")
             plt.close()
 
             # Log to W&B
             if wandb.run:
-                wandb.log({"geometry/visualization": wandb.Image(str(viz_path))}, step=self.step_count)
+                wandb.log(
+                    {"geometry/visualization": wandb.Image(str(viz_path))},
+                    step=self.step_count,
+                )
 
             logger.info(f"Visualization saved: {viz_path}")
 
         except Exception as e:
             logger.warning(f"Visualization generation failed: {e}")
 
-    def get_learning_recommendations(self) -> Dict[str, Any]:
+    def get_learning_recommendations(self) -> dict[str, Any]:
         """Get adaptive learning recommendations based on geometry."""
         if len(self.metrics_history) < 5:
             return {"status": "insufficient_data"}
@@ -492,56 +535,70 @@ class GeometryTracker:
             "timestamp": time.time(),
             "current_id": latest.intrinsic_dimensionality,
             "compass_direction": latest.compass_direction,
-            "recommendations": []
+            "recommendations": [],
         }
 
         # Learning rate recommendations
         if latest.grok_probability > 0.7:
-            recommendations["recommendations"].append({
-                "type": "learning_rate",
-                "action": "increase",
-                "factor": 1.5,
-                "reason": "High grokking probability detected"
-            })
+            recommendations["recommendations"].append(
+                {
+                    "type": "learning_rate",
+                    "action": "increase",
+                    "factor": 1.5,
+                    "reason": "High grokking probability detected",
+                }
+            )
         elif latest.learning_efficiency < 0.3:
-            recommendations["recommendations"].append({
-                "type": "learning_rate",
-                "action": "decrease",
-                "factor": 0.7,
-                "reason": "Low learning efficiency"
-            })
+            recommendations["recommendations"].append(
+                {
+                    "type": "learning_rate",
+                    "action": "decrease",
+                    "factor": 0.7,
+                    "reason": "Low learning efficiency",
+                }
+            )
 
         # Training strategy recommendations
-        recent_id_trend = np.polyfit(range(len(recent)), [m.intrinsic_dimensionality for m in recent], 1)[0]
+        recent_id_trend = np.polyfit(
+            range(len(recent)), [m.intrinsic_dimensionality for m in recent], 1
+        )[0]
 
         if recent_id_trend > 0.2:
-            recommendations["recommendations"].append({
-                "type": "strategy",
-                "action": "apply_grokfast",
-                "reason": "Rapid ID increase suggests approaching grokking"
-            })
+            recommendations["recommendations"].append(
+                {
+                    "type": "strategy",
+                    "action": "apply_grokfast",
+                    "reason": "Rapid ID increase suggests approaching grokking",
+                }
+            )
         elif recent_id_trend < -0.1:
-            recommendations["recommendations"].append({
-                "type": "strategy",
-                "action": "increase_regularization",
-                "reason": "Decreasing ID suggests overfitting"
-            })
+            recommendations["recommendations"].append(
+                {
+                    "type": "strategy",
+                    "action": "increase_regularization",
+                    "reason": "Decreasing ID suggests overfitting",
+                }
+            )
 
         # Compass-based recommendations
         compass = self.compass_history[-1] if self.compass_history else None
         if compass:
             if compass.truth_seeking < 0.3:
-                recommendations["recommendations"].append({
-                    "type": "curriculum",
-                    "action": "add_verification_tasks",
-                    "reason": "Low truth-seeking orientation"
-                })
+                recommendations["recommendations"].append(
+                    {
+                        "type": "curriculum",
+                        "action": "add_verification_tasks",
+                        "reason": "Low truth-seeking orientation",
+                    }
+                )
             if compass.unity_understanding < 0.3:
-                recommendations["recommendations"].append({
-                    "type": "curriculum",
-                    "action": "add_holistic_tasks",
-                    "reason": "Low unity understanding"
-                })
+                recommendations["recommendations"].append(
+                    {
+                        "type": "curriculum",
+                        "action": "add_holistic_tasks",
+                        "reason": "Low unity understanding",
+                    }
+                )
 
         return recommendations
 
@@ -554,14 +611,15 @@ class GeometryTracker:
             "compass_history": [asdict(c) for c in self.compass_history],
             "config": {
                 "update_interval": self.update_interval,
-                "history_length": self.history_length
-            }
+                "history_length": self.history_length,
+            },
         }
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(state, f, indent=2)
 
         logger.info(f"Geometry state saved: {filepath}")
+
 
 class GrokDetector:
     """Specialized grokking detection using geometric signatures."""
@@ -572,15 +630,15 @@ class GrokDetector:
         self.id_history = []
         self.loss_history = []
 
-    def update(self, intrinsic_dim: float, loss: Optional[float] = None) -> float:
+    def update(self, intrinsic_dim: float, loss: float | None = None) -> float:
         """Update and return grokking probability."""
         self.id_history.append(intrinsic_dim)
         if loss is not None:
             self.loss_history.append(loss)
 
         # Trim history
-        self.id_history = self.id_history[-self.window_size:]
-        self.loss_history = self.loss_history[-self.window_size:]
+        self.id_history = self.id_history[-self.window_size :]
+        self.loss_history = self.loss_history[-self.window_size :]
 
         if len(self.id_history) < 10:
             return 0.0
@@ -601,12 +659,13 @@ class GrokDetector:
 
         # Combine signals
         grok_score = (
-            min(1.0, id_trend / 0.5) * 0.4 +  # ID trend
-            min(1.0, id_acceleration / 0.2) * 0.3 +  # ID acceleration
-            loss_stability * 0.3  # Loss stability
+            min(1.0, id_trend / 0.5) * 0.4  # ID trend
+            + min(1.0, id_acceleration / 0.2) * 0.3  # ID acceleration
+            + loss_stability * 0.3  # Loss stability
         )
 
         return max(0.0, min(1.0, grok_score))
+
 
 class PhaseTransitionAnalyzer:
     """Analyzes phase transitions in training dynamics."""
@@ -622,8 +681,8 @@ class PhaseTransitionAnalyzer:
         self.norm_history.append(embedding_norm)
 
         # Trim history
-        self.id_history = self.id_history[-self.window_size:]
-        self.norm_history = self.norm_history[-self.window_size:]
+        self.id_history = self.id_history[-self.window_size :]
+        self.norm_history = self.norm_history[-self.window_size :]
 
         if len(self.id_history) < 15:
             return 0.0
@@ -637,23 +696,25 @@ class PhaseTransitionAnalyzer:
         id_change_ratio = recent_id_change / (historical_id_change + 1e-6)
 
         # 2. Embedding norm instability
-        norm_var = np.var(self.norm_history[-10:]) if len(self.norm_history) >= 10 else 0
+        norm_var = (
+            np.var(self.norm_history[-10:]) if len(self.norm_history) >= 10 else 0
+        )
 
         # Combine signals
         transition_score = (
-            min(1.0, id_change_ratio / 3.0) * 0.6 +
-            min(1.0, norm_var / 10.0) * 0.4
+            min(1.0, id_change_ratio / 3.0) * 0.6 + min(1.0, norm_var / 10.0) * 0.4
         )
 
         return max(0.0, min(1.0, transition_score))
+
 
 # ============================================================================
 # Orchestrator Integration
 # ============================================================================
 
-async def run_geometry(config: Dict[str, Any]) -> 'PhaseResult':
-    """
-    Orchestrator entry point for Geometry Feedback phase.
+
+async def run_geometry(config: dict[str, Any]) -> "PhaseResult":
+    """Orchestrator entry point for Geometry Feedback phase.
 
     Args:
         config: Configuration dictionary with geometry parameters
@@ -661,9 +722,15 @@ async def run_geometry(config: Dict[str, Any]) -> 'PhaseResult':
     Returns:
         PhaseResult with status, artifacts, and metrics
     """
-    from agent_forge.forge_orchestrator import PhaseResult, PhaseStatus, PhaseType, PhaseArtifact
     from datetime import datetime
     import time
+
+    from agent_forge.forge_orchestrator import (
+        PhaseArtifact,
+        PhaseResult,
+        PhaseStatus,
+        PhaseType,
+    )
 
     start_time = time.time()
 
@@ -671,10 +738,10 @@ async def run_geometry(config: Dict[str, Any]) -> 'PhaseResult':
         logger.info("Starting Geometry Feedback phase via orchestrator")
 
         # Extract configuration
-        model_path = config.get('model_path', './models/current_model')
-        output_dir = config.get('output_dir', './geometry_output')
-        update_interval = config.get('update_interval', 10)
-        analysis_steps = config.get('analysis_steps', 100)
+        model_path = config.get("model_path", "./models/current_model")
+        output_dir = config.get("output_dir", "./geometry_output")
+        update_interval = config.get("update_interval", 10)
+        analysis_steps = config.get("analysis_steps", 100)
 
         # Load model for analysis (simplified for orchestrator)
         from transformers import AutoModel, AutoTokenizer
@@ -699,9 +766,7 @@ async def run_geometry(config: Dict[str, Any]) -> 'PhaseResult':
 
         # Initialize geometry tracker
         tracker = GeometryTracker(
-            model=model,
-            update_interval=update_interval,
-            output_dir=output_dir
+            model=model, update_interval=update_interval, output_dir=output_dir
         )
 
         # Perform geometry analysis
@@ -709,7 +774,7 @@ async def run_geometry(config: Dict[str, Any]) -> 'PhaseResult':
 
         for step in range(analysis_steps):
             # Simulate model forward pass
-            if hasattr(model, 'config') and hasattr(model.config, 'hidden_size'):
+            if hasattr(model, "config") and hasattr(model.config, "hidden_size"):
                 hidden_size = model.config.hidden_size
             else:
                 hidden_size = 768  # Default
@@ -717,7 +782,7 @@ async def run_geometry(config: Dict[str, Any]) -> 'PhaseResult':
             x = torch.randn(16, hidden_size)  # Batch of embeddings
 
             try:
-                if hasattr(model, 'forward'):
+                if hasattr(model, "forward"):
                     with torch.no_grad():
                         outputs = model(x)
                         if isinstance(outputs, tuple):
@@ -765,12 +830,12 @@ async def run_geometry(config: Dict[str, Any]) -> 'PhaseResult':
                         "geometry_state_file": str(state_file),
                         "final_metrics": asdict(latest_metrics),
                         "recommendations": recommendations,
-                        "analysis_steps": len(geometry_metrics)
+                        "analysis_steps": len(geometry_metrics),
                     },
                     metadata={
                         "update_interval": update_interval,
-                        "model_path": model_path
-                    }
+                        "model_path": model_path,
+                    },
                 )
             ]
 
@@ -787,7 +852,7 @@ async def run_geometry(config: Dict[str, Any]) -> 'PhaseResult':
                 "compass_magnitude": latest_metrics.compass_magnitude,
                 "execution_time": duration,
                 "total_updates": len(geometry_metrics),
-                "recommendations": recommendations
+                "recommendations": recommendations,
             }
 
             logger.info(f"Geometry analysis completed successfully in {duration:.1f}s")
@@ -799,23 +864,22 @@ async def run_geometry(config: Dict[str, Any]) -> 'PhaseResult':
                 end_time=datetime.now(),
                 duration_seconds=duration,
                 artifacts_produced=artifacts,
-                metrics=metrics_summary
+                metrics=metrics_summary,
             )
-        else:
-            # No metrics generated
-            return PhaseResult(
-                phase_type=PhaseType.GEOMETRY,
-                status=PhaseStatus.FAILED,
-                start_time=datetime.fromtimestamp(start_time),
-                end_time=datetime.now(),
-                duration_seconds=duration,
-                error_message="No geometry metrics were generated during analysis",
-                metrics={"execution_time": duration}
-            )
+        # No metrics generated
+        return PhaseResult(
+            phase_type=PhaseType.GEOMETRY,
+            status=PhaseStatus.FAILED,
+            start_time=datetime.fromtimestamp(start_time),
+            end_time=datetime.now(),
+            duration_seconds=duration,
+            error_message="No geometry metrics were generated during analysis",
+            metrics={"execution_time": duration},
+        )
 
     except Exception as e:
         duration = time.time() - start_time
-        error_msg = f"Geometry phase failed: {str(e)}"
+        error_msg = f"Geometry phase failed: {e!s}"
         logger.error(error_msg)
 
         return PhaseResult(
@@ -825,8 +889,9 @@ async def run_geometry(config: Dict[str, Any]) -> 'PhaseResult':
             end_time=datetime.now(),
             duration_seconds=duration,
             error_message=error_msg,
-            metrics={"execution_time": duration}
+            metrics={"execution_time": duration},
         )
+
 
 # Make the entry point discoverable
 run = run_geometry  # Alias for orchestrator discovery
@@ -858,15 +923,19 @@ if __name__ == "__main__":
 
         # Simulate gradients
         loss = torch.randn(1).item()
-        gradients = {name: torch.randn_like(param) for name, param in model.named_parameters()}
+        gradients = {
+            name: torch.randn_like(param) for name, param in model.named_parameters()
+        }
 
         # Update geometry
         metrics = tracker.update(hidden, gradients, loss, 0.001)
 
         if metrics:
-            print(f"Step {step}: ID={metrics.intrinsic_dimensionality:.3f}, "
-                  f"Compass={metrics.compass_direction}, "
-                  f"Grok={metrics.grok_probability:.3f}")
+            print(
+                f"Step {step}: ID={metrics.intrinsic_dimensionality:.3f}, "
+                f"Compass={metrics.compass_direction}, "
+                f"Grok={metrics.grok_probability:.3f}"
+            )
 
     # Get recommendations
     recommendations = tracker.get_learning_recommendations()

@@ -1,7 +1,7 @@
-import os
 import logging
+import os
 import time
-from typing import List, Dict, Any
+from typing import Any
 
 import numpy as np
 from qdrant_client import QdrantClient
@@ -30,7 +30,9 @@ class VectorStore:
             except Exception as e:  # pragma: no cover - network side effects
                 logger.warning("Qdrant unavailable (%s) – falling back to FAISS", e)
 
-    def add(self, ids: List[str], embeddings: np.ndarray, payload: List[Dict[str, Any]]) -> None:
+    def add(
+        self, ids: list[str], embeddings: np.ndarray, payload: list[dict[str, Any]]
+    ) -> None:
         if self.backend is self.faiss:
             self.faiss.add(ids, embeddings, payload)
         else:
@@ -48,7 +50,7 @@ class VectorStore:
                 self.backend = self.faiss
                 self.faiss.add(ids, embeddings, payload)
 
-    def search(self, query_vec: np.ndarray, k: int = 5) -> List[Dict[str, Any]]:
+    def search(self, query_vec: np.ndarray, k: int = 5) -> list[dict[str, Any]]:
         started = time.time()
         try:
             if self.backend is self.faiss:
@@ -59,10 +61,7 @@ class VectorStore:
                 limit=k,
                 with_payload=True,
             )
-            return [
-                {"id": p.id, "score": p.score, "meta": p.payload}
-                for p in res
-            ]
+            return [{"id": p.id, "score": p.score, "meta": p.payload} for p in res]
         except Exception as e:  # pragma: no cover - network side effects
             logger.error("Qdrant search failed – falling back (%s)", e)
             self.backend = self.faiss

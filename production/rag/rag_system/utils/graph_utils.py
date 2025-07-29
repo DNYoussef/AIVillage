@@ -1,7 +1,6 @@
-from typing import Dict, List
-
-
-def distance_sensitive_linearization(graph: Dict[str, List[str]], anchor: str) -> List[str]:
+def distance_sensitive_linearization(
+    graph: dict[str, list[str]], anchor: str
+) -> list[str]:
     distances = {anchor: 0}
     queue = [(anchor, 0)]
     linearized = []

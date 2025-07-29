@@ -3,6 +3,7 @@ Stub implementation for grokfast module to resolve import dependencies.
 This allows the codebase to import and run without the actual grokfast dependency.
 """
 
+
 class GrokFastTask:
     """Stub implementation of GrokFastTask."""
 
@@ -26,7 +27,7 @@ def grokfast_optimizer(*args, **kwargs):
 
 def apply_grokfast(*args, **kwargs):
     """Stub apply function."""
-    return None
+    return
 
 
 # Additional stub functions that might be imported
@@ -50,8 +51,6 @@ class AugmentedAdam:
 
     def step(self):
         """Stub step method."""
-        pass
 
     def zero_grad(self):
         """Stub zero_grad method."""
-        pass

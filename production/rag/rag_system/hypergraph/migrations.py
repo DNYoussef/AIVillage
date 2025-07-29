@@ -1,14 +1,13 @@
-"""
-Neo4j Database Migrations for Hypergraph Schema
+"""Neo4j Database Migrations for Hypergraph Schema
 
 Handles schema creation, constraints, and indexes for the hypergraph knowledge system.
 Includes both episodic (Hippo) and semantic (Hypergraph-KG) structures.
 """
 
 import logging
-from typing import List, Dict, Any, Optional
-from neo4j import Driver, Session, AsyncDriver, AsyncSession
-import asyncio
+from typing import Any
+
+from neo4j import AsyncSession, Driver, Session
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ class HypergraphMigrations:
         self.driver = driver
         self.migrations = self._define_migrations()
 
-    def _define_migrations(self) -> List[Dict[str, Any]]:
+    def _define_migrations(self) -> list[dict[str, Any]]:
         """Define all schema migrations in order"""
         return [
             {
@@ -30,13 +29,13 @@ class HypergraphMigrations:
                 "up": [
                     "CREATE CONSTRAINT hyperedge_id IF NOT EXISTS FOR (h:Hyperedge) REQUIRE h.id IS UNIQUE",
                     "CREATE CONSTRAINT entity_id IF NOT EXISTS FOR (e:Entity) REQUIRE e.id IS UNIQUE",
-                    "CREATE CONSTRAINT hippo_node_id IF NOT EXISTS FOR (n:HippoNode) REQUIRE n.id IS UNIQUE"
+                    "CREATE CONSTRAINT hippo_node_id IF NOT EXISTS FOR (n:HippoNode) REQUIRE n.id IS UNIQUE",
                 ],
                 "down": [
                     "DROP CONSTRAINT hyperedge_id IF EXISTS",
                     "DROP CONSTRAINT entity_id IF EXISTS",
-                    "DROP CONSTRAINT hippo_node_id IF EXISTS"
-                ]
+                    "DROP CONSTRAINT hippo_node_id IF EXISTS",
+                ],
             },
             {
                 "version": "002",
@@ -50,7 +49,7 @@ class HypergraphMigrations:
                     "CREATE INDEX hippo_session IF NOT EXISTS FOR (n:HippoNode) ON (n.session_id)",
                     "CREATE INDEX hippo_user IF NOT EXISTS FOR (n:HippoNode) ON (n.user_id)",
                     "CREATE INDEX hippo_created IF NOT EXISTS FOR (n:HippoNode) ON (n.created)",
-                    "CREATE INDEX hippo_consolidated IF NOT EXISTS FOR (n:HippoNode) ON (n.consolidated)"
+                    "CREATE INDEX hippo_consolidated IF NOT EXISTS FOR (n:HippoNode) ON (n.consolidated)",
                 ],
                 "down": [
                     "DROP INDEX hyperedge_relation IF EXISTS",
@@ -60,8 +59,8 @@ class HypergraphMigrations:
                     "DROP INDEX hippo_session IF EXISTS",
                     "DROP INDEX hippo_user IF EXISTS",
                     "DROP INDEX hippo_created IF EXISTS",
-                    "DROP INDEX hippo_consolidated IF EXISTS"
-                ]
+                    "DROP INDEX hippo_consolidated IF EXISTS",
+                ],
             },
             {
                 "version": "003",
@@ -79,11 +78,9 @@ class HypergraphMigrations:
                     // Create relationship types for hyperedges
                     CREATE CONSTRAINT rel_type_constraint IF NOT EXISTS
                     FOR ()-[r:CONNECTS]-() REQUIRE r.hyperedge_id IS NOT NULL
-                    """
+                    """,
                 ],
-                "down": [
-                    "DROP CONSTRAINT rel_type_constraint IF EXISTS"
-                ]
+                "down": ["DROP CONSTRAINT rel_type_constraint IF EXISTS"],
             },
             {
                 "version": "004",
@@ -112,16 +109,16 @@ class HypergraphMigrations:
                         RETURN h
                     }
                     RETURN true as success, 'Node consolidated' as message
-                    """
+                    """,
                 ],
                 "down": [
                     "DROP PROCEDURE consolidation.findCandidates IF EXISTS",
-                    "DROP PROCEDURE consolidation.consolidateNode IF EXISTS"
-                ]
-            }
+                    "DROP PROCEDURE consolidation.consolidateNode IF EXISTS",
+                ],
+            },
         ]
 
-    def run_migrations(self, target_version: Optional[str] = None) -> None:
+    def run_migrations(self, target_version: str | None = None) -> None:
         """Run migrations up to target version"""
         with self.driver.session() as session:
             # Check current version
@@ -136,7 +133,9 @@ class HypergraphMigrations:
                 if migration["version"] <= current_version:
                     continue
 
-                logger.info(f"Running migration {migration['version']}: {migration['name']}")
+                logger.info(
+                    f"Running migration {migration['version']}: {migration['name']}"
+                )
                 self._run_migration(session, migration)
                 self._update_version(session, migration["version"])
 
@@ -175,10 +174,10 @@ class HypergraphMigrations:
             "MERGE (v:SchemaVersion {version: $version}) "
             "ON CREATE SET v.created = datetime() "
             "ON MATCH SET v.updated = datetime()",
-            version=version
+            version=version,
         )
 
-    def _run_migration(self, session: Session, migration: Dict[str, Any]) -> None:
+    def _run_migration(self, session: Session, migration: dict[str, Any]) -> None:
         """Execute migration up queries"""
         for query in migration["up"]:
             try:
@@ -189,7 +188,7 @@ class HypergraphMigrations:
                 logger.error(f"Query: {query}")
                 raise
 
-    def _rollback_migration(self, session: Session, migration: Dict[str, Any]) -> None:
+    def _rollback_migration(self, session: Session, migration: dict[str, Any]) -> None:
         """Execute migration down queries"""
         for query in migration["down"]:
             try:
@@ -201,8 +200,7 @@ class HypergraphMigrations:
 
 # Convenience function for basic setup
 def run_cypher_migrations(session: Session) -> None:
-    """
-    Run basic Cypher migrations for hypergraph schema.
+    """Run basic Cypher migrations for hypergraph schema.
     This is the function called by tests and setup scripts.
     """
     try:
@@ -210,7 +208,7 @@ def run_cypher_migrations(session: Session) -> None:
         constraints = [
             "CREATE CONSTRAINT hyperedge_id IF NOT EXISTS FOR (h:Hyperedge) REQUIRE h.id IS UNIQUE",
             "CREATE CONSTRAINT entity_id IF NOT EXISTS FOR (e:Entity) REQUIRE e.id IS UNIQUE",
-            "CREATE CONSTRAINT hippo_node_id IF NOT EXISTS FOR (n:HippoNode) REQUIRE n.id IS UNIQUE"
+            "CREATE CONSTRAINT hippo_node_id IF NOT EXISTS FOR (n:HippoNode) REQUIRE n.id IS UNIQUE",
         ]
 
         # Create performance indexes
@@ -218,7 +216,7 @@ def run_cypher_migrations(session: Session) -> None:
             "CREATE INDEX hyperedge_relation IF NOT EXISTS FOR (h:Hyperedge) ON (h.relation)",
             "CREATE INDEX hyperedge_confidence IF NOT EXISTS FOR (h:Hyperedge) ON (h.confidence)",
             "CREATE INDEX hippo_session IF NOT EXISTS FOR (n:HippoNode) ON (n.session_id)",
-            "CREATE INDEX hippo_consolidated IF NOT EXISTS FOR (n:HippoNode) ON (n.consolidated)"
+            "CREATE INDEX hippo_consolidated IF NOT EXISTS FOR (n:HippoNode) ON (n.consolidated)",
         ]
 
         # Execute constraints
@@ -251,14 +249,14 @@ async def run_cypher_migrations_async(session: AsyncSession) -> None:
         constraints = [
             "CREATE CONSTRAINT hyperedge_id IF NOT EXISTS FOR (h:Hyperedge) REQUIRE h.id IS UNIQUE",
             "CREATE CONSTRAINT entity_id IF NOT EXISTS FOR (e:Entity) REQUIRE e.id IS UNIQUE",
-            "CREATE CONSTRAINT hippo_node_id IF NOT EXISTS FOR (n:HippoNode) REQUIRE n.id IS UNIQUE"
+            "CREATE CONSTRAINT hippo_node_id IF NOT EXISTS FOR (n:HippoNode) REQUIRE n.id IS UNIQUE",
         ]
 
         indexes = [
             "CREATE INDEX hyperedge_relation IF NOT EXISTS FOR (h:Hyperedge) ON (h.relation)",
             "CREATE INDEX hyperedge_confidence IF NOT EXISTS FOR (h:Hyperedge) ON (h.confidence)",
             "CREATE INDEX hippo_session IF NOT EXISTS FOR (n:HippoNode) ON (n.session_id)",
-            "CREATE INDEX hippo_consolidated IF NOT EXISTS FOR (n:HippoNode) ON (n.consolidated)"
+            "CREATE INDEX hippo_consolidated IF NOT EXISTS FOR (n:HippoNode) ON (n.consolidated)",
         ]
 
         # Execute constraints
@@ -285,16 +283,18 @@ async def run_cypher_migrations_async(session: AsyncSession) -> None:
 
 
 # Database connection utilities
-def create_neo4j_driver(uri: str = "bolt://localhost:7687",
-                       username: str = "neo4j",
-                       password: str = "aivillage_neo4j") -> Driver:
+def create_neo4j_driver(
+    uri: str = "bolt://localhost:7687",
+    username: str = "neo4j",
+    password: str = "aivillage_neo4j",
+) -> Driver:
     """Create Neo4j driver with default settings"""
     from neo4j import GraphDatabase
 
     return GraphDatabase.driver(
         uri,
         auth=(username, password),
-        encrypted=False  # For local development
+        encrypted=False,  # For local development
     )
 
 

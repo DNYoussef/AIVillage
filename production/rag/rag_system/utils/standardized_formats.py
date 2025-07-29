@@ -1,6 +1,8 @@
-from typing import Dict, Any, List, Union
-from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, Field
+
 
 class OutputFormat(str, Enum):
     JSON = "json"
@@ -8,14 +10,27 @@ class OutputFormat(str, Enum):
     LIST = "list"
     DICT = "dict"
 
+
 class StandardizedPrompt(BaseModel):
     task: str = Field(..., description="The main task or question to be addressed")
-    context: str = Field(..., description="Any relevant context or background information")
-    constraints: List[str] = Field(default=[], description="Any constraints or limitations to consider")
-    examples: List[Dict[str, str]] = Field(default=[], description="Optional examples to guide the response")
-    output_format: OutputFormat = Field(..., description="The desired format for the output")
-    additional_instructions: str = Field(default="", description="Any additional instructions or guidelines")
-    metadata: Dict[str, Any] = Field(default={}, description="Any additional metadata for the prompt")
+    context: str = Field(
+        ..., description="Any relevant context or background information"
+    )
+    constraints: list[str] = Field(
+        default=[], description="Any constraints or limitations to consider"
+    )
+    examples: list[dict[str, str]] = Field(
+        default=[], description="Optional examples to guide the response"
+    )
+    output_format: OutputFormat = Field(
+        ..., description="The desired format for the output"
+    )
+    additional_instructions: str = Field(
+        default="", description="Any additional instructions or guidelines"
+    )
+    metadata: dict[str, Any] = Field(
+        default={}, description="Any additional metadata for the prompt"
+    )
 
     def to_string(self) -> str:
         prompt = f"Task: {self.task}\n\n"
@@ -44,17 +59,32 @@ class StandardizedPrompt(BaseModel):
 
         return prompt
 
+
 class StandardizedOutput(BaseModel):
     task: str = Field(..., description="The original task or question addressed")
-    response: Union[str, List[str], Dict[str, Any]] = Field(..., description="The main response content")
-    confidence: float = Field(..., ge=0, le=1, description="Confidence score of the response (0-1)")
-    sources: List[str] = Field(default=[], description="Sources or references used in the response")
-    metadata: Dict[str, Any] = Field(default={}, description="Any additional metadata about the response")
-    reasoning: str = Field(default="", description="Explanation of the reasoning process")
-    uncertainty: float = Field(default=0.0, ge=0, le=1, description="Uncertainty level of the response (0-1)")
-    alternative_responses: List[Dict[str, Any]] = Field(default=[], description="Alternative responses or perspectives")
+    response: str | list[str] | dict[str, Any] = Field(
+        ..., description="The main response content"
+    )
+    confidence: float = Field(
+        ..., ge=0, le=1, description="Confidence score of the response (0-1)"
+    )
+    sources: list[str] = Field(
+        default=[], description="Sources or references used in the response"
+    )
+    metadata: dict[str, Any] = Field(
+        default={}, description="Any additional metadata about the response"
+    )
+    reasoning: str = Field(
+        default="", description="Explanation of the reasoning process"
+    )
+    uncertainty: float = Field(
+        default=0.0, ge=0, le=1, description="Uncertainty level of the response (0-1)"
+    )
+    alternative_responses: list[dict[str, Any]] = Field(
+        default=[], description="Alternative responses or perspectives"
+    )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "task": self.task,
             "response": self.response,
@@ -63,17 +93,18 @@ class StandardizedOutput(BaseModel):
             "metadata": self.metadata,
             "reasoning": self.reasoning,
             "uncertainty": self.uncertainty,
-            "alternative_responses": self.alternative_responses
+            "alternative_responses": self.alternative_responses,
         }
+
 
 def create_standardized_prompt(
     task: str,
     context: str,
     output_format: OutputFormat,
-    constraints: List[str] = [],
-    examples: List[Dict[str, str]] = [],
+    constraints: list[str] = [],
+    examples: list[dict[str, str]] = [],
     additional_instructions: str = "",
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {},
 ) -> StandardizedPrompt:
     return StandardizedPrompt(
         task=task,
@@ -82,18 +113,19 @@ def create_standardized_prompt(
         examples=examples,
         output_format=output_format,
         additional_instructions=additional_instructions,
-        metadata=metadata
+        metadata=metadata,
     )
+
 
 def create_standardized_output(
     task: str,
-    response: Union[str, List[str], Dict[str, Any]],
+    response: str | list[str] | dict[str, Any],
     confidence: float,
-    sources: List[str] = [],
-    metadata: Dict[str, Any] = {},
+    sources: list[str] = [],
+    metadata: dict[str, Any] = {},
     reasoning: str = "",
     uncertainty: float = 0.0,
-    alternative_responses: List[Dict[str, Any]] = []
+    alternative_responses: list[dict[str, Any]] = [],
 ) -> StandardizedOutput:
     return StandardizedOutput(
         task=task,
@@ -103,5 +135,5 @@ def create_standardized_output(
         metadata=metadata,
         reasoning=reasoning,
         uncertainty=uncertainty,
-        alternative_responses=alternative_responses
+        alternative_responses=alternative_responses,
     )

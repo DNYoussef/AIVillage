@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import List, Dict
-
 
 logger = logging.getLogger(__name__)
 
@@ -28,15 +26,13 @@ class NamedEntityRecognizer:
             logger.debug("spaCy model loaded for NER")
         except Exception:  # pragma: no cover - best effort to load spaCy
             self._nlp = None
-            logger.warning(
-                "spaCy model not available; falling back to regex based NER"
-            )
+            logger.warning("spaCy model not available; falling back to regex based NER")
 
         # Regex matches sequences of capitalised words as a naive entity
         self._regex = re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b")
         self._stop_words = {"The", "A", "An"}
 
-    def recognize(self, text: str) -> List[Dict[str, str]]:
+    def recognize(self, text: str) -> list[dict[str, str]]:
         """Extract entities from ``text``.
 
         Parameters
@@ -44,23 +40,19 @@ class NamedEntityRecognizer:
         text: str
             The input text from which to extract entities.
 
-        Returns
+        Returns:
         -------
         List[Dict[str, str]]
             A list of recognised entities.  Each entity is represented as a
             dictionary with ``text`` and ``label`` keys.
         """
-
         if not text:
             return []
 
         # Use spaCy when available for more robust entity extraction
         if self._nlp is not None:
             doc = self._nlp(text)
-            return [
-                {"text": ent.text, "label": ent.label_}
-                for ent in doc.ents
-            ]
+            return [{"text": ent.text, "label": ent.label_} for ent in doc.ents]
 
         # Fallback regex based entity recognition
         entities = []

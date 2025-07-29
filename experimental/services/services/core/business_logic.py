@@ -55,7 +55,7 @@ class ChatBusinessLogic(ChatServiceInterface):
                 context=ErrorContext(
                     component="ChatBusinessLogic",
                     operation="process_chat",
-                    details={"message": request.message}
+                    details={"message": request.message},
                 ),
             )
 
@@ -67,7 +67,7 @@ class ChatBusinessLogic(ChatServiceInterface):
                 context=ErrorContext(
                     component="ChatBusinessLogic",
                     operation="process_chat",
-                    details={"message_length": len(request.message)}
+                    details={"message_length": len(request.message)},
                 ),
             )
 
@@ -154,7 +154,7 @@ class QueryBusinessLogic(QueryServiceInterface):
                 context=ErrorContext(
                     component="QueryBusinessLogic",
                     operation="execute_query",
-                    details={}
+                    details={},
                 ),
             )
 
@@ -206,7 +206,7 @@ class UploadBusinessLogic(UploadServiceInterface):
                 context=ErrorContext(
                     component="UploadBusinessLogic",
                     operation="process_upload",
-                    details=validation_result.error
+                    details=validation_result.error,
                 ),
             )
 

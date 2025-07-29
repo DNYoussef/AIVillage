@@ -3,18 +3,23 @@
 Setup script for Agent Forge with CLI integration
 """
 
-from setuptools import setup, find_packages
 from pathlib import Path
+
+from setuptools import find_packages, setup
 
 # Read README
 readme_path = Path(__file__).parent / "README_AGENT_FORGE.md"
-long_description = readme_path.read_text(encoding="utf-8") if readme_path.exists() else ""
+long_description = (
+    readme_path.read_text(encoding="utf-8") if readme_path.exists() else ""
+)
 
 # Read requirements
 requirements_path = Path(__file__).parent / "agent_forge" / "requirements.txt"
 if requirements_path.exists():
-    with open(requirements_path, 'r') as f:
-        requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+    with open(requirements_path) as f:
+        requirements = [
+            line.strip() for line in f if line.strip() and not line.startswith("#")
+        ]
 else:
     requirements = [
         "torch>=2.0.0",
@@ -31,7 +36,7 @@ else:
         "streamlit>=1.28.0",
         "plotly>=5.15.0",
         "pandas>=2.0.0",
-        "psutil>=5.9.0"
+        "psutil>=5.9.0",
     ]
 
 setup(
@@ -52,17 +57,15 @@ setup(
             "black>=23.0.0",
             "isort>=5.12.0",
             "flake8>=6.0.0",
-            "pre-commit>=3.0.0"
+            "pre-commit>=3.0.0",
         ],
-        "cuda": [
-            "torch[cuda]>=2.0.0"
-        ]
+        "cuda": ["torch[cuda]>=2.0.0"],
     },
     entry_points={
         "console_scripts": [
             "forge=agent_forge.cli:main",
             "agent-forge=scripts.run_agent_forge:main",
-            "forge-dashboard=scripts.run_dashboard:main"
+            "forge-dashboard=scripts.run_dashboard:main",
         ]
     },
     python_requires=">=3.8",
@@ -78,12 +81,12 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
-        "Topic :: Software Development :: Libraries :: Python Modules"
+        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     keywords="ai, machine learning, evolutionary algorithms, model merging, transformers",
     project_urls={
         "Bug Reports": "https://github.com/your-org/agent-forge/issues",
         "Source": "https://github.com/your-org/agent-forge",
-        "Documentation": "https://agent-forge.readthedocs.io/"
-    }
+        "Documentation": "https://agent-forge.readthedocs.io/",
+    },
 )
