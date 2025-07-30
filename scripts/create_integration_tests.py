@@ -5,8 +5,8 @@ Tests the complete distributed infrastructure.
 """
 
 import asyncio
-import sys
 from pathlib import Path
+import sys
 
 import torch
 

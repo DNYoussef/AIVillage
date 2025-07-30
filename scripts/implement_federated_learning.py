@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Implement federated learning infrastructure for distributed training across mesh network.
+"""Implement federated learning infrastructure for distributed training across mesh.
 
 Supports heterogeneous devices and intermittent connectivity.
 """
@@ -13,11 +13,11 @@ import time
 from typing import Any
 
 import numpy as np
+import torch
+from torch import nn
 
 # Use the global random number generator
 rng = np.random.default_rng()
-import torch
-from torch import nn
 
 
 class AggregationStrategy(Enum):
@@ -68,6 +68,7 @@ class FederatedLearningServer:
         min_clients: int = 3,
         max_rounds: int = 100,
     ) -> None:
+        """Initialize federated learning server."""
         self.model = model
         self.aggregation_strategy = aggregation_strategy
         self.min_clients = min_clients
@@ -150,15 +151,16 @@ class FederatedLearningServer:
 
     def _select_clients(self) -> list[dict[str, Any]]:
         """Select clients for participation in current round."""
-        eligible_clients = []
-
-        for client_info in self.registered_clients.values():
+        min_battery_level = 0.2
+        eligible_clients = [
+            client_info
+            for client_info in self.registered_clients.values()
             # Check client eligibility
             if (
                 client_info.get("active", False)
-                and client_info.get("battery_level", 0) > 0.2
-            ):
-                eligible_clients.append(client_info)
+                and client_info.get("battery_level", 0) > min_battery_level
+            )
+        ]
 
         # Random selection based on fraction
         num_to_select = max(

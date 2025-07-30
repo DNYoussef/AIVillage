@@ -122,11 +122,12 @@ class MeshProtocol:
     """Bluetooth mesh networking protocol implementation."""
 
     def __init__(self, node_id: str) -> None:
+        """Initialize mesh protocol with node ID."""
         self.node_id = node_id
         self.neighbors: dict[str, MeshNode] = {}
-        self.routing_table: dict[str, tuple[str, int]] = (
-            {}
-        )  # destination -> (next_hop, distance)
+        self.routing_table: dict[
+            str, tuple[str, int]
+        ] = {}  # destination -> (next_hop, distance)
         self.message_cache: set[str] = set()  # Prevent duplicate forwarding
         self.pending_messages: asyncio.Queue = asyncio.Queue()
         self.received_messages: asyncio.Queue = asyncio.Queue()
@@ -150,13 +151,14 @@ class MeshProtocol:
 
     async def start(self) -> None:
         """Start the mesh protocol services."""
-        self.logger.info(f"Starting mesh node {self.node_id[:8]}")
+        self.logger.info("Starting mesh node %s", self.node_id[:8])
 
         # Start background tasks
-        asyncio.create_task(self._heartbeat_loop())
-        asyncio.create_task(self._routing_update_loop())
-        asyncio.create_task(self._message_processor())
-        asyncio.create_task(self._neighbor_discovery())
+        self._background_tasks = []
+        self._background_tasks.append(asyncio.create_task(self._heartbeat_loop()))
+        self._background_tasks.append(asyncio.create_task(self._routing_update_loop()))
+        self._background_tasks.append(asyncio.create_task(self._message_processor()))
+        self._background_tasks.append(asyncio.create_task(self._neighbor_discovery()))
 
     async def send_message(
         self,
@@ -210,8 +212,8 @@ class MeshProtocol:
 
                 self.stats["bytes_sent"] += len(message.to_bytes())
 
-            except Exception as e:
-                self.logger.exception(f"Error processing message: {e}")
+            except Exception:
+                self.logger.exception("Error processing message")
 
             await asyncio.sleep(0.01)  # Small delay to prevent CPU spinning
 
@@ -235,9 +237,9 @@ class MeshProtocol:
             if next_hop in self.neighbors:
                 await self._send_to_neighbor(next_hop, message)
             else:
-                self.logger.warning(f"Next hop {next_hop[:8]} not in neighbors")
+                self.logger.warning("Next hop %s not in neighbors", next_hop[:8])
         else:
-            self.logger.warning(f"No route to {message.recipient_id[:8]}")
+            self.logger.warning("No route to %s", message.recipient_id[:8])
 
     async def _send_to_neighbor(self, neighbor_id: str, message: MeshMessage) -> None:
         """Send message to a specific neighbor (simulated for now)."""
@@ -249,7 +251,9 @@ class MeshProtocol:
             > self.neighbors[neighbor_id].connection_quality * packet_loss_factor
         ):
             # Simulate successful transmission
-            self.logger.debug(f"Sent {message.message_type.name} to {neighbor_id[:8]}")
+            self.logger.debug(
+                "Sent %s to %s", message.message_type.name, neighbor_id[:8]
+            )
         else:
             # Simulate packet loss
             # Update packet loss rate with exponential smoothing
@@ -259,7 +263,7 @@ class MeshProtocol:
                 self.stats["packet_loss_rate"] * smoothing_factor + loss_increment
             )
 
-    async def receive_message(self, data: bytes, sender_id: str) -> None:
+    async def receive_message(self, data: bytes, sender_id: str = "") -> None:
         """Receive a message from the mesh network."""
         try:
             message = MeshMessage.from_bytes(data)
@@ -279,7 +283,8 @@ class MeshProtocol:
 
                 # Call handlers
                 for handler in self.message_handlers.get(message.message_type, []):
-                    asyncio.create_task(handler(message))
+                    task = asyncio.create_task(handler(message))
+                    self._background_tasks.append(task)
 
             # Forward if necessary
             if message.ttl > 0 and (message.recipient_id != self.node_id):
@@ -287,8 +292,8 @@ class MeshProtocol:
                 await self.pending_messages.put(message)
                 self.stats["messages_forwarded"] += 1
 
-        except Exception as e:
-            self.logger.exception(f"Error receiving message: {e}")
+        except Exception:
+            self.logger.exception("Error receiving message")
 
     def register_handler(self, message_type: MessageType, handler: Callable) -> None:
         """Register a message handler."""
@@ -414,7 +419,7 @@ class MeshNetworkSimulator:
             await node.start()
 
         self.running = True
-        logging.info(f"Created mesh network with {self.num_nodes} nodes")
+        logging.info("Created mesh network with %d nodes", self.num_nodes)
 
     async def simulate_traffic(self, duration: int = 60) -> None:
         """Simulate network traffic for testing."""
