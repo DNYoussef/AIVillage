@@ -1,20 +1,28 @@
-try:
-    from . import evomerge
-except ImportError:  # pragma: no cover - optional heavy deps may be missing
-    evomerge = None
-# Re-export key subsystems so external modules can rely on them
-from . import adas, tool_baking
-from .training import expert_vectors
-from .training.training import TrainingTask
+# Lazy imports - moved to properties to avoid startup penalty
+# Heavy imports are deferred until actually needed
 
 # Import ADAS utilities if available. The ADAS module is optional and may
 # require additional heavy dependencies.
 
+# Expose main class
 __all__ = [
     "AgentForge",
-    "adas",
-    "expert_vectors",
 ]
+
+# Lazy module-level properties for backward compatibility
+def __getattr__(name):
+    """Lazy module attribute loading."""
+    if name == "adas":
+        from . import adas
+        return adas
+    elif name == "expert_vectors":
+        from .training import expert_vectors  
+        return expert_vectors
+    elif name == "tool_baking":
+        from . import tool_baking
+        return tool_baking
+    else:
+        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 class AgentForge:
@@ -24,13 +32,51 @@ class AgentForge:
         Args:
             model_name: Name of the model to use for prompt baking.
         """
-        config = evomerge.create_default_config()
-        self.evolution_tournament = evomerge.EvolutionaryTournament(config)
-        self.training_task = TrainingTask(
-            None
-        )  # Note: We're passing None as the agent, you might need to adjust this
-        self.prompt_baker = tool_baking.RAGPromptBaker(model_name)
+        # Store configuration for lazy initialization
+        self.model_name = model_name
+        self._evolution_tournament = None
+        self._training_task = None 
+        self._prompt_baker = None
+        self._config = None
         # Optional: instantiate ADASProcess if the dependencies are installed.
+
+    @property
+    def config(self):
+        """Lazy-loaded config property."""
+        if self._config is None:
+            try:
+                from . import evomerge
+                self._config = evomerge.create_default_config()
+            except ImportError:
+                raise ImportError("evomerge module not available - install heavy dependencies")
+        return self._config
+    
+    @property 
+    def evolution_tournament(self):
+        """Lazy-loaded evolution tournament property."""
+        if self._evolution_tournament is None:
+            try:
+                from . import evomerge
+                self._evolution_tournament = evomerge.EvolutionaryTournament(self.config)
+            except ImportError:
+                raise ImportError("evomerge module not available - install heavy dependencies")
+        return self._evolution_tournament
+    
+    @property
+    def training_task(self):
+        """Lazy-loaded training task property."""
+        if self._training_task is None:
+            from .training.training import TrainingTask
+            self._training_task = TrainingTask(None)
+        return self._training_task
+    
+    @property 
+    def prompt_baker(self):
+        """Lazy-loaded prompt baker property."""
+        if self._prompt_baker is None:
+            from . import tool_baking
+            self._prompt_baker = tool_baking.RAGPromptBaker(self.model_name)
+        return self._prompt_baker
 
     def run_evolution_tournament(self) -> object:
         """Run the evolution tournament and return the best model."""

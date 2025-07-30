@@ -19,6 +19,8 @@ from typing import Any
 import numpy as np
 
 # Import the corrected evolution system
+# Add scripts to path for module resolution
+sys.path.append(str(Path(__file__).parent.parent / "scripts"))
 from run_corrected_evolution import CorrectedEvolutionMerger
 import torch
 

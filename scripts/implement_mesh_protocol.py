@@ -125,9 +125,9 @@ class MeshProtocol:
         """Initialize mesh protocol with node ID."""
         self.node_id = node_id
         self.neighbors: dict[str, MeshNode] = {}
-        self.routing_table: dict[
-            str, tuple[str, int]
-        ] = {}  # destination -> (next_hop, distance)
+        self.routing_table: dict[str, tuple[str, int]] = (
+            {}
+        )  # destination -> (next_hop, distance)
         self.message_cache: set[str] = set()  # Prevent duplicate forwarding
         self.pending_messages: asyncio.Queue = asyncio.Queue()
         self.received_messages: asyncio.Queue = asyncio.Queue()
