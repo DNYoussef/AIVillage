@@ -1,9 +1,0 @@
-{
-  "timestamp": "2025-07-30T22:04:06.276676",
-  "cpu_usage_percent": 64.3,
-  "memory_total_gb": 15.9,
-  "memory_available_gb": 2.2,
-  "memory_used_percent": 86.2,
-  "process_memory_gb": 0.02,
-  "status": "CRITICAL"
-}
