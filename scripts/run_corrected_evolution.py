@@ -157,7 +157,9 @@ class CorrectedEvolutionMerger:
                     combination_id += 1
 
                     logger.info(
-                        "Created systematic combination %d: %s", combination_id, combination
+                        "Created systematic combination %d: %s",
+                        combination_id,
+                        combination,
                     )
 
         # Verify we have exactly 8 individuals
@@ -168,7 +170,7 @@ class CorrectedEvolutionMerger:
         )
         logger.info("Combinations created:")
         for i, ind in enumerate(population):
-            logger.info("  %d. %s", i + 1, ind['technique_combination'])
+            logger.info("  %d. %s", i + 1, ind["technique_combination"])
 
         return population
 
@@ -212,7 +214,11 @@ class CorrectedEvolutionMerger:
         logger.info("Best 2 individuals:")
         for i, ind in enumerate(best_2):
             logger.info(
-                "  %d. %s - Fitness: %.4f - Method: %s", i + 1, ind['id'], ind['fitness'], ind['primary_method']
+                "  %d. %s - Fitness: %.4f - Method: %s",
+                i + 1,
+                ind["id"],
+                ind["fitness"],
+                ind["primary_method"],
             )
 
         # Create 3 mutations from each of the best 2 (total 6)
@@ -222,14 +228,18 @@ class CorrectedEvolutionMerger:
                     parent, f"best_{i + 1}_mut_{mutation_id + 1}"
                 )
                 next_generation.append(mutant)
-                logger.info("  Created mutant: %s from %s", mutant['id'], parent['id'])
+                logger.info("  Created mutant: %s from %s", mutant["id"], parent["id"])
 
         # === STEP 2: Worst 6 → 2 children via triad merging ===
         worst_6 = ranked_population[2:]
         logger.info("Worst 6 individuals for triad merging:")
         for i, ind in enumerate(worst_6):
             logger.info(
-                "  %d. %s - Fitness: %.4f - Method: %s", i + 1, ind['id'], ind['fitness'], ind['primary_method']
+                "  %d. %s - Fitness: %.4f - Method: %s",
+                i + 1,
+                ind["id"],
+                ind["fitness"],
+                ind["primary_method"],
             )
 
         # Split worst 6 into 2 triads
@@ -243,8 +253,8 @@ class CorrectedEvolutionMerger:
         next_generation.extend([child_1, child_2])
 
         logger.info("Created children:")
-        logger.info("  %s from triad: %s", child_1['id'], [p['id'] for p in triad_1])
-        logger.info("  %s from triad: %s", child_2['id'], [p['id'] for p in triad_2])
+        logger.info("  %s from triad: %s", child_1["id"], [p["id"] for p in triad_1])
+        logger.info("  %s from triad: %s", child_2["id"], [p["id"] for p in triad_2])
 
         # Verify we have exactly 8 individuals
         assert (
@@ -252,7 +262,8 @@ class CorrectedEvolutionMerger:
         ), f"Expected 8 individuals, got {len(next_generation)}"
 
         logger.info(
-            "✅ Next generation bred: 6 mutants + 2 children = %d total", len(next_generation)
+            "✅ Next generation bred: 6 mutants + 2 children = %d total",
+            len(next_generation),
         )
 
         return next_generation
@@ -276,7 +287,9 @@ class CorrectedEvolutionMerger:
             mutant["technique_combination"] = [new_technique]  # Reset combination
             mutant["parameters"] = self.generate_optimal_parameters(new_technique)
             logger.info(
-                "    Technique mutation: %s → %s", parent['primary_method'], new_technique
+                "    Technique mutation: %s → %s",
+                parent["primary_method"],
+                new_technique,
             )
         else:
             # Mutate parameters only
@@ -284,7 +297,9 @@ class CorrectedEvolutionMerger:
                 parent["primary_method"], parent["parameters"]
             )
             logger.info(
-                "    Parameter mutation: %s → %s", parent['parameters'], mutant['parameters']
+                "    Parameter mutation: %s → %s",
+                parent["parameters"],
+                mutant["parameters"],
             )
 
         return mutant
@@ -417,7 +432,7 @@ class CorrectedEvolutionMerger:
 
     def benchmark_model(self, individual: dict[str, Any]) -> dict[str, float]:
         """Enhanced benchmarking with realistic simulation."""
-        logger.info("Benchmarking: %s", individual['id'])
+        logger.info("Benchmarking: %s", individual["id"])
 
         method = individual["primary_method"]
         base_model = individual.get("base_model", "")
@@ -570,10 +585,10 @@ class CorrectedEvolutionMerger:
         )
 
         logger.info("Generation %d Results:", self.generation)
-        logger.info("Best fitness: %.4f", best_individual['fitness'])
+        logger.info("Best fitness: %.4f", best_individual["fitness"])
         logger.info("Average fitness: %.4f", avg_fitness)
-        logger.info("Best method: %s", best_individual['primary_method'])
-        logger.info("Best parameters: %s", best_individual['parameters'])
+        logger.info("Best method: %s", best_individual["primary_method"])
+        logger.info("Best parameters: %s", best_individual["parameters"])
 
         # Save generation results
         gen_results = {
@@ -636,7 +651,9 @@ class CorrectedEvolutionMerger:
                 if generation_count % 10 == 0:
                     elapsed = time.time() - start_time
                     logger.info(
-                        "Progress: %d/%d generations", generation_count, self.max_generations
+                        "Progress: %d/%d generations",
+                        generation_count,
+                        self.max_generations,
                     )
                     logger.info("Elapsed: %.1f minutes", elapsed / 60)
 
@@ -659,12 +676,13 @@ class CorrectedEvolutionMerger:
         logger.info("=" * 80)
         logger.info("Duration: %.1f minutes", duration / 60)
         logger.info("Generations completed: %d", self.generation)
-        logger.info("Best overall fitness: %.4f", best_overall['fitness'])
-        logger.info("Best method: %s", best_overall['primary_method'])
+        logger.info("Best overall fitness: %.4f", best_overall["fitness"])
+        logger.info("Best method: %s", best_overall["primary_method"])
         logger.info(
-            "Best technique combination: %s", best_overall.get('technique_combination', [])
+            "Best technique combination: %s",
+            best_overall.get("technique_combination", []),
         )
-        logger.info("Best parameters: %s", best_overall['parameters'])
+        logger.info("Best parameters: %s", best_overall["parameters"])
 
         # Save final results
         final_results = {

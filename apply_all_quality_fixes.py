@@ -26,7 +26,7 @@ def run_command(cmd: List[str], cwd: Path) -> Tuple[int, str, str]:
 def install_required_tools() -> bool:
     """Install required linting and formatting tools."""
     tools = ["black", "isort", "ruff"]
-    
+
     print("Installing required tools...")
     for tool in tools:
         try:
@@ -37,53 +37,53 @@ def install_required_tools() -> bool:
             returncode, _, stderr = run_command([
                 sys.executable, "-m", "pip", "install", tool
             ], Path.cwd())
-            
+
             if returncode != 0:
                 print(f"✗ Failed to install {tool}: {stderr}")
                 return False
             print(f"[OK] {tool} installed successfully")
-    
+
     return True
 
 def fix_bare_except_clauses(project_root: Path) -> int:
     """Fix all bare except clauses in Python files."""
     print("\n1. Fixing bare except clauses...")
-    
+
     files_fixed = 0
-    
+
     for py_file in project_root.rglob("*.py"):
         # Skip excluded directories
         if any(exclude in str(py_file) for exclude in [
             "new_env", "__pycache__", ".git", ".cleanup_backups", ".test_repair_backup"
         ]):
             continue
-        
+
         try:
             with open(py_file, 'r', encoding='utf-8') as f:
                 content = f.read()
-            
+
             original_content = content
-            
+
             # Replace bare except clauses
             pattern = r'^(\s*)except\s*:\s*$'
             replacement = r'\1except Exception:'
             content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
-            
+
             if content != original_content:
                 with open(py_file, 'w', encoding='utf-8') as f:
                     f.write(content)
                 files_fixed += 1
-                
+
         except Exception as e:
             print(f"  Warning: Could not process {py_file}: {e}")
-    
+
     print(f"[OK] Fixed bare except clauses in {files_fixed} files")
     return files_fixed
 
 def apply_black_formatting(project_root: Path) -> bool:
     """Apply black code formatting."""
     print("\n2. Applying black code formatting...")
-    
+
     returncode, stdout, stderr = run_command([
         sys.executable, "-m", "black",
         "--line-length", "88",
@@ -96,7 +96,7 @@ def apply_black_formatting(project_root: Path) -> bool:
         "scripts",
         "benchmarks"
     ], project_root)
-    
+
     if returncode == 0:
         # Count reformatted files
         lines = stdout.split('\n') if stdout else []
@@ -113,7 +113,7 @@ def apply_black_formatting(project_root: Path) -> bool:
 def organize_imports(project_root: Path) -> bool:
     """Organize imports with isort."""
     print("\n3. Organizing imports with isort...")
-    
+
     returncode, stdout, stderr = run_command([
         sys.executable, "-m", "isort",
         "--profile", "black",
@@ -125,12 +125,12 @@ def organize_imports(project_root: Path) -> bool:
         "--skip", ".cleanup_backups",
         "agent_forge",
         "mcp_servers",
-        "production", 
+        "production",
         "tests",
         "scripts",
         "benchmarks"
     ], project_root)
-    
+
     if returncode == 0:
         print("[OK] Import organization completed successfully")
         return True
@@ -141,7 +141,7 @@ def organize_imports(project_root: Path) -> bool:
 def fix_ruff_issues(project_root: Path) -> bool:
     """Fix issues with ruff linter."""
     print("\n4. Fixing linting issues with ruff...")
-    
+
     # First, try to auto-fix issues
     returncode, stdout, stderr = run_command([
         sys.executable, "-m", "ruff", "check",
@@ -150,13 +150,13 @@ def fix_ruff_issues(project_root: Path) -> bool:
         "--select", "F,E,W,I",  # Pyflakes, pycodestyle, isort
         "--ignore", "E501,W503,E203,E402",  # Ignore issues handled by black
         "agent_forge",
-        "mcp_servers", 
+        "mcp_servers",
         "production",
         "tests",
         "scripts",
         "benchmarks"
     ], project_root)
-    
+
     # Count fixes applied
     if stdout:
         lines = stdout.split('\n')
@@ -167,22 +167,22 @@ def fix_ruff_issues(project_root: Path) -> bool:
             print("[OK] No auto-fixable ruff issues found")
     else:
         print("[OK] Ruff linting completed")
-    
+
     return True
 
 def validate_syntax(project_root: Path) -> Tuple[bool, int]:
     """Validate Python syntax in all files."""
     print("\n5. Validating Python syntax...")
-    
+
     syntax_errors = 0
     files_checked = 0
-    
+
     for py_file in project_root.rglob("*.py"):
         if any(exclude in str(py_file) for exclude in [
             "new_env", "__pycache__", ".git", ".cleanup_backups", ".test_repair_backup"
         ]):
             continue
-        
+
         files_checked += 1
         try:
             with open(py_file, 'r', encoding='utf-8') as f:
@@ -193,7 +193,7 @@ def validate_syntax(project_root: Path) -> Tuple[bool, int]:
         except Exception:
             # Skip encoding issues, etc.
             pass
-    
+
     if syntax_errors == 0:
         print(f"[OK] All {files_checked} Python files have valid syntax")
         return True, 0
@@ -204,7 +204,7 @@ def validate_syntax(project_root: Path) -> Tuple[bool, int]:
 def check_final_quality(project_root: Path) -> Tuple[bool, int]:
     """Run final quality check."""
     print("\n6. Running final quality assessment...")
-    
+
     # Check for remaining critical issues
     returncode, stdout, stderr = run_command([
         sys.executable, "-m", "ruff", "check",
@@ -213,19 +213,19 @@ def check_final_quality(project_root: Path) -> Tuple[bool, int]:
         "--format", "concise",
         "agent_forge",
         "mcp_servers",
-        "production", 
+        "production",
         "tests",
         "scripts",
         "benchmarks"
     ], project_root)
-    
+
     if returncode == 0:
         print("[OK] No critical linting errors found")
         return True, 0
     else:
         lines = stdout.strip().split('\n') if stdout else []
         critical_issues = len([line for line in lines if line.strip()])
-        
+
         if critical_issues <= 5:  # Allow a few minor issues
             print(f"[OK] Only {critical_issues} minor issues remain (acceptable)")
             return True, critical_issues
@@ -236,66 +236,66 @@ def check_final_quality(project_root: Path) -> Tuple[bool, int]:
 def main():
     """Apply all quality fixes."""
     project_root = Path(__file__).parent
-    
+
     print("="*70)
     print("AGENT FORGE COMPREHENSIVE QUALITY FIXES")
     print("="*70)
-    
+
     # Install tools
     if not install_required_tools():
         print("✗ Failed to install required tools")
         return 1
-    
+
     total_fixes = 0
-    
+
     # Apply all fixes
     fixes_applied = fix_bare_except_clauses(project_root)
     total_fixes += fixes_applied
-    
+
     if apply_black_formatting(project_root):
         total_fixes += 1
-    
+
     if organize_imports(project_root):
         total_fixes += 1
-    
+
     if fix_ruff_issues(project_root):
         total_fixes += 1
-    
+
     # Validate results
     syntax_valid, syntax_errors = validate_syntax(project_root)
     quality_passed, remaining_issues = check_final_quality(project_root)
-    
+
     # Final report
     print("\n" + "="*70)
     print("QUALITY FIXES SUMMARY")
     print("="*70)
-    
+
     print(f"Fixes applied: {total_fixes}")
     print(f"Syntax errors: {syntax_errors}")
     print(f"Remaining issues: {remaining_issues}")
-    
+
     if syntax_valid and quality_passed:
         print("\n✅ SUCCESS: All critical quality issues have been fixed!")
         print("✅ Code is ready for commit to main branch")
-        
+
         if remaining_issues > 0:
             print(f"Note: {remaining_issues} minor issues remain but are not blocking")
-        
+
         print("\nNext steps:")
         print("1. Review the changes")
         print("2. Run tests to ensure functionality")
         print("3. Commit to main branch")
-        
+
         return 0
     else:
         print("\n[FAIL] FAILED: Critical issues still remain")
         print("[FAIL] Please address remaining issues before committing")
-        
+
         if syntax_errors > 0:
             print(f"Priority: Fix {syntax_errors} syntax errors")
         if remaining_issues > 5:
             print(f"Priority: Fix {remaining_issues} critical linting issues")
-        
+
         return 1
 
 if __name__ == "__main__":

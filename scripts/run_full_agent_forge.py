@@ -118,7 +118,9 @@ class AgentForgePipelineRunner:
                 local_path = self.models_dir / model_name
 
                 if local_path.exists() and any(local_path.iterdir()):
-                    logger.info("Model %s already exists, skipping download", model_name)
+                    logger.info(
+                        "Model %s already exists, skipping download", model_name
+                    )
                     downloaded_models.append(model_name)
                     continue
 
@@ -164,7 +166,9 @@ except Exception as e:
                         logger.info("Successfully downloaded %s", model_name)
                         downloaded_models.append(model_name)
                     else:
-                        logger.error("Failed to download %s: %s", repo_id, result.stderr)
+                        logger.error(
+                            "Failed to download %s: %s", repo_id, result.stderr
+                        )
                 finally:
                     # Clean up temporary file
                     import os
@@ -182,7 +186,9 @@ except Exception as e:
             logger.error("No models were successfully downloaded")
             raise RuntimeError("Model download failed")
 
-        logger.info("Downloaded %d models: %s", len(downloaded_models), downloaded_models)
+        logger.info(
+            "Downloaded %d models: %s", len(downloaded_models), downloaded_models
+        )
         return downloaded_models
 
     async def run_agent_forge_orchestrator(self, models: list[str], device: str):
@@ -223,7 +229,9 @@ except Exception as e:
             failed_phases = [k for k, v in results.items() if not v.success]
 
             logger.info(
-                "Orchestration completed: %d/%d phases successful", len(completed_phases), len(results)
+                "Orchestration completed: %d/%d phases successful",
+                len(completed_phases),
+                len(results),
             )
 
             if failed_phases:
@@ -295,7 +303,7 @@ except Exception as e:
             if self.args.quick:
                 cmd.extend(["--quick"])
 
-            logger.info("Running benchmarks: %s", ' '.join(cmd))
+            logger.info("Running benchmarks: %s", " ".join(cmd))
 
             result = subprocess.run(
                 cmd,
@@ -596,7 +604,7 @@ except Exception as e:
                             level=wandb.AlertLevel.WARN,
                         )
                         logger.warning(
-                            "W&B alert sent for %s regression", regression['benchmark']
+                            "W&B alert sent for %s regression", regression["benchmark"]
                         )
                     except Exception as e:
                         logger.error("Failed to send W&B alert: %s", e)

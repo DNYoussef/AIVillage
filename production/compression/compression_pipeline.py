@@ -144,7 +144,7 @@ class ModelAnalyzer:
         logger.info("Model Analysis:")
         logger.info("  Total Parameters: %s", f"{analysis['total_parameters']:,}")
         logger.info(
-            "  Linear Parameters: %s (%s%%)", 
+            "  Linear Parameters: %s (%s%%)",
             f"{analysis['linear_parameters']:,}",
             f"{analysis['linear_parameters'] / analysis['total_parameters'] * 100:.1f}"
         )

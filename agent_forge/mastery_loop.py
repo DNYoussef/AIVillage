@@ -119,8 +119,7 @@ Return JSON format:
 
             except Exception as e:
                 logger.warning(
-                    "Failed to generate task for difficulty %s: %s",
-                    difficulty, e
+                    "Failed to generate task for difficulty %s: %s", difficulty, e
                 )
                 # Fallback task
                 task = Task(
@@ -250,7 +249,8 @@ class GeometryFeedback:
 
                 logger.info(
                     "Geometry update: ID_nl=%.3f, pre_grok=%s",
-                    id_estimate, state['pre_grok']
+                    id_estimate,
+                    state["pre_grok"],
                 )
 
             except Exception as e:
@@ -389,7 +389,8 @@ class MasteryLoop:
         self.baseline_k = target_diff
         logger.info(
             "Baseline established: Level %s (success rate: %.2f)",
-            self.baseline_k, level_performance[target_diff]
+            self.baseline_k,
+            level_performance[target_diff],
         )
 
         # Log calibration results
@@ -501,7 +502,8 @@ class MasteryLoop:
                 if recent_success_rate >= self.config.mastery_threshold:
                     logger.info(
                         "Mastery achieved for level %s! Success rate: %.2f",
-                        level, recent_success_rate
+                        level,
+                        recent_success_rate,
                     )
                     wandb.log({f"mastery/level_{level}_achieved": True})
                     return True
@@ -530,7 +532,8 @@ class MasteryLoop:
 
         logger.info(
             "Max attempts reached for level %s. Final success rate: %.2f",
-            level, success_rate
+            level,
+            success_rate,
         )
         return False
 
@@ -604,17 +607,16 @@ class MasteryLoop:
             mastery_results = {}
 
             for level in range(1, self.config.max_mastery_levels + 1):
-                logger.info("\n%s", '=' * 50)
+                logger.info("\n%s", "=" * 50)
                 logger.info("MASTERY LEVEL %s", level)
-                logger.info("%s", '=' * 50)
+                logger.info("%s", "=" * 50)
 
                 mastery_achieved = await self.mastery_cycle(level)
                 mastery_results[level] = mastery_achieved
 
                 if not mastery_achieved:
                     logger.info(
-                        "Mastery not achieved for level %s, stopping progression",
-                        level
+                        "Mastery not achieved for level %s, stopping progression", level
                     )
                     break
 
@@ -647,10 +649,11 @@ class MasteryLoop:
             logger.info("\nMastery training complete!")
             logger.info(
                 "Levels mastered: %s/%s",
-                summary['levels_mastered'], self.config.max_mastery_levels
+                summary["levels_mastered"],
+                self.config.max_mastery_levels,
             )
-            logger.info("Total attempts: %s", summary['total_attempts'])
-            logger.info("Total time: %.2f hours", summary['total_time_hours'])
+            logger.info("Total attempts: %s", summary["total_attempts"])
+            logger.info("Total time: %.2f hours", summary["total_time_hours"])
 
             return summary
 

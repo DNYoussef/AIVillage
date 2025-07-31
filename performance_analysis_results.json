@@ -1,0 +1,145 @@
+{
+  "analysis_timestamp": "2025-07-30T22:16:51.253806",
+  "system_status": "CRITICAL",
+  "system_metrics": {
+    "timestamp": "2025-07-30T22:01:11.957580",
+    "cpu_usage_percent": 51.6,
+    "memory_total_gb": 15.9,
+    "memory_available_gb": 2.0,
+    "memory_used_percent": 87.7,
+    "process_memory_gb": 0.02,
+    "cpu_cores": 12,
+    "status": "CRITICAL"
+  },
+  "mesh_network": {
+    "status": "CRITICAL",
+    "message_delivery_rate": 0.0,
+    "overall_success_rate": 44.4,
+    "tests_passed": 8,
+    "tests_total": 18,
+    "issue": "Complete message delivery failure"
+  },
+  "system_complexity": {
+    "python_files": 62769,
+    "total_lines": 18896103,
+    "avg_lines_per_file": 301.0,
+    "large_files_count": 4427,
+    "largest_files": [
+      {
+        "file": ".\\evomerge_env\\Lib\\site-packages\\faker\\decode\\codes.py",
+        "lines": 65538
+      },
+      {
+        "file": ".\\new_env\\Lib\\site-packages\\faker\\decode\\codes.py",
+        "lines": 65538
+      },
+      {
+        "file": ".\\new_env\\Lib\\site-packages\\angr\\procedures\\definitions\\types_win32.py",
+        "lines": 34482
+      },
+      {
+        "file": ".\\evomerge_env\\Lib\\site-packages\\kubernetes\\client\\api\\core_v1_api.py",
+        "lines": 30454
+      },
+      {
+        "file": ".\\new_env\\Lib\\site-packages\\plotly\\graph_objs\\_figurewidget.py",
+        "lines": 25679
+      },
+      {
+        "file": ".\\new_env\\Lib\\site-packages\\plotly\\graph_objs\\_figure.py",
+        "lines": 25673
+      },
+      {
+        "file": ".\\evomerge_env\\Lib\\site-packages\\torch\\testing\\_internal\\common_methods_invocations.py",
+        "lines": 24144
+      },
+      {
+        "file": ".\\new_env\\Lib\\site-packages\\torch\\testing\\_internal\\common_methods_invocations.py",
+        "lines": 24144
+      },
+      {
+        "file": ".\\new_env\\Lib\\site-packages\\playwright\\sync_api\\_generated.py",
+        "lines": 20589
+      },
+      {
+        "file": ".\\new_env\\Lib\\site-packages\\playwright\\async_api\\_generated.py",
+        "lines": 20410
+      }
+    ],
+    "complexity_status": "HIGH",
+    "issue": "Excessive system complexity"
+  },
+  "critical_issues": {
+    "total_issues": 3,
+    "critical_count": 1,
+    "high_count": 2,
+    "issues": [
+      {
+        "severity": "CRITICAL",
+        "component": "Mesh Network",
+        "description": "0% message delivery rate - complete communication failure",
+        "impact": "Distributed operations impossible",
+        "action": "Fix routing algorithms, message serialization, connection pooling"
+      },
+      {
+        "severity": "HIGH",
+        "component": "Memory",
+        "description": "87.7% memory usage",
+        "impact": "Risk of crashes and system instability",
+        "action": "Memory optimization, garbage collection, model compression"
+      },
+      {
+        "severity": "HIGH",
+        "component": "System Architecture",
+        "description": "62769 Python files",
+        "impact": "Slow build times, maintenance overhead",
+        "action": "Code consolidation, modularization, dead code removal"
+      }
+    ]
+  },
+  "optimization_plan": {
+    "immediate_actions": [
+      {
+        "component": "Mesh Network",
+        "action": "Fix routing algorithms, message serialization, connection pooling",
+        "priority": 1,
+        "estimated_effort": "1-2 days"
+      }
+    ],
+    "short_term_actions": [
+      {
+        "component": "Memory",
+        "action": "Memory optimization, garbage collection, model compression",
+        "priority": 2,
+        "estimated_effort": "3-5 days"
+      },
+      {
+        "component": "System Architecture",
+        "action": "Code consolidation, modularization, dead code removal",
+        "priority": 2,
+        "estimated_effort": "3-5 days"
+      }
+    ],
+    "long_term_actions": [
+      {
+        "component": "Performance Monitoring",
+        "action": "Implement continuous performance monitoring dashboard",
+        "priority": 3,
+        "estimated_effort": "1-2 weeks"
+      },
+      {
+        "component": "Testing",
+        "action": "Create automated performance regression tests",
+        "priority": 3,
+        "estimated_effort": "1 week"
+      }
+    ]
+  },
+  "summary": {
+    "total_issues": 3,
+    "critical_issues": 1,
+    "memory_usage_percent": 87.7,
+    "mesh_delivery_rate": 0.0,
+    "python_files_count": 62769
+  }
+}

@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""
-AIVillage Dependency Fix Implementation Script
+"""AIVillage Dependency Fix Implementation Script
 Applies the consolidated dependency recommendations.
 """
 
-import os
-import sys
-import subprocess
-import shutil
 from pathlib import Path
+import shutil
+import subprocess
+import sys
 
 
 def backup_existing_requirements():
@@ -58,6 +56,7 @@ def run_security_scan():
                 "--format",
                 "columns",
             ],
+            check=False,
             capture_output=True,
             text=True,
             timeout=300,
@@ -89,7 +88,7 @@ def validate_requirements():
         if Path(req_file).exists():
             try:
                 # Try to parse the requirements file
-                with open(req_file, "r") as f:
+                with open(req_file) as f:
                     lines = f.readlines()
 
                 # Basic validation
@@ -130,11 +129,11 @@ def update_docker_files():
     """Update Dockerfile references to use new requirements structure."""
     print("Checking for Dockerfile updates needed...")
 
-    docker_files = list(Path(".").rglob("Dockerfile*"))
+    docker_files = list(Path().rglob("Dockerfile*"))
 
     for dockerfile in docker_files:
         try:
-            with open(dockerfile, "r") as f:
+            with open(dockerfile) as f:
                 content = f.read()
 
             # Check if it references old requirements files

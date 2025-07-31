@@ -189,7 +189,8 @@ class PipelineIntegrationTest:
             logger.info("  Stage 1 size: %.2f MB", stage1_size / (1024 * 1024))
             logger.info("  Stage 2 size: %.2f MB", stage2_size / (1024 * 1024))
             logger.info(
-                "  Overall compression ratio: %.2fx", result.get('overall_compression_ratio', 0.0)
+                "  Overall compression ratio: %.2fx",
+                result.get("overall_compression_ratio", 0.0),
             )
 
             # Store results
@@ -250,12 +251,14 @@ class PipelineIntegrationTest:
             )
 
             logger.info("Training pipeline completed:")
-            logger.info("  Levels completed: %d", curriculum_results['levels_completed'])
             logger.info(
-                "  Overall accuracy: %.3f", curriculum_results['overall_accuracy']
+                "  Levels completed: %d", curriculum_results["levels_completed"]
             )
             logger.info(
-                "  Quiet-STaR enabled: %s", curriculum_results['quiet_star_enabled']
+                "  Overall accuracy: %.3f", curriculum_results["overall_accuracy"]
+            )
+            logger.info(
+                "  Quiet-STaR enabled: %s", curriculum_results["quiet_star_enabled"]
             )
 
             # Store results
@@ -317,11 +320,11 @@ class PipelineIntegrationTest:
             insights = self_modeling.get_insights_summary()
 
             logger.info("Self-modeling completed:")
-            logger.info("  Cycles completed: %d", results['cycles_completed'])
+            logger.info("  Cycles completed: %d", results["cycles_completed"])
             logger.info(
-                "  Temperature insights: %d", len(results['temperature_insights'])
+                "  Temperature insights: %d", len(results["temperature_insights"])
             )
-            logger.info("  Recommendations: %d", len(insights['recommendations']))
+            logger.info("  Recommendations: %d", len(insights["recommendations"]))
 
             # Store results
             self.test_results["self_modeling"] = {
@@ -376,11 +379,10 @@ class PipelineIntegrationTest:
 
             logger.info("Deployment manifest generated:")
             logger.info("  Version: %s", version)
+            logger.info("  Model size: %.2f MB", manifest["model_info"]["file_size_mb"])
             logger.info(
-                "  Model size: %.2f MB", manifest['model_info']['file_size_mb']
-            )
-            logger.info(
-                "  Deployment tier: %s", manifest['deployment_requirements']['deployment_tier']
+                "  Deployment tier: %s",
+                manifest["deployment_requirements"]["deployment_tier"],
             )
             logger.info("  Bundle path: %s", bundle_path)
 

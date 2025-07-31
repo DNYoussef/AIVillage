@@ -287,7 +287,7 @@ class Enhanced50GenEvolutionMerger:
 
     def enhanced_benchmark_model(self, config: dict[str, Any]) -> dict[str, float]:
         """Enhanced benchmarking with more realistic simulation."""
-        logger.info("Benchmarking model: %s", config['id'])
+        logger.info("Benchmarking model: %s", config["id"])
 
         results = {}
         method = config["merge_method"]
@@ -547,12 +547,12 @@ class Enhanced50GenEvolutionMerger:
         )
 
         logger.info("Generation %d Results:", self.generation)
-        logger.info("Best fitness: %.4f", best_individual['fitness'])
+        logger.info("Best fitness: %.4f", best_individual["fitness"])
         logger.info("Average fitness: %.4f", avg_fitness)
         logger.info("Population diversity: %.4f", diversity)
         logger.info("Stagnation counter: %d", self.stagnation_counter)
-        logger.info("Best method: %s", best_individual['merge_method'])
-        logger.info("Best parameters: %s", best_individual['parameters'])
+        logger.info("Best method: %s", best_individual["merge_method"])
+        logger.info("Best parameters: %s", best_individual["parameters"])
 
         # Save generation results
         gen_results = {
@@ -639,7 +639,9 @@ class Enhanced50GenEvolutionMerger:
                     remaining = estimated_total - elapsed
 
                     logger.info(
-                        "Progress: %d/%d generations", generation_count, self.max_generations
+                        "Progress: %d/%d generations",
+                        generation_count,
+                        self.max_generations,
                     )
                     logger.info("Elapsed: %.1f minutes", elapsed / 60)
                     logger.info("Estimated remaining: %.1f minutes", remaining / 60)
@@ -664,10 +666,10 @@ class Enhanced50GenEvolutionMerger:
         logger.info("=" * 80)
         logger.info("Duration: %.1f minutes (%.1f seconds)", duration / 60, duration)
         logger.info("Generations completed: %d", self.generation)
-        logger.info("Best overall fitness: %.4f", best_overall['fitness'])
-        logger.info("Best method: %s", best_overall['merge_method'])
-        logger.info("Best parameters: %s", best_overall['parameters'])
-        logger.info("Best benchmarks: %s", best_overall.get('benchmark_results', {}))
+        logger.info("Best overall fitness: %.4f", best_overall["fitness"])
+        logger.info("Best method: %s", best_overall["merge_method"])
+        logger.info("Best parameters: %s", best_overall["parameters"])
+        logger.info("Best benchmarks: %s", best_overall.get("benchmark_results", {}))
 
         # Save comprehensive final results
         final_results = {

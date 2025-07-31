@@ -1056,7 +1056,7 @@ border-radius: 8px; margin: 20px 0;">
 
                     {
                 f'''
-                    <div style="background-color: #e8f5e8; padding: 15px; 
+                    <div style="background-color: #e8f5e8; padding: 15px;
 border-radius: 8px; margin: 20px 0;">
                         <h4 style="color: #27ae60; margin-top: 0;">
 Suggested Actions:</h4>
@@ -1363,11 +1363,11 @@ progress updates.
 
         # Create summary alert
         achievements_text = (
-            "🎉 " + ", ".join(report.achievements_earned) 
+            "🎉 " + ", ".join(report.achievements_earned)
             if report.achievements_earned else "Keep up the great work!"
         )
         summary_message = f"""
-        This week your child completed {report.sessions_completed} learning 
+        This week your child completed {report.sessions_completed} learning
 sessions with {report.total_study_time_minutes} minutes of study time.
 
         🌟 Highlights:
@@ -1507,7 +1507,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
 
             cursor.execute(
                 """
-                INSERT INTO learning_alerts VALUES 
+                INSERT INTO learning_alerts VALUES
                 (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
@@ -1567,7 +1567,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
 
             cursor.execute(
                 """
-                INSERT INTO parent_insights VALUES 
+                INSERT INTO parent_insights VALUES
                 (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
@@ -1601,7 +1601,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
 
             cursor.execute(
                 """
-                INSERT OR REPLACE INTO parent_settings VALUES 
+                INSERT OR REPLACE INTO parent_settings VALUES
                 (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (

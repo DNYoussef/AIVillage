@@ -2,8 +2,8 @@
 
 **Executive Summary:** Critical security vulnerabilities identified requiring immediate remediation.
 
-**Audit Date:** 2025-07-31  
-**Audited Components:** MCP Servers, Agent Communications, API Endpoints, Dependencies  
+**Audit Date:** 2025-07-31
+**Audited Components:** MCP Servers, Agent Communications, API Endpoints, Dependencies
 **Severity:** HIGH - Production deployment blocked until fixes implemented
 
 ---
@@ -217,7 +217,7 @@ class SecureJWTManager:
         self.secret = os.environ.get('AIVILLAGE_JWT_SECRET')
         if not self.secret or len(self.secret) < 32:
             raise SecurityError("Invalid JWT secret configuration")
-    
+
     def create_token(self, user_id: str, role: str) -> str:
         payload = {
             'sub': user_id,
@@ -238,7 +238,7 @@ class SecureMessageInput(BaseModel):
     content: str
     sender: str
     receiver: str
-    
+
     @validator('content')
     def validate_content(cls, v):
         if len(v) > 10000:  # Prevent DoS
@@ -246,8 +246,8 @@ class SecureMessageInput(BaseModel):
         if any(char in v for char in ['<script>', 'javascript:']):
             raise ValueError('Potentially malicious content')
         return v
-    
-    @validator('sender', 'receiver')  
+
+    @validator('sender', 'receiver')
     def validate_agent_id(cls, v):
         if not re.match(r'^[a-zA-Z0-9_-]+$', v):
             raise ValueError('Invalid agent ID format')
@@ -288,7 +288,7 @@ class SecurityAlertManager:
             'query_rate_limit': 100,
             'data_extraction_limit': 1000
         }
-    
+
     async def check_security_event(self, event_type: str, context: dict):
         if self.is_security_violation(event_type, context):
             await self.send_security_alert(event_type, context)
@@ -339,7 +339,7 @@ The AIVillage codebase contains **1 CRITICAL** and **4 HIGH** severity security 
 
 **Immediate Actions:**
 1. Replace all hardcoded secrets (24 hours)
-2. Fix SQL injection vulnerabilities (48 hours) 
+2. Fix SQL injection vulnerabilities (48 hours)
 3. Implement secure authentication (1 week)
 4. Deploy comprehensive security monitoring (2 weeks)
 

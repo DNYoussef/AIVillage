@@ -289,7 +289,9 @@ class ForgeOrchestrator:
 
                     if phase_module.is_stub:
                         logger.warning(
-                            "Phase %s appears to be a stub: %s", phase_type.value, phase_module.stub_reasons
+                            "Phase %s appears to be a stub: %s",
+                            phase_type.value,
+                            phase_module.stub_reasons,
                         )
 
                     break  # Use first successful import
@@ -828,7 +830,10 @@ class ForgeOrchestrator:
         # Execute phases in sequence
         for i, phase_type in enumerate(self.config.enabled_phases):
             logger.info(
-                "Starting Phase %d/%d: %s", i + 1, len(self.config.enabled_phases), phase_type.value
+                "Starting Phase %d/%d: %s",
+                i + 1,
+                len(self.config.enabled_phases),
+                phase_type.value,
             )
 
             try:
@@ -862,7 +867,9 @@ class ForgeOrchestrator:
 
             except asyncio.TimeoutError:
                 logger.error(
-                    "Phase %s timed out after %d minutes", phase_type.value, self.config.max_phase_duration_minutes
+                    "Phase %s timed out after %d minutes",
+                    phase_type.value,
+                    self.config.max_phase_duration_minutes,
                 )
                 result = PhaseResult(
                     phase_type=phase_type,
@@ -966,7 +973,7 @@ class ForgeOrchestrator:
         logger.info("=" * 60)
         logger.info("AGENT FORGE PIPELINE COMPLETE - Run ID: %s", self.run_id)
         logger.info("Duration: %.1f seconds", total_duration)
-        logger.info("Success Rate: %.1%", report['success_rate'])
+        logger.info("Success Rate: %.1%", report["success_rate"])
         logger.info(
             "Phases Completed: %d/%d", len(completed_phases), len(self.phase_results)
         )
@@ -978,11 +985,11 @@ class ForgeOrchestrator:
             logger.warning("Stub Phases: %s", [p.value for p in stub_phases])
 
         if report["todos"]:
-            logger.info("Implementation TODOs (%d):", len(report['todos']))
+            logger.info("Implementation TODOs (%d):", len(report["todos"]))
             for todo in report["todos"][:5]:  # Show first 5
                 logger.info("  - %s", todo)
             if len(report["todos"]) > 5:
-                logger.info("  ... and %d more", len(report['todos']) - 5)
+                logger.info("  ... and %d more", len(report["todos"]) - 5)
 
         logger.info("Full report saved: %s", report_file)
         logger.info("=" * 60)

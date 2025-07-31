@@ -247,7 +247,7 @@ def forward(self, taskInfo):
 
     def evaluate_path(path):
         eval_input = (
-            [taskInfo] + [Info('step', 'Tree', step, i) 
+            [taskInfo] + [Info('step', 'Tree', step, i)
                          for i, step in enumerate(path)]
         )
         evaluation, answer = evaluation_agent(eval_input, evaluation_instruction)
@@ -430,7 +430,7 @@ def forward(self, taskInfo):
         "differences and provide the final correct answer."
     )
     analysis, answer = contrast_agent(
-        [taskInfo, correct_thinking, incorrect_thinking], 
+        [taskInfo, correct_thinking, incorrect_thinking],
         contrast_instruction
     )
 
@@ -456,7 +456,7 @@ def forward(self, taskInfo):
         "solving the given task."
     )
     relevant_examples = retrieval_agent(
-        [taskInfo, Info('memory', 'Memory Bank', str(memory_bank), 0)], 
+        [taskInfo, Info('memory', 'Memory Bank', str(memory_bank), 0)],
         retrieval_instruction
     )[0]
 
@@ -579,8 +579,8 @@ async def run(self):
 
         # Select winners and losers
         sorted_population = sorted(
-            zip(population, scores), 
-            key=lambda x: float(x[1]), 
+            zip(population, scores),
+            key=lambda x: float(x[1]),
             reverse=True
         )
         winners = [idea for idea, _ in sorted_population[:2]]
@@ -629,7 +629,7 @@ async def run(self):
             "offer ways to move forward dynamically."
         )
         critique_response = await critique_module.llm_response(
-            critique_instruction + '\\n' + '\\n'.join(new_ideas), 
+            critique_instruction + '\\n' + '\\n'.join(new_ideas),
             temperature=critique_temp
         )
 

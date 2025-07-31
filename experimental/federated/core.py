@@ -49,15 +49,15 @@ class PrivacyBudget:
     consumed_epsilon: float = 0.0
     consumed_delta: float = 0.0
     max_rounds: int = 100
-    
+
     @property
     def remaining_epsilon(self) -> float:
         return max(0.0, self.epsilon - self.consumed_epsilon)
-    
+
     @property
     def remaining_delta(self) -> float:
         return max(0.0, self.delta - self.consumed_delta)
-    
+
     def consume(self, eps: float, delta: float) -> bool:
         """Consume privacy budget. Returns True if budget allows."""
         if self.consumed_epsilon + eps <= self.epsilon and self.consumed_delta + delta <= self.delta:
@@ -96,7 +96,7 @@ class FederatedRound:
 
 class PrivacyEngine:
     """Privacy-preserving mechanisms for federated learning."""
-    
+
     def __init__(
         self,
         mechanism: PrivacyMechanism = PrivacyMechanism.DIFFERENTIAL_PRIVACY,
@@ -105,7 +105,7 @@ class PrivacyEngine:
         self.mechanism = mechanism
         self.privacy_budget = privacy_budget or PrivacyBudget()
         self.logger = logging.getLogger("PrivacyEngine")
-    
+
     def add_noise_to_gradients(
         self,
         gradients: Dict[str, torch.Tensor],
@@ -115,24 +115,24 @@ class PrivacyEngine:
         """Add differential privacy noise to gradients."""
         if self.mechanism != PrivacyMechanism.DIFFERENTIAL_PRIVACY:
             return gradients, (0.0, 0.0)
-        
+
         # Calculate noise scale using Gaussian mechanism
         delta = 1e-5
         sigma = np.sqrt(2 * np.log(1.25 / delta)) * sensitivity / epsilon
-        
+
         # Check privacy budget
         if not self.privacy_budget.consume(epsilon, delta):
             raise ValueError("Insufficient privacy budget")
-        
+
         noisy_gradients = {}
         for param_name, gradient in gradients.items():
             # Add Gaussian noise
             noise = torch.normal(0, sigma, size=gradient.shape, device=gradient.device)
             noisy_gradients[param_name] = gradient + noise
-        
+
         self.logger.info(f"Added DP noise: ε={epsilon:.3f}, σ={sigma:.3f}")
         return noisy_gradients, (epsilon, delta)
-    
+
     def secure_aggregation_mask(
         self,
         gradients: Dict[str, torch.Tensor],
@@ -142,20 +142,20 @@ class PrivacyEngine:
         """Apply secure aggregation masking (simplified implementation)."""
         if self.mechanism not in [PrivacyMechanism.SECURE_AGGREGATION, PrivacyMechanism.COMBINED]:
             return gradients
-        
+
         # Generate deterministic mask based on client_id and round
         seed = hash(f"{client_id}_{round_number}") % (2**32)
         rng = torch.Generator()
         rng.manual_seed(seed)
-        
+
         masked_gradients = {}
         for param_name, gradient in gradients.items():
             # Generate mask with same shape
             mask = torch.randn(gradient.shape, generator=rng, device=gradient.device) * 0.01
             masked_gradients[param_name] = gradient + mask
-        
+
         return masked_gradients
-    
+
     def validate_privacy_guarantees(self) -> Dict[str, Any]:
         """Validate current privacy guarantees."""
         return {
@@ -167,7 +167,7 @@ class PrivacyEngine:
             "epsilon_remaining": self.privacy_budget.remaining_epsilon,
             "delta_remaining": self.privacy_budget.remaining_delta,
             "budget_exhausted": (
-                self.privacy_budget.remaining_epsilon <= 0 or 
+                self.privacy_budget.remaining_epsilon <= 0 or
                 self.privacy_budget.remaining_delta <= 0
             )
         }
@@ -175,7 +175,7 @@ class PrivacyEngine:
 
 class SecureAggregator:
     """Secure gradient aggregation with Byzantine fault tolerance."""
-    
+
     def __init__(
         self,
         strategy: AggregationStrategy = AggregationStrategy.FEDAVG,
@@ -184,7 +184,7 @@ class SecureAggregator:
         self.strategy = strategy
         self.byzantine_threshold = byzantine_threshold
         self.logger = logging.getLogger("SecureAggregator")
-    
+
     def aggregate_gradients(
         self,
         updates: List[ClientUpdate],
@@ -193,14 +193,14 @@ class SecureAggregator:
         """Aggregate client gradients securely."""
         if not updates:
             return global_model_state, {}
-        
+
         # Byzantine detection and filtering
         filtered_updates = self._detect_and_filter_byzantine(updates)
-        
+
         if len(filtered_updates) == 0:
             self.logger.warning("All updates filtered as Byzantine")
             return global_model_state, {"byzantine_filtered": len(updates)}
-        
+
         # Choose aggregation strategy
         if self.strategy == AggregationStrategy.FEDAVG:
             aggregated_state = self._federated_averaging(filtered_updates, global_model_state)
@@ -210,21 +210,21 @@ class SecureAggregator:
             aggregated_state = self._scaffold_aggregation(filtered_updates, global_model_state)
         else:
             aggregated_state = self._federated_averaging(filtered_updates, global_model_state)
-        
+
         metrics = {
             "total_updates": len(updates),
             "filtered_updates": len(filtered_updates),
             "byzantine_detected": len(updates) - len(filtered_updates),
             "total_samples": sum(u.num_samples for u in filtered_updates)
         }
-        
+
         return aggregated_state, metrics
-    
+
     def _detect_and_filter_byzantine(self, updates: List[ClientUpdate]) -> List[ClientUpdate]:
         """Detect and filter Byzantine updates using statistical methods."""
         if len(updates) <= 2:
             return updates  # Can't detect Byzantine with too few updates
-        
+
         # Calculate gradient norms for each update
         gradient_norms = []
         for update in updates:
@@ -232,14 +232,14 @@ class SecureAggregator:
             for param_name, gradient in update.gradients.items():
                 total_norm += torch.norm(gradient).item() ** 2
             gradient_norms.append(np.sqrt(total_norm))
-        
+
         # Use median-based outlier detection
         median_norm = np.median(gradient_norms)
         mad = np.median(np.abs(np.array(gradient_norms) - median_norm))
-        
+
         # Filter outliers (simplified Byzantine detection)
         threshold = median_norm + 3 * mad  # 3-sigma rule
-        
+
         filtered_updates = []
         for i, update in enumerate(updates):
             if gradient_norms[i] <= threshold:
@@ -249,9 +249,9 @@ class SecureAggregator:
                     f"Filtered Byzantine update from {update.client_id}: "
                     f"norm={gradient_norms[i]:.3f} > threshold={threshold:.3f}"
                 )
-        
+
         return filtered_updates
-    
+
     def _federated_averaging(
         self,
         updates: List[ClientUpdate],
@@ -260,21 +260,21 @@ class SecureAggregator:
         """Standard federated averaging with sample weighting."""
         total_samples = sum(update.num_samples for update in updates)
         aggregated_state = {}
-        
+
         for param_name in global_model_state:
             weighted_sum = torch.zeros_like(global_model_state[param_name])
-            
+
             for update in updates:
                 if param_name in update.gradients:
                     weight = update.num_samples / total_samples
                     # Apply gradient to get updated parameter
                     updated_param = global_model_state[param_name] + update.gradients[param_name]
                     weighted_sum += weight * updated_param
-            
+
             aggregated_state[param_name] = weighted_sum
-        
+
         return aggregated_state
-    
+
     def _fedprox_aggregation(
         self,
         updates: List[ClientUpdate],
@@ -283,16 +283,16 @@ class SecureAggregator:
         """FedProx aggregation with proximal term."""
         # Start with standard averaging
         aggregated_state = self._federated_averaging(updates, global_model_state)
-        
+
         # Add proximal regularization
         mu = 0.01  # Proximal term coefficient
         for param_name in aggregated_state:
             aggregated_state[param_name] = (
                 aggregated_state[param_name] + mu * global_model_state[param_name]
             ) / (1 + mu)
-        
+
         return aggregated_state
-    
+
     def _scaffold_aggregation(
         self,
         updates: List[ClientUpdate],
@@ -301,7 +301,7 @@ class SecureAggregator:
         """SCAFFOLD aggregation with control variates (simplified)."""
         # Use standard averaging with drift correction
         aggregated_state = self._federated_averaging(updates, global_model_state)
-        
+
         # Apply drift correction
         drift_correction = 0.1
         for param_name in aggregated_state:
@@ -309,36 +309,36 @@ class SecureAggregator:
                 (1 - drift_correction) * aggregated_state[param_name] +
                 drift_correction * global_model_state[param_name]
             )
-        
+
         return aggregated_state
 
 
 class ModelSynchronizer:
     """Manages model synchronization across distributed nodes."""
-    
+
     def __init__(self, compression_ratio: float = 0.5):
         self.compression_ratio = compression_ratio
         self.model_versions = {}
         self.logger = logging.getLogger("ModelSynchronizer")
-    
+
     def create_model_version(self, model_state: Dict[str, torch.Tensor]) -> str:
         """Create a unique version identifier for model state."""
         # Hash model parameters for version ID
         param_bytes = b""
         for key in sorted(model_state.keys()):
             param_bytes += model_state[key].cpu().numpy().tobytes()
-        
+
         version = hashlib.sha256(param_bytes).hexdigest()[:16]
         self.model_versions[version] = {k: v.clone() for k, v in model_state.items()}
         return version
-    
+
     def compress_model_state(
         self,
         model_state: Dict[str, torch.Tensor]
     ) -> Dict[str, Any]:
         """Compress model state for efficient transmission."""
         compressed = {}
-        
+
         for key, tensor in model_state.items():
             # Apply quantization and compression
             if tensor.dtype == torch.float32:
@@ -358,21 +358,21 @@ class ModelSynchronizer:
                     "dtype": str(tensor.dtype),
                     "compression": "none"
                 }
-        
+
         return compressed
-    
+
     def decompress_model_state(
         self,
         compressed_state: Dict[str, Any]
     ) -> Dict[str, torch.Tensor]:
         """Decompress model state from compressed format."""
         decompressed = {}
-        
+
         for key, compressed_tensor in compressed_state.items():
             data_bytes = compressed_tensor["data"]
             shape = compressed_tensor["shape"]
             dtype = compressed_tensor["dtype"]
-            
+
             if dtype == "float16":
                 # Decompress quantized tensor
                 tensor = torch.frombuffer(data_bytes, dtype=torch.float16).reshape(shape)
@@ -383,12 +383,12 @@ class ModelSynchronizer:
                     torch_dtype = getattr(torch, dtype.split(".")[-1])
                 else:
                     torch_dtype = torch.float32
-                
+
                 tensor = torch.frombuffer(data_bytes, dtype=torch_dtype).reshape(shape)
                 decompressed[key] = tensor
-        
+
         return decompressed
-    
+
     def calculate_model_diff(
         self,
         old_state: Dict[str, torch.Tensor],
@@ -400,7 +400,7 @@ class ModelSynchronizer:
             if key in new_state:
                 diff[key] = new_state[key] - old_state[key]
         return diff
-    
+
     def apply_model_diff(
         self,
         base_state: Dict[str, torch.Tensor],
@@ -418,29 +418,29 @@ class ModelSynchronizer:
 
 class TrainingMonitor:
     """Monitors federated training progress and health."""
-    
+
     def __init__(self):
         self.round_history = []
         self.client_performance = {}
         self.privacy_metrics = {}
         self.convergence_metrics = {}
         self.logger = logging.getLogger("TrainingMonitor")
-    
+
     def record_round(self, round_info: FederatedRound):
         """Record information about a completed round."""
         self.round_history.append(round_info)
-        
+
         # Update privacy metrics
         eps_consumed, delta_consumed = round_info.privacy_consumed
         total_eps = self.privacy_metrics.get("total_epsilon_consumed", 0.0)
         total_delta = self.privacy_metrics.get("total_delta_consumed", 0.0)
-        
+
         self.privacy_metrics.update({
             "total_epsilon_consumed": total_eps + eps_consumed,
             "total_delta_consumed": total_delta + delta_consumed,
             "rounds_completed": len(self.round_history)
         })
-        
+
         # Update convergence metrics
         if round_info.aggregated_metrics:
             for metric_name, value in round_info.aggregated_metrics.items():
@@ -451,7 +451,7 @@ class TrainingMonitor:
                     "value": value,
                     "timestamp": round_info.end_time or round_info.start_time
                 })
-    
+
     def record_client_performance(
         self,
         client_id: str,
@@ -461,29 +461,29 @@ class TrainingMonitor:
         """Record client performance metrics."""
         if client_id not in self.client_performance:
             self.client_performance[client_id] = []
-        
+
         self.client_performance[client_id].append({
             "round": round_number,
             "timestamp": time.time(),
             **metrics
         })
-    
+
     def get_training_health(self) -> Dict[str, Any]:
         """Get overall training health assessment."""
         if not self.round_history:
             return {"status": "no_data", "health_score": 0.0}
-        
+
         # Calculate participation rate
         total_clients = set()
         participating_clients = set()
-        
+
         for round_info in self.round_history:
             for client_id in round_info.participating_clients:
                 total_clients.add(client_id)
                 participating_clients.add(client_id)
-        
+
         participation_rate = len(participating_clients) / len(total_clients) if total_clients else 0.0
-        
+
         # Calculate convergence stability
         convergence_score = 0.0
         if "loss" in self.convergence_metrics and len(self.convergence_metrics["loss"]) >= 3:
@@ -491,10 +491,10 @@ class TrainingMonitor:
             convergence_score = 1.0 if all(
                 recent_losses[i] >= recent_losses[i+1] for i in range(len(recent_losses)-1)
             ) else 0.5
-        
+
         # Calculate health score
         health_score = (participation_rate + convergence_score) / 2.0
-        
+
         return {
             "status": "healthy" if health_score > 0.7 else "degraded" if health_score > 0.4 else "unhealthy",
             "health_score": health_score,
@@ -507,28 +507,28 @@ class TrainingMonitor:
                 "delta": self.privacy_metrics.get("total_delta_consumed", 0.0)
             }
         }
-    
+
     def get_convergence_analysis(self) -> Dict[str, Any]:
         """Analyze training convergence patterns."""
         if not self.convergence_metrics:
             return {"status": "insufficient_data"}
-        
+
         analysis = {}
-        
+
         for metric_name, history in self.convergence_metrics.items():
             if len(history) < 3:
                 continue
-            
+
             values = [h["value"] for h in history]
             rounds = [h["round"] for h in history]
-            
+
             # Calculate trend
             if len(values) >= 2:
                 trend = "improving" if values[-1] < values[0] else "degrading"
-                
+
                 # Calculate rate of change
                 rate_of_change = (values[-1] - values[0]) / (rounds[-1] - rounds[0])
-                
+
                 analysis[metric_name] = {
                     "trend": trend,
                     "rate_of_change": rate_of_change,
@@ -536,9 +536,9 @@ class TrainingMonitor:
                     "best_value": min(values) if metric_name == "loss" else max(values),
                     "stability": np.std(values[-5:]) if len(values) >= 5 else float('inf')
                 }
-        
+
         return analysis
-    
+
     def export_metrics(self) -> Dict[str, Any]:
         """Export all collected metrics."""
         return {
@@ -562,7 +562,7 @@ class TrainingMonitor:
 
 class FederatedTrainingCoordinator:
     """Main coordinator for federated learning training."""
-    
+
     def __init__(
         self,
         model: nn.Module,
@@ -579,58 +579,58 @@ class FederatedTrainingCoordinator:
         self.aggregator = aggregator or SecureAggregator()
         self.synchronizer = synchronizer or ModelSynchronizer()
         self.monitor = monitor or TrainingMonitor()
-        
+
         self.min_clients = min_clients
         self.max_rounds = max_rounds
         self.round_timeout = round_timeout
-        
+
         # Training state
         self.current_round = 0
         self.registered_clients = {}
         self.client_updates = {}
         self.current_model_version = self.synchronizer.create_model_version(self.model.state_dict())
-        
+
         # Configuration
         self.client_selection_fraction = 0.3
         self.learning_rate = 0.01
-        
+
         self.logger = logging.getLogger("FederatedCoordinator")
-    
+
     async def start_training(self) -> Dict[str, Any]:
         """Start federated training process."""
         self.logger.info(f"Starting federated training for {self.max_rounds} rounds")
-        
+
         training_results = {"rounds": [], "final_metrics": {}}
-        
+
         for round_num in range(1, self.max_rounds + 1):
             self.logger.info(f"Starting round {round_num}/{self.max_rounds}")
-            
+
             round_result = await self.execute_round()
             training_results["rounds"].append(round_result)
-            
+
             if round_result.get("status") == "insufficient_clients":
                 self.logger.warning("Stopping training due to insufficient clients")
                 break
-            
+
             # Check convergence
             if self._check_convergence():
                 self.logger.info("Training converged early")
                 break
-        
+
         # Generate final results
         training_results["final_metrics"] = self.monitor.get_training_health()
         training_results["convergence_analysis"] = self.monitor.get_convergence_analysis()
         training_results["privacy_report"] = self.privacy_engine.validate_privacy_guarantees()
-        
+
         return training_results
-    
+
     async def execute_round(self) -> Dict[str, Any]:
         """Execute a single federated learning round."""
         self.current_round += 1
-        
+
         # Select clients
         selected_clients = self._select_clients()
-        
+
         if len(selected_clients) < self.min_clients:
             return {
                 "status": "insufficient_clients",
@@ -638,7 +638,7 @@ class FederatedTrainingCoordinator:
                 "available_clients": len(selected_clients),
                 "required_clients": self.min_clients
             }
-        
+
         # Create round info
         round_info = FederatedRound(
             round_number=self.current_round,
@@ -653,28 +653,28 @@ class FederatedTrainingCoordinator:
                 "privacy_mechanism": self.privacy_engine.mechanism.name
             }
         )
-        
+
         # Prepare client updates storage
         self.client_updates[self.current_round] = []
-        
+
         # Simulate client training (in real implementation, this would be distributed)
         for client_info in selected_clients:
             client_id = client_info["client_id"]
             update = await self._simulate_client_training(client_id, round_info)
-            
+
             if update:
                 await self.receive_client_update(update)
-        
+
         # Wait for any remaining updates
         await asyncio.sleep(1.0)
-        
+
         # Aggregate updates
         await self._aggregate_round_updates(round_info)
-        
+
         # Record round completion
         round_info.end_time = time.time()
         self.monitor.record_round(round_info)
-        
+
         return {
             "status": "completed",
             "round_number": self.current_round,
@@ -683,16 +683,16 @@ class FederatedTrainingCoordinator:
             "aggregated_metrics": round_info.aggregated_metrics,
             "privacy_consumed": round_info.privacy_consumed
         }
-    
+
     async def receive_client_update(self, update: ClientUpdate) -> Dict[str, Any]:
         """Receive and validate client update."""
         if update.round_number != self.current_round:
             return {"status": "wrong_round", "expected": self.current_round}
-        
+
         # Validate update integrity
         if not self._validate_update(update):
             return {"status": "invalid_update"}
-        
+
         # Apply privacy mechanisms
         if self.privacy_engine.mechanism != PrivacyMechanism.NONE:
             try:
@@ -704,10 +704,10 @@ class FederatedTrainingCoordinator:
             except ValueError as e:
                 self.logger.error(f"Privacy budget exceeded: {e}")
                 return {"status": "privacy_budget_exceeded"}
-        
+
         # Store update
         self.client_updates[self.current_round].append(update)
-        
+
         # Record client performance
         self.monitor.record_client_performance(
             update.client_id,
@@ -719,41 +719,41 @@ class FederatedTrainingCoordinator:
                 "privacy_spent": update.privacy_spent
             }
         )
-        
+
         self.logger.info(f"Received update from {update.client_id}")
         return {"status": "accepted"}
-    
+
     async def _aggregate_round_updates(self, round_info: FederatedRound):
         """Aggregate all updates for the current round."""
         updates = self.client_updates[self.current_round]
-        
+
         if not updates:
             self.logger.warning("No updates to aggregate")
             return
-        
+
         # Secure aggregation
         aggregated_state, aggregation_metrics = self.aggregator.aggregate_gradients(
             updates, self.model.state_dict()
         )
-        
+
         # Update global model
         self.model.load_state_dict(aggregated_state)
         self.current_model_version = self.synchronizer.create_model_version(aggregated_state)
-        
+
         # Calculate aggregated metrics
         round_metrics = self._aggregate_client_metrics(updates)
         round_info.aggregated_metrics = {**round_metrics, **aggregation_metrics}
-        
+
         # Calculate privacy consumption
         total_eps = sum(u.privacy_spent[0] for u in updates)
         total_delta = sum(u.privacy_spent[1] for u in updates)
         round_info.privacy_consumed = (total_eps, total_delta)
-        
+
         self.logger.info(
             f"Aggregated {len(updates)} updates, "
             f"privacy cost: ε={total_eps:.3f}, δ={total_delta:.6f}"
         )
-    
+
     def _select_clients(self) -> List[Dict[str, Any]]:
         """Select clients for participation in current round."""
         # Filter eligible clients
@@ -761,16 +761,16 @@ class FederatedTrainingCoordinator:
             client_info for client_info in self.registered_clients.values()
             if client_info.get("active", False) and client_info.get("battery_level", 0) > 0.2
         ]
-        
+
         if len(eligible_clients) <= self.min_clients:
             return eligible_clients
-        
+
         # Select based on fraction and capabilities
         num_to_select = max(
             self.min_clients,
             int(len(eligible_clients) * self.client_selection_fraction)
         )
-        
+
         # Weight-based selection
         weights = []
         for client in eligible_clients:
@@ -780,22 +780,22 @@ class FederatedTrainingCoordinator:
                 (1 + client.get("compute_power", 1))
             )
             weights.append(weight)
-        
+
         # Normalize weights
         weights = np.array(weights)
         if weights.sum() > 0:
             weights = weights / weights.sum()
         else:
             weights = np.ones(len(eligible_clients)) / len(eligible_clients)
-        
+
         # Random selection with weights
         rng = np.random.default_rng()
         indices = rng.choice(
             len(eligible_clients), size=num_to_select, replace=False, p=weights
         )
-        
+
         return [eligible_clients[i] for i in indices]
-    
+
     def _validate_update(self, update: ClientUpdate) -> bool:
         """Validate client update for integrity and correctness."""
         # Check required fields
@@ -806,7 +806,7 @@ class FederatedTrainingCoordinator:
             update.computation_time > 0
         ]):
             return False
-        
+
         # Check gradient shapes match model
         model_state = self.model.state_dict()
         for param_name, gradient in update.gradients.items():
@@ -814,28 +814,28 @@ class FederatedTrainingCoordinator:
                 return False
             if gradient.shape != model_state[param_name].shape:
                 return False
-        
+
         # Check for NaN or infinite values
         for gradient in update.gradients.values():
             if torch.isnan(gradient).any() or torch.isinf(gradient).any():
                 return False
-        
+
         return True
-    
+
     def _aggregate_client_metrics(self, updates: List[ClientUpdate]) -> Dict[str, float]:
         """Aggregate metrics from client updates."""
         if not updates:
             return {}
-        
+
         # Collect all metric names
         all_metrics = set()
         for update in updates:
             all_metrics.update(update.metrics.keys())
-        
+
         # Aggregate each metric using weighted average
         aggregated = {}
         total_samples = sum(u.num_samples for u in updates)
-        
+
         for metric_name in all_metrics:
             weighted_sum = 0.0
             for update in updates:
@@ -843,45 +843,45 @@ class FederatedTrainingCoordinator:
                     weight = update.num_samples / total_samples
                     weighted_sum += weight * update.metrics[metric_name]
             aggregated[metric_name] = weighted_sum
-        
+
         return aggregated
-    
+
     def _check_convergence(self) -> bool:
         """Check if training has converged."""
         convergence_analysis = self.monitor.get_convergence_analysis()
-        
+
         if "loss" not in convergence_analysis:
             return False
-        
+
         loss_analysis = convergence_analysis["loss"]
-        
+
         # Consider converged if loss is stable and improving slowly
         return (
             loss_analysis.get("stability", float('inf')) < 0.01 and
             abs(loss_analysis.get("rate_of_change", float('inf'))) < 0.001
         )
-    
+
     async def _simulate_client_training(
         self,
         client_id: str,
         round_info: FederatedRound
     ) -> Optional[ClientUpdate]:
         """Simulate client training (for testing purposes)."""
-        # This is a placeholder - in real implementation, 
+        # This is a placeholder - in real implementation,
         # clients would train independently and send updates
-        
+
         # Simulate training time
         await asyncio.sleep(np.random.uniform(0.1, 1.0))
-        
+
         # Generate fake gradients
         model_state = self.model.state_dict()
         fake_gradients = {}
-        
+
         for param_name, param in model_state.items():
             # Generate small random gradients
             gradient = torch.randn_like(param) * 0.01
             fake_gradients[param_name] = gradient
-        
+
         # Create update
         update = ClientUpdate(
             client_id=client_id,
@@ -899,9 +899,9 @@ class FederatedTrainingCoordinator:
                 "battery_level": np.random.uniform(0.3, 1.0)
             }
         )
-        
+
         return update
-    
+
     def register_client(self, client_id: str, client_info: Dict[str, Any]):
         """Register a new client for federated learning."""
         self.registered_clients[client_id] = {
@@ -913,9 +913,9 @@ class FederatedTrainingCoordinator:
             "compute_power": 1.0,
             **client_info
         }
-        
+
         self.logger.info(f"Registered client {client_id}")
-    
+
     def get_training_status(self) -> Dict[str, Any]:
         """Get current training status."""
         return {

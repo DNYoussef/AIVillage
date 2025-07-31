@@ -127,7 +127,9 @@ class OrchestrationTester:
                     test["prompt"], test["context"]
                 )
                 logger.info(
-                    "Classified '%s...' as %s", test['prompt'][:50], classified_type.value
+                    "Classified '%s...' as %s",
+                    test["prompt"][:50],
+                    classified_type.value,
                 )
 
                 # Test model selection
@@ -175,9 +177,9 @@ class OrchestrationTester:
                 domain="algorithm_design", difficulty=6, num_variations=2
             )
 
-            logger.info("Original problem: %s...", result['original'][:200])
-            logger.info("Generated %d variations", len(result['variations']))
-            logger.info("Total cost: $%.4f", result['total_cost'])
+            logger.info("Original problem: %s...", result["original"][:200])
+            logger.info("Generated %d variations", len(result["variations"]))
+            logger.info("Total cost: $%.4f", result["total_cost"])
 
             self.results["variation_test"] = {
                 "success": True,
@@ -213,7 +215,9 @@ class OrchestrationTester:
             question = generator._generate_single_question("python_programming", 5)
 
             logger.info("Generated question: %s...", question.text[:200])
-            logger.info("Domain: %s, Difficulty: %s", question.domain, question.difficulty)
+            logger.info(
+                "Domain: %s, Difficulty: %s", question.domain, question.difficulty
+            )
 
             # Test evaluation
             test_answer = "This is a test answer to the programming question."
@@ -246,9 +250,9 @@ class OrchestrationTester:
                 metrics = self.client.get_metrics_summary()
 
                 logger.info("Cost tracking metrics:")
-                logger.info("Total cost: $%.4f", metrics['total_cost'])
+                logger.info("Total cost: $%.4f", metrics["total_cost"])
                 logger.info(
-                    "Cost by task: %s", json.dumps(metrics['cost_by_task'], indent=2)
+                    "Cost by task: %s", json.dumps(metrics["cost_by_task"], indent=2)
                 )
 
                 self.results["cost_tracking"] = {"success": True, "metrics": metrics}
@@ -291,7 +295,7 @@ class OrchestrationTester:
             logger.info("%s: %s", test_name, status)
 
             if not result.get("success"):
-                logger.error("  Error: %s", result.get('error'))
+                logger.error("  Error: %s", result.get("error"))
 
         # Save results
         with open("orchestration_test_results.json", "w") as f:

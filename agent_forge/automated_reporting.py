@@ -129,8 +129,8 @@ class PublicationReportGenerator:
 
 ### Key Improvements
 {% if biggest_jump %}
-**Biggest Performance Jump**: {{ biggest_jump.to_phase }} showed 
-{{ biggest_jump.relative_improvement }}% improvement in 
+**Biggest Performance Jump**: {{ biggest_jump.to_phase }} showed
+{{ biggest_jump.relative_improvement }}% improvement in
 {{ biggest_jump.benchmark }} over {{ biggest_jump.from_phase }}
 {% else %}
 No significant performance jumps detected across pipeline phases.
@@ -179,8 +179,7 @@ No significant performance jumps detected across pipeline phases.
 
         if insights.get("top_benchmarks"):
             highlights.append(
-                f"Strong performance in "
-                f"{', '.join(insights['top_benchmarks'][:3])}"
+                f"Strong performance in {', '.join(insights['top_benchmarks'][:3])}"
             )
 
         content = template.render(
@@ -188,9 +187,7 @@ No significant performance jumps detected across pipeline phases.
             date=datetime.now().strftime("%Y-%m-%d"),
             best_model=best_model,
             performance_score=performance_score,
-            deployment_rec=insights.get(
-                "deployment_recommendation", "Review required"
-            ),
+            deployment_rec=insights.get("deployment_recommendation", "Review required"),
             confidence=insights.get("confidence_level", "medium"),
             highlights=highlights,
             biggest_jump=insights.get("biggest_performance_jump"),
@@ -214,18 +211,18 @@ No significant performance jumps detected across pipeline phases.
 
 ## Abstract
 
-We present a comprehensive evaluation of the Agent Forge pipeline, an advanced AI 
-training system incorporating evolutionary model merging, reasoning 
-enhancement, and compression techniques. Our analysis across standardized 
-benchmarks demonstrates significant performance improvements through the 
+We present a comprehensive evaluation of the Agent Forge pipeline, an advanced AI
+training system incorporating evolutionary model merging, reasoning
+enhancement, and compression techniques. Our analysis across standardized
+benchmarks demonstrates significant performance improvements through the
 integrated pipeline approach.
 
 ## 1. Introduction
 
-The Agent Forge system represents a novel approach to AI model development, 
-combining multiple optimization techniques in a unified pipeline. This report 
-presents detailed performance analysis across {{ total_benchmarks }} 
-standardized benchmarks, comparing {{ models_evaluated }} pipeline phases 
+The Agent Forge system represents a novel approach to AI model development,
+combining multiple optimization techniques in a unified pipeline. This report
+presents detailed performance analysis across {{ total_benchmarks }}
+standardized benchmarks, comparing {{ models_evaluated }} pipeline phases
 against baseline and frontier models.
 
 ## 2. Methodology
@@ -264,7 +261,7 @@ The Agent Forge pipeline consists of the following phases:
 |-------------|---------------|------|-------|-----------|-----------|-----|
 {% for phase, phase_data in phase_analysis.items() %}
 | {{ phase.title() }} | {{ "%.3f"|format(phase_data.average_score) }} |
-{%- for bench, score in phase_data.benchmark_scores.items() %} 
+{%- for bench, score in phase_data.benchmark_scores.items() %}
 {{ "%.3f"|format(score) }}{% if not loop.last %} | {% endif %}
 {%- endfor %} |
 {% endfor %}
@@ -276,8 +273,8 @@ The Agent Forge pipeline consists of the following phases:
 
 - **Target Performance**: {{ "%.3f"|format(stats.target_score) }}
 - **Baseline Comparison**: {{ "%.1f"|format(stats.baseline_percentile) }}th percentile
-- **Statistical Significance**: 
-{{ "Yes" if stats.get('baseline_ttest', {}).get('significant', False) 
+- **Statistical Significance**:
+{{ "Yes" if stats.get('baseline_ttest', {}).get('significant', False)
 else "No" }}
 {% if stats.get('baseline_ttest', {}).get('p_value') %}
 - **p-value**: {{ "%.4f"|format(stats.baseline_ttest.p_value) }}
@@ -288,9 +285,9 @@ else "No" }}
 ### 3.3 Performance Evolution
 
 {% if biggest_jump %}
-The most significant performance improvement was observed in the 
-{{ biggest_jump.to_phase }} phase, which achieved a 
-{{ "%.1f"|format(biggest_jump.relative_improvement) }}% improvement in 
+The most significant performance improvement was observed in the
+{{ biggest_jump.to_phase }} phase, which achieved a
+{{ "%.1f"|format(biggest_jump.relative_improvement) }}% improvement in
 {{ biggest_jump.benchmark }} compared to {{ biggest_jump.from_phase }}.
 {% endif %}
 
@@ -328,17 +325,17 @@ The most significant performance improvement was observed in the
 
 ### 5.2 Implications
 
-The results demonstrate that the Agent Forge pipeline approach yields 
-significant performance improvements across multiple domains. The integration 
-of evolutionary optimization, reasoning enhancement, and model compression 
+The results demonstrate that the Agent Forge pipeline approach yields
+significant performance improvements across multiple domains. The integration
+of evolutionary optimization, reasoning enhancement, and model compression
 proves effective for creating deployable AI systems.
 
 ## 6. Conclusion
 
 {% if best_model %}
-The {{ best_model }} phase achieves the best overall performance with a score 
-of {{ "%.3f"|format(best_score) }}, representing a significant advancement 
-over baseline models. The comprehensive evaluation validates the Agent Forge 
+The {{ best_model }} phase achieves the best overall performance with a score
+of {{ "%.3f"|format(best_score) }}, representing a significant advancement
+over baseline models. The comprehensive evaluation validates the Agent Forge
 approach for production deployment.
 {% endif %}
 
@@ -358,7 +355,7 @@ approach for production deployment.
 
 ## Appendix A: Detailed Performance Data
 
-Complete performance data and statistical analysis results are available in the 
+Complete performance data and statistical analysis results are available in the
 accompanying data files.
 
 ---
@@ -372,9 +369,7 @@ accompanying data files.
         insights = analysis.get("insights", {})
 
         # Get hardware info
-        hardware_info = (
-            "CUDA GPU" if os.environ.get("CUDA_VISIBLE_DEVICES") else "CPU"
-        )
+        hardware_info = "CUDA GPU" if os.environ.get("CUDA_VISIBLE_DEVICES") else "CPU"
 
         key_insights = [
             "Pipeline approach yields consistent improvements across benchmarks",
@@ -437,19 +432,19 @@ accompanying data files.
 \maketitle
 
 \begin{abstract}
-We present Agent Forge, a comprehensive AI training pipeline that combines 
-evolutionary model merging, reasoning enhancement, and model compression. Our 
-evaluation across standardized benchmarks demonstrates significant performance 
-improvements, with the best model achieving {{ "%.3f"|format(best_score) }} 
-overall performance. Statistical analysis confirms significant improvements over 
+We present Agent Forge, a comprehensive AI training pipeline that combines
+evolutionary model merging, reasoning enhancement, and model compression. Our
+evaluation across standardized benchmarks demonstrates significant performance
+improvements, with the best model achieving {{ "%.3f"|format(best_score) }}
+overall performance. Statistical analysis confirms significant improvements over
 baseline models across multiple domains.
 \end{abstract}
 
 \section{Introduction}
 
-The Agent Forge pipeline represents a novel approach to AI model optimization 
-through integrated training phases. This paper evaluates the complete pipeline 
-across {{ models_evaluated }} phases and {{ total_benchmarks }} standardized 
+The Agent Forge pipeline represents a novel approach to AI model optimization
+through integrated training phases. This paper evaluates the complete pipeline
+across {{ models_evaluated }} phases and {{ total_benchmarks }} standardized
 benchmarks.
 
 \section{Methodology}
@@ -463,7 +458,7 @@ The Agent Forge system consists of:
 \end{itemize}
 
 \subsection{Evaluation Protocol}
-Evaluation followed standardized protocols with 5-shot prompting and greedy 
+Evaluation followed standardized protocols with 5-shot prompting and greedy
 decoding across MMLU, GSM8K, HumanEval, HellaSwag, and ARC benchmarks.
 
 \section{Results}
@@ -476,9 +471,9 @@ decoding across MMLU, GSM8K, HumanEval, HellaSwag, and ARC benchmarks.
 Phase & Avg & MMLU & GSM8K & HumanEval & HellaSwag & ARC \\
 \midrule
 {% for phase, data in phase_results.items() %}
-{{ phase.replace('_', '\\_')[:12] }} & {{ "%.3f"|format(data.avg) }} & 
-{{ "%.3f"|format(data.mmlu) }} & {{ "%.3f"|format(data.gsm8k) }} & 
-{{ "%.3f"|format(data.humaneval) }} & {{ "%.3f"|format(data.hellaswag) }} & 
+{{ phase.replace('_', '\\_')[:12] }} & {{ "%.3f"|format(data.avg) }} &
+{{ "%.3f"|format(data.mmlu) }} & {{ "%.3f"|format(data.gsm8k) }} &
+{{ "%.3f"|format(data.humaneval) }} & {{ "%.3f"|format(data.hellaswag) }} &
 {{ "%.3f"|format(data.arc) }} \\
 {% endfor %}
 \bottomrule
@@ -486,23 +481,23 @@ Phase & Avg & MMLU & GSM8K & HumanEval & HellaSwag & ARC \\
 \end{table}
 
 \subsection{Statistical Analysis}
-Statistical significance testing reveals significant improvements over baseline 
-models (p < 0.05) in {{ significant_benchmarks }} out of 
+Statistical significance testing reveals significant improvements over baseline
+models (p < 0.05) in {{ significant_benchmarks }} out of
 {{ total_benchmarks }} benchmarks.
 
 \section{Discussion}
 
 {% if biggest_jump %}
-The most significant improvement was observed in {{ biggest_jump.benchmark }}, 
-with {{ biggest_jump.to_phase.replace('_', '\\_') }} achieving 
-{{ "%.1f"|format(biggest_jump.relative_improvement) }}\% improvement 
+The most significant improvement was observed in {{ biggest_jump.benchmark }},
+with {{ biggest_jump.to_phase.replace('_', '\\_') }} achieving
+{{ "%.1f"|format(biggest_jump.relative_improvement) }}\% improvement
 over {{ biggest_jump.from_phase.replace('_', '\\_') }}.
 {% endif %}
 
 \section{Conclusion}
 
-The Agent Forge pipeline demonstrates significant performance improvements 
-across multiple domains. The {{ best_model.replace('_', '\\_') }} phase 
+The Agent Forge pipeline demonstrates significant performance improvements
+across multiple domains. The {{ best_model.replace('_', '\\_') }} phase
 achieves optimal performance and is recommended for production deployment.
 
 \bibliographystyle{plain}
@@ -634,9 +629,9 @@ output:
 | Phase | Average | Best Benchmark |
 |-------|---------|----------------|
 {% for phase, data in phase_analysis.items() %}
-| {{ phase.replace('_', ' ').title()[:15] }} | 
-{{ "%.3f"|format(data.average_score) }} | 
-{{ data.benchmark_scores|dictsort|reverse|first|first 
+| {{ phase.replace('_', ' ').title()[:15] }} |
+{{ "%.3f"|format(data.average_score) }} |
+{{ data.benchmark_scores|dictsort|reverse|first|first
 if data.benchmark_scores else 'N/A' }} |
 {% endfor %}
 
@@ -653,7 +648,7 @@ if data.benchmark_scores else 'N/A' }} |
 {% if biggest_jump %}
 ## Biggest Performance Jump
 
-**{{ biggest_jump.to_phase.replace('_', ' ').title() }}** vs 
+**{{ biggest_jump.to_phase.replace('_', ' ').title() }}** vs
 **{{ biggest_jump.from_phase.replace('_', ' ').title() }}**
 
 - **Benchmark**: {{ biggest_jump.benchmark }}
@@ -669,8 +664,8 @@ if data.benchmark_scores else 'N/A' }} |
 ### {{ benchmark }}
 - **Performance**: {{ "%.3f"|format(stats.target_score) }}
 - **Percentile**: {{ "%.0f"|format(stats.baseline_percentile) }}th vs baselines
-- **Significant**: 
-{{ "✅" if stats.get('baseline_ttest', {}).get('significant', False) 
+- **Significant**:
+{{ "✅" if stats.get('baseline_ttest', {}).get('significant', False)
 else "❌" }}
 
 {% endfor %}
@@ -724,15 +719,16 @@ else "❌" }}
 
         # Get performance score for insights
         best_score = (
-            analysis.get('json_analysis', {})
-            .get('performance_trends', {})
-            .get('best_score', 0.0)
+            analysis.get("json_analysis", {})
+            .get("performance_trends", {})
+            .get("best_score", 0.0)
         )
-        
+
         # Count significant benchmarks
         significant_count = sum(
-            1 for s in statistical_analysis.values() 
-            if s.get('baseline_ttest', {}).get('significant', False)
+            1
+            for s in statistical_analysis.values()
+            if s.get("baseline_ttest", {}).get("significant", False)
         )
 
         key_insights = [
@@ -753,9 +749,7 @@ else "❌" }}
             .get("best_score", 0.0),
             deployment_rec=insights.get("deployment_recommendation", "Review required"),
             phase_names=list(phase_analysis.keys()),
-            hardware=(
-                "CUDA GPU" if os.environ.get("CUDA_VISIBLE_DEVICES") else "CPU"
-            ),
+            hardware=("CUDA GPU" if os.environ.get("CUDA_VISIBLE_DEVICES") else "CPU"),
             phase_analysis=phase_analysis,
             key_insights=key_insights,
             biggest_jump=insights.get("biggest_performance_jump"),
@@ -842,17 +836,13 @@ else "❌" }}
             benchmark_data.append(row)
 
         # Create heatmap
-        im = ax.imshow(
-            benchmark_data, cmap="RdYlBu_r", aspect="auto", vmin=0, vmax=1
-        )
+        im = ax.imshow(benchmark_data, cmap="RdYlBu_r", aspect="auto", vmin=0, vmax=1)
 
         # Set ticks and labels
         ax.set_xticks(range(len(benchmark_names)))
         ax.set_xticklabels(benchmark_names, rotation=45, ha="right")
         ax.set_yticks(range(len(phases)))
-        ax.set_yticklabels(
-            [p.replace("_", " ").title() for p in phases]
-        )
+        ax.set_yticklabels([p.replace("_", " ").title() for p in phases])
 
         # Add colorbar
         cbar = plt.colorbar(im, ax=ax)
@@ -889,9 +879,7 @@ else "❌" }}
             for benchmark in benchmark_names:
                 benchmark_scores = []
                 for phase in phases:
-                    score = phase_analysis[phase].benchmark_scores.get(
-                        benchmark, 0.0
-                    )
+                    score = phase_analysis[phase].benchmark_scores.get(benchmark, 0.0)
                     benchmark_scores.append(score)
 
                 ax.plot(
@@ -912,9 +900,7 @@ else "❌" }}
             ax.set_ylabel("Performance Score", fontsize=12)
             ax.set_xticks(range(len(phases)))
             ax.set_xticklabels(
-                [p.replace("_", " ").title() for p in phases], 
-                rotation=45, 
-                ha="right"
+                [p.replace("_", " ").title() for p in phases], rotation=45, ha="right"
             )
             ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
             ax.grid(True, alpha=0.3)
@@ -974,8 +960,7 @@ else "❌" }}
                     "Baseline_Mean": stats.get("baseline_mean", 0.0),
                     "Baseline_Percentile": stats.get("baseline_percentile", 0.0),
                     "Statistical_Significant": (
-                        stats.get("baseline_ttest", {})
-                        .get("significant", False)
+                        stats.get("baseline_ttest", {}).get("significant", False)
                     ),
                 }
                 stats_rows.append(row)
@@ -1000,7 +985,7 @@ else "❌" }}
 
 {{ deployment_rec }}
 
-**Performance**: {{ best_score }}/1.0 | **Best Model**: {{ best_model }} | 
+**Performance**: {{ best_score }}/1.0 | **Best Model**: {{ best_model }} |
 **Confidence**: {{ confidence }}
 
 ## 📊 Quick Results
@@ -1009,9 +994,9 @@ else "❌" }}
 |----------------|---------------|----------------|
 {% for phase, data in phase_analysis.items() %}
 | {{ phase.replace('_', ' ').title() }} | {{ "%.3f"|format(data.average_score) }} |
-{{ data.benchmark_scores.items()|list|sort(attribute='1')|reverse|first|first 
-if data.benchmark_scores else 'N/A' }} 
-({{ "%.3f"|format(data.benchmark_scores.values()|list|max) 
+{{ data.benchmark_scores.items()|list|sort(attribute='1')|reverse|first|first
+if data.benchmark_scores else 'N/A' }}
+({{ "%.3f"|format(data.benchmark_scores.values()|list|max)
 if data.benchmark_scores else '0.000' }}) |
 {% endfor %}
 
@@ -1024,15 +1009,15 @@ if data.benchmark_scores else '0.000' }}) |
 ## 📈 Performance Highlights
 
 {% if biggest_jump %}
-**Biggest Improvement**: {{ biggest_jump.to_phase.replace('_', ' ').title() }} 
-showed {{ "%.1f"|format(biggest_jump.relative_improvement) }}% improvement 
+**Biggest Improvement**: {{ biggest_jump.to_phase.replace('_', ' ').title() }}
+showed {{ "%.1f"|format(biggest_jump.relative_improvement) }}% improvement
 in {{ biggest_jump.benchmark }}
 {% endif %}
 
 ## 📁 Report Files
 
 {% for file_type, file_path in report_files.items() %}
-- **{{ file_type.replace('_', ' ').title() }}**: 
+- **{{ file_type.replace('_', ' ').title() }}**:
 [`{{ file_path.split('/')[-1] }}`]({{ file_path.split('/')[-1] }})
 {% endfor %}
 
@@ -1109,10 +1094,7 @@ python agent_forge/automated_reporting.py \\
         phase_analysis = analysis.get("phase_analysis", {})
 
         key_insights = [
-            (
-                f"Comprehensive evaluation across "
-                f"{len(phase_analysis)} pipeline phases"
-            ),
+            (f"Comprehensive evaluation across {len(phase_analysis)} pipeline phases"),
             "Statistical significance testing confirms improvements",
             "Production-ready deployment recommendations",
             "Open-source reproducible evaluation framework",
@@ -1123,9 +1105,7 @@ python agent_forge/automated_reporting.py \\
             author=self.config.author,
             institution=self.config.institution,
             date=datetime.now().strftime("%Y-%m-%d"),
-            deployment_rec=insights.get(
-                "deployment_recommendation", "Review required"
-            ),
+            deployment_rec=insights.get("deployment_recommendation", "Review required"),
             best_score=analysis.get("json_analysis", {})
             .get("performance_trends", {})
             .get("best_score", 0.0),
@@ -1135,9 +1115,7 @@ python agent_forge/automated_reporting.py \\
             key_insights=key_insights,
             biggest_jump=insights.get("biggest_performance_jump"),
             report_files=report_files,
-            hardware=(
-                "CUDA GPU" if os.environ.get("CUDA_VISIBLE_DEVICES") else "CPU"
-            ),
+            hardware=("CUDA GPU" if os.environ.get("CUDA_VISIBLE_DEVICES") else "CPU"),
             recommendations=analysis.get("recommendations", []),
             datetime=datetime,
         )
@@ -1157,33 +1135,19 @@ async def main():
 
     parser = argparse.ArgumentParser(description="Automated Publication Reporting")
     parser.add_argument(
-        "--results-dir", 
-        default="./benchmark_results", 
-        help="Results directory"
+        "--results-dir", default="./benchmark_results", help="Results directory"
     )
+    parser.add_argument("--output-dir", default="./reports", help="Output directory")
     parser.add_argument(
-        "--output-dir", default="./reports", help="Output directory"
+        "--title", default="Agent Forge Performance Analysis", help="Report title"
     )
-    parser.add_argument(
-        "--title", 
-        default="Agent Forge Performance Analysis", 
-        help="Report title"
-    )
-    parser.add_argument(
-        "--author", default="Agent Forge Team", help="Author name"
-    )
-    parser.add_argument(
-        "--institution", default="AI Village", help="Institution"
-    )
+    parser.add_argument("--author", default="Agent Forge Team", help="Author name")
+    parser.add_argument("--institution", default="AI Village", help="Institution")
     parser.add_argument(
         "--no-slides", action="store_true", help="Skip slide generation"
     )
-    parser.add_argument(
-        "--no-latex", action="store_true", help="Skip LaTeX generation"
-    )
-    parser.add_argument(
-        "--no-viz", action="store_true", help="Skip visualizations"
-    )
+    parser.add_argument("--no-latex", action="store_true", help="Skip LaTeX generation")
+    parser.add_argument("--no-viz", action="store_true", help="Skip visualizations")
 
     args = parser.parse_args()
 
@@ -1221,12 +1185,8 @@ async def main():
             print(f"  {file_type}: {file_path}")
 
         print("\n🎯 Key Reports:")
-        print(
-            f"  📊 Executive Summary: {args.output_dir}/executive_summary.md"
-        )
-        print(
-            f"  📝 Technical Report: {args.output_dir}/technical_report.md"
-        )
+        print(f"  📊 Executive Summary: {args.output_dir}/executive_summary.md")
+        print(f"  📝 Technical Report: {args.output_dir}/technical_report.md")
         print(f"  🐙 GitHub README: {args.output_dir}/README.md")
 
         if config.include_latex:

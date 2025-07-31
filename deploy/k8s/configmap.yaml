@@ -13,7 +13,7 @@ data:
   NEO4J_USER: "neo4j"
   QDRANT_HOST: "aivillage-qdrant"
   QDRANT_PORT: "6333"
-  
+
   # Service configurations
   GATEWAY_PORT: "8000"
   TWIN_PORT: "8001"
@@ -23,19 +23,19 @@ data:
   EVOLUTION_PORT: "8005"
   MESH_NETWORK_PORT: "8006"
   MCP_SERVER_PORT: "8765"
-  
+
   # Application settings
   PYTHONUNBUFFERED: "1"
   HYPERAG_LOG_LEVEL: "INFO"
   WORKER_INTERVAL: "300"
   RATE_LIMIT_REQUESTS: "1000"
   RATE_LIMIT_WINDOW: "60"
-  
+
   # Performance settings
   GUNICORN_WORKERS: "4"
   GUNICORN_THREADS: "2"
   GUNICORN_TIMEOUT: "300"
-  
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -52,7 +52,7 @@ data:
   NEO4J_USER: "neo4j"
   QDRANT_HOST: "aivillage-qdrant"
   QDRANT_PORT: "6333"
-  
+
   # Service configurations
   GATEWAY_PORT: "8000"
   TWIN_PORT: "8001"
@@ -62,14 +62,14 @@ data:
   EVOLUTION_PORT: "8005"
   MESH_NETWORK_PORT: "8006"
   MCP_SERVER_PORT: "8765"
-  
+
   # Application settings
   PYTHONUNBUFFERED: "1"
   HYPERAG_LOG_LEVEL: "DEBUG"
   WORKER_INTERVAL: "300"
   RATE_LIMIT_REQUESTS: "500"
   RATE_LIMIT_WINDOW: "60"
-  
+
   # Performance settings
   GUNICORN_WORKERS: "2"
   GUNICORN_THREADS: "1"

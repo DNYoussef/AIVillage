@@ -1,0 +1,62 @@
+# AIVillage Security Requirements
+# Security-focused versions with known vulnerability patches
+# Updated: 2025-07-31
+
+# CRITICAL SECURITY PACKAGES - Keep Updated
+cryptography==43.0.1          # CVE-2024-26130 patched
+pillow==10.4.0                 # CVE-2024-28219 patched  
+requests==2.32.3               # CVE-2024-35195 patched
+urllib3==2.2.2                 # CVE-2024-37891 patched
+PyYAML==6.0.2                  # CVE-2024-35195 patched
+Jinja2==3.1.4                  # CVE-2024-34064 patched
+Werkzeug==3.0.6                # CVE-2024-34069 patched
+tornado==6.4.1                 # CVE-2024-31497 patched
+setuptools==75.1.0             # CVE-2024-6345 patched
+wheel==0.44.0                  # No known CVEs
+
+# WEB FRAMEWORK SECURITY
+fastapi==0.112.0               # Latest security updates
+uvicorn==0.30.6                # Security patches included
+pydantic==2.8.2                # Input validation security
+
+# DATABASE SECURITY  
+sqlalchemy==2.0.31             # SQL injection protections
+psycopg2-binary==2.9.9         # PostgreSQL security updates
+
+# AUTHENTICATION & ENCRYPTION
+PyJWT==2.9.0                   # JWT security fixes
+bcrypt==4.2.0                  # Password hashing security
+Authlib==1.3.1                 # OAuth security updates
+
+# XML/HTML PARSING SECURITY
+lxml==5.3.0                    # XXE vulnerability patches
+bleach==6.1.0                  # XSS protection updates
+beautifulsoup4==4.12.3         # HTML parsing security
+
+# NETWORK SECURITY
+aiohttp==3.12.14               # Async HTTP security
+httpx==0.27.0                  # HTTP client security
+websockets==12.0               # WebSocket security
+
+# TEMPLATE ENGINE SECURITY
+markupsafe==2.1.5              # Template injection protection
+
+# SERIALIZATION SECURITY
+orjson==3.10.7                 # JSON parsing security
+msgpack==1.1.0                 # Binary serialization security
+
+# MONITORING & LOGGING SECURITY
+sentry-sdk==2.8.0              # Error reporting security
+structlog==23.2.0              # Structured logging security
+
+# DEPENDENCY SCANNING TOOLS
+pip-audit>=2.9.0               # Vulnerability scanning
+safety>=3.2.0                  # Security vulnerability checker
+bandit>=1.7.7                  # Security linting
+
+# NOTES:
+# - Run `pip-audit` regularly to check for new vulnerabilities
+# - Monitor security advisories for all packages
+# - Update immediately when security patches are released
+# - Use `safety check` for continuous monitoring
+# - Consider using `pip-tools` for reproducible builds

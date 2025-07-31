@@ -1279,7 +1279,7 @@ class EvoMergePipeline:
 
             if self.state.best_candidate:
                 logger.info(
-                    "Best candidate: %s (fitness: %.3f)", 
+                    "Best candidate: %s (fitness: %.3f)",
                     self.state.best_candidate.short_id, self.state.best_candidate.overall_fitness
                 )
 
@@ -1317,11 +1317,11 @@ def forge():
 @click.option("--output-dir", default="./evomerge_output", help="Output directory")
 @click.option("--device", default="auto", help="Device to use (auto, cuda, cpu)")
 def evo(
-    gens: int, 
-    base_models: str, 
-    config: str | None, 
-    resume: str | None, 
-    output_dir: str, 
+    gens: int,
+    base_models: str,
+    config: str | None,
+    resume: str | None,
+    output_dir: str,
     device: str
 ) -> None:
     """Run evolutionary model merging."""

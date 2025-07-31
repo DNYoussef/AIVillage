@@ -93,9 +93,9 @@ class EvolutionValidator:
         logger.info("Actual combinations: %s", len(actual_set))
         logger.info(
             "All systematic combinations present: %s",
-            validation['all_systematic_combinations']
+            validation["all_systematic_combinations"],
         )
-        logger.info("All combinations unique: %s", validation['unique_combinations'])
+        logger.info("All combinations unique: %s", validation["unique_combinations"])
 
         # Log all combinations for verification
         logger.info("Actual combinations found:")
@@ -122,7 +122,10 @@ class EvolutionValidator:
         for i, ind in enumerate(ranked_population):
             logger.info(
                 "  %s. %s - Fitness: %.4f - Method: %s",
-                i + 1, ind['id'], ind['fitness'], ind['primary_method']
+                i + 1,
+                ind["id"],
+                ind["fitness"],
+                ind["primary_method"],
             )
 
         # Simulate breeding
@@ -158,8 +161,7 @@ class EvolutionValidator:
         logger.info("Mutants: %s (Expected: 6)", mutant_count)
         logger.info("Children: %s (Expected: 2)", child_count)
         logger.info(
-            "All generation %s: %s",
-            expected_gen, validation['all_new_generation']
+            "All generation %s: %s", expected_gen, validation["all_new_generation"]
         )
 
         # Log breeding details
@@ -168,8 +170,7 @@ class EvolutionValidator:
             breeding_type = ind.get("breeding_type", "unknown")
             parent_ids = ind.get("parent_ids", [])
             logger.info(
-                "  %s - Type: %s - Parents: %s",
-                ind['id'], breeding_type, parent_ids
+                "  %s - Type: %s - Parents: %s", ind["id"], breeding_type, parent_ids
             )
 
         return validation
@@ -229,13 +230,13 @@ class EvolutionValidator:
                     if not all(breeding_validation.values()):
                         logger.error(
                             "❌ Breeding validation FAILED for generation %s",
-                            merger.generation
+                            merger.generation,
                         )
                         test_results["all_tests_passed"] = False
                     else:
                         logger.info(
                             "✅ Breeding validation PASSED for generation %s",
-                            merger.generation
+                            merger.generation,
                         )
 
                 logger.info("Completed generation %s", merger.generation)
@@ -254,7 +255,7 @@ class EvolutionValidator:
         logger.info("=" * 80)
         logger.info("Duration: %.2f seconds", duration)
         logger.info("Generations completed: %s", generation_count)
-        logger.info("Population sizes: %s", test_results['population_sizes'])
+        logger.info("Population sizes: %s", test_results["population_sizes"])
 
         # Check population size consistency
         expected_sizes = [8] * len(test_results["population_sizes"])
@@ -263,8 +264,7 @@ class EvolutionValidator:
 
         if not consistent_population:
             logger.error(
-                "❌ Population size inconsistent: %s",
-                test_results['population_sizes']
+                "❌ Population size inconsistent: %s", test_results["population_sizes"]
             )
             test_results["all_tests_passed"] = False
         else:

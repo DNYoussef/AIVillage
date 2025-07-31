@@ -180,7 +180,9 @@ class PipelineValidationTest:
 
                 best_config = results["evolution_summary"]["best_configuration"]
                 logger.info(
-                    "Best evolution config: %s with fitness %.4f", best_config['merge_method'], best_config['fitness']
+                    "Best evolution config: %s with fitness %.4f",
+                    best_config["merge_method"],
+                    best_config["fitness"],
                 )
 
                 # Create a mock optimal model file (in real scenario, this would be the actual merged model)
@@ -237,9 +239,7 @@ class PipelineValidationTest:
                     "output_path": str(optimal_model_path),
                 }
 
-                logger.info(
-                    "✅ Minimal evolution merge completed in %.2fs", stage_time
-                )
+                logger.info("✅ Minimal evolution merge completed in %.2fs", stage_time)
 
         except Exception as e:
             logger.error("❌ Evolution merge validation failed: %s", e)
@@ -410,9 +410,9 @@ class PipelineValidationTest:
 
             logger.info("Processing orchestrated training from %s", input_model_path)
             logger.info(
-                "Configuration: %d levels, %d questions per level", 
-                self.config['curriculum_learning']['levels'], 
-                self.config['curriculum_learning']['questions_per_level']
+                "Configuration: %d levels, %d questions per level",
+                self.config["curriculum_learning"]["levels"],
+                self.config["curriculum_learning"]["questions_per_level"],
             )
 
             # For validation, simulate orchestrated training
@@ -453,7 +453,7 @@ class PipelineValidationTest:
                 await orchestrator.close()
 
                 logger.info("Generated %d questions successfully", len(questions))
-                logger.info("Orchestration cost tracking: %s", cost_summary['enabled'])
+                logger.info("Orchestration cost tracking: %s", cost_summary["enabled"])
 
             else:
                 logger.info("Simulating orchestrated training without API...")
@@ -497,10 +497,11 @@ class PipelineValidationTest:
             }
 
             logger.info("✅ Orchestrated training completed in %.2fs", stage_time)
-            logger.info("   Levels: %d", self.config['curriculum_learning']['levels'])
+            logger.info("   Levels: %d", self.config["curriculum_learning"]["levels"])
             logger.info("   Questions: %d", len(questions))
             logger.info(
-                "   Orchestration: %s", 'Enabled' if openrouter_available else 'Simulated'
+                "   Orchestration: %s",
+                "Enabled" if openrouter_available else "Simulated",
             )
 
         except Exception as e:
@@ -559,10 +560,11 @@ class PipelineValidationTest:
 
             logger.info("✅ Geometric self-awareness validated in %.2fs", stage_time)
             logger.info(
-                "   Intrinsic dimension: %.1f", geometry_metrics['intrinsic_dimension']
+                "   Intrinsic dimension: %.1f", geometry_metrics["intrinsic_dimension"]
             )
             logger.info(
-                "   Geometric complexity: %.1f", geometry_metrics['geometric_complexity']
+                "   Geometric complexity: %.1f",
+                geometry_metrics["geometric_complexity"],
             )
             logger.info("   Self-awareness: CONFIRMED")
 
@@ -733,7 +735,8 @@ class PipelineValidationTest:
             logger.info("   Total compression: %.1f%%", (1 - total_compression) * 100)
             logger.info("   All markers verified: %s", all_markers_present)
             logger.info(
-                "   Ready for full scale: %s", all_markers_present and capabilities_enhanced
+                "   Ready for full scale: %s",
+                all_markers_present and capabilities_enhanced,
             )
 
         except Exception as e:
