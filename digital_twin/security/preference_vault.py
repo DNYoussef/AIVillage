@@ -1,5 +1,5 @@
 """Secure Preference Vault with End-to-End Encryption
-Sprint R-5: Digital Twin MVP - Task A.2
+Sprint R-5: Digital Twin MVP - Task A.2.
 """
 
 import asyncio
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SecurePreference:
-    """Encrypted preference with metadata"""
+    """Encrypted preference with metadata."""
 
     preference_id: str
     student_id: str
@@ -44,7 +44,7 @@ class SecurePreference:
 
 @dataclass
 class AccessToken:
-    """Access token for preference vault"""
+    """Access token for preference vault."""
 
     token_id: str
     student_id: str
@@ -57,7 +57,7 @@ class AccessToken:
 
 @dataclass
 class VaultAuditLog:
-    """Audit log entry for vault access"""
+    """Audit log entry for vault access."""
 
     log_id: str
     student_id: str
@@ -71,7 +71,7 @@ class VaultAuditLog:
 
 
 class SecurePreferenceVault:
-    """Ultra-secure preference storage with military-grade encryption"""
+    """Ultra-secure preference storage with military-grade encryption."""
 
     def __init__(self, project_name: str = "aivillage-security"):
         self.project_name = project_name
@@ -126,7 +126,7 @@ class SecurePreferenceVault:
         )
 
     def initialize_wandb_tracking(self):
-        """Initialize W&B tracking with privacy protection"""
+        """Initialize W&B tracking with privacy protection."""
         try:
             wandb.init(
                 project=self.project_name,
@@ -147,10 +147,10 @@ class SecurePreferenceVault:
             logger.info("Secure vault W&B tracking initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize W&B tracking: {e}")
+            logger.error("Failed to initialize W&B tracking: %s", e)
 
     def _generate_or_load_master_key(self) -> bytes:
-        """Generate or load master encryption key"""
+        """Generate or load master encryption key."""
         key_file = self.vault_path / ".master_key"
 
         if key_file.exists():
@@ -158,7 +158,7 @@ class SecurePreferenceVault:
                 with open(key_file, "rb") as f:
                     return f.read()
             except Exception as e:
-                logger.warning(f"Could not load master key: {e}")
+                logger.warning("Could not load master key: %s", e)
 
         # Generate new key
         key = Fernet.generate_key()
@@ -172,12 +172,12 @@ class SecurePreferenceVault:
             logger.info("Generated new master encryption key")
 
         except Exception as e:
-            logger.error(f"Failed to save master key: {e}")
+            logger.error("Failed to save master key: %s", e)
 
         return key
 
     def _generate_or_load_rsa_keys(self) -> tuple[Any, Any]:
-        """Generate or load RSA key pair"""
+        """Generate or load RSA key pair."""
         private_key_file = self.vault_path / ".private_key.pem"
         public_key_file = self.vault_path / ".public_key.pem"
 
@@ -196,7 +196,7 @@ class SecurePreferenceVault:
                 return private_key, public_key
 
             except Exception as e:
-                logger.warning(f"Could not load RSA keys: {e}")
+                logger.warning("Could not load RSA keys: %s", e)
 
         # Generate new RSA key pair (4096-bit for maximum security)
         private_key = rsa.generate_private_key(
@@ -229,12 +229,12 @@ class SecurePreferenceVault:
             logger.info("Generated new RSA-4096 key pair")
 
         except Exception as e:
-            logger.error(f"Failed to save RSA keys: {e}")
+            logger.error("Failed to save RSA keys: %s", e)
 
         return private_key, public_key
 
     def init_secure_database(self):
-        """Initialize encrypted SQLite database"""
+        """Initialize encrypted SQLite database."""
         try:
             # Enable encryption at database level (if supported)
             conn = sqlite3.connect(str(self.db_path))
@@ -323,7 +323,7 @@ class SecurePreferenceVault:
             logger.info("Secure vault database initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize secure database: {e}")
+            logger.error("Failed to initialize secure database: %s", e)
 
     async def store_preference(
         self,
@@ -336,7 +336,7 @@ class SecurePreferenceVault:
         accessor_token: str = None,
         expiry_hours: int | None = None,
     ) -> str:
-        """Store encrypted preference with access control"""
+        """Store encrypted preference with access control."""
         # Validate access
         if not await self._validate_access(student_id, "write", accessor_token):
             await self._log_security_event(
@@ -370,7 +370,7 @@ class SecurePreferenceVault:
                 )
 
         except Exception as e:
-            logger.error(f"Encryption failed: {e}")
+            logger.error("Encryption failed: %s", e)
             raise ValueError("Failed to encrypt preference value")
 
         # Set default permissions
@@ -433,7 +433,8 @@ class SecurePreferenceVault:
         )
 
         logger.info(
-            f"Stored encrypted preference {preference_id[:8]} for student {student_id[:8]}"
+            "Stored encrypted preference %s for student %s",
+            preference_id[:8], student_id[:8]
         )
 
         return preference_id
@@ -446,7 +447,7 @@ class SecurePreferenceVault:
         key: str = None,
         accessor_token: str = None,
     ) -> Any:
-        """Retrieve and decrypt preference with access control"""
+        """Retrieve and decrypt preference with access control."""
         # Validate access
         if not await self._validate_access(student_id, "read", accessor_token):
             await self._log_security_event(
@@ -531,7 +532,7 @@ class SecurePreferenceVault:
                 value = json.loads(value_json)  # String or other
 
         except Exception as e:
-            logger.error(f"Decryption failed: {e}")
+            logger.error("Decryption failed: %s", e)
             await self._create_audit_log(
                 student_id=student_id,
                 action="retrieve_preference",
@@ -565,7 +566,7 @@ class SecurePreferenceVault:
         new_value: Any,
         accessor_token: str = None,
     ) -> bool:
-        """Update existing preference with access control"""
+        """Update existing preference with access control."""
         # Validate access
         if not await self._validate_access(student_id, "write", accessor_token):
             await self._log_security_event(
@@ -624,18 +625,19 @@ class SecurePreferenceVault:
             )
 
             logger.info(
-                f"Updated preference {preference_id[:8]} for student {student_id[:8]}"
+                "Updated preference %s for student %s",
+                preference_id[:8], student_id[:8]
             )
             return True
 
         except Exception as e:
-            logger.error(f"Failed to update preference: {e}")
+            logger.error("Failed to update preference: %s", e)
             return False
 
     async def delete_preference(
         self, student_id: str, preference_id: str, accessor_token: str = None
     ) -> bool:
-        """Delete preference with access control"""
+        """Delete preference with access control."""
         # Validate access
         if not await self._validate_access(student_id, "delete", accessor_token):
             await self._log_security_event(
@@ -680,12 +682,13 @@ class SecurePreferenceVault:
             )
 
             logger.info(
-                f"Deleted preference {preference_id[:8]} for student {student_id[:8]}"
+                "Deleted preference %s for student %s",
+                preference_id[:8], student_id[:8]
             )
             return True
 
         except Exception as e:
-            logger.error(f"Failed to delete preference: {e}")
+            logger.error("Failed to delete preference: %s", e)
             return False
 
     async def create_access_token(
@@ -695,7 +698,7 @@ class SecurePreferenceVault:
         issuer: str,
         expiry_hours: int = 24,
     ) -> str:
-        """Create secure access token"""
+        """Create secure access token."""
         token_id = self._generate_secure_id()
 
         expires_at = (
@@ -732,12 +735,12 @@ class SecurePreferenceVault:
             },
         )
 
-        logger.info(f"Created access token {token_id[:8]} for student {student_id[:8]}")
+        logger.info("Created access token %s for student %s", token_id[:8], student_id[:8])
 
         return token_id
 
     async def revoke_access_token(self, token_id: str, accessor: str) -> bool:
-        """Revoke access token"""
+        """Revoke access token."""
         token = self.access_tokens.get(token_id)
         if not token:
             return False
@@ -757,14 +760,14 @@ class SecurePreferenceVault:
             details={"token_id": token_id},
         )
 
-        logger.info(f"Revoked access token {token_id[:8]}")
+        logger.info("Revoked access token %s", token_id[:8])
 
         return True
 
     async def get_student_preferences(
         self, student_id: str, category: str = None, accessor_token: str = None
     ) -> dict[str, Any]:
-        """Get all preferences for a student"""
+        """Get all preferences for a student."""
         # Validate access
         if not await self._validate_access(student_id, "read", accessor_token):
             await self._log_security_event(
@@ -785,19 +788,20 @@ class SecurePreferenceVault:
                             preferences[pref.key] = value
                         except Exception as e:
                             logger.warning(
-                                f"Could not retrieve preference {pref_id}: {e}"
+                                "Could not retrieve preference %s: %s",
+                                pref_id, e
                             )
 
         return preferences
 
     def _generate_secure_id(self) -> str:
-        """Generate cryptographically secure ID"""
+        """Generate cryptographically secure ID."""
         return secrets.token_urlsafe(32)
 
     async def _validate_access(
         self, student_id: str, action: str, accessor_token: str = None
     ) -> bool:
-        """Validate access permissions"""
+        """Validate access permissions."""
         # System access (internal operations)
         if accessor_token is None:
             return True
@@ -842,7 +846,7 @@ class SecurePreferenceVault:
     def _check_preference_permissions(
         self, preference: SecurePreference, accessor_token: str = None
     ) -> bool:
-        """Check if accessor has permission for specific preference"""
+        """Check if accessor has permission for specific preference."""
         if accessor_token is None:
             return True  # System access
 
@@ -869,7 +873,7 @@ class SecurePreferenceVault:
         details: dict[str, Any],
         ip_address: str = None,
     ):
-        """Create audit log entry"""
+        """Create audit log entry."""
         log_id = self._generate_secure_id()
 
         audit_log = VaultAuditLog(
@@ -896,7 +900,7 @@ class SecurePreferenceVault:
     async def _log_security_event(
         self, event_type: str, student_id: str, accessor_token: str = None
     ):
-        """Log security event"""
+        """Log security event."""
         event_id = self._generate_secure_id()
 
         security_event = {
@@ -920,10 +924,10 @@ class SecurePreferenceVault:
             }
         )
 
-        logger.warning(f"Security event: {event_type} for student {student_id[:8]}")
+        logger.warning("Security event: %s for student %s", event_type, student_id[:8])
 
     async def _save_preference_to_db(self, preference: SecurePreference):
-        """Save preference to encrypted database"""
+        """Save preference to encrypted database."""
         try:
             # Calculate checksum for integrity
             data_to_hash = f"{preference.preference_id}{preference.student_id}{preference.encrypted_value}"
@@ -959,10 +963,10 @@ class SecurePreferenceVault:
             conn.close()
 
         except Exception as e:
-            logger.error(f"Failed to save preference to database: {e}")
+            logger.error("Failed to save preference to database: %s", e)
 
     async def _save_access_token_to_db(self, token: AccessToken):
-        """Save access token to database"""
+        """Save access token to database."""
         try:
             # Encrypt permissions
             permissions_json = json.dumps(token.permissions)
@@ -999,10 +1003,10 @@ class SecurePreferenceVault:
             conn.close()
 
         except Exception as e:
-            logger.error(f"Failed to save access token to database: {e}")
+            logger.error("Failed to save access token to database: %s", e)
 
     async def _save_audit_log_to_db(self, audit_log: VaultAuditLog):
-        """Save audit log to database"""
+        """Save audit log to database."""
         try:
             # Encrypt details
             details_json = json.dumps(audit_log.details)
@@ -1039,10 +1043,10 @@ class SecurePreferenceVault:
             conn.close()
 
         except Exception as e:
-            logger.error(f"Failed to save audit log to database: {e}")
+            logger.error("Failed to save audit log to database: %s", e)
 
     async def start_security_monitoring(self):
-        """Start background security monitoring"""
+        """Start background security monitoring."""
         while self.security_monitor_active:
             try:
                 await asyncio.sleep(60)  # Check every minute
@@ -1060,11 +1064,11 @@ class SecurePreferenceVault:
                 await self._analyze_security_patterns()
 
             except Exception as e:
-                logger.error(f"Error in security monitoring: {e}")
+                logger.error("Error in security monitoring: %s", e)
                 await asyncio.sleep(30)
 
     async def _cleanup_expired_tokens(self):
-        """Clean up expired access tokens"""
+        """Clean up expired access tokens."""
         expired_tokens = []
         current_time = datetime.now(timezone.utc)
 
@@ -1077,10 +1081,10 @@ class SecurePreferenceVault:
             del self.access_tokens[token_id]
 
         if expired_tokens:
-            logger.info(f"Cleaned up {len(expired_tokens)} expired access tokens")
+            logger.info("Cleaned up %s expired access tokens", len(expired_tokens))
 
     async def _cleanup_expired_preferences(self):
-        """Clean up expired preferences"""
+        """Clean up expired preferences."""
         expired_prefs = []
         current_time = datetime.now(timezone.utc)
 
@@ -1094,17 +1098,17 @@ class SecurePreferenceVault:
             del self.preferences[pref_id]
 
         if expired_prefs:
-            logger.info(f"Cleaned up {len(expired_prefs)} expired preferences")
+            logger.info("Cleaned up %s expired preferences", len(expired_prefs))
 
     async def _check_key_rotation(self):
-        """Check if encryption keys need rotation"""
+        """Check if encryption keys need rotation."""
         # This would implement automatic key rotation based on security policies
         # For now, just log that we're checking
         if len(self.preferences) > 0 and len(self.preferences) % 1000 == 0:
             logger.info("Key rotation check - consider rotating encryption keys")
 
     async def _analyze_security_patterns(self):
-        """Analyze security patterns and detect anomalies"""
+        """Analyze security patterns and detect anomalies."""
         # Analyze recent security events
         recent_events = [
             e
@@ -1117,7 +1121,8 @@ class SecurePreferenceVault:
 
         if len(recent_events) > 10:  # More than 10 security events in an hour
             logger.warning(
-                f"High security activity detected: {len(recent_events)} events in the last hour"
+                "High security activity detected: %s events in the last hour",
+                len(recent_events)
             )
 
             # Log to W&B
@@ -1132,7 +1137,7 @@ class SecurePreferenceVault:
     async def get_security_report(
         self, student_id: str, accessor_token: str
     ) -> dict[str, Any]:
-        """Generate security report for a student"""
+        """Generate security report for a student."""
         # Validate access
         if not await self._validate_access(student_id, "read", accessor_token):
             raise PermissionError("Unauthorized access to security report")

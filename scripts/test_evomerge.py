@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""EvoMerge Pipeline Testing Script
+"""EvoMerge Pipeline Testing Script.
 
 Comprehensive test suite for the evolutionary merging pipeline.
 Tests all components including model loading, merging operators,
@@ -34,10 +34,10 @@ from evomerge_pipeline import (
 
 
 class TestEvoMergePipeline(unittest.TestCase):
-    """Test suite for EvoMerge pipeline"""
+    """Test suite for EvoMerge pipeline."""
 
     def setUp(self):
-        """Set up test environment"""
+        """Set up test environment."""
         self.temp_dir = Path(tempfile.mkdtemp())
 
         # Create test configuration
@@ -62,11 +62,11 @@ class TestEvoMergePipeline(unittest.TestCase):
         self.config.models_cache_dir.mkdir(parents=True, exist_ok=True)
 
     def tearDown(self):
-        """Clean up test environment"""
+        """Clean up test environment."""
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def create_dummy_model(self) -> torch.nn.Module:
-        """Create a dummy model for testing"""
+        """Create a dummy model for testing."""
         config = AutoConfig.from_pretrained("gpt2")
         config.n_layer = 2  # Smaller for testing
         config.n_head = 2
@@ -77,7 +77,7 @@ class TestEvoMergePipeline(unittest.TestCase):
         return model
 
     def test_config_validation(self):
-        """Test configuration validation"""
+        """Test configuration validation."""
         # Test valid configuration
         config = EvolutionConfig()
         self.assertEqual(len(config.base_models), 3)
@@ -97,7 +97,7 @@ class TestEvoMergePipeline(unittest.TestCase):
             )
 
     def test_merge_operators(self):
-        """Test merge operators with dummy models"""
+        """Test merge operators with dummy models."""
         # Create test models
         models = [self.create_dummy_model() for _ in range(3)]
         merge_ops = MergeOperators()
@@ -132,7 +132,7 @@ class TestEvoMergePipeline(unittest.TestCase):
     @patch("evomerge_pipeline.AutoTokenizer")
     @patch("evomerge_pipeline.AutoModelForCausalLM")
     async def test_evaluators(self, mock_model_cls, mock_tokenizer_cls):
-        """Test model evaluators with mocked components"""
+        """Test model evaluators with mocked components."""
         # Mock tokenizer
         mock_tokenizer = MagicMock()
         mock_tokenizer.encode.return_value = [1, 2, 3]
@@ -165,7 +165,7 @@ class TestEvoMergePipeline(unittest.TestCase):
         print("✅ Evaluators working correctly")
 
     def test_model_candidate(self):
-        """Test ModelCandidate functionality"""
+        """Test ModelCandidate functionality."""
         candidate = ModelCandidate(
             generation=1,
             merge_recipe={"continuous": "linear", "ensemble": "ties"},
@@ -182,7 +182,7 @@ class TestEvoMergePipeline(unittest.TestCase):
         print("✅ ModelCandidate working correctly")
 
     def test_evolution_state(self):
-        """Test EvolutionState functionality"""
+        """Test EvolutionState functionality."""
         state = EvolutionState()
 
         # Create test candidates
@@ -211,7 +211,7 @@ class TestEvoMergePipeline(unittest.TestCase):
 
     @patch("evomerge_pipeline.wandb")
     def test_pipeline_initialization(self, mock_wandb):
-        """Test pipeline initialization"""
+        """Test pipeline initialization."""
         # Mock W&B
         mock_run = MagicMock()
         mock_run.id = "test_run_123"
@@ -235,7 +235,7 @@ class TestEvoMergePipeline(unittest.TestCase):
         print("✅ Pipeline initialization working correctly")
 
     def test_seed_generation_logic(self):
-        """Test seed candidate generation logic"""
+        """Test seed candidate generation logic."""
         pipeline = EvoMergePipeline(self.config)
 
         # Test merge combination generation
@@ -258,7 +258,7 @@ class TestEvoMergePipeline(unittest.TestCase):
         print("✅ Seed generation logic correct")
 
     def test_checkpoint_functionality(self):
-        """Test checkpoint save/load"""
+        """Test checkpoint save/load."""
         pipeline = EvoMergePipeline(self.config)
 
         # Create test state
@@ -289,7 +289,7 @@ class TestEvoMergePipeline(unittest.TestCase):
         print("✅ Checkpoint functionality working correctly")
 
     def test_mutation_and_selection(self):
-        """Test mutation and selection logic"""
+        """Test mutation and selection logic."""
         pipeline = EvoMergePipeline(self.config)
 
         # Create test candidates with different fitness scores
@@ -330,10 +330,10 @@ class TestEvoMergePipeline(unittest.TestCase):
 
 
 class TestCLIIntegration(unittest.TestCase):
-    """Test CLI integration"""
+    """Test CLI integration."""
 
     def test_cli_command_parsing(self):
-        """Test CLI command parsing"""
+        """Test CLI command parsing."""
         # Import CLI components
         from evomerge_pipeline import forge
 
@@ -346,7 +346,7 @@ class TestCLIIntegration(unittest.TestCase):
 
 
 def run_quick_integration_test():
-    """Run a quick integration test of the full pipeline"""
+    """Run a quick integration test of the full pipeline."""
     print("🧪 Running quick integration test...")
 
     # Create temporary directory
@@ -390,7 +390,7 @@ def run_quick_integration_test():
 
 
 async def main():
-    """Main test runner"""
+    """Main test runner."""
     print("🧪 Starting EvoMerge Pipeline Test Suite")
     print("=" * 60)
 

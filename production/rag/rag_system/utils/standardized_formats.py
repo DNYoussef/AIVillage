@@ -101,11 +101,17 @@ def create_standardized_prompt(
     task: str,
     context: str,
     output_format: OutputFormat,
-    constraints: list[str] = [],
-    examples: list[dict[str, str]] = [],
+    constraints: list[str] | None = None,
+    examples: list[dict[str, str]] | None = None,
     additional_instructions: str = "",
-    metadata: dict[str, Any] = {},
+    metadata: dict[str, Any] | None = None,
 ) -> StandardizedPrompt:
+    if metadata is None:
+        metadata = {}
+    if examples is None:
+        examples = []
+    if constraints is None:
+        constraints = []
     return StandardizedPrompt(
         task=task,
         context=context,
@@ -121,12 +127,18 @@ def create_standardized_output(
     task: str,
     response: str | list[str] | dict[str, Any],
     confidence: float,
-    sources: list[str] = [],
-    metadata: dict[str, Any] = {},
+    sources: list[str] | None = None,
+    metadata: dict[str, Any] | None = None,
     reasoning: str = "",
     uncertainty: float = 0.0,
-    alternative_responses: list[dict[str, Any]] = [],
+    alternative_responses: list[dict[str, Any]] | None = None,
 ) -> StandardizedOutput:
+    if alternative_responses is None:
+        alternative_responses = []
+    if metadata is None:
+        metadata = {}
+    if sources is None:
+        sources = []
     return StandardizedOutput(
         task=task,
         response=response,

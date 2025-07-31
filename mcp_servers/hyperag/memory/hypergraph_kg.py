@@ -1,4 +1,4 @@
-"""HypergraphKG: Deep semantic memory storage
+"""HypergraphKG: Deep semantic memory storage.
 
 Brain-inspired neocortical memory system for consolidated semantic knowledge
 with hypergraph relationships, personalized PageRank, and community detection.
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class SemanticNode(Node):
-    """Node optimized for semantic/neocortical storage"""
+    """Node optimized for semantic/neocortical storage."""
 
     def __init__(self, content: str, node_type: str = "concept", **kwargs):
         super().__init__(
@@ -57,7 +57,7 @@ class SemanticNode(Node):
 
 
 class Hyperedge(Edge):
-    """Enhanced edge supporting true hypergraph relationships"""
+    """Enhanced edge supporting true hypergraph relationships."""
 
     def __init__(self, participants: list[str], relation: str, **kwargs):
         # Use first two participants as source/target for compatibility
@@ -83,7 +83,7 @@ class Hyperedge(Edge):
 
 
 class Subgraph:
-    """A connected subgraph for retrieval and reasoning"""
+    """A connected subgraph for retrieval and reasoning."""
 
     def __init__(
         self,
@@ -105,7 +105,7 @@ class Subgraph:
         self.avg_confidence = np.mean([e.confidence for e in edges]) if edges else 0.0
 
     def get_neighbors(self, node_id: str) -> set[str]:
-        """Get all nodes connected to the given node"""
+        """Get all nodes connected to the given node."""
         neighbors = set()
         for edge in self.edges:
             if node_id in edge.participants:
@@ -114,7 +114,7 @@ class Subgraph:
         return neighbors
 
     def contains_path(self, start_id: str, end_id: str, max_hops: int = 3) -> bool:
-        """Check if there's a path between two nodes within max_hops"""
+        """Check if there's a path between two nodes within max_hops."""
         if start_id == end_id:
             return True
 
@@ -139,7 +139,7 @@ class Subgraph:
 
 
 class HypergraphKG(MemoryBackend):
-    """Deep semantic memory - like neocortex
+    """Deep semantic memory - like neocortex.
 
     Features:
     - Consolidated semantic knowledge
@@ -181,10 +181,10 @@ class HypergraphKG(MemoryBackend):
         # Cache settings
         self.cache_ttl = self.redis_schema.get_ttl_configs()
 
-        logger.info(f"HypergraphKG initialized with neo4j_uri={neo4j_uri}")
+        logger.info("HypergraphKG initialized with neo4j_uri=%s", neo4j_uri)
 
     async def initialize(self) -> None:
-        """Initialize all backend connections and schemas"""
+        """Initialize all backend connections and schemas."""
         try:
             # Initialize Neo4j
             self.neo4j_driver = AsyncGraphDatabase.driver(
@@ -203,11 +203,11 @@ class HypergraphKG(MemoryBackend):
             logger.info("HypergraphKG initialization complete")
 
         except Exception as e:
-            logger.error(f"Failed to initialize HypergraphKG: {e!s}")
+            logger.error("Failed to initialize HypergraphKG: %s", e)
             raise
 
     async def close(self) -> None:
-        """Close all connections"""
+        """Close all connections."""
         try:
             if self.neo4j_driver:
                 await self.neo4j_driver.close()
@@ -217,10 +217,10 @@ class HypergraphKG(MemoryBackend):
                 await self.redis_client.close()
             logger.info("HypergraphKG connections closed")
         except Exception as e:
-            logger.error(f"Error closing HypergraphKG: {e!s}")
+            logger.error("Error closing HypergraphKG: %s", e)
 
     async def health_check(self) -> dict[str, Any]:
-        """Check health of all backend systems"""
+        """Check health of all backend systems."""
         health = {"status": "healthy", "backends": {}}
 
         try:
@@ -254,7 +254,7 @@ class HypergraphKG(MemoryBackend):
     async def store_semantic_node(
         self, node: SemanticNode, generate_embedding: bool = True
     ) -> bool:
-        """Store a semantic node in the knowledge graph"""
+        """Store a semantic node in the knowledge graph."""
         try:
             # Generate embedding if needed
             if generate_embedding and node.embedding is None:
@@ -320,15 +320,15 @@ class HypergraphKG(MemoryBackend):
             # Cache in Redis
             await self._cache_semantic_node(node)
 
-            logger.debug(f"Stored semantic node {node.id}")
+            logger.debug("Stored semantic node %s", node.id)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to store semantic node {node.id}: {e!s}")
+            logger.error("Failed to store semantic node %s: %s", node.id, e)
             return False
 
     async def store_hyperedge(self, hyperedge: Hyperedge) -> bool:
-        """Store a hyperedge in the knowledge graph"""
+        """Store a hyperedge in the knowledge graph."""
         try:
             async with self.neo4j_driver.session() as session:
                 # Create the hyperedge node
@@ -396,11 +396,11 @@ class HypergraphKG(MemoryBackend):
             # Cache the hyperedge
             await self._cache_hyperedge(hyperedge)
 
-            logger.debug(f"Stored hyperedge {hyperedge.id}")
+            logger.debug("Stored hyperedge %s", hyperedge.id)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to store hyperedge {hyperedge.id}: {e!s}")
+            logger.error("Failed to store hyperedge %s: %s", hyperedge.id, e)
             return False
 
     async def personalized_pagerank(
@@ -411,7 +411,7 @@ class HypergraphKG(MemoryBackend):
         max_iterations: int = 50,
         tolerance: float = 1e-6,
     ) -> dict[str, float]:
-        """Compute Personalized PageRank from start nodes
+        """Compute Personalized PageRank from start nodes.
 
         Args:
             start_nodes: List of node IDs to start from
@@ -520,13 +520,13 @@ class HypergraphKG(MemoryBackend):
                     current_scores = new_scores
 
                     if max_diff < tolerance:
-                        logger.debug(f"PPR converged after {iteration + 1} iterations")
+                        logger.debug("PPR converged after %d iterations", iteration + 1)
                         break
 
                 return current_scores
 
         except Exception as e:
-            logger.error(f"Failed to compute Personalized PageRank: {e!s}")
+            logger.error("Failed to compute Personalized PageRank: %s", e)
             return {}
 
     async def query_subgraph(
@@ -536,7 +536,7 @@ class HypergraphKG(MemoryBackend):
         min_confidence: float = 0.5,
         max_nodes: int = 50,
     ) -> Subgraph | None:
-        """Extract a subgraph around center nodes for reasoning
+        """Extract a subgraph around center nodes for reasoning.
 
         Args:
             center_nodes: Starting nodes for subgraph extraction
@@ -663,7 +663,7 @@ class HypergraphKG(MemoryBackend):
                 return subgraph
 
         except Exception as e:
-            logger.error(f"Failed to query subgraph: {e!s}")
+            logger.error("Failed to query subgraph: %s", e)
             return None
 
     async def semantic_similarity_search(
@@ -673,7 +673,7 @@ class HypergraphKG(MemoryBackend):
         score_threshold: float = 0.7,
         community_filter: str | None = None,
     ) -> list[tuple[SemanticNode, float]]:
-        """Perform semantic similarity search using vector embeddings"""
+        """Perform semantic similarity search using vector embeddings."""
         try:
             # Generate query embedding
             query_embedding = self.embedding_manager.create_embedding(query_text)
@@ -733,11 +733,11 @@ class HypergraphKG(MemoryBackend):
             return results
 
         except Exception as e:
-            logger.error(f"Semantic similarity search failed: {e!s}")
+            logger.error("Semantic similarity search failed: %s", e)
             return []
 
     async def detect_communities(self, algorithm: str = "louvain") -> dict[str, str]:
-        """Detect communities in the semantic graph
+        """Detect communities in the semantic graph.
 
         Args:
             algorithm: Community detection algorithm ('louvain', 'label_propagation')
@@ -779,16 +779,16 @@ class HypergraphKG(MemoryBackend):
                     )
 
                 logger.info(
-                    f"Detected {len(set(communities.values()))} communities using {algorithm}"
+                    "Detected %d communities using %s", len(set(communities.values())), algorithm
                 )
                 return communities
 
         except Exception as e:
-            logger.error(f"Community detection failed: {e!s}")
+            logger.error("Community detection failed: %s", e)
             return {}
 
     async def get_memory_stats(self) -> MemoryStats:
-        """Get statistics about semantic memory usage"""
+        """Get statistics about semantic memory usage."""
         try:
             async with self.neo4j_driver.session() as session:
                 stats_result = await session.run("""
@@ -814,7 +814,7 @@ class HypergraphKG(MemoryBackend):
                 )
 
         except Exception as e:
-            logger.error(f"Failed to get memory stats: {e!s}")
+            logger.error("Failed to get memory stats: %s", e)
             return MemoryStats(
                 total_nodes=0,
                 total_edges=0,
@@ -829,27 +829,27 @@ class HypergraphKG(MemoryBackend):
     # Private helper methods
 
     async def _setup_neo4j_schema(self) -> None:
-        """Set up Neo4j constraints and indexes"""
+        """Set up Neo4j constraints and indexes."""
         async with self.neo4j_driver.session() as session:
             # Create constraints
             for constraint in self.schema.get_node_constraints():
                 try:
                     await session.run(constraint)
                 except Exception as e:
-                    logger.warning(f"Failed to create constraint: {e!s}")
+                    logger.warning("Failed to create constraint: %s", e)
 
             for constraint in self.schema.get_relationship_constraints():
                 try:
                     await session.run(constraint)
                 except Exception as e:
-                    logger.warning(f"Failed to create relationship constraint: {e!s}")
+                    logger.warning("Failed to create relationship constraint: %s", e)
 
             # Create indexes
             for index in self.schema.get_indexes():
                 try:
                     await session.run(index)
                 except Exception as e:
-                    logger.warning(f"Failed to create index: {e!s}")
+                    logger.warning("Failed to create index: %s", e)
 
             # Create sample data if needed
             sample_data = self.schema.get_sample_data_cypher()
@@ -858,13 +858,13 @@ class HypergraphKG(MemoryBackend):
                     await session.run(cypher)
                 except Exception as e:
                     logger.debug(
-                        f"Sample data creation (expected to fail if data exists): {e!s}"
+                        "Sample data creation (expected to fail if data exists): %s", e
                     )
 
         logger.info("Neo4j schema setup complete")
 
     async def _setup_qdrant_collections(self) -> None:
-        """Set up Qdrant collections for semantic vectors"""
+        """Set up Qdrant collections for semantic vectors."""
         collections_config = self.qdrant_schema.get_collection_configs()
 
         for collection_name, config in collections_config.items():
@@ -880,17 +880,17 @@ class HypergraphKG(MemoryBackend):
                                 size=config["vectors"]["size"], distance=Distance.COSINE
                             ),
                         )
-                        logger.info(f"Created Qdrant collection: {collection_name}")
+                        logger.info("Created Qdrant collection: %s", collection_name)
 
                 except Exception as e:
                     logger.error(
-                        f"Failed to setup Qdrant collection {collection_name}: {e!s}"
+                        "Failed to setup Qdrant collection %s: %s", collection_name, e
                     )
 
         logger.info("Qdrant semantic collections setup complete")
 
     async def _cache_semantic_node(self, node: SemanticNode) -> None:
-        """Cache semantic node in Redis"""
+        """Cache semantic node in Redis."""
         try:
             cache_key = self.redis_schema.get_key_patterns()["node"].format(
                 node_id=node.id
@@ -916,10 +916,10 @@ class HypergraphKG(MemoryBackend):
             )
 
         except Exception as e:
-            logger.warning(f"Failed to cache semantic node {node.id}: {e!s}")
+            logger.warning("Failed to cache semantic node %s: %s", node.id, e)
 
     async def _cache_hyperedge(self, edge: Hyperedge) -> None:
-        """Cache hyperedge in Redis"""
+        """Cache hyperedge in Redis."""
         try:
             cache_key = self.redis_schema.get_key_patterns()["edge"].format(
                 edge_id=edge.id
@@ -941,7 +941,7 @@ class HypergraphKG(MemoryBackend):
             )
 
         except Exception as e:
-            logger.warning(f"Failed to cache hyperedge {edge.id}: {e!s}")
+            logger.warning("Failed to cache hyperedge %s: %s", edge.id, e)
 
 
 # Factory functions for creating semantic memory components
@@ -950,7 +950,7 @@ class HypergraphKG(MemoryBackend):
 def create_semantic_node(
     content: str, node_type: str = "concept", confidence: float = 0.8
 ) -> SemanticNode:
-    """Create a semantic node for consolidated knowledge"""
+    """Create a semantic node for consolidated knowledge."""
     return SemanticNode(
         content=content,
         node_type=node_type,
@@ -967,7 +967,7 @@ def create_hyperedge(
     confidence: float = 0.8,
     evidence_count: int = 1,
 ) -> Hyperedge:
-    """Create a hyperedge for n-ary semantic relationships"""
+    """Create a hyperedge for n-ary semantic relationships."""
     edge = Hyperedge(
         participants=participants,
         relation=relation,

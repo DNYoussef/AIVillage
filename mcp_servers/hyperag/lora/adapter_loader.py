@@ -1,4 +1,4 @@
-"""LoRA Adapter Loader with Guardian Signature Verification
+"""LoRA Adapter Loader with Guardian Signature Verification.
 
 Secure loader for LoRA adapters that validates Guardian signatures before
 allowing adapter attachment to models.
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class AdapterSignature:
-    """Cryptographic signature for LoRA adapter"""
+    """Cryptographic signature for LoRA adapter."""
 
     sha256: str
     domain: str
@@ -31,7 +31,7 @@ class AdapterSignature:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AdapterSignature":
-        """Create signature from dictionary"""
+        """Create signature from dictionary."""
         return cls(
             sha256=data["sha"],
             domain=data["domain"],
@@ -42,7 +42,7 @@ class AdapterSignature:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert signature to dictionary"""
+        """Convert signature to dictionary."""
         return {
             "sha": self.sha256,
             "domain": self.domain,
@@ -54,7 +54,7 @@ class AdapterSignature:
 
 
 class AdapterRegistry:
-    """Registry of verified LoRA adapters with Guardian signatures"""
+    """Registry of verified LoRA adapters with Guardian signatures."""
 
     def __init__(self, registry_path: str | None = None):
         self.registry_path = (
@@ -65,7 +65,7 @@ class AdapterRegistry:
         self._load_registry()
 
     def _load_registry(self):
-        """Load adapter registry from disk"""
+        """Load adapter registry from disk."""
         try:
             if self.registry_path.exists():
                 with open(self.registry_path) as f:
@@ -80,7 +80,7 @@ class AdapterRegistry:
             self.registry = {}
 
     def _save_registry(self):
-        """Save adapter registry to disk"""
+        """Save adapter registry to disk."""
         try:
             registry_data = {
                 "version": "1.0",
@@ -105,7 +105,7 @@ class AdapterRegistry:
         metrics: dict[str, float],
         guardian_key: str,
     ) -> str:
-        """Register a new LoRA adapter with Guardian signature
+        """Register a new LoRA adapter with Guardian signature.
 
         Args:
             adapter_path: Path to the adapter file
@@ -170,7 +170,7 @@ class AdapterRegistry:
             raise
 
     def verify_adapter(self, adapter_id: str, adapter_path: str) -> tuple[bool, str]:
-        """Verify adapter signature and integrity
+        """Verify adapter signature and integrity.
 
         Args:
             adapter_id: ID of the adapter to verify
@@ -232,7 +232,7 @@ class AdapterRegistry:
     def list_verified_adapters(
         self, domain: str | None = None
     ) -> dict[str, dict[str, Any]]:
-        """List all verified adapters, optionally filtered by domain
+        """List all verified adapters, optionally filtered by domain.
 
         Args:
             domain: Optional domain filter
@@ -255,7 +255,7 @@ class AdapterRegistry:
         return result
 
     def remove_adapter(self, adapter_id: str) -> bool:
-        """Remove adapter from registry
+        """Remove adapter from registry.
 
         Args:
             adapter_id: ID of adapter to remove
@@ -273,7 +273,7 @@ class AdapterRegistry:
 
 
 class SecureAdapterLoader:
-    """Secure loader for LoRA adapters with Guardian verification"""
+    """Secure loader for LoRA adapters with Guardian verification."""
 
     def __init__(self, registry: AdapterRegistry | None = None):
         self.registry = registry or AdapterRegistry()
@@ -283,7 +283,7 @@ class SecureAdapterLoader:
     async def load_adapter(
         self, adapter_id: str, adapter_path: str, model_instance: Any = None
     ) -> tuple[bool, str, Any]:
-        """Securely load a LoRA adapter with Guardian verification
+        """Securely load a LoRA adapter with Guardian verification.
 
         Args:
             adapter_id: ID of the adapter to load
@@ -337,7 +337,7 @@ class SecureAdapterLoader:
             return False, error_msg, None
 
     def unload_adapter(self, adapter_id: str) -> bool:
-        """Unload a LoRA adapter
+        """Unload a LoRA adapter.
 
         Args:
             adapter_id: ID of adapter to unload
@@ -353,7 +353,7 @@ class SecureAdapterLoader:
         return False
 
     def get_loaded_adapters(self) -> dict[str, dict[str, Any]]:
-        """Get information about currently loaded adapters"""
+        """Get information about currently loaded adapters."""
         result = {}
 
         for adapter_id, adapter_info in self.loaded_adapters.items():
@@ -370,12 +370,12 @@ class SecureAdapterLoader:
 
 
 def create_adapter_registry(registry_path: str | None = None) -> AdapterRegistry:
-    """Create adapter registry instance"""
+    """Create adapter registry instance."""
     return AdapterRegistry(registry_path)
 
 
 def create_secure_loader(
     registry: AdapterRegistry | None = None,
 ) -> SecureAdapterLoader:
-    """Create secure adapter loader instance"""
+    """Create secure adapter loader instance."""
     return SecureAdapterLoader(registry)

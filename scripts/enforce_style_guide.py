@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 
 class StyleGuideEnforcer:
-    """Automated style guide enforcement for automation scripts"""
+    """Automated style guide enforcement for automation scripts."""
 
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: str | None = None) -> None:
         self.project_root = Path(project_root or os.getcwd())
         self.scripts_dir = self.project_root / "scripts"
 
@@ -72,7 +72,7 @@ class StyleGuideEnforcer:
         }
 
     def check_script_structure(self, script_path: Path) -> dict:
-        """Check if script follows required structure"""
+        """Check if script follows required structure."""
         issues = []
 
         try:
@@ -91,13 +91,13 @@ class StyleGuideEnforcer:
         in_docstring = False
         quote_type = None
 
-        for i, line in enumerate(lines[:20]):  # Check first 20 lines
+        for _i, line in enumerate(lines[:20]):  # Check first 20 lines
             stripped = line.strip()
             if not stripped or stripped.startswith("#"):
                 continue
 
             if not docstring_found:
-                if stripped.startswith('"""') or stripped.startswith("'''"):
+                if stripped.startswith(('"""', "'''")):
                     docstring_found = True
                     quote_type = stripped[:3]
                     if len(stripped) > 3 and stripped.endswith(quote_type):
@@ -113,11 +113,10 @@ class StyleGuideEnforcer:
 
         # Check imports organization
         import_sections = {"standard": [], "third_party": [], "local": []}
-        current_section = None
 
         for line in lines:
             stripped = line.strip()
-            if stripped.startswith("import ") or stripped.startswith("from "):
+            if stripped.startswith(("import ", "from ")):
                 module = self._extract_module_name(stripped)
                 section = self._classify_import(module)
                 import_sections[section].append(line)
@@ -133,13 +132,13 @@ class StyleGuideEnforcer:
         }
 
     def _extract_module_name(self, import_line: str) -> str:
-        """Extract module name from import statement"""
+        """Extract module name from import statement."""
         if import_line.startswith("from "):
             return import_line.split()[1].split(".")[0]
         return import_line.split()[1].split(".")[0]
 
     def _classify_import(self, module: str) -> str:
-        """Classify import as standard, third-party, or local"""
+        """Classify import as standard, third-party, or local."""
         standard_libs = {
             "os",
             "sys",
@@ -175,20 +174,20 @@ class StyleGuideEnforcer:
         return "third_party"
 
     def _check_function_docstrings(self, content: str) -> list[str]:
-        """Check for missing function/class docstrings"""
+        """Check for missing function/class docstrings."""
         issues = []
         lines = content.splitlines()
 
         for i, line in enumerate(lines):
             stripped = line.strip()
-            if stripped.startswith("def ") or stripped.startswith("class "):
+            if stripped.startswith(("def ", "class ")):
                 # Look for docstring in next few lines
                 docstring_found = False
                 for j in range(i + 1, min(i + 5, len(lines))):
                     next_line = lines[j].strip()
                     if not next_line:
                         continue
-                    if next_line.startswith('"""') or next_line.startswith("'''"):
+                    if next_line.startswith(('"""', "'''")):
                         docstring_found = True
                         break
                     if next_line and not next_line.startswith("#"):
@@ -204,7 +203,7 @@ class StyleGuideEnforcer:
         return issues
 
     def run_tool_checks(self, target_path: str, fix: bool = False) -> dict:
-        """Run style checking tools"""
+        """Run style checking tools."""
         results = {}
 
         for tool_name, config in self.tools.items():
@@ -249,7 +248,7 @@ class StyleGuideEnforcer:
         return results
 
     def check_script(self, script_path: Path, fix: bool = False) -> dict:
-        """Perform comprehensive style check on a script"""
+        """Perform comprehensive style check on a script."""
         logger.info(f"Checking {script_path.name}...")
 
         # Structure check
@@ -271,7 +270,7 @@ class StyleGuideEnforcer:
         }
 
     def check_all_scripts(self, fix: bool = False) -> dict:
-        """Check all Python scripts in the scripts directory"""
+        """Check all Python scripts in the scripts directory."""
         logger.info("Checking all automation scripts...")
 
         python_scripts = list(self.scripts_dir.glob("*.py"))
@@ -296,8 +295,8 @@ class StyleGuideEnforcer:
             "timestamp": str(Path().cwd()),
         }
 
-    def generate_report(self, results: dict, output_file: str = None) -> str:
-        """Generate a comprehensive style guide report"""
+    def generate_report(self, results: dict, output_file: str | None = None) -> str:
+        """Generate a comprehensive style guide report."""
         report_lines = []
         report_lines.append("=" * 60)
         report_lines.append("AUTOMATION SCRIPTS STYLE GUIDE REPORT")
@@ -349,7 +348,7 @@ class StyleGuideEnforcer:
         return report_content
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Automated style guide enforcement")
     parser.add_argument("--script", help="Check specific script")
     parser.add_argument(

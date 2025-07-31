@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 
-def create_simple_tree():
+def create_simple_tree() -> None:
     """Create simple ASCII evolutionary tree."""
     # Load results
     results_file = Path("D:/AgentForge/results/evolution_results.json")
@@ -34,7 +34,7 @@ def create_simple_tree():
 
         print(f"\nGeneration {gen_idx}:")
 
-        for i, individual in enumerate(population):
+        for _i, individual in enumerate(population):
             method = individual["merge_method"]
             fitness = individual["fitness"]
             ind_id = individual["id"]

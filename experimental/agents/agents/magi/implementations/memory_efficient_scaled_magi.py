@@ -66,10 +66,11 @@ class MemoryEfficientScaledMagi:
         logger.info("=" * 80)
         logger.info("MEMORY-EFFICIENT SCALED MAGI SPECIALIZATION (10,000 QUESTIONS)")
         logger.info("=" * 80)
-        logger.info(f"Run ID: {self.run_id}")
-        logger.info(f"Scaling from 300 to {self.total_questions:,} questions")
+        logger.info("Run ID: %s", self.run_id)
+        logger.info("Scaling from 300 to %s questions", f"{self.total_questions:,}")
         logger.info(
-            f"Memory Available: {memory_manager.get_memory_stats()['system_ram_available_gb']:.2f} GB"
+            "Memory Available: %.2f GB",
+            memory_manager.get_memory_stats()['system_ram_available_gb']
         )
         logger.info(
             "Advanced Features: Geometric awareness, self-modification, sleep cycles"
@@ -125,9 +126,9 @@ class MemoryEfficientScaledMagi:
 
             best_config = evolution_data["evolution_summary"]["best_configuration"]
             logger.info("Evolved model configuration loaded:")
-            logger.info(f"  Method: {best_config['merge_method']}")
-            logger.info(f"  Fitness: {best_config['fitness']:.4f}")
-            logger.info(f"  Parameters: {best_config['parameters']}")
+            logger.info("  Method: %s", best_config['merge_method'])
+            logger.info("  Fitness: %.4f", best_config['fitness'])
+            logger.info("  Parameters: %s", best_config['parameters'])
 
             return best_config
         logger.info("Using default configuration")
@@ -135,7 +136,7 @@ class MemoryEfficientScaledMagi:
 
     async def generate_curriculum_questions(self):
         """Generate structured 10,000 question curriculum."""
-        logger.info(f"Generating {self.total_questions:,} question curriculum...")
+        logger.info("Generating %s question curriculum...", f"{self.total_questions:,}")
 
         curriculum = {}
         question_templates = {
@@ -213,14 +214,15 @@ class MemoryEfficientScaledMagi:
                     level_questions.append(question)
 
             curriculum[f"level_{level}"] = level_questions
-            logger.info(f"Level {level}: Generated {len(level_questions)} questions")
+            logger.info("Level %s: Generated %s questions", level, len(level_questions))
 
             # Memory cleanup
             if level % 3 == 0:
                 memory_manager.cleanup_memory()
 
         logger.info(
-            f"Curriculum generation complete: {self.total_questions:,} questions across {self.levels} levels"
+            "Curriculum generation complete: %s questions across %s levels",
+            f"{self.total_questions:,}", self.levels
         )
         return curriculum
 
@@ -297,7 +299,7 @@ class MemoryEfficientScaledMagi:
         questions_processed = 0
 
         for level in range(1, self.levels + 1):
-            logger.info(f"=== LEVEL {level}/{self.levels} TRAINING ===")
+            logger.info("=== LEVEL %s/%s TRAINING ===", level, self.levels)
             level_questions = curriculum[f"level_{level}"]
 
             level_start_time = time.time()
@@ -333,7 +335,8 @@ class MemoryEfficientScaledMagi:
                 if questions_processed % 500 == 0:
                     overall_capability = sum(capabilities.values()) / len(capabilities)
                     logger.info(
-                        f"Progress: {questions_processed:,}/10,000 questions - Overall: {overall_capability:.3f}"
+                        "Progress: %s/10,000 questions - Overall: %.3f",
+                        f"{questions_processed:,}", overall_capability
                     )
 
                     log_metrics(
@@ -365,13 +368,15 @@ class MemoryEfficientScaledMagi:
                     }
                     training_results["self_modifications"].append(modification)
                     logger.info(
-                        f"Self-modification event: Enhanced capabilities at {questions_processed:,} questions"
+                        "Self-modification event: Enhanced capabilities at %s questions",
+                        f"{questions_processed:,}"
                     )
 
                 # Sleep/dream cycles (every 500 questions)
                 if questions_processed % 500 == 0 and questions_processed > 0:
                     logger.info(
-                        f"Sleep/dream cycle: Memory consolidation at {questions_processed:,} questions"
+                        "Sleep/dream cycle: Memory consolidation at %s questions",
+                        f"{questions_processed:,}"
                     )
                     training_results["sleep_cycles"] += 1
                     await asyncio.sleep(0.05)  # Simulate consolidation
@@ -391,10 +396,10 @@ class MemoryEfficientScaledMagi:
 
             training_results["level_results"].append(level_result)
 
-            logger.info(f"Level {level} Complete:")
-            logger.info(f"  Duration: {level_duration:.1f}s")
-            logger.info(f"  Overall Capability: {overall_capability:.3f}")
-            logger.info(f"  Questions Processed: {questions_processed:,}/10,000")
+            logger.info("Level %s Complete:", level)
+            logger.info("  Duration: %.1fs", level_duration)
+            logger.info("  Overall Capability: %.3f", overall_capability)
+            logger.info("  Questions Processed: %s/10,000", f"{questions_processed:,}")
 
             log_metrics(
                 {
@@ -411,9 +416,10 @@ class MemoryEfficientScaledMagi:
         training_results["questions_processed"] = questions_processed
 
         logger.info("CURRICULUM TRAINING COMPLETE!")
-        logger.info(f"Final Specialization Score: {final_specialization_score:.3f}")
+        logger.info("Final Specialization Score: %.3f", final_specialization_score)
         logger.info(
-            f"Improvement over baseline: {final_specialization_score - 0.774:.3f}"
+            "Improvement over baseline: %.3f",
+            final_specialization_score - 0.774
         )
 
         return training_results
@@ -447,18 +453,21 @@ async def main():
             logger.info("MEMORY-EFFICIENT SCALED MAGI SUCCESS!")
             logger.info("=" * 80)
             logger.info(
-                f"Duration: {duration / 60:.1f} minutes ({duration:.1f} seconds)"
+                "Duration: %.1f minutes (%.1f seconds)",
+                duration / 60, duration
             )
-            logger.info(f"Questions Processed: {results['questions_processed']:,}")
+            logger.info("Questions Processed: %s", f"{results['questions_processed']:,}")
             logger.info(
-                f"Final Specialization Score: {results['final_specialization_score']:.3f}"
+                "Final Specialization Score: %.3f",
+                results['final_specialization_score']
             )
             logger.info(
-                f"Improvement over baseline: {results['final_specialization_score'] - 0.774:.3f}"
+                "Improvement over baseline: %.3f",
+                results['final_specialization_score'] - 0.774
             )
-            logger.info(f"Geometric Snapshots: {len(results['geometric_snapshots'])}")
-            logger.info(f"Self-Modifications: {len(results['self_modifications'])}")
-            logger.info(f"Sleep Cycles: {results['sleep_cycles']}")
+            logger.info("Geometric Snapshots: %s", len(results['geometric_snapshots']))
+            logger.info("Self-Modifications: %s", len(results['self_modifications']))
+            logger.info("Sleep Cycles: %s", results['sleep_cycles'])
 
             # Final W&B logging
             log_metrics(
@@ -495,7 +504,7 @@ async def main():
         return None
 
     except Exception as e:
-        logger.error(f"Memory-efficient scaled execution failed: {e}")
+        logger.error("Memory-efficient scaled execution failed: %s", e)
         return None
     finally:
         finish_wandb()

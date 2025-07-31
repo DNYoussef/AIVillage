@@ -37,7 +37,7 @@ def check_system_resources(model_paths: list[str]) -> bool:
     total_model_size = 0
     for path in model_paths:
         if os.path.exists(path):
-            for root, dirs, files in os.walk(path):
+            for root, _dirs, files in os.walk(path):
                 total_model_size += sum(
                     os.path.getsize(os.path.join(root, file)) for file in files
                 )
@@ -77,7 +77,7 @@ def setup_gpu_if_available():
     return device
 
 
-def clean_up_models(model_paths: list[str]):
+def clean_up_models(model_paths: list[str]) -> None:
     for path in model_paths:
         try:
             if os.path.exists(path):
@@ -113,7 +113,7 @@ def load_models(
             tokenizers.append(tokenizer)
             logger.info(f"Successfully loaded model and tokenizer: {model_ref.name}")
         except Exception as e:
-            logger.error(f"Failed to load model or tokenizer {model_ref.name}: {e!s}")
+            logger.exception(f"Failed to load model or tokenizer {model_ref.name}: {e!s}")
     return models, tokenizers
 
 
@@ -125,8 +125,9 @@ def save_model(model: torch.nn.Module, path: str) -> None:
         tokenizer = AutoTokenizer.from_pretrained(model.config._name_or_path)
         tokenizer.save_pretrained(path)
     except Exception as e:
-        logger.error(f"Failed to save model: {e!s}")
-        raise EvoMergeException(f"Error saving model: {e!s}")
+        logger.exception(f"Failed to save model: {e!s}")
+        msg = f"Error saving model: {e!s}"
+        raise EvoMergeException(msg)
 
 
 def generate_text(
@@ -137,8 +138,9 @@ def generate_text(
         outputs = model.generate(**inputs, max_length=max_length)
         return tokenizer.decode(outputs[0], skip_special_tokens=True)
     except Exception as e:
-        logger.error(f"Error during text generation: {e!s}")
-        raise EvoMergeException(f"Error generating text: {e!s}")
+        logger.exception(f"Error during text generation: {e!s}")
+        msg = f"Error generating text: {e!s}"
+        raise EvoMergeException(msg)
 
 
 def evaluate_model(model_path: str) -> dict[str, float | str]:
@@ -160,12 +162,13 @@ def evaluate_model(model_path: str) -> dict[str, float | str]:
         return {"perplexity": perplexity, "overall_score": overall_score}
 
     except Exception as e:
-        logger.error(f"Error during model evaluation: {e!s}")
-        raise EvoMergeException(f"Error evaluating model: {e!s}")
+        logger.exception(f"Error during model evaluation: {e!s}")
+        msg = f"Error evaluating model: {e!s}"
+        raise EvoMergeException(msg)
 
 
 def parallel_evaluate_models(
-    model_paths: list[str], max_workers: int = None
+    model_paths: list[str], max_workers: int | None = None
 ) -> list[dict[str, float | str]]:
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         return list(executor.map(evaluate_model, model_paths))
@@ -192,10 +195,7 @@ def mask_model_weights(
     :return: Dictionary of masked parameters
     """
     if weight_format == "finetuned_weight":
-        param_dict = {
-            param_name: param_value
-            for param_name, param_value in finetuned_model.named_parameters()
-        }
+        param_dict = dict(finetuned_model.named_parameters())
         param_names_to_merge = get_param_names_to_merge(
             input_param_names=list(param_dict.keys()),
             exclude_param_names_regex=exclude_param_names_regex,

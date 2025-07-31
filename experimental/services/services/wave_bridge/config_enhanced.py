@@ -302,10 +302,10 @@ validation = config.validate_config()
 if not validation["valid"]:
     import warnings
 
-    warnings.warn(f"Configuration validation failed: {validation['errors']}")
+    warnings.warn(f"Configuration validation failed: {validation['errors']}", stacklevel=2)
 
 if validation["warnings"]:
     import warnings
 
     for warning in validation["warnings"]:
-        warnings.warn(warning)
+        warnings.warn(warning, stacklevel=2)

@@ -1,4 +1,4 @@
-"""HypeRAG MCP Server Authentication and Authorization
+"""HypeRAG MCP Server Authentication and Authorization.
 
 Implements role-based access control with granular permissions for different agent types.
 """
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class HypeRAGPermissions:
-    """Permission constants for HypeRAG operations"""
+    """Permission constants for HypeRAG operations."""
 
     # Read Operations
     READ = "hyperag:read"
@@ -72,7 +72,7 @@ class HypeRAGPermissions:
 
 @dataclass
 class AuthContext:
-    """Authentication context for a user/agent"""
+    """Authentication context for a user/agent."""
 
     user_id: str
     agent_id: str
@@ -86,7 +86,7 @@ class AuthContext:
 
 @dataclass
 class AuditLogEntry:
-    """Audit log entry for permission decisions"""
+    """Audit log entry for permission decisions."""
 
     timestamp: datetime
     user_id: str
@@ -101,25 +101,25 @@ class AuditLogEntry:
 
 
 class AuthenticationError(Exception):
-    """Raised when authentication fails"""
+    """Raised when authentication fails."""
 
 
 class AuthorizationError(Exception):
-    """Raised when authorization fails"""
+    """Raised when authorization fails."""
 
 
 class PermissionChecker(ABC):
-    """Abstract base class for permission checking strategies"""
+    """Abstract base class for permission checking strategies."""
 
     @abstractmethod
     async def check_permission(
         self, context: AuthContext, permission: str, resource: str | None = None
     ) -> bool:
-        """Check if the context has the required permission"""
+        """Check if the context has the required permission."""
 
 
 class RoleBasedPermissionChecker(PermissionChecker):
-    """Role-based permission checker"""
+    """Role-based permission checker."""
 
     def __init__(self, permissions_config: dict[str, list[str]]):
         self.permissions_config = permissions_config
@@ -127,12 +127,12 @@ class RoleBasedPermissionChecker(PermissionChecker):
     async def check_permission(
         self, context: AuthContext, permission: str, resource: str | None = None
     ) -> bool:
-        """Check if the role has the required permission"""
+        """Check if the role has the required permission."""
         return permission in context.permissions
 
 
 class ResourceBasedPermissionChecker(PermissionChecker):
-    """Resource-based permission checker with ownership rules"""
+    """Resource-based permission checker with ownership rules."""
 
     def __init__(self, base_checker: PermissionChecker):
         self.base_checker = base_checker
@@ -140,7 +140,7 @@ class ResourceBasedPermissionChecker(PermissionChecker):
     async def check_permission(
         self, context: AuthContext, permission: str, resource: str | None = None
     ) -> bool:
-        """Check permission with resource ownership rules"""
+        """Check permission with resource ownership rules."""
         # Check base permission first
         if not await self.base_checker.check_permission(context, permission, resource):
             return False
@@ -164,7 +164,7 @@ class ResourceBasedPermissionChecker(PermissionChecker):
 
 
 class TimeBasedPermissionChecker(PermissionChecker):
-    """Time-based permission checker with business hours restrictions"""
+    """Time-based permission checker with business hours restrictions."""
 
     def __init__(
         self, base_checker: PermissionChecker, business_hours: tuple | None = None
@@ -175,7 +175,7 @@ class TimeBasedPermissionChecker(PermissionChecker):
     async def check_permission(
         self, context: AuthContext, permission: str, resource: str | None = None
     ) -> bool:
-        """Check permission with time-based restrictions"""
+        """Check permission with time-based restrictions."""
         # Check base permission first
         if not await self.base_checker.check_permission(context, permission, resource):
             return False
@@ -192,7 +192,7 @@ class TimeBasedPermissionChecker(PermissionChecker):
 
 
 class PermissionManager:
-    """Manages authentication and authorization for HypeRAG MCP server"""
+    """Manages authentication and authorization for HypeRAG MCP server."""
 
     def __init__(
         self,
@@ -220,7 +220,7 @@ class PermissionManager:
     async def authenticate_jwt(
         self, token: str, ip_address: str | None = None
     ) -> AuthContext:
-        """Authenticate using JWT token"""
+        """Authenticate using JWT token."""
         try:
             payload = jwt.decode(token, self.jwt_secret, algorithms=["HS256"])
 
@@ -268,7 +268,7 @@ class PermissionManager:
     async def authenticate_api_key(
         self, api_key: str, ip_address: str | None = None
     ) -> AuthContext:
-        """Authenticate using API key (simplified for demo)"""
+        """Authenticate using API key (simplified for demo)."""
         # In production, this would lookup the API key in a secure store
         key_mapping = {
             "hrag_dev_test123": {"user_id": "dev_user", "role": "external"},
@@ -303,7 +303,7 @@ class PermissionManager:
     async def check_permission(
         self, context: AuthContext, permission: str, resource: str | None = None
     ) -> bool:
-        """Check if the context has the required permission"""
+        """Check if the context has the required permission."""
         # Check rate limiting
         if not await self._check_rate_limit(context.user_id):
             await self._audit_log(
@@ -348,14 +348,14 @@ class PermissionManager:
     async def require_permission(
         self, context: AuthContext, permission: str, resource: str | None = None
     ) -> None:
-        """Require permission or raise AuthorizationError"""
+        """Require permission or raise AuthorizationError."""
         if not await self.check_permission(context, permission, resource):
             raise AuthorizationError(
                 f"Permission denied: {permission} on {resource or 'system'} for role {context.role}"
             )
 
     async def invalidate_session(self, session_id: str) -> None:
-        """Invalidate a session"""
+        """Invalidate a session."""
         if session_id in self.active_sessions:
             context = self.active_sessions[session_id]
             del self.active_sessions[session_id]
@@ -365,7 +365,7 @@ class PermissionManager:
             logger.info(f"Invalidated session {session_id}")
 
     async def get_active_sessions(self) -> list[AuthContext]:
-        """Get list of active sessions"""
+        """Get list of active sessions."""
         now = datetime.now()
         # Clean up expired sessions
         expired_sessions = [
@@ -377,7 +377,7 @@ class PermissionManager:
         return list(self.active_sessions.values())
 
     async def _check_rate_limit(self, user_id: str) -> bool:
-        """Check rate limiting for user"""
+        """Check rate limiting for user."""
         now = time.time()
         minute_ago = now - 60
 
@@ -408,7 +408,7 @@ class PermissionManager:
         granted: bool,
         reason: str,
     ) -> None:
-        """Add entry to audit log"""
+        """Add entry to audit log."""
         if not self.enable_audit:
             return
 
@@ -441,7 +441,7 @@ class PermissionManager:
     async def get_audit_log(
         self, user_id: str | None = None, limit: int = 100
     ) -> list[AuditLogEntry]:
-        """Get audit log entries"""
+        """Get audit log entries."""
         entries = self.audit_log
 
         if user_id:
@@ -450,7 +450,7 @@ class PermissionManager:
         return entries[-limit:]
 
     async def update_permissions(self, role: str, permissions: list[str]) -> None:
-        """Update permissions for a role (admin only)"""
+        """Update permissions for a role (admin only)."""
         self.permissions_config[role] = permissions
 
         # Update active sessions with the role
@@ -463,7 +463,7 @@ class PermissionManager:
 
 # Decorators for easy permission checking
 def require_permission(permission: str, resource_param: str | None = None):
-    """Decorator to require permission for a method"""
+    """Decorator to require permission for a method."""
 
     def decorator(func):
         async def wrapper(self, context: AuthContext, *args, **kwargs):
@@ -479,7 +479,7 @@ def require_permission(permission: str, resource_param: str | None = None):
 
 
 def audit_operation(operation: str):
-    """Decorator to audit operations"""
+    """Decorator to audit operations."""
 
     def decorator(func):
         async def wrapper(self, context: AuthContext, *args, **kwargs):

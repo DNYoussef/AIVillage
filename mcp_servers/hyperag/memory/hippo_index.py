@@ -1,4 +1,4 @@
-"""HippoIndex: Fast episodic memory storage
+"""HippoIndex: Fast episodic memory storage.
 
 Brain-inspired hippocampal memory system for rapid storage and retrieval
 of recent episodic information with time-based decay and PPR access patterns.
@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 class EpisodicDocument(Document):
-    """Document optimized for episodic storage"""
+    """Document optimized for episodic storage."""
 
     def __init__(
         self, content: str, doc_type: str, user_id: str | None = None, **kwargs
@@ -53,7 +53,7 @@ class EpisodicDocument(Document):
 
 
 class HippoNode(Node):
-    """Node optimized for hippocampal-style storage"""
+    """Node optimized for hippocampal-style storage."""
 
     def __init__(self, content: str, user_id: str | None = None, **kwargs):
         super().__init__(
@@ -74,7 +74,7 @@ class HippoNode(Node):
 
 
 class HippoIndex(MemoryBackend):
-    """Fast episodic memory - like hippocampus
+    """Fast episodic memory - like hippocampus.
 
     Features:
     - Rapid storage of new information
@@ -112,10 +112,10 @@ class HippoIndex(MemoryBackend):
         # Cache settings
         self.cache_ttl = self.redis_schema.get_ttl_configs()
 
-        logger.info(f"HippoIndex initialized with db_path={db_path}")
+        logger.info("HippoIndex initialized with db_path=%s", db_path)
 
     async def initialize(self) -> None:
-        """Initialize all backend connections and schemas"""
+        """Initialize all backend connections and schemas."""
         try:
             # Initialize DuckDB
             self.duckdb_conn = duckdb.connect(self.db_path)
@@ -132,11 +132,11 @@ class HippoIndex(MemoryBackend):
             logger.info("HippoIndex initialization complete")
 
         except Exception as e:
-            logger.error(f"Failed to initialize HippoIndex: {e!s}")
+            logger.error("Failed to initialize HippoIndex: %s", e)
             raise
 
     async def close(self) -> None:
-        """Close all connections"""
+        """Close all connections."""
         try:
             if self.duckdb_conn:
                 self.duckdb_conn.close()
@@ -146,10 +146,10 @@ class HippoIndex(MemoryBackend):
                 self.qdrant_client.close()
             logger.info("HippoIndex connections closed")
         except Exception as e:
-            logger.error(f"Error closing HippoIndex: {e!s}")
+            logger.error("Error closing HippoIndex: %s", e)
 
     async def health_check(self) -> dict[str, Any]:
-        """Check health of all backend systems"""
+        """Check health of all backend systems."""
         health = {"status": "healthy", "backends": {}}
 
         try:
@@ -179,7 +179,7 @@ class HippoIndex(MemoryBackend):
         return health
 
     async def store_node(self, node: Node, generate_embedding: bool = True) -> bool:
-        """Store a node in episodic memory"""
+        """Store a node in episodic memory."""
         try:
             # Generate embedding if needed
             if generate_embedding and node.embedding is None:
@@ -243,15 +243,15 @@ class HippoIndex(MemoryBackend):
             # Cache in Redis
             await self._cache_node(node)
 
-            logger.debug(f"Stored episodic node {node.id}")
+            logger.debug("Stored episodic node %s", node.id)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to store node {node.id}: {e!s}")
+            logger.error("Failed to store node %s: %s", node.id, e)
             return False
 
     async def store_edge(self, edge: Edge) -> bool:
-        """Store an edge in episodic memory"""
+        """Store an edge in episodic memory."""
         try:
             self.duckdb_conn.execute(
                 """
@@ -286,15 +286,15 @@ class HippoIndex(MemoryBackend):
             # Cache edge relationships
             await self._cache_edge(edge)
 
-            logger.debug(f"Stored episodic edge {edge.id}")
+            logger.debug("Stored episodic edge %s", edge.id)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to store edge {edge.id}: {e!s}")
+            logger.error("Failed to store edge %s: %s", edge.id, e)
             return False
 
     async def store_document(self, document: Document) -> bool:
-        """Store a document in episodic memory"""
+        """Store a document in episodic memory."""
         try:
             # Generate embedding if needed
             if document.embedding is None:
@@ -325,11 +325,11 @@ class HippoIndex(MemoryBackend):
                 ],
             )
 
-            logger.debug(f"Stored episodic document {document.id}")
+            logger.debug("Stored episodic document %s", document.id)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to store document {document.id}: {e!s}")
+            logger.error("Failed to store document %s: %s", document.id, e)
             return False
 
     async def query_nodes(
@@ -340,7 +340,7 @@ class HippoIndex(MemoryBackend):
         confidence_threshold: float = 0.0,
         max_age_hours: int | None = None,
     ) -> QueryResult:
-        """Query episodic nodes with optional filters"""
+        """Query episodic nodes with optional filters."""
         start_time = time.time()
 
         try:
@@ -421,7 +421,7 @@ class HippoIndex(MemoryBackend):
             )
 
         except Exception as e:
-            logger.error(f"Failed to query nodes: {e!s}")
+            logger.error("Failed to query nodes: %s", e)
             query_time = (time.time() - start_time) * 1000
             return QueryResult(
                 nodes=[],
@@ -435,7 +435,7 @@ class HippoIndex(MemoryBackend):
     async def vector_similarity_search(
         self, query_text: str, limit: int = 10, score_threshold: float = 0.7
     ) -> list[tuple[Node, float]]:
-        """Perform vector similarity search using Qdrant"""
+        """Perform vector similarity search using Qdrant."""
         try:
             # Generate query embedding
             query_embedding = self.embedding_manager.create_embedding(query_text)
@@ -492,13 +492,13 @@ class HippoIndex(MemoryBackend):
             return results
 
         except Exception as e:
-            logger.error(f"Vector similarity search failed: {e!s}")
+            logger.error("Vector similarity search failed: %s", e)
             return []
 
     async def get_recent_nodes(
         self, hours: int = 24, user_id: str | None = None, limit: int = 50
     ) -> list[Node]:
-        """Get recent episodic nodes"""
+        """Get recent episodic nodes."""
         cutoff_time = datetime.now() - timedelta(hours=hours)
 
         conditions = ["created_at >= ?"]
@@ -556,11 +556,11 @@ class HippoIndex(MemoryBackend):
             return nodes
 
         except Exception as e:
-            logger.error(f"Failed to get recent nodes: {e!s}")
+            logger.error("Failed to get recent nodes: %s", e)
             return []
 
     async def cleanup_expired_nodes(self) -> int:
-        """Remove expired nodes based on TTL"""
+        """Remove expired nodes based on TTL."""
         try:
             # Find expired nodes
             current_time = datetime.now()
@@ -600,16 +600,16 @@ class HippoIndex(MemoryBackend):
                     )
                     await self.redis_client.delete(cache_key)
 
-                logger.info(f"Cleaned up {expired_count} expired episodic nodes")
+                logger.info("Cleaned up %d expired episodic nodes", expired_count)
 
             return expired_count
 
         except Exception as e:
-            logger.error(f"Failed to cleanup expired nodes: {e!s}")
+            logger.error("Failed to cleanup expired nodes: %s", e)
             return 0
 
     async def get_memory_stats(self) -> MemoryStats:
-        """Get statistics about episodic memory usage"""
+        """Get statistics about episodic memory usage."""
         try:
             # Get node counts
             node_stats = self.duckdb_conn.execute("""
@@ -640,7 +640,7 @@ class HippoIndex(MemoryBackend):
             )
 
         except Exception as e:
-            logger.error(f"Failed to get memory stats: {e!s}")
+            logger.error("Failed to get memory stats: %s", e)
             return MemoryStats(
                 total_nodes=0,
                 total_edges=0,
@@ -655,7 +655,7 @@ class HippoIndex(MemoryBackend):
     # Private helper methods
 
     async def _setup_duckdb_schema(self) -> None:
-        """Set up DuckDB tables and indexes"""
+        """Set up DuckDB tables and indexes."""
         # Create tables
         for sql in self.schema.get_create_tables_sql():
             self.duckdb_conn.execute(sql)
@@ -666,19 +666,19 @@ class HippoIndex(MemoryBackend):
                 self.duckdb_conn.execute(sql)
             except Exception as e:
                 # Some indexes might not be supported in all DuckDB versions
-                logger.warning(f"Failed to create index: {e!s}")
+                logger.warning("Failed to create index: %s", e)
 
         # Create materialized views
         for sql in self.schema.get_materialized_views_sql():
             try:
                 self.duckdb_conn.execute(sql)
             except Exception as e:
-                logger.warning(f"Failed to create materialized view: {e!s}")
+                logger.warning("Failed to create materialized view: %s", e)
 
         logger.info("DuckDB schema setup complete")
 
     async def _setup_qdrant_collections(self) -> None:
-        """Set up Qdrant collections for vector storage"""
+        """Set up Qdrant collections for vector storage."""
         collections_config = self.qdrant_schema.get_collection_configs()
         hnsw_config = self.qdrant_schema.get_hnsw_configs()
 
@@ -696,17 +696,17 @@ class HippoIndex(MemoryBackend):
                             size=config["vectors"]["size"], distance=Distance.COSINE
                         ),
                     )
-                    logger.info(f"Created Qdrant collection: {collection_name}")
+                    logger.info("Created Qdrant collection: %s", collection_name)
 
             except Exception as e:
                 logger.error(
-                    f"Failed to setup Qdrant collection {collection_name}: {e!s}"
+                    "Failed to setup Qdrant collection %s: %s", collection_name, e
                 )
 
         logger.info("Qdrant collections setup complete")
 
     async def _cache_node(self, node: Node) -> None:
-        """Cache node in Redis"""
+        """Cache node in Redis."""
         try:
             cache_key = self.redis_schema.get_key_patterns()["node"].format(
                 node_id=node.id
@@ -728,10 +728,10 @@ class HippoIndex(MemoryBackend):
             )
 
         except Exception as e:
-            logger.warning(f"Failed to cache node {node.id}: {e!s}")
+            logger.warning("Failed to cache node %s: %s", node.id, e)
 
     async def _cache_edge(self, edge: Edge) -> None:
-        """Cache edge in Redis"""
+        """Cache edge in Redis."""
         try:
             cache_key = self.redis_schema.get_key_patterns()["edge"].format(
                 edge_id=edge.id
@@ -753,7 +753,7 @@ class HippoIndex(MemoryBackend):
             )
 
         except Exception as e:
-            logger.warning(f"Failed to cache edge {edge.id}: {e!s}")
+            logger.warning("Failed to cache edge %s: %s", edge.id, e)
 
 
 # Factory functions for creating episodic memory components
@@ -762,7 +762,7 @@ class HippoIndex(MemoryBackend):
 def create_episodic_document(
     content: str, doc_type: str = "episodic", user_id: str | None = None
 ) -> EpisodicDocument:
-    """Create an episodic document"""
+    """Create an episodic document."""
     return EpisodicDocument(
         content=content,
         doc_type=doc_type,
@@ -775,7 +775,7 @@ def create_episodic_document(
 def create_hippo_node(
     content: str, user_id: str | None = None, ttl_hours: int = 168
 ) -> HippoNode:  # 7 days default
-    """Create a hippocampal episodic node"""
+    """Create a hippocampal episodic node."""
     return HippoNode(
         content=content,
         user_id=user_id,

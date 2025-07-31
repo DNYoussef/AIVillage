@@ -1,0 +1,82 @@
+{
+  "timestamp": 1753927488.5847178,
+  "network_size": 5,
+  "delivery_results": {
+    "delivery_rate": 50.0,
+    "successful_deliveries": 30,
+    "total_messages": 60,
+    "node_count": 5
+  },
+  "node_stats": [
+    {
+      "node_id": "node_0",
+      "address": "localhost:52223",
+      "running": true,
+      "connected_nodes": 4,
+      "stats": {
+        "messages_sent": 34,
+        "messages_received": 4,
+        "messages_failed": 30,
+        "bytes_sent": 7751,
+        "bytes_received": 896
+      },
+      "routing_table_size": 4
+    },
+    {
+      "node_id": "node_1",
+      "address": "localhost:52224",
+      "running": true,
+      "connected_nodes": 4,
+      "stats": {
+        "messages_sent": 4,
+        "messages_received": 4,
+        "messages_failed": 0,
+        "bytes_sent": 896,
+        "bytes_received": 896
+      },
+      "routing_table_size": 4
+    },
+    {
+      "node_id": "node_2",
+      "address": "localhost:52225",
+      "running": true,
+      "connected_nodes": 4,
+      "stats": {
+        "messages_sent": 4,
+        "messages_received": 4,
+        "messages_failed": 0,
+        "bytes_sent": 896,
+        "bytes_received": 896
+      },
+      "routing_table_size": 4
+    },
+    {
+      "node_id": "node_3",
+      "address": "localhost:52226",
+      "running": true,
+      "connected_nodes": 4,
+      "stats": {
+        "messages_sent": 4,
+        "messages_received": 4,
+        "messages_failed": 0,
+        "bytes_sent": 896,
+        "bytes_received": 896
+      },
+      "routing_table_size": 4
+    },
+    {
+      "node_id": "node_4",
+      "address": "localhost:52227",
+      "running": true,
+      "connected_nodes": 4,
+      "stats": {
+        "messages_sent": 4,
+        "messages_received": 34,
+        "messages_failed": 0,
+        "bytes_sent": 896,
+        "bytes_received": 7751
+      },
+      "routing_table_size": 4
+    }
+  ]
+}

@@ -59,13 +59,13 @@ class EvolutionValidator:
         }
 
         # Check population size
-        logger.info(f"Population size: {len(population)} (Expected: 8)")
+        logger.info("Population size: %s (Expected: 8)", len(population))
 
         # Check that all are from generation 1
         generations = [ind.get("generation", 0) for ind in population]
         all_gen_1 = all(gen == 1 for gen in generations)
         validation["all_generation_1"] = all_gen_1
-        logger.info(f"All from generation 1: {all_gen_1}")
+        logger.info("All from generation 1: %s", all_gen_1)
 
         # Check systematic combinations
         expected_combinations = []
@@ -89,17 +89,18 @@ class EvolutionValidator:
             set(actual_combinations)
         )
 
-        logger.info(f"Expected combinations: {len(expected_set)}")
-        logger.info(f"Actual combinations: {len(actual_set)}")
+        logger.info("Expected combinations: %s", len(expected_set))
+        logger.info("Actual combinations: %s", len(actual_set))
         logger.info(
-            f"All systematic combinations present: {validation['all_systematic_combinations']}"
+            "All systematic combinations present: %s",
+            validation['all_systematic_combinations']
         )
-        logger.info(f"All combinations unique: {validation['unique_combinations']}")
+        logger.info("All combinations unique: %s", validation['unique_combinations'])
 
         # Log all combinations for verification
         logger.info("Actual combinations found:")
         for i, combo in enumerate(actual_combinations):
-            logger.info(f"  {i + 1}. {combo}")
+            logger.info("  %s. %s", i + 1, combo)
 
         return validation
 
@@ -107,7 +108,7 @@ class EvolutionValidator:
         self, merger: CorrectedEvolutionMerger, generation: int
     ) -> dict[str, bool]:
         """Validate breeding logic for a specific generation."""
-        logger.info(f"=== VALIDATING BREEDING LOGIC FOR GENERATION {generation} ===")
+        logger.info("=== VALIDATING BREEDING LOGIC FOR GENERATION %s ===", generation)
 
         # Get population before breeding
         pre_breeding_pop = merger.population.copy()
@@ -120,7 +121,8 @@ class EvolutionValidator:
         logger.info("Pre-breeding population (ranked by fitness):")
         for i, ind in enumerate(ranked_population):
             logger.info(
-                f"  {i + 1}. {ind['id']} - Fitness: {ind['fitness']:.4f} - Method: {ind['primary_method']}"
+                "  %s. %s - Fitness: %.4f - Method: %s",
+                i + 1, ind['id'], ind['fitness'], ind['primary_method']
             )
 
         # Simulate breeding
@@ -152,11 +154,12 @@ class EvolutionValidator:
             gen == expected_gen for gen in actual_generations
         )
 
-        logger.info(f"Next generation size: {len(next_gen)} (Expected: 8)")
-        logger.info(f"Mutants: {mutant_count} (Expected: 6)")
-        logger.info(f"Children: {child_count} (Expected: 2)")
+        logger.info("Next generation size: %s (Expected: 8)", len(next_gen))
+        logger.info("Mutants: %s (Expected: 6)", mutant_count)
+        logger.info("Children: %s (Expected: 2)", child_count)
         logger.info(
-            f"All generation {expected_gen}: {validation['all_new_generation']}"
+            "All generation %s: %s",
+            expected_gen, validation['all_new_generation']
         )
 
         # Log breeding details
@@ -165,7 +168,8 @@ class EvolutionValidator:
             breeding_type = ind.get("breeding_type", "unknown")
             parent_ids = ind.get("parent_ids", [])
             logger.info(
-                f"  {ind['id']} - Type: {breeding_type} - Parents: {parent_ids}"
+                "  %s - Type: %s - Parents: %s",
+                ind['id'], breeding_type, parent_ids
             )
 
         return validation
@@ -173,7 +177,7 @@ class EvolutionValidator:
     def run_mini_evolution_test(self, max_generations: int = 3) -> dict[str, Any]:
         """Run a mini evolution test for validation."""
         logger.info("=" * 80)
-        logger.info(f"RUNNING MINI EVOLUTION TEST ({max_generations} GENERATIONS)")
+        logger.info("RUNNING MINI EVOLUTION TEST (%s GENERATIONS)", max_generations)
         logger.info("=" * 80)
 
         # Create corrected evolution system
@@ -224,18 +228,20 @@ class EvolutionValidator:
 
                     if not all(breeding_validation.values()):
                         logger.error(
-                            f"❌ Breeding validation FAILED for generation {merger.generation}"
+                            "❌ Breeding validation FAILED for generation %s",
+                            merger.generation
                         )
                         test_results["all_tests_passed"] = False
                     else:
                         logger.info(
-                            f"✅ Breeding validation PASSED for generation {merger.generation}"
+                            "✅ Breeding validation PASSED for generation %s",
+                            merger.generation
                         )
 
-                logger.info(f"Completed generation {merger.generation}")
+                logger.info("Completed generation %s", merger.generation)
 
         except Exception as e:
-            logger.error(f"Evolution test failed with error: {e}")
+            logger.error("Evolution test failed with error: %s", e)
             test_results["all_tests_passed"] = False
             test_results["error"] = str(e)
 
@@ -246,9 +252,9 @@ class EvolutionValidator:
         logger.info("=" * 80)
         logger.info("MINI EVOLUTION TEST SUMMARY")
         logger.info("=" * 80)
-        logger.info(f"Duration: {duration:.2f} seconds")
-        logger.info(f"Generations completed: {generation_count}")
-        logger.info(f"Population sizes: {test_results['population_sizes']}")
+        logger.info("Duration: %.2f seconds", duration)
+        logger.info("Generations completed: %s", generation_count)
+        logger.info("Population sizes: %s", test_results['population_sizes'])
 
         # Check population size consistency
         expected_sizes = [8] * len(test_results["population_sizes"])
@@ -257,7 +263,8 @@ class EvolutionValidator:
 
         if not consistent_population:
             logger.error(
-                f"❌ Population size inconsistent: {test_results['population_sizes']}"
+                "❌ Population size inconsistent: %s",
+                test_results['population_sizes']
             )
             test_results["all_tests_passed"] = False
         else:
@@ -278,7 +285,7 @@ class EvolutionValidator:
         with open(test_file, "w") as f:
             json.dump(test_results, f, indent=2, default=str)
 
-        logger.info(f"Validation results saved to: {test_file}")
+        logger.info("Validation results saved to: %s", test_file)
 
         return test_results
 

@@ -99,14 +99,16 @@ def test_error_handling():
     # Test invalid inputs
     try:
         encoder.encode("not a tensor")
-        assert False, "Should have raised SeedLMCompressionError"
+        msg = "Should have raised SeedLMCompressionError"
+        raise AssertionError(msg)
     except SeedLMCompressionError:
         print("  ✓ Invalid input error handling works")
 
     # Test invalid compression level
     try:
         encoder.encode(torch.randn(10, 10), compression_level=1.5)
-        assert False, "Should have raised ValueError"
+        msg = "Should have raised ValueError"
+        raise AssertionError(msg)
     except ValueError:
         print("  ✓ Invalid compression level error handling works")
 

@@ -1,5 +1,5 @@
 """Edge Deployment Manager - Device-Specific AI Deployment
-Sprint R-5: Digital Twin MVP - Task A.5
+Sprint R-5: Digital Twin MVP - Task A.5.
 """
 
 import asyncio
@@ -48,7 +48,7 @@ class DeploymentStatus(Enum):
 
 @dataclass
 class DeviceProfile:
-    """Profile of target deployment device"""
+    """Profile of target deployment device."""
 
     device_id: str
     device_name: str
@@ -72,7 +72,7 @@ class DeviceProfile:
 
 @dataclass
 class TutorDeployment:
-    """Deployed tutor instance on a device"""
+    """Deployed tutor instance on a device."""
 
     deployment_id: str
     device_id: str
@@ -95,7 +95,7 @@ class TutorDeployment:
 
 @dataclass
 class EdgeUpdate:
-    """Update for edge-deployed tutors"""
+    """Update for edge-deployed tutors."""
 
     update_id: str
     deployment_id: str
@@ -112,9 +112,9 @@ class EdgeUpdate:
 
 
 class EdgeDeploymentManager:
-    """Comprehensive edge deployment and management system"""
+    """Comprehensive edge deployment and management system."""
 
-    def __init__(self, project_name: str = "aivillage-edge"):
+    def __init__(self, project_name: str = "aivillage-edge") -> None:
         self.project_name = project_name
         self.devices = {}  # device_id -> DeviceProfile
         self.deployments = {}  # deployment_id -> TutorDeployment
@@ -190,8 +190,8 @@ class EdgeDeploymentManager:
 
         logger.info("Edge Deployment Manager initialized")
 
-    def initialize_wandb_tracking(self):
-        """Initialize W&B tracking for edge deployment"""
+    def initialize_wandb_tracking(self) -> None:
+        """Initialize W&B tracking for edge deployment."""
         try:
             wandb.init(
                 project=self.project_name,
@@ -218,10 +218,10 @@ class EdgeDeploymentManager:
             logger.info("Edge deployment W&B tracking initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize W&B tracking: {e}")
+            logger.exception(f"Failed to initialize W&B tracking: {e}")
 
-    def init_database(self):
-        """Initialize database for deployment tracking"""
+    def init_database(self) -> None:
+        """Initialize database for deployment tracking."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -294,7 +294,7 @@ class EdgeDeploymentManager:
             logger.info("Edge deployment database initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize database: {e}")
+            logger.exception(f"Failed to initialize database: {e}")
 
     async def register_device(
         self,
@@ -303,7 +303,7 @@ class EdgeDeploymentManager:
         student_ids: list[str],
         auto_detect_specs: bool = True,
     ) -> DeviceProfile:
-        """Register a new device for edge deployment"""
+        """Register a new device for edge deployment."""
         # Auto-detect device specifications
         if auto_detect_specs:
             device_specs = await self._detect_device_specifications()
@@ -358,7 +358,7 @@ class EdgeDeploymentManager:
         return device_profile
 
     async def _detect_device_specifications(self) -> dict[str, Any]:
-        """Auto-detect device specifications"""
+        """Auto-detect device specifications."""
         try:
             specs = {
                 "os_name": platform.system(),
@@ -401,7 +401,7 @@ class EdgeDeploymentManager:
             return self._get_default_device_specs()
 
     def _get_default_device_specs(self) -> dict[str, Any]:
-        """Get default device specifications"""
+        """Get default device specifications."""
         return {
             "os_name": "Unknown",
             "os_version": "Unknown",
@@ -418,7 +418,7 @@ class EdgeDeploymentManager:
         }
 
     def _classify_device_type(self, specs: dict[str, Any]) -> DeviceType:
-        """Classify device type based on specifications"""
+        """Classify device type based on specifications."""
         ram_mb = specs["ram_mb"]
         cpu_cores = specs["cpu_cores"]
         battery_powered = specs["battery_powered"]
@@ -446,9 +446,10 @@ class EdgeDeploymentManager:
         tutor_model_id: str,
         force_update: bool = False,
     ) -> str:
-        """Deploy personalized tutor to edge device"""
+        """Deploy personalized tutor to edge device."""
         if device_id not in self.devices:
-            raise ValueError(f"Device {device_id} not registered")
+            msg = f"Device {device_id} not registered"
+            raise ValueError(msg)
 
         device = self.devices[device_id]
 
@@ -524,13 +525,13 @@ class EdgeDeploymentManager:
             return deployment_id
 
         except Exception as e:
-            logger.error(f"Failed to deploy tutor: {e}")
+            logger.exception(f"Failed to deploy tutor: {e}")
             raise
 
     def _find_existing_deployment(
         self, device_id: str, student_id: str
     ) -> TutorDeployment | None:
-        """Find existing deployment for student on device"""
+        """Find existing deployment for student on device."""
         for deployment in self.deployments.values():
             if (
                 deployment.device_id == device_id
@@ -548,7 +549,7 @@ class EdgeDeploymentManager:
         device: DeviceProfile,
         config: dict[str, Any],
     ) -> dict[str, Any]:
-        """Prepare tutor model for deployment"""
+        """Prepare tutor model for deployment."""
         try:
             # Import deployment system
             from agent_forge.evolution.deploy_winner import tutor_deployment
@@ -597,7 +598,7 @@ class EdgeDeploymentManager:
             }
 
         except Exception as e:
-            logger.error(f"Error preparing tutor deployment: {e}")
+            logger.exception(f"Error preparing tutor deployment: {e}")
 
             # Create fallback deployment package
             fallback_path = (
@@ -619,8 +620,8 @@ class EdgeDeploymentManager:
         package_path: Path,
         student_id: str,
         device: DeviceProfile,
-    ):
-        """Create deployment ZIP package"""
+    ) -> None:
+        """Create deployment ZIP package."""
         try:
             with zipfile.ZipFile(package_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                 # Add deployment manifest
@@ -678,13 +679,13 @@ class EdgeDeploymentManager:
                 logger.info(f"Created deployment package: {package_path}")
 
         except Exception as e:
-            logger.error(f"Failed to create deployment ZIP: {e}")
+            logger.exception(f"Failed to create deployment ZIP: {e}")
             raise
 
     async def _create_fallback_deployment(
         self, package_path: Path, student_id: str, device: DeviceProfile
-    ):
-        """Create minimal fallback deployment"""
+    ) -> None:
+        """Create minimal fallback deployment."""
         try:
             with zipfile.ZipFile(package_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                 # Minimal manifest
@@ -721,13 +722,13 @@ class EdgeDeploymentManager:
                 zipf.writestr("basic_content.json", json.dumps(basic_content, indent=2))
 
         except Exception as e:
-            logger.error(f"Failed to create fallback deployment: {e}")
+            logger.exception(f"Failed to create fallback deployment: {e}")
             raise
 
     async def _generate_offline_content(
         self, student_id: str, device: DeviceProfile
     ) -> dict[str, Any]:
-        """Generate offline content package"""
+        """Generate offline content package."""
         # Get student's learning profile
         try:
             from digital_twin.core.digital_twin import digital_twin
@@ -786,13 +787,13 @@ class EdgeDeploymentManager:
         }
 
     async def _generate_practice_problems(self, student) -> list[dict[str, Any]]:
-        """Generate grade-appropriate practice problems"""
+        """Generate grade-appropriate practice problems."""
         problems = []
         grade = student.grade_level
 
         if grade <= 2:
             # Basic addition and subtraction
-            for i in range(10):
+            for _i in range(10):
                 a, b = np.random.randint(1, 11), np.random.randint(1, 11)
                 problems.append(
                     {
@@ -815,7 +816,7 @@ class EdgeDeploymentManager:
 
         elif grade <= 4:
             # Multiplication and division
-            for i in range(10):
+            for _i in range(10):
                 a, b = np.random.randint(2, 10), np.random.randint(2, 10)
                 problems.append(
                     {
@@ -838,7 +839,7 @@ class EdgeDeploymentManager:
 
         else:
             # More advanced problems
-            for i in range(8):
+            for _i in range(8):
                 a, b = np.random.randint(10, 100), np.random.randint(2, 20)
                 problems.append(
                     {
@@ -852,7 +853,7 @@ class EdgeDeploymentManager:
         return problems
 
     async def _generate_explanations(self, student) -> dict[str, str]:
-        """Generate age-appropriate explanations"""
+        """Generate age-appropriate explanations."""
         if student.age <= 8:
             return {
                 "addition": "Adding means putting numbers together to get a bigger number!",
@@ -867,7 +868,7 @@ class EdgeDeploymentManager:
         }
 
     async def _generate_offline_activities(self, student) -> list[dict[str, Any]]:
-        """Generate offline learning activities"""
+        """Generate offline learning activities."""
         activities = []
 
         if "sports" in student.interests:
@@ -908,8 +909,8 @@ class EdgeDeploymentManager:
 
         return activities
 
-    async def _execute_deployment(self, deployment: TutorDeployment):
-        """Execute the deployment process"""
+    async def _execute_deployment(self, deployment: TutorDeployment) -> None:
+        """Execute the deployment process."""
         try:
             # Update status to downloading
             deployment.status = DeploymentStatus.DOWNLOADING
@@ -947,7 +948,7 @@ class EdgeDeploymentManager:
             deployment.status = DeploymentStatus.ERROR
             await self._save_deployment(deployment)
 
-            logger.error(f"Deployment failed for {deployment.deployment_id}: {e}")
+            logger.exception(f"Deployment failed for {deployment.deployment_id}: {e}")
 
             # Log failed deployment
             wandb.log(
@@ -959,8 +960,8 @@ class EdgeDeploymentManager:
                 }
             )
 
-    async def _download_deployment_package(self, deployment: TutorDeployment):
-        """Download deployment package to device"""
+    async def _download_deployment_package(self, deployment: TutorDeployment) -> None:
+        """Download deployment package to device."""
         # Simulate download with progress tracking
         package_size_mb = deployment.compressed_size_mb
         downloaded_mb = 0
@@ -979,8 +980,8 @@ class EdgeDeploymentManager:
 
         logger.info(f"Download completed for {deployment.deployment_id}")
 
-    async def _install_deployment_package(self, deployment: TutorDeployment):
-        """Install deployment package on device"""
+    async def _install_deployment_package(self, deployment: TutorDeployment) -> None:
+        """Install deployment package on device."""
         # Simulate installation process
         installation_steps = [
             "Extracting package files",
@@ -1007,9 +1008,10 @@ class EdgeDeploymentManager:
         update_data: Any,
         priority: str = "normal",
     ) -> str:
-        """Create and schedule deployment update"""
+        """Create and schedule deployment update."""
         if deployment_id not in self.deployments:
-            raise ValueError(f"Deployment {deployment_id} not found")
+            msg = f"Deployment {deployment_id} not found"
+            raise ValueError(msg)
 
         deployment = self.deployments[deployment_id]
 
@@ -1049,7 +1051,7 @@ class EdgeDeploymentManager:
         return update_id
 
     def _estimate_update_size(self, update_type: str, update_data: Any) -> float:
-        """Estimate update size in MB"""
+        """Estimate update size in MB."""
         size_estimates = {
             "model": 50.0,  # Model updates are usually large
             "preferences": 0.1,  # Preference updates are small
@@ -1060,8 +1062,8 @@ class EdgeDeploymentManager:
 
         return size_estimates.get(update_type, 1.0)
 
-    async def _execute_update(self, update: EdgeUpdate):
-        """Execute deployment update"""
+    async def _execute_update(self, update: EdgeUpdate) -> None:
+        """Execute deployment update."""
         try:
             deployment = self.deployments[update.deployment_id]
 
@@ -1106,7 +1108,7 @@ class EdgeDeploymentManager:
             logger.info(f"Successfully applied update {update.update_id}")
 
         except Exception as e:
-            logger.error(f"Update failed for {update.update_id}: {e}")
+            logger.exception(f"Update failed for {update.update_id}: {e}")
 
             # Log failed update
             wandb.log(
@@ -1118,30 +1120,30 @@ class EdgeDeploymentManager:
                 }
             )
 
-    async def _update_model(self, deployment: TutorDeployment, update: EdgeUpdate):
-        """Update tutor model"""
+    async def _update_model(self, deployment: TutorDeployment, update: EdgeUpdate) -> None:
+        """Update tutor model."""
         logger.info(f"Updating model for deployment {deployment.deployment_id}")
         # Would implement actual model update logic
 
     async def _update_preferences(
         self, deployment: TutorDeployment, update: EdgeUpdate
-    ):
-        """Update user preferences"""
+    ) -> None:
+        """Update user preferences."""
         logger.info(f"Updating preferences for deployment {deployment.deployment_id}")
         # Would implement preference sync logic
 
-    async def _update_content(self, deployment: TutorDeployment, update: EdgeUpdate):
-        """Update learning content"""
+    async def _update_content(self, deployment: TutorDeployment, update: EdgeUpdate) -> None:
+        """Update learning content."""
         logger.info(f"Updating content for deployment {deployment.deployment_id}")
         # Would implement content update logic
 
-    async def _update_security(self, deployment: TutorDeployment, update: EdgeUpdate):
-        """Update security configurations"""
+    async def _update_security(self, deployment: TutorDeployment, update: EdgeUpdate) -> None:
+        """Update security configurations."""
         logger.info(f"Updating security for deployment {deployment.deployment_id}")
         # Would implement security update logic
 
     async def get_deployment_status(self, deployment_id: str) -> dict[str, Any]:
-        """Get comprehensive deployment status"""
+        """Get comprehensive deployment status."""
         if deployment_id not in self.deployments:
             return {"error": "Deployment not found"}
 
@@ -1190,7 +1192,7 @@ class EdgeDeploymentManager:
         return status
 
     async def sync_deployment(self, deployment_id: str) -> bool:
-        """Sync deployment with cloud"""
+        """Sync deployment with cloud."""
         if deployment_id not in self.deployments:
             return False
 
@@ -1244,11 +1246,11 @@ class EdgeDeploymentManager:
             deployment.sync_status = "error"
             await self._save_deployment(deployment)
 
-            logger.error(f"Sync failed for {deployment_id}: {e}")
+            logger.exception(f"Sync failed for {deployment_id}: {e}")
             return False
 
-    async def start_deployment_monitoring(self):
-        """Start background deployment monitoring"""
+    async def start_deployment_monitoring(self) -> None:
+        """Start background deployment monitoring."""
         while self.deployment_monitor_active:
             try:
                 await asyncio.sleep(300)  # Check every 5 minutes
@@ -1266,11 +1268,11 @@ class EdgeDeploymentManager:
                 await self._cleanup_old_deployments()
 
             except Exception as e:
-                logger.error(f"Error in deployment monitoring: {e}")
+                logger.exception(f"Error in deployment monitoring: {e}")
                 await asyncio.sleep(60)
 
-    async def _check_deployment_health(self):
-        """Check health of all deployments"""
+    async def _check_deployment_health(self) -> None:
+        """Check health of all deployments."""
         for deployment in self.deployments.values():
             if deployment.status == DeploymentStatus.RUNNING:
                 # Check if deployment is responsive
@@ -1291,7 +1293,7 @@ class EdgeDeploymentManager:
                     )
 
     async def _perform_health_check(self, deployment: TutorDeployment) -> bool:
-        """Perform health check on deployment"""
+        """Perform health check on deployment."""
         # Simulate health check
         try:
             # Check if deployment files exist
@@ -1306,12 +1308,12 @@ class EdgeDeploymentManager:
             return True
 
         except Exception as e:
-            logger.error(f"Health check error for {deployment.deployment_id}: {e}")
+            logger.exception(f"Health check error for {deployment.deployment_id}: {e}")
             return False
 
-    async def _process_pending_updates(self):
-        """Process pending updates for all devices"""
-        for device_id, updates in self.pending_updates.items():
+    async def _process_pending_updates(self) -> None:
+        """Process pending updates for all devices."""
+        for updates in self.pending_updates.values():
             for update in updates[
                 :
             ]:  # Copy list to avoid modification during iteration
@@ -1324,8 +1326,8 @@ class EdgeDeploymentManager:
                         # Schedule for off-peak hours
                         asyncio.create_task(self._execute_update(update))
 
-    async def _update_device_status(self):
-        """Update device last seen status"""
+    async def _update_device_status(self) -> None:
+        """Update device last seen status."""
         for device in self.devices.values():
             # Would implement actual device ping/heartbeat
             # For now, just update timestamp for active devices
@@ -1337,8 +1339,8 @@ class EdgeDeploymentManager:
                 device.last_seen = datetime.now(timezone.utc).isoformat()
                 await self._save_device_profile(device)
 
-    async def _cleanup_old_deployments(self):
-        """Clean up old or unused deployments"""
+    async def _cleanup_old_deployments(self) -> None:
+        """Clean up old or unused deployments."""
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
 
         deployments_to_remove = []
@@ -1353,8 +1355,8 @@ class EdgeDeploymentManager:
         for deployment_id in deployments_to_remove:
             await self._remove_deployment(deployment_id)
 
-    async def _remove_deployment(self, deployment_id: str):
-        """Remove deployment and clean up resources"""
+    async def _remove_deployment(self, deployment_id: str) -> None:
+        """Remove deployment and clean up resources."""
         try:
             deployment = self.deployments[deployment_id]
 
@@ -1379,11 +1381,11 @@ class EdgeDeploymentManager:
             logger.info(f"Removed old deployment {deployment_id}")
 
         except Exception as e:
-            logger.error(f"Error removing deployment {deployment_id}: {e}")
+            logger.exception(f"Error removing deployment {deployment_id}: {e}")
 
     # Database helper methods
-    async def _save_device_profile(self, device: DeviceProfile):
-        """Save device profile to database"""
+    async def _save_device_profile(self, device: DeviceProfile) -> None:
+        """Save device profile to database."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -1422,10 +1424,10 @@ class EdgeDeploymentManager:
             conn.close()
 
         except Exception as e:
-            logger.error(f"Failed to save device profile: {e}")
+            logger.exception(f"Failed to save device profile: {e}")
 
-    async def _save_deployment(self, deployment: TutorDeployment):
-        """Save deployment to database"""
+    async def _save_deployment(self, deployment: TutorDeployment) -> None:
+        """Save deployment to database."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -1463,10 +1465,10 @@ class EdgeDeploymentManager:
             conn.close()
 
         except Exception as e:
-            logger.error(f"Failed to save deployment: {e}")
+            logger.exception(f"Failed to save deployment: {e}")
 
-    async def _save_update(self, update: EdgeUpdate):
-        """Save update to database"""
+    async def _save_update(self, update: EdgeUpdate) -> None:
+        """Save update to database."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -1492,10 +1494,10 @@ class EdgeDeploymentManager:
             conn.close()
 
         except Exception as e:
-            logger.error(f"Failed to save update: {e}")
+            logger.exception(f"Failed to save update: {e}")
 
     def get_deployment_analytics(self) -> dict[str, Any]:
-        """Get comprehensive deployment analytics"""
+        """Get comprehensive deployment analytics."""
         total_deployments = len(self.deployments)
         active_deployments = len(
             [

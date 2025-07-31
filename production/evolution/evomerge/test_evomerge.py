@@ -8,8 +8,10 @@ try:
 except ValueError:
     torch_spec = None
 if torch_spec is None:
-    raise unittest.SkipTest("PyTorch not installed")
+    msg = "PyTorch not installed"
+    raise unittest.SkipTest(msg)
 
+import pytest
 import torch
 
 from .config import Configuration, EvolutionSettings, MergeSettings, ModelReference
@@ -24,7 +26,7 @@ from .utils import (
 
 
 class TestEvoMerge(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.config = Configuration(
             models=[
                 ModelReference(name="model1", path="gpt2"),
@@ -45,13 +47,13 @@ class TestEvoMerge(unittest.TestCase):
             evolution_settings=EvolutionSettings(),
         )
 
-    def test_load_models(self):
+    def test_load_models(self) -> None:
         models, tokenizers = load_models(self.config.models)
-        self.assertEqual(len(models), 2)
-        self.assertIsInstance(models[0], torch.nn.Module)
-        self.assertIsInstance(models[1], torch.nn.Module)
+        assert len(models) == 2
+        assert isinstance(models[0], torch.nn.Module)
+        assert isinstance(models[1], torch.nn.Module)
 
-    def test_merge_settings_validation(self):
+    def test_merge_settings_validation(self) -> None:
         # Test valid configuration
         valid_config = MergeSettings(
             merge_method="ps_dfs",
@@ -60,11 +62,11 @@ class TestEvoMerge(unittest.TestCase):
             ps_techniques=["linear"],
             dfs_techniques=["frankenmerge"],
         )
-        self.assertIsInstance(valid_config, MergeSettings)
+        assert isinstance(valid_config, MergeSettings)
 
         # Test invalid configuration
-        with self.assertRaises(ValueError):
-            invalid_config = MergeSettings(
+        with pytest.raises(ValueError):
+            MergeSettings(
                 merge_method="invalid_method",
                 parameters={},
                 custom_dir="./test_merged_models",
@@ -72,32 +74,32 @@ class TestEvoMerge(unittest.TestCase):
                 dfs_techniques=["frankenmerge"],
             )
 
-    def test_merge_techniques(self):
+    def test_merge_techniques(self) -> None:
         weights = {"layer1": torch.rand(2, 3, 4), "layer2": torch.rand(2, 4, 5)}
 
-        for technique, func in MERGE_TECHNIQUES.items():
+        for func in MERGE_TECHNIQUES.values():
             merged_weights = func(weights, [])
-            self.assertEqual(len(merged_weights), len(weights))
+            assert len(merged_weights) == len(weights)
             for key in weights:
-                self.assertEqual(merged_weights[key].shape, weights[key].shape)
+                assert merged_weights[key].shape == weights[key].shape
 
-    def test_ties_merge(self):
+    def test_ties_merge(self) -> None:
         weights = {"layer1": torch.rand(2, 3, 4), "layer2": torch.rand(2, 4, 5)}
         merged_weights = MERGE_TECHNIQUES["ties"](weights, [], threshold=0.1)
-        self.assertEqual(len(merged_weights), len(weights))
+        assert len(merged_weights) == len(weights)
         for key in weights:
-            self.assertEqual(merged_weights[key].shape, weights[key].shape)
+            assert merged_weights[key].shape == weights[key].shape
 
-    def test_dare_merge(self):
+    def test_dare_merge(self) -> None:
         weights = {"layer1": torch.rand(2, 3, 4), "layer2": torch.rand(2, 4, 5)}
         merged_weights = MERGE_TECHNIQUES["dare"](
             weights, [], threshold=0.1, amplification=2.0
         )
-        self.assertEqual(len(merged_weights), len(weights))
+        assert len(merged_weights) == len(weights)
         for key in weights:
-            self.assertEqual(merged_weights[key].shape, weights[key].shape)
+            assert merged_weights[key].shape == weights[key].shape
 
-    def test_weight_masking(self):
+    def test_weight_masking(self) -> None:
         model = torch.nn.Linear(10, 10)
         masked_state_dict = mask_model_weights(
             finetuned_model=model,
@@ -108,43 +110,29 @@ class TestEvoMerge(unittest.TestCase):
             use_weight_rescale=True,
             mask_strategy="random",
         )
-        self.assertEqual(len(masked_state_dict), len(model.state_dict()))
+        assert len(masked_state_dict) == len(model.state_dict())
         for key in model.state_dict():
-            self.assertEqual(
-                masked_state_dict[key].shape, model.state_dict()[key].shape
-            )
+            assert masked_state_dict[key].shape == model.state_dict()[key].shape
 
-    def test_advanced_model_merger(self):
+    def test_advanced_model_merger(self) -> None:
         merger = AdvancedModelMerger(self.config)
         merged_model_path = merger.merge()
-        self.assertTrue(
-            merged_model_path.startswith(self.config.merge_settings.custom_dir)
-        )
+        assert merged_model_path.startswith(self.config.merge_settings.custom_dir)
 
-    def test_evolutionary_tournament(self):
+    def test_evolutionary_tournament(self) -> None:
         evolutionary_tournament = EvolutionaryTournament(self.config)
         best_models = evolutionary_tournament.evolve()
-        self.assertIsInstance(best_models, list)
-        self.assertTrue(all(isinstance(model, str) for model in best_models))
-        self.assertTrue(
-            all(
-                model.startswith(self.config.merge_settings.custom_dir)
-                for model in best_models
-            )
-        )
+        assert isinstance(best_models, list)
+        assert all(isinstance(model, str) for model in best_models)
+        assert all(model.startswith(self.config.merge_settings.custom_dir) for model in best_models)
 
-    def test_run_evolutionary_tournament(self):
+    def test_run_evolutionary_tournament(self) -> None:
         best_models = run_evolutionary_tournament(self.config)
-        self.assertIsInstance(best_models, list)
-        self.assertTrue(all(isinstance(model, str) for model in best_models))
-        self.assertTrue(
-            all(
-                model.startswith(self.config.merge_settings.custom_dir)
-                for model in best_models
-            )
-        )
+        assert isinstance(best_models, list)
+        assert all(isinstance(model, str) for model in best_models)
+        assert all(model.startswith(self.config.merge_settings.custom_dir) for model in best_models)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         clean_up_models([f"{self.config.merge_settings.custom_dir}/merged_*"])
 
 

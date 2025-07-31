@@ -1,4 +1,4 @@
-"""Query Classification System
+"""Query Classification System.
 
 Analyzes queries to determine reasoning requirements and appropriate strategies.
 Uses pattern matching, NLP analysis, and machine learning for classification.
@@ -38,7 +38,7 @@ class QueryClassifier:
         }
 
     def classify_query(self, query: str) -> tuple[QueryType, float, dict[str, Any]]:
-        """Classify query type and return confidence and analysis details
+        """Classify query type and return confidence and analysis details.
 
         Args:
             query: Input query string
@@ -136,7 +136,7 @@ class QueryClassifier:
     def suggest_strategy(
         self, query_type: QueryType, complexity_score: float
     ) -> ReasoningStrategy:
-        """Suggest reasoning strategy based on query type and complexity"""
+        """Suggest reasoning strategy based on query type and complexity."""
         strategy_map = {
             QueryType.SIMPLE_FACT: ReasoningStrategy.DIRECT_RETRIEVAL,
             QueryType.TEMPORAL_ANALYSIS: ReasoningStrategy.TEMPORAL_REASONING,
@@ -157,7 +157,7 @@ class QueryClassifier:
         return base_strategy
 
     def _build_temporal_patterns(self) -> list[str]:
-        """Build patterns for temporal reasoning detection"""
+        """Build patterns for temporal reasoning detection."""
         return [
             r"\b(when|before|after|during|since|until|while)\b",
             r"\b(first|last|previous|next|earlier|later)\b",
@@ -168,7 +168,7 @@ class QueryClassifier:
         ]
 
     def _build_causal_patterns(self) -> list[str]:
-        """Build patterns for causal reasoning detection"""
+        """Build patterns for causal reasoning detection."""
         return [
             r"\b(because|cause|caused|causes|reason|why|how)\b",
             r"\b(result|consequence|effect|affect|impact|influence)\b",
@@ -179,7 +179,7 @@ class QueryClassifier:
         ]
 
     def _build_comparative_patterns(self) -> list[str]:
-        """Build patterns for comparative analysis detection"""
+        """Build patterns for comparative analysis detection."""
         return [
             r"\b(compare|comparison|versus|vs|against|between)\b",
             r"\b(different|difference|similar|similarity|alike|unlike)\b",
@@ -190,7 +190,7 @@ class QueryClassifier:
         ]
 
     def _build_meta_patterns(self) -> list[str]:
-        """Build patterns for meta-knowledge detection"""
+        """Build patterns for meta-knowledge detection."""
         return [
             r"\b(what do you know about|tell me about|information about)\b",
             r"\b(how much|how many|how often|how long)\b",
@@ -201,7 +201,7 @@ class QueryClassifier:
         ]
 
     def _build_aggregation_patterns(self) -> list[str]:
-        """Build patterns for aggregation queries"""
+        """Build patterns for aggregation queries."""
         return [
             r"\b(total|sum|count|average|mean|median|maximum|minimum)\b",
             r"\b(all|every|each|any|none|some|many|few)\b",
@@ -211,7 +211,7 @@ class QueryClassifier:
         ]
 
     def _build_complexity_indicators(self) -> list[str]:
-        """Build patterns that indicate query complexity"""
+        """Build patterns that indicate query complexity."""
         return [
             r"\b(and|or|but|however|although|while|whereas)\b",
             r"\b(if|unless|provided|assuming|given that)\b",
@@ -222,27 +222,27 @@ class QueryClassifier:
         ]
 
     def _check_temporal_patterns(self, query: str) -> float:
-        """Check for temporal reasoning patterns"""
+        """Check for temporal reasoning patterns."""
         return self._pattern_score(query, self.temporal_patterns)
 
     def _check_causal_patterns(self, query: str) -> float:
-        """Check for causal reasoning patterns"""
+        """Check for causal reasoning patterns."""
         return self._pattern_score(query, self.causal_patterns)
 
     def _check_comparative_patterns(self, query: str) -> float:
-        """Check for comparative analysis patterns"""
+        """Check for comparative analysis patterns."""
         return self._pattern_score(query, self.comparative_patterns)
 
     def _check_meta_patterns(self, query: str) -> float:
-        """Check for meta-knowledge patterns"""
+        """Check for meta-knowledge patterns."""
         return self._pattern_score(query, self.meta_patterns)
 
     def _check_aggregation_patterns(self, query: str) -> float:
-        """Check for aggregation patterns"""
+        """Check for aggregation patterns."""
         return self._pattern_score(query, self.aggregation_patterns)
 
     def _check_hypothetical_patterns(self, query: str) -> float:
-        """Check for hypothetical reasoning patterns"""
+        """Check for hypothetical reasoning patterns."""
         hypothetical_patterns = [
             r"\b(what if|suppose|assuming|imagine|hypothetically)\b",
             r"\b(would|could|might|may|should)\b",
@@ -252,7 +252,7 @@ class QueryClassifier:
         return self._pattern_score(query, hypothetical_patterns)
 
     def _check_multihop_indicators(self, query: str) -> float:
-        """Check for multi-hop reasoning indicators"""
+        """Check for multi-hop reasoning indicators."""
         multihop_patterns = [
             r"\b(related to|connected to|associated with|linked to)\b",
             r"\b(through|via|by way of|using|utilizing)\b",
@@ -271,7 +271,7 @@ class QueryClassifier:
         return min(pattern_score + complex_score, 1.0)
 
     def _pattern_score(self, query: str, patterns: list[str]) -> float:
-        """Calculate score based on pattern matches"""
+        """Calculate score based on pattern matches."""
         total_matches = 0
         for pattern in patterns:
             matches = len(re.findall(pattern, query, re.IGNORECASE))
@@ -293,7 +293,7 @@ class QueryClassifier:
     def _calculate_complexity(
         self, query: str, type_scores: dict[QueryType, float]
     ) -> float:
-        """Calculate overall query complexity score"""
+        """Calculate overall query complexity score."""
         base_complexity = 0.1
 
         # Length-based complexity
@@ -336,7 +336,7 @@ class QueryClassifier:
         return min(base_complexity, 1.0)
 
     def get_reasoning_hints(self, query: str, query_type: QueryType) -> list[str]:
-        """Generate reasoning hints for query execution"""
+        """Generate reasoning hints for query execution."""
         hints = []
 
         query_lower = query.lower()

@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class CommunityHub:
-    def __init__(self, communication_protocol: StandardCommunicationProtocol):
+    def __init__(self, communication_protocol: StandardCommunicationProtocol) -> None:
         self.research_results = {}
         self.agents = {}
         self.projects = {}
@@ -18,14 +18,15 @@ class CommunityHub:
     async def get_all_projects(self) -> dict[str, Any]:
         return self.projects
 
-    async def assign_task(self, task_id: str, agent_id: str):
+    async def assign_task(self, task_id: str, agent_id: str) -> None:
         if agent_id not in self.agents:
-            raise ValueError(f"Agent {agent_id} not found")
+            msg = f"Agent {agent_id} not found"
+            raise ValueError(msg)
         self.agents[agent_id]["tasks"].append(task_id)
         logger.info(f"Task {task_id} assigned to agent {agent_id}")
 
-    async def reassign_task(self, task_id: str, new_agent_id: str):
-        for agent_id, agent_data in self.agents.items():
+    async def reassign_task(self, task_id: str, new_agent_id: str) -> None:
+        for agent_data in self.agents.values():
             if task_id in agent_data["tasks"]:
                 agent_data["tasks"].remove(task_id)
                 break
@@ -34,13 +35,14 @@ class CommunityHub:
 
     async def add_resources_to_project(
         self, project_id: str, resources: dict[str, Any]
-    ):
+    ) -> None:
         if project_id not in self.projects:
-            raise ValueError(f"No project found with ID {project_id}")
+            msg = f"No project found with ID {project_id}"
+            raise ValueError(msg)
         self.projects[project_id].setdefault("resources", {}).update(resources)
         logger.info(f"Resources added to project {project_id}")
 
-    async def update_project_data(self, task_id: str, data: dict[str, Any]):
+    async def update_project_data(self, task_id: str, data: dict[str, Any]) -> None:
         for project_id, project_data in self.projects.items():
             if task_id in project_data.get("tasks", []):
                 project_data.setdefault("task_data", {})[task_id] = data
@@ -64,7 +66,7 @@ class CommunityHub:
         )
         return ""
 
-    async def post_research_results(self, task_id: str, results: dict[str, Any]):
+    async def post_research_results(self, task_id: str, results: dict[str, Any]) -> None:
         self.research_results[task_id] = results
         logger.info(f"Research results for task {task_id} posted")
 
@@ -73,9 +75,10 @@ class CommunityHub:
 
     async def update_project_status(
         self, project_id: str, status: str, progress: float
-    ):
+    ) -> None:
         if project_id not in self.projects:
-            raise ValueError(f"No project found with ID {project_id}")
+            msg = f"No project found with ID {project_id}"
+            raise ValueError(msg)
         self.projects[project_id]["status"] = status
         self.projects[project_id]["progress"] = progress
         logger.info(
@@ -89,7 +92,8 @@ class CommunityHub:
         resources and any research results for those tasks.
         """
         if project_id not in self.projects:
-            raise ValueError(f"No project found with ID {project_id}")
+            msg = f"No project found with ID {project_id}"
+            raise ValueError(msg)
 
         project_data = self.projects[project_id]
         task_reports = []

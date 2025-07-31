@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class CompressionMetrics:
-    """Container for compression performance metrics"""
+    """Container for compression performance metrics."""
 
     def __init__(self):
         self.timestamp = datetime.now().isoformat()
@@ -41,7 +41,7 @@ class CompressionMetrics:
         self.config = {}
 
     def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization"""
+        """Convert to dictionary for JSON serialization."""
         return {
             "timestamp": self.timestamp,
             "compression_ratio": self.compression_ratio,
@@ -55,7 +55,7 @@ class CompressionMetrics:
 
     @classmethod
     def from_dict(cls, data: dict) -> "CompressionMetrics":
-        """Create from dictionary"""
+        """Create from dictionary."""
         metrics = cls()
         for key, value in data.items():
             if hasattr(metrics, key):
@@ -64,7 +64,7 @@ class CompressionMetrics:
 
 
 class CompressionMonitor:
-    """Monitor compression performance and detect regressions"""
+    """Monitor compression performance and detect regressions."""
 
     def __init__(self, data_file: str = "compression_metrics.json"):
         self.data_file = Path(data_file)
@@ -81,7 +81,7 @@ class CompressionMonitor:
         }
 
     def load_history(self):
-        """Load metrics history from file"""
+        """Load metrics history from file."""
         if self.data_file.exists():
             try:
                 with open(self.data_file) as f:
@@ -95,7 +95,7 @@ class CompressionMonitor:
                 self.metrics_history = []
 
     def save_history(self):
-        """Save metrics history to file"""
+        """Save metrics history to file."""
         try:
             data = [metrics.to_dict() for metrics in self.metrics_history]
             with open(self.data_file, "w") as f:
@@ -107,7 +107,7 @@ class CompressionMonitor:
             logger.error(f"Failed to save metrics history: {e}")
 
     def run_benchmark(self, method: str = "SeedLM") -> CompressionMetrics:
-        """Run a quick benchmark and return metrics"""
+        """Run a quick benchmark and return metrics."""
         try:
             # Add current directory to path for imports
             sys.path.insert(0, os.getcwd())
@@ -163,14 +163,14 @@ class CompressionMonitor:
             return metrics
 
     def add_metrics(self, metrics: CompressionMetrics):
-        """Add new metrics to history"""
+        """Add new metrics to history."""
         self.metrics_history.append(metrics)
         self.save_history()
 
     def check_regression(
         self, current_metrics: CompressionMetrics, lookback_days: int = 7
     ) -> list[str]:
-        """Check for performance regressions"""
+        """Check for performance regressions."""
         alerts = []
 
         # Get recent metrics for comparison
@@ -243,7 +243,7 @@ class CompressionMonitor:
         return alerts
 
     def generate_report(self, days: int = 30) -> str:
-        """Generate performance report"""
+        """Generate performance report."""
         cutoff_date = datetime.now() - timedelta(days=days)
         recent_metrics = [
             m
@@ -305,7 +305,7 @@ class CompressionMonitor:
         return report
 
     def create_visualizations(self, output_dir: str = "compression_plots"):
-        """Create performance visualization plots"""
+        """Create performance visualization plots."""
         if not self.metrics_history:
             logger.warning("No metrics history available for visualization")
             return
@@ -362,7 +362,7 @@ class CompressionMonitor:
 
 
 def main():
-    """Main monitoring script"""
+    """Main monitoring script."""
     parser = argparse.ArgumentParser(description="Compression Performance Monitor")
     parser.add_argument(
         "--run-benchmark", action="store_true", help="Run benchmark and add to history"

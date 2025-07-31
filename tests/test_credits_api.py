@@ -336,7 +336,7 @@ class TestCreditsAPI:
             session.commit()
 
         # Create multiple transactions
-        for i in range(5):
+        for _i in range(5):
             client.post(
                 "/transfer",
                 json={"from_username": "alice", "to_username": "bob", "amount": 10},
@@ -448,7 +448,7 @@ class TestCreditsAPI:
 
         # Make multiple requests (simulating concurrency)
         responses = []
-        for i in range(5):
+        for _i in range(5):
             response = client.post(
                 "/transfer",
                 json={"from_username": "alice", "to_username": "bob", "amount": 10},

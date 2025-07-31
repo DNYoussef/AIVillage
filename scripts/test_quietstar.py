@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test suite for Quiet-STaR Baker
+"""Test suite for Quiet-STaR Baker.
 
 Tests thought injection, A/B testing, and weight baking functionality.
 """
@@ -27,10 +27,10 @@ from quietstar_baker import (
 
 
 class TestQuietSTaRBaker(unittest.TestCase):
-    """Test suite for Quiet-STaR components"""
+    """Test suite for Quiet-STaR components."""
 
     def setUp(self):
-        """Set up test environment"""
+        """Set up test environment."""
         self.temp_dir = Path(tempfile.mkdtemp())
 
         # Create test configuration
@@ -48,13 +48,13 @@ class TestQuietSTaRBaker(unittest.TestCase):
         Path(self.config.output_path).parent.mkdir(parents=True, exist_ok=True)
 
     def tearDown(self):
-        """Clean up test environment"""
+        """Clean up test environment."""
         import shutil
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_config_validation(self):
-        """Test configuration validation"""
+        """Test configuration validation."""
         # Valid config
         config = QuietSTaRConfig(model_path="test_model", output_path="test_output")
         self.assertEqual(config.start_thought_token, "<|startofthought|>")
@@ -66,7 +66,7 @@ class TestQuietSTaRBaker(unittest.TestCase):
         print("✅ Configuration validation working")
 
     def test_thought_injection(self):
-        """Test thought token injection"""
+        """Test thought token injection."""
         # Create small model and tokenizer
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         tokenizer.pad_token = tokenizer.eos_token
@@ -97,7 +97,7 @@ class TestQuietSTaRBaker(unittest.TestCase):
         print("✅ Thought injection working")
 
     def test_reasoning_dataset(self):
-        """Test reasoning evaluation dataset"""
+        """Test reasoning evaluation dataset."""
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -126,7 +126,7 @@ class TestQuietSTaRBaker(unittest.TestCase):
 
     @patch("quietstar_baker.wandb")
     async def test_ab_harness(self, mock_wandb):
-        """Test A/B testing harness"""
+        """Test A/B testing harness."""
         # Create mock models
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         tokenizer.pad_token = tokenizer.eos_token
@@ -168,7 +168,7 @@ class TestQuietSTaRBaker(unittest.TestCase):
         print("✅ A/B testing harness working")
 
     def test_weight_baker(self):
-        """Test weight baking functionality"""
+        """Test weight baking functionality."""
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -189,7 +189,7 @@ class TestQuietSTaRBaker(unittest.TestCase):
         print("✅ Weight baker working")
 
     def test_trace_quality_evaluation(self):
-        """Test thought trace quality evaluation"""
+        """Test thought trace quality evaluation."""
         baker = QuietSTaRBaker(self.config)
 
         # Test with various trace qualities
@@ -208,7 +208,7 @@ class TestQuietSTaRBaker(unittest.TestCase):
         print("✅ Trace quality evaluation working")
 
     def test_cli_integration(self):
-        """Test CLI command integration"""
+        """Test CLI command integration."""
         from quietstar_baker import forge
 
         # Test that CLI commands exist
@@ -219,7 +219,7 @@ class TestQuietSTaRBaker(unittest.TestCase):
 
 
 async def run_integration_test():
-    """Run quick integration test"""
+    """Run quick integration test."""
     print("\n🧪 Running Quiet-STaR integration test...")
 
     temp_dir = Path(tempfile.mkdtemp())
@@ -258,7 +258,7 @@ async def run_integration_test():
 
 
 def main():
-    """Main test runner"""
+    """Main test runner."""
     print("🧪 Starting Quiet-STaR Baker Test Suite")
     print("=" * 60)
 

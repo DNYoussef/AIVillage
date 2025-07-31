@@ -1,0 +1,161 @@
+{
+  "timestamp": "2025-07-29T21:52:42.128007",
+  "total_duration": 36.730446338653564,
+  "overall_success_rate": 0.6666666666666666,
+  "tests_passed": 12,
+  "tests_total": 18,
+  "detailed_results": {
+    "formation": [
+      {
+        "config": {
+          "nodes": 3,
+          "connectivity": 0.6,
+          "name": "Small"
+        },
+        "nodes_created": 3,
+        "total_connections": 5,
+        "formation_time": 0.001995086669921875,
+        "success": true
+      },
+      {
+        "config": {
+          "nodes": 5,
+          "connectivity": 0.5,
+          "name": "Medium"
+        },
+        "nodes_created": 5,
+        "total_connections": 11,
+        "formation_time": 0.0,
+        "success": true
+      },
+      {
+        "config": {
+          "nodes": 10,
+          "connectivity": 0.4,
+          "name": "Large"
+        },
+        "nodes_created": 10,
+        "total_connections": 36,
+        "formation_time": 0.0009975433349609375,
+        "success": true
+      },
+      {
+        "config": {
+          "nodes": 15,
+          "connectivity": 0.3,
+          "name": "Very Large"
+        },
+        "nodes_created": 15,
+        "total_connections": 73,
+        "formation_time": 0.000997304916381836,
+        "success": true
+      }
+    ],
+    "routing": [
+      {
+        "message_type": "DISCOVERY",
+        "delivery_rate": 0.0,
+        "avg_delivery_time": 0,
+        "success": false
+      },
+      {
+        "message_type": "PARAMETER_UPDATE",
+        "delivery_rate": 0.0,
+        "avg_delivery_time": 0,
+        "success": false
+      },
+      {
+        "message_type": "GRADIENT_SHARE",
+        "delivery_rate": 0.0,
+        "avg_delivery_time": 0,
+        "success": false
+      }
+    ],
+    "resilience": [
+      {
+        "scenario": "Single Node Failure",
+        "initial_nodes": 10,
+        "failures": 1,
+        "active_nodes": 9,
+        "survival_rate": 1.0,
+        "functional": true,
+        "success": true
+      },
+      {
+        "scenario": "Multiple Failures",
+        "initial_nodes": 15,
+        "failures": 3,
+        "active_nodes": 12,
+        "survival_rate": 1.0,
+        "functional": true,
+        "success": true
+      },
+      {
+        "scenario": "Major Failures",
+        "initial_nodes": 20,
+        "failures": 5,
+        "active_nodes": 15,
+        "survival_rate": 1.0,
+        "functional": true,
+        "success": true
+      }
+    ],
+    "scalability": [
+      {
+        "network_size": 5,
+        "formation_time": 0.0,
+        "total_connections": 4,
+        "throughput": 10027.02366722448,
+        "success": true
+      },
+      {
+        "network_size": 10,
+        "formation_time": 0.000997304916381836,
+        "total_connections": 34,
+        "throughput": 17564.087102177553,
+        "success": true
+      },
+      {
+        "network_size": 15,
+        "formation_time": 0.001995563507080078,
+        "total_connections": 88,
+        "throughput": 15031.551785927608,
+        "success": true
+      },
+      {
+        "network_size": 20,
+        "formation_time": 0.0019927024841308594,
+        "total_connections": 135,
+        "throughput": 10025.425862481077,
+        "success": true
+      },
+      {
+        "network_size": 25,
+        "formation_time": 0.004119157791137695,
+        "total_connections": 252,
+        "throughput": 10027.02366722448,
+        "success": true
+      }
+    ],
+    "routing_efficiency": [
+      {
+        "topology": "Dense",
+        "success_rate": 0.0,
+        "avg_route_length": 0,
+        "success": false
+      },
+      {
+        "topology": "Sparse",
+        "success_rate": 0.0,
+        "avg_route_length": 0,
+        "success": false
+      },
+      {
+        "topology": "Medium",
+        "success_rate": 0.0,
+        "avg_route_length": 0,
+        "success": false
+      }
+    ]
+  }
+}

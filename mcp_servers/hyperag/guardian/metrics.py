@@ -1,4 +1,4 @@
-"""Guardian Gate Prometheus Metrics
+"""Guardian Gate Prometheus Metrics.
 
 Provides Prometheus metrics for monitoring Guardian Gate decisions
 and system behavior in production environments.
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 class GuardianMetrics:
-    """Prometheus metrics collector for Guardian Gate operations"""
+    """Prometheus metrics collector for Guardian Gate operations."""
 
     def __init__(self, enabled: bool = True):
         self.enabled = enabled and PROMETHEUS_AVAILABLE
@@ -136,7 +136,7 @@ class GuardianMetrics:
         duration_seconds: float = 0.0,
         confidence: float = 0.0,
     ):
-        """Record a Guardian Gate decision
+        """Record a Guardian Gate decision.
 
         Args:
             decision: APPLY, QUARANTINE, or REJECT
@@ -177,7 +177,7 @@ class GuardianMetrics:
             logger.error(f"Failed to record Guardian decision metrics: {e}")
 
     def record_query_validation(self, domain: str, decision: str, confidence: float):
-        """Record query pipeline validation"""
+        """Record query pipeline validation."""
         if not self.enabled:
             return
 
@@ -194,7 +194,7 @@ class GuardianMetrics:
     def record_repair_validation(
         self, domain: str, decision: str, operation_count: int
     ):
-        """Record repair pipeline validation"""
+        """Record repair pipeline validation."""
         if not self.enabled:
             return
 
@@ -211,7 +211,7 @@ class GuardianMetrics:
     def record_consolidation_validation(
         self, domain: str, decision: str, item_type: str
     ):
-        """Record consolidation pipeline validation"""
+        """Record consolidation pipeline validation."""
         if not self.enabled:
             return
 
@@ -223,7 +223,7 @@ class GuardianMetrics:
             logger.error(f"Failed to record consolidation validation metrics: {e}")
 
     def record_adapter_validation(self, domain: str, verification_result: str):
-        """Record adapter load validation"""
+        """Record adapter load validation."""
         if not self.enabled:
             return
 
@@ -235,7 +235,7 @@ class GuardianMetrics:
             logger.error(f"Failed to record adapter validation metrics: {e}")
 
     def record_validation(self, domain: str, decision: str, validation_type: str):
-        """Generic validation recording for different types"""
+        """Generic validation recording for different types."""
         if not self.enabled:
             return
 
@@ -257,7 +257,7 @@ class GuardianMetrics:
             logger.error(f"Failed to record validation metrics: {e}")
 
     def record_error(self, error_type: str, component: str):
-        """Record Guardian error"""
+        """Record Guardian error."""
         if not self.enabled:
             return
 
@@ -267,7 +267,7 @@ class GuardianMetrics:
             logger.error(f"Failed to record Guardian error metrics: {e}")
 
     def update_quarantine_count(self, domain: str, count: int):
-        """Update active quarantine count"""
+        """Update active quarantine count."""
         if not self.enabled:
             return
 
@@ -277,7 +277,7 @@ class GuardianMetrics:
             logger.error(f"Failed to update quarantine count metrics: {e}")
 
     def set_policy_info(self, policy_info: dict[str, Any]):
-        """Set Guardian policy information"""
+        """Set Guardian policy information."""
         if not self.enabled:
             return
 
@@ -293,7 +293,7 @@ class GuardianMetrics:
             logger.error(f"Failed to set policy info metrics: {e}")
 
     def _get_confidence_tier(self, confidence: float) -> str:
-        """Convert confidence to tier label"""
+        """Convert confidence to tier label."""
         if confidence >= 0.8:
             return "high"
         if confidence >= 0.6:
@@ -303,7 +303,7 @@ class GuardianMetrics:
         return "very_low"
 
     def _get_operation_count_bucket(self, count: int) -> str:
-        """Convert operation count to bucket label"""
+        """Convert operation count to bucket label."""
         if count <= 1:
             return "single"
         if count <= 3:
@@ -313,7 +313,7 @@ class GuardianMetrics:
         return "bulk"
 
     def get_metrics_summary(self) -> dict[str, Any]:
-        """Get summary of current metrics (for debugging)"""
+        """Get summary of current metrics (for debugging)."""
         if not self.enabled:
             return {"status": "disabled"}
 
@@ -331,7 +331,7 @@ _metrics_instance: GuardianMetrics | None = None
 
 
 def get_guardian_metrics() -> GuardianMetrics:
-    """Get global Guardian metrics instance"""
+    """Get global Guardian metrics instance."""
     global _metrics_instance
 
     if _metrics_instance is None:
@@ -341,7 +341,7 @@ def get_guardian_metrics() -> GuardianMetrics:
 
 
 def init_guardian_metrics(enabled: bool = True) -> GuardianMetrics:
-    """Initialize Guardian metrics with specific configuration"""
+    """Initialize Guardian metrics with specific configuration."""
     global _metrics_instance
     _metrics_instance = GuardianMetrics(enabled=enabled)
     return _metrics_instance

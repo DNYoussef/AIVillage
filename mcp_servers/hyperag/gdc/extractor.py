@@ -1,4 +1,4 @@
-"""GDC Extractor Engine
+"""GDC Extractor Engine.
 
 Detects Graph Denial Constraint violations in Neo4j knowledge graphs.
 """
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class GDCExtractor:
-    """Graph Denial Constraint violation detection engine
+    """Graph Denial Constraint violation detection engine.
 
     Performs read-only analysis of Neo4j graphs to detect constraint violations.
     Supports both batch scanning and targeted GDC analysis.
@@ -29,8 +29,8 @@ class GDCExtractor:
         neo4j_auth: tuple[str, str],
         max_concurrent_queries: int = 5,
         default_limit: int = 1000,
-    ):
-        """Initialize GDC extractor
+    ) -> None:
+        """Initialize GDC extractor.
 
         Args:
             neo4j_uri: Neo4j connection URI (e.g., "bolt://localhost:7687")
@@ -47,7 +47,7 @@ class GDCExtractor:
         self._semaphore = asyncio.Semaphore(max_concurrent_queries)
 
     async def initialize(self) -> None:
-        """Initialize Neo4j driver connection"""
+        """Initialize Neo4j driver connection."""
         try:
             self.driver = AsyncGraphDatabase.driver(
                 self.neo4j_uri, auth=self.neo4j_auth
@@ -57,22 +57,22 @@ class GDCExtractor:
                 await session.run("RETURN 1")
             logger.info(f"Connected to Neo4j: {self.neo4j_uri}")
         except Exception as e:
-            logger.error(f"Failed to connect to Neo4j: {e}")
+            logger.exception(f"Failed to connect to Neo4j: {e}")
             raise
 
     async def close(self) -> None:
-        """Close Neo4j driver connection"""
+        """Close Neo4j driver connection."""
         if self.driver:
             await self.driver.close()
             logger.info("Neo4j connection closed")
 
     async def scan_all(
         self,
-        limit: int = None,
+        limit: int | None = None,
         enabled_only: bool = True,
         severity_filter: str | None = None,
     ) -> list[Violation]:
-        """Scan for all GDC violations
+        """Scan for all GDC violations.
 
         Args:
             limit: Maximum violations per GDC (uses default_limit if None)
@@ -83,7 +83,8 @@ class GDCExtractor:
             List of detected violations
         """
         if not self.driver:
-            raise RuntimeError("Extractor not initialized. Call initialize() first.")
+            msg = "Extractor not initialized. Call initialize() first."
+            raise RuntimeError(msg)
 
         limit = limit or self.default_limit
 
@@ -121,8 +122,8 @@ class GDCExtractor:
         logger.info(f"Detected {len(all_violations)} total violations")
         return all_violations
 
-    async def scan_gdc(self, gdc_id: str, limit: int = None) -> list[Violation]:
-        """Scan for violations of a specific GDC
+    async def scan_gdc(self, gdc_id: str, limit: int | None = None) -> list[Violation]:
+        """Scan for violations of a specific GDC.
 
         Args:
             gdc_id: GDC identifier to scan
@@ -132,10 +133,12 @@ class GDCExtractor:
             List of detected violations for this GDC
         """
         if not self.driver:
-            raise RuntimeError("Extractor not initialized. Call initialize() first.")
+            msg = "Extractor not initialized. Call initialize() first."
+            raise RuntimeError(msg)
 
         if gdc_id not in GDC_REGISTRY:
-            raise ValueError(f"Unknown GDC ID: {gdc_id}")
+            msg = f"Unknown GDC ID: {gdc_id}"
+            raise ValueError(msg)
 
         gdc_spec = GDC_REGISTRY[gdc_id]
         limit = limit or self.default_limit
@@ -147,19 +150,19 @@ class GDCExtractor:
         return violations
 
     async def _scan_single_gdc(self, gdc_spec: GDCSpec, limit: int) -> list[Violation]:
-        """Scan for violations of a single GDC"""
+        """Scan for violations of a single GDC."""
         async with self._semaphore:
             try:
                 async with self.driver.session() as session:
                     return await self._execute_gdc_query(session, gdc_spec, limit)
             except Exception as e:
-                logger.error(f"Error scanning {gdc_spec.id}: {e}")
+                logger.exception(f"Error scanning {gdc_spec.id}: {e}")
                 return []
 
     async def _execute_gdc_query(
         self, session: AsyncSession, gdc_spec: GDCSpec, limit: int
     ) -> list[Violation]:
-        """Execute a GDC Cypher query and convert results to violations"""
+        """Execute a GDC Cypher query and convert results to violations."""
         # Add LIMIT to query if not present
         cypher = gdc_spec.cypher.strip()
         if (
@@ -180,19 +183,19 @@ class GDCExtractor:
             return violations
 
         except Neo4jError as e:
-            logger.error(f"Cypher error in {gdc_spec.id}: {e}")
+            logger.exception(f"Cypher error in {gdc_spec.id}: {e}")
             return []
 
     async def _record_to_violation(
         self, record: dict[str, Any], gdc_spec: GDCSpec
     ) -> Violation:
-        """Convert a Cypher query result record to a Violation object"""
+        """Convert a Cypher query result record to a Violation object."""
         nodes = []
         edges = []
         relationships = []
 
         # Extract nodes, edges, and relationships from record
-        for key, value in record.items():
+        for value in record.values():
             if hasattr(value, "labels"):  # Neo4j Node
                 node_data = dict(value.items())
                 node_data["_labels"] = list(value.labels)
@@ -242,7 +245,7 @@ class GDCExtractor:
         return violation
 
     async def health_check(self) -> dict[str, Any]:
-        """Check Neo4j connection health"""
+        """Check Neo4j connection health."""
         if not self.driver:
             return {"status": "disconnected", "error": "Driver not initialized"}
 
@@ -259,7 +262,7 @@ class GDCExtractor:
             return {"status": "error", "error": str(e)}
 
     async def get_graph_stats(self) -> dict[str, Any]:
-        """Get basic graph statistics for context"""
+        """Get basic graph statistics for context."""
         if not self.driver:
             return {}
 
@@ -302,9 +305,9 @@ class GDCExtractor:
 
 # Context manager for automatic connection handling
 class GDCExtractorContext:
-    """Context manager for GDCExtractor with automatic connection management"""
+    """Context manager for GDCExtractor with automatic connection management."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.extractor = GDCExtractor(*args, **kwargs)
 
     async def __aenter__(self) -> GDCExtractor:

@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from credits_ledger import CreditsConfig, CreditsLedger
 
 
-def test_credits_ledger():
+def test_credits_ledger() -> bool | None:
     """Test the credits ledger functionality."""
     print("Testing Credits Ledger...")
 
@@ -111,13 +111,15 @@ def test_credits_ledger():
         print("+ Testing error cases...")
         try:
             ledger.create_user("alice", "node_003")  # Duplicate username
-            assert False, "Should have raised ValueError"
+            msg = "Should have raised ValueError"
+            raise AssertionError(msg)
         except ValueError as e:
             assert "already exists" in str(e)
 
         try:
             ledger.transfer("alice", "bob", 2000)  # Insufficient balance
-            assert False, "Should have raised ValueError"
+            msg = "Should have raised ValueError"
+            raise AssertionError(msg)
         except ValueError as e:
             assert "Insufficient balance" in str(e)
 
@@ -132,7 +134,7 @@ def test_credits_ledger():
             pass  # Ignore cleanup errors
 
 
-def test_api_endpoints():
+def test_api_endpoints() -> bool | None:
     """Test the API endpoints using a simple HTTP client."""
     print("Testing API endpoints...")
 
@@ -243,7 +245,7 @@ def test_api_endpoints():
         return True
 
 
-def main():
+def main() -> int | None:
     """Run all tests."""
     print("Running Credits Ledger MVP Tests")
     print("=" * 40)

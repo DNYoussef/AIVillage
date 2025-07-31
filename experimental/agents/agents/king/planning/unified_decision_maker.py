@@ -87,7 +87,7 @@ class UnifiedDecisionMaker:
                 "full_plan": plan,
             }
         except Exception as e:
-            logger.exception(f"Error making decision: {e!s}")
+            logger.exception("Error making decision: %s", e)
             raise AIVillageException(f"Error making decision: {e!s}") from e
 
     async def generate_plan(
@@ -136,7 +136,7 @@ class UnifiedDecisionMaker:
 
             return {**plan_data, "visualization": visualization}
         except Exception as e:
-            logger.exception(f"Error in plan generation: {e!s}")
+            logger.exception("Error in plan generation: %s", e)
             raise AIVillageException(f"Error in plan generation: {e!s}")
 
     async def mcts_search(
@@ -206,14 +206,14 @@ class UnifiedDecisionMaker:
     async def update_model(self, task: dict[str, Any], result: Any):
         try:
             logger.info(
-                f"Updating unified decision maker model with task result: {result}"
+                "Updating unified decision maker model with task result: %s", result
             )
             await self.mcts_update(task, result)
             await self.quality_assurance_layer.update_task_history(
                 task, result.get("performance", 0.5), result.get("uncertainty", 0.5)
             )
         except Exception as e:
-            logger.exception(f"Error updating unified decision maker model: {e!s}")
+            logger.exception("Error updating unified decision maker model: %s", e)
             raise AIVillageException(
                 f"Error updating unified decision maker model: {e!s}"
             ) from e
@@ -252,7 +252,7 @@ class UnifiedDecisionMaker:
 
     def update_agent_list(self, agent_list: list[str]):
         self.available_agents = agent_list
-        logger.info(f"Updated available agents: {self.available_agents}")
+        logger.info("Updated available agents: %s", self.available_agents)
 
     async def save_models(self, path: str):
         try:
@@ -273,9 +273,9 @@ class UnifiedDecisionMaker:
             with open(os.path.join(path, "unified_decision_maker_data.json"), "w") as f:
                 json.dump(data, f)
 
-            logger.info(f"Models saved successfully to {path}")
+            logger.info("Models saved successfully to %s", path)
         except Exception as e:
-            logger.exception(f"Error saving models: {e!s}")
+            logger.exception("Error saving models: %s", e)
             raise AIVillageException(f"Error saving models: {e!s}") from e
 
     async def load_models(self, path: str):
@@ -295,9 +295,9 @@ class UnifiedDecisionMaker:
                 self.max_depth = data["max_depth"]
                 self.available_agents = data["available_agents"]
 
-            logger.info(f"Models loaded successfully from {path}")
+            logger.info("Models loaded successfully from %s", path)
         except Exception as e:
-            logger.exception(f"Error loading models: {e!s}")
+            logger.exception("Error loading models: %s", e)
             raise AIVillageException(f"Error loading models: {e!s}") from e
 
     async def introspect(self) -> dict[str, Any]:
@@ -314,7 +314,7 @@ class UnifiedDecisionMaker:
         try:
             return await self.agent.generate_structured_response(prompt)
         except Exception as e:
-            logger.exception(f"Error getting current resources: {e!s}")
+            logger.exception("Error getting current resources: %s", e)
             raise AIVillageException(f"Error getting current resources: {e!s}")
 
     async def _create_plan_tree(
@@ -338,7 +338,7 @@ class UnifiedDecisionMaker:
             plan_tree = await self.agent.generate_structured_response(prompt)
             return plan_tree
         except Exception as e:
-            logger.exception(f"Error creating plan tree: {e!s}")
+            logger.exception("Error creating plan tree: %s", e)
             raise AIVillageException(f"Error creating plan tree: {e!s}")
 
     async def _extract_tasks(self, plan_tree: dict[str, Any]) -> list[dict[str, Any]]:
@@ -384,7 +384,7 @@ class UnifiedDecisionMaker:
             update_tasks_recursive(plan_tree)
             return plan_tree
         except Exception as e:
-            logger.exception(f"Error optimizing tasks: {e!s}")
+            logger.exception("Error optimizing tasks: %s", e)
             raise AIVillageException(f"Error optimizing tasks: {e!s}")
 
     async def _conduct_premortem(self, plan_tree: dict[str, Any]) -> dict[str, Any]:
@@ -408,7 +408,7 @@ class UnifiedDecisionMaker:
             plan_tree["premortem_analysis"] = premortem_results
             return plan_tree
         except Exception as e:
-            logger.exception(f"Error conducting premortem: {e!s}")
+            logger.exception("Error conducting premortem: %s", e)
             raise AIVillageException(f"Error conducting premortem: {e!s}")
 
     async def _assess_antifragility(self, plan_tree: dict[str, Any]) -> dict[str, Any]:
@@ -438,7 +438,7 @@ class UnifiedDecisionMaker:
             plan_tree["antifragility_assessment"] = antifragility_assessment
             return plan_tree
         except Exception as e:
-            logger.exception(f"Error assessing antifragility: {e!s}")
+            logger.exception("Error assessing antifragility: %s", e)
             raise AIVillageException(f"Error assessing antifragility: {e!s}")
 
     async def _develop_xanatos_gambits(
@@ -467,7 +467,7 @@ class UnifiedDecisionMaker:
             plan_tree["xanatos_gambits"] = xanatos_gambits
             return plan_tree
         except Exception as e:
-            logger.exception(f"Error developing Xanatos Gambits: {e!s}")
+            logger.exception("Error developing Xanatos Gambits: %s", e)
             raise AIVillageException(f"Error developing Xanatos Gambits: {e!s}")
 
     async def _update_plan(self, plan_tree: dict[str, Any]) -> dict[str, Any]:
@@ -487,7 +487,7 @@ class UnifiedDecisionMaker:
             updated_plan = await self.agent.generate_structured_response(prompt)
             return updated_plan
         except Exception as e:
-            logger.exception(f"Error updating plan: {e!s}")
+            logger.exception("Error updating plan: %s", e)
             raise AIVillageException(f"Error updating plan: {e!s}")
 
     def _calculate_success_likelihood(self, plan_tree: dict[str, Any]) -> float:
@@ -509,7 +509,7 @@ class UnifiedDecisionMaker:
                 0, min(1, success_likelihood)
             )  # Ensure the result is between 0 and 1
         except Exception as e:
-            logger.exception(f"Error calculating success likelihood: {e!s}")
+            logger.exception("Error calculating success likelihood: %s", e)
             return 0.5  # Return a default value in case of error
 
     def _identify_capability_gaps(
@@ -527,7 +527,7 @@ class UnifiedDecisionMaker:
 
             return list(required_resources - available_resources)
         except Exception as e:
-            logger.exception(f"Error identifying capability gaps: {e!s}")
+            logger.exception("Error identifying capability gaps: %s", e)
             return []
 
     async def _plan_checkpoints(
@@ -553,7 +553,7 @@ class UnifiedDecisionMaker:
             checkpoints = await self.agent.generate_structured_response(prompt)
             return checkpoints
         except Exception as e:
-            logger.exception(f"Error planning checkpoints: {e!s}")
+            logger.exception("Error planning checkpoints: %s", e)
             raise AIVillageException(f"Error planning checkpoints: {e!s}")
 
     async def _perform_swot_analysis(
@@ -578,7 +578,7 @@ class UnifiedDecisionMaker:
             swot_analysis = await self.agent.generate_structured_response(prompt)
             return swot_analysis
         except Exception as e:
-            logger.exception(f"Error performing SWOT analysis: {e!s}")
+            logger.exception("Error performing SWOT analysis: %s", e)
             raise AIVillageException(f"Error performing SWOT analysis: {e!s}")
 
     def _calculate_plan_metrics(self, plan_tree: dict[str, Any]) -> dict[str, Any]:
@@ -600,7 +600,7 @@ class UnifiedDecisionMaker:
                 "average_risk_level": avg_risk,
             }
         except Exception as e:
-            logger.exception(f"Error calculating plan metrics: {e!s}")
+            logger.exception("Error calculating plan metrics: %s", e)
             return {}
 
     def _tree_to_dict(self, node: dict[str, Any]) -> dict[str, Any]:
@@ -718,7 +718,7 @@ class UnifiedDecisionMaker:
             implementation_plan = await self.agent.generate_structured_response(prompt)
             return implementation_plan
         except Exception as e:
-            logger.exception(f"Error creating implementation plan: {e!s}")
+            logger.exception("Error creating implementation plan: %s", e)
             raise AIVillageException(f"Error creating implementation plan: {e!s}")
 
 

@@ -19,11 +19,11 @@ class EvoMergeException(Exception):
     """Custom exception class for EvoMerge errors."""
 
 
-def check_system_resources(model_paths: list[str]):
+def check_system_resources(model_paths: list[str]) -> None:
     total_model_size = 0
     for path in model_paths:
         if os.path.exists(path):
-            for root, dirs, files in os.walk(path):
+            for root, _dirs, files in os.walk(path):
                 total_model_size += sum(
                     os.path.getsize(os.path.join(root, file)) for file in files
                 )
@@ -87,5 +87,6 @@ def save_model(model: torch.nn.Module, path: str) -> None:
         tokenizer = AutoTokenizer.from_pretrained(model.config._name_or_path)
         tokenizer.save_pretrained(path)
     except Exception as e:
-        logger.error(f"Failed to save model: {e!s}")
-        raise EvoMergeException(f"Error saving model: {e!s}")
+        logger.exception(f"Failed to save model: {e!s}")
+        msg = f"Error saving model: {e!s}"
+        raise EvoMergeException(msg)

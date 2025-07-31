@@ -322,7 +322,7 @@ Trend: {trend_arrow} {trend_description}
 """
 
         if len(self.history) >= 3:
-            for i, run in enumerate(self.history[-3:], 1):
+            for _i, run in enumerate(self.history[-3:], 1):
                 time_str = datetime.fromisoformat(
                     run.timestamp.replace("Z", "+00:00")
                 ).strftime("%m-%d %H:%M")

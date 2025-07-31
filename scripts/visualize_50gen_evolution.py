@@ -24,7 +24,7 @@ class Evolution50GenVisualizer:
     def __init__(
         self,
         results_file: str = "D:/AgentForge/results_50gen/evolution_50gen_results.json",
-    ):
+    ) -> None:
         self.results_file = Path(results_file)
         self.data = self.load_results()
 
@@ -49,7 +49,7 @@ class Evolution50GenVisualizer:
             print(f"Results file not found: {self.results_file}")
             return None
 
-    def create_comprehensive_visualization(self):
+    def create_comprehensive_visualization(self) -> None:
         """Create comprehensive multi-panel visualization."""
         if not self.data:
             print("No data available for visualization")
@@ -126,7 +126,7 @@ class Evolution50GenVisualizer:
         print(f"Comprehensive visualization saved to: {output_file}")
         plt.show()
 
-    def plot_evolutionary_progression(self, ax):
+    def plot_evolutionary_progression(self, ax) -> None:
         """Plot the main evolutionary progression across 50 generations."""
         generations = self.data["generation_history"]
 
@@ -142,7 +142,7 @@ class Evolution50GenVisualizer:
         colors = []
         sizes = []
 
-        for i, gen_data in enumerate(sample_gens):
+        for _i, gen_data in enumerate(sample_gens):
             gen_num = gen_data["generation"]
             population = gen_data["population"]
 
@@ -156,7 +156,7 @@ class Evolution50GenVisualizer:
                 colors.append(self.method_colors.get(method, "#CCCCCC"))
                 sizes.append(50 + fitness * 200)
 
-        scatter = ax.scatter(
+        ax.scatter(
             x_positions,
             y_positions,
             c=colors,
@@ -212,7 +212,7 @@ class Evolution50GenVisualizer:
         ax.set_facecolor("black")
         ax2.set_facecolor("black")
 
-    def plot_fitness_evolution(self, ax):
+    def plot_fitness_evolution(self, ax) -> None:
         """Plot fitness evolution over 50 generations."""
         generations = self.data["generation_history"]
 
@@ -265,7 +265,7 @@ class Evolution50GenVisualizer:
         ax.grid(True, alpha=0.3)
         ax.set_facecolor("black")
 
-    def plot_method_evolution(self, ax):
+    def plot_method_evolution(self, ax) -> None:
         """Plot how merge methods evolved over generations."""
         method_evolution = self.data["performance_metrics"]["method_evolution"]
 
@@ -274,8 +274,8 @@ class Evolution50GenVisualizer:
         for gen_methods in method_evolution.values():
             methods.update(gen_methods.keys())
 
-        methods = sorted(list(methods))
-        generations = sorted([int(g) for g in method_evolution.keys()])
+        methods = sorted(methods)
+        generations = sorted([int(g) for g in method_evolution])
 
         # Create stacked area plot
         method_data = []
@@ -301,7 +301,7 @@ class Evolution50GenVisualizer:
         ax.grid(True, alpha=0.3)
         ax.set_facecolor("black")
 
-    def plot_diversity_metrics(self, ax):
+    def plot_diversity_metrics(self, ax) -> None:
         """Plot population diversity metrics."""
         if "diversity_evolution" in self.data:
             diversity_history = self.data["diversity_evolution"]
@@ -349,7 +349,7 @@ class Evolution50GenVisualizer:
             )
             ax.set_facecolor("black")
 
-    def plot_best_configuration(self, ax):
+    def plot_best_configuration(self, ax) -> None:
         """Display the best configuration found."""
         best_config = self.data["evolution_summary"]["best_configuration"]
 
@@ -438,7 +438,7 @@ class Evolution50GenVisualizer:
         ax.axis("off")
         ax.set_facecolor("black")
 
-    def plot_benchmark_evolution(self, ax):
+    def plot_benchmark_evolution(self, ax) -> None:
         """Plot how benchmark scores evolved."""
         generations = self.data["generation_history"]
 
@@ -495,7 +495,7 @@ class Evolution50GenVisualizer:
         ax.grid(True, alpha=0.3)
         ax.set_facecolor("black")
 
-    def plot_method_performance(self, ax):
+    def plot_method_performance(self, ax) -> None:
         """Plot performance comparison by merge method."""
         generations = self.data["generation_history"]
 
@@ -535,7 +535,7 @@ class Evolution50GenVisualizer:
         ax.grid(True, alpha=0.3)
         ax.set_facecolor("black")
 
-    def plot_generation_statistics(self, ax):
+    def plot_generation_statistics(self, ax) -> None:
         """Plot generation-level statistics."""
         generations = self.data["generation_history"]
 
@@ -548,9 +548,7 @@ class Evolution50GenVisualizer:
             fitness_scores = [ind["fitness"] for ind in gen_data["population"]]
             fitness_std.append(np.std(fitness_scores))
 
-        bars = ax.bar(
-            gen_numbers[::5], fitness_std[::5], color="#FF6B6B", alpha=0.7, width=2
-        )
+        ax.bar(gen_numbers[::5], fitness_std[::5], color="#FF6B6B", alpha=0.7, width=2)
 
         ax.set_xlabel("Generation", color="white", fontweight="bold")
         ax.set_ylabel("Fitness Std Dev", color="white", fontweight="bold")
@@ -558,7 +556,7 @@ class Evolution50GenVisualizer:
         ax.grid(True, alpha=0.3)
         ax.set_facecolor("black")
 
-    def plot_parameter_evolution(self, ax):
+    def plot_parameter_evolution(self, ax) -> None:
         """Plot how key parameters evolved."""
         generations = self.data["generation_history"]
 
@@ -625,7 +623,7 @@ class Evolution50GenVisualizer:
 
         ax.set_facecolor("black")
 
-    def plot_stagnation_analysis(self, ax):
+    def plot_stagnation_analysis(self, ax) -> None:
         """Plot stagnation analysis."""
         generations = self.data["generation_history"]
 
@@ -645,7 +643,7 @@ class Evolution50GenVisualizer:
         colors = [
             "green" if imp > 0 else "red" if imp < 0 else "gray" for imp in improvements
         ]
-        bars = ax.bar(gen_numbers, improvements, color=colors, alpha=0.7, width=0.8)
+        ax.bar(gen_numbers, improvements, color=colors, alpha=0.7, width=0.8)
 
         ax.axhline(y=0, color="white", linestyle="-", alpha=0.5)
         ax.set_xlabel("Generation", color="white", fontweight="bold")
@@ -654,7 +652,7 @@ class Evolution50GenVisualizer:
         ax.grid(True, alpha=0.3)
         ax.set_facecolor("black")
 
-    def plot_final_population(self, ax):
+    def plot_final_population(self, ax) -> None:
         """Plot final population characteristics."""
         final_population = self.data["final_population"]
 
@@ -688,7 +686,7 @@ class Evolution50GenVisualizer:
         )
 
 
-def main():
+def main() -> None:
     """Create comprehensive 50-generation visualization."""
     print("Creating comprehensive 50-generation evolution visualization...")
 

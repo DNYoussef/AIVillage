@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Magi Agent Specialization Pipeline
+"""Magi Agent Specialization Pipeline.
 
 Complete training pipeline to transform the optimal evolved model into a specialized
 Magi agent with enhanced coding and mathematical reasoning capabilities, geometric
@@ -35,7 +35,11 @@ except ImportError:
     click = None
 
 # Import existing Agent Forge components
-from ..quietstar_baker import QuietSTaRBaker, QuietSTaRConfig
+from AIVillage.experimental.training.quietstar_baker import (
+    QuietSTaRBaker,
+    QuietSTaRConfig,
+)
+
 from .curriculum import Question
 
 # Configure logging
@@ -51,7 +55,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class MagiConfig:
-    """Configuration for Magi Agent Specialization"""
+    """Configuration for Magi Agent Specialization."""
 
     # Base model configuration
     optimal_model_path: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
@@ -113,9 +117,9 @@ class MagiConfig:
 
 
 class FrontierQuestionGenerator:
-    """Generate graded questions using a frontier model for curriculum learning"""
+    """Generate graded questions using a frontier model for curriculum learning."""
 
-    def __init__(self, config: MagiConfig):
+    def __init__(self, config: MagiConfig) -> None:
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -124,7 +128,7 @@ class FrontierQuestionGenerator:
         self.question_templates = self._load_question_templates()
 
     def _load_question_templates(self) -> dict[str, list[str]]:
-        """Load question templates for different specialization areas"""
+        """Load question templates for different specialization areas."""
         return {
             "python_programming": [
                 "Write a Python function that {task} with time complexity O({complexity})",
@@ -157,7 +161,7 @@ class FrontierQuestionGenerator:
         }
 
     def generate_curriculum_questions(self) -> list[Question]:
-        """Generate 10,000 graded questions for Magi specialization"""
+        """Generate 10,000 graded questions for Magi specialization."""
         logger.info("Generating 10,000 graded questions for Magi curriculum...")
 
         questions = []
@@ -172,21 +176,21 @@ class FrontierQuestionGenerator:
         return questions
 
     def _generate_level_questions(self, level: int) -> list[Question]:
-        """Generate questions for a specific difficulty level"""
+        """Generate questions for a specific difficulty level."""
         questions = []
         questions_per_area = self.config.questions_per_level // len(
             self.config.specialization_areas
         )
 
         for area in self.config.specialization_areas:
-            for i in range(questions_per_area):
+            for _i in range(questions_per_area):
                 question = self._generate_single_question(area, level)
                 questions.append(question)
 
         return questions
 
     def _generate_single_question(self, area: str, level: int) -> Question:
-        """Generate a single question for a specific area and level"""
+        """Generate a single question for a specific area and level."""
         # In a real implementation, this would use a frontier model API
         # For now, we'll create realistic simulated questions
 
@@ -204,7 +208,7 @@ class FrontierQuestionGenerator:
         )
 
     def _get_difficulty_parameters(self, area: str, level: int) -> dict[str, str]:
-        """Get difficulty-appropriate parameters for question generation"""
+        """Get difficulty-appropriate parameters for question generation."""
         base_difficulty = level * 100  # Scale from 100 to 1000
 
         # Common parameters for all areas
@@ -262,7 +266,7 @@ class FrontierQuestionGenerator:
         return common_params
 
     def _generate_answer(self, question: str, area: str, level: int) -> str:
-        """Generate appropriate answer for the question"""
+        """Generate appropriate answer for the question."""
         # In production, this would use the frontier model to generate detailed answers
         # For now, return a structured placeholder that the training can work with
 
@@ -286,15 +290,15 @@ class FrontierQuestionGenerator:
 
 
 class GeometricSelfAwareness:
-    """Enhanced geometric analysis with real-time visualization for the AI"""
+    """Enhanced geometric analysis with real-time visualization for the AI."""
 
-    def __init__(self, config: MagiConfig):
+    def __init__(self, config: MagiConfig) -> None:
         self.config = config
         self.geometric_history = []
         self.grokking_signatures = []
 
     def analyze_weight_space(self, model: nn.Module) -> dict[str, Any]:
-        """Analyze the model's current position in weight space"""
+        """Analyze the model's current position in weight space."""
         weight_analysis = {
             "timestamp": datetime.now().isoformat(),
             "layer_analyses": {},
@@ -337,14 +341,14 @@ class GeometricSelfAwareness:
         return weight_analysis
 
     def _calculate_weight_entropy(self, weights: np.ndarray) -> float:
-        """Calculate entropy of weight distribution"""
+        """Calculate entropy of weight distribution."""
         # Bin the weights and calculate entropy
         hist, _ = np.histogram(weights.flatten(), bins=50, density=True)
         hist = hist[hist > 0]  # Remove zero bins
         return -np.sum(hist * np.log(hist + 1e-10))
 
     def _calculate_geometric_complexity(self, model: nn.Module) -> float:
-        """Calculate a measure of the model's geometric complexity"""
+        """Calculate a measure of the model's geometric complexity."""
         # This is a simplified metric - in production would use more sophisticated measures
         complexity_score = 0.0
 
@@ -364,7 +368,7 @@ class GeometricSelfAwareness:
     def detect_grokking_signature(
         self, loss_history: list[float], accuracy_history: list[float]
     ) -> dict[str, Any] | None:
-        """Detect if the model is experiencing grokking"""
+        """Detect if the model is experiencing grokking."""
         if len(loss_history) < 50:  # Need sufficient history
             return None
 
@@ -375,8 +379,8 @@ class GeometricSelfAwareness:
         # - Loss plateau followed by sudden drop
         # - Accuracy plateau followed by sudden jump
 
-        loss_variance = np.var(recent_loss)
-        accuracy_variance = np.var(recent_accuracy)
+        np.var(recent_loss)
+        np.var(recent_accuracy)
 
         # Check for sudden changes
         if len(loss_history) >= 100:
@@ -398,7 +402,7 @@ class GeometricSelfAwareness:
         return None
 
     def visualize_for_ai(self, weight_analysis: dict[str, Any]) -> str:
-        """Create a text-based visualization that the AI can understand about its own weights"""
+        """Create a text-based visualization that the AI can understand about its own weights."""
         viz = f"""
 === GEOMETRIC SELF-AWARENESS REPORT ===
 Timestamp: {weight_analysis["timestamp"]}
@@ -441,15 +445,15 @@ Use this information to understand your own learning process and guide self-modi
 
 
 class SelfModificationFramework:
-    """Allow the AI to modify its own parameters within safety boundaries"""
+    """Allow the AI to modify its own parameters within safety boundaries."""
 
-    def __init__(self, config: MagiConfig):
+    def __init__(self, config: MagiConfig) -> None:
         self.config = config
         self.modification_history = []
         self.safety_checkpoints = []
 
     def enable_self_modification(self, model: nn.Module) -> dict[str, Any]:
-        """Enable controlled self-modification capabilities"""
+        """Enable controlled self-modification capabilities."""
         modification_interface = {
             "available_modifications": [
                 "adjust_layer_weights",
@@ -465,7 +469,7 @@ class SelfModificationFramework:
         return modification_interface
 
     def _capture_model_state(self, model: nn.Module) -> dict[str, Any]:
-        """Capture current model state for rollback purposes"""
+        """Capture current model state for rollback purposes."""
         state = {
             "timestamp": datetime.now().isoformat(),
             "state_dict": {
@@ -477,7 +481,7 @@ class SelfModificationFramework:
         return state
 
     def _calculate_architecture_hash(self, model: nn.Module) -> str:
-        """Calculate a hash of the model architecture"""
+        """Calculate a hash of the model architecture."""
         architecture_str = ""
         for name, module in model.named_modules():
             architecture_str += f"{name}:{type(module).__name__}:"
@@ -489,7 +493,7 @@ class SelfModificationFramework:
     def apply_modification(
         self, model: nn.Module, modification_request: dict[str, Any]
     ) -> dict[str, Any]:
-        """Apply a self-modification request with safety checks"""
+        """Apply a self-modification request with safety checks."""
         # Save checkpoint before modification
         checkpoint = self._capture_model_state(model)
         self.safety_checkpoints.append(checkpoint)
@@ -534,7 +538,7 @@ class SelfModificationFramework:
     def _adjust_layer_weights(
         self, model: nn.Module, parameters: dict[str, Any]
     ) -> dict[str, Any]:
-        """Adjust weights in a specific layer"""
+        """Adjust weights in a specific layer."""
         layer_name = parameters.get("layer_name")
         adjustment_factor = parameters.get("adjustment_factor", 1.0)
         max_change = self.config.modification_safety_bounds["max_weight_change"]
@@ -559,7 +563,7 @@ class SelfModificationFramework:
     def _adjust_temperature(
         self, model: nn.Module, parameters: dict[str, Any]
     ) -> dict[str, Any]:
-        """Adjust the temperature parameter for generation"""
+        """Adjust the temperature parameter for generation."""
         temperature_change = parameters.get("temperature_change", 0.0)
         max_change = self.config.modification_safety_bounds["max_temperature_change"]
 
@@ -584,7 +588,7 @@ class SelfModificationFramework:
     def _prune_connections(
         self, model: nn.Module, parameters: dict[str, Any]
     ) -> dict[str, Any]:
-        """Prune low-magnitude connections"""
+        """Prune low-magnitude connections."""
         threshold = parameters.get("threshold", 1e-6)
         layer_pattern = parameters.get("layer_pattern", "")
 
@@ -612,7 +616,7 @@ class SelfModificationFramework:
         }
 
     def rollback_to_checkpoint(self, model: nn.Module, checkpoint_id: int) -> bool:
-        """Rollback model to a previous checkpoint"""
+        """Rollback model to a previous checkpoint."""
         if checkpoint_id >= len(self.safety_checkpoints):
             return False
 
@@ -635,9 +639,9 @@ class SelfModificationFramework:
 
 
 class MagiSpecializationPipeline:
-    """Complete pipeline for creating a specialized Magi agent"""
+    """Complete pipeline for creating a specialized Magi agent."""
 
-    def __init__(self, config: MagiConfig):
+    def __init__(self, config: MagiConfig) -> None:
         self.config = config
         self.output_dir = Path(config.output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -660,8 +664,8 @@ class MagiSpecializationPipeline:
         # W&B tracking
         self.wandb_run = None
 
-    def initialize_wandb(self):
-        """Initialize W&B tracking for the specialization process"""
+    def initialize_wandb(self) -> None:
+        """Initialize W&B tracking for the specialization process."""
         try:
             self.wandb_run = wandb.init(
                 project=self.config.wandb_project,
@@ -674,11 +678,11 @@ class MagiSpecializationPipeline:
             logger.info(f"W&B initialized: {self.wandb_run.url}")
 
         except Exception as e:
-            logger.error(f"W&B initialization failed: {e}")
+            logger.exception(f"W&B initialization failed: {e}")
             self.wandb_run = None
 
     def load_optimal_model(self) -> tuple[nn.Module, Any]:
-        """Load the optimal evolved model as the base for specialization"""
+        """Load the optimal evolved model as the base for specialization."""
         logger.info("Loading optimal model...")
 
         # Check if optimal_model_path is a directory (evolution results) or direct model name
@@ -723,7 +727,7 @@ class MagiSpecializationPipeline:
         return model, tokenizer
 
     async def run_magi_specialization(self) -> dict[str, Any]:
-        """Run the complete Magi specialization pipeline"""
+        """Run the complete Magi specialization pipeline."""
         logger.info("=" * 80)
         logger.info("STARTING MAGI AGENT SPECIALIZATION PIPELINE")
         logger.info("=" * 80)
@@ -756,7 +760,7 @@ class MagiSpecializationPipeline:
 
             # Enable self-modification if configured
             if self.self_modification:
-                modification_interface = (
+                (
                     self.self_modification.enable_self_modification(model)
                 )
                 logger.info("Self-modification enabled with safety bounds")
@@ -808,7 +812,7 @@ class MagiSpecializationPipeline:
             return specialization_results
 
         except Exception as e:
-            logger.error(f"Magi specialization failed: {e}")
+            logger.exception(f"Magi specialization failed: {e}")
             raise
 
         finally:
@@ -818,7 +822,7 @@ class MagiSpecializationPipeline:
     async def execute_curriculum(
         self, model: nn.Module, tokenizer: Any, questions: list[Question]
     ) -> dict[str, Any]:
-        """Execute the 10-level curriculum with geometric monitoring and self-modification"""
+        """Execute the 10-level curriculum with geometric monitoring and self-modification."""
         logger.info("Executing Magi curriculum with geometric self-awareness...")
 
         curriculum_results = {
@@ -864,7 +868,7 @@ class MagiSpecializationPipeline:
     async def execute_level(
         self, model: nn.Module, tokenizer: Any, questions: list[Question], level: int
     ) -> dict[str, Any]:
-        """Execute a single curriculum level"""
+        """Execute a single curriculum level."""
         level_performance = []
         correct_answers = 0
 
@@ -921,7 +925,7 @@ class MagiSpecializationPipeline:
     def answer_question(
         self, model: nn.Module, tokenizer: Any, question: Question
     ) -> str:
-        """Generate answer to a curriculum question"""
+        """Generate answer to a curriculum question."""
         prompt = f"Question: {question.text}\n\nAnswer:"
 
         inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
@@ -940,7 +944,7 @@ class MagiSpecializationPipeline:
         return answer.replace(prompt, "").strip()
 
     def evaluate_answer(self, question: Question, generated_answer: str) -> bool:
-        """Evaluate if the generated answer is correct (simplified evaluation)"""
+        """Evaluate if the generated answer is correct (simplified evaluation)."""
         # In production, this would use sophisticated evaluation metrics
         # For now, use simple keyword matching and length heuristics
 
@@ -956,8 +960,8 @@ class MagiSpecializationPipeline:
         # Simple correctness heuristic
         return overlap_ratio > 0.3 and len(generated_answer) > 20
 
-    async def sleep_dream_cycle(self, model: nn.Module):
-        """Execute a sleep/dream cycle for memory consolidation"""
+    async def sleep_dream_cycle(self, model: nn.Module) -> None:
+        """Execute a sleep/dream cycle for memory consolidation."""
         logger.info("Executing sleep/dream cycle for memory consolidation...")
 
         # Simple implementation - in production would use full sleep/dream architecture
@@ -975,7 +979,7 @@ class MagiSpecializationPipeline:
     async def final_evaluation(
         self, model: nn.Module, tokenizer: Any
     ) -> dict[str, Any]:
-        """Conduct final evaluation of the specialized Magi agent"""
+        """Conduct final evaluation of the specialized Magi agent."""
         logger.info("Conducting final evaluation of Magi specialization...")
 
         # Test on each specialization area
@@ -1025,7 +1029,7 @@ class MagiSpecializationPipeline:
         return final_eval
 
     def prepare_deployment(self, model: nn.Module, tokenizer: Any) -> dict[str, Any]:
-        """Prepare the specialized Magi agent for deployment"""
+        """Prepare the specialized Magi agent for deployment."""
         logger.info("Preparing Magi agent for deployment...")
 
         # Save specialized model
@@ -1075,7 +1079,7 @@ def main(
     questions_per_level=1000,
     enable_self_mod=False,
 ):
-    """Run Magi Agent Specialization Pipeline"""
+    """Run Magi Agent Specialization Pipeline."""
     if config and Path(config).exists():
         with open(config) as f:
             config_data = json.load(f)

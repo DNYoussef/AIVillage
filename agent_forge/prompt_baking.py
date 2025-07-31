@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prompt Baking Phase - Production Implementation
+"""Prompt Baking Phase - Production Implementation.
 
 Implements advanced prompt optimization and baking techniques:
 - A/B testing harness for prompt variants
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 class PromptVariant(BaseModel):
-    """A single prompt variant for A/B testing"""
+    """A single prompt variant for A/B testing."""
 
     id: str
     name: str
@@ -49,7 +49,7 @@ class PromptVariant(BaseModel):
 
 
 class PromptBakingConfig(BaseModel):
-    """Configuration for prompt baking phase"""
+    """Configuration for prompt baking phase."""
 
     # Model paths
     input_model_path: str = Field(..., description="Path to input model")
@@ -115,7 +115,7 @@ class PromptBakingConfig(BaseModel):
 
 
 class ABTestHarness:
-    """A/B testing system for prompt variants"""
+    """A/B testing system for prompt variants."""
 
     def __init__(self, config: PromptBakingConfig):
         self.config = config
@@ -130,7 +130,7 @@ class ABTestHarness:
             self.variants.append(variant)
 
     async def run_ab_test(self, model, tokenizer) -> dict[str, Any]:
-        """Run A/B test on all prompt variants"""
+        """Run A/B test on all prompt variants."""
         logger.info(f"Running A/B test with {len(self.variants)} variants")
 
         results = {}
@@ -157,7 +157,7 @@ class ABTestHarness:
         return results
 
     async def test_variant(self, variant: PromptVariant, model, tokenizer) -> float:
-        """Test a single prompt variant"""
+        """Test a single prompt variant."""
         total_score = 0.0
         successful_tests = 0
 
@@ -200,7 +200,7 @@ class ABTestHarness:
         return total_score / max(successful_tests, 1)
 
     def score_response(self, task: str, response: str, prompt: str) -> float:
-        """Score a response quality (simplified heuristic)"""
+        """Score a response quality (simplified heuristic)."""
         # Remove the original prompt from response
         if prompt in response:
             response = response.replace(prompt, "").strip()
@@ -255,7 +255,7 @@ class ABTestHarness:
 
 
 class PromptWeightBaker:
-    """Bakes optimal prompts into model weights"""
+    """Bakes optimal prompts into model weights."""
 
     def __init__(self, config: PromptBakingConfig):
         self.config = config
@@ -263,7 +263,7 @@ class PromptWeightBaker:
     async def bake_prompt_weights(
         self, model, tokenizer, best_prompt_template: str
     ) -> nn.Module:
-        """Bake prompt patterns into model weights"""
+        """Bake prompt patterns into model weights."""
         logger.info("Starting prompt weight baking")
 
         # Prepare training data from best prompt
@@ -335,7 +335,7 @@ class PromptWeightBaker:
         return model
 
     def prepare_baking_data(self, prompt_template: str) -> list[list[str]]:
-        """Prepare training data for prompt baking"""
+        """Prepare training data for prompt baking."""
         training_examples = []
 
         # Generate diverse examples using the best prompt template
@@ -368,7 +368,7 @@ class PromptWeightBaker:
 
 
 class ToolIntegrationSystem:
-    """Integrates tools with prompt-optimized models"""
+    """Integrates tools with prompt-optimized models."""
 
     def __init__(self, config: PromptBakingConfig):
         self.config = config
@@ -379,7 +379,7 @@ class ToolIntegrationSystem:
         }
 
     async def integrate_tools(self, model, tokenizer) -> dict[str, Any]:
-        """Test tool integration capabilities"""
+        """Test tool integration capabilities."""
         if not self.config.enable_tool_integration:
             return {"tool_integration": "disabled"}
 
@@ -404,7 +404,7 @@ class ToolIntegrationSystem:
     async def test_tool_integration(
         self, tool_name: str, model, tokenizer
     ) -> dict[str, Any]:
-        """Test integration with a specific tool"""
+        """Test integration with a specific tool."""
         # Create tool-specific test prompt
         test_prompts = {
             "calculator": "Use the calculator to compute 25 * 18 + 7",
@@ -439,21 +439,21 @@ class ToolIntegrationSystem:
         }
 
     async def calculator_tool(self, prompt: str) -> str:
-        """Mock calculator tool"""
+        """Mock calculator tool."""
         # Simple expression evaluator
         try:
             if "25 * 18 + 7" in prompt:
                 return str(25 * 18 + 7)
             return "Calculator ready"
-        except:
+        except Exception:
             return "Calculator error"
 
     async def search_tool(self, prompt: str) -> str:
-        """Mock search tool"""
+        """Mock search tool."""
         return "Search results: Machine learning is a subset of AI..."
 
     async def code_executor_tool(self, prompt: str) -> str:
-        """Mock code executor"""
+        """Mock code executor."""
         if "print" in prompt and "Hello" in prompt:
             return "Output: Hello, World!"
         return "Code executed"
@@ -465,7 +465,7 @@ class ToolIntegrationSystem:
 
 
 class PromptBakingPipeline:
-    """Main pipeline for prompt baking optimization"""
+    """Main pipeline for prompt baking optimization."""
 
     def __init__(self, config: PromptBakingConfig):
         self.config = config
@@ -475,7 +475,7 @@ class PromptBakingPipeline:
         self.wandb_run = None
 
     def initialize_wandb(self):
-        """Initialize Weights & Biases tracking"""
+        """Initialize Weights & Biases tracking."""
         try:
             self.wandb_run = wandb.init(
                 project=self.config.wandb_project,
@@ -490,7 +490,7 @@ class PromptBakingPipeline:
             self.wandb_run = None
 
     async def run_prompt_baking_pipeline(self) -> dict[str, Any]:
-        """Run the complete prompt baking pipeline"""
+        """Run the complete prompt baking pipeline."""
         try:
             # Initialize W&B
             self.initialize_wandb()

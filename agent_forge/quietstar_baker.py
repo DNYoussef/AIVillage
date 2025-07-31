@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Quiet-STaR Baker - Reasoning Token Injection and Baking
+"""Quiet-STaR Baker - Reasoning Token Injection and Baking.
 
 Implements Quiet-STaR (Self-Taught Reasoner) methodology:
 - Injects thought tokens (<|startofthought|> / <|endofthought|>) during forward pass
@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 
 class QuietSTaRConfig(BaseModel):
-    """Configuration for Quiet-STaR baking"""
+    """Configuration for Quiet-STaR baking."""
 
     # Model configuration
     model_path: str = Field(..., description="Path to champion model from EvoMerge")
@@ -91,7 +91,7 @@ class QuietSTaRConfig(BaseModel):
     wandb_tags: list[str] = Field(default_factory=lambda: ["quietstar", "reasoning"])
 
     @validator("device")
-    def validate_device(cls, v):
+    def validate_device(self, v):
         if v == "auto":
             return "cuda" if torch.cuda.is_available() else "cpu"
         return v
@@ -103,9 +103,9 @@ class QuietSTaRConfig(BaseModel):
 
 
 class ThoughtInjector(nn.Module):
-    """Injects thought tokens into model forward pass"""
+    """Injects thought tokens into model forward pass."""
 
-    def __init__(self, model: nn.Module, tokenizer, config: QuietSTaRConfig):
+    def __init__(self, model: nn.Module, tokenizer, config: QuietSTaRConfig) -> None:
         super().__init__()
         self.model = model
         self.tokenizer = tokenizer
@@ -127,8 +127,8 @@ class ThoughtInjector(nn.Module):
             f"{config.end_thought_token} ({self.end_thought_id})"
         )
 
-    def add_thought_tokens(self):
-        """Add thought tokens to tokenizer"""
+    def add_thought_tokens(self) -> None:
+        """Add thought tokens to tokenizer."""
         special_tokens = {
             "additional_special_tokens": [
                 self.config.start_thought_token,
@@ -146,7 +146,7 @@ class ThoughtInjector(nn.Module):
     def inject_thoughts(
         self, input_ids: torch.Tensor, attention_mask: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Inject thought tokens into input sequences"""
+        """Inject thought tokens into input sequences."""
         batch_size, seq_len = input_ids.shape
         device = input_ids.device
 
@@ -216,7 +216,7 @@ class ThoughtInjector(nn.Module):
         return torch.stack(padded_sequences), torch.stack(padded_masks)
 
     def find_injection_points(self, input_ids: torch.Tensor) -> list[list[int]]:
-        """Find suitable points for thought injection"""
+        """Find suitable points for thought injection."""
         batch_size = input_ids.shape[0]
         injection_points = []
 
@@ -242,7 +242,7 @@ class ThoughtInjector(nn.Module):
         return injection_points
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor, **kwargs):
-        """Forward pass with thought injection"""
+        """Forward pass with thought injection."""
         # Inject thoughts into sequences
         thought_input_ids, thought_attention_mask = self.inject_thoughts(
             input_ids, attention_mask
@@ -256,7 +256,7 @@ class ThoughtInjector(nn.Module):
         return outputs, thought_input_ids, thought_attention_mask
 
     def extract_thoughts(self, generated_ids: torch.Tensor) -> list[str]:
-        """Extract generated thoughts from output"""
+        """Extract generated thoughts from output."""
         thoughts = []
 
         for seq in generated_ids:
@@ -289,11 +289,11 @@ class ThoughtInjector(nn.Module):
 
 
 class ReasoningEvalDataset(Dataset):
-    """Dataset for evaluating reasoning capabilities"""
+    """Dataset for evaluating reasoning capabilities."""
 
     def __init__(
         self, dataset_name: str, num_samples: int, tokenizer, max_length: int = 512
-    ):
+    ) -> None:
         self.tokenizer = tokenizer
         self.max_length = max_length
 
@@ -305,12 +305,13 @@ class ReasoningEvalDataset(Dataset):
             dataset = load_dataset("hendrycks/math", split="test")
             self.examples = self.prepare_math(dataset, num_samples)
         else:
-            raise ValueError(f"Unknown dataset: {dataset_name}")
+            msg = f"Unknown dataset: {dataset_name}"
+            raise ValueError(msg)
 
         logger.info(f"Loaded {len(self.examples)} examples from {dataset_name}")
 
     def prepare_gsm8k(self, dataset, num_samples: int) -> list[dict]:
-        """Prepare GSM8K examples"""
+        """Prepare GSM8K examples."""
         examples = []
 
         for i, item in enumerate(dataset):
@@ -339,7 +340,7 @@ class ReasoningEvalDataset(Dataset):
         return examples
 
     def prepare_math(self, dataset, num_samples: int) -> list[dict]:
-        """Prepare MATH dataset examples"""
+        """Prepare MATH dataset examples."""
         examples = []
 
         for i, item in enumerate(dataset):
@@ -360,7 +361,7 @@ class ReasoningEvalDataset(Dataset):
         return examples
 
     def extract_math_answer(self, solution: str) -> str:
-        """Extract final answer from MATH solution"""
+        """Extract final answer from MATH solution."""
         # Look for boxed answer
         import re
 
@@ -374,7 +375,7 @@ class ReasoningEvalDataset(Dataset):
         numbers = re.findall(r"-?\d+\.?\d*", solution)
         return numbers[-1] if numbers else ""
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.examples)
 
     def __getitem__(self, idx):
@@ -403,7 +404,7 @@ class ReasoningEvalDataset(Dataset):
 
 
 class ABTestHarness:
-    """A/B testing harness for comparing with/without thought tokens"""
+    """A/B testing harness for comparing with/without thought tokens."""
 
     def __init__(
         self,
@@ -411,7 +412,7 @@ class ABTestHarness:
         thought_model: ThoughtInjector,
         tokenizer,
         config: QuietSTaRConfig,
-    ):
+    ) -> None:
         self.model = model
         self.thought_model = thought_model
         self.tokenizer = tokenizer
@@ -429,7 +430,7 @@ class ABTestHarness:
         }
 
     async def run_ab_test(self, eval_dataset: ReasoningEvalDataset) -> dict[str, Any]:
-        """Run A/B test comparing baseline vs thought-injected model"""
+        """Run A/B test comparing baseline vs thought-injected model."""
         logger.info(f"Starting A/B test with {len(eval_dataset)} examples")
 
         # Create dataloader
@@ -491,7 +492,7 @@ class ABTestHarness:
     async def evaluate_model(
         self, model: nn.Module, dataloader: DataLoader, use_thoughts: bool, desc: str
     ) -> dict[str, float]:
-        """Evaluate model on dataset"""
+        """Evaluate model on dataset."""
         model.eval()
 
         total_correct = 0
@@ -543,7 +544,7 @@ class ABTestHarness:
                 total_time += end_time - start_time
 
                 # Decode and evaluate
-                for i, (gen, target, num_answer) in enumerate(
+                for _i, (gen, _target, num_answer) in enumerate(
                     zip(generated, targets, numerical_answers, strict=False)
                 ):
                     generated_text = self.tokenizer.decode(
@@ -574,7 +575,7 @@ class ABTestHarness:
         return results
 
     def check_answer(self, generated_text: str, target_answer: str) -> bool:
-        """Check if generated answer matches target"""
+        """Check if generated answer matches target."""
         # Extract numbers from generated text
         import re
 
@@ -584,7 +585,7 @@ class ABTestHarness:
         return target_answer in generated_numbers
 
     def collate_fn(self, batch):
-        """Custom collate function for dataloader"""
+        """Custom collate function for dataloader."""
         return {
             "input_ids": torch.stack([item["input_ids"] for item in batch]),
             "attention_mask": torch.stack([item["attention_mask"] for item in batch]),
@@ -593,7 +594,7 @@ class ABTestHarness:
         }
 
     def analyze_results(self) -> dict[str, Any]:
-        """Analyze A/B test results"""
+        """Analyze A/B test results."""
         # Calculate statistics
         baseline_acc_mean = np.mean(self.metrics["baseline"]["accuracy"])
         baseline_acc_std = np.std(self.metrics["baseline"]["accuracy"])
@@ -656,9 +657,9 @@ class ABTestHarness:
 
 
 class WeightBaker:
-    """Bakes reasoning patterns into model weights via fine-tuning"""
+    """Bakes reasoning patterns into model weights via fine-tuning."""
 
-    def __init__(self, model: nn.Module, tokenizer, config: QuietSTaRConfig):
+    def __init__(self, model: nn.Module, tokenizer, config: QuietSTaRConfig) -> None:
         self.model = model
         self.tokenizer = tokenizer
         self.config = config
@@ -667,7 +668,7 @@ class WeightBaker:
     def prepare_baking_dataset(
         self, examples: list[dict], thought_traces: list[list[str]]
     ) -> Dataset:
-        """Prepare dataset for baking thoughts into weights"""
+        """Prepare dataset for baking thoughts into weights."""
         baking_examples = []
 
         for example, thoughts in zip(examples, thought_traces, strict=False):
@@ -686,7 +687,7 @@ class WeightBaker:
         return BakingDataset(baking_examples, self.tokenizer, max_length=512)
 
     def insert_thoughts_in_text(self, text: str, thoughts: list[str]) -> str:
-        """Insert thought tokens into text"""
+        """Insert thought tokens into text."""
         # Simple insertion after sentences
         sentences = text.split(". ")
         augmented = []
@@ -701,7 +702,7 @@ class WeightBaker:
         return ". ".join(augmented)
 
     async def bake_weights(self, baking_dataset: Dataset) -> nn.Module:
-        """Fine-tune model to internalize reasoning patterns"""
+        """Fine-tune model to internalize reasoning patterns."""
         logger.info("Starting weight baking via fine-tuning")
 
         # Training arguments
@@ -751,14 +752,14 @@ class WeightBaker:
 
 
 class BakingDataset(Dataset):
-    """Dataset for weight baking"""
+    """Dataset for weight baking."""
 
-    def __init__(self, examples: list[dict], tokenizer, max_length: int = 512):
+    def __init__(self, examples: list[dict], tokenizer, max_length: int = 512) -> None:
         self.examples = examples
         self.tokenizer = tokenizer
         self.max_length = max_length
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.examples)
 
     def __getitem__(self, idx):
@@ -792,9 +793,9 @@ class BakingDataset(Dataset):
 
 
 class QuietSTaRBaker:
-    """Main Quiet-STaR baking pipeline"""
+    """Main Quiet-STaR baking pipeline."""
 
-    def __init__(self, config: QuietSTaRConfig):
+    def __init__(self, config: QuietSTaRConfig) -> None:
         self.config = config
         self.wandb_run = None
 
@@ -804,8 +805,8 @@ class QuietSTaRBaker:
 
         logger.info(f"QuietSTaR Baker initialized with model: {config.model_path}")
 
-    def initialize_wandb(self):
-        """Initialize W&B tracking"""
+    def initialize_wandb(self) -> None:
+        """Initialize W&B tracking."""
         try:
             self.wandb_run = wandb.init(
                 project=self.config.wandb_project,
@@ -818,11 +819,11 @@ class QuietSTaRBaker:
             logger.info(f"W&B initialized: {self.wandb_run.url}")
 
         except Exception as e:
-            logger.error(f"W&B initialization failed: {e}")
+            logger.exception(f"W&B initialization failed: {e}")
             self.wandb_run = None
 
     async def run_baking_pipeline(self) -> dict[str, Any]:
-        """Run complete Quiet-STaR baking pipeline"""
+        """Run complete Quiet-STaR baking pipeline."""
         try:
             # Initialize W&B
             self.initialize_wandb()
@@ -908,9 +909,7 @@ class QuietSTaRBaker:
                 weight_baker = WeightBaker(thought_model.model, tokenizer, self.config)
 
                 # Get thought traces from best round
-                best_round_idx = np.argmax(
-                    ab_harness.metrics["with_thoughts"]["accuracy"]
-                )
+                np.argmax(ab_harness.metrics["with_thoughts"]["accuracy"])
 
                 # Re-run best round to get thought traces
                 dataloader = DataLoader(
@@ -994,7 +993,7 @@ class QuietSTaRBaker:
             return results
 
         except Exception as e:
-            logger.error(f"Pipeline failed: {e}")
+            logger.exception(f"Pipeline failed: {e}")
             raise
 
         finally:
@@ -1002,7 +1001,7 @@ class QuietSTaRBaker:
                 self.wandb_run.finish()
 
     def evaluate_trace_quality(self, thought_traces: list[list[str]]) -> list[float]:
-        """Evaluate quality of generated thought traces"""
+        """Evaluate quality of generated thought traces."""
         quality_scores = []
 
         for traces in thought_traces:
@@ -1049,8 +1048,8 @@ class QuietSTaRBaker:
 
 
 @click.group()
-def forge():
-    """Agent Forge CLI"""
+def forge() -> None:
+    """Agent Forge CLI."""
 
 
 @forge.command()
@@ -1063,8 +1062,10 @@ def forge():
 @click.option("--eval-samples", default=100, help="Number of evaluation samples")
 @click.option("--device", default="auto", help="Device to use (auto, cuda, cpu)")
 @click.option("--config", help="Configuration JSON file")
-def bake_quietstar(model, out, tokenizer, eval_dataset, eval_samples, device, config):
-    """Bake Quiet-STaR reasoning into model weights"""
+def bake_quietstar(
+    model, out, tokenizer, eval_dataset, eval_samples, device, config
+) -> None:
+    """Bake Quiet-STaR reasoning into model weights."""
     try:
         # Load configuration
         if config and Path(config).exists():
@@ -1103,7 +1104,7 @@ def bake_quietstar(model, out, tokenizer, eval_dataset, eval_samples, device, co
         print("=" * 60)
 
     except Exception as e:
-        logger.error(f"Quiet-STaR baking failed: {e}")
+        logger.exception(f"Quiet-STaR baking failed: {e}")
         raise click.ClickException(str(e))
 
 

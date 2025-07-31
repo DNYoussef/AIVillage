@@ -56,10 +56,10 @@ class OrchestrationTester:
                 temperature=0.1,
             )
 
-            logger.info(f"Response: {response.content}")
-            logger.info(f"Model used: {response.model_used}")
-            logger.info(f"Cost: ${response.cost:.4f}")
-            logger.info(f"Latency: {response.latency:.2f}s")
+            logger.info("Response: %s", response.content)
+            logger.info("Model used: %s", response.model_used)
+            logger.info("Cost: $%.4f", response.cost)
+            logger.info("Latency: %.2fs", response.latency)
 
             self.results["client_test"] = {
                 "success": True,
@@ -71,7 +71,7 @@ class OrchestrationTester:
             return True
 
         except Exception as e:
-            logger.error(f"Client test failed: {e}")
+            logger.error("Client test failed: %s", e)
             self.results["client_test"] = {"success": False, "error": str(e)}
             return False
 
@@ -127,14 +127,14 @@ class OrchestrationTester:
                     test["prompt"], test["context"]
                 )
                 logger.info(
-                    f"Classified '{test['prompt'][:50]}...' as {classified_type.value}"
+                    "Classified '%s...' as %s", test['prompt'][:50], classified_type.value
                 )
 
                 # Test model selection
                 selected_model = self.router.select_model_for_task(
                     classified_type, test["context"]
                 )
-                logger.info(f"Selected model: {selected_model}")
+                logger.info("Selected model: %s", selected_model)
 
                 # Test actual routing (small request)
                 response = await self.router.route_task(
@@ -162,7 +162,7 @@ class OrchestrationTester:
             return True
 
         except Exception as e:
-            logger.error(f"Routing test failed: {e}")
+            logger.error("Routing test failed: %s", e)
             self.results["routing_test"] = {"success": False, "error": str(e)}
             return False
 
@@ -175,9 +175,9 @@ class OrchestrationTester:
                 domain="algorithm_design", difficulty=6, num_variations=2
             )
 
-            logger.info(f"Original problem: {result['original'][:200]}...")
-            logger.info(f"Generated {len(result['variations'])} variations")
-            logger.info(f"Total cost: ${result['total_cost']:.4f}")
+            logger.info("Original problem: %s...", result['original'][:200])
+            logger.info("Generated %d variations", len(result['variations']))
+            logger.info("Total cost: $%.4f", result['total_cost'])
 
             self.results["variation_test"] = {
                 "success": True,
@@ -189,7 +189,7 @@ class OrchestrationTester:
             return True
 
         except Exception as e:
-            logger.error(f"Variation test failed: {e}")
+            logger.error("Variation test failed: %s", e)
             self.results["variation_test"] = {"success": False, "error": str(e)}
             return False
 
@@ -212,8 +212,8 @@ class OrchestrationTester:
             # Generate a single question
             question = generator._generate_single_question("python_programming", 5)
 
-            logger.info(f"Generated question: {question.text[:200]}...")
-            logger.info(f"Domain: {question.domain}, Difficulty: {question.difficulty}")
+            logger.info("Generated question: %s...", question.text[:200])
+            logger.info("Domain: %s, Difficulty: %s", question.domain, question.difficulty)
 
             # Test evaluation
             test_answer = "This is a test answer to the programming question."
@@ -221,7 +221,7 @@ class OrchestrationTester:
                 question, test_answer
             )
 
-            logger.info(f"Evaluation result: {eval_result}")
+            logger.info("Evaluation result: %s", eval_result)
 
             self.results["integration_test"] = {
                 "success": True,
@@ -233,7 +233,7 @@ class OrchestrationTester:
             return True
 
         except Exception as e:
-            logger.error(f"Integration test failed: {e}")
+            logger.error("Integration test failed: %s", e)
             self.results["integration_test"] = {"success": False, "error": str(e)}
             return False
 
@@ -246,9 +246,9 @@ class OrchestrationTester:
                 metrics = self.client.get_metrics_summary()
 
                 logger.info("Cost tracking metrics:")
-                logger.info(f"Total cost: ${metrics['total_cost']:.4f}")
+                logger.info("Total cost: $%.4f", metrics['total_cost'])
                 logger.info(
-                    f"Cost by task: {json.dumps(metrics['cost_by_task'], indent=2)}"
+                    "Cost by task: %s", json.dumps(metrics['cost_by_task'], indent=2)
                 )
 
                 self.results["cost_tracking"] = {"success": True, "metrics": metrics}
@@ -258,7 +258,7 @@ class OrchestrationTester:
             return False
 
         except Exception as e:
-            logger.error(f"Cost tracking test failed: {e}")
+            logger.error("Cost tracking test failed: %s", e)
             self.results["cost_tracking"] = {"success": False, "error": str(e)}
             return False
 
@@ -288,10 +288,10 @@ class OrchestrationTester:
 
         for test_name, result in self.results.items():
             status = "✓ PASSED" if result.get("success") else "✗ FAILED"
-            logger.info(f"{test_name}: {status}")
+            logger.info("%s: %s", test_name, status)
 
             if not result.get("success"):
-                logger.error(f"  Error: {result.get('error')}")
+                logger.error("  Error: %s", result.get('error'))
 
         # Save results
         with open("orchestration_test_results.json", "w") as f:

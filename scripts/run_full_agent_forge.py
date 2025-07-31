@@ -88,7 +88,7 @@ class AgentForgePipelineRunner:
                 import torch
 
                 device = "cuda" if torch.cuda.is_available() else "cpu"
-                logger.info(f"Auto-detected device: {device}")
+                logger.info("Auto-detected device: %s", device)
             except ImportError:
                 device = "cpu"
                 logger.warning("PyTorch not available, using CPU")
@@ -97,7 +97,7 @@ class AgentForgePipelineRunner:
 
         os.environ["CUDA_VISIBLE_DEVICES"] = "0" if device == "cuda" else ""
 
-        logger.info(f"Environment configured for device: {device}")
+        logger.info("Environment configured for device: %s", device)
         return device
 
     def download_models(self) -> list[str]:
@@ -118,11 +118,11 @@ class AgentForgePipelineRunner:
                 local_path = self.models_dir / model_name
 
                 if local_path.exists() and any(local_path.iterdir()):
-                    logger.info(f"Model {model_name} already exists, skipping download")
+                    logger.info("Model %s already exists, skipping download", model_name)
                     downloaded_models.append(model_name)
                     continue
 
-                logger.info(f"Downloading {repo_id}...")
+                logger.info("Downloading %s...", repo_id)
 
                 # Use subprocess to avoid dependency issues
                 import tempfile
@@ -161,28 +161,28 @@ except Exception as e:
                     )
 
                     if result.returncode == 0:
-                        logger.info(f"Successfully downloaded {model_name}")
+                        logger.info("Successfully downloaded %s", model_name)
                         downloaded_models.append(model_name)
                     else:
-                        logger.error(f"Failed to download {repo_id}: {result.stderr}")
+                        logger.error("Failed to download %s: %s", repo_id, result.stderr)
                 finally:
                     # Clean up temporary file
                     import os
 
                     try:
                         os.unlink(temp_script_path)
-                    except:
+                    except Exception:
                         pass
 
             except Exception as e:
-                logger.error(f"Error downloading {repo_id}: {e}")
+                logger.error("Error downloading %s: %s", repo_id, e)
                 continue
 
         if not downloaded_models:
             logger.error("No models were successfully downloaded")
             raise RuntimeError("Model download failed")
 
-        logger.info(f"Downloaded {len(downloaded_models)} models: {downloaded_models}")
+        logger.info("Downloaded %d models: %s", len(downloaded_models), downloaded_models)
         return downloaded_models
 
     async def run_agent_forge_orchestrator(self, models: list[str], device: str):
@@ -223,16 +223,16 @@ except Exception as e:
             failed_phases = [k for k, v in results.items() if not v.success]
 
             logger.info(
-                f"Orchestration completed: {len(completed_phases)}/{len(results)} phases successful"
+                "Orchestration completed: %d/%d phases successful", len(completed_phases), len(results)
             )
 
             if failed_phases:
-                logger.warning(f"Failed phases: {[p.value for p in failed_phases]}")
+                logger.warning("Failed phases: %s", [p.value for p in failed_phases])
 
             logger.info("Agent Forge orchestration completed successfully")
 
         except Exception as e:
-            logger.error(f"Unexpected error during orchestration: {e}")
+            logger.error("Unexpected error during orchestration: %s", e)
             raise
 
     def _run_mock_orchestration(self, models: list[str], device: str):
@@ -295,7 +295,7 @@ except Exception as e:
             if self.args.quick:
                 cmd.extend(["--quick"])
 
-            logger.info(f"Running benchmarks: {' '.join(cmd)}")
+            logger.info("Running benchmarks: %s", ' '.join(cmd))
 
             result = subprocess.run(
                 cmd,
@@ -308,14 +308,14 @@ except Exception as e:
 
         except subprocess.TimeoutExpired:
             logger.error(
-                f"Benchmarking timed out after {self.args.benchmark_timeout} seconds"
+                "Benchmarking timed out after %d seconds", self.args.benchmark_timeout
             )
             raise
         except subprocess.CalledProcessError as e:
-            logger.error(f"Benchmarking failed with return code {e.returncode}")
+            logger.error("Benchmarking failed with return code %d", e.returncode)
             raise
         except Exception as e:
-            logger.error(f"Unexpected error during benchmarking: {e}")
+            logger.error("Unexpected error during benchmarking: %s", e)
             raise
 
     def _create_mock_benchmark_results(self):
@@ -383,7 +383,7 @@ except Exception as e:
         with open(results_file, "w") as f:
             json.dump(comparison_data, f, indent=2)
 
-        logger.info(f"Mock benchmark results saved to {results_file}")
+        logger.info("Mock benchmark results saved to %s", results_file)
 
     def run_deployment_smoke_test(self):
         """Run optional deployment smoke test."""
@@ -424,10 +424,10 @@ except Exception as e:
                         logger.info("Deployment smoke test passed")
                     else:
                         logger.warning(
-                            f"Smoke test warning: HTTP {response.status_code}"
+                            "Smoke test warning: HTTP %d", response.status_code
                         )
                 except Exception as e:
-                    logger.warning(f"Smoke test couldn't connect: {e}")
+                    logger.warning("Smoke test couldn't connect: %s", e)
                 finally:
                     process.terminate()
 
@@ -435,7 +435,7 @@ except Exception as e:
                 logger.info("Wave Bridge service not found, skipping smoke test")
 
         except Exception as e:
-            logger.error(f"Deployment smoke test failed: {e}")
+            logger.error("Deployment smoke test failed: %s", e)
 
     def generate_summary_report(self):
         """Generate a summary report of the pipeline execution."""
@@ -466,7 +466,7 @@ except Exception as e:
         with open(summary_file, "w") as f:
             json.dump(summary, f, indent=2)
 
-        logger.info(f"Pipeline summary saved to {summary_file}")
+        logger.info("Pipeline summary saved to %s", summary_file)
 
         # Print key results
         if "benchmark_results" in summary:
@@ -517,13 +517,13 @@ except Exception as e:
             self.generate_summary_report()
 
             duration = time.time() - start_time
-            logger.info(f"Agent Forge pipeline completed in {duration:.1f} seconds")
+            logger.info("Agent Forge pipeline completed in %.1f seconds", duration)
 
             # Check for performance regressions and send W&B alerts
             self.check_performance_regressions()
 
         except Exception as e:
-            logger.error(f"Pipeline failed: {e}")
+            logger.error("Pipeline failed: %s", e)
             # Send W&B alert on failure
             self.send_wandb_alert_on_failure(str(e))
             raise
@@ -596,16 +596,16 @@ except Exception as e:
                             level=wandb.AlertLevel.WARN,
                         )
                         logger.warning(
-                            f"W&B alert sent for {regression['benchmark']} regression"
+                            "W&B alert sent for %s regression", regression['benchmark']
                         )
                     except Exception as e:
-                        logger.error(f"Failed to send W&B alert: {e}")
+                        logger.error("Failed to send W&B alert: %s", e)
 
             if not regressions_found:
                 logger.info("No performance regressions detected")
 
         except Exception as e:
-            logger.error(f"Performance regression check failed: {e}")
+            logger.error("Performance regression check failed: %s", e)
 
     def send_wandb_alert_on_failure(self, error_message: str):
         """Send W&B alert when pipeline fails."""
@@ -619,7 +619,7 @@ except Exception as e:
             )
             logger.info("W&B failure alert sent")
         except Exception as e:
-            logger.error(f"Failed to send W&B failure alert: {e}")
+            logger.error("Failed to send W&B failure alert: %s", e)
 
 
 async def main():
@@ -697,7 +697,7 @@ async def main():
         logger.info("Pipeline interrupted by user")
         sys.exit(1)
     except Exception as e:
-        logger.error(f"Pipeline failed: {e}")
+        logger.error("Pipeline failed: %s", e)
         sys.exit(1)
 
 

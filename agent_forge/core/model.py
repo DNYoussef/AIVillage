@@ -5,7 +5,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class QuietStarModel(nn.Module):
-    def __init__(self, model_path, thought_config):
+    def __init__(self, model_path, thought_config) -> None:
         super().__init__()
         self.model = AutoModelForCausalLM.from_pretrained(model_path)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -20,7 +20,7 @@ class QuietStarModel(nn.Module):
         thoughts = []
         log_probs = []
 
-        for i in range(self.thought_config["num_thoughts"]):
+        for _i in range(self.thought_config["num_thoughts"]):
             thought_input = torch.cat(
                 [
                     hidden_states,
@@ -76,7 +76,7 @@ class QuietStarModel(nn.Module):
 
 
 class QuietStarOutput:
-    def __init__(self, loss, logits, hidden_states, thoughts):
+    def __init__(self, loss, logits, hidden_states, thoughts) -> None:
         self.loss = loss
         self.logits = logits
         self.hidden_states = hidden_states

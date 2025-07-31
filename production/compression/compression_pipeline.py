@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Agent Forge Compression Pipeline
+"""Agent Forge Compression Pipeline.
 
 Multi-stage compression pipeline that applies BitNet quantization (Phase 1) after Quiet-STaR baking.
 This creates production-ready models with:
@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 
 class CompressionConfig(BaseModel):
-    """Configuration for the compression pipeline"""
+    """Configuration for the compression pipeline."""
 
     # Model paths
     input_model_path: str = Field(..., description="Path to Quiet-STaR baked model")
@@ -97,7 +97,7 @@ class CompressionConfig(BaseModel):
 
 
 class ModelAnalyzer:
-    """Analyzes model characteristics for optimal compression"""
+    """Analyzes model characteristics for optimal compression."""
 
     def __init__(self, model: nn.Module, tokenizer):
         self.model = model
@@ -105,7 +105,7 @@ class ModelAnalyzer:
         self.device = next(model.parameters()).device
 
     def analyze_model_structure(self) -> dict[str, Any]:
-        """Analyze model structure and parameters"""
+        """Analyze model structure and parameters."""
         analysis = {
             "total_parameters": 0,
             "linear_parameters": 0,
@@ -142,18 +142,21 @@ class ModelAnalyzer:
             )  # ~80% reduction for linear layers
 
         logger.info("Model Analysis:")
-        logger.info(f"  Total Parameters: {analysis['total_parameters']:,}")
+        logger.info("  Total Parameters: %s", f"{analysis['total_parameters']:,}")
         logger.info(
-            f"  Linear Parameters: {analysis['linear_parameters']:,} ({analysis['linear_parameters'] / analysis['total_parameters'] * 100:.1f}%)"
+            "  Linear Parameters: %s (%s%%)", 
+            f"{analysis['linear_parameters']:,}",
+            f"{analysis['linear_parameters'] / analysis['total_parameters'] * 100:.1f}"
         )
         logger.info(
-            f"  Compression Potential: {analysis['compression_potential'] * 100:.1f}%"
+            "  Compression Potential: %.1f%%",
+            analysis['compression_potential'] * 100
         )
 
         return analysis
 
     def estimate_memory_usage(self) -> dict[str, float]:
-        """Estimate memory usage before/after compression"""
+        """Estimate memory usage before/after compression."""
         total_params = sum(p.numel() for p in self.model.parameters())
 
         # Full precision (FP16/FP32)
@@ -189,10 +192,10 @@ class ModelAnalyzer:
         }
 
         logger.info("Memory Estimation:")
-        logger.info(f"  FP16: {fp16_size_mb:.1f} MB")
-        logger.info(f"  BitNet: {bitnet_size_mb:.1f} MB")
-        logger.info(f"  Compression Ratio: {compression_ratio:.1f}x")
-        logger.info(f"  Memory Savings: {memory_usage['memory_savings_mb']:.1f} MB")
+        logger.info("  FP16: %.1f MB", fp16_size_mb)
+        logger.info("  BitNet: %.1f MB", bitnet_size_mb)
+        logger.info("  Compression Ratio: %.1fx", compression_ratio)
+        logger.info("  Memory Savings: %.1f MB", memory_usage['memory_savings_mb'])
 
         return memory_usage
 
@@ -203,7 +206,7 @@ class ModelAnalyzer:
 
 
 class CompressionEvaluator:
-    """Evaluates model performance before/after compression"""
+    """Evaluates model performance before/after compression."""
 
     def __init__(self, config: CompressionConfig):
         self.config = config
@@ -212,28 +215,28 @@ class CompressionEvaluator:
     async def evaluate_model(
         self, model: nn.Module, tokenizer, model_name: str = "model"
     ) -> dict[str, float]:
-        """Evaluate model on configured datasets"""
+        """Evaluate model on configured datasets."""
         model.eval()
         results = {}
 
         for dataset_name in self.config.eval_datasets:
-            logger.info(f"Evaluating {model_name} on {dataset_name}")
+            logger.info("Evaluating %s on %s", model_name, dataset_name)
 
             if dataset_name == "gsm8k":
                 score = await self.evaluate_gsm8k(model, tokenizer)
             elif dataset_name == "math":
                 score = await self.evaluate_math(model, tokenizer)
             else:
-                logger.warning(f"Unknown dataset: {dataset_name}")
+                logger.warning("Unknown dataset: %s", dataset_name)
                 score = 0.0
 
             results[f"{dataset_name}_accuracy"] = score
-            logger.info(f"{model_name} {dataset_name} accuracy: {score:.3f}")
+            logger.info("%s %s accuracy: %.3f", model_name, dataset_name, score)
 
         return results
 
     async def evaluate_gsm8k(self, model: nn.Module, tokenizer) -> float:
-        """Evaluate on GSM8K dataset"""
+        """Evaluate on GSM8K dataset."""
         try:
             # Load dataset
             dataset = load_dataset("gsm8k", "main", split="test")
@@ -278,11 +281,11 @@ class CompressionEvaluator:
             return correct / total if total > 0 else 0.0
 
         except Exception as e:
-            logger.error(f"GSM8K evaluation failed: {e}")
+            logger.error("GSM8K evaluation failed: %s", e)
             return 0.0
 
     async def evaluate_math(self, model: nn.Module, tokenizer) -> float:
-        """Evaluate on MATH dataset"""
+        """Evaluate on MATH dataset."""
         try:
             dataset = load_dataset("hendrycks/math", split="test")
             samples = list(dataset)[: self.config.eval_samples]
@@ -319,11 +322,11 @@ class CompressionEvaluator:
             return correct / total if total > 0 else 0.0
 
         except Exception as e:
-            logger.error(f"MATH evaluation failed: {e}")
+            logger.error("MATH evaluation failed: %s", e)
             return 0.0
 
     def extract_final_answer(self, solution: str) -> str:
-        """Extract final answer from MATH solution"""
+        """Extract final answer from MATH solution."""
         import re
 
         boxed_pattern = r"\\boxed\{([^}]+)\}"
@@ -343,7 +346,7 @@ class CompressionEvaluator:
 
 
 class CalibrationDataset:
-    """Creates calibration dataset for compression"""
+    """Creates calibration dataset for compression."""
 
     def __init__(
         self, dataset_name: str, num_samples: int, tokenizer, max_length: int = 512
@@ -358,10 +361,10 @@ class CalibrationDataset:
         else:
             raise ValueError(f"Unknown calibration dataset: {dataset_name}")
 
-        logger.info(f"Loaded {len(self.examples)} calibration examples")
+        logger.info("Loaded %s calibration examples", len(self.examples))
 
     def load_wikitext(self, num_samples: int) -> list[str]:
-        """Load WikiText-2 for calibration"""
+        """Load WikiText-2 for calibration."""
         try:
             dataset = load_dataset("wikitext", "wikitext-2-v1", split="train")
 
@@ -377,7 +380,7 @@ class CalibrationDataset:
             return examples
 
         except Exception as e:
-            logger.error(f"Failed to load WikiText: {e}")
+            logger.error("Failed to load WikiText: %s", e)
             # Fallback to synthetic data
             return [
                 "The quick brown fox jumps over the lazy dog. This is a test sentence for model calibration.",
@@ -386,7 +389,7 @@ class CalibrationDataset:
             ] * (num_samples // 3 + 1)
 
     def load_openwebtext(self, num_samples: int) -> list[str]:
-        """Load OpenWebText for calibration"""
+        """Load OpenWebText for calibration."""
         try:
             dataset = load_dataset("openwebtext", split="train")
 
@@ -402,11 +405,11 @@ class CalibrationDataset:
             return examples
 
         except Exception as e:
-            logger.error(f"Failed to load OpenWebText: {e}")
+            logger.error("Failed to load OpenWebText: %s", e)
             return self.load_wikitext(num_samples)
 
     def create_torch_dataset(self):
-        """Create PyTorch dataset for training"""
+        """Create PyTorch dataset for training."""
         encoded_examples = []
 
         for text in self.examples:
@@ -437,7 +440,7 @@ class CalibrationDataset:
 
 
 class CompressionPipeline:
-    """Main compression pipeline orchestrator"""
+    """Main compression pipeline orchestrator."""
 
     def __init__(self, config: CompressionConfig):
         self.config = config
@@ -446,10 +449,10 @@ class CompressionPipeline:
         # Set device
         self.device = torch.device(config.device)
 
-        logger.info(f"Compression pipeline initialized for {config.input_model_path}")
+        logger.info("Compression pipeline initialized for %s", config.input_model_path)
 
     def initialize_wandb(self):
-        """Initialize W&B tracking"""
+        """Initialize W&B tracking."""
         try:
             self.wandb_run = wandb.init(
                 project=self.config.wandb_project,
@@ -459,20 +462,20 @@ class CompressionPipeline:
                 config=self.config.dict(),
             )
 
-            logger.info(f"W&B initialized: {self.wandb_run.url}")
+            logger.info("W&B initialized: %s", self.wandb_run.url)
 
         except Exception as e:
-            logger.error(f"W&B initialization failed: {e}")
+            logger.error("W&B initialization failed: %s", e)
             self.wandb_run = None
 
     async def run_compression_pipeline(self) -> dict[str, Any]:
-        """Run complete compression pipeline"""
+        """Run complete compression pipeline."""
         try:
             # Initialize W&B
             self.initialize_wandb()
 
             # Load model
-            logger.info(f"Loading model from {self.config.input_model_path}")
+            logger.info("Loading model from %s", self.config.input_model_path)
             tokenizer = AutoTokenizer.from_pretrained(self.config.input_model_path)
             if tokenizer.pad_token is None:
                 tokenizer.pad_token = tokenizer.eos_token
@@ -537,7 +540,7 @@ class CompressionPipeline:
             actual_memory = self.calculate_actual_compression(model, compressed_model)
 
             # Save compressed model
-            logger.info(f"Saving compressed model to {self.config.output_model_path}")
+            logger.info("Saving compressed model to %s", self.config.output_model_path)
             Path(self.config.output_model_path).mkdir(parents=True, exist_ok=True)
 
             compressed_model.save_pretrained(self.config.output_model_path)
@@ -605,7 +608,7 @@ class CompressionPipeline:
             return results
 
         except Exception as e:
-            logger.error(f"Compression pipeline failed: {e}")
+            logger.error("Compression pipeline failed: %s", e)
             raise
 
         finally:
@@ -613,7 +616,7 @@ class CompressionPipeline:
                 self.wandb_run.finish()
 
     def apply_bitnet_compression(self, model: nn.Module, tokenizer) -> nn.Module:
-        """Apply BitNet compression to model"""
+        """Apply BitNet compression to model."""
         logger.info("Converting model to BitNet...")
 
         # Convert model to BitNet
@@ -650,7 +653,7 @@ class CompressionPipeline:
     def calculate_actual_compression(
         self, original_model: nn.Module, compressed_model: nn.Module
     ) -> dict[str, float]:
-        """Calculate actual compression metrics"""
+        """Calculate actual compression metrics."""
         # Count parameters
         original_params = sum(p.numel() for p in original_model.parameters())
         compressed_params = sum(p.numel() for p in compressed_model.parameters())
@@ -700,11 +703,12 @@ class CompressionPipeline:
         }
 
         logger.info("Actual Compression Metrics:")
-        logger.info(f"  Original: {original_memory_mb:.1f} MB")
-        logger.info(f"  Compressed: {compressed_memory_mb:.1f} MB")
-        logger.info(f"  Ratio: {compression_ratio:.1f}x")
+        logger.info("  Original: %.1f MB", original_memory_mb)
+        logger.info("  Compressed: %.1f MB", compressed_memory_mb)
+        logger.info("  Ratio: %.1fx", compression_ratio)
         logger.info(
-            f"  Savings: {memory_savings:.1f} MB ({metrics['compression_efficiency']:.1f}%)"
+            "  Savings: %.1f MB (%.1f%%)",
+            memory_savings, metrics['compression_efficiency']
         )
 
         return metrics
@@ -717,7 +721,7 @@ class CompressionPipeline:
 
 @click.group()
 def forge():
-    """Agent Forge CLI"""
+    """Agent Forge CLI."""
 
 
 @forge.command()
@@ -743,7 +747,7 @@ def compress(
     device,
     config,
 ):
-    """Apply BitNet compression to Quiet-STaR baked model"""
+    """Apply BitNet compression to Quiet-STaR baked model."""
     try:
         # Load configuration
         if config and Path(config).exists():
@@ -778,7 +782,7 @@ def compress(
         print("=" * 60)
 
     except Exception as e:
-        logger.error(f"Compression pipeline failed: {e}")
+        logger.error("Compression pipeline failed: %s", e)
         raise click.ClickException(str(e))
 
 
@@ -874,7 +878,7 @@ async def run_compression(config: dict[str, Any]) -> "PhaseResult":
                 "calibration_samples": compression_config.calibration_samples,
             }
 
-            logger.info(f"Compression completed successfully in {duration:.1f}s")
+            logger.info("Compression completed successfully in %.1fs", duration)
 
             return PhaseResult(
                 phase_type=PhaseType.COMPRESSION,

@@ -44,7 +44,7 @@ class PrometheusClient:
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
-            logger.error(f"Prometheus query failed: {e}")
+            logger.error("Prometheus query failed: %s", e)
             raise
 
     def get_node_metrics(self, node_id: str, timestamp: datetime | None = None) -> dict:
@@ -62,7 +62,7 @@ class PrometheusClient:
             else:
                 metrics["uptime_seconds"] = 0
         except Exception as e:
-            logger.warning(f"Failed to get uptime for {node_id}: {e}")
+            logger.warning("Failed to get uptime for %s: %s", node_id, e)
             metrics["uptime_seconds"] = 0
 
         # FLOPs (floating point operations)
@@ -76,7 +76,7 @@ class PrometheusClient:
             else:
                 metrics["flops"] = 0
         except Exception as e:
-            logger.warning(f"Failed to get FLOPs for {node_id}: {e}")
+            logger.warning("Failed to get FLOPs for %s: %s", node_id, e)
             metrics["flops"] = 0
 
         # Bandwidth (bytes)
@@ -95,10 +95,10 @@ class PrometheusClient:
             else:
                 metrics["bandwidth_bytes"] = 0
         except Exception as e:
-            logger.warning(f"Failed to get bandwidth for {node_id}: {e}")
+            logger.warning("Failed to get bandwidth for %s: %s", node_id, e)
             metrics["bandwidth_bytes"] = 0
 
-        logger.debug(f"Node {node_id} metrics: {metrics}")
+        logger.debug("Node %s metrics: %s", node_id, metrics)
         return metrics
 
     def get_active_nodes(self) -> list[str]:
@@ -108,7 +108,7 @@ class PrometheusClient:
             result = self.query(query)
 
             if result["status"] != "success":
-                logger.error(f"Failed to get active nodes: {result}")
+                logger.error("Failed to get active nodes: %s", result)
                 return []
 
             nodes = []
@@ -117,11 +117,11 @@ class PrometheusClient:
                 if instance:
                     nodes.append(instance)
 
-            logger.info(f"Found {len(nodes)} active nodes: {nodes}")
+            logger.info("Found %d active nodes: %s", len(nodes), nodes)
             return nodes
 
         except Exception as e:
-            logger.error(f"Failed to get active nodes: {e}")
+            logger.error("Failed to get active nodes: %s", e)
             return []
 
 
@@ -150,16 +150,16 @@ class EarnShellsWorker:
                     json={"username": username, "node_id": node_id},
                 )
                 if create_response.status_code == 201:
-                    logger.info(f"Created user {username} with node_id {node_id}")
+                    logger.info("Created user %s with node_id %s", username, node_id)
                     return True
                 logger.error(
-                    f"Failed to create user {username}: {create_response.text}"
+                    "Failed to create user %s: %s", username, create_response.text
                 )
                 return False
-            logger.error(f"Failed to check user {username}: {response.text}")
+            logger.error("Failed to check user %s: %s", username, response.text)
             return False
         except Exception as e:
-            logger.error(f"Error ensuring user {username} exists: {e}")
+            logger.error("Error ensuring user %s exists: %s", username, e)
             return False
 
     def mint_credits_for_node(self, node_id: str, scrape_timestamp: datetime) -> bool:
@@ -173,7 +173,7 @@ class EarnShellsWorker:
 
             # Ensure user exists
             if not self.ensure_user_exists(username, node_id):
-                logger.error(f"Failed to ensure user {username} exists")
+                logger.error("Failed to ensure user %s exists", username)
                 return False
 
             # Submit earning request
@@ -192,22 +192,22 @@ class EarnShellsWorker:
             if response.status_code == 200:
                 earning_data = response.json()
                 logger.info(
-                    f"Minted {earning_data['credits_earned']} credits for {username} "
-                    f"(uptime: {metrics['uptime_seconds']}s, FLOPs: {metrics['flops']}, "
-                    f"bandwidth: {metrics['bandwidth_bytes']} bytes)"
+                    "Minted %s credits for %s (uptime: %ds, FLOPs: %d, bandwidth: %d bytes)",
+                    earning_data['credits_earned'], username, metrics['uptime_seconds'],
+                    metrics['flops'], metrics['bandwidth_bytes']
                 )
                 return True
-            logger.error(f"Failed to mint credits for {username}: {response.text}")
+            logger.error("Failed to mint credits for %s: %s", username, response.text)
             return False
 
         except Exception as e:
-            logger.error(f"Error minting credits for node {node_id}: {e}")
+            logger.error("Error minting credits for node %s: %s", node_id, e)
             return False
 
     def run_earning_cycle(self) -> None:
         """Run a single earning cycle for all active nodes."""
         scrape_timestamp = datetime.now(timezone.utc)
-        logger.info(f"Starting earning cycle at {scrape_timestamp}")
+        logger.info("Starting earning cycle at %s", scrape_timestamp)
 
         try:
             # Get active nodes
@@ -224,29 +224,30 @@ class EarnShellsWorker:
                     success_count += 1
 
             logger.info(
-                f"Earning cycle completed: {success_count}/{len(active_nodes)} nodes processed successfully"
+                "Earning cycle completed: %d/%d nodes processed successfully",
+                success_count, len(active_nodes)
             )
 
         except Exception as e:
-            logger.error(f"Error in earning cycle: {e}")
+            logger.error("Error in earning cycle: %s", e)
 
     def run_continuous(self, interval_seconds: int = 300) -> None:
         """Run worker continuously with specified interval."""
         logger.info(
-            f"Starting continuous earning worker with {interval_seconds}s interval"
+            "Starting continuous earning worker with %ds interval", interval_seconds
         )
 
         while True:
             try:
                 self.run_earning_cycle()
-                logger.info(f"Sleeping for {interval_seconds} seconds...")
+                logger.info("Sleeping for %d seconds...", interval_seconds)
                 time.sleep(interval_seconds)
 
             except KeyboardInterrupt:
                 logger.info("Received interrupt signal, shutting down...")
                 break
             except Exception as e:
-                logger.error(f"Unexpected error in continuous worker: {e}")
+                logger.error("Unexpected error in continuous worker: %s", e)
                 time.sleep(60)  # Wait 1 minute before retrying
 
     def run_once(self) -> None:

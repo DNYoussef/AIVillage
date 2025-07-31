@@ -4,12 +4,12 @@ from typing import Any
 import networkx as nx
 import numpy as np
 
-from ..core.config import UnifiedConfig
-from ..core.structures import RetrievalResult
+from AIVillage.production.rag.rag_system.core.config import UnifiedConfig
+from AIVillage.production.rag.rag_system.core.structures import RetrievalResult
 
 
 class UncertaintyAwareReasoningEngine:
-    def __init__(self, config: UnifiedConfig):
+    def __init__(self, config: UnifiedConfig) -> None:
         self.config = config
         self.driver = None  # This should be initialized with a proper database driver
         self.causal_edges = {}
@@ -72,7 +72,7 @@ class UncertaintyAwareReasoningEngine:
 
     def update_causal_strength(
         self, source: str, target: str, observed_probability: float
-    ):
+    ) -> None:
         edge = self.causal_edges.get((source, target))
         if edge:
             learning_rate = 0.1
@@ -80,7 +80,7 @@ class UncertaintyAwareReasoningEngine:
                 1 - learning_rate
             ) * edge.strength + learning_rate * observed_probability
 
-    def close(self):
+    def close(self) -> None:
         """Close the underlying driver if it exists."""
         if self.driver:
             self.driver.close()
@@ -112,7 +112,7 @@ class UncertaintyAwareReasoningEngine:
             for beam in beams:
                 neighbors = await self.get_neighbors(beam[-1])
                 for neighbor in neighbors:
-                    new_beam = beam + [neighbor]
+                    new_beam = [*beam, neighbor]
                     score = await self.llm.score_path(query, new_beam)
                     candidates.append((new_beam, score))
 
@@ -272,7 +272,7 @@ class UncertaintyAwareReasoningEngine:
         :return: A list of suggestions for reducing uncertainty.
         """
         suggestions = []
-        for source, contribution in sorted(
+        for source, _contribution in sorted(
             uncertainty_sources.items(), key=lambda x: x[1], reverse=True
         ):
             if source == "interpret_query":

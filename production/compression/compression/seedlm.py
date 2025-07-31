@@ -19,25 +19,25 @@ logger = logging.getLogger(__name__)
 
 # Exception Classes
 class SeedLMError(Exception):
-    """Base exception for SeedLM errors"""
+    """Base exception for SeedLM errors."""
 
 
 class SeedLMCompressionError(SeedLMError):
-    """Raised when compression fails"""
+    """Raised when compression fails."""
 
 
 class SeedLMDecompressionError(SeedLMError):
-    """Raised when decompression fails"""
+    """Raised when decompression fails."""
 
 
 class SeedLMVerificationError(SeedLMError):
-    """Raised when integrity check fails"""
+    """Raised when integrity check fails."""
 
 
 # Configuration Classes
 @dataclass
 class SeedLMConfig:
-    """Configuration for SeedLM compression"""
+    """Configuration for SeedLM compression."""
 
     compression_levels: list[float] = None  # [0.1, 0.3, 0.5, 0.7, 0.9]
     block_sizes: list[int] = None  # [4, 8, 16, 32]
@@ -59,7 +59,7 @@ class SeedLMConfig:
 
 # Core Algorithm Classes
 class MultiScaleLFSRGenerator:
-    """Multi-scale LFSR basis generator with deterministic seeding"""
+    """Multi-scale LFSR basis generator with deterministic seeding."""
 
     def __init__(self, seeds: list[int], tap_configs: list[list[int]]):
         self.seeds = seeds
@@ -69,7 +69,7 @@ class MultiScaleLFSRGenerator:
     def generate_basis(
         self, rows: int, cols: int, scale_index: int = 0
     ) -> torch.Tensor:
-        """Generate orthogonal basis matrix at specified scale"""
+        """Generate orthogonal basis matrix at specified scale."""
         key = (rows, cols, scale_index)
         if key not in self.lfsr_generators:
             seed = self.seeds[scale_index % len(self.seeds)]
@@ -86,7 +86,7 @@ class MultiScaleLFSRGenerator:
         return basis
 
     def _gram_schmidt(self, matrix: torch.Tensor) -> torch.Tensor:
-        """Apply Gram-Schmidt orthogonalization"""
+        """Apply Gram-Schmidt orthogonalization."""
         rows, cols = matrix.shape
         orthogonal = torch.zeros_like(matrix)
 
@@ -107,7 +107,7 @@ class MultiScaleLFSRGenerator:
 
 
 class LFSRGenerator:
-    """Hardware-friendly LFSR pseudo-random generator"""
+    """Hardware-friendly LFSR pseudo-random generator."""
 
     def __init__(self, seed: int, taps: list[int] = None):
         self.register = seed & 0xFFFF
@@ -131,13 +131,13 @@ class LFSRGenerator:
 
 
 class AdaptiveBlockAnalyzer:
-    """Analyzes weight matrices to determine optimal block sizes"""
+    """Analyzes weight matrices to determine optimal block sizes."""
 
     def __init__(self, variance_threshold: float = 0.1):
         self.variance_threshold = variance_threshold
 
     def determine_block_size(self, weight: torch.Tensor) -> int:
-        """Determine optimal block size based on weight variance"""
+        """Determine optimal block size based on weight variance."""
         if weight.numel() == 0:
             return 4  # Minimum block size
 
@@ -154,7 +154,7 @@ class AdaptiveBlockAnalyzer:
 
 
 class ProgressiveSeedLMEncoder:
-    """Progressive multi-resolution SeedLM encoder with adaptive quality control"""
+    """Progressive multi-resolution SeedLM encoder with adaptive quality control."""
 
     def __init__(self, config: SeedLMConfig):
         self.config = config
@@ -178,7 +178,7 @@ class ProgressiveSeedLMEncoder:
         }
 
     def set_seed(self, seed: int):
-        """Set random seed for deterministic compression"""
+        """Set random seed for deterministic compression."""
         self.seed = seed
         torch.manual_seed(seed)
         np.random.seed(seed)
@@ -191,7 +191,7 @@ class ProgressiveSeedLMEncoder:
         enable_verification: bool = False,
         streaming: bool = False,
     ) -> dict[str, Any]:
-        """Main encoding method with comprehensive options"""
+        """Main encoding method with comprehensive options."""
         start_time = time.time()
 
         try:
@@ -253,7 +253,7 @@ class ProgressiveSeedLMEncoder:
     def decode(
         self, compressed_data: dict[str, Any], verify: bool = False
     ) -> torch.Tensor:
-        """Decode compressed data back to tensor"""
+        """Decode compressed data back to tensor."""
         try:
             # Input validation
             if not isinstance(compressed_data, dict):
@@ -303,7 +303,7 @@ class ProgressiveSeedLMEncoder:
         enhancement_layers: int = 3,
         quality_increments: list[float] = None,
     ) -> dict[str, Any]:
-        """Encode with progressive quality layers"""
+        """Encode with progressive quality layers."""
         if quality_increments is None:
             quality_increments = [0.2, 0.3, 0.2]
 
@@ -348,7 +348,7 @@ class ProgressiveSeedLMEncoder:
     def decode_progressive(
         self, compressed_data: dict[str, Any], num_layers: int = None
     ) -> torch.Tensor:
-        """Decode progressive compression with configurable quality"""
+        """Decode progressive compression with configurable quality."""
         # Decode base layer
         reconstruction = self.decode(compressed_data["base_layer"])
 
@@ -370,7 +370,7 @@ class ProgressiveSeedLMEncoder:
     def get_streaming_data(
         self, compressed_data: dict[str, Any], max_bytes: int
     ) -> dict[str, Any]:
-        """Get compressed data within bandwidth limit"""
+        """Get compressed data within bandwidth limit."""
         if not compressed_data.get("metadata", {}).get("progressive"):
             # Non-progressive data - return as-is if within limit
             data_size = len(str(compressed_data))
@@ -402,7 +402,7 @@ class ProgressiveSeedLMEncoder:
     def _progressive_encode(
         self, weight: torch.Tensor, compression_level: float, block_size: int
     ) -> dict[str, Any]:
-        """Internal progressive encoding logic"""
+        """Internal progressive encoding logic."""
         # Select compression parameters based on level
         level_idx = int(compression_level * (len(self.config.compression_levels) - 1))
         level_idx = max(0, min(level_idx, len(self.config.compression_levels) - 1))
@@ -430,7 +430,7 @@ class ProgressiveSeedLMEncoder:
         return {"data": compressed_weight_data}
 
     def _progressive_decode(self, compressed_data: dict[str, Any]) -> torch.Tensor:
-        """Internal progressive decoding logic"""
+        """Internal progressive decoding logic."""
         # Extract compression parameters from metadata
         metadata = compressed_data["metadata"]
         block_size = metadata.get("block_size", 8)
@@ -455,7 +455,7 @@ class ProgressiveSeedLMEncoder:
     def _create_empty_compressed_data(
         self, weight: torch.Tensor, metadata: dict | None
     ) -> dict[str, Any]:
-        """Create compressed data for empty tensors"""
+        """Create compressed data for empty tensors."""
         return {
             "data": {
                 "compressed_blocks": [],
@@ -477,14 +477,14 @@ class ProgressiveSeedLMEncoder:
         }
 
     def _compute_checksum(self, tensor: torch.Tensor) -> str:
-        """Compute MD5 checksum of tensor data"""
+        """Compute MD5 checksum of tensor data."""
         tensor_bytes = tensor.detach().cpu().numpy().tobytes()
         return hashlib.md5(tensor_bytes).hexdigest()
 
 
 # Backward Compatibility Classes
 class SeedLMCompressor:
-    """Legacy SeedLM compressor with enhanced capabilities"""
+    """Legacy SeedLM compressor with enhanced capabilities."""
 
     def __init__(self, block_size: int = 8, latent_dim: int = 4, num_seeds: int = 256):
         self.block_size = block_size
@@ -495,14 +495,14 @@ class SeedLMCompressor:
         )
 
     def encode(self, weight_matrix: torch.Tensor) -> torch.Tensor:
-        """Legacy encode method for backward compatibility"""
+        """Legacy encode method for backward compatibility."""
         compressed_data = self.compress_weight_matrix(weight_matrix)
         return self._pack_compressed_data(compressed_data)
 
     def decode(
         self, packed_tensor: torch.Tensor, original_shape: tuple[int, ...]
     ) -> torch.Tensor:
-        """Legacy decode method for backward compatibility"""
+        """Legacy decode method for backward compatibility."""
         blocks = self._unpack_compressed_data(packed_tensor)
         compressed_data = {
             "compressed_blocks": blocks,
@@ -512,7 +512,7 @@ class SeedLMCompressor:
         return self.decompress_weight_matrix(compressed_data)
 
     def compress_weight_matrix(self, weight_matrix: torch.Tensor) -> dict[str, Any]:
-        """Enhanced weight matrix compression"""
+        """Enhanced weight matrix compression."""
         if weight_matrix.numel() == 0:
             return {
                 "compressed_blocks": [],
@@ -536,7 +536,7 @@ class SeedLMCompressor:
         }
 
     def decompress_weight_matrix(self, data: dict[str, Any]) -> torch.Tensor:
-        """Fast weight matrix decompression optimized for performance"""
+        """Fast weight matrix decompression optimized for performance."""
         if not data["compressed_blocks"]:
             return torch.zeros(data["original_shape"])
 
@@ -559,7 +559,7 @@ class SeedLMCompressor:
         return flat.reshape(data["original_shape"])
 
     def _create_blocks(self, flat: torch.Tensor) -> list[torch.Tensor]:
-        """Create overlapping blocks for better compression"""
+        """Create overlapping blocks for better compression."""
         blocks = []
         for i in range(0, len(flat), self.block_size):
             block = flat[i : i + self.block_size]
@@ -571,7 +571,7 @@ class SeedLMCompressor:
         return blocks
 
     def _compress_single_block(self, block: torch.Tensor) -> dict[str, Any]:
-        """Fast single block compression optimized for performance"""
+        """Fast single block compression optimized for performance."""
         # Ultra-fast path: Skip complex basis generation and use simple quantization
         seed = 12345  # Fixed seed for performance
 
@@ -598,7 +598,7 @@ class SeedLMCompressor:
             }
 
     def _quantize(self, coeff: torch.Tensor) -> tuple[torch.Tensor, int]:
-        """Enhanced quantization with better dynamic range"""
+        """Enhanced quantization with better dynamic range."""
         if coeff.numel() == 0:
             return torch.zeros(0, dtype=torch.int8), 0
 
@@ -614,11 +614,11 @@ class SeedLMCompressor:
         return q, exp
 
     def _dequantize(self, q: torch.Tensor, exp: int) -> torch.Tensor:
-        """Enhanced dequantization"""
+        """Enhanced dequantization."""
         return q.float() * (2**exp)
 
     def _compression_ratio(self, original: torch.Tensor, blocks: list[dict]) -> float:
-        """Calculate compression ratio with more accurate bit counting"""
+        """Calculate compression ratio with more accurate bit counting."""
         original_bits = original.numel() * 32  # 32-bit floats
 
         compressed_bits = 0
@@ -631,7 +631,7 @@ class SeedLMCompressor:
         return original_bits / compressed_bits if compressed_bits > 0 else 0.0
 
     def _pack_compressed_data(self, compressed_data: dict) -> torch.Tensor:
-        """Pack compressed data into tensor format"""
+        """Pack compressed data into tensor format."""
         blocks = compressed_data["compressed_blocks"]
 
         if not blocks:
@@ -654,7 +654,7 @@ class SeedLMCompressor:
         return packed_tensor
 
     def _unpack_compressed_data(self, packed_tensor: torch.Tensor) -> list[dict]:
-        """Unpack tensor format back to block data"""
+        """Unpack tensor format back to block data."""
         if packed_tensor.numel() == 0:
             return []
 

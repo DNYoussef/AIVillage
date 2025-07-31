@@ -44,7 +44,8 @@ class MobileCompressionPipeline:
     ) -> nn.Module:
         """Compress model for specific mobile profile."""
         if profile not in self.compression_profiles:
-            raise ValueError(f"Unknown profile: {profile}")
+            msg = f"Unknown profile: {profile}"
+            raise ValueError(msg)
 
         config = self.compression_profiles[profile]
 
@@ -70,10 +71,11 @@ class MobileCompressionPipeline:
         # Verify size constraints
         model_size_mb = self._get_model_size_mb(model)
         if model_size_mb > config["max_model_size_mb"]:
-            raise ValueError(
+            msg = (
                 f"Compressed model ({model_size_mb:.1f}MB) exceeds "
                 f"limit ({config['max_model_size_mb']}MB) for {profile}"
             )
+            raise ValueError(msg)
 
         return model
 
@@ -81,8 +83,8 @@ class MobileCompressionPipeline:
         """Prune model weights below threshold."""
         from torch.nn.utils import prune
 
-        for name, module in model.named_modules():
-            if isinstance(module, (nn.Linear, nn.Conv2d)):
+        for _name, module in model.named_modules():
+            if isinstance(module, nn.Linear | nn.Conv2d):
                 prune.l1_unstructured(module, name="weight", amount=threshold)
                 prune.remove(module, "weight")  # Make pruning permanent
 
@@ -162,9 +164,11 @@ class MobileCompressionPipeline:
     def create_progressive_models(
         self,
         base_model: nn.Module,
-        profiles: list = ["2gb_device", "4gb_device", "edge_server"],
+        profiles: list | None = None,
     ) -> dict[str, nn.Module]:
         """Create models for different device tiers."""
+        if profiles is None:
+            profiles = ["2gb_device", "4gb_device", "edge_server"]
         models = {}
 
         for profile in profiles:
@@ -225,7 +229,7 @@ class MobileOptimizedLayers:
         if use_linear_attention:
             # Linear attention for O(n) complexity instead of O(n²)
             class LinearAttention(nn.Module):
-                def __init__(self, embed_dim, num_heads):
+                def __init__(self, embed_dim, num_heads) -> None:
                     super().__init__()
                     self.num_heads = num_heads
                     self.head_dim = embed_dim // num_heads
@@ -253,7 +257,7 @@ class MobileOptimizedLayers:
         return nn.MultiheadAttention(embed_dim, num_heads, batch_first=True)
 
 
-def create_mobile_compression_cli():
+def create_mobile_compression_cli() -> None:
     """Create CLI tool for mobile compression."""
     cli_script = '''#!/usr/bin/env python3
 """

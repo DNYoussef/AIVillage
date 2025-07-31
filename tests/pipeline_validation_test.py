@@ -136,7 +136,7 @@ class PipelineValidationTest:
             logger.info("=" * 80)
 
         except Exception as e:
-            logger.error(f"❌ Pipeline validation failed: {e}")
+            logger.error("❌ Pipeline validation failed: %s", e)
             self.results["errors"].append(str(e))
             self.results["success"] = False
 
@@ -180,7 +180,7 @@ class PipelineValidationTest:
 
                 best_config = results["evolution_summary"]["best_configuration"]
                 logger.info(
-                    f"Best evolution config: {best_config['merge_method']} with fitness {best_config['fitness']:.4f}"
+                    "Best evolution config: %s with fitness %.4f", best_config['merge_method'], best_config['fitness']
                 )
 
                 # Create a mock optimal model file (in real scenario, this would be the actual merged model)
@@ -208,7 +208,7 @@ class PipelineValidationTest:
                 }
 
                 logger.info(
-                    f"✅ Evolution merge validation completed in {stage_time:.2f}s"
+                    "✅ Evolution merge validation completed in %.2fs", stage_time
                 )
 
             else:
@@ -238,11 +238,11 @@ class PipelineValidationTest:
                 }
 
                 logger.info(
-                    f"✅ Minimal evolution merge completed in {stage_time:.2f}s"
+                    "✅ Minimal evolution merge completed in %.2fs", stage_time
                 )
 
         except Exception as e:
-            logger.error(f"❌ Evolution merge validation failed: {e}")
+            logger.error("❌ Evolution merge validation failed: %s", e)
             self.results["stages"]["evolution"] = {
                 "status": "failed",
                 "error": str(e),
@@ -268,7 +268,7 @@ class PipelineValidationTest:
             input_model_path = evolution_result["output_path"]
             output_path = self.stage_paths["quietstar"] / "baked_model.pt"
 
-            logger.info(f"Processing Quiet-STaR baking from {input_model_path}")
+            logger.info("Processing Quiet-STaR baking from %s", input_model_path)
 
             # For validation, we'll simulate the Quiet-STaR process
             # In a full test, this would run the actual QuietSTaRBaker
@@ -301,11 +301,11 @@ class PipelineValidationTest:
                 "output_path": str(output_path),
             }
 
-            logger.info(f"✅ Quiet-STaR baking completed in {stage_time:.2f}s")
+            logger.info("✅ Quiet-STaR baking completed in %.2fs", stage_time)
             logger.info("   Simulated improvement: 5.2%")
 
         except Exception as e:
-            logger.error(f"❌ Quiet-STaR baking failed: {e}")
+            logger.error("❌ Quiet-STaR baking failed: %s", e)
             self.results["stages"]["quietstar"] = {
                 "status": "failed",
                 "error": str(e),
@@ -331,7 +331,7 @@ class PipelineValidationTest:
             input_model_path = quietstar_result["output_path"]
             output_path = self.stage_paths["stage1_compressed"] / "model.stage1.pt"
 
-            logger.info(f"Processing Stage 1 compression from {input_model_path}")
+            logger.info("Processing Stage 1 compression from %s", input_model_path)
 
             # For validation, simulate compression
             logger.info("Simulating BitNet + SeedLM compression...")
@@ -371,12 +371,12 @@ class PipelineValidationTest:
                 "output_path": str(output_path),
             }
 
-            logger.info(f"✅ Stage 1 compression completed in {stage_time:.2f}s")
+            logger.info("✅ Stage 1 compression completed in %.2fs", stage_time)
             logger.info("   Compression ratio: 23% (77% size reduction)")
             logger.info("   Performance retention: 94%")
 
         except Exception as e:
-            logger.error(f"❌ Stage 1 compression failed: {e}")
+            logger.error("❌ Stage 1 compression failed: %s", e)
             self.results["stages"]["stage1_compression"] = {
                 "status": "failed",
                 "error": str(e),
@@ -408,10 +408,11 @@ class PipelineValidationTest:
             input_model_path = stage1_result["output_path"]
             output_path = self.stage_paths["curriculum"] / "trained_model.pt"
 
-            logger.info(f"Processing orchestrated training from {input_model_path}")
+            logger.info("Processing orchestrated training from %s", input_model_path)
             logger.info(
-                f"Configuration: {self.config['curriculum_learning']['levels']} levels, "
-                f"{self.config['curriculum_learning']['questions_per_level']} questions per level"
+                "Configuration: %d levels, %d questions per level", 
+                self.config['curriculum_learning']['levels'], 
+                self.config['curriculum_learning']['questions_per_level']
             )
 
             # For validation, simulate orchestrated training
@@ -451,8 +452,8 @@ class PipelineValidationTest:
                 # Clean up
                 await orchestrator.close()
 
-                logger.info(f"Generated {len(questions)} questions successfully")
-                logger.info(f"Orchestration cost tracking: {cost_summary['enabled']}")
+                logger.info("Generated %d questions successfully", len(questions))
+                logger.info("Orchestration cost tracking: %s", cost_summary['enabled'])
 
             else:
                 logger.info("Simulating orchestrated training without API...")
@@ -495,15 +496,15 @@ class PipelineValidationTest:
                 "output_path": str(output_path),
             }
 
-            logger.info(f"✅ Orchestrated training completed in {stage_time:.2f}s")
-            logger.info(f"   Levels: {self.config['curriculum_learning']['levels']}")
-            logger.info(f"   Questions: {len(questions)}")
+            logger.info("✅ Orchestrated training completed in %.2fs", stage_time)
+            logger.info("   Levels: %d", self.config['curriculum_learning']['levels'])
+            logger.info("   Questions: %d", len(questions))
             logger.info(
-                f"   Orchestration: {'Enabled' if openrouter_available else 'Simulated'}"
+                "   Orchestration: %s", 'Enabled' if openrouter_available else 'Simulated'
             )
 
         except Exception as e:
-            logger.error(f"❌ Orchestrated training failed: {e}")
+            logger.error("❌ Orchestrated training failed: %s", e)
             self.results["stages"]["orchestrated_training"] = {
                 "status": "failed",
                 "error": str(e),
@@ -556,17 +557,17 @@ class PipelineValidationTest:
                 "self_awareness_confirmed": True,
             }
 
-            logger.info(f"✅ Geometric self-awareness validated in {stage_time:.2f}s")
+            logger.info("✅ Geometric self-awareness validated in %.2fs", stage_time)
             logger.info(
-                f"   Intrinsic dimension: {geometry_metrics['intrinsic_dimension']:.1f}"
+                "   Intrinsic dimension: %.1f", geometry_metrics['intrinsic_dimension']
             )
             logger.info(
-                f"   Geometric complexity: {geometry_metrics['geometric_complexity']:.1f}"
+                "   Geometric complexity: %.1f", geometry_metrics['geometric_complexity']
             )
             logger.info("   Self-awareness: CONFIRMED")
 
         except Exception as e:
-            logger.error(f"❌ Geometric awareness validation failed: {e}")
+            logger.error("❌ Geometric awareness validation failed: %s", e)
             self.results["stages"]["geometric_awareness"] = {
                 "status": "failed",
                 "error": str(e),
@@ -590,7 +591,7 @@ class PipelineValidationTest:
             input_model_path = training_result["output_path"]
             output_path = self.stage_paths["stage2_compressed"] / "model.stage2.pt"
 
-            logger.info(f"Processing Stage 2 compression from {input_model_path}")
+            logger.info("Processing Stage 2 compression from %s", input_model_path)
 
             # For validation, simulate final compression
             logger.info("Simulating VPTQ + HyperFn compression...")
@@ -628,12 +629,12 @@ class PipelineValidationTest:
                 "output_path": str(output_path),
             }
 
-            logger.info(f"✅ Stage 2 compression completed in {stage_time:.2f}s")
+            logger.info("✅ Stage 2 compression completed in %.2fs", stage_time)
             logger.info("   Final compression ratio: 8% (92% total reduction)")
             logger.info("   Performance retention: 91%")
 
         except Exception as e:
-            logger.error(f"❌ Stage 2 compression failed: {e}")
+            logger.error("❌ Stage 2 compression failed: %s", e)
             self.results["stages"]["stage2_compression"] = {
                 "status": "failed",
                 "error": str(e),
@@ -670,7 +671,7 @@ class PipelineValidationTest:
             stage2_result = self.results["stages"]["stage2_compression"]
             final_model_path = stage2_result["output_path"]
 
-            logger.info(f"Loading final model from {final_model_path}")
+            logger.info("Loading final model from %s", final_model_path)
             final_model = torch.load(final_model_path, map_location="cpu")
 
             # Verify pipeline markers
@@ -726,17 +727,17 @@ class PipelineValidationTest:
             }
 
             logger.info(
-                f"✅ Complete pipeline verification successful in {stage_time:.2f}s"
+                "✅ Complete pipeline verification successful in %.2fs", stage_time
             )
-            logger.info(f"   Total pipeline time: {total_time / 60:.1f} minutes")
-            logger.info(f"   Total compression: {(1 - total_compression) * 100:.1f}%")
-            logger.info(f"   All markers verified: {all_markers_present}")
+            logger.info("   Total pipeline time: %.1f minutes", total_time / 60)
+            logger.info("   Total compression: %.1f%%", (1 - total_compression) * 100)
+            logger.info("   All markers verified: %s", all_markers_present)
             logger.info(
-                f"   Ready for full scale: {all_markers_present and capabilities_enhanced}"
+                "   Ready for full scale: %s", all_markers_present and capabilities_enhanced
             )
 
         except Exception as e:
-            logger.error(f"❌ Pipeline verification failed: {e}")
+            logger.error("❌ Pipeline verification failed: %s", e)
             self.results["stages"]["pipeline_verification"] = {
                 "status": "failed",
                 "error": str(e),
@@ -825,7 +826,7 @@ class PipelineValidationTest:
                 for error in self.results.get("errors", []):
                     f.write(f"- Fix: {error}\n")
 
-        logger.info(f"📋 Validation report saved to: {report_path}")
+        logger.info("📋 Validation report saved to: %s", report_path)
 
 
 async def main():

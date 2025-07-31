@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Agent Forge Unified Pipeline
+"""Agent Forge Unified Pipeline.
 
 Complete end-to-end workflow that integrates all phases:
 1. EvoMerge: Evolutionary model optimization (50 generations)
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 class UnifiedPipelineConfig(BaseModel):
-    """Configuration for the complete Agent Forge pipeline"""
+    """Configuration for the complete Agent Forge pipeline."""
 
     # Pipeline control
     enable_evomerge: bool = Field(default=True, description="Run evolutionary merging")
@@ -87,7 +87,7 @@ class UnifiedPipelineConfig(BaseModel):
     checkpoint_dir: Path = Field(default=Path("./unified_checkpoints"))
 
     def __post_init__(self):
-        """Create output directories"""
+        """Create output directories."""
         self.base_output_dir.mkdir(parents=True, exist_ok=True)
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
@@ -98,7 +98,7 @@ class UnifiedPipelineConfig(BaseModel):
 
 
 class PipelineState(BaseModel):
-    """Tracks the current state of the unified pipeline"""
+    """Tracks the current state of the unified pipeline."""
 
     run_id: str
     start_time: datetime
@@ -121,7 +121,7 @@ class PipelineState(BaseModel):
     compression_ratio: float = 1.0
 
     def save_checkpoint(self, checkpoint_dir: Path):
-        """Save pipeline state checkpoint"""
+        """Save pipeline state checkpoint."""
         checkpoint_path = checkpoint_dir / f"unified_pipeline_{self.run_id}.json"
 
         with open(checkpoint_path, "w") as f:
@@ -131,7 +131,7 @@ class PipelineState(BaseModel):
 
     @classmethod
     def load_checkpoint(cls, checkpoint_path: Path) -> "PipelineState":
-        """Load pipeline state from checkpoint"""
+        """Load pipeline state from checkpoint."""
         with open(checkpoint_path) as f:
             data = json.load(f)
 
@@ -148,7 +148,7 @@ class PipelineState(BaseModel):
 
 
 class UnifiedPipeline:
-    """Main unified pipeline orchestrator"""
+    """Main unified pipeline orchestrator."""
 
     def __init__(self, config: UnifiedPipelineConfig):
         self.config = config
@@ -161,7 +161,7 @@ class UnifiedPipeline:
         logger.info(f"Unified pipeline initialized - Run ID: {self.state.run_id}")
 
     def initialize_wandb(self):
-        """Initialize W&B tracking for unified pipeline"""
+        """Initialize W&B tracking for unified pipeline."""
         try:
             self.wandb_run = wandb.init(
                 project=self.config.wandb_project,
@@ -179,7 +179,7 @@ class UnifiedPipeline:
             self.wandb_run = None
 
     async def run_complete_pipeline(self) -> dict[str, Any]:
-        """Run the complete end-to-end pipeline"""
+        """Run the complete end-to-end pipeline."""
         try:
             # Initialize W&B
             self.initialize_wandb()
@@ -237,7 +237,7 @@ class UnifiedPipeline:
                 self.wandb_run.finish()
 
     async def run_evomerge_phase(self):
-        """Run EvoMerge evolutionary optimization"""
+        """Run EvoMerge evolutionary optimization."""
         logger.info("🧬 Starting EvoMerge Phase")
         self.state.current_phase = "evomerge"
 
@@ -300,7 +300,7 @@ class UnifiedPipeline:
             raise RuntimeError("EvoMerge failed to produce a best candidate")
 
     async def run_quietstar_phase(self):
-        """Run Quiet-STaR reasoning enhancement"""
+        """Run Quiet-STaR reasoning enhancement."""
         logger.info("🤔 Starting Quiet-STaR Phase")
         self.state.current_phase = "quietstar"
 
@@ -344,7 +344,7 @@ class UnifiedPipeline:
         )
 
     async def run_compression_phase(self, source_model_path: str):
-        """Run BitNet compression"""
+        """Run BitNet compression."""
         logger.info("🗜️ Starting Compression Phase")
         self.state.current_phase = "compression"
 
@@ -383,7 +383,7 @@ class UnifiedPipeline:
         )
 
     async def calculate_final_metrics(self):
-        """Calculate final performance metrics"""
+        """Calculate final performance metrics."""
         logger.info("📊 Calculating final metrics")
 
         # Calculate total improvement
@@ -431,7 +431,7 @@ class UnifiedPipeline:
             )
 
     async def generate_final_report(self) -> dict[str, Any]:
-        """Generate comprehensive final report"""
+        """Generate comprehensive final report."""
         end_time = datetime.now()
         total_duration = (end_time - self.state.start_time).total_seconds()
 
@@ -498,7 +498,7 @@ class UnifiedPipeline:
         return report
 
     def print_final_summary(self, report: dict):
-        """Print comprehensive final summary"""
+        """Print comprehensive final summary."""
         print("\n" + "=" * 80)
         print("🎉 AGENT FORGE UNIFIED PIPELINE COMPLETE")
         print("=" * 80)
@@ -539,7 +539,7 @@ class UnifiedPipeline:
 
 @click.group()
 def forge():
-    """Agent Forge CLI"""
+    """Agent Forge CLI."""
 
 
 @forge.command()
@@ -562,7 +562,7 @@ def forge():
 def run_pipeline(
     config, evomerge, quietstar, compression, generations, output_dir, device, resume
 ):
-    """Run complete Agent Forge pipeline: EvoMerge → Quiet-STaR → Compression"""
+    """Run complete Agent Forge pipeline: EvoMerge → Quiet-STaR → Compression."""
     try:
         # Load configuration
         if config and Path(config).exists():

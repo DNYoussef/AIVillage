@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Hyperedge Extractor
+"""Hyperedge Extractor.
 
 Extracts multi-entity relationships (hyperedges) from document corpus.
 Creates rich semantic relationships for HypeRAG knowledge graph.
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Hyperedge:
-    """Multi-entity relationship (hyperedge)"""
+    """Multi-entity relationship (hyperedge)."""
 
     hyperedge_id: str
     entities: list[str]
@@ -43,7 +43,7 @@ class Hyperedge:
 
 @dataclass
 class ExtractionMetrics:
-    """Metrics for hyperedge extraction process"""
+    """Metrics for hyperedge extraction process."""
 
     total_documents_processed: int
     total_hyperedges_extracted: int
@@ -55,14 +55,14 @@ class ExtractionMetrics:
 
 
 class PatternBasedExtractor:
-    """Extracts hyperedges using linguistic patterns"""
+    """Extracts hyperedges using linguistic patterns."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.patterns = self._load_extraction_patterns()
         self.entity_cache = {}
 
     def _load_extraction_patterns(self) -> dict[str, list[dict]]:
-        """Load linguistic patterns for relationship extraction"""
+        """Load linguistic patterns for relationship extraction."""
         return {
             "temporal_relations": [
                 {
@@ -127,7 +127,7 @@ class PatternBasedExtractor:
         }
 
     def extract_entities_from_text(self, text: str) -> list[dict[str, Any]]:
-        """Extract entities using various methods"""
+        """Extract entities using various methods."""
         entities = []
 
         # Named Entity Recognition using simple patterns
@@ -177,13 +177,13 @@ class PatternBasedExtractor:
         return entities
 
     def extract_hyperedges(self, text: str, document_id: str) -> list[Hyperedge]:
-        """Extract hyperedges from text using patterns"""
+        """Extract hyperedges from text using patterns."""
         hyperedges = []
         hyperedge_counter = 0
 
         # Extract entities first
         entities = self.extract_entities_from_text(text)
-        entity_texts = [e["text"] for e in entities]
+        [e["text"] for e in entities]
 
         # Apply each pattern category
         for category, patterns in self.patterns.items():
@@ -230,9 +230,9 @@ class PatternBasedExtractor:
 
 
 class CooccurrenceExtractor:
-    """Extracts hyperedges based on entity co-occurrence"""
+    """Extracts hyperedges based on entity co-occurrence."""
 
-    def __init__(self, window_size: int = 100, min_cooccurrence: int = 2):
+    def __init__(self, window_size: int = 100, min_cooccurrence: int = 2) -> None:
         self.window_size = window_size
         self.min_cooccurrence = min_cooccurrence
         self.cooccurrence_matrix = defaultdict(lambda: defaultdict(int))
@@ -240,7 +240,7 @@ class CooccurrenceExtractor:
     def extract_cooccurrences(
         self, text: str, entities: list[dict[str, Any]]
     ) -> list[tuple[str, str, float]]:
-        """Extract entity co-occurrences within sliding windows"""
+        """Extract entity co-occurrences within sliding windows."""
         cooccurrences = []
 
         # Sort entities by position
@@ -248,7 +248,7 @@ class CooccurrenceExtractor:
 
         # Find co-occurrences within windows
         for i, entity1 in enumerate(entities_sorted):
-            for j, entity2 in enumerate(entities_sorted[i + 1 :], i + 1):
+            for _j, entity2 in enumerate(entities_sorted[i + 1 :], i + 1):
                 # Check if entities are within window
                 distance = entity2["start"] - entity1["end"]
 
@@ -267,7 +267,7 @@ class CooccurrenceExtractor:
     def extract_hyperedges(
         self, text: str, document_id: str, entities: list[dict[str, Any]]
     ) -> list[Hyperedge]:
-        """Extract hyperedges based on co-occurrence patterns"""
+        """Extract hyperedges based on co-occurrence patterns."""
         hyperedges = []
 
         # Get co-occurrences for this document
@@ -288,7 +288,7 @@ class CooccurrenceExtractor:
         for entity, related_entities in entity_groups.items():
             if len(related_entities) >= 1:  # At least one relationship
                 # Create entity group signature for deduplication
-                group_signature = tuple(sorted([entity] + list(related_entities)))
+                group_signature = tuple(sorted([entity, *list(related_entities)]))
 
                 if group_signature not in processed_groups:
                     processed_groups.add(group_signature)
@@ -327,23 +327,23 @@ class CooccurrenceExtractor:
 
 
 class SemanticExtractor:
-    """Extracts hyperedges using semantic similarity"""
+    """Extracts hyperedges using semantic similarity."""
 
-    def __init__(self, similarity_threshold: float = 0.7):
+    def __init__(self, similarity_threshold: float = 0.7) -> None:
         self.similarity_threshold = similarity_threshold
 
         # Load pre-trained embeddings (simplified - would use actual embeddings in production)
         self.embeddings = {}
 
     def get_entity_embedding(self, entity: str) -> np.ndarray:
-        """Get embedding for entity (mock implementation)"""
+        """Get embedding for entity (mock implementation)."""
         if entity not in self.embeddings:
             # Generate random embedding (in production, use real embeddings)
             self.embeddings[entity] = np.random.rand(300)
         return self.embeddings[entity]
 
     def calculate_semantic_similarity(self, entity1: str, entity2: str) -> float:
-        """Calculate semantic similarity between entities"""
+        """Calculate semantic similarity between entities."""
         emb1 = self.get_entity_embedding(entity1)
         emb2 = self.get_entity_embedding(entity2)
 
@@ -359,7 +359,7 @@ class SemanticExtractor:
     def extract_hyperedges(
         self, text: str, document_id: str, entities: list[dict[str, Any]]
     ) -> list[Hyperedge]:
-        """Extract hyperedges based on semantic similarity"""
+        """Extract hyperedges based on semantic similarity."""
         hyperedges = []
 
         if len(entities) < 2:
@@ -369,7 +369,7 @@ class SemanticExtractor:
         semantic_groups = []
 
         for i, entity1 in enumerate(entities):
-            for j, entity2 in enumerate(entities[i + 1 :], i + 1):
+            for _j, entity2 in enumerate(entities[i + 1 :], i + 1):
                 similarity = self.calculate_semantic_similarity(
                     entity1["text"], entity2["text"]
                 )
@@ -425,9 +425,9 @@ class SemanticExtractor:
 
 
 class HyperedgeExtractor:
-    """Main hyperedge extraction system"""
+    """Main hyperedge extraction system."""
 
-    def __init__(self, output_dir: Path = Path("./hyperedges")):
+    def __init__(self, output_dir: Path = Path("./hyperedges")) -> None:
         self.output_dir = output_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -440,7 +440,7 @@ class HyperedgeExtractor:
         self.metrics = ExtractionMetrics(0, 0, {}, {}, 0.0, 0.0, 0.0)
 
     def load_documents(self, documents_path: Path) -> list[dict[str, Any]]:
-        """Load documents from various formats"""
+        """Load documents from various formats."""
         documents = []
 
         if documents_path.is_file():
@@ -448,10 +448,7 @@ class HyperedgeExtractor:
             if documents_path.suffix == ".json":
                 with open(documents_path) as f:
                     data = json.load(f)
-                    if isinstance(data, list):
-                        documents = data
-                    else:
-                        documents = [data]
+                    documents = data if isinstance(data, list) else [data]
             elif documents_path.suffix == ".jsonl":
                 with open(documents_path) as f:
                     for line in f:
@@ -485,7 +482,7 @@ class HyperedgeExtractor:
         return documents
 
     def extract_from_document(self, document: dict[str, Any]) -> list[Hyperedge]:
-        """Extract all hyperedges from a single document"""
+        """Extract all hyperedges from a single document."""
         doc_id = document.get("id", "unknown")
         content = document.get("content", "")
 
@@ -516,7 +513,7 @@ class HyperedgeExtractor:
         return all_hyperedges
 
     def extract_from_corpus(self, documents_path: Path) -> list[Hyperedge]:
-        """Extract hyperedges from entire document corpus"""
+        """Extract hyperedges from entire document corpus."""
         start_time = datetime.now()
 
         # Load documents
@@ -541,7 +538,7 @@ class HyperedgeExtractor:
                     )
 
             except Exception as e:
-                logger.error(f"Error processing document {document.get('id')}: {e}")
+                logger.exception(f"Error processing document {document.get('id')}: {e}")
                 continue
 
         # Calculate metrics
@@ -556,8 +553,8 @@ class HyperedgeExtractor:
         )
         return all_hyperedges
 
-    def _analyze_hyperedges(self, hyperedges: list[Hyperedge]):
-        """Analyze extracted hyperedges for metrics"""
+    def _analyze_hyperedges(self, hyperedges: list[Hyperedge]) -> None:
+        """Analyze extracted hyperedges for metrics."""
         if not hyperedges:
             return
 
@@ -578,8 +575,8 @@ class HyperedgeExtractor:
             hyperedges
         )
 
-    def save_hyperedges(self, hyperedges: list[Hyperedge], output_path: Path):
-        """Save hyperedges to file"""
+    def save_hyperedges(self, hyperedges: list[Hyperedge], output_path: Path) -> None:
+        """Save hyperedges to file."""
         # Convert to serializable format
         hyperedges_data = [asdict(h) for h in hyperedges]
 
@@ -588,8 +585,8 @@ class HyperedgeExtractor:
 
         logger.info(f"Saved {len(hyperedges)} hyperedges to {output_path}")
 
-    def save_metrics_report(self, output_path: Path):
-        """Save extraction metrics report"""
+    def save_metrics_report(self, output_path: Path) -> None:
+        """Save extraction metrics report."""
         report = {
             "extraction_metadata": {
                 "extraction_timestamp": datetime.now(timezone.utc).isoformat(),
@@ -603,7 +600,7 @@ class HyperedgeExtractor:
             "quality_analysis": {
                 "high_confidence_hyperedges": sum(
                     1
-                    for method in self.metrics.hyperedges_by_method.keys()
+                    for method in self.metrics.hyperedges_by_method
                     if "pattern" in method
                 ),
                 "medium_confidence_hyperedges": self.metrics.hyperedges_by_method.get(
@@ -620,8 +617,8 @@ class HyperedgeExtractor:
 
         logger.info(f"Metrics report saved to {output_path}")
 
-    def export_for_hyperag(self, hyperedges: list[Hyperedge], kg_path: Path):
-        """Export hyperedges directly to HypeRAG knowledge graph"""
+    def export_for_hyperag(self, hyperedges: list[Hyperedge], kg_path: Path) -> None:
+        """Export hyperedges directly to HypeRAG knowledge graph."""
         kg = HypergraphKG()
 
         # Create hyperedge entities and relationships
@@ -666,7 +663,7 @@ class HyperedgeExtractor:
         )
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Extract hyperedges from document corpus"
     )
@@ -736,7 +733,7 @@ def main():
             print(f"  - {method}: {count}")
 
     except Exception as e:
-        logger.error(f"Hyperedge extraction failed: {e}")
+        logger.exception(f"Hyperedge extraction failed: {e}")
         raise
 
 

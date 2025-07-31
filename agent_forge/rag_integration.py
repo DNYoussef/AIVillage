@@ -1,4 +1,4 @@
-"""Agent Forge RAG Integration
+"""Agent Forge RAG Integration.
 
 Integrates the top-performing Agent Forge model into the HyperRAG retrieval pipeline:
 - Automatic model selection based on benchmark results
@@ -60,7 +60,7 @@ class RAGPerformanceMetrics:
 class HyperRAGIntegration:
     """Advanced RAG system with Agent Forge model integration."""
 
-    def __init__(self, config: RAGConfig):
+    def __init__(self, config: RAGConfig) -> None:
         self.config = config
         self.model = None
         self.tokenizer = None
@@ -74,7 +74,7 @@ class HyperRAGIntegration:
             project="agent-forge-rag", config=asdict(config), job_type="rag_integration"
         )
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize all RAG components."""
         logger.info("Initializing HyperRAG system")
 
@@ -89,7 +89,7 @@ class HyperRAGIntegration:
 
         logger.info("HyperRAG initialization complete")
 
-    async def _load_agent_forge_model(self):
+    async def _load_agent_forge_model(self) -> None:
         """Load the top-performing Agent Forge model."""
         logger.info(f"Loading Agent Forge model: {self.config.model_name}")
 
@@ -115,10 +115,10 @@ class HyperRAGIntegration:
             logger.info("Agent Forge model loaded successfully")
 
         except Exception as e:
-            logger.error(f"Failed to load Agent Forge model: {e}")
+            logger.exception(f"Failed to load Agent Forge model: {e}")
             raise
 
-    async def _initialize_embedding_model(self):
+    async def _initialize_embedding_model(self) -> None:
         """Initialize sentence embedding model for retrieval."""
         logger.info(f"Initializing embedding model: {self.config.embedding_model}")
 
@@ -129,10 +129,10 @@ class HyperRAGIntegration:
             logger.info("Embedding model initialized successfully")
 
         except Exception as e:
-            logger.error(f"Failed to initialize embedding model: {e}")
+            logger.exception(f"Failed to initialize embedding model: {e}")
             raise
 
-    async def _setup_vector_store(self):
+    async def _setup_vector_store(self) -> None:
         """Setup FAISS vector store for document retrieval."""
         logger.info("Setting up vector store")
 
@@ -157,7 +157,7 @@ class HyperRAGIntegration:
 
         logger.info(f"Vector store ready with {len(self.document_chunks)} chunks")
 
-    async def _create_sample_vector_store(self, vector_store_path: Path):
+    async def _create_sample_vector_store(self, vector_store_path: Path) -> None:
         """Create sample vector store for demonstration."""
         # Sample educational documents
         sample_documents = [
@@ -242,7 +242,7 @@ class HyperRAGIntegration:
             relevant_chunks = []
             total_length = 0
 
-            for idx, similarity in zip(indices[0], similarities[0], strict=False):
+            for idx, _similarity in zip(indices[0], similarities[0], strict=False):
                 if idx != -1:  # Valid index
                     chunk = self.document_chunks[idx]
                     chunk_text = chunk["text"]
@@ -266,7 +266,7 @@ class HyperRAGIntegration:
             return relevant_chunks, retrieval_latency, avg_similarity
 
         except Exception as e:
-            logger.error(f"Retrieval failed: {e}")
+            logger.exception(f"Retrieval failed: {e}")
             return [], time.time() - start_time, 0.0
 
     async def generate_response(
@@ -321,7 +321,7 @@ Answer:"""
             return response, generation_latency
 
         except Exception as e:
-            logger.error(f"Generation failed: {e}")
+            logger.exception(f"Generation failed: {e}")
             return (
                 f"I apologize, but I encountered an error while generating a response: {e!s}",
                 time.time() - start_time,
@@ -466,7 +466,7 @@ Answer:"""
                 )
 
             except Exception as e:
-                logger.error(f"Query {i + 1} failed: {e}")
+                logger.exception(f"Query {i + 1} failed: {e}")
                 results["failed_queries"] += 1
 
         # Calculate summary statistics
@@ -508,7 +508,7 @@ Answer:"""
 class AgentForgeRAGSelector:
     """Selects the best Agent Forge model for RAG integration."""
 
-    def __init__(self, results_dir: str):
+    def __init__(self, results_dir: str) -> None:
         self.results_dir = Path(results_dir)
         self.analyzer = ResultsAnalyzer(str(results_dir))
 
@@ -521,7 +521,8 @@ class AgentForgeRAGSelector:
             analysis = await self.analyzer.analyze_comprehensive_results()
 
             if "insights" not in analysis:
-                raise ValueError("No insights found in analysis results")
+                msg = "No insights found in analysis results"
+                raise ValueError(msg)
 
             insights = analysis["insights"]
             best_phase = insights["best_performing_phase"]
@@ -536,7 +537,8 @@ class AgentForgeRAGSelector:
             }
 
             if best_phase not in model_paths:
-                raise ValueError(f"Unknown phase: {best_phase}")
+                msg = f"Unknown phase: {best_phase}"
+                raise ValueError(msg)
 
             model_path = model_paths[best_phase]
 
@@ -553,7 +555,8 @@ class AgentForgeRAGSelector:
                         model_path = path
                         break
                 else:
-                    raise ValueError("No valid Agent Forge models found")
+                    msg = "No valid Agent Forge models found"
+                    raise ValueError(msg)
 
             selection_result = {
                 "selected_phase": best_phase,
@@ -577,7 +580,7 @@ class AgentForgeRAGSelector:
             return selection_result
 
         except Exception as e:
-            logger.error(f"Model selection failed: {e}")
+            logger.exception(f"Model selection failed: {e}")
             # Fallback to default model
             return {
                 "selected_phase": "mastery_trained",
@@ -605,7 +608,7 @@ SAMPLE_TEST_QUERIES = [
 
 
 # CLI interface
-async def main():
+async def main() -> int:
     """Main CLI for RAG integration."""
     import argparse
 

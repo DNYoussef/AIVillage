@@ -1,4 +1,4 @@
-"""Base classes and types for HypeRAG dual-memory system"""
+"""Base classes and types for HypeRAG dual-memory system."""
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -11,7 +11,7 @@ import numpy as np
 
 
 class MemoryType(Enum):
-    """Types of memory storage"""
+    """Types of memory storage."""
 
     EPISODIC = "episodic"  # Short-term, recent events
     SEMANTIC = "semantic"  # Long-term, consolidated knowledge
@@ -19,7 +19,7 @@ class MemoryType(Enum):
 
 
 class ConfidenceType(Enum):
-    """Types of confidence measurements"""
+    """Types of confidence measurements."""
 
     BAYESIAN = "bayesian"  # Prior/posterior updates
     FREQUENCY = "frequency"  # Usage-based confidence
@@ -29,7 +29,7 @@ class ConfidenceType(Enum):
 
 @dataclass
 class Document:
-    """Base document class for memory storage"""
+    """Base document class for memory storage."""
 
     id: str
     content: str
@@ -49,7 +49,7 @@ class Document:
 
 @dataclass
 class Node:
-    """Enhanced node with memory-specific properties"""
+    """Enhanced node with memory-specific properties."""
 
     id: str
     content: str
@@ -84,12 +84,12 @@ class Node:
             self.created_at = datetime.now()
 
     def update_access(self):
-        """Update access tracking"""
+        """Update access tracking."""
         self.last_accessed = datetime.now()
         self.access_count += 1
 
     def calculate_recency_weight(self, current_time: datetime | None = None) -> float:
-        """Calculate time-based recency weight"""
+        """Calculate time-based recency weight."""
         if not current_time:
             current_time = datetime.now()
 
@@ -100,7 +100,7 @@ class Node:
         return np.exp(-self.decay_rate * time_diff / 3600)  # Hourly decay
 
     def is_expired(self, current_time: datetime | None = None) -> bool:
-        """Check if node has expired based on TTL"""
+        """Check if node has expired based on TTL."""
         if not self.ttl or not self.created_at:
             return False
 
@@ -113,7 +113,7 @@ class Node:
 
 @dataclass
 class Edge:
-    """Enhanced edge with hypergraph and memory properties"""
+    """Enhanced edge with hypergraph and memory properties."""
 
     id: str
     source_id: str
@@ -159,12 +159,12 @@ class Edge:
             self.participants.append(self.target_id)
 
     def update_access(self):
-        """Update access tracking"""
+        """Update access tracking."""
         self.last_accessed = datetime.now()
         self.access_count += 1
 
     def add_evidence(self, doc_id: str, confidence_boost: float = 0.1):
-        """Add evidence supporting this edge"""
+        """Add evidence supporting this edge."""
         if doc_id not in self.source_docs:
             self.source_docs.append(doc_id)
             self.evidence_count += 1
@@ -173,7 +173,7 @@ class Edge:
             self.confidence = min(1.0, self.confidence + confidence_gain)
 
     def update_bayesian_confidence(self, prior: float, likelihood: float):
-        """Update confidence using Bayesian inference"""
+        """Update confidence using Bayesian inference."""
         # Simple Bayesian update: posterior ∝ likelihood × prior
         posterior = (likelihood * prior) / (
             (likelihood * prior) + ((1 - likelihood) * (1 - prior))
@@ -181,29 +181,29 @@ class Edge:
         self.confidence = posterior
 
     def is_hyperedge(self) -> bool:
-        """Check if this is a hyperedge (connects >2 nodes)"""
+        """Check if this is a hyperedge (connects >2 nodes)."""
         return len(self.participants) > 2
 
 
 class MemoryBackend(ABC):
-    """Abstract base class for memory storage backends"""
+    """Abstract base class for memory storage backends."""
 
     @abstractmethod
     async def initialize(self) -> None:
-        """Initialize the backend"""
+        """Initialize the backend."""
 
     @abstractmethod
     async def close(self) -> None:
-        """Close backend connections"""
+        """Close backend connections."""
 
     @abstractmethod
     async def health_check(self) -> dict[str, Any]:
-        """Check backend health"""
+        """Check backend health."""
 
 
 @dataclass
 class QueryResult:
-    """Result of a memory query"""
+    """Result of a memory query."""
 
     nodes: list[Node]
     edges: list[Edge]
@@ -215,7 +215,7 @@ class QueryResult:
 
 @dataclass
 class ConsolidationBatch:
-    """Batch of items for consolidation"""
+    """Batch of items for consolidation."""
 
     id: str
     nodes: list[Node]
@@ -233,7 +233,7 @@ class ConsolidationBatch:
 
 @dataclass
 class MemoryStats:
-    """Statistics about memory usage"""
+    """Statistics about memory usage."""
 
     total_nodes: int
     total_edges: int
@@ -246,19 +246,19 @@ class MemoryStats:
 
 
 class EmbeddingManager:
-    """Manages embeddings for memory systems"""
+    """Manages embeddings for memory systems."""
 
     def __init__(self, dimension: int = 768):
         self.dimension = dimension
 
     def create_embedding(self, text: str) -> np.ndarray:
-        """Create embedding for text (mock implementation)"""
+        """Create embedding for text (mock implementation)."""
         # In production, this would use a real embedding model
         np.random.seed(hash(text) % 2**32)
         return np.random.rand(self.dimension).astype(np.float32)
 
     def cosine_similarity(self, a: np.ndarray, b: np.ndarray) -> float:
-        """Calculate cosine similarity between embeddings"""
+        """Calculate cosine similarity between embeddings."""
         if a is None or b is None:
             return 0.0
         dot_product = np.dot(a, b)
@@ -271,7 +271,7 @@ class EmbeddingManager:
     def find_similar(
         self, query_embedding: np.ndarray, candidates: list[np.ndarray], top_k: int = 10
     ) -> list[tuple]:
-        """Find most similar embeddings"""
+        """Find most similar embeddings."""
         if not candidates:
             return []
 
@@ -288,7 +288,7 @@ class EmbeddingManager:
 def create_episodic_node(
     content: str, user_id: str | None = None, ttl_hours: int = 168
 ) -> Node:  # 7 days default
-    """Create a new episodic memory node"""
+    """Create a new episodic memory node."""
     return Node(
         id=str(uuid.uuid4()),
         content=content,
@@ -303,7 +303,7 @@ def create_episodic_node(
 
 
 def create_semantic_node(content: str, confidence: float = 0.8) -> Node:
-    """Create a new semantic memory node"""
+    """Create a new semantic memory node."""
     return Node(
         id=str(uuid.uuid4()),
         content=content,
@@ -322,7 +322,7 @@ def create_hyperedge(
     confidence: float = 1.0,
     user_id: str | None = None,
 ) -> Edge:
-    """Create a hyperedge connecting multiple nodes"""
+    """Create a hyperedge connecting multiple nodes."""
     # Use first two participants as source/target for compatibility
     source_id = participants[0] if participants else str(uuid.uuid4())
     target_id = participants[1] if len(participants) > 1 else str(uuid.uuid4())

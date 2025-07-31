@@ -1,4 +1,4 @@
-"""HypeRAG MCP Server Model Injection
+"""HypeRAG MCP Server Model Injection.
 
 Provides the interface for agent-specific reasoning models and manages model registry.
 """
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class QueryMode(Enum):
-    """Query execution modes"""
+    """Query execution modes."""
 
     NORMAL = "normal"
     CREATIVE = "creative"
@@ -26,7 +26,7 @@ class QueryMode(Enum):
 
 @dataclass
 class QueryPlan:
-    """Query planning result from agent reasoning model"""
+    """Query planning result from agent reasoning model."""
 
     query_id: str
     mode: QueryMode
@@ -41,7 +41,7 @@ class QueryPlan:
 
 @dataclass
 class Node:
-    """Knowledge graph node"""
+    """Knowledge graph node."""
 
     id: str
     content: str
@@ -53,7 +53,7 @@ class Node:
 
 @dataclass
 class Edge:
-    """Knowledge graph edge"""
+    """Knowledge graph edge."""
 
     id: str
     source_id: str
@@ -65,7 +65,7 @@ class Edge:
 
 @dataclass
 class KnowledgeGraph:
-    """Knowledge graph structure"""
+    """Knowledge graph structure."""
 
     nodes: dict[str, Node]
     edges: dict[str, Edge]
@@ -74,15 +74,15 @@ class KnowledgeGraph:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def add_node(self, node: Node) -> None:
-        """Add a node to the graph"""
+        """Add a node to the graph."""
         self.nodes[node.id] = node
 
     def add_edge(self, edge: Edge) -> None:
-        """Add an edge to the graph"""
+        """Add an edge to the graph."""
         self.edges[edge.id] = edge
 
     def get_neighbors(self, node_id: str) -> list[Node]:
-        """Get neighboring nodes"""
+        """Get neighboring nodes."""
         neighbors = []
         for edge in self.edges.values():
             if edge.source_id == node_id and edge.target_id in self.nodes:
@@ -94,7 +94,7 @@ class KnowledgeGraph:
 
 @dataclass
 class ReasoningStep:
-    """Individual reasoning step"""
+    """Individual reasoning step."""
 
     step_id: str
     step_type: str
@@ -108,7 +108,7 @@ class ReasoningStep:
 
 @dataclass
 class ReasoningResult:
-    """Result of agent reasoning process"""
+    """Result of agent reasoning process."""
 
     answer: str
     confidence: float
@@ -119,11 +119,11 @@ class ReasoningResult:
 
 
 class AgentReasoningModel(ABC):
-    """Abstract base class for agent-specific reasoning models"""
+    """Abstract base class for agent-specific reasoning models."""
 
     def __init__(
         self, agent_id: str, model_name: str, config: dict[str, Any] | None = None
-    ):
+    ) -> None:
         self.agent_id = agent_id
         self.model_name = model_name
         self.config = config or {}
@@ -140,7 +140,7 @@ class AgentReasoningModel(ABC):
     async def plan_query(
         self, query: str, context: dict[str, Any] | None = None
     ) -> QueryPlan:
-        """Agent-specific query planning
+        """Agent-specific query planning.
 
         Args:
             query: The input query string
@@ -157,7 +157,7 @@ class AgentReasoningModel(ABC):
         plan: QueryPlan,
         context: dict[str, Any] | None = None,
     ) -> KnowledgeGraph:
-        """Agent-specific knowledge construction
+        """Agent-specific knowledge construction.
 
         Args:
             retrieved: List of retrieved nodes
@@ -176,7 +176,7 @@ class AgentReasoningModel(ABC):
         plan: QueryPlan,
         context: dict[str, Any] | None = None,
     ) -> ReasoningResult:
-        """Agent-specific reasoning over knowledge graph
+        """Agent-specific reasoning over knowledge graph.
 
         Args:
             knowledge: The knowledge graph to reason over
@@ -189,13 +189,13 @@ class AgentReasoningModel(ABC):
         """
 
     async def warmup(self) -> None:
-        """Warm up the model (optional)"""
+        """Warm up the model (optional)."""
 
     async def cleanup(self) -> None:
-        """Clean up model resources (optional)"""
+        """Clean up model resources (optional)."""
 
     def update_stats(self, processing_time: float, confidence: float) -> None:
-        """Update usage statistics"""
+        """Update usage statistics."""
         self.usage_stats["queries_processed"] += 1
         self.usage_stats["total_processing_time"] += processing_time
         self.usage_stats["last_used"] = time.time()
@@ -212,12 +212,12 @@ class AgentReasoningModel(ABC):
 
 
 class DefaultAgentModel(AgentReasoningModel):
-    """Default implementation for agents without custom models"""
+    """Default implementation for agents without custom models."""
 
     async def plan_query(
         self, query: str, context: dict[str, Any] | None = None
     ) -> QueryPlan:
-        """Simple default planning"""
+        """Simple default planning."""
         return QueryPlan(
             query_id=str(uuid.uuid4()),
             mode=QueryMode.NORMAL,
@@ -235,7 +235,7 @@ class DefaultAgentModel(AgentReasoningModel):
         plan: QueryPlan,
         context: dict[str, Any] | None = None,
     ) -> KnowledgeGraph:
-        """Simple knowledge graph construction"""
+        """Simple knowledge graph construction."""
         kg = KnowledgeGraph(nodes={}, edges={})
 
         # Add all retrieved nodes
@@ -244,7 +244,7 @@ class DefaultAgentModel(AgentReasoningModel):
 
         # Create simple connections based on similarity
         for i, node1 in enumerate(retrieved):
-            for j, node2 in enumerate(retrieved[i + 1 :], i + 1):
+            for _j, node2 in enumerate(retrieved[i + 1 :], i + 1):
                 # Simple heuristic: connect nodes with similar content
                 if self._calculate_similarity(node1.content, node2.content) > 0.5:
                     edge = Edge(
@@ -266,7 +266,7 @@ class DefaultAgentModel(AgentReasoningModel):
         plan: QueryPlan,
         context: dict[str, Any] | None = None,
     ) -> ReasoningResult:
-        """Simple reasoning implementation"""
+        """Simple reasoning implementation."""
         # Simple reasoning: combine top nodes by confidence
         sorted_nodes = sorted(
             knowledge.nodes.values(), key=lambda n: n.confidence, reverse=True
@@ -315,7 +315,7 @@ class DefaultAgentModel(AgentReasoningModel):
         )
 
     def _calculate_similarity(self, text1: str, text2: str) -> float:
-        """Simple text similarity calculation"""
+        """Simple text similarity calculation."""
         words1 = set(text1.lower().split())
         words2 = set(text2.lower().split())
         intersection = words1.intersection(words2)
@@ -324,12 +324,12 @@ class DefaultAgentModel(AgentReasoningModel):
 
 
 class KingAgentModel(AgentReasoningModel):
-    """King agent reasoning model with comprehensive planning"""
+    """King agent reasoning model with comprehensive planning."""
 
     async def plan_query(
         self, query: str, context: dict[str, Any] | None = None
     ) -> QueryPlan:
-        """King-specific comprehensive planning"""
+        """King-specific comprehensive planning."""
         # King agent prefers comprehensive analysis
         plan = QueryPlan(
             query_id=str(uuid.uuid4()),
@@ -352,12 +352,12 @@ class KingAgentModel(AgentReasoningModel):
 
 
 class SageAgentModel(AgentReasoningModel):
-    """Sage agent reasoning model with strategic analysis"""
+    """Sage agent reasoning model with strategic analysis."""
 
     async def plan_query(
         self, query: str, context: dict[str, Any] | None = None
     ) -> QueryPlan:
-        """Sage-specific strategic planning"""
+        """Sage-specific strategic planning."""
         plan = QueryPlan(
             query_id=str(uuid.uuid4()),
             mode=QueryMode.NORMAL,
@@ -381,12 +381,12 @@ class SageAgentModel(AgentReasoningModel):
 
 
 class MagiAgentModel(AgentReasoningModel):
-    """Magi agent reasoning model focused on technical/development queries"""
+    """Magi agent reasoning model focused on technical/development queries."""
 
     async def plan_query(
         self, query: str, context: dict[str, Any] | None = None
     ) -> QueryPlan:
-        """Magi-specific technical planning"""
+        """Magi-specific technical planning."""
         plan = QueryPlan(
             query_id=str(uuid.uuid4()),
             mode=QueryMode.NORMAL,
@@ -408,9 +408,9 @@ class MagiAgentModel(AgentReasoningModel):
 
 
 class ModelRegistry:
-    """Registry for managing agent reasoning models"""
+    """Registry for managing agent reasoning models."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.models: dict[str, AgentReasoningModel] = {}
         self.model_classes: dict[str, type[AgentReasoningModel]] = {
             "default": DefaultAgentModel,
@@ -421,7 +421,7 @@ class ModelRegistry:
         self.locks: dict[str, asyncio.Lock] = {}
 
     async def register_model(self, agent_id: str, model: AgentReasoningModel) -> None:
-        """Register a model for an agent"""
+        """Register a model for an agent."""
         await model.warmup()
         self.models[agent_id] = model
         self.locks[agent_id] = asyncio.Lock()
@@ -430,14 +430,14 @@ class ModelRegistry:
     async def register_model_class(
         self, agent_type: str, model_class: type[AgentReasoningModel]
     ) -> None:
-        """Register a model class for an agent type"""
+        """Register a model class for an agent type."""
         self.model_classes[agent_type] = model_class
         logger.info(f"Registered model class for agent type {agent_type}")
 
     async def get_model(
         self, agent_id: str, agent_type: str = "default"
     ) -> AgentReasoningModel:
-        """Get model for an agent, creating if necessary"""
+        """Get model for an agent, creating if necessary."""
         if agent_id not in self.models:
             # Create model based on agent type
             model_class = self.model_classes.get(agent_type, DefaultAgentModel)
@@ -447,7 +447,7 @@ class ModelRegistry:
         return self.models[agent_id]
 
     async def remove_model(self, agent_id: str) -> None:
-        """Remove model for an agent"""
+        """Remove model for an agent."""
         if agent_id in self.models:
             model = self.models[agent_id]
             await model.cleanup()
@@ -459,7 +459,7 @@ class ModelRegistry:
     async def process_with_model(
         self, agent_id: str, agent_type: str, operation: str, *args, **kwargs
     ) -> Any:
-        """Process operation with agent's model under lock"""
+        """Process operation with agent's model under lock."""
         model = await self.get_model(agent_id, agent_type)
 
         if agent_id not in self.locks:
@@ -475,7 +475,8 @@ class ModelRegistry:
                 elif operation == "reason":
                     result = await model.reason(*args, **kwargs)
                 else:
-                    raise ValueError(f"Unknown operation: {operation}")
+                    msg = f"Unknown operation: {operation}"
+                    raise ValueError(msg)
 
                 # Update stats
                 processing_time = time.time() - start_time
@@ -486,13 +487,13 @@ class ModelRegistry:
 
             except Exception as e:
                 processing_time = time.time() - start_time
-                logger.error(
+                logger.exception(
                     f"Model operation {operation} failed for {agent_id}: {e!s}"
                 )
                 raise
 
     def get_model_stats(self) -> dict[str, dict[str, Any]]:
-        """Get statistics for all models"""
+        """Get statistics for all models."""
         stats = {}
         for agent_id, model in self.models.items():
             stats[agent_id] = {
@@ -504,7 +505,7 @@ class ModelRegistry:
         return stats
 
     async def cleanup_all(self) -> None:
-        """Clean up all models"""
+        """Clean up all models."""
         for agent_id in list(self.models.keys()):
             await self.remove_model(agent_id)
         logger.info("Cleaned up all models")

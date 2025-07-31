@@ -93,7 +93,7 @@ class AgentSpecialization:
 class BaseMetaAgent(ABC):
     """Abstract base class for all Atlantis meta-agents."""
 
-    def __init__(self, specialization: AgentSpecialization):
+    def __init__(self, specialization: AgentSpecialization) -> None:
         self.specialization = specialization
         self.performance_history = []
         self.kpi_scores = {}
@@ -106,7 +106,7 @@ class BaseMetaAgent(ABC):
     def evaluate_kpi(self) -> dict[str, float]:
         """Evaluate agent's KPIs for evolution system."""
 
-    def update_performance(self, task_result: dict[str, Any]):
+    def update_performance(self, task_result: dict[str, Any]) -> None:
         """Update performance metrics based on task result."""
         self.performance_history.append(
             {
@@ -131,7 +131,7 @@ class BaseMetaAgent(ABC):
 class AgentForge:
     """Enhanced Agent Forge for creating specialized Atlantis agents."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.agent_templates = self._initialize_templates()
         self.active_agents = {}
         self.retired_agents = []
@@ -256,7 +256,8 @@ class AgentForge:
     ) -> BaseMetaAgent:
         """Create a new specialized agent."""
         if role not in self.agent_templates:
-            raise ValueError(f"No template for role: {role}")
+            msg = f"No template for role: {role}"
+            raise ValueError(msg)
 
         # Get base template
         spec = self.agent_templates[role]
@@ -305,7 +306,7 @@ class AgentForge:
 
         return GenericAgent
 
-    def evolve_agents(self, performance_threshold: float = 0.5):
+    def evolve_agents(self, performance_threshold: float = 0.5) -> None:
         """Evolve agents based on KPI performance."""
         agents_to_retire = []
 
@@ -332,7 +333,7 @@ class AgentForge:
             import random
 
             new_role = random.choice(list(self.agent_templates.keys()))
-            new_agent = self.forge_agent(new_role)
+            self.forge_agent(new_role)
             print(f"Spawned new agent: {new_role.value}")
 
     def get_agent_census(self) -> dict[str, Any]:
@@ -345,7 +346,7 @@ class AgentForge:
         }
 
         # Count by role
-        for agent_id, agent in self.active_agents.items():
+        for agent in self.active_agents.values():
             role = agent.specialization.role.value
             census["by_role"][role] = census["by_role"].get(role, 0) + 1
 
@@ -366,7 +367,7 @@ class AgentForge:
 class AgentSpecializationEngine:
     """Engine for creating truly specialized agents with distinct behaviors."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.behavior_modules = {}
         self.skill_modules = {}
 
@@ -380,13 +381,14 @@ class AgentSpecializationEngine:
             return self._create_research_module()
         if capability == AgentCapability.PHYSICS_SIMULATION:
             return self._create_physics_module()
+        return None
         # Add more capability modules...
 
     def _create_coding_module(self) -> torch.nn.Module:
         """Coding-specific neural module."""
 
         class CodingModule(torch.nn.Module):
-            def __init__(self, hidden_dim=512):
+            def __init__(self, hidden_dim=512) -> None:
                 super().__init__()
                 self.code_understanding = torch.nn.LSTM(
                     hidden_dim, hidden_dim, num_layers=2
@@ -419,7 +421,7 @@ class AgentSpecializationEngine:
         """Translation-specific neural module."""
 
         class TranslationModule(torch.nn.Module):
-            def __init__(self, num_languages=100, hidden_dim=512):
+            def __init__(self, num_languages=100, hidden_dim=512) -> None:
                 super().__init__()
                 self.language_encoder = torch.nn.Embedding(num_languages, hidden_dim)
                 self.semantic_bridge = torch.nn.TransformerEncoder(
@@ -446,7 +448,7 @@ class AgentSpecializationEngine:
         """Research-specific neural module."""
 
         class ResearchModule(torch.nn.Module):
-            def __init__(self, hidden_dim=512):
+            def __init__(self, hidden_dim=512) -> None:
                 super().__init__()
                 self.hypothesis_generator = torch.nn.LSTM(hidden_dim, hidden_dim)
                 self.evidence_evaluator = torch.nn.MultiheadAttention(
@@ -479,7 +481,7 @@ class AgentSpecializationEngine:
         """Physics simulation neural module."""
 
         class PhysicsModule(torch.nn.Module):
-            def __init__(self, hidden_dim=512):
+            def __init__(self, hidden_dim=512) -> None:
                 super().__init__()
                 self.state_encoder = torch.nn.Linear(hidden_dim, hidden_dim)
                 self.dynamics_predictor = torch.nn.LSTM(
@@ -506,7 +508,7 @@ class AgentSpecializationEngine:
         return PhysicsModule()
 
 
-def test_enhanced_agent_forge():
+def test_enhanced_agent_forge() -> None:
     """Test the enhanced Agent Forge system."""
     print("Testing Enhanced Agent Forge...")
 
@@ -586,7 +588,7 @@ def test_enhanced_agent_forge():
     print("\n✅ Enhanced Agent Forge testing complete!")
 
 
-def create_agent_templates():
+def create_agent_templates() -> None:
     """Create template files for each agent type."""
     template_dir = Path("production/agent_forge/templates")
     template_dir.mkdir(parents=True, exist_ok=True)

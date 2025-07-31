@@ -46,7 +46,7 @@ class PipelineIntegrationTest:
         self.model_name = "microsoft/DialoGPT-small"
         self.test_results = {}
 
-        logger.info(f"Initialized pipeline test in {self.temp_dir}")
+        logger.info("Initialized pipeline test in %s", self.temp_dir)
 
     def create_test_model(self) -> str:
         """Create a test model for pipeline testing"""
@@ -73,15 +73,15 @@ class PipelineIntegrationTest:
                 model_path,
             )
 
-            logger.info(f"Test model created: {model_path}")
+            logger.info("Test model created: %s", model_path)
             logger.info(
-                f"Model size: {model_path.stat().st_size / (1024 * 1024):.2f} MB"
+                "Model size: %.2f MB", model_path.stat().st_size / (1024 * 1024)
             )
 
             return str(model_path)
 
         except Exception as e:
-            logger.error(f"Failed to create test model: {e}")
+            logger.error("Failed to create test model: %s", e)
             raise
 
     def test_stage1_compression(self, input_path: str) -> str:
@@ -124,9 +124,9 @@ class PipelineIntegrationTest:
             compressed_size = os.path.getsize(output_path)
 
             logger.info("Stage 1 compression completed:")
-            logger.info(f"  Original size: {original_size / (1024 * 1024):.2f} MB")
-            logger.info(f"  Compressed size: {compressed_size / (1024 * 1024):.2f} MB")
-            logger.info(f"  File size ratio: {original_size / compressed_size:.2f}x")
+            logger.info("  Original size: %.2f MB", original_size / (1024 * 1024))
+            logger.info("  Compressed size: %.2f MB", compressed_size / (1024 * 1024))
+            logger.info("  File size ratio: %.2fx", original_size / compressed_size)
 
             # Store results
             self.test_results["stage1"] = {
@@ -142,7 +142,7 @@ class PipelineIntegrationTest:
             return str(output_path)
 
         except Exception as e:
-            logger.error(f"Stage 1 compression failed: {e}")
+            logger.error("Stage 1 compression failed: %s", e)
             self.test_results["stage1"] = {"success": False, "error": str(e)}
             raise
 
@@ -186,10 +186,10 @@ class PipelineIntegrationTest:
             stage2_size = os.path.getsize(output_path)
 
             logger.info("Stage 2 compression completed:")
-            logger.info(f"  Stage 1 size: {stage1_size / (1024 * 1024):.2f} MB")
-            logger.info(f"  Stage 2 size: {stage2_size / (1024 * 1024):.2f} MB")
+            logger.info("  Stage 1 size: %.2f MB", stage1_size / (1024 * 1024))
+            logger.info("  Stage 2 size: %.2f MB", stage2_size / (1024 * 1024))
             logger.info(
-                f"  Overall compression ratio: {result.get('overall_compression_ratio', 'N/A'):.2f}x"
+                "  Overall compression ratio: %.2fx", result.get('overall_compression_ratio', 0.0)
             )
 
             # Store results
@@ -205,7 +205,7 @@ class PipelineIntegrationTest:
             return str(output_path)
 
         except Exception as e:
-            logger.error(f"Stage 2 compression failed: {e}")
+            logger.error("Stage 2 compression failed: %s", e)
             self.test_results["stage2"] = {"success": False, "error": str(e)}
             raise
 
@@ -250,12 +250,12 @@ class PipelineIntegrationTest:
             )
 
             logger.info("Training pipeline completed:")
-            logger.info(f"  Levels completed: {curriculum_results['levels_completed']}")
+            logger.info("  Levels completed: %d", curriculum_results['levels_completed'])
             logger.info(
-                f"  Overall accuracy: {curriculum_results['overall_accuracy']:.3f}"
+                "  Overall accuracy: %.3f", curriculum_results['overall_accuracy']
             )
             logger.info(
-                f"  Quiet-STaR enabled: {curriculum_results['quiet_star_enabled']}"
+                "  Quiet-STaR enabled: %s", curriculum_results['quiet_star_enabled']
             )
 
             # Store results
@@ -270,7 +270,7 @@ class PipelineIntegrationTest:
             return curriculum_results
 
         except Exception as e:
-            logger.error(f"Training pipeline failed: {e}")
+            logger.error("Training pipeline failed: %s", e)
             self.test_results["training"] = {"success": False, "error": str(e)}
             raise
 
@@ -317,11 +317,11 @@ class PipelineIntegrationTest:
             insights = self_modeling.get_insights_summary()
 
             logger.info("Self-modeling completed:")
-            logger.info(f"  Cycles completed: {results['cycles_completed']}")
+            logger.info("  Cycles completed: %d", results['cycles_completed'])
             logger.info(
-                f"  Temperature insights: {len(results['temperature_insights'])}"
+                "  Temperature insights: %d", len(results['temperature_insights'])
             )
-            logger.info(f"  Recommendations: {len(insights['recommendations'])}")
+            logger.info("  Recommendations: %d", len(insights['recommendations']))
 
             # Store results
             self.test_results["self_modeling"] = {
@@ -334,7 +334,7 @@ class PipelineIntegrationTest:
             return results
 
         except Exception as e:
-            logger.error(f"Self-modeling failed: {e}")
+            logger.error("Self-modeling failed: %s", e)
             self.test_results["self_modeling"] = {"success": False, "error": str(e)}
             raise
 
@@ -375,14 +375,14 @@ class PipelineIntegrationTest:
             assert (bundle_dir / "README.md").exists(), "README file not in bundle"
 
             logger.info("Deployment manifest generated:")
-            logger.info(f"  Version: {version}")
+            logger.info("  Version: %s", version)
             logger.info(
-                f"  Model size: {manifest['model_info']['file_size_mb']:.2f} MB"
+                "  Model size: %.2f MB", manifest['model_info']['file_size_mb']
             )
             logger.info(
-                f"  Deployment tier: {manifest['deployment_requirements']['deployment_tier']}"
+                "  Deployment tier: %s", manifest['deployment_requirements']['deployment_tier']
             )
-            logger.info(f"  Bundle path: {bundle_path}")
+            logger.info("  Bundle path: %s", bundle_path)
 
             # Store results
             self.test_results["deployment"] = {
@@ -399,7 +399,7 @@ class PipelineIntegrationTest:
             return bundle_path
 
         except Exception as e:
-            logger.error(f"Deployment manifest generation failed: {e}")
+            logger.error("Deployment manifest generation failed: %s", e)
             self.test_results["deployment"] = {"success": False, "error": str(e)}
             raise
 
@@ -483,7 +483,7 @@ class PipelineIntegrationTest:
             return integrity_results
 
         except Exception as e:
-            logger.error(f"Model handoff integrity test failed: {e}")
+            logger.error("Model handoff integrity test failed: %s", e)
             self.test_results["integrity"] = {"success": False, "error": str(e)}
             raise
 
@@ -510,7 +510,7 @@ class PipelineIntegrationTest:
         with open(report_path, "w") as f:
             json.dump(full_report, f, indent=2, default=str)
 
-        logger.info(f"Test report saved: {report_path}")
+        logger.info("Test report saved: %s", report_path)
         return str(report_path)
 
     def run_full_pipeline_test(self) -> dict:
@@ -560,12 +560,12 @@ class PipelineIntegrationTest:
             }
 
         except Exception as e:
-            logger.error(f"Full pipeline test failed: {e}")
+            logger.error("Full pipeline test failed: %s", e)
 
             # Generate partial report
             try:
                 report_path = self.generate_test_report()
-            except:
+            except Exception:
                 report_path = None
 
             return {

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HypeRAG LoRA Training Data Generator
+"""HypeRAG LoRA Training Data Generator.
 
 Generates domain-specific training data for LoRA fine-tuning by:
 1. Reusing inference templates from prompt_bank.md
@@ -137,7 +137,7 @@ DOMAIN_SYSTEM_PROMPTS = {
 
 
 class LoRADataGenerator:
-    def __init__(self, domain: str, seed: int = 42):
+    def __init__(self, domain: str, seed: int = 42) -> None:
         self.domain = domain
         self.rng = random.Random(seed)
         self.stats = {
@@ -210,12 +210,13 @@ Provide your repair in JSON format:
     def generate_examples(self, count: int) -> list[dict[str, str]]:
         """Generate training examples for the domain."""
         if self.domain not in DOMAIN_VIOLATIONS:
-            raise ValueError(f"Unknown domain: {self.domain}")
+            msg = f"Unknown domain: {self.domain}"
+            raise ValueError(msg)
 
         violations = DOMAIN_VIOLATIONS[self.domain]
         examples = []
 
-        for i in range(count):
+        for _i in range(count):
             # Select a random violation type
             violation_template = self.rng.choice(violations)
 
@@ -298,7 +299,7 @@ Provide your repair in JSON format:
 
         return examples
 
-    def save_dataset(self, examples: list[dict[str, str]], output_path: Path):
+    def save_dataset(self, examples: list[dict[str, str]], output_path: Path) -> None:
         """Save examples to JSONL file."""
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -315,7 +316,7 @@ Provide your repair in JSON format:
         logger.info(f"Stats saved to {stats_path}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Generate LoRA training data for HypeRAG"
     )

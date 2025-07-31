@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Agent Forge Orchestrator - Central 5-Phase Pipeline Runner
+"""Agent Forge Orchestrator - Central 5-Phase Pipeline Runner.
 
 This module implements the core orchestration system that ties together all phases
 of the Agent Forge pipeline:
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 class PhaseStatus(str, Enum):
-    """Status of a phase execution"""
+    """Status of a phase execution."""
 
     PENDING = "pending"
     RUNNING = "running"
@@ -47,7 +47,7 @@ class PhaseStatus(str, Enum):
 
 
 class PhaseType(str, Enum):
-    """Types of phases in the Agent Forge pipeline"""
+    """Types of phases in the Agent Forge pipeline."""
 
     EVOMERGE = "evomerge"
     GEOMETRY = "geometry"
@@ -58,7 +58,7 @@ class PhaseType(str, Enum):
 
 
 class PhaseArtifact(BaseModel):
-    """Artifact passed between phases"""
+    """Artifact passed between phases."""
 
     phase_type: PhaseType
     artifact_type: str
@@ -70,7 +70,7 @@ class PhaseArtifact(BaseModel):
 
 
 class PhaseResult(BaseModel):
-    """Result of a phase execution"""
+    """Result of a phase execution."""
 
     phase_type: PhaseType
     status: PhaseStatus
@@ -89,7 +89,7 @@ class PhaseResult(BaseModel):
 
 
 class OrchestratorConfig(BaseModel):
-    """Configuration for the Agent Forge Orchestrator"""
+    """Configuration for the Agent Forge Orchestrator."""
 
     # W&B Configuration
     wandb_project: str = "agent-forge"
@@ -149,7 +149,7 @@ class OrchestratorConfig(BaseModel):
 
 
 class PhaseModule:
-    """Wrapper for a discovered phase module"""
+    """Wrapper for a discovered phase module."""
 
     def __init__(self, phase_type: PhaseType, module_path: str, module):
         self.phase_type = phase_type
@@ -160,7 +160,7 @@ class PhaseModule:
         self.entry_points = []
 
     def discover_entry_points(self):
-        """Discover callable entry points in the module"""
+        """Discover callable entry points in the module."""
         for name in dir(self.module):
             obj = getattr(self.module, name)
             if callable(obj) and not name.startswith("_"):
@@ -180,7 +180,7 @@ class PhaseModule:
                     self.entry_points.append((name, obj))
 
     def detect_stub_implementation(self, stub_keywords: list[str]) -> bool:
-        """Detect if this module is a stub implementation"""
+        """Detect if this module is a stub implementation."""
         try:
             # Check source code for stub patterns
             import inspect
@@ -203,7 +203,7 @@ class PhaseModule:
                 self.is_stub = True
 
         except Exception as e:
-            logger.warning(f"Could not analyze source for {self.module_path}: {e}")
+            logger.warning("Could not analyze source for %s: %s", self.module_path, e)
 
         return self.is_stub
 
@@ -232,7 +232,7 @@ class ForgeOrchestrator:
         self.config.output_dir.mkdir(parents=True, exist_ok=True)
         self.config.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Initialized ForgeOrchestrator with run_id: {self.run_id}")
+        logger.info("Initialized ForgeOrchestrator with run_id: %s", self.run_id)
 
     def discover_phase_modules(self) -> dict[PhaseType, PhaseModule]:
         """Discover available phase modules in the agent_forge package.
@@ -285,20 +285,20 @@ class ForgeOrchestrator:
                         )
 
                     discovered[phase_type] = phase_module
-                    logger.info(f"Discovered {phase_type.value}: {full_path}")
+                    logger.info("Discovered %s: %s", phase_type.value, full_path)
 
                     if phase_module.is_stub:
                         logger.warning(
-                            f"Phase {phase_type.value} appears to be a stub: {phase_module.stub_reasons}"
+                            "Phase %s appears to be a stub: %s", phase_type.value, phase_module.stub_reasons
                         )
 
                     break  # Use first successful import
 
                 except ImportError as e:
-                    logger.debug(f"Could not import {full_path}: {e}")
+                    logger.debug("Could not import %s: %s", full_path, e)
                     continue
                 except Exception as e:
-                    logger.error(f"Error discovering {full_path}: {e}")
+                    logger.error("Error discovering %s: %s", full_path, e)
                     continue
 
         self.discovered_phases = discovered
@@ -307,14 +307,14 @@ class ForgeOrchestrator:
         found_phases = list(discovered.keys())
         missing_phases = [p for p in PhaseType if p not in found_phases]
 
-        logger.info(f"Discovered phases: {[p.value for p in found_phases]}")
+        logger.info("Discovered phases: %s", [p.value for p in found_phases])
         if missing_phases:
-            logger.warning(f"Missing phases: {[p.value for p in missing_phases]}")
+            logger.warning("Missing phases: %s", [p.value for p in missing_phases])
 
         return discovered
 
     def initialize_wandb(self):
-        """Initialize Weights & Biases tracking"""
+        """Initialize Weights & Biases tracking."""
         try:
             self.wandb_run = wandb.init(
                 project=self.config.wandb_project,
@@ -330,15 +330,15 @@ class ForgeOrchestrator:
                     "config": self.config.dict(),
                 },
             )
-            logger.info(f"Initialized W&B tracking: {wandb.run.url}")
+            logger.info("Initialized W&B tracking: %s", wandb.run.url)
         except Exception as e:
-            logger.error(f"Failed to initialize W&B: {e}")
+            logger.error("Failed to initialize W&B: %s", e)
             self.wandb_run = None
 
     def log_phase_transition(
         self, phase_type: PhaseType, status: PhaseStatus, **kwargs
     ):
-        """Log phase transition to W&B and local logs"""
+        """Log phase transition to W&B and local logs."""
         log_data = {
             "phase": phase_type.value,
             "status": status.value,
@@ -347,7 +347,7 @@ class ForgeOrchestrator:
             **kwargs,
         }
 
-        logger.info(f"Phase {phase_type.value} -> {status.value}")
+        logger.info("Phase %s -> %s", phase_type.value, status.value)
 
         if self.wandb_run:
             self.wandb_run.log(
@@ -450,7 +450,7 @@ class ForgeOrchestrator:
         except Exception as e:
             result.status = PhaseStatus.FAILED
             result.error_message = str(e)
-            logger.error(f"Phase {phase_type.value} failed: {e}")
+            logger.error("Phase %s failed: %s", phase_type.value, e)
             logger.debug(traceback.format_exc())
 
         finally:
@@ -474,7 +474,7 @@ class ForgeOrchestrator:
     async def _execute_evomerge(
         self, phase_module: PhaseModule, input_artifacts: list[PhaseArtifact]
     ) -> list[PhaseArtifact]:
-        """Execute Phase 1: EvoMerge - Evolutionary Model Foundation"""
+        """Execute Phase 1: EvoMerge - Evolutionary Model Foundation."""
         logger.info("Executing Phase 1: EvoMerge")
 
         artifacts = []
@@ -514,10 +514,10 @@ class ForgeOrchestrator:
                         },
                     )
                     artifacts.append(artifact)
-                    logger.info(f"EvoMerge completed with best model: {best_model}")
+                    logger.info("EvoMerge completed with best model: %s", best_model)
 
         except Exception as e:
-            logger.error(f"EvoMerge execution failed: {e}")
+            logger.error("EvoMerge execution failed: %s", e)
             # Create error artifact
             artifact = PhaseArtifact(
                 phase_type=PhaseType.EVOMERGE,
@@ -531,7 +531,7 @@ class ForgeOrchestrator:
     async def _execute_geometry(
         self, phase_module: PhaseModule, input_artifacts: list[PhaseArtifact]
     ) -> list[PhaseArtifact]:
-        """Execute Phase 2: Geometry-Aware Training with Grokking Detection"""
+        """Execute Phase 2: Geometry-Aware Training with Grokking Detection."""
         logger.info("Executing Phase 2: Geometry-Aware Training")
 
         artifacts = []
@@ -560,7 +560,7 @@ class ForgeOrchestrator:
                     },
                 )
                 artifacts.append(artifact)
-                logger.info(f"Geometry analysis available methods: {geometry_methods}")
+                logger.info("Geometry analysis available methods: %s", geometry_methods)
             else:
                 # Stub detected
                 artifact = PhaseArtifact(
@@ -571,7 +571,7 @@ class ForgeOrchestrator:
                 artifacts.append(artifact)
 
         except Exception as e:
-            logger.error(f"Geometry phase execution failed: {e}")
+            logger.error("Geometry phase execution failed: %s", e)
             artifact = PhaseArtifact(
                 phase_type=PhaseType.GEOMETRY,
                 artifact_type="error",
@@ -584,7 +584,7 @@ class ForgeOrchestrator:
     async def _execute_self_modeling(
         self, phase_module: PhaseModule, input_artifacts: list[PhaseArtifact]
     ) -> list[PhaseArtifact]:
-        """Execute Phase 3: Self-Modeling and Metacognitive Development"""
+        """Execute Phase 3: Self-Modeling and Metacognitive Development."""
         logger.info("Executing Phase 3: Self-Modeling")
 
         artifacts = []
@@ -615,7 +615,7 @@ class ForgeOrchestrator:
                     },
                 )
                 artifacts.append(artifact)
-                logger.info(f"Self-modeling features: {self_modeling_features}")
+                logger.info("Self-modeling features: %s", self_modeling_features)
             else:
                 artifact = PhaseArtifact(
                     phase_type=PhaseType.SELF_MODELING,
@@ -625,7 +625,7 @@ class ForgeOrchestrator:
                 artifacts.append(artifact)
 
         except Exception as e:
-            logger.error(f"Self-modeling phase execution failed: {e}")
+            logger.error("Self-modeling phase execution failed: %s", e)
             artifact = PhaseArtifact(
                 phase_type=PhaseType.SELF_MODELING,
                 artifact_type="error",
@@ -638,7 +638,7 @@ class ForgeOrchestrator:
     async def _execute_prompt_baking(
         self, phase_module: PhaseModule, input_artifacts: list[PhaseArtifact]
     ) -> list[PhaseArtifact]:
-        """Execute Phase 4: Prompt Baking and Tool Integration"""
+        """Execute Phase 4: Prompt Baking and Tool Integration."""
         logger.info("Executing Phase 4: Prompt Baking")
 
         artifacts = []
@@ -666,7 +666,7 @@ class ForgeOrchestrator:
                     },
                 )
                 artifacts.append(artifact)
-                logger.info(f"Prompt baking features: {baking_features}")
+                logger.info("Prompt baking features: %s", baking_features)
             else:
                 artifact = PhaseArtifact(
                     phase_type=PhaseType.PROMPT_BAKING,
@@ -676,7 +676,7 @@ class ForgeOrchestrator:
                 artifacts.append(artifact)
 
         except Exception as e:
-            logger.error(f"Prompt baking phase execution failed: {e}")
+            logger.error("Prompt baking phase execution failed: %s", e)
             artifact = PhaseArtifact(
                 phase_type=PhaseType.PROMPT_BAKING,
                 artifact_type="error",
@@ -689,7 +689,7 @@ class ForgeOrchestrator:
     async def _execute_adas(
         self, phase_module: PhaseModule, input_artifacts: list[PhaseArtifact]
     ) -> list[PhaseArtifact]:
-        """Execute Phase 5: ADAS Architecture Search and Optimization"""
+        """Execute Phase 5: ADAS Architecture Search and Optimization."""
         logger.info("Executing Phase 5: ADAS")
 
         artifacts = []
@@ -717,7 +717,7 @@ class ForgeOrchestrator:
                     },
                 )
                 artifacts.append(artifact)
-                logger.info(f"ADAS features: {adas_features}")
+                logger.info("ADAS features: %s", adas_features)
             else:
                 artifact = PhaseArtifact(
                     phase_type=PhaseType.ADAS,
@@ -727,7 +727,7 @@ class ForgeOrchestrator:
                 artifacts.append(artifact)
 
         except Exception as e:
-            logger.error(f"ADAS phase execution failed: {e}")
+            logger.error("ADAS phase execution failed: %s", e)
             artifact = PhaseArtifact(
                 phase_type=PhaseType.ADAS, artifact_type="error", data={"error": str(e)}
             )
@@ -738,7 +738,7 @@ class ForgeOrchestrator:
     async def _execute_compression(
         self, phase_module: PhaseModule, input_artifacts: list[PhaseArtifact]
     ) -> list[PhaseArtifact]:
-        """Execute Final Compression and Packaging"""
+        """Execute Final Compression and Packaging."""
         logger.info("Executing Final Phase: Compression")
 
         artifacts = []
@@ -766,7 +766,7 @@ class ForgeOrchestrator:
                     },
                 )
                 artifacts.append(artifact)
-                logger.info(f"Compression features: {compression_features}")
+                logger.info("Compression features: %s", compression_features)
             else:
                 artifact = PhaseArtifact(
                     phase_type=PhaseType.COMPRESSION,
@@ -776,7 +776,7 @@ class ForgeOrchestrator:
                 artifacts.append(artifact)
 
         except Exception as e:
-            logger.error(f"Compression phase execution failed: {e}")
+            logger.error("Compression phase execution failed: %s", e)
             artifact = PhaseArtifact(
                 phase_type=PhaseType.COMPRESSION,
                 artifact_type="error",
@@ -787,7 +787,7 @@ class ForgeOrchestrator:
         return artifacts
 
     def save_checkpoint(self, phase_type: PhaseType):
-        """Save checkpoint after phase completion"""
+        """Save checkpoint after phase completion."""
         checkpoint_file = (
             self.config.checkpoint_dir
             / f"orchestrator_checkpoint_{self.run_id}_{phase_type.value}.json"
@@ -804,9 +804,9 @@ class ForgeOrchestrator:
         try:
             with open(checkpoint_file, "w") as f:
                 json.dump(checkpoint_data, f, indent=2, default=str)
-            logger.info(f"Saved checkpoint: {checkpoint_file}")
+            logger.info("Saved checkpoint: %s", checkpoint_file)
         except Exception as e:
-            logger.error(f"Failed to save checkpoint: {e}")
+            logger.error("Failed to save checkpoint: %s", e)
 
     async def run_pipeline(self) -> dict[PhaseType, PhaseResult]:
         """Run the complete Agent Forge 5-phase pipeline.
@@ -814,7 +814,7 @@ class ForgeOrchestrator:
         Returns:
             Dictionary mapping phase types to their execution results
         """
-        logger.info(f"Starting Agent Forge Pipeline - Run ID: {self.run_id}")
+        logger.info("Starting Agent Forge Pipeline - Run ID: %s", self.run_id)
 
         # Initialize tracking
         self.initialize_wandb()
@@ -828,7 +828,7 @@ class ForgeOrchestrator:
         # Execute phases in sequence
         for i, phase_type in enumerate(self.config.enabled_phases):
             logger.info(
-                f"Starting Phase {i + 1}/{len(self.config.enabled_phases)}: {phase_type.value}"
+                "Starting Phase %d/%d: %s", i + 1, len(self.config.enabled_phases), phase_type.value
             )
 
             try:
@@ -856,13 +856,13 @@ class ForgeOrchestrator:
                 # Handle failures
                 if not result.success and self.config.fail_fast:
                     logger.error(
-                        f"Pipeline failed at phase {phase_type.value} (fail_fast=True)"
+                        "Pipeline failed at phase %s (fail_fast=True)", phase_type.value
                     )
                     break
 
             except asyncio.TimeoutError:
                 logger.error(
-                    f"Phase {phase_type.value} timed out after {self.config.max_phase_duration_minutes} minutes"
+                    "Phase %s timed out after %d minutes", phase_type.value, self.config.max_phase_duration_minutes
                 )
                 result = PhaseResult(
                     phase_type=phase_type,
@@ -876,7 +876,7 @@ class ForgeOrchestrator:
                     break
 
             except Exception as e:
-                logger.error(f"Unexpected error in phase {phase_type.value}: {e}")
+                logger.error("Unexpected error in phase %s: %s", phase_type.value, e)
                 result = PhaseResult(
                     phase_type=phase_type,
                     status=PhaseStatus.FAILED,
@@ -894,7 +894,7 @@ class ForgeOrchestrator:
         return self.phase_results
 
     async def generate_final_report(self):
-        """Generate comprehensive pipeline execution report"""
+        """Generate comprehensive pipeline execution report."""
         end_time = datetime.now()
         total_duration = (end_time - self.start_time).total_seconds()
 
@@ -964,32 +964,32 @@ class ForgeOrchestrator:
 
         # Print summary
         logger.info("=" * 60)
-        logger.info(f"AGENT FORGE PIPELINE COMPLETE - Run ID: {self.run_id}")
-        logger.info(f"Duration: {total_duration:.1f} seconds")
-        logger.info(f"Success Rate: {report['success_rate']:.1%}")
+        logger.info("AGENT FORGE PIPELINE COMPLETE - Run ID: %s", self.run_id)
+        logger.info("Duration: %.1f seconds", total_duration)
+        logger.info("Success Rate: %.1%", report['success_rate'])
         logger.info(
-            f"Phases Completed: {len(completed_phases)}/{len(self.phase_results)}"
+            "Phases Completed: %d/%d", len(completed_phases), len(self.phase_results)
         )
 
         if failed_phases:
-            logger.warning(f"Failed Phases: {[p.value for p in failed_phases]}")
+            logger.warning("Failed Phases: %s", [p.value for p in failed_phases])
 
         if stub_phases:
-            logger.warning(f"Stub Phases: {[p.value for p in stub_phases]}")
+            logger.warning("Stub Phases: %s", [p.value for p in stub_phases])
 
         if report["todos"]:
-            logger.info(f"Implementation TODOs ({len(report['todos'])}):")
+            logger.info("Implementation TODOs (%d):", len(report['todos']))
             for todo in report["todos"][:5]:  # Show first 5
-                logger.info(f"  - {todo}")
+                logger.info("  - %s", todo)
             if len(report["todos"]) > 5:
-                logger.info(f"  ... and {len(report['todos']) - 5} more")
+                logger.info("  ... and %d more", len(report['todos']) - 5)
 
-        logger.info(f"Full report saved: {report_file}")
+        logger.info("Full report saved: %s", report_file)
         logger.info("=" * 60)
 
 
 async def main():
-    """Main entry point for testing the orchestrator"""
+    """Main entry point for testing the orchestrator."""
     # Create configuration
     config = OrchestratorConfig(
         base_models=["microsoft/DialoGPT-medium"],
@@ -1022,7 +1022,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("Pipeline interrupted by user")
     except Exception as e:
-        logger.error(f"Pipeline failed with unexpected error: {e}")
+        logger.error("Pipeline failed with unexpected error: %s", e)
         raise
     finally:
         if orchestrator.wandb_run:

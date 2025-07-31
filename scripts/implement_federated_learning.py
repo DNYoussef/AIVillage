@@ -115,9 +115,9 @@ class FederatedLearningServer:
                 f"Not enough clients: {len(selected_clients)} < {self.min_clients}"
             )
             return {
-                "status": "insufficient_clients", 
+                "status": "insufficient_clients",
                 "round_number": self.current_round,  # Provide for consistency
-                "error": f"Need {self.min_clients} clients, got {len(selected_clients)}"
+                "error": f"Need {self.min_clients} clients, got {len(selected_clients)}",
             }
 
         # Create round info
@@ -454,10 +454,12 @@ class FederatedLearningClient:
         if "status" in round_config:
             if round_config["status"] == "insufficient_clients":
                 raise ValueError("Server rejected round: insufficient clients")
-            
+
         if "round_number" not in round_config:
-            raise ValueError(f"Invalid round config: missing 'round_number'. Got: {list(round_config.keys())}")
-            
+            raise ValueError(
+                f"Invalid round config: missing 'round_number'. Got: {list(round_config.keys())}"
+            )
+
         self.current_round = round_config["round_number"]
 
         # Update local model with global model

@@ -47,7 +47,7 @@ def test_file_structure():
         "agent_forge/__init__.py": "Core module exists",
     }
 
-    for file_path, description in expected_structure.items():
+    for file_path, _description in expected_structure.items():
         if Path(file_path).exists():
             results[file_path] = "PASS"
         else:

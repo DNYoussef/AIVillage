@@ -6,19 +6,22 @@ import torch
 from torch import nn
 from transformers import AutoTokenizer
 
-from ..geometry.snapshot import snapshot
-from ..meta.geo2z_policy import Geo2Z, Replay
-from ..optim.augmented_adam import AugmentedAdam
-from ..training.curriculum import CurriculumGenerator, CurriculumLevel
-from ..training.pid_edgechaos import EdgePID
-from ..training.quiet_star import QuietSTaRModel
-from ..training.svf_ops import apply_svf
+from AIVillage.experimental.training.geometry.snapshot import snapshot
+from AIVillage.experimental.training.meta.geo2z_policy import Geo2Z, Replay
+from AIVillage.experimental.training.optim.augmented_adam import AugmentedAdam
+from AIVillage.experimental.training.training.curriculum import (
+    CurriculumGenerator,
+    CurriculumLevel,
+)
+from AIVillage.experimental.training.training.pid_edgechaos import EdgePID
+from AIVillage.experimental.training.training.quiet_star import QuietSTaRModel
+from AIVillage.experimental.training.training.svf_ops import apply_svf
 
 logger = logging.getLogger(__name__)
 
 
 class AgentForgeTrainingLoop:
-    """Enhanced training loop with Quiet-STaR integration and curriculum learning"""
+    """Enhanced training loop with Quiet-STaR integration and curriculum learning."""
 
     def __init__(
         self,
@@ -26,7 +29,7 @@ class AgentForgeTrainingLoop:
         tokenizer: AutoTokenizer,
         enable_quiet_star: bool = False,
         curriculum_domain: str = "general",
-    ):
+    ) -> None:
         self.model = model
         self.tokenizer = tokenizer
         self.enable_quiet_star = enable_quiet_star
@@ -48,7 +51,7 @@ class AgentForgeTrainingLoop:
         self.pid = EdgePID()
         self.geo2z = Geo2Z()
         self.replay = Replay(50000)
-        self.state = dict(G=None, pre_grok=False, G_prev=None)
+        self.state = {"G": None, "pre_grok": False, "G_prev": None}
 
         # Training statistics
         self.level_accuracy = {}
@@ -62,7 +65,7 @@ class AgentForgeTrainingLoop:
     def generate_curriculum_level(
         self, level: int, num_tasks: int = 100
     ) -> CurriculumLevel:
-        """Generate curriculum for a specific level"""
+        """Generate curriculum for a specific level."""
         logger.info(f"Generating curriculum level {level} with {num_tasks} tasks")
 
         # Generate assessment questions for this level
@@ -90,7 +93,7 @@ class AgentForgeTrainingLoop:
     def process_quiet_star_thoughts(
         self, input_ids: torch.Tensor, attention_mask: torch.Tensor | None = None
     ) -> tuple[torch.Tensor, torch.Tensor | None]:
-        """Process input through Quiet-STaR for thought generation"""
+        """Process input through Quiet-STaR for thought generation."""
         if not self.enable_quiet_star:
             return self.model(input_ids, attention_mask=attention_mask), None
 
@@ -110,7 +113,7 @@ class AgentForgeTrainingLoop:
         step: int,
         thought_logits: torch.Tensor | None = None,
     ) -> float:
-        """Calculate training reward with optional thought penalty"""
+        """Calculate training reward with optional thought penalty."""
         # Base task reward
         task_accuracy = (logits.argmax(-1) == target).float().mean().item()
 
@@ -150,7 +153,7 @@ class AgentForgeTrainingLoop:
     def run_level(
         self, curriculum_level: CurriculumLevel, max_steps: int = 1000
     ) -> dict[str, Any]:
-        """Run training for a specific curriculum level"""
+        """Run training for a specific curriculum level."""
         logger.info(f"Starting training for level {curriculum_level.level}")
 
         # Prepare dataset from curriculum level
@@ -290,7 +293,7 @@ class AgentForgeTrainingLoop:
     def run_curriculum(
         self, max_levels: int = 10, tasks_per_level: int = 100
     ) -> dict[str, Any]:
-        """Run complete curriculum training"""
+        """Run complete curriculum training."""
         logger.info(f"Starting curriculum training with {max_levels} levels")
 
         curriculum_results = {
@@ -335,8 +338,8 @@ class AgentForgeTrainingLoop:
 
 
 # Legacy compatibility
-def run_level(dataset):
-    """Legacy function for backward compatibility"""
+def run_level(dataset) -> None:
+    """Legacy function for backward compatibility."""
     logger.warning(
         "Using legacy run_level function. Consider migrating to AgentForgeTrainingLoop."
     )
@@ -344,7 +347,7 @@ def run_level(dataset):
     # Initialize basic components for legacy support
     global state, optimizer, pid, geo2z, replay, model
 
-    for step, (prompt, target, tag) in enumerate(dataset):
+    for step, (prompt, target, _tag) in enumerate(dataset):
         # forward
         logits, H = model(prompt, return_h=True)
         loss_task = torch.nn.functional.cross_entropy(logits, target)
@@ -391,7 +394,6 @@ def run_level(dataset):
 
         # grok detection
         if state["pre_grok"] and abs(state["G"]["ratio"] - 0.05) < 0.01:
-            huge_reward = 10
             break
 
         state["G_prev"] = state["G"]
@@ -403,15 +405,15 @@ try:
     pid = EdgePID()
     geo2z = Geo2Z()
     replay = Replay(50000)
-    state = dict(G=None, pre_grok=False, G_prev=None)
+    state = {"G": None, "pre_grok": False, "G_prev": None}
 except NameError:
     # Model not defined in global scope
     pass
 
 
-def run_level(dataset):
+def run_level(dataset) -> None:
     global state
-    for step, (prompt, target, tag) in enumerate(dataset):
+    for step, (prompt, target, _tag) in enumerate(dataset):
         # forward
         logits, H = model(prompt, return_h=True)
         loss_task = torch.nn.functional.cross_entropy(logits, target)
@@ -458,7 +460,6 @@ def run_level(dataset):
 
         # grok detection
         if state["pre_grok"] and abs(state["G"]["ratio"] - 0.05) < 0.01:
-            huge_reward = 10
             break
 
         state["G_prev"] = state["G"]

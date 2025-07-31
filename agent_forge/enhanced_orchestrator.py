@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Enhanced Agent Forge Orchestrator with Complete Phase Integration
+"""Enhanced Agent Forge Orchestrator with Complete Phase Integration.
 
 This module provides the missing connections between Agent Forge phases,
 implementing the 20% -> 90% functionality gap to create a working pipeline.
@@ -26,9 +26,9 @@ logger = logging.getLogger(__name__)
 
 
 class EnhancedOrchestrator(ForgeOrchestrator):
-    """Enhanced orchestrator with complete phase implementations"""
+    """Enhanced orchestrator with complete phase implementations."""
 
-    def __init__(self, config: OrchestratorConfig | None = None):
+    def __init__(self, config: OrchestratorConfig | None = None) -> None:
         super().__init__(config)
 
         # Enhanced configurations
@@ -47,7 +47,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
     async def _execute_evomerge_enhanced(
         self, phase_module, input_artifacts: list[PhaseArtifact]
     ) -> list[PhaseArtifact]:
-        """Enhanced EvoMerge with actual model loading and evolution"""
+        """Enhanced EvoMerge with actual model loading and evolution."""
         logger.info("Executing Enhanced Phase 1: EvoMerge")
 
         artifacts = []
@@ -57,23 +57,21 @@ class EnhancedOrchestrator(ForgeOrchestrator):
             model_manifest_path = self.models_dir / "model_manifest.json"
 
             if not model_manifest_path.exists():
-                raise FileNotFoundError(
-                    f"Model manifest not found: {model_manifest_path}"
-                )
+                msg = f"Model manifest not found: {model_manifest_path}"
+                raise FileNotFoundError(msg)
 
             with open(model_manifest_path) as f:
                 model_manifest = json.load(f)
 
             # Prepare models for evolution
             base_models = []
-            for model_key, model_info in model_manifest["models"].items():
+            for model_info in model_manifest["models"].values():
                 if model_info["downloaded"]:
                     base_models.append(model_info["local_path"])
 
             if len(base_models) < 2:
-                raise ValueError(
-                    f"Need at least 2 models for evolution, found {len(base_models)}"
-                )
+                msg = f"Need at least 2 models for evolution, found {len(base_models)}"
+                raise ValueError(msg)
 
             # Run evolution with real models
             from agent_forge.evomerge.config import create_default_config
@@ -112,7 +110,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
             logger.info(f"EvoMerge completed: {best_model_path}")
 
         except Exception as e:
-            logger.error(f"Enhanced EvoMerge failed: {e}")
+            logger.exception(f"Enhanced EvoMerge failed: {e}")
             # Fallback to first available model
             if self.models_dir.exists():
                 available_models = list(self.models_dir.glob("*/"))
@@ -132,7 +130,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
     async def _execute_geometry_enhanced(
         self, phase_module, input_artifacts: list[PhaseArtifact]
     ) -> list[PhaseArtifact]:
-        """Enhanced geometric analysis with real intrinsic dimensionality"""
+        """Enhanced geometric analysis with real intrinsic dimensionality."""
         logger.info("Executing Enhanced Phase 2: Geometric Analysis")
 
         artifacts = []
@@ -189,7 +187,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                     id_estimate = estimate_intrinsic_dimensionality(combined_states)
 
                     # Initialize PID controller for edge of chaos
-                    pid_controller = EdgePID(target_complexity=0.7)
+                    EdgePID(target_complexity=0.7)
 
                     # Store geometric state
                     self.geometric_state = {
@@ -233,7 +231,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
             artifacts.append(artifact)
 
         except Exception as e:
-            logger.error(f"Geometric analysis failed: {e}")
+            logger.exception(f"Geometric analysis failed: {e}")
             artifact = PhaseArtifact(
                 phase_type=PhaseType.GEOMETRY,
                 artifact_type="error",
@@ -246,7 +244,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
     async def _execute_self_modeling_enhanced(
         self, phase_module, input_artifacts: list[PhaseArtifact]
     ) -> list[PhaseArtifact]:
-        """Enhanced self-modeling with actual internal state prediction"""
+        """Enhanced self-modeling with actual internal state prediction."""
         logger.info("Executing Enhanced Phase 3: Self-Modeling")
 
         artifacts = []
@@ -265,7 +263,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
 
                 # Implement basic self-modeling gate
                 class SelfModelingGate:
-                    def __init__(self, hidden_dim, geometric_state):
+                    def __init__(self, hidden_dim, geometric_state) -> None:
                         self.hidden_dim = hidden_dim
                         self.geometric_state = geometric_state
                         self.prediction_layer = (
@@ -273,7 +271,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                         )
 
                     def predict_internal_state(self, current_hidden, context):
-                        """Predict next internal state based on current state and context"""
+                        """Predict next internal state based on current state and context."""
                         # This would be the actual self-prediction mechanism
                         # For now, return structured prediction metadata
                         return {
@@ -327,7 +325,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
             artifacts.append(artifact)
 
         except Exception as e:
-            logger.error(f"Self-modeling failed: {e}")
+            logger.exception(f"Self-modeling failed: {e}")
             artifact = PhaseArtifact(
                 phase_type=PhaseType.SELF_MODELING,
                 artifact_type="error",
@@ -340,7 +338,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
     async def _execute_prompt_baking_enhanced(
         self, phase_module, input_artifacts: list[PhaseArtifact]
     ) -> list[PhaseArtifact]:
-        """Enhanced prompt baking with real strategy embedding"""
+        """Enhanced prompt baking with real strategy embedding."""
         logger.info("Executing Enhanced Phase 4: Prompt Baking")
 
         artifacts = []
@@ -394,7 +392,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
 
             # If self-modeling is available, integrate geometric state
             if self.self_modeling_state.get("geometric_integration"):
-                for strategy_name, strategy in self.baked_prompts.items():
+                for strategy in self.baked_prompts.values():
                     strategy["geometric_augmentation"] = {
                         "intrinsic_dim_aware": True,
                         "complexity_adapted": True,
@@ -422,7 +420,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
             artifacts.append(artifact)
 
         except Exception as e:
-            logger.error(f"Prompt baking failed: {e}")
+            logger.exception(f"Prompt baking failed: {e}")
             artifact = PhaseArtifact(
                 phase_type=PhaseType.PROMPT_BAKING,
                 artifact_type="error",
@@ -435,7 +433,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
     async def _execute_compression_enhanced(
         self, phase_module, input_artifacts: list[PhaseArtifact]
     ) -> list[PhaseArtifact]:
-        """Enhanced compression with actual model quantization"""
+        """Enhanced compression with actual model quantization."""
         logger.info("Executing Enhanced Final Phase: Compression")
 
         artifacts = []
@@ -537,7 +535,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
             artifacts.append(artifact)
 
         except Exception as e:
-            logger.error(f"Compression failed: {e}")
+            logger.exception(f"Compression failed: {e}")
             artifact = PhaseArtifact(
                 phase_type=PhaseType.COMPRESSION,
                 artifact_type="error",
@@ -550,7 +548,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
     async def execute_phase(
         self, phase_type: PhaseType, input_artifacts: list[PhaseArtifact]
     ) -> PhaseResult:
-        """Execute phase with enhanced implementations"""
+        """Execute phase with enhanced implementations."""
         logger.info(f"Executing enhanced phase: {phase_type.value}")
 
         # Use enhanced implementations if available
@@ -595,7 +593,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                 result.duration_seconds = (
                     result.end_time - result.start_time
                 ).total_seconds()
-                logger.error(f"Enhanced phase {phase_type.value} failed: {e}")
+                logger.exception(f"Enhanced phase {phase_type.value} failed: {e}")
 
             return result
         # Fall back to base implementation
@@ -604,7 +602,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
 
 # Enhanced configuration for real deployment
 def create_enhanced_config() -> OrchestratorConfig:
-    """Create enhanced configuration for production run"""
+    """Create enhanced configuration for production run."""
     return OrchestratorConfig(
         wandb_project="agent-forge-enhanced",
         wandb_tags=["enhanced", "production", "rtx2060"],
@@ -630,7 +628,7 @@ def create_enhanced_config() -> OrchestratorConfig:
 
 
 async def run_enhanced_pipeline():
-    """Run the enhanced Agent Forge pipeline"""
+    """Run the enhanced Agent Forge pipeline."""
     config = create_enhanced_config()
     orchestrator = EnhancedOrchestrator(config)
 
@@ -670,7 +668,7 @@ async def run_enhanced_pipeline():
         return results
 
     except Exception as e:
-        logger.error(f"Enhanced pipeline failed: {e}")
+        logger.exception(f"Enhanced pipeline failed: {e}")
         raise
     finally:
         if orchestrator.wandb_run:

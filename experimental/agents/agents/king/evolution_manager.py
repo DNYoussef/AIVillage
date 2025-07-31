@@ -21,7 +21,7 @@ class EvolutionManager:
         population_size: int = 10,
         mutation_rate: float = 0.1,
         crossover_rate: float = 0.7,
-    ):
+    ) -> None:
         self.population_size = population_size
         self.mutation_rate = mutation_rate
         self.crossover_rate = crossover_rate
@@ -55,7 +55,7 @@ class EvolutionManager:
         logger.info(f"Best individual: {self.best_individual}")
         return self.best_individual
 
-    def initialize_population(self, architecture_space: dict[str, Any]):
+    def initialize_population(self, architecture_space: dict[str, Any]) -> None:
         self.population = []
         for _ in range(self.population_size):
             individual = {
@@ -64,7 +64,7 @@ class EvolutionManager:
             }
             self.population.append(individual)
 
-    async def evaluate_population(self, fitness_function):
+    async def evaluate_population(self, fitness_function) -> None:
         for individual in self.population:
             individual["fitness"] = await fitness_function(individual)
 
@@ -101,7 +101,7 @@ class EvolutionManager:
 
 
 @log_and_handle_errors
-async def run_evolution_and_optimization(king_agent):
+async def run_evolution_and_optimization(king_agent) -> None:
     architecture_space = {
         "input_size": [64, 128, 256],
         "hidden_sizes": [[64, 64], [128, 64], [256, 128]],
@@ -129,7 +129,7 @@ async def run_evolution_and_optimization(king_agent):
             criterion = nn.MSELoss()
             optimizer = optim.Adam(model.parameters())
 
-            for epoch in range(5):  # Train for 5 epochs
+            for _epoch in range(5):  # Train for 5 epochs
                 optimizer.zero_grad()
                 outputs = model(X_train)
                 loss = criterion(outputs, y_train)
@@ -148,7 +148,7 @@ async def run_evolution_and_optimization(king_agent):
             logger.info(f"Evaluated architecture with fitness: {fitness}")
             return fitness
         except Exception as e:
-            logger.error(f"Error in fitness function: {e!s}")
+            logger.exception(f"Error in fitness function: {e!s}")
             return float("-inf")  # Return worst possible fitness on error
 
     try:
@@ -157,7 +157,7 @@ async def run_evolution_and_optimization(king_agent):
             architecture_space, fitness_function
         )
 
-        new_model = king_agent.create_model_from_architecture(best_architecture)
+        king_agent.create_model_from_architecture(best_architecture)
         await king_agent.update_model_architecture(best_architecture)
 
         # Hyperparameter optimization
@@ -178,5 +178,6 @@ async def run_evolution_and_optimization(king_agent):
         logger.info(f"Best hyperparameters: {best_hyperparameters}")
 
     except Exception as e:
-        logger.error(f"Error in run_evolution_and_optimization: {e!s}")
-        raise AIVillageException(f"Error in run_evolution_and_optimization: {e!s}")
+        logger.exception(f"Error in run_evolution_and_optimization: {e!s}")
+        msg = f"Error in run_evolution_and_optimization: {e!s}"
+        raise AIVillageException(msg)

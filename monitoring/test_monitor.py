@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Automated test health monitoring system
+"""Automated test health monitoring system.
 
 Captures test results after each run, stores historical data,
 triggers dashboard updates, and sends alerts on degradation.
@@ -22,7 +22,7 @@ __version__ = "1.0.0"
 
 @dataclass
 class MonitorStats:
-    """Test statistics for a single run"""
+    """Test statistics for a single run."""
 
     timestamp: str
     total_tests: int
@@ -36,7 +36,7 @@ class MonitorStats:
 
     @classmethod
     def from_pytest_json(cls, report_data: dict[str, Any]) -> "MonitorStats":
-        """Create MonitorStats from pytest JSON report"""
+        """Create MonitorStats from pytest JSON report."""
         summary = report_data.get("summary", {})
 
         total = summary.get("total", 0)
@@ -91,9 +91,9 @@ class MonitorStats:
 
 
 class HealthMonitor:
-    """Automated test health monitoring system"""
+    """Automated test health monitoring system."""
 
-    def __init__(self, base_dir: Path = None):
+    def __init__(self, base_dir: Path | None = None) -> None:
         self.base_dir = base_dir or Path(__file__).parent
         self.history_file = self.base_dir / "test_history.json"
         self.dashboard_path = Path("test_health_dashboard.md")
@@ -103,8 +103,8 @@ class HealthMonitor:
         # Load existing history
         self._load_history()
 
-    def _load_history(self):
-        """Load historical test data"""
+    def _load_history(self) -> None:
+        """Load historical test data."""
         if self.history_file.exists():
             try:
                 with open(self.history_file) as f:
@@ -112,23 +112,23 @@ class HealthMonitor:
                     self.history = [MonitorStats(**item) for item in data]
                 logger.info(f"Loaded {len(self.history)} historical test runs")
             except Exception as e:
-                logger.error(f"Failed to load history: {e}")
+                logger.exception(f"Failed to load history: {e}")
                 self.history = []
         else:
             self.history = []
 
-    def _save_history(self):
-        """Save historical test data"""
+    def _save_history(self) -> None:
+        """Save historical test data."""
         try:
             self.history_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.history_file, "w") as f:
                 json.dump([asdict(stat) for stat in self.history], f, indent=2)
             logger.info(f"Saved {len(self.history)} test runs to history")
         except Exception as e:
-            logger.error(f"Failed to save history: {e}")
+            logger.exception(f"Failed to save history: {e}")
 
-    async def capture_test_results(self, pytest_json_report: str):
-        """Parse pytest JSON report and store results"""
+    async def capture_test_results(self, pytest_json_report: str) -> None:
+        """Parse pytest JSON report and store results."""
         try:
             with open(pytest_json_report) as f:
                 report_data = json.load(f)
@@ -151,10 +151,10 @@ class HealthMonitor:
             await self.check_alert_conditions()
 
         except Exception as e:
-            logger.error(f"Failed to capture test results: {e}")
+            logger.exception(f"Failed to capture test results: {e}")
 
     def get_trend_arrow(self) -> str:
-        """Get trend direction arrow"""
+        """Get trend direction arrow."""
         if len(self.history) < 2:
             return "→"
 
@@ -168,7 +168,7 @@ class HealthMonitor:
         return "→"
 
     def generate_ascii_trend_graph(self, days: int = 30) -> str:
-        """Generate ASCII trend graph"""
+        """Generate ASCII trend graph."""
         if len(self.history) < 2:
             return "Insufficient data for trend graph"
 
@@ -197,7 +197,7 @@ class HealthMonitor:
         return f"{min_rate:.1f}%-{max_rate:.1f}%: {sparkline}"
 
     def identify_hot_issues(self) -> list[dict[str, Any]]:
-        """Identify current hot issues"""
+        """Identify current hot issues."""
         if not self.history:
             return []
 
@@ -235,8 +235,8 @@ class HealthMonitor:
 
         return sorted(issues, key=lambda x: x["failure_rate"], reverse=True)[:5]
 
-    async def update_dashboard(self):
-        """Regenerate dashboard with latest data and trends"""
+    async def update_dashboard(self) -> None:
+        """Regenerate dashboard with latest data and trends."""
         if not self.history:
             logger.warning("No test history available for dashboard")
             return
@@ -322,7 +322,7 @@ Trend: {trend_arrow} {trend_description}
 """
 
         if len(self.history) >= 3:
-            for i, run in enumerate(self.history[-3:], 1):
+            for _i, run in enumerate(self.history[-3:], 1):
                 time_str = datetime.fromisoformat(
                     run.timestamp.replace("Z", "+00:00")
                 ).strftime("%m-%d %H:%M")
@@ -354,10 +354,10 @@ Trend: {trend_arrow} {trend_description}
                 f.write(dashboard_content)
             logger.info(f"Updated dashboard: {self.dashboard_path}")
         except Exception as e:
-            logger.error(f"Failed to update dashboard: {e}")
+            logger.exception(f"Failed to update dashboard: {e}")
 
     async def _check_alert_conditions_internal(self) -> list[dict[str, str]]:
-        """Internal method to check alert conditions"""
+        """Internal method to check alert conditions."""
         alerts = []
 
         if not self.history:
@@ -387,8 +387,8 @@ Trend: {trend_arrow} {trend_description}
 
         return alerts
 
-    async def check_alert_conditions(self):
-        """Check if alerts should be triggered"""
+    async def check_alert_conditions(self) -> None:
+        """Check if alerts should be triggered."""
         alerts = await self._check_alert_conditions_internal()
 
         for alert in alerts:
@@ -403,8 +403,8 @@ Trend: {trend_arrow} {trend_description}
                 f.write(f"{timestamp} [{alert['severity']}] {alert['message']}\n")
 
 
-async def main():
-    """Main CLI interface"""
+async def main() -> None:
+    """Main CLI interface."""
     parser = argparse.ArgumentParser(description="Test Health Monitor")
     parser.add_argument("--capture", help="Capture results from pytest JSON report")
     parser.add_argument(

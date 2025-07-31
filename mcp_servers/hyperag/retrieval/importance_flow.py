@@ -1,4 +1,4 @@
-"""Importance Flow Utility Mathematics
+"""Importance Flow Utility Mathematics.
 
 Mathematical utilities for flow-based importance calculations in hypergraphs.
 Supports PageRank, random walks, and uncertainty propagation.
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class ImportanceFlow:
-    """Utility mathematics for flow calculations in hypergraphs
+    """Utility mathematics for flow calculations in hypergraphs.
 
     Features:
     - Sparse matrix PageRank computation
@@ -23,7 +23,7 @@ class ImportanceFlow:
     - Random walk sampling
     """
 
-    def __init__(self, damping: float = 0.85):
+    def __init__(self, damping: float = 0.85) -> None:
         self.damping = damping
 
     def compute_pagerank_sparse(
@@ -33,7 +33,7 @@ class ImportanceFlow:
         max_iterations: int = 100,
         tolerance: float = 1e-6,
     ) -> np.ndarray:
-        """Compute PageRank using sparse matrix operations
+        """Compute PageRank using sparse matrix operations.
 
         Args:
             adjacency_matrix: Sparse adjacency matrix (N x N)
@@ -86,7 +86,7 @@ class ImportanceFlow:
         node_scores: dict[str, float],
         distribution_method: str = "proportional",
     ) -> dict[str, float]:
-        """Distribute importance across hyperedge participants
+        """Distribute importance across hyperedge participants.
 
         Args:
             hyperedge_participants: List of node IDs in the hyperedge
@@ -135,7 +135,8 @@ class ImportanceFlow:
                 for node_id, score in participant_scores.items()
             }
 
-        raise ValueError(f"Unknown distribution method: {distribution_method}")
+        msg = f"Unknown distribution method: {distribution_method}"
+        raise ValueError(msg)
 
     def uncertainty_propagation(
         self,
@@ -144,7 +145,7 @@ class ImportanceFlow:
         propagation_steps: int = 3,
         decay_factor: float = 0.8,
     ) -> dict[str, float]:
-        """Propagate uncertainty through the graph
+        """Propagate uncertainty through the graph.
 
         Args:
             source_uncertainties: Initial uncertainties {node_id: uncertainty}
@@ -157,12 +158,12 @@ class ImportanceFlow:
         """
         current_uncertainties = source_uncertainties.copy()
 
-        for step in range(propagation_steps):
+        for _step in range(propagation_steps):
             new_uncertainties = current_uncertainties.copy()
 
             for (source, target), confidence in edge_confidences.items():
                 source_uncertainty = current_uncertainties.get(source, 0.0)
-                target_uncertainty = current_uncertainties.get(target, 0.0)
+                current_uncertainties.get(target, 0.0)
 
                 # Propagate uncertainty along edge
                 # Higher confidence edges propagate less uncertainty
@@ -188,7 +189,7 @@ class ImportanceFlow:
         num_walks: int = 100,
         restart_probability: float = 0.15,
     ) -> dict[str, int]:
-        """Sample nodes using random walks for importance estimation
+        """Sample nodes using random walks for importance estimation.
 
         Args:
             start_nodes: Starting nodes for walks
@@ -202,11 +203,11 @@ class ImportanceFlow:
         """
         visit_counts = {}
 
-        for walk_idx in range(num_walks):
+        for _walk_idx in range(num_walks):
             # Choose random start node
             current_node = np.random.choice(start_nodes)
 
-            for step in range(walk_length):
+            for _step in range(walk_length):
                 # Record visit
                 visit_counts[current_node] = visit_counts.get(current_node, 0) + 1
 
@@ -235,7 +236,7 @@ class ImportanceFlow:
     def compute_centrality_measures(
         self, adjacency_matrix: csr_matrix, node_ids: list[str]
     ) -> dict[str, dict[str, float]]:
-        """Compute various centrality measures
+        """Compute various centrality measures.
 
         Args:
             adjacency_matrix: Sparse adjacency matrix
@@ -282,7 +283,7 @@ class ImportanceFlow:
         flow_matrix: np.ndarray,
         node_ids: list[str],
     ) -> dict[str, float]:
-        """Rank nodes based on flow from sources to targets
+        """Rank nodes based on flow from sources to targets.
 
         Args:
             source_nodes: Source node IDs
@@ -324,7 +325,7 @@ class ImportanceFlow:
     def compute_resistance_distance(
         self, adjacency_matrix: csr_matrix, source_idx: int, target_idx: int
     ) -> float:
-        """Compute resistance distance between two nodes (simplified)
+        """Compute resistance distance between two nodes (simplified).
 
         Args:
             adjacency_matrix: Sparse adjacency matrix
@@ -368,7 +369,7 @@ class ImportanceFlow:
     def normalize_scores(
         self, scores: dict[str, float], method: str = "minmax"
     ) -> dict[str, float]:
-        """Normalize scores using various methods
+        """Normalize scores using various methods.
 
         Args:
             scores: {node_id: score}
@@ -404,7 +405,8 @@ class ImportanceFlow:
             normalized_values = exp_values / np.sum(exp_values)
 
         else:
-            raise ValueError(f"Unknown normalization method: {method}")
+            msg = f"Unknown normalization method: {method}"
+            raise ValueError(msg)
 
         return {
             node_id: normalized_values[i] for i, node_id in enumerate(scores.keys())
@@ -417,7 +419,7 @@ class ImportanceFlow:
 def build_sparse_adjacency(
     edges: list[tuple[str, str, float]], node_ids: list[str]
 ) -> csr_matrix:
-    """Build sparse adjacency matrix from edge list"""
+    """Build sparse adjacency matrix from edge list."""
     node_to_idx = {node_id: i for i, node_id in enumerate(node_ids)}
     n = len(node_ids)
 
@@ -435,5 +437,5 @@ def build_sparse_adjacency(
 
 
 def create_importance_flow(damping: float = 0.85) -> ImportanceFlow:
-    """Create an ImportanceFlow instance"""
+    """Create an ImportanceFlow instance."""
     return ImportanceFlow(damping=damping)

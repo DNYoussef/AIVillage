@@ -1,5 +1,5 @@
 """Model Merge Operators with Evolutionary Strategies
-Sprint R-4+AF1: Agent Forge Phase 1 - Task B.2
+Sprint R-4+AF1: Agent Forge Phase 1 - Task B.2.
 """
 
 import asyncio
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class MergeResult:
-    """Result of model merging operation"""
+    """Result of model merging operation."""
 
     merge_id: str
     parent1_id: str
@@ -39,7 +39,7 @@ class MergeResult:
 
 @dataclass
 class MergeConfig:
-    """Configuration for merge operations"""
+    """Configuration for merge operations."""
 
     # Linear merge parameters
     linear_alpha: float = 0.5  # Weight for first model
@@ -65,9 +65,9 @@ class MergeConfig:
 
 
 class MergeOperator:
-    """Advanced model merging with evolutionary strategies and W&B tracking"""
+    """Advanced model merging with evolutionary strategies and W&B tracking."""
 
-    def __init__(self, project_name: str = "agent-forge"):
+    def __init__(self, project_name: str = "agent-forge") -> None:
         self.project_name = project_name
         self.merge_history = []
         self.merge_strategies = {
@@ -81,7 +81,7 @@ class MergeOperator:
 
         # Performance tracking
         self.strategy_performance = {
-            strategy: [] for strategy in self.merge_strategies.keys()
+            strategy: [] for strategy in self.merge_strategies
         }
         self.merge_analytics = {
             "total_merges": 0,
@@ -93,8 +93,8 @@ class MergeOperator:
         # Initialize tracking
         self.initialize_merge_tracking()
 
-    def initialize_merge_tracking(self):
-        """Initialize W&B tracking for merge operations"""
+    def initialize_merge_tracking(self) -> None:
+        """Initialize W&B tracking for merge operations."""
         try:
             # Use existing wandb run or create new one
             if wandb.run is None:
@@ -112,7 +112,7 @@ class MergeOperator:
             logger.info("Model merge tracking initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize merge tracking: {e}")
+            logger.exception(f"Failed to initialize merge tracking: {e}")
 
     async def merge_population(
         self,
@@ -120,7 +120,7 @@ class MergeOperator:
         generation: int,
         merge_config: MergeConfig = None,
     ) -> list[MergeResult]:
-        """Create next generation through strategic merging"""
+        """Create next generation through strategic merging."""
         logger.info(f"Merging population for generation {generation}")
 
         if not merge_config:
@@ -180,7 +180,7 @@ class MergeOperator:
                     logger.warning(f"Merge failed for strategy {strategy}")
 
             except Exception as e:
-                logger.error(f"Error in merge operation: {e}")
+                logger.exception(f"Error in merge operation: {e}")
                 continue
 
         # Update analytics
@@ -209,7 +209,7 @@ class MergeOperator:
     def select_merge_pairs(
         self, population: list[dict[str, Any]]
     ) -> list[tuple[dict[str, Any], dict[str, Any]]]:
-        """Select optimal pairs for merging based on fitness and diversity"""
+        """Select optimal pairs for merging based on fitness and diversity."""
         pairs = []
 
         # Sort population by fitness
@@ -243,7 +243,7 @@ class MergeOperator:
     def select_optimal_strategy(
         self, parent1: dict[str, Any], parent2: dict[str, Any]
     ) -> str:
-        """Select optimal merge strategy based on parent characteristics and history"""
+        """Select optimal merge strategy based on parent characteristics and history."""
         # Get strategy performance history
         strategy_scores = {}
         for strategy, history in self.strategy_performance.items():
@@ -287,7 +287,7 @@ class MergeOperator:
         merge_config: MergeConfig,
         generation: int,
     ) -> MergeResult:
-        """Perform model merge using specified strategy"""
+        """Perform model merge using specified strategy."""
         start_time = asyncio.get_event_loop().time()
 
         # Generate merge ID
@@ -354,7 +354,7 @@ class MergeOperator:
                     }
 
         except Exception as e:
-            logger.error(f"Error in {strategy} merge: {e}")
+            logger.exception(f"Error in {strategy} merge: {e}")
             result.success = False
 
         # Store result
@@ -363,7 +363,7 @@ class MergeOperator:
         return result
 
     async def linear_merge(self, model1, model2, config: MergeConfig):
-        """Linear interpolation merge: merged = α * model1 + (1-α) * model2"""
+        """Linear interpolation merge: merged = α * model1 + (1-α) * model2."""
         try:
             alpha = config.linear_alpha
 
@@ -385,11 +385,11 @@ class MergeOperator:
             return merged_model
 
         except Exception as e:
-            logger.error(f"Error in linear merge: {e}")
+            logger.exception(f"Error in linear merge: {e}")
             return None
 
     async def slerp_merge(self, model1, model2, config: MergeConfig):
-        """Spherical Linear Interpolation merge for smoother blending"""
+        """Spherical Linear Interpolation merge for smoother blending."""
         try:
             t = config.slerp_interpolation_factor
 
@@ -435,11 +435,11 @@ class MergeOperator:
             return merged_model
 
         except Exception as e:
-            logger.error(f"Error in SLERP merge: {e}")
+            logger.exception(f"Error in SLERP merge: {e}")
             return None
 
     async def dare_merge(self, model1, model2, config: MergeConfig):
-        """DARE (Drop And REscale) merge with random parameter selection"""
+        """DARE (Drop And REscale) merge with random parameter selection."""
         try:
             drop_rate = config.dare_drop_rate
             rescale = config.dare_rescale
@@ -476,11 +476,11 @@ class MergeOperator:
             return merged_model
 
         except Exception as e:
-            logger.error(f"Error in DARE merge: {e}")
+            logger.exception(f"Error in DARE merge: {e}")
             return None
 
     async def evolutionary_merge(self, model1, model2, config: MergeConfig):
-        """Evolutionary merge with mutation and selection pressure"""
+        """Evolutionary merge with mutation and selection pressure."""
         try:
             mutation_strength = config.mutation_strength
             selection_prob = config.parameter_selection_prob
@@ -513,11 +513,11 @@ class MergeOperator:
             return merged_model
 
         except Exception as e:
-            logger.error(f"Error in evolutionary merge: {e}")
+            logger.exception(f"Error in evolutionary merge: {e}")
             return None
 
     async def layer_wise_merge(self, model1, model2, config: MergeConfig):
-        """Layer-wise merge with adaptive blending"""
+        """Layer-wise merge with adaptive blending."""
         try:
             merged_model = copy.deepcopy(model1)
 
@@ -550,11 +550,11 @@ class MergeOperator:
             return merged_model
 
         except Exception as e:
-            logger.error(f"Error in layer-wise merge: {e}")
+            logger.exception(f"Error in layer-wise merge: {e}")
             return None
 
     async def attention_guided_merge(self, model1, model2, config: MergeConfig):
-        """Attention-guided merge focusing on important parameters"""
+        """Attention-guided merge focusing on important parameters."""
         try:
             merged_model = copy.deepcopy(model1)
 
@@ -581,13 +581,13 @@ class MergeOperator:
             return merged_model
 
         except Exception as e:
-            logger.error(f"Error in attention-guided merge: {e}")
+            logger.exception(f"Error in attention-guided merge: {e}")
             return None
 
     async def calculate_merge_quality(
         self, merged_model, model1, model2, parent1_info: dict, parent2_info: dict
     ) -> float:
-        """Calculate quality score for merged model"""
+        """Calculate quality score for merged model."""
         try:
             quality_score = 0.0
 
@@ -610,13 +610,13 @@ class MergeOperator:
             return min(1.0, quality_score)
 
         except Exception as e:
-            logger.error(f"Error calculating merge quality: {e}")
+            logger.exception(f"Error calculating merge quality: {e}")
             return 0.5
 
     async def calculate_parameter_diversity(
         self, merged_model, model1, model2
     ) -> float:
-        """Calculate how diverse the merged model is from its parents"""
+        """Calculate how diverse the merged model is from its parents."""
         try:
             total_similarity = 0.0
             param_count = 0
@@ -657,16 +657,16 @@ class MergeOperator:
             return total_similarity / max(param_count, 1)
 
         except Exception as e:
-            logger.error(f"Error calculating parameter diversity: {e}")
+            logger.exception(f"Error calculating parameter diversity: {e}")
             return 0.5
 
     async def calculate_model_stability(self, model) -> float:
-        """Calculate stability metrics for merged model"""
+        """Calculate stability metrics for merged model."""
         try:
             stability_metrics = []
 
             with torch.no_grad():
-                for name, param in model.named_parameters():
+                for _name, param in model.named_parameters():
                     # Check for NaN or Inf values
                     if torch.isnan(param).any() or torch.isinf(param).any():
                         return 0.0  # Unstable model
@@ -683,11 +683,11 @@ class MergeOperator:
             return np.mean(stability_metrics) if stability_metrics else 0.5
 
         except Exception as e:
-            logger.error(f"Error calculating model stability: {e}")
+            logger.exception(f"Error calculating model stability: {e}")
             return 0.5
 
     async def count_parameter_changes(self, merged_model, model1, model2) -> int:
-        """Count how many parameters were significantly changed in merge"""
+        """Count how many parameters were significantly changed in merge."""
         try:
             changed_params = 0
             threshold = 1e-6
@@ -713,11 +713,11 @@ class MergeOperator:
             return changed_params
 
         except Exception as e:
-            logger.error(f"Error counting parameter changes: {e}")
+            logger.exception(f"Error counting parameter changes: {e}")
             return 0
 
-    def update_merge_analytics(self, merge_results: list[MergeResult]):
-        """Update analytics based on merge results"""
+    def update_merge_analytics(self, merge_results: list[MergeResult]) -> None:
+        """Update analytics based on merge results."""
         for result in merge_results:
             # Update strategy performance
             if result.success:
@@ -747,7 +747,7 @@ class MergeOperator:
     async def merge_models(
         self, model1, model2, strategy: str, generation: int
     ) -> Any | None:
-        """Simple interface for merging two models"""
+        """Simple interface for merging two models."""
         config = MergeConfig()
 
         # Create mock parent info for merge
@@ -769,7 +769,7 @@ class MergeOperator:
         return result.merged_model if result.success else None
 
     def get_merge_analytics(self) -> dict[str, Any]:
-        """Get comprehensive merge analytics"""
+        """Get comprehensive merge analytics."""
         analytics = {
             "merge_summary": self.merge_analytics,
             "strategy_performance": {

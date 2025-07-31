@@ -1,4 +1,4 @@
-"""Execution Strategies
+"""Execution Strategies.
 
 Concrete implementations of reasoning strategies for different query types.
 Each strategy defines how to break down and execute specific types of queries.
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class BaseStrategy(ABC):
-    """Base class for all reasoning strategies"""
+    """Base class for all reasoning strategies."""
 
     description = "Base reasoning strategy"
 
@@ -35,7 +35,7 @@ class BaseStrategy(ABC):
         constraints: RetrievalConstraints,
         context: dict[str, Any],
     ) -> QueryPlan:
-        """Create execution plan for the query"""
+        """Create execution plan for the query."""
 
     def _create_base_plan(
         self,
@@ -44,7 +44,7 @@ class BaseStrategy(ABC):
         strategy: ReasoningStrategy,
         constraints: RetrievalConstraints,
     ) -> QueryPlan:
-        """Create base plan structure"""
+        """Create base plan structure."""
         return QueryPlan(
             original_query=query,
             query_type=query_type,
@@ -60,7 +60,7 @@ class BaseStrategy(ABC):
         parameters: dict[str, Any],
         dependencies: list[str] = None,
     ) -> str:
-        """Add a retrieval step to the plan"""
+        """Add a retrieval step to the plan."""
         step = ExecutionStep(
             step_type="retrieval",
             description=description,
@@ -81,7 +81,7 @@ class BaseStrategy(ABC):
         parameters: dict[str, Any],
         dependencies: list[str] = None,
     ) -> str:
-        """Add a reasoning step to the plan"""
+        """Add a reasoning step to the plan."""
         step = ExecutionStep(
             step_type="reasoning",
             description=description,
@@ -102,7 +102,7 @@ class BaseStrategy(ABC):
         parameters: dict[str, Any],
         dependencies: list[str] = None,
     ) -> str:
-        """Add a verification step to the plan"""
+        """Add a verification step to the plan."""
         step = ExecutionStep(
             step_type="verification",
             description=description,
@@ -117,7 +117,7 @@ class BaseStrategy(ABC):
 
 
 class SimpleFactStrategy(BaseStrategy):
-    """Strategy for simple factual queries requiring direct retrieval"""
+    """Strategy for simple factual queries requiring direct retrieval."""
 
     description = "Direct retrieval for simple factual queries"
 
@@ -150,7 +150,7 @@ class SimpleFactStrategy(BaseStrategy):
 
 
 class TemporalStrategy(BaseStrategy):
-    """Strategy for temporal reasoning queries"""
+    """Strategy for temporal reasoning queries."""
 
     description = "Temporal reasoning with chronological analysis"
 
@@ -208,7 +208,7 @@ class TemporalStrategy(BaseStrategy):
 
 
 class CausalStrategy(BaseStrategy):
-    """Strategy for causal reasoning queries"""
+    """Strategy for causal reasoning queries."""
 
     description = "Causal reasoning and cause-effect analysis"
 
@@ -279,7 +279,7 @@ class CausalStrategy(BaseStrategy):
 
 
 class ComparativeStrategy(BaseStrategy):
-    """Strategy for comparative analysis queries"""
+    """Strategy for comparative analysis queries."""
 
     description = "Comparative analysis and contrast reasoning"
 
@@ -338,7 +338,7 @@ class ComparativeStrategy(BaseStrategy):
 
 
 class MetaQueryStrategy(BaseStrategy):
-    """Strategy for meta-knowledge queries"""
+    """Strategy for meta-knowledge queries."""
 
     description = "Meta-reasoning about knowledge and information"
 
@@ -398,7 +398,7 @@ class MetaQueryStrategy(BaseStrategy):
 
 
 class MultiHopStrategy(BaseStrategy):
-    """Strategy for multi-hop reasoning queries"""
+    """Strategy for multi-hop reasoning queries."""
 
     description = "Step-by-step multi-hop reasoning"
 
@@ -470,7 +470,7 @@ class MultiHopStrategy(BaseStrategy):
 
 
 class AggregationStrategy(BaseStrategy):
-    """Strategy for aggregation and statistical queries"""
+    """Strategy for aggregation and statistical queries."""
 
     description = "Graph traversal for aggregation queries"
 
@@ -529,7 +529,7 @@ class AggregationStrategy(BaseStrategy):
 
 
 class HypotheticalStrategy(BaseStrategy):
-    """Strategy for hypothetical and what-if queries"""
+    """Strategy for hypothetical and what-if queries."""
 
     description = "Hypothetical reasoning and scenario analysis"
 
@@ -600,7 +600,7 @@ class HypotheticalStrategy(BaseStrategy):
 
 
 class HybridStrategy(BaseStrategy):
-    """Hybrid strategy combining multiple approaches"""
+    """Hybrid strategy combining multiple approaches."""
 
     description = "Hybrid approach combining multiple reasoning strategies"
 

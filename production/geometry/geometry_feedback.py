@@ -1,4 +1,4 @@
-"""Geometry Feedback System - Enhanced Implementation
+"""Geometry Feedback System - Enhanced Implementation.
 
 Provides comprehensive geometric analysis and feedback for training:
 - Intrinsic dimensionality tracking using Two-NN estimator
@@ -85,7 +85,7 @@ class GeometryTracker:
         history_length: int = 1000,
         save_visualizations: bool = True,
         output_dir: str | None = None,
-    ):
+    ) -> None:
         self.model = model
         self.update_interval = update_interval
         self.history_length = history_length
@@ -190,7 +190,7 @@ class GeometryTracker:
         gradient_norm = 0.0
         if gradients:
             grad_norms = []
-            for name, grad in gradients.items():
+            for grad in gradients.values():
                 if grad is not None:
                     grad_norms.append(torch.norm(grad).item())
             gradient_norm = np.mean(grad_norms) if grad_norms else 0.0
@@ -362,7 +362,7 @@ class GeometryTracker:
         efficiency = min(1.0, 1.0 / (1.0 + id_change))
         return efficiency
 
-    def _analyze_patterns(self):
+    def _analyze_patterns(self) -> None:
         """Analyze patterns in geometry evolution."""
         if len(self.metrics_history) < 10:
             return
@@ -386,7 +386,7 @@ class GeometryTracker:
             if max(phase_scores) > 0.8:
                 logger.info("Phase transition detected!")
 
-    def _log_metrics(self, metrics: GeometryMetrics, compass: UDaimonicCompass):
+    def _log_metrics(self, metrics: GeometryMetrics, compass: UDaimonicCompass) -> None:
         """Log metrics to W&B."""
         if wandb.run is None:
             return
@@ -410,7 +410,7 @@ class GeometryTracker:
 
         wandb.log(log_dict, step=self.step_count)
 
-    def _generate_visualizations(self):
+    def _generate_visualizations(self) -> None:
         """Generate comprehensive visualizations."""
         if len(self.metrics_history) < 10:
             return
@@ -602,7 +602,7 @@ class GeometryTracker:
 
         return recommendations
 
-    def save_state(self, filepath: str):
+    def save_state(self, filepath: str) -> None:
         """Save geometry tracking state."""
         state = {
             "step_count": self.step_count,
@@ -624,7 +624,7 @@ class GeometryTracker:
 class GrokDetector:
     """Specialized grokking detection using geometric signatures."""
 
-    def __init__(self, window_size: int = 20, threshold: float = 0.7):
+    def __init__(self, window_size: int = 20, threshold: float = 0.7) -> None:
         self.window_size = window_size
         self.threshold = threshold
         self.id_history = []
@@ -670,7 +670,7 @@ class GrokDetector:
 class PhaseTransitionAnalyzer:
     """Analyzes phase transitions in training dynamics."""
 
-    def __init__(self, window_size: int = 30):
+    def __init__(self, window_size: int = 30) -> None:
         self.window_size = window_size
         self.id_history = []
         self.norm_history = []
@@ -748,11 +748,11 @@ async def run_geometry(config: dict[str, Any]) -> "PhaseResult":
 
         try:
             model = AutoModel.from_pretrained(model_path)
-            tokenizer = AutoTokenizer.from_pretrained(model_path)
+            AutoTokenizer.from_pretrained(model_path)
         except Exception:
             # Create mock model for testing
             class MockModel(nn.Module):
-                def __init__(self):
+                def __init__(self) -> None:
                     super().__init__()
                     self.linear = nn.Linear(768, 256)
                     self.output = nn.Linear(256, 1)
@@ -772,7 +772,7 @@ async def run_geometry(config: dict[str, Any]) -> "PhaseResult":
         # Perform geometry analysis
         geometry_metrics = []
 
-        for step in range(analysis_steps):
+        for _step in range(analysis_steps):
             # Simulate model forward pass
             if hasattr(model, "config") and hasattr(model.config, "hidden_size"):
                 hidden_size = model.config.hidden_size
@@ -880,7 +880,7 @@ async def run_geometry(config: dict[str, Any]) -> "PhaseResult":
     except Exception as e:
         duration = time.time() - start_time
         error_msg = f"Geometry phase failed: {e!s}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
 
         return PhaseResult(
             phase_type=PhaseType.GEOMETRY,
@@ -901,7 +901,7 @@ execute = run_geometry  # Alternative alias
 if __name__ == "__main__":
     # Example model for testing
     class SimpleModel(nn.Module):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__()
             self.linear = nn.Linear(64, 32)
             self.relu = nn.ReLU()

@@ -38,7 +38,7 @@ class CodingTask(ToolMessage):
 class CodeState:
     def __init__(
         self, task: CodingTask, code: str = "", thoughts: str = "", response: str = ""
-    ):
+    ) -> None:
         self.task = task
         self.code = code
         self.thoughts = thoughts
@@ -46,7 +46,7 @@ class CodeState:
 
 
 class MCTSNode:
-    def __init__(self, state: CodeState, parent=None):
+    def __init__(self, state: CodeState, parent=None) -> None:
         self.state = state
         self.parent = parent
         self.children: list[MCTSNode] = []
@@ -55,7 +55,7 @@ class MCTSNode:
 
 
 class EnhancedMagiAgent(ChatAgent):
-    def __init__(self, config: ChatAgentConfig):
+    def __init__(self, config: ChatAgentConfig) -> None:
         super().__init__(config)
         self.enable_message(CodingTask)
         self.cognitive_strategies = [
@@ -107,7 +107,7 @@ class EnhancedMagiAgent(ChatAgent):
 
 
 class EnhancedSupervisorAgent(ChatAgent):
-    def __init__(self, config: ChatAgentConfig):
+    def __init__(self, config: ChatAgentConfig) -> None:
         super().__init__(config)
 
     async def create_initial_test(self) -> list[CodingTask]:
@@ -169,7 +169,7 @@ class EnhancedSupervisorAgent(ChatAgent):
 
     def determine_competence_level(self, results: list[tuple[CodingTask, bool]]) -> int:
         sorted_results = sorted(results, key=lambda x: x[0].difficulty)
-        for i, (task, success) in enumerate(sorted_results):
+        for _i, (task, success) in enumerate(sorted_results):
             if not success:
                 return task.difficulty - 1
         return 100  # If all tasks were successful
@@ -287,7 +287,7 @@ class AIFeedbackTask(Task):
 
 
 class CodePreferenceModel(nn.Module):
-    def __init__(self, input_size, hidden_size):
+    def __init__(self, input_size, hidden_size) -> None:
         super().__init__()
         self.encoder = nn.Sequential(
             nn.Linear(input_size, hidden_size),
@@ -304,7 +304,7 @@ class CodePreferenceModel(nn.Module):
 class DPOTrainer:
     def __init__(
         self, model: CodePreferenceModel, learning_rate: float = 1e-4, beta: float = 0.1
-    ):
+    ) -> None:
         self.model = model
         self.optimizer = optim.Adam(model.parameters(), lr=learning_rate)
         self.beta = beta
@@ -337,7 +337,7 @@ class DPOTrainer:
 
 
 class HyperparameterOptimizationTask(Task):
-    def __init__(self, agent: ChatAgent):
+    def __init__(self, agent: ChatAgent) -> None:
         super().__init__(agent)
         self.current_hyperparameters = {
             "mcts_iterations": 100,
@@ -415,11 +415,11 @@ class TrajectoryStep:
 
 
 class DataCollectionPipeline:
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str) -> None:
         self.conn = sqlite3.connect(db_path)
         self.create_tables()
 
-    def create_tables(self):
+    def create_tables(self) -> None:
         self.conn.execute("""
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY,
@@ -454,7 +454,7 @@ class DataCollectionPipeline:
         self.conn.commit()
         return cursor.lastrowid
 
-    def store_trajectory(self, task_id: int, trajectory: list[TrajectoryStep]):
+    def store_trajectory(self, task_id: int, trajectory: list[TrajectoryStep]) -> None:
         for step in trajectory:
             self.conn.execute(
                 """
@@ -531,7 +531,7 @@ async def simulate(
     ) + ai_score * ai_feedback_weight
 
 
-def backpropagate(node: MCTSNode, reward: float):
+def backpropagate(node: MCTSNode, reward: float) -> None:
     while node:
         node.visits += 1
         node.value += reward
@@ -768,7 +768,7 @@ class TrainingTask(Task):
                     quiet_model=quiet_model,
                     tokenizer=tokenizer,
                 )
-                loss = dpo_trainer.train_step(preferred_tensor, non_preferred_tensor)
+                dpo_trainer.train_step(preferred_tensor, non_preferred_tensor)
 
                 if grokfast_task:
                     await grokfast_task.filter_gradients()
@@ -932,7 +932,7 @@ class OptimizationTask(Task):
         return best_hyperparameters, grok_detected
 
 
-async def main():
+async def main() -> None:
     magi_config = ChatAgentConfig(
         name="Magi",
         llm=OpenAIGPTConfig(

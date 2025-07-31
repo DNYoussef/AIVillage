@@ -206,7 +206,7 @@ def test_hyperag_simulation_performance(benchmark):
 
         # Simulate document vectors
         vectors = []
-        for i in range(100):
+        for _i in range(100):
             vector = [random.random() for _ in range(50)]  # 50-dim vectors
             vectors.append(vector)
 
@@ -267,8 +267,8 @@ def test_memory_usage_simulation(benchmark):
         large_list = []
 
         # Allocate memory in chunks
-        for i in range(100):
-            chunk = [j for j in range(100)]  # 100 integers per chunk
+        for _i in range(100):
+            chunk = list(range(100))  # 100 integers per chunk
             large_list.append(chunk)
 
         # Process the data
@@ -298,7 +298,7 @@ def test_optional_dependency_performance(benchmark):
 
             data = {"test": True, "values": list(range(100))}
             serialized = json.dumps(data)
-            deserialized = json.loads(serialized)
+            json.loads(serialized)
             return len(serialized)
         except ImportError:
             # Fallback to simple operations

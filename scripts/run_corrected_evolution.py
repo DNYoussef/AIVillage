@@ -79,9 +79,9 @@ class CorrectedEvolutionMerger:
         self.population = self.initialize_systematic_generation_1()
 
         logger.info("CORRECTED Evolution initialized")
-        logger.info(f"Population size: {self.population_size}")
-        logger.info(f"Core techniques: {self.core_techniques}")
-        logger.info(f"Technique pairs: {self.technique_pairs}")
+        logger.info("Population size: %d", self.population_size)
+        logger.info("Core techniques: %s", self.core_techniques)
+        logger.info("Technique pairs: %s", self.technique_pairs)
 
     def load_available_models(self) -> list[str]:
         """Load available models from the model list file."""
@@ -157,18 +157,18 @@ class CorrectedEvolutionMerger:
                     combination_id += 1
 
                     logger.info(
-                        f"Created systematic combination {combination_id}: {combination}"
+                        "Created systematic combination %d: %s", combination_id, combination
                     )
 
         # Verify we have exactly 8 individuals
         assert len(population) == 8, f"Expected 8 individuals, got {len(population)}"
 
         logger.info(
-            f"✅ Systematic Generation 1 created with {len(population)} individuals"
+            "✅ Systematic Generation 1 created with %d individuals", len(population)
         )
         logger.info("Combinations created:")
         for i, ind in enumerate(population):
-            logger.info(f"  {i + 1}. {ind['technique_combination']}")
+            logger.info("  %d. %s", i + 1, ind['technique_combination'])
 
         return population
 
@@ -198,7 +198,7 @@ class CorrectedEvolutionMerger:
         2. Worst 6 models → group in triads → merge to 2 children
         3. Total: 6 mutants + 2 children = 8 next generation
         """
-        logger.info(f"=== BREEDING GENERATION {self.generation + 1} ===")
+        logger.info("=== BREEDING GENERATION %d ===", self.generation + 1)
 
         # Ensure we have exactly 8 individuals ranked by fitness
         assert (
@@ -212,7 +212,7 @@ class CorrectedEvolutionMerger:
         logger.info("Best 2 individuals:")
         for i, ind in enumerate(best_2):
             logger.info(
-                f"  {i + 1}. {ind['id']} - Fitness: {ind['fitness']:.4f} - Method: {ind['primary_method']}"
+                "  %d. %s - Fitness: %.4f - Method: %s", i + 1, ind['id'], ind['fitness'], ind['primary_method']
             )
 
         # Create 3 mutations from each of the best 2 (total 6)
@@ -222,14 +222,14 @@ class CorrectedEvolutionMerger:
                     parent, f"best_{i + 1}_mut_{mutation_id + 1}"
                 )
                 next_generation.append(mutant)
-                logger.info(f"  Created mutant: {mutant['id']} from {parent['id']}")
+                logger.info("  Created mutant: %s from %s", mutant['id'], parent['id'])
 
         # === STEP 2: Worst 6 → 2 children via triad merging ===
         worst_6 = ranked_population[2:]
         logger.info("Worst 6 individuals for triad merging:")
         for i, ind in enumerate(worst_6):
             logger.info(
-                f"  {i + 1}. {ind['id']} - Fitness: {ind['fitness']:.4f} - Method: {ind['primary_method']}"
+                "  %d. %s - Fitness: %.4f - Method: %s", i + 1, ind['id'], ind['fitness'], ind['primary_method']
             )
 
         # Split worst 6 into 2 triads
@@ -243,8 +243,8 @@ class CorrectedEvolutionMerger:
         next_generation.extend([child_1, child_2])
 
         logger.info("Created children:")
-        logger.info(f"  {child_1['id']} from triad: {[p['id'] for p in triad_1]}")
-        logger.info(f"  {child_2['id']} from triad: {[p['id'] for p in triad_2]}")
+        logger.info("  %s from triad: %s", child_1['id'], [p['id'] for p in triad_1])
+        logger.info("  %s from triad: %s", child_2['id'], [p['id'] for p in triad_2])
 
         # Verify we have exactly 8 individuals
         assert (
@@ -252,7 +252,7 @@ class CorrectedEvolutionMerger:
         ), f"Expected 8 individuals, got {len(next_generation)}"
 
         logger.info(
-            f"✅ Next generation bred: 6 mutants + 2 children = {len(next_generation)} total"
+            "✅ Next generation bred: 6 mutants + 2 children = %d total", len(next_generation)
         )
 
         return next_generation
@@ -276,7 +276,7 @@ class CorrectedEvolutionMerger:
             mutant["technique_combination"] = [new_technique]  # Reset combination
             mutant["parameters"] = self.generate_optimal_parameters(new_technique)
             logger.info(
-                f"    Technique mutation: {parent['primary_method']} → {new_technique}"
+                "    Technique mutation: %s → %s", parent['primary_method'], new_technique
             )
         else:
             # Mutate parameters only
@@ -284,7 +284,7 @@ class CorrectedEvolutionMerger:
                 parent["primary_method"], parent["parameters"]
             )
             logger.info(
-                f"    Parameter mutation: {parent['parameters']} → {mutant['parameters']}"
+                "    Parameter mutation: %s → %s", parent['parameters'], mutant['parameters']
             )
 
         return mutant
@@ -417,7 +417,7 @@ class CorrectedEvolutionMerger:
 
     def benchmark_model(self, individual: dict[str, Any]) -> dict[str, float]:
         """Enhanced benchmarking with realistic simulation."""
-        logger.info(f"Benchmarking: {individual['id']}")
+        logger.info("Benchmarking: %s", individual['id'])
 
         method = individual["primary_method"]
         base_model = individual.get("base_model", "")
@@ -544,7 +544,7 @@ class CorrectedEvolutionMerger:
 
     def evolve_generation(self) -> bool:
         """Run one generation of evolution."""
-        logger.info(f"=== GENERATION {self.generation} ===")
+        logger.info("=== GENERATION %d ===", self.generation)
 
         # Benchmark all individuals
         for individual in self.population:
@@ -569,11 +569,11 @@ class CorrectedEvolutionMerger:
             self.population
         )
 
-        logger.info(f"Generation {self.generation} Results:")
-        logger.info(f"Best fitness: {best_individual['fitness']:.4f}")
-        logger.info(f"Average fitness: {avg_fitness:.4f}")
-        logger.info(f"Best method: {best_individual['primary_method']}")
-        logger.info(f"Best parameters: {best_individual['parameters']}")
+        logger.info("Generation %d Results:", self.generation)
+        logger.info("Best fitness: %.4f", best_individual['fitness'])
+        logger.info("Average fitness: %.4f", avg_fitness)
+        logger.info("Best method: %s", best_individual['primary_method'])
+        logger.info("Best parameters: %s", best_individual['parameters'])
 
         # Save generation results
         gen_results = {
@@ -623,8 +623,8 @@ class CorrectedEvolutionMerger:
         logger.info("=" * 80)
         logger.info("CORRECTED AGENT FORGE EVOLUTION WITH SYSTEMATIC GENERATION 1")
         logger.info("=" * 80)
-        logger.info(f"Technique pairs: {self.technique_pairs}")
-        logger.info(f"Population size: {self.population_size}")
+        logger.info("Technique pairs: %s", self.technique_pairs)
+        logger.info("Population size: %d", self.population_size)
 
         start_time = time.time()
 
@@ -636,9 +636,9 @@ class CorrectedEvolutionMerger:
                 if generation_count % 10 == 0:
                     elapsed = time.time() - start_time
                     logger.info(
-                        f"Progress: {generation_count}/{self.max_generations} generations"
+                        "Progress: %d/%d generations", generation_count, self.max_generations
                     )
-                    logger.info(f"Elapsed: {elapsed / 60:.1f} minutes")
+                    logger.info("Elapsed: %.1f minutes", elapsed / 60)
 
                 time.sleep(0.1)
 
@@ -657,14 +657,14 @@ class CorrectedEvolutionMerger:
         logger.info("=" * 80)
         logger.info("CORRECTED EVOLUTION COMPLETE")
         logger.info("=" * 80)
-        logger.info(f"Duration: {duration / 60:.1f} minutes")
-        logger.info(f"Generations completed: {self.generation}")
-        logger.info(f"Best overall fitness: {best_overall['fitness']:.4f}")
-        logger.info(f"Best method: {best_overall['primary_method']}")
+        logger.info("Duration: %.1f minutes", duration / 60)
+        logger.info("Generations completed: %d", self.generation)
+        logger.info("Best overall fitness: %.4f", best_overall['fitness'])
+        logger.info("Best method: %s", best_overall['primary_method'])
         logger.info(
-            f"Best technique combination: {best_overall.get('technique_combination', [])}"
+            "Best technique combination: %s", best_overall.get('technique_combination', [])
         )
-        logger.info(f"Best parameters: {best_overall['parameters']}")
+        logger.info("Best parameters: %s", best_overall['parameters'])
 
         # Save final results
         final_results = {
@@ -697,7 +697,7 @@ class CorrectedEvolutionMerger:
         with open(final_file, "w") as f:
             json.dump(final_results, f, indent=2)
 
-        logger.info(f"Complete results saved to: {final_file}")
+        logger.info("Complete results saved to: %s", final_file)
         return best_overall
 
 
@@ -706,7 +706,7 @@ def main():
     if torch.cuda.is_available():
         gpu_name = torch.cuda.get_device_name(0)
         gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-        logger.info(f"GPU: {gpu_name} - {gpu_memory:.1f}GB VRAM")
+        logger.info("GPU: %s - %.1fGB VRAM", gpu_name, gpu_memory)
     else:
         logger.warning("CUDA not available - running on CPU")
 

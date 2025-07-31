@@ -1,0 +1,44 @@
+# Gateway Service Dockerfile
+FROM python:3.11-slim as base
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Create non-root user
+RUN groupadd -r aivillage && useradd -r -g aivillage aivillage
+
+# Copy requirements
+COPY requirements.txt requirements-production.txt ./
+COPY experimental/services/services/gateway/requirements.txt ./gateway_requirements.txt
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-production.txt -r gateway_requirements.txt
+
+# Copy application code
+COPY experimental/services/services/gateway/ ./gateway/
+COPY communications/ ./communications/
+COPY config/ ./config/
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV GATEWAY_PORT=8000
+ENV GATEWAY_HOST=0.0.0.0
+
+# Change ownership
+RUN chown -R aivillage:aivillage /app
+
+USER aivillage
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/healthz || exit 1
+
+EXPOSE 8000
+
+CMD ["python", "-m", "gateway.app"]

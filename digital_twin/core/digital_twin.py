@@ -1,5 +1,5 @@
 """Digital Twin Core System for Personalized Learning
-Sprint R-5: Digital Twin MVP - Task A.1
+Sprint R-5: Digital Twin MVP - Task A.1.
 """
 
 import asyncio
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class LearningProfile:
-    """Individual learner's profile and preferences"""
+    """Individual learner's profile and preferences."""
 
     student_id: str
     name: str
@@ -46,7 +46,7 @@ class LearningProfile:
 
 @dataclass
 class LearningSession:
-    """Individual learning session record"""
+    """Individual learning session record."""
 
     session_id: str
     student_id: str
@@ -67,7 +67,7 @@ class LearningSession:
 
 @dataclass
 class KnowledgeState:
-    """Student's current knowledge state"""
+    """Student's current knowledge state."""
 
     student_id: str
     subject: str
@@ -85,7 +85,7 @@ class KnowledgeState:
 
 @dataclass
 class PersonalizationVector:
-    """Multi-dimensional representation of student's learning needs"""
+    """Multi-dimensional representation of student's learning needs."""
 
     cognitive_load_preference: float  # 0=simple, 1=complex
     explanation_depth: float  # 0=brief, 1=detailed
@@ -100,9 +100,9 @@ class PersonalizationVector:
 
 
 class DigitalTwin:
-    """Comprehensive digital twin for personalized math tutoring"""
+    """Comprehensive digital twin for personalized math tutoring."""
 
-    def __init__(self, project_name: str = "aivillage-digital-twin"):
+    def __init__(self, project_name: str = "aivillage-digital-twin") -> None:
         self.project_name = project_name
         self.students = {}  # student_id -> LearningProfile
         self.knowledge_states = defaultdict(
@@ -138,8 +138,8 @@ class DigitalTwin:
         # Start background analytics
         asyncio.create_task(self.start_background_analytics())
 
-    def initialize_wandb_tracking(self):
-        """Initialize W&B tracking for digital twin"""
+    def initialize_wandb_tracking(self) -> None:
+        """Initialize W&B tracking for digital twin."""
         try:
             wandb.init(
                 project=self.project_name,
@@ -165,10 +165,10 @@ class DigitalTwin:
             logger.info("Digital Twin W&B tracking initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize W&B tracking: {e}")
+            logger.exception(f"Failed to initialize W&B tracking: {e}")
 
-    def init_database(self):
-        """Initialize SQLite database for persistent storage"""
+    def init_database(self) -> None:
+        """Initialize SQLite database for persistent storage."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -222,7 +222,7 @@ class DigitalTwin:
             logger.info("Digital twin database initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize database: {e}")
+            logger.exception(f"Failed to initialize database: {e}")
 
     async def create_student_profile(
         self,
@@ -231,10 +231,10 @@ class DigitalTwin:
         grade_level: int,
         language: str = "en",
         region: str = "north_america",
-        parent_email: str = None,
-        initial_assessment: dict[str, Any] = None,
+        parent_email: str | None = None,
+        initial_assessment: dict[str, Any] | None = None,
     ) -> str:
-        """Create new student profile with initial assessment"""
+        """Create new student profile with initial assessment."""
         student_id = str(uuid.uuid4())
 
         # Run initial assessment if provided
@@ -312,7 +312,7 @@ class DigitalTwin:
     async def analyze_initial_assessment(
         self, student_id: str, age: int, grade_level: int, assessment: dict[str, Any]
     ) -> LearningProfile:
-        """Analyze initial assessment to create personalized profile"""
+        """Analyze initial assessment to create personalized profile."""
         # Extract learning style from assessment responses
         learning_style = self.detect_learning_style(assessment)
 
@@ -354,11 +354,11 @@ class DigitalTwin:
         return profile
 
     def detect_learning_style(self, assessment: dict[str, Any]) -> str:
-        """Detect primary learning style from assessment"""
+        """Detect primary learning style from assessment."""
         style_scores = {"visual": 0, "auditory": 0, "kinesthetic": 0, "reading": 0}
 
         # Analyze response patterns
-        for question, response in assessment.get("responses", {}).items():
+        for response in assessment.get("responses", {}).values():
             if "picture" in response.lower() or "see" in response.lower():
                 style_scores["visual"] += 1
             if "hear" in response.lower() or "listen" in response.lower():
@@ -378,7 +378,7 @@ class DigitalTwin:
     def analyze_math_abilities(
         self, assessment: dict[str, Any], grade_level: int
     ) -> tuple[list[str], list[str]]:
-        """Analyze mathematical strengths and challenges"""
+        """Analyze mathematical strengths and challenges."""
         strengths = []
         challenges = []
 
@@ -412,7 +412,7 @@ class DigitalTwin:
         return strengths, challenges
 
     def extract_interests(self, assessment: dict[str, Any]) -> list[str]:
-        """Extract student interests from assessment"""
+        """Extract student interests from assessment."""
         interests = assessment.get("interests", [])
 
         # Analyze free-text responses for interest keywords
@@ -435,7 +435,7 @@ class DigitalTwin:
         return list(set(interests))
 
     def estimate_attention_span(self, assessment: dict[str, Any], age: int) -> int:
-        """Estimate attention span from assessment behavior"""
+        """Estimate attention span from assessment behavior."""
         # Base estimate by age
         base_minutes = max(15, min(45, age * 3))
 
@@ -452,7 +452,7 @@ class DigitalTwin:
         return base_minutes
 
     def identify_motivation_triggers(self, assessment: dict[str, Any]) -> list[str]:
-        """Identify what motivates the student"""
+        """Identify what motivates the student."""
         triggers = []
 
         # Analyze responses for motivation indicators
@@ -483,8 +483,8 @@ class DigitalTwin:
 
         return triggers
 
-    async def initialize_knowledge_states(self, student_id: str, grade_level: int):
-        """Initialize knowledge states for grade-appropriate concepts"""
+    async def initialize_knowledge_states(self, student_id: str, grade_level: int) -> None:
+        """Initialize knowledge states for grade-appropriate concepts."""
         # Import curriculum graph
         from hyperag.education.curriculum_graph import curriculum_graph
 
@@ -514,8 +514,8 @@ class DigitalTwin:
             f"Initialized knowledge states for student {student_id[:8]} with {len(self.knowledge_states[student_id])} concepts"
         )
 
-    async def record_learning_session(self, session: LearningSession):
-        """Record and analyze a learning session"""
+    async def record_learning_session(self, session: LearningSession) -> None:
+        """Record and analyze a learning session."""
         # Store session
         self.session_history[session.student_id].append(session)
 
@@ -551,8 +551,8 @@ class DigitalTwin:
             f"Recorded learning session {session.session_id[:8]} for student {session.student_id[:8]}"
         )
 
-    async def update_knowledge_states_from_session(self, session: LearningSession):
-        """Update knowledge states based on session performance"""
+    async def update_knowledge_states_from_session(self, session: LearningSession) -> None:
+        """Update knowledge states based on session performance."""
         accuracy = session.questions_correct / max(session.questions_asked, 1)
 
         for concept in session.concepts_covered:
@@ -595,8 +595,8 @@ class DigitalTwin:
                         60, int(state.estimated_study_time * 1.2)
                     )
 
-    async def update_personalization_vector(self, session: LearningSession):
-        """Update personalization vector based on session outcomes"""
+    async def update_personalization_vector(self, session: LearningSession) -> None:
+        """Update personalization vector based on session outcomes."""
         if session.student_id not in self.personalization_vectors:
             return
 
@@ -662,8 +662,8 @@ class DigitalTwin:
                     0.0, vector.gamification_response - learning_rate * 0.1
                 )
 
-    def update_learning_patterns(self, session: LearningSession):
-        """Update detected learning patterns"""
+    def update_learning_patterns(self, session: LearningSession) -> None:
+        """Update detected learning patterns."""
         student_id = session.student_id
 
         if student_id not in self.learning_patterns:
@@ -707,7 +707,7 @@ class DigitalTwin:
             patterns[pattern_type] = patterns[pattern_type][-max_history:]
 
     async def get_personalized_recommendations(self, student_id: str) -> dict[str, Any]:
-        """Generate personalized learning recommendations"""
+        """Generate personalized learning recommendations."""
         if student_id not in self.students:
             return {"error": "Student not found"}
 
@@ -825,7 +825,7 @@ class DigitalTwin:
         current_accuracy: float,
         time_in_session: int,
     ) -> dict[str, Any]:
-        """Provide real-time adaptations during a session"""
+        """Provide real-time adaptations during a session."""
         adaptations = {
             "difficulty_adjustment": 0,  # -1 easier, 0 same, 1 harder
             "explanation_style": "maintain",  # simpler, maintain, detailed
@@ -888,8 +888,8 @@ class DigitalTwin:
 
         return adaptations
 
-    async def save_student_profile(self, student_id: str):
-        """Save student profile to encrypted database"""
+    async def save_student_profile(self, student_id: str) -> None:
+        """Save student profile to encrypted database."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -936,10 +936,10 @@ class DigitalTwin:
             conn.close()
 
         except Exception as e:
-            logger.error(f"Failed to save student profile: {e}")
+            logger.exception(f"Failed to save student profile: {e}")
 
-    async def save_learning_session(self, session: LearningSession):
-        """Save learning session to encrypted database"""
+    async def save_learning_session(self, session: LearningSession) -> None:
+        """Save learning session to encrypted database."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -968,10 +968,10 @@ class DigitalTwin:
             conn.close()
 
         except Exception as e:
-            logger.error(f"Failed to save learning session: {e}")
+            logger.exception(f"Failed to save learning session: {e}")
 
-    async def start_background_analytics(self):
-        """Start background analytics and pattern detection"""
+    async def start_background_analytics(self) -> None:
+        """Start background analytics and pattern detection."""
         while True:
             try:
                 await asyncio.sleep(300)  # Run every 5 minutes
@@ -986,15 +986,15 @@ class DigitalTwin:
                 await self.generate_learning_insights()
 
             except Exception as e:
-                logger.error(f"Error in background analytics: {e}")
+                logger.exception(f"Error in background analytics: {e}")
                 await asyncio.sleep(60)
 
-    async def update_retention_decay(self):
-        """Update knowledge retention based on time decay"""
+    async def update_retention_decay(self) -> None:
+        """Update knowledge retention based on time decay."""
         current_time = datetime.now(timezone.utc)
 
-        for student_id, knowledge_map in self.knowledge_states.items():
-            for concept, state in knowledge_map.items():
+        for knowledge_map in self.knowledge_states.values():
+            for state in knowledge_map.values():
                 if state.last_practiced != "never":
                     last_practice = datetime.fromisoformat(state.last_practiced)
                     days_since = (current_time - last_practice).days
@@ -1005,8 +1005,8 @@ class DigitalTwin:
                         state.mastery_level *= decay_factor
                         state.confidence_score *= decay_factor
 
-    async def detect_learning_patterns(self):
-        """Detect and update learning patterns for all students"""
+    async def detect_learning_patterns(self) -> None:
+        """Detect and update learning patterns for all students."""
         for student_id in self.students:
             if student_id not in self.learning_patterns:
                 continue
@@ -1043,8 +1043,8 @@ class DigitalTwin:
                         set(preferred_times)
                     )
 
-    async def generate_learning_insights(self):
-        """Generate learning insights and log to W&B"""
+    async def generate_learning_insights(self) -> None:
+        """Generate learning insights and log to W&B."""
         total_students = len(self.students)
         if total_students == 0:
             return
@@ -1101,7 +1101,7 @@ class DigitalTwin:
         )
 
     def get_student_dashboard(self, student_id: str) -> dict[str, Any]:
-        """Generate comprehensive student dashboard data"""
+        """Generate comprehensive student dashboard data."""
         if student_id not in self.students:
             return {"error": "Student not found"}
 
@@ -1187,7 +1187,7 @@ class DigitalTwin:
         return dashboard
 
     def calculate_improvement_trend(self, sessions: list[LearningSession]) -> str:
-        """Calculate improvement trend from session history"""
+        """Calculate improvement trend from session history."""
         if len(sessions) < 3:
             return "insufficient_data"
 
@@ -1212,7 +1212,7 @@ class DigitalTwin:
         return "stable"
 
     def calculate_consistency_score(self, sessions: list[LearningSession]) -> float:
-        """Calculate consistency score based on regular study patterns"""
+        """Calculate consistency score based on regular study patterns."""
         if len(sessions) < 5:
             return 0.5
 
@@ -1237,7 +1237,7 @@ class DigitalTwin:
         return min(1.0, consistency)
 
     def get_student_achievements(self, student_id: str) -> list[dict[str, Any]]:
-        """Get student achievements and badges"""
+        """Get student achievements and badges."""
         achievements = []
         sessions = self.session_history.get(student_id, [])
         knowledge = self.knowledge_states.get(student_id, {})
@@ -1290,7 +1290,7 @@ class DigitalTwin:
         return achievements
 
     def get_parent_insights(self, student_id: str) -> dict[str, Any]:
-        """Generate insights for parents"""
+        """Generate insights for parents."""
         student = self.students[student_id]
         sessions = self.session_history.get(student_id, [])
 
@@ -1376,8 +1376,8 @@ class DigitalTwin:
 if __name__ == "__main__":
     import asyncio
 
-    async def main():
-        digital_twin = DigitalTwin()
+    async def main() -> None:
+        DigitalTwin()
         print("✅ Digital Twin initialized successfully")
 
     asyncio.run(main())

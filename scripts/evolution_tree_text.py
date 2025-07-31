@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 
-def create_text_tree():
+def create_text_tree() -> None:
     """Create text-based evolutionary tree."""
     # Load results
     results_file = Path("D:/AgentForge/results/evolution_results.json")
@@ -35,7 +35,7 @@ def create_text_tree():
         print(f"\nGeneration {gen_idx}:")
         print("    " + "|" + "-" * 50)
 
-        for i, individual in enumerate(population):
+        for _i, individual in enumerate(population):
             method = individual["merge_method"]
             fitness = individual["fitness"]
             ind_id = individual["id"]

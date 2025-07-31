@@ -113,7 +113,7 @@ class TestAITutorEngine:
             ("Random question about anything", "general"),
         ]
 
-        for message, expected_subject in test_cases:
+        for message, _expected_subject in test_cases:
             detected = tutor.detect_subject_interest(message)
             print(f"✅ '{message}' -> {detected}")
 

@@ -161,7 +161,7 @@ class TestGeometricSelfAwareness:
         layer_analyses = analysis["layer_analyses"]
         assert len(layer_analyses) > 0
 
-        for layer_name, layer_analysis in layer_analyses.items():
+        for layer_analysis in layer_analyses.values():
             assert "shape" in layer_analysis
             assert "mean" in layer_analysis
             assert "std" in layer_analysis
@@ -433,7 +433,7 @@ class TestMagiSpecializationPipeline:
         # Test partial answer
         partial_answer = "Paris"
         # Should be True due to keyword matching
-        evaluation = pipeline.evaluate_answer(question, partial_answer)
+        pipeline.evaluate_answer(question, partial_answer)
         # This might be False due to length requirement, which is acceptable
 
     @pytest.mark.asyncio
@@ -454,7 +454,7 @@ class TestMagiSpecializationPipeline:
 
 def test_integration_with_existing_systems(test_config):
     """Test integration with existing Agent Forge systems"""
-    pipeline = MagiSpecializationPipeline(test_config)
+    MagiSpecializationPipeline(test_config)
 
     # Verify we can import and use existing components
     from agent_forge.quietstar_baker import QuietSTaRConfig

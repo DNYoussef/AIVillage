@@ -1,4 +1,4 @@
-"""Planning Learning System
+"""Planning Learning System.
 
 Learns from plan execution outcomes to improve strategy selection and planning.
 Tracks plan effectiveness, updates strategy weights, and learns from agent feedback.
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class StrategyFeedback:
-    """Feedback about strategy execution performance"""
+    """Feedback about strategy execution performance."""
 
     strategy: ReasoningStrategy
     query_type: QueryType
@@ -44,7 +44,7 @@ class StrategyFeedback:
 
 @dataclass
 class LearningMetrics:
-    """Aggregated learning metrics for strategies"""
+    """Aggregated learning metrics for strategies."""
 
     strategy: ReasoningStrategy
     query_type: QueryType
@@ -73,7 +73,7 @@ class PlanLearner:
     to improve future planning decisions.
     """
 
-    def __init__(self, learning_rate: float = 0.1, min_samples: int = 5):
+    def __init__(self, learning_rate: float = 0.1, min_samples: int = 5) -> None:
         self.learning_rate = learning_rate
         self.min_samples = min_samples
 
@@ -103,7 +103,7 @@ class PlanLearner:
     def record_execution_feedback(
         self, plan: QueryPlan, feedback: StrategyFeedback
     ) -> None:
-        """Record feedback from plan execution"""
+        """Record feedback from plan execution."""
         # Store feedback
         self.feedback_history.append(feedback)
         if len(self.feedback_history) > self.max_history_size:
@@ -136,7 +136,7 @@ class PlanLearner:
         complexity_score: float,
         context: dict[str, Any] | None = None,
     ) -> tuple[ReasoningStrategy, float]:
-        """Get strategy recommendation based on learned performance"""
+        """Get strategy recommendation based on learned performance."""
         context = context or {}
 
         # Get candidate strategies for this query type
@@ -164,7 +164,7 @@ class PlanLearner:
         query_type: QueryType | None = None,
         time_window_hours: int = 24,
     ) -> dict[str, Any]:
-        """Analyze strategy performance over time window"""
+        """Analyze strategy performance over time window."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=time_window_hours)
         recent_feedback = [
             f for f in self.feedback_history if f.timestamp >= cutoff_time
@@ -224,7 +224,7 @@ class PlanLearner:
         return analysis
 
     def get_learning_insights(self) -> dict[str, Any]:
-        """Get insights from learning system"""
+        """Get insights from learning system."""
         insights = {
             "learning_stats": self.learning_stats.copy(),
             "top_performing_strategies": self._get_top_strategies(),
@@ -236,7 +236,7 @@ class PlanLearner:
         return insights
 
     def _update_strategy_metrics(self, feedback: StrategyFeedback) -> None:
-        """Update performance metrics for strategy-query type combination"""
+        """Update performance metrics for strategy-query type combination."""
         key = (feedback.strategy, feedback.query_type)
 
         if key not in self.strategy_metrics:
@@ -294,7 +294,7 @@ class PlanLearner:
         metrics.last_updated = datetime.now(timezone.utc)
 
     def _update_strategy_weights(self, feedback: StrategyFeedback) -> None:
-        """Update global strategy weights based on feedback"""
+        """Update global strategy weights based on feedback."""
         strategy = feedback.strategy
         current_weight = self.global_strategy_weights[strategy]
 
@@ -328,7 +328,7 @@ class PlanLearner:
     def _learn_query_patterns(
         self, plan: QueryPlan, feedback: StrategyFeedback
     ) -> None:
-        """Learn patterns from successful query-strategy combinations"""
+        """Learn patterns from successful query-strategy combinations."""
         # Extract query features for pattern recognition
         query_features = self._extract_query_features(plan.original_query)
 
@@ -343,7 +343,7 @@ class PlanLearner:
 
                 # Find existing entry
                 existing_idx = None
-                for i, (strategy, score) in enumerate(strategy_scores):
+                for i, (strategy, _score) in enumerate(strategy_scores):
                     if strategy == feedback.strategy:
                         existing_idx = i
                         break
@@ -366,7 +366,7 @@ class PlanLearner:
                 self.query_patterns[feature] = strategy_scores[:5]
 
     def _extract_query_features(self, query: str) -> list[str]:
-        """Extract features from query for pattern recognition"""
+        """Extract features from query for pattern recognition."""
         query_lower = query.lower()
         features = []
 
@@ -410,7 +410,7 @@ class PlanLearner:
     def _get_candidate_strategies(
         self, query_type: QueryType
     ) -> list[ReasoningStrategy]:
-        """Get candidate strategies for query type"""
+        """Get candidate strategies for query type."""
         type_strategy_map = {
             QueryType.SIMPLE_FACT: [
                 ReasoningStrategy.DIRECT_RETRIEVAL,
@@ -455,7 +455,7 @@ class PlanLearner:
         complexity_score: float,
         context: dict[str, Any],
     ) -> float:
-        """Calculate score for strategy based on learned performance"""
+        """Calculate score for strategy based on learned performance."""
         # Base score from global weight
         base_score = self.global_strategy_weights.get(strategy, 1.0)
 
@@ -507,7 +507,7 @@ class PlanLearner:
         return base_score * complexity_adjustment
 
     def _get_top_strategies(self) -> list[dict[str, Any]]:
-        """Get top performing strategies"""
+        """Get top performing strategies."""
         strategy_performance = []
 
         for strategy in ReasoningStrategy:
@@ -543,7 +543,7 @@ class PlanLearner:
         return strategy_performance[:5]
 
     def _get_problematic_combinations(self) -> list[dict[str, Any]]:
-        """Identify problematic strategy-query type combinations"""
+        """Identify problematic strategy-query type combinations."""
         problematic = []
 
         for key, metrics in self.strategy_metrics.items():
@@ -565,7 +565,7 @@ class PlanLearner:
         return problematic[:5]
 
     def _get_pattern_insights(self) -> dict[str, Any]:
-        """Get insights from learned query patterns"""
+        """Get insights from learned query patterns."""
         insights = {
             "total_patterns": len(self.query_patterns),
             "most_reliable_patterns": [],
@@ -593,7 +593,7 @@ class PlanLearner:
         return insights
 
     def _generate_recommendations(self) -> list[str]:
-        """Generate recommendations based on learning"""
+        """Generate recommendations based on learning."""
         recommendations = []
 
         # Check for consistently failing strategies

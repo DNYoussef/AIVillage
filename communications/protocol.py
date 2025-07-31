@@ -66,7 +66,7 @@ class StandardCommunicationProtocol(CommunicationProtocol):
         mcp_client: MCPClient | None = None,
         certs: dict[str, dict[str, str]] | None = None,
         cards: dict[str, dict[str, Any]] | None = None,
-    ):
+    ) -> None:
         self.message_queues: dict[str, MessageQueue] = {}
         self.subscribers: dict[
             str, list[Callable[[Message], Coroutine[Any, Any, None]]]
@@ -159,7 +159,7 @@ class StandardCommunicationProtocol(CommunicationProtocol):
             if message.sender in self.message_queues:
                 queue = self.message_queues[message.sender]
                 for _idx, resp in enumerate(queue.get_all_messages()):
-                    if resp.parent_id == message.id or resp.id == message.id:
+                    if message.id in (resp.parent_id, resp.id):
                         # remove specific response from queue
                         self.message_queues[message.sender]._queues[
                             resp.priority
@@ -167,7 +167,8 @@ class StandardCommunicationProtocol(CommunicationProtocol):
                         return resp
             await asyncio.sleep(poll_interval)
             elapsed += poll_interval
-        raise AIVillageException("Response timeout")
+        msg = "Response timeout"
+        raise AIVillageException(msg)
 
     def subscribe(
         self, agent_id: str, callback: Callable[[Message], Coroutine[Any, Any, None]]
@@ -215,7 +216,7 @@ class StandardCommunicationProtocol(CommunicationProtocol):
         self._running = True
         while self._running:
             processed = False
-            for agent_id, q in list(self.message_queues.items()):
+            for _agent_id, q in list(self.message_queues.items()):
                 msg = q.dequeue()
                 if msg is not None:
                     await handler(msg)

@@ -20,7 +20,7 @@ def validate_workflow(workflow_path: Path) -> bool:
 
         try:
             workflow = yaml.safe_load(content)
-        except yaml.YAMLError as yaml_err:
+        except yaml.YAMLError:
             # If YAML parsing fails due to shell scripts, try a more targeted approach
             print(
                 "  Warning: YAML parser encountered issues, attempting basic validation..."
@@ -72,7 +72,7 @@ def validate_workflow(workflow_path: Path) -> bool:
             )
 
             if not workflow:
-                raise yaml_err  # Re-raise original error if fallback fails
+                raise  # Re-raise original error if fallback fails
         issues = []
 
         # Check required top-level fields
@@ -193,7 +193,7 @@ def analyze_workflow_coverage(workflows_dir: Path) -> dict[str, Any]:
                 analysis["triggers"].add(triggers)
 
             # Analyze jobs
-            for job_name, job_config in jobs.items():
+            for job_config in jobs.values():
                 if isinstance(job_config, dict):
                     # Track runners
                     if "runs-on" in job_config:
@@ -234,7 +234,7 @@ def analyze_workflow_coverage(workflows_dir: Path) -> dict[str, Any]:
     return analysis
 
 
-def main():
+def main() -> int:
     """Test all workflows and provide analysis."""
     workflows_dir = Path(".github/workflows")
 

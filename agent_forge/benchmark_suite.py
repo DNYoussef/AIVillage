@@ -1,4 +1,4 @@
-"""Comprehensive Benchmarking Suite
+"""Comprehensive Benchmarking Suite.
 
 Implements standardized evaluation across multiple benchmarks:
 - MMLU (Massive Multitask Language Understanding)
@@ -115,7 +115,7 @@ class ComparisonReport:
 class MMLUEvaluator:
     """Evaluates on MMLU (Massive Multitask Language Understanding)."""
 
-    def __init__(self, config: BenchmarkConfig):
+    def __init__(self, config: BenchmarkConfig) -> None:
         self.config = config
         self.subjects = [
             "abstract_algebra",
@@ -206,7 +206,7 @@ class MMLUEvaluator:
                 subject_samples = len(dataset)
                 subject_results = []
 
-                for i, example in enumerate(dataset):
+                for _i, example in enumerate(dataset):
                     # Format question
                     question = example["question"]
                     choices = [example["choices"][j] for j in range(4)]
@@ -246,7 +246,7 @@ class MMLUEvaluator:
                 all_results.extend(subject_results)
 
             except Exception as e:
-                logger.error(f"Error evaluating MMLU subject {subject}: {e}")
+                logger.exception(f"Error evaluating MMLU subject {subject}: {e}")
                 category_scores[subject] = 0.0
 
         overall_score = total_correct / total_samples if total_samples > 0 else 0.0
@@ -345,7 +345,7 @@ Answer: C
 class GSM8KEvaluator:
     """Evaluates on GSM8K (Grade School Math 8K)."""
 
-    def __init__(self, config: BenchmarkConfig):
+    def __init__(self, config: BenchmarkConfig) -> None:
         self.config = config
 
     async def evaluate(self, model, tokenizer) -> BenchmarkResult:
@@ -363,7 +363,7 @@ class GSM8KEvaluator:
         total_correct = 0
         total_samples = len(dataset)
 
-        for i, example in enumerate(tqdm(dataset, desc="GSM8K Problems")):
+        for _i, example in enumerate(tqdm(dataset, desc="GSM8K Problems")):
             question = example["question"]
             answer = example["answer"]
 
@@ -478,7 +478,7 @@ A: The robe takes 2 bolts of blue fiber. It takes half that much white fiber, so
 class HumanEvalEvaluator:
     """Evaluates on HumanEval (Code Evaluation)."""
 
-    def __init__(self, config: BenchmarkConfig):
+    def __init__(self, config: BenchmarkConfig) -> None:
         self.config = config
 
     async def evaluate(self, model, tokenizer) -> BenchmarkResult:
@@ -496,7 +496,7 @@ class HumanEvalEvaluator:
         total_correct = 0
         total_samples = len(dataset)
 
-        for i, example in enumerate(tqdm(dataset, desc="HumanEval Problems")):
+        for _i, example in enumerate(tqdm(dataset, desc="HumanEval Problems")):
             task_id = example["task_id"]
             prompt = example["prompt"]
             canonical_solution = example["canonical_solution"]
@@ -596,7 +596,7 @@ class HumanEvalEvaluator:
 class ComprehensiveBenchmark:
     """Main benchmarking orchestrator."""
 
-    def __init__(self, config: BenchmarkConfig):
+    def __init__(self, config: BenchmarkConfig) -> None:
         self.config = config
         self.output_dir = Path(config.output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -634,7 +634,7 @@ class ComprehensiveBenchmark:
                 logger.info(f"{eval_name} Score: {result.overall_score:.4f}")
 
             except Exception as e:
-                logger.error(f"Failed to evaluate {eval_name}: {e}")
+                logger.exception(f"Failed to evaluate {eval_name}: {e}")
                 # Create dummy result for failed evaluation
                 results[eval_name] = BenchmarkResult(
                     benchmark_name=eval_name,
@@ -689,7 +689,7 @@ class ComprehensiveBenchmark:
             return model, tokenizer
 
         except Exception as e:
-            logger.error(f"Failed to load model {model_name}: {e}")
+            logger.exception(f"Failed to load model {model_name}: {e}")
             raise
 
     async def run_comprehensive_benchmark(self) -> ComparisonReport:
@@ -722,7 +722,7 @@ class ComprehensiveBenchmark:
                 baseline_results[baseline_model] = results
                 all_results[baseline_model] = results
             except Exception as e:
-                logger.error(f"Failed to benchmark baseline {baseline_model}: {e}")
+                logger.exception(f"Failed to benchmark baseline {baseline_model}: {e}")
 
         # Benchmark frontier models (if accessible)
         frontier_results = {}
@@ -969,7 +969,7 @@ class ComprehensiveBenchmark:
         self,
         all_results: dict[str, dict[str, BenchmarkResult]],
         comparison_report: ComparisonReport,
-    ):
+    ) -> None:
         """Generate comprehensive W&B report."""
         # Create comparison tables
         comparison_data = []
@@ -994,7 +994,7 @@ class ComprehensiveBenchmark:
         )
 
         # Create detailed charts
-        for benchmark_name in self.evaluators.keys():
+        for benchmark_name in self.evaluators:
             scores = []
             models = []
 
@@ -1029,7 +1029,7 @@ class ComprehensiveBenchmark:
         # Create performance radar chart
         target_scores = [
             comparison_report.target_results[bench].overall_score
-            for bench in comparison_report.target_results.keys()
+            for bench in comparison_report.target_results
         ]
 
         wandb.log(
@@ -1052,7 +1052,7 @@ class ComprehensiveBenchmark:
         self,
         all_results: dict[str, dict[str, BenchmarkResult]],
         comparison_report: ComparisonReport,
-    ):
+    ) -> None:
         """Save detailed results to files."""
         # Save individual results
         for model_name, model_results in all_results.items():
@@ -1085,7 +1085,7 @@ class ComprehensiveBenchmark:
 
 
 # CLI and main execution
-async def main():
+async def main() -> None:
     """Main benchmark execution."""
     import argparse
 

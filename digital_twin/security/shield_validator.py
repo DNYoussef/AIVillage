@@ -1,5 +1,5 @@
 """Shield Validator - AI Safety and Content Validation System
-Sprint R-5: Digital Twin MVP - Task A.3
+Sprint R-5: Digital Twin MVP - Task A.3.
 """
 
 import asyncio
@@ -52,7 +52,7 @@ class ValidationCategory(Enum):
 
 @dataclass
 class ValidationRule:
-    """Validation rule definition"""
+    """Validation rule definition."""
 
     rule_id: str
     category: ValidationCategory
@@ -69,7 +69,7 @@ class ValidationRule:
 
 @dataclass
 class ValidationResult:
-    """Result of content validation"""
+    """Result of content validation."""
 
     validation_id: str
     content_hash: str
@@ -89,7 +89,7 @@ class ValidationResult:
 
 @dataclass
 class ShieldMetrics:
-    """Shield validation metrics"""
+    """Shield validation metrics."""
 
     total_validations: int = 0
     blocked_content: int = 0
@@ -102,7 +102,7 @@ class ShieldMetrics:
 
 
 class ShieldValidator:
-    """Comprehensive AI safety and content validation system"""
+    """Comprehensive AI safety and content validation system."""
 
     def __init__(self, project_name: str = "aivillage-shield"):
         self.project_name = project_name
@@ -163,7 +163,7 @@ class ShieldValidator:
         asyncio.create_task(self.initialize_shield_system())
 
     def initialize_wandb_tracking(self):
-        """Initialize W&B tracking for Shield validation"""
+        """Initialize W&B tracking for Shield validation."""
         try:
             wandb.init(
                 project=self.project_name,
@@ -190,7 +190,7 @@ class ShieldValidator:
             logger.error(f"Failed to initialize W&B tracking: {e}")
 
     def init_database(self):
-        """Initialize database for validation logs"""
+        """Initialize database for validation logs."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -260,7 +260,7 @@ class ShieldValidator:
             logger.error(f"Failed to initialize database: {e}")
 
     async def initialize_shield_system(self):
-        """Initialize shield system with rules and models"""
+        """Initialize shield system with rules and models."""
         logger.info("Initializing Shield validation system...")
 
         # Load validation rules
@@ -281,7 +281,7 @@ class ShieldValidator:
         logger.info("Shield validation system initialized")
 
     async def load_validation_rules(self):
-        """Load comprehensive validation rules"""
+        """Load comprehensive validation rules."""
         # Safety rules
         safety_rules = [
             ValidationRule(
@@ -434,7 +434,7 @@ class ShieldValidator:
         logger.info(f"Loaded {len(all_rules)} validation rules")
 
     async def initialize_ml_models(self):
-        """Initialize ML models for content analysis"""
+        """Initialize ML models for content analysis."""
         try:
             # Toxicity classifier
             self.toxicity_classifier = pipeline(
@@ -456,7 +456,7 @@ class ShieldValidator:
             logger.warning(f"Failed to initialize some ML models: {e}")
 
     async def load_content_filters(self):
-        """Load content filter lists"""
+        """Load content filter lists."""
         # Basic profanity filter (placeholder - in production would load from secure source)
         self.profanity_filter = {
             "damn",
@@ -511,7 +511,7 @@ class ShieldValidator:
         logger.info("Content filters loaded")
 
     async def initialize_nlp_processor(self):
-        """Initialize NLP processor for advanced text analysis"""
+        """Initialize NLP processor for advanced text analysis."""
         if SPACY_AVAILABLE:
             try:
                 import spacy
@@ -534,7 +534,7 @@ class ShieldValidator:
         student_age: int = 10,
         context: dict[str, Any] = None,
     ) -> ValidationResult:
-        """Comprehensive content validation"""
+        """Comprehensive content validation."""
         start_time = asyncio.get_event_loop().time()
 
         # Generate content hash for caching and tracking
@@ -650,7 +650,7 @@ class ShieldValidator:
     async def _check_safety(
         self, content: str, student_age: int, violations: list, warnings: list
     ) -> float:
-        """Check content safety"""
+        """Check content safety."""
         safety_score = 1.0
         content_lower = content.lower()
 
@@ -745,7 +745,7 @@ class ShieldValidator:
     async def _check_privacy(
         self, content: str, violations: list, warnings: list
     ) -> float:
-        """Check privacy compliance"""
+        """Check privacy compliance."""
         privacy_score = 1.0
 
         # Check privacy rules
@@ -807,7 +807,7 @@ class ShieldValidator:
     async def _check_content_appropriateness(
         self, content: str, student_age: int, violations: list, warnings: list
     ) -> float:
-        """Check content appropriateness"""
+        """Check content appropriateness."""
         content_score = 1.0
         content_lower = content.lower()
 
@@ -852,7 +852,7 @@ class ShieldValidator:
     async def _check_educational_value(
         self, content: str, student_age: int, warnings: list
     ) -> float:
-        """Check educational value of content"""
+        """Check educational value of content."""
         educational_score = 0.5  # Start neutral
         content_lower = content.lower()
 
@@ -913,7 +913,7 @@ class ShieldValidator:
     async def _check_age_appropriateness(
         self, content: str, student_age: int, warnings: list
     ) -> float:
-        """Check age appropriateness of content"""
+        """Check age appropriateness of content."""
         age_score = 1.0
 
         # Get age guidelines
@@ -979,7 +979,7 @@ class ShieldValidator:
     async def _check_technical_safety(
         self, content: str, violations: list, warnings: list
     ) -> float:
-        """Check for technical safety issues like prompt injection"""
+        """Check for technical safety issues like prompt injection."""
         technical_score = 1.0
 
         # Check technical rules
@@ -1042,7 +1042,7 @@ class ShieldValidator:
         safety_score: float,
         educational_value: float,
     ) -> list[str]:
-        """Generate content improvement recommendations"""
+        """Generate content improvement recommendations."""
         recommendations = []
 
         # Safety recommendations
@@ -1089,7 +1089,7 @@ class ShieldValidator:
         return recommendations
 
     async def _save_validation_result(self, result: ValidationResult):
-        """Save validation result to database"""
+        """Save validation result to database."""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -1126,7 +1126,7 @@ class ShieldValidator:
             logger.error(f"Failed to save validation result: {e}")
 
     def _update_metrics(self, result: ValidationResult):
-        """Update shield metrics"""
+        """Update shield metrics."""
         self.metrics.total_validations += 1
 
         if not result.passed:
@@ -1158,7 +1158,7 @@ class ShieldValidator:
             self.metrics.common_violations[violation.get("rule_id", "unknown")] += 1
 
     async def process_validation_queue(self):
-        """Process validation requests from queue"""
+        """Process validation requests from queue."""
         while True:
             try:
                 # Get validation request from queue
@@ -1177,7 +1177,7 @@ class ShieldValidator:
     async def batch_validate(
         self, content_list: list[dict[str, Any]]
     ) -> list[ValidationResult]:
-        """Validate multiple content items efficiently"""
+        """Validate multiple content items efficiently."""
         results = []
 
         # Process in parallel with semaphore to limit concurrency
@@ -1206,7 +1206,7 @@ class ShieldValidator:
     async def get_validation_analytics(
         self, student_id: str = None, days: int = 7
     ) -> dict[str, Any]:
-        """Get validation analytics"""
+        """Get validation analytics."""
         # Filter results by student and time period
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
 
@@ -1274,7 +1274,7 @@ class ShieldValidator:
     async def export_validation_report(
         self, student_id: str, format: str = "json"
     ) -> str:
-        """Export detailed validation report"""
+        """Export detailed validation report."""
         # Get student's validation history
         student_results = [
             r for r in self.validation_history if r.student_id == student_id
@@ -1295,7 +1295,7 @@ class ShieldValidator:
         return str(report)
 
     def get_shield_status(self) -> dict[str, Any]:
-        """Get current shield system status"""
+        """Get current shield system status."""
         return {
             "status": "active",
             "version": "2.0.0-enterprise",

@@ -1,5 +1,5 @@
 """Mathematical Fitness Evaluator for Tutor Models
-Sprint R-4+AF1: Agent Forge Phase 1 - Task B.3
+Sprint R-4+AF1: Agent Forge Phase 1 - Task B.3.
 """
 
 import asyncio
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class MathProblem:
-    """Mathematical problem for evaluation"""
+    """Mathematical problem for evaluation."""
 
     problem_id: str
     category: str  # arithmetic, algebra, geometry, word_problems, etc.
@@ -36,7 +36,7 @@ class MathProblem:
 
 @dataclass
 class EvaluationResult:
-    """Result of model evaluation on a problem"""
+    """Result of model evaluation on a problem."""
 
     problem_id: str
     model_response: str
@@ -52,7 +52,7 @@ class EvaluationResult:
 
 
 class MathFitnessEvaluator:
-    """Comprehensive evaluation system for math tutoring model fitness"""
+    """Comprehensive evaluation system for math tutoring model fitness."""
 
     def __init__(self, project_name: str = "agent-forge"):
         self.project_name = project_name
@@ -81,7 +81,7 @@ class MathFitnessEvaluator:
         asyncio.create_task(self.initialize_test_suite())
 
     async def initialize_test_suite(self):
-        """Initialize comprehensive test suite for K-8 mathematics"""
+        """Initialize comprehensive test suite for K-8 mathematics."""
         logger.info("Initializing mathematical fitness evaluation test suite")
 
         # Arithmetic problems (Grades K-3)
@@ -326,7 +326,7 @@ class MathFitnessEvaluator:
     async def evaluate(
         self, model, tokenizer, individual_id: str = None, log_details: bool = True
     ) -> float:
-        """Comprehensive fitness evaluation of a math tutoring model"""
+        """Comprehensive fitness evaluation of a math tutoring model."""
         logger.info(f"Evaluating model {individual_id or 'unknown'}")
 
         start_time = asyncio.get_event_loop().time()
@@ -437,7 +437,7 @@ class MathFitnessEvaluator:
     async def evaluate_problem(
         self, model, tokenizer, problem: MathProblem
     ) -> EvaluationResult:
-        """Evaluate model performance on a single math problem"""
+        """Evaluate model performance on a single math problem."""
         start_time = asyncio.get_event_loop().time()
 
         # Create tutoring prompt
@@ -510,7 +510,7 @@ class MathFitnessEvaluator:
             )
 
     def create_tutoring_prompt(self, problem: MathProblem) -> str:
-        """Create an appropriate tutoring prompt for the problem"""
+        """Create an appropriate tutoring prompt for the problem."""
         grade_descriptor = self.get_grade_descriptor(problem.grade_level)
 
         prompt = f"""You are a helpful math tutor working with {grade_descriptor}. Your goal is to help students learn by explaining concepts clearly and encouraging them.
@@ -528,7 +528,7 @@ Your response:"""
         return prompt
 
     def get_grade_descriptor(self, grade_level: int) -> str:
-        """Get appropriate grade level descriptor"""
+        """Get appropriate grade level descriptor."""
         if grade_level == 0:
             return "a kindergarten student"
         if grade_level <= 3:
@@ -546,7 +546,7 @@ Your response:"""
     async def generate_model_response(
         self, model, tokenizer, prompt: str, max_length: int = 200
     ) -> str:
-        """Generate response from model"""
+        """Generate response from model."""
         try:
             # Tokenize input
             inputs = tokenizer(
@@ -580,7 +580,7 @@ Your response:"""
             return "I'm having trouble generating a response right now."
 
     def evaluate_correctness(self, response: str, problem: MathProblem) -> float:
-        """Evaluate correctness of the mathematical answer"""
+        """Evaluate correctness of the mathematical answer."""
         response_lower = response.lower()
         expected_answer = problem.expected_answer.lower()
 
@@ -606,7 +606,7 @@ Your response:"""
             for num_str in response_numbers:
                 if abs(float(num_str) - float(expected_num)) < 0.01:
                     return 0.7
-        except:
+        except Exception:
             pass
 
         # Check for conceptual understanding even if answer is wrong
@@ -617,7 +617,7 @@ Your response:"""
         return 0.0
 
     def evaluate_step_by_step(self, response: str, problem: MathProblem) -> float:
-        """Evaluate quality of step-by-step explanation"""
+        """Evaluate quality of step-by-step explanation."""
         response_lower = response.lower()
         score = 0.0
 
@@ -683,7 +683,7 @@ Your response:"""
     def evaluate_explanation_quality(
         self, response: str, problem: MathProblem
     ) -> float:
-        """Evaluate overall quality of explanation"""
+        """Evaluate overall quality of explanation."""
         response_lower = response.lower()
         score = 0.0
 
@@ -745,7 +745,7 @@ Your response:"""
         return min(1.0, score)
 
     def evaluate_encouragement(self, response: str) -> float:
-        """Evaluate presence and quality of encouragement"""
+        """Evaluate presence and quality of encouragement."""
         response_lower = response.lower()
         score = 0.0
 
@@ -813,7 +813,7 @@ Your response:"""
     def evaluate_cultural_sensitivity(
         self, response: str, problem: MathProblem
     ) -> float:
-        """Evaluate cultural sensitivity and inclusiveness"""
+        """Evaluate cultural sensitivity and inclusiveness."""
         response_lower = response.lower()
         score = 0.8  # Start with high baseline
 
@@ -865,7 +865,7 @@ Your response:"""
         encouragement: float,
         cultural: float,
     ) -> str:
-        """Generate detailed feedback on model performance"""
+        """Generate detailed feedback on model performance."""
         feedback_parts = []
 
         # Correctness feedback
@@ -911,7 +911,7 @@ Your response:"""
         return "; ".join(feedback_parts)
 
     def calculate_weighted_fitness(self, category_scores: dict[str, float]) -> float:
-        """Calculate overall weighted fitness score from category scores"""
+        """Calculate overall weighted fitness score from category scores."""
         # Category weights based on importance for math tutoring
         category_weights = {
             "arithmetic": 0.25,  # Foundational skills
@@ -938,7 +938,7 @@ Your response:"""
         return min(1.0, max(0.0, final_score))
 
     def get_performance_level(self, fitness_score: float) -> str:
-        """Get performance level description"""
+        """Get performance level description."""
         if fitness_score >= self.performance_thresholds["excellent"]:
             return "excellent"
         if fitness_score >= self.performance_thresholds["good"]:
@@ -948,7 +948,7 @@ Your response:"""
         return "poor"
 
     def get_evaluation_analytics(self) -> dict[str, Any]:
-        """Get comprehensive evaluation analytics"""
+        """Get comprehensive evaluation analytics."""
         if not self.evaluation_history:
             return {"message": "No evaluations completed yet"}
 

@@ -1,0 +1,423 @@
+name: Production Deployment Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'agent_forge/**'
+      - 'mcp_servers/**'
+      - 'production/**'
+      - 'experimental/services/**'
+      - 'communications/**'
+      - 'deploy/**'
+      - 'docker-compose.yml'
+      - 'Dockerfile*'
+  pull_request:
+    branches: [main]
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      force_rebuild:
+        description: 'Force rebuild all images'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: aivillage
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  security-scan:
+    name: Security & Quality Gates
+    runs-on: ubuntu-latest
+    outputs:
+      security-passed: ${{ steps.security-check.outputs.passed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install security tools
+        run: |
+          pip install bandit safety semgrep
+          
+      - name: Run Bandit security scan
+        run: |
+          bandit -r . -f json -o bandit-report.json || true
+          bandit -r . -ll
+          
+      - name: Run Safety dependency check
+        run: |
+          safety check --json --output safety-report.json || true
+          safety check
+          
+      - name: Run Semgrep SAST
+        run: |
+          semgrep --config=auto --json --output=semgrep-report.json . || true
+          semgrep --config=auto .
+          
+      - name: Security Check Gate
+        id: security-check
+        run: |
+          # Parse security reports and determine if deployment should proceed
+          python -c "
+          import json
+          import sys
+          
+          try:
+              with open('bandit-report.json') as f:
+                  bandit = json.load(f)
+              high_severity = len([r for r in bandit.get('results', []) if r.get('issue_severity') == 'HIGH'])
+              
+              if high_severity > 0:
+                  print(f'SECURITY GATE FAILED: {high_severity} high severity issues found')
+                  sys.exit(1)
+              
+              print('SECURITY GATE PASSED')
+              print('passed=true' >> \$GITHUB_OUTPUT)
+          except Exception as e:
+              print(f'Security check failed: {e}')
+              sys.exit(1)
+          "
+
+  pre-deployment-tests:
+    name: Pre-Deployment Test Suite
+    runs-on: ubuntu-latest
+    needs: security-scan
+    if: needs.security-scan.outputs.security-passed == 'true'
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      neo4j:
+        image: neo4j:5.11-community
+        env:
+          NEO4J_AUTH: neo4j/test_password
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p test_password 'RETURN 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          
+      - name: Run comprehensive test suite
+        env:
+          DATABASE_URL: postgresql://postgres:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+          NEO4J_URI: bolt://localhost:7687
+          NEO4J_USER: neo4j
+          NEO4J_PASSWORD: test_password
+        run: |
+          python -m pytest tests/ -v --cov=. --cov-report=xml --cov-report=html --tb=short
+          
+      - name: Run integration tests
+        run: |
+          python run_comprehensive_tests.py --integration
+          
+      - name: Performance benchmarks
+        run: |
+          python -m pytest benchmarks/ -v --benchmark-only --benchmark-json=benchmark-results.json
+          
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: |
+            htmlcov/
+            benchmark-results.json
+            coverage.xml
+
+  build-images:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [security-scan, pre-deployment-tests]
+    if: needs.security-scan.outputs.security-passed == 'true'
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      digest: ${{ steps.build.outputs.digest }}
+    strategy:
+      matrix:
+        service: 
+          - hyperag-mcp
+          - gateway
+          - twin
+          - credits-api
+          - credits-worker
+          - agent-forge
+          - compression-service
+          - evolution-engine
+          - mesh-network
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: deploy/docker/Dockerfile.${{ matrix.service }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  staging-deployment:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-images
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+          
+      - name: Configure kubectl for staging
+        run: |
+          echo "${{ secrets.STAGING_KUBECONFIG }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+          kubectl config current-context
+          
+      - name: Deploy to staging with Helm
+        run: |
+          helm upgrade --install aivillage-staging ./deploy/helm/aivillage \
+            --namespace aivillage-staging \
+            --create-namespace \
+            --set image.tag=${{ needs.build-images.outputs.image-tag }} \
+            --set environment=staging \
+            --set-file secrets.mcp_jwt_secret=<(echo "${{ secrets.STAGING_MCP_JWT_SECRET }}") \
+            --values deploy/helm/aivillage/values-staging.yaml \
+            --wait --timeout=10m
+            
+      - name: Run staging smoke tests
+        run: |
+          export KUBECONFIG=kubeconfig
+          python deploy/scripts/smoke_tests.py --environment=staging --namespace=aivillage-staging
+          
+      - name: Health check
+        run: |
+          python deploy/scripts/health_check.py --environment=staging
+          
+  production-deployment:
+    name: Deploy to Production (Blue-Green)
+    runs-on: ubuntu-latest
+    needs: [build-images, staging-deployment]
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+          
+      - name: Configure kubectl for production
+        run: |
+          echo "${{ secrets.PRODUCTION_KUBECONFIG }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+          kubectl config current-context
+          
+      - name: Determine deployment slot (Blue/Green)
+        id: deployment-slot
+        run: |
+          export KUBECONFIG=kubeconfig
+          CURRENT_SLOT=$(kubectl get service aivillage-active -o jsonpath='{.spec.selector.slot}' 2>/dev/null || echo "blue")
+          if [ "$CURRENT_SLOT" = "blue" ]; then
+            DEPLOY_SLOT="green"
+          else
+            DEPLOY_SLOT="blue"
+          fi
+          echo "current-slot=$CURRENT_SLOT" >> $GITHUB_OUTPUT
+          echo "deploy-slot=$DEPLOY_SLOT" >> $GITHUB_OUTPUT
+          echo "Deploying to $DEPLOY_SLOT slot (currently active: $CURRENT_SLOT)"
+          
+      - name: Deploy to inactive slot
+        run: |
+          export KUBECONFIG=kubeconfig
+          helm upgrade --install aivillage-${{ steps.deployment-slot.outputs.deploy-slot }} ./deploy/helm/aivillage \
+            --namespace aivillage-production \
+            --create-namespace \
+            --set image.tag=${{ needs.build-images.outputs.image-tag }} \
+            --set environment=production \
+            --set deployment.slot=${{ steps.deployment-slot.outputs.deploy-slot }} \
+            --set-file secrets.mcp_jwt_secret=<(echo "${{ secrets.PRODUCTION_MCP_JWT_SECRET }}") \
+            --values deploy/helm/aivillage/values-production.yaml \
+            --wait --timeout=15m
+            
+      - name: Run production readiness tests
+        run: |
+          export KUBECONFIG=kubeconfig
+          python deploy/scripts/readiness_tests.py \
+            --environment=production \
+            --namespace=aivillage-production \
+            --slot=${{ steps.deployment-slot.outputs.deploy-slot }}
+            
+      - name: Switch traffic to new deployment
+        id: traffic-switch
+        run: |
+          export KUBECONFIG=kubeconfig
+          # Update active service selector to point to new slot
+          kubectl patch service aivillage-active -p '{"spec":{"selector":{"slot":"${{ steps.deployment-slot.outputs.deploy-slot }}"}}}' \
+            --namespace aivillage-production
+          
+          # Wait for traffic switch to complete
+          sleep 30
+          
+          echo "Traffic switched to ${{ steps.deployment-slot.outputs.deploy-slot }} slot"
+          
+      - name: Verify production deployment
+        run: |
+          python deploy/scripts/production_verification.py \
+            --environment=production \
+            --slot=${{ steps.deployment-slot.outputs.deploy-slot }}
+            
+      - name: Cleanup old deployment
+        if: success()
+        run: |
+          export KUBECONFIG=kubeconfig
+          # Remove old deployment after successful verification
+          helm uninstall aivillage-${{ steps.deployment-slot.outputs.current-slot }} \
+            --namespace aivillage-production || true
+            
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: production-deployment
+    if: failure() && needs.production-deployment.steps.traffic-switch.conclusion == 'success'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+          
+      - name: Configure kubectl for production
+        run: |
+          echo "${{ secrets.PRODUCTION_KUBECONFIG }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+          
+      - name: Rollback traffic to previous slot
+        run: |
+          export KUBECONFIG=kubeconfig
+          PREVIOUS_SLOT="${{ needs.production-deployment.outputs.current-slot }}"
+          kubectl patch service aivillage-active -p "{\"spec\":{\"selector\":{\"slot\":\"$PREVIOUS_SLOT\"}}}" \
+            --namespace aivillage-production
+          echo "Traffic rolled back to $PREVIOUS_SLOT slot"
+          
+      - name: Notify on rollback
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: "🚨 Production deployment failed and was rolled back"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  notify:
+    name: Deployment Notifications
+    runs-on: ubuntu-latest
+    needs: [production-deployment]
+    if: always()
+    steps:
+      - name: Notify success
+        if: needs.production-deployment.result == 'success'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: "✅ Production deployment completed successfully"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          
+      - name: Notify failure
+        if: needs.production-deployment.result == 'failure'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: "❌ Production deployment failed"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

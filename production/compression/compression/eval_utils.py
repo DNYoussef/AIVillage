@@ -9,7 +9,7 @@ import torch
 
 @dataclass
 class EvaluationResult:
-    """Results from compression evaluation"""
+    """Results from compression evaluation."""
 
     accuracy: float
     original_size_mb: float
@@ -21,7 +21,7 @@ class EvaluationResult:
 
 
 class CompressionEvaluator:
-    """Evaluation harness for compression pipeline"""
+    """Evaluation harness for compression pipeline."""
 
     def __init__(self, model_path: str, tokenizer_path: str | None = None):
         self.model_path = model_path
@@ -29,7 +29,7 @@ class CompressionEvaluator:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
     def load_hellaswag_sample(self, sample_path: str) -> list[dict]:
-        """Load HellaSwag evaluation sample"""
+        """Load HellaSwag evaluation sample."""
         if not os.path.exists(sample_path):
             return self._generate_hellaswag_sample(sample_path)
 
@@ -37,7 +37,7 @@ class CompressionEvaluator:
             return [json.loads(line) for line in f]
 
     def _generate_hellaswag_sample(self, sample_path: str) -> list[dict]:
-        """Generate sample HellaSwag data for testing"""
+        """Generate sample HellaSwag data for testing."""
         sample_data = [
             {
                 "ctx": "A person is trying to cut a piece of paper with scissors. The paper is thick and the scissors are dull. The person should",
@@ -79,7 +79,7 @@ class CompressionEvaluator:
         return sample_data
 
     def evaluate_model_accuracy(self, model, tokenizer, eval_data: list[dict]) -> float:
-        """Evaluate model accuracy on HellaSwag-style data"""
+        """Evaluate model accuracy on HellaSwag-style data."""
         model.eval()
         correct = 0
         total = len(eval_data)
@@ -125,14 +125,14 @@ class CompressionEvaluator:
         return correct / total
 
     def measure_model_size(self, model) -> float:
-        """Measure model size in MB"""
+        """Measure model size in MB."""
         with tempfile.NamedTemporaryFile() as tmp:
             torch.save(model.state_dict(), tmp.name)
             size_bytes = os.path.getsize(tmp.name)
             return size_bytes / (1024 * 1024)
 
     def measure_inference_time(self, model, tokenizer, num_samples: int = 10) -> float:
-        """Measure average inference time in milliseconds"""
+        """Measure average inference time in milliseconds."""
         model.eval()
         test_input = "The quick brown fox jumps over the lazy dog."
 
@@ -151,7 +151,7 @@ class CompressionEvaluator:
         return sum(times) / len(times)
 
     def measure_memory_usage(self, model) -> float:
-        """Measure model memory usage in MB"""
+        """Measure model memory usage in MB."""
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
             torch.cuda.reset_peak_memory_stats()
@@ -172,7 +172,7 @@ class CompressionEvaluator:
     def evaluate_compressed_model(
         self, original_model, compressed_model, tokenizer, eval_data: list[dict]
     ) -> EvaluationResult:
-        """Comprehensive evaluation of compressed model"""
+        """Comprehensive evaluation of compressed model."""
         # Accuracy evaluation
         accuracy = self.evaluate_model_accuracy(compressed_model, tokenizer, eval_data)
 
@@ -197,7 +197,7 @@ class CompressionEvaluator:
         )
 
     def print_evaluation_report(self, result: EvaluationResult):
-        """Print formatted evaluation report"""
+        """Print formatted evaluation report."""
         print("\n" + "=" * 50)
         print("COMPRESSION EVALUATION REPORT")
         print("=" * 50)
@@ -215,7 +215,7 @@ class CompressionEvaluator:
         max_accuracy_drop: float = 0.05,
         min_compression_ratio: float = 10.0,
     ) -> bool:
-        """Check if compression meets constraints"""
+        """Check if compression meets constraints."""
         # Note: Would need baseline accuracy for proper accuracy drop calculation
         # For now, assuming we want accuracy > (1 - max_accuracy_drop)
         accuracy_ok = result.accuracy > (1.0 - max_accuracy_drop)

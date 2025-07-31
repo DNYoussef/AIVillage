@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HypeRAG Graph Repair Test Suite
+"""HypeRAG Graph Repair Test Suite.
 
 Injects controlled violations into test knowledge graphs and measures the repair pipeline's ability to:
 - Detect violations (Detection Recall)
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class RepairTestMetrics:
-    """Repair test suite results"""
+    """Repair test suite results."""
 
     detection_recall: float
     proposal_validity: float
@@ -55,7 +55,7 @@ class RepairTestMetrics:
 
 @dataclass
 class InjectedViolation:
-    """A violation injected into the test graph"""
+    """A violation injected into the test graph."""
 
     violation_id: str
     violation_type: str
@@ -69,7 +69,7 @@ class InjectedViolation:
 
 @dataclass
 class TestGraphNode:
-    """Node in test graph"""
+    """Node in test graph."""
 
     id: str
     type: str
@@ -78,7 +78,7 @@ class TestGraphNode:
 
 @dataclass
 class TestGraphEdge:
-    """Edge in test graph"""
+    """Edge in test graph."""
 
     id: str
     source: str
@@ -88,13 +88,13 @@ class TestGraphEdge:
 
 
 class ViolationInjector:
-    """Injects controlled violations into test knowledge graphs"""
+    """Injects controlled violations into test knowledge graphs."""
 
     def __init__(self):
         self.violation_templates = self._create_violation_templates()
 
     def _create_violation_templates(self) -> dict[str, dict]:
-        """Create templates for different violation types"""
+        """Create templates for different violation types."""
         return {
             "allergy_conflict": {
                 "description": "Patient prescribed drug they are allergic to",
@@ -143,7 +143,7 @@ class ViolationInjector:
     def create_medical_test_graph(
         self,
     ) -> tuple[list[TestGraphNode], list[TestGraphEdge]]:
-        """Create a medical domain test graph"""
+        """Create a medical domain test graph."""
         nodes = [
             # Patients
             TestGraphNode(
@@ -221,7 +221,7 @@ class ViolationInjector:
     def inject_allergy_conflict(
         self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]
     ) -> InjectedViolation:
-        """Inject an allergy conflict violation"""
+        """Inject an allergy conflict violation."""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
         # Find a patient with an allergy
@@ -301,7 +301,7 @@ class ViolationInjector:
     def inject_duplicate_identity(
         self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]
     ) -> InjectedViolation:
-        """Inject a duplicate identity violation"""
+        """Inject a duplicate identity violation."""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
         # Create a duplicate of an existing patient
@@ -349,7 +349,7 @@ class ViolationInjector:
     def inject_temporal_inconsistency(
         self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]
     ) -> InjectedViolation:
-        """Inject a temporal inconsistency violation"""
+        """Inject a temporal inconsistency violation."""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
         # Find an edge with a date property and make it inconsistent
@@ -397,7 +397,7 @@ class ViolationInjector:
     def inject_missing_critical_property(
         self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]
     ) -> InjectedViolation:
-        """Inject a missing critical property violation"""
+        """Inject a missing critical property violation."""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
         # Find a drug node and remove its dosage from a prescription
@@ -441,7 +441,7 @@ class ViolationInjector:
     def inject_orphaned_relationship(
         self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]
     ) -> InjectedViolation:
-        """Inject an orphaned relationship violation"""
+        """Inject an orphaned relationship violation."""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
         # Create an edge pointing to a non-existent node
@@ -474,7 +474,7 @@ class ViolationInjector:
 
 
 class RepairTestSuite:
-    """Main repair test suite evaluation system"""
+    """Main repair test suite evaluation system."""
 
     def __init__(
         self,
@@ -491,7 +491,7 @@ class RepairTestSuite:
         self.test_results = []
 
     async def run_comprehensive_repair_tests(self) -> RepairTestMetrics:
-        """Run the complete repair test suite"""
+        """Run the complete repair test suite."""
         logger.info("Starting HypeRAG Graph Repair Test Suite...")
 
         # Test different violation types
@@ -542,7 +542,7 @@ class RepairTestSuite:
     async def _run_single_violation_test(
         self, violation_type: str, test_num: int
     ) -> dict[str, Any]:
-        """Run a single violation test"""
+        """Run a single violation test."""
         test_id = f"{violation_type}_{test_num}"
         logger.debug(f"Running test {test_id}")
 
@@ -612,7 +612,7 @@ class RepairTestSuite:
     def _convert_to_graph_format(
         self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]
     ) -> dict[str, Any]:
-        """Convert test nodes/edges to graph format"""
+        """Convert test nodes/edges to graph format."""
         return {
             "nodes": [
                 {"id": n.id, "type": n.type, "properties": n.properties} for n in nodes
@@ -630,7 +630,7 @@ class RepairTestSuite:
         }
 
     async def _detect_violations(self, graph: dict[str, Any]) -> list[dict[str, Any]]:
-        """Mock violation detection - in reality would use ViolationExtractor"""
+        """Mock violation detection - in reality would use ViolationExtractor."""
         detected = []
 
         # Mock detection logic based on common patterns
@@ -697,7 +697,7 @@ class RepairTestSuite:
                                 "affected_elements": [edge["id"]],
                             }
                         )
-                except:
+                except Exception:
                     pass  # Invalid date format
 
         # Check for duplicate identities (simplified)
@@ -724,7 +724,7 @@ class RepairTestSuite:
     async def _generate_repair_proposals(
         self, violation: dict[str, Any], graph: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Mock repair proposal generation - in reality would use InnovatorAgent"""
+        """Mock repair proposal generation - in reality would use InnovatorAgent."""
         proposals = []
 
         violation_type = violation["type"]
@@ -807,7 +807,7 @@ class RepairTestSuite:
     async def _validate_with_guardian(
         self, proposal: dict[str, Any], violations: list[dict[str, Any]]
     ) -> dict[str, Any]:
-        """Validate repair proposal with Guardian Gate"""
+        """Validate repair proposal with Guardian Gate."""
         # Mock Guardian validation
         confidence = proposal.get("confidence", 0.5)
         operation = proposal.get("operation", "unknown")
@@ -833,7 +833,7 @@ class RepairTestSuite:
     async def _check_residual_violations(
         self, graph: dict[str, Any], applied_repairs: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """Check for violations remaining after repairs"""
+        """Check for violations remaining after repairs."""
         # Mock residual violation checking
         # In reality, this would apply the repairs to the graph and re-run detection
 
@@ -861,7 +861,7 @@ class RepairTestSuite:
         proposals: list[dict[str, Any]],
         guardian_decisions: list[dict[str, Any]],
     ) -> RepairTestMetrics:
-        """Calculate repair test metrics"""
+        """Calculate repair test metrics."""
         # Detection Recall: What fraction of injected violations were detected?
         expected_detections = sum(1 for v in violations if v.expected_detection)
         actual_detections = len(detections)
@@ -914,7 +914,7 @@ class RepairTestSuite:
         )
 
     async def _save_test_results(self, metrics: RepairTestMetrics):
-        """Save test results to files"""
+        """Save test results to files."""
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
         # Save detailed results

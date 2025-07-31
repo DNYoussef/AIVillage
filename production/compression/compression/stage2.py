@@ -1,4 +1,4 @@
-"""Stage 2 Compression Pipeline - VPTQ + HyperFn Implementation
+"""Stage 2 Compression Pipeline - VPTQ + HyperFn Implementation.
 
 This module implements the Stage 2 compression pipeline that applies
 VPTQ quantization and optional hyper-function compression to Stage 1 outputs.
@@ -14,6 +14,7 @@ Pipeline:
 import logging
 import os
 from pathlib import Path
+import sys
 import time
 from typing import Any
 
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class Stage2Compressor:
-    """Main Stage 2 compression pipeline orchestrator"""
+    """Main Stage 2 compression pipeline orchestrator."""
 
     def __init__(
         self,
@@ -35,7 +36,7 @@ class Stage2Compressor:
         vptq_vector_length: int = 32,
         use_hyperfn: bool = True,
         hyperfn_clusters: int = 16,
-    ):
+    ) -> None:
         self.vptq = VPTQQuantizer(vptq_bits, vptq_vector_length)
         self.hyperfn = (
             HyperCompressionEncoder(hyperfn_clusters) if use_hyperfn else None
@@ -46,7 +47,7 @@ class Stage2Compressor:
         logging.basicConfig(level=logging.INFO)
 
     def load_stage1_model(self, stage1_path: str) -> tuple[dict, dict]:
-        """Load Stage 1 compressed model"""
+        """Load Stage 1 compressed model."""
         logger.info(f"Loading Stage 1 model from {stage1_path}")
 
         try:
@@ -68,13 +69,13 @@ class Stage2Compressor:
             return compressed_weights, metadata
 
         except Exception as e:
-            logger.error(f"Failed to load Stage 1 model: {e}")
+            logger.exception(f"Failed to load Stage 1 model: {e}")
             raise
 
     def decompress_stage1_weights(
         self, compressed_weights: dict
     ) -> dict[str, torch.Tensor]:
-        """Decompress Stage 1 weights for Stage 2 processing"""
+        """Decompress Stage 1 weights for Stage 2 processing."""
         logger.info("Decompressing Stage 1 weights")
 
         decompressed_weights = {}
@@ -95,7 +96,7 @@ class Stage2Compressor:
     def apply_vptq_quantization(
         self, weights: dict[str, torch.Tensor]
     ) -> dict[str, Any]:
-        """Apply VPTQ quantization to decompressed weights"""
+        """Apply VPTQ quantization to decompressed weights."""
         logger.info("Applying VPTQ quantization")
 
         vptq_data = {}
@@ -138,7 +139,7 @@ class Stage2Compressor:
         }
 
     def apply_hyperfn_compression(self, vptq_data: dict[str, Any]) -> dict[str, Any]:
-        """Apply hyper-function compression to VPTQ data"""
+        """Apply hyper-function compression to VPTQ data."""
         if not self.use_hyperfn:
             logger.info("Hyper-function compression disabled")
             return {"hyperfn_data": vptq_data, "compression_stats": {}}
@@ -197,7 +198,7 @@ class Stage2Compressor:
     def save_stage2_model(
         self, compressed_data: dict, metadata: dict, output_path: str
     ) -> None:
-        """Save Stage 2 compressed model"""
+        """Save Stage 2 compressed model."""
         logger.info(f"Saving Stage 2 model to {output_path}")
 
         # Create output directory
@@ -225,7 +226,7 @@ class Stage2Compressor:
     def evaluate_compression(
         self, original_weights: dict, compressed_data: dict
     ) -> dict:
-        """Evaluate Stage 2 compression quality"""
+        """Evaluate Stage 2 compression quality."""
         logger.info("Evaluating Stage 2 compression")
 
         # Calculate overall compression statistics
@@ -235,7 +236,7 @@ class Stage2Compressor:
 
         # Estimate compressed size (simplified)
         total_compressed_size = 0
-        for name, data in compressed_data.items():
+        for data in compressed_data.values():
             if isinstance(data, dict):
                 # Rough estimate of compressed size
                 total_compressed_size += len(str(data)) * 4  # Very rough estimate
@@ -264,7 +265,7 @@ class Stage2Compressor:
         }
 
     def run_pipeline(self, stage1_path: str, output_path: str) -> dict:
-        """Execute the complete Stage 2 compression pipeline"""
+        """Execute the complete Stage 2 compression pipeline."""
         start_time = time.time()
 
         try:
@@ -314,7 +315,7 @@ class Stage2Compressor:
             return results
 
         except Exception as e:
-            logger.error(f"Stage 2 compression failed: {e}")
+            logger.exception(f"Stage 2 compression failed: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -322,8 +323,8 @@ class Stage2Compressor:
             }
 
 
-def main():
-    """CLI entry point for Stage 2 compression"""
+def main() -> None:
+    """CLI entry point for Stage 2 compression."""
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -364,7 +365,7 @@ def main():
     # Validate input file
     if not os.path.exists(args.input):
         logger.error(f"Input file not found: {args.input}")
-        exit(1)
+        sys.exit(1)
 
     # Create compressor
     compressor = Stage2Compressor(
@@ -393,7 +394,7 @@ def main():
         print(f"📁 Output: {results['output_path']}")
     else:
         print(f"❌ Stage 2 compression failed: {results['error']}")
-        exit(1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

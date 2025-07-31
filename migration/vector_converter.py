@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Vector to Hypergraph Converter
+"""Vector to Hypergraph Converter.
 
 Converts existing vector store embeddings (FAISS/Qdrant) to HypeRAG hypergraph entities.
 Preserves semantic information while enabling graph-based reasoning.
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class VectorDocument:
-    """Document with vector embedding and metadata"""
+    """Document with vector embedding and metadata."""
 
     doc_id: str
     embedding: np.ndarray
@@ -40,7 +40,7 @@ class VectorDocument:
 
 @dataclass
 class ConversionMetrics:
-    """Metrics tracking conversion progress"""
+    """Metrics tracking conversion progress."""
 
     total_documents: int
     converted_documents: int
@@ -51,28 +51,30 @@ class ConversionMetrics:
 
 
 class VectorStoreLoader:
-    """Loads vectors from different vector store formats"""
+    """Loads vectors from different vector store formats."""
 
-    def __init__(self, vector_store_path: str, store_type: str = "faiss"):
+    def __init__(self, vector_store_path: str, store_type: str = "faiss") -> None:
         self.vector_store_path = Path(vector_store_path)
         self.store_type = store_type.lower()
 
     def load_faiss_store(self) -> list[VectorDocument]:
-        """Load documents from FAISS vector store"""
+        """Load documents from FAISS vector store."""
         try:
             import faiss
 
             # Load FAISS index
             index_path = self.vector_store_path / "index.faiss"
             if not index_path.exists():
-                raise FileNotFoundError(f"FAISS index not found: {index_path}")
+                msg = f"FAISS index not found: {index_path}"
+                raise FileNotFoundError(msg)
 
             index = faiss.read_index(str(index_path))
 
             # Load metadata
             metadata_path = self.vector_store_path / "metadata.json"
             if not metadata_path.exists():
-                raise FileNotFoundError(f"Metadata file not found: {metadata_path}")
+                msg = f"Metadata file not found: {metadata_path}"
+                raise FileNotFoundError(msg)
 
             with open(metadata_path) as f:
                 metadata = json.load(f)
@@ -101,16 +103,16 @@ class VectorStoreLoader:
             return documents
 
         except ImportError:
-            logger.error(
+            logger.exception(
                 "FAISS not installed. Please install with: pip install faiss-cpu"
             )
             raise
         except Exception as e:
-            logger.error(f"Error loading FAISS store: {e}")
+            logger.exception(f"Error loading FAISS store: {e}")
             raise
 
     def load_qdrant_store(self) -> list[VectorDocument]:
-        """Load documents from Qdrant vector store"""
+        """Load documents from Qdrant vector store."""
         try:
             from qdrant_client import QdrantClient
 
@@ -120,7 +122,8 @@ class VectorStoreLoader:
             # Get collection info
             collections = client.get_collections().collections
             if not collections:
-                raise ValueError("No collections found in Qdrant store")
+                msg = "No collections found in Qdrant store"
+                raise ValueError(msg)
 
             collection_name = collections[0].name
             logger.info(f"Loading from Qdrant collection: {collection_name}")
@@ -159,16 +162,16 @@ class VectorStoreLoader:
             return documents
 
         except ImportError:
-            logger.error(
+            logger.exception(
                 "Qdrant client not installed. Please install with: pip install qdrant-client"
             )
             raise
         except Exception as e:
-            logger.error(f"Error loading Qdrant store: {e}")
+            logger.exception(f"Error loading Qdrant store: {e}")
             raise
 
     def load_custom_store(self) -> list[VectorDocument]:
-        """Load documents from custom pickle format"""
+        """Load documents from custom pickle format."""
         try:
             store_file = self.vector_store_path / "vector_store.pkl"
 
@@ -191,24 +194,25 @@ class VectorStoreLoader:
             return documents
 
         except Exception as e:
-            logger.error(f"Error loading custom store: {e}")
+            logger.exception(f"Error loading custom store: {e}")
             raise
 
     def load_documents(self) -> list[VectorDocument]:
-        """Load documents based on store type"""
+        """Load documents based on store type."""
         if self.store_type == "faiss":
             return self.load_faiss_store()
         if self.store_type == "qdrant":
             return self.load_qdrant_store()
         if self.store_type == "custom":
             return self.load_custom_store()
-        raise ValueError(f"Unsupported store type: {self.store_type}")
+        msg = f"Unsupported store type: {self.store_type}"
+        raise ValueError(msg)
 
 
 class EntityExtractor:
-    """Extracts entities from document content for knowledge graph"""
+    """Extracts entities from document content for knowledge graph."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         try:
             import spacy
 
@@ -221,7 +225,7 @@ class EntityExtractor:
             self.nlp = None
 
     def extract_entities(self, text: str) -> list[dict[str, Any]]:
-        """Extract named entities from text"""
+        """Extract named entities from text."""
         entities = []
 
         if self.nlp:
@@ -245,7 +249,7 @@ class EntityExtractor:
             # Find capitalized words (potential entities)
             capitalized_words = re.findall(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b", text)
 
-            for i, word in enumerate(capitalized_words):
+            for _i, word in enumerate(capitalized_words):
                 entities.append(
                     {
                         "text": word,
@@ -261,7 +265,7 @@ class EntityExtractor:
     def extract_relationships(
         self, text: str, entities: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """Extract relationships between entities"""
+        """Extract relationships between entities."""
         relationships = []
 
         if len(entities) < 2:
@@ -269,7 +273,7 @@ class EntityExtractor:
 
         # Simple relationship extraction based on proximity and patterns
         for i, entity1 in enumerate(entities):
-            for j, entity2 in enumerate(entities[i + 1 :], i + 1):
+            for _j, entity2 in enumerate(entities[i + 1 :], i + 1):
                 # Check if entities are in the same sentence
                 if (
                     abs(entity1["start"] - entity2["start"]) < 200
@@ -319,7 +323,7 @@ class EntityExtractor:
 
 
 class VectorToHypergraphConverter:
-    """Main converter class"""
+    """Main converter class."""
 
     def __init__(
         self,
@@ -327,7 +331,7 @@ class VectorToHypergraphConverter:
         output_kg_path: str,
         store_type: str = "faiss",
         batch_size: int = 100,
-    ):
+    ) -> None:
         self.vector_store_path = vector_store_path
         self.output_kg_path = output_kg_path
         self.store_type = store_type
@@ -342,7 +346,7 @@ class VectorToHypergraphConverter:
         self.metrics = ConversionMetrics(0, 0, 0, 0, 0, 0.0)
 
     def convert_document(self, document: VectorDocument) -> bool:
-        """Convert a single document to knowledge graph entities"""
+        """Convert a single document to knowledge graph entities."""
         try:
             # Create main document entity
             doc_entity_id = f"doc_{document.doc_id}"
@@ -464,12 +468,12 @@ class VectorToHypergraphConverter:
             return True
 
         except Exception as e:
-            logger.error(f"Error converting document {document.doc_id}: {e}")
+            logger.exception(f"Error converting document {document.doc_id}: {e}")
             self.metrics.failed_conversions += 1
             return False
 
     def convert_all_documents(self) -> ConversionMetrics:
-        """Convert all documents from vector store to knowledge graph"""
+        """Convert all documents from vector store to knowledge graph."""
         start_time = datetime.now()
 
         logger.info("Loading documents from vector store...")
@@ -487,7 +491,7 @@ class VectorToHypergraphConverter:
             )
 
             for document in batch:
-                success = self.convert_document(document)
+                self.convert_document(document)
 
                 if self.metrics.converted_documents % 100 == 0:
                     logger.info(
@@ -514,8 +518,8 @@ class VectorToHypergraphConverter:
 
         return self.metrics
 
-    def save_conversion_report(self, output_path: Path):
-        """Save detailed conversion report"""
+    def save_conversion_report(self, output_path: Path) -> None:
+        """Save detailed conversion report."""
         report = {
             "conversion_metadata": {
                 "source_vector_store": str(self.vector_store_path),
@@ -564,7 +568,7 @@ class VectorToHypergraphConverter:
         logger.info(f"Conversion report saved to: {output_path}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Convert vector store to HypeRAG knowledge graph"
     )
@@ -627,7 +631,7 @@ def main():
             print(f"  Failed conversions: {metrics.failed_conversions}")
 
     except Exception as e:
-        logger.error(f"Conversion failed: {e}")
+        logger.exception(f"Conversion failed: {e}")
         raise
 
 

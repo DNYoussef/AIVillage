@@ -1,5 +1,5 @@
 """Mathematical Tutor Evolution System - Agent Forge Phase 1
-Sprint R-4+AF1: Model Merging and Evolution - Task B.1
+Sprint R-4+AF1: Model Merging and Evolution - Task B.1.
 """
 
 from dataclasses import asdict, dataclass
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ModelIndividual:
-    """Individual model in the evolution population"""
+    """Individual model in the evolution population."""
 
     individual_id: str
     model_name: str
@@ -45,7 +45,7 @@ class ModelIndividual:
 
 @dataclass
 class EvolutionConfig:
-    """Configuration for evolution process"""
+    """Configuration for evolution process."""
 
     population_size: int = 6
     max_generations: int = 10
@@ -60,7 +60,7 @@ class EvolutionConfig:
 
 
 class MathTutorEvolution:
-    """Evolve specialized math tutoring models through genetic algorithms"""
+    """Evolve specialized math tutoring models through genetic algorithms."""
 
     def __init__(
         self,
@@ -97,7 +97,7 @@ class MathTutorEvolution:
             self.config.target_grade_levels = list(range(1, 9))  # Grades 1-8
 
     def initialize_wandb_tracking(self):
-        """Initialize W&B tracking for evolution process"""
+        """Initialize W&B tracking for evolution process."""
         try:
             wandb.init(
                 project=self.project_name,
@@ -119,7 +119,7 @@ class MathTutorEvolution:
             logger.error(f"Failed to initialize W&B tracking: {e}")
 
     async def initialize_population(self) -> list[ModelIndividual]:
-        """Initialize population with diverse base models optimized for math tutoring"""
+        """Initialize population with diverse base models optimized for math tutoring."""
         logger.info("Initializing evolution population with base models")
 
         # Curated base models for mathematical reasoning
@@ -235,7 +235,7 @@ class MathTutorEvolution:
     async def create_individual_from_base(
         self, model_info: dict[str, Any], generation: int
     ) -> ModelIndividual | None:
-        """Create individual from base model with quantization and evaluation"""
+        """Create individual from base model with quantization and evaluation."""
         model_name = model_info["name"]
 
         try:
@@ -309,7 +309,7 @@ class MathTutorEvolution:
     async def quick_fitness_evaluation(
         self, model, tokenizer, model_info: dict[str, Any]
     ) -> float:
-        """Quick fitness evaluation for initial population"""
+        """Quick fitness evaluation for initial population."""
         try:
             # Simple math problems for quick evaluation
             test_problems = [
@@ -375,7 +375,7 @@ class MathTutorEvolution:
             return 0.3  # Default low score
 
     def evaluate_math_response(self, problem: str, response: str) -> bool:
-        """Simple heuristic evaluation of math response quality"""
+        """Simple heuristic evaluation of math response quality."""
         response_lower = response.lower()
 
         # Check for basic math indicators
@@ -406,7 +406,7 @@ class MathTutorEvolution:
     async def create_model_variation(
         self, base_individual: ModelIndividual
     ) -> ModelIndividual | None:
-        """Create a variation of an existing individual through parameter perturbation"""
+        """Create a variation of an existing individual through parameter perturbation."""
         try:
             # Create variation ID
             variation_id = hashlib.md5(
@@ -446,7 +446,7 @@ class MathTutorEvolution:
         return None
 
     async def evolve_generation(self, generation: int) -> list[ModelIndividual]:
-        """Evolve population for one generation using genetic algorithms"""
+        """Evolve population for one generation using genetic algorithms."""
         logger.info(f"Evolving generation {generation}")
 
         # Evaluate current population fitness
@@ -521,7 +521,7 @@ class MathTutorEvolution:
         return self.population
 
     async def evaluate_population_fitness(self):
-        """Evaluate fitness for all individuals in population"""
+        """Evaluate fitness for all individuals in population."""
         logger.info("Evaluating population fitness")
 
         # Import fitness evaluator
@@ -557,7 +557,7 @@ class MathTutorEvolution:
                 individual.fitness_score = 0.1  # Low fitness for failed evaluation
 
     def select_parents(self) -> list[ModelIndividual]:
-        """Select parents for reproduction using tournament selection"""
+        """Select parents for reproduction using tournament selection."""
         # Sort population by fitness
         sorted_population = sorted(
             self.population, key=lambda x: x.fitness_score, reverse=True
@@ -580,7 +580,7 @@ class MathTutorEvolution:
     async def crossover(
         self, parent1: ModelIndividual, parent2: ModelIndividual, generation: int
     ) -> ModelIndividual | None:
-        """Create offspring through model crossover/merging"""
+        """Create offspring through model crossover/merging."""
         try:
             # Import merge operator
             from .merge_operators import MergeOperator
@@ -646,7 +646,7 @@ class MathTutorEvolution:
     async def mutate(
         self, parent: ModelIndividual, generation: int
     ) -> ModelIndividual | None:
-        """Create offspring through mutation"""
+        """Create offspring through mutation."""
         if np.random.random() > self.config.mutation_rate:
             return None
 
@@ -673,7 +673,7 @@ class MathTutorEvolution:
         return None
 
     async def run_evolution(self) -> ModelIndividual:
-        """Run complete evolution process"""
+        """Run complete evolution process."""
         logger.info(
             f"Starting evolution with {self.config.max_generations} generations"
         )
@@ -733,7 +733,7 @@ class MathTutorEvolution:
         return self.best_individual
 
     async def cleanup_old_models(self, current_generation: int):
-        """Clean up old models to manage memory"""
+        """Clean up old models to manage memory."""
         # Keep only recent generations and best individuals
         generations_to_keep = 2
         min_generation = max(0, current_generation - generations_to_keep)
@@ -769,7 +769,7 @@ class MathTutorEvolution:
             )
 
     async def save_champion_model(self, champion: ModelIndividual):
-        """Save the champion model for deployment"""
+        """Save the champion model for deployment."""
         try:
             # Create save directory
             save_dir = Path("models/evolved_math_tutors")
@@ -824,7 +824,7 @@ class MathTutorEvolution:
             logger.error(f"Error saving champion model: {e}")
 
     def get_evolution_summary(self) -> dict[str, Any]:
-        """Get comprehensive evolution summary"""
+        """Get comprehensive evolution summary."""
         summary = {
             "evolution_config": asdict(self.config),
             "population_size": len(self.population),

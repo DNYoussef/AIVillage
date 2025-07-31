@@ -1,4 +1,4 @@
-"""Deployment Manifest Generation System
+"""Deployment Manifest Generation System.
 
 This module generates deployment manifests for Agent Forge models,
 including SHA256 hashes, size information, evaluation metrics, and
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class DeploymentManifestGenerator:
-    """Generates deployment manifests for Agent Forge models"""
+    """Generates deployment manifests for Agent Forge models."""
 
     def __init__(self, model_path: str, output_dir: str = "releases"):
         self.model_path = Path(model_path)
@@ -36,7 +36,7 @@ class DeploymentManifestGenerator:
         logger.info(f"Initialized manifest generator for {self.model_path}")
 
     def calculate_file_hash(self, file_path: Path) -> str:
-        """Calculate SHA256 hash of a file"""
+        """Calculate SHA256 hash of a file."""
         logger.debug(f"Calculating hash for {file_path}")
 
         hash_sha256 = hashlib.sha256()
@@ -47,11 +47,11 @@ class DeploymentManifestGenerator:
         return hash_sha256.hexdigest()
 
     def get_file_size(self, file_path: Path) -> int:
-        """Get file size in bytes"""
+        """Get file size in bytes."""
         return file_path.stat().st_size
 
     def extract_model_metadata(self, model_path: Path) -> dict[str, Any]:
-        """Extract metadata from model file"""
+        """Extract metadata from model file."""
         logger.info(f"Extracting metadata from {model_path}")
 
         try:
@@ -136,7 +136,7 @@ class DeploymentManifestGenerator:
             }
 
     def run_evaluation(self, model_path: Path) -> dict[str, float]:
-        """Run evaluation on the model"""
+        """Run evaluation on the model."""
         logger.info(f"Running evaluation on {model_path}")
 
         try:
@@ -180,7 +180,7 @@ class DeploymentManifestGenerator:
             }
 
     def generate_deployment_requirements(self, model_size_mb: float) -> dict[str, Any]:
-        """Generate deployment requirements based on model size"""
+        """Generate deployment requirements based on model size."""
         # Determine deployment tier based on model size
         if model_size_mb < 100:
             tier = "edge"
@@ -244,7 +244,7 @@ class DeploymentManifestGenerator:
         }
 
     def generate_security_info(self, model_path: Path) -> dict[str, Any]:
-        """Generate security information for the model"""
+        """Generate security information for the model."""
         # Calculate file hash
         file_hash = self.calculate_file_hash(model_path)
 
@@ -273,7 +273,7 @@ class DeploymentManifestGenerator:
         return security_info
 
     def generate_usage_examples(self) -> list[dict[str, str]]:
-        """Generate usage examples for the model"""
+        """Generate usage examples for the model."""
         examples = [
             {
                 "name": "Basic Chat",
@@ -336,7 +336,7 @@ for inp, resp in zip(inputs, responses):
         return examples
 
     def generate_manifest(self, version: str = None) -> dict[str, Any]:
-        """Generate complete deployment manifest"""
+        """Generate complete deployment manifest."""
         if version is None:
             version = f"v{__version__}-{datetime.now().strftime('%Y%m%d')}"
 
@@ -411,7 +411,7 @@ for inp, resp in zip(inputs, responses):
         return manifest
 
     def save_manifest(self, manifest: dict[str, Any], version: str) -> str:
-        """Save manifest to file"""
+        """Save manifest to file."""
         # Create version directory
         version_dir = self.output_dir / version
         version_dir.mkdir(parents=True, exist_ok=True)
@@ -425,7 +425,7 @@ for inp, resp in zip(inputs, responses):
         return str(manifest_path)
 
     def create_release_bundle(self, manifest: dict[str, Any], version: str) -> str:
-        """Create complete release bundle"""
+        """Create complete release bundle."""
         # Create version directory
         version_dir = self.output_dir / version
         version_dir.mkdir(parents=True, exist_ok=True)
@@ -458,7 +458,7 @@ for inp, resp in zip(inputs, responses):
         return str(version_dir)
 
     def _generate_readme(self, manifest: dict[str, Any]) -> str:
-        """Generate README for the release"""
+        """Generate README for the release."""
         model_info = manifest["model_info"]
         eval_metrics = manifest["evaluation_metrics"]
         deployment_req = manifest["deployment_requirements"]
@@ -520,7 +520,7 @@ pip install -r requirements.txt
 
 
 def main():
-    """CLI entry point for manifest generation"""
+    """CLI entry point for manifest generation."""
     import argparse
 
     parser = argparse.ArgumentParser(

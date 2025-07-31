@@ -13,8 +13,8 @@ def linear_merge(
     device = next(models[0].parameters()).device
     chunk_size = kwargs.get("chunk_size", 1000000)
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        for key in models[0].state_dict().keys():
+    with tempfile.TemporaryDirectory():
+        for key in models[0].state_dict():
             # Initialize merged_param as an empty list to collect chunks
             merged_chunks = []
 
@@ -64,8 +64,8 @@ def slerp_merge(
     device = next(models[0].parameters()).device
     chunk_size = kwargs.get("chunk_size", 1000000)
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        for key in models[0].state_dict().keys():
+    with tempfile.TemporaryDirectory():
+        for key in models[0].state_dict():
             # Initialize merged_param as an empty list to collect chunks
             merged_chunks = []
 
@@ -125,8 +125,8 @@ def disk_based_ties_merge(
     )  # Use CPU to handle larger tensors without GPU memory issues
     chunk_size = kwargs.get("chunk_size", 1000000)
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        for key in models[0].state_dict().keys():
+    with tempfile.TemporaryDirectory():
+        for key in models[0].state_dict():
             # Initialize merged_param as an empty list to collect chunks
             merged_chunks = []
 
@@ -196,8 +196,8 @@ def dare_merge(
     device = torch.device("cpu")
     chunk_size = kwargs.get("chunk_size", 1000000)
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        for key in models[0].state_dict().keys():
+    with tempfile.TemporaryDirectory():
+        for key in models[0].state_dict():
             merged_chunks = []
 
             param_shape = models[0].state_dict()[key].shape
@@ -257,7 +257,7 @@ def task_arithmetic_merge(
     device = torch.device("cpu")
     chunk_size = kwargs.get("chunk_size", 1000000)
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
+    with tempfile.TemporaryDirectory():
         for key in base_weights:
             merged_chunks = []
 
@@ -306,7 +306,7 @@ def dfs_merge(
     device = torch.device("cpu")
     chunk_size = kwargs.get("chunk_size", 1000000)
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
+    with tempfile.TemporaryDirectory():
         layer_index = 0
         for name, tensor in models[0].state_dict().items():
             if any(
@@ -358,7 +358,7 @@ def frankenmerge(merged_model, models, **kwargs):
     for name, param in merged_model.named_parameters():
         param_shape = param.shape
         merged_param = torch.zeros_like(param)
-        for i, model in enumerate(models):
+        for _i, model in enumerate(models):
             if name in model.state_dict():
                 merged_param += model.state_dict()[name]
         merged_param /= len(models)

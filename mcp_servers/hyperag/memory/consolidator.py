@@ -1,4 +1,4 @@
-"""Memory Consolidation System
+"""Memory Consolidation System.
 
 Brain-inspired memory consolidation mimicking hippocampal-neocortical transfer.
 Consolidates episodic memories into semantic knowledge during 'sleep' cycles.
@@ -13,7 +13,8 @@ from typing import Any
 
 import numpy as np
 
-from ..guardian.gate import GuardianGate
+from hyperag.guardian.gate import GuardianGate
+
 from .base import (
     Edge,
     Node,
@@ -30,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ConsolidationConfig:
-    """Configuration for memory consolidation process"""
+    """Configuration for memory consolidation process."""
 
     # Thresholds for consolidation
     confidence_threshold: float = 0.7  # Min confidence to consolidate
@@ -62,7 +63,7 @@ class ConsolidationConfig:
 
 @dataclass
 class ConsolidationResult:
-    """Result of a consolidation operation"""
+    """Result of a consolidation operation."""
 
     batch_id: str
     processed_nodes: int = 0
@@ -77,15 +78,15 @@ class ConsolidationResult:
 
 
 class PatternDetector:
-    """Detects patterns in episodic memory for consolidation"""
+    """Detects patterns in episodic memory for consolidation."""
 
-    def __init__(self, config: ConsolidationConfig):
+    def __init__(self, config: ConsolidationConfig) -> None:
         self.config = config
 
     async def detect_frequent_relations(
-        self, edges: list[Edge], min_support: float = None
+        self, edges: list[Edge], min_support: float | None = None
     ) -> list[dict[str, Any]]:
-        """Detect frequently occurring relation patterns"""
+        """Detect frequently occurring relation patterns."""
         if min_support is None:
             min_support = self.config.min_pattern_support
 
@@ -144,7 +145,7 @@ class PatternDetector:
     async def detect_concept_clusters(
         self, nodes: list[Node], similarity_threshold: float = 0.8
     ) -> list[list[str]]:
-        """Detect clusters of similar concept nodes for merging"""
+        """Detect clusters of similar concept nodes for merging."""
         if not nodes:
             return []
 
@@ -159,7 +160,7 @@ class PatternDetector:
             processed.add(node_a.id)
 
             # Find similar nodes
-            for j, node_b in enumerate(nodes[i + 1 :], i + 1):
+            for _j, node_b in enumerate(nodes[i + 1 :], i + 1):
                 if node_b.id in processed:
                     continue
 
@@ -184,7 +185,7 @@ class PatternDetector:
         return clusters
 
     def _text_similarity(self, text1: str, text2: str) -> float:
-        """Simple text similarity based on common words"""
+        """Simple text similarity based on common words."""
         words1 = set(text1.lower().split())
         words2 = set(text2.lower().split())
 
@@ -198,7 +199,7 @@ class PatternDetector:
 
 
 class MemoryConsolidator:
-    """Main consolidation system coordinating episodic to semantic memory transfer
+    """Main consolidation system coordinating episodic to semantic memory transfer.
 
     Features:
     - Pattern-based consolidation
@@ -214,7 +215,7 @@ class MemoryConsolidator:
         hypergraph_kg: HypergraphKG,
         config: ConsolidationConfig = None,
         guardian_gate: GuardianGate | None = None,
-    ):
+    ) -> None:
         self.hippo = hippo_index
         self.semantic = hypergraph_kg
         self.config = config or ConsolidationConfig()
@@ -234,7 +235,7 @@ class MemoryConsolidator:
     async def run_consolidation_cycle(
         self, user_id: str | None = None, force: bool = False
     ) -> ConsolidationResult:
-        """Run a complete consolidation cycle
+        """Run a complete consolidation cycle.
 
         Args:
             user_id: Specific user to consolidate (None for all users)
@@ -301,7 +302,7 @@ class MemoryConsolidator:
 
         except Exception as e:
             error_msg = f"Consolidation cycle failed: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
 
             result = ConsolidationResult(
                 batch_id=batch_id,
@@ -310,8 +311,8 @@ class MemoryConsolidator:
             )
             return result
 
-    async def schedule_consolidation(self, interval_hours: int | None = None):
-        """Schedule periodic consolidation cycles
+    async def schedule_consolidation(self, interval_hours: int | None = None) -> None:
+        """Schedule periodic consolidation cycles.
 
         Args:
             interval_hours: Override default consolidation interval
@@ -335,12 +336,12 @@ class MemoryConsolidator:
                 logger.info("Consolidation scheduling cancelled")
                 break
             except Exception as e:
-                logger.error(f"Scheduled consolidation failed: {e!s}")
+                logger.exception(f"Scheduled consolidation failed: {e!s}")
                 # Continue scheduling despite errors
                 await asyncio.sleep(3600)  # Wait 1 hour before retry
 
     async def get_consolidation_status(self) -> dict[str, Any]:
-        """Get current consolidation status and statistics"""
+        """Get current consolidation status and statistics."""
         try:
             # Get memory stats from both systems
             hippo_stats = await self.hippo.get_memory_stats()
@@ -377,13 +378,13 @@ class MemoryConsolidator:
             }
 
         except Exception as e:
-            logger.error(f"Failed to get consolidation status: {e!s}")
+            logger.exception(f"Failed to get consolidation status: {e!s}")
             return {"error": str(e)}
 
     # Private helper methods
 
     async def _should_consolidate(self) -> bool:
-        """Check if consolidation should run based on time and thresholds"""
+        """Check if consolidation should run based on time and thresholds."""
         if self.last_consolidation is None:
             return True
 
@@ -395,7 +396,7 @@ class MemoryConsolidator:
     async def _get_consolidation_candidates(
         self, user_id: str | None = None
     ) -> tuple[list[Node], list[Edge]]:
-        """Get episodic memories eligible for consolidation"""
+        """Get episodic memories eligible for consolidation."""
         try:
             # Get recent episodic nodes with sufficient confidence
             candidate_nodes = await self.hippo.query_nodes(
@@ -423,13 +424,13 @@ class MemoryConsolidator:
             return filtered_nodes, candidate_edges
 
         except Exception as e:
-            logger.error(f"Failed to get consolidation candidates: {e!s}")
+            logger.exception(f"Failed to get consolidation candidates: {e!s}")
             return [], []
 
     async def _consolidate_patterns(
         self, edges: list[Edge], result: ConsolidationResult
-    ):
-        """Consolidate frequent patterns into semantic hyperedges"""
+    ) -> None:
+        """Consolidate frequent patterns into semantic hyperedges."""
         try:
             frequent_patterns = await self.pattern_detector.detect_frequent_relations(
                 edges
@@ -494,11 +495,11 @@ class MemoryConsolidator:
 
         except Exception as e:
             error_msg = f"Pattern consolidation failed: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             result.errors.append(error_msg)
 
-    async def _consolidate_nodes(self, nodes: list[Node], result: ConsolidationResult):
-        """Consolidate high-confidence episodic nodes into semantic nodes"""
+    async def _consolidate_nodes(self, nodes: list[Node], result: ConsolidationResult) -> None:
+        """Consolidate high-confidence episodic nodes into semantic nodes."""
         try:
             for node in nodes:
                 # Apply consolidation criteria
@@ -552,11 +553,11 @@ class MemoryConsolidator:
 
         except Exception as e:
             error_msg = f"Node consolidation failed: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             result.errors.append(error_msg)
 
-    async def _merge_duplicates(self, result: ConsolidationResult):
-        """Detect and merge duplicate concepts in semantic memory"""
+    async def _merge_duplicates(self, result: ConsolidationResult) -> None:
+        """Detect and merge duplicate concepts in semantic memory."""
         try:
             # This would involve semantic similarity search and merging
             # Implementation would require semantic graph querying
@@ -565,11 +566,11 @@ class MemoryConsolidator:
 
         except Exception as e:
             error_msg = f"Duplicate merging failed: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             result.errors.append(error_msg)
 
-    async def _update_communities(self, result: ConsolidationResult):
-        """Update community structure after consolidation"""
+    async def _update_communities(self, result: ConsolidationResult) -> None:
+        """Update community structure after consolidation."""
         try:
             if hasattr(self.semantic, "detect_communities"):
                 communities = await self.semantic.detect_communities()
@@ -577,13 +578,13 @@ class MemoryConsolidator:
 
         except Exception as e:
             error_msg = f"Community update failed: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             result.errors.append(error_msg)
 
     async def _cleanup_consolidated_memories(
         self, nodes: list[Node], edges: list[Edge], result: ConsolidationResult
-    ):
-        """Clean up episodic memories that have been successfully consolidated"""
+    ) -> None:
+        """Clean up episodic memories that have been successfully consolidated."""
         try:
             # For now, just mark as consolidated rather than deleting
             # In production, might want to archive or soft-delete
@@ -591,11 +592,11 @@ class MemoryConsolidator:
 
         except Exception as e:
             error_msg = f"Cleanup failed: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             result.errors.append(error_msg)
 
     def _meets_consolidation_criteria(self, node: Node) -> bool:
-        """Check if a node meets criteria for consolidation"""
+        """Check if a node meets criteria for consolidation."""
         # Confidence threshold
         if node.confidence < self.config.confidence_threshold:
             return False
@@ -619,7 +620,7 @@ class MemoryConsolidator:
     async def _validate_consolidation_with_guardian(
         self, item: Any, consolidation_type: str, result: ConsolidationResult
     ) -> bool:
-        """Validate consolidation items through Guardian Gate
+        """Validate consolidation items through Guardian Gate.
 
         Args:
             item: The hyperedge or semantic node to validate
@@ -631,7 +632,7 @@ class MemoryConsolidator:
         """
         try:
             # Create a creative bridge for Guardian validation
-            from ..guardian.gate import CreativeBridge
+            from hyperag.guardian.gate import CreativeBridge
 
             # Extract relevant information based on item type
             if hasattr(item, "relation"):  # Hyperedge
@@ -675,7 +676,7 @@ class MemoryConsolidator:
             return False
 
         except Exception as e:
-            logger.error(f"Guardian validation failed during consolidation: {e}")
+            logger.exception(f"Guardian validation failed during consolidation: {e}")
             # Default to allowing consolidation on Guardian error to avoid blocking system
             return True
 
@@ -688,7 +689,7 @@ def create_memory_consolidator(
     hypergraph_kg: HypergraphKG,
     config: ConsolidationConfig | None = None,
 ) -> MemoryConsolidator:
-    """Create a memory consolidator with the given backends"""
+    """Create a memory consolidator with the given backends."""
     if config is None:
         config = ConsolidationConfig()
 

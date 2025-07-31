@@ -75,9 +75,9 @@ class Enhanced50GenEvolutionMerger:
         self.population = self.initialize_enhanced_population()
 
         logger.info("Enhanced 50-generation evolution initialized")
-        logger.info(f"Population size: {self.population_size}")
-        logger.info(f"Available models: {len(self.available_models)}")
-        logger.info(f"Merge methods: {len(self.merge_methods)}")
+        logger.info("Population size: %d", self.population_size)
+        logger.info("Available models: %d", len(self.available_models))
+        logger.info("Merge methods: %d", len(self.merge_methods))
 
     def load_available_models(self) -> list[str]:
         """Load available models from the model list file."""
@@ -287,7 +287,7 @@ class Enhanced50GenEvolutionMerger:
 
     def enhanced_benchmark_model(self, config: dict[str, Any]) -> dict[str, float]:
         """Enhanced benchmarking with more realistic simulation."""
-        logger.info(f"Benchmarking model: {config['id']}")
+        logger.info("Benchmarking model: %s", config['id'])
 
         results = {}
         method = config["merge_method"]
@@ -370,7 +370,7 @@ class Enhanced50GenEvolutionMerger:
         if results["gsm8k"] > 0.4:
             results["humaneval"] = min(0.8, results["humaneval"] + 0.01)
 
-        logger.info(f"Benchmark results: {results}")
+        logger.info("Benchmark results: %s", results)
         return results
 
     def calculate_parameter_bonus(self, config: dict[str, Any], metric: str) -> float:
@@ -516,7 +516,7 @@ class Enhanced50GenEvolutionMerger:
 
     def evolve_generation(self):
         """Enhanced generation evolution with adaptive parameters."""
-        logger.info(f"=== Generation {self.generation} ===")
+        logger.info("=== Generation %d ===", self.generation)
 
         # Benchmark all individuals (can be parallelized for real implementation)
         for individual in self.population:
@@ -546,13 +546,13 @@ class Enhanced50GenEvolutionMerger:
             self.population
         )
 
-        logger.info(f"Generation {self.generation} Results:")
-        logger.info(f"Best fitness: {best_individual['fitness']:.4f}")
-        logger.info(f"Average fitness: {avg_fitness:.4f}")
-        logger.info(f"Population diversity: {diversity:.4f}")
-        logger.info(f"Stagnation counter: {self.stagnation_counter}")
-        logger.info(f"Best method: {best_individual['merge_method']}")
-        logger.info(f"Best parameters: {best_individual['parameters']}")
+        logger.info("Generation %d Results:", self.generation)
+        logger.info("Best fitness: %.4f", best_individual['fitness'])
+        logger.info("Average fitness: %.4f", avg_fitness)
+        logger.info("Population diversity: %.4f", diversity)
+        logger.info("Stagnation counter: %d", self.stagnation_counter)
+        logger.info("Best method: %s", best_individual['merge_method'])
+        logger.info("Best parameters: %s", best_individual['parameters'])
 
         # Save generation results
         gen_results = {
@@ -618,10 +618,10 @@ class Enhanced50GenEvolutionMerger:
         logger.info("=" * 80)
         logger.info("STARTING 50-GENERATION AGENT FORGE EVOLUTION MERGE")
         logger.info("=" * 80)
-        logger.info(f"Generations: {self.max_generations}")
-        logger.info(f"Population size: {self.population_size}")
-        logger.info(f"Available models: {self.available_models}")
-        logger.info(f"Merge methods: {self.merge_methods}")
+        logger.info("Generations: %d", self.max_generations)
+        logger.info("Population size: %d", self.population_size)
+        logger.info("Available models: %s", self.available_models)
+        logger.info("Merge methods: %s", self.merge_methods)
 
         start_time = time.time()
 
@@ -639,10 +639,10 @@ class Enhanced50GenEvolutionMerger:
                     remaining = estimated_total - elapsed
 
                     logger.info(
-                        f"Progress: {generation_count}/{self.max_generations} generations"
+                        "Progress: %d/%d generations", generation_count, self.max_generations
                     )
-                    logger.info(f"Elapsed: {elapsed / 60:.1f} minutes")
-                    logger.info(f"Estimated remaining: {remaining / 60:.1f} minutes")
+                    logger.info("Elapsed: %.1f minutes", elapsed / 60)
+                    logger.info("Estimated remaining: %.1f minutes", remaining / 60)
 
                 # Brief pause between generations
                 time.sleep(0.1)
@@ -662,12 +662,12 @@ class Enhanced50GenEvolutionMerger:
         logger.info("=" * 80)
         logger.info("50-GENERATION EVOLUTION COMPLETE")
         logger.info("=" * 80)
-        logger.info(f"Duration: {duration / 60:.1f} minutes ({duration:.1f} seconds)")
-        logger.info(f"Generations completed: {self.generation}")
-        logger.info(f"Best overall fitness: {best_overall['fitness']:.4f}")
-        logger.info(f"Best method: {best_overall['merge_method']}")
-        logger.info(f"Best parameters: {best_overall['parameters']}")
-        logger.info(f"Best benchmarks: {best_overall.get('benchmark_results', {})}")
+        logger.info("Duration: %.1f minutes (%.1f seconds)", duration / 60, duration)
+        logger.info("Generations completed: %d", self.generation)
+        logger.info("Best overall fitness: %.4f", best_overall['fitness'])
+        logger.info("Best method: %s", best_overall['merge_method'])
+        logger.info("Best parameters: %s", best_overall['parameters'])
+        logger.info("Best benchmarks: %s", best_overall.get('benchmark_results', {}))
 
         # Save comprehensive final results
         final_results = {
@@ -712,7 +712,7 @@ class Enhanced50GenEvolutionMerger:
         with open(final_file, "w") as f:
             json.dump(final_results, f, indent=2)
 
-        logger.info(f"Complete results saved to: {final_file}")
+        logger.info("Complete results saved to: %s", final_file)
         return best_overall
 
     def analyze_method_evolution(self) -> dict[str, Any]:
@@ -738,7 +738,7 @@ def main():
     if torch.cuda.is_available():
         gpu_name = torch.cuda.get_device_name(0)
         gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-        logger.info(f"GPU: {gpu_name} - {gpu_memory:.1f}GB VRAM")
+        logger.info("GPU: %s - %.1fGB VRAM", gpu_name, gpu_memory)
     else:
         logger.warning("CUDA not available - running on CPU")
 

@@ -119,7 +119,8 @@ Return JSON format:
 
             except Exception as e:
                 logger.warning(
-                    f"Failed to generate task for difficulty {difficulty}: {e}"
+                    "Failed to generate task for difficulty %s: %s",
+                    difficulty, e
                 )
                 # Fallback task
                 task = Task(
@@ -177,7 +178,7 @@ class MasteryEvaluator:
             return success, response, confidence
 
         except Exception as e:
-            logger.error(f"Evaluation error: {e}")
+            logger.error("Evaluation error: %s", e)
             return False, "", 0.0
 
     def _check_correctness(self, response: str, expected: str) -> bool:
@@ -248,11 +249,12 @@ class GeometryFeedback:
                         state["pre_grok"] = False
 
                 logger.info(
-                    f"Geometry update: ID_nl={id_estimate:.3f}, pre_grok={state['pre_grok']}"
+                    "Geometry update: ID_nl=%.3f, pre_grok=%s",
+                    id_estimate, state['pre_grok']
                 )
 
             except Exception as e:
-                logger.warning(f"Geometry update failed: {e}")
+                logger.warning("Geometry update failed: %s", e)
 
 
 class MasteryLoop:
@@ -310,7 +312,7 @@ class MasteryLoop:
 
     async def initialize_model(self):
         """Load and initialize the model for training."""
-        logger.info(f"Loading model from {self.config.model_path}")
+        logger.info("Loading model from %s", self.config.model_path)
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_path)
         if self.tokenizer.pad_token is None:
@@ -356,7 +358,7 @@ class MasteryLoop:
             self.config.domain, self.config.initial_task_count
         )
 
-        logger.info(f"Generated {len(self.calibration_tasks)} calibration tasks")
+        logger.info("Generated %s calibration tasks", len(self.calibration_tasks))
 
         # Evaluate model on all tasks to find k where success ≈ 50%
         success_rates = {}
@@ -386,7 +388,8 @@ class MasteryLoop:
 
         self.baseline_k = target_diff
         logger.info(
-            f"Baseline established: Level {self.baseline_k} (success rate: {level_performance[target_diff]:.2f})"
+            "Baseline established: Level %s (success rate: %.2f)",
+            self.baseline_k, level_performance[target_diff]
         )
 
         # Log calibration results
@@ -418,7 +421,7 @@ class MasteryLoop:
             level_mapping[level] = mapped_diff
 
         self.level_mapping = level_mapping
-        logger.info(f"Level mapping: {level_mapping}")
+        logger.info("Level mapping: %s", level_mapping)
 
         # Generate tasks for each mastery level
         for level, difficulty in level_mapping.items():
@@ -445,7 +448,7 @@ class MasteryLoop:
 
     async def mastery_cycle(self, level: int) -> bool:
         """Phase 3: Mastery cycle for a specific level."""
-        logger.info(f"Starting mastery cycle for level {level}")
+        logger.info("Starting mastery cycle for level %s", level)
 
         state["mastery_level"] = level
         tasks = self.level_tasks[level]
@@ -497,7 +500,8 @@ class MasteryLoop:
 
                 if recent_success_rate >= self.config.mastery_threshold:
                     logger.info(
-                        f"Mastery achieved for level {level}! Success rate: {recent_success_rate:.2f}"
+                        "Mastery achieved for level %s! Success rate: %.2f",
+                        level, recent_success_rate
                     )
                     wandb.log({f"mastery/level_{level}_achieved": True})
                     return True
@@ -525,7 +529,8 @@ class MasteryLoop:
                 await self.self_modeling_integration(level)
 
         logger.info(
-            f"Max attempts reached for level {level}. Final success rate: {success_rate:.2f}"
+            "Max attempts reached for level %s. Final success rate: %.2f",
+            level, success_rate
         )
         return False
 
@@ -558,11 +563,11 @@ class MasteryLoop:
             wandb.log({"sleep_dream/cycle_completed": self.attempt_count})
 
         except Exception as e:
-            logger.warning(f"Sleep/dream cycle failed: {e}")
+            logger.warning("Sleep/dream cycle failed: %s", e)
 
     async def self_modeling_integration(self, level: int):
         """Integrate self-modeling for enhanced self-awareness."""
-        logger.info(f"Running self-modeling integration for level {level}")
+        logger.info("Running self-modeling integration for level %s", level)
 
         try:
             # Run a mini self-modeling cycle
@@ -579,7 +584,7 @@ class MasteryLoop:
             )
 
         except Exception as e:
-            logger.warning(f"Self-modeling integration failed: {e}")
+            logger.warning("Self-modeling integration failed: %s", e)
 
     async def run_mastery_training(self) -> dict[str, Any]:
         """Run the complete mastery training loop."""
@@ -599,16 +604,17 @@ class MasteryLoop:
             mastery_results = {}
 
             for level in range(1, self.config.max_mastery_levels + 1):
-                logger.info(f"\n{'=' * 50}")
-                logger.info(f"MASTERY LEVEL {level}")
-                logger.info(f"{'=' * 50}")
+                logger.info("\n%s", '=' * 50)
+                logger.info("MASTERY LEVEL %s", level)
+                logger.info("%s", '=' * 50)
 
                 mastery_achieved = await self.mastery_cycle(level)
                 mastery_results[level] = mastery_achieved
 
                 if not mastery_achieved:
                     logger.info(
-                        f"Mastery not achieved for level {level}, stopping progression"
+                        "Mastery not achieved for level %s, stopping progression",
+                        level
                     )
                     break
 
@@ -640,15 +646,16 @@ class MasteryLoop:
 
             logger.info("\nMastery training complete!")
             logger.info(
-                f"Levels mastered: {summary['levels_mastered']}/{self.config.max_mastery_levels}"
+                "Levels mastered: %s/%s",
+                summary['levels_mastered'], self.config.max_mastery_levels
             )
-            logger.info(f"Total attempts: {summary['total_attempts']}")
-            logger.info(f"Total time: {summary['total_time_hours']:.2f} hours")
+            logger.info("Total attempts: %s", summary['total_attempts'])
+            logger.info("Total time: %.2f hours", summary['total_time_hours'])
 
             return summary
 
         except Exception as e:
-            logger.error(f"Mastery training failed: {e}")
+            logger.error("Mastery training failed: %s", e)
             raise
 
     def save_checkpoint(self, level: int):
@@ -680,7 +687,7 @@ class MasteryLoop:
             model_path = checkpoint_dir / f"model_level_{level}.pt"
             torch.save(self.model.state_dict(), model_path)
 
-        logger.info(f"Checkpoint saved: {checkpoint_path}")
+        logger.info("Checkpoint saved: %s", checkpoint_path)
 
 
 # CLI integration
@@ -811,7 +818,7 @@ async def run_self_modeling(config: dict[str, Any]) -> "PhaseResult":
                     }
                 )
 
-            logger.info(f"Self-Modeling completed successfully in {duration:.1f}s")
+            logger.info("Self-Modeling completed successfully in %.1fs", duration)
 
             return PhaseResult(
                 phase_type=PhaseType.SELF_MODELING,
