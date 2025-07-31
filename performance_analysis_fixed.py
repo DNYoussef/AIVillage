@@ -3,7 +3,7 @@
 
 CRITICAL ISSUES:
 1. MESH NETWORK: 0% message delivery rate
-2. MEMORY: 87% usage (13.8GB/15.9GB)  
+2. MEMORY: 87% usage (13.8GB/15.9GB)
 3. SYSTEM COMPLEXITY: 81k+ Python files
 """
 
@@ -22,10 +22,10 @@ logger = logging.getLogger(__name__)
 
 class PerformanceAnalyzer:
     """Simple, effective performance analyzer."""
-    
+
     def __init__(self):
         self.start_time = time.time()
-        
+
     def get_system_metrics(self) -> Dict[str, Any]:
         """Get current system metrics."""
         try:
@@ -33,7 +33,7 @@ class PerformanceAnalyzer:
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
             process = psutil.Process()
-            
+
             return {
                 'timestamp': datetime.now().isoformat(),
                 'cpu_usage_percent': round(cpu_percent, 1),
@@ -47,7 +47,7 @@ class PerformanceAnalyzer:
         except Exception as e:
             logger.error(f"Failed to get system metrics: {e}")
             return {}
-    
+
     def analyze_mesh_network(self) -> Dict[str, Any]:
         """Analyze mesh network performance."""
         try:
@@ -58,17 +58,17 @@ class PerformanceAnalyzer:
                     'message_delivery_rate': 0.0,
                     'issue': 'No mesh network test results found'
                 }
-            
+
             with open(mesh_file, 'r', encoding='utf-8') as f:
                 results = json.load(f)
-            
+
             # Extract delivery rates
             routing_results = results.get('detailed_results', {}).get('routing', [])
             delivery_rates = [r.get('delivery_rate', 0) for r in routing_results]
             avg_delivery = sum(delivery_rates) / len(delivery_rates) if delivery_rates else 0
-            
+
             status = 'CRITICAL' if avg_delivery == 0 else 'WARNING' if avg_delivery < 0.5 else 'OK'
-            
+
             return {
                 'status': status,
                 'message_delivery_rate': round(avg_delivery * 100, 1),
@@ -80,7 +80,7 @@ class PerformanceAnalyzer:
         except Exception as e:
             logger.error(f"Mesh network analysis failed: {e}")
             return {'status': 'ERROR', 'error': str(e)}
-    
+
     def analyze_system_complexity(self) -> Dict[str, Any]:
         """Analyze system complexity metrics."""
         try:
@@ -88,11 +88,11 @@ class PerformanceAnalyzer:
             python_files = 0
             total_lines = 0
             large_files = []
-            
+
             for root, dirs, files in os.walk('.'):
                 # Skip virtual environments and caches
                 dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['venv', 'env', '__pycache__']]
-                
+
                 for file in files:
                     if file.endswith('.py'):
                         python_files += 1
@@ -108,12 +108,12 @@ class PerformanceAnalyzer:
                                     })
                         except Exception:
                             continue
-            
+
             # Sort large files by size
             large_files.sort(key=lambda x: x['lines'], reverse=True)
-            
+
             complexity_status = 'HIGH' if python_files > 10000 else 'MEDIUM' if python_files > 1000 else 'LOW'
-            
+
             return {
                 'python_files': python_files,
                 'total_lines': total_lines,
@@ -126,13 +126,13 @@ class PerformanceAnalyzer:
         except Exception as e:
             logger.error(f"System complexity analysis failed: {e}")
             return {'error': str(e)}
-    
-    def identify_critical_issues(self, system_metrics: Dict[str, Any], 
-                               mesh_analysis: Dict[str, Any], 
+
+    def identify_critical_issues(self, system_metrics: Dict[str, Any],
+                               mesh_analysis: Dict[str, Any],
                                complexity_analysis: Dict[str, Any]) -> Dict[str, Any]:
         """Identify critical performance issues."""
         issues = []
-        
+
         # Critical: Mesh network failure
         if mesh_analysis.get('message_delivery_rate', 0) == 0:
             issues.append({
@@ -142,7 +142,7 @@ class PerformanceAnalyzer:
                 'impact': 'Distributed operations impossible',
                 'action': 'Fix routing algorithms, message serialization, connection pooling'
             })
-        
+
         # High: Memory pressure
         if system_metrics.get('memory_used_percent', 0) > 85:
             issues.append({
@@ -152,7 +152,7 @@ class PerformanceAnalyzer:
                 'impact': 'Risk of crashes and system instability',
                 'action': 'Memory optimization, garbage collection, model compression'
             })
-        
+
         # High: System complexity
         if complexity_analysis.get('python_files', 0) > 10000:
             issues.append({
@@ -162,14 +162,14 @@ class PerformanceAnalyzer:
                 'impact': 'Slow build times, maintenance overhead',
                 'action': 'Code consolidation, modularization, dead code removal'
             })
-        
+
         return {
             'total_issues': len(issues),
             'critical_count': sum(1 for i in issues if i['severity'] == 'CRITICAL'),
             'high_count': sum(1 for i in issues if i['severity'] == 'HIGH'),
             'issues': issues
         }
-    
+
     def generate_optimization_plan(self, issues: Dict[str, Any]) -> Dict[str, Any]:
         """Generate actionable optimization plan."""
         plan = {
@@ -177,7 +177,7 @@ class PerformanceAnalyzer:
             'short_term_actions': [],
             'long_term_actions': []
         }
-        
+
         for issue in issues.get('issues', []):
             if issue['severity'] == 'CRITICAL':
                 plan['immediate_actions'].append({
@@ -193,7 +193,7 @@ class PerformanceAnalyzer:
                     'priority': 2,
                     'estimated_effort': '3-5 days'
                 })
-        
+
         # Long-term improvements
         plan['long_term_actions'].extend([
             {
@@ -209,9 +209,9 @@ class PerformanceAnalyzer:
                 'estimated_effort': '1 week'
             }
         ])
-        
+
         return plan
-    
+
     def create_performance_report(self) -> str:
         """Create comprehensive performance report."""
         # Collect all analysis data
@@ -220,7 +220,7 @@ class PerformanceAnalyzer:
         complexity_analysis = self.analyze_system_complexity()
         issues = self.identify_critical_issues(system_metrics, mesh_analysis, complexity_analysis)
         optimization_plan = self.generate_optimization_plan(issues)
-        
+
         # Generate report
         report = f"""# AIVillage Performance Analysis Report
 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
@@ -244,7 +244,7 @@ High Priority Issues: **{issues.get('high_count', 0)}**
 - **Overall Success Rate**: {mesh_analysis.get('overall_success_rate', 0)}%
 - **Tests Status**: {mesh_analysis.get('tests_passed', 0)}/{mesh_analysis.get('tests_total', 0)} passed
 
-### 2. Memory Utilization  
+### 2. Memory Utilization
 - **Current Usage**: {system_metrics.get('memory_used_percent', 0)}%
 - **Process Memory**: {system_metrics.get('process_memory_gb', 0)} GB
 - **Status**: {'CRITICAL - Risk of OOM' if system_metrics.get('memory_used_percent', 0) > 85 else 'Acceptable'}
@@ -257,7 +257,7 @@ High Priority Issues: **{issues.get('high_count', 0)}**
 
 ## Issues Identified
 """
-        
+
         for i, issue in enumerate(issues.get('issues', []), 1):
             severity_icon = "🚨" if issue['severity'] == 'CRITICAL' else "⚠️"
             report += f"""
@@ -266,7 +266,7 @@ High Priority Issues: **{issues.get('high_count', 0)}**
 **Impact**: {issue['impact']}
 **Action Required**: {issue['action']}
 """
-        
+
         report += f"""
 ## Optimization Plan
 
@@ -274,19 +274,19 @@ High Priority Issues: **{issues.get('high_count', 0)}**
 """
         for action in optimization_plan.get('immediate_actions', []):
             report += f"- **{action['component']}**: {action['action']} (Est: {action['estimated_effort']})\n"
-        
+
         report += f"""
 ### Short-term Actions (High Priority - This Week)
 """
         for action in optimization_plan.get('short_term_actions', []):
             report += f"- **{action['component']}**: {action['action']} (Est: {action['estimated_effort']})\n"
-        
+
         report += f"""
 ### Long-term Actions (Ongoing Improvements)
 """
         for action in optimization_plan.get('long_term_actions', []):
             report += f"- **{action['component']}**: {action['action']} (Est: {action['estimated_effort']})\n"
-        
+
         report += f"""
 ## Performance Targets
 
@@ -298,7 +298,7 @@ High Priority Issues: **{issues.get('high_count', 0)}**
 
 ## Next Steps
 1. **CRITICAL**: Fix mesh network message routing (Priority 1)
-2. **HIGH**: Implement memory optimization (Priority 2)  
+2. **HIGH**: Implement memory optimization (Priority 2)
 3. **HIGH**: Reduce system complexity (Priority 3)
 4. **MEDIUM**: Set up continuous monitoring (Priority 4)
 
@@ -306,13 +306,13 @@ High Priority Issues: **{issues.get('high_count', 0)}**
 - Performance dashboard: `performance_dashboard.json`
 - Detailed results: `performance_analysis_results.json`
 """
-        
+
         return report
-    
+
     def run_complete_analysis(self) -> Dict[str, Any]:
         """Run complete performance analysis."""
         logger.info("Starting comprehensive performance analysis...")
-        
+
         try:
             # Collect all data
             system_metrics = self.get_system_metrics()
@@ -320,7 +320,7 @@ High Priority Issues: **{issues.get('high_count', 0)}**
             complexity_analysis = self.analyze_system_complexity()
             issues = self.identify_critical_issues(system_metrics, mesh_analysis, complexity_analysis)
             optimization_plan = self.generate_optimization_plan(issues)
-            
+
             # Create comprehensive results
             results = {
                 'analysis_timestamp': datetime.now().isoformat(),
@@ -338,19 +338,19 @@ High Priority Issues: **{issues.get('high_count', 0)}**
                     'python_files_count': complexity_analysis.get('python_files', 0)
                 }
             }
-            
+
             # Save results
             with open('performance_analysis_results.json', 'w', encoding='utf-8') as f:
                 json.dump(results, f, indent=2, ensure_ascii=False)
-            
+
             # Generate and save report
             report = self.create_performance_report()
             with open('performance_analysis_report.md', 'w', encoding='utf-8') as f:
                 f.write(report)
-            
+
             logger.info("Performance analysis completed successfully")
             return results
-            
+
         except Exception as e:
             logger.error(f"Performance analysis failed: {e}")
             return {'error': str(e)}
@@ -359,16 +359,16 @@ High Priority Issues: **{issues.get('high_count', 0)}**
 def main():
     """Main entry point."""
     analyzer = PerformanceAnalyzer()
-    
+
     print("=== AIVillage Performance Analysis ===")
     print("Analyzing system performance...")
-    
+
     results = analyzer.run_complete_analysis()
-    
+
     if 'error' in results:
         print(f"❌ Analysis failed: {results['error']}")
         return
-    
+
     # Print summary
     summary = results.get('summary', {})
     print(f"\n=== RESULTS SUMMARY ===")
@@ -377,11 +377,11 @@ def main():
     print(f"Memory Usage: {summary.get('memory_usage_percent', 0)}%")
     print(f"Mesh Delivery Rate: {summary.get('mesh_delivery_rate', 0)}%")
     print(f"Python Files: {summary.get('python_files_count', 0):,}")
-    
+
     print(f"\n=== FILES GENERATED ===")
     print("📊 Report: performance_analysis_report.md")
     print("📋 Results: performance_analysis_results.json")
-    
+
     # Show critical issues
     critical_count = summary.get('critical_issues', 0)
     if critical_count > 0:

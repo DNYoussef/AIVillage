@@ -14,7 +14,7 @@
 - **Solution**: Created new `mcp_servers/hyperag/mcp_server.py` implementing standard MCP protocol over stdio
 
 ### 3. Configuration Management
-- **Problem**: No centralized MCP server configuration 
+- **Problem**: No centralized MCP server configuration
 - **Solution**: Created `mcp_config.json` with working server configurations
 
 ### 4. Server Management
@@ -58,7 +58,7 @@ Provides tools:
 ### Sequential Thinking Server
 ```json
 {
-    "command": "npx", 
+    "command": "npx",
     "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
     "transport": "stdio"
 }

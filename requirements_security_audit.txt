@@ -4,7 +4,7 @@
 
 # CRITICAL SECURITY PACKAGES - Keep Updated
 cryptography==43.0.1          # CVE-2024-26130 patched
-pillow==10.4.0                 # CVE-2024-28219 patched  
+pillow==10.4.0                 # CVE-2024-28219 patched
 requests==2.32.3               # CVE-2024-35195 patched
 urllib3==2.2.2                 # CVE-2024-37891 patched
 PyYAML==6.0.2                  # CVE-2024-35195 patched
@@ -19,7 +19,7 @@ fastapi==0.112.0               # Latest security updates
 uvicorn==0.30.6                # Security patches included
 pydantic==2.8.2                # Input validation security
 
-# DATABASE SECURITY  
+# DATABASE SECURITY
 sqlalchemy==2.0.31             # SQL injection protections
 psycopg2-binary==2.9.9         # PostgreSQL security updates
 

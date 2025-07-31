@@ -28,34 +28,34 @@ def install_if_missing(packages):
 
 def main():
     project_root = Path(__file__).parent
-    
+
     # Install required tools
     install_if_missing(["black", "isort", "ruff"])
-    
-    # Define target directories  
+
+    # Define target directories
     targets = ["agent_forge", "mcp_servers", "production", "tests", "scripts", "benchmarks"]
-    
+
     # Filter existing directories
     existing_targets = [t for t in targets if (project_root / t).exists()]
-    
+
     print(f"Running quality fixes on: {', '.join(existing_targets)}")
-    
+
     # 1. Run black formatting
     print("\n1. Running black formatter...")
     returncode, stdout, stderr = run_command([
-        sys.executable, "-m", "black", 
+        sys.executable, "-m", "black",
         "--line-length", "88",
         "--target-version", "py39",
         "--exclude", "(new_env|__pycache__|.git|.cleanup_backups|.test_repair_backup)"
     ] + existing_targets, cwd=project_root)
-    
+
     if returncode == 0:
         print("✓ Black formatting completed successfully")
         if stdout.strip():
             print(f"Files formatted: {len(stdout.strip().split())}")
     else:
         print(f"⚠ Black formatting issues: {stderr}")
-    
+
     # 2. Run isort for import organization
     print("\n2. Running isort for import organization...")
     returncode, stdout, stderr = run_command([
@@ -67,12 +67,12 @@ def main():
         "--skip", "__pycache__",
         "--skip", ".git"
     ] + existing_targets, cwd=project_root)
-    
+
     if returncode == 0:
         print("✓ Import organization completed successfully")
     else:
         print(f"⚠ Isort issues: {stderr}")
-    
+
     # 3. Run ruff for basic linting and auto-fixes
     print("\n3. Running ruff linter with auto-fixes...")
     returncode, stdout, stderr = run_command([
@@ -82,14 +82,14 @@ def main():
         "--select", "E,W,F,I",  # Basic errors, warnings, pyflakes, isort
         "--ignore", "E501,W503,E203"  # Ignore line length (handled by black)
     ] + existing_targets, cwd=project_root)
-    
+
     if returncode == 0:
         print("✓ Ruff auto-fixes completed successfully")
     else:
         print(f"⚠ Ruff found remaining issues:")
         if stdout:
             print(stdout)
-    
+
     # 4. Check for remaining issues
     print("\n4. Checking for remaining critical issues...")
     returncode, stdout, stderr = run_command([
@@ -98,7 +98,7 @@ def main():
         "--select", "F,E9",  # Only critical errors
         "--format", "concise"
     ] + existing_targets, cwd=project_root)
-    
+
     if returncode == 0:
         print("✓ No critical linting errors found")
         critical_issues = 0
@@ -112,7 +112,7 @@ def main():
                     print(f"  {line}")
         else:
             print("  (Too many to display - run ruff check manually for details)")
-    
+
     # 5. Validate Python syntax
     print("\n5. Validating Python syntax...")
     syntax_errors = 0
@@ -128,19 +128,19 @@ def main():
                 syntax_errors += 1
             except Exception:
                 pass  # Other encoding issues, etc.
-    
+
     if syntax_errors == 0:
         print("✓ No syntax errors found")
     else:
         print(f"⚠ Found {syntax_errors} syntax errors")
-    
+
     # Summary
     print("\n" + "="*50)
     print("QUALITY FIX SUMMARY")
     print("="*50)
-    
+
     total_issues = critical_issues + syntax_errors
-    
+
     if total_issues == 0:
         print("✓ All critical quality issues have been fixed!")
         print("✓ Code is ready for commit")

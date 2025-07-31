@@ -148,7 +148,7 @@ class MeshProtocol:
         }
 
         self.logger = logging.getLogger(f"MeshNode-{node_id[:8]}")
-        
+
         # Connection tracking for simulator
         self._simulator_reference = None
 
@@ -165,7 +165,7 @@ class MeshProtocol:
         self._background_tasks.append(asyncio.create_task(self._routing_update_loop()))
         self._background_tasks.append(asyncio.create_task(self._message_processor()))
         self._background_tasks.append(asyncio.create_task(self._neighbor_discovery()))
-        
+
     async def _initialize_routing_table(self) -> None:
         """Initialize routing table with direct neighbors."""
         for neighbor_id in self.neighbors:
@@ -256,7 +256,7 @@ class MeshProtocol:
         """Send message to a specific neighbor."""
         if neighbor_id not in self.neighbors:
             return
-            
+
         # Simulate packet loss based on connection quality
         connection_quality = self.neighbors[neighbor_id].connection_quality
         if rng.random() > connection_quality:
@@ -265,13 +265,13 @@ class MeshProtocol:
                 self.stats["packet_loss_rate"] * 0.9 + 0.1
             )
             return
-            
+
         # If we have a simulator reference, deliver message directly
         if self._simulator_reference and neighbor_id in self._simulator_reference.nodes:
             neighbor_node = self._simulator_reference.nodes[neighbor_id]
             message_bytes = message.to_bytes()
             await neighbor_node.receive_message(message_bytes, self.node_id)
-            
+
         self.logger.debug(
             "Sent %s to %s", message.message_type.name, neighbor_id[:8]
         )
@@ -300,7 +300,7 @@ class MeshProtocol:
             if message.recipient_id is None or message.recipient_id == self.node_id:
                 # Process message
                 await self.received_messages.put(message)
-                
+
                 # Update routing table from message origin
                 if message.sender_id not in self.routing_table and sender_id:
                     if sender_id in self.neighbors:
@@ -332,26 +332,26 @@ class MeshProtocol:
         """Handle routing update messages to learn new routes."""
         try:
             payload = json.loads(message.payload.decode())
-            
+
             # Update routes from the routing update
             for route_info in payload.get("routes", []):
                 destination = route_info["destination"]
                 distance = route_info["distance"] + 1  # Add one hop through sender
-                
+
                 # Only update if we don't have a route or this is shorter
-                if (destination not in self.routing_table or 
+                if (destination not in self.routing_table or
                     self.routing_table[destination][1] > distance):
                     self.routing_table[destination] = (sender_id, distance)
-                    
+
         except Exception as e:
             self.logger.debug("Error handling routing update: %s", e)
-    
+
     async def _handle_discovery(self, message: MeshMessage, sender_id: str) -> None:
         """Handle discovery messages."""
         try:
             payload = json.loads(message.payload.decode())
             discovered_node_id = payload.get("node_id")
-            
+
             if discovered_node_id and discovered_node_id != self.node_id:
                 # Update routing table if this is a new or better route
                 if (discovered_node_id not in self.routing_table or
@@ -359,7 +359,7 @@ class MeshProtocol:
                     if sender_id in self.neighbors:
                         distance = 1 if discovered_node_id == sender_id else 2
                         self.routing_table[discovered_node_id] = (sender_id, distance)
-                        
+
         except Exception as e:
             self.logger.debug("Error handling discovery: %s", e)
 
