@@ -202,10 +202,11 @@ resources:
 
 # Staging secrets (less secure for testing)
 secrets:
-  postgresPassword: "staging_password_123"
-  redisPassword: "staging_redis_123"
-  neo4jPassword: "staging_neo4j_123"
-  hyperhagJwtSecret: "staging_jwt_secret_12345"
-  openaiApiKey: "sk-test-staging"
-  anthropicApiKey: "test-staging"
-  grafanaPassword: "staging_admin"
+  # Loaded from environment or Kubernetes secrets
+  postgresPassword: "${POSTGRES_PASSWORD}"
+  redisPassword: "${REDIS_PASSWORD}"
+  neo4jPassword: "${NEO4J_PASSWORD}"
+  hyperhagJwtSecret: "${HYPERAG_JWT_SECRET}"
+  openaiApiKey: "${OPENAI_API_KEY}"
+  anthropicApiKey: "${ANTHROPIC_API_KEY}"
+  grafanaPassword: "${GRAFANA_PASSWORD}"
