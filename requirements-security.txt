@@ -1,0 +1,9 @@
+# Generated from pyproject.toml [security] - do not edit manually
+# Use 'pip install -e ".[security]"' for installation
+
+pip-audit>=2.7.3
+safety>=3.2.7
+bandit>=1.7.7
+pyotp>=2.9.0
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0

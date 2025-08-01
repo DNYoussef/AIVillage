@@ -1,0 +1,20 @@
+# Generated from pyproject.toml [experimental] - do not edit manually
+# Use 'pip install -e ".[experimental]"' for installation
+
+grokfast>=0.1.0
+mcts>=1.0.0
+gym>=0.29.1
+stable-baselines3>=2.3.2
+llama-cpp-python>=0.2.89
+chromadb>=0.5.7
+langchain>=0.2.16
+langchain-community>=0.2.16
+opencv-python>=4.10.0
+imageio>=2.34.2
+scikit-image>=0.24.0
+librosa>=0.10.2
+sounddevice>=0.5.0
+soundfile>=0.12.1
+streamlit>=1.37.1
+gradio>=4.44.0
+bokeh>=3.5.2

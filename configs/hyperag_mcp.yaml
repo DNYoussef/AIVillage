@@ -1,0 +1,354 @@
+# HypeRAG MCP Server Configuration
+# Configuration for the Model Context Protocol server implementation
+
+# Server settings
+server:
+  host: "localhost"
+  port: 8765
+  max_connections: 100
+  ping_interval: 30  # seconds
+  ping_timeout: 10   # seconds
+
+  # TLS settings (optional)
+  tls:
+    enabled: false
+    cert_file: null
+    key_file: null
+    ca_file: null
+
+# Authentication and authorization
+auth:
+  # JWT configuration
+  jwt_secret: "change-this-secret-in-production"
+  jwt_algorithm: "HS256"
+  jwt_expiration_hours: 24
+
+  # API key authentication
+  api_keys_enabled: true
+
+  # Session management
+  session_timeout_hours: 24
+  max_sessions_per_user: 5
+
+  # Rate limiting
+  rate_limit:
+    requests_per_minute: 1000
+    burst_limit: 100
+
+# Permission system
+permissions:
+  # Default permissions per role
+  roles:
+    king:
+      - "hyperag:read"
+      - "hyperag:write"
+      - "hyperag:graph_modify"
+      - "hyperag:repair_approve"
+      - "hyperag:adapter_manage"
+      - "hyperag:monitor"
+
+    sage:
+      - "hyperag:read"
+      - "hyperag:write"
+      - "hyperag:graph_modify"
+      - "hyperag:adapter_use"
+      - "hyperag:monitor"
+
+    magi:
+      - "hyperag:read"
+      - "hyperag:write_code_docs"
+      - "hyperag:adapter_use"
+      - "hyperag:monitor"
+
+    watcher:
+      - "hyperag:read"
+      - "hyperag:monitor"
+
+    external:
+      - "hyperag:read_limited"
+
+    guardian:
+      - "hyperag:read"
+      - "hyperag:gate_override"
+      - "hyperag:repair_approve"
+      - "hyperag:policy_manage"
+      - "hyperag:monitor"
+
+    innovator:
+      - "hyperag:read"
+      - "hyperag:repair_propose"
+      - "hyperag:monitor"
+
+    admin:
+      - "hyperag:*"  # All permissions
+
+  # Time-based restrictions
+  business_hours:
+    enabled: true
+    start_hour: 9   # 9 AM
+    end_hour: 17    # 5 PM
+    timezone: "UTC"
+
+  # Resource-based permissions
+  resource_rules:
+    user_data:
+      - rule: "user:${user_id}/*"
+        permission: "hyperag:write"
+        description: "Users can write to their own namespace"
+
+    code_docs:
+      - rule: "docs:code/*"
+        roles: ["magi", "sage", "king", "admin"]
+        permission: "hyperag:write_code_docs"
+        description: "Only technical roles can edit code documentation"
+
+# Model management
+models:
+  # Default agent model types
+  default_agent_type: "default"
+
+  # Model registry settings
+  warmup_on_start: true
+  max_concurrent_models: 10
+  model_timeout_seconds: 300
+
+  # Agent-specific model configurations
+  agent_configs:
+    king:
+      model_type: "king"
+      max_depth: 5
+      time_budget_ms: 5000
+      confidence_threshold: 0.8
+
+    sage:
+      model_type: "sage"
+      max_depth: 4
+      time_budget_ms: 3000
+      confidence_threshold: 0.75
+
+    magi:
+      model_type: "magi"
+      max_depth: 3
+      time_budget_ms: 2000
+      confidence_threshold: 0.7
+
+# Storage backends
+storage:
+  # Hippo-Index (episodic memory)
+  hippo_index:
+    backend: "duckdb"
+    connection_string: "data/hippo_index.db"
+    pool_size: 10
+    ttl_default_hours: 168  # 7 days
+
+  # Hypergraph-KG (semantic memory)
+  hypergraph_kg:
+    backend: "neo4j"
+    uri: "bolt://localhost:7687"
+    username: "neo4j"
+    password: "password"
+    database: "hyperag"
+
+  # Vector storage
+  vector_store:
+    backend: "qdrant"
+    host: "localhost"
+    port: 6333
+    collection_name: "hyperag_embeddings"
+    vector_size: 768
+
+  # Cache layer
+  cache:
+    backend: "redis"
+    host: "localhost"
+    port: 6379
+    database: 0
+    password: null
+    ttl_default_seconds: 3600
+
+# Guardian Gate configuration
+guardian:
+  enabled: true
+
+  # Validation thresholds
+  thresholds:
+    semantic_score_min: 0.7
+    utility_score_min: 0.6
+    safety_score_min: 0.8
+
+  # External fact checking
+  fact_checking:
+    enabled: true
+    sources:
+      - wikipedia
+      - wikidata
+    timeout_seconds: 5
+
+  # Policy enforcement
+  policies:
+    content_safety:
+      enabled: true
+      block_harmful_content: true
+
+    pii_protection:
+      enabled: true
+      mask_sensitive_data: true
+
+    copyright_check:
+      enabled: false  # Requires additional services
+
+  # KG-Trie fallback
+  kg_trie:
+    enabled: true
+    trigger_threshold: 0.5  # Activate when safety score < 0.5
+    max_tokens: 100
+
+# Retrieval configuration
+retrieval:
+  # Vector retrieval
+  vector:
+    algorithm: "hnsw"
+    m: 16
+    ef_construction: 200
+    ef_search: 100
+    top_k: 20
+
+  # Personalized PageRank
+  ppr:
+    alpha: 0.85
+    max_iterations: 100
+    tolerance: 1e-6
+    top_k: 50
+
+  # Divergent retrieval (creative mode)
+  divergent:
+    max_depth: 5
+    min_surprise: 0.3
+    time_budget_ms: 2000
+    parallel_threads: 4
+    cache_results: true
+
+  # Relation-aware GAT
+  rel_gat:
+    layers: 3
+    heads: 8
+    hidden_dim: 256
+    dropout: 0.1
+
+# Repair system
+repair:
+  # GDC (Graph Diagnostic Criteria)
+  gdc:
+    enabled: true
+    scan_interval_hours: 24
+    batch_size: 100
+
+    # Auto-repair settings
+    auto_repair_threshold: 0.3  # Impact score
+    require_approval_threshold: 0.7
+
+  # Innovator agent
+  innovator:
+    model: "gpt-4"
+    temperature: 0.3
+    max_tokens: 500
+    timeout_seconds: 30
+
+# LoRA adapter management
+adapters:
+  # Storage
+  storage_backend: "s3"
+  bucket_name: "hyperag-adapters"
+
+  # Security
+  require_signature: true
+  trusted_signers: []
+
+  # Performance
+  cache_size_mb: 1024
+  hot_swap_enabled: true
+
+# Audit and logging
+audit:
+  enabled: true
+  max_entries: 10000
+  retention_days: 90
+
+  # What to audit
+  operations:
+    - "permission_check"
+    - "authentication"
+    - "query"
+    - "repair"
+    - "guardian_decision"
+    - "adapter_operation"
+
+  # Storage
+  storage:
+    backend: "file"
+    file_path: "logs/audit.jsonl"
+    rotate_size_mb: 100
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  # File logging
+  file:
+    enabled: true
+    path: "logs/hyperag_mcp.log"
+    max_size_mb: 100
+    backup_count: 5
+
+  # Console logging
+  console:
+    enabled: true
+    colored: true
+
+  # Structured logging
+  structured:
+    enabled: false
+    format: "json"
+
+# Monitoring and metrics
+monitoring:
+  enabled: true
+
+  # Prometheus metrics
+  prometheus:
+    enabled: false
+    port: 9090
+
+  # Health checks
+  health:
+    enabled: true
+    check_interval_seconds: 30
+
+  # Performance metrics
+  metrics:
+    - "request_latency"
+    - "request_count"
+    - "error_rate"
+    - "active_connections"
+    - "memory_usage"
+    - "model_performance"
+
+# Development settings
+development:
+  debug: false
+  hot_reload: false
+  mock_responses: false
+
+  # Test data
+  create_test_data: false
+  test_data_size: 100
+
+# Production settings
+production:
+  security_headers: true
+  rate_limiting: true
+  connection_limits: true
+  resource_limits:
+    max_memory_mb: 4096
+    max_cpu_percent: 80
