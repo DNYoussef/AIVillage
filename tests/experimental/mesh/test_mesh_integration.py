@@ -6,15 +6,16 @@ Moved from root to tests/experimental/mesh/ for better organization.
 
 import asyncio
 import logging
-import sys
 from pathlib import Path
+import sys
 
 # Add the project root to the path for imports
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from mesh_network_manager import MeshNetworkManager
 from communications.message import Message, MessageType, Priority
+from mesh_network_manager import MeshNetworkManager
+
 
 async def test_mesh_integration():
     """Test that mesh network integrates with existing message system."""
@@ -47,7 +48,7 @@ async def test_mesh_integration():
         sender="agent_001",
         receiver="agent_002",
         content={"test": "mesh_integration", "data": "Hello from mesh!"},
-        priority=Priority.HIGH
+        priority=Priority.HIGH,
     )
 
     await node1.send_message(test_message)
@@ -58,31 +59,36 @@ async def test_mesh_integration():
     stats1 = node1.get_network_statistics()
     stats2 = node2.get_network_statistics()
 
-    print(f"Node 1 - Active peers: {stats1['active_peers']}, Routes: {stats1['routing_entries']}")
-    print(f"Node 2 - Active peers: {stats2['active_peers']}, Routes: {stats2['routing_entries']}")
+    print(
+        f"Node 1 - Active peers: {stats1['active_peers']}, Routes: {stats1['routing_entries']}"
+    )
+    print(
+        f"Node 2 - Active peers: {stats2['active_peers']}, Routes: {stats2['routing_entries']}"
+    )
 
     # Test 3: Health monitoring
     print("\nTest 3: Health Monitoring")
-    health1 = stats1['network_health']
-    health2 = stats2['network_health']
+    health1 = stats1["network_health"]
+    health2 = stats2["network_health"]
 
-    print(f"Node 1 Health - Success: {health1['success_rate']:.1%}, Latency: {health1['average_latency_ms']:.1f}ms")
-    print(f"Node 2 Health - Success: {health2['success_rate']:.1%}, Latency: {health2['average_latency_ms']:.1f}ms")
+    print(
+        f"Node 1 Health - Success: {health1['success_rate']:.1%}, Latency: {health1['average_latency_ms']:.1f}ms"
+    )
+    print(
+        f"Node 2 Health - Success: {health2['success_rate']:.1%}, Latency: {health2['average_latency_ms']:.1f}ms"
+    )
 
     # Test 4: Multiple message types
     print("\nTest 4: Multiple Message Types")
     message_types = [
         (MessageType.TASK, {"task": "process_data", "priority": "high"}),
         (MessageType.NOTIFICATION, {"alert": "system_status", "level": "info"}),
-        (MessageType.RESPONSE, {"result": "completed", "status": "success"})
+        (MessageType.RESPONSE, {"result": "completed", "status": "success"}),
     ]
 
     for msg_type, content in message_types:
         message = Message(
-            type=msg_type,
-            sender="agent_001",
-            receiver="agent_002",
-            content=content
+            type=msg_type, sender="agent_001", receiver="agent_002", content=content
         )
         await node1.send_message(message)
         print(f"Sent {msg_type.value} message")
@@ -95,12 +101,16 @@ async def test_mesh_integration():
     final_stats1 = node1.get_network_statistics()
     final_stats2 = node2.get_network_statistics()
 
-    print(f"Node 1 - Messages processed: {final_stats1['network_health']['total_messages']}")
-    print(f"Node 2 - Messages processed: {final_stats2['network_health']['total_messages']}")
+    print(
+        f"Node 1 - Messages processed: {final_stats1['network_health']['total_messages']}"
+    )
+    print(
+        f"Node 2 - Messages processed: {final_stats2['network_health']['total_messages']}"
+    )
 
     total_success_rate = (
-        final_stats1['network_health']['success_rate'] +
-        final_stats2['network_health']['success_rate']
+        final_stats1["network_health"]["success_rate"]
+        + final_stats2["network_health"]["success_rate"]
     ) / 2
 
     print(f"Overall success rate: {total_success_rate:.1%}")
@@ -118,7 +128,7 @@ async def test_mesh_integration():
         type=MessageType.QUERY,
         sender="agent_001",
         receiver="agent_002",
-        content={"test": "recovery"}
+        content={"test": "recovery"},
     )
     await node1.send_message(recovery_message)
 
@@ -142,10 +152,12 @@ async def test_mesh_integration():
 
     return total_success_rate >= 0.8
 
+
 def test_mesh_integration_pytest():
     """Pytest wrapper for the mesh integration test."""
     result = asyncio.run(test_mesh_integration())
     assert result, "Mesh network integration test failed"
+
 
 if __name__ == "__main__":
     result = asyncio.run(test_mesh_integration())

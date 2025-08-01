@@ -1,8 +1,0 @@
-[run]
-source = rag_system.confidence, calibration
-omit =
-    */tests/*
-
-[report]
-exclude_lines =
-    pragma: no cover

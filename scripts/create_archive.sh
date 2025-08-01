@@ -66,7 +66,7 @@ This repository contains deprecated components from the AIVillage project.
 ### Directory Structure
 
 - `archived_claims/` - Documentation with misleading status claims
-- `docs_archive/` - Outdated analysis from pre-Sprint 2 development  
+- `docs_archive/` - Outdated analysis from pre-Sprint 2 development
 - `legacy/` - Legacy code superseded by production/experimental components
 - `backups/` - Deprecated development utilities
 - Other directories with legacy type stubs and reports

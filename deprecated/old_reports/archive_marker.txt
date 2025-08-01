@@ -1,0 +1,2 @@
+This directory contains archived reports and summaries from the AIVillage project.
+Files moved here represent historical documentation that is no longer part of the active documentation structure.

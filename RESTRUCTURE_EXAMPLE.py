@@ -13,17 +13,17 @@ from datetime import datetime
 
 class RestructureSimulator:
     """Simulates the restructuring process without actually moving files."""
-    
+
     def __init__(self, base_path: str):
         self.base_path = Path(base_path)
         self.moves = []
         self.errors = []
-        
+
     def simulate_move(self, source: str, target: str) -> dict:
         """Simulate moving a file/directory."""
         source_path = self.base_path / source
         target_path = self.base_path / target
-        
+
         result = {
             "source": source,
             "target": target,
@@ -32,7 +32,7 @@ class RestructureSimulator:
             "would_move": False,
             "reason": ""
         }
-        
+
         if not source_path.exists():
             result["reason"] = "Source does not exist"
         elif target_path.exists():
@@ -40,13 +40,13 @@ class RestructureSimulator:
         else:
             result["would_move"] = True
             result["reason"] = "Ready to move"
-            
+
         return result
-        
+
     def simulate_production_moves(self):
         """Simulate moving production components."""
         print("=== Simulating Production Component Moves ===")
-        
+
         production_moves = [
             ("production", "src/production"),
             ("digital_twin", "src/digital_twin"),
@@ -61,18 +61,18 @@ class RestructureSimulator:
             ("hyperag", "src/hyperag"),
             ("rag_system", "src/rag_system")
         ]
-        
+
         for source, target in production_moves:
             result = self.simulate_move(source, target)
             self.moves.append(result)
-            
+
             status = "✅" if result["would_move"] else "⚠️"
             print(f"{status} {source} → {target} ({result['reason']})")
-            
+
     def simulate_agent_forge_split(self):
         """Simulate splitting agent_forge."""
         print("\n=== Simulating Agent Forge Split ===")
-        
+
         # Stable components to src/
         stable_moves = [
             ("agent_forge/core", "src/agent_forge/core"),
@@ -81,15 +81,15 @@ class RestructureSimulator:
             ("agent_forge/utils", "src/agent_forge/utils"),
             ("agent_forge/orchestration", "src/agent_forge/orchestration")
         ]
-        
+
         print("Stable components → src/agent_forge/:")
         for source, target in stable_moves:
             result = self.simulate_move(source, target)
             self.moves.append(result)
-            
+
             status = "✅" if result["would_move"] else "⚠️"
             print(f"  {status} {source} → {target} ({result['reason']})")
-            
+
         # Experimental components to experimental/
         experimental_moves = [
             ("agent_forge/self_awareness", "experimental/agent_forge_experimental/self_awareness"),
@@ -106,37 +106,37 @@ class RestructureSimulator:
             ("agent_forge/evolution", "experimental/agent_forge_experimental/evolution"),
             ("agent_forge/compression", "experimental/agent_forge_experimental/compression")
         ]
-        
+
         print("\nExperimental components → experimental/agent_forge_experimental/:")
         for source, target in experimental_moves:
             result = self.simulate_move(source, target)
             self.moves.append(result)
-            
+
             status = "✅" if result["would_move"] else "⚠️"
             print(f"  {status} {source} → {target} ({result['reason']})")
-            
+
     def simulate_tools_moves(self):
         """Simulate moving tools."""
         print("\n=== Simulating Tools Consolidation ===")
-        
+
         tools_moves = [
             ("scripts", "tools/scripts"),
             ("benchmarks", "tools/benchmarks"),
             ("examples", "tools/examples")
         ]
-        
+
         for source, target in tools_moves:
             result = self.simulate_move(source, target)
             self.moves.append(result)
-            
+
             status = "✅" if result["would_move"] else "⚠️"
             print(f"{status} {source} → {target} ({result['reason']})")
-            
+
     def generate_simulation_report(self):
         """Generate simulation report."""
         moveable = [m for m in self.moves if m["would_move"]]
         blocked = [m for m in self.moves if not m["would_move"]]
-        
+
         report = {
             "timestamp": datetime.now().isoformat(),
             "total_operations": len(self.moves),
@@ -144,43 +144,43 @@ class RestructureSimulator:
             "blocked_moves": len(blocked),
             "moves": self.moves
         }
-        
+
         print(f"\n=== Simulation Summary ===")
         print(f"Total operations: {report['total_operations']}")
         print(f"Ready to move: {report['ready_to_move']}")
         print(f"Blocked: {report['blocked_moves']}")
-        
+
         if blocked:
             print(f"\nBlocked moves:")
             for move in blocked:
                 print(f"  {move['source']} → {move['target']} ({move['reason']})")
-                
+
         return report
-        
+
     def run_simulation(self):
         """Run the complete simulation."""
         print("AIVillage Codebase Restructuring Simulation")
         print("=" * 50)
-        
+
         self.simulate_production_moves()
-        self.simulate_agent_forge_split()  
+        self.simulate_agent_forge_split()
         self.simulate_tools_moves()
-        
+
         return self.generate_simulation_report()
 
 def main():
     """Run the restructuring simulation."""
     simulator = RestructureSimulator(os.getcwd())
     report = simulator.run_simulation()
-    
+
     # Save simulation report
     with open('restructure_simulation.json', 'w') as f:
         import json
         json.dump(report, f, indent=2)
-        
+
     print(f"\nSimulation report saved to: restructure_simulation.json")
     print("\nTo execute actual restructuring, run the full migration script.")
-    
+
     return report
 
 if __name__ == "__main__":

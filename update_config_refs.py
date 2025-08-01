@@ -11,13 +11,13 @@ def update_file(file_path, replacements):
         # Read the file
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             content = f.read()
-        
+
         original_content = content
-        
+
         # Apply replacements
         for old, new in replacements.items():
             content = content.replace(old, new)
-        
+
         # Write back if changed
         if content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
@@ -25,18 +25,18 @@ def update_file(file_path, replacements):
             print(f"Updated: {file_path}")
             return True
         return False
-            
+
     except Exception as e:
         print(f"Error updating {file_path}: {e}")
         return False
 
 def main():
     """Update all config/ references"""
-    
+
     # Define replacements
     replacements = {
         'config/hyperag_mcp.yaml': 'configs/hyperag_mcp.yaml',
-        'config/compression.yaml': 'configs/compression.yaml', 
+        'config/compression.yaml': 'configs/compression.yaml',
         'config/retrieval.yaml': 'configs/retrieval.yaml',
         'config/gdc_rules.yaml': 'configs/gdc_rules.yaml',
         'config/scanner_config.json': 'configs/scanner_config.yaml',
@@ -46,7 +46,7 @@ def main():
         './config/': './configs/',
         'Check config/': 'Check configs/'
     }
-    
+
     # Files to update
     files_to_update = [
         '.env.mcp',
@@ -62,7 +62,7 @@ def main():
         'jobs/README.md',
         'jobs/crontab_hyperag',
     ]
-    
+
     # Docker files
     docker_files = [
         'deploy/docker/Dockerfile.agent-forge',
@@ -75,10 +75,10 @@ def main():
         'deploy/docker/Dockerfile.mesh-network',
         'deploy/docker/Dockerfile.twin',
     ]
-    
+
     all_files = files_to_update + docker_files
     updated_count = 0
-    
+
     for file_path in all_files:
         path = Path(file_path)
         if path.exists():
@@ -86,7 +86,7 @@ def main():
                 updated_count += 1
         else:
             print(f"File not found: {file_path}")
-    
+
     print(f"\nUpdated {updated_count} files with config path references")
 
 if __name__ == "__main__":

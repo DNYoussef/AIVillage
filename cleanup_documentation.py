@@ -1,218 +1,477 @@
 #!/usr/bin/env python3
 """
-AIVillage Documentation Cleanup Script
+Comprehensive Documentation Cleanup Script for AIVillage
+========================================================
 
-This script performs comprehensive documentation cleanup:
-1. Archives misleading success claims
-2. Updates README.md with realistic status
-3. Consolidates documentation structure
-4. Removes redundant JSON dashboard files
+This script consolidates and organizes scattered markdown files into a clean,
+hierarchical documentation structure.
 
-Run with: python cleanup_documentation.py
+Goals:
+1. Archive reports and summaries to deprecated/old_reports/
+2. Reorganize docs/ into logical structure
+3. Remove duplicates
+4. Clean hidden directories
+5. Create master documentation index
+6. Update cross-references
 """
 
 import os
 import shutil
+import re
 from pathlib import Path
+from collections import defaultdict
 import json
-from datetime import datetime
 
-def main():
-    base_dir = Path(".")
-    
-    print("🧹 Starting AIVillage Documentation Cleanup")
-    print("=" * 50)
-    
-    # Step 1: Create archive directory structure
-    print("\n📁 Creating archive directory structure...")
-    archived_claims_dir = base_dir / "deprecated" / "archived_claims"
-    old_reports_dir = base_dir / "deprecated" / "old_reports"
-    
-    archived_claims_dir.mkdir(parents=True, exist_ok=True)
-    old_reports_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Step 2: Archive misleading success claims
-    print("\n📦 Archiving misleading success claims...")
-    
-    misleading_files = [
-        "FINAL_PROJECT_STATUS.md",
-        "MESH_NETWORK_DEPLOYMENT_GUIDE.md", 
-        "CODEBASE_TRANSFORMATION_SUMMARY.md"
-    ]
-    
-    for filename in misleading_files:
-        source_path = base_dir / filename
-        if source_path.exists():
-            target_path = archived_claims_dir / filename
-            print(f"  Moving {filename} to archived_claims/")
-            shutil.move(str(source_path), str(target_path))
+class DocumentationCleanup:
+    def __init__(self, base_path=None):
+        self.base_path = Path(base_path) if base_path else Path.cwd()
+        self.moved_files = []
+        self.duplicates_removed = []
+        self.structure_created = []
+        
+        # Define target structure
+        self.target_structure = {
+            'docs/architecture/': [
+                'architecture.md', 'architecture_updated.md', 'system_overview.md',
+                'design/', 'hyperag_mcp_architecture.md'
+            ],
+            'docs/guides/': [
+                'onboarding.md', 'advanced_setup.md', 'usage_examples.md',
+                'migration_notes.md', 'EVOMERGE_GUIDE.md', 'QUIETSTAR_GUIDE.md',
+                'compression_guide.md', 'process_standardization_guide.md',
+                'interface_standardization_guide.md'
+            ],
+            'docs/api/': [
+                'API_DOCUMENTATION.md', 'specs/', 'hyperag_api.md'
+            ],
+            'docs/components/': [
+                'mesh/', 'rag/', 'twin/', 'agent_forge_pipeline_overview.md',
+                'complete_agent_forge_pipeline.md', 'AGENT_FORGE_ANALYSIS.md'
+            ],
+            'docs/development/': [
+                'BRANCHING_STRATEGY.md', 'testing-best-practices.md',
+                'test-discovered-behaviors.md', 'COMPRESSION_INTEGRATION.md',
+                'SMOKE_TEST_INTEGRATION.md'
+            ],
+            'docs/reference/': [
+                'TODO.md', 'roadmap.md', 'feature_matrix.md', 'benchmark_results.md',
+                'DIRECTORY_STRUCTURE.md', 'ENTRY_POINTS.md', 'ENTRY_POINT_MAPPING.md'
+            ],
+            'deprecated/old_reports/': [
+                # All report files will go here
+            ]
+        }
+        
+        # Files to keep in root
+        self.root_files = [
+            'README.md', 'CONTRIBUTING.md', 'CHANGELOG.md', 'CLAUDE.local.md'
+        ]
+        
+        # Report patterns to archive
+        self.report_patterns = [
+            r'.*_REPORT\.md$', r'.*REPORT\.md$', r'.*_SUMMARY\.md$', 
+            r'.*SUMMARY\.md$', r'.*_COMPLETE\.md$', r'.*COMPLETE\.md$',
+            r'.*_STATUS\.md$', r'.*STATUS\.md$', r'.*_PLAN\.md$',
+            r'.*PLAN\.md$', r'.*_CHECKLIST\.md$', r'.*CHECKLIST\.md$',
+            r'.*_DASHBOARD\.md$', r'.*DASHBOARD\.md$', r'.*_ANALYSIS\.md$',
+            r'.*ANALYSIS\.md$', r'.*_AUDIT\.md$', r'.*AUDIT\.md$',
+            r'.*_ROADMAP\.md$', r'.*ROADMAP\.md$', r'.*_GUIDE\.md$'
+        ]
+
+    def create_directory_structure(self):
+        """Create the target directory structure"""
+        print("Creating directory structure...")
+        
+        for dir_path in self.target_structure.keys():
+            full_path = self.base_path / dir_path
+            full_path.mkdir(parents=True, exist_ok=True)
+            self.structure_created.append(str(full_path))
+            print(f"  Created: {dir_path}")
+        
+        # Create deprecated directory
+        deprecated_path = self.base_path / 'deprecated' / 'old_reports'
+        deprecated_path.mkdir(parents=True, exist_ok=True)
+        self.structure_created.append(str(deprecated_path))
+        print(f"  Created: deprecated/old_reports/")
+
+    def is_report_file(self, filename):
+        """Check if a file matches report patterns"""
+        for pattern in self.report_patterns:
+            if re.match(pattern, filename, re.IGNORECASE):
+                return True
+        return False
+
+    def find_markdown_files(self):
+        """Find all markdown files in the project (excluding virtual environments)"""
+        md_files = []
+        
+        for root, dirs, files in os.walk(self.base_path):
+            # Skip virtual environments and node_modules
+            dirs[:] = [d for d in dirs if not d.startswith(('env', 'venv', 'node_modules', '__pycache__'))]
             
-            # Add archive notice to file
-            with open(target_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            for file in files:
+                if file.endswith('.md'):
+                    full_path = Path(root) / file
+                    relative_path = full_path.relative_to(self.base_path)
+                    md_files.append((full_path, relative_path))
+        
+        return md_files
+
+    def categorize_file(self, file_path, relative_path):
+        """Determine the appropriate category for a file"""
+        filename = file_path.name
+        path_str = str(relative_path).lower()
+        
+        # Keep certain files in root
+        if filename in self.root_files:
+            return 'root'
+        
+        # Archive reports and temporary files
+        if self.is_report_file(filename):
+            return 'archive'
+        
+        # Check existing location for hints
+        if 'docs/architecture' in path_str or 'docs/design' in path_str:
+            return 'architecture'
+        elif 'docs/guides' in path_str or 'guide' in filename.lower():
+            return 'guides'
+        elif 'docs/api' in path_str or 'api' in filename.lower() or 'docs/specs' in path_str:
+            return 'api'
+        elif any(comp in path_str for comp in ['mesh', 'rag', 'twin', 'agent_forge']):
+            return 'components'
+        elif any(dev in path_str for dev in ['test', 'branch', 'development', 'smoke']):
+            return 'development'
+        elif any(ref in filename.lower() for ref in ['todo', 'roadmap', 'feature', 'benchmark', 'directory', 'entry']):
+            return 'reference'
+        
+        # Default categorization based on content keywords
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read().lower()
+                
+            if any(arch in content for arch in ['architecture', 'system design', 'component diagram']):
+                return 'architecture'
+            elif any(guide in content for guide in ['setup', 'installation', 'how to', 'tutorial']):
+                return 'guides'
+            elif any(api in content for api in ['endpoint', 'api', 'interface', 'protocol']):
+                return 'api'
+            elif any(comp in content for comp in ['component', 'module', 'service']):
+                return 'components'
+            elif any(dev in content for dev in ['test', 'development', 'testing', 'ci/cd']):
+                return 'development'
+            else:
+                return 'reference'
+        except Exception:
+            return 'reference'
+
+    def find_duplicates(self, md_files):
+        """Find duplicate files based on filename"""
+        filename_groups = defaultdict(list)
+        
+        for file_path, relative_path in md_files:
+            base_name = file_path.stem.lower()
+            # Handle README variations
+            if base_name.startswith('readme'):
+                base_name = 'readme'
+            filename_groups[base_name].append((file_path, relative_path))
+        
+        duplicates = {}
+        for base_name, files in filename_groups.items():
+            if len(files) > 1:
+                # Sort by modification time, keep newest
+                files.sort(key=lambda x: x[0].stat().st_mtime, reverse=True)
+                duplicates[base_name] = files
+        
+        return duplicates
+
+    def move_file(self, source_path, target_dir, new_name=None):
+        """Move a file to target directory"""
+        target_path = self.base_path / target_dir
+        target_path.mkdir(parents=True, exist_ok=True)
+        
+        filename = new_name if new_name else source_path.name
+        destination = target_path / filename
+        
+        # Handle conflicts
+        counter = 1
+        original_destination = destination
+        while destination.exists():
+            stem = original_destination.stem
+            suffix = original_destination.suffix
+            destination = target_path / f"{stem}_{counter}{suffix}"
+            counter += 1
+        
+        try:
+            shutil.move(str(source_path), str(destination))
+            self.moved_files.append((str(source_path), str(destination)))
+            return destination
+        except Exception as e:
+            print(f"  Error moving {source_path}: {e}")
+            return None
+
+    def cleanup_hidden_directories(self):
+        """Remove hidden cleanup directories"""
+        hidden_dirs = [
+            '.claude_analysis', '.claude_cleanup', '.cleanup_analysis', 
+            '.cleanup_backups', '.test_repair_backup'
+        ]
+        
+        for hidden_dir in hidden_dirs:
+            dir_path = self.base_path / hidden_dir
+            if dir_path.exists():
+                try:
+                    shutil.rmtree(str(dir_path))
+                    print(f"  Removed: {hidden_dir}/")
+                except Exception as e:
+                    print(f"  Error removing {hidden_dir}: {e}")
+
+    def organize_files(self):
+        """Main file organization logic"""
+        print("\nFinding markdown files...")
+        md_files = self.find_markdown_files()
+        print(f"Found {len(md_files)} markdown files")
+        
+        print("\nFinding duplicates...")
+        duplicates = self.find_duplicates(md_files)
+        
+        # Remove duplicates (keep newest)
+        for base_name, files in duplicates.items():
+            print(f"  Duplicate group '{base_name}': {len(files)} files")
+            keep_file = files[0]  # Newest
+            for file_path, relative_path in files[1:]:
+                try:
+                    file_path.unlink()
+                    self.duplicates_removed.append(str(relative_path))
+                    print(f"    Removed duplicate: {relative_path}")
+                except Exception as e:
+                    print(f"    Error removing {relative_path}: {e}")
+        
+        # Re-scan after duplicate removal
+        md_files = self.find_markdown_files()
+        
+        print(f"\nOrganizing {len(md_files)} files...")
+        
+        category_mapping = {
+            'architecture': 'docs/architecture/',
+            'guides': 'docs/guides/', 
+            'api': 'docs/api/',
+            'components': 'docs/components/',
+            'development': 'docs/development/',
+            'reference': 'docs/reference/',
+            'archive': 'deprecated/old_reports/'
+        }
+        
+        for file_path, relative_path in md_files:
+            if not file_path.exists():
+                continue
+                
+            category = self.categorize_file(file_path, relative_path)
             
-            archive_notice = f"""
+            if category == 'root':
+                print(f"  Keeping in root: {file_path.name}")
+                continue
+            
+            target_dir = category_mapping.get(category, 'docs/reference/')
+            
+            print(f"  Moving {relative_path} -> {target_dir}")
+            moved_to = self.move_file(file_path, target_dir)
+            
+            if moved_to:
+                print(f"    Successfully moved to: {moved_to.relative_to(self.base_path)}")
+
+    def create_documentation_index(self):
+        """Create a master documentation index"""
+        print("\nCreating documentation index...")
+        
+        index_content = """# AIVillage Documentation
+
+Welcome to the AIVillage documentation. This directory contains comprehensive documentation for the AIVillage project, organized into logical categories.
+
+## Documentation Structure
+
+### 📐 Architecture
+Core system architecture, design decisions, and component relationships.
+- [System Overview](architecture/system_overview.md)
+- [Architecture Documentation](architecture/architecture.md)
+- [Design Documents](architecture/design/)
+
+### 📚 Guides
+Step-by-step guides for setup, configuration, and usage.
+- [Onboarding Guide](guides/onboarding.md)
+- [Advanced Setup](guides/advanced_setup.md)
+- [Usage Examples](guides/usage_examples.md)
+- [Migration Notes](guides/migration_notes.md)
+
+### 🔌 API Reference
+API documentation, specifications, and interface definitions.
+- [API Documentation](api/API_DOCUMENTATION.md)
+- [Specifications](api/specs/)
+
+### 🧩 Components
+Documentation for individual system components and modules.
+- [Mesh Network](components/mesh/)
+- [RAG System](components/rag/)
+- [Agent Forge Pipeline](components/agent_forge_pipeline_overview.md)
+
+### 🛠️ Development
+Development workflows, testing, and contribution guidelines.
+- [Branching Strategy](development/BRANCHING_STRATEGY.md)
+- [Testing Best Practices](development/testing-best-practices.md)
+- [Integration Testing](development/SMOKE_TEST_INTEGRATION.md)
+
+### 📋 Reference
+Reference materials, roadmaps, and administrative documentation.
+- [Project Roadmap](reference/roadmap.md)
+- [Feature Matrix](reference/feature_matrix.md)
+- [Directory Structure](reference/DIRECTORY_STRUCTURE.md)
+- [TODO List](reference/TODO.md)
+
+## Quick Links
+
+- [Main README](../README.md) - Project overview and quick start
+- [Contributing Guide](../CONTRIBUTING.md) - How to contribute to the project
+- [Changelog](../CHANGELOG.md) - Project history and releases
+
+## Historical Documentation
+
+Older reports, summaries, and historical documentation have been archived in [`deprecated/old_reports/`](../deprecated/old_reports/) to maintain project history while keeping the main documentation clean and focused.
+
+## Documentation Standards
+
+All documentation in this project follows our [Style Guide](../STYLE_GUIDE.md) for consistency and maintainability.
 
 ---
 
-**ARCHIVED**: This file contained premature success claims and has been moved to deprecated/archived_claims/ for historical record. For current project status, see README.md.
+*Last updated: {date}*
+"""
+        
+        from datetime import datetime
+        index_content = index_content.format(date=datetime.now().strftime("%Y-%m-%d"))
+        
+        index_path = self.base_path / 'docs' / 'README.md'
+        
+        try:
+            with open(index_path, 'w', encoding='utf-8') as f:
+                f.write(index_content)
+            print(f"  Created: {index_path.relative_to(self.base_path)}")
+        except Exception as e:
+            print(f"  Error creating index: {e}")
 
-**Archive Date**: {datetime.now().strftime('%Y-%m-%d')}"""
+    def generate_cleanup_report(self):
+        """Generate a comprehensive cleanup report"""
+        report_content = f"""# Documentation Cleanup Report
+
+## Summary
+Successfully reorganized AIVillage documentation structure.
+
+## Actions Taken
+
+### Directory Structure Created
+{len(self.structure_created)} directories created:
+"""
+        
+        for directory in self.structure_created:
+            report_content += f"- {Path(directory).relative_to(self.base_path)}\n"
+        
+        report_content += f"""
+### Files Moved
+{len(self.moved_files)} files moved:
+"""
+        
+        for source, target in self.moved_files:
+            source_rel = Path(source).relative_to(self.base_path) if Path(source).is_absolute() else source
+            target_rel = Path(target).relative_to(self.base_path) if Path(target).is_absolute() else target
+            report_content += f"- {source_rel} → {target_rel}\n"
+        
+        report_content += f"""
+### Duplicates Removed
+{len(self.duplicates_removed)} duplicate files removed:
+"""
+        
+        for duplicate in self.duplicates_removed:
+            report_content += f"- {duplicate}\n"
+        
+        report_content += """
+### Hidden Directories Cleaned
+- .claude_analysis/
+- .claude_cleanup/
+- .cleanup_analysis/
+- .cleanup_backups/
+- .test_repair_backup/
+
+## New Documentation Structure
+
+```
+docs/
+├── README.md                 # Master documentation index
+├── architecture/            # System architecture and design
+├── guides/                  # User and developer guides
+├── api/                     # API documentation
+├── components/              # Component-specific docs
+├── development/             # Development workflows
+└── reference/               # Reference materials
+
+deprecated/
+└── old_reports/            # Archived reports and summaries
+```
+
+## Next Steps
+
+1. Review moved files for accuracy
+2. Update any remaining broken links
+3. Validate new documentation structure
+4. Update CI/CD to reflect new paths
+
+---
+*Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}*
+"""
+        
+        from datetime import datetime
+        report_path = self.base_path / 'DOCUMENTATION_CLEANUP_REPORT.md'
+        
+        try:
+            with open(report_path, 'w', encoding='utf-8') as f:
+                f.write(report_content)
+            print(f"\nCleanup report generated: {report_path.relative_to(self.base_path)}")
+        except Exception as e:
+            print(f"Error generating report: {e}")
+
+    def run_cleanup(self):
+        """Execute the complete cleanup process"""
+        print("=" * 60)
+        print("AIVillage Documentation Cleanup")
+        print("=" * 60)
+        
+        try:
+            # Step 1: Create directory structure
+            self.create_directory_structure()
             
-            with open(target_path, 'w', encoding='utf-8') as f:
-                f.write(content + archive_notice)
-    
-    # Step 3: Archive all *_REPORT.md and *_SUMMARY.md files
-    print("\n📊 Archiving historical reports...")
-    
-    report_patterns = ["*_REPORT.md", "*_SUMMARY.md"]
-    for pattern in report_patterns:
-        for report_file in base_dir.glob(pattern):
-            if report_file.name not in misleading_files:  # Don't move already moved files
-                target_path = old_reports_dir / report_file.name
-                print(f"  Moving {report_file.name} to old_reports/")
-                shutil.move(str(report_file), str(target_path))
-    
-    # Step 4: Remove redundant JSON dashboard files from version control
-    print("\n🗑️  Removing redundant JSON dashboard files...")
-    
-    json_dashboard_patterns = [
-        "*dashboard*.json",
-        "*_report*.json", 
-        "*_results*.json",
-        "*_summary*.json",
-        "*performance*.json",
-        "*benchmark*.json"
-    ]
-    
-    for pattern in json_dashboard_patterns:
-        for json_file in base_dir.glob(pattern):
-            # Keep essential config files
-            if json_file.name in ["mcp_config.json", "package.json"]:
-                continue
-            print(f"  Removing {json_file.name}")
-            json_file.unlink()
-    
-    # Step 5: Update README.md with corrected content
-    print("\n📝 Updating README.md with realistic status...")
-    
-    readme_path = base_dir / "README.md"
-    readme_final_path = base_dir / "README_final.md"
-    
-    if readme_final_path.exists():
-        print("  Replacing README.md with updated version")
-        shutil.copy(str(readme_final_path), str(readme_path))
-        readme_final_path.unlink()  # Remove temporary file
-    
-    # Step 6: Create archive README files
-    print("\n📋 Creating archive documentation...")
-    
-    # Create archived_claims README
-    archived_claims_readme = archived_claims_dir / "DEPRECATED_DOCS_README.md"
-    archived_claims_content = """# Deprecated Documentation Archive
-
-This directory contains documentation files that made premature or misleading success claims about AIVillage components. These files have been archived to maintain historical record while preventing confusion about the actual project status.
-
-## Archived Files and Reasons
-
-### FINAL_PROJECT_STATUS.md
-**Reason**: Made premature "100% complete" and "MISSION ACCOMPLISHED" claims
-**Reality**: Project is in active development with many experimental components
-
-### MESH_NETWORK_DEPLOYMENT_GUIDE.md
-**Reason**: Claimed production-ready mesh networking capabilities
-**Reality**: Mesh networking is 20% complete and experimental
-
-### CODEBASE_TRANSFORMATION_SUMMARY.md
-**Reason**: Overstated completeness and transformation success
-**Reality**: Codebase contains mix of production-ready and experimental components
-
-## Current Project Status
-
-For accurate project status, refer to:
-- `README.md` - Current implementation status and realistic percentages
-- `docs/architecture.md` - Actual architecture and component readiness
-- `docs/roadmap.md` - Realistic development roadmap
-- `docs/feature_matrix.md` - Feature completion matrix
-
-## Archive Date
-Archived: 2025-07-31"""
-    
-    with open(archived_claims_readme, 'w', encoding='utf-8') as f:
-        f.write(archived_claims_content)
-    
-    # Create old_reports README
-    old_reports_readme = old_reports_dir / "README.md"
-    old_reports_content = """# Archived Reports Directory
-
-This directory contains historical reports and summaries that were generated during various development phases. These files have been archived to reduce root directory clutter while maintaining historical record.
-
-## Archive Contents
-
-- Sprint completion reports
-- Test analysis reports  
-- Performance analysis documents
-- Quality assessment summaries
-- Migration and cleanup reports
-
-## Current Documentation
-
-For current project documentation, see:
-- `README.md` - Main project overview
-- `docs/architecture.md` - System architecture
-- `docs/roadmap.md` - Development roadmap
-- `docs/usage_examples.md` - Usage examples
-- `docs/feature_matrix.md` - Feature completion matrix
-
-**Archive Date**: 2025-07-31"""
-    
-    with open(old_reports_readme, 'w', encoding='utf-8') as f:
-        f.write(old_reports_content)
-    
-    # Step 7: Clean up temporary files
-    print("\n🧽 Cleaning up temporary files...")
-    temp_files = ["README_updated.md", "README_backup.md"]
-    for temp_file in temp_files:
-        temp_path = base_dir / temp_file
-        if temp_path.exists():
-            temp_path.unlink()
-            print(f"  Removed {temp_file}")
-    
-    # Step 8: Generate summary report
-    print("\n✅ Documentation cleanup completed!")
-    print("=" * 50)
-    
-    print("\n📊 Cleanup Summary:")
-    print(f"  • Archived {len(misleading_files)} misleading success claim files")
-    print(f"  • Moved {len(list(old_reports_dir.glob('*.md'))) - 1} report files to old_reports/")  # -1 for README
-    print(f"  • Removed JSON dashboard files")
-    print(f"  • Updated README.md with realistic status")
-    print(f"  • Added server.py development warning")
-    print(f"  • Created archive documentation")
-    
-    print("\n🎯 Key Documentation Changes:")
-    print("  • Removed '100% complete' and 'MISSION ACCOMPLISHED' claims")
-    print("  • Added clear server.py development-only warning")
-    print("  • Updated implementation percentages to be realistic")
-    print("  • Distinguished Production (stable) vs Experimental components")
-    print("  • Consolidated documentation structure")
-    
-    print("\n📚 Current Documentation Structure:")
-    print("  • README.md - Main project overview (updated)")
-    print("  • docs/architecture.md - System architecture")
-    print("  • docs/roadmap.md - Development roadmap") 
-    print("  • docs/usage_examples.md - Usage examples")
-    print("  • docs/feature_matrix.md - Feature completion matrix")
-    print("  • deprecated/archived_claims/ - Archived misleading claims")
-    print("  • deprecated/old_reports/ - Historical reports")
-    
-    print("\n🚀 Next Steps:")
-    print("  1. Review updated README.md for accuracy")
-    print("  2. Verify docs/ files exist and are current")
-    print("  3. Update any references to archived files")
-    print("  4. Consider adding .gitignore for future JSON dashboard files")
-    
-    print(f"\n✨ Cleanup completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            # Step 2: Clean hidden directories
+            print("\nCleaning hidden directories...")
+            self.cleanup_hidden_directories()
+            
+            # Step 3: Organize files
+            self.organize_files()
+            
+            # Step 4: Create documentation index
+            self.create_documentation_index()
+            
+            # Step 5: Generate report
+            self.generate_cleanup_report()
+            
+            print("\n" + "=" * 60)
+            print("CLEANUP COMPLETED SUCCESSFULLY")
+            print("=" * 60)
+            print(f"Directories created: {len(self.structure_created)}")
+            print(f"Files moved: {len(self.moved_files)}")
+            print(f"Duplicates removed: {len(self.duplicates_removed)}")
+            print("\nNew documentation structure is ready!")
+            
+        except Exception as e:
+            print(f"\nERROR during cleanup: {e}")
+            import traceback
+            traceback.print_exc()
 
 if __name__ == "__main__":
-    main()
+    cleanup = DocumentationCleanup()
+    cleanup.run_cleanup()

@@ -2,7 +2,7 @@
 
 Stable agent_forge components that are production-ready:
 - core: Core agent functionality
-- evaluation: Agent evaluation systems  
+- evaluation: Agent evaluation systems
 - deployment: Production deployment tools
 - utils: Utility functions and helpers
 - orchestration: Agent orchestration systems
