@@ -13,6 +13,7 @@ from .base import EvolvableAgent, EvolutionMetrics
 from .nightly_evolution_orchestrator import NightlyEvolutionOrchestrator
 from .magi_architectural_evolution import MagiArchitecturalEvolution
 from .evolution_metrics import EvolutionMetricsCollector
+from .evolution_scheduler import EvolutionScheduler, SchedulerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,9 @@ class DualEvolutionSystem:
         )
         self.metrics_collector = EvolutionMetricsCollector(
             self.config.get('metrics_config', {})
+        )
+        self.scheduler = EvolutionScheduler(
+            SchedulerConfig(**self.config.get('scheduler', {}))
         )
         
         # Agent registry
@@ -251,13 +255,23 @@ class DualEvolutionSystem:
         """Monitor agent performance for emergency evolution triggers"""
         current_time = time.time()
         
-        for agent_id, agent in self.registered_agents.items():
+        for agent_id, agent in list(self.registered_agents.items()):
             try:
                 kpis = agent.evaluate_kpi()
                 performance = kpis.get('performance', 0.5)
-                
+
+                # Scheduler-driven actions
+                action = self.scheduler.get_action(agent)
+                if action == 'retire':
+                    logger.info(f"Retiring agent {agent_id} based on KPIs")
+                    self.unregister_agent(agent_id)
+                    continue
+                if (action == 'evolve' and
+                        not self._agent_in_cooling_period(agent_id, current_time)):
+                    await self._evolve_agent_nightly(agent)
+
                 # Check for emergency evolution trigger
-                if (performance < self.schedule.emergency_threshold and 
+                if (performance < self.schedule.emergency_threshold and
                     not self._agent_in_cooling_period(agent_id, current_time)):
                     
                     logger.warning(f"Emergency evolution triggered for agent {agent_id} "

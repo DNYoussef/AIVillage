@@ -7,7 +7,7 @@ including nightly incremental improvements and breakthrough discoveries.
 # Core classes - import order matters to avoid circular imports
 from .base import EvolvableAgent
 from .evolution_metrics import EvolutionMetrics
-# from .evolution_scheduler import EvolutionScheduler  # TODO: Implement
+from .evolution_scheduler import EvolutionScheduler
 
 # Evolution engines
 from .dual_evolution_system import DualEvolutionSystem
@@ -17,8 +17,8 @@ from .magi_architectural_evolution import MagiArchitecturalEvolution
 __all__ = [
     'EvolvableAgent',
     'EvolutionMetrics',
-    # 'EvolutionScheduler',  # TODO: Implement
-    'DualEvolutionSystem', 
+    'EvolutionScheduler',
+    'DualEvolutionSystem',
     'NightlyEvolutionOrchestrator',
     'MagiArchitecturalEvolution'
 ]
