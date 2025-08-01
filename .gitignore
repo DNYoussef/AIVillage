@@ -226,3 +226,30 @@ mobile_benchmark_results.json
 mesh_network_*_results.json
 bandit_results.json
 dependency_audit_report.json
+
+# Generated artifacts and logs
+*.log
+*.db
+wandb/
+wandb_offline/
+htmlcov/
+cache/
+test_checkpoints/
+compressed_*/
+merged_model/
+agent_forge_outputs/
+evomerge_env/
+new_env/
+
+# Mobile and UI builds
+mobile-app/node_modules/
+aivillage-monorepo/node_modules/
+aivillage-android-sdk/build/
+
+# Data backups (keep only recent)
+data/backups/agent_data_*.db
+data/cleanup_archive/
+
+# Performance and monitoring
+performance_monitor_*.log
+monitoring/logs/
