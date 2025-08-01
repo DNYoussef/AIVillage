@@ -98,7 +98,7 @@ class DocumentationAligner:
 
     def update_feature_matrix(self):
         """Update feature matrix with accurate status."""
-        matrix_path = Path("docs/feature_matrix.md")
+        matrix_path = Path("docs/reference/feature_matrix_1.md")
         if not matrix_path.exists():
             matrix_path = Path("docs/FEATURE_MATRIX.md")
 
