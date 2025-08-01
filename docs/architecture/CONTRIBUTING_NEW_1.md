@@ -16,7 +16,7 @@ Welcome to AIVillage! We're excited about your interest in contributing to our s
 
 ### Prerequisites
 
-- Python 3.8+ (recommended: 3.11+)
+ - Python 3.10+ (recommended: 3.11+)
 - Git
 - Docker (for microservices development)
 - Poetry (optional, for dependency management)

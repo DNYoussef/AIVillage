@@ -228,8 +228,8 @@ def validate_environment() -> bool:
     print(f"Python executable: {sys.executable}")
 
     # Check Python version
-    if sys.version_info < (3, 8):
-        print("⚠️  Warning: Python 3.8+ recommended")
+    if sys.version_info < (3, 10):
+        print("⚠️  Warning: Python 3.10+ recommended")
         return False
 
     return True

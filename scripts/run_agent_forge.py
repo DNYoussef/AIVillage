@@ -46,8 +46,8 @@ class AgentForgeRunner:
 
         try:
             # Check Python version
-            if sys.version_info < (3, 8):
-                logger.error("❌ Python 3.8+ required")
+            if sys.version_info < (3, 10):
+                logger.error("❌ Python 3.10+ required")
                 return False
 
             # Check key dependencies

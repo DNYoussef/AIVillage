@@ -2,9 +2,7 @@
 
 ⚠️ **Development Status**: This project is approximately 60% complete. Many documented features are aspirational or partially implemented. This README provides an honest assessment of actual capabilities vs. planned features.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-164%20files-green.svg)](./tests/)
+
 
 ## What AIVillage Actually Is
 
