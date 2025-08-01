@@ -7,3 +7,11 @@ structlog>=24.4.0
 sentry-sdk>=2.13.0
 uvloop>=0.20.0; platform_system != 'Windows'
 httptools>=0.6.1
+
+# P2P and Mesh Dependencies - Sprint 6 Infrastructure
+pydantic==2.11.7
+annotated-types==0.7.0
+bitarray>=3.6.0
+lz4>=4.4.4
+# libp2p>=0.2.9  # commented out due to Windows compatibility issues
+# bluetooth-mesh>=0.9.1  # commented out due to Windows compatibility issues
