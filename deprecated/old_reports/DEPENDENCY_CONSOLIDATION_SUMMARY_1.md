@@ -78,7 +78,7 @@ Update workflow files to use new pyproject.toml:
 
 **Before:**
 ```yaml
-- name: Install dependencies  
+- name: Install dependencies
   run: pip install -r requirements.txt
 ```
 

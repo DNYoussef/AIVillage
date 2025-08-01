@@ -28,7 +28,7 @@ class DocumentationCleanup:
         self.moved_files = []
         self.duplicates_removed = []
         self.structure_created = []
-        
+
         # Define target structure
         self.target_structure = {
             'docs/architecture/': [
@@ -61,15 +61,15 @@ class DocumentationCleanup:
                 # All report files will go here
             ]
         }
-        
+
         # Files to keep in root
         self.root_files = [
             'README.md', 'CONTRIBUTING.md', 'CHANGELOG.md', 'CLAUDE.local.md'
         ]
-        
+
         # Report patterns to archive
         self.report_patterns = [
-            r'.*_REPORT\.md$', r'.*REPORT\.md$', r'.*_SUMMARY\.md$', 
+            r'.*_REPORT\.md$', r'.*REPORT\.md$', r'.*_SUMMARY\.md$',
             r'.*SUMMARY\.md$', r'.*_COMPLETE\.md$', r'.*COMPLETE\.md$',
             r'.*_STATUS\.md$', r'.*STATUS\.md$', r'.*_PLAN\.md$',
             r'.*PLAN\.md$', r'.*_CHECKLIST\.md$', r'.*CHECKLIST\.md$',
@@ -81,13 +81,13 @@ class DocumentationCleanup:
     def create_directory_structure(self):
         """Create the target directory structure"""
         print("Creating directory structure...")
-        
+
         for dir_path in self.target_structure.keys():
             full_path = self.base_path / dir_path
             full_path.mkdir(parents=True, exist_ok=True)
             self.structure_created.append(str(full_path))
             print(f"  Created: {dir_path}")
-        
+
         # Create deprecated directory
         deprecated_path = self.base_path / 'deprecated' / 'old_reports'
         deprecated_path.mkdir(parents=True, exist_ok=True)
@@ -104,32 +104,32 @@ class DocumentationCleanup:
     def find_markdown_files(self):
         """Find all markdown files in the project (excluding virtual environments)"""
         md_files = []
-        
+
         for root, dirs, files in os.walk(self.base_path):
             # Skip virtual environments and node_modules
             dirs[:] = [d for d in dirs if not d.startswith(('env', 'venv', 'node_modules', '__pycache__'))]
-            
+
             for file in files:
                 if file.endswith('.md'):
                     full_path = Path(root) / file
                     relative_path = full_path.relative_to(self.base_path)
                     md_files.append((full_path, relative_path))
-        
+
         return md_files
 
     def categorize_file(self, file_path, relative_path):
         """Determine the appropriate category for a file"""
         filename = file_path.name
         path_str = str(relative_path).lower()
-        
+
         # Keep certain files in root
         if filename in self.root_files:
             return 'root'
-        
+
         # Archive reports and temporary files
         if self.is_report_file(filename):
             return 'archive'
-        
+
         # Check existing location for hints
         if 'docs/architecture' in path_str or 'docs/design' in path_str:
             return 'architecture'
@@ -143,12 +143,12 @@ class DocumentationCleanup:
             return 'development'
         elif any(ref in filename.lower() for ref in ['todo', 'roadmap', 'feature', 'benchmark', 'directory', 'entry']):
             return 'reference'
-        
+
         # Default categorization based on content keywords
         try:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read().lower()
-                
+
             if any(arch in content for arch in ['architecture', 'system design', 'component diagram']):
                 return 'architecture'
             elif any(guide in content for guide in ['setup', 'installation', 'how to', 'tutorial']):
@@ -167,31 +167,31 @@ class DocumentationCleanup:
     def find_duplicates(self, md_files):
         """Find duplicate files based on filename"""
         filename_groups = defaultdict(list)
-        
+
         for file_path, relative_path in md_files:
             base_name = file_path.stem.lower()
             # Handle README variations
             if base_name.startswith('readme'):
                 base_name = 'readme'
             filename_groups[base_name].append((file_path, relative_path))
-        
+
         duplicates = {}
         for base_name, files in filename_groups.items():
             if len(files) > 1:
                 # Sort by modification time, keep newest
                 files.sort(key=lambda x: x[0].stat().st_mtime, reverse=True)
                 duplicates[base_name] = files
-        
+
         return duplicates
 
     def move_file(self, source_path, target_dir, new_name=None):
         """Move a file to target directory"""
         target_path = self.base_path / target_dir
         target_path.mkdir(parents=True, exist_ok=True)
-        
+
         filename = new_name if new_name else source_path.name
         destination = target_path / filename
-        
+
         # Handle conflicts
         counter = 1
         original_destination = destination
@@ -200,7 +200,7 @@ class DocumentationCleanup:
             suffix = original_destination.suffix
             destination = target_path / f"{stem}_{counter}{suffix}"
             counter += 1
-        
+
         try:
             shutil.move(str(source_path), str(destination))
             self.moved_files.append((str(source_path), str(destination)))
@@ -212,10 +212,10 @@ class DocumentationCleanup:
     def cleanup_hidden_directories(self):
         """Remove hidden cleanup directories"""
         hidden_dirs = [
-            '.claude_analysis', '.claude_cleanup', '.cleanup_analysis', 
+            '.claude_analysis', '.claude_cleanup', '.cleanup_analysis',
             '.cleanup_backups', '.test_repair_backup'
         ]
-        
+
         for hidden_dir in hidden_dirs:
             dir_path = self.base_path / hidden_dir
             if dir_path.exists():
@@ -230,10 +230,10 @@ class DocumentationCleanup:
         print("\nFinding markdown files...")
         md_files = self.find_markdown_files()
         print(f"Found {len(md_files)} markdown files")
-        
+
         print("\nFinding duplicates...")
         duplicates = self.find_duplicates(md_files)
-        
+
         # Remove duplicates (keep newest)
         for base_name, files in duplicates.items():
             print(f"  Duplicate group '{base_name}': {len(files)} files")
@@ -245,44 +245,44 @@ class DocumentationCleanup:
                     print(f"    Removed duplicate: {relative_path}")
                 except Exception as e:
                     print(f"    Error removing {relative_path}: {e}")
-        
+
         # Re-scan after duplicate removal
         md_files = self.find_markdown_files()
-        
+
         print(f"\nOrganizing {len(md_files)} files...")
-        
+
         category_mapping = {
             'architecture': 'docs/architecture/',
-            'guides': 'docs/guides/', 
+            'guides': 'docs/guides/',
             'api': 'docs/api/',
             'components': 'docs/components/',
             'development': 'docs/development/',
             'reference': 'docs/reference/',
             'archive': 'deprecated/old_reports/'
         }
-        
+
         for file_path, relative_path in md_files:
             if not file_path.exists():
                 continue
-                
+
             category = self.categorize_file(file_path, relative_path)
-            
+
             if category == 'root':
                 print(f"  Keeping in root: {file_path.name}")
                 continue
-            
+
             target_dir = category_mapping.get(category, 'docs/reference/')
-            
+
             print(f"  Moving {relative_path} -> {target_dir}")
             moved_to = self.move_file(file_path, target_dir)
-            
+
             if moved_to:
                 print(f"    Successfully moved to: {moved_to.relative_to(self.base_path)}")
 
     def create_documentation_index(self):
         """Create a master documentation index"""
         print("\nCreating documentation index...")
-        
+
         index_content = """# AIVillage Documentation
 
 Welcome to the AIVillage documentation. This directory contains comprehensive documentation for the AIVillage project, organized into logical categories.
@@ -344,12 +344,12 @@ All documentation in this project follows our [Style Guide](../STYLE_GUIDE.md) f
 
 *Last updated: {date}*
 """
-        
+
         from datetime import datetime
         index_content = index_content.format(date=datetime.now().strftime("%Y-%m-%d"))
-        
+
         index_path = self.base_path / 'docs' / 'README.md'
-        
+
         try:
             with open(index_path, 'w', encoding='utf-8') as f:
                 f.write(index_content)
@@ -369,28 +369,28 @@ Successfully reorganized AIVillage documentation structure.
 ### Directory Structure Created
 {len(self.structure_created)} directories created:
 """
-        
+
         for directory in self.structure_created:
             report_content += f"- {Path(directory).relative_to(self.base_path)}\n"
-        
+
         report_content += f"""
 ### Files Moved
 {len(self.moved_files)} files moved:
 """
-        
+
         for source, target in self.moved_files:
             source_rel = Path(source).relative_to(self.base_path) if Path(source).is_absolute() else source
             target_rel = Path(target).relative_to(self.base_path) if Path(target).is_absolute() else target
             report_content += f"- {source_rel} → {target_rel}\n"
-        
+
         report_content += f"""
 ### Duplicates Removed
 {len(self.duplicates_removed)} duplicate files removed:
 """
-        
+
         for duplicate in self.duplicates_removed:
             report_content += f"- {duplicate}\n"
-        
+
         report_content += """
 ### Hidden Directories Cleaned
 - .claude_analysis/
@@ -425,10 +425,10 @@ deprecated/
 ---
 *Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}*
 """
-        
+
         from datetime import datetime
         report_path = self.base_path / 'DOCUMENTATION_CLEANUP_REPORT.md'
-        
+
         try:
             with open(report_path, 'w', encoding='utf-8') as f:
                 f.write(report_content)
@@ -441,24 +441,24 @@ deprecated/
         print("=" * 60)
         print("AIVillage Documentation Cleanup")
         print("=" * 60)
-        
+
         try:
             # Step 1: Create directory structure
             self.create_directory_structure()
-            
+
             # Step 2: Clean hidden directories
             print("\nCleaning hidden directories...")
             self.cleanup_hidden_directories()
-            
+
             # Step 3: Organize files
             self.organize_files()
-            
+
             # Step 4: Create documentation index
             self.create_documentation_index()
-            
+
             # Step 5: Generate report
             self.generate_cleanup_report()
-            
+
             print("\n" + "=" * 60)
             print("CLEANUP COMPLETED SUCCESSFULLY")
             print("=" * 60)
@@ -466,7 +466,7 @@ deprecated/
             print(f"Files moved: {len(self.moved_files)}")
             print(f"Duplicates removed: {len(self.duplicates_removed)}")
             print("\nNew documentation structure is ready!")
-            
+
         except Exception as e:
             print(f"\nERROR during cleanup: {e}")
             import traceback

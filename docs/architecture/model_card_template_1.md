@@ -273,4 +273,4 @@ Carbon emissions were measured using [CodeCarbon](https://github.com/mlco2/codec
 ## Model Card Contact
 
 *Provides a way for people who have updates to the Model Card, suggestions, or questions, to contact the Model Card authors.*
---> 
+-->

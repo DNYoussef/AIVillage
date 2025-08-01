@@ -26,7 +26,7 @@ AIVillage/
 AIVillage/
 ├── README.md (clean project overview)
 ├── CONTRIBUTING.md
-├── CHANGELOG.md 
+├── CHANGELOG.md
 ├── CLAUDE.local.md
 ├── docs/                           # Master documentation hub
 │   ├── README.md                   # Navigation index
@@ -35,7 +35,7 @@ AIVillage/
 │   │   ├── architecture.md
 │   │   ├── system_overview.md
 │   │   └── design/
-│   ├── guides/                     # User guides  
+│   ├── guides/                     # User guides
 │   │   ├── README.md
 │   │   ├── onboarding.md
 │   │   ├── EVOMERGE_GUIDE.md
@@ -88,7 +88,7 @@ AIVillage/
 
 ### Archived (50+ files):
 - All `*_REPORT.md` files (22 files)
-- All `*_SUMMARY.md` files (15 files)  
+- All `*_SUMMARY.md` files (15 files)
 - All `*_STATUS.md`, `*_PLAN.md`, `*_CHECKLIST.md` files (13 files)
 - Duplicate README variants (5 files)
 

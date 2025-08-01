@@ -15,7 +15,7 @@ This document summarizes the consolidation of configuration directories and stan
 #### From config/ to configs/:
 - `compression.yaml` - SeedLM compression configuration
 - `retrieval.yaml` - HypeRAG retrieval settings
-- `hyperag_mcp.yaml` - MCP server configuration  
+- `hyperag_mcp.yaml` - MCP server configuration
 - `gdc_rules.yaml` - Graph Diagnostic Criteria rules
 - `scanner_config.json` → `scanner_config.yaml` (converted to YAML)
 
@@ -134,7 +134,7 @@ results/                          # Test results and metrics
 ## Action Items for Developers
 
 1. **Update import paths** in code to use `configs/` instead of `config/`
-2. **Update Docker files** to copy `configs/` directory  
+2. **Update Docker files** to copy `configs/` directory
 3. **Update CI/CD workflows** to monitor `configs/` for changes
 4. **Update documentation** to reference correct paths
 5. **Test configuration loading** to ensure all paths work correctly
