@@ -189,7 +189,7 @@ pip install -r requirements_sprint6.txt
 
 ## Version Compatibility
 
-- Python: 3.8+
+- Python: 3.10+
 - PyTorch: 2.1.2+ (CPU version recommended for compatibility)
 - Node.js: 16+ (for any JavaScript components)
 - Docker: 20+ (for containerized deployments)
