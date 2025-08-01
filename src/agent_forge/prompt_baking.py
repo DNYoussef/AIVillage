@@ -13,21 +13,20 @@ patterns through systematic testing and parameter adjustment.
 """
 
 import asyncio
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import time
 import traceback
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field, validator
 import torch
+import wandb
+from pydantic import BaseModel, Field, validator
 from torch import nn
 from tqdm import tqdm
 from transformers import AdamW, AutoModelForCausalLM, AutoTokenizer
-
-import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -355,7 +354,7 @@ class PromptWeightBaker:
         # Create batches
         batch_size = self.config.batch_size
         for i in range(0, len(sample_tasks), batch_size):
-            batch_tasks = sample_tasks[i : i + batch_size]
+            batch_tasks = sample_tasks[i: i + batch_size]
             batch_prompts = [prompt_template.format(task=task) for task in batch_tasks]
             training_examples.append(batch_prompts)
 

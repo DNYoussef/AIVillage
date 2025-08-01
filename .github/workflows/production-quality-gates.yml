@@ -4,10 +4,18 @@ on:
   pull_request:
     paths:
       - 'production/**'
+      - 'src/production/**'
+      - '.github/workflows/production-quality-gates.yml'
   push:
     branches: [main]
     paths:
       - 'production/**'
+      - 'src/production/**'
+      - '.github/workflows/production-quality-gates.yml'
+
+env:
+  PYTHON_VERSION: '3.11'
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
 
 jobs:
   production-standards:
@@ -19,7 +27,8 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
 
     - name: Install dependencies
       run: |
@@ -86,7 +95,8 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
 
     - name: Install dependencies
       run: |

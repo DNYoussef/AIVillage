@@ -9,21 +9,21 @@ Implements tool prompt refinement and optimization for MCP integration:
 """
 
 import asyncio
-from collections import Counter, defaultdict
-from dataclasses import dataclass
 import json
 import logging
-from pathlib import Path
 import re
 import time
+from collections import Counter, defaultdict
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 import torch
+import wandb
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from agent_forge.geometry_feedback import GeometryTracker
-import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -146,7 +146,7 @@ class ToolAnalyzer:
             words = re.findall(r"\b\w+\b", event["prompt"].lower())
             if len(words) >= 3:
                 for i in range(len(words) - 2):
-                    trigram = " ".join(words[i : i + 3])
+                    trigram = " ".join(words[i: i + 3])
                     context_patterns.append(trigram)
 
         # Get most common context patterns

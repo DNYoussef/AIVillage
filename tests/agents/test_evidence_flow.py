@@ -1,8 +1,9 @@
 # ruff: noqa
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 import sys
 import types
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # Stub heavy dependencies before importing SageAgent
 tok_mod = types.ModuleType("tiktoken")
@@ -40,12 +41,13 @@ sys.modules.setdefault(
 )
 sys.modules.setdefault("matplotlib.pyplot", types.ModuleType("matplotlib.pyplot"))
 
-from core.error_handling import (
-    StandardCommunicationProtocol,
+import importlib  # noqa: E402
+
+from core.error_handling import (  # noqa: E402
     Message,
     MessageType,
-)  # noqa: E402
-import importlib  # noqa: E402
+    StandardCommunicationProtocol,
+)
 
 SageAgent = importlib.import_module("agents.sage.sage_agent").SageAgent  # noqa: E402
 UnifiedConfig = importlib.import_module("rag_system.core.config").UnifiedConfig  # noqa: E402

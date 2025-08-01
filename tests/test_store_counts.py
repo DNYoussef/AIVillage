@@ -1,14 +1,17 @@
 import importlib.util
 import unittest
 
+from rag_system.retrieval.graph_store import GraphStore
+from rag_system.retrieval.vector_store import VectorStore
+
 if importlib.util.find_spec("numpy") is None:
     msg = "Required dependency not installed"
     raise unittest.SkipTest(msg)
 
-from datetime import datetime
-from pathlib import Path
 import sys
 import types
+from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 
@@ -17,9 +20,6 @@ fake_faiss.IndexFlatL2 = lambda *args, **kwargs: object()
 sys.modules.setdefault("faiss", fake_faiss)
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-
-from rag_system.retrieval.graph_store import GraphStore
-from rag_system.retrieval.vector_store import VectorStore
 
 
 class TestStoreCounts(unittest.IsolatedAsyncioTestCase):

@@ -4,14 +4,12 @@ Unit tests for GDC Registry
 Tests the GDC specification loading and management system.
 """
 
-from pathlib import Path
 import sys
 import tempfile
+from pathlib import Path
 
 import pytest
 import yaml
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from mcp_servers.hyperag.gdc.registry import (
     get_enabled_gdcs,
@@ -21,6 +19,8 @@ from mcp_servers.hyperag.gdc.registry import (
     validate_registry,
 )
 from mcp_servers.hyperag.gdc.specs import GDCSpec
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 
 class TestGDCRegistry:

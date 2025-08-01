@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import ast
 import json
 import os
 import platform
 import signal
 import subprocess
+import sys
 import tempfile
 
 try:
@@ -60,7 +62,8 @@ class ADASTask(Task):
 
     def generate_prompt(self, archive: list[dict]) -> str:
         archive_str = ",\n".join([str(agent) for agent in archive])
-        return f"\n        Your objective is to create an optimal agent for the following task:\n\n        {self.task_description}\n\n        Here is the archive of discovered architectures:\n\n        [{archive_str}]\n\n        Design a new agent that improves upon these existing architectures. Be creative and think outside the box.\n        Your response should be a JSON object with the following fields:\n        - thought: Your reasoning behind the agent design\n        - name: A name for your proposed agent architecture\n        - code: The complete Python code for the forward() function of your agent\n\n        Ensure your code uses the Langroid ChatAgent class and follows the correct structure.\n        "
+        return f"\n        Your objective is to create an optimal agent for the following task:\n\n        {
+            self.task_description}\n\n        Here is the archive of discovered architectures:\n\n        [{archive_str}]\n\n        Design a new agent that improves upon these existing architectures. Be creative and think outside the box.\n        Your response should be a JSON object with the following fields:\n        - thought: Your reasoning behind the agent design\n        - name: A name for your proposed agent architecture\n        - code: The complete Python code for the forward() function of your agent\n\n        Ensure your code uses the Langroid ChatAgent class and follows the correct structure.\n        "
 
     def create_new_agent(self) -> dict[str, Any]:
         prompt = self.generate_prompt(self.archive)

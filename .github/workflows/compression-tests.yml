@@ -19,7 +19,9 @@ name: Compression Pipeline Tests
       - '.github/workflows/compression-tests.yml'
 
 env:
-  PYTHON_VERSION: '3.11'  # Changed from 3.12 for better compatibility
+  PYTHON_VERSION: '3.11'  # Optimized for stability and performance
+  PIP_CACHE_DIR: /tmp/pip-cache
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
 
 jobs:
   # Check if compression code exists
@@ -55,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: compression-check
     if: needs.compression-check.outputs.has_compression == 'true' || needs.compression-check.outputs.has_tests == 'true'
-    timeout-minutes: 30  # Reduced from 45
+    timeout-minutes: 25  # Optimized timeout
 
     strategy:
       fail-fast: false  # Continue other jobs if one fails
@@ -72,53 +74,76 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-compression-${{ hashFiles('requirements*.txt', 'pyproject.toml') }}
+        path: |
+          ~/.cache/pip
+          /tmp/pip-cache
+        key: ${{ runner.os }}-pip-compression-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements*.txt', 'pyproject.toml') }}
         restore-keys: |
+          ${{ runner.os }}-pip-compression-${{ env.PYTHON_VERSION }}-
           ${{ runner.os }}-pip-compression-
           ${{ runner.os }}-pip-
 
     - name: Install base dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools wheel
+        
+        # Set pip options for better performance
+        export PIP_NO_WARN_SCRIPT_LOCATION=1
+        export PIP_DISABLE_PIP_VERSION_CHECK=1
 
-        # Try to install from project files with better error handling
-        if [ -f "requirements.txt" ]; then
-          echo "Installing from requirements.txt"
-          # Check if requirements.txt is properly formatted
-          if head -1 requirements.txt | grep -q "^[[:space:]]*-e"; then
-            pip install -r requirements.txt || echo "Some requirements failed to install"
-          else
-            echo "requirements.txt appears corrupted, installing essential packages directly"
-            pip install numpy scipy scikit-learn || echo "Essential packages failed"
-          fi
-        elif [ -f "pyproject.toml" ]; then
+        # Install from project files with robust error handling
+        if [ -f "pyproject.toml" ]; then
           echo "Installing from pyproject.toml"
-          pip install -e . || echo "Project installation failed"
+          pip install -e . || {
+            echo "Project installation failed, trying fallback"
+            pip install numpy scipy scikit-learn
+          }
+        elif [ -f "requirements.txt" ] && [ -s "requirements.txt" ]; then
+          echo "Installing from requirements.txt"
+          pip install -r requirements.txt || {
+            echo "Requirements installation failed, installing essentials"
+            pip install numpy scipy scikit-learn
+          }
+        else
+          echo "No dependency file found, installing essentials"
+          pip install numpy scipy scikit-learn
         fi
 
         # Install test dependencies
-        pip install pytest pytest-xdist pytest-cov pytest-timeout || echo "Test dependencies installation failed"
+        pip install pytest pytest-xdist pytest-cov pytest-timeout pytest-mock
 
     - name: Install compression dependencies
       run: |
         echo "=== Installing compression-specific dependencies ==="
 
-        # Install PyTorch CPU version (lighter for CI)
-        pip install torch --index-url https://download.pytorch.org/whl/cpu || echo "PyTorch installation failed"
+        # Install PyTorch CPU version with retry logic
+        for i in {1..3}; do
+          if pip install torch --index-url https://download.pytorch.org/whl/cpu --timeout 300; then
+            echo "PyTorch installed successfully"
+            break
+          else
+            echo "PyTorch installation attempt $i failed, retrying..."
+            sleep 5
+          fi
+        done
 
-        # Install scientific computing packages
-        pip install numpy scipy scikit-learn || echo "Scientific packages installation failed"
+        # Install scientific computing packages with fallbacks
+        pip install numpy scipy scikit-learn || {
+          echo "Installing packages individually..."
+          pip install numpy || echo "NumPy failed"
+          pip install scipy || echo "SciPy failed" 
+          pip install scikit-learn || echo "scikit-learn failed"
+        }
 
-        # Install additional packages that might be needed
-        pip install einops safetensors || echo "Additional packages installation failed"
+        # Install additional packages
+        pip install einops safetensors transformers || echo "Some additional packages failed"
 
-        # Check what we have
+        # Verify installations
         echo ""
         echo "=== Installed packages ==="
-        pip list | grep -E "(torch|numpy|scipy|sklearn|einops|safetensors)" || echo "No matching packages found"
+        pip list | grep -E "(torch|numpy|scipy|sklearn|einops|safetensors|transformers)" || echo "Package verification failed"
 
     - name: Run unit tests
       if: matrix.test-type == 'unit' && needs.compression-check.outputs.has_tests == 'true'
@@ -136,6 +161,8 @@ jobs:
             --tb=short \
             --maxfail=10 \
             --timeout=300 \
+            --tb=short \
+            --durations=10 \
             -x \
             || echo "Some unit tests failed"
         elif ls tests/test_*compression*.py 2>/dev/null; then
@@ -195,6 +222,8 @@ EOF
             --tb=short \
             --maxfail=3 \
             --timeout=600 \
+            --tb=short \
+            --durations=5 \
             || echo "Some integration tests failed"
         else
           echo "No integration tests found, running basic compression workflow test"
@@ -248,7 +277,7 @@ except Exception as e:
     runs-on: ubuntu-latest
     needs: compression-check
     if: needs.compression-check.outputs.has_compression == 'true'
-    timeout-minutes: 15
+    timeout-minutes: 12  # Optimized benchmark timeout
 
     steps:
     - name: Checkout repository
@@ -261,9 +290,19 @@ except Exception as e:
 
     - name: Install minimal dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install torch --index-url https://download.pytorch.org/whl/cpu
-        pip install numpy scipy
+        python -m pip install --upgrade pip setuptools wheel
+        
+        # Install with retry and timeout
+        for i in {1..2}; do
+          if pip install torch --index-url https://download.pytorch.org/whl/cpu --timeout 180; then
+            break
+          else
+            echo "Retry $i failed, trying again..."
+            sleep 3
+          fi
+        done
+        
+        pip install numpy scipy --timeout 120
 
     - name: Run basic benchmark
       run: |
@@ -338,8 +377,13 @@ print(f'✅ Completed {len(results)} benchmark tests')
 
     - name: Install linting tools
       run: |
-        python -m pip install --upgrade pip
-        pip install ruff black flake8 || echo "Some linting tools failed to install"
+        python -m pip install --upgrade pip setuptools wheel
+        
+        # Install linting tools with fallbacks
+        pip install ruff || echo "ruff installation failed"
+        pip install black || echo "black installation failed" 
+        pip install flake8 || echo "flake8 installation failed"
+        pip install mypy || echo "mypy installation failed"
 
     - name: Run code formatting check
       run: |

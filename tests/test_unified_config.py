@@ -1,13 +1,13 @@
-from datetime import timedelta
 import sys
 import types
 import unittest
+from datetime import timedelta
+
+from rag_system.core.config import UnifiedConfig
 
 yaml_stub = types.ModuleType("yaml")
 yaml_stub.safe_load = lambda *args, **kwargs: {}
 sys.modules.setdefault("yaml", yaml_stub)
-
-from rag_system.core.config import UnifiedConfig
 
 
 class TestUnifiedConfig(unittest.TestCase):

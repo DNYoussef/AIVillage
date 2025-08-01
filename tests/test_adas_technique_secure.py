@@ -1,7 +1,7 @@
-from pathlib import Path
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 # Add the project root to the Python path
 repo_root = Path(__file__).resolve().parents[1]

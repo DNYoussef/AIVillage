@@ -157,11 +157,11 @@ async def apply_agent_optimization(
     from .safe_code_modifier import CodeTransformations
 
     if optimization_type == "hyperparameter_tuning":
-        transformer = lambda code: CodeTransformations.optimize_hyperparameters(
+        def transformer(code): return CodeTransformations.optimize_hyperparameters(
             code, {"learning_rate": 0.001, "batch_size": 32}
         )
     elif optimization_type == "error_handling":
-        transformer = lambda code: CodeTransformations.add_error_handling(
+        def transformer(code): return CodeTransformations.add_error_handling(
             code, ["train", "predict", "evaluate"]
         )
     elif optimization_type == "documentation":

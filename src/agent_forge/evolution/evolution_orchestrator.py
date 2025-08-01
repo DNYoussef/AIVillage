@@ -5,21 +5,21 @@ coordinates between components, and ensures stable autonomous improvement.
 """
 
 import asyncio
+import json
+import logging
+import signal
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 from datetime import datetime
-import json
-import logging
 from pathlib import Path
-import signal
 from typing import Any
 
+import numpy as np
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
-import numpy as np
 
 from .agent_evolution_engine import AgentEvolutionEngine, AgentGenome, AgentKPIs
 from .evolution_dashboard import EvolutionDashboard, PerformanceAnalyzer
@@ -801,7 +801,7 @@ class EvolutionOrchestrator:
         # Keep only the highest priority modifications
         sorted_mods = sorted(pending_mods, key=lambda x: x.safety_score, reverse=True)
 
-        for mod in sorted_mods[self.config.max_concurrent_modifications :]:
+        for mod in sorted_mods[self.config.max_concurrent_modifications:]:
             # Remove from tracking
             if mod.modification_id in self.code_modifier.modifications:
                 del self.code_modifier.modifications[mod.modification_id]

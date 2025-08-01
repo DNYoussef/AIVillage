@@ -12,21 +12,21 @@ This script integrates all Agent Forge components for end-to-end evaluation.
 
 import argparse
 import asyncio
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import sys
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
 import wandb
+
+from agent_forge.benchmark_runner import BenchmarkRunner
 
 # Agent Forge imports
 sys.path.append(str(Path(__file__).parent))
-from agent_forge.benchmark_runner import BenchmarkRunner
 
 # Configure logging
 logging.basicConfig(

@@ -14,10 +14,10 @@ Options:
 """
 
 import argparse
-from pathlib import Path
 import re
 import shutil
 import sys
+from pathlib import Path
 
 # Legacy exception patterns to migrate
 LEGACY_PATTERNS = {

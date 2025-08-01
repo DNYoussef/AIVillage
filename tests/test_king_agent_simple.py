@@ -1,6 +1,6 @@
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -14,6 +14,7 @@ class TestKingAgentBasic(unittest.TestCase):
         try:
             # Try to import core components
             from agents.unified_base_agent import UnifiedBaseAgent
+
             from core.error_handling import (
                 Message,
                 MessageType,

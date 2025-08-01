@@ -1,11 +1,11 @@
 """Tests for route migration from server.py to microservices."""
 
 import os
-from unittest.mock import MagicMock, patch
 import warnings
+from unittest.mock import MagicMock, patch
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture

@@ -2,15 +2,15 @@
 Unit tests for Query Classification System
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
 from mcp_servers.hyperag.planning.plan_structures import QueryType, ReasoningStrategy
 from mcp_servers.hyperag.planning.query_classifier import QueryClassifier
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 
 class TestQueryClassifier:

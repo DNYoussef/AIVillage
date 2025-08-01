@@ -3,8 +3,8 @@
 This script will safely remove backup files where originals exist.
 """
 
-from datetime import datetime
 import json
+from datetime import datetime
 from pathlib import Path
 
 

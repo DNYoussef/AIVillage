@@ -172,7 +172,7 @@ class TestAgentForgeTrainingLoop:
         assert training_loop.model != model  # Should be wrapped in Quiet-STaR
         assert isinstance(training_loop.model, QuietSTaRModel)
         assert training_loop.tokenizer == tokenizer
-        assert training_loop.enable_quiet_star == True
+        assert training_loop.enable_quiet_star
         assert training_loop.curriculum is not None
         assert training_loop.optimizer is not None
         assert training_loop.level_accuracy == {}

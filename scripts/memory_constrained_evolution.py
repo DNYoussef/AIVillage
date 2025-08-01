@@ -6,20 +6,21 @@ Uses CPU-only processing with model sharding for genuine AI agent evolution.
 """
 
 import asyncio
-from datetime import datetime
 import logging
-from pathlib import Path
 import sys
 import time
-
-# Add project to path
-sys.path.append(".")
-sys.path.append("./scripts")
+from datetime import datetime
+from pathlib import Path
 
 from run_50gen_evolution import Enhanced50GenEvolutionMerger
 
 from agent_forge.memory_manager import memory_manager
 from agent_forge.wandb_manager import finish_wandb, init_wandb, log_metrics
+
+# Add project to path
+sys.path.append(".")
+sys.path.append("./scripts")
+
 
 # Configure logging for historic run
 logging.basicConfig(

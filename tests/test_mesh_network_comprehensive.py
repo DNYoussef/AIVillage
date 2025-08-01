@@ -11,23 +11,18 @@ Tests all aspects of the mesh network including:
 """
 
 import asyncio
-import time
-import statistics
 import json
+import statistics
+import sys
+import time
 from datetime import datetime
 from pathlib import Path
-import sys
+
+from implement_mesh_protocol import MeshMessage, MeshNetworkSimulator, MeshNode, MeshProtocol, MessageType
 
 # Add scripts directory to path
 sys.path.append(str(Path(__file__).resolve().parent / "scripts"))
 
-from implement_mesh_protocol import (
-    MeshNetworkSimulator,
-    MeshProtocol,
-    MessageType,
-    MeshMessage,
-    MeshNode
-)
 
 class MeshNetworkTester:
     """Comprehensive mesh network test suite."""
@@ -336,7 +331,7 @@ class MeshNetworkTester:
 
                 for i in range(num_messages):
                     source_node = list(simulator.nodes.values())[i % size]
-                    dest_node = list(simulator.nodes.values())[(i + size//2) % size]
+                    dest_node = list(simulator.nodes.values())[(i + size // 2) % size]
 
                     if source_node.node_id != dest_node.node_id:
                         task = asyncio.create_task(
@@ -447,7 +442,7 @@ class MeshNetworkTester:
                 # Test multiple source-destination pairs
                 for i in range(min(20, len(nodes) * 2)):
                     source = nodes[i % len(nodes)]
-                    dest = nodes[(i + len(nodes)//2) % len(nodes)]
+                    dest = nodes[(i + len(nodes) // 2) % len(nodes)]
 
                     if source.node_id == dest.node_id:
                         continue
@@ -488,7 +483,8 @@ class MeshNetworkTester:
                 # Analyze routing effectiveness
                 successful_routes = [t for t in routing_tests if t["route_found"]]
                 route_success_rate = len(successful_routes) / len(routing_tests) if routing_tests else 0
-                avg_route_length = statistics.mean([t["route_length"] for t in successful_routes]) if successful_routes else 0
+                avg_route_length = statistics.mean([t["route_length"]
+                                                   for t in successful_routes]) if successful_routes else 0
                 avg_routing_time = statistics.mean([t["routing_time"] for t in routing_tests]) if routing_tests else 0
 
                 result = {
@@ -587,15 +583,18 @@ class MeshNetworkTester:
 
             security_test_result = {
                 "test_type": "Message Integrity & Anti-Replay",
-                "valid_message_success_rate": valid_messages_processed / valid_messages_sent if valid_messages_sent > 0 else 0,
+                "valid_message_success_rate": valid_messages_processed /
+                valid_messages_sent if valid_messages_sent > 0 else 0,
                 "duplicate_message_blocked": duplicate_blocked,
-                "success": (valid_messages_processed / valid_messages_sent >= 0.8) and duplicate_blocked
-            }
+                "success": (
+                    valid_messages_processed /
+                    valid_messages_sent >= 0.8) and duplicate_blocked}
 
             security_results.append(security_test_result)
 
             status = "✅ PASS" if security_test_result["success"] else "❌ FAIL"
-            print(f"    {status} - {valid_messages_processed}/{valid_messages_sent} valid msgs, duplicate blocked: {duplicate_blocked}")
+            print(
+                f"    {status} - {valid_messages_processed}/{valid_messages_sent} valid msgs, duplicate blocked: {duplicate_blocked}")
 
         except Exception as e:
             security_results.append({
@@ -671,21 +670,23 @@ class MeshNetworkTester:
 
     def generate_comprehensive_report(self):
         """Generate comprehensive test report."""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🌐 DECENTRALIZED MESH NETWORK - COMPREHENSIVE TEST RESULTS")
-        print("="*80)
+        print("=" * 80)
 
         # Calculate overall metrics
         total_tests = len(self.results["tests_run"])
         successful_tests = sum(1 for test in self.results["tests_run"]
-                             if test.get("success_rate", 0) >= 0.6)
+                               if test.get("success_rate", 0) >= 0.6)
 
         overall_success_rate = successful_tests / total_tests if total_tests > 0 else 0
 
         print(f"\n📊 EXECUTIVE SUMMARY")
         print(f"   Test Suite: {successful_tests}/{total_tests} test categories passed ({overall_success_rate:.1%})")
         print(f"   Generated: {self.results['test_start']}")
-        print(f"   Status: {'✅ OPERATIONAL' if overall_success_rate >= 0.7 else '⚠️ NEEDS ATTENTION' if overall_success_rate >= 0.5 else '❌ CRITICAL ISSUES'}")
+        print(
+            f"   Status: {
+                '✅ OPERATIONAL' if overall_success_rate >= 0.7 else '⚠️ NEEDS ATTENTION' if overall_success_rate >= 0.5 else '❌ CRITICAL ISSUES'}")
 
         # Test category results
         print(f"\n🔍 TEST CATEGORY RESULTS")
@@ -756,9 +757,10 @@ class MeshNetworkTester:
             if test.get("success_rate", 0) < 0.6:
                 print(f"   🔧 Priority fix: {test['test_name']} - {test.get('success_rate', 0):.1%} success rate")
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
 
         return self.results
+
 
 async def main():
     """Run comprehensive mesh network tests."""

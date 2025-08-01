@@ -1,8 +1,8 @@
 import importlib.util
 import os
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 repo_root = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(

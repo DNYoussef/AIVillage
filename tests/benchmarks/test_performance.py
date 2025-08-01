@@ -1,7 +1,7 @@
 """Performance benchmarks for AI Village components."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
 

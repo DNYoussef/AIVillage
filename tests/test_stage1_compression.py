@@ -139,8 +139,8 @@ class TestStage1Config:
         """Test default configuration values"""
         config = DEFAULT_STAGE1_CONFIG
 
-        assert config.bitnet_enabled == True
-        assert config.seedlm_enabled == True
+        assert config.bitnet_enabled
+        assert config.seedlm_enabled
         assert config.target_compression_ratio == 10.0
         assert config.max_accuracy_drop == 0.05
         assert config.seedlm_lfsr_taps == [16, 14, 13, 11]

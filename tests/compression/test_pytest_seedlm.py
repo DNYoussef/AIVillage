@@ -6,12 +6,13 @@ Run SeedLM pytest tests
 import os
 import sys
 
+import torch
+
 # Temporarily modify the system path to enable imports
 sys.path.insert(0, os.getcwd())
 
 # Import required libraries
 
-import torch
 
 # Execute the seedlm module to load classes
 exec(open("agent_forge/compression/seedlm.py").read())

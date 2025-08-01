@@ -6,17 +6,17 @@ Includes validation, rollback, and security measures to prevent harmful modifica
 
 import ast
 import asyncio
-from collections.abc import Callable
-from dataclasses import dataclass
-from datetime import datetime, timedelta
 import hashlib
 import json
 import logging
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import time
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 import black
@@ -919,7 +919,9 @@ class CodeTransformations:
                     ):
                         # Generate basic docstring
                         args_str = ", ".join([arg.arg for arg in node.args.args])
-                        docstring = f'"""{node.name} function.\n\nArgs:\n    {args_str}\n\nReturns:\n    Result of {node.name}\n"""'
+                        docstring = f'"""{
+                            node.name} function.\n\nArgs:\n    {args_str}\n\nReturns:\n    Result of {
+                            node.name}\n"""'
 
                         docstring_node = ast.Expr(value=ast.Str(s=docstring))
                         node.body.insert(0, docstring_node)

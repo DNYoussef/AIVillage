@@ -6,11 +6,12 @@ implementing the 20% -> 90% functionality gap to create a working pipeline.
 """
 
 import asyncio
-from datetime import datetime
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 
+import torch
 from forge_orchestrator import (
     ForgeOrchestrator,
     OrchestratorConfig,
@@ -19,7 +20,6 @@ from forge_orchestrator import (
     PhaseStatus,
     PhaseType,
 )
-import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 logger = logging.getLogger(__name__)
@@ -373,8 +373,8 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                     "strategy": "step_by_step_decomposition",
                     "template": "Let me solve this step by step:\n1. Understand the problem\n2. Identify key information\n3. Apply mathematical operations\n4. Verify the answer",
                     "optimization_score": 0.87,
-                    "benchmark_validated": "gsm8k"
-                    in [s.split("_")[0] for s in benchmark_strategies],
+                    "benchmark_validated": "gsm8k" in [
+                        s.split("_")[0] for s in benchmark_strategies],
                 },
                 "code_generation": {
                     "strategy": "structured_programming",

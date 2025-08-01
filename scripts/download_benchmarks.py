@@ -14,8 +14,8 @@ mathematical reasoning capabilities.
 import argparse
 import json
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 from datasets import load_dataset
 
@@ -139,7 +139,7 @@ def create_benchmark_manifest(base_path: Path, downloaded_benchmarks: list[str])
                             split_count = len(split_data)
                             splits_info[split] = split_count
                             total_examples += split_count
-                    except:
+                    except BaseException:
                         splits_info[split] = 0
 
             manifest["benchmarks"][benchmark_key] = {

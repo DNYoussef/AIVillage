@@ -1,7 +1,16 @@
 import importlib.util
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
+
+import torch
+
+from agent_forge.compression import (
+    SeedLMCompressor,
+    VPTQQuantizer,
+    stream_compress_model,
+)
+from agent_forge.compression.stage1_bitnet import convert_to_bitnet
 
 try:
     torch_spec = importlib.util.find_spec("torch")
@@ -13,14 +22,6 @@ if torch_spec is None:
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-import torch
-
-from agent_forge.compression import (
-    SeedLMCompressor,
-    VPTQQuantizer,
-    stream_compress_model,
-)
-from agent_forge.compression.stage1_bitnet import convert_to_bitnet
 
 try:
     import bitsandbytes as bnb

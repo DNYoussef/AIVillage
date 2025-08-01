@@ -6,12 +6,12 @@ This fixes the evolution system to implement:
 2. Subsequent Generations: Best 2 → 6 mutants + Worst 6 → 2 children = 8 total
 """
 
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import random
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import numpy as np

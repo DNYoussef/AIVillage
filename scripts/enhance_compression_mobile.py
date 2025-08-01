@@ -104,7 +104,7 @@ class MobileCompressionPipeline:
         if calibration_data is not None:
             with torch.no_grad():
                 for i in range(min(100, len(calibration_data))):
-                    _ = model(calibration_data[i : i + 1])
+                    _ = model(calibration_data[i: i + 1])
 
         # Convert to quantized model
         torch.quantization.convert(model, inplace=True)
@@ -142,7 +142,7 @@ class MobileCompressionPipeline:
         try:
             model = torch.jit.script(model)
             model = torch.jit.optimize_for_mobile(model)
-        except:
+        except BaseException:
             # Fallback if JIT scripting fails
             pass
         return model
@@ -371,7 +371,7 @@ if __name__ == '__main__':
     # Make executable on Unix systems
     try:
         cli_path.chmod(0o755)
-    except:
+    except BaseException:
         pass  # Windows doesn't support chmod
 
     print("✓ Created mobile compression CLI tool")

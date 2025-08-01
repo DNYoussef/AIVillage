@@ -5,17 +5,13 @@ Tests thought injection, A/B testing, and weight baking functionality.
 """
 
 import asyncio
-from pathlib import Path
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import torch
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
-
-sys.path.append(str(Path(__file__).parent.parent / "agent_forge"))
-
 from quietstar_baker import (
     ABTestHarness,
     QuietSTaRBaker,
@@ -24,6 +20,9 @@ from quietstar_baker import (
     ThoughtInjector,
     WeightBaker,
 )
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+
+sys.path.append(str(Path(__file__).parent.parent / "agent_forge"))
 
 
 class TestQuietSTaRBaker(unittest.TestCase):

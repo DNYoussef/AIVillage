@@ -270,7 +270,7 @@ class TestSeedLMCore:
         # Verify metadata preservation
         assert compressed["metadata"]["original_shape"] == [512, 768]
         assert compressed["metadata"]["original_dtype"] == "torch.float16"
-        assert compressed["metadata"]["requires_grad"] == True
+        assert compressed["metadata"]["requires_grad"]
         assert compressed["metadata"]["layer_name"] == custom_metadata["layer_name"]
         assert (
             compressed["metadata"]["importance_score"]

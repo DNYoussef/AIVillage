@@ -2,12 +2,10 @@
 Unit tests for Planning Data Structures
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from mcp_servers.hyperag.planning.plan_structures import (
     ExecutionStatus,
@@ -19,6 +17,8 @@ from mcp_servers.hyperag.planning.plan_structures import (
     ReasoningStrategy,
     RetrievalConstraints,
 )
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 
 class TestRetrievalConstraints:

@@ -8,21 +8,21 @@ Integrates the top-performing Agent Forge model into the HyperRAG retrieval pipe
 """
 
 import asyncio
-from dataclasses import asdict, dataclass
 import json
 import logging
-from pathlib import Path
 import time
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any
 
 import faiss
 import numpy as np
-from sentence_transformers import SentenceTransformer
 import torch
+import wandb
+from sentence_transformers import SentenceTransformer
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from agent_forge.results_analyzer import ResultsAnalyzer
-import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -191,7 +191,7 @@ class HyperRAGIntegration:
             chunk_size = self.config.chunk_size
 
             for i in range(0, len(content), chunk_size - self.config.chunk_overlap):
-                chunk_text = content[i : i + chunk_size]
+                chunk_text = content[i: i + chunk_size]
                 if len(chunk_text.strip()) > 50:  # Filter very short chunks
                     chunks.append(
                         {
@@ -296,7 +296,7 @@ Answer:"""
             # Check input length
             if inputs.size(1) > self.config.max_context_length:
                 # Truncate if too long
-                inputs = inputs[:, -self.config.max_context_length :]
+                inputs = inputs[:, -self.config.max_context_length:]
 
             # Generate response
             with torch.no_grad():
@@ -313,7 +313,7 @@ Answer:"""
             # Decode response
             full_response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
             response = full_response[
-                len(self.tokenizer.decode(inputs[0], skip_special_tokens=True)) :
+                len(self.tokenizer.decode(inputs[0], skip_special_tokens=True)):
             ].strip()
 
             generation_latency = time.time() - start_time
@@ -462,8 +462,11 @@ Answer:"""
                 )
 
                 logger.info(
-                    f"Query {i + 1}/{len(test_queries)}: {metrics.total_latency:.3f}s, quality: {metrics.answer_quality:.3f}"
-                )
+                    f"Query {
+                        i + 1}/{
+                        len(test_queries)}: {
+                        metrics.total_latency:.3f}s, quality: {
+                        metrics.answer_quality:.3f}")
 
             except Exception as e:
                 logger.exception(f"Query {i + 1} failed: {e}")
@@ -677,8 +680,10 @@ async def main() -> int:
         print("RAG VALIDATION RESULTS")
         print(f"{'=' * 60}")
         print(
-            f"Success Rate: {validation_results['successful_queries']}/{validation_results['total_queries']} ({validation_results['successful_queries'] / validation_results['total_queries'] * 100:.1f}%)"
-        )
+            f"Success Rate: {
+                validation_results['successful_queries']}/{
+                validation_results['total_queries']} ({
+                validation_results['successful_queries'] / validation_results['total_queries'] * 100:.1f}%)")
         print(f"Average Latency: {validation_results['average_latency']:.3f}s")
         print(f"Average Quality: {validation_results['average_quality']:.3f}")
 

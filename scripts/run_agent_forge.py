@@ -12,12 +12,12 @@ This script handles:
 
 import argparse
 import asyncio
-from datetime import datetime
 import logging
-from pathlib import Path
 import subprocess
 import sys
 import time
+from datetime import datetime
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
@@ -298,7 +298,7 @@ NEXT STEPS:
             self.dashboard_process.terminate()
             try:
                 self.dashboard_process.wait(timeout=5)
-            except:
+            except BaseException:
                 self.dashboard_process.kill()
 
 

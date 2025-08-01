@@ -4,22 +4,23 @@ Provides comprehensive monitoring and visualization of the self-evolving agent e
 """
 
 import asyncio
-from datetime import datetime, timedelta
 import json
 import logging
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import matplotlib
-
-matplotlib.use("Agg")  # Non-interactive backend
-from flask import Flask, jsonify, render_template, request
 import numpy as np
 import plotly.express as px
 import plotly.graph_objs as go
+from flask import Flask, jsonify, render_template, request
 from plotly.utils import PlotlyJSONEncoder
 
 from .agent_evolution_engine import AgentEvolutionEngine
+
+matplotlib.use("Agg")  # Non-interactive backend
+
 
 logger = logging.getLogger(__name__)
 

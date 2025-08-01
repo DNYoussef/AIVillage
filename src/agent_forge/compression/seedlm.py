@@ -2,8 +2,8 @@
 This is a placeholder to fix test infrastructure.
 """
 
-from typing import Any
 import warnings
+from typing import Any
 
 import torch
 

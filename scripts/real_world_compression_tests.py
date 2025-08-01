@@ -10,12 +10,11 @@ import time
 
 import numpy as np
 import torch
+from enhance_compression_mobile import MobileCompressionPipeline, MobileOptimizedLayers
 from torch import nn
 
 # Add the scripts directory to the path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from enhance_compression_mobile import MobileCompressionPipeline, MobileOptimizedLayers
 
 
 class RealWorldTestSuite:

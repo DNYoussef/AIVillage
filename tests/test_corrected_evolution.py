@@ -10,19 +10,19 @@ This validates:
 
 import json
 import logging
-from pathlib import Path
 import random
 import sys
 import time
+from pathlib import Path
 from typing import Any
 
 import numpy as np
+import torch
+from run_corrected_evolution import CorrectedEvolutionMerger
 
 # Import the corrected evolution system
 # Add scripts to path for module resolution
 sys.path.append(str(Path(__file__).parent.parent / "scripts"))
-from run_corrected_evolution import CorrectedEvolutionMerger
-import torch
 
 # Setup logging
 logging.basicConfig(

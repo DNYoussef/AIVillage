@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Generate comprehensive test dashboard for AIVillage project."""
 
-import subprocess
 import json
+import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
+
 
 class TestDashboard:
     def __init__(self):
@@ -151,7 +152,7 @@ class TestDashboard:
                 issues = json.loads(result["stdout"])
                 result["issues_found"] = len(issues)
                 self.results["issues"].extend(issues[:10])  # Top 10 issues
-            except:
+            except BaseException:
                 result["issues_found"] = "Unknown"
 
         self.results["test_suites"]["code_quality"] = result
@@ -160,7 +161,7 @@ class TestDashboard:
         """Generate test summary."""
         total_suites = len(self.results["test_suites"])
         passed_suites = sum(1 for suite in self.results["test_suites"].values()
-                           if suite["status"] == "PASSED")
+                            if suite["status"] == "PASSED")
 
         total_tests = sum(suite.get("tests_total", 0) for suite in self.results["test_suites"].values())
         total_passed = sum(suite.get("tests_passed", 0) for suite in self.results["test_suites"].values())
@@ -177,15 +178,23 @@ class TestDashboard:
 
     def generate_report(self):
         """Generate comprehensive test report."""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("AIVillage Test Dashboard - Comprehensive Results")
-        print("="*80)
+        print("=" * 80)
 
         # Summary
         summary = self.results["summary"]
         print(f"\n📊 OVERALL SUMMARY")
-        print(f"   Test Suites: {summary['passed_test_suites']}/{summary['total_test_suites']} passed ({summary['suite_pass_rate']:.1f}%)")
-        print(f"   Individual Tests: {summary['total_passed_tests']}/{summary['total_individual_tests']} passed ({summary['overall_pass_rate']:.1f}%)")
+        print(
+            f"   Test Suites: {
+                summary['passed_test_suites']}/{
+                summary['total_test_suites']} passed ({
+                summary['suite_pass_rate']:.1f}%)")
+        print(
+            f"   Individual Tests: {
+                summary['total_passed_tests']}/{
+                summary['total_individual_tests']} passed ({
+                summary['overall_pass_rate']:.1f}%)")
         print(f"   Code Quality Issues: {summary['total_issues']}")
 
         # Detailed results
@@ -197,7 +206,13 @@ class TestDashboard:
             print(f"   {status_emoji} {suite['name']} {duration}")
 
             if suite.get("tests_total"):
-                print(f"      └─ {suite['tests_passed']}/{suite['tests_total']} tests passed ({suite.get('pass_rate', 0):.1f}%)")
+                print(
+                    f"      └─ {
+                        suite['tests_passed']}/{
+                        suite['tests_total']} tests passed ({
+                        suite.get(
+                            'pass_rate',
+                            0):.1f}%)")
 
             if suite["status"] != "PASSED" and suite["stderr"]:
                 error_preview = suite["stderr"][:100] + "..." if len(suite["stderr"]) > 100 else suite["stderr"]
@@ -239,7 +254,7 @@ class TestDashboard:
         if summary["total_issues"] > 0:
             print(f"   🔧 Address {summary['total_issues']} code quality issues for better maintainability.")
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
 
         return self.results
 
@@ -266,6 +281,7 @@ def main():
     dashboard.save_report()
 
     return results
+
 
 if __name__ == "__main__":
     main()

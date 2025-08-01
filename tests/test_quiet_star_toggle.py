@@ -1,15 +1,14 @@
 import importlib.util
 
 import pytest
-
-spec = importlib.util.find_spec("torch")
-if spec is None:
-    pytest.skip("PyTorch not installed", allow_module_level=True)
-
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from agent_forge.training.quiet_star import QuietSTaRModel
+
+spec = importlib.util.find_spec("torch")
+if spec is None:
+    pytest.skip("PyTorch not installed", allow_module_level=True)
 
 
 def test_quiet_star_toggle_changes_output():

@@ -3,8 +3,10 @@
 
 import asyncio
 import logging
-from mesh_network_manager import MeshNetworkManager
+
 from communications.message import Message, MessageType, Priority
+from mesh_network_manager import MeshNetworkManager
+
 
 async def test_mesh_simple():
     """Simple test that mesh network works."""

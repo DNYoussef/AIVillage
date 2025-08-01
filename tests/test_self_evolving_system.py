@@ -1,4 +1,5 @@
 import importlib.util
+import types
 import unittest
 
 import pytest
@@ -10,15 +11,14 @@ if (
     msg = "Required dependency not installed"
     raise unittest.SkipTest(msg)
 
-from pathlib import Path
 import sys
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np
 
 repo_root = Path(__file__).resolve().parents[1]
 sys.path.append(str(repo_root))
-import types
 
 # Create complete tiktoken stub with proper __spec__
 fake_tiktoken = types.ModuleType("tiktoken")
@@ -59,7 +59,6 @@ fake_tiktoken.encoding_for_model = encoding_for_model
 sys.modules["tiktoken"] = fake_tiktoken
 sys.modules["tiktoken.load"] = fake_load
 
-import importlib.util
 
 spec = importlib.util.spec_from_file_location(
     "unified_base_agent",

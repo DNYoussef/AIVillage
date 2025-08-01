@@ -13,19 +13,19 @@ Usage:
 import argparse
 import asyncio
 import csv
-from datetime import datetime, timezone
 import json
 import logging
-from pathlib import Path
 import sys
-
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+from datetime import datetime, timezone
+from pathlib import Path
 
 from mcp_servers.hyperag.gdc.extractor import GDCExtractorContext
 from mcp_servers.hyperag.gdc.registry import GDC_REGISTRY, validate_registry
 from mcp_servers.hyperag.gdc.specs import Violation
+
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 
 def setup_logging(level: str = "INFO") -> None:

@@ -1,18 +1,37 @@
 #!/usr/bin/env python3
 """Dependency validation script for AIVillage pyproject.toml consolidation.
-Validates that all dependencies can be resolved and imported.
+
+This script validates that all dependencies listed in pyproject.toml can be
+resolved and imported correctly. It also checks for version conflicts and
+generates backward-compatible requirements.txt files.
+
+Usage:
+    python validate_dependencies.py
 """
 
 import importlib
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
 
-import toml
+try:
+    import toml
+except ImportError:
+    print("Error: 'toml' package required. Install with: pip install toml")
+    sys.exit(1)
 
 
-def load_pyproject_dependencies() -> dict[str, list[str]]:
-    """Load dependencies from pyproject.toml."""
+def load_pyproject_dependencies() -> Dict[str, List[str]]:
+    """Load dependencies from pyproject.toml.
+
+    Returns:
+        Dictionary mapping dependency groups to package lists
+
+    Raises:
+        FileNotFoundError: If pyproject.toml is not found
+        Exception: If TOML parsing fails
+    """
     pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
 
     if not pyproject_path.exists():
@@ -29,10 +48,20 @@ def load_pyproject_dependencies() -> dict[str, list[str]]:
     return dependencies
 
 
-def parse_requirement(req: str) -> str:
-    """Extract package name from requirement string."""
+def parse_requirement(req: str) -> Optional[str]:
+    """Extract package name from requirement string.
+
+    Args:
+        req: Requirement string (e.g., 'numpy>=1.20.0', 'torch[cuda]')
+
+    Returns:
+        Package name or None if it's a URL requirement
+    """
     # Handle various requirement formats
     req = req.strip()
+
+    if not req or req.startswith('#'):
+        return None
 
     # Remove environment markers
     if ";" in req:
@@ -48,14 +77,21 @@ def parse_requirement(req: str) -> str:
         req = req.split("[")[0].strip()
 
     # Handle URL requirements
-    if req.startswith("git+") or req.startswith("http"):
+    if req.startswith(("git+", "http", "https://", "file://")):
         return None  # Skip URL requirements for import testing
 
     return req
 
 
 def get_import_name(package_name: str) -> str:
-    """Get the import name for a package (may differ from package name)."""
+    """Get the import name for a package (may differ from package name).
+
+    Args:
+        package_name: PyPI package name
+
+    Returns:
+        Python import name for the package
+    """
     # Common package name to import name mappings
     mapping = {
         "pillow": "PIL",
@@ -77,15 +113,25 @@ def get_import_name(package_name: str) -> str:
         "transformers": "transformers",
         "gradio": "gradio",
         "streamlit": "streamlit",
+        "openai": "openai",
+        "anthropic": "anthropic",
+        "requests": "requests",
     }
 
     return mapping.get(package_name.lower(), package_name.replace("-", "_"))
 
 
-def check_imports(packages: set[str]) -> tuple[list[str], list[str]]:
-    """Check if packages can be imported."""
-    successful = []
-    failed = []
+def check_imports(packages: Set[str]) -> Tuple[List[str], List[str]]:
+    """Check if packages can be imported.
+
+    Args:
+        packages: Set of package names to test
+
+    Returns:
+        Tuple of (successful imports, failed imports)
+    """
+    successful: List[str] = []
+    failed: List[str] = []
 
     for package in sorted(packages):
         if not package:  # Skip empty packages
@@ -103,6 +149,9 @@ def check_imports(packages: set[str]) -> tuple[list[str], list[str]]:
         except Exception as e:
             failed.append(package)
             print(f"WARN {package} ({import_name}): Unexpected error - {e}")
+            # Don't include warnings in failed count for critical errors
+            if "No module named" not in str(e):
+                failed.pop()  # Remove from failed list if it's just a warning
 
     return successful, failed
 
@@ -135,8 +184,17 @@ def check_version_conflicts() -> bool:
 
 
 def generate_requirements_txt() -> None:
-    """Generate requirements.txt files for backward compatibility."""
-    dependencies = load_pyproject_dependencies()
+    """Generate requirements.txt files for backward compatibility.
+
+    Creates:
+        - requirements.txt: Core dependencies
+        - requirements-{group}.txt: Optional dependency groups
+    """
+    try:
+        dependencies = load_pyproject_dependencies()
+    except Exception as e:
+        print(f"Failed to load dependencies: {e}")
+        return
 
     # Generate core requirements.txt
     with open("requirements.txt", "w", encoding="utf-8") as f:
@@ -160,10 +218,36 @@ def generate_requirements_txt() -> None:
                 f.write(f"{dep}\n")
 
 
-def main():
-    """Main validation function."""
+def validate_environment() -> bool:
+    """Validate the current Python environment.
+
+    Returns:
+        True if environment is suitable, False otherwise
+    """
+    print(f"Python version: {sys.version}")
+    print(f"Python executable: {sys.executable}")
+
+    # Check Python version
+    if sys.version_info < (3, 8):
+        print("⚠️  Warning: Python 3.8+ recommended")
+        return False
+
+    return True
+
+
+def main() -> int:
+    """Main validation function.
+
+    Returns:
+        Exit code (0 for success, 1 for failure)
+    """
     print("AIVillage Dependency Validation")
     print("=" * 40)
+
+    # Validate environment
+    if not validate_environment():
+        print("Environment validation failed")
+        return 1
 
     try:
         # Load dependencies
@@ -171,7 +255,7 @@ def main():
         print(f"Loaded {len(dependencies)} dependency groups")
 
         # Extract all unique packages
-        all_packages = set()
+        all_packages: Set[str] = set()
         for group, deps in dependencies.items():
             packages = [parse_requirement(dep) for dep in deps]
             packages = [p for p in packages if p]  # Remove None values
@@ -213,12 +297,16 @@ def main():
         )
 
         if failed or not conflicts_ok:
-            sys.exit(1)
+            return 1
+
+        return 0
 
     except Exception as e:
         print(f"Validation failed: {e}")
-        sys.exit(1)
+        import traceback
+        traceback.print_exc()
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

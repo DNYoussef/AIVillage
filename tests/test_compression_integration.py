@@ -6,18 +6,18 @@ Tests that the compression phase entry point executes successfully
 and returns valid PhaseResult objects with real compression operations.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from agent_forge.compression_pipeline import run_compression
+from agent_forge.forge_orchestrator import PhaseResult, PhaseStatus, PhaseType
+
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-
-from agent_forge.compression_pipeline import run_compression
-from agent_forge.forge_orchestrator import PhaseResult, PhaseStatus, PhaseType
 
 
 class TestCompressionIntegration:

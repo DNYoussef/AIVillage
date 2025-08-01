@@ -8,8 +8,8 @@ Prevents RangeError from large string outputs by implementing:
 4. Memory-safe string handling
 """
 
-from collections.abc import Iterator
 import json
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -79,7 +79,7 @@ class BufferedOutputHandler:
     def chunk_output(self, text: str) -> Iterator[str]:
         """Yield chunks of text for progressive display."""
         for i in range(0, len(text), self.CHUNK_SIZE):
-            yield text[i : i + self.CHUNK_SIZE]
+            yield text[i: i + self.CHUNK_SIZE]
 
     def display_large_output(self, data: Any, title: str = "Output"):
         """Display large output safely with pagination."""

@@ -9,17 +9,16 @@ Provides comprehensive analysis of benchmark results:
 """
 
 import asyncio
+import json
+import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
-import json
-import logging
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
-
 import wandb
 
 logger = logging.getLogger(__name__)
@@ -103,7 +102,7 @@ class WandBDashboardAnalyzer:
                 try:
                     history = run.scan_history()
                     run_data["history"] = list(history)
-                except:
+                except BaseException:
                     pass
 
                 dashboard_data["runs"].append(run_data)

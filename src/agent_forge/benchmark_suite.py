@@ -12,23 +12,22 @@ Supports comparison against baseline 1.5B and frontier models with detailed W&B 
 """
 
 import asyncio
-from dataclasses import asdict, dataclass
 import json
 import logging
-from pathlib import Path
 import re
 import time
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Any
 
-from datasets import load_dataset
 import numpy as np
 import pandas as pd
-from scipy import stats
 import torch
+import wandb
+from datasets import load_dataset
+from scipy import stats
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
-import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -314,7 +313,7 @@ Answer: C
 
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
         prediction = response[
-            len(tokenizer.decode(inputs[0], skip_special_tokens=True)) :
+            len(tokenizer.decode(inputs[0], skip_special_tokens=True)):
         ].strip()
 
         return prediction
@@ -442,7 +441,7 @@ A: The robe takes 2 bolts of blue fiber. It takes half that much white fiber, so
 
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
         prediction = response[
-            len(tokenizer.decode(inputs[0], skip_special_tokens=True)) :
+            len(tokenizer.decode(inputs[0], skip_special_tokens=True)):
         ].strip()
 
         return prediction
@@ -558,7 +557,7 @@ class HumanEvalEvaluator:
 
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
         generated = response[
-            len(tokenizer.decode(inputs[0], skip_special_tokens=True)) :
+            len(tokenizer.decode(inputs[0], skip_special_tokens=True)):
         ].strip()
 
         return generated

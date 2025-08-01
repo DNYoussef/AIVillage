@@ -8,15 +8,12 @@ to ensure they work correctly and verify proper handoff between components.
 import json
 import logging
 import os
-from pathlib import Path
 import sys
 import tempfile
+from pathlib import Path
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
-# Add the project root to the Python path
-sys.path.insert(0, str(Path(__file__).parent))
 
 from agent_forge.compression.stage1 import run_stage1_compression
 from agent_forge.compression.stage1_config import Stage1Config
@@ -27,6 +24,10 @@ from agent_forge.training.enhanced_self_modeling import (
     SelfModelingConfig,
 )
 from agent_forge.training.training_loop import AgentForgeTrainingLoop
+
+# Add the project root to the Python path
+sys.path.insert(0, str(Path(__file__).parent))
+
 
 # Configure logging
 logging.basicConfig(

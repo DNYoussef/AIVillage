@@ -1,9 +1,17 @@
 import asyncio
 import importlib.util
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+from agents.king.king_agent import KingAgent
+from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
+from agents.utils.task import Task as LangroidTask
+
+from core.error_handling import StandardCommunicationProtocol
+from rag_system.core.config import RAGConfig
+from rag_system.retrieval.vector_store import VectorStore
 
 # Skip these tests if PyTorch isn't installed since KingAgent relies on
 # transformer models.
@@ -18,13 +26,6 @@ if torch_spec is None:
 # Ensure the repository root is on the Python path so that the ``agents``
 # package imports correctly when running this test in isolation.
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-
-from agents.king.king_agent import KingAgent
-from agents.unified_base_agent import UnifiedAgentConfig as KingAgentConfig
-from agents.utils.task import Task as LangroidTask
-from core.error_handling import StandardCommunicationProtocol
-from rag_system.core.config import RAGConfig
-from rag_system.retrieval.vector_store import VectorStore
 
 
 class TestKingAgent(unittest.TestCase):

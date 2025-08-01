@@ -6,14 +6,14 @@ Simple script to start the HypeRAG MCP server with proper configuration.
 
 import asyncio
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
+
+from mcp_servers.hyperag.server import HypeRAGMCPServer
 
 # Add the project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-
-from mcp_servers.hyperag.server import HypeRAGMCPServer
 
 
 async def main():

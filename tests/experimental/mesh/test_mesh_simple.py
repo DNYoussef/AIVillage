@@ -6,15 +6,15 @@ Moved from root to tests/experimental/mesh/ for better organization.
 
 import asyncio
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
+
+from communications.message import Message, MessageType, Priority
+from mesh_network_manager import MeshNetworkManager
 
 # Add the project root to the path for imports
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
-
-from communications.message import Message, MessageType, Priority
-from mesh_network_manager import MeshNetworkManager
 
 
 async def test_mesh_simple():

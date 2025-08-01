@@ -180,7 +180,7 @@ class TestHippoNode:
 
         assert node.id == "hippo_001"
         assert node.content == "User asked about diabetes management"
-        assert node.episodic == True
+        assert node.episodic
 
     def test_hippo_node_timestamps(self):
         """Test timestamp handling"""
@@ -300,7 +300,7 @@ class TestArchitecturalBoundaries:
 
         # Verify clear separation
         if hasattr(episodic_node, "episodic"):
-            assert episodic_node.episodic == True
+            assert episodic_node.episodic
 
         # Semantic edges should not have episodic flag
         assert not hasattr(semantic_edge, "episodic") or not semantic_edge.episodic

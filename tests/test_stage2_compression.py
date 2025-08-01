@@ -301,7 +301,7 @@ class TestStage2Compressor:
 
         assert compressor.vptq.bits_per_vector == 2.0
         assert compressor.vptq.vector_length == 16
-        assert compressor.use_hyperfn == True
+        assert compressor.use_hyperfn
         assert compressor.hyperfn is not None
         assert compressor.hyperfn.num_clusters == 8
 

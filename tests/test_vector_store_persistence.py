@@ -1,11 +1,13 @@
-from datetime import datetime
 import importlib.util
 import json
-from pathlib import Path
 import sys
 import tempfile
 import types
 import unittest
+from datetime import datetime
+from pathlib import Path
+
+from rag_system.retrieval.vector_store import VectorStore
 
 if importlib.util.find_spec("numpy") is None:
     msg = "Required dependency not installed"
@@ -45,8 +47,6 @@ fake_faiss.deserialize_index = _deserialize
 sys.modules["faiss"] = fake_faiss
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-
-from rag_system.retrieval.vector_store import VectorStore
 
 
 class TestVectorStorePersistence(unittest.TestCase):

@@ -5,14 +5,14 @@ Based on Bluetooth 5.0+ mesh specifications adapted for AI parameter sharing.
 """
 
 import asyncio
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum, auto
 import hashlib
 import json
 import logging
 import struct
 import time
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import Any
 
 import numpy as np

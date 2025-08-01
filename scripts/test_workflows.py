@@ -68,8 +68,8 @@ def validate_workflow(workflow_path: Path) -> bool:
                 }
 
             print(
-                f"  Basic structure detected: name={has_name}, triggers={has_on}, jobs={len(apparent_jobs) if apparent_jobs else 0}"
-            )
+                f"  Basic structure detected: name={has_name}, triggers={has_on}, jobs={
+                    len(apparent_jobs) if apparent_jobs else 0}")
 
             if not workflow:
                 raise  # Re-raise original error if fallback fails

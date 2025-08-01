@@ -2,12 +2,12 @@ import logging
 import random
 import traceback
 
-from langroid import ChatAgent, ChatAgentConfig, Task
 import nltk
-from nltk.tokenize import sent_tokenize
-from nltk.translate.bleu_score import sentence_bleu
 import torch
 import torch.nn.functional as F
+from langroid import ChatAgent, ChatAgentConfig, Task
+from nltk.tokenize import sent_tokenize
+from nltk.translate.bleu_score import sentence_bleu
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from agent_forge.self_awareness.metacognaitve_eval import MetacognitiveEvaluatorTask
@@ -54,8 +54,7 @@ class SelfGuidedEvolutionTask(Task):
                     )
                     scores.append(combined_score)
                     logger.info(
-                        f"Variant score: {combined_score} (Performance: {score}, Coherence: {coherence_score}, Relevance: {relevance_score})"
-                    )
+                        f"Variant score: {combined_score} (Performance: {score}, Coherence: {coherence_score}, Relevance: {relevance_score})")
                 except Exception as e:
                     logger.error(f"Error evaluating variant: {e!s}")
                     logger.error(traceback.format_exc())
@@ -145,7 +144,7 @@ class SelfGuidedEvolutionTask(Task):
             combine_pos = random.randint(0, len(sentences) - 2)
             combined = f"{sentences[combine_pos]} Moreover, {sentences[combine_pos + 1].lower()}"
             sentences = (
-                sentences[:combine_pos] + [combined] + sentences[combine_pos + 2 :]
+                sentences[:combine_pos] + [combined] + sentences[combine_pos + 2:]
             )
         return " ".join(sentences)
 
@@ -155,7 +154,7 @@ class SelfGuidedEvolutionTask(Task):
         split_sentence = sentences[split_pos].split(", ", 1)
         if len(split_sentence) > 1:
             sentences = (
-                sentences[:split_pos] + split_sentence + sentences[split_pos + 1 :]
+                sentences[:split_pos] + split_sentence + sentences[split_pos + 1:]
             )
         return " ".join(sentences)
 

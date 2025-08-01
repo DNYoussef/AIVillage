@@ -1,4 +1,4 @@
-"""Real-time device profiling for mobile resource monitoring."""
+"""Real-time mobile device resource profiling for Sprint 6"""
 
 import asyncio
 import json
@@ -14,8 +14,100 @@ import queue
 # System monitoring
 import psutil
 
+# Platform-specific imports
+if platform.system() == "Android":
+    try:
+        from jnius import autoclass
+        Build = autoclass('android.os.Build')
+        BatteryManager = autoclass('android.os.BatteryManager')
+        ActivityManager = autoclass('android.app.ActivityManager')
+        ThermalManager = autoclass('android.os.ThermalManager')
+        ANDROID_AVAILABLE = True
+    except ImportError:
+        ANDROID_AVAILABLE = False
+elif platform.system() == "Darwin":  # iOS/macOS
+    try:
+        import objc
+        from Foundation import NSBundle, NSProcessInfo
+        MACOS_AVAILABLE = True
+    except ImportError:
+        MACOS_AVAILABLE = False
+else:
+    ANDROID_AVAILABLE = False
+    MACOS_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
+@dataclass
+class DeviceProfile:
+    """Current device resource state - Enhanced for Sprint 6"""
+    timestamp: float
+    cpu_percent: float
+    cpu_freq_mhz: float
+    cpu_temp_celsius: Optional[float]
+    cpu_cores: int
+    ram_used_mb: int
+    ram_available_mb: int
+    ram_total_mb: int
+    battery_percent: Optional[int]
+    battery_charging: bool
+    battery_temp_celsius: Optional[float]
+    battery_health: Optional[str]
+    network_type: str
+    network_bandwidth_mbps: Optional[float]
+    network_latency_ms: Optional[float]
+    storage_available_gb: float
+    storage_total_gb: float
+    gpu_available: bool
+    gpu_memory_mb: Optional[int]
+    thermal_state: str
+    power_mode: str
+    screen_brightness: Optional[int]
+    device_type: str
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return {
+            'timestamp': self.timestamp,
+            'cpu': {
+                'percent': self.cpu_percent,
+                'freq_mhz': self.cpu_freq_mhz,
+                'temp_celsius': self.cpu_temp_celsius,
+                'cores': self.cpu_cores
+            },
+            'memory': {
+                'used_mb': self.ram_used_mb,
+                'available_mb': self.ram_available_mb,
+                'total_mb': self.ram_total_mb,
+                'usage_percent': (self.ram_used_mb / self.ram_total_mb) * 100
+            },
+            'battery': {
+                'percent': self.battery_percent,
+                'charging': self.battery_charging,
+                'temp_celsius': self.battery_temp_celsius,
+                'health': self.battery_health
+            },
+            'network': {
+                'type': self.network_type,
+                'bandwidth_mbps': self.network_bandwidth_mbps,
+                'latency_ms': self.network_latency_ms
+            },
+            'storage': {
+                'available_gb': self.storage_available_gb,
+                'total_gb': self.storage_total_gb,
+                'usage_percent': ((self.storage_total_gb - self.storage_available_gb) / self.storage_total_gb) * 100
+            },
+            'gpu': {
+                'available': self.gpu_available,
+                'memory_mb': self.gpu_memory_mb
+            },
+            'system': {
+                'thermal_state': self.thermal_state,
+                'power_mode': self.power_mode,
+                'screen_brightness': self.screen_brightness,
+                'device_type': self.device_type
+            }
+        }
 
 class DeviceType(Enum):
     """Device type classification."""

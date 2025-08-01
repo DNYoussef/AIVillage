@@ -7,15 +7,11 @@ with their new entry points, and that they return valid PhaseResult objects.
 """
 
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
 
 from agent_forge.forge_orchestrator import (
     ForgeOrchestrator,
@@ -24,6 +20,10 @@ from agent_forge.forge_orchestrator import (
     PhaseStatus,
     PhaseType,
 )
+
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 
 class TestOrchestratorIntegration:

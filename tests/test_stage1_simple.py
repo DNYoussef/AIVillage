@@ -3,12 +3,11 @@
 
 import os
 import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "agent_forge"))
-
 import tempfile
 
 import torch
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "agent_forge"))
 
 
 # Test individual components

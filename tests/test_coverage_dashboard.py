@@ -4,17 +4,19 @@ Comprehensive Test Coverage Dashboard for AIVillage
 Real-time monitoring and analysis of test coverage across all components.
 """
 
-import os
-import sys
-import subprocess
+import ast
+import asyncio
+import glob
 import json
+import os
+import subprocess
+import sys
 import time
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
 from datetime import datetime
-import glob
-import ast
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
 
 @dataclass
 class CoverageMetrics:
@@ -26,6 +28,7 @@ class CoverageMetrics:
     file_path: str
     timestamp: str
 
+
 @dataclass
 class TestSuiteMetrics:
     """Container for test suite metrics."""
@@ -35,6 +38,7 @@ class TestSuiteMetrics:
     skipped_tests: int
     execution_time: float
     test_files: List[str]
+
 
 class TestCoverageDashboard:
     """Comprehensive test coverage dashboard."""
@@ -48,6 +52,31 @@ class TestCoverageDashboard:
     def _identify_critical_components(self) -> Dict[str, List[str]]:
         """Identify critical components that require high test coverage."""
         return {
+            "sprint6_infrastructure": [
+                "src/core/p2p/",
+                "src/core/resources/",
+                "src/production/agent_forge/evolution/infrastructure_aware_evolution.py",
+                "src/production/agent_forge/evolution/resource_constrained_evolution.py",
+                "src/production/agent_forge/evolution/evolution_coordination_protocol.py"
+            ],
+            "sprint6_p2p_layer": [
+                "src/core/p2p/p2p_node.py",
+                "src/core/p2p/peer_discovery.py",
+                "src/core/p2p/message_protocol.py",
+                "src/core/p2p/encryption_layer.py"
+            ],
+            "sprint6_resource_management": [
+                "src/core/resources/device_profiler.py",
+                "src/core/resources/resource_monitor.py",
+                "src/core/resources/constraint_manager.py",
+                "src/core/resources/adaptive_loader.py"
+            ],
+            "sprint6_evolution_systems": [
+                "src/production/agent_forge/evolution/base.py",
+                "src/production/agent_forge/evolution/dual_evolution_system.py",
+                "src/production/agent_forge/evolution/magi_architectural_evolution.py",
+                "src/production/agent_forge/evolution/nightly_evolution_orchestrator.py"
+            ],
             "production_critical": [
                 "production/compression/",
                 "production/evolution/",
@@ -77,21 +106,33 @@ class TestCoverageDashboard:
         """Run comprehensive coverage analysis."""
         print("🔍 Running comprehensive test coverage analysis...")
 
-        # Step 1: Run pytest with coverage
+        # Step 1: Run Sprint 6 validation
+        sprint6_results = self._run_sprint6_validation()
+
+        # Step 2: Run Sprint 6 infrastructure tests
+        infrastructure_results = self._run_sprint6_infrastructure_tests()
+
+        # Step 3: Run Sprint 6 performance tests
+        performance_results = self._run_sprint6_performance_tests()
+
+        # Step 4: Run pytest with coverage
         coverage_results = self._run_pytest_coverage()
 
-        # Step 2: Analyze coverage by component
+        # Step 5: Analyze coverage by component
         component_coverage = self._analyze_component_coverage()
 
-        # Step 3: Identify gaps and priorities
+        # Step 6: Identify gaps and priorities
         coverage_gaps = self._identify_coverage_gaps()
 
-        # Step 4: Generate recommendations
+        # Step 7: Generate recommendations
         recommendations = self._generate_recommendations(coverage_gaps)
 
-        # Step 5: Create visual dashboard
+        # Step 8: Create visual dashboard
         dashboard_data = {
             "timestamp": datetime.now().isoformat(),
+            "sprint6_validation": sprint6_results,
+            "sprint6_infrastructure": infrastructure_results,
+            "sprint6_performance": performance_results,
             "overall_coverage": coverage_results,
             "component_coverage": component_coverage,
             "coverage_gaps": coverage_gaps,
@@ -364,43 +405,414 @@ class TestCoverageDashboard:
 
         return health_metrics
 
+    def _run_sprint6_validation(self) -> Dict:
+        """Run Sprint 6 validation script."""
+        print("🚀 Running Sprint 6 validation...")
+
+        validation_script = self.project_root / "validate_sprint6.py"
+        if not validation_script.exists():
+            return {
+                "success": False,
+                "error": "validate_sprint6.py not found",
+                "timestamp": datetime.now().isoformat()
+            }
+
+        try:
+            start_time = time.time()
+            result = subprocess.run(
+                [sys.executable, str(validation_script)],
+                capture_output=True,
+                text=True,
+                timeout=300,
+                cwd=self.project_root
+            )
+            execution_time = time.time() - start_time
+
+            return {
+                "success": result.returncode == 0,
+                "execution_time": execution_time,
+                "returncode": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "timestamp": datetime.now().isoformat()
+            }
+
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "error": "Sprint 6 validation timed out",
+                "execution_time": 300,
+                "timestamp": datetime.now().isoformat()
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+
+    def _run_sprint6_infrastructure_tests(self) -> Dict:
+        """Run Sprint 6 infrastructure tests."""
+        print("🏗️ Running Sprint 6 infrastructure tests...")
+
+        test_files = [
+            "tests/test_sprint6_infrastructure.py",
+            "tests/communications/test_p2p.py",
+            "tests/core/test_integration.py"
+        ]
+
+        results = {
+            "total_files": len(test_files),
+            "passed_files": 0,
+            "failed_files": 0,
+            "results": {},
+            "timestamp": datetime.now().isoformat()
+        }
+
+        for test_file in test_files:
+            test_path = self.project_root / test_file
+            if not test_path.exists():
+                results["results"][test_file] = {
+                    "success": False,
+                    "error": "Test file not found"
+                }
+                results["failed_files"] += 1
+                continue
+
+            try:
+                start_time = time.time()
+                result = subprocess.run(
+                    [sys.executable, "-m", "pytest", str(test_path), "-v", "--tb=short"],
+                    capture_output=True,
+                    text=True,
+                    timeout=180,
+                    cwd=self.project_root
+                )
+                execution_time = time.time() - start_time
+
+                if result.returncode == 0:
+                    results["passed_files"] += 1
+                else:
+                    results["failed_files"] += 1
+
+                results["results"][test_file] = {
+                    "success": result.returncode == 0,
+                    "execution_time": execution_time,
+                    "returncode": result.returncode,
+                    "stdout": result.stdout,
+                    "stderr": result.stderr
+                }
+
+            except subprocess.TimeoutExpired:
+                results["results"][test_file] = {
+                    "success": False,
+                    "error": "Test execution timed out",
+                    "execution_time": 180
+                }
+                results["failed_files"] += 1
+            except Exception as e:
+                results["results"][test_file] = {
+                    "success": False,
+                    "error": str(e)
+                }
+                results["failed_files"] += 1
+
+        return results
+
+    def _run_sprint6_performance_tests(self) -> Dict:
+        """Run Sprint 6 performance tests."""
+        print("⚡ Running Sprint 6 performance tests...")
+
+        performance_test = "tests/test_sprint6_performance.py"
+        test_path = self.project_root / performance_test
+
+        if not test_path.exists():
+            return {
+                "success": False,
+                "error": "Performance test file not found",
+                "timestamp": datetime.now().isoformat()
+            }
+
+        try:
+            start_time = time.time()
+            result = subprocess.run(
+                [sys.executable, "-m", "pytest", str(test_path), "-v", "--benchmark-only", "--tb=short"],
+                capture_output=True,
+                text=True,
+                timeout=300,
+                cwd=self.project_root
+            )
+            execution_time = time.time() - start_time
+
+            return {
+                "success": result.returncode == 0,
+                "execution_time": execution_time,
+                "returncode": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "timestamp": datetime.now().isoformat()
+            }
+
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "error": "Performance tests timed out",
+                "execution_time": 300,
+                "timestamp": datetime.now().isoformat()
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+
+    def run_sprint6_test_suite(self) -> Dict:
+        """Run comprehensive Sprint 6 test suite."""
+        print("🧪 Running comprehensive Sprint 6 test suite...")
+
+        # Start time tracking
+        suite_start_time = time.time()
+
+        # Run all Sprint 6 tests
+        validation_results = self._run_sprint6_validation()
+        infrastructure_results = self._run_sprint6_infrastructure_tests()
+        performance_results = self._run_sprint6_performance_tests()
+
+        # Calculate overall results
+        total_execution_time = time.time() - suite_start_time
+
+        # Determine overall success
+        overall_success = (
+            validation_results.get("success", False) and
+            infrastructure_results.get("passed_files", 0) == infrastructure_results.get("total_files", 1) and
+            performance_results.get("success", False)
+        )
+
+        suite_results = {
+            "timestamp": datetime.now().isoformat(),
+            "overall_success": overall_success,
+            "total_execution_time": total_execution_time,
+            "validation": validation_results,
+            "infrastructure": infrastructure_results,
+            "performance": performance_results,
+            "summary": {
+                "validation_passed": validation_results.get("success", False),
+                "infrastructure_tests_passed": infrastructure_results.get("passed_files", 0),
+                "infrastructure_tests_failed": infrastructure_results.get("failed_files", 0),
+                "performance_tests_passed": performance_results.get("success", False)
+            }
+        }
+
+        # Save results
+        results_file = self.project_root / "sprint6_test_results.json"
+        with open(results_file, 'w') as f:
+            json.dump(suite_results, f, indent=2)
+
+        print(f"✅ Sprint 6 test suite completed in {total_execution_time:.2f} seconds")
+        print(f"📊 Overall success: {overall_success}")
+        print(f"📄 Results saved to: {results_file}")
+
+        return suite_results
+
     def generate_html_dashboard(self, dashboard_data: Dict) -> str:
         """Generate HTML dashboard."""
+        # Determine Sprint 6 status
+        sprint6_status = "🟢 Healthy"
+        sprint6_class = "success"
+
+        if 'sprint6_validation' in dashboard_data:
+            validation_success = dashboard_data['sprint6_validation'].get('success', False)
+            infrastructure_success = dashboard_data.get('sprint6_infrastructure', {}).get('passed_files', 0) > 0
+            performance_success = dashboard_data.get('sprint6_performance', {}).get('success', False)
+
+            if validation_success and infrastructure_success and performance_success:
+                sprint6_status = "🟢 All Systems Operational"
+                sprint6_class = "success"
+            elif validation_success and infrastructure_success:
+                sprint6_status = "🟡 Core Systems OK, Performance Issues"
+                sprint6_class = "warning"
+            elif validation_success:
+                sprint6_status = "🟡 Validation OK, Infrastructure Issues"
+                sprint6_class = "warning"
+            else:
+                sprint6_status = "🔴 Critical Issues Detected"
+                sprint6_class = "critical"
+
         html_content = f"""
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AIVillage Test Coverage Dashboard</title>
+    <title>Sprint 6 Test Dashboard - AIVillage</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body {{ font-family: Arial, sans-serif; margin: 20px; }}
-        .header {{ background: #2c3e50; color: white; padding: 20px; border-radius: 5px; }}
-        .metric-card {{ background: #ecf0f1; padding: 15px; margin: 10px 0; border-radius: 5px; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f8f9fa; }}
+        .container {{ max-width: 1200px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }}
+        .header h1 {{ margin: 0 0 10px 0; font-size: 2.5em; font-weight: 700; }}
+        .header p {{ margin: 0; opacity: 0.9; font-size: 1.1em; }}
+        .status-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }}
+        .metric-card {{ background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: transform 0.2s ease; }}
+        .metric-card:hover {{ transform: translateY(-2px); }}
+        .metric-card h2 {{ margin: 0 0 15px 0; color: #2c3e50; font-size: 1.4em; }}
+        .metric-card h3 {{ margin: 0 0 10px 0; color: #57606f; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px; }}
+        .status-value {{ font-size: 2.2em; font-weight: 700; margin-bottom: 8px; }}
+        .status-description {{ color: #747d8c; font-size: 0.9em; line-height: 1.4; }}
         .critical {{ border-left: 5px solid #e74c3c; }}
         .warning {{ border-left: 5px solid #f39c12; }}
         .success {{ border-left: 5px solid #27ae60; }}
-        .recommendation {{ background: #fff3cd; padding: 15px; margin: 10px 0; border-radius: 5px; }}
-        table {{ width: 100%; border-collapse: collapse; }}
-        th, td {{ padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }}
-        th {{ background-color: #34495e; color: white; }}
-        .progress-bar {{ width: 100%; background: #ecf0f1; border-radius: 5px; }}
-        .progress-fill {{ height: 20px; background: #3498db; border-radius: 5px; }}
+        .info {{ border-left: 5px solid #3498db; }}
+        .recommendation {{ background: #fff3cd; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #f39c12; }}
+        .test-results {{ background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px; }}
+        table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
+        th, td {{ padding: 12px; text-align: left; border-bottom: 1px solid #e1e8ed; }}
+        th {{ background-color: #2c3e50; color: white; font-weight: 600; }}
+        .progress-bar {{ width: 100%; background: #e1e8ed; border-radius: 6px; height: 8px; overflow: hidden; margin: 10px 0; }}
+        .progress-fill {{ height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); transition: width 0.3s ease; }}
+        .test-status-pass {{ color: #27ae60; font-weight: 600; }}
+        .test-status-fail {{ color: #e74c3c; font-weight: 600; }}
+        .test-status-warn {{ color: #f39c12; font-weight: 600; }}
+        .execution-time {{ font-size: 0.9em; color: #7f8c8d; }}
+        .collapsible {{ cursor: pointer; padding: 10px; background: #ecf0f1; border: none; text-align: left; width: 100%; font-size: 1em; }}
+        .collapsible:hover {{ background: #d5dbdb; }}
+        .content {{ display: none; padding: 15px; background: #f8f9fa; border-left: 3px solid #3498db; }}
+        .content pre {{ background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 0.9em; }}
     </style>
+    <script>
+        function toggleContent(id) {{
+            var content = document.getElementById(id);
+            content.style.display = content.style.display === 'block' ? 'none' : 'block';
+        }}
+
+        function refreshDashboard() {{
+            location.reload();
+        }}
+
+        setTimeout(refreshDashboard, 300000); // Auto-refresh every 5 minutes
+    </script>
 </head>
 <body>
-    <div class="header">
-        <h1>🧪 AIVillage Test Coverage Dashboard</h1>
-        <p>Generated: {dashboard_data['timestamp']}</p>
-    </div>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Sprint 6 Test Dashboard</h1>
+            <p>Real-time monitoring for P2P, Resource Management, and Evolution Infrastructure • Generated: {dashboard_data['timestamp']}</p>
+        </div>
 
-    <div class="metric-card success">
-        <h2>📊 Overall Coverage Status</h2>
-        <p><strong>Status:</strong> Analysis Complete</p>
-        <p><strong>Components Analyzed:</strong> {len(self.critical_components)} categories</p>
-    </div>
+        <div class="status-grid">
+            <div class="metric-card {sprint6_class}">
+                <h3>Sprint 6 Infrastructure Status</h3>
+                <div class="status-value">{sprint6_status}</div>
+                <div class="status-description">Overall system health assessment</div>
+            </div>
 
-    <div class="metric-card">
-        <h2>🎯 Critical Component Coverage</h2>
-        <table>
+            <div class="metric-card info">
+                <h3>Components Analyzed</h3>
+                <div class="status-value">{len(self.critical_components)}</div>
+                <div class="status-description">Critical system categories monitored</div>
+            </div>
+        </div>"""
+
+        # Add Sprint 6 test results sections
+        if 'sprint6_validation' in dashboard_data:
+            validation = dashboard_data['sprint6_validation']
+            validation_status = "✅ Passed" if validation.get('success', False) else "❌ Failed"
+            validation_class = "success" if validation.get('success', False) else "critical"
+
+            html_content += f"""
+        <div class="test-results {validation_class}">
+            <h2>🔧 Sprint 6 Validation Results</h2>
+            <p><strong>Status:</strong> <span class="test-status-{'pass' if validation.get('success', False) else 'fail'}">{validation_status}</span></p>
+            <p><strong>Execution Time:</strong> <span class="execution-time">{validation.get('execution_time', 0):.2f} seconds</span></p>
+            
+            <button class="collapsible" onclick="toggleContent('validation-details')">View Validation Output</button>
+            <div id="validation-details" class="content">
+                <h4>Standard Output:</h4>
+                <pre>{validation.get('stdout', 'No output')}</pre>
+                {f'<h4>Error Output:</h4><pre>{validation.get("stderr", "")}</pre>' if validation.get('stderr') else ''}
+            </div>
+        </div>"""
+
+        if 'sprint6_infrastructure' in dashboard_data:
+            infra = dashboard_data['sprint6_infrastructure']
+
+            html_content += f"""
+        <div class="test-results">
+            <h2>🏗️ Sprint 6 Infrastructure Tests</h2>
+            <div class="status-grid">
+                <div class="metric-card success">
+                    <h3>Passed Tests</h3>
+                    <div class="status-value test-status-pass">{infra.get('passed_files', 0)}</div>
+                </div>
+                <div class="metric-card {'critical' if infra.get('failed_files', 0) > 0 else 'info'}">
+                    <h3>Failed Tests</h3>
+                    <div class="status-value test-status-{'fail' if infra.get('failed_files', 0) > 0 else 'pass'}">{infra.get('failed_files', 0)}</div>
+                </div>
+                <div class="metric-card info">
+                    <h3>Total Files</h3>
+                    <div class="status-value">{infra.get('total_files', 0)}</div>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {(infra.get('passed_files', 0) / max(infra.get('total_files', 1), 1)) * 100:.1f}%"></div>
+            </div>
+
+            <table>
+                <tr><th>Test File</th><th>Status</th><th>Execution Time</th><th>Details</th></tr>"""
+
+            for test_file, result in infra.get('results', {}).items():
+                status_icon = "✅" if result.get('success', False) else "❌"
+                status_class = "test-status-pass" if result.get('success', False) else "test-status-fail"
+                exec_time = result.get('execution_time', 0)
+
+                html_content += f"""
+                <tr>
+                    <td>{test_file.split('/')[-1]}</td>
+                    <td class="{status_class}">{status_icon}</td>
+                    <td class="execution-time">{exec_time:.2f}s</td>
+                    <td><button class="collapsible" onclick="toggleContent('{test_file.replace('/', '-').replace('.', '-')}')">View</button></td>
+                </tr>"""
+
+            html_content += "</table>"
+
+            # Add collapsible details for each test
+            for test_file, result in infra.get('results', {}).items():
+                content_id = test_file.replace('/', '-').replace('.', '-')
+                html_content += f"""
+            <div id="{content_id}" class="content">
+                <h4>{test_file}</h4>
+                <p><strong>Status:</strong> {'Success' if result.get('success', False) else 'Failed'}</p>
+                <p><strong>Execution Time:</strong> {result.get('execution_time', 0):.2f} seconds</p>
+                {f'<p><strong>Error:</strong> {result.get("error", "")}</p>' if result.get('error') else ''}
+                {f'<h5>Output:</h5><pre>{result.get("stdout", "No output")}</pre>' if result.get('stdout') else ''}
+                {f'<h5>Errors:</h5><pre>{result.get("stderr", "")}</pre>' if result.get('stderr') else ''}
+            </div>"""
+
+            html_content += "</div>"
+
+        if 'sprint6_performance' in dashboard_data:
+            perf = dashboard_data['sprint6_performance']
+            perf_status = "✅ Passed" if perf.get('success', False) else "❌ Failed"
+            perf_class = "success" if perf.get('success', False) else "warning"
+
+            html_content += f"""
+        <div class="test-results {perf_class}">
+            <h2>⚡ Sprint 6 Performance Tests</h2>
+            <p><strong>Status:</strong> <span class="test-status-{'pass' if perf.get('success', False) else 'fail'}">{perf_status}</span></p>
+            <p><strong>Execution Time:</strong> <span class="execution-time">{perf.get('execution_time', 0):.2f} seconds</span></p>
+            
+            <button class="collapsible" onclick="toggleContent('performance-details')">View Performance Results</button>
+            <div id="performance-details" class="content">
+                <h4>Benchmark Output:</h4>
+                <pre>{perf.get('stdout', 'No output')}</pre>
+                {f'<h4>Error Output:</h4><pre>{perf.get("stderr", "")}</pre>' if perf.get('stderr') else ''}
+            </div>
+        </div>"""
+
+        html_content += f"""
+        <div class="test-results">
+            <h2>🎯 Critical Component Coverage</h2>
+            <table>
             <tr><th>Component Category</th><th>Files</th><th>Avg Coverage</th><th>Status</th></tr>
 """
 
@@ -525,17 +937,13 @@ Generated: {dashboard_data['timestamp']}
 
 | Category | Files | Avg Coverage | Status |
 |----------|-------|--------------|--------|
-""" + "\n".join([
-    f"| {cat.replace('_', ' ').title()} | {metrics['total_files']} | {metrics['average_coverage']:.1f}% | {'🟢' if metrics['average_coverage'] > 80 else '🟡' if metrics['average_coverage'] > 50 else '🔴'} |"
-    for cat, metrics in dashboard_data["component_coverage"].items()
-]) + f"""
+""" + "\n".join([f"| {cat.replace('_',
+                                  ' ').title()} | {metrics['total_files']} | {metrics['average_coverage']:.1f}% | {'🟢' if metrics['average_coverage'] > 80 else '🟡' if metrics['average_coverage'] > 50 else '🔴'} |" for cat,
+                 metrics in dashboard_data["component_coverage"].items()]) + f"""
 
 ## Priority Recommendations
 
-""" + "\n".join([
-    f"### {rec['priority'].upper()}: {rec['title']}\n{rec['description']}\n**Effort**: {rec['estimated_effort']}\n"
-    for rec in dashboard_data["recommendations"][:3]
-]) + """
+""" + "\n".join([f"### {rec['priority'].upper()}: {rec['title']}\n{rec['description']}\n**Effort**: {rec['estimated_effort']}\n" for rec in dashboard_data["recommendations"][:3]]) + """
 
 ## Action Items
 1. Create tests for production-critical components
@@ -556,6 +964,7 @@ open htmlcov/index.html
 python test_coverage_dashboard.py
 ```
 """
+
 
 def main():
     """Main execution function."""
@@ -590,6 +999,7 @@ def main():
             print(f"   {i}. {gap['file']} ({gap['category']})")
 
     print(f"\n🌐 Open dashboard: {saved_files['html_dashboard']}")
+
 
 if __name__ == "__main__":
     main()

@@ -2,8 +2,8 @@
 """Create comprehensive text summary of 50-generation evolution results."""
 
 import json
-from pathlib import Path
 import statistics
+from pathlib import Path
 
 
 def create_comprehensive_summary():
@@ -24,8 +24,9 @@ def create_comprehensive_summary():
     print("-" * 50)
     print(f"Generations Completed:     {summary['generations_completed']}")
     print(
-        f"Duration:                  {summary['duration_minutes']:.2f} minutes ({summary['duration_seconds']:.1f} seconds)"
-    )
+        f"Duration:                  {
+            summary['duration_minutes']:.2f} minutes ({
+            summary['duration_seconds']:.1f} seconds)")
     print(
         f"Population Size:           {summary['population_size']} individuals per generation"
     )

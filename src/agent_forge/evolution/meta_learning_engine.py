@@ -5,14 +5,14 @@ including few-shot learning, learning rate adaptation, and strategy optimization
 """
 
 import asyncio
+import json
+import logging
+import pickle
+import time
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass
 from datetime import datetime
-import json
-import logging
 from pathlib import Path
-import pickle
-import time
 from typing import Any
 
 import numpy as np
@@ -865,8 +865,9 @@ class MetaLearningEngine:
         )
         if best_strategy.performance_history:
             recommendations.append(
-                f"Strategy '{best_strategy.name}' shows best performance with {best_strategy.avg_improvement:.3f} average improvement"
-            )
+                f"Strategy '{
+                    best_strategy.name}' shows best performance with {
+                    best_strategy.avg_improvement:.3f} average improvement")
 
         # Learning rate recommendations
         if len(self.lr_optimizer.experience_buffer) > 10:

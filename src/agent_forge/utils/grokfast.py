@@ -34,7 +34,7 @@ class AugmentedAdam(Adam):
 
     def step(self, filter_slow: bool = False, **kwargs):
         if filter_slow and len(self._grad_history) >= int(1 / self.slow_freq):
-            window = self._grad_history[-int(1 / self.slow_freq) :]
+            window = self._grad_history[-int(1 / self.slow_freq):]
             g_slow = torch.stack(window, dim=0).mean(0)
             lam = min(
                 self.boost_cap, self.boost_start * (len(self._grad_history) / 1000)
@@ -46,7 +46,7 @@ class AugmentedAdam(Adam):
                 numel = p.grad.numel()
                 p.grad.data.add_(
                     lam
-                    * g_slow[offset : offset + numel].view_as(p.grad).to(p.grad.device)
+                    * g_slow[offset: offset + numel].view_as(p.grad).to(p.grad.device)
                 )
                 offset += numel
 

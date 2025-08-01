@@ -5,14 +5,14 @@ Based on Bluetooth 5.0+ mesh specifications adapted for AI parameter sharing.
 """
 
 import asyncio
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum, auto
 import hashlib
 import json
 import logging
 import struct
 import time
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import Any
 
 import numpy as np
@@ -340,7 +340,7 @@ class MeshProtocol:
 
                 # Only update if we don't have a route or this is shorter
                 if (destination not in self.routing_table or
-                    self.routing_table[destination][1] > distance):
+                        self.routing_table[destination][1] > distance):
                     self.routing_table[destination] = (sender_id, distance)
 
         except Exception as e:
@@ -355,7 +355,7 @@ class MeshProtocol:
             if discovered_node_id and discovered_node_id != self.node_id:
                 # Update routing table if this is a new or better route
                 if (discovered_node_id not in self.routing_table or
-                    self.routing_table[discovered_node_id][1] > 2):
+                        self.routing_table[discovered_node_id][1] > 2):
                     if sender_id in self.neighbors:
                         distance = 1 if discovered_node_id == sender_id else 2
                         self.routing_table[discovered_node_id] = (sender_id, distance)

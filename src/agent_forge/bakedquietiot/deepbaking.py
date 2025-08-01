@@ -1,6 +1,6 @@
-from langroid import ChatAgent, ChatAgentConfig, Task
 import torch
 import torch.nn.functional as F
+from langroid import ChatAgent, ChatAgentConfig, Task
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 

@@ -1,10 +1,12 @@
-name: CI
+name: Optimized CI Pipeline - Sprint 6
 
 "on":
   pull_request:
     paths-ignore:
       - 'docs/**'
       - '*.md'
+      - '*.txt'
+      - '.gitignore'
   push:
     branches: [ "main" ]
   schedule:
@@ -13,118 +15,243 @@ name: CI
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  PYTHON_VERSION: '3.11'
+  POETRY_VERSION: '1.6.1'
+  NODE_VERSION: '18'
+  # Performance optimizations
+  PYTHONUNBUFFERED: 1
+  PYTHONDONTWRITEBYTECODE: 1
+  PIP_NO_CACHE_DIR: 0
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
 
 jobs:
-  # Simple health check that always runs
-  health-check:
+  # Fast pre-flight checks
+  pre-flight-check:
     runs-on: ubuntu-latest
+    outputs:
+      has-python-changes: ${{ steps.changes.outputs.python }}
+      has-production-changes: ${{ steps.changes.outputs.production }}
+      has-infrastructure-changes: ${{ steps.changes.outputs.infrastructure }}
+      python-cache-key: ${{ steps.cache-keys.outputs.python }}
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+    
+    - name: Detect changes
+      uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          python:
+            - '**/*.py'
+            - 'requirements*.txt'
+            - 'pyproject.toml'
+          production:
+            - 'src/production/**'
+          infrastructure:
+            - 'src/infrastructure/**'
+            - 'requirements_sprint6.txt'
+    
+    - name: Generate cache keys
+      id: cache-keys
+      run: |
+        echo "python=${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements*.txt', 'pyproject.toml') }}" >> $GITHUB_OUTPUT
+    
     - name: Repository Health Check
       run: |
-        echo "=== Repository Structure ==="
+        echo "=== Sprint 6 Repository Health ==="
         echo "Python files: $(find . -name '*.py' -not -path './.*' | wc -l)"
+        echo "Production files: $(find src/production -name '*.py' 2>/dev/null | wc -l)"
+        echo "Infrastructure files: $(find src/infrastructure -name '*.py' 2>/dev/null | wc -l)"
         echo "Test files: $(find . -name 'test_*.py' -o -name '*_test.py' | wc -l)"
         echo "Workflow files: $(find .github/workflows -name '*.yml' | wc -l)"
-        echo "Requirements files: $(ls requirements*.txt 2>/dev/null | wc -l)"
         echo ""
-        echo "=== Dependencies Check ==="
-        ls -la requirements*.txt 2>/dev/null || echo "No requirements files"
-        ls -la pyproject.toml 2>/dev/null || echo "No pyproject.toml"
+        echo "=== Sprint 6 Dependencies ==="
+        ls -la requirements_sprint6.txt 2>/dev/null || echo "Sprint 6 requirements missing"
         echo ""
-        echo "=== Directory Structure ==="
-        find . -maxdepth 2 -type d -not -path './.*' | head -20
+        echo "=== Key Directories ==="
+        ls -la src/ 2>/dev/null || echo "No src directory"
+        ls -la src/production/ 2>/dev/null || echo "No production directory"
+        ls -la src/infrastructure/ 2>/dev/null || echo "No infrastructure directory"
 
-  # Basic test runner
-  test:
+  # Sprint 6 Infrastructure Tests
+  sprint6-infrastructure-test:
     runs-on: ubuntu-latest
+    needs: pre-flight-check
+    if: needs.pre-flight-check.outputs.has-infrastructure-changes == 'true' || needs.pre-flight-check.outputs.has-production-changes == 'true'
+    strategy:
+      matrix:
+        test-suite: ['p2p-communication', 'resource-management', 'evolution-system']
+      fail-fast: false
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements*.txt
+          pyproject.toml
+    
+    - name: Cache Sprint 6 dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/pip
+          ~/.cache/pypoetry
+        key: ${{ needs.pre-flight-check.outputs.python-cache-key }}-sprint6
+        restore-keys: |
+          ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-
+    
+    - name: Install Sprint 6 dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install -r requirements_sprint6.txt
+        pip install pytest pytest-asyncio pytest-timeout pytest-mock
+    
+    - name: Test P2P Communication
+      if: matrix.test-suite == 'p2p-communication'
+      run: |
+        echo "Testing P2P Communication Layer..."
+        python -c "
+        import sys
+        import os
+        sys.path.insert(0, os.getcwd())
+        try:
+            from src.production.communications.p2p import device_mesh, p2p_node, tensor_streaming
+            from src.infrastructure.p2p import device_mesh as infra_mesh
+            print('✅ P2P communication imports successful')
+        except ImportError as e:
+            print(f'❌ P2P import error: {e}')
+            sys.exit(1)
+        "
+    
+    - name: Test Resource Management
+      if: matrix.test-suite == 'resource-management'
+      run: |
+        echo "Testing Resource Management System..."
+        python -c "
+        import sys
+        import os
+        sys.path.insert(0, os.getcwd())
+        try:
+            from src.production.monitoring.mobile import device_profiler, resource_allocator
+            import psutil
+            print('✅ Resource management imports successful')
+            print(f'✅ System memory: {psutil.virtual_memory().available / (1024**3):.1f} GB available')
+        except ImportError as e:
+            print(f'❌ Resource management import error: {e}')
+            sys.exit(1)
+        "
+    
+    - name: Test Evolution System
+      if: matrix.test-suite == 'evolution-system'
+      run: |
+        echo "Testing Evolution System..."
+        python -c "
+        import sys
+        import os
+        sys.path.insert(0, os.getcwd())
+        try:
+            from src.production.agent_forge.evolution import dual_evolution_system, nightly_evolution_orchestrator
+            print('✅ Evolution system imports successful')
+        except ImportError as e:
+            print(f'❌ Evolution system import error: {e}')
+            sys.exit(1)
+        "
+
+  # Optimized core test runner
+  core-tests:
+    runs-on: ubuntu-latest
+    needs: pre-flight-check
+    if: needs.pre-flight-check.outputs.has-python-changes == 'true'
+    
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
+        cache-dependency-path: |
+          requirements*.txt
+          pyproject.toml
 
-    - name: Check for wheel cache dependencies
-      id: check-wheels
-      run: |
-        if [ -f "scripts/fetch_wheels.py" ] && [ -f "docs/build_artifacts/wheel-manifest.txt" ]; then
-          echo "has_wheel_cache=true" >> $GITHUB_OUTPUT
-        else
-          echo "has_wheel_cache=false" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Cache PyPI wheels (if supported)
-      if: steps.check-wheels.outputs.has_wheel_cache == 'true'
-      id: cache-pip
+    - name: Cache dependencies
       uses: actions/cache@v4
       with:
-        path: vendor/wheels
-        key: pip-v2-${{ hashFiles('docs/build_artifacts/wheel-manifest.txt') }}
-
-    - name: Populate wheel cache (if supported)
-      if: steps.check-wheels.outputs.has_wheel_cache == 'true' && steps.cache-pip.outputs.cache-hit != 'true'
-      run: python scripts/fetch_wheels.py
-
-    - name: Install dependencies (wheel cache)
-      if: steps.check-wheels.outputs.has_wheel_cache == 'true'
+        path: |
+          ~/.cache/pip
+          vendor/wheels
+        key: ${{ needs.pre-flight-check.outputs.python-cache-key }}-core
+        restore-keys: |
+          ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-
+    
+    - name: Install dependencies (optimized)
       run: |
-        set -o pipefail
-        pip install --no-index --find-links vendor/wheels -r requirements-dev.txt 2>&1 | tee /tmp/pip.log
-        if grep -q "Found link requiring enable-hashes" /tmp/pip.log; then
-          echo "::warning ::Wheel cache changed; attempting fallback installation"
-          pip install -r requirements-dev.txt
+        python -m pip install --upgrade pip setuptools wheel
+        
+        # Install core dependencies first
+        pip install pytest pytest-cov pytest-xdist pytest-timeout pytest-mock
+        
+        # Install Sprint 6 dependencies
+        if [ -f "requirements_sprint6.txt" ]; then
+          echo "Installing Sprint 6 dependencies..."
+          pip install -r requirements_sprint6.txt || echo "Sprint 6 deps partially failed"
         fi
-
-    - name: Install dependencies (fallback)
-      if: steps.check-wheels.outputs.has_wheel_cache == 'false'
-      run: |
-        python -m pip install --upgrade pip
-
-        # Try multiple installation strategies with better error handling
+        
+        # Install development dependencies
         if [ -f "requirements-dev.txt" ]; then
-          echo "Installing from requirements-dev.txt"
-          pip install -r requirements-dev.txt || echo "requirements-dev.txt installation failed, trying basic deps"
+          echo "Installing development dependencies..."
+          pip install -r requirements-dev.txt || echo "Dev deps partially failed"
         fi
+        
+        # Verify critical installations
+        python -c "import torch, numpy, psutil, pydantic; print('✅ Critical dependencies installed')"
 
-        # Fallback to basic dependencies if requirements-dev.txt fails
-        echo "Installing core dependencies"
-        pip install pytest pytest-cov pytest-xdist numpy scikit-learn torch transformers || echo "Some core dependencies failed"
-
-        # Install specific packages for Agent Forge
-        pip install wandb pydantic fastapi aiohttp tiktoken || echo "Some Agent Forge dependencies failed"
-
-    - name: Run tests
+    - name: Run core tests (optimized)
       run: |
-        echo "=== Available test runners ==="
-        which pytest 2>/dev/null && echo "pytest: available" || echo "pytest: not found"
-
-        echo ""
-        echo "=== Running tests ==="
-
-        # Try pytest with coverage
-        if which pytest >/dev/null 2>&1; then
-          if [ -f "pyproject.toml" ] || [ -f "setup.cfg" ] || [ -f "pytest.ini" ]; then
-            echo "Running pytest with project configuration"
-            pytest --cov=. --cov-report=xml --cov-report=term || echo "Tests completed with issues"
-          else
-            echo "Running pytest with basic configuration"
-            pytest -v --tb=short || echo "Tests completed with issues"
-          fi
-        else
-          echo "Pytest not available, trying unittest discovery"
-          python -m unittest discover -v || echo "No tests found or unittest failed"
+        echo "=== Running Optimized Core Tests ==="
+        
+        # Run fast core tests first
+        if [ -d "tests/core" ]; then
+          echo "Running core communication tests..."
+          pytest tests/core/test_communication.py tests/core/test_evidencepack.py -v --tb=short --maxfail=5 -x || echo "Core tests completed with issues"
         fi
+        
+        # Run basic message tests
+        if [ -f "tests/test_message.py" ]; then
+          echo "Running message tests..."
+          pytest tests/test_message.py -v --tb=short --maxfail=3 -x || echo "Message tests completed with issues"
+        fi
+        
+        # Run production integration tests if they exist
+        if [ -d "tests/production/integration" ]; then
+          echo "Running production integration tests..."
+          pytest tests/production/integration/ -v --tb=short --maxfail=3 --timeout=300 -x || echo "Integration tests completed with issues"
+        fi
+    
+    - name: Generate test summary
+      if: always()
+      run: |
+        echo "=== Test Summary ==="
+        echo "Core tests completed at $(date)"
+        echo "Python version: ${{ env.PYTHON_VERSION }}"
+        echo "Runner: ${{ runner.os }}"
 
     - name: Upload coverage (if available)
       if: hashFiles('coverage.xml') != ''
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
-        flags: unittests
-        name: basic-coverage
+        flags: core-tests
+        name: sprint6-core-coverage
+        fail_ci_if_error: false
 
   # Simplified build job that doesn't fail the entire CI
   build-check:

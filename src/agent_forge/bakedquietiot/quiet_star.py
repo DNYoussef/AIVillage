@@ -1,5 +1,5 @@
-from langroid import ChatAgent, ChatAgentConfig, Task
 import torch
+from langroid import ChatAgent, ChatAgentConfig, Task
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -70,7 +70,7 @@ class QuietSTaRTask(Task):
             start = thought.find(start_tag)
             end = thought.find(end_tag)
             if start != -1 and end != -1:
-                insights[strategy] = thought[start + len(start_tag) : end].strip()
+                insights[strategy] = thought[start + len(start_tag): end].strip()
             else:
                 insights[strategy] = "No specific insight found."
         return insights
@@ -214,7 +214,7 @@ class QuietSTaRTask(Task):
         start = output.find(start_tag)
         end = output.find(end_tag)
         if start != -1 and end != -1:
-            return output[start + len(start_tag) : end].strip()
+            return output[start + len(start_tag): end].strip()
         return "Section not found."
 
     async def evaluate_insight_quality(self, insights):

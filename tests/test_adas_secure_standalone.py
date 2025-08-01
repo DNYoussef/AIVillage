@@ -40,7 +40,7 @@ class MockSecureCodeRunner:
                     try:
                         score = float(match.group(1))
                         return max(0.0, min(1.0, score))
-                    except:
+                    except BaseException:
                         pass
 
                 # Check for params.get pattern

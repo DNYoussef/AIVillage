@@ -5,11 +5,11 @@ Supports heterogeneous devices and intermittent connectivity.
 """
 
 import asyncio
-from dataclasses import dataclass, field
-from enum import Enum, auto
 import hashlib
 import logging
 import time
+from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import Any
 
 import numpy as np

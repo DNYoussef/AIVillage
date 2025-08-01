@@ -1,9 +1,10 @@
-from pathlib import Path
 import sys
 import unittest
+from pathlib import Path
+
+from rag_system.utils.named_entity_recognition import NamedEntityRecognizer
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from rag_system.utils.named_entity_recognition import NamedEntityRecognizer
 
 
 class TestNamedEntityRecognizer(unittest.TestCase):

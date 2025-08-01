@@ -3,22 +3,22 @@ Integration Test Suite for WhatsApp Multi-Language Tutoring Flow
 Part B: Agent Forge Phase 4 - Comprehensive Testing
 """
 
-# Import modules from the WhatsApp Wave Bridge
 import sys
 import time
 
 import httpx
 import pytest
-
 import wandb
-
-sys.path.append("services/wave_bridge")
-
 from app import app
 
 from agent_forge.prompt_engineering.ab_testing import PromptABTest
 from agent_forge.prompt_engineering.prompt_baker import PromptBaker
+
+# Import modules from the WhatsApp Wave Bridge
 from agent_forge.prompt_engineering.tutor_prompts import TutorPromptEngineer
+
+sys.path.append("services/wave_bridge")
+
 
 # Test configuration
 TEST_BASE_URL = "http://localhost:8000"

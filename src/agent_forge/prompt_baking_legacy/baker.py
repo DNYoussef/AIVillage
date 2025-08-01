@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import datetime as dt
-from datetime import timezone
 import json
 import logging
 import pathlib
+from datetime import timezone
 
 import torch
 from transformers import AutoTokenizer

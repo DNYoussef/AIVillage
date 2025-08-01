@@ -2,8 +2,8 @@
 Pytest configuration and fixtures.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -90,7 +90,7 @@ def cleanup_after_test():
 
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-    except:
+    except BaseException:
         pass
 
 

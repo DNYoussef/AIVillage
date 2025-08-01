@@ -1,8 +1,10 @@
 import importlib.machinery
-from pathlib import Path
 import sys
 import types
 import unittest
+from pathlib import Path
+
+from rag_system.agents.task_planning_agent import TaskPlanningAgent
 
 # Ensure repository root is on path and provide dummy torch module to avoid
 # heavy dependency import failures when loading the agent modules.
@@ -12,8 +14,6 @@ fake_torch.__spec__ = importlib.machinery.ModuleSpec("torch", loader=None)
 fake_torch.Tensor = type("Tensor", (), {})
 fake_torch.randn = lambda *args, **kwargs: 0
 sys.modules["torch"] = fake_torch
-
-from rag_system.agents.task_planning_agent import TaskPlanningAgent
 
 
 class DummyPlanningAgent(TaskPlanningAgent):

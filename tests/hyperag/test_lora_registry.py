@@ -2,17 +2,16 @@
 Tests for HypeRAG LoRA Registry
 """
 
-from pathlib import Path
-
 # Import the registry module
 import sys
 import tempfile
+from pathlib import Path
 
 import pytest
 
-sys.path.append(str(Path(__file__).parent.parent.parent))
-
 from mcp_servers.hyperag.lora.registry import AdapterEntry, LoRARegistry
+
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
 
 class MockGuardianGate:

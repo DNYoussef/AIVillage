@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Agent Forge performance unit tests - moved from tests root."""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Add the project root to the path for imports
 project_root = Path(__file__).parent.parent.parent.parent

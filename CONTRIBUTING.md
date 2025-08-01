@@ -31,16 +31,27 @@ We're excited that you're interested in contributing to AI Village! This documen
 
 ## Running Tests
 
-We use unittest for our testing framework. To run all tests:
+We use pytest for our testing framework. To run all tests:
 
 ```
-python -m unittest discover -v
+pytest
 ```
 
-To run specific test files:
+To run specific test categories:
 
 ```
-python -m unittest agents/king/tests/test_integration.py
+pytest tests/unit/              # Unit tests
+pytest tests/integration/       # Integration tests
+pytest tests/performance/       # Performance benchmarks
+pytest tests/mobile/            # Mobile compatibility tests
+```
+
+For detailed output and coverage:
+
+```
+pytest -v                       # Verbose output
+pytest --cov=src               # With coverage report
+pytest --cov=src --cov-report=html  # HTML coverage report
 ```
 
 Make sure all tests pass before submitting a pull request.

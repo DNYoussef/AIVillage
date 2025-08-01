@@ -2,15 +2,13 @@
 Unit tests for Innovator Repair Agent
 """
 
-from datetime import datetime
 import json
-from pathlib import Path
 import sys
+from datetime import datetime
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from mcp_servers.hyperag.repair.innovator_agent import (
     InnovatorAgent,
@@ -22,6 +20,8 @@ from mcp_servers.hyperag.repair.innovator_agent import (
 from mcp_servers.hyperag.repair.llm_driver import (
     GenerationResponse,
 )
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 
 class TestRepairOperation:
@@ -412,8 +412,8 @@ Final explanatory text."""
             RepairOperationType.UPDATE_ATTR, "node_2", "Update contact information", 0.7
         )
 
-        assert agent._is_safety_critical(op1) == True
-        assert agent._is_safety_critical(op2) == True
+        assert agent._is_safety_critical(op1)
+        assert agent._is_safety_critical(op2)
         assert agent._is_safety_critical(op3) == False
 
     def test_estimate_impact(self, agent):
@@ -448,7 +448,7 @@ Final explanatory text."""
 
         validation = await agent.validate_proposal(proposal)
 
-        assert validation["is_valid"] == True
+        assert validation["is_valid"]
         assert len(validation["errors"]) == 0
 
         # Invalid proposal - missing target_id

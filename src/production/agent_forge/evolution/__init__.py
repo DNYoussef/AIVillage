@@ -1,25 +1,26 @@
-"""KPI-based agent evolution system for production infrastructure."""
+"""Evolution system for agent self-improvement
 
-from .kpi_evolution_engine import (
-    KPIEvolutionEngine,
-    AgentKPI,
-    EvolutionStrategy,
-    RetirementCriteria,
-    EvolutionResult,
-)
-from .evolution_metrics import (
-    EvolutionMetrics,
-    PerformanceTracker,
-    KnowledgeDistillation,
-)
+This module provides the core evolution system for AIVillage agents,
+including nightly incremental improvements and breakthrough discoveries.
+"""
+
+# Core classes - import order matters to avoid circular imports
+from .base import EvolvableAgent
+from .evolution_metrics import EvolutionMetrics
+# from .evolution_scheduler import EvolutionScheduler  # TODO: Implement
+
+# Evolution engines
+from .dual_evolution_system import DualEvolutionSystem
+from .nightly_evolution_orchestrator import NightlyEvolutionOrchestrator
+from .magi_architectural_evolution import MagiArchitecturalEvolution
 
 __all__ = [
-    "KPIEvolutionEngine",
-    "AgentKPI", 
-    "EvolutionStrategy",
-    "RetirementCriteria",
-    "EvolutionResult",
-    "EvolutionMetrics",
-    "PerformanceTracker",
-    "KnowledgeDistillation",
+    'EvolvableAgent',
+    'EvolutionMetrics',
+    # 'EvolutionScheduler',  # TODO: Implement
+    'DualEvolutionSystem', 
+    'NightlyEvolutionOrchestrator',
+    'MagiArchitecturalEvolution'
 ]
+
+__version__ = "1.0.0"

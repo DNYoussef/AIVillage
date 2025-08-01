@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Monitor test performance and track regressions."""
 
-from datetime import datetime
 import json
-from pathlib import Path
 import subprocess
 import sys
 import time
+from datetime import datetime
+from pathlib import Path
 
 
 class PerformanceMonitor:
@@ -127,17 +127,18 @@ class PerformanceMonitor:
         test_results = {}
 
         test_categories = [
-            ("core_communication", "tests/core/test_communication.py"),
-            ("core_evidencepack", "tests/core/test_evidencepack.py"),
-            ("message_tests", "tests/test_message.py"),
-            (
-                "compression_basic",
+            ("core_communication",
+             "tests/core/test_communication.py"),
+            ("core_evidencepack",
+             "tests/core/test_evidencepack.py"),
+            ("message_tests",
+             "tests/test_message.py"),
+            ("compression_basic",
                 "tests/compression/test_compression_comprehensive.py::TestCompressionPipeline::test_seedlm_compression_basic",
-            ),
-            (
-                "evolution_basic",
+             ),
+            ("evolution_basic",
                 "tests/evolution/test_evolution_comprehensive.py::TestEvolutionaryTournament::test_tournament_basic_selection",
-            ),
+             ),
         ]
 
         for category, test_path in test_categories:
@@ -209,8 +210,13 @@ class PerformanceMonitor:
         for category, results in summary["test_categories"].items():
             success_rate = results["success_rate"] * 100
             print(
-                f"{category:20} | {results['execution_time']:6.2f}s | {results['passed']:2d}P {results['failed']:2d}F {results['errors']:2d}E | {success_rate:5.1f}%"
-            )
+                f"{
+                    category:20} | {
+                    results['execution_time']:6.2f}s | {
+                    results['passed']:2d}P {
+                    results['failed']:2d}F {
+                        results['errors']:2d}E | {
+                            success_rate:5.1f}%")
 
         print()
         overall = summary["overall_metrics"]

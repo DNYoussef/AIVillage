@@ -6,10 +6,10 @@ Intended for CI gate.
 from __future__ import annotations
 
 import difflib
-from pathlib import Path
 import sys
 import tempfile
 import textwrap
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TMP = tempfile.gettempdir()
@@ -28,7 +28,7 @@ def current_feature_matrix() -> str:
     if START not in content or END not in content:
         sys.exit("Feature matrix tags missing from README.md")
     start, end = content.index(START), content.index(END)
-    return "\n".join(content[start + 1 : end])
+    return "\n".join(content[start + 1: end])
 
 
 def generate_live_matrix() -> str:

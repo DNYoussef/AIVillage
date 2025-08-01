@@ -3,10 +3,10 @@
 This creates honest, accurate documentation.
 """
 
-from datetime import datetime
 import json
-from pathlib import Path
 import re
+from datetime import datetime
+from pathlib import Path
 
 
 class DocumentationAligner:
@@ -122,7 +122,9 @@ class DocumentationAligner:
             test_status = "PASS" if info["completion"] > 80 else "FAIL"
             doc_status = "YES" if Path(f"docs/{component}.md").exists() else "NO"
 
-            content += f"| {component.title()} | {status_emoji} | {info['completion']}% | {test_status} | {doc_status} |\n"
+            content += f"| {
+                component.title()} | {status_emoji} | {
+                info['completion']}% | {test_status} | {doc_status} |\n"
 
         matrix_path.write_text(content, encoding="utf-8")
         print("Updated feature matrix")

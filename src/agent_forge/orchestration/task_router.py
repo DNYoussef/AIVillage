@@ -1,7 +1,7 @@
 """Task router for intelligent model selection based on task characteristics."""
 
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from typing import Any
 
 from .model_config import MODEL_ROUTING_CONFIG, TaskType
@@ -274,7 +274,9 @@ Solution: [detailed solution]"""
 Original Problem:
 {original_problem}
 
-Create variation #{i + 1} that maintains the same difficulty level but changes the context, numbers, or specific details."""
+Create variation #{
+                i +
+                1} that maintains the same difficulty level but changes the context, numbers, or specific details."""
 
             # Use a more cost-effective model for variations
             variation_context = TaskContext(

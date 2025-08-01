@@ -5,8 +5,8 @@ Test suite for deployment system components
 import hashlib
 import json
 import os
-from pathlib import Path
 import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -159,8 +159,8 @@ class TestDeploymentManifestGenerator:
             assert metadata["compression"]["compression_ratio"] == 8.0
 
             # Verify training info
-            assert metadata["training"]["bitnet_enabled"] == True
-            assert metadata["training"]["seedlm_enabled"] == True
+            assert metadata["training"]["bitnet_enabled"]
+            assert metadata["training"]["seedlm_enabled"]
 
             # Verify architecture info
             assert metadata["architecture"]["base_model"] == "microsoft/DialoGPT-small"

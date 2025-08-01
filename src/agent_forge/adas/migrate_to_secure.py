@@ -8,11 +8,11 @@ This script:
 4. Runs tests to ensure compatibility
 """
 
-from datetime import datetime
-from pathlib import Path
 import shutil
 import subprocess
 import sys
+from datetime import datetime
+from pathlib import Path
 
 
 def backup_original(file_path: Path) -> Path:

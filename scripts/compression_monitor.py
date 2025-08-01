@@ -1,22 +1,32 @@
 #!/usr/bin/env python3
-"""Compression Performance Monitoring Dashboard
+"""Compression Performance Monitoring Dashboard.
+
 Tracks compression ratios, accuracy, and performance over time.
 Provides alerts for regressions and generates reports.
+
+This module provides comprehensive monitoring capabilities for compression
+performance including automated benchmarking, regression detection,
+and visualization generation.
 """
 
 import argparse
-from datetime import datetime, timedelta
 import json
 import logging
 import os
-from pathlib import Path
 import sys
 import time
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import torch
+try:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    import torch
+except ImportError as e:
+    logging.exception(f"Required dependencies missing: {e}")
+    sys.exit(1)
 
 # Configure logging
 logging.basicConfig(
@@ -28,20 +38,35 @@ logger = logging.getLogger(__name__)
 
 
 class CompressionMetrics:
-    """Container for compression performance metrics."""
+    """Container for compression performance metrics.
 
-    def __init__(self):
-        self.timestamp = datetime.now().isoformat()
-        self.compression_ratio = 0.0
-        self.relative_error = 0.0
-        self.compression_time = 0.0
-        self.memory_usage = 0.0
-        self.model_size = 0
-        self.method = ""
-        self.config = {}
+    Attributes:
+        timestamp: ISO format timestamp of the measurement
+        compression_ratio: Achieved compression ratio (higher is better)
+        relative_error: Relative reconstruction error (lower is better)
+        compression_time: Time taken for compression in seconds
+        memory_usage: Peak memory usage during compression in MB
+        model_size: Size of the model in parameters
+        method: Compression method used
+        config: Configuration parameters used
+    """
 
-    def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization."""
+    def __init__(self) -> None:
+        self.timestamp: str = datetime.now().isoformat()
+        self.compression_ratio: float = 0.0
+        self.relative_error: float = 0.0
+        self.compression_time: float = 0.0
+        self.memory_usage: float = 0.0
+        self.model_size: int = 0
+        self.method: str = ""
+        self.config: dict[str, Any] = {}
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization.
+
+        Returns:
+            Dictionary representation of the metrics
+        """
         return {
             "timestamp": self.timestamp,
             "compression_ratio": self.compression_ratio,
@@ -54,8 +79,15 @@ class CompressionMetrics:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "CompressionMetrics":
-        """Create from dictionary."""
+    def from_dict(cls, data: dict[str, Any]) -> "CompressionMetrics":
+        """Create from dictionary.
+
+        Args:
+            data: Dictionary containing metric data
+
+        Returns:
+            CompressionMetrics instance
+        """
         metrics = cls()
         for key, value in data.items():
             if hasattr(metrics, key):
@@ -64,9 +96,23 @@ class CompressionMetrics:
 
 
 class CompressionMonitor:
-    """Monitor compression performance and detect regressions."""
+    """Monitor compression performance and detect regressions.
 
-    def __init__(self, data_file: str = "compression_metrics.json"):
+    This class provides comprehensive monitoring of compression performance
+    including automated benchmarking, regression detection, and reporting.
+
+    Attributes:
+        data_file: Path to the metrics history file
+        metrics_history: List of historical compression metrics
+        thresholds: Performance thresholds for regression detection
+    """
+
+    def __init__(self, data_file: str = "compression_metrics.json") -> None:
+        """Initialize the compression monitor.
+
+        Args:
+            data_file: Path to store metrics history
+        """
         self.data_file = Path(data_file)
         self.metrics_history: list[CompressionMetrics] = []
         self.load_history()
@@ -80,11 +126,15 @@ class CompressionMonitor:
             "regression_threshold": 0.15,  # 15% regression threshold
         }
 
-    def load_history(self):
-        """Load metrics history from file."""
+    def load_history(self) -> None:
+        """Load metrics history from file.
+
+        Raises:
+            Exception: If loading fails, logs error and continues with empty history
+        """
         if self.data_file.exists():
             try:
-                with open(self.data_file) as f:
+                with open(self.data_file, encoding="utf-8") as f:
                     data = json.load(f)
                     self.metrics_history = [
                         CompressionMetrics.from_dict(item) for item in data
@@ -94,11 +144,15 @@ class CompressionMonitor:
                 logger.error(f"Failed to load metrics history: {e}")
                 self.metrics_history = []
 
-    def save_history(self):
-        """Save metrics history to file."""
+    def save_history(self) -> None:
+        """Save metrics history to file.
+
+        Raises:
+            Exception: If saving fails, logs error
+        """
         try:
             data = [metrics.to_dict() for metrics in self.metrics_history]
-            with open(self.data_file, "w") as f:
+            with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
             logger.info(
                 f"Saved {len(self.metrics_history)} metrics to {self.data_file}"
@@ -107,15 +161,40 @@ class CompressionMonitor:
             logger.error(f"Failed to save metrics history: {e}")
 
     def run_benchmark(self, method: str = "SeedLM") -> CompressionMetrics:
-        """Run a quick benchmark and return metrics."""
+        """Run a quick benchmark and return metrics.
+
+        Args:
+            method: Compression method to benchmark
+
+        Returns:
+            CompressionMetrics with benchmark results
+        """
+        metrics = CompressionMetrics()
+        metrics.method = method
+
         try:
             # Add current directory to path for imports
             sys.path.insert(0, os.getcwd())
 
-            # Load SeedLM implementation
-            exec(open("agent_forge/compression/seedlm.py").read())
+            # Safely load and execute SeedLM implementation
+            seedlm_path = Path("agent_forge/compression/seedlm.py")
+            if not seedlm_path.exists():
+                raise FileNotFoundError(
+                    f"SeedLM implementation not found at {seedlm_path}"
+                )
 
-            # Create encoder
+            # Use exec with controlled globals for safety
+            seedlm_globals = {}
+            with open(seedlm_path, encoding="utf-8") as f:
+                exec(f.read(), seedlm_globals)
+
+            # Create encoder from executed code
+            SeedLMConfig = seedlm_globals.get("SeedLMConfig")
+            ProgressiveSeedLMEncoder = seedlm_globals.get("ProgressiveSeedLMEncoder")
+
+            if not SeedLMConfig or not ProgressiveSeedLMEncoder:
+                raise ImportError("Required classes not found in SeedLM implementation")
+
             config = SeedLMConfig()
             encoder = ProgressiveSeedLMEncoder(config)
 
@@ -131,16 +210,25 @@ class CompressionMonitor:
             reconstructed = encoder.decode(compressed)
 
             # Calculate metrics
-            metrics = CompressionMetrics()
-            metrics.method = method
             metrics.compression_time = compression_time
             metrics.relative_error = (
                 torch.norm(test_weight - reconstructed) / torch.norm(test_weight)
             ).item()
             metrics.model_size = test_weight.numel()
-            metrics.compression_ratio = compressed.get("data", {}).get(
-                "compression_ratio", 4.0
-            )  # Fallback estimate
+
+            # Handle different compressed data formats safely
+            if isinstance(compressed, dict):
+                metrics.compression_ratio = compressed.get("data", {}).get(
+                    "compression_ratio", 4.0
+                )
+            else:
+                # Estimate compression ratio based on size reduction
+                original_size = test_weight.numel() * 4  # 4 bytes per float32
+                compressed_size = getattr(
+                    compressed, "numel", lambda: original_size // 4
+                )()
+                metrics.compression_ratio = original_size / (compressed_size * 4)
+
             metrics.config = {
                 "compression_level": 0.5,
                 "test_size": list(test_weight.shape),
@@ -155,23 +243,35 @@ class CompressionMonitor:
 
         except Exception as e:
             logger.error(f"Benchmark failed: {e}")
-            # Return default metrics on failure
-            metrics = CompressionMetrics()
-            metrics.method = method
+            # Update metrics with error information
             metrics.compression_ratio = 0.0
             metrics.relative_error = float("inf")
-            return metrics
+            metrics.config["error"] = str(e)
 
-    def add_metrics(self, metrics: CompressionMetrics):
-        """Add new metrics to history."""
+        return metrics
+
+    def add_metrics(self, metrics: CompressionMetrics) -> None:
+        """Add new metrics to history.
+
+        Args:
+            metrics: Compression metrics to add to history
+        """
         self.metrics_history.append(metrics)
         self.save_history()
 
     def check_regression(
         self, current_metrics: CompressionMetrics, lookback_days: int = 7
     ) -> list[str]:
-        """Check for performance regressions."""
-        alerts = []
+        """Check for performance regressions.
+
+        Args:
+            current_metrics: Current metrics to compare against baseline
+            lookback_days: Number of days to look back for baseline
+
+        Returns:
+            List of regression alert messages
+        """
+        alerts: list[str] = []
 
         # Get recent metrics for comparison
         cutoff_date = datetime.now() - timedelta(days=lookback_days)
@@ -304,11 +404,45 @@ class CompressionMonitor:
 
         return report
 
-    def create_visualizations(self, output_dir: str = "compression_plots"):
-        """Create performance visualization plots."""
+    def cleanup_old_metrics(self, days_to_keep: int = 90) -> int:
+        """Clean up old metrics to prevent unbounded growth.
+
+        Args:
+            days_to_keep: Number of days of metrics to retain
+
+        Returns:
+            Number of metrics removed
+        """
+        cutoff_date = datetime.now() - timedelta(days=days_to_keep)
+        original_count = len(self.metrics_history)
+
+        self.metrics_history = [
+            m
+            for m in self.metrics_history
+            if datetime.fromisoformat(m.timestamp) > cutoff_date
+        ]
+
+        removed_count = original_count - len(self.metrics_history)
+        if removed_count > 0:
+            logger.info(f"Cleaned up {removed_count} old metrics")
+            self.save_history()
+
+        return removed_count
+
+    def create_visualizations(
+        self, output_dir: str = "compression_plots"
+    ) -> Path | None:
+        """Create performance visualization plots.
+
+        Args:
+            output_dir: Directory to save plots
+
+        Returns:
+            Path to the generated plot file, or None if generation failed
+        """
         if not self.metrics_history:
             logger.warning("No metrics history available for visualization")
-            return
+            return None
 
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)
@@ -359,11 +493,25 @@ class CompressionMonitor:
         plt.close()
 
         logger.info(f"Visualizations saved to {output_path}")
+        return output_path / "compression_performance.png"
 
 
-def main():
-    """Main monitoring script."""
-    parser = argparse.ArgumentParser(description="Compression Performance Monitor")
+def main() -> int:
+    """Main monitoring script.
+
+    Returns:
+        Exit code (0 for success, 1 for failure)
+    """
+    parser = argparse.ArgumentParser(
+        description="Compression Performance Monitor",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python compression_monitor.py --run-benchmark --check-regression
+  python compression_monitor.py --generate-report 30
+  python compression_monitor.py --create-plots
+""",
+    )
     parser.add_argument(
         "--run-benchmark", action="store_true", help="Run benchmark and add to history"
     )
@@ -408,9 +556,8 @@ def main():
                 logger.warning("Performance regressions detected:")
                 for alert in alerts:
                     logger.warning(f"  - {alert}")
-                sys.exit(1)
-            else:
-                logger.info("No performance regressions detected")
+                return 1
+            logger.info("No performance regressions detected")
 
     if args.generate_report:
         logger.info(f"Generating performance report for {args.generate_report} days...")
@@ -428,8 +575,15 @@ def main():
 
     if args.create_plots:
         logger.info("Creating performance visualizations...")
-        monitor.create_visualizations()
+        plot_path = monitor.create_visualizations()
+        if plot_path:
+            logger.info(f"Visualizations created at {plot_path}")
+
+    # Cleanup old metrics to prevent unbounded growth
+    monitor.cleanup_old_metrics()
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

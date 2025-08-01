@@ -1,7 +1,8 @@
 import asyncio
-from pathlib import Path
 import sys
+import types
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import numpy as np
@@ -19,7 +20,6 @@ fake_torch = mock.MagicMock()
 fake_torch.__spec__ = mock.MagicMock()
 fake_mpl = mock.MagicMock()
 fake_mpl.__spec__ = mock.MagicMock()
-import types
 
 fake_sklearn = types.ModuleType("sklearn")
 fake_metrics = types.ModuleType("sklearn.metrics")

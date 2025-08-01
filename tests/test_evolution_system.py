@@ -19,7 +19,7 @@ import time
 import unittest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
 
 import numpy as np
 import pytest
@@ -27,15 +27,15 @@ import pytest
 # Import evolution system components
 from agent_forge.evolution import (
     AgentEvolutionEngine,
-    AgentKPIs,
     AgentGenome,
-    SafeCodeModifier,
+    AgentKPIs,
     CodeTransformations,
-    MetaLearningEngine,
     EvolutionOrchestrator,
+    MetaLearningEngine,
     OrchestrationConfig,
+    SafeCodeModifier,
     initialize_evolution_system,
-    quick_evolution_cycle
+    quick_evolution_cycle,
 )
 
 # Configure test logging
@@ -682,7 +682,7 @@ async def run_comprehensive_test_suite():
     print(f"  Total Tests: {total_tests}")
     print(f"  Passed: {passed_tests}")
     print(f"  Failed: {failed_tests}")
-    print(f"  Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+    print(f"  Success Rate: {(passed_tests / total_tests) * 100:.1f}%")
 
     if failed_tests == 0:
         print("\n🎉 All tests passed! Evolution system is ready for deployment.")

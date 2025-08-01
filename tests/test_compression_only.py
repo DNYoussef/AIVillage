@@ -2,9 +2,9 @@
 """Direct test of compression components only, avoiding import issues"""
 
 import os
-from pathlib import Path
 import sys
 import tempfile
+from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -91,7 +91,7 @@ def test_individual_components():
             def _create_blocks(self, flat: torch.Tensor) -> list:
                 blocks = []
                 for i in range(0, len(flat), self.block_size):
-                    block = flat[i : i + self.block_size]
+                    block = flat[i: i + self.block_size]
                     if len(block) < self.block_size:
                         pad = torch.zeros(self.block_size)
                         pad[: len(block)] = block
@@ -223,7 +223,7 @@ def test_individual_components():
                 # Simple assignment (just assign to nearest)
                 assignments = torch.zeros(num_vectors, dtype=torch.long)
                 for i in range(num_vectors):
-                    distances = torch.norm(vectors[i : i + 1] - codebook, dim=1)
+                    distances = torch.norm(vectors[i: i + 1] - codebook, dim=1)
                     assignments[i] = torch.argmin(distances)
 
                 # Calculate compression ratio

@@ -5,7 +5,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
 import pytest
-
 from agents.unified_base_agent import (
     SelfEvolvingSystem,
     UnifiedAgentConfig,
@@ -15,6 +14,7 @@ from agents.unified_base_agent import (
     create_agent,
 )
 from agents.utils.task import Task as LangroidTask
+
 from core.error_handling import (
     AIVillageException,
     ErrorCategory,

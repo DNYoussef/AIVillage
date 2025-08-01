@@ -8,8 +8,8 @@ Combines all Agent Forge commands into a single interface:
 """
 
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import click
 
@@ -94,7 +94,7 @@ def version():
         from version import __version__
 
         click.echo(f"Agent Forge v{__version__}")
-    except:
+    except BaseException:
         click.echo("Agent Forge v1.0.0")
 
 
