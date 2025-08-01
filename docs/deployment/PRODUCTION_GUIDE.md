@@ -81,15 +81,26 @@ TWIN_PORT=8081
 MCP_PORT=8082
 MESH_PORT=9000
 
-# Security (CHANGE THESE IN PRODUCTION)
-JWT_SECRET=your-production-jwt-secret-change-this
-API_KEY=your-production-api-key-change-this
+# Security (set via environment variables or secrets)
+JWT_SECRET=${HYPERAG_JWT_SECRET}
+API_KEY=${OPENAI_API_KEY}
 
 # Mesh Network
 NODE_ID=production-node-1
 MAX_CONNECTIONS=50
 HEALTH_CHECK_INTERVAL=30
 ```
+
+### TLS for P2P Communication
+
+Provide a certificate and key to enable encrypted P2P links:
+
+```bash
+export P2P_CERT=path/to/cert.pem
+export P2P_KEY=path/to/key.pem
+```
+
+Set `use_tls=True` when starting the node or via configuration.
 
 ## Deployment Verification
 

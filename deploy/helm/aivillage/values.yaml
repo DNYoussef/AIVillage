@@ -313,13 +313,14 @@ security:
 
 # Environment-specific secrets (override in values-production.yaml)
 secrets:
-  postgresPassword: "changeme"
-  redisPassword: "changeme"
-  neo4jPassword: "changeme"
-  hyperhagJwtSecret: "changeme"
-  openaiApiKey: ""
-  anthropicApiKey: ""
-  grafanaPassword: "changeme"
+  # Populated via environment variables or Kubernetes secrets
+  postgresPassword: "${POSTGRES_PASSWORD}"
+  redisPassword: "${REDIS_PASSWORD}"
+  neo4jPassword: "${NEO4J_PASSWORD}"
+  hyperhagJwtSecret: "${HYPERAG_JWT_SECRET}"
+  openaiApiKey: "${OPENAI_API_KEY}"
+  anthropicApiKey: "${ANTHROPIC_API_KEY}"
+  grafanaPassword: "${GRAFANA_PASSWORD}"
 
 # Node selectors and tolerations
 nodeSelector: {}
