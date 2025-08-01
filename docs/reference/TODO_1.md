@@ -1,6 +1,6 @@
 # TODO
 
-This repository is under active development. For full details see [docs/roadmap.md](docs/roadmap.md) or the GitHub issue tracker.
+This repository is under active development. For full details see [roadmap](roadmap.md) or the GitHub issue tracker.
 
 ## Prioritized Tasks
 

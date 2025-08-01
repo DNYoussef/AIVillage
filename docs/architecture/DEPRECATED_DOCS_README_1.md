@@ -21,8 +21,8 @@ This directory contains documentation files that made premature or misleading su
 For accurate project status, refer to:
 - `README.md` - Current implementation status and realistic percentages
 - `docs/architecture.md` - Actual architecture and component readiness
-- `docs/roadmap.md` - Realistic development roadmap
-- `docs/feature_matrix.md` - Feature completion matrix
+- `docs/reference/roadmap.md` - Realistic development roadmap
+- `docs/reference/feature_matrix_1.md` - Feature completion matrix
 
 ## Archive Date
 Archived: 2025-07-31

@@ -14,7 +14,7 @@
   - Justification: Multiple core features are stubs or incomplete
 
 ### 1.3 Update Feature Matrix with Accurate Status
-- [ ] **Fix**: Update docs/feature_matrix.md with real implementation status
+- [ ] **Fix**: Update docs/reference/feature_matrix_1.md with real implementation status
   ```markdown
   | Feature | Status | Notes |
   | ------- | ------ | ----- |

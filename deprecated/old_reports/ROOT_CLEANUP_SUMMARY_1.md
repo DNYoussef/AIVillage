@@ -15,16 +15,16 @@ Cleaned up and organized loose files from the root directory to improve codebase
 
 ### Documentation → `docs/`
 - `BRANCHING_STRATEGY.md`
-- `DIRECTORY_STRUCTURE.md`
+- `DIRECTORY_STRUCTURE_1.md`
 - `ENTRY_POINTS.md`
-- `ENTRY_POINT_MAPPING.md`
+- `ENTRY_POINT_MAPPING_1.md`
 - `FIXES_APPLIED.md`
 - `MIGRATION_CHECKLIST.md`
 - `MIGRATION_PLAN.md`
 - `REPOSITORY_ANALYSIS_REPORT.md`
 - `SCOUT_REPORT.md`
 - `STAGE1_COMPRESSION_SUMMARY.md`
-- `TODO.md`
+- `TODO_1.md`
 - `WORKSPACE_HEALTH_REPORT.md`
 - `test_analysis_report.md`
 - `test_health_dashboard.md`
