@@ -56,7 +56,7 @@ AIVillage/
 │   └── reference/                 # Reference materials
 │       ├── README.md
 │       ├── roadmap.md
-│       └── feature_matrix.md
+│       └── feature_matrix_1.md
 └── deprecated/
     └── old_reports/              # Archived historical docs
         └── (All reports and summaries)
