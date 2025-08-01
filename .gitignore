@@ -150,6 +150,7 @@ stub_*.md
 *_CHECKLIST.md
 *_SUMMARY.md
 *_STATUS.md
+!docs/HONEST_STATUS.md
 *_ROADMAP.md
 *_PLAN.md
 

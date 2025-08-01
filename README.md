@@ -2,9 +2,7 @@
 
 ⚠️ **Development Status**: This project is approximately 60% complete. Many documented features are aspirational or partially implemented. This README provides an honest assessment of actual capabilities vs. planned features.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-135%20files-green.svg)](./tests/)
+
 
 ## What AIVillage Actually Is
 
@@ -22,7 +20,7 @@ AIVillage is a sophisticated multi-agent AI system with self-evolution capabilit
 
 ### Infrastructure
 - ✅ **Mobile Compatibility**: Tested on 2-4GB RAM devices
-- ✅ **Testing Framework**: 135 comprehensive test files
+- ✅ **Testing Framework**: 164 comprehensive test files
 - ✅ **Microservices**: Gateway/Twin production-ready services
 - ✅ **MCP Integration**: HyperAG Model Context Protocol servers
 
@@ -96,7 +94,7 @@ AIVillage/
 │   ├── agent_forge/         # Agent creation and management
 │   ├── communications/      # Inter-agent messaging
 │   └── mcp_servers/        # Model Context Protocol servers
-├── tests/                   # 135 comprehensive test files
+├── tests/                   # 164 comprehensive test files
 ├── docs/                    # Documentation (see docs/README.md)
 ├── experimental/            # Experimental features
 └── main.py                 # Unified entry point
