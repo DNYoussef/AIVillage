@@ -135,6 +135,22 @@ pytest tests/performance/
 pytest --cov=src
 ```
 
+## Performance Benchmarking & Stress Testing
+
+Run all sprint benchmarks and aggregate their metrics:
+
+```bash
+python benchmarks/run_all.py --output performance_comparison.json
+```
+
+Simulate production load to evaluate system stability:
+
+```bash
+python stress_tests/production_simulation.py --devices 100 --duration 60 --failure-rate 0.01
+```
+
+Both utilities emit JSON reports for reproducible performance analysis.
+
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
