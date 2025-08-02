@@ -412,7 +412,11 @@ class MCPProtocolHandler:
         except Exception as e:
             raise InternalError(f"Search failed: {e!s}")
 
-        return {"results": results, "total_count": len(results), "query": query}
+        return {
+            "results": results,
+            "total_count": len(results),
+            "query": query,
+        }
 
     @require_permission(HypeRAGPermissions.WRITE)
     @audit_operation("update_knowledge")
