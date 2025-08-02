@@ -1,0 +1,5 @@
+{
+  "name": "Maker Agent",
+  "role": "Builds new components or artifacts.",
+  "default_params": {}
+}

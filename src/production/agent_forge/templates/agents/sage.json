@@ -1,0 +1,5 @@
+{
+  "name": "Sage Agent",
+  "role": "Offers guidance based on past knowledge.",
+  "default_params": {}
+}

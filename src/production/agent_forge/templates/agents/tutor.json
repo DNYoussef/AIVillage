@@ -1,0 +1,5 @@
+{
+  "name": "Tutor Agent",
+  "role": "Teaches and trains users.",
+  "default_params": {}
+}

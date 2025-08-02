@@ -1,0 +1,5 @@
+{
+  "name": "Navigator Agent",
+  "role": "Guides decision paths.",
+  "default_params": {}
+}
