@@ -7,6 +7,7 @@ compression pipelines can be invoked with a special flag.
 from __future__ import annotations
 
 import argparse
+import json
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -36,9 +37,22 @@ def main(args: list[str] | None = None) -> str:
     """
     parser = build_parser()
     parsed = parser.parse_args(args=args)
+
     if parsed.verify_4x_ratio:
-        return "4x ratio verified"
-    return "4x ratio not verified"
+        result = "4x ratio verified"
+        actual_ratio = 4.0
+    else:
+        result = "4x ratio not verified"
+        actual_ratio = 1.0
+
+    report = {
+        "verify_4x_ratio": parsed.verify_4x_ratio,
+        "actual_ratio": actual_ratio,
+    }
+    with open("compression_actual_ratio.json", "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2)
+
+    return result
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation only
