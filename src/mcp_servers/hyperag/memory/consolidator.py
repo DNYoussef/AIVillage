@@ -13,11 +13,12 @@ from typing import Any
 
 import numpy as np
 
-from hyperag.guardian.gate import GuardianGate
+from ..guardian.gate import GuardianGate
 
 from .base import (
     Edge,
     Node,
+    ConsolidationBatch,
 )
 from .hippo_index import HippoIndex
 from .hypergraph_kg import (
@@ -224,6 +225,7 @@ class MemoryConsolidator:
 
         # Consolidation tracking
         self.last_consolidation: datetime | None = None
+        self.pending_batches: asyncio.Queue[ConsolidationBatch] = asyncio.Queue()
         self.consolidation_stats: dict[str, Any] = {
             "guardian_approvals": 0,
             "guardian_quarantines": 0,
@@ -231,6 +233,11 @@ class MemoryConsolidator:
         }
 
         logger.info("MemoryConsolidator initialized with Guardian Gate")
+
+    @property
+    def pending_consolidations(self) -> int:
+        """Number of consolidation batches waiting to be processed."""
+        return self.pending_batches.qsize()
 
     async def run_consolidation_cycle(
         self, user_id: str | None = None, force: bool = False
@@ -351,6 +358,7 @@ class MemoryConsolidator:
                 "last_consolidation": self.last_consolidation.isoformat()
                 if self.last_consolidation
                 else None,
+                "pending_consolidations": self.pending_consolidations,
                 "consolidation_interval_hours": self.config.consolidation_interval_hours,
                 "next_consolidation": (
                     self.last_consolidation
