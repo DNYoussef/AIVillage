@@ -131,12 +131,11 @@ class OrchestratorConfig(BaseModel):
     detect_stubs: bool = True
     stub_keywords: list[str] = Field(
         default_factory=lambda: [
-            "NotImplementedError",
             "pass",
             "TODO",
             "FIXME",
             "placeholder",
-            "raise NotImplementedError",
+            "raise NotImplemented",
             "return None",
         ]
     )
@@ -197,8 +196,8 @@ class PhaseModule:
                 self.is_stub = True
 
             # Check for common stub patterns
-            if "NotImplementedError" in source:
-                self.stub_reasons.append("Contains NotImplementedError")
+            if "raise NotImplemented" in source:
+                self.stub_reasons.append("Contains raise NotImplemented")
                 self.is_stub = True
 
         except Exception as e:
@@ -437,7 +436,7 @@ class ForgeOrchestrator:
                     phase_module, input_artifacts
                 )
             else:
-                raise NotImplementedError(
+                raise RuntimeError(
                     f"Phase {phase_type.value} execution not implemented"
                 )
 

@@ -6,4 +6,8 @@ class ToolMessage(BaseModel):
     purpose: str
 
     def handle(self):
-        raise NotImplementedError("This method should be implemented by subclasses")
+        """Handle the message.
+
+        Subclasses can override this with specific behavior.
+        """
+        return None

@@ -118,7 +118,7 @@ class AdvancedModelMerger:
             ps_model = self._ps_merge(models)
             merged_model = self._dfs_merge([ps_model] + models)
         else:
-            raise NotImplementedError(
+            raise EvoMergeException(
                 f"Merge method {self.config.merge_settings.merge_method} not implemented"
             )
 
