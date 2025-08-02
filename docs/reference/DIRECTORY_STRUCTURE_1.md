@@ -1,5 +1,7 @@
 # AIVillage Directory Structure
 
+The `src/` directory contains **17 top-level modules**, including the newly added `digital_twin` module.
+
 ## Root Directory
 ```
 AIVillage/
@@ -149,6 +151,12 @@ AIVillage/
 │   ├── communication.py
 │   ├── error_handling.py
 │   └── logging_config.py
+├── digital_twin/               # Digital twin personalization engine
+│   ├── core/
+│   ├── deployment/
+│   ├── engine/
+│   ├── monitoring/
+│   └── security/
 ├── data/                       # Data storage
 │   ├── agent_data.db
 │   └── backups/
@@ -251,6 +259,12 @@ Handles inter-agent communication with:
 - Credit management system
 - Mesh networking
 - MCP (Model Context Protocol) integration
+
+### digital_twin/
+Personalization and twin management features with:
+- User preference modeling
+- Deployment and monitoring utilities
+- Security and privacy tooling
 
 ### tests/
 Comprehensive test suite covering:
