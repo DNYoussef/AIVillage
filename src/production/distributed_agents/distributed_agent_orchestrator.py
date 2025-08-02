@@ -33,7 +33,7 @@ class AgentType(Enum):
     GARDENER = "gardener"                  # System maintenance
     LEGAL = "legal"                        # Compliance and legal
     MAKER = "maker"                        # Content creation
-    MASTER = "master"                      # Training coordination
+    SHAMAN = "shaman"                      # Intuitive reasoning
     MEDIC = "medic"                        # System health
     NAVIGATOR = "navigator"                # Path finding and routing
     ORACLE = "oracle"                      # Prediction and forecasting
@@ -228,13 +228,12 @@ class DistributedAgentOrchestrator:
                 dependencies=[AgentType.SAGE, AgentType.CURATOR]
             ),
 
-            AgentType.MASTER: AgentSpec(
-                agent_type=AgentType.MASTER,
+            AgentType.SHAMAN: AgentSpec(
+                agent_type=AgentType.SHAMAN,
                 priority=AgentPriority.MEDIUM,
-                memory_requirement_mb=1024.0,
-                compute_requirement=3.5,
-                specialization="training_coordination",
-                dependencies=[AgentType.KING]
+                memory_requirement_mb=512.0,
+                compute_requirement=2.0,
+                specialization="intuitive_reasoning"
             ),
 
             AgentType.MEDIC: AgentSpec(
