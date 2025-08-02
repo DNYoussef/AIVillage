@@ -20,23 +20,34 @@ import unittest
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
+import sys
+import types
+import importlib.util
 
 import numpy as np
 import pytest
 
-# Import evolution system components
-from agent_forge.evolution import (
-    AgentEvolutionEngine,
-    AgentGenome,
-    AgentKPIs,
-    CodeTransformations,
-    EvolutionOrchestrator,
-    MetaLearningEngine,
-    OrchestrationConfig,
-    SafeCodeModifier,
-    initialize_evolution_system,
-    quick_evolution_cycle,
+sys.path.insert(0, os.path.abspath("src"))
+sys.path.insert(0, os.path.abspath("src/agent_forge/evolution"))
+
+# Create minimal package structure to load evolution_dashboard without full package
+agent_forge_pkg = types.ModuleType("agent_forge")
+evolution_pkg = types.ModuleType("agent_forge.evolution")
+sys.modules.setdefault("agent_forge", agent_forge_pkg)
+sys.modules.setdefault("agent_forge.evolution", evolution_pkg)
+
+dummy_engine = types.ModuleType("agent_forge.evolution.agent_evolution_engine")
+dummy_engine.AgentEvolutionEngine = object
+sys.modules.setdefault("agent_forge.evolution.agent_evolution_engine", dummy_engine)
+
+spec = importlib.util.spec_from_file_location(
+    "agent_forge.evolution.evolution_dashboard",
+    os.path.abspath("src/agent_forge/evolution/evolution_dashboard.py"),
 )
+evo_module = importlib.util.module_from_spec(spec)
+sys.modules["agent_forge.evolution.evolution_dashboard"] = evo_module
+spec.loader.exec_module(evo_module)
+EvolutionDashboard = evo_module.EvolutionDashboard
 
 # Configure test logging
 logging.basicConfig(level=logging.INFO)
@@ -738,6 +749,44 @@ async def test_evolution_demo():
         print(f"   Avg Fitness: {final_status['evolution']['avg_fitness']:.3f}")
         print(f"   Max Fitness: {final_status['evolution']['max_fitness']:.3f}")
         print(f"   Trend: {final_status['orchestrator']['performance_trend']}")
+
+
+class TestEvolutionDashboard(unittest.TestCase):
+    """Test the trigger_evolution API endpoint"""
+
+    def setUp(self):
+        self.engine = Mock()
+        self.engine.is_running = False
+        self.engine.get_evolution_dashboard_data = AsyncMock(
+            return_value={"population_stats": {"total_agents": 1}}
+        )
+        self.dashboard = EvolutionDashboard(self.engine)
+
+    def test_trigger_evolution_success(self):
+        valid_results = {
+            "initial_population": 1,
+            "generations_run": 1,
+            "best_fitness_history": [0.5],
+            "diversity_history": [0.1],
+            "specialization_distribution": [{}],
+        }
+        self.engine.run_evolution_cycle = AsyncMock(return_value=valid_results)
+
+        with self.dashboard.app.test_client() as client:
+            response = client.post("/api/trigger_evolution", json={"generations": 1})
+            self.assertEqual(response.status_code, 200)
+            data = response.get_json()
+            self.assertTrue(data["success"])
+            self.assertEqual(data["results"]["generations_run"], 1)
+
+    def test_trigger_evolution_invalid_results(self):
+        self.engine.run_evolution_cycle = AsyncMock(return_value={"unexpected": "data"})
+
+        with self.dashboard.app.test_client() as client:
+            response = client.post("/api/trigger_evolution", json={"generations": 1})
+            self.assertEqual(response.status_code, 400)
+            data = response.get_json()
+            self.assertIn("error", data)
 
 
 if __name__ == "__main__":
