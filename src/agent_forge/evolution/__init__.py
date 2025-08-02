@@ -1,4 +1,5 @@
-"""Agent Evolution System - Self-Evolving 18-Agent Ecosystem
+# ruff: noqa: N999,RUF022
+"""Agent Evolution System - Self-Evolving 18-Agent Ecosystem.
 
 The core differentiator of the Atlantis vision - a fully autonomous, self-improving
 agent ecosystem that evolves through genetic algorithms, meta-learning, and safe
@@ -20,6 +21,7 @@ This system implements:
 6. Comprehensive evolution analytics and reporting
 """
 
+import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
@@ -64,6 +66,8 @@ logger = logging.getLogger(__name__)
 #     SafetyPolicy,
 #     SandboxEnvironment,
 # )
+
+logger = logging.getLogger(__name__)
 
 __version__ = "1.0.0"
 

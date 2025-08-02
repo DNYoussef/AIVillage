@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""Unified CLI for Agent Forge
+"""Unified CLI for Agent Forge.
 
 Combines all Agent Forge commands into a single interface:
 - forge evo: Run evolutionary model merging (EvoMerge)
@@ -8,10 +7,17 @@ Combines all Agent Forge commands into a single interface:
 """
 
 import logging
-import sys
 from pathlib import Path
+import subprocess
+import sys
 
 import click
+import torch
+
+try:
+    from version import __version__
+except ImportError:  # pragma: no cover - fallback
+    __version__ = "1.0.0"
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +30,13 @@ try:
 
     imports_available = True
 except ImportError as e:
-    logger.warning(f"Some pipeline modules not available: {e}")
+    logger.warning("Some pipeline modules not available: %s", e)
     imports_available = False
 
 
 @click.group()
-def forge():
-    """Agent Forge CLI - Advanced AI Agent Development Platform
+def forge() -> None:
+    """Agent Forge CLI - Advanced AI Agent Development Platform.
 
     Commands:
         evo             Run evolutionary model merging
@@ -49,16 +55,14 @@ if imports_available:
         forge.add_command(compression_cli.commands["compress"])
         forge.add_command(unified_cli.commands["run-pipeline"])
     except (KeyError, AttributeError) as e:
-        logger.warning(f"Could not register some commands: {e}")
+        logger.warning("Could not register some commands: %s", e)
 
 
 @forge.command()
 @click.option("--port", default=8501, help="Dashboard port")
 @click.option("--host", default="localhost", help="Dashboard host")
-def dashboard(port, host):
-    """Launch Agent Forge monitoring dashboard"""
-    import subprocess
-
+def dashboard(port: int, host: str) -> None:
+    """Launch Agent Forge monitoring dashboard."""
     try:
         dashboard_script = Path(__file__).parent.parent / "scripts" / "run_dashboard.py"
 
@@ -68,7 +72,7 @@ def dashboard(port, host):
 
         click.echo(f"🚀 Launching Agent Forge Dashboard at http://{host}:{port}")
 
-        subprocess.run(
+        subprocess.run(  # noqa: S603
             [
                 sys.executable,
                 str(dashboard_script),
@@ -82,29 +86,20 @@ def dashboard(port, host):
 
     except KeyboardInterrupt:
         click.echo("\n👋 Dashboard stopped by user")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         click.echo(f"❌ Dashboard error: {e}")
         sys.exit(1)
 
 
 @forge.command()
-def version():
-    """Show Agent Forge version"""
-    try:
-        from version import __version__
-
-        click.echo(f"Agent Forge v{__version__}")
-    except BaseException:
-        click.echo("Agent Forge v1.0.0")
+def version() -> None:
+    """Show Agent Forge version."""
+    click.echo(f"Agent Forge v{__version__}")
 
 
 @forge.command()
-def status():
-    """Check Agent Forge system status"""
-    from pathlib import Path
-
-    import torch
-
+def status() -> None:
+    """Check Agent Forge system status."""
     click.echo("🔍 Agent Forge System Status")
     click.echo("=" * 40)
 
@@ -147,8 +142,8 @@ def status():
     click.echo("=" * 40)
 
 
-def main():
-    """Main CLI entry point"""
+def main() -> None:
+    """Main CLI entry point."""
     forge()
 
 

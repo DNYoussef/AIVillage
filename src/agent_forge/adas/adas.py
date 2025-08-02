@@ -10,25 +10,37 @@ import sys
 import tempfile
 
 try:
-    import resource
-
+    import resource as _resource
     HAS_RESOURCE = True
-except ImportError:
+except ImportError:  # pragma: no cover - executed on Windows
+    _resource = None
     HAS_RESOURCE = False
 
-    class resource:
-        RLIMIT_AS = "RLIMIT_AS"
-        RLIMIT_CPU = "RLIMIT_CPU"
 
-        @staticmethod
-        def setrlimit(resource_type, limits):
-            """Setrlimit - Planned feature not yet implemented.
+class Resource:
+    """Lightweight wrapper around :mod:`resource` with Windows fallback."""
 
-            This functionality is part of the Atlantis roadmap.
-            """
-            raise NotImplementedError(
-                "'setrlimit' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-setrlimit"
-            )
+    RLIMIT_AS = getattr(_resource, "RLIMIT_AS", "RLIMIT_AS")
+    RLIMIT_CPU = getattr(_resource, "RLIMIT_CPU", "RLIMIT_CPU")
+
+    @staticmethod
+    def setrlimit(resource_type, limits):
+        """Set resource limits if supported.
+
+        Raises:
+            OSError: If resource limits are not supported on this platform.
+        """
+        if _resource is None or platform.system() == "Windows":
+            raise OSError("resource.setrlimit is not supported on this platform")
+        _resource.setrlimit(resource_type, limits)
+
+    def __getattr__(self, name):  # pragma: no cover - thin wrapper
+        if _resource is None:
+            raise AttributeError(name)
+        return getattr(_resource, name)
+
+
+resource = Resource()
 
 
 from contextlib import contextmanager
@@ -60,11 +72,17 @@ class ADASTask(Task):
         self.best_agent = None
         self.best_performance = float("-inf")
 
+
     def generate_prompt(self, archive: list[dict]) -> str:
         archive_str = ",\n".join([str(agent) for agent in archive])
-        return f"\n        Your objective is to create an optimal agent for the following task:\n\n        {
-            self.task_description}\n\n        Here is the archive of discovered architectures:\n\n        [{archive_str}]\n\n        Design a new agent that improves upon these existing architectures. Be creative and think outside the box.\n        Your response should be a JSON object with the following fields:\n        - thought: Your reasoning behind the agent design\n        - name: A name for your proposed agent architecture\n        - code: The complete Python code for the forward() function of your agent\n\n        Ensure your code uses the Langroid ChatAgent class and follows the correct structure.\n        "
-
+        prompt_parts = [
+            "\n        Your objective is to create an optimal agent for the following task:\n\n        ",
+            self.task_description,
+            "\n\n        Here is the archive of discovered architectures:\n\n        ",
+            f"[{archive_str}]\n\n     Design a new agent that improves upon these existing architectures. Be creative and think outside the box.\n        ",
+            "Your response should be a JSON object with the following fields:\n        - thought: Your reasoning behind the agent design\n        - name: A name for your proposed agent architecture\n        - code: The complete Python code for the forward() function of your agent\n\n        Ensure your code uses the Langroid ChatAgent class and follows the correct structure.\n        ",
+        ]
+        return "".join(prompt_parts)
     def create_new_agent(self) -> dict[str, Any]:
         prompt = self.generate_prompt(self.archive)
         response = self.agent.llm_response(prompt)

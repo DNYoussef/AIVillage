@@ -1,10 +1,13 @@
 import json
 import os
 from pathlib import Path
+import logging
 
 from chromadb import PersistentClient
 from llama_cpp import Llama
 import peft
+
+logger = logging.getLogger(__name__)
 
 try:
     from transformers import LlamaConfig, LlamaForCausalLM
@@ -19,19 +22,25 @@ _COMPRESSED = Path(os.getenv("TWIN_COMPRESSED", "")).expanduser()
 
 DB = PersistentClient(path=_HOME)
 
-if _COMPRESSED.exists() and LlamaConfig is not None:
-    try:
-        from twin_runtime.compressed_loader import CompressedModelLoader
 
-        def _empty_llama():
-            return LlamaForCausalLM(LlamaConfig())
+def _load_llm():
+    if _COMPRESSED.exists() and LlamaConfig is not None:
+        try:
+            from twin_runtime.compressed_loader import CompressedModelLoader
 
-        loader = CompressedModelLoader(_empty_llama, str(_COMPRESSED))
-        _ = loader.assemble_model()
-    except Exception:
-        pass
+            def _empty_llama():
+                return LlamaForCausalLM(LlamaConfig())
 
-LLM = Llama(model_path=str(_MODEL), n_ctx=4096, n_threads=max(os.cpu_count() // 2, 1))
+            loader = CompressedModelLoader(_empty_llama, str(_COMPRESSED))
+            return loader.assemble_model()
+        except Exception as e:  # noqa: PERF203
+            logger.error("Failed to load compressed model from %s: %s", _COMPRESSED, e)
+    return Llama(
+        model_path=str(_MODEL), n_ctx=4096, n_threads=max(os.cpu_count() // 2, 1)
+    )
+
+
+LLM = _load_llm()
 
 
 def _merge_domain_lora(prompt: str):

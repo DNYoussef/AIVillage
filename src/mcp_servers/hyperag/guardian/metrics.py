@@ -28,12 +28,19 @@ except ImportError:
             self.gauge_value = 0.0
             self.info_data = {}
             self._warn_once = False
+            self.calls = {
+                "inc": 0,
+                "observe": 0,
+                "set": 0,
+                "info": 0,
+            }
             
             # Store in class registry
             MockMetric._instances[name] = self
             
         def inc(self, amount=1, **labels):
             """Increment counter with label tracking."""
+            self.calls["inc"] += 1
             if not self._warn_once:
                 logger.warning(
                     f"Metric '{self.name}' using MockMetric fallback. "
@@ -56,6 +63,7 @@ except ImportError:
 
         def observe(self, amount, **labels):
             """Record observation with statistical tracking."""
+            self.calls["observe"] += 1
             if not self._warn_once:
                 logger.warning(
                     f"Metric '{self.name}' using MockMetric fallback. "
@@ -79,6 +87,7 @@ except ImportError:
 
         def set(self, value, **labels):
             """Set gauge value with change tracking."""
+            self.calls["set"] += 1
             if not self._warn_once:
                 logger.warning(
                     f"Metric '{self.name}' using MockMetric fallback. "
@@ -97,6 +106,7 @@ except ImportError:
 
         def info(self, info_dict):
             """Store info metric data."""
+            self.calls["info"] += 1
             if not self._warn_once:
                 logger.warning(
                     f"Metric '{self.name}' using MockMetric fallback. "
