@@ -1,0 +1,27 @@
+{
+  "agent_id": "navigator",
+  "specification": {
+    "name": "Navigator",
+    "description": "Path finding and route optimization agent",
+    "primary_capabilities": [
+      "route_optimization",
+      "path_finding",
+      "navigation"
+    ],
+    "secondary_capabilities": [
+      "map_analysis",
+      "traffic_prediction"
+    ],
+    "behavioral_traits": {
+      "orientation": "high",
+      "adaptability": "high",
+      "decision_speed": "fast"
+    },
+    "resource_requirements": {
+      "cpu": "medium",
+      "memory": "medium",
+      "network": "high",
+      "storage": "low"
+    }
+  }
+}
