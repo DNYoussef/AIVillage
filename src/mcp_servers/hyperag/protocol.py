@@ -221,20 +221,32 @@ class MCPProtocolHandler:
             context.agent_id, agent_type, "plan", query, plan_context
         )
 
-        # TODO: Implement actual retrieval and reasoning
-        # For now, return mock response
-        mock_nodes = [
-            Node(
-                id="node_1",
-                content=f"Mock content related to: {query}",
-                node_type="document",
-                confidence=0.85,
+        # Retrieve relevant knowledge
+        nodes: list[Node] = []
+        if not self.storage_backend:
+            raise InternalError("Storage backend not configured")
+
+        try:
+            search_fn = getattr(self.storage_backend, "search_nodes", None) or getattr(
+                self.storage_backend, "search", None
             )
-        ]
+            if not search_fn:
+                raise InternalError("Storage backend does not support search")
+
+            limit = getattr(plan, "max_depth", 10)
+            retrieved = await search_fn(query, limit=limit, user_id=user_id)
+
+            for item in retrieved:
+                if isinstance(item, Node):
+                    nodes.append(item)
+                elif isinstance(item, dict):
+                    nodes.append(Node(**item))
+        except Exception as e:
+            raise InternalError(f"Retrieval failed: {e!s}")
 
         # Construct knowledge graph
         knowledge_graph = await self.model_registry.process_with_model(
-            context.agent_id, agent_type, "construct", mock_nodes, plan
+            context.agent_id, agent_type, "construct", nodes, plan
         )
 
         # Perform reasoning
@@ -351,11 +363,25 @@ class MCPProtocolHandler:
         **kwargs,
     ) -> dict[str, Any]:
         """Handle add knowledge request."""
-        node_id = str(uuid.uuid4())
+        if not self.storage_backend:
+            raise InternalError("Storage backend not configured")
 
-        # TODO: Implement actual storage
+        node = Node(
+            id=str(uuid.uuid4()),
+            content=content,
+            node_type=content_type,
+            confidence=1.0,
+            metadata=metadata or {},
+        )
+
+        try:
+            add_fn = getattr(self.storage_backend, "add_node")
+            await add_fn(node)
+        except Exception as e:
+            raise InternalError(f"Failed to store knowledge: {e!s}")
+
         return {
-            "node_id": node_id,
+            "node_id": node.id,
             "status": "success",
             "message": "Knowledge added successfully",
         }
@@ -371,16 +397,20 @@ class MCPProtocolHandler:
         **kwargs,
     ) -> dict[str, Any]:
         """Handle search knowledge request."""
-        # Mock search results
-        results = [
-            {
-                "id": f"node_{i}",
-                "content": f"Search result {i} for: {query}",
-                "relevance": 0.9 - (i * 0.1),
-                "metadata": {"type": "document"},
-            }
-            for i in range(min(limit, 3))
-        ]
+        if not self.storage_backend:
+            raise InternalError("Storage backend not configured")
+
+        try:
+            search_fn = getattr(self.storage_backend, "search_nodes", None) or getattr(
+                self.storage_backend, "search", None
+            )
+            if not search_fn:
+                raise InternalError("Storage backend does not support search")
+
+            retrieved = await search_fn(query, limit=limit, filters=filters)
+            results = [asdict(node) for node in retrieved]
+        except Exception as e:
+            raise InternalError(f"Search failed: {e!s}")
 
         return {"results": results, "total_count": len(results), "query": query}
 
@@ -395,7 +425,15 @@ class MCPProtocolHandler:
         **kwargs,
     ) -> dict[str, Any]:
         """Handle update knowledge request."""
-        # TODO: Implement actual update
+        if not self.storage_backend:
+            raise InternalError("Storage backend not configured")
+
+        try:
+            update_fn = getattr(self.storage_backend, "update_node")
+            await update_fn(node_id, content=content, metadata=metadata)
+        except Exception as e:
+            raise InternalError(f"Update failed: {e!s}")
+
         return {
             "node_id": node_id,
             "status": "success",
@@ -408,7 +446,15 @@ class MCPProtocolHandler:
         self, context: AuthContext, node_id: str, **kwargs
     ) -> dict[str, Any]:
         """Handle delete knowledge request."""
-        # TODO: Implement actual deletion
+        if not self.storage_backend:
+            raise InternalError("Storage backend not configured")
+
+        try:
+            delete_fn = getattr(self.storage_backend, "delete_node")
+            await delete_fn(node_id)
+        except Exception as e:
+            raise InternalError(f"Delete failed: {e!s}")
+
         return {
             "node_id": node_id,
             "status": "success",
