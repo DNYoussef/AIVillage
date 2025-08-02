@@ -223,16 +223,65 @@ class DistributedCompressionManager:
         shard: ModelShard,
         output_dir: Path
     ) -> str:
-        """Extract specific layers for a shard (simplified implementation)"""
-        # This is a simplified implementation
-        # In reality, you would need to load the full model and extract only the required layers
+        """Extract specific layers for a shard (simplified implementation)
 
+        This method loads the model weights, selects only the parameters that
+        correspond to the requested ``layer_indices`` and writes them to a new
+        directory.  The returned path can then be used as an input to the
+        compression pipeline.  Only a very small subset of the full HuggingFace
+        save format is implemented – just enough for our unit tests – but the
+        logic mirrors what a real implementation would do.
+        """
+
+        # Destination for the shard-specific model
         shard_model_path = output_dir / "shard_model"
         shard_model_path.mkdir(exist_ok=True)
 
-        # For now, just copy the original model path
-        # TODO: Implement actual layer extraction
-        logger.debug(f"Extracting layers {shard.layer_indices} from {model_name}")
+        logger.debug(
+            f"Extracting layers {shard.layer_indices} from {model_name} into {shard_model_path}"
+        )
+
+        # ------------------------------------------------------------------
+        # Load the model weights.  We first attempt to load from a local path
+        # to avoid network calls during testing.  If the path does not exist we
+        # fall back to the HuggingFace ``from_pretrained`` helper.
+        # ------------------------------------------------------------------
+        model_path = Path(model_name)
+        state_dict: dict[str, torch.Tensor]
+        if model_path.exists():
+            # If a directory is provided, assume the weights are stored in
+            # ``pytorch_model.bin`` – mirroring the HF layout.
+            weight_file = (
+                model_path / "pytorch_model.bin"
+                if model_path.is_dir()
+                else model_path
+            )
+            state_dict = torch.load(weight_file, map_location="cpu")
+        else:  # pragma: no cover - network loading is not used in tests
+            from transformers import AutoModelForCausalLM
+
+            model = AutoModelForCausalLM.from_pretrained(model_name)
+            state_dict = model.state_dict()
+
+        # ------------------------------------------------------------------
+        # Filter out parameters that do not belong to the requested layers.
+        # We match common naming patterns used by transformer implementations
+        # (``layers.<idx>``, ``model.layers.<idx>``, ``transformer.h.<idx>``, ...)
+        # ------------------------------------------------------------------
+        selected_state: dict[str, torch.Tensor] = {}
+        for key, tensor in state_dict.items():
+            for idx in shard.layer_indices:
+                patterns = (
+                    f"layers.{idx}.",
+                    f"model.layers.{idx}.",
+                    f"transformer.h.{idx}.",
+                )
+                if any(p in key for p in patterns):
+                    selected_state[key] = tensor
+                    break
+
+        # Save the filtered state dict to the shard directory
+        torch.save(selected_state, shard_model_path / "pytorch_model.bin")
 
         return str(shard_model_path)
 
@@ -381,10 +430,27 @@ class DistributedCompressionManager:
             success = await self.sharding_engine.p2p_node.send_to_peer(target_device, transfer_message)
 
             if success:
-                # TODO: Implement actual file transfer
-                # For now, just log the operation
-                logger.debug(f"Compressed shard {compressed_shard.shard_id} sent to {target_device}")
-                return True
+                # After metadata acknowledgement, stream the actual file
+                file_path = Path(compressed_shard.compressed_model_path)
+                if not file_path.exists():
+                    logger.error(f"Compressed shard file not found: {file_path}")
+                    return False
+
+                file_sent = await self.sharding_engine.p2p_node.send_file(
+                    target_device, str(file_path)
+                )
+
+                if file_sent:
+                    logger.debug(
+                        f"Compressed shard {compressed_shard.shard_id} sent to {target_device}"
+                    )
+                    return True
+
+                logger.error(
+                    f"Failed to send shard file for {compressed_shard.shard_id} to {target_device}"
+                )
+                return False
+
             logger.error(f"Failed to send shard metadata to {target_device}")
             return False
 
