@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""
-Create a backup of the current codebase structure before restructuring
+"""Create a backup of the current codebase structure before restructuring
 """
 
-import os
-import json
-import shutil
-from pathlib import Path
 from datetime import datetime
+import json
+import os
+from pathlib import Path
+
 
 def create_structure_snapshot():
     """Create a snapshot of the current directory structure."""
@@ -22,9 +21,9 @@ def create_structure_snapshot():
 
         try:
             for item in path.iterdir():
-                if item.name.startswith('.') and item.name not in ['.github']:
+                if item.name.startswith(".") and item.name not in [".github"]:
                     continue
-                if item.name in ['__pycache__', 'node_modules', 'new_env']:
+                if item.name in ["__pycache__", "node_modules", "new_env"]:
                     continue
 
                 if item.is_dir():
@@ -54,7 +53,7 @@ def main():
 
     # Save snapshot
     snapshot_file = f"structure_snapshot_{timestamp}.json"
-    with open(snapshot_file, 'w') as f:
+    with open(snapshot_file, "w") as f:
         json.dump({
             "timestamp": timestamp,
             "structure": structure
@@ -72,7 +71,7 @@ def main():
     base_path = Path(os.getcwd())
 
     for pattern in important_files:
-        if '*' in pattern:
+        if "*" in pattern:
             file_list.extend(list(base_path.glob(pattern)))
         else:
             file_path = base_path / pattern
@@ -87,7 +86,7 @@ def main():
     }
 
     backup_file = f"backup_info_{timestamp}.json"
-    with open(backup_file, 'w') as f:
+    with open(backup_file, "w") as f:
         json.dump(backup_info, f, indent=2)
 
     print(f"Backup info saved to: {backup_file}")

@@ -5,6 +5,7 @@ All configuration is now in pyproject.toml.
 """
 
 import warnings
+
 from setuptools import setup
 
 warnings.warn(

@@ -12,9 +12,6 @@ import os
 import signal
 import subprocess
 import sys
-import time
-from pathlib import Path
-from typing import Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(
@@ -36,7 +33,7 @@ class MCPServerManager:
     def load_config(self) -> None:
         """Load MCP server configuration."""
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path) as f:
                 self.config = json.load(f)
             logger.info(f"Loaded configuration from {self.config_path}")
         except Exception as e:
@@ -57,7 +54,7 @@ class MCPServerManager:
 
         logger.info("Environment setup complete")
 
-    async def start_server(self, name: str, config: Dict) -> Optional[subprocess.Popen]:
+    async def start_server(self, name: str, config: dict) -> subprocess.Popen | None:
         """Start a single MCP server."""
         if config.get("disabled", False):
             logger.info(f"Skipping disabled server: {name}")
@@ -92,10 +89,9 @@ class MCPServerManager:
             if process.poll() is None:
                 logger.info(f"Successfully started MCP server: {name} (PID: {process.pid})")
                 return process
-            else:
-                stdout, stderr = process.communicate()
-                logger.error(f"Failed to start MCP server {name}: {stderr}")
-                return None
+            stdout, stderr = process.communicate()
+            logger.error(f"Failed to start MCP server {name}: {stderr}")
+            return None
 
         except Exception as e:
             logger.error(f"Error starting MCP server {name}: {e}")

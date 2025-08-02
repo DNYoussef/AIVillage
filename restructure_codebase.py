@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-AIVillage Codebase Restructuring Script
+"""AIVillage Codebase Restructuring Script
 
 This script reorganizes the codebase into a clean, production-ready structure:
 - src/ for production-ready code
@@ -11,15 +10,14 @@ This script reorganizes the codebase into a clean, production-ready structure:
 The script performs the restructuring safely with validation checks.
 """
 
-import os
-import shutil
 import json
-from pathlib import Path
-from typing import Dict, List, Set
 import logging
+import os
+from pathlib import Path
+import shutil
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 class CodebaseRestructurer:
@@ -55,13 +53,13 @@ class CodebaseRestructurer:
 
         # Files/directories to skip during restructuring
         self.skip_items = {
-            '.git', '.github', 'node_modules', '__pycache__', '.pytest_cache',
-            'new_env', '.env', 'venv', 'env',
+            ".git", ".github", "node_modules", "__pycache__", ".pytest_cache",
+            "new_env", ".env", "venv", "env",
             # Config and root files stay at root
-            'pyproject.toml', 'requirements*.txt', 'setup.py', 'Dockerfile*',
-            'docker-compose*.yml', 'Makefile', 'pytest.ini', '*.md', '*.txt',
-            'LICENSE', 'CHANGELOG.md', 'README.md', '*.log', '*.json', '*.xml',
-            'coverage.xml', '*.db', '*.sh', '*.py', 'main.py', 'server.py'
+            "pyproject.toml", "requirements*.txt", "setup.py", "Dockerfile*",
+            "docker-compose*.yml", "Makefile", "pytest.ini", "*.md", "*.txt",
+            "LICENSE", "CHANGELOG.md", "README.md", "*.log", "*.json", "*.xml",
+            "coverage.xml", "*.db", "*.sh", "*.py", "main.py", "server.py"
         }
 
     def validate_source_exists(self, source_path: Path) -> bool:
@@ -101,7 +99,7 @@ class CodebaseRestructurer:
             logger.info(f"Created directory: {target_dir}")
 
             # Create __init__.py files for Python packages
-            if 'src/' in dir_path or 'experimental/' in dir_path:
+            if "src/" in dir_path or "experimental/" in dir_path:
                 init_file = target_dir / "__init__.py"
                 if not init_file.exists():
                     init_file.write_text("# Auto-generated during restructure\n")
@@ -112,16 +110,16 @@ class CodebaseRestructurer:
 
         # Skip items in skip list
         for skip_pattern in self.skip_items:
-            if '*' in skip_pattern:
+            if "*" in skip_pattern:
                 # Handle wildcard patterns
-                pattern = skip_pattern.replace('*', '')
+                pattern = skip_pattern.replace("*", "")
                 if pattern in item_name:
                     return True
             elif item_name == skip_pattern:
                 return True
 
         # Skip if it's already in the new structure
-        if item_name in ['src', 'experimental', 'tools', 'mobile']:
+        if item_name in ["src", "experimental", "tools", "mobile"]:
             return True
 
         return False
@@ -153,7 +151,7 @@ class CodebaseRestructurer:
                 logger.info(f"Moved: {item.name}")
 
         except Exception as e:
-            error_msg = f"Error moving {source_dir} to {target_dir}: {str(e)}"
+            error_msg = f"Error moving {source_dir} to {target_dir}: {e!s}"
             logger.error(error_msg)
             self.errors.append(error_msg)
 
@@ -343,7 +341,7 @@ class CodebaseRestructurer:
                 continue
 
             try:
-                content = py_file.read_text(encoding='utf-8')
+                content = py_file.read_text(encoding="utf-8")
                 modified = False
 
                 for old_import, new_import in import_replacements.items():
@@ -352,11 +350,11 @@ class CodebaseRestructurer:
                         modified = True
 
                 if modified:
-                    py_file.write_text(content, encoding='utf-8')
+                    py_file.write_text(content, encoding="utf-8")
                     logger.info(f"Updated imports in: {py_file}")
 
             except Exception as e:
-                logger.warning(f"Could not update imports in {py_file}: {str(e)}")
+                logger.warning(f"Could not update imports in {py_file}: {e!s}")
 
     def generate_restructure_report(self):
         """Generate a report of the restructuring process."""
@@ -377,7 +375,7 @@ class CodebaseRestructurer:
         }
 
         report_file = self.base_path / "restructure_report.json"
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             json.dump(report, f, indent=2)
 
         logger.info(f"Restructure report saved to: {report_file}")
@@ -422,7 +420,7 @@ class CodebaseRestructurer:
             return report
 
         except Exception as e:
-            logger.error(f"Critical error during restructuring: {str(e)}")
+            logger.error(f"Critical error during restructuring: {e!s}")
             raise
 
 if __name__ == "__main__":

@@ -10,14 +10,14 @@ This implements a robust mesh networking solution with:
 """
 
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
+import hashlib
 import json
 import logging
 import time
-import hashlib
-from typing import Dict, Set, Optional, Any, Callable
-from dataclasses import dataclass, field
-from enum import Enum, auto
-from pathlib import Path
+from typing import Any
 
 from communications.message import Message, MessageType, Priority
 from communications.protocol import CommunicationProtocol
@@ -49,10 +49,10 @@ class ConnectionPool:
 
     def __init__(self, max_connections: int = 50):
         self.max_connections = max_connections
-        self.connections: Dict[str, Any] = {}
-        self.connection_stats: Dict[str, Dict[str, Any]] = {}
+        self.connections: dict[str, Any] = {}
+        self.connection_stats: dict[str, dict[str, Any]] = {}
 
-    async def get_connection(self, peer_id: str, peer_info: PeerInfo) -> Optional[Any]:
+    async def get_connection(self, peer_id: str, peer_info: PeerInfo) -> Any | None:
         """Get or create a connection to a peer."""
         if peer_id in self.connections:
             # Update last used time
@@ -97,9 +97,9 @@ class MeshRouter:
     """Handles routing in the mesh network."""
 
     def __init__(self):
-        self.routing_table: Dict[str, str] = {}  # destination -> next_hop
-        self.route_costs: Dict[str, int] = {}    # destination -> cost
-        self.route_cache_time: Dict[str, float] = {}  # destination -> timestamp
+        self.routing_table: dict[str, str] = {}  # destination -> next_hop
+        self.route_costs: dict[str, int] = {}    # destination -> cost
+        self.route_cache_time: dict[str, float] = {}  # destination -> timestamp
 
     def update_route(self, destination: str, next_hop: str, cost: int):
         """Update routing table with new route information."""
@@ -107,14 +107,14 @@ class MeshRouter:
 
         # Only update if this is a better route or route is old
         if (destination not in self.routing_table or
-            cost < self.route_costs.get(destination, float('inf')) or
+            cost < self.route_costs.get(destination, float("inf")) or
             current_time - self.route_cache_time.get(destination, 0) > 60):
 
             self.routing_table[destination] = next_hop
             self.route_costs[destination] = cost
             self.route_cache_time[destination] = current_time
 
-    def get_next_hop(self, destination: str) -> Optional[str]:
+    def get_next_hop(self, destination: str) -> str | None:
         """Get the next hop for a destination."""
         return self.routing_table.get(destination)
 
@@ -135,7 +135,7 @@ class NetworkHealthMonitor:
     """Monitors the health of the mesh network."""
 
     def __init__(self):
-        self.peer_health: Dict[str, float] = {}
+        self.peer_health: dict[str, float] = {}
         self.network_metrics = {
             "total_messages": 0,
             "successful_deliveries": 0,
@@ -167,14 +167,14 @@ class NetworkHealthMonitor:
                 (current_avg * (total_messages - 1) + latency_ms) / total_messages
             )
 
-    def get_healthy_peers(self, threshold: float = 0.7) -> Set[str]:
+    def get_healthy_peers(self, threshold: float = 0.7) -> set[str]:
         """Get set of peers that are considered healthy."""
         return {
             peer_id for peer_id, health in self.peer_health.items()
             if health >= threshold
         }
 
-    def get_network_status(self) -> Dict[str, Any]:
+    def get_network_status(self) -> dict[str, Any]:
         """Get current network status."""
         total = self.network_metrics["total_messages"]
         success_rate = (
@@ -199,15 +199,15 @@ class MeshNetworkManager(CommunicationProtocol):
         self.port = port
 
         # Core components
-        self.peers: Dict[str, PeerInfo] = {}
+        self.peers: dict[str, PeerInfo] = {}
         self.connection_pool = ConnectionPool()
         self.router = MeshRouter()
         self.health_monitor = NetworkHealthMonitor()
 
         # Message handling
-        self.message_handlers: Dict[str, Callable] = {}
+        self.message_handlers: dict[str, Callable] = {}
         self.pending_messages: asyncio.Queue = asyncio.Queue()
-        self.message_cache: Set[str] = set()
+        self.message_cache: set[str] = set()
 
         # Control
         self.running = False
@@ -281,7 +281,7 @@ class MeshNetworkManager(CommunicationProtocol):
             content={"status": "mesh_ready"}
         )
 
-    async def query(self, sender: str, receiver: str, content: Dict[str, Any],
+    async def query(self, sender: str, receiver: str, content: dict[str, Any],
                    priority: Priority = Priority.MEDIUM) -> Any:
         """Send a query through the mesh network."""
         message = Message(
@@ -398,7 +398,7 @@ class MeshNetworkManager(CommunicationProtocol):
             if peer_id in self.peers:
                 await self._send_discovery(peer_id, discovery_message)
 
-    async def _send_discovery(self, peer_id: str, discovery_message: Dict):
+    async def _send_discovery(self, peer_id: str, discovery_message: dict):
         """Send a route discovery message to a peer."""
         try:
             # In production, this would use the actual network protocol
@@ -483,7 +483,7 @@ class MeshNetworkManager(CommunicationProtocol):
             except Exception as e:
                 self.logger.error("Error in route maintenance: %s", e)
 
-    def get_network_statistics(self) -> Dict[str, Any]:
+    def get_network_statistics(self) -> dict[str, Any]:
         """Get comprehensive network statistics."""
         status = self.health_monitor.get_network_status()
 

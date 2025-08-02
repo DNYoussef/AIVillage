@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""
-Example demonstration of the AIVillage restructuring process.
+"""Example demonstration of the AIVillage restructuring process.
 
 This script shows what the actual restructuring would look like,
 but operates in simulation mode to avoid breaking the current system.
 """
 
-import os
-import shutil
-from pathlib import Path
 from datetime import datetime
+import os
+from pathlib import Path
+
 
 class RestructureSimulator:
     """Simulates the restructuring process without actually moving files."""
@@ -145,13 +144,13 @@ class RestructureSimulator:
             "moves": self.moves
         }
 
-        print(f"\n=== Simulation Summary ===")
+        print("\n=== Simulation Summary ===")
         print(f"Total operations: {report['total_operations']}")
         print(f"Ready to move: {report['ready_to_move']}")
         print(f"Blocked: {report['blocked_moves']}")
 
         if blocked:
-            print(f"\nBlocked moves:")
+            print("\nBlocked moves:")
             for move in blocked:
                 print(f"  {move['source']} → {move['target']} ({move['reason']})")
 
@@ -174,11 +173,11 @@ def main():
     report = simulator.run_simulation()
 
     # Save simulation report
-    with open('restructure_simulation.json', 'w') as f:
+    with open("restructure_simulation.json", "w") as f:
         import json
         json.dump(report, f, indent=2)
 
-    print(f"\nSimulation report saved to: restructure_simulation.json")
+    print("\nSimulation report saved to: restructure_simulation.json")
     print("\nTo execute actual restructuring, run the full migration script.")
 
     return report

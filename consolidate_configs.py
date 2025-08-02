@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Configuration Consolidation Script
+"""Configuration Consolidation Script
 
 This script consolidates the configuration directories and updates all references:
 1. Merges config/ and configs/ into a single configs/ directory
@@ -10,21 +9,20 @@ This script consolidates the configuration directories and updates all reference
 """
 
 import json
-import os
+from pathlib import Path
 import re
 import shutil
+
 import yaml
-from pathlib import Path
-from typing import Any, Dict, List, Tuple
 
 
 def convert_json_to_yaml(json_file: Path, yaml_file: Path) -> bool:
     """Convert a JSON file to YAML format"""
     try:
-        with open(json_file, 'r', encoding='utf-8') as f:
+        with open(json_file, encoding="utf-8") as f:
             data = json.load(f)
 
-        with open(yaml_file, 'w', encoding='utf-8') as f:
+        with open(yaml_file, "w", encoding="utf-8") as f:
             yaml.dump(data, f, default_flow_style=False, sort_keys=False, indent=2)
 
         print(f"✓ Converted {json_file} to {yaml_file}")
@@ -76,12 +74,12 @@ def merge_config_directories():
         if file_path.is_file():
             dst = configs_dir / file_path.name
 
-            if file_path.suffix == '.json' and file_path.name != 'scanner_config.json':
+            if file_path.suffix == ".json" and file_path.name != "scanner_config.json":
                 # Keep as JSON if not scanner_config
                 shutil.copy2(str(file_path), str(dst))
-            elif file_path.name == 'scanner_config.json':
+            elif file_path.name == "scanner_config.json":
                 # Convert scanner_config.json to YAML
-                yaml_dst = configs_dir / 'scanner_config.yaml'
+                yaml_dst = configs_dir / "scanner_config.yaml"
                 if convert_json_to_yaml(file_path, yaml_dst):
                     moved_files.append(f"{file_path.name} -> scanner_config.yaml")
                 continue
@@ -95,10 +93,10 @@ def merge_config_directories():
     return moved_files
 
 
-def update_file_references(file_path: Path, patterns: List[Tuple[str, str]]) -> bool:
+def update_file_references(file_path: Path, patterns: list[tuple[str, str]]) -> bool:
     """Update file with pattern replacements"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
@@ -106,7 +104,7 @@ def update_file_references(file_path: Path, patterns: List[Tuple[str, str]]) -> 
             content = re.sub(old_pattern, new_pattern, content)
 
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
         return False
@@ -117,38 +115,38 @@ def update_file_references(file_path: Path, patterns: List[Tuple[str, str]]) -> 
 
 def update_all_references():
     """Update all config/ references to configs/"""
-    root_dir = Path(".")
+    root_dir = Path()
 
     # Patterns to replace
     patterns = [
         # Specific file patterns
-        (r'\bconfig/hyperag_mcp\.yaml\b', r'configs/hyperag_mcp.yaml'),
-        (r'\bconfig/compression\.yaml\b', r'configs/compression.yaml'),
-        (r'\bconfig/retrieval\.yaml\b', r'configs/retrieval.yaml'),
-        (r'\bconfig/gdc_rules\.yaml\b', r'configs/gdc_rules.yaml'),
-        (r'\bconfig/scanner_config\.json\b', r'configs/scanner_config.yaml'),
+        (r"\bconfig/hyperag_mcp\.yaml\b", r"configs/hyperag_mcp.yaml"),
+        (r"\bconfig/compression\.yaml\b", r"configs/compression.yaml"),
+        (r"\bconfig/retrieval\.yaml\b", r"configs/retrieval.yaml"),
+        (r"\bconfig/gdc_rules\.yaml\b", r"configs/gdc_rules.yaml"),
+        (r"\bconfig/scanner_config\.json\b", r"configs/scanner_config.yaml"),
 
         # Generic patterns
-        (r'\bconfig/([a-zA-Z0-9_\-]+\.ya?ml)\b', r'configs/\1'),
-        (r'\bconfig/([a-zA-Z0-9_\-]+\.json)\b', r'configs/\1'),
+        (r"\bconfig/([a-zA-Z0-9_\-]+\.ya?ml)\b", r"configs/\1"),
+        (r"\bconfig/([a-zA-Z0-9_\-]+\.json)\b", r"configs/\1"),
 
         # Path patterns
         (r'"config/', r'"configs/'),
         (r"'config/", r"'configs/"),
-        (r'`config/', r'`configs/'),
-        (r'./config/', r'./configs/'),
+        (r"`config/", r"`configs/"),
+        (r"./config/", r"./configs/"),
     ]
 
     # File types to update
-    file_extensions = ['.py', '.md', '.yml', '.yaml', '.json', '.sh', '.env.mcp', '.txt']
+    file_extensions = [".py", ".md", ".yml", ".yaml", ".json", ".sh", ".env.mcp", ".txt"]
 
     updated_files = []
 
     # Walk through all files
-    for file_path in root_dir.rglob('*'):
+    for file_path in root_dir.rglob("*"):
         if (file_path.is_file() and
             any(str(file_path).endswith(ext) for ext in file_extensions) and
-            not any(part in str(file_path) for part in ['.git', '__pycache__', 'node_modules', '.pytest_cache', 'config/', 'results/'])):
+            not any(part in str(file_path) for part in [".git", "__pycache__", "node_modules", ".pytest_cache", "config/", "results/"])):
 
             if update_file_references(file_path, patterns):
                 updated_files.append(str(file_path))
@@ -164,7 +162,7 @@ def cleanup_old_directories():
     if config_dir.exists():
         try:
             shutil.rmtree(config_dir)
-            print(f"✓ Removed old config/ directory")
+            print("✓ Removed old config/ directory")
             return True
         except Exception as e:
             print(f"✗ Error removing config/ directory: {e}")

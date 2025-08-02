@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
-"""
-Execute the AIVillage codebase restructuring
+"""Execute the AIVillage codebase restructuring
 """
 
-import os
-import shutil
-import json
-from pathlib import Path
 from datetime import datetime
+import json
 import logging
+import os
+from pathlib import Path
+import shutil
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler('restructure.log'),
+        logging.FileHandler("restructure.log"),
         logging.StreamHandler()
     ]
 )
@@ -52,7 +51,7 @@ class AIVillageRestructurer:
             full_path.mkdir(parents=True, exist_ok=True)
 
             # Add __init__.py to Python packages
-            if any(part in dir_path for part in ['src', 'experimental']):
+            if any(part in dir_path for part in ["src", "experimental"]):
                 init_file = full_path / "__init__.py"
                 if not init_file.exists():
                     init_file.write_text("# Auto-generated during restructure\n")
@@ -81,7 +80,7 @@ class AIVillageRestructurer:
             return True
 
         except Exception as e:
-            error_msg = f"Error moving {source} to {target}: {str(e)}"
+            error_msg = f"Error moving {source} to {target}: {e!s}"
             logger.error(error_msg)
             self.errors.append(error_msg)
             return False
@@ -155,8 +154,8 @@ class AIVillageRestructurer:
 
         # Move remaining files in agent_forge root
         for item in agent_forge_source.iterdir():
-            if item.is_file() and item.suffix == '.py':
-                if item.name in ['main.py', 'version.py']:
+            if item.is_file() and item.suffix == ".py":
+                if item.name in ["main.py", "version.py"]:
                     target = src_agent_forge / item.name
                 else:
                     target = exp_agent_forge / item.name
@@ -251,7 +250,7 @@ class AIVillageRestructurer:
         }
 
         report_file = self.base_path / "restructure_report.json"
-        with open(report_file, 'w') as f:
+        with open(report_file, "w") as f:
             json.dump(report, f, indent=2)
 
         logger.info(f"Report saved to: {report_file}")
@@ -301,7 +300,7 @@ class AIVillageRestructurer:
             return report
 
         except Exception as e:
-            logger.error(f"Critical error during restructuring: {str(e)}")
+            logger.error(f"Critical error during restructuring: {e!s}")
             raise
 
 def main():
@@ -319,14 +318,14 @@ def main():
     print(f"Items moved: {report['summary']['items_moved']}")
     print(f"Errors: {report['summary']['errors']}")
 
-    if report['summary']['errors'] > 0:
+    if report["summary"]["errors"] > 0:
         print("\nErrors encountered - check restructure.log for details")
 
     print("\nNew structure created:")
     for path, description in report["new_structure"].items():
         print(f"  {path} - {description}")
 
-    print(f"\nDetailed report: restructure_report.json")
+    print("\nDetailed report: restructure_report.json")
     print("Restructuring complete!")
 
     return report

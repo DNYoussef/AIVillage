@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Experimental Code Validator
+"""Experimental Code Validator
 
 This script validates code stability before allowing it to be moved to production areas.
 It checks for:
@@ -10,12 +9,10 @@ It checks for:
 - API stability markers
 """
 
-import os
 import ast
-import re
-from pathlib import Path
-from typing import Dict, List, Tuple, Set
 import logging
+import os
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -48,16 +45,16 @@ class ExperimentalValidator:
             "pass  # placeholder"
         ]
 
-    def analyze_file_stability(self, file_path: Path) -> Dict:
+    def analyze_file_stability(self, file_path: Path) -> dict:
         """Analyze a Python file for stability indicators."""
-        if not file_path.suffix == '.py':
+        if not file_path.suffix == ".py":
             return {"stable": True, "issues": []}
 
         try:
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
             tree = ast.parse(content)
         except Exception as e:
-            return {"stable": False, "issues": [f"Parse error: {str(e)}"]}
+            return {"stable": False, "issues": [f"Parse error: {e!s}"]}
 
         issues = []
 
@@ -74,7 +71,7 @@ class ExperimentalValidator:
         missing_docstrings = []
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
-                if not node.name.startswith('_'):  # Public function/class
+                if not node.name.startswith("_"):  # Public function/class
                     if not ast.get_docstring(node):
                         missing_docstrings.append(f"{node.name} ({node.lineno})")
 
@@ -84,7 +81,7 @@ class ExperimentalValidator:
         # Check for type hints (simplified check)
         functions_without_hints = []
         for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and not node.name.startswith('_'):
+            if isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
                 has_return_hint = node.returns is not None
                 has_arg_hints = any(arg.annotation for arg in node.args.args)
                 if not (has_return_hint or has_arg_hints):
@@ -126,7 +123,7 @@ class ExperimentalValidator:
         visit_node(tree)
         return max_depth
 
-    def validate_directory(self, dir_path: Path) -> Dict:
+    def validate_directory(self, dir_path: Path) -> dict:
         """Validate all files in a directory for stability."""
         if not dir_path.exists() or not dir_path.is_dir():
             return {"stable": True, "files": {}, "summary": "Directory not found"}
@@ -173,12 +170,11 @@ class ExperimentalValidator:
         if validation_result["stable"]:
             logger.info(f"✓ Component '{component_path}' is stable for production")
             return True
-        else:
-            logger.warning(f"✗ Component '{component_path}' is not stable for production")
-            logger.warning(f"  Stability ratio: {validation_result['summary']['stability_ratio']:.2%}")
-            return False
+        logger.warning(f"✗ Component '{component_path}' is not stable for production")
+        logger.warning(f"  Stability ratio: {validation_result['summary']['stability_ratio']:.2%}")
+        return False
 
-    def get_production_ready_components(self) -> Tuple[List[str], List[str]]:
+    def get_production_ready_components(self) -> tuple[list[str], list[str]]:
         """Get lists of production-ready and experimental components."""
         components_to_check = [
             "production",
@@ -201,7 +197,7 @@ class ExperimentalValidator:
 
         return production_ready, experimental_only
 
-    def generate_validation_report(self) -> Dict:
+    def generate_validation_report(self) -> dict:
         """Generate a comprehensive validation report."""
         production_ready, experimental_only = self.get_production_ready_components()
 
@@ -219,7 +215,7 @@ class ExperimentalValidator:
 
         return report
 
-    def generate_recommendations(self, experimental_components: List[str]) -> List[str]:
+    def generate_recommendations(self, experimental_components: list[str]) -> list[str]:
         """Generate recommendations for making experimental components production-ready."""
         recommendations = []
 
@@ -252,7 +248,7 @@ class ExperimentalValidator:
 
         return recommendations
 
-    def get_graduation_readiness(self, component_path: str) -> Dict:
+    def get_graduation_readiness(self, component_path: str) -> dict:
         """Assess graduation readiness with detailed scoring."""
         if not self.validate_component_for_production(component_path):
             return {"ready": False, "score": 0, "blockers": ["Basic stability requirements not met"]}
@@ -294,7 +290,7 @@ class ExperimentalValidator:
             "max_score": max_score
         }
 
-    def check_import_leakage(self) -> Dict:
+    def check_import_leakage(self) -> dict:
         """Check for any experimental imports in production code."""
         src_path = self.base_path / "src"
         production_path = self.base_path / "production"
@@ -310,7 +306,7 @@ class ExperimentalValidator:
                     continue
 
                 try:
-                    content = py_file.read_text(encoding='utf-8')
+                    content = py_file.read_text(encoding="utf-8")
 
                     # Check for experimental imports
                     if "from experimental" in content or "import experimental" in content:
@@ -345,21 +341,21 @@ if __name__ == "__main__":
     # Check import leakage
     leakage_check = validator.check_import_leakage()
     print(f"\nImport Leakage Check: {'CLEAN' if leakage_check['clean'] else 'VIOLATIONS FOUND'}")
-    if not leakage_check['clean']:
-        for violation in leakage_check['violations']:
+    if not leakage_check["clean"]:
+        for violation in leakage_check["violations"]:
             print(f"  - {violation}")
 
     # Show graduation readiness for experimental components
     print("\n=== Graduation Readiness Assessment ===")
-    experimental_components = ['experimental/agents', 'experimental/federated', 'experimental/mesh']
+    experimental_components = ["experimental/agents", "experimental/federated", "experimental/mesh"]
     for component in experimental_components:
         readiness = validator.get_graduation_readiness(component)
-        status = "READY" if readiness['ready'] else "NOT READY"
+        status = "READY" if readiness["ready"] else "NOT READY"
         print(f"{component}: {status} (Score: {readiness['score']}/{readiness['max_score']})")
-        if readiness['blockers']:
-            for blocker in readiness['blockers']:
+        if readiness["blockers"]:
+            for blocker in readiness["blockers"]:
                 print(f"  - {blocker}")
 
     print("\nRecommendations:")
-    for rec in report['recommendations']:
+    for rec in report["recommendations"]:
         print(f"- {rec}")
