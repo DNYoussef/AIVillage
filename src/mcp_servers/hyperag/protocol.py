@@ -220,24 +220,32 @@ class MCPProtocolHandler:
         plan = await self.model_registry.process_with_model(
             context.agent_id, agent_type, "plan", query, plan_context
         )
+        if not self.storage_backend:
+            raise InternalError("Storage backend not configured")
 
-        # TODO: Implement actual retrieval and reasoning
-        # For now, return mock response
-        mock_nodes = [
-            Node(
-                id="node_1",
-                content=f"Mock content related to: {query}",
-                node_type="document",
-                confidence=0.85,
-            )
-        ]
-
-        # Construct knowledge graph
-        knowledge_graph = await self.model_registry.process_with_model(
-            context.agent_id, agent_type, "construct", mock_nodes, plan
+        # Retrieve relevant knowledge items
+        retrieval_limit = getattr(plan, "max_depth", 10)
+        raw_results = await self.storage_backend.search_knowledge(
+            query, limit=retrieval_limit
         )
 
-        # Perform reasoning
+        retrieved_nodes = [
+            Node(
+                id=item["id"],
+                content=item["content"],
+                node_type=item.get("content_type", "text"),
+                confidence=item.get("relevance", 1.0),
+                metadata=item.get("metadata", {}),
+            )
+            for item in raw_results
+        ]
+
+        # Construct knowledge graph using agent's model
+        knowledge_graph = await self.model_registry.process_with_model(
+            context.agent_id, agent_type, "construct", retrieved_nodes, plan
+        )
+
+        # Perform reasoning over constructed graph
         reasoning_result = await self.model_registry.process_with_model(
             context.agent_id, agent_type, "reason", knowledge_graph, query, plan
         )
