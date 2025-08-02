@@ -207,6 +207,7 @@ coverage.xml
 !package.json
 !package-lock.json
 !tsconfig.json
+!cleanup_metrics.json
 
 # Specific generated JSON files
 *_results.json

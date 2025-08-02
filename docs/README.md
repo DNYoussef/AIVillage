@@ -33,6 +33,7 @@ Development workflows, testing, and contribution guidelines.
 - [Branching Strategy](development/BRANCHING_STRATEGY.md)
 - [Testing Best Practices](development/testing-best-practices.md)
 - [Integration Testing](development/SMOKE_TEST_INTEGRATION.md)
+- [Cleanup Verification](development/cleanup_verification.md)
 
 ### 📋 Reference
 Reference materials, roadmaps, and administrative documentation.
