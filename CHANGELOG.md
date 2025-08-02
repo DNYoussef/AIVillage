@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Added
+- Added `digital_twin` module, increasing core module count to 17.
+
 ## [1.0.0] - 2025-07-27
 ### Added
 - **Sprint 2 Complete**: Production/experimental separation with quality gates

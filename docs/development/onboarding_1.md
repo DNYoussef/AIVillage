@@ -16,6 +16,9 @@
    ```
 4. **Mobile quick-start** – See [`mobile-app/README.md`](../mobile-app/README.md)
 
+5. **Explore source modules**
+   - The `src/` directory now contains **17 modules**, including the new `digital_twin` module for personalized twins.
+
 ## Troubleshooting FAQ
 | Symptom | Fix |
 |---------|-----|
