@@ -148,6 +148,7 @@ def main():
         "constraint": args.constraint,
         "duration_sec": duration,
         "total_shards": plan.total_shards,
+        "simulate_failures": args.simulate_failures,
     }
     with open("sharding_performance_report.json", "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
