@@ -149,25 +149,49 @@ class EvolutionDashboard:
                     }), 408
                 
                 duration = time.time() - start_time
-                
-                # Validate results
-                if not results:
+
+                # Validate results structure
+                if not isinstance(results, dict):
                     return jsonify({
-                        "error": "Evolution cycle returned no results"
+                        "error": "Evolution cycle returned invalid results"
+                    }), 400
+
+                expected_fields = {
+                    "initial_population": int,
+                    "generations_run": int,
+                    "best_fitness_history": list,
+                    "diversity_history": list,
+                    "specialization_distribution": list,
+                }
+
+                missing = [f for f in expected_fields if f not in results]
+                if missing:
+                    return jsonify({
+                        "error": f"Evolution results missing fields: {', '.join(missing)}"
+                    }), 400
+
+                for field, field_type in expected_fields.items():
+                    if not isinstance(results[field], field_type):
+                        return jsonify({
+                            "error": f"Invalid type for field '{field}'"
+                        }), 400
+
+                generations_run = results["generations_run"]
+                histories = [
+                    results["best_fitness_history"],
+                    results["diversity_history"],
+                    results["specialization_distribution"],
+                ]
+                if generations_run < 1 or any(len(hist) != generations_run for hist in histories):
+                    return jsonify({
+                        "error": "Evolution results inconsistent with generations run"
+                    }), 400
+
+                if results.get("status") == "failed":
+                    return jsonify({
+                        "error": f"Evolution failed: {results.get('error', 'Unknown error')}"
                     }), 500
-                
-                # Check if evolution actually succeeded
-                if isinstance(results, dict):
-                    if results.get("status") == "failed":
-                        return jsonify({
-                            "error": f"Evolution failed: {results.get('error', 'Unknown error')}"
-                        }), 500
-                    
-                    if results.get("generations_completed", 0) == 0:
-                        return jsonify({
-                            "error": "Evolution completed but no generations were processed"
-                        }), 500
-                
+
                 logger.info(f"Evolution cycle completed successfully in {duration:.2f}s")
                 
                 return jsonify({
