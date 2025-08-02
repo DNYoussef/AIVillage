@@ -15,6 +15,7 @@ from .base import EvolvableAgent
 
 logger = logging.getLogger(__name__)
 
+
 class ResourceAdaptationStrategy(Enum):
     """Strategies for adapting to resource constraints"""
     PAUSE_AND_RETRY = "pause_and_retry"
@@ -91,10 +92,11 @@ class EvolutionResourceState:
     constraint_types: List[str] = field(default_factory=list)
     adaptation_strategy: Optional[ResourceAdaptationStrategy] = None
     
+
 class ResourceConstrainedEvolution(DualEvolutionSystem):
     """Enhanced dual evolution system with comprehensive resource constraints"""
     
-    def __init__(self, 
+    def __init__(self,
                  device_profiler: DeviceProfiler,
                  resource_monitor: ResourceMonitor,
                  constraint_manager: ConstraintManager,
@@ -191,8 +193,8 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
                 
             # Execute evolution with resource monitoring
             result = await self._execute_monitored_evolution(
-                agent, 
-                "nightly", 
+                agent,
+                "nightly",
                 super()._evolve_agent_nightly
             )
             
@@ -226,7 +228,7 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
             # Execute with enhanced monitoring
             result = await self._execute_monitored_evolution(
                 agent,
-                "breakthrough", 
+                "breakthrough",
                 super()._evolve_agent_breakthrough
             )
             
@@ -286,7 +288,7 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
         # Different thresholds for different evolution types
         thresholds = {
             'emergency': 0.3,    # Lower threshold for emergency
-            'nightly': 0.5,      # Medium threshold for nightly  
+            'nightly': 0.5,      # Medium threshold for nightly
             'breakthrough': 0.7  # Higher threshold for breakthrough
         }
         
@@ -309,19 +311,19 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
                 return False
                 
             # Battery check
-            if (constraints.min_battery_percent and 
+            if (constraints.min_battery_percent and
                 current_snapshot.battery_percent and
                 current_snapshot.battery_percent < constraints.min_battery_percent):
                 return False
                 
             # Thermal check
-            if (current_snapshot.thermal_state.value in 
+            if (current_snapshot.thermal_state.value in
                 ['hot', 'critical', 'throttling']):
                 return False
                 
         return True
         
-    async def _execute_monitored_evolution(self, 
+    async def _execute_monitored_evolution(self,
                                          agent: EvolvableAgent,
                                          evolution_type: str,
                                          evolution_func: Callable) -> bool:
@@ -408,12 +410,12 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
             constraint_types.append("cpu")
             is_constrained = True
             
-        if (snapshot.battery_percent and 
+        if (snapshot.battery_percent and
             snapshot.battery_percent < self.config.battery_pause_threshold):
             constraint_types.append("battery")
             is_constrained = True
             
-        if (snapshot.cpu_temp and 
+        if (snapshot.cpu_temp and
             snapshot.cpu_temp > self.config.thermal_throttle_temperature):
             constraint_types.append("thermal")
             is_constrained = True
@@ -437,7 +439,7 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
         constraint_types = self.current_resource_state.constraint_types
         
         # Emergency stop for critical conditions
-        if ("thermal" in constraint_types and 
+        if ("thermal" in constraint_types and
             self.current_resource_state.temperature_celsius and
             self.current_resource_state.temperature_celsius > self.config.thermal_pause_temperature):
             return ResourceAdaptationStrategy.EMERGENCY_STOP
@@ -461,7 +463,7 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
             return None  # No further adaptation needed if cleanup successful
             
         # Quality degradation for CPU constraints
-        if ("cpu" in constraint_types and 
+        if ("cpu" in constraint_types and
             self.config.enable_quality_degradation and
             evolution_type in ["nightly", "breakthrough"]):
             return ResourceAdaptationStrategy.DEGRADE_QUALITY
@@ -658,8 +660,8 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
         status.update({
             'resource_config': self.config.to_dict(),
             'current_resource_state': (
-                self.current_resource_state.__dict__ 
-                if self.current_resource_state 
+                self.current_resource_state.__dict__
+                if self.current_resource_state
                 else None
             ),
             'paused_evolutions': len(self.paused_evolutions),
@@ -673,3 +675,4 @@ class ResourceConstrainedEvolution(DualEvolutionSystem):
         })
         
         return status
+

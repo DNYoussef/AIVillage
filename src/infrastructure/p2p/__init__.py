@@ -13,9 +13,10 @@ from .tensor_streaming import TensorStreamer
 
 __all__ = [
     'P2PNode',
-    'PeerCapabilities', 
+    'PeerCapabilities',
     'DeviceMesh',
     'TensorStreamer'
 ]
 
 __version__ = "1.0.0"
+

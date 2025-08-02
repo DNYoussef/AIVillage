@@ -7,9 +7,10 @@ from .encryption_layer import EncryptionLayer
 
 __all__ = [
     'P2PNode',
-    'PeerCapabilities', 
+    'PeerCapabilities',
     'PeerDiscovery',
     'MessageProtocol',
     'EvolutionMessage',
     'EncryptionLayer'
 ]
+

@@ -44,7 +44,7 @@ class MessageType(Enum):
     """P2P message types."""
     HANDSHAKE = "handshake"
     HEARTBEAT = "heartbeat"
-    DATA = "data" 
+    DATA = "data"
     TENSOR_CHUNK = "tensor_chunk"
     SYNC_REQUEST = "sync_request"
     DISCOVERY = "discovery"
@@ -536,7 +536,7 @@ class P2PNode:
                     port = int(port)
                     
                     # Skip if already connected
-                    if any(p.address == address and p.port == port 
+                    if any(p.address == address and p.port == port
                           for p in self.peers.values()):
                         continue
                         
@@ -592,3 +592,4 @@ class P2PNode:
             "max_message_size": self.config["max_message_size"],
             "encryption": "fernet",
         }
+

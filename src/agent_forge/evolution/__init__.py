@@ -20,6 +20,11 @@ This system implements:
 6. Comprehensive evolution analytics and reporting
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+"""
+
 from .agent_evolution_engine import (
     AgentEvolutionEngine,
     AgentGenome,

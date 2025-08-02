@@ -79,6 +79,7 @@ class EvolutionMemory:
                 existing.extend(to_compress)
                 self.long_term_compressed = pickle.dumps(existing)
 
+
 class EvolutionMetrics:
     """Tracks evolution performance and trends"""
     
@@ -141,6 +142,7 @@ class EvolutionMetrics:
         slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x)
         return slope
 
+
 class EvolvableAgent:
     """Enhanced agent with evolution capabilities for Sprint 6"""
     
@@ -173,7 +175,7 @@ class EvolvableAgent:
         
         logger.info(f"Created evolvable agent {self.agent_id} of type {self.agent_type}")
         
-    def record_performance(self, task_type: str, success: bool, 
+    def record_performance(self, task_type: str, success: bool,
                           execution_time_ms: float, accuracy: Optional[float] = None,
                           confidence: Optional[float] = None,
                           resource_usage: Optional[Dict[str, float]] = None,
@@ -330,7 +332,7 @@ class EvolvableAgent:
                 
             # Task-specific insights
             for task_type in daily_stats.get("task_types", []):
-                task_records = [r for r in self.performance_history[-1000:] 
+                task_records = [r for r in self.performance_history[-1000:]
                                if r.task_type == task_type]
                 if len(task_records) >= 10:
                     task_success_rate = sum(1 for r in task_records if r.success) / len(task_records)
@@ -477,7 +479,7 @@ class EvolvableAgent:
         
         # Edge cases (high uncertainty but successful)
         edge_cases = [
-            r for r in successful_records 
+            r for r in successful_records
             if r.confidence is not None and r.confidence < 0.6
         ][:100]
         
@@ -782,8 +784,8 @@ class EvolvableAgent:
         data_sufficiency = min(1.0, len(self.performance_history) / 1000)
         stability = kpis.get("reliability", 0.5)
         
-        readiness = (performance_gap * 0.5 + 
-                    data_sufficiency * 0.3 + 
+        readiness = (performance_gap * 0.5 +
+                    data_sufficiency * 0.3 +
                     (1 - stability) * 0.2)
                     
         return min(1.0, readiness)
@@ -824,3 +826,4 @@ class EvolvableAgent:
         agent.evolution_memory.distilled_wisdom = memory_state.get("distilled_wisdom", {})
         
         return agent
+

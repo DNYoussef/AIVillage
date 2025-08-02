@@ -30,6 +30,7 @@ class SecurityConfig:
     max_message_age: float = 300.0  # 5 minutes
     enable_forward_secrecy: bool = True
 
+
 class EncryptionLayer:
     """Secure encryption layer for P2P communications"""
     
@@ -153,7 +154,7 @@ class EncryptionLayer:
         
         # Encrypt with AES-GCM
         cipher = Cipher(
-            algorithms.AES(session_key), 
+            algorithms.AES(session_key),
             modes.GCM(iv),
             backend=default_backend()
         )
@@ -248,7 +249,7 @@ class EncryptionLayer:
         
         # Add HMAC for integrity
         mac = hmac.new(
-            broadcast_key, 
+            broadcast_key,
             iv + ciphertext,
             hashlib.sha256
         ).digest()
@@ -278,7 +279,7 @@ class EncryptionLayer:
         current_time = time.time()
         
         # Check if we need key rotation
-        if (peer_id in self.session_keys and 
+        if (peer_id in self.session_keys and
             peer_id in self.session_created and
             current_time - self.session_created[peer_id] > self.config.key_rotation_interval):
             # Rotate key
@@ -450,3 +451,4 @@ class EncryptionLayer:
             'used_nonces': len(self.used_nonces),
             'encryption_enabled': self.private_key is not None
         }
+

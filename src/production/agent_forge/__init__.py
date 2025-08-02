@@ -27,9 +27,10 @@ try:
     )
     __all__.extend([
         'evolution_scheduler',
-        'resource_constrained_evolution', 
+        'resource_constrained_evolution',
         'kpi_evolution_engine'
     ])
 except ImportError:
     # Evolution system optional
     pass
+

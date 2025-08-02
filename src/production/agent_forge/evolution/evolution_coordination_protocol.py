@@ -14,6 +14,7 @@ from ....core.p2p.message_protocol import MessageType, EvolutionMessage, Message
 
 logger = logging.getLogger(__name__)
 
+
 class CoordinationPhase(Enum):
     """Phases of evolution coordination"""
     DISCOVERY = "discovery"           # Discover suitable peers
@@ -23,10 +24,11 @@ class CoordinationPhase(Enum):
     CONSENSUS = "consensus"           # Reach consensus on results
     FINALIZATION = "finalization"     # Finalize and distribute results
 
+
 class ConsensusType(Enum):
     """Types of consensus mechanisms"""
     SIMPLE_MAJORITY = "simple_majority"     # >50% agreement
-    SUPERMAJORITY = "supermajority"         # >66% agreement  
+    SUPERMAJORITY = "supermajority"         # >66% agreement
     UNANIMOUS = "unanimous"                 # 100% agreement
     WEIGHTED_VOTING = "weighted_voting"     # Weighted by peer capability
     PROOF_OF_WORK = "proof_of_work"        # Best result wins
@@ -112,6 +114,7 @@ class EvolutionResult:
     verification_hash: Optional[str] = None
     timestamp: float = field(default_factory=time.time)
 
+
 class EvolutionCoordinationProtocol:
     """Protocol for coordinating distributed evolution across P2P network"""
     
@@ -167,8 +170,8 @@ class EvolutionCoordinationProtocol:
         for msg_type, handler in handlers.items():
             self.p2p_node.register_handler(msg_type, handler)
             
-    async def initiate_distributed_evolution(self, 
-                                           agent_id: str, 
+    async def initiate_distributed_evolution(self,
+                                           agent_id: str,
                                            evolution_type: str,
                                            resource_requirements: Dict[str, Any]) -> str:
         """Initiate distributed evolution coordination"""
@@ -491,7 +494,7 @@ class EvolutionCoordinationProtocol:
         available_cpu = self.node_capabilities.get('cpu_available_percent', 0)
         
         # Simple capability check
-        return (available_memory >= required_memory * 0.5 and 
+        return (available_memory >= required_memory * 0.5 and
                 available_cpu >= required_cpu * 0.5)
                 
     async def _send_contribution_offer(self, proposal_id: str, contribution: PeerContribution, initiator_id: str):
@@ -567,7 +570,7 @@ class EvolutionCoordinationProtocol:
         return {
             'active_proposals': len(self.active_proposals),
             'coordination_phases': {
-                proposal_id: phase.value 
+                proposal_id: phase.value
                 for proposal_id, phase in self.coordination_phases.items()
             },
             'peer_contributions': {
@@ -592,3 +595,4 @@ class EvolutionCoordinationProtocol:
     def register_result_callback(self, callback: callable):
         """Register callback for result events"""
         self.result_callbacks.append(callback)
+

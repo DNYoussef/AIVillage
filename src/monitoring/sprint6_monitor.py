@@ -389,7 +389,7 @@ class Sprint6Monitor:
         # Memory pressure alerts
         if metrics.memory_pressure > self.thresholds["memory_pressure_critical"]:
             current_alerts.append(self._create_alert(
-                "memory_pressure_critical", 
+                "memory_pressure_critical",
                 "critical",
                 "System Resources",
                 f"Critical memory pressure: {metrics.memory_pressure:.1f}%",
@@ -398,7 +398,7 @@ class Sprint6Monitor:
         elif metrics.memory_pressure > self.thresholds["memory_pressure_warning"]:
             current_alerts.append(self._create_alert(
                 "memory_pressure_warning",
-                "warning", 
+                "warning",
                 "System Resources",
                 f"High memory pressure: {metrics.memory_pressure:.1f}%",
                 {"memory_pressure": metrics.memory_pressure, "threshold": self.thresholds["memory_pressure_warning"]}
@@ -422,7 +422,7 @@ class Sprint6Monitor:
                     current_alerts.append(self._create_alert(
                         "validation_age_warning",
                         "warning",
-                        "System Validation", 
+                        "System Validation",
                         f"Sprint 6 validation is {age_seconds/3600:.1f} hours old",
                         {"age_hours": age_seconds/3600, "threshold_hours": self.thresholds["validation_age_warning"]/3600}
                     ))
@@ -555,7 +555,7 @@ class Sprint6Monitor:
             "overall_health": latest_health.overall_health if latest_health else "unknown",
             "components": {
                 "p2p": latest_health.p2p_status if latest_health else "unknown",
-                "resources": latest_health.resource_management_status if latest_health else "unknown", 
+                "resources": latest_health.resource_management_status if latest_health else "unknown",
                 "evolution": latest_health.evolution_system_status if latest_health else "unknown"
             },
             "metrics": {
@@ -594,3 +594,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+

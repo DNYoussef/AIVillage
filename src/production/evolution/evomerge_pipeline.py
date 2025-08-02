@@ -469,7 +469,11 @@ class BaseEvaluator:
 
     async def evaluate(self, model_path: str) -> float:
         """Evaluate model and return fitness score [0.0, 1.0]."""
-        raise NotImplementedError
+        # Base implementation returns 0.0 - subclasses should override
+        logger.warning(
+            "BaseEvaluator.evaluate() called directly - should be overridden by subclass"
+        )
+        return 0.0
 
 
 class CodeEvaluator(BaseEvaluator):

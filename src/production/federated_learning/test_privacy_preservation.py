@@ -26,6 +26,7 @@ import torch
 if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parents[3]))
 
+
 def _stub_module(name: str, **attrs: object) -> None:
     mod = types.ModuleType(name)
     for k, v in attrs.items():

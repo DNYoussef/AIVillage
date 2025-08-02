@@ -6,6 +6,7 @@ Provides comprehensive monitoring and visualization of the self-evolving agent e
 import asyncio
 import json
 import logging
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -95,14 +96,96 @@ class EvolutionDashboard:
         @self.app.route("/api/trigger_evolution", methods=["POST"])
         async def trigger_evolution():
             try:
+                # Validate request data
+                if not request.json:
+                    return jsonify({"error": "Missing JSON payload"}), 400
+                    
                 generations = request.json.get("generations", 1)
-                results = await self.evolution_engine.run_evolution_cycle(
-                    generations=generations
-                )
-                return jsonify({"success": True, "results": results})
+                
+                # Validate generations parameter
+                if not isinstance(generations, int) or generations < 1 or generations > 100:
+                    return jsonify({
+                        "error": "Invalid generations parameter. Must be integer between 1 and 100"
+                    }), 400
+                
+                # Check if evolution engine is available
+                if not self.evolution_engine:
+                    return jsonify({
+                        "error": "Evolution engine not initialized"
+                    }), 500
+                    
+                # Check if evolution is already running
+                if hasattr(self.evolution_engine, 'is_running') and self.evolution_engine.is_running:
+                    return jsonify({
+                        "error": "Evolution is already running. Please wait for current cycle to complete."
+                    }), 409
+                
+                # Verify there are agents to evolve
+                try:
+                    status = await self.evolution_engine.get_evolution_dashboard_data()
+                    total_agents = status["population_stats"]["total_agents"]
+                    
+                    if total_agents == 0:
+                        return jsonify({
+                            "error": "No agents available for evolution. Initialize population first."
+                        }), 400
+                        
+                except Exception as e:
+                    logger.warning(f"Could not verify agent population: {e}")
+                    # Continue anyway - the engine should handle this
+                
+                # Run evolution with timeout and validation
+                logger.info(f"Starting evolution cycle with {generations} generations")
+                start_time = time.time()
+                
+                try:
+                    results = await asyncio.wait_for(
+                        self.evolution_engine.run_evolution_cycle(generations=generations),
+                        timeout=300.0  # 5 minute timeout
+                    )
+                except asyncio.TimeoutError:
+                    return jsonify({
+                        "error": "Evolution cycle timed out after 5 minutes"
+                    }), 408
+                
+                duration = time.time() - start_time
+                
+                # Validate results
+                if not results:
+                    return jsonify({
+                        "error": "Evolution cycle returned no results"
+                    }), 500
+                
+                # Check if evolution actually succeeded
+                if isinstance(results, dict):
+                    if results.get("status") == "failed":
+                        return jsonify({
+                            "error": f"Evolution failed: {results.get('error', 'Unknown error')}"
+                        }), 500
+                    
+                    if results.get("generations_completed", 0) == 0:
+                        return jsonify({
+                            "error": "Evolution completed but no generations were processed"
+                        }), 500
+                
+                logger.info(f"Evolution cycle completed successfully in {duration:.2f}s")
+                
+                return jsonify({
+                    "success": True,
+                    "results": results,
+                    "duration_seconds": duration,
+                    "generations_requested": generations,
+                    "completed_at": datetime.now().isoformat()
+                })
+                
             except Exception as e:
                 logger.error(f"Failed to trigger evolution: {e}")
-                return jsonify({"error": str(e)}), 500
+                import traceback
+                logger.error(traceback.format_exc())
+                return jsonify({
+                    "error": f"Evolution failed: {str(e)}",
+                    "type": type(e).__name__
+                }), 500
 
         @self.app.route("/api/emergency_rollback", methods=["POST"])
         async def emergency_rollback():

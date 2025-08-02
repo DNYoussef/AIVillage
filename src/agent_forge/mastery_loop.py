@@ -736,6 +736,7 @@ async def main():
 
 
 async def run_self_modeling(config: dict[str, Any]) -> "PhaseResult":
+    from .forge_orchestrator import PhaseResult
     """Orchestrator entry point for Self-Modeling phase (via Mastery Loop).
 
     Args:

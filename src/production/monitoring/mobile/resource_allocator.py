@@ -48,13 +48,14 @@ class ResourceAllocation:
             }
         }
 
+
 class ResourceAllocator:
     """Intelligent resource allocation based on device state and policy"""
     
     def __init__(self):
         # Threshold configurations
         self.thermal_threshold = 40.0  # Celsius
-        self.battery_low_threshold = 20  # Percent  
+        self.battery_low_threshold = 20  # Percent
         self.battery_critical_threshold = 10  # Percent
         self.memory_pressure_threshold = 85  # Percent
         self.memory_critical_threshold = 95  # Percent
@@ -144,8 +145,8 @@ class ResourceAllocator:
             return self.profiles["power_save"]
             
         # Low battery and not charging
-        if (profile.battery_percent and 
-            profile.battery_percent <= self.battery_low_threshold and 
+        if (profile.battery_percent and
+            profile.battery_percent <= self.battery_low_threshold and
             not profile.battery_charging):
             return self.profiles["power_save"]
             
@@ -164,7 +165,7 @@ class ResourceAllocator:
             # Laptops/desktops can use performance
             return self.profiles["performance"]
             
-    def _apply_thermal_constraints(self, allocation: ResourceAllocation, 
+    def _apply_thermal_constraints(self, allocation: ResourceAllocation,
                                  profile: DeviceProfile) -> ResourceAllocation:
         """Apply thermal throttling constraints"""
         
@@ -450,3 +451,4 @@ class ResourceAllocator:
             reason="prediction_based",
             constraints={"prediction_confidence": 0.7}
         )
+

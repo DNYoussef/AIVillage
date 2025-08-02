@@ -16,10 +16,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class NodeStatus(Enum):
     """Status of a P2P node"""
     STARTING = "starting"
-    ACTIVE = "active" 
+    ACTIVE = "active"
     CONNECTING = "connecting"
     DISCONNECTED = "disconnected"
     FAILED = "failed"
@@ -36,6 +37,7 @@ class PeerCapabilities:
     last_seen: float = field(default_factory=time.time)
     latency_ms: float = 0.0
     bandwidth_kbps: Optional[int] = None
+
 
 class P2PNode:
     """Enhanced P2P node with capability tracking"""
@@ -506,3 +508,4 @@ class P2PNode:
             'bytes_sent': self.bytes_sent,
             'bytes_received': self.bytes_received
         }
+

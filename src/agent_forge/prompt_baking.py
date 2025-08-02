@@ -579,6 +579,7 @@ class PromptBakingPipeline:
 
 
 async def run_prompt_baking(config: dict[str, Any]) -> "PhaseResult":
+    from .forge_orchestrator import PhaseResult
     """Orchestrator entry point for Prompt Baking phase.
 
     Args:

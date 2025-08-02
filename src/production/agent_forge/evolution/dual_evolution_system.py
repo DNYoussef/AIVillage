@@ -40,6 +40,7 @@ class EvolutionEvent:
     generation_change: int = 0
     insights: List[str] = field(default_factory=list)
 
+
 class DualEvolutionSystem:
     """Master coordinator for dual evolution: nightly incremental + breakthrough discoveries"""
     
@@ -244,7 +245,7 @@ class DualEvolutionSystem:
         successful_breakthroughs = sum(1 for r in results if r)
         
         await self.metrics_collector.record_system_event("breakthrough_evolution_completed", {
-            "candidates": len(candidates), 
+            "candidates": len(candidates),
             "successful": successful_breakthroughs,
             "timestamp": time.time()
         })
@@ -328,7 +329,7 @@ class DualEvolutionSystem:
         
         for agent_id, agent in self.registered_agents.items():
             # Skip agents in cooling period or actively evolving
-            if (self._agent_in_cooling_period(agent_id, time.time()) or 
+            if (self._agent_in_cooling_period(agent_id, time.time()) or
                 agent_id in self.active_evolutions):
                 continue
                 
@@ -562,7 +563,7 @@ class DualEvolutionSystem:
             'registered_agents': len(self.registered_agents),
             'active_evolutions': len(self.active_evolutions),
             'total_evolutions_today': len([
-                e for e in self.evolution_history 
+                e for e in self.evolution_history
                 if current_time - e.timestamp < 86400
             ]),
             'success_rate_24h': self._calculate_success_rate(86400),
@@ -616,8 +617,8 @@ class DualEvolutionSystem:
                 'avg_evolution_duration': self._calculate_avg_duration(),
                 'total_evolutions': len(self.evolution_history),
                 'emergency_evolutions_today': len([
-                    e for e in self.evolution_history 
-                    if (current_time - e.timestamp < 86400 and 
+                    e for e in self.evolution_history
+                    if (current_time - e.timestamp < 86400 and
                         e.evolution_type == 'emergency')
                 ])
             }
@@ -697,3 +698,4 @@ class DualEvolutionSystem:
             
         logger.info(f"Evolution history exported to {filepath}")
         return filepath
+

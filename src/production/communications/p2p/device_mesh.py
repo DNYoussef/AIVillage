@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class ConnectionType(Enum):
     """Types of network connections."""
     BLUETOOTH = "bluetooth"
-    WIFI_DIRECT = "wifi_direct" 
+    WIFI_DIRECT = "wifi_direct"
     TCP_IP = "tcp_ip"
     USB_TETHER = "usb_tether"
 
@@ -58,7 +58,7 @@ class MeshRoute:
     reliable: bool = True
 
 
-@dataclass 
+@dataclass
 class NetworkMetrics:
     """Network performance metrics."""
     latency_ms: float
@@ -314,13 +314,13 @@ class DeviceMesh:
                 "supports_wifi_direct": self.device_capabilities.supports_wifi_direct,
             },
             "network_topology": {
-                node: list(neighbors) 
+                node: list(neighbors)
                 for node, neighbors in self.network_topology.items()
             },
             "routing_table_size": len(self.routing_table),
             "reachable_nodes": len(self.routing_table),
             "connection_types": {
-                peer: conn_type.value 
+                peer: conn_type.value
                 for peer, conn_type in self.connection_types.items()
             },
             "stored_messages": sum(len(msgs) for msgs in self.message_store.values()),
@@ -710,3 +710,4 @@ class DeviceMesh:
             return 0
             
         return max(route.hop_count for route in self.routing_table.values())
+

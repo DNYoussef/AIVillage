@@ -9,6 +9,7 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
+
 class MetricType(Enum):
     """Types of evolution metrics"""
     PERFORMANCE = "performance"
@@ -62,6 +63,7 @@ class EvolutionMetrics:
             'metadata': self.metadata
         }
 
+
 class EvolutionMetricsCollector:
     """Collector for evolution metrics"""
     
@@ -93,3 +95,4 @@ class EvolutionMetricsCollector:
     async def record_system_metrics(self, metrics: Dict[str, Any]):
         """Record system metrics"""
         pass
+

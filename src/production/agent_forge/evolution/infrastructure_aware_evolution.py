@@ -17,6 +17,7 @@ from .base import EvolvableAgent
 
 logger = logging.getLogger(__name__)
 
+
 class EvolutionMode(Enum):
     """Evolution execution modes"""
     LOCAL_ONLY = "local_only"           # Run evolution locally only
@@ -76,6 +77,7 @@ class EvolutionCoordinationPlan:
     quality_target: float = 0.8
     fallback_mode: Optional[EvolutionMode] = None
     
+
 class InfrastructureAwareEvolution:
     """Evolution system that leverages P2P network and resource management"""
     
@@ -133,7 +135,7 @@ class InfrastructureAwareEvolution:
             # Initialize adaptive loader
             if self.config.enable_adaptive_loading and self.constraint_manager:
                 self.adaptive_loader = AdaptiveLoader(
-                    self.device_profiler, 
+                    self.device_profiler,
                     self.constraint_manager
                 )
                 
@@ -227,8 +229,8 @@ class InfrastructureAwareEvolution:
             'performance_tier': self.device_profiler.profile.performance_tier
         }
         
-    async def evolve_agent_infrastructure_aware(self, 
-                                              agent: EvolvableAgent, 
+    async def evolve_agent_infrastructure_aware(self,
+                                              agent: EvolvableAgent,
                                               evolution_type: str = "nightly",
                                               preferred_mode: Optional[EvolutionMode] = None) -> Dict[str, Any]:
         """Evolve agent with infrastructure awareness"""
@@ -242,16 +244,16 @@ class InfrastructureAwareEvolution:
             
             # Assess current resources and determine evolution mode
             evolution_mode = await self._determine_evolution_mode(
-                agent, 
-                evolution_type, 
+                agent,
+                evolution_type,
                 preferred_mode
             )
             
             # Create coordination plan
             plan = await self._create_coordination_plan(
-                evolution_id, 
-                agent, 
-                evolution_type, 
+                evolution_id,
+                agent,
+                evolution_type,
                 evolution_mode
             )
             
@@ -295,8 +297,8 @@ class InfrastructureAwareEvolution:
                 'mode_used': evolution_mode.value if 'evolution_mode' in locals() else 'unknown'
             }
             
-    async def _determine_evolution_mode(self, 
-                                      agent: EvolvableAgent, 
+    async def _determine_evolution_mode(self,
+                                      agent: EvolvableAgent,
                                       evolution_type: str,
                                       preferred_mode: Optional[EvolutionMode]) -> EvolutionMode:
         """Determine optimal evolution mode based on current conditions"""
@@ -354,9 +356,9 @@ class InfrastructureAwareEvolution:
         # Check evolution suitability score
         return snapshot.evolution_suitability_score > 0.6
         
-    async def _create_coordination_plan(self, 
+    async def _create_coordination_plan(self,
                                       evolution_id: str,
-                                      agent: EvolvableAgent, 
+                                      agent: EvolvableAgent,
                                       evolution_type: str,
                                       mode: EvolutionMode) -> EvolutionCoordinationPlan:
         """Create coordination plan for evolution"""
@@ -514,7 +516,7 @@ class InfrastructureAwareEvolution:
         
         # Load base evolution model
         model, loading_info = await self.adaptive_loader.load_model_adaptive(
-            "base_evolution_model", 
+            "base_evolution_model",
             context
         )
         
@@ -608,3 +610,4 @@ class InfrastructureAwareEvolution:
             }
             
         return peer_capabilities
+

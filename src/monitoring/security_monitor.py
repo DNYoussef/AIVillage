@@ -57,6 +57,7 @@ class ThreatIntelligence:
     last_seen: datetime
     source: str
 
+
 class SecurityMetrics:
     """Security metrics collection."""
 
@@ -85,6 +86,7 @@ class SecurityMetrics:
         """Update threat score for user."""
         if PROMETHEUS_AVAILABLE:
             self.threat_score.labels(user_id=user_id).set(score)
+
 
 class ThreatDetector:
     """Advanced threat detection algorithms."""
@@ -195,6 +197,7 @@ class ThreatDetector:
 
         return min(threat_score, 1.0)
 
+
 class SecurityAlertManager:
     """Security alert and notification management."""
 
@@ -261,6 +264,7 @@ class SecurityAlertManager:
     def get_recent_alerts(self, limit: int = 50) -> List[Dict[str, Any]]:
         """Get recent security alerts."""
         return list(self.recent_alerts)[-limit:]
+
 
 class SecurityMonitor:
     """Main security monitoring system."""
@@ -425,6 +429,7 @@ class SecurityMonitor:
         }
 
 # Example integration with MCP server
+
 class MCPSecurityIntegration:
     """Integration with MCP server for security monitoring."""
 
@@ -461,6 +466,7 @@ class MCPSecurityIntegration:
             source_ip,
             {'endpoint': endpoint, **details}
         )
+
 
 async def main():
     """Main function to run security monitor."""

@@ -24,6 +24,7 @@ class EvolutionStrategy:
     rollback_capable: bool  # Can rollback if evolution fails
     min_data_points: int  # Minimum performance records needed
 
+
 class NightlyEvolutionOrchestrator:
     """Orchestrates incremental nightly evolution of agents"""
     
@@ -147,7 +148,7 @@ class NightlyEvolutionOrchestrator:
             if improvement >= self.success_threshold:
                 # Success - record results
                 await self._record_evolution_success(
-                    agent_id, strategy, pre_evolution_kpis, post_evolution_kpis, 
+                    agent_id, strategy, pre_evolution_kpis, post_evolution_kpis,
                     improvement, evolution_result
                 )
                 
@@ -615,7 +616,7 @@ class NightlyEvolutionOrchestrator:
         
         total_evolutions = sum(len(results) for results in self.evolution_results.values())
         successful_evolutions = sum(
-            sum(1 for r in results if r['success']) 
+            sum(1 for r in results if r['success'])
             for results in self.evolution_results.values()
         )
         
@@ -627,3 +628,4 @@ class NightlyEvolutionOrchestrator:
             "strategy_effectiveness": self.strategy_effectiveness.copy(),
             "available_strategies": list(self.strategies.keys())
         }
+

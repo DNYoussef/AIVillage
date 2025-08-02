@@ -81,7 +81,7 @@ class MetricsCollector:
         
         self.memory_available = Gauge(
             'device_memory_available_bytes',
-            'Available device memory in bytes', 
+            'Available device memory in bytes',
             ['device_id', 'device_type'],
             registry=self.registry
         )
@@ -673,7 +673,7 @@ class MetricsCollector:
         elif current_snapshot.memory_percent > 80:
             alerts.append({
                 "type": "memory_warning",
-                "severity": "warning", 
+                "severity": "warning",
                 "message": f"Memory usage at {current_snapshot.memory_percent:.1f}%",
                 "value": current_snapshot.memory_percent,
                 "threshold": 80,
@@ -824,3 +824,4 @@ class MobileMetrics:
     def register_custom_metric(self, definition: MetricDefinition) -> Any:
         """Register custom metric."""
         return self.collector.register_custom_metric(definition)
+

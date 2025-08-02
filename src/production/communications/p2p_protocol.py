@@ -170,8 +170,8 @@ class P2PCommunicationProtocol(CommunicationProtocol):
             }
             
             success = await self.p2p_node.send_message(
-                peer_id, 
-                MessageType.DATA, 
+                peer_id,
+                MessageType.DATA,
                 p2p_payload
             )
             
@@ -248,8 +248,8 @@ class P2PCommunicationProtocol(CommunicationProtocol):
             raise TimeoutError("Response timeout in P2P send_and_wait")
             
     def subscribe(
-        self, 
-        agent_id: str, 
+        self,
+        agent_id: str,
         callback: Callable[[Message], Coroutine[Any, Any, None]]
     ) -> None:
         """Subscribe to messages for an agent."""
@@ -361,7 +361,7 @@ class P2PCommunicationProtocol(CommunicationProtocol):
             for agent_id in target_agents:
                 task_message = Message(
                     type=MessageType.QUERY,
-                    sender="coordinator", 
+                    sender="coordinator",
                     receiver=agent_id,
                     content={"task": task, "task_type": "distributed"},
                 )
@@ -493,3 +493,4 @@ class P2PCommunicationProtocol(CommunicationProtocol):
             self.p2p_stats["messages_routed"] += 1
             
         return success
+

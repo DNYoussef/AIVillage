@@ -16,20 +16,149 @@ except ImportError:
     PROMETHEUS_AVAILABLE = False
 
     class MockMetric:
-        def __init__(self, *args, **kwargs):
-            self.name = kwargs.get("name", "mock_metric")
-
+        """Informative fallback metric that provides real feedback when Prometheus is unavailable."""
+        
+        _instances = {}  # Class-level storage for all metrics
+        
+        def __init__(self, name: str, documentation: str = "", **kwargs):
+            self.name = name
+            self.documentation = documentation
+            self.values = []
+            self.counters = {}
+            self.gauge_value = 0.0
+            self.info_data = {}
+            self._warn_once = False
+            
+            # Store in class registry
+            MockMetric._instances[name] = self
+            
         def inc(self, amount=1, **labels):
-            pass
+            """Increment counter with label tracking."""
+            if not self._warn_once:
+                logger.warning(
+                    f"Metric '{self.name}' using MockMetric fallback. "
+                    f"Install prometheus_client for real monitoring."
+                )
+                self._warn_once = True
+                
+            # Track counter by label combination
+            label_key = frozenset(labels.items()) if labels else frozenset()
+            if label_key not in self.counters:
+                self.counters[label_key] = 0
+            self.counters[label_key] += amount
+            
+            # Log significant counter increases
+            if self.counters[label_key] % 10 == 0:
+                logger.info(
+                    f"MockMetric {self.name}: counter reached {self.counters[label_key]} "
+                    f"(labels: {dict(labels) if labels else 'none'})"
+                )
 
         def observe(self, amount, **labels):
-            pass
+            """Record observation with statistical tracking."""
+            if not self._warn_once:
+                logger.warning(
+                    f"Metric '{self.name}' using MockMetric fallback. "
+                    f"Install prometheus_client for real monitoring."
+                )
+                self._warn_once = True
+                
+            self.values.append(float(amount))
+            
+            # Keep only last 1000 values to prevent memory growth
+            if len(self.values) > 1000:
+                self.values = self.values[-1000:]
+                
+            # Log statistical summary every 25 observations
+            if len(self.values) % 25 == 0:
+                stats = self.get_stats()
+                logger.info(
+                    f"MockMetric {self.name}: {len(self.values)} observations, "
+                    f"mean={stats['mean']:.3f}, range=[{stats['min']:.3f}, {stats['max']:.3f}]"
+                )
 
         def set(self, value, **labels):
-            pass
+            """Set gauge value with change tracking."""
+            if not self._warn_once:
+                logger.warning(
+                    f"Metric '{self.name}' using MockMetric fallback. "
+                    f"Install prometheus_client for real monitoring."
+                )
+                self._warn_once = True
+                
+            old_value = self.gauge_value
+            self.gauge_value = float(value)
+            
+            # Log significant changes
+            if abs(self.gauge_value - old_value) > 0.1:
+                logger.info(
+                    f"MockMetric {self.name}: gauge changed from {old_value:.3f} to {self.gauge_value:.3f}"
+                )
 
         def info(self, info_dict):
-            pass
+            """Store info metric data."""
+            if not self._warn_once:
+                logger.warning(
+                    f"Metric '{self.name}' using MockMetric fallback. "
+                    f"Install prometheus_client for real monitoring."
+                )
+                self._warn_once = True
+                
+            self.info_data.update(info_dict)
+            logger.info(f"MockMetric {self.name}: info updated with {len(info_dict)} fields")
+            
+        def get_stats(self) -> dict:
+            """Get statistical summary of observations."""
+            if not self.values:
+                return {"mean": 0, "count": 0, "min": 0, "max": 0, "std": 0}
+                
+            import statistics
+            return {
+                "mean": statistics.mean(self.values),
+                "max": max(self.values),
+                "min": min(self.values),
+                "count": len(self.values),
+                "std": statistics.stdev(self.values) if len(self.values) > 1 else 0,
+            }
+            
+        @classmethod
+        def get_all_metrics_summary(cls) -> dict:
+            """Get summary of all MockMetric instances."""
+            summary = {
+                "total_metrics": len(cls._instances),
+                "metrics": {}
+            }
+            
+            for name, metric in cls._instances.items():
+                summary["metrics"][name] = {
+                    "type": "mock",
+                    "values_count": len(metric.values),
+                    "counters": dict(metric.counters),
+                    "gauge_value": metric.gauge_value,
+                    "info_data": metric.info_data,
+                    "stats": metric.get_stats()
+                }
+                
+            return summary
+            
+        @classmethod
+        def export_to_file(cls, filepath: str = "mock_metrics_export.json") -> None:
+            """Export all metric data to JSON file for analysis."""
+            import json
+            from datetime import datetime
+            
+            export_data = {
+                "timestamp": datetime.now().isoformat(),
+                "prometheus_available": False,
+                "metrics_summary": cls.get_all_metrics_summary()
+            }
+            
+            try:
+                with open(filepath, 'w') as f:
+                    json.dump(export_data, f, indent=2, default=str)
+                logger.info(f"MockMetrics exported to {filepath}")
+            except Exception as e:
+                logger.error(f"Failed to export MockMetrics: {e}")
 
     Counter = Histogram = Gauge = Info = MockMetric
 
@@ -317,13 +446,92 @@ class GuardianMetrics:
         if not self.enabled:
             return {"status": "disabled"}
 
-        # This would need to be implemented with actual metric collection
-        # For now, return basic status
-        return {
+        summary = {
             "status": "enabled",
             "prometheus_available": PROMETHEUS_AVAILABLE,
             "metrics_initialized": True,
         }
+        
+        # If using MockMetrics, include their data
+        if not PROMETHEUS_AVAILABLE:
+            try:
+                from .metrics import MockMetric  # Import the class
+                summary["mock_metrics"] = MockMetric.get_all_metrics_summary()
+            except Exception as e:
+                logger.error(f"Failed to get MockMetric summary: {e}")
+                
+        return summary
+        
+    def export_metrics_dashboard(self, filepath: str = "guardian_metrics_dashboard.html") -> None:
+        """Export metrics dashboard as HTML file."""
+        if not PROMETHEUS_AVAILABLE:
+            try:
+                # Generate simple HTML dashboard for MockMetrics
+                from .metrics import MockMetric
+                
+                html_content = self._generate_mock_metrics_dashboard()
+                
+                with open(filepath, 'w') as f:
+                    f.write(html_content)
+                    
+                logger.info(f"Metrics dashboard exported to {filepath}")
+                
+            except Exception as e:
+                logger.error(f"Failed to export metrics dashboard: {e}")
+        else:
+            logger.info("Prometheus metrics available - use Grafana for dashboards")
+            
+    def _generate_mock_metrics_dashboard(self) -> str:
+        """Generate HTML dashboard for MockMetrics."""
+        from .metrics import MockMetric
+        summary = MockMetric.get_all_metrics_summary()
+        
+        html = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Guardian MockMetrics Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .metric { border: 1px solid #ccc; margin: 10px 0; padding: 15px; }
+        .metric-name { font-weight: bold; font-size: 1.2em; color: #333; }
+        .metric-stats { margin: 10px 0; }
+        .counter { background-color: #e8f4f8; padding: 5px; margin: 5px 0; }
+        .gauge { background-color: #f0f8e8; padding: 5px; margin: 5px 0; }
+        .histogram { background-color: #f8f0e8; padding: 5px; margin: 5px 0; }
+        .warning { color: #d9534f; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Guardian MockMetrics Dashboard</h1>
+    <div class="warning">⚠️ Using MockMetrics fallback - install prometheus_client for production monitoring</div>
+    
+    <h2>Summary</h2>
+    <p>Total Metrics: {total_metrics}</p>
+    
+    <h2>Metrics Details</h2>
+""".format(total_metrics=summary.get('total_metrics', 0))
+
+        for name, data in summary.get('metrics', {}).items():
+            html += f"""
+    <div class="metric">
+        <div class="metric-name">{name}</div>
+        <div class="metric-stats">
+            <div class="counter">Counters: {len(data.get('counters', {}))}</div>
+            <div class="gauge">Gauge Value: {data.get('gauge_value', 0):.3f}</div>
+            <div class="histogram">
+                Observations: {data.get('values_count', 0)}<br>
+                Stats: {data.get('stats', {})}
+            </div>
+        </div>
+    </div>
+"""
+        
+        html += """
+</body>
+</html>
+"""
+        return html
 
 
 # Global metrics instance

@@ -15,6 +15,7 @@ from .base import EvolvableAgent
 
 logger = logging.getLogger(__name__)
 
+
 class BreakthroughType(Enum):
     """Types of evolutionary breakthroughs"""
     ARCHITECTURAL = "architectural"  # Fundamental architecture changes
@@ -47,13 +48,14 @@ class BreakthroughResult:
     rollback_data: Optional[Dict] = None
     timestamp: float = field(default_factory=time.time)
 
+
 class MagiArchitecturalEvolution:
     """MAGI system for breakthrough evolutionary discoveries
     
     Named after the three supercomputers (Melchior, Balthasar, Casper) from Evangelion,
     this system represents three different approaches to breakthrough evolution:
     - Analytical (systematic exploration)
-    - Intuitive (pattern-based discovery) 
+    - Intuitive (pattern-based discovery)
     - Synthetic (combination and emergence)
     """
     
@@ -157,7 +159,7 @@ class MagiArchitecturalEvolution:
             duration = time.time() - start_time
             logger.info(f"MAGI evolution completed for agent {agent_id} in {duration:.1f}s")
             
-    async def _magi_consensus_selection(self, agent: EvolvableAgent, 
+    async def _magi_consensus_selection(self, agent: EvolvableAgent,
                                       candidates: List[BreakthroughCandidate],
                                       magi_systems: List) -> Optional[BreakthroughCandidate]:
         """MAGI consensus mechanism for breakthrough selection"""
@@ -198,7 +200,7 @@ class MagiArchitecturalEvolution:
         
         return selected_candidate
         
-    async def _apply_breakthrough(self, agent: EvolvableAgent, 
+    async def _apply_breakthrough(self, agent: EvolvableAgent,
                                 candidate: BreakthroughCandidate) -> BreakthroughResult:
         """Apply breakthrough evolution to agent"""
         
@@ -247,7 +249,7 @@ class MagiArchitecturalEvolution:
                 insights=[f"Application failed: {str(e)}"]
             )
             
-    async def _apply_architectural_breakthrough(self, agent: EvolvableAgent, 
+    async def _apply_architectural_breakthrough(self, agent: EvolvableAgent,
                                               candidate: BreakthroughCandidate) -> Tuple[bool, List[str]]:
         """Apply architectural breakthrough"""
         
@@ -436,7 +438,7 @@ class MagiArchitecturalEvolution:
             insights.append(f"Emergent breakthrough failed: {str(e)}")
             return False, insights
             
-    def _calculate_breakthrough_impact(self, pre_kpis: Dict[str, float], 
+    def _calculate_breakthrough_impact(self, pre_kpis: Dict[str, float],
                                      post_kpis: Dict[str, float]) -> float:
         """Calculate the impact of a breakthrough evolution"""
         
@@ -478,7 +480,7 @@ class MagiArchitecturalEvolution:
         else:
             return min(self.max_generation_jump, int(impact * 10))  # Exceptional breakthrough
             
-    async def _update_knowledge_base(self, agent: EvolvableAgent, 
+    async def _update_knowledge_base(self, agent: EvolvableAgent,
                                    candidate: BreakthroughCandidate,
                                    result: BreakthroughResult):
         """Update MAGI knowledge base with breakthrough results"""
@@ -528,7 +530,7 @@ class MagiArchitecturalEvolution:
         impact_by_type = {}
         for bt, stats in type_distribution.items():
             if stats["successes"] > 0:
-                impacts = [r.impact_achieved for r in self.breakthrough_history 
+                impacts = [r.impact_achieved for r in self.breakthrough_history
                           if r.breakthrough_type.value == bt and r.success]
                 impact_by_type[bt] = sum(impacts) / len(impacts)
                 
@@ -540,7 +542,7 @@ class MagiArchitecturalEvolution:
             "average_impact_by_type": impact_by_type,
             "knowledge_base_entries": len(self.knowledge_base),
             "recent_breakthroughs": len([
-                r for r in self.breakthrough_history 
+                r for r in self.breakthrough_history
                 if time.time() - r.timestamp < 86400 and r.success
             ])
         }
@@ -769,3 +771,4 @@ class CasperSynthetic:
     async def update_knowledge(self, knowledge_entry: Dict):
         """Update synthetic knowledge base"""
         self.knowledge.append(knowledge_entry)
+

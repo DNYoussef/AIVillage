@@ -14,6 +14,7 @@ from .constraint_manager import ConstraintManager, ResourceConstraints
 
 logger = logging.getLogger(__name__)
 
+
 class LoadingStrategy(Enum):
     """Model loading strategies"""
     FULL = "full"               # Load full model
@@ -22,6 +23,7 @@ class LoadingStrategy(Enum):
     LAYERED = "layered"         # Load model in layers
     STREAMING = "streaming"     # Stream model from storage/network
     CACHED = "cached"           # Use cached/preloaded model
+
 
 class ModelSize(Enum):
     """Model size categories"""
@@ -70,6 +72,7 @@ class LoadingContext:
     allow_degraded_quality: bool = True
     cache_enabled: bool = True
     
+
 class AdaptiveLoader:
     """Adaptive model loader that selects optimal loading strategy based on device resources"""
     
@@ -326,7 +329,7 @@ class AdaptiveLoader:
         
         return selected_variant
         
-    def _calculate_variant_score(self, variant: ModelVariant, context: LoadingContext, 
+    def _calculate_variant_score(self, variant: ModelVariant, context: LoadingContext,
                                snapshot: ResourceSnapshot) -> float:
         """Calculate score for a model variant"""
         score = 0.0
@@ -358,7 +361,7 @@ class AdaptiveLoader:
             
         return score
         
-    async def _load_model_variant(self, model_name: str, variant: ModelVariant, 
+    async def _load_model_variant(self, model_name: str, variant: ModelVariant,
                                 context: LoadingContext) -> Tuple[Optional[Any], Dict[str, Any]]:
         """Load model using specific variant"""
         loading_info = {
@@ -508,7 +511,7 @@ class AdaptiveLoader:
             'models_cached': model_count,
             'total_size_mb': total_size_mb,
             'cache_hit_rate': (
-                self.stats['cache_hits'] / 
+                self.stats['cache_hits'] /
                 max(self.stats['cache_hits'] + self.stats['cache_misses'], 1)
             ),
             'models': list(self.model_metadata.keys())
@@ -564,3 +567,4 @@ class AdaptiveLoader:
             'registered_models': len(self.model_variants),
             'total_variants': sum(len(variants) for variants in self.model_variants.values())
         }
+

@@ -11,6 +11,7 @@ from .device_profiler import DeviceProfiler, ResourceSnapshot, DeviceType, Power
 
 logger = logging.getLogger(__name__)
 
+
 class ConstraintSeverity(Enum):
     """Severity levels for resource constraints"""
     NONE = "none"
@@ -18,6 +19,7 @@ class ConstraintSeverity(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
 
 class ConstraintType(Enum):
     """Types of resource constraints"""
@@ -113,6 +115,7 @@ class ConstraintViolation:
             'message': self.message,
             'timestamp': self.timestamp
         }
+
 
 class ConstraintManager:
     """Manages resource constraints for evolution tasks"""
@@ -325,7 +328,7 @@ class ConstraintManager:
                 
         self.stats['constraints_checked'] += 1
         
-    async def _check_task_constraints(self, task_id: str, constraints: ResourceConstraints, 
+    async def _check_task_constraints(self, task_id: str, constraints: ResourceConstraints,
                                     snapshot: ResourceSnapshot) -> List[ConstraintViolation]:
         """Check constraints for a specific task"""
         violations = []
@@ -368,7 +371,7 @@ class ConstraintManager:
             ))
             
         # Battery constraints
-        if (constraints.min_battery_percent is not None and 
+        if (constraints.min_battery_percent is not None and
             snapshot.battery_percent is not None):
             
             if snapshot.battery_percent < constraints.min_battery_percent:
@@ -390,7 +393,7 @@ class ConstraintManager:
                 ))
                 
         # Thermal constraints
-        if (constraints.max_temperature_celsius is not None and 
+        if (constraints.max_temperature_celsius is not None and
             snapshot.cpu_temp is not None):
             
             if snapshot.cpu_temp > constraints.max_temperature_celsius:
@@ -495,7 +498,7 @@ class ConstraintManager:
             except Exception as e:
                 logger.error(f"Error in enforcement callback: {e}")
                 
-    def register_task(self, task_id: str, evolution_type: str = "nightly", 
+    def register_task(self, task_id: str, evolution_type: str = "nightly",
                      custom_constraints: Optional[ResourceConstraints] = None) -> bool:
         """Register a task with constraints"""
         if task_id in self.active_tasks:
@@ -549,7 +552,7 @@ class ConstraintManager:
             return False
             
         # Check battery requirements
-        if (constraints.min_battery_percent is not None and 
+        if (constraints.min_battery_percent is not None and
             current_snapshot.battery_percent is not None and
             current_snapshot.battery_percent < constraints.min_battery_percent):
             return False
@@ -618,3 +621,4 @@ class ConstraintManager:
             'violation_callbacks': len(self.violation_callbacks),
             'enforcement_callbacks': len(self.enforcement_callbacks)
         }
+

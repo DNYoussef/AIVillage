@@ -109,6 +109,7 @@ class DeviceProfile:
             }
         }
 
+
 class DeviceType(Enum):
     """Device type classification."""
     PHONE = "phone"
@@ -123,7 +124,7 @@ class PowerState(Enum):
     """Device power state."""
     PLUGGED_IN = "plugged_in"
     BATTERY_HIGH = "battery_high"      # > 80%
-    BATTERY_MEDIUM = "battery_medium"  # 20-80%  
+    BATTERY_MEDIUM = "battery_medium"  # 20-80%
     BATTERY_LOW = "battery_low"        # 5-20%
     BATTERY_CRITICAL = "battery_critical"  # < 5%
     UNKNOWN = "unknown"
@@ -225,7 +226,7 @@ class ResourceSnapshot:
                 power_score = self.battery_percent / 100
                 
         # Weighted average
-        return (memory_score * 0.4 + cpu_score * 0.3 + 
+        return (memory_score * 0.4 + cpu_score * 0.3 +
                 storage_score * 0.2 + power_score * 0.1)
 
 
@@ -641,7 +642,7 @@ class DeviceProfiler:
         elif snapshot.memory_percent > self.thresholds["memory_warning"]:
             alerts_triggered.append("memory_warning")
             
-        # CPU checks  
+        # CPU checks
         if snapshot.cpu_percent > self.thresholds["cpu_critical"]:
             alerts_triggered.append("cpu_critical")
         elif snapshot.cpu_percent > self.thresholds["cpu_warning"]:
@@ -704,8 +705,8 @@ class DeviceProfiler:
         self.alert_callbacks.append(callback)
         
     def register_threshold_callback(
-        self, 
-        threshold: str, 
+        self,
+        threshold: str,
         callback: Callable[[ResourceSnapshot], None]
     ) -> None:
         """Register callback for specific threshold."""
@@ -753,7 +754,7 @@ class DeviceProfiler:
         }
         
     def get_historical_data(
-        self, 
+        self,
         duration_minutes: Optional[int] = None,
         metric: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
@@ -847,3 +848,4 @@ class DeviceProfiler:
             "alerts_configured": len(self.thresholds),
             "callbacks_registered": len(self.alert_callbacks),
         }
+

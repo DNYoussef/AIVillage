@@ -11,6 +11,7 @@ from .device_profiler import DeviceProfiler, ResourceSnapshot
 
 logger = logging.getLogger(__name__)
 
+
 class MonitoringMode(Enum):
     """Resource monitoring modes"""
     PASSIVE = "passive"      # Basic monitoring
@@ -28,6 +29,7 @@ class ResourceTrend:
     predicted_value_5min: Optional[float] = None
     predicted_value_15min: Optional[float] = None
     confidence: float = 0.5  # Prediction confidence
+
 
 class ResourceMonitor:
     """Advanced resource monitor with trend analysis and predictions"""
@@ -263,8 +265,8 @@ class ResourceMonitor:
             
         # Memory spike detection
         memory_spike = self._detect_spike(
-            recent_snapshots, 
-            'memory_percent', 
+            recent_snapshots,
+            'memory_percent',
             self.event_thresholds['memory_spike'],
             time_window=60  # 1 minute
         )
@@ -308,14 +310,14 @@ class ResourceMonitor:
             self.stats['events_detected'] += 1
             await self._trigger_event(event_type, event_data)
             
-    def _detect_spike(self, snapshots: List[ResourceSnapshot], metric: str, 
+    def _detect_spike(self, snapshots: List[ResourceSnapshot], metric: str,
                      threshold: float, time_window: float) -> Optional[Dict[str, Any]]:
         """Detect spikes in a metric"""
         current_time = time.time()
         
         # Filter snapshots within time window
         recent_snapshots = [
-            s for s in snapshots 
+            s for s in snapshots
             if current_time - s.timestamp <= time_window
         ]
         
@@ -356,7 +358,7 @@ class ResourceMonitor:
         
         # Filter snapshots within time window
         recent_snapshots = [
-            s for s in snapshots 
+            s for s in snapshots
             if current_time - s.timestamp <= time_window
         ]
         
@@ -502,3 +504,4 @@ class ResourceMonitor:
             'trends_tracked': len(self.trends),
             'event_callbacks': len(self.event_callbacks)
         }
+

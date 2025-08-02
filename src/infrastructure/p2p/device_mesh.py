@@ -11,6 +11,7 @@ from .p2p_node import P2PNode
 
 logger = logging.getLogger(__name__)
 
+
 class DeviceMesh:
     """Bluetooth + WiFi Direct mesh networking with store-and-forward"""
 

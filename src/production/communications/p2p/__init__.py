@@ -6,7 +6,7 @@ from .tensor_streaming import TensorStreaming, TensorChunk, StreamingConfig
 
 __all__ = [
     "P2PNode",
-    "PeerInfo", 
+    "PeerInfo",
     "NodeStatus",
     "DeviceMesh",
     "MeshProtocol",
@@ -15,3 +15,4 @@ __all__ = [
     "TensorChunk",
     "StreamingConfig",
 ]
+

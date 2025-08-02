@@ -17,6 +17,7 @@ import psutil
 
 logger = logging.getLogger(__name__)
 
+
 class DeviceType(Enum):
     """Device type classification for resource management"""
     PHONE = "phone"
@@ -27,14 +28,16 @@ class DeviceType(Enum):
     EMBEDDED = "embedded"
     UNKNOWN = "unknown"
 
+
 class PowerState(Enum):
     """Device power state for evolution scheduling"""
     PLUGGED_IN = "plugged_in"
     BATTERY_HIGH = "battery_high"      # > 80%
-    BATTERY_MEDIUM = "battery_medium"  # 20-80%  
+    BATTERY_MEDIUM = "battery_medium"  # 20-80%
     BATTERY_LOW = "battery_low"        # 5-20%
     BATTERY_CRITICAL = "battery_critical"  # < 5%
     UNKNOWN = "unknown"
+
 
 class ThermalState(Enum):
     """Device thermal state for performance management"""
@@ -244,6 +247,7 @@ class DeviceProfile:
             "created_at": self.created_at,
             "last_updated": self.last_updated,
         }
+
 
 class DeviceProfiler:
     """Enhanced device profiler for mobile resource monitoring"""
@@ -693,7 +697,7 @@ class DeviceProfiler:
         elif snapshot.memory_percent > self.thresholds["memory_warning"]:
             alerts_triggered.append("memory_warning")
             
-        # CPU checks  
+        # CPU checks
         if snapshot.cpu_percent > self.thresholds["cpu_critical"]:
             alerts_triggered.append("cpu_critical")
         elif snapshot.cpu_percent > self.thresholds["cpu_warning"]:
@@ -935,3 +939,4 @@ class DeviceProfiler:
             ]
             
         return data
+

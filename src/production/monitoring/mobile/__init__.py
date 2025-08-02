@@ -6,7 +6,7 @@ from .mobile_metrics import MobileMetrics, MetricsCollector
 
 __all__ = [
     "DeviceProfiler",
-    "DeviceProfile", 
+    "DeviceProfile",
     "ResourceSnapshot",
     "ResourceAllocator",
     "AllocationStrategy",
@@ -14,3 +14,4 @@ __all__ = [
     "MobileMetrics",
     "MetricsCollector",
 ]
+

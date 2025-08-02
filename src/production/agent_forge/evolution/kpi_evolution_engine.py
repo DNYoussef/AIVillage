@@ -591,7 +591,7 @@ class KPIEvolutionEngine:
         recent_kpis = self.agent_kpis[agent_id][-self.retirement_criteria.consecutive_poor_performance:]
         if len(recent_kpis) >= self.retirement_criteria.consecutive_poor_performance:
             poor_performance_count = sum(
-                1 for k in recent_kpis 
+                1 for k in recent_kpis
                 if k.overall_performance() < self.retirement_criteria.performance_threshold
             )
             if poor_performance_count >= self.retirement_criteria.consecutive_poor_performance:
@@ -633,9 +633,9 @@ class KPIEvolutionEngine:
             return EvolutionStrategy.HOT_SWAP  # Default
             
     async def _hot_swap_evolution(
-        self, 
-        agent_id: str, 
-        agent_info: Dict[str, Any], 
+        self,
+        agent_id: str,
+        agent_info: Dict[str, Any],
         kpi: Optional[AgentKPI]
     ) -> EvolutionResult:
         """Perform hot-swap evolution (in-place optimization)."""
@@ -659,9 +659,9 @@ class KPIEvolutionEngine:
         return result
         
     async def _generational_evolution(
-        self, 
-        agent_id: str, 
-        agent_info: Dict[str, Any], 
+        self,
+        agent_id: str,
+        agent_info: Dict[str, Any],
         kpi: Optional[AgentKPI]
     ) -> EvolutionResult:
         """Perform generational evolution (create new agent)."""
@@ -689,9 +689,9 @@ class KPIEvolutionEngine:
         return result
         
     async def _knowledge_distillation_evolution(
-        self, 
-        agent_id: str, 
-        agent_info: Dict[str, Any], 
+        self,
+        agent_id: str,
+        agent_info: Dict[str, Any],
         kpi: Optional[AgentKPI]
     ) -> EvolutionResult:
         """Perform knowledge distillation evolution."""
@@ -711,9 +711,9 @@ class KPIEvolutionEngine:
         return result
         
     async def _architectural_evolution(
-        self, 
-        agent_id: str, 
-        agent_info: Dict[str, Any], 
+        self,
+        agent_id: str,
+        agent_info: Dict[str, Any],
         kpi: Optional[AgentKPI]
     ) -> EvolutionResult:
         """Perform architectural evolution."""
@@ -817,3 +817,4 @@ class KPIEvolutionEngine:
             return []
             
         return [kpi.to_dict() for kpi in self.agent_kpis[agent_id]]
+

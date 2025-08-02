@@ -454,6 +454,9 @@ class DigitalTwin:
     def identify_motivation_triggers(self, assessment: dict[str, Any]) -> list[str]:
         """Identify what motivates the student."""
         triggers = []
+        
+        # Get age from assessment or use default
+        age = assessment.get("age", 12)  # Default to 12 if age not provided
 
         # Analyze responses for motivation indicators
         responses_text = " ".join(assessment.get("responses", {}).values()).lower()

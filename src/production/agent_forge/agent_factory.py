@@ -15,6 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts.refactor_agent_forge import BaseMetaAgent, AgentSpecialization, AgentRole
 
+
 class AgentFactory:
     """Factory for creating agents from templates."""
 

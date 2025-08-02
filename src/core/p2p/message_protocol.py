@@ -5,12 +5,13 @@ import json
 import logging
 import time
 import uuid
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any, Union, Set
 from dataclasses import dataclass, asdict
 from enum import Enum
 import struct
 
 logger = logging.getLogger(__name__)
+
 
 class MessageType(Enum):
     """Standard message types for P2P communication"""
@@ -27,7 +28,7 @@ class MessageType(Enum):
     
     # Evolution coordination
     EVOLUTION_START = "EVOLUTION_START"
-    EVOLUTION_PROGRESS = "EVOLUTION_PROGRESS" 
+    EVOLUTION_PROGRESS = "EVOLUTION_PROGRESS"
     EVOLUTION_COMPLETE = "EVOLUTION_COMPLETE"
     EVOLUTION_REQUEST_HELP = "EVOLUTION_REQUEST_HELP"
     EVOLUTION_OFFER_HELP = "EVOLUTION_OFFER_HELP"
@@ -52,6 +53,7 @@ class MessageType(Enum):
     # Error handling
     ERROR = "ERROR"
     ACKNOWLEDGMENT = "ACK"
+
 
 class MessagePriority(Enum):
     """Message priority levels"""
@@ -143,6 +145,7 @@ class EvolutionMessage:
     def should_retry(self) -> bool:
         """Check if message should be retried"""
         return self.retry_count < self.max_retries and not self.is_expired()
+
 
 class MessageProtocol:
     """Evolution-aware message protocol handler"""
@@ -417,8 +420,8 @@ class MessageProtocol:
                     'listen_port': self.p2p_node.listen_port
                 },
                 'capabilities': (
-                    self.p2p_node.local_capabilities.__dict__ 
-                    if self.p2p_node.local_capabilities 
+                    self.p2p_node.local_capabilities.__dict__
+                    if self.p2p_node.local_capabilities
                     else {}
                 )
             }
@@ -503,7 +506,7 @@ class MessageProtocol:
         """Register custom message handler"""
         self.message_handlers[message_type] = handler
         
-    async def send_evolution_message(self, 
+    async def send_evolution_message(self,
                                    message_type: MessageType,
                                    recipient_id: Optional[str],
                                    data: Dict[str, Any],
@@ -557,3 +560,4 @@ class MessageProtocol:
             'message_queue_size': self.message_queue.qsize(),
             'retry_queue_size': self.retry_queue.qsize()
         }
+
