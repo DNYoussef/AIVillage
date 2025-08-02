@@ -65,7 +65,10 @@ def demonstrate_cleanup():
             "testing*.md", "BRANCHING_STRATEGY.md"
         ],
         "Reference (docs/reference/)": [
-            "roadmap.md", "TODO_1.md", "feature_matrix_1.md"
+            "roadmap.md", "TODO_1.md"
+        ],
+        "Root Docs (docs/)": [
+            "feature_matrix.md"
         ]
     }
 

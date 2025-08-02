@@ -54,7 +54,7 @@ class DocumentationCleanup:
                 'SMOKE_TEST_INTEGRATION.md'
             ],
             'docs/reference/': [
-                'TODO_1.md', 'roadmap.md', 'feature_matrix_1.md', 'benchmark_results.md',
+                'TODO_1.md', 'roadmap.md', 'benchmark_results.md',
                 'DIRECTORY_STRUCTURE_1.md', 'ENTRY_POINTS.md', 'ENTRY_POINT_MAPPING_1.md'
             ],
             'deprecated/old_reports/': [
@@ -322,7 +322,7 @@ Development workflows, testing, and contribution guidelines.
 ### 📋 Reference
 Reference materials, roadmaps, and administrative documentation.
     - [Project Roadmap](reference/roadmap.md)
-    - [Feature Matrix](reference/feature_matrix_1.md)
+    - [Feature Matrix](../feature_matrix.md)
     - [Directory Structure](reference/DIRECTORY_STRUCTURE_1.md)
     - [TODO List](reference/TODO_1.md)
 
