@@ -1,0 +1,27 @@
+{
+  "agent_id": "sustainer",
+  "specification": {
+    "name": "Sustainer",
+    "description": "Resource management and efficiency agent",
+    "primary_capabilities": [
+      "resource_management",
+      "efficiency_optimization",
+      "capacity_planning"
+    ],
+    "secondary_capabilities": [
+      "load_balancing",
+      "usage_tracking"
+    ],
+    "behavioral_traits": {
+      "frugality": "high",
+      "patience": "medium",
+      "predictability": "high"
+    },
+    "resource_requirements": {
+      "cpu": "medium",
+      "memory": "low",
+      "network": "medium",
+      "storage": "medium"
+    }
+  }
+}

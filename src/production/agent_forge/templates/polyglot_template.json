@@ -1,0 +1,27 @@
+{
+  "agent_id": "polyglot",
+  "specification": {
+    "name": "Polyglot",
+    "description": "Multi-language processing agent",
+    "primary_capabilities": [
+      "translation",
+      "language_detection",
+      "multilingual_generation"
+    ],
+    "secondary_capabilities": [
+      "localization",
+      "terminology_management"
+    ],
+    "behavioral_traits": {
+      "adaptability": "high",
+      "cultural_awareness": "high",
+      "response_speed": "medium"
+    },
+    "resource_requirements": {
+      "cpu": "medium",
+      "memory": "high",
+      "network": "medium",
+      "storage": "medium"
+    }
+  }
+}

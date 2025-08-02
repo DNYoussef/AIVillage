@@ -1,0 +1,27 @@
+{
+  "agent_id": "oracle",
+  "specification": {
+    "name": "Oracle",
+    "description": "Prediction and forecasting agent",
+    "primary_capabilities": [
+      "prediction",
+      "forecasting",
+      "trend_analysis"
+    ],
+    "secondary_capabilities": [
+      "scenario_modeling",
+      "risk_projection"
+    ],
+    "behavioral_traits": {
+      "foresight": "high",
+      "confidence": "measured",
+      "tempo": "deliberate"
+    },
+    "resource_requirements": {
+      "cpu": "medium",
+      "memory": "medium",
+      "network": "medium",
+      "storage": "medium"
+    }
+  }
+}
