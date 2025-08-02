@@ -8,6 +8,7 @@ Welcome to the AIVillage documentation. This directory contains comprehensive do
 Core system architecture, design decisions, and component relationships.
 - [System Overview](architecture/system_overview.md)
 - [Architecture Documentation](architecture/architecture.md)
+- [Current System Architecture](architecture.md)
 - [Design Documents](architecture/design/)
 
 ### 📚 Guides
@@ -37,7 +38,7 @@ Development workflows, testing, and contribution guidelines.
 ### 📋 Reference
 Reference materials, roadmaps, and administrative documentation.
 - [Project Roadmap](reference/roadmap.md)
-- [Feature Matrix](reference/feature_matrix_1.md)
+- [Feature Matrix](feature_matrix.md)
 - [Directory Structure](reference/DIRECTORY_STRUCTURE_1.md)
 - [TODO List](reference/TODO_1.md)
 
