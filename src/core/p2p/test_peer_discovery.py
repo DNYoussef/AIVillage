@@ -1,4 +1,8 @@
+import json
+import socket
+import threading
 import time
+
 import pytest
 
 from .peer_discovery import PeerDiscovery
@@ -43,3 +47,68 @@ async def test_retry_targets() -> None:
     targets = discovery._get_retry_targets()
     assert ("3.3.3.3", 9000) in targets
     assert ("3.3.3.3", 9000) not in discovery.failed_peers
+
+
+def _start_discovery_server(host: str, port: int, stop_event: threading.Event) -> None:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind((host, port))
+    sock.listen()
+    sock.settimeout(1)
+    while not stop_event.is_set():
+        try:
+            conn, _ = sock.accept()
+        except socket.timeout:
+            continue
+        with conn:
+            length_data = conn.recv(4)
+            if len(length_data) != 4:
+                continue
+            length = int.from_bytes(length_data, "big")
+            _ = conn.recv(length)
+            response = {
+                "sender_id": "peer",
+                "peer_info": {},
+                "capabilities": {},
+            }
+            resp_bytes = json.dumps(response).encode("utf-8")
+            conn.send(len(resp_bytes).to_bytes(4, "big") + resp_bytes)
+    sock.close()
+
+
+def test_discovery_delivery_rate_and_latency() -> None:
+    stop_event = threading.Event()
+    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_sock.bind(("127.0.0.1", 0))
+    host, port = server_sock.getsockname()
+    server_sock.close()
+
+    server_thread = threading.Thread(
+        target=_start_discovery_server, args=(host, port, stop_event), daemon=True
+    )
+    server_thread.start()
+    time.sleep(0.1)
+
+    node = DummyNode()
+    discovery = PeerDiscovery(node)
+
+    attempts = 20
+    successes = 0
+    latencies: list[float] = []
+
+    for _ in range(attempts):
+        start = time.perf_counter()
+        discovery._discover_peer_sync(host, port)
+        elapsed = time.perf_counter() - start
+        if discovery.stats["peers_discovered"] > successes:
+            successes += 1
+            latencies.append(elapsed)
+
+    stop_event.set()
+    server_thread.join(timeout=1)
+
+    success_rate = successes / attempts
+    avg_latency = sum(latencies) / len(latencies)
+
+    assert success_rate >= 0.99
+    assert avg_latency < 0.1
