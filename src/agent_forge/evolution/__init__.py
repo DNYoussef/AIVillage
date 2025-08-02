@@ -1,4 +1,5 @@
-"""Agent Evolution System - Self-Evolving 18-Agent Ecosystem
+# ruff: noqa: N999,RUF022
+"""Agent Evolution System - Self-Evolving 18-Agent Ecosystem.
 
 The core differentiator of the Atlantis vision - a fully autonomous, self-improving
 agent ecosystem that evolves through genetic algorithms, meta-learning, and safe
@@ -20,10 +21,9 @@ This system implements:
 6. Comprehensive evolution analytics and reporting
 """
 
+import asyncio
 import logging
-
-logger = logging.getLogger(__name__)
-"""
+from pathlib import Path
 
 from .agent_evolution_engine import (
     AgentEvolutionEngine,
@@ -64,6 +64,8 @@ from .safe_code_modifier import (
     SafetyPolicy,
     SandboxEnvironment,
 )
+
+logger = logging.getLogger(__name__)
 
 __version__ = "1.0.0"
 
@@ -109,18 +111,17 @@ __all__ = [
 async def initialize_evolution_system(
     evolution_data_path: str = "evolution_data",
     population_size: int = 18,
+    *,
     auto_evolution: bool = True,
     safety_mode: bool = True,
-    dashboard_port: int = 5000,
 ) -> EvolutionOrchestrator:
-    """Quick initialization of the complete evolution system
+    """Quick initialization of the complete evolution system.
 
     Args:
         evolution_data_path: Path for storing evolution data
         population_size: Size of agent population (default: 18)
         auto_evolution: Enable automatic evolution cycles
         safety_mode: Enable safety restrictions for code modifications
-        dashboard_port: Port for evolution dashboard
 
     Returns:
         Configured EvolutionOrchestrator ready to start
@@ -149,7 +150,7 @@ async def initialize_evolution_system(
 async def quick_evolution_cycle(
     orchestrator: EvolutionOrchestrator, generations: int = 1
 ) -> dict:
-    """Run a quick evolution cycle"""
+    """Run a quick evolution cycle."""
     return await orchestrator.trigger_evolution(generations=generations)
 
 
@@ -158,21 +159,28 @@ async def apply_agent_optimization(
     agent_id: str,
     optimization_type: str = "hyperparameter_tuning",
 ) -> dict:
-    """Apply optimization to a specific agent"""
-    from .safe_code_modifier import CodeTransformations
-
+    """Apply optimization to a specific agent."""
     if optimization_type == "hyperparameter_tuning":
-        def transformer(code): return CodeTransformations.optimize_hyperparameters(
-            code, {"learning_rate": 0.001, "batch_size": 32}
-        )
+
+        def transformer(code: str) -> str:
+            return CodeTransformations.optimize_hyperparameters(
+                code,
+                {"learning_rate": 0.001, "batch_size": 32},
+            )
+
     elif optimization_type == "error_handling":
-        def transformer(code): return CodeTransformations.add_error_handling(
-            code, ["train", "predict", "evaluate"]
-        )
+
+        def transformer(code: str) -> str:
+            return CodeTransformations.add_error_handling(
+                code,
+                ["train", "predict", "evaluate"],
+            )
+
     elif optimization_type == "documentation":
         transformer = CodeTransformations.improve_documentation
     else:
-        raise ValueError(f"Unknown optimization type: {optimization_type}")
+        message = f"Unknown optimization type: {optimization_type}"
+        raise ValueError(message)
 
     return await orchestrator.apply_safe_modification(
         agent_id=agent_id,
@@ -184,24 +192,19 @@ async def apply_agent_optimization(
 
 
 def get_evolution_status(orchestrator: EvolutionOrchestrator) -> dict:
-    """Get current evolution system status (sync wrapper)"""
-    import asyncio
-
+    """Get current evolution system status (sync wrapper)."""
     return asyncio.run(orchestrator.get_orchestration_status())
 
 
 # Integration helpers for existing agent forge
 class EvolutionIntegrator:
-    """Helper class for integrating evolution system with existing agent forge"""
+    """Helper class for integrating evolution system with existing agent forge."""
 
-    def __init__(self, orchestrator: EvolutionOrchestrator):
+    def __init__(self, orchestrator: EvolutionOrchestrator) -> None:
         self.orchestrator = orchestrator
 
-    async def integrate_with_agent_forge(self, agent_forge_path: str):
-        """Integrate evolution system with existing agent forge"""
-        import importlib.util
-        from pathlib import Path
-
+    async def integrate_with_agent_forge(self, agent_forge_path: str) -> None:
+        """Integrate evolution system with existing agent forge."""
         forge_path = Path(agent_forge_path)
 
         # Find existing agents
@@ -213,7 +216,7 @@ class EvolutionIntegrator:
                 agent_id = agent_file.stem
 
                 # Read agent code
-                with open(agent_file) as f:
+                with agent_file.open() as f:
                     agent_code = f.read()
 
                 # Create initial genome
@@ -234,10 +237,8 @@ class EvolutionIntegrator:
                 # Add to population
                 self.orchestrator.evolution_engine.agent_population.append(genome)
 
-    async def export_evolved_agents(self, output_path: str):
-        """Export evolved agents back to agent forge format"""
-        from pathlib import Path
-
+    async def export_evolved_agents(self, output_path: str) -> None:
+        """Export evolved agents back to agent forge format."""
         output_dir = Path(output_path)
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -284,20 +285,22 @@ class {genome.agent_id.replace("-", "_").title()}Agent:
             'task_type': task.get('type', 'unknown'),
             'result': 'processed',
             'confidence': 0.85,
-            'specialization_applied': list(self.specialization.get('focus_areas', {{}}).keys())
-        }}
+              'specialization_applied': list(
+                  self.specialization.get('focus_areas', {{}}).keys()
+              )
+          }}
 
-        return result
+          return result
 
-    def get_agent_info(self) -> Dict[str, Any]:
-        """Get agent information"""
-        return {{
-            'agent_id': self.agent_id,
-            'generation': self.generation,
-            'fitness_score': 0.8,  # Would be actual fitness
-            'specialization': self.specialization,
-            'behavior_weights': self.behavior_weights
-        }}
+      def get_agent_info(self) -> Dict[str, Any]:
+          """Get agent information."""
+          return {{
+              'agent_id': self.agent_id,
+              'generation': self.generation,
+              'fitness_score': 0.8,  # Would be actual fitness
+              'specialization': self.specialization,
+              'behavior_weights': self.behavior_weights
+          }}
 
 
 # Factory function for creating agent instance
@@ -305,11 +308,13 @@ def create_agent():
     return {genome.agent_id.replace("-", "_").title()}Agent()
 '''
 
-            with open(agent_file, "w") as f:
+            with agent_file.open("w") as f:
                 f.write(agent_code)
 
         logger.info(
-            f"Exported {len(self.orchestrator.evolution_engine.agent_population)} evolved agents to {output_dir}"
+            "Exported %d evolved agents to %s",
+            len(self.orchestrator.evolution_engine.agent_population),
+            output_dir,
         )
 
 
@@ -324,7 +329,7 @@ if __name__ == "__main__":
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    async def main():
+    async def main() -> None:
         # Initialize evolution system
         orchestrator = await initialize_evolution_system(
             evolution_data_path="test_evolution_data",
