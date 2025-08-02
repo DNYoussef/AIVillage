@@ -19,23 +19,24 @@ class AgentFactory:
     """Factory for creating agents from templates."""
 
     def __init__(self, template_dir: str = "production/agent_forge/templates"):
+        """Initialize the factory and load templates."""
         self.template_dir = Path(template_dir)
         self.templates = self._load_templates()
         self.agent_classes = self._initialize_agent_classes()
 
     def _load_templates(self) -> Dict[str, Dict[str, Any]]:
-        """Load all agent templates."""
-        templates = {}
+        """Load all agent templates from the agents directory."""
+        templates: Dict[str, Dict[str, Any]] = {}
+        agents_dir = self.template_dir / "agents"
 
-        for template_file in self.template_dir.glob("*_template.json"):
-            if template_file.stem != "master_config":
-                try:
-                    with open(template_file, 'r') as f:
-                        template = json.load(f)
-                    agent_id = template_file.stem.replace("_template", "")
-                    templates[agent_id] = template
-                except Exception as e:
-                    print(f"Error loading template {template_file}: {e}")
+        for template_file in agents_dir.glob("*.json"):
+            try:
+                with open(template_file, "r") as f:
+                    template = json.load(f)
+                agent_id = template_file.stem
+                templates[agent_id] = template
+            except Exception as e:
+                print(f"Error loading template {template_file}: {e}")
 
         return templates
 
@@ -193,33 +194,33 @@ class AgentFactory:
     def _create_generic_agent_class(self, agent_id: str) -> type:
         """Create a generic agent class for the given agent ID."""
         template = self.templates.get(agent_id, {})
-        spec = template.get("specification", {})
+        default_params = template.get("default_params", {})
 
         class GenericAgent(BaseMetaAgent):
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
+            def __init__(self, spec: AgentSpecialization):
+                super().__init__(spec)
                 self.agent_type = agent_id
-                self.capabilities = spec.get("primary_capabilities", [])
+                self.config = default_params.copy()
 
             def process(self, task: Dict[str, Any]) -> Dict[str, Any]:
-                # Generic processing based on capabilities
                 return {
                     "status": "completed",
                     "agent": self.agent_type,
-                    "result": f"Processed by {spec.get('name', agent_id)}",
-                    "capabilities_used": self.capabilities[:3]  # Show first 3 capabilities
+                    "result": f"Processed by {template.get('name', agent_id)}",
                 }
 
             def evaluate_kpi(self) -> Dict[str, float]:
-                # Generic KPI evaluation
                 if not self.performance_history:
                     return {"performance": 0.7}
 
                 success_rate = sum(
-                    1 for p in self.performance_history if p.get('success', False)
+                    1 for p in self.performance_history if p.get("success", False)
                 ) / len(self.performance_history)
 
-                return {"success_rate": success_rate, "performance": success_rate * 0.8 + 0.2}
+                return {
+                    "success_rate": success_rate,
+                    "performance": success_rate * 0.8 + 0.2,
+                }
 
         return GenericAgent
 
@@ -231,29 +232,29 @@ class AgentFactory:
         template = self.templates[agent_type]
         agent_class = self.agent_classes[agent_type]
 
-        # Create specialization from template
         try:
             role = AgentRole(agent_type)
         except ValueError:
-            # Create dynamic role if not in enum
             role = agent_type
 
         spec = AgentSpecialization(
             role=role,
-            primary_capabilities=template["specification"]["primary_capabilities"],
-            secondary_capabilities=template["specification"]["secondary_capabilities"],
+            primary_capabilities=[],
+            secondary_capabilities=[],
             performance_metrics={},
-            resource_requirements=template["specification"]["resource_requirements"]
+            resource_requirements={},
         )
 
-        # Apply custom config if provided
+        params = template.get("default_params", {}).copy()
         if config:
-            # Merge configurations
-            if "resource_requirements" in config:
-                spec.resource_requirements.update(config["resource_requirements"])
+            params.update(config)
 
-        # Create agent instance
         agent = agent_class(spec)
+        # Attach configuration and metadata
+        agent.config = getattr(agent, "config", {})
+        agent.config.update(params)
+        agent.name = template.get("name", agent_type)
+        agent.role_description = template.get("role", "")
 
         return agent
 
@@ -262,13 +263,13 @@ class AgentFactory:
         agents = []
 
         for agent_id, template in self.templates.items():
-            spec = template["specification"]
-            agents.append({
-                "id": agent_id,
-                "name": spec["name"],
-                "description": spec["description"],
-                "primary_capabilities": spec["primary_capabilities"]
-            })
+            agents.append(
+                {
+                    "id": agent_id,
+                    "name": template.get("name", agent_id),
+                    "role": template.get("role", ""),
+                }
+            )
 
         return agents
 
@@ -277,4 +278,4 @@ class AgentFactory:
         if agent_type not in self.templates:
             raise ValueError(f"Unknown agent type: {agent_type}")
 
-        return self.templates[agent_type]["specification"]
+        return self.templates[agent_type]
