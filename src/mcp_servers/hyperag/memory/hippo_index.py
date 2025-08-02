@@ -7,8 +7,9 @@ of recent episodic information with time-based decay and PPR access patterns.
 from datetime import datetime, timedelta
 import json
 import logging
+import os
 import time
-from typing import Any
+from typing import Any, TYPE_CHECKING
 import uuid
 
 import duckdb
@@ -29,6 +30,9 @@ from .base import (
     QueryResult,
 )
 from .schemas import HippoSchema, QdrantSchema, RedisSchema
+
+if TYPE_CHECKING:  # pragma: no cover - type checking only
+    from .consolidator import MemoryConsolidator
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +96,7 @@ class HippoIndex(MemoryBackend):
         redis_url: str = "redis://localhost:6379",
         qdrant_url: str = "http://localhost:6333",
         embedding_dim: int = 768,
+        consolidator: "MemoryConsolidator | None" = None,
     ):
         self.db_path = db_path
         self.redis_url = redis_url
@@ -103,6 +108,7 @@ class HippoIndex(MemoryBackend):
         self.redis_client: redis.Redis | None = None
         self.qdrant_client: QdrantClient | None = None
         self.embedding_manager = EmbeddingManager(embedding_dim)
+        self.consolidator: "MemoryConsolidator | None" = consolidator
 
         # Schemas
         self.schema = HippoSchema()
@@ -113,6 +119,10 @@ class HippoIndex(MemoryBackend):
         self.cache_ttl = self.redis_schema.get_ttl_configs()
 
         logger.info("HippoIndex initialized with db_path=%s", db_path)
+
+    def set_consolidator(self, consolidator: "MemoryConsolidator") -> None:
+        """Attach a consolidator instance for tracking consolidation stats."""
+        self.consolidator = consolidator
 
     async def initialize(self) -> None:
         """Initialize all backend connections and schemas."""
@@ -624,9 +634,17 @@ class HippoIndex(MemoryBackend):
             edge_count = self.duckdb_conn.execute("""
                 SELECT COUNT(*) FROM hippo_edges
             """).fetchone()[0]
-
-            # Get last consolidation (would come from consolidation system)
-            last_consolidation = None  # TODO: Implement when consolidator is ready
+            memory_usage_mb = self._calculate_memory_usage_mb()
+            last_consolidation = (
+                self.consolidator.last_consolidation
+                if self.consolidator is not None
+                else None
+            )
+            pending_consolidations = (
+                self.consolidator.pending_consolidations
+                if self.consolidator is not None
+                else 0
+            )
 
             return MemoryStats(
                 total_nodes=node_stats[0] or 0,
@@ -634,9 +652,9 @@ class HippoIndex(MemoryBackend):
                 episodic_nodes=node_stats[1] or 0,
                 semantic_nodes=0,  # HippoIndex only handles episodic
                 avg_confidence=node_stats[2] or 0.0,
-                memory_usage_mb=0.0,  # TODO: Calculate actual usage
+                memory_usage_mb=memory_usage_mb,
                 last_consolidation=last_consolidation,
-                pending_consolidations=0,  # TODO: Implement
+                pending_consolidations=pending_consolidations,
             )
 
         except Exception as e:
@@ -653,6 +671,37 @@ class HippoIndex(MemoryBackend):
             )
 
     # Private helper methods
+
+    def _calculate_memory_usage_mb(self) -> float:
+        """Calculate DuckDB database size in megabytes."""
+        try:
+            if self.duckdb_conn is None:
+                return 0.0
+            if self.db_path != ":memory:" and os.path.exists(self.db_path):
+                return os.path.getsize(self.db_path) / (1024 * 1024)
+            size_info = self.duckdb_conn.execute("PRAGMA database_size").fetchone()
+            if size_info and len(size_info) > 7:
+                return self._parse_size_to_mb(size_info[7])
+        except Exception as e:
+            logger.warning("Failed to calculate memory usage: %s", e)
+        return 0.0
+
+    @staticmethod
+    def _parse_size_to_mb(size_str: str) -> float:
+        """Convert DuckDB size string (e.g., '10.0 KiB') to megabytes."""
+        try:
+            value, unit = size_str.split()
+            factors = {
+                "bytes": 1,
+                "KiB": 1024,
+                "MiB": 1024**2,
+                "GiB": 1024**3,
+                "TiB": 1024**4,
+            }
+            size_bytes = float(value) * factors.get(unit, 1)
+            return size_bytes / (1024**2)
+        except Exception:
+            return 0.0
 
     async def _setup_duckdb_schema(self) -> None:
         """Set up DuckDB tables and indexes."""
