@@ -135,6 +135,14 @@ pytest tests/performance/
 pytest --cov=src
 ```
 
+## Security Scanning
+
+Run static analysis with [Bandit](https://bandit.readthedocs.io/):
+
+```bash
+bandit --ini .bandit -r src
+```
+
 ## Performance Benchmarking & Stress Testing
 
 Run all sprint benchmarks and aggregate their metrics:

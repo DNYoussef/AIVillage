@@ -1,0 +1,3 @@
+[bandit]
+exclude = tests,experimental,deprecated
+skips = B101,B601
