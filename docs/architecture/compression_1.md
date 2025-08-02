@@ -121,7 +121,7 @@
 ## Documentation Updates
 
 - [ ] Updated `docs/compression_guide.md`
-- [ ] Updated `docs/reference/feature_matrix_1.md`
+- [ ] Updated `docs/feature_matrix.md`
 - [ ] Updated `README.md` if necessary
 - [ ] Added/updated API documentation
 - [ ] Updated benchmark results documentation

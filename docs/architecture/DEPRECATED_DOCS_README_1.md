@@ -22,7 +22,7 @@ For accurate project status, refer to:
 - `README.md` - Current implementation status and realistic percentages
 - `docs/architecture.md` - Actual architecture and component readiness
 - `docs/reference/roadmap.md` - Realistic development roadmap
-- `docs/reference/feature_matrix_1.md` - Feature completion matrix
+- `docs/feature_matrix.md` - Feature completion matrix
 
 ## Archive Date
 Archived: 2025-07-31

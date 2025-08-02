@@ -41,13 +41,13 @@ This document tracks all documentation fixes and integrity improvements made dur
 **Issue**: Mesh networking documented as 20% complete, actually 95% complete
 **Impact**: Major capability hidden, prevents leveraging existing infrastructure
 **Fix Applied**: Updated status across multiple documents:
-- `docs/reference/feature_matrix_1.md`: 20% → 95%
+- `docs/feature_matrix.md`: 20% → 95%
 - `SPRINT_1-5_FINAL_ASSESSMENT.md`: 15% → 95%
 - Added comprehensive documentation of actual capabilities
 
 **Evidence**: 768-line `mesh_network_manager.py` with production-ready P2P system
 **Files Modified**: 
-- `docs/reference/feature_matrix_1.md`
+- `docs/feature_matrix.md`
 - `SPRINT_1-5_FINAL_ASSESSMENT.md`
 
 ### 4. **Testing Framework Mismatch** ✅ FIXED
@@ -123,7 +123,7 @@ This document tracks all documentation fixes and integrity improvements made dur
 
 ### **Documentation Updates**
 - `docs/architecture/index_1.md` - Fixed broken links
-- `docs/reference/feature_matrix_1.md` - Updated mesh networking status
+- `docs/feature_matrix.md` - Updated mesh networking status
 - `SPRINT_1-5_FINAL_ASSESSMENT.md` - Corrected infrastructure assessment
 - `CONTRIBUTING.md` - Fixed testing framework instructions
 
