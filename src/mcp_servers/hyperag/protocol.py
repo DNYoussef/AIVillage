@@ -352,8 +352,13 @@ class MCPProtocolHandler:
     ) -> dict[str, Any]:
         """Handle add knowledge request."""
         node_id = str(uuid.uuid4())
+        if not self.storage_backend:
+            raise InternalError("Storage backend not configured")
 
-        # TODO: Implement actual storage
+        await self.storage_backend.add_knowledge(
+            node_id, content, content_type, metadata
+        )
+
         return {
             "node_id": node_id,
             "status": "success",
@@ -371,18 +376,18 @@ class MCPProtocolHandler:
         **kwargs,
     ) -> dict[str, Any]:
         """Handle search knowledge request."""
-        # Mock search results
-        results = [
-            {
-                "id": f"node_{i}",
-                "content": f"Search result {i} for: {query}",
-                "relevance": 0.9 - (i * 0.1),
-                "metadata": {"type": "document"},
-            }
-            for i in range(min(limit, 3))
-        ]
+        if not self.storage_backend:
+            raise InternalError("Storage backend not configured")
 
-        return {"results": results, "total_count": len(results), "query": query}
+        results = await self.storage_backend.search_knowledge(
+            query, limit, filters
+        )
+
+        return {
+            "results": results,
+            "total_count": len(results),
+            "query": query,
+        }
 
     @require_permission(HypeRAGPermissions.WRITE)
     @audit_operation("update_knowledge")
@@ -395,7 +400,13 @@ class MCPProtocolHandler:
         **kwargs,
     ) -> dict[str, Any]:
         """Handle update knowledge request."""
-        # TODO: Implement actual update
+        if not self.storage_backend:
+            raise InternalError("Storage backend not configured")
+
+        await self.storage_backend.update_knowledge(
+            node_id, content=content, metadata=metadata
+        )
+
         return {
             "node_id": node_id,
             "status": "success",
@@ -408,7 +419,11 @@ class MCPProtocolHandler:
         self, context: AuthContext, node_id: str, **kwargs
     ) -> dict[str, Any]:
         """Handle delete knowledge request."""
-        # TODO: Implement actual deletion
+        if not self.storage_backend:
+            raise InternalError("Storage backend not configured")
+
+        await self.storage_backend.delete_knowledge(node_id)
+
         return {
             "node_id": node_id,
             "status": "success",

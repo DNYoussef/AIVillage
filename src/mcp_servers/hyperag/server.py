@@ -23,6 +23,7 @@ from .auth import (
 )
 from .models import ModelRegistry
 from .protocol import MCPProtocolHandler, MCPRequest
+from .storage import SQLiteStorage
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ class HypeRAGMCPServer:
         self.config = {}
         self.permission_manager: PermissionManager | None = None
         self.model_registry: ModelRegistry | None = None
+        self.storage_backend: SQLiteStorage | None = None
         self.protocol_handler: MCPProtocolHandler | None = None
         self.server = None
         self.start_time = time.time()
@@ -61,11 +63,14 @@ class HypeRAGMCPServer:
         # Initialize model registry
         self.model_registry = ModelRegistry()
 
+        # Initialize storage backend
+        self.storage_backend = SQLiteStorage()
+
         # Initialize protocol handler
         self.protocol_handler = MCPProtocolHandler(
             permission_manager=self.permission_manager,
             model_registry=self.model_registry,
-            storage_backend=None,  # TODO: Initialize storage backend
+            storage_backend=self.storage_backend,
         )
 
         # Set start time for metrics
