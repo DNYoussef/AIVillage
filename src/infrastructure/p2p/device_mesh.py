@@ -209,10 +209,33 @@ class DeviceMesh:
             logger.debug("Bluetooth not available for discovery")
             return []
 
-        # Simplified Bluetooth discovery (would need bluetooth library)
-        # For now, return empty list
-        logger.debug("Bluetooth discovery not yet implemented")
-        return []
+        # Check for bleak library availability
+        bleak_client_cls = getattr(self, "_bleak_client", None)
+        if bleak_client_cls is None:
+            logger.debug("Bleak library not available for Bluetooth discovery")
+            return []
+
+        try:
+            # Import bleak components for discovery
+            import bleak
+            
+            discovered_devices = []
+            
+            # Scan for nearby Bluetooth Low Energy devices
+            async with bleak.BleakScanner() as scanner:
+                devices = await scanner.discover(timeout=10.0)
+                
+                for device in devices:
+                    if device.name and device.address:
+                        discovered_devices.append((device.address, device.name))
+                        logger.debug(f"Discovered Bluetooth device: {device.name} ({device.address})")
+            
+            logger.info(f"Bluetooth discovery found {len(discovered_devices)} devices")
+            return discovered_devices
+            
+        except Exception as e:
+            logger.warning(f"Bluetooth discovery failed: {e}")
+            return []
 
     async def establish_mesh_connection(
         self, peer_addr: str, protocol: str = "auto"

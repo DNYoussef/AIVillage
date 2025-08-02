@@ -1,475 +1,189 @@
-name: Optimized CI Pipeline - Sprint 6
+name: Continuous Integration
 
-"on":
-  pull_request:
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-      - '*.txt'
-      - '.gitignore'
+on:
   push:
-    branches: [ "main" ]
-  schedule:
-    - cron: '0 2 * * *'  # 2 AM UTC daily
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  PYTHON_VERSION: '3.11'
-  POETRY_VERSION: '1.6.1'
-  NODE_VERSION: '18'
-  # Performance optimizations
-  PYTHONUNBUFFERED: 1
-  PYTHONDONTWRITEBYTECODE: 1
-  PIP_NO_CACHE_DIR: 0
-  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  PYTHON_VERSION: "3.10"
+  PYTHONPATH: ${{ github.workspace }}/src
 
 jobs:
-  # Fast pre-flight checks
-  pre-flight-check:
+  lint:
+    name: Code Quality & Linting
     runs-on: ubuntu-latest
-    outputs:
-      has-python-changes: ${{ steps.changes.outputs.python }}
-      has-production-changes: ${{ steps.changes.outputs.production }}
-      has-infrastructure-changes: ${{ steps.changes.outputs.infrastructure }}
-      python-cache-key: ${{ steps.cache-keys.outputs.python }}
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 2
-    
-    - name: Detect changes
-      uses: dorny/paths-filter@v2
-      id: changes
-      with:
-        filters: |
-          python:
-            - '**/*.py'
-            - 'requirements*.txt'
-            - 'pyproject.toml'
-          production:
-            - 'src/production/**'
-          infrastructure:
-            - 'src/infrastructure/**'
-            - 'requirements_sprint6.txt'
-    
-    - name: Generate cache keys
-      id: cache-keys
-      run: |
-        echo "python=${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements*.txt', 'pyproject.toml') }}" >> $GITHUB_OUTPUT
-    
-    - name: Repository Health Check
-      run: |
-        echo "=== Sprint 6 Repository Health ==="
-        echo "Python files: $(find . -name '*.py' -not -path './.*' | wc -l)"
-        echo "Production files: $(find src/production -name '*.py' 2>/dev/null | wc -l)"
-        echo "Infrastructure files: $(find src/infrastructure -name '*.py' 2>/dev/null | wc -l)"
-        echo "Test files: $(find . -name 'test_*.py' -o -name '*_test.py' | wc -l)"
-        echo "Workflow files: $(find .github/workflows -name '*.yml' | wc -l)"
-        echo ""
-        echo "=== Sprint 6 Dependencies ==="
-        ls -la requirements_sprint6.txt 2>/dev/null || echo "Sprint 6 requirements missing"
-        echo ""
-        echo "=== Key Directories ==="
-        ls -la src/ 2>/dev/null || echo "No src directory"
-        ls -la src/production/ 2>/dev/null || echo "No production directory"
-        ls -la src/infrastructure/ 2>/dev/null || echo "No infrastructure directory"
-
-  # Sprint 6 Infrastructure Tests
-  sprint6-infrastructure-test:
-    runs-on: ubuntu-latest
-    needs: pre-flight-check
-    if: needs.pre-flight-check.outputs.has-infrastructure-changes == 'true' || needs.pre-flight-check.outputs.has-production-changes == 'true'
-    strategy:
-      matrix:
-        test-suite: ['p2p-communication', 'resource-management', 'evolution-system']
-      fail-fast: false
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-        cache-dependency-path: |
-          requirements*.txt
-          pyproject.toml
-    
-    - name: Cache Sprint 6 dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/pip
-          ~/.cache/pypoetry
-        key: ${{ needs.pre-flight-check.outputs.python-cache-key }}-sprint6
-        restore-keys: |
-          ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-
-    
-    - name: Install Sprint 6 dependencies
-      run: |
-        python -m pip install --upgrade pip setuptools wheel
-        pip install -r requirements_sprint6.txt
-        pip install pytest pytest-asyncio pytest-timeout pytest-mock
-    
-    - name: Test P2P Communication
-      if: matrix.test-suite == 'p2p-communication'
-      run: |
-        echo "Testing P2P Communication Layer..."
-        python -c "
-        import sys
-        import os
-        sys.path.insert(0, os.getcwd())
-        try:
-            from src.production.communications.p2p import device_mesh, p2p_node, tensor_streaming
-            from src.infrastructure.p2p import device_mesh as infra_mesh
-            print('✅ P2P communication imports successful')
-        except ImportError as e:
-            print(f'❌ P2P import error: {e}')
-            sys.exit(1)
-        "
-    
-    - name: Test Resource Management
-      if: matrix.test-suite == 'resource-management'
-      run: |
-        echo "Testing Resource Management System..."
-        python -c "
-        import sys
-        import os
-        sys.path.insert(0, os.getcwd())
-        try:
-            from src.production.monitoring.mobile import device_profiler, resource_allocator
-            import psutil
-            print('✅ Resource management imports successful')
-            print(f'✅ System memory: {psutil.virtual_memory().available / (1024**3):.1f} GB available')
-        except ImportError as e:
-            print(f'❌ Resource management import error: {e}')
-            sys.exit(1)
-        "
-    
-    - name: Test Evolution System
-      if: matrix.test-suite == 'evolution-system'
-      run: |
-        echo "Testing Evolution System..."
-        python -c "
-        import sys
-        import os
-        sys.path.insert(0, os.getcwd())
-        try:
-            from src.production.agent_forge.evolution import dual_evolution_system, nightly_evolution_orchestrator
-            print('✅ Evolution system imports successful')
-        except ImportError as e:
-            print(f'❌ Evolution system import error: {e}')
-            sys.exit(1)
-        "
-
-  # Optimized core test runner
-  core-tests:
-    runs-on: ubuntu-latest
-    needs: pre-flight-check
-    if: needs.pre-flight-check.outputs.has-python-changes == 'true'
-    
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-        cache-dependency-path: |
-          requirements*.txt
-          pyproject.toml
-
-    - name: Cache dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/pip
-          vendor/wheels
-        key: ${{ needs.pre-flight-check.outputs.python-cache-key }}-core
-        restore-keys: |
-          ${{ runner.os }}-python-${{ env.PYTHON_VERSION }}-
-    
-    - name: Install dependencies (optimized)
-      run: |
-        python -m pip install --upgrade pip setuptools wheel
-        
-        # Install core dependencies first
-        pip install pytest pytest-cov pytest-xdist pytest-timeout pytest-mock
-        
-        # Install Sprint 6 dependencies
-        if [ -f "requirements_sprint6.txt" ]; then
-          echo "Installing Sprint 6 dependencies..."
-          pip install -r requirements_sprint6.txt || echo "Sprint 6 deps partially failed"
-        fi
-        
-        # Install development dependencies
-        if [ -f "requirements-dev.txt" ]; then
-          echo "Installing development dependencies..."
-          pip install -r requirements-dev.txt || echo "Dev deps partially failed"
-        fi
-        
-        # Verify critical installations
-        python -c "import torch, numpy, psutil, pydantic; print('✅ Critical dependencies installed')"
-
-    - name: Run core tests (optimized)
-      run: |
-        echo "=== Running Optimized Core Tests ==="
-        
-        # Run fast core tests first
-        if [ -d "tests/core" ]; then
-          echo "Running core communication tests..."
-          pytest tests/core/test_communication.py tests/core/test_evidencepack.py -v --tb=short --maxfail=5 -x || echo "Core tests completed with issues"
-        fi
-        
-        # Run basic message tests
-        if [ -f "tests/test_message.py" ]; then
-          echo "Running message tests..."
-          pytest tests/test_message.py -v --tb=short --maxfail=3 -x || echo "Message tests completed with issues"
-        fi
-        
-        # Run production integration tests if they exist
-        if [ -d "tests/production/integration" ]; then
-          echo "Running production integration tests..."
-          pytest tests/production/integration/ -v --tb=short --maxfail=3 --timeout=300 -x || echo "Integration tests completed with issues"
-        fi
-    
-    - name: Generate test summary
-      if: always()
-      run: |
-        echo "=== Test Summary ==="
-        echo "Core tests completed at $(date)"
-        echo "Python version: ${{ env.PYTHON_VERSION }}"
-        echo "Runner: ${{ runner.os }}"
-
-    - name: Upload coverage (if available)
-      if: hashFiles('coverage.xml') != ''
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        flags: core-tests
-        name: sprint6-core-coverage
-        fail_ci_if_error: false
-
-  # Simplified build job that doesn't fail the entire CI
-  build-check:
-    needs: test
-    runs-on: ubuntu-latest
-    if: success() || failure()  # Run even if tests fail
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Check Docker setup
-      id: docker-check
-      run: |
-        if [ -f "docker-compose.yml" ] || [ -f "docker-compose.yaml" ]; then
-          echo "has_docker=true" >> $GITHUB_OUTPUT
-          echo "Docker compose file found"
-        else
-          echo "has_docker=false" >> $GITHUB_OUTPUT
-          echo "No Docker compose file found"
-        fi
-
-    - name: Validate Docker setup (if available)
-      if: steps.docker-check.outputs.has_docker == 'true'
-      run: |
-        echo "=== Docker Compose Validation ==="
-        docker compose config || echo "Docker compose validation failed"
-
-        echo ""
-        echo "=== Available Services ==="
-        docker compose config --services 2>/dev/null || echo "No services defined"
-
-    - name: Build status summary
-      run: |
-        echo "=== Build Summary ==="
-        echo "Docker available: ${{ steps.docker-check.outputs.has_docker }}"
-        echo "Test job status: ${{ needs.test.result }}"
-        echo "Build check completed successfully"
-
-  # Security and quality checks
-  security-check:
-    runs-on: ubuntu-latest
-    if: always()  # Always run security checks
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Basic security scan
-        run: |
-          pip install safety bandit || echo "Security tools installation failed"
-
-          echo "=== Safety Check ==="
-          if which safety >/dev/null 2>&1; then
-            safety check --continue-on-error || echo "Safety check completed with warnings"
-          else
-            echo "Safety not available, skipping"
-          fi
-
-          echo ""
-          echo "=== Bandit Security Scan ==="
-          if which bandit >/dev/null 2>&1; then
-            bandit -r . -f json -o bandit-report.json || echo "Bandit scan completed"
-            bandit -r . || echo "Bandit scan completed with issues"
-          else
-            echo "Bandit not available, skipping"
-          fi
-
-      - name: Upload security report
-        if: hashFiles('bandit-report.json') != ''
-        uses: actions/upload-artifact@v3
-        with:
-          name: security-report
-          path: bandit-report.json
-
-  # Full Agent Forge pipeline test (nightly and on-demand)
-  full-pipeline-test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[full-pipeline]')
-    env:
-      FRONTIER_API_KEY: ${{ secrets.FRONTIER_API_KEY }}
-      WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
-      WANDB_PROJECT: "agent-forge-ci"
-    steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
-
+      
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-          cache: 'pip'
-
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt || echo "requirements.txt not found, installing basic deps"
-          pip install wandb torch transformers datasets huggingface_hub
-          pip install pytest pytest-cov  # For any post-pipeline tests
-
-      - name: Validate pipeline configuration
+          pip install -e ".[dev]"
+      
+      - name: Run Black formatter check
         run: |
-          echo "=== Pipeline Configuration Validation ==="
-          python run_full_agent_forge.py --dry-run --device cpu
-          echo "Configuration validation completed"
-
-      - name: Run full Agent Forge pipeline
+          black src/ tests/ --check --verbose --diff
+      
+      - name: Run Ruff linting
         run: |
-          echo "=== Starting Full Agent Forge Pipeline ==="
-          python run_full_agent_forge.py \
-            --no-deploy \
-            --device cpu \
-            --quick \
-            --timeout 5400 \
-            --benchmark-timeout 1800
-          echo "Pipeline execution completed"
-
-      - name: Run smoke test validation
+          ruff check src/ tests/ --output-format=github
+      
+      - name: Run isort import sorting check
         run: |
-          echo "=== Running Agent Forge Smoke Test ==="
-          python run_smoke_test.py \
-            --no-deploy \
-            --timeout 3600 \
-            --quick
-          echo "Smoke test completed"
+          isort src/ tests/ --check-only --diff --profile black
+      
+      - name: Run MyPy type checking
+        run: |
+          mypy src/ --ignore-missing-imports --show-error-codes
+        continue-on-error: true  # Allow to fail initially while fixing types
 
-      - name: Upload pipeline results
+  security:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit safety
+      
+      - name: Run Bandit security scan
+        run: |
+          bandit -r src/ -f json -o bandit-report.json || true
+          bandit -r src/ -f txt
+      
+      - name: Run Safety dependency check
+        run: |
+          safety check --json --output safety-report.json || true
+          safety check
+      
+      - name: Upload security reports
+        uses: actions/upload-artifact@v3
         if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        test-group: [unit, integration]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+      
+      - name: Run ${{ matrix.test-group }} tests
+        run: |
+          if [ "${{ matrix.test-group }}" == "unit" ]; then
+            pytest tests/unit -v --cov=src --cov-report=xml --cov-report=term-missing
+          elif [ "${{ matrix.test-group }}" == "integration" ]; then
+            pytest tests/integration -v --timeout=300
+          fi
+      
+      - name: Upload coverage to Codecov
+        if: matrix.test-group == 'unit'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          name: ${{ matrix.test-group }}-coverage
+          fail_ci_if_error: false
+
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: [lint, security, test]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+      
+      - name: Build package
+        run: |
+          python -m build
+      
+      - name: Check package integrity
+        run: |
+          twine check dist/*
+      
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: agent-forge-pipeline-results
-          path: |
-            benchmark_results/
-            agent_forge_outputs/
-            wandb/
-            agent_forge_pipeline_summary.json
-            *.log
+          name: build-artifacts
+          path: dist/
 
-      - name: Check pipeline success
+  status-summary:
+    name: Status Summary
+    runs-on: ubuntu-latest
+    needs: [lint, security, test, build]
+    if: always()
+    
+    steps:
+      - name: Generate status summary
         run: |
-          if [ -f "agent_forge_pipeline_summary.json" ]; then
-            echo "=== Pipeline Summary ==="
-            python -c "
-          import json
-          with open('agent_forge_pipeline_summary.json', 'r') as f:
-              summary = json.load(f)
-          print(f'Pipeline Status: {summary.get(\"pipeline_execution\", {}).get(\"status\", \"unknown\")}')
-          if 'benchmark_results' in summary:
-              model_averages = summary['benchmark_results'].get('model_averages', {})
-              if model_averages:
-                  best_model = max(model_averages, key=model_averages.get)
-                  best_score = model_averages[best_model]
-                  print(f'Best Model: {best_model} (Score: {best_score:.3f})')
-          "
-          else
-            echo "ERROR: Pipeline summary not found"
-            exit 1
-          fi
-
-      - name: Performance regression check
-        if: success()
-        run: |
-          echo "=== Performance Regression Check ==="
-          cat > regression_check.py << 'EOF'
-import json
-import os
-
-# Load results
-try:
-    with open('benchmark_results/agent_forge_model_comparison.json', 'r') as f:
-        results = json.load(f)
-
-    model_averages = results.get('model_averages', {})
-    if not model_averages:
-        print('No model averages found')
-        exit(0)
-
-    # Check against minimum thresholds
-    thresholds = {'MMLU': 0.40, 'GSM8K': 0.25, 'HumanEval': 0.15}
-    benchmark_data = results.get('benchmark_comparison', [])
-
-    if model_averages:
-        best_model = max(model_averages, key=model_averages.get)
-        print(f'Best model: {best_model} with average {model_averages[best_model]:.3f}')
-
-        # Check individual benchmarks
-        regressions = []
-        for benchmark_entry in benchmark_data:
-            benchmark = benchmark_entry.get('Benchmark', '')
-            if benchmark in thresholds and best_model in benchmark_entry:
-                score = benchmark_entry[best_model]
-                threshold = thresholds[benchmark]
-                if score < threshold:
-                    regressions.append(f'{benchmark}: {score:.3f} < {threshold:.3f}')
-
-        if regressions:
-            print('PERFORMANCE REGRESSIONS DETECTED:')
-            for regression in regressions:
-                print(f'  - {regression}')
-            # Don't fail CI for regressions, just warn
-            print('Regressions detected but not failing CI (alerts sent to W&B)')
-        else:
-            print('No performance regressions detected')
-
-except Exception as e:
-    print(f'Regression check failed: {e}')
-    # Don't fail CI for regression check issues
-EOF
-          python regression_check.py
-
-      - name: Cleanup
-        if: always()
-        run: |
-          echo "=== Cleanup ==="
-          # Clean up large files to save space
-          find . -name "*.pt" -size +100M -delete 2>/dev/null || true
-          find . -name "*.bin" -size +100M -delete 2>/dev/null || true
-          echo "Cleanup completed"
+          echo "## CI Pipeline Status Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY

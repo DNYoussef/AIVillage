@@ -1,0 +1,98 @@
+# TODO/FIXME/XXX Items Found in AIVillage
+
+## Overview
+This file contains all TODO, FIXME, XXX, HACK, BUG, and REFACTOR comments found in the src/ directory.
+
+## Summary
+- Total TODO-related comments found: 18
+- NotImplementedError placeholders: 11
+- Files with implementation gaps: Multiple
+
+## TODO Items by Category
+
+### 1. Agent Forge Orchestrator (src/agent_forge/forge_orchestrator.py)
+**Lines 83, 136-137, 390, 401, 919-992, 1026-1027**
+
+Key TODOs in the orchestration system:
+- Line 83: `todos: list[str] = Field(default_factory=list)` - TODO tracking system
+- Line 136: Detection pattern includes "TODO"
+- Line 137: Detection pattern includes "FIXME" 
+- Line 390: `result.todos.append(f"Implement {phase_type.value} module")`
+- Line 401: `result.todos.extend([...])`
+- Lines 919-992: Complete TODO collection and reporting system
+- Lines 1026-1027: TODO count reporting
+
+Status: **FUNCTIONAL** - This is actually a working TODO tracking system, not placeholder code.
+
+### 2. Memory System TODOs (src/mcp_servers/hyperag/memory/hypergraph_kg.py)
+**Lines 811-812**
+
+```python
+memory_usage_mb=0.0,  # TODO: Calculate actual usage
+last_consolidation=None,  # TODO: Track consolidation
+```
+
+Status: **NEEDS IMPLEMENTATION** - Missing memory usage calculation and consolidation tracking.
+
+### 3. Education System TODOs (src/hyperag/education/curriculum_graph.py)
+**Lines 784, 802**
+
+Spanish translations in curriculum data - these are NOT TODOs but Spanish words meaning "all":
+- Line 784: `"es": "Todos los seres vivos tienen necesidades"`
+- Line 802: `"es": "Todos los organismos tienen ciclos de vida"`
+
+Status: **FALSE POSITIVE** - These are legitimate Spanish content, not TODO items.
+
+## NotImplementedError Items
+
+### High Priority NotImplementedErrors
+
+1. **Tool Message Base Class** (src/agent_forge/utils/tool_message.py:9)
+   ```python
+   def handle(self):
+       raise NotImplementedError("This method should be implemented by subclasses")
+   ```
+   Status: **INTENTIONAL** - Abstract base class pattern
+
+2. **ADAS Resource Limits** (src/agent_forge/adas/adas.py:29-31)
+   ```python
+   raise NotImplementedError(
+       "'setrlimit' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-setrlimit"
+   )
+   ```
+   Status: **PLANNED FEATURE** - Part of Atlantis roadmap with GitHub issue tracking
+
+3. **EvoMerge Pipeline** (src/production/evolution/evomerge_pipeline.py:472)
+   ```python
+   raise NotImplementedError
+   ```
+   Status: **NEEDS INVESTIGATION** - Unfinished implementation
+
+4. **Relation Extraction** (src/production/rag/rag_system/utils/relation_extraction.py:7)
+   ```python
+   raise NotImplementedError(
+   ```
+   Status: **STUB** - Missing implementation
+
+5. **Evolution Merger** (src/production/evolution/evomerge/merger.py:121)
+   ```python
+   raise NotImplementedError(
+   ```
+   Status: **STUB** - Missing implementation
+
+## Recommendations
+
+### Immediate Fixes Required
+1. Implement memory usage calculation in hypergraph_kg.py
+2. Complete relation extraction utility
+3. Finish evolution merger implementation
+4. Investigate and complete evomerge_pipeline NotImplementedError
+
+### Planning Required
+1. ADAS setrlimit feature - continue tracking via GitHub issue
+2. Abstract base classes are intentionally not implemented
+
+### False Positives to Ignore
+1. Spanish language content in curriculum_graph.py
+2. Functional TODO tracking system in forge_orchestrator.py
+3. Debug logging statements (not placeholder code)

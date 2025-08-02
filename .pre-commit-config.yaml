@@ -1,238 +1,67 @@
-# Optimized Pre-commit Configuration for AIVillage Sprint 6
-# Run 'pre-commit install' to set up the git hook
-# Run 'pre-commit run --all-files' to run on all files
-# Performance optimized with parallel execution and smart file filtering
-
-default_language_version:
-  python: python3.11
-
-default_stages: [commit, push]
-
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v4.5.0
     hooks:
       - id: trailing-whitespace
-        stages: [commit]
-        exclude: '\.(md|txt|log)$'
+        args: [--markdown-linebreak-ext=md]
       - id: end-of-file-fixer
-        stages: [commit]
-        exclude: '\.(md|txt|log|json)$'
       - id: check-yaml
-        args: ['--allow-multiple-documents']
-        files: '\.(yml|yaml)$'
-        stages: [commit]
-      - id: check-json
-        files: '\.json$'
-        stages: [commit]
-      - id: check-toml
-        files: '\.toml$'
-        stages: [commit]
       - id: check-added-large-files
-        args: ['--maxkb=20000']  # Increased for Sprint 6 model files
-        stages: [commit]
+        args: [--maxkb=10000]
       - id: check-merge-conflict
-        stages: [commit]
+      - id: check-toml
       - id: debug-statements
-        files: '\.py$'
-        exclude: '^(tests/|scripts/debug_)'
-        stages: [commit]
       - id: mixed-line-ending
-        args: ['--fix=lf']
-        stages: [commit]
       - id: check-case-conflict
-        stages: [commit]
-      - id: check-executables-have-shebangs
-        stages: [commit]
-      - id: check-shebang-scripts-are-executable
-        stages: [commit]
+      - id: check-docstring-first
+      - id: check-json
+        exclude: ^(.*\.jsonc|mcp_config\.json)$
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.3
+  - repo: https://github.com/psf/black
+    rev: 24.1.0
+    hooks:
+      - id: black
+        args: [--line-length=120]
+        language_version: python3.10
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.1.11
     hooks:
       - id: ruff
-        name: "Ruff Linter (optimized)"
-        args: [--fix, --exit-non-zero-on-fix]
-        files: '^(src/|agent_forge/|tests/|scripts/|tools/|run_.*\.py).*\.py$'
-        exclude: '^(experimental/|deprecated/|archive/|docs/build_artifacts/)'
-        stages: [commit]
-      - id: ruff-format
-        name: "Ruff Formatter (optimized)"
-        files: '^(src/|agent_forge/|tests/|scripts/|tools/|run_.*\.py).*\.py$'
-        exclude: '^(experimental/|deprecated/|archive/|docs/build_artifacts/)'
-        stages: [commit]
+        args: [--fix, --exit-non-zero-on-fix, --line-length=120]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=120]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.0
+    rev: v1.8.0
     hooks:
       - id: mypy
-        name: "MyPy Type Checking (optimized)"
-        files: '^(src/production/|agent_forge/core/|run_.*\.py).*\.py$'
-        exclude: '^(tests/|experimental/|deprecated/)'
-        additional_dependencies: [torch, numpy, types-requests, types-PyYAML, pydantic, psutil]
-        args: [--ignore-missing-imports, --no-strict-optional, --follow-imports=silent]
-        stages: [push]  # Move to push stage for performance
+        additional_dependencies: [types-all]
+        args: [--ignore-missing-imports, --show-error-codes]
+        exclude: ^(tests/|deprecated/|experimental/)
 
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.8.6
+    rev: 1.7.5
     hooks:
       - id: bandit
-        name: "Security Scanner (optimized)"
-        args: [-r, --exclude, 'tests,experimental,deprecated', --skip, 'B101,B601']
-        files: '^(src/production/|agent_forge/).*\.py$'
-        stages: [push]  # Move to push stage for performance
+        args: [-r, src/, -f, txt, --skip, B101,B601]
+        exclude: ^(tests/|deprecated/|experimental/)
 
   - repo: local
     hooks:
-      # Sprint 6: Core Infrastructure Validation
-      - id: p2p-communication-check
-        name: P2P Communication Layer Validation
-        entry: python -c "
-import sys
-import os
-sys.path.insert(0, os.getcwd())
-try:
-    from src.production.communications.p2p import device_mesh, p2p_node, tensor_streaming
-    from src.infrastructure.p2p import device_mesh as infra_mesh
-    print('✅ P2P communication imports successful')
-except ImportError as e:
-    print(f'❌ P2P import error: {e}')
-    sys.exit(1)"
+      - id: check-placeholder-functions
+        name: Check for placeholder functions
+        entry: python scripts/check_placeholders.py
         language: system
-        files: '^(src/production/communications/p2p/|src/infrastructure/p2p/).*\.py$'
-        pass_filenames: false
-        stages: [commit]
-
-      - id: resource-management-check
-        name: Resource Management System Validation
-        entry: python -c "
-import sys
-import os
-sys.path.insert(0, os.getcwd())
-try:
-    from src.production.monitoring.mobile import device_profiler, resource_allocator
-    import psutil
-    print('✅ Resource management imports successful')
-    print(f'✅ System memory: {psutil.virtual_memory().available / (1024**3):.1f} GB available')
-except ImportError as e:
-    print(f'❌ Resource management import error: {e}')
-    sys.exit(1)"
-        language: system
-        files: '^src/production/monitoring/mobile/.*\.py$'
-        pass_filenames: false
-        stages: [commit]
-
-      - id: evolution-system-check
-        name: Evolution System Validation
-        entry: python -c "
-import sys
-import os
-sys.path.insert(0, os.getcwd())
-try:
-    from src.production.agent_forge.evolution import dual_evolution_system, nightly_evolution_orchestrator
-    print('✅ Evolution system imports successful')
-except ImportError as e:
-    print(f'❌ Evolution system import error: {e}')
-    sys.exit(1)"
-        language: system
-        files: '^src/production/agent_forge/evolution/.*\.py$'
-        pass_filenames: false
-        stages: [commit]
-
-      # Optimized Core Testing
-      - id: fast-pytest-check
-        name: Fast pytest on critical paths only
-        entry: python -m pytest
-        language: system
-        files: '^(tests/core/|tests/production/integration/).*\.py$'
-        args: [--maxfail=3, -q, --tb=short, --no-cov, -x]
-        pass_filenames: false
-        stages: [push]  # Move to push for performance
-
-      # Performance and Regression Checks
-      - id: compression-performance-check
-        name: Compression Performance Validation
-        entry: python scripts/compression_monitor.py --run-benchmark --check-regression
-        language: system
-        files: '^(src/production/compression/|agent_forge/compression/).*\.py$'
-        pass_filenames: false
-        stages: [push]
-
-      - id: system-performance-baseline
-        name: System Performance Baseline Check
-        entry: python scripts/system_performance_monitor.py --report 1
-        language: system
-        files: '^(src/production/monitoring/|scripts/.*performance.*).*\.py$'
-        pass_filenames: false
-        stages: [push]
-
-      # Production Code Quality
-      - id: no-experimental-in-production
-        name: Prevent experimental imports in production
-        entry: bash -c 'if grep -r "from experimental\|import experimental" src/production/ --include="*.py"; then echo "❌ Production code cannot import experimental!"; exit 1; else echo "✅ No experimental imports in production"; fi'
-        language: system
-        files: '^src/production/.*\.py$'
-        pass_filenames: false
-        stages: [commit]
-
-      - id: no-todos-in-production
-        name: Prevent TODOs in production code
-        entry: bash -c 'if grep -r "TODO\|FIXME\|XXX" src/production/ --include="*.py"; then echo "❌ Production code cannot contain TODOs!"; exit 1; else echo "✅ No TODOs in production code"; fi'
-        language: system
-        files: '^src/production/.*\.py$'
-        pass_filenames: false
-        stages: [commit]
-
-      # Infrastructure Dependencies Check
-      - id: sprint6-dependencies-check
-        name: Sprint 6 Dependencies Validation
-        entry: python -c "
-import sys
-import subprocess
-required_packages = ['psutil', 'pydantic', 'torch', 'transformers', 'numpy']
-missing = []
-for pkg in required_packages:
-    try:
-        __import__(pkg)
-    except ImportError:
-        missing.append(pkg)
-if missing:
-    print(f'❌ Missing Sprint 6 dependencies: {missing}')
-    print('Run: pip install -r requirements_sprint6.txt')
-    sys.exit(1)
-else:
-    print('✅ All Sprint 6 dependencies available')
-"
-        language: system
-        files: 'requirements_sprint6\.txt'
-        pass_filenames: false
-        stages: [commit]
-
-      # Legacy hooks (optimized)
-      - id: automation-style-guide
-        name: Automation Scripts Style Guide Enforcement
-        entry: python scripts/enforce_style_guide.py
-        language: system
-        files: '^scripts/.*\.py$'
-        args: [--fix]
-        pass_filenames: false
-        stages: [commit]
+        files: \.py$
+        exclude: ^(tests/|deprecated/|experimental/)
 
 ci:
   autofix_commit_msg: |
-    [pre-commit.ci] auto fixes from pre-commit.com hooks
-
-    for more information, see https://pre-commit.ci
+    [pre-commit.ci] auto fixes from pre-commit hooks
   autofix_prs: true
-  autoupdate_branch: ''
-  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
   autoupdate_schedule: weekly
-  skip: [
-    'mypy',  # Skip MyPy on CI for performance
-    'compression-performance-check',  # Skip heavy checks on CI
-    'system-performance-baseline'
-  ]
-  submodules: false
-
-# Performance configuration
-minimum_pre_commit_version: '3.0.0'
