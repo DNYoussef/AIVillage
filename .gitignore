@@ -116,6 +116,7 @@ fix_*.py
 apply_*.py
 run_*.py
 quick_*.py
+!benchmarks/run_all.py
 
 # Mesh network and integration test files
 mesh_network_*.py
