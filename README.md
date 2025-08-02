@@ -11,16 +11,16 @@
 
 ## What AIVillage Actually Is
 
-AIVillage is a sophisticated multi-agent AI system with self-evolution capabilities, featuring a production-ready core infrastructure for compression, retrieval-augmented generation (RAG), and agent orchestration. The project includes advanced mesh networking capabilities and comprehensive testing infrastructure, though distributed inference remains a work in progress.
+AIVillage is a sophisticated multi-agent AI system with self-evolution capabilities. It currently offers a **prototype** core infrastructure for compression, retrieval-augmented generation (RAG), and agent orchestration. The project includes advanced mesh networking components and testing utilities, but production readiness and distributed inference still require significant validation.
 
 ## 🟢 What Actually Works (Verified Implementation)
 
 ### Core Infrastructure
-- ✅ **Agent Templates**: 18 specialized agent types with defined capabilities and resource requirements
-- ✅ **P2P Communication Framework**: Message protocol, encryption layer, and basic networking infrastructure
-- ✅ **Resource Management**: Device profiling and constraint management system
-- ✅ **Evolution Framework**: KPI-based evolution engine with retirement and improvement strategies
-- ✅ **Testing Infrastructure**: Comprehensive test framework with real behavioral tests
+- ✅ **Agent Templates**: ~18 specialized agent types with defined capabilities (validated by [scripts/validate_system.py](scripts/validate_system.py))
+- ✅ **P2P Communication Framework**: Message protocol, encryption layer, and basic networking infrastructure (large-scale testing pending)
+- ✅ **Resource Management**: Device profiling and constraint management system; performance under load is unverified
+- ✅ **Evolution Framework**: Prototype KPI-based evolution engine with retirement and improvement strategies
+- ✅ **Testing Infrastructure**: Behavioral and integration tests available in [tests/](tests/)
 
 ### Development Infrastructure  
 - ✅ **CI/CD Pipeline**: GitHub Actions workflow with automated testing and quality checks
@@ -37,7 +37,7 @@ AIVillage is a sophisticated multi-agent AI system with self-evolution capabilit
 - 🟡 **Evolution System**: Simulation logic complete but real agent evolution needs testing
 - 🟡 **P2P Networking**: Basic implementation present but distributed operation needs validation
 
-## 🔴 Known Issues (Require Attention)
+## Known Issues
 
 ### Code Quality Issues
 - 🔴 **Critical Issues**: 16 undefined variables and import errors fixed during analysis
@@ -45,11 +45,15 @@ AIVillage is a sophisticated multi-agent AI system with self-evolution capabilit
 - 🔴 **Performance Claims**: Many benchmark claims need verification with real testing
 - 🔴 **Error Handling**: Several try/catch blocks suppress errors without proper handling
 
-### Implementation Gaps  
+### Implementation Gaps
 - 🔴 **Token Economy**: Framework designed but not implemented
 - 🔴 **DAO Governance**: Conceptual only, no implementation
 - 🔴 **Production Deployment**: Development setup only, production deployment needs work
 - 🔴 **Mobile Testing**: Mobile compatibility claimed but needs device validation
+
+### TODO References
+- TODO markers remain in benchmark scripts, e.g. GSM8K and MATH evaluations in [scripts/download_benchmarks.py](scripts/download_benchmarks.py)
+- Evidence pack retrieval uses placeholder logic in [server.py](server.py)
 
 ## ✨ Atlantis Vision Progress: Honest Assessment
 
@@ -140,7 +144,7 @@ python main.py --mode core --action status
 ```
 AIVillage/
 ├── src/
-│   ├── production/          # Production-ready components
+│   ├── production/          # Prototype components intended for production
 │   ├── agent_forge/         # Agent creation and management
 │   ├── communications/      # Inter-agent messaging
 │   └── mcp_servers/        # Model Context Protocol servers
