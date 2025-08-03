@@ -80,11 +80,6 @@ class RateLimiter:
         return True
 
 
-rate_limiter = RateLimiter(
-    max_requests=CONFIG["RATE_LIMIT_REQUESTS"],
-    window_seconds=CONFIG["RATE_LIMIT_WINDOW"],
-)
-
 # Configuration - should be moved to config file
 CONFIG = {
     "MAX_FILE_SIZE": int(os.getenv("MAX_FILE_SIZE", 50 * 1024 * 1024)),  # 50MB default
@@ -97,6 +92,11 @@ CONFIG = {
 MAX_FILE_SIZE = CONFIG["MAX_FILE_SIZE"]
 ALLOWED_EXTENSIONS = CONFIG["ALLOWED_EXTENSIONS"]
 CHUNK_SIZE = CONFIG["CHUNK_SIZE"]
+
+rate_limiter = RateLimiter(
+    max_requests=CONFIG["RATE_LIMIT_REQUESTS"],
+    window_seconds=CONFIG["RATE_LIMIT_WINDOW"],
+)
 
 
 class DeprecationMiddleware(BaseHTTPMiddleware):
