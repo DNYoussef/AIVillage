@@ -6,33 +6,31 @@ Welcome to the AIVillage documentation. This directory contains comprehensive do
 
 ### 📐 Architecture
 Core system architecture, design decisions, and component relationships.
-- [System Overview](architecture/system_overview.md)
-- [Architecture Documentation](architecture/architecture.md)
-- [Design Documents](architecture/design/)
+- [Architecture Overview](architecture/architecture_1.md)
+- [Updated Architecture](architecture/architecture_updated_1.md)
+- [Index](architecture/index_1.md)
 
 ### 📚 Guides
 Step-by-step guides for setup, configuration, and usage.
-- [Onboarding Guide](guides/onboarding.md)
-- [Advanced Setup](guides/advanced_setup.md)
-- [Usage Examples](guides/usage_examples.md)
-- [Migration Notes](guides/migration_notes.md)
+- [Development Guide](guides/DEVELOPMENT.md)
+- [Advanced Setup](guides/advanced_setup_1.md)
+- [Usage Examples](guides/usage_examples_1.md)
 
 ### 🔌 API Reference
 API documentation, specifications, and interface definitions.
-- [API Documentation](api/API_DOCUMENTATION.md)
-- [Specifications](api/specs/)
+- [API Documentation](api/API_DOCUMENTATION_1.md)
 
 ### 🧩 Components
 Documentation for individual system components and modules.
-- [Mesh Network](components/mesh/)
-- [RAG System](components/rag/)
-- [Agent Forge Pipeline](components/agent_forge_pipeline_overview.md)
+- [Mesh Network](components/mesh-network-engineer_1.md)
+- [RAG System](rag_system_explainer.txt)
+- [Agent Forge Pipeline](components/agent_forge_pipeline_overview_1.md)
 
 ### 🛠️ Development
 Development workflows, testing, and contribution guidelines.
-- [Branching Strategy](development/BRANCHING_STRATEGY.md)
-- [Testing Best Practices](development/testing-best-practices.md)
-- [Integration Testing](development/SMOKE_TEST_INTEGRATION.md)
+- [Branching Strategy](development/BRANCHING_STRATEGY_1.md)
+- [Testing Best Practices](development/testing-best-practices_1.md)
+- [Integration Testing](development/SMOKE_TEST_INTEGRATION_1.md)
 - [Cleanup Verification](development/cleanup_verification.md)
 
 ### 📋 Reference
