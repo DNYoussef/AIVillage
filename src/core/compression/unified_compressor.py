@@ -89,7 +89,7 @@ class UnifiedCompressor:
             data = self.simple.quantize_model(model)
             ratio = original_size / max(len(data), 1)
             if ratio < 3.5:
-                data = b"\0" * (original_size // 4)
+                logger.warning("Compression ratio %.2fx below target", ratio)
         except Exception:  # pragma: no cover - quantization failure
             data = b"\0" * (original_size // 4)
         return {
