@@ -10,9 +10,14 @@ from typing import Any, Dict
 import numpy as np
 import torch
 
-from agent_forge.compression.bitnet import BITNETCompressor
-from agent_forge.compression.seedlm import SEEDLMCompressor
-from agent_forge.compression.vptq import VPTQCompressor
+try:  # pragma: no cover - allow tests to run from repository root
+    from agent_forge.compression.bitnet import BITNETCompressor
+    from agent_forge.compression.seedlm import SEEDLMCompressor
+    from agent_forge.compression.vptq import VPTQCompressor
+except ModuleNotFoundError:  # pragma: no cover
+    from src.agent_forge.compression.bitnet import BITNETCompressor
+    from src.agent_forge.compression.seedlm import SEEDLMCompressor
+    from src.agent_forge.compression.vptq import VPTQCompressor
 
 logger = logging.getLogger(__name__)
 
