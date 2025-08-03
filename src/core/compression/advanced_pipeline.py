@@ -1,96 +1,92 @@
-"""Advanced 4-stage compression pipeline for extreme model compression.
-
-This module wires together the available compression components in the
-``agent_forge`` package to provide a pipeline compatible with the
-:class:`SimpleQuantizer` interface.  The individual stage implementations
-are placeholders, but the orchestration mirrors the intended production
-workflow:
-
-1. BITNet 1.58-bit quantization
-2. SeedLM seed based compression
-3. VPTQ vector post-training quantization
-4. Hyper-function compression
-"""
-
+"""Advanced four-stage compression pipeline."""
 from __future__ import annotations
 
-import gzip
-import io
 import logging
+import pickle
 from pathlib import Path
-from typing import Union
+from typing import Dict, Any, Union
 
 import torch
 
 from agent_forge.compression.bitnet import BITNETCompressor
 from agent_forge.compression.seedlm import SEEDLMCompressor
 from agent_forge.compression.vptq import VPTQCompressor
-from agent_forge.compression.hyperfn import HyperCompressionEncoder
+
+try:  # pragma: no cover - optional dependency
+    from production.compression.hyper_compression import HyperCompressionEncoder
+except ModuleNotFoundError:  # pragma: no cover - fallback
+    class HyperCompressionEncoder:  # type: ignore
+        """Lightweight fallback encoder when production module unavailable."""
+
+        def encode(self, data: bytes) -> bytes:  # noqa: D401 - simple passthrough
+            return data
+
+        def decode(self, data: bytes) -> bytes:  # type: ignore[override]
+            return data
 
 logger = logging.getLogger(__name__)
 
 
 class AdvancedCompressionPipeline:
-    """Orchestrates the four stage compression pipeline.
+    """Compose BitNet, SeedLM, VPTQ and HyperCompression."""
 
-    The public API mirrors :class:`SimpleQuantizer` so existing tooling can
-    switch between implementations transparently.
-    """
-
-    def __init__(self) -> None:
-        self.stage1_quantizer = BITNETCompressor()
-        self.stage2_seedlm = SEEDLMCompressor()
-        self.stage3_vptq = VPTQCompressor()
+    def __init__(self, target_compression: float = 100.0) -> None:
+        self.target_compression = target_compression
+        self.stage1_bitnet = BITNETCompressor()
+        self.stage2_seedlm = SEEDLMCompressor(bits_per_weight=4)
+        self.stage3_vptq = VPTQCompressor(bits=2)
         self.stage4_hyper = HyperCompressionEncoder()
 
     # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-    def quantize_model(self, model: Union[str, Path, torch.nn.Module]) -> bytes:
-        """Quantize and compress ``model`` using all pipeline stages."""
+    def compress_model(self, model: Union[torch.nn.Module, str, Path]) -> bytes:
         model = self._load_model(model)
-        original_size = self._get_model_size(model)
-        logger.info("Original model size: %.1f MB", original_size / 1024 / 1024)
+        original = self._get_model_size(model)
+        total_compressed = 0
+        params: Dict[str, Any] = {}
 
-        # Stage 1 – 1.58‑bit quantization (stub)
-        self.stage1_quantizer.compress(model)
+        for name, param in model.named_parameters():
+            if not param.requires_grad:
+                continue
+            data = param.data.cpu()
+            # Stage 1
+            s1 = self.stage1_bitnet.compress(data)
+            s1_w = self.stage1_bitnet.decompress(s1)
+            # Stage 2
+            s2 = self.stage2_seedlm.compress(s1_w)
+            s2_w = self.stage2_seedlm.decompress(s2)
+            # Stage 3
+            s3 = self.stage3_vptq.compress(s2_w)
+            import pickle as _p
+            s3_bytes = _p.dumps(s3)
+            # Stage 4
+            s4_bytes = self.stage4_hyper.encode(s3_bytes)
+            params[name] = {
+                "data": s4_bytes,
+                "shape": tuple(param.shape),
+            }
+            total_compressed += len(s4_bytes)
 
-        # Stage 2 – SeedLM (stub)
-        self.stage2_seedlm.compress(model)
-
-        # Stage 3 – VPTQ (stub)
-        self.stage3_vptq.compress(model)
-
-        # Stage 4 – Hyper compression (uses gzip as placeholder)
-        buffer = io.BytesIO()
-        torch.save(model, buffer)
-        compressed = gzip.compress(buffer.getvalue())
-        final_size = len(compressed)
-        logger.info(
-            "Final size: %.1f MB (%.2fx compression)",
-            final_size / 1024 / 1024,
-            original_size / final_size,
-        )
-        return compressed
-
-    def compress_model(self, model: Union[str, Path, torch.nn.Module]) -> bytes:
-        """Alias for :meth:`quantize_model` for API symmetry."""
-        return self.quantize_model(model)
-
-    def decompress_model(self, compressed: bytes) -> torch.nn.Module:
-        """Reconstruct model from bytes produced by :meth:`quantize_model`."""
-        buffer = io.BytesIO(gzip.decompress(compressed))
-        return torch.load(buffer, map_location="cpu", weights_only=False)
+        blob = pickle.dumps({"params": params})
+        ratio = original / len(blob)
+        logger.info("Compression ratio: %.1fx", ratio)
+        return blob
 
     # ------------------------------------------------------------------
-    # Helpers
+    def decompress_model(self, data: bytes) -> Dict[str, torch.Tensor]:
+        payload = pickle.loads(data)
+        result: Dict[str, torch.Tensor] = {}
+        for name, entry in payload["params"].items():
+            s3_bytes = self.stage4_hyper.decode(entry["data"])
+            s3 = pickle.loads(s3_bytes)
+            w = self.stage3_vptq.decompress(s3)
+            result[name] = w.reshape(entry["shape"])
+        return result
+
     # ------------------------------------------------------------------
-    def _load_model(self, model: Union[str, Path, torch.nn.Module]) -> torch.nn.Module:
+    def _load_model(self, model: Union[torch.nn.Module, str, Path]) -> torch.nn.Module:
         if isinstance(model, torch.nn.Module):
             return model
-        return torch.load(Path(model), map_location="cpu", weights_only=False)
+        return torch.load(Path(model), map_location="cpu")
 
     def _get_model_size(self, model: torch.nn.Module) -> int:
-        buffer = io.BytesIO()
-        torch.save(model, buffer)
-        return buffer.tell()
+        return sum(p.numel() * 4 for p in model.parameters())

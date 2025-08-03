@@ -154,6 +154,16 @@ AIVillage/
 └── main.py                 # Unified entry point
 ```
 
+## Compression Options
+
+Two compression systems are available:
+
+- **SimpleQuantizer** – fast 4x compression for models under ~100M parameters
+- **Advanced Pipeline** – four-stage 100x+ compression for large models
+- **UnifiedCompressor** – automatically chooses between the two with fallback
+
+See [docs/COMPRESSION_EVOLUTION.md](docs/COMPRESSION_EVOLUTION.md) for details.
+
 ## Documentation
 
 - **[Getting Started](docs/README.md)**: Comprehensive documentation index

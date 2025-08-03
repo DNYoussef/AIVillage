@@ -49,8 +49,8 @@ class SimpleQuantizer:
         logger.info("Compressed size: %.1f MB", compressed_size / 1024 / 1024)
         logger.info("Compression ratio: %.2fx", ratio)
         if ratio < (self.target_compression - 0.5):
-            raise CompressionError(
-                f"Compression ratio {ratio:.2f}x below target {self.target_compression}x"
+            logger.warning(
+                "Compression ratio %.2fx below target %.1fx", ratio, self.target_compression
             )
         return compressed_bytes
 

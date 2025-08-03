@@ -1,37 +1,122 @@
-"""Stub implementation for seedlm compression.
-This is a placeholder to fix test infrastructure.
-"""
+"""SeedLM: lightweight seed-based weight compression."""
+from __future__ import annotations
 
-import warnings
-from typing import Any
+import logging
+from typing import Dict, List, Tuple
 
+import numpy as np
 import torch
 
-warnings.warn(
-    "seedlm is a stub implementation. "
-    "Replace with actual implementation before production use.",
-    UserWarning,
-    stacklevel=2,
-)
+logger = logging.getLogger(__name__)
+
+
+class LinearFeedbackShiftRegister:
+    """Simple LFSR used for reproducible pseudo-random matrices."""
+
+    def __init__(self, seed_length: int = 16) -> None:
+        self.seed_length = seed_length
+
+    def generate_matrix(self, seed: int, rows: int, cols: int) -> np.ndarray:
+        rng = np.random.default_rng(seed % (2**self.seed_length))
+        return rng.standard_normal((rows, cols), dtype=np.float32)
 
 
 class SEEDLMCompressor:
-    """Placeholder compressor for testing."""
+    """Compress tensors using pseudo-random projections.
 
-    def __init__(self):
-        self.compression_ratio = 4.0  # Mock compression ratio
+    This is a simplified implementation of the SeedLM approach.  Each block of
+    ``C`` weights is approximated using a small latent dimension ``P`` and a
+    pseudo-random projection generated from a seed.  Only the seed, quantised
+    coefficients and a shared exponent are stored.
+    """
 
-    def compress(self, model: Any) -> dict[str, Any]:
-        """Stub compression method."""
-        return {"compressed": True, "method": "seedlm", "ratio": self.compression_ratio}
+    def __init__(self, bits_per_weight: int = 4, max_candidates: int = 16) -> None:
+        self.bits_per_weight = bits_per_weight
+        if bits_per_weight == 3:
+            self.C, self.P = 12, 4
+        elif bits_per_weight == 4:
+            self.C, self.P = 8, 3
+        else:
+            raise ValueError("Unsupported bit width")
+        self.lfsr = LinearFeedbackShiftRegister(16)
+        self.max_candidates = max_candidates
+        self.Q = np.array(range(-8, 8), dtype=np.int8)  # 4-bit quantisation
+        logger.info(
+            "SeedLM initialised: %s bits, block=%s latent=%s",
+            bits_per_weight,
+            self.C,
+            self.P,
+        )
 
-    def decompress(self, compressed_data: dict[str, Any]) -> Any:
-        """Stub decompression method."""
-        return torch.nn.Linear(10, 10)  # Return dummy model
+    # ------------------------------------------------------------------
+    def compress(self, weights: torch.Tensor) -> Dict[str, object]:
+        original_shape = tuple(weights.shape)
+        flat = weights.flatten().cpu().numpy()
+        pad = (-len(flat)) % self.C
+        if pad:
+            flat = np.concatenate([flat, np.zeros(pad, dtype=flat.dtype)])
+        blocks = flat.reshape(-1, self.C)
+
+        seeds: List[int] = []
+        coeffs: List[np.ndarray] = []
+        exps: List[int] = []
+        for block in blocks:
+            max_val = np.max(np.abs(block))
+            exp = int(np.floor(np.log2(max_val))) if max_val > 0 else 0
+            scaled = block / (2**exp) if max_val > 0 else block
+            seed, c = self._find_best_seed(scaled)
+            seeds.append(seed)
+            coeffs.append(c)
+            exps.append(exp)
+
+        coeff_arr = np.stack(coeffs).astype(np.int8)
+        compressed = {
+            "seeds": np.array(seeds, dtype=np.uint16),
+            "coefficients": coeff_arr,
+            "shared_exponents": np.array(exps, dtype=np.int8),
+            "original_shape": original_shape,
+            "block_size": self.C,
+            "latent_dim": self.P,
+            "pad_length": pad,
+        }
+        return compressed
+
+    # ------------------------------------------------------------------
+    def _find_best_seed(self, block: np.ndarray) -> Tuple[int, np.ndarray]:
+        best_seed, best_c, best_err = 0, None, float("inf")
+        for seed in range(1, self.max_candidates + 1):
+            U = self.lfsr.generate_matrix(seed, self.C, self.P)
+            c, *_ = np.linalg.lstsq(U, block, rcond=None)
+            q = self._quantise(c)
+            err = np.linalg.norm(block - U @ q)
+            if err < best_err:
+                best_seed, best_c, best_err = seed, q, err
+        assert best_c is not None
+        return best_seed, best_c
+
+    def _quantise(self, coeffs: np.ndarray) -> np.ndarray:
+        idx = np.abs(coeffs[:, None] - self.Q[None, :]).argmin(axis=1)
+        return self.Q[idx]
+
+    # ------------------------------------------------------------------
+    def decompress(self, compressed: Dict[str, object]) -> torch.Tensor:
+        seeds = compressed["seeds"]
+        coeffs = compressed["coefficients"]
+        exps = compressed["shared_exponents"]
+        blocks = []
+        for seed, c, exp in zip(seeds, coeffs, exps):
+            U = self.lfsr.generate_matrix(int(seed), self.C, self.P)
+            block = U @ c
+            block = block * (2**int(exp))
+            blocks.append(block)
+        flat = np.concatenate(blocks)
+        if compressed["pad_length"]:
+            flat = flat[:-compressed["pad_length"]]
+        return torch.tensor(flat, dtype=torch.float32).reshape(
+            compressed["original_shape"]
+        )
 
 
-# Convenience function for tests
-def compress(model: Any) -> dict[str, Any]:
-    """Convenience function for compression."""
-    compressor = SEEDLMCompressor()
-    return compressor.compress(model)
+def compress(weights: torch.Tensor) -> Dict[str, object]:
+    """Convenience wrapper."""
+    return SEEDLMCompressor().compress(weights)
