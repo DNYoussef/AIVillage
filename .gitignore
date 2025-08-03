@@ -217,6 +217,9 @@ coverage.xml
 *_dashboard.json
 *_analysis.json
 *_audit.json
+!docs/benchmarks/compression_results.json
+!docs/benchmarks/rag_latency_results.json
+!docs/benchmarks/p2p_network_results.json
 github_issues.json
 implementation_status.json
 quality_gate_report.json
