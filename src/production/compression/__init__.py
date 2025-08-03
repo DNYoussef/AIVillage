@@ -3,6 +3,33 @@
 # Export main compression classes
 __all__ = []
 
+# Primary unified compression interface
+try:
+    from .unified_compressor import (
+        UnifiedCompressor,
+        CompressionStrategy,
+        CompressionResult,
+        compress_simple,
+        compress_mobile,
+        compress_advanced
+    )
+    __all__.extend([
+        "UnifiedCompressor", 
+        "CompressionStrategy", 
+        "CompressionResult",
+        "compress_simple",
+        "compress_mobile", 
+        "compress_advanced"
+    ])
+except ImportError:
+    # Handle missing dependencies gracefully
+    UnifiedCompressor = None
+    CompressionStrategy = None
+    CompressionResult = None
+    compress_simple = None
+    compress_mobile = None
+    compress_advanced = None
+
 try:
     from .compression_pipeline import CompressionPipeline
 
