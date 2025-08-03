@@ -32,10 +32,10 @@ AIVillage is a sophisticated multi-agent AI system with self-evolution capabilit
 
 ### Core Functionality
 - 🟡 **Agent Communication**: Protocol defined but end-to-end workflow needs validation
-- 🟡 **Compression Pipeline**: Framework present but performance claims need verification  
-- 🟡 **RAG System**: Structure implemented but query performance needs benchmarking
+- 🟡 **Compression Pipeline**: Framework present; sample benchmark shows ~99.5% size reduction on synthetic data ([results](docs/benchmarks/compression_results.json))
+- 🟡 **RAG System**: Structure implemented; baseline latency ~1.19 ms/query with 100% accuracy ([results](docs/benchmarks/rag_latency_results.json))
 - 🟡 **Evolution System**: Simulation logic complete but real agent evolution needs testing
-- 🟡 **P2P Networking**: Basic implementation present but distributed operation needs validation
+- 🟡 **P2P Networking**: Basic implementation; localhost round-trip latency ~2.076 ms with 100% success rate ([results](docs/benchmarks/p2p_network_results.json))
 
 ## Known Issues
 
@@ -158,7 +158,7 @@ AIVillage/
 
 Two compression systems are available:
 
-- **SimpleQuantizer** – fast 4x compression for models under ~100M parameters
+- **SimpleQuantizer** – fast 4x compression for models under ~100M parameters ([benchmark results](docs/benchmarks/compression_results.json))
 - **Advanced Pipeline** – four-stage 100x+ compression for large models
 - **UnifiedCompressor** – automatically chooses between the two with fallback
 
