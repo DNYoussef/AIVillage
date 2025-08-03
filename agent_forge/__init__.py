@@ -1,12 +1,17 @@
 # Lazy imports - moved to properties to avoid startup penalty
 # Heavy imports are deferred until actually needed
 
+from pkgutil import extend_path
+
+__path__ = extend_path(__path__, __name__)
+
 # Import ADAS utilities if available. The ADAS module is optional and may
 # require additional heavy dependencies.
 
-# Expose main class
+# Expose main class and compression subpackage
 __all__ = [
     "AgentForge",
+    "compression",
 ]
 
 # Lazy module-level properties for backward compatibility

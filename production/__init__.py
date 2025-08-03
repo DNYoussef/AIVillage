@@ -11,6 +11,10 @@ This package contains production-ready components that have passed Sprint 2 qual
 All components in this package are stable, tested, and ready for production use.
 """
 
+from pkgutil import extend_path
+
+__path__ = extend_path(__path__, __name__)
+
 __version__ = "1.0.0"
 __status__ = "Production"
 
