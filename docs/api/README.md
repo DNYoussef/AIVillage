@@ -29,15 +29,19 @@ This directory contains comprehensive API documentation for all AIVillage compon
 
 ## Quick Navigation
 
+Statuses reflect the current implementation progress documented in
+[../HONEST_STATUS.md](../HONEST_STATUS.md) and the project
+[README](../../README.md).
+
 | Component | Description | Status |
 |-----------|-------------|--------|
-| [Agent Forge](agent_forge/README.md) | Agent template system and orchestration | ✅ Complete |
-| [P2P Network](core/p2p/README.md) | Distributed communication layer | ✅ Complete |
-| [Compression](production/compression/README.md) | Model compression (4x ratio) | ✅ Complete |
-| [Evolution](production/evolution/README.md) | Agent self-improvement | ✅ Complete |
+| [Agent Forge](agent_forge/README.md) | Agent template system and orchestration | 🟡 Partial |
+| [P2P Network](core/p2p/README.md) | Distributed communication layer | 🟡 Partial |
+| [Compression](production/compression/README.md) | Model compression pipeline | 🟡 Partial |
+| [Evolution](production/evolution/README.md) | Agent self-improvement | 🟡 Partial |
 | [RAG System](production/rag/README.md) | Retrieval-augmented generation pipeline | 🟡 Partial |
-| [Federated Learning](production/federated_learning/README.md) | Privacy-preserving training | ✅ Complete |
-| [Resource Management](core/resources/README.md) | Device profiling and constraints | ✅ Complete |
+| [Federated Learning](production/federated_learning/README.md) | Privacy-preserving training | 🟡 Partial |
+| [Resource Management](core/resources/README.md) | Device profiling and constraints | 🟡 Partial |
 
 ## Usage Examples
 
