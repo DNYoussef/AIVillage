@@ -4,7 +4,7 @@ Currently returns None for everything!
 """
 import psutil
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ class ResourceMonitor:
     """
     
     def __init__(self):
-        self.history = []
+        self.history: List[Dict[str, Any]] = []
         self.max_history = 100
         
     def get_cpu_usage(self) -> float:

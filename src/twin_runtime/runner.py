@@ -3,7 +3,7 @@ Twin Runtime Chat - The core of the digital twin system
 This MUST work for anything else to matter
 """
 import torch
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import logging
 from pathlib import Path
 
@@ -17,8 +17,9 @@ class TwinRuntimeChat:
     """
     
     def __init__(self):
-        self.model = None
-        self.context = []
+        # Annotate to clarify runtime expectations
+        self.model: Optional[torch.nn.Module] = None
+        self.context: List[Dict[str, str]] = []
         self.max_context = 2048
         
         # Try to load a compressed model
@@ -64,7 +65,7 @@ class TwinRuntimeChat:
         self.model = SimpleChatModel()
         logger.info("Using fallback chat model")
     
-    def chat(self, prompt: str, **kwargs) -> str:
+    def chat(self, prompt: str, **kwargs: Any) -> str:
         """
         ACTUAL IMPLEMENTATION - Not a stub!
         

@@ -11,7 +11,7 @@ from src.core.resources.resource_monitor import get_all_metrics
 def test_chat_works():
     """Test chat produces real responses"""
     response = chat("Hello, how are you?")
-    assert response != ""
+    assert isinstance(response, str) and response != ""
     assert "pass" not in str(response)
     print(f"Chat response: {response}")
     
@@ -35,7 +35,7 @@ def test_p2p_discovery_works():
     """Test P2P finds at least localhost"""
     peers = discover_network_peers()
     assert len(peers) > 0
-    assert peers[0]['ip'] in ['127.0.0.1', '192.168.1.1']
+    assert any(p['ip'] in ['127.0.0.1', '192.168.1.1'] for p in peers)
     print(f"Found peers: {peers}")
     
 

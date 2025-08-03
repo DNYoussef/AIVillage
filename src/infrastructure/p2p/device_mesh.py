@@ -6,7 +6,7 @@ import socket
 import json
 import time
 import threading
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,9 +19,9 @@ class DeviceMesh:
     
     def __init__(self, port: int = 8765):
         self.port = port
-        self.peers = {}
+        self.peers: Dict[str, Any] = {}
         self.local_info = self._get_local_info()
-        self.discovery_thread = None
+        self.discovery_thread: Optional[threading.Thread] = None
         self.running = False
         
     def _get_local_info(self) -> Dict[str, Any]:
