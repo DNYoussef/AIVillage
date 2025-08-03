@@ -27,6 +27,9 @@ import sys
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
+# Allow importing experimental agents as top-level 'agents'
+sys.path.insert(0, str(Path(__file__).parent / "experimental" / "agents"))
+
 
 def create_parser():
     """Create the unified argument parser"""
@@ -111,24 +114,36 @@ def run_king_mode(args):
     """Run KING agent mode"""
     try:
         from agents.king.main import main as king_main
+    except Exception:
+        import importlib.util
 
-        # Convert unified args to king format
-        king_args = [args.action]
-        if args.config:
-            king_args.extend(["--config", args.config])
-        if args.task:
-            king_args.extend(["--task", args.task])
-        if args.input:
-            king_args.extend(["--input", args.input])
-        if args.output:
-            king_args.extend(["--output", args.output])
-        if args.verbose:
-            king_args.append("--verbose")
+        king_path = (
+            Path(__file__).parent
+            / "experimental"
+            / "agents"
+            / "agents"
+            / "king"
+            / "main.py"
+        )
+        spec = importlib.util.spec_from_file_location("king_main", king_path)
+        king_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(king_module)
+        king_main = king_module.main
 
-        return king_main(king_args)
-    except ImportError as e:
-        print(f"Error: KING agent module not found: {e}")
-        return 1
+    # Convert unified args to king format
+    king_args = [args.action]
+    if args.config:
+        king_args.extend(["--config", args.config])
+    if args.task:
+        king_args.extend(["--task", args.task])
+    if args.input:
+        king_args.extend(["--input", args.input])
+    if args.output:
+        king_args.extend(["--output", args.output])
+    if args.verbose:
+        king_args.append("--verbose")
+
+    return king_main(king_args)
 
 
 def run_rag_mode(args):
