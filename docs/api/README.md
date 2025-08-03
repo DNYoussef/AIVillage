@@ -35,7 +35,7 @@ This directory contains comprehensive API documentation for all AIVillage compon
 | [P2P Network](core/p2p/README.md) | Distributed communication layer | ✅ Complete |
 | [Compression](production/compression/README.md) | Model compression (4x ratio) | ✅ Complete |
 | [Evolution](production/evolution/README.md) | Agent self-improvement | ✅ Complete |
-| [RAG System](production/rag/README.md) | Knowledge retrieval (<1ms) | ✅ Complete |
+| [RAG System](production/rag/README.md) | Retrieval-augmented generation pipeline | 🟡 Partial |
 | [Federated Learning](production/federated_learning/README.md) | Privacy-preserving training | ✅ Complete |
 | [Resource Management](core/resources/README.md) | Device profiling and constraints | ✅ Complete |
 
@@ -94,6 +94,11 @@ pipeline = CompressionPipeline(config)
 result = await pipeline.compress_model()
 
 print(f"Compression ratio: {result.compression_ratio}x")
+```
+
+### Querying the RAG System
+```bash
+python -m src.production.rag.rag_system.main query --question "What is RAG?"
 ```
 
 ## Development
