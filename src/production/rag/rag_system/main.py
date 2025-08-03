@@ -6,12 +6,20 @@ handling document indexing, querying, and knowledge management.
 """
 
 import argparse
+import asyncio
 import sys
+
+try:  # pragma: no cover - import guard for optional dependencies
+    from rag_system.core.pipeline import EnhancedRAGPipeline
+except Exception:  # pragma: no cover - import guard
+    EnhancedRAGPipeline = None
 
 
 def create_parser():
     """Create argument parser for RAG system"""
-    parser = argparse.ArgumentParser(description="RAG System Service")
+    parser = argparse.ArgumentParser(
+        description="Experimental RAG System Service"
+    )
 
     parser.add_argument(
         "action",
@@ -42,8 +50,26 @@ def query_system(args):
         print("Error: --question is required for query action")
         return 1
 
+    if EnhancedRAGPipeline is None:
+        print("EnhancedRAGPipeline is unavailable; CLI is experimental.")
+        return 1
+
     print(f"Querying: {args.question}")
-    # Implementation would go here
+
+    async def _run_query(question: str):
+        pipeline = EnhancedRAGPipeline()
+        await pipeline.initialize()
+        result = await pipeline.process(question)
+        await pipeline.shutdown()
+        return result
+
+    try:
+        result = asyncio.run(_run_query(args.question))
+    except Exception as exc:  # pragma: no cover - runtime safety
+        print(f"RAG query failed: {exc}")
+        return 1
+
+    print(result)
     return 0
 
 
@@ -53,9 +79,8 @@ def index_document(args):
         print("Error: --document is required for index action")
         return 1
 
-    print(f"Indexing document: {args.document}")
-    # Implementation would go here
-    return 0
+    print("Document indexing is experimental and not yet implemented.")
+    return 1
 
 
 def search_documents(args):
@@ -64,9 +89,8 @@ def search_documents(args):
         print("Error: --question is required for search action")
         return 1
 
-    print(f"Searching for: {args.question}")
-    # Implementation would go here
-    return 0
+    print("Document search is experimental and not yet implemented.")
+    return 1
 
 
 def get_status(args):
@@ -77,9 +101,8 @@ def get_status(args):
 
 def configure_service(args):
     """Configure service"""
-    print("Configuring RAG system...")
-    # Implementation would go here
-    return 0
+    print("Service configuration is experimental and not yet implemented.")
+    return 1
 
 
 def main(args=None):
