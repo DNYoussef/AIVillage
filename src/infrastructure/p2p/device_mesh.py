@@ -89,7 +89,7 @@ class DeviceMesh:
                         peer_id = f"{addr[0]}:{peer_info.get('port', self.port)}"
                         self.peers[peer_id] = peer_info
 
-                except TimeoutError:
+                except socket.timeout:
                     continue
                 except Exception as e:
                     logger.debug(f"Discovery receive error: {e}")
@@ -143,7 +143,7 @@ class DeviceMesh:
 
                     sock.sendto(response, addr)
 
-            except TimeoutError:
+            except socket.timeout:
                 continue
             except Exception as e:
                 logger.debug(f"Discovery service error: {e}")
