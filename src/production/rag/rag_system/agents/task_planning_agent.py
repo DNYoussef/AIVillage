@@ -8,7 +8,7 @@ from rag_system.core.agent_interface import AgentInterface
 class TaskPlanningAgent(AgentInterface):
     """Agent responsible for planning tasks based on user intent and extracted concepts."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.intent_interpreter = UserIntentInterpreterAgent()
         self.concept_extractor = KeyConceptExtractorAgent()

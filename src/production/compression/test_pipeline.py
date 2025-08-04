@@ -27,10 +27,11 @@ def main(args: list[str] | None = None) -> str:
 
     Parameters
     ----------
-    args:
+
+    Args:
         Optional list of arguments for testing purposes.
 
-    Returns
+    Returns:
     -------
     str
         Text describing whether the ratio was verified.

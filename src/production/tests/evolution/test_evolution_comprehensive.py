@@ -35,7 +35,7 @@ class TestEvolutionSystem:
             )
         return models
 
-    def test_evolution_imports(self):
+    def test_evolution_imports(self) -> None:
         """Test that evolution modules can be imported."""
         try:
             from production.evolution.evomerge.evolutionary_tournament import (
@@ -46,7 +46,7 @@ class TestEvolutionSystem:
         except ImportError:
             pytest.skip("EvolutionaryTournament not available")
 
-    def test_model_merging_concepts(self):
+    def test_model_merging_concepts(self) -> None:
         """Test basic model merging concepts."""
         # Create two simple models
         model1 = torch.nn.Linear(10, 5)
@@ -62,7 +62,7 @@ class TestEvolutionSystem:
 
         assert torch.allclose(avg_weight, expected)
 
-    def test_fitness_evaluation_concept(self):
+    def test_fitness_evaluation_concept(self) -> None:
         """Test fitness evaluation concepts."""
         # Mock fitness scores
         scores = [0.1, 0.5, 0.8, 0.3, 0.9]
@@ -74,7 +74,7 @@ class TestEvolutionSystem:
         assert ranked_indices[0] == 4  # Index of highest score (0.9)
         assert ranked_indices[-1] == 0  # Index of lowest score (0.1)
 
-    def test_tournament_selection_concept(self, sample_population):
+    def test_tournament_selection_concept(self, sample_population) -> None:
         """Test tournament selection concept."""
         # Simple tournament selection simulation
         tournament_size = 3
@@ -90,7 +90,7 @@ class TestEvolutionSystem:
         assert "fitness" in winner
         assert "model" in winner
 
-    def test_merger_operators_exist(self):
+    def test_merger_operators_exist(self) -> None:
         """Test that merger operators exist."""
         try:
             from production.evolution.evolution.merge_operators import MergeOperators
@@ -99,7 +99,7 @@ class TestEvolutionSystem:
         except ImportError:
             pytest.skip("MergeOperators not available")
 
-    def test_evomerge_config(self):
+    def test_evomerge_config(self) -> None:
         """Test evomerge configuration."""
         try:
             from production.evolution.evomerge.config import Config
@@ -112,7 +112,7 @@ class TestEvolutionSystem:
 class TestEvolutionPipeline:
     """Test the evolution pipeline."""
 
-    def test_pipeline_exists(self):
+    def test_pipeline_exists(self) -> None:
         """Test that evolution pipeline exists."""
         try:
             from production.evolution.evomerge_pipeline import EvomergePipeline
@@ -121,7 +121,7 @@ class TestEvolutionPipeline:
         except ImportError:
             pytest.skip("EvomergePipeline not available")
 
-    def test_math_tutor_evolution(self):
+    def test_math_tutor_evolution(self) -> None:
         """Test math tutor evolution."""
         try:
             from production.evolution.evolution.math_tutor_evolution import (

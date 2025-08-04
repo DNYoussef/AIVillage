@@ -1,8 +1,8 @@
+from collections.abc import Callable
 import json
 import os
 import random
 import shutil
-from collections.abc import Callable
 from typing import Any
 
 from rag_system.utils.logging import setup_logger as get_logger
@@ -11,7 +11,7 @@ from rag_system.utils.logging import setup_logger as get_logger
 class ADASystem:
     """Simple wrapper for the Automatic Discovery of Agentic Space (ADAS) stage."""
 
-    def __init__(self, model_path: str):
+    def __init__(self, model_path: str) -> None:
         self.model_path = model_path
         self.logger = get_logger(__name__)
 

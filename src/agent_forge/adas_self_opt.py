@@ -1,4 +1,4 @@
-"""ADAS (Automated Design and Architecture Search) Self-Optimization
+"""ADAS (Automated Design and Architecture Search) Self-Optimization.
 
 Implements automated design and architecture search for self-improving agents:
 - Neural Architecture Search (NAS) for model optimization
@@ -9,22 +9,22 @@ Implements automated design and architecture search for self-improving agents:
 """
 
 import asyncio
+from dataclasses import asdict, dataclass
 import json
 import logging
+from pathlib import Path
 import random
 import time
-from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import Any
 
 import numpy as np
-import torch
-import wandb
 from scipy.optimize import minimize
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern
+import torch
 from torch import nn
 from transformers import AutoConfig, AutoModelForCausalLM
+import wandb
 
 from agent_forge.geometry_feedback import GeometryTracker
 
@@ -54,9 +54,7 @@ class ArchitectureConfig:
             return False
         if self.num_layers < 1 or self.num_layers > 48:
             return False
-        if self.hidden_size < 64 or self.hidden_size > 4096:
-            return False
-        return True
+        return not (self.hidden_size < 64 or self.hidden_size > 4096)
 
 
 @dataclass
@@ -105,7 +103,7 @@ class OptimizationResult:
 class ArchitectureGenerator:
     """Generates and evolves model architectures."""
 
-    def __init__(self, base_config: ArchitectureConfig, mutation_rate: float = 0.1):
+    def __init__(self, base_config: ArchitectureConfig, mutation_rate: float = 0.1) -> None:
         self.base_config = base_config
         self.mutation_rate = mutation_rate
         self.architecture_history = []
@@ -222,13 +220,13 @@ class ArchitectureGenerator:
 class TrainingStrategyOptimizer:
     """Optimizes training strategies using Bayesian optimization."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.strategy_history = []
         self.performance_history = []
         self.gp_regressor = None
 
     def suggest_training_config(
-        self, geometry_feedback: dict[str, float] = None
+        self, geometry_feedback: dict[str, float] | None = None
     ) -> TrainingConfig:
         """Suggest optimal training configuration."""
         if len(self.strategy_history) < 5:
@@ -253,7 +251,7 @@ class TrainingStrategyOptimizer:
         )
 
     def _bayesian_suggest_training_config(
-        self, geometry_feedback: dict[str, float] = None
+        self, geometry_feedback: dict[str, float] | None = None
     ) -> TrainingConfig:
         """Use Bayesian optimization to suggest training config."""
         if self.gp_regressor is None:
@@ -304,7 +302,7 @@ class TrainingStrategyOptimizer:
             max_grad_norm=float(best_x[5]),
         )
 
-    def _initialize_gp_regressor(self):
+    def _initialize_gp_regressor(self) -> None:
         """Initialize Gaussian Process regressor."""
         if len(self.strategy_history) < 3:
             return
@@ -337,7 +335,7 @@ class TrainingStrategyOptimizer:
         )
         self.gp_regressor.fit(X, y)
 
-    def update_performance(self, config: TrainingConfig, performance: float):
+    def update_performance(self, config: TrainingConfig, performance: float) -> None:
         """Update performance history."""
         self.strategy_history.append(config)
         self.performance_history.append(performance)
@@ -379,7 +377,7 @@ class ModelBuilder:
 class PerformanceEvaluator:
     """Evaluates model performance on various metrics."""
 
-    def __init__(self, device: str = "cuda"):
+    def __init__(self, device: str = "cuda") -> None:
         self.device = device
 
     async def evaluate_model(
@@ -493,7 +491,7 @@ class ADASOptimizer:
         population_size: int = 20,
         num_generations: int = 50,
         device: str = "cuda",
-    ):
+    ) -> None:
         self.base_architecture = base_architecture
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -574,7 +572,7 @@ class ADASOptimizer:
                     )
 
                 except Exception as e:
-                    logger.error(f"Evaluation failed for individual {i}: {e}")
+                    logger.exception(f"Evaluation failed for individual {i}: {e}")
                     # Create dummy result with low score
                     result = OptimizationResult(
                         architecture_config=arch_config,
@@ -656,7 +654,7 @@ class ADASOptimizer:
         tournament = random.sample(results, min(tournament_size, len(results)))
         return max(tournament, key=lambda x: x.performance_score)
 
-    def _save_checkpoint(self, generation: int, results: list[OptimizationResult]):
+    def _save_checkpoint(self, generation: int, results: list[OptimizationResult]) -> None:
         """Save optimization checkpoint."""
         checkpoint = {
             "generation": generation,
@@ -700,7 +698,7 @@ class ADASOptimizer:
 
 
 # CLI and usage
-async def main():
+async def main() -> None:
     """Main ADAS optimization entry point."""
     import argparse
 

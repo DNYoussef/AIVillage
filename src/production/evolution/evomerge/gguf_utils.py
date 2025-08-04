@@ -7,19 +7,20 @@ logger = logging.getLogger(__name__)
 
 
 class GGUFReader:
-    def __init__(self, file_path):
+    def __init__(self, file_path) -> None:
         self.file_path = file_path
         self.metadata = {}
         self.tensors = {}
 
-    def read(self):
+    def read(self) -> None:
         logger.info(f"Reading GGUF file: {self.file_path}")
         with open(self.file_path, "rb") as f:
             # Read magic number and version
             magic = f.read(4)
             if magic != b"GGUF":
                 logger.error(f"Invalid GGUF file: {self.file_path}")
-                raise ValueError("Not a valid GGUF file")
+                msg = "Not a valid GGUF file"
+                raise ValueError(msg)
 
             version = struct.unpack("<I", f.read(4))[0]
             logger.debug(f"GGUF version: {version}")
@@ -73,12 +74,14 @@ class GGUFReader:
             length = struct.unpack("<Q", f.read(8))[0]
             return f.read(length).decode("utf-8")
         logger.warning(f"Unsupported value type: {value_type}")
-        raise ValueError(f"Unsupported value type: {value_type}")
+        msg = f"Unsupported value type: {value_type}"
+        raise ValueError(msg)
 
     def get_tensor(self, name):
         if name not in self.tensors:
             logger.error(f"Tensor {name} not found")
-            raise KeyError(f"Tensor {name} not found")
+            msg = f"Tensor {name} not found"
+            raise KeyError(msg)
 
         tensor_info = self.tensors[name]
         with open(self.file_path, "rb") as f:
@@ -105,18 +108,18 @@ class GGUFReader:
 
 
 class GGUFWriter:
-    def __init__(self, file_path):
+    def __init__(self, file_path) -> None:
         self.file_path = file_path
         self.metadata = {}
         self.tensors = {}
 
-    def add_metadata(self, key, value):
+    def add_metadata(self, key, value) -> None:
         self.metadata[key] = value
 
-    def add_tensor(self, name, tensor):
+    def add_tensor(self, name, tensor) -> None:
         self.tensors[name] = tensor
 
-    def write(self):
+    def write(self) -> None:
         logger.info(f"Writing GGUF file: {self.file_path}")
         with open(self.file_path, "wb") as f:
             # Write magic number and version
@@ -155,11 +158,11 @@ class GGUFWriter:
                 tensor.tofile(f)
         logger.info(f"Successfully wrote GGUF file: {self.file_path}")
 
-    def _write_value(self, f, value):
-        if isinstance(value, (int, np.integer)):
+    def _write_value(self, f, value) -> None:
+        if isinstance(value, int | np.integer):
             f.write(struct.pack("<I", 5))  # int32 type
             f.write(struct.pack("<i", value))
-        elif isinstance(value, (float, np.floating)):
+        elif isinstance(value, float | np.floating):
             f.write(struct.pack("<I", 6))  # float32 type
             f.write(struct.pack("<f", value))
         elif isinstance(value, bool):
@@ -172,7 +175,8 @@ class GGUFWriter:
             f.write(encoded)
         else:
             logger.error(f"Unsupported value type: {type(value)}")
-            raise ValueError(f"Unsupported value type: {type(value)}")
+            msg = f"Unsupported value type: {type(value)}"
+            raise ValueError(msg)
 
     def _get_gguf_dtype(self, numpy_dtype):
         dtype_map = {

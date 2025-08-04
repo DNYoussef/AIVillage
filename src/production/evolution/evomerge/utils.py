@@ -113,7 +113,9 @@ def load_models(
             tokenizers.append(tokenizer)
             logger.info(f"Successfully loaded model and tokenizer: {model_ref.name}")
         except Exception as e:
-            logger.exception(f"Failed to load model or tokenizer {model_ref.name}: {e!s}")
+            logger.exception(
+                f"Failed to load model or tokenizer {model_ref.name}: {e!s}"
+            )
     return models, tokenizers
 
 

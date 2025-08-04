@@ -1,18 +1,18 @@
-"""Meta-Learning Engine - Learning How to Learn Better
+"""Meta-Learning Engine - Learning How to Learn Better.
 
 Implements meta-learning algorithms for optimizing agent learning strategies,
 including few-shot learning, learning rate adaptation, and strategy optimization.
 """
 
 import asyncio
-import json
-import logging
-import pickle
-import time
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
+import pickle
+import time
 from typing import Any
 
 import numpy as np
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class LearningExperience:
-    """Records a learning experience for meta-learning"""
+    """Records a learning experience for meta-learning."""
 
     experience_id: str
     agent_id: str
@@ -42,7 +42,7 @@ class LearningExperience:
 
 @dataclass
 class MetaLearningStrategy:
-    """Defines a meta-learning strategy"""
+    """Defines a meta-learning strategy."""
 
     strategy_id: str
     name: str
@@ -55,9 +55,9 @@ class MetaLearningStrategy:
 
 
 class LearningRateOptimizer:
-    """Optimizes learning rates using meta-learning"""
+    """Optimizes learning rates using meta-learning."""
 
-    def __init__(self, memory_size: int = 1000):
+    def __init__(self, memory_size: int = 1000) -> None:
         self.memory_size = memory_size
         self.experience_buffer = deque(maxlen=memory_size)
         self.lr_history = defaultdict(list)
@@ -70,8 +70,8 @@ class LearningRateOptimizer:
         performance_improvement: float,
         convergence_steps: int,
         task_difficulty: float,
-    ):
-        """Record learning experience for future optimization"""
+    ) -> None:
+        """Record learning experience for future optimization."""
         experience = {
             "agent_id": agent_id,
             "learning_rate": learning_rate,
@@ -88,7 +88,7 @@ class LearningRateOptimizer:
     def optimize_learning_rate(
         self, agent_id: str, task_difficulty: float, base_lr: float = 0.001
     ) -> float:
-        """Optimize learning rate based on historical performance"""
+        """Optimize learning rate based on historical performance."""
         if agent_id not in self.lr_history or len(self.lr_history[agent_id]) < 3:
             return base_lr
 
@@ -125,7 +125,7 @@ class LearningRateOptimizer:
         return optimal_lr
 
     def get_adaptive_schedule(self, agent_id: str, num_epochs: int) -> list[float]:
-        """Generate adaptive learning rate schedule"""
+        """Generate adaptive learning rate schedule."""
         base_lr = self.optimize_learning_rate(agent_id, 0.5)  # Medium difficulty
         schedule = []
 
@@ -144,9 +144,9 @@ class LearningRateOptimizer:
 
 
 class FewShotLearner:
-    """Implements few-shot learning capabilities"""
+    """Implements few-shot learning capabilities."""
 
-    def __init__(self, embedding_dim: int = 128):
+    def __init__(self, embedding_dim: int = 128) -> None:
         self.embedding_dim = embedding_dim
         self.support_memory = {}
         self.prototypes = {}
@@ -154,13 +154,13 @@ class FewShotLearner:
     def create_prototype(
         self, task_id: str, support_examples: list[Any], support_labels: list[int]
     ) -> np.ndarray:
-        """Create prototype representation from support examples"""
+        """Create prototype representation from support examples."""
         # Simple centroid-based prototype (in practice, would use learned embeddings)
         embeddings = []
 
         for example in support_examples:
             # Convert example to embedding (simplified)
-            if isinstance(example, (list, np.ndarray)):
+            if isinstance(example, list | np.ndarray):
                 embedding = np.array(example)
             else:
                 # Hash-based embedding for other types
@@ -185,12 +185,13 @@ class FewShotLearner:
         return prototypes
 
     def few_shot_predict(self, task_id: str, query_example: Any) -> tuple[int, float]:
-        """Make prediction using few-shot learning"""
+        """Make prediction using few-shot learning."""
         if task_id not in self.prototypes:
-            raise ValueError(f"No prototypes found for task {task_id}")
+            msg = f"No prototypes found for task {task_id}"
+            raise ValueError(msg)
 
         # Convert query to embedding
-        if isinstance(query_example, (list, np.ndarray)):
+        if isinstance(query_example, list | np.ndarray):
             query_embedding = np.array(query_example)
         else:
             query_embedding = np.random.RandomState(
@@ -218,8 +219,8 @@ class FewShotLearner:
         new_examples: list[Any],
         new_labels: list[int],
         alpha: float = 0.1,
-    ):
-        """Update prototypes with new examples using exponential moving average"""
+    ) -> None:
+        """Update prototypes with new examples using exponential moving average."""
         if task_id not in self.prototypes:
             self.create_prototype(task_id, new_examples, new_labels)
             return
@@ -227,7 +228,7 @@ class FewShotLearner:
         # Convert new examples to embeddings
         new_embeddings = []
         for example in new_examples:
-            if isinstance(example, (list, np.ndarray)):
+            if isinstance(example, list | np.ndarray):
                 embedding = np.array(example)
             else:
                 embedding = np.random.RandomState(hash(str(example)) % 2**32).normal(
@@ -250,11 +251,11 @@ class FewShotLearner:
 
 
 class ModelAgnosticMetaLearner:
-    """Model-Agnostic Meta-Learning (MAML) implementation"""
+    """Model-Agnostic Meta-Learning (MAML) implementation."""
 
     def __init__(
         self, model: nn.Module, inner_lr: float = 0.01, meta_lr: float = 0.001
-    ):
+    ) -> None:
         self.model = model
         self.inner_lr = inner_lr
         self.meta_lr = meta_lr
@@ -263,7 +264,7 @@ class ModelAgnosticMetaLearner:
     def inner_update(
         self, support_x: torch.Tensor, support_y: torch.Tensor, num_steps: int = 1
     ) -> nn.Module:
-        """Perform inner loop update on support set"""
+        """Perform inner loop update on support set."""
         # Clone model for inner update
         model_copy = type(self.model)(**self.model.__dict__)
         model_copy.load_state_dict(self.model.state_dict())
@@ -286,7 +287,7 @@ class ModelAgnosticMetaLearner:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
         ],
     ):
-        """Perform meta-update across batch of tasks"""
+        """Perform meta-update across batch of tasks."""
         meta_loss = 0.0
 
         for support_x, support_y, query_x, query_y in tasks_batch:
@@ -309,21 +310,21 @@ class ModelAgnosticMetaLearner:
 
 
 class StrategyOptimizer:
-    """Optimizes learning strategies based on task characteristics"""
+    """Optimizes learning strategies based on task characteristics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.strategy_performance = defaultdict(list)
         self.task_characteristics = {}
         self.strategy_mappings = {}
 
-    def register_strategy(self, strategy: MetaLearningStrategy):
-        """Register a learning strategy"""
+    def register_strategy(self, strategy: MetaLearningStrategy) -> None:
+        """Register a learning strategy."""
         self.strategy_mappings[strategy.strategy_id] = strategy
 
     def record_strategy_performance(
         self, strategy_id: str, task_characteristics: dict[str, Any], performance: float
-    ):
-        """Record performance of a strategy on a task"""
+    ) -> None:
+        """Record performance of a strategy on a task."""
         self.strategy_performance[strategy_id].append(
             {
                 "task_characteristics": task_characteristics,
@@ -352,11 +353,11 @@ class StrategyOptimizer:
     def recommend_strategy(
         self, task_characteristics: dict[str, Any]
     ) -> MetaLearningStrategy | None:
-        """Recommend best strategy for given task characteristics"""
+        """Recommend best strategy for given task characteristics."""
         best_strategy = None
         best_score = -float("inf")
 
-        for strategy_id, strategy in self.strategy_mappings.items():
+        for strategy in self.strategy_mappings.values():
             score = self._calculate_strategy_score(strategy, task_characteristics)
 
             if score > best_score:
@@ -368,7 +369,7 @@ class StrategyOptimizer:
     def _calculate_strategy_score(
         self, strategy: MetaLearningStrategy, task_characteristics: dict[str, Any]
     ) -> float:
-        """Calculate compatibility score between strategy and task"""
+        """Calculate compatibility score between strategy and task."""
         if strategy.strategy_id not in self.strategy_performance:
             return 0.0
 
@@ -396,7 +397,7 @@ class StrategyOptimizer:
     def _calculate_task_similarity(
         self, task1: dict[str, Any], task2: dict[str, Any]
     ) -> float:
-        """Calculate similarity between two task characteristic sets"""
+        """Calculate similarity between two task characteristic sets."""
         common_keys = set(task1.keys()) & set(task2.keys())
         if not common_keys:
             return 0.0
@@ -406,7 +407,7 @@ class StrategyOptimizer:
         for key in common_keys:
             val1, val2 = task1[key], task2[key]
 
-            if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
+            if isinstance(val1, int | float) and isinstance(val2, int | float):
                 # Numerical similarity
                 max_val = max(abs(val1), abs(val2), 1.0)
                 similarity = 1.0 - abs(val1 - val2) / max_val
@@ -422,13 +423,13 @@ class StrategyOptimizer:
 
 
 class MetaLearningEngine:
-    """Main meta-learning engine that coordinates all meta-learning components"""
+    """Main meta-learning engine that coordinates all meta-learning components."""
 
     def __init__(
         self,
         storage_path: str = "evolution_data/meta_learning",
         memory_size: int = 10000,
-    ):
+    ) -> None:
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
@@ -447,8 +448,8 @@ class MetaLearningEngine:
         # Initialize default strategies
         self._initialize_default_strategies()
 
-    def _initialize_default_strategies(self):
-        """Initialize default meta-learning strategies"""
+    def _initialize_default_strategies(self) -> None:
+        """Initialize default meta-learning strategies."""
         strategies = [
             MetaLearningStrategy(
                 strategy_id="aggressive_lr",
@@ -506,7 +507,7 @@ class MetaLearningEngine:
         task_characteristics: dict[str, Any],
         current_performance: float,
     ) -> dict[str, Any]:
-        """Optimize learning strategy for an agent"""
+        """Optimize learning strategy for an agent."""
         # Get agent profile
         agent_profile = self.agent_profiles.get(
             agent_id,
@@ -564,8 +565,8 @@ class MetaLearningEngine:
         learning_config: dict[str, Any],
         learning_time: float,
         convergence_steps: int,
-    ):
-        """Record the outcome of a learning session"""
+    ) -> None:
+        """Record the outcome of a learning session."""
         # Create learning experience
         experience = LearningExperience(
             experience_id=f"{agent_id}_{int(time.time())}",
@@ -614,9 +615,9 @@ class MetaLearningEngine:
         support_examples: list[Any],
         support_labels: list[int],
     ) -> dict[str, Any]:
-        """Perform few-shot adaptation for an agent"""
+        """Perform few-shot adaptation for an agent."""
         # Create prototypes
-        prototypes = self.few_shot_learner.create_prototype(
+        self.few_shot_learner.create_prototype(
             f"{agent_id}_{task_id}", support_examples, support_labels
         )
 
@@ -632,8 +633,8 @@ class MetaLearningEngine:
         return config
 
     def get_agent_learning_profile(self, agent_id: str) -> dict[str, Any]:
-        """Get comprehensive learning profile for an agent"""
-        profile = self.agent_profiles.get(agent_id, {})
+        """Get comprehensive learning profile for an agent."""
+        self.agent_profiles.get(agent_id, {})
 
         # Calculate statistics
         agent_experiences = [
@@ -683,7 +684,7 @@ class MetaLearningEngine:
         }
 
     def _get_preferred_strategies(self, agent_id: str) -> list[str]:
-        """Get preferred strategies for an agent based on historical performance"""
+        """Get preferred strategies for an agent based on historical performance."""
         agent_experiences = [
             exp for exp in self.experiences if exp.agent_id == agent_id
         ]
@@ -706,7 +707,7 @@ class MetaLearningEngine:
         return [strategy_id for strategy_id, _ in strategy_rankings[:3]]
 
     def _get_optimal_lr_range(self, agent_id: str) -> tuple[float, float]:
-        """Get optimal learning rate range for an agent"""
+        """Get optimal learning rate range for an agent."""
         if agent_id not in self.lr_optimizer.lr_history:
             return (0.001, 0.01)
 
@@ -727,8 +728,8 @@ class MetaLearningEngine:
             return (min(good_lrs), max(good_lrs))
         return (min(lr_history), max(lr_history))
 
-    def save_meta_learning_data(self):
-        """Save meta-learning data to disk"""
+    def save_meta_learning_data(self) -> None:
+        """Save meta-learning data to disk."""
         try:
             # Save experiences
             experiences_file = self.storage_path / "experiences.pkl"
@@ -764,10 +765,10 @@ class MetaLearningEngine:
             logger.info("Meta-learning data saved successfully")
 
         except Exception as e:
-            logger.error(f"Failed to save meta-learning data: {e}")
+            logger.exception(f"Failed to save meta-learning data: {e}")
 
-    def load_meta_learning_data(self):
-        """Load meta-learning data from disk"""
+    def load_meta_learning_data(self) -> None:
+        """Load meta-learning data from disk."""
         try:
             # Load experiences
             experiences_file = self.storage_path / "experiences.pkl"
@@ -799,17 +800,17 @@ class MetaLearningEngine:
             if strategy_file.exists():
                 with open(strategy_file) as f:
                     strategy_data = json.load(f)
-                    for strategy_id, data in strategy_data.items():
+                    for data in strategy_data.values():
                         strategy = MetaLearningStrategy(**data)
                         self.strategy_optimizer.register_strategy(strategy)
 
             logger.info("Meta-learning data loaded successfully")
 
         except Exception as e:
-            logger.error(f"Failed to load meta-learning data: {e}")
+            logger.exception(f"Failed to load meta-learning data: {e}")
 
     async def generate_meta_learning_report(self) -> dict[str, Any]:
-        """Generate comprehensive meta-learning analysis report"""
+        """Generate comprehensive meta-learning analysis report."""
         report = {
             "timestamp": datetime.now().isoformat(),
             "total_experiences": len(self.experiences),
@@ -865,9 +866,9 @@ class MetaLearningEngine:
         )
         if best_strategy.performance_history:
             recommendations.append(
-                f"Strategy '{
-                    best_strategy.name}' shows best performance with {
-                    best_strategy.avg_improvement:.3f} average improvement")
+                f"Strategy '{best_strategy.name}' shows best performance with {
+                    best_strategy.avg_improvement:.3f} average improvement"
+            )
 
         # Learning rate recommendations
         if len(self.lr_optimizer.experience_buffer) > 10:
@@ -891,7 +892,7 @@ class MetaLearningEngine:
 
 if __name__ == "__main__":
 
-    async def example_usage():
+    async def example_usage() -> None:
         # Initialize meta-learning engine
         meta_engine = MetaLearningEngine()
 

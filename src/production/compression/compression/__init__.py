@@ -32,7 +32,7 @@ class CompressionConfig:
 
 
 class TwoStageCompressor:
-    def __init__(self, config: CompressionConfig):
+    def __init__(self, config: CompressionConfig) -> None:
         self.config = config
 
         # Initialize SeedLM compressor (legacy or progressive)
@@ -103,8 +103,8 @@ class TwoStageCompressor:
 import torch
 
 
-def run_stage1(input_path: str, output_path: str, config_path: str = None) -> dict:
-    """Wrapper function for Stage-1 compression pipeline
+def run_stage1(input_path: str, output_path: str, config_path: str | None = None) -> dict:
+    """Wrapper function for Stage-1 compression pipeline.
 
     Args:
         input_path: Path to input model checkpoint

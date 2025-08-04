@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real Model Benchmarking - Replace Simulation with Actual Evaluation
+"""Real Model Benchmarking - Replace Simulation with Actual Evaluation.
 
 Implements actual model evaluation on standard benchmarks:
 - MMLU (Massive Multitask Language Understanding)
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class RealModelBenchmark:
     """Real model benchmarking without simulation."""
 
-    def __init__(self, model_path: str, model_name: str = None):
+    def __init__(self, model_path: str, model_name: str | None = None) -> None:
         self.model_path = model_path
         self.model_name = model_name or model_path.split("/")[-1]
         self.model = None
@@ -43,7 +43,7 @@ class RealModelBenchmark:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     @memory_efficient_operation
-    def load_model(self):
+    def load_model(self) -> None:
         """Load model safely with memory management."""
         if self.model is None:
             logger.info(f"Loading model for benchmarking: {self.model_path}")
@@ -155,7 +155,7 @@ class RealModelBenchmark:
             return results
 
         except Exception as e:
-            logger.error(f"MMLU benchmark failed: {e}")
+            logger.exception(f"MMLU benchmark failed: {e}")
             return {"overall_accuracy": 0.0, "error": str(e)}
 
     async def benchmark_gsm8k(self, num_samples: int = 100) -> dict[str, float]:
@@ -207,7 +207,7 @@ class RealModelBenchmark:
             return results
 
         except Exception as e:
-            logger.error(f"GSM8K benchmark failed: {e}")
+            logger.exception(f"GSM8K benchmark failed: {e}")
             return {"accuracy": 0.0, "error": str(e)}
 
     async def benchmark_hellaswag(self, num_samples: int = 100) -> dict[str, float]:
@@ -259,7 +259,7 @@ class RealModelBenchmark:
             return results
 
         except Exception as e:
-            logger.error(f"HellaSwag benchmark failed: {e}")
+            logger.exception(f"HellaSwag benchmark failed: {e}")
             return {"accuracy": 0.0, "error": str(e)}
 
     def calculate_text_likelihood(self, text: str) -> float:
@@ -389,7 +389,7 @@ class RealModelBenchmark:
             logger.info(f"Duration: {results['duration_minutes']:.1f} minutes")
 
         except Exception as e:
-            logger.error(f"Benchmark failed: {e}")
+            logger.exception(f"Benchmark failed: {e}")
             results["error"] = str(e)
             results["overall_score"] = 0.0
 
@@ -399,7 +399,7 @@ class RealModelBenchmark:
 
         return results
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Clean up resources."""
         if hasattr(self, "model") and self.model is not None:
             del self.model
@@ -409,7 +409,7 @@ class RealModelBenchmark:
 
 # Factory function for easy use
 def create_real_benchmark(
-    model_path: str, model_name: str = None
+    model_path: str, model_name: str | None = None
 ) -> RealModelBenchmark:
     """Create a real benchmark instance."""
     return RealModelBenchmark(model_path, model_name)
@@ -417,7 +417,7 @@ def create_real_benchmark(
 
 # Convenience function for quick benchmarking
 async def benchmark_model_real(
-    model_path: str, model_name: str = None, quick_mode: bool = False
+    model_path: str, model_name: str | None = None, quick_mode: bool = False
 ) -> dict[str, Any]:
     """Benchmark a model with real evaluation (no simulation)."""
     benchmark = create_real_benchmark(model_path, model_name)

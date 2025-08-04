@@ -17,7 +17,7 @@ except ImportError:
 class TestRealBenchmark:
     """Test real benchmarking functionality."""
 
-    def test_real_benchmark_exists(self):
+    def test_real_benchmark_exists(self) -> None:
         """Test that real benchmark can be imported."""
         try:
             from production.benchmarking.real_benchmark import RealBenchmark
@@ -26,7 +26,7 @@ class TestRealBenchmark:
         except ImportError:
             pytest.skip("RealBenchmark not available")
 
-    def test_benchmark_metrics(self):
+    def test_benchmark_metrics(self) -> None:
         """Test benchmark metrics concepts."""
         # Mock benchmark results
         results = {
@@ -41,7 +41,7 @@ class TestRealBenchmark:
         for metric, score in results.items():
             assert 0.0 <= score <= 1.0, f"Score {score} for {metric} out of range"
 
-    def test_benchmark_thresholds(self):
+    def test_benchmark_thresholds(self) -> None:
         """Test benchmark threshold concepts."""
         thresholds = {
             "mmlu": 0.65,
@@ -64,7 +64,7 @@ class TestRealBenchmark:
 
         assert passed == 2  # mmlu and humaneval pass
 
-    def test_fitness_calculation(self):
+    def test_fitness_calculation(self) -> None:
         """Test fitness calculation concept."""
         scores = {
             "mmlu": 0.70,
@@ -93,7 +93,7 @@ class TestRealBenchmark:
 class TestBenchmarkIntegration:
     """Test benchmark integration capabilities."""
 
-    def test_model_evaluation_concept(self):
+    def test_model_evaluation_concept(self) -> None:
         """Test model evaluation concept."""
         # Mock model evaluation
         model_outputs = ["Answer A", "Answer B", "Answer C"]
@@ -109,7 +109,7 @@ class TestBenchmarkIntegration:
 
         assert accuracy == 2 / 3  # 2 out of 3 correct
 
-    def test_benchmark_categories(self):
+    def test_benchmark_categories(self) -> None:
         """Test benchmark categories."""
         categories = {
             "reasoning": ["mmlu", "arc"],

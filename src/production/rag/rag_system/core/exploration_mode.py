@@ -17,7 +17,7 @@ class ExplorationMode:
         graph_store: GraphStore,
         llm_config: OpenAIGPTConfig,
         advanced_nlp: AdvancedNLP,
-    ):
+    ) -> None:
         self.graph_store = graph_store
         self.llm = llm_config.create()
         self.advanced_nlp = advanced_nlp
@@ -54,7 +54,7 @@ class ExplorationMode:
         depth: int,
         explored_nodes: set,
         exploration_results: list[dict[str, Any]],
-    ):
+    ) -> None:
         if depth == 0 or node in explored_nodes:
             return
 
@@ -120,7 +120,7 @@ class ExplorationMode:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON response: {response}")
+            logger.exception(f"Failed to parse JSON response: {response}")
             return {"error": "Failed to parse response"}
 
     async def discover_new_relations(
@@ -229,7 +229,7 @@ class ExplorationMode:
 
         return is_valid
 
-    async def update_knowledge_graph(self, new_relations: list[dict[str, Any]]):
+    async def update_knowledge_graph(self, new_relations: list[dict[str, Any]]) -> None:
         """Update the knowledge graph with newly discovered and validated relations.
 
         Args:
@@ -396,7 +396,7 @@ class ExplorationMode:
             return []
 
         main_causal_path = causal_paths[0]
-        excluded_nodes = set(node for path in causal_paths for node in path[1:-1])
+        excluded_nodes = {node for path in causal_paths for node in path[1:-1]}
 
         creative_paths = await self.find_creative_connections(
             start_node, end_node, list(excluded_nodes)
@@ -450,7 +450,7 @@ class ExplorationMode:
         response = await self.llm.complete(prompt)
         return self._parse_json_response(response.text)
 
-    async def update_graph_with_new_ideas(self, new_ideas: list[dict[str, Any]]):
+    async def update_graph_with_new_ideas(self, new_ideas: list[dict[str, Any]]) -> None:
         """Update the knowledge graph with new ideas and connections.
 
         Args:

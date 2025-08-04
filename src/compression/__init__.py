@@ -8,8 +8,8 @@ Target: 4x compression ratio for 2GB phones.
 
 from src.core.compression.unified_compressor import UnifiedCompressor
 
-from .simple_quantizer import CompressionError, SimpleQuantizer
 from .pipeline import compress, decompress
+from .simple_quantizer import CompressionError, SimpleQuantizer
 from .test_model_generator import create_test_model
 
 __all__ = [
@@ -17,6 +17,6 @@ __all__ = [
     "SimpleQuantizer",
     "UnifiedCompressor",
     "compress",
-    "decompress",
     "create_test_model",
+    "decompress",
 ]

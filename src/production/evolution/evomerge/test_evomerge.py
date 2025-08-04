@@ -124,13 +124,19 @@ class TestEvoMerge(unittest.TestCase):
         best_models = evolutionary_tournament.evolve()
         assert isinstance(best_models, list)
         assert all(isinstance(model, str) for model in best_models)
-        assert all(model.startswith(self.config.merge_settings.custom_dir) for model in best_models)
+        assert all(
+            model.startswith(self.config.merge_settings.custom_dir)
+            for model in best_models
+        )
 
     def test_run_evolutionary_tournament(self) -> None:
         best_models = run_evolutionary_tournament(self.config)
         assert isinstance(best_models, list)
         assert all(isinstance(model, str) for model in best_models)
-        assert all(model.startswith(self.config.merge_settings.custom_dir) for model in best_models)
+        assert all(
+            model.startswith(self.config.merge_settings.custom_dir)
+            for model in best_models
+        )
 
     def tearDown(self) -> None:
         clean_up_models([f"{self.config.merge_settings.custom_dir}/merged_*"])

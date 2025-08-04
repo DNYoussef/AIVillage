@@ -1,4 +1,4 @@
-"""Strategy Selection System
+"""Strategy Selection System.
 
 Selects and configures reasoning strategies based on query classification and requirements.
 Manages strategy registry and provides adaptive strategy selection.
@@ -20,7 +20,7 @@ class StrategySelector:
     Maintains registry of available strategies and provides adaptive selection.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Import strategies here to avoid circular imports
         from .strategies import (
             AggregationStrategy,
@@ -91,7 +91,7 @@ class StrategySelector:
         constraints: RetrievalConstraints | None = None,
         context: dict | None = None,
     ) -> ReasoningStrategy:
-        """Select best reasoning strategy for the given query characteristics
+        """Select best reasoning strategy for the given query characteristics.
 
         Args:
             query_type: Classified query type
@@ -143,18 +143,19 @@ class StrategySelector:
         return best_strategy
 
     def create_strategy_instance(self, strategy: ReasoningStrategy, **kwargs):
-        """Create instance of selected strategy"""
+        """Create instance of selected strategy."""
         strategy_class = self.strategies.get(strategy)
 
         if not strategy_class:
-            raise ValueError(f"Unknown strategy: {strategy}")
+            msg = f"Unknown strategy: {strategy}"
+            raise ValueError(msg)
 
         return strategy_class(**kwargs)
 
     def _select_by_performance(
         self, candidates: list[ReasoningStrategy], context: dict
     ) -> ReasoningStrategy:
-        """Select strategy based on performance metrics"""
+        """Select strategy based on performance metrics."""
         if not candidates:
             return ReasoningStrategy.DIRECT_RETRIEVAL
 
@@ -192,7 +193,7 @@ class StrategySelector:
         confidence: float,
         execution_time_ms: float,
     ) -> None:
-        """Update performance metrics for a strategy"""
+        """Update performance metrics for a strategy."""
         if strategy not in self.strategy_performance:
             self.strategy_performance[strategy] = {
                 "success_rate": 0.8,
@@ -233,7 +234,7 @@ class StrategySelector:
         )
 
     def get_strategy_info(self, strategy: ReasoningStrategy) -> dict:
-        """Get information about a strategy"""
+        """Get information about a strategy."""
         strategy_class = self.strategies.get(strategy)
         perf = self.strategy_performance.get(strategy, {})
 
@@ -252,13 +253,13 @@ class StrategySelector:
         }
 
     def list_available_strategies(self) -> list[dict]:
-        """List all available strategies with their information"""
+        """List all available strategies with their information."""
         return [self.get_strategy_info(strategy) for strategy in ReasoningStrategy]
 
     def recommend_fallback_strategy(
         self, failed_strategy: ReasoningStrategy, query_type: QueryType
     ) -> ReasoningStrategy | None:
-        """Recommend fallback strategy when primary strategy fails"""
+        """Recommend fallback strategy when primary strategy fails."""
         candidates = self.type_strategy_map.get(query_type, [])
 
         # Remove failed strategy from candidates
@@ -276,7 +277,7 @@ class StrategySelector:
     def can_handle_complexity(
         self, strategy: ReasoningStrategy, complexity_score: float
     ) -> bool:
-        """Check if strategy can handle given complexity level"""
+        """Check if strategy can handle given complexity level."""
         complexity_thresholds = {
             ReasoningStrategy.DIRECT_RETRIEVAL: 0.5,
             ReasoningStrategy.META_REASONING: 0.6,
@@ -292,7 +293,7 @@ class StrategySelector:
         return complexity_score <= threshold
 
     def get_strategy_requirements(self, strategy: ReasoningStrategy) -> dict:
-        """Get resource requirements for a strategy"""
+        """Get resource requirements for a strategy."""
         requirements = {
             ReasoningStrategy.DIRECT_RETRIEVAL: {
                 "min_memory_mb": 50,

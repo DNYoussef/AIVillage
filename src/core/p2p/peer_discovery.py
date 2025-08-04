@@ -1,27 +1,28 @@
-"""Peer Discovery System for Evolution-Aware P2P Network"""
+"""Peer Discovery System for Evolution-Aware P2P Network."""
 
 import asyncio
+import contextlib
+from dataclasses import dataclass
+import ipaddress
 import json
 import logging
-import socket
-import time
-import ipaddress
-from typing import Dict, List, Set, Optional, Tuple, Any
-from dataclasses import dataclass
-import threading
 import queue
+import socket
+import threading
+import time
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class DiscoveryConfig:
-    """Configuration for peer discovery"""
+    """Configuration for peer discovery."""
 
     discovery_interval: float = 30.0  # seconds
     discovery_timeout: float = 2.0  # seconds per discovery attempt
     max_discovery_ips: int = 20  # max IPs to scan per cycle
-    discovery_ports: List[int] = None  # ports to scan
+    discovery_ports: list[int] = None  # ports to scan
     enable_mdns: bool = True  # enable mDNS discovery
     enable_broadcast: bool = True  # enable broadcast discovery
     enable_dht: bool = False  # enable DHT discovery (future)
@@ -32,20 +33,22 @@ class DiscoveryConfig:
 
 
 class PeerDiscovery:
-    """Advanced peer discovery for evolution coordination"""
+    """Advanced peer discovery for evolution coordination."""
 
-    def __init__(self, p2p_node):
+    def __init__(self, p2p_node) -> None:
         self.p2p_node = p2p_node
         self.config = DiscoveryConfig()
 
         # Discovery state
         self.discovery_active = False
-        self.discovery_task: Optional[asyncio.Task] = None
+        self.discovery_task: asyncio.Task | None = None
 
         # Discovered peers
-        self.discovered_peers: Set[Tuple[str, int]] = set()
-        self.failed_peers: Dict[Tuple[str, int], float] = {}  # peer -> last_failure_time
-        self.peer_response_times: Dict[Tuple[str, int], float] = {}
+        self.discovered_peers: set[tuple[str, int]] = set()
+        self.failed_peers: dict[
+            tuple[str, int], float
+        ] = {}  # peer -> last_failure_time
+        self.peer_response_times: dict[tuple[str, int], float] = {}
 
         # Statistics
         self.stats = {
@@ -58,10 +61,10 @@ class PeerDiscovery:
 
         # Background discovery
         self.discovery_queue = queue.Queue()
-        self.discovery_threads: List[threading.Thread] = []
+        self.discovery_threads: list[threading.Thread] = []
 
-    async def start_discovery(self):
-        """Start peer discovery process"""
+    async def start_discovery(self) -> None:
+        """Start peer discovery process."""
         if self.discovery_active:
             logger.warning("Peer discovery already active")
             return
@@ -73,22 +76,22 @@ class PeerDiscovery:
 
         # Start background discovery threads
         for i in range(3):  # 3 discovery threads
-            thread = threading.Thread(target=self._discovery_worker, daemon=True, name=f"PeerDiscovery-{i}")
+            thread = threading.Thread(
+                target=self._discovery_worker, daemon=True, name=f"PeerDiscovery-{i}"
+            )
             thread.start()
             self.discovery_threads.append(thread)
 
         logger.info("Peer discovery started")
 
-    async def stop_discovery(self):
-        """Stop peer discovery process"""
+    async def stop_discovery(self) -> None:
+        """Stop peer discovery process."""
         self.discovery_active = False
 
         if self.discovery_task:
             self.discovery_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.discovery_task
-            except asyncio.CancelledError:
-                pass
 
         # Stop discovery threads
         for _ in self.discovery_threads:
@@ -96,18 +99,18 @@ class PeerDiscovery:
 
         logger.info("Peer discovery stopped")
 
-    async def _discovery_loop(self):
-        """Main discovery coordination loop"""
+    async def _discovery_loop(self) -> None:
+        """Main discovery coordination loop."""
         while self.discovery_active:
             try:
                 await self._run_discovery_cycle()
                 await asyncio.sleep(self.config.discovery_interval)
             except Exception as e:
-                logger.error(f"Discovery loop error: {e}")
+                logger.exception(f"Discovery loop error: {e}")
                 await asyncio.sleep(10)
 
-    async def _run_discovery_cycle(self):
-        """Run a complete discovery cycle"""
+    async def _run_discovery_cycle(self) -> None:
+        """Run a complete discovery cycle."""
         start_time = time.time()
 
         # Get discovery targets
@@ -133,10 +136,12 @@ class PeerDiscovery:
         self.stats["last_discovery_time"] = time.time()
 
         cycle_time = time.time() - start_time
-        logger.debug(f"Discovery cycle completed in {cycle_time:.2f}s, queued {len(discovery_tasks)} tasks")
+        logger.debug(
+            f"Discovery cycle completed in {cycle_time:.2f}s, queued {len(discovery_tasks)} tasks"
+        )
 
-    def _discovery_worker(self):
-        """Background worker for peer discovery"""
+    def _discovery_worker(self) -> None:
+        """Background worker for peer discovery."""
         while self.discovery_active:
             try:
                 task = self.discovery_queue.get(timeout=1.0)
@@ -149,10 +154,10 @@ class PeerDiscovery:
             except queue.Empty:
                 continue
             except Exception as e:
-                logger.error(f"Discovery worker error: {e}")
+                logger.exception(f"Discovery worker error: {e}")
 
-    def _discover_peer_sync(self, host: str, port: int):
-        """Synchronously discover a single peer"""
+    def _discover_peer_sync(self, host: str, port: int) -> None:
+        """Synchronously discover a single peer."""
         start_time = time.time()
 
         try:
@@ -181,7 +186,9 @@ class PeerDiscovery:
                     "sender_port": self.p2p_node.listen_port,
                     "timestamp": time.time(),
                     "capabilities": (
-                        self.p2p_node.local_capabilities.__dict__ if self.p2p_node.local_capabilities else {}
+                        self.p2p_node.local_capabilities.__dict__
+                        if self.p2p_node.local_capabilities
+                        else {}
                     ),
                 }
 
@@ -202,7 +209,9 @@ class PeerDiscovery:
 
                         # Process discovery response
                         response_time = time.time() - start_time
-                        self._process_discovery_response(host, port, response, response_time)
+                        self._process_discovery_response(
+                            host, port, response, response_time
+                        )
 
                         # Update stats
                         self.stats["peers_discovered"] += 1
@@ -212,7 +221,9 @@ class PeerDiscovery:
                         if peer_addr in self.failed_peers:
                             del self.failed_peers[peer_addr]
 
-                        logger.debug(f"Discovered peer at {host}:{port} (response: {response_time:.3f}s)")
+                        logger.debug(
+                            f"Discovered peer at {host}:{port} (response: {response_time:.3f}s)"
+                        )
 
             finally:
                 sock.close()
@@ -223,11 +234,13 @@ class PeerDiscovery:
             self.stats["discovery_failures"] += 1
             logger.debug(f"Discovery failed for {host}:{port}: {e}")
 
-    def _process_discovery_response(self, host: str, port: int, response: Dict, response_time: float):
-        """Process discovery response from peer"""
+    def _process_discovery_response(
+        self, host: str, port: int, response: dict, response_time: float
+    ) -> None:
+        """Process discovery response from peer."""
         try:
             peer_id = response.get("sender_id")
-            peer_info = response.get("peer_info", {})
+            response.get("peer_info", {})
             capabilities_data = response.get("capabilities", {})
 
             if not peer_id:
@@ -245,7 +258,9 @@ class PeerDiscovery:
                 device_type=capabilities_data.get("device_type", "unknown"),
                 performance_tier=capabilities_data.get("performance_tier", "medium"),
                 evolution_capacity=capabilities_data.get("evolution_capacity", 0.5),
-                available_for_evolution=capabilities_data.get("available_for_evolution", True),
+                available_for_evolution=capabilities_data.get(
+                    "available_for_evolution", True
+                ),
                 latency_ms=response_time * 1000,
                 last_seen=time.time(),
             )
@@ -256,16 +271,20 @@ class PeerDiscovery:
 
             # Initiate connection if not already connected
             if peer_id not in self.p2p_node.connections:
-                asyncio.create_task(self._connect_to_discovered_peer(host, port, peer_id))
+                asyncio.create_task(
+                    self._connect_to_discovered_peer(host, port, peer_id)
+                )
 
         except Exception as e:
-            logger.error(f"Error processing discovery response from {host}:{port}: {e}")
+            logger.exception(f"Error processing discovery response from {host}:{port}: {e}")
 
-    async def _connect_to_discovered_peer(self, host: str, port: int, peer_id: str):
-        """Connect to discovered peer"""
+    async def _connect_to_discovered_peer(self, host: str, port: int, peer_id: str) -> None:
+        """Connect to discovered peer."""
         try:
             if self.p2p_node.use_tls and self.p2p_node.ssl_context:
-                reader, writer = await asyncio.open_connection(host, port, ssl=self.p2p_node.ssl_context)
+                reader, writer = await asyncio.open_connection(
+                    host, port, ssl=self.p2p_node.ssl_context
+                )
             else:
                 reader, writer = await asyncio.open_connection(host, port)
 
@@ -273,7 +292,11 @@ class PeerDiscovery:
             intro_message = {
                 "type": "PEER_INTRODUCTION",
                 "sender_id": self.p2p_node.node_id,
-                "capabilities": (self.p2p_node.local_capabilities.__dict__ if self.p2p_node.local_capabilities else {}),
+                "capabilities": (
+                    self.p2p_node.local_capabilities.__dict__
+                    if self.p2p_node.local_capabilities
+                    else {}
+                ),
             }
 
             # Use the P2P node's message sending method
@@ -286,10 +309,10 @@ class PeerDiscovery:
             logger.info(f"Connected to discovered peer {peer_id} at {host}:{port}")
 
         except Exception as e:
-            logger.error(f"Failed to connect to discovered peer {peer_id}: {e}")
+            logger.exception(f"Failed to connect to discovered peer {peer_id}: {e}")
 
-    async def _get_discovery_targets(self) -> List[Tuple[str, int]]:
-        """Get list of discovery targets"""
+    async def _get_discovery_targets(self) -> list[tuple[str, int]]:
+        """Get list of discovery targets."""
         targets = []
 
         # Local network discovery
@@ -311,8 +334,8 @@ class PeerDiscovery:
 
         return unique_targets
 
-    async def _get_local_network_targets(self) -> List[Tuple[str, int]]:
-        """Get local network discovery targets"""
+    async def _get_local_network_targets(self) -> list[tuple[str, int]]:
+        """Get local network discovery targets."""
         targets = []
 
         try:
@@ -340,8 +363,8 @@ class PeerDiscovery:
 
         return targets
 
-    async def _get_mdns_targets(self) -> List[Tuple[str, int]]:
-        """Get mDNS discovery targets"""
+    async def _get_mdns_targets(self) -> list[tuple[str, int]]:
+        """Get mDNS discovery targets."""
         targets = []
 
         try:
@@ -355,8 +378,8 @@ class PeerDiscovery:
 
         return targets
 
-    def _get_retry_targets(self) -> List[Tuple[str, int]]:
-        """Get targets for retry (previously failed peers)"""
+    def _get_retry_targets(self) -> list[tuple[str, int]]:
+        """Get targets for retry (previously failed peers)."""
         targets = []
         current_time = time.time()
 
@@ -368,8 +391,8 @@ class PeerDiscovery:
 
         return targets
 
-    def _get_local_ips(self) -> List[str]:
-        """Get local IP addresses"""
+    def _get_local_ips(self) -> list[str]:
+        """Get local IP addresses."""
         local_ips = []
 
         try:
@@ -403,23 +426,25 @@ class PeerDiscovery:
 
         return local_ips
 
-    def add_known_peer(self, host: str, port: int):
-        """Manually add a known peer for discovery"""
+    def add_known_peer(self, host: str, port: int) -> None:
+        """Manually add a known peer for discovery."""
         self.discovered_peers.add((host, port))
         logger.info(f"Added known peer: {host}:{port}")
 
-    def remove_peer(self, host: str, port: int):
-        """Remove peer from discovery"""
+    def remove_peer(self, host: str, port: int) -> None:
+        """Remove peer from discovery."""
         peer_addr = (host, port)
         self.discovered_peers.discard(peer_addr)
         self.failed_peers.pop(peer_addr, None)
         self.peer_response_times.pop(peer_addr, None)
 
-    def get_discovery_stats(self) -> Dict[str, Any]:
-        """Get discovery statistics"""
+    def get_discovery_stats(self) -> dict[str, Any]:
+        """Get discovery statistics."""
         # Calculate average response time
         response_times = list(self.peer_response_times.values())
-        avg_response_time = sum(response_times) / len(response_times) if response_times else 0.0
+        avg_response_time = (
+            sum(response_times) / len(response_times) if response_times else 0.0
+        )
 
         return {
             **self.stats,
@@ -431,7 +456,7 @@ class PeerDiscovery:
             "worker_threads": len(self.discovery_threads),
         }
 
-    def force_discovery_cycle(self):
-        """Force an immediate discovery cycle"""
+    def force_discovery_cycle(self) -> None:
+        """Force an immediate discovery cycle."""
         if self.discovery_active:
             asyncio.create_task(self._run_discovery_cycle())

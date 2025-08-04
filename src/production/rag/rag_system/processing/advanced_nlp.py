@@ -12,7 +12,7 @@ from transformers import (
 
 
 class AdvancedNLP:
-    def __init__(self):
+    def __init__(self) -> None:
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
         self.bert_model = BertModel.from_pretrained("bert-base-uncased")
         self.bert_classifier = BertForSequenceClassification.from_pretrained(

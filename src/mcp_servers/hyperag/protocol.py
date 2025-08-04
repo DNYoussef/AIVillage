@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class MCPError(Exception):
     """Base class for MCP protocol errors."""
 
-    def __init__(self, code: str, message: str, data: dict[str, Any] | None = None):
+    def __init__(self, code: str, message: str, data: dict[str, Any] | None = None) -> None:
         self.code = code
         self.message = message
         self.data = data or {}
@@ -35,42 +35,42 @@ class MCPError(Exception):
 class AuthenticationRequired(MCPError):
     """Authentication required error."""
 
-    def __init__(self, message: str = "Authentication required"):
+    def __init__(self, message: str = "Authentication required") -> None:
         super().__init__("AUTH_REQUIRED", message)
 
 
 class PermissionDenied(MCPError):
     """Permission denied error."""
 
-    def __init__(self, message: str = "Permission denied"):
+    def __init__(self, message: str = "Permission denied") -> None:
         super().__init__("PERMISSION_DENIED", message)
 
 
 class InvalidRequest(MCPError):
     """Invalid request error."""
 
-    def __init__(self, message: str = "Invalid request"):
+    def __init__(self, message: str = "Invalid request") -> None:
         super().__init__("INVALID_REQUEST", message)
 
 
 class NotFound(MCPError):
     """Resource not found error."""
 
-    def __init__(self, message: str = "Resource not found"):
+    def __init__(self, message: str = "Resource not found") -> None:
         super().__init__("NOT_FOUND", message)
 
 
 class InternalError(MCPError):
     """Internal server error."""
 
-    def __init__(self, message: str = "Internal server error"):
+    def __init__(self, message: str = "Internal server error") -> None:
         super().__init__("INTERNAL_ERROR", message)
 
 
 class MCPRequest:
     """MCP request wrapper."""
 
-    def __init__(self, method: str, params: dict[str, Any], request_id: str = None):
+    def __init__(self, method: str, params: dict[str, Any], request_id: str | None = None) -> None:
         self.method = method
         self.params = params
         self.request_id = request_id or str(uuid.uuid4())
@@ -81,8 +81,8 @@ class MCPResponse:
     """MCP response wrapper."""
 
     def __init__(
-        self, result: Any = None, error: MCPError | None = None, request_id: str = None
-    ):
+        self, result: Any = None, error: MCPError | None = None, request_id: str | None = None
+    ) -> None:
         self.result = result
         self.error = error
         self.request_id = request_id
@@ -112,7 +112,7 @@ class MCPProtocolHandler:
         permission_manager: PermissionManager,
         model_registry: ModelRegistry,
         storage_backend: Any | None = None,
-    ):
+    ) -> None:
         self.permission_manager = permission_manager
         self.model_registry = model_registry
         self.storage_backend = storage_backend
@@ -152,10 +152,12 @@ class MCPProtocolHandler:
         try:
             # Validate request
             if not request.method:
-                raise InvalidRequest("Missing method")
+                msg = "Missing method"
+                raise InvalidRequest(msg)
 
             if request.method not in self.handlers:
-                raise NotFound(f"Unknown method: {request.method}")
+                msg = f"Unknown method: {request.method}"
+                raise NotFound(msg)
 
             # Get handler
             handler = self.handlers[request.method]
@@ -185,7 +187,7 @@ class MCPProtocolHandler:
             return MCPResponse(error=e, request_id=request.request_id)
 
         except Exception as e:
-            logger.error(f"Unexpected error for {request.method}: {e!s}")
+            logger.exception(f"Unexpected error for {request.method}: {e!s}")
             return MCPResponse(
                 error=InternalError(f"Unexpected error: {e!s}"),
                 request_id=request.request_id,
@@ -221,7 +223,8 @@ class MCPProtocolHandler:
             context.agent_id, agent_type, "plan", query, plan_context
         )
         if not self.storage_backend:
-            raise InternalError("Storage backend not configured")
+            msg = "Storage backend not configured"
+            raise InternalError(msg)
 
         # Retrieve relevant knowledge items
         retrieval_limit = getattr(plan, "max_depth", 10)
@@ -282,8 +285,6 @@ class MCPProtocolHandler:
         **kwargs,
     ) -> dict[str, Any]:
         """Handle creative/divergent query request."""
-        creativity_params = creativity_parameters or {}
-
         # Mock creative response
         bridges = [
             {
@@ -361,7 +362,8 @@ class MCPProtocolHandler:
         """Handle add knowledge request."""
         node_id = str(uuid.uuid4())
         if not self.storage_backend:
-            raise InternalError("Storage backend not configured")
+            msg = "Storage backend not configured"
+            raise InternalError(msg)
 
         await self.storage_backend.add_knowledge(
             node_id, content, content_type, metadata
@@ -385,11 +387,10 @@ class MCPProtocolHandler:
     ) -> dict[str, Any]:
         """Handle search knowledge request."""
         if not self.storage_backend:
-            raise InternalError("Storage backend not configured")
+            msg = "Storage backend not configured"
+            raise InternalError(msg)
 
-        results = await self.storage_backend.search_knowledge(
-            query, limit, filters
-        )
+        results = await self.storage_backend.search_knowledge(query, limit, filters)
 
         return {
             "results": results,
@@ -409,7 +410,8 @@ class MCPProtocolHandler:
     ) -> dict[str, Any]:
         """Handle update knowledge request."""
         if not self.storage_backend:
-            raise InternalError("Storage backend not configured")
+            msg = "Storage backend not configured"
+            raise InternalError(msg)
 
         await self.storage_backend.update_knowledge(
             node_id, content=content, metadata=metadata
@@ -428,7 +430,8 @@ class MCPProtocolHandler:
     ) -> dict[str, Any]:
         """Handle delete knowledge request."""
         if not self.storage_backend:
-            raise InternalError("Storage backend not configured")
+            msg = "Storage backend not configured"
+            raise InternalError(msg)
 
         await self.storage_backend.delete_knowledge(node_id)
 

@@ -4,7 +4,7 @@ from langroid import ChatAgent, ChatAgentConfig, Task
 
 
 class TextGenerationTask(Task):
-    def __init__(self, agent: ChatAgent, rag_system):
+    def __init__(self, agent: ChatAgent, rag_system) -> None:
         super().__init__(agent)
         self.rag_system = rag_system
         self.NUM_TEXTS_PER_RANGE = 1000  # This can be adjusted as needed
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     class MockRAGSystem:
         """Very small RAG wrapper returning canned retrieval snippets."""
 
-        def __init__(self, snippets: list[str] | None = None, n_ctx: int = 3):
+        def __init__(self, snippets: list[str] | None = None, n_ctx: int = 3) -> None:
             self.snippets = snippets or [
                 "The quick brown fox jumps over the lazy dog.",
                 "RAG systems combine retrieval with generation.",
@@ -88,7 +88,7 @@ if __name__ == "__main__":
             ctx = "\n".join(f"[ctx{i}] {d}" for i, d in enumerate(docs[: self.n], 1))
             return f"{ctx}\n\n[question] {prompt}"
 
-    async def main():
+    async def main() -> None:
         config = ChatAgentConfig(
             name="TextGenerator",
             llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),

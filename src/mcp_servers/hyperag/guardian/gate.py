@@ -20,8 +20,8 @@ Decision = Literal["APPLY", "QUARANTINE", "REJECT"]
 
 # Type aliases for imports that may not exist yet
 try:
-    from ..gdc.specs import Violation
-    from ..repair.innovator_agent import RepairOperation
+    from AIVillage.src.mcp_servers.hyperag.gdc.specs import Violation
+    from AIVillage.src.mcp_servers.hyperag.repair.innovator_agent import RepairOperation
 except ImportError:
     # Fallback types for testing
     RepairOperation = Any
@@ -49,7 +49,7 @@ class CreativeBridge:
 class GuardianGate:
     """Core decision engine for validating repairs and creative bridges."""
 
-    def __init__(self, policy_path: str | None = None):
+    def __init__(self, policy_path: str | None = None) -> None:
         if policy_path is None:
             policy_path = pathlib.Path(__file__).parent / "policies.yaml"
 
@@ -95,8 +95,8 @@ class GuardianGate:
         self, proposals: list[RepairOperation], violation: Violation
     ) -> Decision:
         """Validate Innovator Repair set and return decision."""
-        start_time = time.time()
-        domain = getattr(violation, "domain", "general")
+        time.time()
+        getattr(violation, "domain", "general")
 
         try:
             # 1. Calculate semantic utility by applying proposals in-memory
@@ -194,7 +194,7 @@ class GuardianGate:
         domain = getattr(violation, "domain", "general")
         domain_rules = self.policies.get("domain_heuristics", {}).get(domain, {})
         forbidden_deletes = domain_rules.get("forbidden_deletes", [])
-        must_preserve = domain_rules.get("must_preserve_edges", [])
+        domain_rules.get("must_preserve_edges", [])
 
         penalty = 0.0
         for proposal in proposals:
@@ -228,7 +228,7 @@ class GuardianGate:
 
         return min(1.0, final_score)
 
-    def _simulate_proposal(self, graph: dict[str, Any], proposal: Any):
+    def _simulate_proposal(self, graph: dict[str, Any], proposal: Any) -> None:
         """Apply a single proposal to the simulated graph."""
         if not hasattr(proposal, "operation_type"):
             return

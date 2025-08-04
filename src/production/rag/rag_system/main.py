@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""RAG System Entry Point
+"""RAG System Entry Point.
 
 This module provides the entry point for the RAG (Retrieval-Augmented Generation) system,
 handling document indexing, querying, and knowledge management.
@@ -16,10 +16,8 @@ except Exception:  # pragma: no cover - import guard
 
 
 def create_parser():
-    """Create argument parser for RAG system"""
-    parser = argparse.ArgumentParser(
-        description="Experimental RAG System Service"
-    )
+    """Create argument parser for RAG system."""
+    parser = argparse.ArgumentParser(description="Experimental RAG System Service")
 
     parser.add_argument(
         "action",
@@ -44,8 +42,8 @@ def create_parser():
     return parser
 
 
-def query_system(args):
-    """Query the RAG system"""
+def query_system(args) -> int:
+    """Query the RAG system."""
     if not args.question:
         print("Error: --question is required for query action")
         return 1
@@ -73,8 +71,8 @@ def query_system(args):
     return 0
 
 
-def index_document(args):
-    """Index a document"""
+def index_document(args) -> int:
+    """Index a document."""
     if not args.document:
         print("Error: --document is required for index action")
         return 1
@@ -83,8 +81,8 @@ def index_document(args):
     return 1
 
 
-def search_documents(args):
-    """Search documents"""
+def search_documents(args) -> int:
+    """Search documents."""
     if not args.question:
         print("Error: --question is required for search action")
         return 1
@@ -93,25 +91,22 @@ def search_documents(args):
     return 1
 
 
-def get_status(args):
-    """Get service status"""
+def get_status(args) -> int:
+    """Get service status."""
     print("RAG system status: Running")
     return 0
 
 
-def configure_service(args):
-    """Configure service"""
+def configure_service(args) -> int:
+    """Configure service."""
     print("Service configuration is experimental and not yet implemented.")
     return 1
 
 
 def main(args=None):
-    """Main entry point for RAG system"""
+    """Main entry point for RAG system."""
     parser = create_parser()
-    if args is None:
-        args = parser.parse_args()
-    else:
-        args = parser.parse_args(args)
+    args = parser.parse_args() if args is None else parser.parse_args(args)
 
     if args.verbose:
         print(f"RAG System: {args.action}")

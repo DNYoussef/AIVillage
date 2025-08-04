@@ -5,7 +5,7 @@ import torch
 
 @dataclass
 class Stage1Config:
-    """Configuration for Stage-1 compression pipeline (BitNet + SeedLM)"""
+    """Configuration for Stage-1 compression pipeline (BitNet + SeedLM)."""
 
     # BitNet Fine-tuning Parameters
     bitnet_enabled: bool = True
@@ -58,11 +58,14 @@ class Stage1Config:
 
         # Validate constraints
         if self.target_compression_ratio < 10.0:
-            raise ValueError("Target compression ratio must be >= 10x")
+            msg = "Target compression ratio must be >= 10x"
+            raise ValueError(msg)
         if self.max_accuracy_drop > 0.05:
-            raise ValueError("Maximum accuracy drop must be <= 5%")
+            msg = "Maximum accuracy drop must be <= 5%"
+            raise ValueError(msg)
         if self.bitnet_batch_size * self.gradient_accumulation_steps > 32:
-            raise ValueError("Effective batch size too large for 16GB VRAM")
+            msg = "Effective batch size too large for 16GB VRAM"
+            raise ValueError(msg)
 
 
 # Import torch for device check

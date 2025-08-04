@@ -12,7 +12,7 @@ class VPTQQuantizer:
     that have already been processed by Stage 1 (BitNet + SeedLM).
     """
 
-    def __init__(self, bits_per_vector: float = 2.0, vector_length: int = 32):
+    def __init__(self, bits_per_vector: float = 2.0, vector_length: int = 32) -> None:
         self.bits_per_vector = bits_per_vector
         self.vector_length = vector_length
         self.codebook_size = int(2**bits_per_vector)
@@ -57,10 +57,11 @@ class VPTQQuantizer:
             hessian = torch.mm(grad.T, grad) / vectors.size(0)
             return hessian + torch.eye(vectors.size(1)) * 1e-8
 
-        raise ValueError(f"Unknown Hessian method: {method}")
+        msg = f"Unknown Hessian method: {method}"
+        raise ValueError(msg)
 
     def _approx_hessian(self, vectors: torch.Tensor) -> torch.Tensor:
-        """Backward compatibility wrapper"""
+        """Backward compatibility wrapper."""
         return self._compute_hessian(vectors, method="diagonal")
 
     def _weighted_distance(
@@ -185,7 +186,7 @@ class VPTQQuantizer:
     def _initialize_codebook_kmeans_plus(
         self, vectors: torch.Tensor, hessian: torch.Tensor
     ) -> torch.Tensor:
-        """Initialize codebook using k-means++ algorithm with Hessian weighting"""
+        """Initialize codebook using k-means++ algorithm with Hessian weighting."""
         n_vectors = vectors.size(0)
         codebook = torch.zeros(self.codebook_size, self.vector_length)
 
@@ -211,7 +212,7 @@ class VPTQQuantizer:
         assignments: torch.Tensor,
         hessian: torch.Tensor,
     ) -> float:
-        """Calculate quantization loss with Hessian weighting"""
+        """Calculate quantization loss with Hessian weighting."""
         reconstructed = codebook[assignments]
         diff = vectors - reconstructed
 
@@ -234,7 +235,7 @@ class VPTQQuantizer:
         res_codebook: torch.Tensor,
         res_idx: torch.Tensor,
     ) -> torch.Tensor:
-        """Reconstruct vectors from quantization data"""
+        """Reconstruct vectors from quantization data."""
         vectors = codebook[assignments]
         residuals = res_codebook[res_idx]
         return vectors + residuals

@@ -1,4 +1,4 @@
-"""Federated Learning System for Sprint 7
+"""Federated Learning System for Sprint 7.
 
 This module implements federated learning on the distributed infrastructure,
 enabling collaborative training across devices while preserving privacy.

@@ -19,7 +19,7 @@ class EnhancedRAGPipeline(BaseComponent):
         self,
         config: UnifiedConfig | None = None,
         knowledge_tracker: UnifiedKnowledgeTracker | None = None,
-    ):
+    ) -> None:
         """Initialize the RAG pipeline with an optional configuration."""
         self.config = config or UnifiedConfig()
         self.latent_space_activation = LatentSpaceActivation()

@@ -22,9 +22,9 @@ from scipy.stats import entropy
 import seaborn as sns
 import torch
 from torch import nn
+import wandb
 
 from agent_forge.geometry.id_twonn import twonn
-import wandb
 
 logger = logging.getLogger(__name__)
 

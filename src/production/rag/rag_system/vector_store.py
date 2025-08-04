@@ -18,7 +18,7 @@ COLLECTION_NAME = os.getenv("COLLECTION_NAME", "ai_village_vectors")
 class VectorStore:
     """Unified interface backed by Qdrant or FAISS with automatic fallback."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.faiss = FaissAdapter()
         self.backend = self.faiss
         if USE_QDRANT:
@@ -46,7 +46,7 @@ class VectorStore:
                 )
                 self.faiss.add(ids, embeddings, payload)
             except Exception as e:  # pragma: no cover - network side effects
-                logger.error("Qdrant add failed – reverting to FAISS: %s", e)
+                logger.exception("Qdrant add failed – reverting to FAISS: %s", e)
                 self.backend = self.faiss
                 self.faiss.add(ids, embeddings, payload)
 
@@ -63,7 +63,7 @@ class VectorStore:
             )
             return [{"id": p.id, "score": p.score, "meta": p.payload} for p in res]
         except Exception as e:  # pragma: no cover - network side effects
-            logger.error("Qdrant search failed – falling back (%s)", e)
+            logger.exception("Qdrant search failed – falling back (%s)", e)
             self.backend = self.faiss
             return self.faiss.search(query_vec, k)
         finally:

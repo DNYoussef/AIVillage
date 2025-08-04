@@ -6,15 +6,16 @@ import requests
 
 JWT_SECRET = os.getenv("JWT_SECRET")
 if not JWT_SECRET:
+    msg = "JWT_SECRET environment variable must be set for secure authentication"
     raise ValueError(
-        "JWT_SECRET environment variable must be set for secure authentication"
+        msg
     )
 
 
 class MCPClient:
     """JSON-RPC 2.0 over HTTPS with mTLS & JWT."""
 
-    def __init__(self, endpoint: str, cert: str, key: str, ca: str):
+    def __init__(self, endpoint: str, cert: str, key: str, ca: str) -> None:
         self.endpoint = endpoint
         self.session = requests.Session()
         self.session.verify = ca

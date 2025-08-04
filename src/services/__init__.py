@@ -15,7 +15,7 @@ warnings.warn(
 class Init:
     """Placeholder class for testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.initialized = True
 
     def process(self, *args, **kwargs):

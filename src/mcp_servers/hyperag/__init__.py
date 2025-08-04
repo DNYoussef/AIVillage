@@ -1,4 +1,4 @@
-"""HypeRAG MCP Server
+"""HypeRAG MCP Server.
 
 A Model Context Protocol server for HypeRAG knowledge retrieval and reasoning.
 Provides brain-inspired dual-memory architecture with creativity, repair, and safety validation.

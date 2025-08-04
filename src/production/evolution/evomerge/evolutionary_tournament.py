@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class EvolutionaryTournament:
-    def __init__(self, config: Configuration):
+    def __init__(self, config: Configuration) -> None:
         self.config = config
         self.merger = AdvancedModelMerger(config)
         self.fitness_scores = []
@@ -38,7 +38,7 @@ class EvolutionaryTournament:
         self.objectives = self.config.evolution_settings.objectives
         self.setup_logging()
 
-    def setup_logging(self):
+    def setup_logging(self) -> None:
         self.log_file = os.path.join(
             self.config.merge_settings.custom_dir, "evolution_log.txt"
         )
@@ -52,7 +52,7 @@ class EvolutionaryTournament:
 
     def log_generation_info(
         self, generation: int, population: list[str], scores: list[dict[str, float]]
-    ):
+    ) -> None:
         logger.info(f"Generation {generation} completed")
         logger.info(f"Population size: {len(population)}")
         logger.info(f"Best scores: {max(scores, key=lambda x: x[self.objectives[0]])}")
@@ -83,7 +83,7 @@ class EvolutionaryTournament:
                 population.append(merged_model_path)
                 logger.info(f"Created merged model: {merged_model_path}")
             except Exception as e:
-                logger.error(
+                logger.exception(
                     f"Failed to create merged model with techniques {techniques}: {e!s}"
                 )
 
@@ -135,7 +135,7 @@ class EvolutionaryTournament:
         population: list[str],
         scores: list[float],
         mutation_rate: float,
-    ):
+    ) -> None:
         checkpoint = {
             "generation": generation,
             "population": population,
@@ -157,7 +157,7 @@ class EvolutionaryTournament:
         logger.info(f"Loaded checkpoint from {checkpoint_path}")
         return checkpoint
 
-    def evolve(self, start_from_checkpoint: str = None) -> list[str]:
+    def evolve(self, start_from_checkpoint: str | None = None) -> list[str]:
         try:
             if start_from_checkpoint:
                 checkpoint = self.load_checkpoint(start_from_checkpoint)
@@ -172,8 +172,9 @@ class EvolutionaryTournament:
                 base_mutation_rate = self.config.evolution_settings.mutation_rate
 
             if len(population) < self.population_size:
+                msg = "Failed to create enough initial models. Aborting evolution."
                 raise EvoMergeException(
-                    "Failed to create enough initial models. Aborting evolution."
+                    msg
                 )
 
             progress_bar = tqdm(
@@ -280,8 +281,8 @@ class EvolutionaryTournament:
 
                     progress_bar.update(1)
                 except Exception as e:
-                    logger.error(f"Error in generation {generation + 1}: {e!s}")
-                    logger.error("Attempting to continue with the next generation...")
+                    logger.exception(f"Error in generation {generation + 1}: {e!s}")
+                    logger.exception("Attempting to continue with the next generation...")
 
             progress_bar.close()
 
@@ -307,12 +308,12 @@ class EvolutionaryTournament:
             return pareto_optimal_models
 
         except Exception as e:
-            logger.error(f"Critical error in evolution process: {e!s}")
+            logger.exception(f"Critical error in evolution process: {e!s}")
             raise
 
     def generate_final_report(
         self, pareto_optimal_models: list[str], final_scores: list[dict[str, float]]
-    ):
+    ) -> None:
         report = "EvoMerge Evolution Report\n"
         report += "========================\n\n"
         report += f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
@@ -340,7 +341,7 @@ class EvolutionaryTournament:
 
 
 def run_evolutionary_tournament(
-    config: Configuration, start_from_checkpoint: str = None
+    config: Configuration, start_from_checkpoint: str | None = None
 ) -> list[str]:
     evolutionary_tournament = EvolutionaryTournament(config)
     pareto_optimal_models = evolutionary_tournament.evolve(start_from_checkpoint)
@@ -360,7 +361,7 @@ def run_evolutionary_tournament(
     return pareto_optimal_models
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="EvoMerge: Evolutionary Model Merging")
     parser.add_argument("--config", type=str, help="Path to the configuration file")
     parser.add_argument(

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Monitor canary tests for unexpected changes
+"""Monitor canary tests for unexpected changes.
 
 Canary tests are expected to fail but serve as indicators of
 architectural changes when they start passing or fail differently.
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CanaryTest:
-    """Represents a canary test and its expected behavior"""
+    """Represents a canary test and its expected behavior."""
 
     name: str
     path: str
@@ -31,7 +31,7 @@ class CanaryTest:
 
 @dataclass
 class CanaryChange:
-    """Represents a change in canary test behavior"""
+    """Represents a change in canary test behavior."""
 
     timestamp: str
     test_name: str
@@ -42,9 +42,9 @@ class CanaryChange:
 
 
 class CanaryMonitor:
-    """Monitor canary tests for unexpected changes"""
+    """Monitor canary tests for unexpected changes."""
 
-    def __init__(self, base_dir: Path = None):
+    def __init__(self, base_dir: Path | None = None) -> None:
         self.base_dir = base_dir or Path(__file__).parent
         self.canary_config_file = self.base_dir / "canary_tests.json"
         self.canary_history_file = self.base_dir / "canary_history.json"
@@ -55,8 +55,8 @@ class CanaryMonitor:
         self._load_canary_config()
         self._load_change_history()
 
-    def _load_canary_config(self):
-        """Load known canary tests configuration"""
+    def _load_canary_config(self) -> None:
+        """Load known canary tests configuration."""
         if not self.canary_config_file.exists():
             self._create_default_canary_config()
             return
@@ -73,11 +73,11 @@ class CanaryMonitor:
             logger.info(f"Loaded {len(self.known_canaries)} canary tests")
 
         except Exception as e:
-            logger.error(f"Failed to load canary config: {e}")
+            logger.exception(f"Failed to load canary config: {e}")
             self.known_canaries = {}
 
-    def _create_default_canary_config(self):
-        """Create default canary test configuration"""
+    def _create_default_canary_config(self) -> None:
+        """Create default canary test configuration."""
         default_canaries = [
             {
                 "name": "test_bitnet_quantization_accuracy",
@@ -108,10 +108,10 @@ class CanaryMonitor:
                 json.dump(config, f, indent=2)
             logger.info(f"Created default canary config: {self.canary_config_file}")
         except Exception as e:
-            logger.error(f"Failed to create canary config: {e}")
+            logger.exception(f"Failed to create canary config: {e}")
 
-    def _load_change_history(self):
-        """Load canary change history"""
+    def _load_change_history(self) -> None:
+        """Load canary change history."""
         if not self.canary_history_file.exists():
             self.change_history = []
             return
@@ -124,11 +124,11 @@ class CanaryMonitor:
             logger.info(f"Loaded {len(self.change_history)} canary changes")
 
         except Exception as e:
-            logger.error(f"Failed to load canary history: {e}")
+            logger.exception(f"Failed to load canary history: {e}")
             self.change_history = []
 
-    def _save_change_history(self):
-        """Save canary change history"""
+    def _save_change_history(self) -> None:
+        """Save canary change history."""
         try:
             self.canary_history_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.canary_history_file, "w") as f:
@@ -145,10 +145,10 @@ class CanaryMonitor:
                 ]
                 json.dump(data, f, indent=2)
         except Exception as e:
-            logger.error(f"Failed to save change history: {e}")
+            logger.exception(f"Failed to save change history: {e}")
 
     def check_canary_status(self, test_results: dict[str, Any]) -> list[CanaryChange]:
-        """Check canary tests for unexpected changes"""
+        """Check canary tests for unexpected changes."""
         changes = []
         timestamp = datetime.now(timezone.utc).isoformat()
 
@@ -200,7 +200,7 @@ class CanaryMonitor:
         return changes
 
     def _find_canary_for_test(self, test_id: str) -> CanaryTest | None:
-        """Find canary test configuration for a given test ID"""
+        """Find canary test configuration for a given test ID."""
         for canary in self.known_canaries.values():
             if canary.path in test_id or canary.name in test_id:
                 return canary
@@ -214,7 +214,7 @@ class CanaryMonitor:
         return None
 
     def _normalize_test_status(self, outcome: str, test_data: dict[str, Any]) -> str:
-        """Normalize pytest outcomes to consistent status strings"""
+        """Normalize pytest outcomes to consistent status strings."""
         if outcome == "passed":
             return "passed"
         if outcome == "failed":
@@ -230,7 +230,7 @@ class CanaryMonitor:
     def _determine_alert_level(
         self, canary: CanaryTest, old_status: str, new_status: str
     ) -> str:
-        """Determine alert level for status changes"""
+        """Determine alert level for status changes."""
         # Expected fail → Pass = Critical (architecture changed!)
         if canary.expected_status == "xfail" and new_status == "passed":
             return "critical"
@@ -250,8 +250,8 @@ class CanaryMonitor:
         # Other changes = Info
         return "info"
 
-    def _update_canary_config(self):
-        """Update canary configuration with latest status"""
+    def _update_canary_config(self) -> None:
+        """Update canary configuration with latest status."""
         try:
             config = {
                 "canary_tests": [
@@ -275,10 +275,10 @@ class CanaryMonitor:
                 json.dump(config, f, indent=2)
 
         except Exception as e:
-            logger.error(f"Failed to update canary config: {e}")
+            logger.exception(f"Failed to update canary config: {e}")
 
-    def alert_canary_change(self, change: CanaryChange):
-        """Send alert for canary test change"""
+    def alert_canary_change(self, change: CanaryChange) -> None:
+        """Send alert for canary test change."""
         if change.alert_level == "critical":
             logger.critical(f"CANARY ALERT: {change.test_name} - {change.reason}")
             print("\n🚨 CRITICAL CANARY ALERT 🚨")
@@ -296,7 +296,7 @@ class CanaryMonitor:
             logger.info(f"CANARY INFO: {change.test_name} - {change.reason}")
 
     def get_canary_summary(self) -> dict[str, Any]:
-        """Get summary of canary test status"""
+        """Get summary of canary test status."""
         summary = {
             "total_canaries": len(self.known_canaries),
             "recent_changes": len(
@@ -333,8 +333,8 @@ class CanaryMonitor:
         return summary
 
 
-def main():
-    """CLI interface for canary monitoring"""
+def main() -> None:
+    """CLI interface for canary monitoring."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Canary Test Monitor")

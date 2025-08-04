@@ -12,7 +12,6 @@ from typing import Any
 import numpy as np
 import torch
 import torch.nn.functional as F
-
 import wandb
 
 logger = logging.getLogger(__name__)
@@ -80,9 +79,7 @@ class MergeOperator:
         }
 
         # Performance tracking
-        self.strategy_performance = {
-            strategy: [] for strategy in self.merge_strategies
-        }
+        self.strategy_performance = {strategy: [] for strategy in self.merge_strategies}
         self.merge_analytics = {
             "total_merges": 0,
             "successful_merges": 0,

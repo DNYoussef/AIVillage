@@ -7,9 +7,9 @@ class TaskVector:
         self,
         pretrained_model: nn.Module = None,
         finetuned_model: nn.Module = None,
-        exclude_param_names_regex: list[str] = None,
-        task_vector_param_dict: dict[str, torch.Tensor] = None,
-    ):
+        exclude_param_names_regex: list[str] | None = None,
+        task_vector_param_dict: dict[str, torch.Tensor] | None = None,
+    ) -> None:
         """Initialize a TaskVector object.
 
         :param pretrained_model: The pretrained model
@@ -31,7 +31,7 @@ class TaskVector:
         pretrained_model: nn.Module,
         finetuned_model: nn.Module,
         exclude_param_names_regex: list[str],
-    ):
+    ) -> None:
         """Compute the task vector by subtracting pretrained model parameters from finetuned model parameters.
 
         :param pretrained_model: The pretrained model
@@ -74,10 +74,11 @@ class TaskVector:
         :return: A new TaskVector object representing the sum
         """
         if not isinstance(other, TaskVector):
-            raise TypeError("Can only add TaskVector objects")
+            msg = "Can only add TaskVector objects"
+            raise TypeError(msg)
 
         new_task_vector_param_dict = {}
-        for name in self.task_vector_param_dict.keys():
+        for name in self.task_vector_param_dict:
             if name in other.task_vector_param_dict:
                 new_task_vector_param_dict[name] = (
                     self.task_vector_param_dict[name]
@@ -86,7 +87,7 @@ class TaskVector:
             else:
                 new_task_vector_param_dict[name] = self.task_vector_param_dict[name]
 
-        for name in other.task_vector_param_dict.keys():
+        for name in other.task_vector_param_dict:
             if name not in self.task_vector_param_dict:
                 new_task_vector_param_dict[name] = other.task_vector_param_dict[name]
 

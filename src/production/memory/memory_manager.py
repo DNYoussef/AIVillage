@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Memory Management Utilities for Agent Forge
+"""Memory Management Utilities for Agent Forge.
 
 Provides safe memory management for large model operations:
 - GPU memory monitoring and cleanup
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class MemoryManager:
     """Comprehensive memory management for AI operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.is_cuda = torch.cuda.is_available()
 
@@ -51,7 +51,7 @@ class MemoryManager:
 
         return stats
 
-    def cleanup_memory(self, aggressive: bool = False):
+    def cleanup_memory(self, aggressive: bool = False) -> None:
         """Clean up memory safely."""
         gc.collect()
 
@@ -83,9 +83,10 @@ class MemoryManager:
             yield
         except RuntimeError as e:
             if "out of memory" in str(e).lower():
-                logger.error(f"Out of memory during {operation_name}")
+                logger.exception(f"Out of memory during {operation_name}")
                 self.cleanup_memory(aggressive=True)
-                raise MemoryError(f"Insufficient memory for {operation_name}: {e}")
+                msg = f"Insufficient memory for {operation_name}: {e}"
+                raise MemoryError(msg)
             else:
                 raise
         finally:
@@ -112,7 +113,7 @@ def memory_efficient_operation(func: Callable) -> Callable:
 class SafeModelLoader:
     """Safe model loading with memory management."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.memory_manager = MemoryManager()
 
     def estimate_model_memory(self, model_name: str) -> float:
@@ -139,9 +140,12 @@ class SafeModelLoader:
         estimated_memory = self.estimate_model_memory(model_path)
 
         if not self.memory_manager.check_memory_available(estimated_memory):
-            raise MemoryError(
+            msg = (
                 f"Insufficient memory to load model {model_path}. "
                 f"Required: {estimated_memory}GB"
+            )
+            raise MemoryError(
+                msg
             )
 
         logger.info(f"Loading model {model_path} (estimated {estimated_memory}GB)")
@@ -170,7 +174,7 @@ class SafeModelLoader:
                 return model, tokenizer
 
         except Exception as e:
-            logger.error(f"Failed to load model {model_path}: {e}")
+            logger.exception(f"Failed to load model {model_path}: {e}")
             self.memory_manager.cleanup_memory(aggressive=True)
             raise
 
@@ -179,7 +183,7 @@ class GradientCheckpointing:
     """Utilities for gradient checkpointing to reduce memory usage."""
 
     @staticmethod
-    def enable_for_model(model):
+    def enable_for_model(model) -> None:
         """Enable gradient checkpointing for a model."""
         if hasattr(model, "gradient_checkpointing_enable"):
             model.gradient_checkpointing_enable()
@@ -188,7 +192,7 @@ class GradientCheckpointing:
             logger.warning("Model does not support gradient checkpointing")
 
     @staticmethod
-    def optimize_model_for_memory(model):
+    def optimize_model_for_memory(model) -> None:
         """Apply various memory optimizations to a model."""
         GradientCheckpointing.enable_for_model(model)
 

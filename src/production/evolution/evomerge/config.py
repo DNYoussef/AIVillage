@@ -37,16 +37,17 @@ class MergeSettings(BaseModel):
     chunk_size: int = Field(default=1000000)
 
     @validator("merge_method")
-    def validate_merge_method(cls, v):
+    def validate_merge_method(self, v):
         valid_methods = ["ps", "dfs", "ps_dfs"]
         if v not in valid_methods:
+            msg = f"Invalid merge method. Choose from: {', '.join(valid_methods)}"
             raise ValueError(
-                f"Invalid merge method. Choose from: {', '.join(valid_methods)}"
+                msg
             )
         return v
 
     @validator("ps_techniques", "dfs_techniques")
-    def validate_techniques(cls, v):
+    def validate_techniques(self, v):
         valid_techniques = [
             "linear",
             "slerp",
@@ -58,32 +59,35 @@ class MergeSettings(BaseModel):
         ]
         for technique in v:
             if technique not in valid_techniques:
+                msg = f"Invalid technique: {technique}. Choose from: {', '.join(valid_techniques)}"
                 raise ValueError(
-                    f"Invalid technique: {technique}. Choose from: {', '.join(valid_techniques)}"
+                    msg
                 )
         return v
 
     @validator("custom_dir")
-    def validate_custom_dir(cls, v):
+    def validate_custom_dir(self, v):
         if not os.path.exists(v):
             os.makedirs(v, exist_ok=True)
         return v
 
     @validator("cross_domain_strategy")
-    def validate_cross_domain_strategy(cls, v):
+    def validate_cross_domain_strategy(self, v):
         valid_strategies = ["adapter", "embedding_only", "full"]
         if v not in valid_strategies:
+            msg = f"Invalid cross-domain strategy. Choose from: {', '.join(valid_strategies)}"
             raise ValueError(
-                f"Invalid cross-domain strategy. Choose from: {', '.join(valid_strategies)}"
+                msg
             )
         return v
 
     @validator("mask_strategy")
-    def validate_mask_strategy(cls, v):
+    def validate_mask_strategy(self, v):
         valid_strategies = ["random", "magnitude"]
         if v not in valid_strategies:
+            msg = f"Invalid mask strategy. Choose from: {', '.join(valid_strategies)}"
             raise ValueError(
-                f"Invalid mask strategy. Choose from: {', '.join(valid_strategies)}"
+                msg
             )
         return v
 
@@ -99,20 +103,22 @@ class EvolutionSettings(BaseModel):
     objectives: list[str] = Field(default=["overall_score", "perplexity"])
 
     @validator("tournament_size")
-    def validate_tournament_size(cls, v, values):
+    def validate_tournament_size(self, v, values):
         if "population_size" in values and v > values["population_size"]:
+            msg = "Tournament size must be less than or equal to population size"
             raise ValueError(
-                "Tournament size must be less than or equal to population size"
+                msg
             )
         return v
 
     @validator("objectives")
-    def validate_objectives(cls, v):
+    def validate_objectives(self, v):
         valid_objectives = ["overall_score", "perplexity", "accuracy", "coherence"]
         for obj in v:
             if obj not in valid_objectives:
+                msg = f"Invalid objective: {obj}. Choose from: {', '.join(valid_objectives)}"
                 raise ValueError(
-                    f"Invalid objective: {obj}. Choose from: {', '.join(valid_objectives)}"
+                    msg
                 )
         return v
 

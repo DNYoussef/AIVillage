@@ -31,7 +31,6 @@ from pydantic import BaseModel, Field, validator
 import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
 import wandb
 
 # Configure logging
@@ -134,16 +133,18 @@ class EvolutionConfig(BaseModel):
     cleanup_failed_models: bool = Field(default=True)
 
     @validator("base_models")
-    def validate_base_models(cls, v: list[BaseModelConfig]) -> list[BaseModelConfig]:
+    def validate_base_models(self, v: list[BaseModelConfig]) -> list[BaseModelConfig]:
         if len(v) != 3:
-            raise ValueError("Exactly 3 base models required")
+            msg = "Exactly 3 base models required"
+            raise ValueError(msg)
         return v
 
     @validator("evaluation_weights")
-    def validate_evaluation_weights(cls, v: dict[str, float]) -> dict[str, float]:
+    def validate_evaluation_weights(self, v: dict[str, float]) -> dict[str, float]:
         total = sum(v.values())
         if abs(total - 1.0) > 0.01:
-            raise ValueError(f"Evaluation weights must sum to 1.0, got {total}")
+            msg = f"Evaluation weights must sum to 1.0, got {total}"
+            raise ValueError(msg)
         return v
 
     def __post_init__(self) -> None:
@@ -235,7 +236,8 @@ class MergeOperators:
     ) -> torch.nn.Module:
         """Linear interpolation between models."""
         if len(models) != len(weights):
-            raise ValueError("Number of models must match number of weights")
+            msg = "Number of models must match number of weights"
+            raise ValueError(msg)
 
         # Normalize weights
         total_weight = sum(weights)
@@ -247,7 +249,7 @@ class MergeOperators:
         # Get reference state dict
         ref_state_dict = models[0].state_dict()
 
-        for key in ref_state_dict.keys():
+        for key in ref_state_dict:
             merged_param = torch.zeros_like(ref_state_dict[key])
 
             for model, weight in zip(models, weights, strict=False):
@@ -271,7 +273,7 @@ class MergeOperators:
         state_dict1 = model1.state_dict()
         state_dict2 = model2.state_dict()
 
-        for key in state_dict1.keys():
+        for key in state_dict1:
             if key in state_dict2:
                 param1 = state_dict1[key].flatten()
                 param2 = state_dict2[key].flatten()
@@ -313,7 +315,7 @@ class MergeOperators:
 
         ref_state_dict = models[0].state_dict()
 
-        for key in ref_state_dict.keys():
+        for key in ref_state_dict:
             # Collect all parameter tensors for this key
             params = []
             for model in models:
@@ -357,7 +359,7 @@ class MergeOperators:
 
         ref_state_dict = models[0].state_dict()
 
-        for key in ref_state_dict.keys():
+        for key in ref_state_dict:
             params = []
             for model in models:
                 model_state = model.state_dict()
@@ -390,15 +392,16 @@ class MergeOperators:
     ) -> torch.nn.Module:
         """Frankenmerge - layer-wise model combination."""
         if len(models) != 3:
-            raise ValueError("Frankenmerge requires exactly 3 models")
+            msg = "Frankenmerge requires exactly 3 models"
+            raise ValueError(msg)
 
         merged_model = models[0].__class__(models[0].config)
         merged_state_dict = {}
 
         # Get layer information
-        num_layers = models[0].config.num_hidden_layers
+        models[0].config.num_hidden_layers
 
-        for key in models[0].state_dict().keys():
+        for key in models[0].state_dict():
             # Determine which model to use for this layer
             if "layers." in key:
                 # Extract layer number
@@ -428,7 +431,7 @@ class MergeOperators:
 
         ref_state_dict = models[0].state_dict()
 
-        for key in ref_state_dict.keys():
+        for key in ref_state_dict:
             params = []
             for model in models:
                 model_state = model.state_dict()
@@ -679,7 +682,9 @@ class MultilingualEvaluator(BaseEvaluator):
 
                 except Exception as e:
                     logger.warning(
-                        "Multilingual evaluation error for prompt '%s...': %s", prompt[:30], e
+                        "Multilingual evaluation error for prompt '%s...': %s",
+                        prompt[:30],
+                        e,
                     )
                     scores.append(0.0)
 
@@ -744,7 +749,9 @@ class StructuredDataEvaluator(BaseEvaluator):
 
                 except Exception as e:
                     logger.warning(
-                        "Structured data evaluation error for prompt '%s...': %s", prompt[:30], e
+                        "Structured data evaluation error for prompt '%s...': %s",
+                        prompt[:30],
+                        e,
                     )
                     scores.append(0.0)
 
@@ -781,7 +788,8 @@ class EvoMergePipeline:
         self.wandb_run = None
 
         logger.info(
-            "EvoMerge pipeline initialized with %d base models", len(self.config.base_models)
+            "EvoMerge pipeline initialized with %d base models",
+            len(self.config.base_models),
         )
 
     def initialize_wandb(self) -> None:
@@ -791,7 +799,7 @@ class EvoMergePipeline:
                 project=self.config.wandb_project,
                 entity=self.config.wandb_entity,
                 job_type="evomerge",
-                tags=self.config.wandb_tags + [f"gen-{self.state.current_generation}"],
+                tags=[*self.config.wandb_tags, f"gen-{self.state.current_generation}"],
                 config=self.config.dict(),
                 resume="allow",
             )
@@ -800,7 +808,7 @@ class EvoMergePipeline:
             logger.info("W&B initialized: %s", self.wandb_run.url)
 
         except Exception as e:
-            logger.error("W&B initialization failed: %s", e)
+            logger.exception("W&B initialization failed: %s", e)
             self.wandb_run = None
 
     def load_base_models(self) -> list[torch.nn.Module]:
@@ -811,9 +819,7 @@ class EvoMergePipeline:
             try:
                 logger.info("Loading base model: %s", model_config.name)
 
-                dtype = (
-                    torch.float16 if self.config.device == "cuda" else torch.float32
-                )
+                dtype = torch.float16 if self.config.device == "cuda" else torch.float32
                 model = AutoModelForCausalLM.from_pretrained(
                     model_config.path,
                     torch_dtype=dtype,
@@ -824,7 +830,7 @@ class EvoMergePipeline:
                 logger.info("Successfully loaded %s", model_config.name)
 
             except Exception as e:
-                logger.error("Failed to load %s: %s", model_config.name, e)
+                logger.exception("Failed to load %s: %s", model_config.name, e)
                 raise
 
         return models
@@ -851,10 +857,14 @@ class EvoMergePipeline:
         for i, (continuous, ensemble, structured) in enumerate(merge_combinations):
             try:
                 logger.info(
-                    "Generating seed candidate %d/8: %s-%s-%s", i + 1, continuous, ensemble, structured
+                    "Generating seed candidate %d/8: %s-%s-%s",
+                    i + 1,
+                    continuous,
+                    ensemble,
+                    structured,
                 )
 
-                    # Apply merge operations in sequence
+                # Apply merge operations in sequence
                 merged_model = self.apply_merge_sequence(
                     base_models, continuous, ensemble, structured
                 )
@@ -883,7 +893,7 @@ class EvoMergePipeline:
                 logger.info("Seed candidate %s created", candidate.short_id)
 
             except Exception as e:
-                logger.error("Failed to create seed candidate %d: %s", i + 1, e)
+                logger.exception("Failed to create seed candidate %d: %s", i + 1, e)
                 continue
 
         logger.info("Generated %d seed candidates", len(candidates))
@@ -910,33 +920,36 @@ class EvoMergePipeline:
                 [temp, models[2]], [0.67, 0.33]
             )
         else:
-            raise ValueError(f"Unknown continuous method: {continuous}")
+            msg = f"Unknown continuous method: {continuous}"
+            raise ValueError(msg)
 
         # Step 2: Ensemble crossover
         if ensemble == "ties":
             merged = self.merge_ops.ties_merge(
-                [merged] + models, self.config.merge_operators.ties_threshold
+                [merged, *models], self.config.merge_operators.ties_threshold
             )
         elif ensemble == "dare":
             merged = self.merge_ops.dare_merge(
-                [merged] + models,
+                [merged, *models],
                 self.config.merge_operators.dare_threshold,
                 self.config.merge_operators.dare_amplification,
             )
         else:
-            raise ValueError(f"Unknown ensemble method: {ensemble}")
+            msg = f"Unknown ensemble method: {ensemble}"
+            raise ValueError(msg)
 
         # Step 3: Structured recombination
         if structured == "frankenmerge":
             merged = self.merge_ops.frankenmerge(
-                [merged] + models[:2], self.config.merge_operators.frankenmerge_layers
+                [merged, *models[:2]], self.config.merge_operators.frankenmerge_layers
             )
         elif structured == "dfs":
             merged = self.merge_ops.dfs_merge(
-                [merged] + models, self.config.merge_operators.dfs_merge_ratio
+                [merged, *models], self.config.merge_operators.dfs_merge_ratio
             )
         else:
-            raise ValueError(f"Unknown structured method: {structured}")
+            msg = f"Unknown structured method: {structured}"
+            raise ValueError(msg)
 
         return merged
 
@@ -965,11 +978,13 @@ class EvoMergePipeline:
                 # Calculate overall fitness
                 candidate.calculate_overall_fitness(self.config.evaluation_weights)
                 logger.info(
-                    "Candidate %s overall fitness: %.3f", candidate.short_id, candidate.overall_fitness
+                    "Candidate %s overall fitness: %.3f",
+                    candidate.short_id,
+                    candidate.overall_fitness,
                 )
 
             except Exception as e:
-                logger.error(
+                logger.exception(
                     "Evaluation failed for candidate %s: %s", candidate.short_id, e
                 )
                 candidate.overall_fitness = 0.0
@@ -1000,7 +1015,9 @@ class EvoMergePipeline:
         # Combine for next generation
         next_generation = mutants + failure_children
         logger.info(
-            "Next generation: %d mutants + %d failure children", len(mutants), len(failure_children)
+            "Next generation: %d mutants + %d failure children",
+            len(mutants),
+            len(failure_children),
         )
 
         return next_generation
@@ -1032,9 +1049,7 @@ class EvoMergePipeline:
         )
 
         # Save mutated model
-        model_name = (
-            f"gen_{self.state.current_generation + 1}_mutant_{parent.short_id}_{mutation_id}"
-        )
+        model_name = f"gen_{self.state.current_generation + 1}_mutant_{parent.short_id}_{mutation_id}"
         model_path = self.config.output_dir / model_name
         model_path.mkdir(parents=True, exist_ok=True)
         mutated_model.save_pretrained(model_path)
@@ -1049,7 +1064,10 @@ class EvoMergePipeline:
         )
 
         logger.debug(
-            "Created mutant %s from %s with %s", mutant.short_id, parent.short_id, mutation_applied
+            "Created mutant %s from %s with %s",
+            mutant.short_id,
+            parent.short_id,
+            mutation_applied,
         )
         return mutant
 
@@ -1090,9 +1108,7 @@ class EvoMergePipeline:
                     merged_model = self.merge_ops.linear_interpolation(models, weights)
 
                     # Save child model
-                    child_name = (
-                        f"gen_{self.state.current_generation + 1}_failure_child_{i // 3}"
-                    )
+                    child_name = f"gen_{self.state.current_generation + 1}_failure_child_{i // 3}"
                     child_path = self.config.output_dir / child_name
                     child_path.mkdir(parents=True, exist_ok=True)
                     merged_model.save_pretrained(child_path)
@@ -1111,11 +1127,13 @@ class EvoMergePipeline:
 
                     children.append(child)
                     logger.debug(
-                        "Created failure child %s from %s", child.short_id, [c.short_id for c in triple]
+                        "Created failure child %s from %s",
+                        child.short_id,
+                        [c.short_id for c in triple],
                     )
 
                 except Exception as e:
-                    logger.error(
+                    logger.exception(
                         "Failed to create failure child from triple %d: %s", i // 3, e
                     )
                     continue
@@ -1124,7 +1142,9 @@ class EvoMergePipeline:
 
     def save_checkpoint(self) -> None:
         """Save evolution checkpoint."""
-        checkpoint_name = f"evolution_checkpoint_gen_{self.state.current_generation}.json"
+        checkpoint_name = (
+            f"evolution_checkpoint_gen_{self.state.current_generation}.json"
+        )
         checkpoint_path = self.config.checkpoint_dir / checkpoint_name
 
         checkpoint_data = {
@@ -1140,7 +1160,7 @@ class EvoMergePipeline:
             logger.info("Checkpoint saved: %s", checkpoint_path)
 
         except Exception as e:
-            logger.error("Failed to save checkpoint: %s", e)
+            logger.exception("Failed to save checkpoint: %s", e)
 
     def load_checkpoint(self, checkpoint_path: str) -> bool:
         """Load evolution checkpoint."""
@@ -1158,7 +1178,7 @@ class EvoMergePipeline:
             return True
 
         except Exception as e:
-            logger.error("Failed to load checkpoint: %s", e)
+            logger.exception("Failed to load checkpoint: %s", e)
             return False
 
     def log_generation_metrics(self) -> None:
@@ -1177,7 +1197,7 @@ class EvoMergePipeline:
         }
 
         # Domain-specific metrics
-        for domain in self.config.evaluation_weights.keys():
+        for domain in self.config.evaluation_weights:
             domain_scores = [
                 c.fitness_scores.get(domain, 0.0) for c in self.state.population
             ]
@@ -1196,7 +1216,9 @@ class EvoMergePipeline:
             if self.state.best_candidate and self.state.best_candidate.model_path:
                 try:
                     artifact_name = f"model_gen_{self.state.current_generation}"
-                    description = f"Best model from generation {self.state.current_generation}"
+                    description = (
+                        f"Best model from generation {self.state.current_generation}"
+                    )
                     artifact = wandb.Artifact(
                         artifact_name,
                         type="model",
@@ -1209,7 +1231,9 @@ class EvoMergePipeline:
                     logger.warning("Failed to log model artifact: %s", e)
 
         logger.info(
-            "Generation %d metrics: %s", self.state.current_generation, generation_metrics
+            "Generation %d metrics: %s",
+            self.state.current_generation,
+            generation_metrics,
         )
 
     async def run_evolution(self) -> ModelCandidate:
@@ -1239,7 +1263,9 @@ class EvoMergePipeline:
                 self.state.current_generation, self.config.max_generations
             ):
                 logger.info(
-                    "=== Generation %d/%d ===", generation + 1, self.config.max_generations
+                    "=== Generation %d/%d ===",
+                    generation + 1,
+                    self.config.max_generations,
                 )
                 self.state.current_generation = generation
 
@@ -1258,7 +1284,9 @@ class EvoMergePipeline:
                 if self.state.check_plateau(self.config.plateau_threshold):
                     self.state.plateau_count += 1
                     logger.info(
-                        "Plateau detected (%d/%d)", self.state.plateau_count, self.config.plateau_patience
+                        "Plateau detected (%d/%d)",
+                        self.state.plateau_count,
+                        self.config.plateau_patience,
                     )
 
                     if self.state.plateau_count >= self.config.plateau_patience:
@@ -1284,14 +1312,15 @@ class EvoMergePipeline:
             if self.state.best_candidate:
                 logger.info(
                     "Best candidate: %s (fitness: %.3f)",
-                    self.state.best_candidate.short_id, self.state.best_candidate.overall_fitness
+                    self.state.best_candidate.short_id,
+                    self.state.best_candidate.overall_fitness,
                 )
 
             return self.state.best_candidate
 
         except Exception as e:
-            logger.error("Evolution failed: %s", e)
-            logger.error(traceback.format_exc())
+            logger.exception("Evolution failed: %s", e)
+            logger.exception(traceback.format_exc())
             raise
 
         finally:
@@ -1305,7 +1334,7 @@ class EvoMergePipeline:
 
 
 @click.group()
-def forge():
+def forge() -> None:
     """Agent Forge CLI."""
 
 
@@ -1326,7 +1355,7 @@ def evo(
     config: str | None,
     resume: str | None,
     output_dir: str,
-    device: str
+    device: str,
 ) -> None:
     """Run evolutionary model merging."""
     try:
@@ -1374,8 +1403,8 @@ def evo(
             sys.exit(1)
 
     except Exception as e:
-        logger.error("Evolution pipeline failed: %s", e)
-        logger.error(traceback.format_exc())
+        logger.exception("Evolution pipeline failed: %s", e)
+        logger.exception(traceback.format_exc())
         sys.exit(1)
 
 
@@ -1469,8 +1498,8 @@ async def run_evomerge(config: dict[str, Any]) -> "PhaseResult":
     except Exception as e:
         duration = time.time() - start_time
         error_msg = f"EvoMerge phase failed: {e!s}"
-        logger.error(error_msg)
-        logger.error(traceback.format_exc())
+        logger.exception(error_msg)
+        logger.exception(traceback.format_exc())
 
         return PhaseResult(
             phase_type=PhaseType.EVOMERGE,

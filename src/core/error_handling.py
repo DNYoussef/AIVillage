@@ -187,7 +187,7 @@ class AIVillageException(Exception):
         severity: ErrorSeverity = ErrorSeverity.ERROR,
         context: ErrorContext | None = None,
         original_exception: Exception | None = None,
-    ):
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.category = category
@@ -234,7 +234,7 @@ class ServiceException(AIVillageException):
 class ValidationException(AIVillageException):
     """Exception for validation errors."""
 
-    def __init__(self, message: str, field: str, value: Any, **kwargs):
+    def __init__(self, message: str, field: str, value: Any, **kwargs) -> None:
         context = kwargs.pop("context", None) or ErrorContext(
             component="validation",
             operation="validate_field",
@@ -250,7 +250,7 @@ class NetworkException(AIVillageException):
 
     def __init__(
         self, message: str, url: str, status_code: int | None = None, **kwargs
-    ):
+    ) -> None:
         context = kwargs.pop("context", None) or ErrorContext(
             component="network",
             operation="request",
@@ -264,7 +264,7 @@ class NetworkException(AIVillageException):
 class ConfigurationException(AIVillageException):
     """Exception for configuration-related errors."""
 
-    def __init__(self, message: str, config_key: str | None = None, **kwargs):
+    def __init__(self, message: str, config_key: str | None = None, **kwargs) -> None:
         context = kwargs.pop("context", None) or ErrorContext(
             component="configuration",
             operation="load_config",
@@ -280,7 +280,7 @@ class ErrorContextManager:
 
     def __init__(
         self, component: str, operation: str, details: dict[str, Any] | None = None
-    ):
+    ) -> None:
         self.component = component
         self.operation = operation
         self.details = details or {}
@@ -302,6 +302,7 @@ class ErrorContextManager:
             )
             # Re-raise the exception
             return False
+        return None
 
 
 def get_component_logger(component_name: str) -> logging.Logger:
@@ -482,7 +483,7 @@ def with_error_handling(*args, **kwargs) -> Callable[[F], F]:
 class ErrorHandler:
     """Centralized error handler for tracking and managing errors."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.errors: list[AIVillageException] = []
         self.error_counts: dict[str, int] = {}
 
@@ -518,8 +519,8 @@ class ErrorHandler:
         return {
             "total_errors": len(self.errors),
             "error_counts": self.error_counts,
-            "categories": list(set(e.category.value for e in self.errors)),
-            "severities": list(set(e.severity.value for e in self.errors)),
+            "categories": list({e.category.value for e in self.errors}),
+            "severities": list({e.severity.value for e in self.errors}),
         }
 
 

@@ -5,11 +5,11 @@ from some_embedding_library import (
 )
 from some_llm_library import LLMModel  # Replace with actual LLM library
 
-from ..core.agent_interface import AgentInterface
+from AIVillage.src.production.rag.rag_system.core.agent_interface import AgentInterface
 
 
 class LatentSpaceAgent(AgentInterface):
-    def __init__(self, llm_model: LLMModel):
+    def __init__(self, llm_model: LLMModel) -> None:
         self.llm_model = llm_model
 
     async def activate_latent_space(self, query: str) -> tuple[str, str]:

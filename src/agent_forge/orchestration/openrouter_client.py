@@ -1,11 +1,11 @@
 """OpenRouter API client with error handling, rate limiting, and cost tracking."""
 
 import asyncio
+from dataclasses import dataclass
 import json
 import logging
 import os
 import time
-from dataclasses import dataclass
 from typing import Any
 
 import aiohttp
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class APIResponse:
-    """Response from OpenRouter API"""
+    """Response from OpenRouter API."""
 
     content: str
     model_used: str
@@ -35,7 +35,7 @@ class APIResponse:
 
 @dataclass
 class ModelMetrics:
-    """Metrics for model performance tracking"""
+    """Metrics for model performance tracking."""
 
     total_requests: int = 0
     total_tokens: int = 0
@@ -50,7 +50,7 @@ class OpenRouterClient:
 
     BASE_URL = "https://openrouter.ai/api/v1"
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(self, api_key: str | None = None) -> None:
         """Initialize OpenRouter client.
 
         Args:
@@ -58,8 +58,9 @@ class OpenRouterClient:
         """
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
         if not self.api_key:
+            msg = "OpenRouter API key not found. Set OPENROUTER_API_KEY environment variable."
             raise ValueError(
-                "OpenRouter API key not found. Set OPENROUTER_API_KEY environment variable."
+                msg
             )
 
         self.headers = {
@@ -127,29 +128,28 @@ class OpenRouterClient:
 
         start_time = time.time()
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{self.BASE_URL}/chat/completions",
-                headers=self.headers,
-                json=payload,
-                timeout=aiohttp.ClientTimeout(total=60),
-            ) as response:
-                latency = time.time() - start_time
+        async with aiohttp.ClientSession() as session, session.post(
+            f"{self.BASE_URL}/chat/completions",
+            headers=self.headers,
+            json=payload,
+            timeout=aiohttp.ClientTimeout(total=60),
+        ) as response:
+            latency = time.time() - start_time
 
-                if response.status != 200:
-                    error_text = await response.text()
-                    logger.error(
-                        f"OpenRouter API error: {response.status} - {error_text}"
-                    )
-                    raise aiohttp.ClientResponseError(
-                        request_info=response.request_info,
-                        history=response.history,
-                        status=response.status,
-                    )
+            if response.status != 200:
+                error_text = await response.text()
+                logger.error(
+                    f"OpenRouter API error: {response.status} - {error_text}"
+                )
+                raise aiohttp.ClientResponseError(
+                    request_info=response.request_info,
+                    history=response.history,
+                    status=response.status,
+                )
 
-                data = await response.json()
-                data["latency"] = latency
-                return data
+            data = await response.json()
+            data["latency"] = latency
+            return data
 
     async def complete(
         self,
@@ -179,7 +179,7 @@ class OpenRouterClient:
         if model_override:
             models_to_try = [model_override]
         else:
-            models_to_try = [config["primary"]] + config.get("fallback", [])
+            models_to_try = [config["primary"], *config.get("fallback", [])]
 
         last_error = None
 
@@ -226,8 +226,9 @@ class OpenRouterClient:
                 continue
 
         # All models failed
+        msg = f"All models failed for {task_type.value}. Last error: {last_error}"
         raise Exception(
-            f"All models failed for {task_type.value}. Last error: {last_error}"
+            msg
         )
 
     def _calculate_cost(self, model: str, usage: dict[str, int]) -> float:
@@ -256,7 +257,7 @@ class OpenRouterClient:
 
     def _update_metrics(
         self, model: str, usage: dict[str, int], cost: float, latency: float
-    ):
+    ) -> None:
         """Update model performance metrics."""
         if model not in self.model_metrics:
             self.model_metrics[model] = ModelMetrics()
@@ -290,7 +291,7 @@ class OpenRouterClient:
 
         return summary
 
-    async def close(self):
+    async def close(self) -> None:
         """Clean up resources."""
         # Save metrics to file for analysis
         metrics_file = "openrouter_metrics.json"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HypeRAG LoRA Adapter Trainer
+"""HypeRAG LoRA Adapter Trainer.
 
 Trains domain-specific LoRA adapters using PEFT (Parameter-Efficient Fine-Tuning).
 Integrates with Guardian Gate for signing and validation.
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class RepairDataset(Dataset):
     """Dataset for knowledge graph repair tasks."""
 
-    def __init__(self, data_path: Path, tokenizer, max_length: int = 512):
+    def __init__(self, data_path: Path, tokenizer, max_length: int = 512) -> None:
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.examples = []
@@ -43,7 +43,7 @@ class RepairDataset(Dataset):
                 example = json.loads(line)
                 self.examples.append(example)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.examples)
 
     def __getitem__(self, idx):
@@ -68,14 +68,14 @@ class RepairDataset(Dataset):
 
 
 class LoRATrainer:
-    def __init__(self, base_model: str = "microsoft/phi-2", device: str = "cuda"):
+    def __init__(self, base_model: str = "microsoft/phi-2", device: str = "cuda") -> None:
         self.base_model_name = base_model
         self.device = device if torch.cuda.is_available() else "cpu"
         self.model = None
         self.tokenizer = None
         self.peft_model = None
 
-    def load_base_model(self):
+    def load_base_model(self) -> None:
         """Load the base model and tokenizer."""
         logger.info(f"Loading base model: {self.base_model_name}")
 
@@ -95,7 +95,7 @@ class LoRATrainer:
         if self.device == "cpu":
             self.model = self.model.to(self.device)
 
-    def create_lora_model(self, lora_config: dict[str, Any] | None = None):
+    def create_lora_model(self, lora_config: dict[str, Any] | None = None) -> None:
         """Create LoRA model with specified configuration."""
         if lora_config is None:
             lora_config = {
@@ -153,9 +153,9 @@ class LoRATrainer:
             evaluation_strategy="steps" if eval_dataset else "no",
             eval_steps=save_steps if eval_dataset else None,
             save_total_limit=2,
-            load_best_model_at_end=True if eval_dataset else False,
+            load_best_model_at_end=bool(eval_dataset),
             metric_for_best_model="eval_loss" if eval_dataset else None,
-            fp16=True if self.device == "cuda" else False,
+            fp16=self.device == "cuda",
             push_to_hub=False,
             report_to=["tensorboard"],
             logging_dir=str(output_dir / "logs"),
@@ -265,7 +265,7 @@ class LoRATrainer:
         return entry
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Train LoRA adapter for HypeRAG")
     parser.add_argument(
         "--train-data", required=True, type=Path, help="Path to training JSONL file"
@@ -321,7 +321,7 @@ def main():
     trainer.create_lora_model(lora_config)
 
     # Train
-    train_history = trainer.train(
+    trainer.train(
         train_data_path=args.train_data,
         eval_data_path=args.eval_data,
         output_dir=args.output_dir,

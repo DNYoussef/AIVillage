@@ -13,7 +13,7 @@ from .model_config import TaskType
 class OrchestrationConfig:
     """Manages configuration for multi-model orchestration."""
 
-    def __init__(self, config_path: str | None = None):
+    def __init__(self, config_path: str | None = None) -> None:
         """Initialize configuration.
 
         Args:
@@ -67,21 +67,23 @@ class OrchestrationConfig:
                 return json.load(f)
             if path_obj.suffix in [".yml", ".yaml"]:
                 return yaml.safe_load(f)
-            raise ValueError(f"Unsupported config format: {path_obj.suffix}")
+            msg = f"Unsupported config format: {path_obj.suffix}"
+            raise ValueError(msg)
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value."""
         return self.config.get(key, default)
 
-    def set(self, key: str, value: Any):
+    def set(self, key: str, value: Any) -> None:
         """Set configuration value."""
         self.config[key] = value
 
-    def save(self, path: str | None = None):
+    def save(self, path: str | None = None) -> None:
         """Save configuration to file."""
         save_path = path or self.config_path
         if not save_path:
-            raise ValueError("No path provided for saving configuration")
+            msg = "No path provided for saving configuration"
+            raise ValueError(msg)
 
         path_obj = Path(save_path)
 
@@ -114,7 +116,8 @@ class OrchestrationConfig:
 
         for key in required_keys:
             if not self.config.get(key):
-                raise ValueError(f"Missing required configuration: {key}")
+                msg = f"Missing required configuration: {key}"
+                raise ValueError(msg)
 
         return True
 
@@ -133,7 +136,7 @@ def get_config() -> OrchestrationConfig:
     return _config
 
 
-def set_config(config: OrchestrationConfig):
+def set_config(config: OrchestrationConfig) -> None:
     """Set global configuration instance."""
     global _config
     _config = config

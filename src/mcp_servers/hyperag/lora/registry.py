@@ -1,4 +1,4 @@
-"""HypeRAG LoRA Adapter Registry
+"""HypeRAG LoRA Adapter Registry.
 
 Manages registration, validation, and retrieval of LoRA adapters.
 Integrates with Guardian Gate for signature verification.
@@ -45,7 +45,7 @@ class AdapterEntry:
 class LoRARegistry:
     """Registry for managing LoRA adapters."""
 
-    def __init__(self, registry_path: Path, guardian_gate=None):
+    def __init__(self, registry_path: Path, guardian_gate=None) -> None:
         self.registry_path = registry_path
         self.guardian_gate = guardian_gate
         self.entries: dict[str, AdapterEntry] = {}
@@ -57,7 +57,7 @@ class LoRARegistry:
         else:
             self._load_registry()
 
-    def _load_registry(self):
+    def _load_registry(self) -> None:
         """Load registry from disk."""
         try:
             with open(self.registry_path, encoding="utf-8") as f:
@@ -68,10 +68,10 @@ class LoRARegistry:
                 }
             logger.info(f"Loaded {len(self.entries)} adapters from registry")
         except Exception as e:
-            logger.error(f"Failed to load registry: {e}")
+            logger.exception(f"Failed to load registry: {e}")
             self.entries = {}
 
-    def _save_registry(self):
+    def _save_registry(self) -> None:
         """Save registry to disk."""
         data = {
             "version": "1.0",
@@ -97,13 +97,15 @@ class LoRARegistry:
         # Verify adapter hash
         computed_hash = self._compute_adapter_hash(adapter_path)
         if computed_hash != entry.sha256:
+            msg = f"Adapter hash mismatch: expected {entry.sha256}, got {computed_hash}"
             raise ValueError(
-                f"Adapter hash mismatch: expected {entry.sha256}, got {computed_hash}"
+                msg
             )
 
         # Check for duplicates
         if entry.adapter_id in self.entries:
-            raise ValueError(f"Adapter {entry.adapter_id} already registered")
+            msg = f"Adapter {entry.adapter_id} already registered"
+            raise ValueError(msg)
 
         # Guardian approval if required
         if require_guardian_approval and self.guardian_gate:
@@ -246,7 +248,7 @@ class LoRARegistry:
 
         return sha256_hash.hexdigest()
 
-    def export_registry(self, export_path: Path, format: str = "yaml"):
+    def export_registry(self, export_path: Path, format: str = "yaml") -> None:
         """Export registry in different formats."""
         data = {
             "version": "1.0",

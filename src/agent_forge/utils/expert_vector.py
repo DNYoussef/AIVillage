@@ -2,11 +2,11 @@ import torch
 
 
 class ExpertVector:
-    def __init__(self, name: str, svs: dict[str, torch.Tensor]):
+    def __init__(self, name: str, svs: dict[str, torch.Tensor]) -> None:
         self.name = name
         self.svs = svs
 
-    def apply(self, model: torch.nn.Module):
+    def apply(self, model: torch.nn.Module) -> None:
         modules = dict(model.named_modules())
         for layer_name, z in self.svs.items():
             layer = modules[layer_name]

@@ -4,7 +4,7 @@ from .base_controller import BaseErrorController
 
 
 class AdaptiveErrorController(BaseErrorController):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.error_count = {}
 
@@ -41,5 +41,5 @@ class AdaptiveErrorController(BaseErrorController):
             "new_approach": "Use a different model or technique",
         }
 
-    def reset(self):
+    def reset(self) -> None:
         self.error_count.clear()

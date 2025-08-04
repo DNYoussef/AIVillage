@@ -5,9 +5,9 @@ class ToolMessage(BaseModel):
     request: str
     purpose: str
 
-    def handle(self):
+    def handle(self) -> None:
         """Handle the message.
 
         Subclasses can override this with specific behavior.
         """
-        return None
+        return

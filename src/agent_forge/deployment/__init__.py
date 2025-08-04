@@ -1,4 +1,4 @@
-"""Agent Forge deployment utilities"""
+"""Agent Forge deployment utilities."""
 
 from .manifest_generator import DeploymentManifestGenerator
 

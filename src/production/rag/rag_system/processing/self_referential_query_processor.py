@@ -1,10 +1,10 @@
 # rag_system/processing/self_referential_query_processor.py
 
-from ..core.pipeline import EnhancedRAGPipeline
+from AIVillage.src.production.rag.rag_system.core.pipeline import EnhancedRAGPipeline
 
 
 class SelfReferentialQueryProcessor:
-    def __init__(self, rag_system: EnhancedRAGPipeline, history_limit: int = 100):
+    def __init__(self, rag_system: EnhancedRAGPipeline, history_limit: int = 100) -> None:
         self.rag_system = rag_system
         # Keep an in-memory list of processed queries
         self.query_history: list[str] = []

@@ -1,4 +1,4 @@
-"""HypeRAG Graph-Doctor Constraint System
+"""HypeRAG Graph-Doctor Constraint System.
 
 Detects forbidden sub-graph patterns (Graph Denial Constraints) and outputs
 structured Violation objects for the Innovator Repair flow.

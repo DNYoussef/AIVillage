@@ -1,5 +1,5 @@
 class CognitiveNexus:
-    def __init__(self):
+    def __init__(self) -> None:
         self.knowledge_graph = {}
 
     async def query(self, content: str, embeddings: list, entities: list):
@@ -8,11 +8,11 @@ class CognitiveNexus:
             return ctx
         return {"content": content, "entities": entities}
 
-    async def update(self, task, result):
+    async def update(self, task, result) -> bool:
         self.knowledge_graph[task] = result
         return True
 
-    async def evolve(self):
+    async def evolve(self) -> str:
         for key in list(self.knowledge_graph.keys())[:10]:
             data = self.knowledge_graph[key]
             if isinstance(data, dict) and "score" in data:

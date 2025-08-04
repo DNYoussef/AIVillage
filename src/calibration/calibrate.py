@@ -3,7 +3,10 @@ from __future__ import annotations
 """Simple conformal calibration utilities."""
 
 
-from .dataset import CalibrationDataset
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .dataset import CalibrationDataset
 
 
 def expected_calibration_error(

@@ -2,7 +2,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class QuietSTAR:
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str) -> None:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForCausalLM.from_pretrained(model_name)
 

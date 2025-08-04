@@ -17,7 +17,7 @@ except ImportError:
 class TestGeometryFeedback:
     """Test geometry feedback functionality."""
 
-    def test_geometry_feedback_exists(self):
+    def test_geometry_feedback_exists(self) -> None:
         """Test that geometry feedback can be imported."""
         try:
             from production.geometry.geometry_feedback import GeometryFeedback
@@ -26,7 +26,7 @@ class TestGeometryFeedback:
         except ImportError:
             pytest.skip("GeometryFeedback not available")
 
-    def test_geometric_analysis_concept(self):
+    def test_geometric_analysis_concept(self) -> None:
         """Test basic geometric analysis concepts."""
         # Create sample weight tensors
         weights1 = torch.randn(10, 10)
@@ -46,7 +46,7 @@ class TestGeometryFeedback:
 
         assert -1 <= cos_sim <= 1
 
-    def test_weight_space_analysis(self):
+    def test_weight_space_analysis(self) -> None:
         """Test weight space analysis concepts."""
         # Mock model weights
         model_weights = torch.randn(100, 50)
@@ -64,7 +64,7 @@ class TestGeometryFeedback:
 class TestGeometrySnapshot:
     """Test geometry snapshot functionality."""
 
-    def test_snapshot_concept(self):
+    def test_snapshot_concept(self) -> None:
         """Test snapshot concept."""
         try:
             from production.geometry.geometry.snapshot import Snapshot
@@ -73,7 +73,7 @@ class TestGeometrySnapshot:
         except ImportError:
             pytest.skip("Snapshot not available")
 
-    def test_model_state_capture(self):
+    def test_model_state_capture(self) -> None:
         """Test model state capture concept."""
         # Create a simple model
         model = torch.nn.Linear(10, 5)
@@ -87,7 +87,7 @@ class TestGeometrySnapshot:
         assert state_dict["weight"].shape == (5, 10)
         assert state_dict["bias"].shape == (5,)
 
-    def test_geometric_properties(self):
+    def test_geometric_properties(self) -> None:
         """Test geometric property calculation."""
         # Mock weight matrix
         weights = torch.randn(50, 100)
@@ -104,7 +104,7 @@ class TestGeometrySnapshot:
 class TestGeometryIntegration:
     """Test geometry integration with other components."""
 
-    def test_training_geometry_tracking(self):
+    def test_training_geometry_tracking(self) -> None:
         """Test geometry tracking during training."""
         # Mock training steps
         initial_weights = torch.randn(10, 10)
@@ -121,7 +121,7 @@ class TestGeometryIntegration:
 
         assert abs(weight_change - expected_change) < 1e-6
 
-    def test_model_evolution_tracking(self):
+    def test_model_evolution_tracking(self) -> None:
         """Test tracking model evolution geometry."""
         # Create sequence of model states
         states = []

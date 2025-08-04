@@ -1,4 +1,4 @@
-"""HypeRAG Dual-Memory System
+"""HypeRAG Dual-Memory System.
 
 Brain-inspired dual-memory architecture combining:
 - HippoIndex: Fast episodic memory (hippocampus-like)

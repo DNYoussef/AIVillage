@@ -16,8 +16,8 @@ import json
 import os
 import uuid
 
-from ..core.config import UnifiedConfig
-from ..core.structures import RetrievalResult
+from AIVillage.src.production.rag.rag_system.core.config import UnifiedConfig
+from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
 
 DEFAULT_DIMENSION = 768
 
@@ -28,7 +28,7 @@ class VectorStore:
         config: UnifiedConfig | None = None,
         dimension: int = DEFAULT_DIMENSION,
         embedding_model: Any | None = None,
-    ):
+    ) -> None:
         """Create a VectorStore.
 
         The previous version of :class:`VectorStore` required ``config`` and
@@ -60,7 +60,7 @@ class VectorStore:
         else:
             self.index = faiss.IndexFlatL2(self.dimension)
 
-    def add_documents(self, documents: list[dict[str, Any]]):
+    def add_documents(self, documents: list[dict[str, Any]]) -> None:
         vectors = [doc["embedding"] for doc in documents]
         if USE_QDRANT and QdrantClient is not None:
             payload = [
@@ -79,7 +79,7 @@ class VectorStore:
             self.index.add(np.array(vectors).astype("float32"))
         self.documents.extend(documents)
 
-    async def add_texts(self, texts: list[str]):
+    async def add_texts(self, texts: list[str]) -> None:
         """Convenience helper used by learning layers to store raw text."""
         docs = []
         for text in texts:
@@ -102,17 +102,17 @@ class VectorStore:
             )
         self.add_documents(docs)
 
-    def update_document(self, doc_id: str, new_doc: dict[str, Any]):
+    def update_document(self, doc_id: str, new_doc: dict[str, Any]) -> None:
         for i, doc in enumerate(self.documents):
             if doc["id"] == doc_id:
-                old_vector = np.array([doc["embedding"]]).astype("float32")
+                np.array([doc["embedding"]]).astype("float32")
                 new_vector = np.array([new_doc["embedding"]]).astype("float32")
                 self.index.remove_ids(np.array([i]))
                 self.index.add(new_vector)
                 self.documents[i] = new_doc
                 break
 
-    def delete_document(self, doc_id: str):
+    def delete_document(self, doc_id: str) -> None:
         for i, doc in enumerate(self.documents):
             if doc["id"] == doc_id:
                 self.index.remove_ids(np.array([i]))
@@ -182,7 +182,7 @@ class VectorStore:
         """Return the number of stored vector documents."""
         return len(self.documents)
 
-    def save(self, file_path: str):
+    def save(self, file_path: str) -> None:
         index_bytes = (
             faiss.serialize_index(self.index) if self.index is not None else b""
         )

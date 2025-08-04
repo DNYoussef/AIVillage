@@ -5,7 +5,7 @@ from typing import Any
 class BayesNet:
     """Simple Bayesian network for storing probabilistic knowledge."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.nodes: dict[str, dict[str, Any]] = {}
         self.edges: dict[str, dict[str, float]] = defaultdict(dict)
 

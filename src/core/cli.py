@@ -1,6 +1,5 @@
 import argparse
 import json
-from typing import List
 
 
 def _compute_reliability(sent: int, received: int, dropped: int = 0) -> float:
@@ -32,9 +31,11 @@ def reliability_metrics() -> float:
 def latency_metrics() -> dict:
     """CLI entry point for latency metrics."""
     parser = argparse.ArgumentParser(description="Generate latency metrics")
-    parser.add_argument("latencies", nargs="+", type=float, help="Latency samples in ms")
+    parser.add_argument(
+        "latencies", nargs="+", type=float, help="Latency samples in ms"
+    )
     args = parser.parse_args()
-    latencies: List[float] = args.latencies
+    latencies: list[float] = args.latencies
     avg = sum(latencies) / len(latencies)
     metrics = {
         "average_latency": avg,

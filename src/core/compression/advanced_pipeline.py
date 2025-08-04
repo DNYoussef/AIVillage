@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import logging
-import pickle
-import struct
 import lzma
 from pathlib import Path
-from typing import Dict, Any, Tuple, Union
+import pickle
+import struct
 
 import torch
 
@@ -27,7 +26,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback
     class HyperCompressionEncoder:  # type: ignore
         """Lightweight fallback encoder when production module unavailable."""
 
-        def encode(self, data: bytes) -> bytes:  # noqa: D401 - simple passthrough
+        def encode(self, data: bytes) -> bytes:
             return data
 
         def decode(self, data: bytes) -> bytes:  # type: ignore[override]
@@ -48,10 +47,10 @@ class AdvancedCompressionPipeline:
         self.stage4_hyper = HyperCompressionEncoder()
 
     # ------------------------------------------------------------------
-    def compress_model(self, model: Union[torch.nn.Module, str, Path]) -> bytes:
+    def compress_model(self, model: torch.nn.Module | str | Path) -> bytes:
         model = self._load_model(model)
         original = self._get_model_size(model)
-        params: Dict[str, Tuple[Tuple[int, ...], bytes]] = {}
+        params: dict[str, tuple[tuple[int, ...], bytes]] = {}
 
         for name, param in model.named_parameters():
             if not param.requires_grad:
@@ -80,11 +79,11 @@ class AdvancedCompressionPipeline:
         return blob
 
     # ------------------------------------------------------------------
-    def decompress_model(self, data: bytes) -> Dict[str, torch.Tensor]:
+    def decompress_model(self, data: bytes) -> dict[str, torch.Tensor]:
         payload = lzma.decompress(data)
         view = memoryview(payload)
         offset = 0
-        params: Dict[str, Tuple[Tuple[int, ...], bytes]] = {}
+        params: dict[str, tuple[tuple[int, ...], bytes]] = {}
         count = view[offset]
         offset += 1
         for _ in range(count):
@@ -105,7 +104,7 @@ class AdvancedCompressionPipeline:
             offset += length
             params[name] = (tuple(shape), s4_bytes)
 
-        result: Dict[str, torch.Tensor] = {}
+        result: dict[str, torch.Tensor] = {}
         for name, (shape, s4_bytes) in params.items():
             try:
                 s3_bytes = self.stage4_hyper.decode(s4_bytes)
@@ -117,7 +116,9 @@ class AdvancedCompressionPipeline:
         return result
 
     # ------------------------------------------------------------------
-    def pack_compressed_data(self, params: Dict[str, Tuple[Tuple[int, ...], bytes]]) -> bytes:
+    def pack_compressed_data(
+        self, params: dict[str, tuple[tuple[int, ...], bytes]]
+    ) -> bytes:
         """Pack parameter data with minimal overhead and lzma compression."""
         blob = bytearray()
         blob.append(len(params))
@@ -133,7 +134,7 @@ class AdvancedCompressionPipeline:
         return lzma.compress(bytes(blob), preset=9)
 
     # ------------------------------------------------------------------
-    def _load_model(self, model: Union[torch.nn.Module, str, Path]) -> torch.nn.Module:
+    def _load_model(self, model: torch.nn.Module | str | Path) -> torch.nn.Module:
         if isinstance(model, torch.nn.Module):
             return model
         return torch.load(Path(model), map_location="cpu")

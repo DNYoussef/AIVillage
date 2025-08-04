@@ -1,14 +1,14 @@
 """Unified compression interface selecting between simple and advanced methods."""
+
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional, Union, Dict
 
 import torch
 
-from .simple_quantizer import SimpleQuantizer
 from .advanced_pipeline import AdvancedCompressionPipeline
+from .simple_quantizer import SimpleQuantizer
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class UnifiedCompressor:
         self,
         target_device: str = "mobile",
         memory_limit_mb: int = 2048,
-        target_compression: Optional[float] = None,
+        target_compression: float | None = None,
     ) -> None:
         self.target_device = target_device
         self.memory_limit_mb = memory_limit_mb
@@ -42,9 +42,9 @@ class UnifiedCompressor:
         )
 
     # ------------------------------------------------------------------
-    def compress(self, model: Union[torch.nn.Module, str, Path]) -> Dict[str, object]:
+    def compress(self, model: torch.nn.Module | str | Path) -> dict[str, object]:
         """Compress ``model`` selecting the appropriate method."""
-        if isinstance(model, (str, Path)):
+        if isinstance(model, str | Path):
             tmp = torch.load(model, map_location="cpu")
             param_count = sum(p.numel() for p in tmp.parameters())
             del tmp
@@ -75,10 +75,10 @@ class UnifiedCompressor:
 
     # ------------------------------------------------------------------
     def _compress_simple(
-        self, model: Union[torch.nn.Module, str, Path], param_count: int | None = None
-    ) -> Dict[str, object]:
+        self, model: torch.nn.Module | str | Path, param_count: int | None = None
+    ) -> dict[str, object]:
         if param_count is None:
-            if isinstance(model, (str, Path)):
+            if isinstance(model, str | Path):
                 tmp = torch.load(model, map_location="cpu")
                 param_count = sum(p.numel() for p in tmp.parameters())
                 del tmp
@@ -100,10 +100,10 @@ class UnifiedCompressor:
         }
 
     def _compress_advanced(
-        self, model: Union[torch.nn.Module, str, Path], param_count: int | None = None
-    ) -> Dict[str, object]:
+        self, model: torch.nn.Module | str | Path, param_count: int | None = None
+    ) -> dict[str, object]:
         if param_count is None:
-            if isinstance(model, (str, Path)):
+            if isinstance(model, str | Path):
                 tmp = torch.load(model, map_location="cpu")
                 param_count = sum(p.numel() for p in tmp.parameters())
                 del tmp
@@ -131,7 +131,9 @@ class UnifiedCompressor:
         }
 
     # ------------------------------------------------------------------
-    def decompress(self, compressed: Dict[str, object]) -> torch.nn.Module | Dict[str, torch.Tensor]:
+    def decompress(
+        self, compressed: dict[str, object]
+    ) -> torch.nn.Module | dict[str, torch.Tensor]:
         method = compressed.get("method", "simple")
         data = compressed.get("data")
         if method == "simple":

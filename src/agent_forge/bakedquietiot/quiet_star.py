@@ -1,11 +1,11 @@
-import torch
 from langroid import ChatAgent, ChatAgentConfig, Task
+import torch
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class TalkHead(nn.Module):
-    def __init__(self, hidden_size):
+    def __init__(self, hidden_size) -> None:
         super().__init__()
         self.dense = nn.Linear(hidden_size * 2, 1)
         self.activation = nn.Sigmoid()
@@ -15,7 +15,7 @@ class TalkHead(nn.Module):
 
 
 class QuietSTaRTask(Task):
-    def __init__(self, agent: ChatAgent, model_path="deep_baked_model"):
+    def __init__(self, agent: ChatAgent, model_path="deep_baked_model") -> None:
         super().__init__(agent)
         self.model = AutoModelForCausalLM.from_pretrained(model_path)
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -70,7 +70,7 @@ class QuietSTaRTask(Task):
             start = thought.find(start_tag)
             end = thought.find(end_tag)
             if start != -1 and end != -1:
-                insights[strategy] = thought[start + len(start_tag): end].strip()
+                insights[strategy] = thought[start + len(start_tag) : end].strip()
             else:
                 insights[strategy] = "No specific insight found."
         return insights
@@ -190,14 +190,7 @@ class QuietSTaRTask(Task):
         return self.tokenizer.decode(mixed_output[0], skip_special_tokens=False)
 
     async def format_output(self, output, insights):
-        sections = [
-            "Initial Thought",
-            "Critique",
-            "Alternative Perspective",
-            "Self-Evaluation",
-            "Revised Thought",
-            "Final Output",
-        ] + self.cognitive_strategies
+        sections = ["Initial Thought", "Critique", "Alternative Perspective", "Self-Evaluation", "Revised Thought", "Final Output", *self.cognitive_strategies]
 
         formatted_output = ""
         for section in sections:
@@ -214,7 +207,7 @@ class QuietSTaRTask(Task):
         start = output.find(start_tag)
         end = output.find(end_tag)
         if start != -1 and end != -1:
-            return output[start + len(start_tag): end].strip()
+            return output[start + len(start_tag) : end].strip()
         return "Section not found."
 
     async def evaluate_insight_quality(self, insights):
@@ -249,7 +242,7 @@ if __name__ == "__main__":
 
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
-    async def main():
+    async def main() -> None:
         config = ChatAgentConfig(
             name="QuietSTaR",
             llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),

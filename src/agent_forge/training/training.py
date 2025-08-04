@@ -15,7 +15,7 @@ warnings.warn(
 class TrainingTask:
     """Placeholder TrainingTask for testing."""
 
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
         self.initialized = True
 

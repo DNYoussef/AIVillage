@@ -44,7 +44,7 @@ def download_and_merge_models(
         models = load_models(config.models)
         logger.info(f"Loaded {len(models)} models successfully")
     except EvoMergeException as e:
-        logger.error(f"Failed to load models: {e!s}")
+        logger.exception(f"Failed to load models: {e!s}")
         return []
 
     if not models:
@@ -62,9 +62,9 @@ def download_and_merge_models(
             logger.info(f"Successfully created merged model: {merged_model_path}")
             break
         except Exception as e:
-            logger.error(f"Attempt {attempt + 1} failed to create merged model: {e!s}")
+            logger.exception(f"Attempt {attempt + 1} failed to create merged model: {e!s}")
             if attempt == max_retries - 1:
-                logger.error(
+                logger.exception(
                     f"Failed to create merged model after {max_retries} attempts"
                 )
 
@@ -74,7 +74,7 @@ def download_and_merge_models(
     return merged_models
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="EvoMerge: Evolutionary Model Merging System"
     )

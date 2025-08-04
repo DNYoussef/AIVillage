@@ -8,14 +8,16 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def create_test_model(layers: int = 3, hidden_size: int = 256, size_mb: float = 10.0) -> Any:
+def create_test_model(
+    layers: int = 3, hidden_size: int = 256, size_mb: float = 10.0
+) -> Any:
     """Create a test PyTorch model for compression testing.
-    
+
     Args:
         layers: Number of linear layers
         hidden_size: Size of hidden layers
         size_mb: Target approximate size in MB
-        
+
     Returns:
         PyTorch model object
     """
@@ -23,7 +25,8 @@ def create_test_model(layers: int = 3, hidden_size: int = 256, size_mb: float = 
         import torch
         from torch import nn
     except ImportError:
-        raise ImportError("PyTorch not available - cannot create test model")
+        msg = "PyTorch not available - cannot create test model"
+        raise ImportError(msg)
 
     # Calculate input size to approximately reach target size
     # Rough calculation: each float32 parameter is 4 bytes
@@ -68,23 +71,28 @@ def create_test_model(layers: int = 3, hidden_size: int = 256, size_mb: float = 
     return model
 
 
-def create_test_model_file(layers: int = 3, hidden_size: int = 256,
-                          size_mb: float = 10.0, save_path: str = None) -> str:
+def create_test_model_file(
+    layers: int = 3,
+    hidden_size: int = 256,
+    size_mb: float = 10.0,
+    save_path: str | None = None,
+) -> str:
     """Create and save a test PyTorch model to file.
-    
+
     Args:
         layers: Number of linear layers
-        hidden_size: Size of hidden layers  
+        hidden_size: Size of hidden layers
         size_mb: Target approximate size in MB
         save_path: Path to save model (if None, uses temp file)
-        
+
     Returns:
         Path to saved model file
     """
     try:
         import torch
     except ImportError:
-        raise ImportError("PyTorch not available")
+        msg = "PyTorch not available"
+        raise ImportError(msg)
 
     # Create model
     model = create_test_model(layers, hidden_size, size_mb)
@@ -108,18 +116,19 @@ def create_test_model_file(layers: int = 3, hidden_size: int = 256,
 
 def create_simple_cnn_model(input_channels: int = 3, num_classes: int = 10) -> Any:
     """Create a simple CNN model for testing.
-    
+
     Args:
         input_channels: Number of input channels (e.g., 3 for RGB)
         num_classes: Number of output classes
-        
+
     Returns:
         PyTorch CNN model
     """
     try:
         from torch import nn
     except ImportError:
-        raise ImportError("PyTorch not available")
+        msg = "PyTorch not available"
+        raise ImportError(msg)
 
     # Create CNN as Sequential to avoid pickle issues
     model = nn.Sequential(
@@ -136,7 +145,7 @@ def create_simple_cnn_model(input_channels: int = 3, num_classes: int = 10) -> A
         nn.Linear(128 * 4 * 4, 256),
         nn.ReLU(),
         nn.Dropout(0.5),
-        nn.Linear(256, num_classes)
+        nn.Linear(256, num_classes),
     )
 
     # Count parameters
@@ -154,14 +163,15 @@ def create_simple_cnn_model(input_channels: int = 3, num_classes: int = 10) -> A
 
 def create_mixed_model() -> Any:
     """Create a model with both Conv2d and Linear layers for comprehensive testing.
-    
+
     Returns:
         PyTorch model with mixed layer types
     """
     try:
         from torch import nn
     except ImportError:
-        raise ImportError("PyTorch not available")
+        msg = "PyTorch not available"
+        raise ImportError(msg)
 
     # Create mixed model as Sequential to avoid pickle issues
     model = nn.Sequential(
@@ -176,7 +186,7 @@ def create_mixed_model() -> Any:
         nn.ReLU(),
         nn.Linear(512, 256),
         nn.ReLU(),
-        nn.Linear(256, 10)
+        nn.Linear(256, 10),
     )
 
     # Log model info

@@ -5,7 +5,7 @@ from bittensor_wallet import Network, Wallet  # pip install bittensor-wallet
 
 
 class CreditManager:
-    def __init__(self, mnemonic: str):
+    def __init__(self, mnemonic: str) -> None:
         self.wallet = Wallet.from_mnemonic(mnemonic)
         self.network = Network(self.wallet)
 

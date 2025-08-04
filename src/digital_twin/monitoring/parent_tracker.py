@@ -16,7 +16,6 @@ import sqlite3
 from typing import Any
 
 import numpy as np
-
 import wandb
 
 logger = logging.getLogger(__name__)
@@ -186,7 +185,7 @@ class ParentProgressTracker:
             logger.info("Parent tracker W&B tracking initialized")
 
         except Exception as e:
-            logger.error("Failed to initialize W&B tracking: %s", e)
+            logger.exception("Failed to initialize W&B tracking: %s", e)
 
     def init_database(self) -> None:
         """Initialize database for parent tracking data."""
@@ -305,7 +304,7 @@ class ParentProgressTracker:
             logger.info("Parent tracker database initialized")
 
         except Exception as e:
-            logger.error("Failed to initialize database: %s", e)
+            logger.exception("Failed to initialize database: %s", e)
 
     async def register_parent(
         self,
@@ -383,9 +382,7 @@ class ParentProgressTracker:
             }
         )
 
-        logger.info(
-            "Registered parent %s for student %s", parent_name, student_id[:8]
-        )
+        logger.info("Registered parent %s for student %s", parent_name, student_id[:8])
 
         return True
 
@@ -411,7 +408,7 @@ class ParentProgressTracker:
                 logger.info(
                     "Initialized %d milestones for student %s",
                     len(milestones),
-                    student_id[:8]
+                    student_id[:8],
                 )
 
         except Exception as e:
@@ -444,41 +441,16 @@ class ParentProgressTracker:
                     0.8,
                     "critical",
                 ),
-                (
-                    "division",
-                    "Understand division with remainders",
-                    0.7,
-                    "critical"
-                ),
-                (
-                    "fractions",
-                    "Compare and order simple fractions",
-                    0.7,
-                    "important"
-                ),
-                (
-                    "word_problems",
-                    "Solve multi-step word problems",
-                    0.6,
-                    "important"
-                ),
+                ("division", "Understand division with remainders", 0.7, "critical"),
+                ("fractions", "Compare and order simple fractions", 0.7, "important"),
+                ("word_problems", "Solve multi-step word problems", 0.6, "important"),
                 ("geometry", "Calculate area and perimeter", 0.6, "helpful"),
             ]
         elif grade_level <= 6:
             milestone_concepts = [
-                (
-                    "decimals",
-                    "Add and subtract decimals confidently",
-                    0.8,
-                    "critical"
-                ),
+                ("decimals", "Add and subtract decimals confidently", 0.8, "critical"),
                 ("fractions", "Multiply and divide fractions", 0.7, "critical"),
-                (
-                    "ratios",
-                    "Understand ratios and proportions",
-                    0.7,
-                    "important"
-                ),
+                ("ratios", "Understand ratios and proportions", 0.7, "important"),
                 ("geometry", "Work with angles and triangles", 0.6, "important"),
                 ("statistics", "Interpret graphs and data", 0.6, "helpful"),
             ]
@@ -498,9 +470,7 @@ class ParentProgressTracker:
 
             # Estimate completion based on current progress
             estimated_weeks = (
-                4 if importance == "critical"
-                else 6 if importance == "important"
-                else 8
+                4 if importance == "critical" else 6 if importance == "important" else 8
             )
             estimated_completion = (
                 datetime.now(timezone.utc) + timedelta(weeks=estimated_weeks)
@@ -565,7 +535,7 @@ class ParentProgressTracker:
             )
 
         except Exception as e:
-            logger.error("Error updating student progress: %s", e)
+            logger.exception("Error updating student progress: %s", e)
 
     async def _update_milestone_progress(
         self, student_id: str, session_data: dict[str, Any]
@@ -583,19 +553,13 @@ class ParentProgressTracker:
                 # Update mastery level (simplified calculation)
                 learning_rate = 0.1
                 milestone.current_mastery_level = min(
-                    1.0,
-                    milestone.current_mastery_level + learning_rate * accuracy
+                    1.0, milestone.current_mastery_level + learning_rate * accuracy
                 )
 
                 # Check if milestone is achieved
-                if (
-                    milestone.current_mastery_level
-                    >= milestone.target_mastery_level
-                ):
+                if milestone.current_mastery_level >= milestone.target_mastery_level:
                     milestone.achieved = True
-                    milestone.achieved_date = (
-                        datetime.now(timezone.utc).isoformat()
-                    )
+                    milestone.achieved_date = datetime.now(timezone.utc).isoformat()
 
                     # Create celebration alert
                     await self.create_alert(
@@ -613,7 +577,7 @@ class ParentProgressTracker:
                     logger.info(
                         "Milestone achieved: %s for student %s",
                         milestone.description,
-                        student_id[:8]
+                        student_id[:8],
                     )
 
                 # Update in database
@@ -621,22 +585,20 @@ class ParentProgressTracker:
 
     async def _check_progress_alerts(
         self, student_id: str, session_data: dict[str, Any]
-    ):
+    ) -> None:
         """Check for progress-based alerts."""
-        engagement = session_data.get("engagement_score", 0.5)
-        accuracy = session_data.get("accuracy", 0.5)
-        duration = session_data.get("duration_minutes", 0)
+        session_data.get("engagement_score", 0.5)
+        session_data.get("accuracy", 0.5)
+        session_data.get("duration_minutes", 0)
 
         # Get recent session history for trend analysis
         recent_sessions = self._get_recent_sessions(student_id, days=7)
 
         if len(recent_sessions) >= 3:
-            avg_engagement = np.mean([
-                s.get("engagement_score", 0.5) for s in recent_sessions
-            ])
-            avg_accuracy = np.mean([
-                s.get("accuracy", 0.5) for s in recent_sessions
-            ])
+            avg_engagement = np.mean(
+                [s.get("engagement_score", 0.5) for s in recent_sessions]
+            )
+            avg_accuracy = np.mean([s.get("accuracy", 0.5) for s in recent_sessions])
 
             # Low engagement alert
             if avg_engagement < 0.3:
@@ -694,8 +656,7 @@ class ParentProgressTracker:
                         ),
                         suggested_actions=[
                             "Celebrate this great progress!",
-                            "Consider introducing slightly more challenging "
-                            "material",
+                            "Consider introducing slightly more challenging material",
                             "Ask them to teach you what they've learned",
                         ],
                     )
@@ -722,9 +683,7 @@ class ParentProgressTracker:
         x_mean = np.mean(x)
         y_mean = np.mean(accuracies)
 
-        numerator = sum(
-            (x[i] - x_mean) * (accuracies[i] - y_mean) for i in range(n)
-        )
+        numerator = sum((x[i] - x_mean) * (accuracies[i] - y_mean) for i in range(n))
         denominator = sum((x[i] - x_mean) ** 2 for i in range(n))
 
         if denominator == 0:
@@ -733,9 +692,7 @@ class ParentProgressTracker:
         slope = numerator / denominator
         return slope
 
-    def _update_learning_velocity(
-        self, student_id: str, session_data: dict[str, Any]
-    ):
+    def _update_learning_velocity(self, student_id: str, session_data: dict[str, Any]) -> None:
         """Update learning velocity tracking."""
         concepts_learned = len(session_data.get("concepts_covered", []))
         session_time = session_data.get("duration_minutes", 0)
@@ -765,7 +722,7 @@ class ParentProgressTracker:
 
     def _update_engagement_patterns(
         self, student_id: str, session_data: dict[str, Any]
-    ):
+    ) -> None:
         """Update engagement pattern analysis."""
         session_start = session_data.get("start_time")
         if session_start:
@@ -792,7 +749,7 @@ class ParentProgressTracker:
             except Exception as e:
                 logger.warning("Error updating engagement patterns: %s", e)
 
-    async def _generate_parent_insights(self, student_id: str):
+    async def _generate_parent_insights(self, student_id: str) -> None:
         """Generate actionable insights for parents."""
         # Check if we have enough data
         if len(self.engagement_patterns[student_id]) < 10:
@@ -821,8 +778,7 @@ class ParentProgressTracker:
                 insights.append(
                     ParentInsight(
                         insight_id=(
-                            f"timing_{student_id}_"
-                            f"{datetime.now().strftime('%Y%m%d')}"
+                            f"timing_{student_id}_{datetime.now().strftime('%Y%m%d')}"
                         ),
                         student_id=student_id,
                         category="schedule",
@@ -840,8 +796,7 @@ class ParentProgressTracker:
                         recommended_actions=[
                             f"Schedule important learning sessions around "
                             f"{best_hour}:00",
-                            f"Use {worst_hour}:00 for lighter review or "
-                            "break time",
+                            f"Use {worst_hour}:00 for lighter review or break time",
                             "Be consistent with timing to build routine",
                         ],
                         priority="medium",
@@ -863,8 +818,7 @@ class ParentProgressTracker:
                 insights.append(
                     ParentInsight(
                         insight_id=(
-                            f"velocity_{student_id}_"
-                            f"{datetime.now().strftime('%Y%m%d')}"
+                            f"velocity_{student_id}_{datetime.now().strftime('%Y%m%d')}"
                         ),
                         student_id=student_id,
                         category="motivation",
@@ -876,15 +830,12 @@ class ParentProgressTracker:
                         evidence=[
                             f"Average learning velocity: "
                             f"{np.mean(velocities):.2f} concepts/hour",
-                            f"Positive trend: +{velocity_trend:.3f} "
-                            "improvement rate",
+                            f"Positive trend: +{velocity_trend:.3f} improvement rate",
                         ],
                         recommended_actions=[
                             "Acknowledge and celebrate this improvement",
-                            "Consider introducing more challenging "
-                            "material",
-                            "Maintain current study routine as it's "
-                            "working well",
+                            "Consider introducing more challenging material",
+                            "Maintain current study routine as it's working well",
                         ],
                         priority="high",
                         confidence_score=0.9,
@@ -904,13 +855,13 @@ class ParentProgressTracker:
         level: AlertLevel,
         title: str,
         message: str,
-        suggested_actions: list[str] = None,
+        suggested_actions: list[str] | None = None,
         action_required: bool = False,
-        related_concepts: list[str] = None,
+        related_concepts: list[str] | None = None,
         expires_hours: int = 168,  # Default 7 days
     ) -> str:
         """Create alert for parents."""
-        message_to_hash = f'{student_id}_{title}_{datetime.now().isoformat()}'
+        message_to_hash = f"{student_id}_{title}_{datetime.now().isoformat()}"
         alert_id = f"alert_{hashlib.md5(message_to_hash.encode()).hexdigest()[:12]}"
 
         expires_at = (
@@ -952,15 +903,12 @@ class ParentProgressTracker:
         )
 
         logger.info(
-            "Created %s alert for student %s: %s",
-            level.value,
-            student_id[:8],
-            title
+            "Created %s alert for student %s: %s", level.value, student_id[:8], title
         )
 
         return alert_id
 
-    async def _send_notification(self, student_id: str, alert: LearningAlert):
+    async def _send_notification(self, student_id: str, alert: LearningAlert) -> None:
         """Send notification to parent."""
         parent_settings = self.parent_settings.get(student_id)
         if not parent_settings:
@@ -976,10 +924,7 @@ class ParentProgressTracker:
         # Check quiet hours
         quiet_hours = notification_prefs.get("alert_quiet_hours", {})
         if self._is_quiet_hours(quiet_hours):
-            logger.info(
-                "Delaying notification due to quiet hours: %s",
-                alert.alert_id
-            )
+            logger.info("Delaying notification due to quiet hours: %s", alert.alert_id)
             return
 
         # Check daily limit
@@ -996,9 +941,7 @@ class ParentProgressTracker:
 
         max_daily = notification_prefs.get("max_daily_alerts", 5)
         if daily_alerts > max_daily:
-            logger.info(
-                "Daily alert limit reached for student %s", student_id[:8]
-            )
+            logger.info("Daily alert limit reached for student %s", student_id[:8])
             return
 
         # Send email notification
@@ -1028,7 +971,7 @@ class ParentProgressTracker:
 
     async def _send_email_notification(
         self, parent_settings: dict[str, Any], alert: LearningAlert
-    ):
+    ) -> None:
         """Send email notification to parent."""
         try:
             parent_email = parent_settings.get("parent_email")
@@ -1061,8 +1004,11 @@ border-radius: 8px; margin: 20px 0;">
                         <h4 style="color: #27ae60; margin-top: 0;">
 Suggested Actions:</h4>
                         <ul>
-                            {"".join([
-f"<li>{action}</li>" for action in alert.suggested_actions])}
+                            {
+                    "".join(
+                        [f"<li>{action}</li>" for action in alert.suggested_actions]
+                    )
+                }
                         </ul>
                     </div>
                     '''
@@ -1104,13 +1050,11 @@ progress updates.
             # Send email (would need proper SMTP configuration)
             # This is a placeholder for the actual email sending logic
             logger.info(
-                "Email notification prepared for %s: %s",
-                parent_email,
-                alert.title
+                "Email notification prepared for %s: %s", parent_email, alert.title
             )
 
         except Exception as e:
-            logger.error("Failed to send email notification: %s", e)
+            logger.exception("Failed to send email notification: %s", e)
 
     async def generate_weekly_report(self, student_id: str) -> WeeklyReport:
         """Generate comprehensive weekly progress report."""
@@ -1156,8 +1100,8 @@ progress updates.
         )
 
         # Analyze strengths and areas for improvement
-        areas_of_strength, areas_for_improvement = (
-            self._analyze_performance_areas(week_sessions)
+        areas_of_strength, areas_for_improvement = self._analyze_performance_areas(
+            week_sessions
         )
 
         # Generate recommendations
@@ -1203,27 +1147,19 @@ progress updates.
             }
         )
 
-        logger.info(
-            "Generated weekly report for student %s", student_id[:8]
-        )
+        logger.info("Generated weekly report for student %s", student_id[:8])
 
         return report
 
     def _get_week_sessions(
-        self,
-        student_id: str,
-        week_start: datetime,
-        week_end: datetime
+        self, student_id: str, week_start: datetime, week_end: datetime
     ) -> list[dict[str, Any]]:
         """Get sessions for the specified week."""
         # This would integrate with actual session data
         return []
 
     def _get_concepts_mastered_this_week(
-        self,
-        student_id: str,
-        week_start: datetime,
-        week_end: datetime
+        self, student_id: str, week_start: datetime, week_end: datetime
     ) -> list[str]:
         """Get concepts that were mastered this week."""
         mastered = []
@@ -1237,10 +1173,7 @@ progress updates.
         return mastered
 
     def _get_achievements_this_week(
-        self,
-        student_id: str,
-        week_start: datetime,
-        week_end: datetime
+        self, student_id: str, week_start: datetime, week_end: datetime
     ) -> list[str]:
         """Get achievements earned this week."""
         achievements = []
@@ -1250,9 +1183,7 @@ progress updates.
             if milestone.achieved and milestone.achieved_date:
                 achieved_date = datetime.fromisoformat(milestone.achieved_date)
                 if week_start <= achieved_date <= week_end:
-                    achievements.append(
-                        f"Mastered {milestone.description}"
-                    )
+                    achievements.append(f"Mastered {milestone.description}")
 
         return achievements
 
@@ -1267,9 +1198,7 @@ progress updates.
         concept_performance = defaultdict(list)
         for session in sessions:
             for concept in session.get("concepts_covered", []):
-                concept_performance[concept].append(
-                    session.get("accuracy", 0)
-                )
+                concept_performance[concept].append(session.get("accuracy", 0))
 
         strengths = []
         improvements = []
@@ -1280,14 +1209,10 @@ progress updates.
             if avg_accuracy >= 0.8:
                 strengths.append(f"Strong performance in {concept}")
             elif avg_accuracy <= 0.5:
-                improvements.append(
-                    f"Additional practice needed in {concept}"
-                )
+                improvements.append(f"Additional practice needed in {concept}")
 
         # Overall engagement analysis
-        avg_engagement = np.mean([
-            s.get("engagement_score", 0) for s in sessions
-        ])
+        avg_engagement = np.mean([s.get("engagement_score", 0) for s in sessions])
         if avg_engagement >= 0.8:
             strengths.append("High engagement and motivation")
         elif avg_engagement <= 0.4:
@@ -1317,18 +1242,14 @@ progress updates.
 
         if concept_struggles:
             most_challenging = max(concept_struggles, key=concept_struggles.get)
-            recommendations.append(
-                f"Focus extra attention on {most_challenging}"
-            )
+            recommendations.append(f"Focus extra attention on {most_challenging}")
 
         # Check for mastered concepts - can advance
         if concepts_mastered:
             recommendations.append("Ready to explore more advanced topics")
 
         # Engagement-based recommendations
-        avg_engagement = np.mean([
-            s.get("engagement_score", 0) for s in sessions
-        ])
+        avg_engagement = np.mean([s.get("engagement_score", 0) for s in sessions])
         if avg_engagement < 0.5:
             recommendations.append(
                 "Try incorporating more interactive or hands-on activities"
@@ -1343,15 +1264,13 @@ progress updates.
                     "Consider slightly longer sessions for deeper learning"
                 )
             elif avg_length > 45:
-                recommendations.append(
-                    "Consider shorter, more frequent sessions"
-                )
+                recommendations.append("Consider shorter, more frequent sessions")
 
         return recommendations or ["Continue current learning approach"]
 
     async def _send_weekly_report_notification(
         self, student_id: str, report: WeeklyReport
-    ):
+    ) -> None:
         """Send weekly report to parent."""
         parent_settings = self.parent_settings.get(student_id)
         if not parent_settings:
@@ -1364,7 +1283,8 @@ progress updates.
         # Create summary alert
         achievements_text = (
             "🎉 " + ", ".join(report.achievements_earned)
-            if report.achievements_earned else "Keep up the great work!"
+            if report.achievements_earned
+            else "Keep up the great work!"
         )
         summary_message = f"""
         This week your child completed {report.sessions_completed} learning
@@ -1391,7 +1311,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
             expires_hours=168,  # 7 days
         )
 
-    async def start_progress_monitoring(self):
+    async def start_progress_monitoring(self) -> None:
         """Start background progress monitoring."""
         while self.monitoring_active:
             try:
@@ -1407,26 +1327,24 @@ sessions with {report.total_study_time_minutes} minutes of study time.
                 await self._update_progress_trends()
 
             except Exception as e:
-                logger.error(f"Error in progress monitoring: {e}")
+                logger.exception(f"Error in progress monitoring: {e}")
                 await asyncio.sleep(300)  # Wait 5 minutes before retry
 
-    async def _check_weekly_report_schedule(self):
+    async def _check_weekly_report_schedule(self) -> None:
         """Check if it's time to generate weekly reports."""
         now = datetime.now(timezone.utc)
 
         # Generate reports on Sunday evenings
         if now.weekday() == 6 and now.hour == 20:  # Sunday 8 PM
-            for student_id in self.parent_settings.keys():
+            for student_id in self.parent_settings:
                 try:
                     await self.generate_weekly_report(student_id)
                 except Exception as e:
-                    logger.error(
-                        "Error generating weekly report for %s: %s",
-                        student_id,
-                        e
+                    logger.exception(
+                        "Error generating weekly report for %s: %s", student_id, e
                     )
 
-    async def _cleanup_expired_alerts(self):
+    async def _cleanup_expired_alerts(self) -> None:
         """Clean up expired alerts."""
         current_time = datetime.now(timezone.utc)
 
@@ -1445,13 +1363,13 @@ sessions with {report.total_study_time_minutes} minutes of study time.
 
             self.parent_alerts[student_id] = active_alerts
 
-    async def _update_progress_trends(self):
+    async def _update_progress_trends(self) -> None:
         """Update long-term progress trends."""
-        for student_id in self.parent_settings.keys():
+        for student_id in self.parent_settings:
             # Update various trend analyses
             self._calculate_learning_trends(student_id)
 
-    def _calculate_learning_trends(self, student_id: str):
+    def _calculate_learning_trends(self, student_id: str) -> None:
         """Calculate learning trends for analytics."""
         # This would perform sophisticated trend analysis
         # For now, store basic placeholder data
@@ -1464,7 +1382,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
         }
 
     # Database helper methods
-    async def _save_milestone(self, milestone: ProgressMilestone):
+    async def _save_milestone(self, milestone: ProgressMilestone) -> None:
         """Save milestone to database."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -1497,9 +1415,9 @@ sessions with {report.total_study_time_minutes} minutes of study time.
             conn.close()
 
         except Exception as e:
-            logger.error("Failed to save milestone: %s", e)
+            logger.exception("Failed to save milestone: %s", e)
 
-    async def _save_alert(self, alert: LearningAlert):
+    async def _save_alert(self, alert: LearningAlert) -> None:
         """Save alert to database."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -1531,9 +1449,9 @@ sessions with {report.total_study_time_minutes} minutes of study time.
             conn.close()
 
         except Exception as e:
-            logger.error("Failed to save alert: %s", e)
+            logger.exception("Failed to save alert: %s", e)
 
-    async def _save_weekly_report(self, report: WeeklyReport):
+    async def _save_weekly_report(self, report: WeeklyReport) -> None:
         """Save weekly report to database."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -1557,9 +1475,9 @@ sessions with {report.total_study_time_minutes} minutes of study time.
             conn.close()
 
         except Exception as e:
-            logger.error("Failed to save weekly report: %s", e)
+            logger.exception("Failed to save weekly report: %s", e)
 
-    async def _save_insight(self, insight: ParentInsight):
+    async def _save_insight(self, insight: ParentInsight) -> None:
         """Save parent insight to database."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -1589,11 +1507,9 @@ sessions with {report.total_study_time_minutes} minutes of study time.
             conn.close()
 
         except Exception as e:
-            logger.error("Failed to save insight: %s", e)
+            logger.exception("Failed to save insight: %s", e)
 
-    async def _save_parent_settings(
-        self, student_id: str, settings: dict[str, Any]
-    ):
+    async def _save_parent_settings(self, student_id: str, settings: dict[str, Any]) -> None:
         """Save parent settings to database."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -1621,7 +1537,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
             conn.close()
 
         except Exception as e:
-            logger.error("Failed to save parent settings: %s", e)
+            logger.exception("Failed to save parent settings: %s", e)
 
     def get_parent_dashboard_data(self, student_id: str) -> dict[str, Any]:
         """Get comprehensive dashboard data for parents."""
@@ -1692,12 +1608,12 @@ sessions with {report.total_study_time_minutes} minutes of study time.
                     if self.learning_velocity[student_id]
                     else 0
                 ),
-                "engagement_trend": self.progress_trends.get(
-                    student_id, {}
-                ).get("engagement_trend", "unknown"),
-                "accuracy_trend": self.progress_trends.get(
-                    student_id, {}
-                ).get("accuracy_trend", "unknown"),
+                "engagement_trend": self.progress_trends.get(student_id, {}).get(
+                    "engagement_trend", "unknown"
+                ),
+                "accuracy_trend": self.progress_trends.get(student_id, {}).get(
+                    "accuracy_trend", "unknown"
+                ),
             },
         }
 

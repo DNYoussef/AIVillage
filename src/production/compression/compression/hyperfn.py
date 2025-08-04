@@ -13,7 +13,7 @@ class HyperCompressionEncoder:
     achieving additional compression beyond VPTQ quantization.
     """
 
-    def __init__(self, num_clusters: int = 16, trajectory_types: list[str] = None):
+    def __init__(self, num_clusters: int = 16, trajectory_types: list[str] | None = None) -> None:
         self.num_clusters = num_clusters
         self.trajectory_types = trajectory_types or ["sinusoidal", "spiral", "chaotic"]
         self.max_search_iterations = 100
@@ -35,7 +35,7 @@ class HyperCompressionEncoder:
     def _generate_sinusoidal_trajectory(
         self, length: int, params: dict
     ) -> torch.Tensor:
-        """Generate sinusoidal trajectory: A*sin(2π*α*t) + B*cos(2π*α*t) + D"""
+        """Generate sinusoidal trajectory: A*sin(2π*α*t) + B*cos(2π*α*t) + D."""
         t = torch.arange(length, dtype=torch.float32)
         alpha = params["an"] / params["ad"]
         theta = 2 * math.pi * alpha * t
@@ -46,7 +46,7 @@ class HyperCompressionEncoder:
         )
 
     def _generate_spiral_trajectory(self, length: int, params: dict) -> torch.Tensor:
-        """Generate spiral trajectory: A*t*sin(2π*α*t) + B*t*cos(2π*α*t) + D"""
+        """Generate spiral trajectory: A*t*sin(2π*α*t) + B*t*cos(2π*α*t) + D."""
         t = torch.arange(length, dtype=torch.float32) / length  # Normalize to [0,1]
         alpha = params["an"] / params["ad"]
         theta = 2 * math.pi * alpha * t
@@ -57,7 +57,7 @@ class HyperCompressionEncoder:
         )
 
     def _generate_chaotic_trajectory(self, length: int, params: dict) -> torch.Tensor:
-        """Generate chaotic trajectory using logistic map: x_{n+1} = r*x_n*(1-x_n)"""
+        """Generate chaotic trajectory using logistic map: x_{n+1} = r*x_n*(1-x_n)."""
         trajectory = torch.zeros(length)
         x = 0.5  # Initial condition
         r = 3.0 + params["A"]  # Chaotic parameter
@@ -71,7 +71,7 @@ class HyperCompressionEncoder:
     def _search_params(
         self, w: torch.Tensor, trajectory_type: str = "sinusoidal"
     ) -> dict:
-        """Search for optimal parameters for the specified trajectory type"""
+        """Search for optimal parameters for the specified trajectory type."""
         mean = w.mean().item()
         std = w.std().item()
 
@@ -103,7 +103,8 @@ class HyperCompressionEncoder:
             alpha_n_range = [1]  # Not used for chaotic
             alpha_d_range = [1]  # Not used for chaotic
         else:
-            raise ValueError(f"Unknown trajectory type: {trajectory_type}")
+            msg = f"Unknown trajectory type: {trajectory_type}"
+            raise ValueError(msg)
 
         # Grid search for optimal parameters
         for A in A_range:
@@ -196,11 +197,11 @@ class HyperCompressionEncoder:
             "compression_ratio": compression_ratio,
             "total_error": total_error,
             "num_clusters": self.num_clusters,
-            "trajectory_types_used": list(set(p["trajectory_type"] for p in params)),
+            "trajectory_types_used": list({p["trajectory_type"] for p in params}),
         }
 
     def _reconstruct_trajectory(self, params: dict, length: int) -> torch.Tensor:
-        """Reconstruct trajectory from parameters"""
+        """Reconstruct trajectory from parameters."""
         trajectory_type = params.get("trajectory_type", "sinusoidal")
 
         if trajectory_type == "sinusoidal":

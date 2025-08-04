@@ -2,9 +2,10 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ..core.structures import RetrievalResult
+if TYPE_CHECKING:
+    from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
 
 
 @dataclass
@@ -18,18 +19,18 @@ class KnowledgeChange:
 
 
 class UnifiedKnowledgeTracker:
-    def __init__(self, vector_store, graph_store):
+    def __init__(self, vector_store, graph_store) -> None:
         self.vector_store = vector_store
         self.graph_store = graph_store
         self.knowledge_changes: list[KnowledgeChange] = []
         self.knowledge_graph: dict[str, dict[str, Any]] = {}
         self.retrieval_log: list[dict[str, Any]] = []
 
-    def record_change(self, change: KnowledgeChange):
+    def record_change(self, change: KnowledgeChange) -> None:
         self.knowledge_changes.append(change)
         self._update_knowledge_graph(change)
 
-    def track_changes(self, result: dict[str, Any], timestamp: datetime):
+    def track_changes(self, result: dict[str, Any], timestamp: datetime) -> None:
         # Implement logic to extract and record changes from the result
         # This is a simplified version and should be expanded based on your specific needs
         for key, value in result.items():
@@ -43,7 +44,7 @@ class UnifiedKnowledgeTracker:
             )
             self.record_change(change)
 
-    def _update_knowledge_graph(self, change: KnowledgeChange):
+    def _update_knowledge_graph(self, change: KnowledgeChange) -> None:
         if change.entity not in self.knowledge_graph:
             self.knowledge_graph[change.entity] = {}
 
@@ -70,7 +71,7 @@ class UnifiedKnowledgeTracker:
             }
         )
 
-    def update_vector_store(self):
+    def update_vector_store(self) -> None:
         """Synchronize recorded changes with the underlying vector store.
 
         This method iterates over all recorded ``KnowledgeChange`` instances and
@@ -102,7 +103,7 @@ class UnifiedKnowledgeTracker:
             else:
                 self.vector_store.add_documents([document])
 
-    def update_graph_store(self):
+    def update_graph_store(self) -> None:
         """Propagate knowledge changes to the underlying graph store."""
         for change in self.knowledge_changes:
             new_val = change.new_value

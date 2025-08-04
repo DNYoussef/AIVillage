@@ -1,4 +1,4 @@
-"""HypeRAG Innovator Repair Agent
+"""HypeRAG Innovator Repair Agent.
 
 Given a GDC Violation subgraph, produces structured repair proposal lists
 without auto-applying changes. Supports pluggable local LLM models.
@@ -15,13 +15,14 @@ import re
 from typing import Any
 import uuid
 
-from ..guardian.gate import GuardianGate
+from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
+
 from .llm_driver import LLMDriver, ModelConfig
 from .templates import TemplateEncoder, ViolationTemplate
 
 
 class RepairOperationType(Enum):
-    """Types of repair operations"""
+    """Types of repair operations."""
 
     ADD_EDGE = "add_edge"
     DELETE_EDGE = "delete_edge"
@@ -33,7 +34,7 @@ class RepairOperationType(Enum):
 
 @dataclass
 class RepairOperation:
-    """Single repair operation with rationale"""
+    """Single repair operation with rationale."""
 
     operation_type: RepairOperationType
     target_id: str
@@ -55,7 +56,7 @@ class RepairOperation:
     estimated_impact: str = "low"
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert operation to dictionary format"""
+        """Convert operation to dictionary format."""
         result = {
             "op": self.operation_type.value,
             "target_id": self.target_id,
@@ -85,12 +86,12 @@ class RepairOperation:
         return result
 
     def to_jsonl(self) -> str:
-        """Convert operation to JSONL format"""
+        """Convert operation to JSONL format."""
         return json.dumps(self.to_dict(), ensure_ascii=False)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "RepairOperation":
-        """Create operation from dictionary"""
+        """Create operation from dictionary."""
         op_type = RepairOperationType(data["op"])
 
         return cls(
@@ -113,7 +114,7 @@ class RepairOperation:
 
 @dataclass
 class RepairProposalSet:
-    """Set of repair proposals with validation and metadata"""
+    """Set of repair proposals with validation and metadata."""
 
     proposals: list[RepairOperation]
     violation_id: str
@@ -141,7 +142,7 @@ class RepairProposalSet:
     validation_notes: list[str] = field(default_factory=list)
 
     def __post_init__(self):
-        """Calculate derived metrics"""
+        """Calculate derived metrics."""
         if self.proposals:
             self.overall_confidence = sum(op.confidence for op in self.proposals) / len(
                 self.proposals
@@ -155,7 +156,7 @@ class RepairProposalSet:
             )  # Assume ~3 ops for complete repair
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert proposal set to dictionary"""
+        """Convert proposal set to dictionary."""
         return {
             "proposal_set_id": self.proposal_set_id,
             "violation_id": self.violation_id,
@@ -176,21 +177,21 @@ class RepairProposalSet:
         }
 
     def to_json_array(self) -> str:
-        """Convert proposals to JSON array format"""
+        """Convert proposals to JSON array format."""
         return json.dumps([op.to_dict() for op in self.proposals], indent=2)
 
     def get_high_confidence_proposals(
         self, threshold: float = 0.8
     ) -> list[RepairOperation]:
-        """Get proposals with confidence above threshold"""
+        """Get proposals with confidence above threshold."""
         return [op for op in self.proposals if op.confidence >= threshold]
 
     def get_safety_critical_proposals(self) -> list[RepairOperation]:
-        """Get safety-critical proposals that need extra review"""
+        """Get safety-critical proposals that need extra review."""
         return [op for op in self.proposals if op.safety_critical]
 
     def validate(self) -> bool:
-        """Validate the proposal set and update validation status"""
+        """Validate the proposal set and update validation status."""
         self.validation_errors.clear()
         self.validation_warnings.clear()
 
@@ -217,7 +218,7 @@ class RepairProposalSet:
 
 @dataclass
 class RepairProposal:
-    """Complete repair proposal for a GDC violation (legacy compatibility)"""
+    """Complete repair proposal for a GDC violation (legacy compatibility)."""
 
     violation_id: str
     gdc_rule: str
@@ -240,7 +241,7 @@ class RepairProposal:
     validation_notes: list[str] = field(default_factory=list)
 
     def __post_init__(self):
-        """Calculate derived metrics"""
+        """Calculate derived metrics."""
         if self.operations:
             self.overall_confidence = sum(
                 op.confidence for op in self.operations
@@ -254,7 +255,7 @@ class RepairProposal:
             )  # Assume ~3 ops for complete repair
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert proposal to dictionary"""
+        """Convert proposal to dictionary."""
         return {
             "proposal_id": self.proposal_id,
             "violation_id": self.violation_id,
@@ -272,7 +273,7 @@ class RepairProposal:
         }
 
     def to_jsonl(self) -> str:
-        """Convert proposal to JSONL format"""
+        """Convert proposal to JSONL format."""
         lines = []
         for operation in self.operations:
             lines.append(operation.to_jsonl())
@@ -281,19 +282,19 @@ class RepairProposal:
     def get_high_confidence_operations(
         self, threshold: float = 0.8
     ) -> list[RepairOperation]:
-        """Get operations with confidence above threshold"""
+        """Get operations with confidence above threshold."""
         return [op for op in self.operations if op.confidence >= threshold]
 
     def get_safety_critical_operations(self) -> list[RepairOperation]:
-        """Get safety-critical operations that need extra review"""
+        """Get safety-critical operations that need extra review."""
         return [op for op in self.operations if op.safety_critical]
 
 
 class PromptComposer:
-    """Composes prompts for repair operations"""
+    """Composes prompts for repair operations."""
 
-    def __init__(self, prompt_bank_path: str | None = None, domain: str = "general"):
-        """Initialize prompt composer
+    def __init__(self, prompt_bank_path: str | None = None, domain: str = "general") -> None:
+        """Initialize prompt composer.
 
         Args:
             prompt_bank_path: Path to prompt bank markdown file
@@ -306,7 +307,7 @@ class PromptComposer:
         self.prompts = self._load_prompts()
 
     def _load_prompts(self) -> dict[str, str]:
-        """Load prompts from markdown file"""
+        """Load prompts from markdown file."""
         prompts = {}
 
         try:
@@ -333,7 +334,7 @@ class PromptComposer:
         return prompts
 
     def _get_default_prompts(self) -> dict[str, str]:
-        """Get default prompts if file loading fails"""
+        """Get default prompts if file loading fails."""
         return {
             "base_system_prompt": """You are a knowledge graph repair assistant (Innovator Agent) specializing in analyzing graph violations and proposing precise repair operations.
 
@@ -369,7 +370,7 @@ Provide JSONL format with one operation per line:
         }
 
     def get_system_prompt(self) -> str:
-        """Get system prompt for the domain"""
+        """Get system prompt for the domain."""
         if self.domain == "medical":
             return self.prompts.get(
                 "medical_domain_system_prompt",
@@ -378,7 +379,7 @@ Provide JSONL format with one operation per line:
         return self.prompts.get("base_system_prompt", "")
 
     def get_repair_instructions(self) -> str:
-        """Get repair instructions for the domain"""
+        """Get repair instructions for the domain."""
         if self.domain == "medical":
             return self.prompts.get(
                 "medical_domain_instructions",
@@ -389,7 +390,7 @@ Provide JSONL format with one operation per line:
     def compose_repair_prompt(
         self, violation: ViolationTemplate, context: dict[str, Any]
     ) -> str:
-        """Compose complete repair prompt
+        """Compose complete repair prompt.
 
         Args:
             violation: The violation template
@@ -463,7 +464,7 @@ Provide JSONL format with one operation per line:
 
 
 class InnovatorAgent:
-    """Main Innovator Agent class for knowledge graph repair"""
+    """Main Innovator Agent class for knowledge graph repair."""
 
     def __init__(
         self,
@@ -472,8 +473,8 @@ class InnovatorAgent:
         prompt_composer: PromptComposer | None = None,
         domain: str = "general",
         guardian_gate: GuardianGate | None = None,
-    ):
-        """Initialize Innovator Agent
+    ) -> None:
+        """Initialize Innovator Agent.
 
         Args:
             llm_driver: LLM driver for generating repairs
@@ -496,7 +497,7 @@ class InnovatorAgent:
     async def analyze_violation(
         self, violation_data: dict[str, Any]
     ) -> ViolationTemplate:
-        """Analyze and encode a GDC violation
+        """Analyze and encode a GDC violation.
 
         Args:
             violation_data: Raw violation data from GDC extractor
@@ -512,7 +513,7 @@ class InnovatorAgent:
         max_operations: int = 10,
         confidence_threshold: float = 0.5,
     ) -> RepairProposalSet:
-        """Generate repair proposals for a GDC violation
+        """Generate repair proposals for a GDC violation.
 
         Args:
             violation_data: Raw violation data
@@ -589,7 +590,7 @@ class InnovatorAgent:
             return proposal
 
         except Exception as e:
-            self.logger.error(f"Failed to generate repair proposals: {e}")
+            self.logger.exception(f"Failed to generate repair proposals: {e}")
             # Return empty proposal with error information
             return RepairProposal(
                 violation_id=violation_data.get("violation_id", "unknown"),
@@ -599,7 +600,7 @@ class InnovatorAgent:
             )
 
     def _parse_repair_operations(self, response_text: str) -> list[RepairOperation]:
-        """Parse repair operations from LLM response
+        """Parse repair operations from LLM response.
 
         Args:
             response_text: Raw LLM response
@@ -668,7 +669,7 @@ class InnovatorAgent:
     def _parse_repair_operations_enhanced(
         self, response_text: str
     ) -> list[RepairOperation]:
-        """Enhanced parsing with better JSON validation and confidence extraction
+        """Enhanced parsing with better JSON validation and confidence extraction.
 
         Args:
             response_text: Raw LLM response
@@ -696,7 +697,7 @@ class InnovatorAgent:
 
                         # Extract confidence with validation
                         confidence = op_data.get("confidence", 0.5)
-                        if not isinstance(confidence, (int, float)):
+                        if not isinstance(confidence, int | float):
                             confidence = 0.5
                         confidence = max(0.0, min(1.0, float(confidence)))
 
@@ -734,8 +735,8 @@ class InnovatorAgent:
 
     def _record_repair_attempt_enhanced(
         self, proposal_set: RepairProposalSet, violation: ViolationTemplate
-    ):
-        """Record repair attempt for performance tracking with enhanced metrics"""
+    ) -> None:
+        """Record repair attempt for performance tracking with enhanced metrics."""
         self.repair_history.append(
             {
                 "timestamp": datetime.now(),
@@ -756,7 +757,7 @@ class InnovatorAgent:
             self.repair_history = self.repair_history[-100:]
 
     def _is_safety_critical(self, operation: RepairOperation) -> bool:
-        """Determine if operation is safety-critical"""
+        """Determine if operation is safety-critical."""
         # Domain-specific safety rules
         if self.domain == "medical":
             # Medical safety patterns
@@ -778,7 +779,7 @@ class InnovatorAgent:
         return False
 
     def _estimate_impact(self, operation: RepairOperation) -> str:
-        """Estimate impact level of operation"""
+        """Estimate impact level of operation."""
         if operation.operation_type in [
             RepairOperationType.DELETE_NODE,
             RepairOperationType.MERGE_NODES,
@@ -794,7 +795,7 @@ class InnovatorAgent:
         return "low"
 
     def _generate_repair_summary(self, operations: list[RepairOperation]) -> str:
-        """Generate summary of repair operations"""
+        """Generate summary of repair operations."""
         if not operations:
             return "No repair operations proposed"
 
@@ -826,7 +827,7 @@ class InnovatorAgent:
         return f"{base_summary}. Average confidence: {confidence_desc} ({avg_confidence:.2f})"
 
     def _assess_potential_risks(self, operations: list[RepairOperation]) -> list[str]:
-        """Assess potential risks of proposed operations"""
+        """Assess potential risks of proposed operations."""
         risks = []
 
         # Check for high-impact operations
@@ -870,7 +871,7 @@ class InnovatorAgent:
     def _generate_validation_notes(
         self, operations: list[RepairOperation], violation: ViolationTemplate
     ) -> list[str]:
-        """Generate validation notes for manual review"""
+        """Generate validation notes for manual review."""
         notes = []
 
         # Check completeness
@@ -928,8 +929,8 @@ class InnovatorAgent:
 
     def _record_repair_attempt(
         self, proposal: RepairProposal, violation: ViolationTemplate
-    ):
-        """Record repair attempt for performance tracking"""
+    ) -> None:
+        """Record repair attempt for performance tracking."""
         self.repair_history.append(
             {
                 "timestamp": datetime.now(),
@@ -947,7 +948,7 @@ class InnovatorAgent:
             self.repair_history = self.repair_history[-100:]
 
     async def validate_proposal(self, proposal: RepairProposal) -> dict[str, Any]:
-        """Validate a repair proposal for correctness and safety
+        """Validate a repair proposal for correctness and safety.
 
         Args:
             proposal: The repair proposal to validate
@@ -1000,7 +1001,7 @@ class InnovatorAgent:
         return validation
 
     def get_performance_stats(self) -> dict[str, Any]:
-        """Get agent performance statistics"""
+        """Get agent performance statistics."""
         if not self.repair_history:
             return {"message": "No repair history available"}
 
@@ -1030,7 +1031,7 @@ class InnovatorAgent:
     async def create_default(
         cls, model_name: str = "llama3.2:3b", domain: str = "general"
     ) -> "InnovatorAgent":
-        """Create InnovatorAgent with default configuration
+        """Create InnovatorAgent with default configuration.
 
         Args:
             model_name: LLM model to use
@@ -1058,7 +1059,7 @@ class InnovatorAgent:
     async def _validate_with_guardian(
         self, proposal: RepairProposal, violation: ViolationTemplate
     ) -> dict[str, Any]:
-        """Validate repair proposal through Guardian Gate
+        """Validate repair proposal through Guardian Gate.
 
         Args:
             proposal: The repair proposal to validate
@@ -1116,7 +1117,7 @@ class InnovatorAgent:
             return validation_result
 
         except Exception as e:
-            self.logger.error(f"Guardian validation failed: {e}")
+            self.logger.exception(f"Guardian validation failed: {e}")
             return {
                 "decision": "ERROR",
                 "notes": [f"Guardian validation failed: {e!s}"],

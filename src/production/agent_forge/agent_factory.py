@@ -1,38 +1,37 @@
 #!/usr/bin/env python3
-"""
-Agent Factory for creating specialized agents from templates.
+"""Agent Factory for creating specialized agents from templates.
 Auto-generated from agent specifications.
 """
 
-from typing import Dict, Any, Optional, List
-from pathlib import Path
 import json
-import sys
 import os
+from pathlib import Path
+import sys
+from typing import Any
 
 # Add the parent directory to the path to import our modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from scripts.refactor_agent_forge import BaseMetaAgent, AgentSpecialization, AgentRole
+from scripts.refactor_agent_forge import AgentRole, AgentSpecialization, BaseMetaAgent
 
 
 class AgentFactory:
     """Factory for creating agents from templates."""
 
-    def __init__(self, template_dir: str = "production/agent_forge/templates"):
+    def __init__(self, template_dir: str = "production/agent_forge/templates") -> None:
         """Initialize the factory and load templates."""
         self.template_dir = Path(template_dir)
         self.templates = self._load_templates()
         self.agent_classes = self._initialize_agent_classes()
 
-    def _load_templates(self) -> Dict[str, Dict[str, Any]]:
+    def _load_templates(self) -> dict[str, dict[str, Any]]:
         """Load all agent templates from the agents directory."""
-        templates: Dict[str, Dict[str, Any]] = {}
+        templates: dict[str, dict[str, Any]] = {}
         agents_dir = self.template_dir / "agents"
 
         for template_file in agents_dir.glob("*.json"):
             try:
-                with open(template_file, "r") as f:
+                with open(template_file) as f:
                     template = json.load(f)
                 agent_id = template_file.stem
                 templates[agent_id] = template
@@ -41,7 +40,7 @@ class AgentFactory:
 
         return templates
 
-    def _initialize_agent_classes(self) -> Dict[str, type]:
+    def _initialize_agent_classes(self) -> dict[str, type]:
         """Initialize specialized agent classes."""
         # Import specialized implementations
         agent_classes = {}
@@ -49,6 +48,7 @@ class AgentFactory:
         # King Agent
         try:
             from production.agents.king import KingAgent
+
             agent_classes["king"] = KingAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -57,6 +57,7 @@ class AgentFactory:
         # Magi Agent
         try:
             from production.agents.magi import MagiAgent
+
             agent_classes["magi"] = MagiAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -65,6 +66,7 @@ class AgentFactory:
         # Sage Agent
         try:
             from production.agents.sage import SageAgent
+
             agent_classes["sage"] = SageAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -73,6 +75,7 @@ class AgentFactory:
         # Gardener Agent
         try:
             from production.agents.gardener import GardenerAgent
+
             agent_classes["gardener"] = GardenerAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -81,14 +84,18 @@ class AgentFactory:
         # Sword & Shield Agent
         try:
             from production.agents.sword_shield import SwordAndShieldAgent
+
             agent_classes["sword_shield"] = SwordAndShieldAgent
         except ImportError:
             # Use generic agent if specialized not available
-            agent_classes["sword_shield"] = self._create_generic_agent_class("sword_shield")
+            agent_classes["sword_shield"] = self._create_generic_agent_class(
+                "sword_shield"
+            )
 
         # Legal AI Agent
         try:
             from production.agents.legal import LegalAIAgent
+
             agent_classes["legal"] = LegalAIAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -97,6 +104,7 @@ class AgentFactory:
         # Shaman Agent
         try:
             from production.agents.shaman import ShamanAgent
+
             agent_classes["shaman"] = ShamanAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -105,6 +113,7 @@ class AgentFactory:
         # Oracle Agent
         try:
             from production.agents.oracle import OracleAgent
+
             agent_classes["oracle"] = OracleAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -113,6 +122,7 @@ class AgentFactory:
         # Maker Agent
         try:
             from production.agents.maker import MakerAgent
+
             agent_classes["maker"] = MakerAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -121,6 +131,7 @@ class AgentFactory:
         # Ensemble Agent
         try:
             from production.agents.ensemble import EnsembleAgent
+
             agent_classes["ensemble"] = EnsembleAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -129,6 +140,7 @@ class AgentFactory:
         # Curator Agent
         try:
             from production.agents.curator import CuratorAgent
+
             agent_classes["curator"] = CuratorAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -137,6 +149,7 @@ class AgentFactory:
         # Auditor Agent
         try:
             from production.agents.auditor import AuditorAgent
+
             agent_classes["auditor"] = AuditorAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -145,6 +158,7 @@ class AgentFactory:
         # Medic Agent
         try:
             from production.agents.medic import MedicAgent
+
             agent_classes["medic"] = MedicAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -153,6 +167,7 @@ class AgentFactory:
         # Sustainer Agent
         try:
             from production.agents.sustainer import SustainerAgent
+
             agent_classes["sustainer"] = SustainerAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -161,6 +176,7 @@ class AgentFactory:
         # Navigator Agent
         try:
             from production.agents.navigator import NavigatorAgent
+
             agent_classes["navigator"] = NavigatorAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -169,6 +185,7 @@ class AgentFactory:
         # Tutor Agent
         try:
             from production.agents.tutor import TutorAgent
+
             agent_classes["tutor"] = TutorAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -177,6 +194,7 @@ class AgentFactory:
         # Polyglot Agent
         try:
             from production.agents.polyglot import PolyglotAgent
+
             agent_classes["polyglot"] = PolyglotAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -185,6 +203,7 @@ class AgentFactory:
         # Strategist Agent
         try:
             from production.agents.strategist import StrategistAgent
+
             agent_classes["strategist"] = StrategistAgent
         except ImportError:
             # Use generic agent if specialized not available
@@ -198,19 +217,19 @@ class AgentFactory:
         default_params = template.get("default_params", {})
 
         class GenericAgent(BaseMetaAgent):
-            def __init__(self, spec: AgentSpecialization):
+            def __init__(self, spec: AgentSpecialization) -> None:
                 super().__init__(spec)
                 self.agent_type = agent_id
                 self.config = default_params.copy()
 
-            def process(self, task: Dict[str, Any]) -> Dict[str, Any]:
+            def process(self, task: dict[str, Any]) -> dict[str, Any]:
                 return {
                     "status": "completed",
                     "agent": self.agent_type,
                     "result": f"Processed by {template.get('name', agent_id)}",
                 }
 
-            def evaluate_kpi(self) -> Dict[str, float]:
+            def evaluate_kpi(self) -> dict[str, float]:
                 if not self.performance_history:
                     return {"performance": 0.7}
 
@@ -225,10 +244,15 @@ class AgentFactory:
 
         return GenericAgent
 
-    def create_agent(self, agent_type: str, config: Optional[Dict[str, Any]] = None) -> BaseMetaAgent:
+    def create_agent(
+        self, agent_type: str, config: dict[str, Any] | None = None
+    ) -> BaseMetaAgent:
         """Create an agent of the specified type."""
         if agent_type not in self.templates:
-            raise ValueError(f"Unknown agent type: {agent_type}. Available: {list(self.templates.keys())}")
+            msg = f"Unknown agent type: {agent_type}. Available: {list(self.templates.keys())}"
+            raise ValueError(
+                msg
+            )
 
         template = self.templates[agent_type]
         agent_class = self.agent_classes[agent_type]
@@ -259,7 +283,7 @@ class AgentFactory:
 
         return agent
 
-    def list_available_agents(self) -> List[Dict[str, str]]:
+    def list_available_agents(self) -> list[dict[str, str]]:
         """List all available agent types."""
         agents = []
 
@@ -274,9 +298,10 @@ class AgentFactory:
 
         return agents
 
-    def get_agent_info(self, agent_type: str) -> Dict[str, Any]:
+    def get_agent_info(self, agent_type: str) -> dict[str, Any]:
         """Get detailed information about an agent type."""
         if agent_type not in self.templates:
-            raise ValueError(f"Unknown agent type: {agent_type}")
+            msg = f"Unknown agent type: {agent_type}"
+            raise ValueError(msg)
 
         return self.templates[agent_type]

@@ -1,4 +1,4 @@
-"""Multi-Model Orchestration for Agent Forge
+"""Multi-Model Orchestration for Agent Forge.
 
 This module provides intelligent routing of training tasks to optimal models
 via OpenRouter API integration.

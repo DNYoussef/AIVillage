@@ -1,4 +1,4 @@
-"""Model Sharding Engine for Distributed Inference
+"""Model Sharding Engine for Distributed Inference.
 
 This module implements intelligent model partitioning across heterogeneous devices,
 building on Sprint 6's P2P communication and resource management systems.
@@ -14,25 +14,27 @@ import uuid
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Import Sprint 6 infrastructure
-from ...core.p2p.p2p_node import P2PNode, PeerCapabilities
-from ...core.resources.device_profiler import DeviceProfiler
-from ...core.resources.resource_monitor import ResourceMonitor
+from AIVillage.src.core.p2p.p2p_node import P2PNode, PeerCapabilities
+from AIVillage.src.core.resources.device_profiler import DeviceProfiler
+from AIVillage.src.core.resources.resource_monitor import ResourceMonitor
 
 logger = logging.getLogger(__name__)
 
 
 class ShardingStrategy(Enum):
-    """Model sharding strategies"""
-    MEMORY_AWARE = "memory_aware"      # Partition based on available memory
+    """Model sharding strategies."""
+
+    MEMORY_AWARE = "memory_aware"  # Partition based on available memory
     COMPUTE_BALANCED = "compute_balanced"  # Balance compute load
     LAYER_SEQUENTIAL = "layer_sequential"  # Sequential layer distribution
-    ATTENTION_SPLIT = "attention_split"    # Split attention heads
-    HYBRID = "hybrid"                      # Combination of strategies
+    ATTENTION_SPLIT = "attention_split"  # Split attention heads
+    HYBRID = "hybrid"  # Combination of strategies
 
 
 @dataclass
 class ModelShard:
-    """Represents a model shard"""
+    """Represents a model shard."""
+
     shard_id: str
     device_id: str
     layer_indices: list[int]
@@ -45,7 +47,8 @@ class ModelShard:
 
 @dataclass
 class ShardingPlan:
-    """Complete model sharding plan"""
+    """Complete model sharding plan."""
+
     model_name: str
     total_shards: int
     shards: list[ModelShard]
@@ -57,7 +60,8 @@ class ShardingPlan:
 
 @dataclass
 class DeviceProfile:
-    """Enhanced device profile for sharding decisions"""
+    """Enhanced device profile for sharding decisions."""
+
     device_id: str
     capabilities: PeerCapabilities
     available_memory_mb: float
@@ -69,14 +73,14 @@ class DeviceProfile:
 
 
 class ModelShardingEngine:
-    """Intelligent model sharding system for distributed inference"""
+    """Intelligent model sharding system for distributed inference."""
 
     def __init__(
         self,
         p2p_node: P2PNode,
         resource_monitor: ResourceMonitor,
-        device_profiler: DeviceProfiler
-    ):
+        device_profiler: DeviceProfiler,
+    ) -> None:
         self.p2p_node = p2p_node
         self.resource_monitor = resource_monitor
         self.device_profiler = device_profiler
@@ -96,15 +100,15 @@ class ModelShardingEngine:
             "failed_assignments": 0,
             "avg_sharding_time": 0.0,
             "memory_utilization": 0.0,
-            "compute_balance": 0.0
+            "compute_balance": 0.0,
         }
 
         # Configuration
         self.config = {
             "memory_buffer_percent": 20,  # Reserve 20% memory buffer
-            "max_shards_per_device": 3,   # Limit shards per device
-            "min_shard_size_mb": 50,      # Minimum shard size
-            "max_latency_ms": 200,        # Maximum acceptable latency
+            "max_shards_per_device": 3,  # Limit shards per device
+            "min_shard_size_mb": 50,  # Minimum shard size
+            "max_latency_ms": 200,  # Maximum acceptable latency
             "reliability_threshold": 0.6,  # Minimum device reliability
         }
 
@@ -114,22 +118,24 @@ class ModelShardingEngine:
         self,
         model_path: str,
         strategy: ShardingStrategy = ShardingStrategy.HYBRID,
-        target_devices: list[str] | None = None
+        target_devices: list[str] | None = None,
     ) -> ShardingPlan:
-        """Shard model across available devices
-        
+        """Shard model across available devices.
+
         Args:
             model_path: Path to the model to shard
             strategy: Sharding strategy to use
             target_devices: Specific devices to use (None for auto-discovery)
-            
+
         Returns:
             ShardingPlan describing the sharding configuration
         """
         start_time = time.time()
 
         try:
-            logger.info(f"Starting model sharding: {model_path} with strategy {strategy.value}")
+            logger.info(
+                f"Starting model sharding: {model_path} with strategy {strategy.value}"
+            )
 
             # 1. Analyze model structure
             model_analysis = await self._analyze_model(model_path)
@@ -143,7 +149,9 @@ class ModelShardingEngine:
             )
 
             # 4. Validate and optimize plan
-            optimized_plan = await self._optimize_sharding_plan(sharding_plan, device_profiles)
+            optimized_plan = await self._optimize_sharding_plan(
+                sharding_plan, device_profiles
+            )
 
             # 5. Store and activate plan
             self.current_sharding_plan = optimized_plan
@@ -153,18 +161,20 @@ class ModelShardingEngine:
             duration = time.time() - start_time
             self.sharding_stats["models_sharded"] += 1
             self.sharding_stats["avg_sharding_time"] = (
-                (self.sharding_stats["avg_sharding_time"] + duration) / 2
-            )
+                self.sharding_stats["avg_sharding_time"] + duration
+            ) / 2
 
-            logger.info(f"Model sharding completed in {duration:.2f}s with {len(optimized_plan.shards)} shards")
+            logger.info(
+                f"Model sharding completed in {duration:.2f}s with {len(optimized_plan.shards)} shards"
+            )
             return optimized_plan
 
         except Exception as e:
-            logger.error(f"Model sharding failed: {e}")
+            logger.exception(f"Model sharding failed: {e}")
             raise
 
     async def _analyze_model(self, model_path: str) -> dict[str, Any]:
-        """Analyze model structure for sharding decisions"""
+        """Analyze model structure for sharding decisions."""
         if model_path in self.model_analysis_cache:
             return self.model_analysis_cache[model_path]
 
@@ -172,7 +182,7 @@ class ModelShardingEngine:
 
         try:
             # Load model for analysis (without full parameters)
-            tokenizer = AutoTokenizer.from_pretrained(model_path)
+            AutoTokenizer.from_pretrained(model_path)
             model_config = AutoModelForCausalLM.from_pretrained(
                 model_path, config_only=True
             ).config
@@ -185,12 +195,16 @@ class ModelShardingEngine:
 
             # Estimate memory requirements per layer
             attention_params = hidden_size * hidden_size * 4  # Q, K, V, O projections
-            mlp_params = hidden_size * (getattr(model_config, "intermediate_size", hidden_size * 4))
+            mlp_params = hidden_size * (
+                getattr(model_config, "intermediate_size", hidden_size * 4)
+            )
             layer_params = attention_params + mlp_params
             layer_memory_mb = (layer_params * 2) / (1024 * 1024)  # FP16
 
             # Estimate compute requirements
-            layer_compute_score = (attention_params + mlp_params) / 1e6  # Normalized score
+            layer_compute_score = (
+                attention_params + mlp_params
+            ) / 1e6  # Normalized score
 
             analysis = {
                 "model_path": model_path,
@@ -200,24 +214,29 @@ class ModelShardingEngine:
                 "vocab_size": vocab_size,
                 "layer_memory_mb": layer_memory_mb,
                 "layer_compute_score": layer_compute_score,
-                "total_memory_mb": layer_memory_mb * num_layers + 100,  # +100MB for embeddings
+                "total_memory_mb": layer_memory_mb * num_layers
+                + 100,  # +100MB for embeddings
                 "embedding_memory_mb": (vocab_size * hidden_size * 2) / (1024 * 1024),
                 "can_split_attention": num_attention_heads >= 4,
                 "optimal_shard_count": max(2, min(8, num_layers // 3)),
-                "analyzed_at": time.time()
+                "analyzed_at": time.time(),
             }
 
             self.model_analysis_cache[model_path] = analysis
-            logger.info(f"Model analysis complete: {num_layers} layers, {analysis['total_memory_mb']:.1f}MB")
+            logger.info(
+                f"Model analysis complete: {num_layers} layers, {analysis['total_memory_mb']:.1f}MB"
+            )
 
             return analysis
 
         except Exception as e:
-            logger.error(f"Model analysis failed: {e}")
+            logger.exception(f"Model analysis failed: {e}")
             raise
 
-    async def _get_device_profiles(self, target_devices: list[str] | None = None) -> list[DeviceProfile]:
-        """Get profiles of available devices for sharding"""
+    async def _get_device_profiles(
+        self, target_devices: list[str] | None = None
+    ) -> list[DeviceProfile]:
+        """Get profiles of available devices for sharding."""
         device_profiles = []
 
         # Get suitable peers from P2P network
@@ -268,7 +287,7 @@ class ModelShardingEngine:
                 network_latency_ms=peer.latency_ms,
                 battery_level=peer.battery_percent,
                 thermal_state=thermal_state,
-                reliability_score=peer.trust_score
+                reliability_score=peer.trust_score,
             )
 
             # Filter out unreliable devices
@@ -278,11 +297,11 @@ class ModelShardingEngine:
         # Sort by suitability (memory + compute + reliability)
         device_profiles.sort(
             key=lambda d: (
-                d.available_memory_mb * 0.4 +
-                d.compute_score * 0.3 +
-                d.reliability_score * 0.3
+                d.available_memory_mb * 0.4
+                + d.compute_score * 0.3
+                + d.reliability_score * 0.3
             ),
-            reverse=True
+            reverse=True,
         )
 
         logger.info(f"Found {len(device_profiles)} suitable devices for sharding")
@@ -292,30 +311,34 @@ class ModelShardingEngine:
         self,
         model_analysis: dict[str, Any],
         device_profiles: list[DeviceProfile],
-        strategy: ShardingStrategy
+        strategy: ShardingStrategy,
     ) -> ShardingPlan:
-        """Create initial sharding plan based on strategy"""
+        """Create initial sharding plan based on strategy."""
         if not device_profiles:
-            raise ValueError("No suitable devices available for sharding")
+            msg = "No suitable devices available for sharding"
+            raise ValueError(msg)
 
         if strategy == ShardingStrategy.MEMORY_AWARE:
             return await self._create_memory_aware_plan(model_analysis, device_profiles)
         if strategy == ShardingStrategy.COMPUTE_BALANCED:
-            return await self._create_compute_balanced_plan(model_analysis, device_profiles)
+            return await self._create_compute_balanced_plan(
+                model_analysis, device_profiles
+            )
         if strategy == ShardingStrategy.LAYER_SEQUENTIAL:
             return await self._create_sequential_plan(model_analysis, device_profiles)
         if strategy == ShardingStrategy.ATTENTION_SPLIT:
-            return await self._create_attention_split_plan(model_analysis, device_profiles)
+            return await self._create_attention_split_plan(
+                model_analysis, device_profiles
+            )
         if strategy == ShardingStrategy.HYBRID:
             return await self._create_hybrid_plan(model_analysis, device_profiles)
-        raise ValueError(f"Unknown sharding strategy: {strategy}")
+        msg = f"Unknown sharding strategy: {strategy}"
+        raise ValueError(msg)
 
     async def _create_memory_aware_plan(
-        self,
-        model_analysis: dict[str, Any],
-        device_profiles: list[DeviceProfile]
+        self, model_analysis: dict[str, Any], device_profiles: list[DeviceProfile]
     ) -> ShardingPlan:
-        """Create sharding plan based on available memory"""
+        """Create sharding plan based on available memory."""
         num_layers = model_analysis["num_layers"]
         layer_memory_mb = model_analysis["layer_memory_mb"]
 
@@ -328,9 +351,11 @@ class ModelShardingEngine:
             # Check if current device can accommodate another layer
             current_device = device_profiles[device_idx % len(device_profiles)]
 
-            if (current_shard_memory + layer_memory_mb <= current_device.available_memory_mb and
-                len(current_shard_layers) < self.config["max_shards_per_device"]):
-
+            if (
+                current_shard_memory + layer_memory_mb
+                <= current_device.available_memory_mb
+                and len(current_shard_layers) < self.config["max_shards_per_device"]
+            ):
                 current_shard_layers.append(layer_idx)
                 current_shard_memory += layer_memory_mb
             else:
@@ -340,9 +365,11 @@ class ModelShardingEngine:
                         shard_id=str(uuid.uuid4()),
                         device_id=current_device.device_id,
                         layer_indices=current_shard_layers.copy(),
-                        parameters_count=len(current_shard_layers) * int(layer_memory_mb * 1024 * 1024 / 2),
+                        parameters_count=len(current_shard_layers)
+                        * int(layer_memory_mb * 1024 * 1024 / 2),
                         memory_mb=current_shard_memory,
-                        compute_requirement=len(current_shard_layers) * model_analysis["layer_compute_score"]
+                        compute_requirement=len(current_shard_layers)
+                        * model_analysis["layer_compute_score"],
                     )
                     shards.append(shard)
 
@@ -362,9 +389,11 @@ class ModelShardingEngine:
                 shard_id=str(uuid.uuid4()),
                 device_id=current_device.device_id,
                 layer_indices=current_shard_layers,
-                parameters_count=len(current_shard_layers) * int(layer_memory_mb * 1024 * 1024 / 2),
+                parameters_count=len(current_shard_layers)
+                * int(layer_memory_mb * 1024 * 1024 / 2),
                 memory_mb=current_shard_memory,
-                compute_requirement=len(current_shard_layers) * model_analysis["layer_compute_score"]
+                compute_requirement=len(current_shard_layers)
+                * model_analysis["layer_compute_score"],
             )
             shards.append(shard)
 
@@ -374,23 +403,25 @@ class ModelShardingEngine:
             if i == 0:
                 activation_routing[shard.shard_id] = []  # First shard receives input
             else:
-                activation_routing[shard.shard_id] = [shards[i-1].shard_id]
+                activation_routing[shard.shard_id] = [shards[i - 1].shard_id]
 
         return ShardingPlan(
             model_name=model_analysis["model_path"],
             total_shards=len(shards),
             shards=shards,
             activation_routing=activation_routing,
-            memory_efficiency=self._calculate_memory_efficiency(shards, device_profiles),
-            compute_balance_score=self._calculate_compute_balance(shards, device_profiles)
+            memory_efficiency=self._calculate_memory_efficiency(
+                shards, device_profiles
+            ),
+            compute_balance_score=self._calculate_compute_balance(
+                shards, device_profiles
+            ),
         )
 
     async def _create_compute_balanced_plan(
-        self,
-        model_analysis: dict[str, Any],
-        device_profiles: list[DeviceProfile]
+        self, model_analysis: dict[str, Any], device_profiles: list[DeviceProfile]
     ) -> ShardingPlan:
-        """Create sharding plan balanced by compute capacity"""
+        """Create sharding plan balanced by compute capacity."""
         num_layers = model_analysis["num_layers"]
         layer_compute_score = model_analysis["layer_compute_score"]
         layer_memory_mb = model_analysis["layer_memory_mb"]
@@ -426,15 +457,18 @@ class ModelShardingEngine:
             if layers_per_device[device_idx] == 0:
                 continue
 
-            layer_indices = list(range(layer_idx, layer_idx + layers_per_device[device_idx]))
+            layer_indices = list(
+                range(layer_idx, layer_idx + layers_per_device[device_idx])
+            )
 
             shard = ModelShard(
                 shard_id=str(uuid.uuid4()),
                 device_id=device.device_id,
                 layer_indices=layer_indices,
-                parameters_count=len(layer_indices) * int(layer_memory_mb * 1024 * 1024 / 2),
+                parameters_count=len(layer_indices)
+                * int(layer_memory_mb * 1024 * 1024 / 2),
                 memory_mb=len(layer_indices) * layer_memory_mb,
-                compute_requirement=len(layer_indices) * layer_compute_score
+                compute_requirement=len(layer_indices) * layer_compute_score,
             )
             shards.append(shard)
             layer_idx += layers_per_device[device_idx]
@@ -445,23 +479,25 @@ class ModelShardingEngine:
             if i == 0:
                 activation_routing[shard.shard_id] = []
             else:
-                activation_routing[shard.shard_id] = [shards[i-1].shard_id]
+                activation_routing[shard.shard_id] = [shards[i - 1].shard_id]
 
         return ShardingPlan(
             model_name=model_analysis["model_path"],
             total_shards=len(shards),
             shards=shards,
             activation_routing=activation_routing,
-            memory_efficiency=self._calculate_memory_efficiency(shards, device_profiles),
-            compute_balance_score=self._calculate_compute_balance(shards, device_profiles)
+            memory_efficiency=self._calculate_memory_efficiency(
+                shards, device_profiles
+            ),
+            compute_balance_score=self._calculate_compute_balance(
+                shards, device_profiles
+            ),
         )
 
     async def _create_sequential_plan(
-        self,
-        model_analysis: dict[str, Any],
-        device_profiles: list[DeviceProfile]
+        self, model_analysis: dict[str, Any], device_profiles: list[DeviceProfile]
     ) -> ShardingPlan:
-        """Create sequential layer distribution plan"""
+        """Create sequential layer distribution plan."""
         num_layers = model_analysis["num_layers"]
         num_devices = len(device_profiles)
         layers_per_shard = max(1, num_layers // num_devices)
@@ -489,9 +525,11 @@ class ModelShardingEngine:
                 shard_id=str(uuid.uuid4()),
                 device_id=device.device_id,
                 layer_indices=layer_indices,
-                parameters_count=len(layer_indices) * int(model_analysis["layer_memory_mb"] * 1024 * 1024 / 2),
+                parameters_count=len(layer_indices)
+                * int(model_analysis["layer_memory_mb"] * 1024 * 1024 / 2),
                 memory_mb=len(layer_indices) * model_analysis["layer_memory_mb"],
-                compute_requirement=len(layer_indices) * model_analysis["layer_compute_score"]
+                compute_requirement=len(layer_indices)
+                * model_analysis["layer_compute_score"],
             )
             shards.append(shard)
             layer_idx += shard_layers
@@ -502,25 +540,29 @@ class ModelShardingEngine:
             if i == 0:
                 activation_routing[shard.shard_id] = []
             else:
-                activation_routing[shard.shard_id] = [shards[i-1].shard_id]
+                activation_routing[shard.shard_id] = [shards[i - 1].shard_id]
 
         return ShardingPlan(
             model_name=model_analysis["model_path"],
             total_shards=len(shards),
             shards=shards,
             activation_routing=activation_routing,
-            memory_efficiency=self._calculate_memory_efficiency(shards, device_profiles),
-            compute_balance_score=self._calculate_compute_balance(shards, device_profiles)
+            memory_efficiency=self._calculate_memory_efficiency(
+                shards, device_profiles
+            ),
+            compute_balance_score=self._calculate_compute_balance(
+                shards, device_profiles
+            ),
         )
 
     async def _create_attention_split_plan(
-        self,
-        model_analysis: dict[str, Any],
-        device_profiles: list[DeviceProfile]
+        self, model_analysis: dict[str, Any], device_profiles: list[DeviceProfile]
     ) -> ShardingPlan:
-        """Create plan that splits attention heads across devices"""
+        """Create plan that splits attention heads across devices."""
         if not model_analysis["can_split_attention"]:
-            logger.warning("Model cannot split attention heads, falling back to sequential")
+            logger.warning(
+                "Model cannot split attention heads, falling back to sequential"
+            )
             return await self._create_sequential_plan(model_analysis, device_profiles)
 
         # For now, implement as layer-based (attention head splitting requires model architecture changes)
@@ -528,28 +570,32 @@ class ModelShardingEngine:
         return await self._create_sequential_plan(model_analysis, device_profiles)
 
     async def _create_hybrid_plan(
-        self,
-        model_analysis: dict[str, Any],
-        device_profiles: list[DeviceProfile]
+        self, model_analysis: dict[str, Any], device_profiles: list[DeviceProfile]
     ) -> ShardingPlan:
-        """Create hybrid plan combining multiple strategies"""
+        """Create hybrid plan combining multiple strategies."""
         # Try memory-aware first, then optimize for compute balance
-        memory_plan = await self._create_memory_aware_plan(model_analysis, device_profiles)
-        compute_plan = await self._create_compute_balanced_plan(model_analysis, device_profiles)
+        memory_plan = await self._create_memory_aware_plan(
+            model_analysis, device_profiles
+        )
+        compute_plan = await self._create_compute_balanced_plan(
+            model_analysis, device_profiles
+        )
 
         # Choose better plan based on efficiency metrics
-        if (memory_plan.memory_efficiency + memory_plan.compute_balance_score >
-            compute_plan.memory_efficiency + compute_plan.compute_balance_score):
+        if (
+            memory_plan.memory_efficiency + memory_plan.compute_balance_score
+            > compute_plan.memory_efficiency + compute_plan.compute_balance_score
+        ):
             return memory_plan
         return compute_plan
 
     def _calculate_memory_efficiency(
-        self,
-        shards: list[ModelShard],
-        device_profiles: list[DeviceProfile]
+        self, shards: list[ModelShard], device_profiles: list[DeviceProfile]
     ) -> float:
-        """Calculate memory utilization efficiency"""
-        device_memory_map = {d.device_id: d.available_memory_mb for d in device_profiles}
+        """Calculate memory utilization efficiency."""
+        device_memory_map = {
+            d.device_id: d.available_memory_mb for d in device_profiles
+        }
 
         total_used = 0
         total_available = 0
@@ -562,11 +608,9 @@ class ModelShardingEngine:
         return total_used / total_available if total_available > 0 else 0.0
 
     def _calculate_compute_balance(
-        self,
-        shards: list[ModelShard],
-        device_profiles: list[DeviceProfile]
+        self, shards: list[ModelShard], device_profiles: list[DeviceProfile]
     ) -> float:
-        """Calculate compute load balance score"""
+        """Calculate compute load balance score."""
         device_compute_map = {d.device_id: d.compute_score for d in device_profiles}
         device_loads = {}
 
@@ -593,13 +637,13 @@ class ModelShardingEngine:
         return balance_score
 
     async def _optimize_sharding_plan(
-        self,
-        plan: ShardingPlan,
-        device_profiles: list[DeviceProfile]
+        self, plan: ShardingPlan, device_profiles: list[DeviceProfile]
     ) -> ShardingPlan:
-        """Optimize sharding plan for better performance"""
+        """Optimize sharding plan for better performance."""
         # Check memory constraints
-        device_memory_map = {d.device_id: d.available_memory_mb for d in device_profiles}
+        device_memory_map = {
+            d.device_id: d.available_memory_mb for d in device_profiles
+        }
 
         optimized_shards = []
         issues_found = []
@@ -608,7 +652,9 @@ class ModelShardingEngine:
             available_memory = device_memory_map.get(shard.device_id, 0)
 
             if shard.memory_mb > available_memory:
-                issues_found.append(f"Shard {shard.shard_id} requires {shard.memory_mb:.1f}MB but device {shard.device_id} only has {available_memory:.1f}MB")
+                issues_found.append(
+                    f"Shard {shard.shard_id} requires {shard.memory_mb:.1f}MB but device {shard.device_id} only has {available_memory:.1f}MB"
+                )
 
                 # Try to split this shard
                 if len(shard.layer_indices) > 1:
@@ -621,14 +667,16 @@ class ModelShardingEngine:
                         layer_indices=shard.layer_indices[:mid_point],
                         parameters_count=shard.parameters_count // 2,
                         memory_mb=shard.memory_mb / 2,
-                        compute_requirement=shard.compute_requirement / 2
+                        compute_requirement=shard.compute_requirement / 2,
                     )
 
                     # Second half - try to find another device
                     best_device = None
                     for device in device_profiles:
-                        if (device.device_id != shard.device_id and
-                            device.available_memory_mb >= shard.memory_mb / 2):
+                        if (
+                            device.device_id != shard.device_id
+                            and device.available_memory_mb >= shard.memory_mb / 2
+                        ):
                             best_device = device
                             break
 
@@ -637,9 +685,10 @@ class ModelShardingEngine:
                             shard_id=str(uuid.uuid4()),
                             device_id=best_device.device_id,
                             layer_indices=shard.layer_indices[mid_point:],
-                            parameters_count=shard.parameters_count - shard.parameters_count // 2,
+                            parameters_count=shard.parameters_count
+                            - shard.parameters_count // 2,
                             memory_mb=shard.memory_mb / 2,
-                            compute_requirement=shard.compute_requirement / 2
+                            compute_requirement=shard.compute_requirement / 2,
                         )
                         optimized_shards.extend([shard1, shard2])
                     else:
@@ -658,22 +707,28 @@ class ModelShardingEngine:
             if i == 0:
                 optimized_routing[shard.shard_id] = []
             else:
-                optimized_routing[shard.shard_id] = [optimized_shards[i-1].shard_id]
+                optimized_routing[shard.shard_id] = [optimized_shards[i - 1].shard_id]
 
         optimized_plan = ShardingPlan(
             model_name=plan.model_name,
             total_shards=len(optimized_shards),
             shards=optimized_shards,
             activation_routing=optimized_routing,
-            memory_efficiency=self._calculate_memory_efficiency(optimized_shards, device_profiles),
-            compute_balance_score=self._calculate_compute_balance(optimized_shards, device_profiles)
+            memory_efficiency=self._calculate_memory_efficiency(
+                optimized_shards, device_profiles
+            ),
+            compute_balance_score=self._calculate_compute_balance(
+                optimized_shards, device_profiles
+            ),
         )
 
-        logger.info(f"Sharding plan optimized: {len(plan.shards)} -> {len(optimized_shards)} shards")
+        logger.info(
+            f"Sharding plan optimized: {len(plan.shards)} -> {len(optimized_shards)} shards"
+        )
         return optimized_plan
 
-    async def _activate_sharding_plan(self, plan: ShardingPlan):
-        """Activate sharding plan by distributing shards to devices"""
+    async def _activate_sharding_plan(self, plan: ShardingPlan) -> None:
+        """Activate sharding plan by distributing shards to devices."""
         logger.info(f"Activating sharding plan with {plan.total_shards} shards")
 
         # Update internal state
@@ -693,10 +748,12 @@ class ModelShardingEngine:
             "model_name": plan.model_name,
             "total_shards": plan.total_shards,
             "device_assignments": self.device_assignments,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
-        await self.p2p_node.broadcast_to_peers("SHARDING_PLAN_ACTIVATED", sharding_message)
+        await self.p2p_node.broadcast_to_peers(
+            "SHARDING_PLAN_ACTIVATED", sharding_message
+        )
 
         # Update performance stats
         self.sharding_stats["memory_utilization"] = plan.memory_efficiency
@@ -705,40 +762,40 @@ class ModelShardingEngine:
         logger.info("Sharding plan activated successfully")
 
     async def partition_by_memory(
-        self,
-        model_path: str,
-        device_profiles: list[DeviceProfile]
+        self, model_path: str, device_profiles: list[DeviceProfile]
     ) -> ShardingPlan:
-        """Partition model layers based on available device memory"""
+        """Partition model layers based on available device memory."""
         model_analysis = await self._analyze_model(model_path)
         return await self._create_memory_aware_plan(model_analysis, device_profiles)
 
     async def partition_by_compute(
-        self,
-        model_path: str,
-        device_profiles: list[DeviceProfile]
+        self, model_path: str, device_profiles: list[DeviceProfile]
     ) -> ShardingPlan:
-        """Balance compute load across heterogeneous devices"""
+        """Balance compute load across heterogeneous devices."""
         model_analysis = await self._analyze_model(model_path)
         return await self._create_compute_balanced_plan(model_analysis, device_profiles)
 
     def get_sharding_status(self) -> dict[str, Any]:
-        """Get current sharding status"""
+        """Get current sharding status."""
         return {
             "active_plan": self.current_sharding_plan is not None,
             "plan_details": {
-                "model_name": self.current_sharding_plan.model_name if self.current_sharding_plan else None,
+                "model_name": self.current_sharding_plan.model_name
+                if self.current_sharding_plan
+                else None,
                 "total_shards": len(self.active_shards),
                 "devices_used": len(self.device_assignments),
                 "memory_efficiency": self.sharding_stats["memory_utilization"],
-                "compute_balance": self.sharding_stats["compute_balance"]
-            } if self.current_sharding_plan else None,
+                "compute_balance": self.sharding_stats["compute_balance"],
+            }
+            if self.current_sharding_plan
+            else None,
             "statistics": self.sharding_stats.copy(),
-            "cache_size": len(self.model_analysis_cache)
+            "cache_size": len(self.model_analysis_cache),
         }
 
-    async def cleanup_sharding(self):
-        """Clean up current sharding plan"""
+    async def cleanup_sharding(self) -> None:
+        """Clean up current sharding plan."""
         if self.current_sharding_plan:
             logger.info("Cleaning up sharding plan")
 
@@ -746,7 +803,7 @@ class ModelShardingEngine:
             cleanup_message = {
                 "type": "SHARDING_CLEANUP",
                 "model_name": self.current_sharding_plan.model_name,
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
 
             await self.p2p_node.broadcast_to_peers("SHARDING_CLEANUP", cleanup_message)

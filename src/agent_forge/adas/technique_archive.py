@@ -43,12 +43,14 @@ class AgentTechnique(ToolMessage):
         try:
             tree = ast.parse(code)
         except SyntaxError as e:
-            raise RuntimeError(f"Invalid code for technique '{self.name}': {e}") from e
+            msg = f"Invalid code for technique '{self.name}': {e}"
+            raise RuntimeError(msg) from e
 
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
                 if node.func.id in {"exec", "eval", "__import__", "compile"}:
-                    raise RuntimeError("Disallowed operation in technique code")
+                    msg = "Disallowed operation in technique code"
+                    raise RuntimeError(msg)
 
         with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tmp:
             tmp.write(code)

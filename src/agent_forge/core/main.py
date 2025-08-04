@@ -9,7 +9,7 @@ from agent_forge.mergekit.utils import load_models, save_model
 @click.command()
 @click.argument("config_file")
 @click.argument("out_path")
-def main(config_file: str, out_path: str):
+def main(config_file: str, out_path: str) -> None:
     with open(config_file) as f:
         config_dict = yaml.safe_load(f)
 

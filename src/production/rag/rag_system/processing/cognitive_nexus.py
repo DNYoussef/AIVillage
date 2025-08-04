@@ -2,9 +2,9 @@
 
 from typing import Any
 
-from ..core.agent_interface import AgentInterface
-from ..core.interface import ReasoningEngine
-from ..processing.self_referential_query_processor import (
+from AIVillage.src.production.rag.rag_system.core.agent_interface import AgentInterface
+from AIVillage.src.production.rag.rag_system.core.interface import ReasoningEngine
+from AIVillage.src.production.rag.rag_system.processing.self_referential_query_processor import (
     SelfReferentialQueryProcessor,
 )
 
@@ -14,7 +14,7 @@ class CognitiveNexus:
         self,
         reasoning_engine: ReasoningEngine,
         self_ref_processor: SelfReferentialQueryProcessor,
-    ):
+    ) -> None:
         self.reasoning_engine = reasoning_engine
         self.self_ref_processor = self_ref_processor
 

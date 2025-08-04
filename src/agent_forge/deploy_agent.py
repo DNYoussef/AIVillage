@@ -1,4 +1,4 @@
-"""Deploy Agent - Containerized Deployment System
+"""Deploy Agent - Containerized Deployment System.
 
 Implements comprehensive deployment capabilities for Agent Forge models:
 - Docker containerization with optimization
@@ -10,18 +10,18 @@ Implements comprehensive deployment capabilities for Agent Forge models:
 """
 
 import asyncio
+from dataclasses import asdict, dataclass
 import json
 import logging
+from pathlib import Path
 import shutil
 import time
-from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import Any
 
 import docker
-import requests
 from kubernetes import client
 from kubernetes import config as k8s_config
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ class DeploymentStatus:
 class ContainerBuilder:
     """Builds optimized containers for model deployment."""
 
-    def __init__(self, config: DeploymentConfig):
+    def __init__(self, config: DeploymentConfig) -> None:
         self.config = config
         self.docker_client = docker.from_env()
 
@@ -402,14 +402,14 @@ pydantic>=2.0.0
             return image_tag
 
         except Exception as e:
-            logger.error(f"Container build failed: {e}")
+            logger.exception(f"Container build failed: {e}")
             raise
 
 
 class KubernetesDeployer:
     """Handles Kubernetes deployments."""
 
-    def __init__(self, config: DeploymentConfig):
+    def __init__(self, config: DeploymentConfig) -> None:
         self.config = config
         try:
             k8s_config.load_incluster_config()
@@ -539,10 +539,10 @@ class KubernetesDeployer:
             return await self.get_deployment_status()
 
         except Exception as e:
-            logger.error(f"Kubernetes deployment failed: {e}")
+            logger.exception(f"Kubernetes deployment failed: {e}")
             raise
 
-    async def _wait_for_deployment(self, timeout: int = 600):
+    async def _wait_for_deployment(self, timeout: int = 600) -> None:
         """Wait for deployment to be ready."""
         start_time = time.time()
 
@@ -564,7 +564,8 @@ class KubernetesDeployer:
 
             await asyncio.sleep(10)
 
-        raise TimeoutError("Deployment did not become ready within timeout")
+        msg = "Deployment did not become ready within timeout"
+        raise TimeoutError(msg)
 
     async def get_deployment_status(self) -> DeploymentStatus:
         """Get current deployment status."""
@@ -622,7 +623,7 @@ class KubernetesDeployer:
             )
 
         except Exception as e:
-            logger.error(f"Failed to get deployment status: {e}")
+            logger.exception(f"Failed to get deployment status: {e}")
             return DeploymentStatus(
                 deployment_name=self.config.deployment_name,
                 status="unknown",
@@ -639,7 +640,7 @@ class KubernetesDeployer:
 class DockerDeployer:
     """Handles Docker deployments."""
 
-    def __init__(self, config: DeploymentConfig):
+    def __init__(self, config: DeploymentConfig) -> None:
         self.config = config
         self.docker_client = docker.from_env()
 
@@ -691,10 +692,10 @@ class DockerDeployer:
             )
 
         except Exception as e:
-            logger.error(f"Docker deployment failed: {e}")
+            logger.exception(f"Docker deployment failed: {e}")
             raise
 
-    async def _wait_for_health(self, container, timeout: int = 300):
+    async def _wait_for_health(self, container, timeout: int = 300) -> None:
         """Wait for container to be healthy."""
         start_time = time.time()
 
@@ -715,7 +716,8 @@ class DockerDeployer:
 
             await asyncio.sleep(5)
 
-        raise TimeoutError("Container did not become healthy within timeout")
+        msg = "Container did not become healthy within timeout"
+        raise TimeoutError(msg)
 
     def _get_container_stats(self, container) -> dict[str, Any]:
         """Get container resource usage statistics."""
@@ -736,7 +738,7 @@ class DockerDeployer:
 class DeploymentOrchestrator:
     """Main deployment orchestrator."""
 
-    def __init__(self, config: DeploymentConfig):
+    def __init__(self, config: DeploymentConfig) -> None:
         self.config = config
         self.output_dir = Path(config.output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -775,7 +777,7 @@ class DeploymentOrchestrator:
             return deployment_status
 
         except Exception as e:
-            logger.error(f"Deployment failed: {e}")
+            logger.exception(f"Deployment failed: {e}")
             raise
 
     async def _prepare_model_directory(self, model_path: str) -> Path:
@@ -799,7 +801,7 @@ class DeploymentOrchestrator:
         logger.info(f"Model prepared in {model_dst}")
         return model_dst.parent
 
-    async def _save_deployment_info(self, status: DeploymentStatus, image_tag: str):
+    async def _save_deployment_info(self, status: DeploymentStatus, image_tag: str) -> None:
         """Save deployment information."""
         deployment_info = {
             "deployment_config": self.config.to_dict(),
@@ -819,14 +821,14 @@ class DeploymentOrchestrator:
         """Get current deployment status."""
         return await self.deployer.get_deployment_status()
 
-    async def scale_deployment(self, replicas: int):
+    async def scale_deployment(self, replicas: int) -> None:
         """Scale deployment to specified number of replicas."""
         if hasattr(self.deployer, "scale"):
             await self.deployer.scale(replicas)
         else:
             logger.warning("Scaling not supported for this deployment type")
 
-    async def stop_deployment(self):
+    async def stop_deployment(self) -> None:
         """Stop the deployment."""
         if hasattr(self.deployer, "stop"):
             await self.deployer.stop()
@@ -835,7 +837,7 @@ class DeploymentOrchestrator:
 
 
 # CLI and usage
-async def main():
+async def main() -> None:
     """Main deployment entry point."""
     import argparse
 

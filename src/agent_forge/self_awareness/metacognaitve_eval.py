@@ -1,15 +1,15 @@
 import re
 
+from langroid import ChatAgent, ChatAgentConfig, Task
 import numpy as np
 import torch
-from langroid import ChatAgent, ChatAgentConfig, Task
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class MetacognitiveEvaluatorTask(Task):
     def __init__(
         self, agent: ChatAgent, model: AutoModelForCausalLM, tokenizer: AutoTokenizer
-    ):
+    ) -> None:
         super().__init__(agent)
         self.model = model
         self.tokenizer = tokenizer
@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
-    async def main():
+    async def main() -> None:
         config = ChatAgentConfig(
             name="MetacognitiveEvaluator",
             llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),

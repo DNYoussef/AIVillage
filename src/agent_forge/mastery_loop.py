@@ -1,4 +1,4 @@
-"""Mastery Training Loop - Comprehensive Implementation
+"""Mastery Training Loop - Comprehensive Implementation.
 
 Integrates all training components:
 - Calibration with frontier API
@@ -12,21 +12,22 @@ Integrates all training components:
 """
 
 import asyncio
+import contextlib
+from dataclasses import dataclass
 import json
 import logging
+from pathlib import Path
 import random
 import sys
 import time
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
-import torch
-import wandb
 from langroid import ChatAgent, ChatAgentConfig
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
+import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import wandb
 
 from agent_forge.geometry.id_twonn import twonn
 from agent_forge.training.grokfast import GrokFastTask
@@ -77,7 +78,7 @@ class MasteryConfig:
 class TaskGenerator:
     """Generates tasks using frontier API (GPT-4) for calibration."""
 
-    def __init__(self, config: MasteryConfig, agent: ChatAgent):
+    def __init__(self, config: MasteryConfig, agent: ChatAgent) -> None:
         self.config = config
         self.agent = agent
 
@@ -124,9 +125,7 @@ Return JSON format:
                 # Fallback task
                 task = Task(
                     prompt=f"Solve this {domain} problem (difficulty {difficulty}): What is {difficulty} + {difficulty}?",
-                    expected_output=f"{
-                        difficulty *
-                        2}",
+                    expected_output=f"{difficulty * 2}",
                     difficulty=difficulty,
                     domain=domain,
                 )
@@ -138,7 +137,7 @@ Return JSON format:
 class MasteryEvaluator:
     """Evaluates model performance on tasks and determines mastery levels."""
 
-    def __init__(self, model, tokenizer, device: str):
+    def __init__(self, model, tokenizer, device: str) -> None:
         self.model = model
         self.tokenizer = tokenizer
         self.device = device
@@ -168,7 +167,7 @@ class MasteryEvaluator:
             response = self.tokenizer.decode(
                 outputs.sequences[0], skip_special_tokens=True
             )
-            response = response[len(prompt):].strip()
+            response = response[len(prompt) :].strip()
 
             # Simple success detection (could be enhanced with semantic similarity)
             success = self._check_correctness(response, task.expected_output)
@@ -179,7 +178,7 @@ class MasteryEvaluator:
             return success, response, confidence
 
         except Exception as e:
-            logger.error("Evaluation error: %s", e)
+            logger.exception("Evaluation error: %s", e)
             return False, "", 0.0
 
     def _check_correctness(self, response: str, expected: str) -> bool:
@@ -208,13 +207,13 @@ class MasteryEvaluator:
 class GeometryFeedback:
     """Tracks intrinsic dimensionality and provides geometry-based feedback."""
 
-    def __init__(self, model, update_interval: int = 100):
+    def __init__(self, model, update_interval: int = 100) -> None:
         self.model = model
         self.update_interval = update_interval
         self.step_count = 0
         self.id_history = []
 
-    async def update_geometry(self, hidden_states: torch.Tensor):
+    async def update_geometry(self, hidden_states: torch.Tensor) -> None:
         """Update intrinsic dimensionality using Two-NN estimator."""
         self.step_count += 1
 
@@ -262,7 +261,7 @@ class GeometryFeedback:
 class MasteryLoop:
     """Main mastery training loop implementation."""
 
-    def __init__(self, config: MasteryConfig):
+    def __init__(self, config: MasteryConfig) -> None:
         self.config = config
         self.setup_logging()
 
@@ -301,7 +300,7 @@ class MasteryLoop:
                 job_type="mastery_loop",
             )
 
-    def setup_logging(self):
+    def setup_logging(self) -> None:
         """Configure enhanced logging."""
         log_dir = Path(self.config.output_dir) / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
@@ -312,7 +311,7 @@ class MasteryLoop:
         )
         logger.addHandler(handler)
 
-    async def initialize_model(self):
+    async def initialize_model(self) -> None:
         """Load and initialize the model for training."""
         logger.info("Loading model from %s", self.config.model_path)
 
@@ -406,7 +405,7 @@ class MasteryLoop:
 
         return self.baseline_k
 
-    async def level_remapping(self):
+    async def level_remapping(self) -> None:
         """Phase 2: Remap difficulty levels 1-10 based on baseline."""
         logger.info("Performing level remapping...")
 
@@ -489,7 +488,7 @@ class MasteryLoop:
 
             # Check for mastery (80% success rate over recent window)
             if attempts >= 50 and attempts % 10 == 0:
-                recent_window = min(attempts, 100)
+                min(attempts, 100)
                 recent_successes = 0
 
                 # Re-evaluate recent performance
@@ -539,7 +538,7 @@ class MasteryLoop:
         )
         return False
 
-    async def sleep_dream_cycle(self):
+    async def sleep_dream_cycle(self) -> None:
         """Execute sleep/dream cycle for memory consolidation."""
         logger.info("Executing sleep/dream cycle...")
 
@@ -570,7 +569,7 @@ class MasteryLoop:
         except Exception as e:
             logger.warning("Sleep/dream cycle failed: %s", e)
 
-    async def self_modeling_integration(self, level: int):
+    async def self_modeling_integration(self, level: int) -> None:
         """Integrate self-modeling for enhanced self-awareness."""
         logger.info("Running self-modeling integration for level %s", level)
 
@@ -660,10 +659,10 @@ class MasteryLoop:
             return summary
 
         except Exception as e:
-            logger.error("Mastery training failed: %s", e)
+            logger.exception("Mastery training failed: %s", e)
             raise
 
-    def save_checkpoint(self, level: int):
+    def save_checkpoint(self, level: int) -> None:
         """Save training checkpoint."""
         checkpoint_dir = Path(self.config.output_dir) / "checkpoints"
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -696,7 +695,7 @@ class MasteryLoop:
 
 
 # CLI integration
-async def main():
+async def main() -> None:
     """Main entry point for mastery training."""
     import argparse
 
@@ -737,6 +736,7 @@ async def main():
 
 async def run_self_modeling(config: dict[str, Any]) -> "PhaseResult":
     from .forge_orchestrator import PhaseResult
+
     """Orchestrator entry point for Self-Modeling phase (via Mastery Loop).
 
     Args:
@@ -745,8 +745,8 @@ async def run_self_modeling(config: dict[str, Any]) -> "PhaseResult":
     Returns:
         PhaseResult with status, artifacts, and metrics
     """
-    import time
     from datetime import datetime
+    import time
 
     from agent_forge.forge_orchestrator import (
         PhaseArtifact,
@@ -849,7 +849,7 @@ async def run_self_modeling(config: dict[str, Any]) -> "PhaseResult":
     except Exception as e:
         duration = time.time() - start_time
         error_msg = f"Self-Modeling phase failed: {e!s}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
 
         return PhaseResult(
             phase_type=PhaseType.SELF_MODELING,
@@ -868,9 +868,7 @@ execute = run_self_modeling  # Alternative alias
 
 if __name__ == "__main__":
     # Handle encoding for emoji output
-    try:
+    with contextlib.suppress(AttributeError):
         sys.stdout.reconfigure(encoding="utf-8")
-    except AttributeError:
-        pass
 
     asyncio.run(main())

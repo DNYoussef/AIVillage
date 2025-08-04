@@ -8,7 +8,8 @@ import logging
 import time
 from typing import Any
 
-from ..guardian.gate import GuardianGate
+from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
+
 from .plan_structures import (
     ExecutionStatus,
     QueryPlan,
@@ -30,7 +31,7 @@ class AgentReasoningModel:
         model_name: str,
         capabilities: list[str],
         performance_profile: dict[str, float],
-    ):
+    ) -> None:
         self.model_name = model_name
         self.capabilities = capabilities
         self.performance_profile = performance_profile
@@ -54,7 +55,7 @@ class QueryPlanner:
         classifier: QueryClassifier | None = None,
         strategy_selector: StrategySelector | None = None,
         guardian_gate: GuardianGate | None = None,
-    ):
+    ) -> None:
         self.classifier = classifier or QueryClassifier()
         self.strategy_selector = strategy_selector or StrategySelector()
         self.guardian_gate = guardian_gate or GuardianGate()
@@ -152,7 +153,7 @@ class QueryPlanner:
 
         except Exception as e:
             planning_time = (time.time() - start_time) * 1000
-            logger.error(f"Failed to create plan for query '{query[:50]}...': {e}")
+            logger.exception(f"Failed to create plan for query '{query[:50]}...': {e}")
 
             # Create fallback simple plan
             fallback_plan = await self._create_fallback_plan(query, constraints)
@@ -228,7 +229,7 @@ class QueryPlanner:
             return new_plan
 
         except Exception as e:
-            logger.error(f"Failed to create replan: {e}")
+            logger.exception(f"Failed to create replan: {e}")
             # Return original plan as fallback
             return original_plan
 
@@ -488,7 +489,7 @@ class QueryPlanner:
         # Inherit successful parts if possible
         if analysis["replan_type"] == "incremental_improvement":
             # Try to preserve successful steps
-            successful_step_ids = [s["step_id"] for s in analysis["successful_steps"]]
+            [s["step_id"] for s in analysis["successful_steps"]]
             # This would require more sophisticated merging logic
 
         return new_plan
@@ -615,7 +616,7 @@ class QueryPlanner:
 
             # Create a mock creative bridge for validation
             # In a real implementation, this would be more sophisticated
-            from ..guardian.gate import CreativeBridge
+            from AIVillage.src.mcp_servers.hyperag.guardian.gate import CreativeBridge
 
             bridge = CreativeBridge(
                 id=f"query_answer_{hash(answer) % 10000}",
@@ -642,6 +643,6 @@ class QueryPlanner:
             return False, f"Guardian blocked answer (decision: {decision})"
 
         except Exception as e:
-            logger.error(f"Guardian validation failed: {e}")
+            logger.exception(f"Guardian validation failed: {e}")
             # Default to allowing on error to avoid blocking legitimate queries
             return True, f"Guardian validation error, defaulting to allow: {e!s}"

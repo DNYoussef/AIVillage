@@ -1,4 +1,4 @@
-"""AIVillage Agent Forge - Production Components
+"""AIVillage Agent Forge - Production Components.
 
 Stable agent_forge components that are production-ready:
 - core: Core agent functionality
@@ -14,4 +14,4 @@ __version__ = "1.0.0"
 __status__ = "Production"
 
 # Production-ready components only
-__all__ = ["core", "evaluation", "deployment", "utils", "orchestration"]
+__all__ = ["core", "deployment", "evaluation", "orchestration", "utils"]

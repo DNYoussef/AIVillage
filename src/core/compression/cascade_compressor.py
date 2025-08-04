@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Experimental cascade compressor for multiplicative gains."""
+
 from __future__ import annotations
 
-import lzma
 from collections import Counter
-from typing import Any, Dict, List, Tuple
+import lzma
+from typing import Any
 
 import torch
 
@@ -25,7 +26,9 @@ class CascadeCompressor:
         return metadata + entropy_data
 
     # ------------------------------------------------------------------
-    def quantize_cascade(self, weights: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, Any]]:
+    def quantize_cascade(
+        self, weights: torch.Tensor
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
         levels = 8
         scale = torch.quantile(weights.abs(), 0.99)
         normalised = weights / (scale or 1.0)
@@ -34,7 +37,7 @@ class CascadeCompressor:
         return quant, {"scale": float(scale), "levels": levels}
 
     # ------------------------------------------------------------------
-    def pattern_compress(self, data: torch.Tensor) -> Tuple[Any, Any]:
+    def pattern_compress(self, data: torch.Tensor) -> tuple[Any, Any]:
         arr = data.flatten().tolist()
         best = None
         best_size = len(arr)
@@ -56,7 +59,7 @@ class CascadeCompressor:
         return lzma.compress(data, preset=9)
 
     # ------------------------------------------------------------------
-    def pack_metadata(self, *metas: Dict[str, Any]) -> bytes:
+    def pack_metadata(self, *metas: dict[str, Any]) -> bytes:
         out = bytearray()
         for meta in metas:
             if not meta:
@@ -75,7 +78,7 @@ class CascadeCompressor:
         return bytes(out)
 
     # ------------------------------------------------------------------
-    def _pack_patterns(self, data: Dict[str, Any]) -> bytes:
+    def _pack_patterns(self, data: dict[str, Any]) -> bytes:
         uniq = data["unique"]
         patterns = data["patterns"]
         length = data["len"]

@@ -9,7 +9,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 import uuid
 
 import duckdb
@@ -42,7 +42,7 @@ class EpisodicDocument(Document):
 
     def __init__(
         self, content: str, doc_type: str, user_id: str | None = None, **kwargs
-    ):
+    ) -> None:
         super().__init__(
             id=str(uuid.uuid4()),
             content=content,
@@ -59,7 +59,7 @@ class EpisodicDocument(Document):
 class HippoNode(Node):
     """Node optimized for hippocampal-style storage."""
 
-    def __init__(self, content: str, user_id: str | None = None, **kwargs):
+    def __init__(self, content: str, user_id: str | None = None, **kwargs) -> None:
         super().__init__(
             id=str(uuid.uuid4()),
             content=content,
@@ -97,7 +97,7 @@ class HippoIndex(MemoryBackend):
         qdrant_url: str = "http://localhost:6333",
         embedding_dim: int = 768,
         consolidator: "MemoryConsolidator | None" = None,
-    ):
+    ) -> None:
         self.db_path = db_path
         self.redis_url = redis_url
         self.qdrant_url = qdrant_url
@@ -108,7 +108,7 @@ class HippoIndex(MemoryBackend):
         self.redis_client: redis.Redis | None = None
         self.qdrant_client: QdrantClient | None = None
         self.embedding_manager = EmbeddingManager(embedding_dim)
-        self.consolidator: "MemoryConsolidator | None" = consolidator
+        self.consolidator: MemoryConsolidator | None = consolidator
 
         # Schemas
         self.schema = HippoSchema()
@@ -142,7 +142,7 @@ class HippoIndex(MemoryBackend):
             logger.info("HippoIndex initialization complete")
 
         except Exception as e:
-            logger.error("Failed to initialize HippoIndex: %s", e)
+            logger.exception("Failed to initialize HippoIndex: %s", e)
             raise
 
     async def close(self) -> None:
@@ -156,7 +156,7 @@ class HippoIndex(MemoryBackend):
                 self.qdrant_client.close()
             logger.info("HippoIndex connections closed")
         except Exception as e:
-            logger.error("Error closing HippoIndex: %s", e)
+            logger.exception("Error closing HippoIndex: %s", e)
 
     async def health_check(self) -> dict[str, Any]:
         """Check health of all backend systems."""
@@ -180,7 +180,7 @@ class HippoIndex(MemoryBackend):
 
         try:
             # Qdrant health
-            collections = self.qdrant_client.get_collections()
+            self.qdrant_client.get_collections()
             health["backends"]["qdrant"] = "healthy"
         except Exception as e:
             health["backends"]["qdrant"] = f"error: {e!s}"
@@ -257,7 +257,7 @@ class HippoIndex(MemoryBackend):
             return True
 
         except Exception as e:
-            logger.error("Failed to store node %s: %s", node.id, e)
+            logger.exception("Failed to store node %s: %s", node.id, e)
             return False
 
     async def store_edge(self, edge: Edge) -> bool:
@@ -300,7 +300,7 @@ class HippoIndex(MemoryBackend):
             return True
 
         except Exception as e:
-            logger.error("Failed to store edge %s: %s", edge.id, e)
+            logger.exception("Failed to store edge %s: %s", edge.id, e)
             return False
 
     async def store_document(self, document: Document) -> bool:
@@ -339,7 +339,7 @@ class HippoIndex(MemoryBackend):
             return True
 
         except Exception as e:
-            logger.error("Failed to store document %s: %s", document.id, e)
+            logger.exception("Failed to store document %s: %s", document.id, e)
             return False
 
     async def query_nodes(
@@ -431,7 +431,7 @@ class HippoIndex(MemoryBackend):
             )
 
         except Exception as e:
-            logger.error("Failed to query nodes: %s", e)
+            logger.exception("Failed to query nodes: %s", e)
             query_time = (time.time() - start_time) * 1000
             return QueryResult(
                 nodes=[],
@@ -502,7 +502,7 @@ class HippoIndex(MemoryBackend):
             return results
 
         except Exception as e:
-            logger.error("Vector similarity search failed: %s", e)
+            logger.exception("Vector similarity search failed: %s", e)
             return []
 
     async def get_recent_nodes(
@@ -566,7 +566,7 @@ class HippoIndex(MemoryBackend):
             return nodes
 
         except Exception as e:
-            logger.error("Failed to get recent nodes: %s", e)
+            logger.exception("Failed to get recent nodes: %s", e)
             return []
 
     async def cleanup_expired_nodes(self) -> int:
@@ -615,7 +615,7 @@ class HippoIndex(MemoryBackend):
             return expired_count
 
         except Exception as e:
-            logger.error("Failed to cleanup expired nodes: %s", e)
+            logger.exception("Failed to cleanup expired nodes: %s", e)
             return 0
 
     async def get_memory_stats(self) -> MemoryStats:
@@ -658,7 +658,7 @@ class HippoIndex(MemoryBackend):
             )
 
         except Exception as e:
-            logger.error("Failed to get memory stats: %s", e)
+            logger.exception("Failed to get memory stats: %s", e)
             return MemoryStats(
                 total_nodes=0,
                 total_edges=0,
@@ -729,7 +729,7 @@ class HippoIndex(MemoryBackend):
     async def _setup_qdrant_collections(self) -> None:
         """Set up Qdrant collections for vector storage."""
         collections_config = self.qdrant_schema.get_collection_configs()
-        hnsw_config = self.qdrant_schema.get_hnsw_configs()
+        self.qdrant_schema.get_hnsw_configs()
 
         for collection_name, config in collections_config.items():
             try:
@@ -748,7 +748,7 @@ class HippoIndex(MemoryBackend):
                     logger.info("Created Qdrant collection: %s", collection_name)
 
             except Exception as e:
-                logger.error(
+                logger.exception(
                     "Failed to setup Qdrant collection %s: %s", collection_name, e
                 )
 

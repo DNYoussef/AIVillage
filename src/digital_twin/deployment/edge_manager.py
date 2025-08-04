@@ -19,7 +19,6 @@ import zipfile
 import numpy as np
 import psutil
 import torch
-
 import wandb
 
 logger = logging.getLogger(__name__)
@@ -1120,7 +1119,9 @@ class EdgeDeploymentManager:
                 }
             )
 
-    async def _update_model(self, deployment: TutorDeployment, update: EdgeUpdate) -> None:
+    async def _update_model(
+        self, deployment: TutorDeployment, update: EdgeUpdate
+    ) -> None:
         """Update tutor model."""
         logger.info(f"Updating model for deployment {deployment.deployment_id}")
         # Would implement actual model update logic
@@ -1132,12 +1133,16 @@ class EdgeDeploymentManager:
         logger.info(f"Updating preferences for deployment {deployment.deployment_id}")
         # Would implement preference sync logic
 
-    async def _update_content(self, deployment: TutorDeployment, update: EdgeUpdate) -> None:
+    async def _update_content(
+        self, deployment: TutorDeployment, update: EdgeUpdate
+    ) -> None:
         """Update learning content."""
         logger.info(f"Updating content for deployment {deployment.deployment_id}")
         # Would implement content update logic
 
-    async def _update_security(self, deployment: TutorDeployment, update: EdgeUpdate) -> None:
+    async def _update_security(
+        self, deployment: TutorDeployment, update: EdgeUpdate
+    ) -> None:
         """Update security configurations."""
         logger.info(f"Updating security for deployment {deployment.deployment_id}")
         # Would implement security update logic

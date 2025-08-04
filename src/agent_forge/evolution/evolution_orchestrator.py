@@ -1,25 +1,25 @@
-"""Evolution Orchestrator - Coordinates the Self-Evolving Agent Ecosystem
+"""Evolution Orchestrator - Coordinates the Self-Evolving Agent Ecosystem.
 
 Main orchestration system that manages the 18-agent ecosystem evolution,
 coordinates between components, and ensures stable autonomous improvement.
 """
 
 import asyncio
-import json
-import logging
-import signal
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
+import signal
 from typing import Any
 
-import numpy as np
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
+import numpy as np
 
 from .agent_evolution_engine import AgentEvolutionEngine, AgentGenome, AgentKPIs
 from .evolution_dashboard import EvolutionDashboard, PerformanceAnalyzer
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class OrchestrationConfig:
-    """Configuration for evolution orchestration"""
+    """Configuration for evolution orchestration."""
 
     evolution_interval_hours: int = 24
     monitoring_interval_minutes: int = 15
@@ -46,7 +46,7 @@ class OrchestrationConfig:
 
 @dataclass
 class OrchestrationState:
-    """Current state of the orchestration system"""
+    """Current state of the orchestration system."""
 
     is_running: bool = False
     last_evolution_time: datetime | None = None
@@ -59,9 +59,9 @@ class OrchestrationState:
 
 
 class HealthMonitor:
-    """Monitors system health and triggers emergency responses"""
+    """Monitors system health and triggers emergency responses."""
 
-    def __init__(self, orchestrator):
+    def __init__(self, orchestrator) -> None:
         self.orchestrator = orchestrator
         self.health_history = []
         self.alert_thresholds = {
@@ -72,7 +72,7 @@ class HealthMonitor:
         }
 
     async def check_system_health(self) -> dict[str, Any]:
-        """Comprehensive system health check"""
+        """Comprehensive system health check."""
         health_status = {
             "timestamp": datetime.now(),
             "overall_healthy": True,
@@ -146,7 +146,7 @@ class HealthMonitor:
             }
 
         except Exception as e:
-            logger.error(f"Health check failed: {e}")
+            logger.exception(f"Health check failed: {e}")
             health_status["overall_healthy"] = False
             health_status["alerts"].append(
                 {
@@ -164,8 +164,8 @@ class HealthMonitor:
 
         return health_status
 
-    async def handle_emergency(self, alert: dict[str, Any]):
-        """Handle emergency situations"""
+    async def handle_emergency(self, alert: dict[str, Any]) -> None:
+        """Handle emergency situations."""
         logger.warning(f"Handling emergency: {alert}")
 
         if alert["type"] == "fitness_drop" and alert["severity"] == "high":
@@ -194,15 +194,15 @@ class HealthMonitor:
 
 
 class TaskScheduler:
-    """Manages scheduled tasks for evolution orchestration"""
+    """Manages scheduled tasks for evolution orchestration."""
 
-    def __init__(self, orchestrator):
+    def __init__(self, orchestrator) -> None:
         self.orchestrator = orchestrator
         self.scheduler = AsyncIOScheduler()
         self.scheduled_jobs = {}
 
-    def setup_schedules(self):
-        """Setup scheduled tasks"""
+    def setup_schedules(self) -> None:
+        """Setup scheduled tasks."""
         # Evolution cycle
         if self.orchestrator.config.auto_evolution_enabled:
             evolution_job = self.scheduler.add_job(
@@ -244,37 +244,37 @@ class TaskScheduler:
         )
         self.scheduled_jobs["backup_cleanup"] = backup_job
 
-    def start(self):
-        """Start the scheduler"""
+    def start(self) -> None:
+        """Start the scheduler."""
         self.scheduler.start()
         logger.info("Task scheduler started")
 
-    def stop(self):
-        """Stop the scheduler"""
+    def stop(self) -> None:
+        """Stop the scheduler."""
         self.scheduler.shutdown()
         logger.info("Task scheduler stopped")
 
-    def pause_job(self, job_id: str):
-        """Pause a specific job"""
+    def pause_job(self, job_id: str) -> None:
+        """Pause a specific job."""
         if job_id in self.scheduled_jobs:
             self.scheduler.pause_job(job_id)
             logger.info(f"Paused job: {job_id}")
 
-    def resume_job(self, job_id: str):
-        """Resume a specific job"""
+    def resume_job(self, job_id: str) -> None:
+        """Resume a specific job."""
         if job_id in self.scheduled_jobs:
             self.scheduler.resume_job(job_id)
             logger.info(f"Resumed job: {job_id}")
 
 
 class EvolutionOrchestrator:
-    """Main orchestration system for the self-evolving agent ecosystem"""
+    """Main orchestration system for the self-evolving agent ecosystem."""
 
     def __init__(
         self,
         config: OrchestrationConfig | None = None,
         storage_path: str = "evolution_data",
-    ):
+    ) -> None:
         self.config = config or OrchestrationConfig()
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(parents=True, exist_ok=True)
@@ -313,8 +313,8 @@ class EvolutionOrchestrator:
 
         logger.info("Evolution Orchestrator initialized")
 
-    async def start(self):
-        """Start the orchestration system"""
+    async def start(self) -> None:
+        """Start the orchestration system."""
         if self.state.is_running:
             logger.warning("Orchestrator is already running")
             return
@@ -345,12 +345,12 @@ class EvolutionOrchestrator:
             await self._start_background_tasks()
 
         except Exception as e:
-            logger.error(f"Failed to start orchestrator: {e}")
+            logger.exception(f"Failed to start orchestrator: {e}")
             await self.stop()
             raise
 
-    async def stop(self):
-        """Stop the orchestration system"""
+    async def stop(self) -> None:
+        """Stop the orchestration system."""
         logger.info("Stopping Evolution Orchestrator...")
 
         # Update state
@@ -378,12 +378,14 @@ class EvolutionOrchestrator:
     async def trigger_evolution(
         self, generations: int = 1, force: bool = False
     ) -> dict[str, Any]:
-        """Manually trigger evolution cycle"""
+        """Manually trigger evolution cycle."""
         if not self.state.is_running and not force:
-            raise RuntimeError("Orchestrator is not running")
+            msg = "Orchestrator is not running"
+            raise RuntimeError(msg)
 
         if self.state.emergency_mode and not force:
-            raise RuntimeError("System is in emergency mode")
+            msg = "System is in emergency mode"
+            raise RuntimeError(msg)
 
         logger.info(f"Triggering evolution cycle: {generations} generations")
 
@@ -418,7 +420,7 @@ class EvolutionOrchestrator:
             }
 
         except Exception as e:
-            logger.error(f"Evolution cycle failed: {e}")
+            logger.exception(f"Evolution cycle failed: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -433,12 +435,14 @@ class EvolutionOrchestrator:
         code_transformer: Callable[[str], str],
         file_path: str,
     ) -> dict[str, Any]:
-        """Apply safe code modification to an agent"""
+        """Apply safe code modification to an agent."""
         if self.state.active_modifications >= self.config.max_concurrent_modifications:
-            raise RuntimeError("Too many concurrent modifications")
+            msg = "Too many concurrent modifications"
+            raise RuntimeError(msg)
 
         if self.state.emergency_mode:
-            raise RuntimeError("Modifications disabled in emergency mode")
+            msg = "Modifications disabled in emergency mode"
+            raise RuntimeError(msg)
 
         try:
             self.state.active_modifications += 1
@@ -492,7 +496,7 @@ class EvolutionOrchestrator:
             )
 
     async def get_orchestration_status(self) -> dict[str, Any]:
-        """Get comprehensive orchestration status"""
+        """Get comprehensive orchestration status."""
         # Calculate uptime
         uptime = (datetime.now() - self.start_time).total_seconds()
 
@@ -532,8 +536,8 @@ class EvolutionOrchestrator:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def _start_background_tasks(self):
-        """Start background monitoring tasks"""
+    async def _start_background_tasks(self) -> None:
+        """Start background monitoring tasks."""
         # Performance monitoring task
         monitor_task = asyncio.create_task(self._performance_monitor_loop())
         self.active_tasks.add(monitor_task)
@@ -546,8 +550,8 @@ class EvolutionOrchestrator:
         cleanup_task = asyncio.create_task(self._cleanup_loop())
         self.active_tasks.add(cleanup_task)
 
-    async def _performance_monitor_loop(self):
-        """Background performance monitoring"""
+    async def _performance_monitor_loop(self) -> None:
+        """Background performance monitoring."""
         while self.state.is_running:
             try:
                 # Monitor agent performance
@@ -572,11 +576,11 @@ class EvolutionOrchestrator:
                 await asyncio.sleep(300)  # 5 minutes
 
             except Exception as e:
-                logger.error(f"Performance monitoring error: {e}")
+                logger.exception(f"Performance monitoring error: {e}")
                 await asyncio.sleep(60)
 
-    async def _meta_learning_loop(self):
-        """Background meta-learning optimization"""
+    async def _meta_learning_loop(self) -> None:
+        """Background meta-learning optimization."""
         while self.state.is_running:
             try:
                 # Optimize learning for active agents
@@ -606,11 +610,11 @@ class EvolutionOrchestrator:
                 await asyncio.sleep(1800)  # 30 minutes
 
             except Exception as e:
-                logger.error(f"Meta-learning optimization error: {e}")
+                logger.exception(f"Meta-learning optimization error: {e}")
                 await asyncio.sleep(300)
 
-    async def _cleanup_loop(self):
-        """Background cleanup tasks"""
+    async def _cleanup_loop(self) -> None:
+        """Background cleanup tasks."""
         while self.state.is_running:
             try:
                 # Cleanup old sandbox environments
@@ -624,19 +628,19 @@ class EvolutionOrchestrator:
                 await asyncio.sleep(3600)  # 1 hour
 
             except Exception as e:
-                logger.error(f"Cleanup error: {e}")
+                logger.exception(f"Cleanup error: {e}")
                 await asyncio.sleep(300)
 
-    async def _run_scheduled_evolution(self):
-        """Scheduled evolution cycle"""
+    async def _run_scheduled_evolution(self) -> None:
+        """Scheduled evolution cycle."""
         if not self.config.auto_evolution_enabled or self.state.emergency_mode:
             return
 
         logger.info("Running scheduled evolution cycle")
         await self.trigger_evolution(generations=1)
 
-    async def _run_health_check(self):
-        """Scheduled health check"""
+    async def _run_health_check(self) -> None:
+        """Scheduled health check."""
         health_status = await self.health_monitor.check_system_health()
 
         # Handle alerts
@@ -646,8 +650,8 @@ class EvolutionOrchestrator:
 
         self.state.last_health_check = datetime.now()
 
-    async def _run_daily_maintenance(self):
-        """Daily maintenance tasks"""
+    async def _run_daily_maintenance(self) -> None:
+        """Daily maintenance tasks."""
         logger.info("Running daily maintenance")
 
         try:
@@ -670,20 +674,20 @@ class EvolutionOrchestrator:
                 await self.trigger_evolution(generations=2, force=True)
 
         except Exception as e:
-            logger.error(f"Daily maintenance failed: {e}")
+            logger.exception(f"Daily maintenance failed: {e}")
 
-    async def _cleanup_old_backups(self):
-        """Weekly backup cleanup"""
+    async def _cleanup_old_backups(self) -> None:
+        """Weekly backup cleanup."""
         logger.info("Running weekly backup cleanup")
         await self.code_modifier.cleanup_old_backups(
             max_age_days=self.config.backup_retention_days
         )
 
     async def _create_evaluation_tasks(self) -> list[Callable]:
-        """Create evaluation tasks for evolution"""
+        """Create evaluation tasks for evolution."""
 
         async def fitness_evaluation_task(genome: AgentGenome) -> float:
-            """Evaluate agent fitness"""
+            """Evaluate agent fitness."""
             try:
                 # Get recent performance data
                 fitness_scores = self.evolution_engine.kpi_tracker.get_fitness_scores(
@@ -696,7 +700,7 @@ class EvolutionOrchestrator:
                 return 0.5
 
         async def specialization_task(genome: AgentGenome) -> float:
-            """Evaluate specialization effectiveness"""
+            """Evaluate specialization effectiveness."""
             try:
                 spec_focus = genome.specialization_config.get("focus_areas", {})
                 if spec_focus:
@@ -706,7 +710,7 @@ class EvolutionOrchestrator:
                 return 0.5
 
         async def collaboration_task(genome: AgentGenome) -> float:
-            """Evaluate collaboration capability"""
+            """Evaluate collaboration capability."""
             try:
                 collab_weight = genome.behavior_weights.get("collaboration", 0.5)
                 return min(1.0, collab_weight + np.random.normal(0, 0.1))
@@ -718,7 +722,7 @@ class EvolutionOrchestrator:
     async def _analyze_evolution_results(
         self, results: dict[str, Any]
     ) -> dict[str, Any]:
-        """Analyze evolution results"""
+        """Analyze evolution results."""
         analysis = {
             "improvement": 0.0,
             "diversity_change": 0.0,
@@ -753,12 +757,12 @@ class EvolutionOrchestrator:
                 )
 
         except Exception as e:
-            logger.error(f"Evolution analysis failed: {e}")
+            logger.exception(f"Evolution analysis failed: {e}")
 
         return analysis
 
-    def _update_performance_trend(self, results: dict[str, Any]):
-        """Update performance trend based on results"""
+    def _update_performance_trend(self, results: dict[str, Any]) -> None:
+        """Update performance trend based on results."""
         try:
             fitness_history = results["best_fitness_history"]
 
@@ -776,8 +780,8 @@ class EvolutionOrchestrator:
 
     async def _record_modification_outcome(
         self, modification: CodeModification, success: bool
-    ):
-        """Record modification outcome for meta-learning"""
+    ) -> None:
+        """Record modification outcome for meta-learning."""
         try:
             # Record learning outcome
             await self.meta_learning_engine.record_learning_outcome(
@@ -790,10 +794,10 @@ class EvolutionOrchestrator:
                 convergence_steps=1,
             )
         except Exception as e:
-            logger.error(f"Failed to record modification outcome: {e}")
+            logger.exception(f"Failed to record modification outcome: {e}")
 
-    async def _cancel_pending_modifications(self):
-        """Cancel excessive pending modifications"""
+    async def _cancel_pending_modifications(self) -> None:
+        """Cancel excessive pending modifications."""
         pending_mods = [
             mod for mod in self.code_modifier.modifications.values() if not mod.applied
         ]
@@ -801,7 +805,7 @@ class EvolutionOrchestrator:
         # Keep only the highest priority modifications
         sorted_mods = sorted(pending_mods, key=lambda x: x.safety_score, reverse=True)
 
-        for mod in sorted_mods[self.config.max_concurrent_modifications:]:
+        for mod in sorted_mods[self.config.max_concurrent_modifications :]:
             # Remove from tracking
             if mod.modification_id in self.code_modifier.modifications:
                 del self.code_modifier.modifications[mod.modification_id]
@@ -810,18 +814,18 @@ class EvolutionOrchestrator:
             f"Cancelled {len(sorted_mods) - self.config.max_concurrent_modifications} pending modifications"
         )
 
-    def _setup_signal_handlers(self):
-        """Setup graceful shutdown signal handlers"""
+    def _setup_signal_handlers(self) -> None:
+        """Setup graceful shutdown signal handlers."""
 
-        def signal_handler(signum, frame):
+        def signal_handler(signum, frame) -> None:
             logger.info(f"Received signal {signum} - initiating graceful shutdown")
             asyncio.create_task(self.stop())
 
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
 
-    async def _save_orchestration_state(self):
-        """Save orchestration state to disk"""
+    async def _save_orchestration_state(self) -> None:
+        """Save orchestration state to disk."""
         try:
             state_file = self.storage_path / "orchestration_state.json"
             state_data = {
@@ -834,10 +838,10 @@ class EvolutionOrchestrator:
                 json.dump(state_data, f, indent=2, default=str)
 
         except Exception as e:
-            logger.error(f"Failed to save orchestration state: {e}")
+            logger.exception(f"Failed to save orchestration state: {e}")
 
-    async def _load_orchestration_state(self):
-        """Load orchestration state from disk"""
+    async def _load_orchestration_state(self) -> None:
+        """Load orchestration state from disk."""
         try:
             state_file = self.storage_path / "orchestration_state.json"
 
@@ -855,11 +859,11 @@ class EvolutionOrchestrator:
                     )
 
         except Exception as e:
-            logger.error(f"Failed to load orchestration state: {e}")
+            logger.exception(f"Failed to load orchestration state: {e}")
 
     @asynccontextmanager
     async def orchestration_context(self):
-        """Context manager for orchestration lifecycle"""
+        """Context manager for orchestration lifecycle."""
         try:
             await self.start()
             yield self
@@ -869,7 +873,7 @@ class EvolutionOrchestrator:
 
 if __name__ == "__main__":
 
-    async def main():
+    async def main() -> None:
         # Configure logging
         logging.basicConfig(
             level=logging.INFO,

@@ -8,11 +8,11 @@ This script:
 4. Runs tests to ensure compatibility
 """
 
+from datetime import datetime
+from pathlib import Path
 import shutil
 import subprocess
 import sys
-from datetime import datetime
-from pathlib import Path
 
 
 def backup_original(file_path: Path) -> Path:
@@ -26,7 +26,7 @@ def backup_original(file_path: Path) -> Path:
     return backup_path
 
 
-def update_imports(root_dir: Path):
+def update_imports(root_dir: Path) -> None:
     """Update imports in files that reference the ADAS module."""
     # Files that might import from adas
     patterns = [
@@ -111,7 +111,7 @@ def run_tests(root_dir: Path) -> bool:
     return all_passed
 
 
-def create_migration_summary(backup_path: Path, files_updated: int):
+def create_migration_summary(backup_path: Path, files_updated: int) -> None:
     """Create a summary of the migration."""
     summary = f"""
 ADAS Security Migration Summary
@@ -148,7 +148,7 @@ To rollback:
     print(f"\n✓ Migration summary saved to: {summary_path}")
 
 
-def main():
+def main() -> int:
     """Main migration process."""
     print("🔒 ADAS Security Migration Script")
     print("=================================\n")

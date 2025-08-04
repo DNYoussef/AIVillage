@@ -2,7 +2,7 @@ from torch import nn
 
 
 class PromptBank(nn.Module):
-    def __init__(self, num_prompts: int, embed_dim: int):
+    def __init__(self, num_prompts: int, embed_dim: int) -> None:
         super().__init__()
         self.prompts = nn.Embedding(num_prompts, embed_dim)
 
@@ -10,7 +10,7 @@ class PromptBank(nn.Module):
         return self.prompts(prompt_ids)
 
 
-def bake_prompts(model, prompt_bank: PromptBank):
+def bake_prompts(model, prompt_bank: PromptBank) -> None:
     model.prompt_bank = prompt_bank
     for p in prompt_bank.parameters():
         p.requires_grad_(False)

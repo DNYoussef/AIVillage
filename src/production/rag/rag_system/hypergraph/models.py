@@ -1,4 +1,4 @@
-"""Hypergraph Models
+"""Hypergraph Models.
 
 Core data structures for the dual-memory hypergraph knowledge system.
 Implements Hyperedge for n-ary relationships and HippoNode for episodic memory.
@@ -53,43 +53,49 @@ class Hyperedge(BaseModel):
         }
 
     @validator("entities")
-    def validate_entities(cls, v):
-        """Ensure minimum entity count and no duplicates"""
+    def validate_entities(self, v):
+        """Ensure minimum entity count and no duplicates."""
         if len(v) < 2:
-            raise ValueError("Hyperedge must connect at least 2 entities")
+            msg = "Hyperedge must connect at least 2 entities"
+            raise ValueError(msg)
         if len(v) != len(set(v)):
-            raise ValueError("Duplicate entities not allowed in hyperedge")
+            msg = "Duplicate entities not allowed in hyperedge"
+            raise ValueError(msg)
         return v
 
     @validator("relation")
-    def validate_relation(cls, v):
-        """Ensure relation is non-empty and valid"""
+    def validate_relation(self, v):
+        """Ensure relation is non-empty and valid."""
         if not v or not v.strip():
-            raise ValueError("Relation cannot be empty")
+            msg = "Relation cannot be empty"
+            raise ValueError(msg)
         return v.strip()
 
     @validator("embedding")
-    def validate_embedding(cls, v):
-        """Validate embedding vector if provided"""
+    def validate_embedding(self, v):
+        """Validate embedding vector if provided."""
         if v is not None:
             if not isinstance(v, np.ndarray):
-                raise ValueError("Embedding must be numpy array")
+                msg = "Embedding must be numpy array"
+                raise ValueError(msg)
             if v.ndim != 1:
-                raise ValueError("Embedding must be 1-dimensional array")
+                msg = "Embedding must be 1-dimensional array"
+                raise ValueError(msg)
             if len(v) == 0:
-                raise ValueError("Embedding cannot be empty")
+                msg = "Embedding cannot be empty"
+                raise ValueError(msg)
         return v
 
     def add_metadata(self, key: str, value: Any) -> None:
-        """Add metadata field"""
+        """Add metadata field."""
         self.metadata[key] = value
 
     def get_metadata(self, key: str, default: Any = None) -> Any:
-        """Get metadata field with default"""
+        """Get metadata field with default."""
         return self.metadata.get(key, default)
 
     def to_neo4j_dict(self) -> dict[str, Any]:
-        """Convert to dictionary suitable for Neo4j storage"""
+        """Convert to dictionary suitable for Neo4j storage."""
         result = {
             "id": self.id,
             "relation": self.relation,
@@ -162,29 +168,33 @@ class HippoNode(BaseModel):
         }
 
     @validator("content")
-    def validate_content(cls, v):
-        """Ensure content is not empty"""
+    def validate_content(self, v):
+        """Ensure content is not empty."""
         if not v or not v.strip():
-            raise ValueError("Content cannot be empty")
+            msg = "Content cannot be empty"
+            raise ValueError(msg)
         return v.strip()
 
     @validator("access_pattern")
-    def validate_access_pattern(cls, v):
-        """Validate access pattern for Personalized PageRank"""
+    def validate_access_pattern(self, v):
+        """Validate access pattern for Personalized PageRank."""
         if v is not None:
             if not isinstance(v, np.ndarray):
-                raise ValueError("Access pattern must be numpy array")
+                msg = "Access pattern must be numpy array"
+                raise ValueError(msg)
             if v.ndim != 1:
-                raise ValueError("Access pattern must be 1-dimensional")
+                msg = "Access pattern must be 1-dimensional"
+                raise ValueError(msg)
             if np.any(v < 0):
-                raise ValueError("Access pattern values must be non-negative")
+                msg = "Access pattern values must be non-negative"
+                raise ValueError(msg)
             # Normalize if not already
             if np.sum(v) > 0:
                 v = v / np.sum(v)
         return v
 
     def update_access(self) -> None:
-        """Update access tracking"""
+        """Update access tracking."""
         self.last_accessed = datetime.now(timezone.utc)
         self.access_count += 1
 
@@ -194,7 +204,7 @@ class HippoNode(BaseModel):
         self.relevance_decay = np.exp(-time_diff / 3600.0)
 
     def calculate_consolidation_score(self) -> float:
-        """Calculate score for consolidating to semantic memory"""
+        """Calculate score for consolidating to semantic memory."""
         # Factors: access frequency, age, relevance
         age_hours = (datetime.now(timezone.utc) - self.created).total_seconds() / 3600.0
 
@@ -211,12 +221,12 @@ class HippoNode(BaseModel):
         return self.consolidation_score
 
     def mark_consolidated(self) -> None:
-        """Mark node as consolidated to semantic memory"""
+        """Mark node as consolidated to semantic memory."""
         self.consolidated = True
         self.consolidation_timestamp = datetime.now(timezone.utc)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for storage"""
+        """Convert to dictionary for storage."""
         result = {
             "id": self.id,
             "content": self.content,
@@ -251,7 +261,7 @@ def create_medical_hyperedge(
     confidence: float,
     severity: str = "medium",
 ) -> Hyperedge:
-    """Create a medical contraindication hyperedge"""
+    """Create a medical contraindication hyperedge."""
     return Hyperedge(
         entities=[patient_id, medication_id, allergen_id],
         relation="contraindicated_due_to_allergy",
@@ -267,8 +277,8 @@ def create_medical_hyperedge(
 def create_query_response_hyperedge(
     query_id: str, document_ids: list[str], response_id: str, confidence: float
 ) -> Hyperedge:
-    """Create a query-document-response hyperedge for RAG tracking"""
-    entities = [query_id] + document_ids + [response_id]
+    """Create a query-document-response hyperedge for RAG tracking."""
+    entities = [query_id, *document_ids, response_id]
 
     return Hyperedge(
         entities=entities,
@@ -285,7 +295,7 @@ def create_query_response_hyperedge(
 def create_session_hippo_node(
     session_id: str, user_id: str, content: str, context_type: str = "interaction"
 ) -> HippoNode:
-    """Create a session-specific episodic memory node"""
+    """Create a session-specific episodic memory node."""
     return HippoNode(
         id=f"hippo_{session_id}_{uuid.uuid4().hex[:8]}",
         content=content,

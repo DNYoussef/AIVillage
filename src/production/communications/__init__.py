@@ -1,13 +1,12 @@
 """Production communications infrastructure for AIVillage."""
 
-from .p2p import P2PNode, DeviceMesh, TensorStreaming
-from .p2p_protocol import P2PCommunicationProtocol, P2PCapabilities
+from .p2p import DeviceMesh, P2PNode, TensorStreaming
+from .p2p_protocol import P2PCapabilities, P2PCommunicationProtocol
 
 __all__ = [
-    "P2PNode",
     "DeviceMesh",
-    "TensorStreaming",
-    "P2PCommunicationProtocol",
     "P2PCapabilities",
+    "P2PCommunicationProtocol",
+    "P2PNode",
+    "TensorStreaming",
 ]
-

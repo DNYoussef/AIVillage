@@ -12,7 +12,7 @@ from .visualization import generate_html_report, plot_benchmark_comparison
 
 def benchmark_merger(config):
     merger = AdvancedModelMerger(config)
-    models = load_models(config.models)
+    load_models(config.models)
 
     start_time = time.time()
     start_memory = psutil.virtual_memory().used
@@ -55,7 +55,7 @@ def benchmark_evolutionary_tournament(config):
     }
 
 
-def run_benchmarks():
+def run_benchmarks() -> None:
     config = create_default_config()
 
     print("Benchmarking Model Merger:")
@@ -80,7 +80,7 @@ def run_benchmarks():
         # Run a sample GPU operation
         a = torch.randn(10000, 10000, device="cuda")
         b = torch.randn(10000, 10000, device="cuda")
-        c = torch.matmul(a, b)
+        torch.matmul(a, b)
 
         torch.cuda.synchronize()
         end_time = time.time()

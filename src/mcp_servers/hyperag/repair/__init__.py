@@ -1,4 +1,4 @@
-"""HypeRAG Repair Module
+"""HypeRAG Repair Module.
 
 Innovator Agent for knowledge graph repair and maintenance.
 Analyzes GDC violations and proposes structured repair operations.

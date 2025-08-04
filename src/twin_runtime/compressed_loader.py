@@ -8,7 +8,7 @@ class CompressedModelLoader:
 
     def __init__(
         self, model_cls, compressed_path: str, config: CompressionConfig | None = None
-    ):
+    ) -> None:
         self.model = model_cls()
         self.compressed = torch.load(compressed_path, map_location="cpu")
         self.comp = TwoStageCompressor(config or CompressionConfig(use_hyper=True))

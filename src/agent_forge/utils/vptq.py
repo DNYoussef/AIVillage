@@ -2,12 +2,12 @@ import torch
 
 
 class VPTQQuantizer:
-    def __init__(self, K=4, D=32, hessian=None):
+    def __init__(self, K=4, D=32, hessian=None) -> None:
         self.K = K
         self.D = D
         self.hessian = hessian
 
-    def train_codebook(self, X: torch.Tensor):
+    def train_codebook(self, X: torch.Tensor) -> None:
         centroids = X[torch.randperm(X.size(0))[: self.K]]
         for _ in range(20):
             dists = ((X.unsqueeze(1) - centroids) ** 2).sum(-1)

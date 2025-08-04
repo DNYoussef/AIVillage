@@ -5,7 +5,7 @@ from torch.optim import Adam
 
 
 class AugmentedAdam(Adam):
-    def __init__(self, params, boost=1.5, beta_cut=0.08, **kw):
+    def __init__(self, params, boost=1.5, beta_cut=0.08, **kw) -> None:
         super().__init__(params, **kw)
         self.boost, self.beta_cut = boost, beta_cut
         self._grad_window = None

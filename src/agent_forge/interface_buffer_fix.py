@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Interface Buffer Overflow Fix for Large Output Handling
+"""Interface Buffer Overflow Fix for Large Output Handling.
 
 Prevents RangeError from large string outputs by implementing:
 1. Output chunking for large results
@@ -8,8 +8,8 @@ Prevents RangeError from large string outputs by implementing:
 4. Memory-safe string handling
 """
 
-import json
 from collections.abc import Iterator
+import json
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +21,7 @@ class BufferedOutputHandler:
     MAX_DISPLAY_LENGTH = 50_000  # 50KB for terminal display
     CHUNK_SIZE = 10_000  # 10KB chunks for progressive display
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.buffer = []
         self.total_size = 0
 
@@ -79,9 +79,9 @@ class BufferedOutputHandler:
     def chunk_output(self, text: str) -> Iterator[str]:
         """Yield chunks of text for progressive display."""
         for i in range(0, len(text), self.CHUNK_SIZE):
-            yield text[i: i + self.CHUNK_SIZE]
+            yield text[i : i + self.CHUNK_SIZE]
 
-    def display_large_output(self, data: Any, title: str = "Output"):
+    def display_large_output(self, data: Any, title: str = "Output") -> None:
         """Display large output safely with pagination."""
         print(f"\n{'=' * 60}")
         print(f"{title}")
@@ -111,7 +111,7 @@ class BufferedOutputHandler:
 
         print(f"{'=' * 60}\n")
 
-    def save_full_output(self, data: Any, filepath: Path):
+    def save_full_output(self, data: Any, filepath: Path) -> None:
         """Save full output to file for reference."""
         try:
             with open(filepath, "w") as f:
@@ -129,7 +129,7 @@ class BufferedOutputHandler:
 class SafeMagiInterface:
     """Magi interface with buffer overflow protection."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.output_handler = BufferedOutputHandler()
         self.results_path = Path(
             "D:/AgentForge/memory_efficient_magi_20250726_033506/memory_efficient_scaled_results.json"
@@ -137,7 +137,7 @@ class SafeMagiInterface:
         self.capabilities = {}
         self.specialization_score = 0.0
 
-    def load_magi_data_safely(self):
+    def load_magi_data_safely(self) -> bool:
         """Load Magi data with buffer overflow protection."""
         if not self.results_path.exists():
             print("Magi training data not found")
@@ -181,7 +181,7 @@ class SafeMagiInterface:
 
         return False
 
-    def _load_summary_only(self):
+    def _load_summary_only(self) -> None:
         """Load only summary information for memory-constrained systems."""
         print("Loading summary information only...")
 

@@ -1,27 +1,26 @@
-"""Simple quantizer that actually achieves 4x compression for mobile devices"""
+"""Simple quantizer that actually achieves 4x compression for mobile devices."""
+
 import io
-import os
+import logging
+from pathlib import Path
+
 import torch
 import torch.quantization
-from pathlib import Path
-from typing import Union
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 class CompressionError(Exception):
-    """Raised when compression fails or doesn't meet requirements"""
-    pass
+    """Raised when compression fails or doesn't meet requirements."""
+
 
 
 class SimpleQuantizer:
-    """
-    Quantize PyTorch models for 2GB mobile devices
-    Target: 4x compression with <10% accuracy loss
+    """Quantize PyTorch models for 2GB mobile devices
+    Target: 4x compression with <10% accuracy loss.
     """
 
-    def __init__(self, target_compression: float = 4.0):
+    def __init__(self, target_compression: float = 4.0) -> None:
         self.target_compression = target_compression
         self.supported_layers = {
             torch.nn.Linear,
@@ -31,8 +30,8 @@ class SimpleQuantizer:
             torch.nn.GRU,
         }
 
-    def quantize_model(self, model_path: Union[str, Path, torch.nn.Module]) -> bytes:
-        """Quantize a PyTorch model to achieve 4x compression"""
+    def quantize_model(self, model_path: str | Path | torch.nn.Module) -> bytes:
+        """Quantize a PyTorch model to achieve 4x compression."""
         model = self._load_model(model_path)
         original_size = self._get_model_size(model)
         logger.info("Original model size: %.1f MB", original_size / 1024 / 1024)
@@ -50,25 +49,32 @@ class SimpleQuantizer:
         logger.info("Compression ratio: %.2fx", ratio)
         if ratio < (self.target_compression - 0.5):
             logger.warning(
-                "Compression ratio %.2fx below target %.1fx", ratio, self.target_compression
+                "Compression ratio %.2fx below target %.1fx",
+                ratio,
+                self.target_compression,
             )
         return compressed_bytes
 
-    def _load_model(self, model_path: Union[str, Path, torch.nn.Module]) -> torch.nn.Module:
+    def _load_model(
+        self, model_path: str | Path | torch.nn.Module
+    ) -> torch.nn.Module:
         if isinstance(model_path, torch.nn.Module):
             return model_path
         model_path = Path(model_path)
         if not model_path.exists():
-            raise FileNotFoundError(f"Model file not found: {model_path}")
+            msg = f"Model file not found: {model_path}"
+            raise FileNotFoundError(msg)
         try:
             model = torch.load(model_path, map_location="cpu", weights_only=False)
             if isinstance(model, dict):
+                msg = "Model file contains state_dict only. Please provide complete model or model instance."
                 raise CompressionError(
-                    "Model file contains state_dict only. Please provide complete model or model instance."
+                    msg
                 )
             return model
         except Exception as e:
-            raise CompressionError(f"Failed to load model: {e}") from e
+            msg = f"Failed to load model: {e}"
+            raise CompressionError(msg) from e
 
     def _get_model_size(self, model: torch.nn.Module) -> int:
         buffer = io.BytesIO()
@@ -83,7 +89,7 @@ class SimpleQuantizer:
         for module in model.modules():
             if hasattr(module, "training"):
                 module.training = False
-            if isinstance(module, (torch.nn.BatchNorm1d, torch.nn.BatchNorm2d)):
+            if isinstance(module, torch.nn.BatchNorm1d | torch.nn.BatchNorm2d):
                 module.track_running_stats = False
 
     def _serialize_compressed(self, model: torch.nn.Module) -> bytes:
@@ -107,7 +113,7 @@ class SimpleQuantizer:
 
     @staticmethod
     def load_quantized_model(model_bytes: bytes) -> torch.nn.Module:
-        """Compatibility helper for previous API"""
+        """Compatibility helper for previous API."""
         buffer = io.BytesIO(model_bytes)
         try:
             model = torch.jit.load(buffer, map_location="cpu")

@@ -1,11 +1,11 @@
 import argparse
 import asyncio
+import importlib.util
 import json
-import time
 from pathlib import Path
 import sys
+import time
 import types
-import importlib.util
 
 # Stub external dependencies required by the sharding modules
 sys.modules.setdefault("wandb", types.ModuleType("wandb"))
@@ -17,7 +17,7 @@ class _Dummy:
     def from_pretrained(cls, *args, **kwargs):
         return cls()
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.config = types.SimpleNamespace()
 
 
@@ -53,9 +53,9 @@ from src.core.p2p.p2p_node import PeerCapabilities
 
 
 class DummyP2PNode:
-    """Minimal P2P node for testing"""
+    """Minimal P2P node for testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.node_id = "local"
         self.peer_registry: dict[str, PeerCapabilities] = {}
         self.local_capabilities = PeerCapabilities(
@@ -76,9 +76,9 @@ class DummyDeviceProfiler:
 
 
 class TestModelShardingEngine(ModelShardingEngine):
-    """Lightweight testing subclass of ModelShardingEngine"""
+    """Lightweight testing subclass of ModelShardingEngine."""
 
-    def __init__(self, device_count: int, constraint: str):
+    def __init__(self, device_count: int, constraint: str) -> None:
         super().__init__(DummyP2PNode(), DummyResourceMonitor(), DummyDeviceProfiler())
         self.device_count = device_count
         self.constraint = constraint
@@ -122,14 +122,16 @@ class TestModelShardingEngine(ModelShardingEngine):
     ) -> ShardingPlan:
         return await self._create_sequential_plan(model_analysis, device_profiles)
 
-    async def _activate_sharding_plan(self, plan: ShardingPlan):
+    async def _activate_sharding_plan(self, plan: ShardingPlan) -> None:
         self.active_shards = {s.shard_id: s for s in plan.shards}
         self.device_assignments = {}
         for shard in plan.shards:
-            self.device_assignments.setdefault(shard.device_id, []).append(shard.shard_id)
+            self.device_assignments.setdefault(shard.device_id, []).append(
+                shard.shard_id
+            )
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Test model sharding")
     parser.add_argument("--device-count", type=int, default=2)
     parser.add_argument("--constraint", type=str, default="none")
@@ -139,7 +141,9 @@ def main():
     engine = TestModelShardingEngine(args.device_count, args.constraint)
 
     start = time.time()
-    plan = asyncio.run(engine.shard_model("dummy-model", strategy=ShardingStrategy.HYBRID))
+    plan = asyncio.run(
+        engine.shard_model("dummy-model", strategy=ShardingStrategy.HYBRID)
+    )
     duration = time.time() - start
 
     report = {

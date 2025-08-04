@@ -56,8 +56,9 @@ def merge_instruction_tuned_models(
         elif merge_settings.merge_method == "ps_dfs":
             merged_model = merge_ps_dfs(models, merge_settings)
         else:
+            msg = f"Unsupported merge method for instruction-tuned models: {merge_settings.merge_method}"
             raise EvoMergeException(
-                f"Unsupported merge method for instruction-tuned models: {merge_settings.merge_method}"
+                msg
             )
 
         # Merge tokenizers
@@ -68,8 +69,9 @@ def merge_instruction_tuned_models(
 
         return merged_model, merged_tokenizer
     except Exception as e:
-        logger.error(f"Failed to merge instruction-tuned models: {e!s}")
-        raise EvoMergeException(f"Failed to merge instruction-tuned models: {e!s}")
+        logger.exception(f"Failed to merge instruction-tuned models: {e!s}")
+        msg = f"Failed to merge instruction-tuned models: {e!s}"
+        raise EvoMergeException(msg)
 
 
 def merge_ps(
@@ -79,7 +81,8 @@ def merge_ps(
     merged_state_dict = {}
     for technique in merge_settings.ps_techniques:
         if technique not in MERGE_TECHNIQUES:
-            raise ValueError(f"Unknown merge technique: {technique}")
+            msg = f"Unknown merge technique: {technique}"
+            raise ValueError(msg)
 
         technique_params = merge_settings.parameters.get(technique, {})
         weights = technique_params.pop("weights", None)
@@ -88,7 +91,7 @@ def merge_ps(
             if name not in merged_state_dict:
                 merged_state_dict[name] = torch.zeros_like(param.data)
 
-            params = [model.state_dict()[name] for model in models]
+            [model.state_dict()[name] for model in models]
             if weights is not None:
                 merged_state_dict = MERGE_TECHNIQUES[technique](
                     merged_state_dict, models, weights=weights, **technique_params
@@ -109,7 +112,8 @@ def merge_dfs(
 
     for technique in merge_settings.dfs_techniques:
         if technique not in MERGE_TECHNIQUES:
-            raise ValueError(f"Unknown merge technique: {technique}")
+            msg = f"Unknown merge technique: {technique}"
+            raise ValueError(msg)
         merged_model = MERGE_TECHNIQUES[technique](
             merged_model, models, **merge_settings.parameters.get(technique, {})
         )
@@ -121,7 +125,7 @@ def merge_ps_dfs(
 ) -> torch.nn.Module:
     logger.info("Performing combined parameter space and deep fusion space merge")
     ps_model = merge_ps(models, merge_settings)
-    return merge_dfs([ps_model] + models, merge_settings)
+    return merge_dfs([ps_model, *models], merge_settings)
 
 
 def merge_tokenizers(tokenizers: list[AutoTokenizer]) -> AutoTokenizer:
@@ -147,7 +151,7 @@ def preserve_instruction_tuning(
     for model, tokenizer in zip(original_models, tokenizers, strict=False):
         instruction_tokens = [
             token
-            for token in tokenizer.get_vocab().keys()
+            for token in tokenizer.get_vocab()
             if "instruction" in token.lower() or "task" in token.lower()
         ]
         instruction_ids = tokenizer.convert_tokens_to_ids(instruction_tokens)
@@ -160,7 +164,7 @@ def preserve_instruction_tuning(
     merged_tokenizer = merge_tokenizers(tokenizers)
     merged_instruction_tokens = [
         token
-        for token in merged_tokenizer.get_vocab().keys()
+        for token in merged_tokenizer.get_vocab()
         if "instruction" in token.lower() or "task" in token.lower()
     ]
     merged_instruction_ids = merged_tokenizer.convert_tokens_to_ids(

@@ -8,13 +8,13 @@ class RAGPromptBaker:
         self,
         model_name: str,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
-    ):
+    ) -> None:
         self.device = device
         self.model_name = model_name
         self.tokenizer = None
         self.model = None
 
-    def load_model(self):
+    def load_model(self) -> None:
         try:
             print(f"Loading tokenizer for {self.model_name}...")
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
@@ -35,7 +35,7 @@ class RAGPromptBaker:
 
     def bake_prompts(
         self, prompts: list[str], num_iterations: int = 1000, lr: float = 1e-5
-    ):
+    ) -> None:
         if self.model is None:
             self.load_model()
 
@@ -61,9 +61,10 @@ class RAGPromptBaker:
 
         print("Prompt baking completed.")
 
-    def save_model(self, path: str):
+    def save_model(self, path: str) -> None:
         if self.model is None:
-            raise ValueError("Model hasn't been loaded or trained yet.")
+            msg = "Model hasn't been loaded or trained yet."
+            raise ValueError(msg)
         self.model.save_pretrained(path)
         self.tokenizer.save_pretrained(path)
         print(f"Model saved to {path}")
@@ -119,7 +120,7 @@ def get_rag_prompts() -> list[str]:
 
 def deep_bake_rag_prompts(
     model_name: str, num_rounds: int = 5, save_path: str = "./rag_baked_model"
-):
+) -> None:
     baker = RAGPromptBaker(model_name)
     prompts = get_rag_prompts()
 

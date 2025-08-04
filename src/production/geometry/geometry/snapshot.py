@@ -1,4 +1,4 @@
-"""geometry/snapshot.py
+"""geometry/snapshot.py.
 --------------------
 Fast utilities for sensing representational geometry every mini-batch.
 """

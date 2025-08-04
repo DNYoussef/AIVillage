@@ -12,7 +12,7 @@ class HybridErrorController(AdaptiveErrorRateController, LTTErrorController):
         target_error_rate: float,
         adaptation_rate: float,
         confidence_level: float,
-    ):
+    ) -> None:
         """Initialize the HybridErrorController.
 
         :param num_steps: The number of steps in the multi-step process.
@@ -28,8 +28,8 @@ class HybridErrorController(AdaptiveErrorRateController, LTTErrorController):
         )
 
     def update_error_rates(
-        self, observed_errors: list[float], calibration_data: list[int] = None
-    ):
+        self, observed_errors: list[float], calibration_data: list[int] | None = None
+    ) -> None:
         """Update error rates using both adaptive control and LTT calibration.
 
         :param observed_errors: A list of observed error rates for each step.
@@ -40,7 +40,7 @@ class HybridErrorController(AdaptiveErrorRateController, LTTErrorController):
 
         AdaptiveErrorRateController.update_error_rates(self, observed_errors)
 
-    def _compute_step_error_rates(self):
+    def _compute_step_error_rates(self) -> None:
         """Compute step error rates using both adaptive and LTT methods."""
         LTTErrorController._compute_step_error_rates(self)
         # Further adjust rates using adaptive method if needed

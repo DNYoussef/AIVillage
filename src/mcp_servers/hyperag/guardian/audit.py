@@ -11,7 +11,7 @@ _AUDIT_PATH = pathlib.Path("data/guardian_audit")
 _AUDIT_PATH.mkdir(parents=True, exist_ok=True)
 
 
-def log(record: dict[str, Any]):
+def log(record: dict[str, Any]) -> None:
     """Log audit record to persistent JSON file.
 
     Args:
@@ -117,7 +117,7 @@ def get_statistics(hours: int = 24) -> dict[str, Any]:
             decisions[decision] += 1
 
         score = record.get("score")
-        if isinstance(score, (int, float)):
+        if isinstance(score, int | float):
             scores.append(score)
 
     total = sum(decisions.values())

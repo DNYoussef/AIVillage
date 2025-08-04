@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""W&B Manager for Agent Forge
+"""W&B Manager for Agent Forge.
 
 Provides robust W&B integration with:
 - Automatic authentication setup
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class WandBManager:
     """Manages W&B connection and initialization with robust error handling."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.run = None
         self.is_initialized = False
         self.offline_mode = False
@@ -134,12 +134,12 @@ class WandBManager:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to initialize W&B run: {e}")
+            logger.exception(f"Failed to initialize W&B run: {e}")
             logger.info("Switching to offline mode")
             self.offline_mode = True
             return False
 
-    def log_metrics(self, metrics: dict[str, Any], step: int | None = None):
+    def log_metrics(self, metrics: dict[str, Any], step: int | None = None) -> None:
         """Log metrics to W&B with error handling."""
         if not self.is_initialized or self.offline_mode:
             # Log to local file instead
@@ -154,7 +154,7 @@ class WandBManager:
 
     def log_artifact(
         self, artifact_path: str, artifact_name: str, artifact_type: str = "model"
-    ):
+    ) -> None:
         """Log artifact to W&B with error handling."""
         if not self.is_initialized or self.offline_mode:
             logger.info(
@@ -170,7 +170,7 @@ class WandBManager:
         except Exception as e:
             logger.warning(f"Failed to log artifact to W&B: {e}")
 
-    def _log_to_file(self, metrics: dict[str, Any], step: int | None = None):
+    def _log_to_file(self, metrics: dict[str, Any], step: int | None = None) -> None:
         """Log metrics to local file when W&B is unavailable."""
         log_dir = Path("./wandb_offline")
         log_dir.mkdir(exist_ok=True)
@@ -181,7 +181,7 @@ class WandBManager:
         with open(log_file, "a") as f:
             f.write(json.dumps(log_entry) + "\n")
 
-    def finish(self):
+    def finish(self) -> None:
         """Finish W&B run safely."""
         if self.is_initialized and self.run:
             try:
@@ -208,16 +208,16 @@ def init_wandb(project: str = "agent-forge", **kwargs) -> bool:
     return wandb_manager.initialize_run(project=project, **kwargs)
 
 
-def log_metrics(metrics: dict[str, Any], step: int | None = None):
+def log_metrics(metrics: dict[str, Any], step: int | None = None) -> None:
     """Log metrics with W&B fallback."""
     wandb_manager.log_metrics(metrics, step)
 
 
-def log_artifact(artifact_path: str, artifact_name: str, artifact_type: str = "model"):
+def log_artifact(artifact_path: str, artifact_name: str, artifact_type: str = "model") -> None:
     """Log artifact with W&B fallback."""
     wandb_manager.log_artifact(artifact_path, artifact_name, artifact_type)
 
 
-def finish_wandb():
+def finish_wandb() -> None:
     """Finish W&B run safely."""
     wandb_manager.finish()

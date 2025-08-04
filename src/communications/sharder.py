@@ -5,9 +5,9 @@ import pulp
 
 
 class ShardPlanner:
-    def __init__(self, layer_flops: dict[int, float], node_speeds: dict[str, float]):
+    def __init__(self, layer_flops: dict[int, float], node_speeds: dict[str, float]) -> None:
         """layer_flops: {layer_idx: flops_required}
-        node_speeds: {peer_id: flops_per_sec}
+        node_speeds: {peer_id: flops_per_sec}.
         """
         self.layer_flops = layer_flops
         self.node_speeds = node_speeds

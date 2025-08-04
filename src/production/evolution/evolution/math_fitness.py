@@ -11,7 +11,6 @@ import statistics
 from typing import Any
 
 import torch
-
 import wandb
 
 logger = logging.getLogger(__name__)
@@ -54,7 +53,7 @@ class EvaluationResult:
 class MathFitnessEvaluator:
     """Comprehensive evaluation system for math tutoring model fitness."""
 
-    def __init__(self, project_name: str = "agent-forge"):
+    def __init__(self, project_name: str = "agent-forge") -> None:
         self.project_name = project_name
         self.test_suite = {}
         self.evaluation_history = []
@@ -80,7 +79,7 @@ class MathFitnessEvaluator:
         # Initialize test problems
         asyncio.create_task(self.initialize_test_suite())
 
-    async def initialize_test_suite(self):
+    async def initialize_test_suite(self) -> None:
         """Initialize comprehensive test suite for K-8 mathematics."""
         logger.info("Initializing mathematical fitness evaluation test suite")
 
@@ -324,7 +323,7 @@ class MathFitnessEvaluator:
         )
 
     async def evaluate(
-        self, model, tokenizer, individual_id: str = None, log_details: bool = True
+        self, model, tokenizer, individual_id: str | None = None, log_details: bool = True
     ) -> float:
         """Comprehensive fitness evaluation of a math tutoring model."""
         logger.info(f"Evaluating model {individual_id or 'unknown'}")
@@ -366,7 +365,7 @@ class MathFitnessEvaluator:
                         )
 
                 except Exception as e:
-                    logger.error(f"Error evaluating problem {problem.problem_id}: {e}")
+                    logger.exception(f"Error evaluating problem {problem.problem_id}: {e}")
                     # Create failed evaluation
                     evaluation = EvaluationResult(
                         problem_id=problem.problem_id,
@@ -495,7 +494,7 @@ class MathFitnessEvaluator:
             )
 
         except Exception as e:
-            logger.error(f"Error in problem evaluation: {e}")
+            logger.exception(f"Error in problem evaluation: {e}")
             return EvaluationResult(
                 problem_id=problem.problem_id,
                 model_response="Error generating response",
@@ -576,7 +575,7 @@ Your response:"""
             return response
 
         except Exception as e:
-            logger.error(f"Error generating model response: {e}")
+            logger.exception(f"Error generating model response: {e}")
             return "I'm having trouble generating a response right now."
 
     def evaluate_correctness(self, response: str, problem: MathProblem) -> float:
@@ -930,10 +929,7 @@ Your response:"""
             total_weight += weight
 
         # Normalize by total weight
-        if total_weight > 0:
-            final_score = weighted_score / total_weight
-        else:
-            final_score = 0.0
+        final_score = weighted_score / total_weight if total_weight > 0 else 0.0
 
         return min(1.0, max(0.0, final_score))
 

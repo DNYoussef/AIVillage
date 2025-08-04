@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage-1 Compression Pipeline CLI
+"""Stage-1 Compression Pipeline CLI.
 
 Usage:
     python -m agent_forge.compression.stage1 --in models/raw/model.pt --out models/compressed/model.stage1.pt
@@ -21,8 +21,8 @@ from .stage1_bitnet import convert_to_bitnet
 from .stage1_config import DEFAULT_STAGE1_CONFIG, Stage1Config
 
 
-def setup_logging(log_level: str = "INFO"):
-    """Setup logging configuration"""
+def setup_logging(log_level: str = "INFO") -> None:
+    """Setup logging configuration."""
     logging.basicConfig(
         level=getattr(logging, log_level.upper()),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -34,11 +34,11 @@ def setup_logging(log_level: str = "INFO"):
 
 
 def load_model_and_tokenizer(model_path: str):
-    """Load model and tokenizer from path"""
+    """Load model and tokenizer from path."""
     logger = logging.getLogger(__name__)
 
     try:
-        if model_path.endswith(".pt") or model_path.endswith(".pth"):
+        if model_path.endswith((".pt", ".pth")):
             # Load PyTorch checkpoint
             logger.info(f"Loading PyTorch checkpoint from {model_path}")
             checkpoint = torch.load(model_path, map_location="cpu")
@@ -66,14 +66,14 @@ def load_model_and_tokenizer(model_path: str):
 
         return model, tokenizer
     except Exception as e:
-        logger.error(f"Failed to load model from {model_path}: {e}")
+        logger.exception(f"Failed to load model from {model_path}: {e}")
         raise
 
 
 def run_stage1_compression(
     input_path: str, output_path: str, config: Stage1Config
 ) -> dict[str, Any]:
-    """Run the complete Stage-1 compression pipeline"""
+    """Run the complete Stage-1 compression pipeline."""
     logger = logging.getLogger(__name__)
 
     # Create output directory
@@ -202,8 +202,8 @@ def run_stage1_compression(
     }
 
 
-def main():
-    """Main CLI entry point"""
+def main() -> None:
+    """Main CLI entry point."""
     parser = argparse.ArgumentParser(description="Stage-1 Compression Pipeline")
     parser.add_argument(
         "--in", "--input", "-i", required=True, help="Input model path", dest="input"
@@ -258,7 +258,7 @@ def main():
             sys.exit(1)
 
     except Exception as e:
-        logger.error(f"Stage-1 compression failed: {e}")
+        logger.exception(f"Stage-1 compression failed: {e}")
         sys.exit(1)
 
 

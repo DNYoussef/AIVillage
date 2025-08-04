@@ -12,7 +12,6 @@ fixes remain in place. It focuses on two areas:
 from __future__ import annotations
 
 import ssl
-from typing import Tuple
 
 import yaml
 
@@ -25,7 +24,6 @@ def check_serialization_hardening() -> bool:
     should raise a :class:`yaml.constructor.ConstructorError` and
     prevent the command from running.
     """
-
     malicious_payload = "!!python/object/apply:os.system ['echo vulnerable']"
     try:
         yaml.safe_load(malicious_payload)
@@ -42,7 +40,6 @@ def check_tls_configuration() -> bool:
     The context should enforce certificate validation and restrict the
     protocol to TLS v1.2 or newer.
     """
-
     context = ssl.create_default_context()
     cert_required = context.verify_mode == ssl.CERT_REQUIRED
 
@@ -55,9 +52,8 @@ def check_tls_configuration() -> bool:
     return cert_required and tls_version_ok
 
 
-def verify_security_fixes() -> Tuple[bool, bool]:
+def verify_security_fixes() -> tuple[bool, bool]:
     """Run all security checks and return their results."""
-
     return check_serialization_hardening(), check_tls_configuration()
 
 

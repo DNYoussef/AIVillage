@@ -56,9 +56,9 @@ class ChatEngine:
         try:
             twin_resp = requests.post(TWIN_URL, json=twin_payload, timeout=15)
             twin_resp.raise_for_status()
-        except Exception as exc:  # pragma: no cover - network failure
+        except Exception:  # pragma: no cover - network failure
             logger.exception("Twin request failed")
-            raise exc
+            raise
 
         data = twin_resp.json()
         resp_text: str = data.get("response", "")
@@ -73,7 +73,7 @@ class ChatEngine:
                 logger.warning("Calibration error: %s", exc)
                 self._consecutive_calib_errors += 1
                 if self._consecutive_calib_errors >= 3:
-                    logger.error("Disabling calibration after 3 failures")
+                    logger.exception("Disabling calibration after 3 failures")
                     self._calib_enabled = False
 
         return {

@@ -24,7 +24,7 @@ class BaseStrategy(ABC):
 
     description = "Base reasoning strategy"
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         self.config = kwargs
 
     @abstractmethod
@@ -58,7 +58,7 @@ class BaseStrategy(ABC):
         description: str,
         operation: str,
         parameters: dict[str, Any],
-        dependencies: list[str] = None,
+        dependencies: list[str] | None = None,
     ) -> str:
         """Add a retrieval step to the plan."""
         step = ExecutionStep(
@@ -79,7 +79,7 @@ class BaseStrategy(ABC):
         description: str,
         operation: str,
         parameters: dict[str, Any],
-        dependencies: list[str] = None,
+        dependencies: list[str] | None = None,
     ) -> str:
         """Add a reasoning step to the plan."""
         step = ExecutionStep(
@@ -100,7 +100,7 @@ class BaseStrategy(ABC):
         description: str,
         operation: str,
         parameters: dict[str, Any],
-        dependencies: list[str] = None,
+        dependencies: list[str] | None = None,
     ) -> str:
         """Add a verification step to the plan."""
         step = ExecutionStep(

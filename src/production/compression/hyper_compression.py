@@ -6,10 +6,14 @@ byte representation produced by earlier stages.  The interface mirrors the
 expected ``encode``/``decode`` API so the pipeline can experiment with more
 sophisticated approaches in the future.
 """
+
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import zlib
-from typing import ByteString
+
+if TYPE_CHECKING:
+    from collections.abc import ByteString
 
 
 class HyperCompressionEncoder:

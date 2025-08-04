@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class PrometheusClient:
     """Client for querying Prometheus metrics."""
 
-    def __init__(self, prometheus_url: str):
+    def __init__(self, prometheus_url: str) -> None:
         self.prometheus_url = prometheus_url
         self.session = requests.Session()
         self.session.timeout = 30
@@ -44,7 +44,7 @@ class PrometheusClient:
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
-            logger.error("Prometheus query failed: %s", e)
+            logger.exception("Prometheus query failed: %s", e)
             raise
 
     def get_node_metrics(self, node_id: str, timestamp: datetime | None = None) -> dict:
@@ -121,14 +121,14 @@ class PrometheusClient:
             return nodes
 
         except Exception as e:
-            logger.error("Failed to get active nodes: %s", e)
+            logger.exception("Failed to get active nodes: %s", e)
             return []
 
 
 class EarnShellsWorker:
     """Worker that mints credits based on Prometheus metrics."""
 
-    def __init__(self, prometheus_url: str, credits_api_url: str):
+    def __init__(self, prometheus_url: str, credits_api_url: str) -> None:
         self.prometheus_client = PrometheusClient(prometheus_url)
         self.credits_api_url = credits_api_url
         self.config = CreditsConfig()
@@ -159,7 +159,7 @@ class EarnShellsWorker:
             logger.error("Failed to check user %s: %s", username, response.text)
             return False
         except Exception as e:
-            logger.error("Error ensuring user %s exists: %s", username, e)
+            logger.exception("Error ensuring user %s exists: %s", username, e)
             return False
 
     def mint_credits_for_node(self, node_id: str, scrape_timestamp: datetime) -> bool:
@@ -193,15 +193,18 @@ class EarnShellsWorker:
                 earning_data = response.json()
                 logger.info(
                     "Minted %s credits for %s (uptime: %ds, FLOPs: %d, bandwidth: %d bytes)",
-                    earning_data['credits_earned'], username, metrics['uptime_seconds'],
-                    metrics['flops'], metrics['bandwidth_bytes']
+                    earning_data["credits_earned"],
+                    username,
+                    metrics["uptime_seconds"],
+                    metrics["flops"],
+                    metrics["bandwidth_bytes"],
                 )
                 return True
             logger.error("Failed to mint credits for %s: %s", username, response.text)
             return False
 
         except Exception as e:
-            logger.error("Error minting credits for node %s: %s", node_id, e)
+            logger.exception("Error minting credits for node %s: %s", node_id, e)
             return False
 
     def run_earning_cycle(self) -> None:
@@ -225,11 +228,12 @@ class EarnShellsWorker:
 
             logger.info(
                 "Earning cycle completed: %d/%d nodes processed successfully",
-                success_count, len(active_nodes)
+                success_count,
+                len(active_nodes),
             )
 
         except Exception as e:
-            logger.error("Error in earning cycle: %s", e)
+            logger.exception("Error in earning cycle: %s", e)
 
     def run_continuous(self, interval_seconds: int = 300) -> None:
         """Run worker continuously with specified interval."""
@@ -247,7 +251,7 @@ class EarnShellsWorker:
                 logger.info("Received interrupt signal, shutting down...")
                 break
             except Exception as e:
-                logger.error("Unexpected error in continuous worker: %s", e)
+                logger.exception("Unexpected error in continuous worker: %s", e)
                 time.sleep(60)  # Wait 1 minute before retrying
 
     def run_once(self) -> None:
@@ -257,7 +261,7 @@ class EarnShellsWorker:
         logger.info("Single earning cycle completed")
 
 
-def main():
+def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Earn Shells Worker")
     parser.add_argument(

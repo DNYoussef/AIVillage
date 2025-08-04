@@ -12,15 +12,15 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from dataclasses import dataclass
 import json
 import logging
+from pathlib import Path
+import sys
 import time
-from dataclasses import dataclass
+import types
 from typing import Any
 
-import sys
-from pathlib import Path
-import types
 import torch
 
 if __package__ is None or __package__ == "":
@@ -32,6 +32,7 @@ def _stub_module(name: str, **attrs: object) -> None:
     for k, v in attrs.items():
         setattr(mod, k, v)
     sys.modules[name] = mod
+
 
 _stub_module(
     "src.production.evolution.infrastructure_aware_evolution",
@@ -55,7 +56,6 @@ from src.production.federated_learning.federated_coordinator import (
     TrainingParticipant,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -74,19 +74,24 @@ class MockP2PNode:
             evolution_capacity=1.0,
         )
 
-    async def broadcast_to_peers(self, _msg_type: str, _message: dict[str, Any]) -> bool:
+    async def broadcast_to_peers(
+        self, _msg_type: str, _message: dict[str, Any]
+    ) -> bool:
         return True
 
     async def send_to_peer(self, _peer_id: str, _message: dict[str, Any]) -> bool:
         return True
 
-    def get_suitable_evolution_peers(self, min_count: int = 1) -> list[PeerCapabilities]:
+    def get_suitable_evolution_peers(
+        self, min_count: int = 1
+    ) -> list[PeerCapabilities]:
         return []
 
 
-async def run_test(participants: int, dp_check: bool, efficiency: bool) -> dict[str, Any]:
+async def run_test(
+    participants: int, dp_check: bool, efficiency: bool
+) -> dict[str, Any]:
     """Verify noise application and privacy budget consumption."""
-
     config = FederatedLearningConfig()
     fl = DistributedFederatedLearning(MockP2PNode(), config=config)
 
@@ -110,7 +115,9 @@ async def run_test(participants: int, dp_check: bool, efficiency: bool) -> dict[
     gradients = {"w": torch.ones(5)}
     start = time.time()
     noisy = fl._add_differential_privacy_noise(
-        gradients, fl.config.differential_privacy_epsilon, fl.config.differential_privacy_delta
+        gradients,
+        fl.config.differential_privacy_epsilon,
+        fl.config.differential_privacy_delta,
     )
     runtime = time.time() - start
 
@@ -139,10 +146,24 @@ async def run_test(participants: int, dp_check: bool, efficiency: bool) -> dict[
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--participants", type=int, default=3, help="number of mock participants to simulate")
-    parser.add_argument("--dp-check", action="store_true", help="validate privacy budget consumption")
-    parser.add_argument("--efficiency", action="store_true", help="report runtime metrics")
-    parser.add_argument("--output", type=str, default="-", help="file to write JSON results to; '-' for stdout")
+    parser.add_argument(
+        "--participants",
+        type=int,
+        default=3,
+        help="number of mock participants to simulate",
+    )
+    parser.add_argument(
+        "--dp-check", action="store_true", help="validate privacy budget consumption"
+    )
+    parser.add_argument(
+        "--efficiency", action="store_true", help="report runtime metrics"
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="-",
+        help="file to write JSON results to; '-' for stdout",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)
@@ -158,4 +179,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

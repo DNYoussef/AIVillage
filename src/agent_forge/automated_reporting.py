@@ -1,4 +1,4 @@
-"""Automated Publication-Ready Reporting System
+"""Automated Publication-Ready Reporting System.
 
 Generates professional reports from Agent Forge benchmark results:
 - Publication-ready Markdown with LaTeX tables
@@ -9,21 +9,21 @@ Generates professional reports from Agent Forge benchmark results:
 """
 
 import asyncio
+from dataclasses import dataclass
+from datetime import datetime
 import json
 import logging
 import os
+from pathlib import Path
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
+from jinja2 import Template
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from jinja2 import Template
 
 from agent_forge.results_analyzer import ResultsAnalyzer
 
@@ -49,7 +49,7 @@ class ReportConfig:
 class PublicationReportGenerator:
     """Generates publication-ready reports from benchmark results."""
 
-    def __init__(self, config: ReportConfig):
+    def __init__(self, config: ReportConfig) -> None:
         self.config = config
         self.output_dir = Path(config.output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -1129,7 +1129,7 @@ python agent_forge/automated_reporting.py \\
 
 
 # CLI interface
-async def main():
+async def main() -> int:
     """Main CLI for automated reporting."""
     import argparse
 

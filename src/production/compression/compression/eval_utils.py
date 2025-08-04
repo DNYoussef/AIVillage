@@ -23,7 +23,7 @@ class EvaluationResult:
 class CompressionEvaluator:
     """Evaluation harness for compression pipeline."""
 
-    def __init__(self, model_path: str, tokenizer_path: str | None = None):
+    def __init__(self, model_path: str, tokenizer_path: str | None = None) -> None:
         self.model_path = model_path
         self.tokenizer_path = tokenizer_path or model_path
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -143,7 +143,7 @@ class CompressionEvaluator:
                 inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
                 start_time = time.time()
-                outputs = model(**inputs)
+                model(**inputs)
                 end_time = time.time()
 
                 times.append((end_time - start_time) * 1000)
@@ -161,7 +161,7 @@ class CompressionEvaluator:
             test_input = torch.randint(0, 1000, (1, 50)).to(self.device)
 
             with torch.no_grad():
-                outputs = model(test_input)
+                model(test_input)
 
             memory_mb = torch.cuda.max_memory_allocated() / (1024 * 1024)
             return memory_mb
@@ -196,7 +196,7 @@ class CompressionEvaluator:
             memory_usage_mb=memory_usage,
         )
 
-    def print_evaluation_report(self, result: EvaluationResult):
+    def print_evaluation_report(self, result: EvaluationResult) -> None:
         """Print formatted evaluation report."""
         print("\n" + "=" * 50)
         print("COMPRESSION EVALUATION REPORT")

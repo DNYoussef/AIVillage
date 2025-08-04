@@ -1,9 +1,9 @@
 """Mobile-optimized compression with automatic method selection."""
+
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Dict
 
 import torch
 
@@ -16,9 +16,21 @@ class MobileCompressor:
     """Compression tuned for different mobile device profiles."""
 
     DEVICE_PROFILES = {
-        "low_end": {"memory_mb": 1500, "target_compression": 50.0, "prefer_simple": True},
-        "mid_range": {"memory_mb": 3000, "target_compression": 20.0, "prefer_simple": False},
-        "high_end": {"memory_mb": 4000, "target_compression": 10.0, "prefer_simple": False},
+        "low_end": {
+            "memory_mb": 1500,
+            "target_compression": 50.0,
+            "prefer_simple": True,
+        },
+        "mid_range": {
+            "memory_mb": 3000,
+            "target_compression": 20.0,
+            "prefer_simple": False,
+        },
+        "high_end": {
+            "memory_mb": 4000,
+            "target_compression": 10.0,
+            "prefer_simple": False,
+        },
     }
 
     def __init__(self, device_profile: str = "low_end") -> None:
@@ -30,7 +42,7 @@ class MobileCompressor:
         )
         logger.info("MobileCompressor initialized for %s devices", device_profile)
 
-    def prepare_model_for_device(self, model_path: str | Path) -> Dict[str, object]:
+    def prepare_model_for_device(self, model_path: str | Path) -> dict[str, object]:
         model = torch.load(Path(model_path), map_location="cpu")
         param_count = sum(p.numel() for p in model.parameters())
         original_mb = param_count * 4 / 1024 / 1024

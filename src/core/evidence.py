@@ -42,7 +42,8 @@ class EvidencePack(BaseModel):
     @classmethod
     def _non_empty(cls, v: list[Chunk]) -> list[Chunk]:
         if not v:
-            raise ValueError("chunks must not be empty")
+            msg = "chunks must not be empty"
+            raise ValueError(msg)
         return v
 
     def to_json(self) -> str:

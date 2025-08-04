@@ -5,11 +5,11 @@ from typing import Any
 
 
 class HippoCache:
-    def __init__(self, max_size: int = 1000):
+    def __init__(self, max_size: int = 1000) -> None:
         self.cache = {}
         self.max_size = max_size
 
-    def add(self, key: str, value: Any, timestamp: datetime):
+    def add(self, key: str, value: Any, timestamp: datetime) -> None:
         if len(self.cache) >= self.max_size:
             self._evict()
         self.cache[key] = {"value": value, "timestamp": timestamp, "frequency": 1}
@@ -20,7 +20,7 @@ class HippoCache:
             return self.cache[key]["value"]
         return None
 
-    def _evict(self):
+    def _evict(self) -> None:
         # Implement eviction strategy based on frequency and recency
         sorted_items = sorted(
             self.cache.items(),

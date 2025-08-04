@@ -61,7 +61,7 @@ class SeedLMConfig:
 class MultiScaleLFSRGenerator:
     """Multi-scale LFSR basis generator with deterministic seeding."""
 
-    def __init__(self, seeds: list[int], tap_configs: list[list[int]]):
+    def __init__(self, seeds: list[int], tap_configs: list[list[int]]) -> None:
         self.seeds = seeds
         self.tap_configs = tap_configs
         self.lfsr_generators = {}
@@ -109,7 +109,7 @@ class MultiScaleLFSRGenerator:
 class LFSRGenerator:
     """Hardware-friendly LFSR pseudo-random generator."""
 
-    def __init__(self, seed: int, taps: list[int] = None):
+    def __init__(self, seed: int, taps: list[int] | None = None) -> None:
         self.register = seed & 0xFFFF
         self.taps = taps or [16, 14, 13, 11]
         self.initial_seed = seed
@@ -133,7 +133,7 @@ class LFSRGenerator:
 class AdaptiveBlockAnalyzer:
     """Analyzes weight matrices to determine optimal block sizes."""
 
-    def __init__(self, variance_threshold: float = 0.1):
+    def __init__(self, variance_threshold: float = 0.1) -> None:
         self.variance_threshold = variance_threshold
 
     def determine_block_size(self, weight: torch.Tensor) -> int:
@@ -156,7 +156,7 @@ class AdaptiveBlockAnalyzer:
 class ProgressiveSeedLMEncoder:
     """Progressive multi-resolution SeedLM encoder with adaptive quality control."""
 
-    def __init__(self, config: SeedLMConfig):
+    def __init__(self, config: SeedLMConfig) -> None:
         self.config = config
         self.multi_scale_generator = MultiScaleLFSRGenerator(
             seeds=[12345, 67890, 23456, 78901],
@@ -177,7 +177,7 @@ class ProgressiveSeedLMEncoder:
             "average_ratio": 0.0,
         }
 
-    def set_seed(self, seed: int):
+    def set_seed(self, seed: int) -> None:
         """Set random seed for deterministic compression."""
         self.seed = seed
         torch.manual_seed(seed)
@@ -197,10 +197,12 @@ class ProgressiveSeedLMEncoder:
         try:
             # Input validation
             if not isinstance(weight, torch.Tensor):
-                raise SeedLMCompressionError("Input must be a torch.Tensor")
+                msg = "Input must be a torch.Tensor"
+                raise SeedLMCompressionError(msg)
 
             if not (0.0 <= compression_level <= 1.0):
-                raise ValueError("Compression level must be between 0 and 1")
+                msg = "Compression level must be between 0 and 1"
+                raise ValueError(msg)
 
             if weight.numel() == 0:
                 # Handle empty tensors gracefully
@@ -248,7 +250,8 @@ class ProgressiveSeedLMEncoder:
             return compressed_data
 
         except Exception as e:
-            raise SeedLMCompressionError(f"Compression failed: {e!s}") from e
+            msg = f"Compression failed: {e!s}"
+            raise SeedLMCompressionError(msg) from e
 
     def decode(
         self, compressed_data: dict[str, Any], verify: bool = False
@@ -257,11 +260,13 @@ class ProgressiveSeedLMEncoder:
         try:
             # Input validation
             if not isinstance(compressed_data, dict):
-                raise SeedLMDecompressionError("Invalid compressed data format")
+                msg = "Invalid compressed data format"
+                raise SeedLMDecompressionError(msg)
 
             if "data" not in compressed_data or "metadata" not in compressed_data:
+                msg = "Missing required compressed data fields"
                 raise SeedLMDecompressionError(
-                    "Missing required compressed data fields"
+                    msg
                 )
 
             # Integrity verification
@@ -285,8 +290,9 @@ class ProgressiveSeedLMEncoder:
             if verify and "checksum" in metadata:
                 computed_checksum = self._compute_checksum(reconstructed)
                 if computed_checksum != metadata["checksum"]:
+                    msg = "Integrity check failed - data may be corrupted"
                     raise SeedLMVerificationError(
-                        "Integrity check failed - data may be corrupted"
+                        msg
                     )
 
             return reconstructed
@@ -294,14 +300,15 @@ class ProgressiveSeedLMEncoder:
         except Exception as e:
             if isinstance(e, SeedLMError):
                 raise
-            raise SeedLMDecompressionError(f"Decompression failed: {e!s}") from e
+            msg = f"Decompression failed: {e!s}"
+            raise SeedLMDecompressionError(msg) from e
 
     def encode_progressive(
         self,
         weight: torch.Tensor,
         base_quality: float = 0.3,
         enhancement_layers: int = 3,
-        quality_increments: list[float] = None,
+        quality_increments: list[float] | None = None,
     ) -> dict[str, Any]:
         """Encode with progressive quality layers."""
         if quality_increments is None:
@@ -346,7 +353,7 @@ class ProgressiveSeedLMEncoder:
         }
 
     def decode_progressive(
-        self, compressed_data: dict[str, Any], num_layers: int = None
+        self, compressed_data: dict[str, Any], num_layers: int | None = None
     ) -> torch.Tensor:
         """Decode progressive compression with configurable quality."""
         # Decode base layer
@@ -356,10 +363,7 @@ class ProgressiveSeedLMEncoder:
         enhancement_layers = compressed_data["enhancement_layers"]
         max_layers = len(enhancement_layers)
 
-        if num_layers is None:
-            num_layers = max_layers
-        else:
-            num_layers = min(num_layers, max_layers)
+        num_layers = max_layers if num_layers is None else min(num_layers, max_layers)
 
         for i in range(num_layers):
             residual = self.decode(enhancement_layers[i])
@@ -486,7 +490,7 @@ class ProgressiveSeedLMEncoder:
 class SeedLMCompressor:
     """Legacy SeedLM compressor with enhanced capabilities."""
 
-    def __init__(self, block_size: int = 8, latent_dim: int = 4, num_seeds: int = 256):
+    def __init__(self, block_size: int = 8, latent_dim: int = 4, num_seeds: int = 256) -> None:
         self.block_size = block_size
         self.latent_dim = latent_dim
         self.num_seeds = num_seeds

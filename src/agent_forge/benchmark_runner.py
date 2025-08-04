@@ -1,4 +1,4 @@
-"""Automated Benchmark Runner
+"""Automated Benchmark Runner.
 
 Orchestrates the complete benchmarking pipeline for Agent Forge models:
 - Automatically runs trained models through all benchmark suites
@@ -9,11 +9,11 @@ Orchestrates the complete benchmarking pipeline for Agent Forge models:
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-import sys
-from datetime import datetime
 from pathlib import Path
+import sys
 from typing import Any
 
 import torch
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class BenchmarkRunner:
     """Automated benchmark runner for Agent Forge models."""
 
-    def __init__(self, base_output_dir: str = "./benchmark_results"):
+    def __init__(self, base_output_dir: str = "./benchmark_results") -> None:
         self.base_output_dir = Path(base_output_dir)
         self.base_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -128,7 +128,7 @@ class BenchmarkRunner:
             }
 
         except Exception as e:
-            logger.error(f"Benchmark failed for {model_name}: {e}")
+            logger.exception(f"Benchmark failed for {model_name}: {e}")
             return {"status": "failed", "model_name": model_name, "error": str(e)}
 
     async def benchmark_pipeline_outputs(
@@ -168,7 +168,7 @@ class BenchmarkRunner:
 
     async def _save_comprehensive_results(
         self, comparison_report: ComparisonReport, output_dir: Path
-    ):
+    ) -> None:
         """Save comprehensive benchmark results."""
         # Save detailed JSON report
         report_file = output_dir / "comprehensive_report.json"
@@ -202,7 +202,7 @@ class BenchmarkRunner:
 
     async def _generate_publication_report(
         self, comparison_report: ComparisonReport, output_dir: Path
-    ):
+    ) -> None:
         """Generate publication-ready performance report."""
         model_name = comparison_report.target_model
         performance = comparison_report.performance_summary
@@ -288,7 +288,7 @@ The **{model_name}** model has been evaluated across multiple standardized bench
 ### Resource Usage
 """
 
-        for benchmark_name in performance["execution_times"].keys():
+        for benchmark_name in performance["execution_times"]:
             exec_time = performance["execution_times"][benchmark_name]
             memory_usage = performance["memory_usage"][benchmark_name]
             report_content += f"- **{benchmark_name}**: {exec_time:.1f}s execution, {memory_usage:.1f}GB memory\n"
@@ -390,7 +390,7 @@ python agent_forge/benchmark_runner.py --model-path {model_name} --output-dir {o
             "\n".join(weaknesses) if weaknesses else "- No major weaknesses identified"
         )
 
-    async def _generate_cross_stage_comparison(self, stage_results: dict[str, Any]):
+    async def _generate_cross_stage_comparison(self, stage_results: dict[str, Any]) -> None:
         """Generate comparison across pipeline stages."""
         logger.info("Generating cross-stage comparison")
 
@@ -568,7 +568,7 @@ Based on the cross-stage analysis:
 
 
 # CLI interface
-async def main():
+async def main() -> int:
     """Main CLI for benchmark runner."""
     import argparse
 

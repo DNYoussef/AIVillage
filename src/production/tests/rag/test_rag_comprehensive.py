@@ -15,7 +15,7 @@ except ImportError:
 class TestRAGSystem:
     """Test the RAG system functionality."""
 
-    def test_rag_imports(self):
+    def test_rag_imports(self) -> None:
         """Test that RAG modules can be imported."""
         try:
             from production.rag.rag_system.main import RAGSystem
@@ -24,7 +24,7 @@ class TestRAGSystem:
         except ImportError:
             pytest.skip("RAG main module not available")
 
-    def test_vector_store_exists(self):
+    def test_vector_store_exists(self) -> None:
         """Test that vector store exists."""
         try:
             from production.rag.rag_system.vector_store import VectorStore
@@ -33,7 +33,7 @@ class TestRAGSystem:
         except ImportError:
             pytest.skip("VectorStore not available")
 
-    def test_document_indexing_concept(self):
+    def test_document_indexing_concept(self) -> None:
         """Test document indexing concepts."""
         # Mock documents
         documents = [
@@ -43,11 +43,11 @@ class TestRAGSystem:
         ]
 
         # Test basic indexing concept
-        indexed = {i: doc for i, doc in enumerate(documents)}
+        indexed = dict(enumerate(documents))
         assert len(indexed) == 3
         assert indexed[0] == "The sky is blue."
 
-    def test_similarity_search_concept(self):
+    def test_similarity_search_concept(self) -> None:
         """Test similarity search concepts."""
         # Mock embeddings
         query_embedding = [0.1, 0.2, 0.3]
@@ -71,7 +71,7 @@ class TestRAGSystem:
 class TestRAGRetrieval:
     """Test RAG retrieval components."""
 
-    def test_faiss_backend_exists(self):
+    def test_faiss_backend_exists(self) -> None:
         """Test FAISS backend availability."""
         try:
             from production.rag.rag_system.faiss_backend import FAISSBackend
@@ -80,7 +80,7 @@ class TestRAGRetrieval:
         except ImportError:
             pytest.skip("FAISS backend not available")
 
-    def test_graph_explain_exists(self):
+    def test_graph_explain_exists(self) -> None:
         """Test graph explanation module."""
         try:
             from production.rag.rag_system.graph_explain import GraphExplain
@@ -93,7 +93,7 @@ class TestRAGRetrieval:
 class TestRAGGeneration:
     """Test RAG generation capabilities."""
 
-    def test_generation_concept(self):
+    def test_generation_concept(self) -> None:
         """Test basic generation concept."""
         # Mock retrieved documents
         retrieved_docs = [

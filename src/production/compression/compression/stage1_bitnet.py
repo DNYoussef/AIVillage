@@ -6,9 +6,9 @@ from transformers import Trainer, TrainerCallback, TrainingArguments
 
 
 class RMSNorm(nn.Module):
-    """Root Mean Square Layer Normalization for BitNet stabilization"""
+    """Root Mean Square Layer Normalization for BitNet stabilization."""
 
-    def __init__(self, dim: int, eps: float = 1e-6):
+    def __init__(self, dim: int, eps: float = 1e-6) -> None:
         super().__init__()
         self.weight = nn.Parameter(torch.ones(dim))
         self.eps = eps
@@ -19,9 +19,9 @@ class RMSNorm(nn.Module):
 
 
 class BitNetLinear(nn.Module):
-    """BitNet Linear layer with ternary quantization"""
+    """BitNet Linear layer with ternary quantization."""
 
-    def __init__(self, in_features: int, out_features: int, bias: bool = True):
+    def __init__(self, in_features: int, out_features: int, bias: bool = True) -> None:
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -38,7 +38,7 @@ class BitNetLinear(nn.Module):
         self.alpha = nn.Parameter(torch.ones(1))  # Scaling factor
 
     def quantize_weights(self, weights: torch.Tensor) -> torch.Tensor:
-        """Quantize weights to ternary {-1, 0, 1}"""
+        """Quantize weights to ternary {-1, 0, 1}."""
         # Calculate threshold for sparsity
         threshold = weights.abs().mean()
 
@@ -65,7 +65,7 @@ class BitNetLinear(nn.Module):
         return F.linear(x, effective_weights, self.bias)
 
     def to_float(self) -> torch.Tensor:
-        """Return quantized weights as float tensor"""
+        """Return quantized weights as float tensor."""
         return self.quantize_weights(self.weight_fp) * self.alpha
 
 
@@ -85,7 +85,7 @@ def convert_to_bitnet(model, threshold: float = 0.02):
 
         return bitnet_layer
 
-    def replace_linear_recursive(module, name=""):
+    def replace_linear_recursive(module, name="") -> None:
         for child_name, child in module.named_children():
             if isinstance(child, nn.Linear):
                 # Replace with BitNet linear
@@ -114,8 +114,8 @@ def convert_to_bitnet(model, threshold: float = 0.02):
     return model
 
 
-def add_rmsnorm_to_attention(model):
-    """Add RMSNorm layers after attention blocks for stability"""
+def add_rmsnorm_to_attention(model) -> None:
+    """Add RMSNorm layers after attention blocks for stability."""
     for name, module in model.named_modules():
         if "attention" in name.lower() or "attn" in name.lower():
             # Add RMSNorm after attention if it doesn't exist
@@ -129,7 +129,7 @@ def add_rmsnorm_to_attention(model):
                 def forward_with_norm(*args, **kwargs):
                     output = original_forward(*args, **kwargs)
                     if isinstance(output, tuple):
-                        return (module.norm(output[0]),) + output[1:]
+                        return (module.norm(output[0]), *output[1:])
                     return module.norm(output)
 
                 module.forward = forward_with_norm
@@ -138,14 +138,14 @@ def add_rmsnorm_to_attention(model):
 class GradualBitnetCallback(TrainerCallback):
     """Lambda schedule ramping 0->1 over first 40% of steps."""
 
-    def __init__(self, total_steps: int, warmup_ratio: float = 0.4):
+    def __init__(self, total_steps: int, warmup_ratio: float = 0.4) -> None:
         self.total_steps = total_steps
         self.warmup_steps = int(total_steps * warmup_ratio)
 
     def on_step_begin(self, args, state, control, **kwargs):
         lam = min(state.global_step / self.warmup_steps, 1.0)
         for m in kwargs["model"].modules():
-            if isinstance(m, bnb.nn.LinearBitNet) or isinstance(m, BitNetLinear):
+            if isinstance(m, bnb.nn.LinearBitNet | BitNetLinear):
                 m.lambda_val = lam
         return control
 

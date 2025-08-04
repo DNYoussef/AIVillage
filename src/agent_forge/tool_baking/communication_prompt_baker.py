@@ -7,14 +7,14 @@ class CommunicationPromptBaker:
         self,
         model_name: str,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
-    ):
+    ) -> None:
         self.device = device
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     def bake_prompts(
         self, prompts: list[str], num_iterations: int = 1000, lr: float = 1e-5
-    ):
+    ) -> None:
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=lr)
 
         for iteration in range(num_iterations):
@@ -37,7 +37,7 @@ class CommunicationPromptBaker:
 
         print("Prompt baking completed.")
 
-    def save_model(self, path: str):
+    def save_model(self, path: str) -> None:
         self.model.save_pretrained(path)
         self.tokenizer.save_pretrained(path)
         print(f"Model saved to {path}")
@@ -81,7 +81,7 @@ def get_communication_prompts() -> list[str]:
 
 def deep_bake_communication_prompts(
     model_name: str, num_rounds: int = 5, save_path: str = "./communication_baked_model"
-):
+) -> None:
     baker = CommunicationPromptBaker(model_name)
     prompts = get_communication_prompts()
 

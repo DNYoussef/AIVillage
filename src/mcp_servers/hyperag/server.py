@@ -1,4 +1,4 @@
-"""HypeRAG MCP Server Core
+"""HypeRAG MCP Server Core.
 
 Main server implementation for HypeRAG Model Context Protocol server.
 """
@@ -29,9 +29,9 @@ logger = logging.getLogger(__name__)
 
 
 class HypeRAGMCPServer:
-    """HypeRAG MCP Server implementation"""
+    """HypeRAG MCP Server implementation."""
 
-    def __init__(self, config_path: str | None = None):
+    def __init__(self, config_path: str | None = None) -> None:
         self.config_path = config_path or "config/hyperag_mcp.yaml"
         self.config = {}
         self.permission_manager: PermissionManager | None = None
@@ -45,7 +45,7 @@ class HypeRAGMCPServer:
         self.shutdown_event = asyncio.Event()
 
     async def initialize(self) -> None:
-        """Initialize the server components"""
+        """Initialize the server components."""
         logger.info("Initializing HypeRAG MCP Server...")
 
         # Load configuration
@@ -79,7 +79,7 @@ class HypeRAGMCPServer:
         logger.info("HypeRAG MCP Server initialized successfully")
 
     async def _load_config(self) -> None:
-        """Load configuration from file"""
+        """Load configuration from file."""
         try:
             config_file = Path(self.config_path)
             if config_file.exists():
@@ -92,11 +92,11 @@ class HypeRAGMCPServer:
                 )
                 self.config = self._get_default_config()
         except Exception as e:
-            logger.error(f"Failed to load configuration: {e!s}")
+            logger.exception(f"Failed to load configuration: {e!s}")
             self.config = self._get_default_config()
 
     def _get_default_config(self) -> dict[str, Any]:
-        """Get default configuration"""
+        """Get default configuration."""
         return {
             "server": {
                 "host": "localhost",
@@ -119,7 +119,7 @@ class HypeRAGMCPServer:
         }
 
     async def start(self) -> None:
-        """Start the MCP server"""
+        """Start the MCP server."""
         if not self.protocol_handler:
             await self.initialize()
 
@@ -154,7 +154,7 @@ class HypeRAGMCPServer:
     async def handle_connection(
         self, websocket: WebSocketServerProtocol, path: str
     ) -> None:
-        """Handle new WebSocket connection"""
+        """Handle new WebSocket connection."""
         connection_id = f"conn_{int(time.time() * 1000)}_{id(websocket)}"
         self.active_connections[connection_id] = websocket
 
@@ -165,7 +165,7 @@ class HypeRAGMCPServer:
         except websockets.exceptions.ConnectionClosed:
             logger.info(f"Connection closed: {connection_id}")
         except Exception as e:
-            logger.error(f"Error handling connection {connection_id}: {e!s}")
+            logger.exception(f"Error handling connection {connection_id}: {e!s}")
         finally:
             # Clean up connection
             if connection_id in self.active_connections:
@@ -178,7 +178,7 @@ class HypeRAGMCPServer:
     async def _handle_client_session(
         self, connection_id: str, websocket: WebSocketServerProtocol
     ) -> None:
-        """Handle client session"""
+        """Handle client session."""
         context: AuthContext | None = None
 
         async for message in websocket:
@@ -236,7 +236,7 @@ class HypeRAGMCPServer:
             except json.JSONDecodeError:
                 await self._send_error(websocket, "PARSE_ERROR", "Invalid JSON")
             except Exception as e:
-                logger.error(f"Error processing message from {connection_id}: {e!s}")
+                logger.exception(f"Error processing message from {connection_id}: {e!s}")
                 await self._send_error(
                     websocket, "INTERNAL_ERROR", f"Internal error: {e!s}"
                 )
@@ -244,7 +244,7 @@ class HypeRAGMCPServer:
     async def _authenticate_request(
         self, params: dict[str, Any], ip_address: str
     ) -> AuthContext | None:
-        """Authenticate a request"""
+        """Authenticate a request."""
         try:
             # Check for JWT token
             auth_header = params.get("auth") or params.get("authorization", "")
@@ -272,7 +272,7 @@ class HypeRAGMCPServer:
         message: str,
         request_id: str | None = None,
     ) -> None:
-        """Send error response"""
+        """Send error response."""
         error_response = {
             "jsonrpc": "2.0",
             "error": {"code": code, "message": message},
@@ -281,7 +281,7 @@ class HypeRAGMCPServer:
         await websocket.send(json.dumps(error_response))
 
     async def shutdown(self) -> None:
-        """Shutdown the server"""
+        """Shutdown the server."""
         logger.info("Shutting down HypeRAG MCP Server...")
 
         # Close all active connections
@@ -308,7 +308,7 @@ class HypeRAGMCPServer:
         logger.info("HypeRAG MCP Server shutdown complete")
 
     async def get_server_stats(self) -> dict[str, Any]:
-        """Get server statistics"""
+        """Get server statistics."""
         active_sessions = (
             await self.permission_manager.get_active_sessions()
             if self.permission_manager
@@ -338,8 +338,8 @@ class HypeRAGMCPServer:
         }
 
 
-async def main():
-    """Main entry point"""
+async def main() -> None:
+    """Main entry point."""
     # Set up logging
     logging.basicConfig(
         level=logging.INFO,
@@ -354,7 +354,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt")
     except Exception as e:
-        logger.error(f"Server error: {e!s}")
+        logger.exception(f"Server error: {e!s}")
     finally:
         await server.shutdown()
 

@@ -11,6 +11,7 @@ import tempfile
 
 try:
     import resource as _resource
+
     HAS_RESOURCE = True
 except ImportError:  # pragma: no cover - executed on Windows
     _resource = None
@@ -24,14 +25,15 @@ class Resource:
     RLIMIT_CPU = getattr(_resource, "RLIMIT_CPU", "RLIMIT_CPU")
 
     @staticmethod
-    def setrlimit(resource_type, limits):
+    def setrlimit(resource_type, limits) -> None:
         """Set resource limits if supported.
 
         Raises:
             OSError: If resource limits are not supported on this platform.
         """
         if _resource is None or platform.system() == "Windows":
-            raise OSError("resource.setrlimit is not supported on this platform")
+            msg = "resource.setrlimit is not supported on this platform"
+            raise OSError(msg)
         _resource.setrlimit(resource_type, limits)
 
     def __getattr__(self, name):  # pragma: no cover - thin wrapper
@@ -44,7 +46,7 @@ resource = Resource()
 
 
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, NoReturn
 
 from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
 from langroid.agent.task import Task
@@ -59,7 +61,7 @@ from .technique_archive import PROMPT_TECHNIQUE_ARCHIVE
 class ADASTask(Task):
     """ADAS Task for evolutionary agent development."""
 
-    def __init__(self, task_description: str):
+    def __init__(self, task_description: str) -> None:
         config = ChatAgentConfig(
             name="ADAS",
             system_message="You are an expert machine learning researcher designing agentic systems.",
@@ -72,7 +74,6 @@ class ADASTask(Task):
         self.best_agent = None
         self.best_performance = float("-inf")
 
-
     def generate_prompt(self, archive: list[dict]) -> str:
         archive_str = ",\n".join([str(agent) for agent in archive])
         prompt_parts = [
@@ -83,6 +84,7 @@ class ADASTask(Task):
             "Your response should be a JSON object with the following fields:\n        - thought: Your reasoning behind the agent design\n        - name: A name for your proposed agent architecture\n        - code: The complete Python code for the forward() function of your agent\n\n        Ensure your code uses the Langroid ChatAgent class and follows the correct structure.\n        ",
         ]
         return "".join(prompt_parts)
+
     def create_new_agent(self) -> dict[str, Any]:
         prompt = self.generate_prompt(self.archive)
         response = self.agent.llm_response(prompt)
@@ -103,7 +105,7 @@ class ADASTask(Task):
         try:
             import ast
 
-            tree = ast.parse(code)
+            ast.parse(code)
             score += 0.2
         except SyntaxError:
             return 0.0
@@ -140,7 +142,7 @@ class ADASTask(Task):
 class SecureCodeRunner:
     """Secure code execution using subprocess isolation."""
 
-    def __init__(self, logger=None):
+    def __init__(self, logger=None) -> None:
         self.logger = logger or get_logger("SecureCodeRunner")
 
     @contextmanager
@@ -150,8 +152,9 @@ class SecureCodeRunner:
             yield
         else:
 
-            def timeout_handler(signum, frame):
-                raise TimeoutError(f"Code execution exceeded {seconds} seconds")
+            def timeout_handler(signum, frame) -> NoReturn:
+                msg = f"Code execution exceeded {seconds} seconds"
+                raise TimeoutError(msg)
 
             signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(seconds)
@@ -203,13 +206,13 @@ class SecureCodeRunner:
                 self.logger.error(f"Code error: {output.get('error')}")
                 return 0.0
             except json.JSONDecodeError:
-                self.logger.error(f"Invalid output: {result.stdout}")
+                self.logger.exception(f"Invalid output: {result.stdout}")
                 return 0.0
         except subprocess.TimeoutExpired:
-            self.logger.error("Code execution timeout")
+            self.logger.exception("Code execution timeout")
             return 0.0
         except Exception as e:
-            self.logger.error(f"Execution error: {e}")
+            self.logger.exception(f"Execution error: {e}")
             return 0.0
         finally:
             os.unlink(script_path)
@@ -223,15 +226,13 @@ class AgentTechnique(ToolMessage):
     technique_name: str
     code: str
 
-    def __init__(self, **data: Any):
+    def __init__(self, **data: Any) -> None:
         super().__init__(**data)
         self.logger = get_logger("ADAS")
         self.runner = SecureCodeRunner(self.logger)
 
     def validate_code(self, code: str) -> bool:
         """Validate code for basic safety checks."""
-        import ast
-
         try:
             tree = ast.parse(code)
         except SyntaxError:
@@ -283,7 +284,7 @@ class AgentTechnique(ToolMessage):
             )
             return score
         except Exception as e:
-            self.logger.error(f"Failed to run technique {self.technique_name}: {e}")
+            self.logger.exception(f"Failed to run technique {self.technique_name}: {e}")
             return 0.0
 
 

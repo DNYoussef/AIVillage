@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import faiss
 import numpy as np
 
 from rag_system.core.config import UnifiedConfig
 from rag_system.retrieval.vector_store import VectorStore as PickledStore
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 DEFAULT_STORE_PATH = os.getenv("VECTOR_STORE_PATH", "vector_store.json")
 DEFAULT_DIM = 768

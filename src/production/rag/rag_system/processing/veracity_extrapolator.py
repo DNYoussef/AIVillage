@@ -7,7 +7,7 @@ from .prompt_constructor import construct_extrapolation_prompt
 
 
 class VeracityExtrapolator:
-    def __init__(self, knowledge_graph, llm, config):
+    def __init__(self, knowledge_graph, llm, config) -> None:
         """Initialize the VeracityExtrapolator.
 
         :param knowledge_graph: An instance of the knowledge graph.
@@ -50,7 +50,7 @@ class VeracityExtrapolator:
 
     def update_knowledge_graph(
         self, extrapolated_connections: list[tuple[str, str, str, float]]
-    ):
+    ) -> None:
         """Update the knowledge graph with extrapolated connections.
 
         :param extrapolated_connections: A list of tuples containing (entity1, relation, entity2, confidence).

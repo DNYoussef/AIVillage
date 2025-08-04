@@ -15,11 +15,11 @@ class KnowledgeChange:
 
 
 class KnowledgeTracker:
-    def __init__(self):
+    def __init__(self) -> None:
         self.changes = []
         self.knowledge_graph = {}
 
-    def record_change(self, change: KnowledgeChange):
+    def record_change(self, change: KnowledgeChange) -> None:
         """Record a change made to the knowledge graph.
 
         :param change: An instance of KnowledgeChange representing the modification.
@@ -36,13 +36,14 @@ class KnowledgeTracker:
         """
         return [change for change in self.changes if change.entity == entity]
 
-    def rollback_change(self, change_id: int):
+    def rollback_change(self, change_id: int) -> None:
         """Roll back a specific change by its ID.
 
         :param change_id: The index of the change in the changes list.
         """
         if not (0 <= change_id < len(self.changes)):
-            raise ValueError("Invalid change_id")
+            msg = "Invalid change_id"
+            raise ValueError(msg)
 
         change = self.changes.pop(change_id)
         entity_data = self.knowledge_graph.get(change.entity, {})

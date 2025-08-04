@@ -1,4 +1,4 @@
-"""LLM Driver Abstraction for Local Models
+"""LLM Driver Abstraction for Local Models.
 
 Supports pluggable local models (7B-14B) like Llama for repair proposals.
 Provides unified interface for different model backends.
@@ -18,7 +18,7 @@ from typing import Any
 
 
 class ModelBackend(Enum):
-    """Supported model backends"""
+    """Supported model backends."""
 
     OLLAMA = "ollama"
     LMSTUDIO = "lmstudio"
@@ -30,7 +30,7 @@ class ModelBackend(Enum):
 
 @dataclass
 class ModelConfig:
-    """Configuration for LLM model"""
+    """Configuration for LLM model."""
 
     model_name: str
     backend: ModelBackend
@@ -58,7 +58,7 @@ class ModelConfig:
     max_concurrent_requests: int = 3
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert config to dictionary"""
+        """Convert config to dictionary."""
         return {
             "model_name": self.model_name,
             "backend": self.backend.value,
@@ -75,7 +75,7 @@ class ModelConfig:
 
 @dataclass
 class GenerationRequest:
-    """Request for LLM generation"""
+    """Request for LLM generation."""
 
     prompt: str
     system_prompt: str | None = None
@@ -85,7 +85,7 @@ class GenerationRequest:
     stream: bool = False
 
     def merge_with_config(self, config: ModelConfig) -> dict[str, Any]:
-        """Merge request parameters with model config"""
+        """Merge request parameters with model config."""
         return {
             "prompt": self.prompt,
             "system_prompt": self.system_prompt,
@@ -99,7 +99,7 @@ class GenerationRequest:
 
 @dataclass
 class GenerationResponse:
-    """Response from LLM generation"""
+    """Response from LLM generation."""
 
     text: str
     finish_reason: str
@@ -112,7 +112,7 @@ class GenerationResponse:
     quality_score: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert response to dictionary"""
+        """Convert response to dictionary."""
         return {
             "text": self.text,
             "finish_reason": self.finish_reason,
@@ -125,38 +125,38 @@ class GenerationResponse:
 
 
 class LLMBackend(ABC):
-    """Abstract base class for LLM backends"""
+    """Abstract base class for LLM backends."""
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: ModelConfig) -> None:
         self.config = config
         self.logger = logging.getLogger(f"{__name__}.{config.backend.value}")
 
     @abstractmethod
     async def generate(self, request: GenerationRequest) -> GenerationResponse:
-        """Generate text from prompt"""
+        """Generate text from prompt."""
 
     @abstractmethod
     async def generate_stream(self, request: GenerationRequest) -> AsyncIterator[str]:
-        """Generate text with streaming"""
+        """Generate text with streaming."""
 
     @abstractmethod
     async def is_available(self) -> bool:
-        """Check if backend is available and functional"""
+        """Check if backend is available and functional."""
 
     @abstractmethod
     async def get_model_info(self) -> dict[str, Any]:
-        """Get information about the loaded model"""
+        """Get information about the loaded model."""
 
 
 class OllamaBackend(LLMBackend):
-    """Ollama backend for local models"""
+    """Ollama backend for local models."""
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: ModelConfig) -> None:
         super().__init__(config)
         self.base_url = config.api_endpoint or "http://localhost:11434"
 
     async def generate(self, request: GenerationRequest) -> GenerationResponse:
-        """Generate using Ollama API"""
+        """Generate using Ollama API."""
         import aiohttp
 
         start_time = time.time()
@@ -178,14 +178,13 @@ class OllamaBackend(LLMBackend):
             payload["system"] = request.system_prompt
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.base_url}/api/generate",
-                    json=payload,
-                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
-                ) as response:
-                    response.raise_for_status()
-                    result = await response.json()
+            async with aiohttp.ClientSession() as session, session.post(
+                f"{self.base_url}/api/generate",
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
+            ) as response:
+                response.raise_for_status()
+                result = await response.json()
 
             latency_ms = (time.time() - start_time) * 1000
 
@@ -203,11 +202,11 @@ class OllamaBackend(LLMBackend):
             )
 
         except Exception as e:
-            self.logger.error(f"Ollama generation failed: {e}")
+            self.logger.exception(f"Ollama generation failed: {e}")
             raise
 
     async def generate_stream(self, request: GenerationRequest) -> AsyncIterator[str]:
-        """Generate with streaming using Ollama"""
+        """Generate with streaming using Ollama."""
         import aiohttp
 
         payload = {
@@ -225,31 +224,30 @@ class OllamaBackend(LLMBackend):
             payload["system"] = request.system_prompt
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.base_url}/api/generate",
-                    json=payload,
-                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
-                ) as response:
-                    response.raise_for_status()
+            async with aiohttp.ClientSession() as session, session.post(
+                f"{self.base_url}/api/generate",
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
+            ) as response:
+                response.raise_for_status()
 
-                    async for line in response.content:
-                        if line:
-                            try:
-                                chunk = json.loads(line.decode("utf-8"))
-                                if "response" in chunk:
-                                    yield chunk["response"]
-                                if chunk.get("done", False):
-                                    break
-                            except json.JSONDecodeError:
-                                continue
+                async for line in response.content:
+                    if line:
+                        try:
+                            chunk = json.loads(line.decode("utf-8"))
+                            if "response" in chunk:
+                                yield chunk["response"]
+                            if chunk.get("done", False):
+                                break
+                        except json.JSONDecodeError:
+                            continue
 
         except Exception as e:
-            self.logger.error(f"Ollama streaming failed: {e}")
+            self.logger.exception(f"Ollama streaming failed: {e}")
             raise
 
     async def is_available(self) -> bool:
-        """Check if Ollama is running and model is available"""
+        """Check if Ollama is running and model is available."""
         import aiohttp
 
         try:
@@ -265,30 +263,29 @@ class OllamaBackend(LLMBackend):
             return False
 
     async def get_model_info(self) -> dict[str, Any]:
-        """Get Ollama model information"""
+        """Get Ollama model information."""
         import aiohttp
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.base_url}/api/show", json={"name": self.config.model_name}
-                ) as response:
-                    if response.status == 200:
-                        return await response.json()
+            async with aiohttp.ClientSession() as session, session.post(
+                f"{self.base_url}/api/show", json={"name": self.config.model_name}
+            ) as response:
+                if response.status == 200:
+                    return await response.json()
             return {}
         except:
             return {}
 
 
 class LMStudioBackend(LLMBackend):
-    """LM Studio backend for local models"""
+    """LM Studio backend for local models."""
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: ModelConfig) -> None:
         super().__init__(config)
         self.base_url = config.api_endpoint or "http://localhost:1234"
 
     async def generate(self, request: GenerationRequest) -> GenerationResponse:
-        """Generate using LM Studio OpenAI-compatible API"""
+        """Generate using LM Studio OpenAI-compatible API."""
         import aiohttp
 
         start_time = time.time()
@@ -310,14 +307,13 @@ class LMStudioBackend(LLMBackend):
         }
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.base_url}/v1/chat/completions",
-                    json=payload,
-                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
-                ) as response:
-                    response.raise_for_status()
-                    result = await response.json()
+            async with aiohttp.ClientSession() as session, session.post(
+                f"{self.base_url}/v1/chat/completions",
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
+            ) as response:
+                response.raise_for_status()
+                result = await response.json()
 
             latency_ms = (time.time() - start_time) * 1000
 
@@ -337,11 +333,11 @@ class LMStudioBackend(LLMBackend):
             )
 
         except Exception as e:
-            self.logger.error(f"LM Studio generation failed: {e}")
+            self.logger.exception(f"LM Studio generation failed: {e}")
             raise
 
     async def generate_stream(self, request: GenerationRequest) -> AsyncIterator[str]:
-        """Generate with streaming using LM Studio"""
+        """Generate with streaming using LM Studio."""
         import aiohttp
 
         messages = []
@@ -359,36 +355,35 @@ class LMStudioBackend(LLMBackend):
         }
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.base_url}/v1/chat/completions",
-                    json=payload,
-                    timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
-                ) as response:
-                    response.raise_for_status()
+            async with aiohttp.ClientSession() as session, session.post(
+                f"{self.base_url}/v1/chat/completions",
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=self.config.timeout_seconds),
+            ) as response:
+                response.raise_for_status()
 
-                    async for line in response.content:
-                        if line:
-                            line_str = line.decode("utf-8").strip()
-                            if line_str.startswith("data: "):
-                                data_str = line_str[6:]
-                                if data_str == "[DONE]":
-                                    break
-                                try:
-                                    chunk = json.loads(data_str)
-                                    if chunk.get("choices"):
-                                        delta = chunk["choices"][0].get("delta", {})
-                                        if "content" in delta:
-                                            yield delta["content"]
-                                except json.JSONDecodeError:
-                                    continue
+                async for line in response.content:
+                    if line:
+                        line_str = line.decode("utf-8").strip()
+                        if line_str.startswith("data: "):
+                            data_str = line_str[6:]
+                            if data_str == "[DONE]":
+                                break
+                            try:
+                                chunk = json.loads(data_str)
+                                if chunk.get("choices"):
+                                    delta = chunk["choices"][0].get("delta", {})
+                                    if "content" in delta:
+                                        yield delta["content"]
+                            except json.JSONDecodeError:
+                                continue
 
         except Exception as e:
-            self.logger.error(f"LM Studio streaming failed: {e}")
+            self.logger.exception(f"LM Studio streaming failed: {e}")
             raise
 
     async def is_available(self) -> bool:
-        """Check if LM Studio is running and has models loaded"""
+        """Check if LM Studio is running and has models loaded."""
         import aiohttp
 
         try:
@@ -403,7 +398,7 @@ class LMStudioBackend(LLMBackend):
             return False
 
     async def get_model_info(self) -> dict[str, Any]:
-        """Get LM Studio model information"""
+        """Get LM Studio model information."""
         import aiohttp
 
         try:
@@ -417,15 +412,15 @@ class LMStudioBackend(LLMBackend):
 
 
 class HuggingFaceBackend(LLMBackend):
-    """Hugging Face Transformers backend"""
+    """Hugging Face Transformers backend."""
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: ModelConfig) -> None:
         super().__init__(config)
         self.model = None
         self.tokenizer = None
 
-    async def _load_model(self):
-        """Load model and tokenizer"""
+    async def _load_model(self) -> None:
+        """Load model and tokenizer."""
         if self.model is None:
             try:
                 import torch
@@ -446,13 +441,14 @@ class HuggingFaceBackend(LLMBackend):
                     self.tokenizer.pad_token = self.tokenizer.eos_token
 
             except ImportError:
-                raise RuntimeError("transformers library not available")
+                msg = "transformers library not available"
+                raise RuntimeError(msg)
             except Exception as e:
-                self.logger.error(f"Failed to load HuggingFace model: {e}")
+                self.logger.exception(f"Failed to load HuggingFace model: {e}")
                 raise
 
     async def generate(self, request: GenerationRequest) -> GenerationResponse:
-        """Generate using HuggingFace model"""
+        """Generate using HuggingFace model."""
         await self._load_model()
 
         start_time = time.time()
@@ -502,12 +498,12 @@ class HuggingFaceBackend(LLMBackend):
         )
 
     async def generate_stream(self, request: GenerationRequest) -> AsyncIterator[str]:
-        """Streaming not implemented for HuggingFace backend"""
+        """Streaming not implemented for HuggingFace backend."""
         response = await self.generate(request)
         yield response.text
 
     async def is_available(self) -> bool:
-        """Check if HuggingFace backend is available"""
+        """Check if HuggingFace backend is available."""
         try:
             import torch
             import transformers
@@ -517,7 +513,7 @@ class HuggingFaceBackend(LLMBackend):
             return False
 
     async def get_model_info(self) -> dict[str, Any]:
-        """Get HuggingFace model information"""
+        """Get HuggingFace model information."""
         await self._load_model()
         return {
             "model_name": self.config.model_name,
@@ -530,10 +526,10 @@ class HuggingFaceBackend(LLMBackend):
 
 
 class LLMDriver:
-    """Main driver class for LLM operations"""
+    """Main driver class for LLM operations."""
 
-    def __init__(self, config: ModelConfig):
-        """Initialize LLM driver with configuration
+    def __init__(self, config: ModelConfig) -> None:
+        """Initialize LLM driver with configuration.
 
         Args:
             config: Model configuration
@@ -548,17 +544,18 @@ class LLMDriver:
         self._audit_log = []
 
     def _create_backend(self) -> LLMBackend:
-        """Create appropriate backend based on config"""
+        """Create appropriate backend based on config."""
         if self.config.backend == ModelBackend.OLLAMA:
             return OllamaBackend(self.config)
         if self.config.backend == ModelBackend.LMSTUDIO:
             return LMStudioBackend(self.config)
         if self.config.backend == ModelBackend.HUGGINGFACE:
             return HuggingFaceBackend(self.config)
-        raise ValueError(f"Unsupported backend: {self.config.backend}")
+        msg = f"Unsupported backend: {self.config.backend}"
+        raise ValueError(msg)
 
-    async def _check_rate_limit(self):
-        """Check and enforce rate limiting"""
+    async def _check_rate_limit(self) -> None:
+        """Check and enforce rate limiting."""
         now = time.time()
 
         # Clean old request times
@@ -574,8 +571,9 @@ class LLMDriver:
 
         # Check concurrent requests
         if self._concurrent_requests >= self.config.max_concurrent_requests:
+            msg = f"Max concurrent requests ({self.config.max_concurrent_requests}) exceeded"
             raise RuntimeError(
-                f"Max concurrent requests ({self.config.max_concurrent_requests}) exceeded"
+                msg
             )
 
         # Record this request
@@ -583,8 +581,8 @@ class LLMDriver:
 
     def _log_request(
         self, prompt: str, system_prompt: str | None, response: GenerationResponse
-    ):
-        """Log request for audit trail"""
+    ) -> None:
+        """Log request for audit trail."""
         log_entry = {
             "timestamp": datetime.now().isoformat(),
             "model": self.config.model_name,
@@ -605,7 +603,7 @@ class LLMDriver:
     async def generate(
         self, prompt: str, system_prompt: str | None = None, **kwargs
     ) -> GenerationResponse:
-        """Generate text from prompt with rate limiting and audit logging
+        """Generate text from prompt with rate limiting and audit logging.
 
         Args:
             prompt: Input prompt
@@ -634,7 +632,7 @@ class LLMDriver:
                     return response
                 except Exception as e:
                     if attempt == self.config.retry_attempts - 1:
-                        self.logger.error(
+                        self.logger.exception(
                             f"Generation failed after {self.config.retry_attempts} attempts: {e}"
                         )
                         raise
@@ -648,7 +646,7 @@ class LLMDriver:
     async def generate_stream(
         self, prompt: str, system_prompt: str | None = None, **kwargs
     ) -> AsyncIterator[str]:
-        """Generate text with streaming
+        """Generate text with streaming.
 
         Args:
             prompt: Input prompt
@@ -666,17 +664,17 @@ class LLMDriver:
             yield chunk
 
     async def is_ready(self) -> bool:
-        """Check if the LLM driver is ready for generation"""
+        """Check if the LLM driver is ready for generation."""
         return await self.backend.is_available()
 
     async def get_model_info(self) -> dict[str, Any]:
-        """Get information about the loaded model"""
+        """Get information about the loaded model."""
         info = await self.backend.get_model_info()
         info["config"] = self.config.to_dict()
         return info
 
     def parse_confidence_from_response(self, response_text: str) -> float | None:
-        """Parse confidence score from model response
+        """Parse confidence score from model response.
 
         Args:
             response_text: Generated text
@@ -708,11 +706,11 @@ class LLMDriver:
         return None
 
     def get_audit_log(self) -> list[dict[str, Any]]:
-        """Get audit log of recent requests"""
+        """Get audit log of recent requests."""
         return self._audit_log.copy()
 
     def get_usage_stats(self) -> dict[str, Any]:
-        """Get usage statistics"""
+        """Get usage statistics."""
         if not self._audit_log:
             return {"message": "No usage data available"}
 
@@ -739,7 +737,7 @@ class LLMDriver:
     def create_default_config(
         cls, model_name: str, backend: ModelBackend = ModelBackend.OLLAMA
     ) -> ModelConfig:
-        """Create default configuration for common models
+        """Create default configuration for common models.
 
         Args:
             model_name: Name of the model
@@ -760,7 +758,7 @@ class LLMDriver:
 
     @classmethod
     def create_llama_config(cls, model_size: str = "7b") -> ModelConfig:
-        """Create configuration for Llama models
+        """Create configuration for Llama models.
 
         Args:
             model_size: Model size (7b, 13b, 70b)

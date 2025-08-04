@@ -18,7 +18,6 @@ from transformers import (
     AutoTokenizer,
     BitsAndBytesConfig,
 )
-
 import wandb
 
 logger = logging.getLogger(__name__)
@@ -66,7 +65,7 @@ class MathTutorEvolution:
         self,
         project_name: str = "agent-forge",
         evolution_config: EvolutionConfig = None,
-    ):
+    ) -> None:
         self.project_name = project_name
         self.config = evolution_config or EvolutionConfig()
         self.population = []
@@ -96,7 +95,7 @@ class MathTutorEvolution:
         if self.config.target_grade_levels is None:
             self.config.target_grade_levels = list(range(1, 9))  # Grades 1-8
 
-    def initialize_wandb_tracking(self):
+    def initialize_wandb_tracking(self) -> None:
         """Initialize W&B tracking for evolution process."""
         try:
             wandb.init(
@@ -116,7 +115,7 @@ class MathTutorEvolution:
             logger.info("W&B evolution tracking initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize W&B tracking: {e}")
+            logger.exception(f"Failed to initialize W&B tracking: {e}")
 
     async def initialize_population(self) -> list[ModelIndividual]:
         """Initialize population with diverse base models optimized for math tutoring."""
@@ -193,7 +192,7 @@ class MathTutorEvolution:
                     )
 
             except Exception as e:
-                logger.error(
+                logger.exception(
                     f"Failed to create individual from {model_info['name']}: {e}"
                 )
                 continue
@@ -303,7 +302,7 @@ class MathTutorEvolution:
             return individual
 
         except Exception as e:
-            logger.error(f"Failed to create individual from {model_name}: {e}")
+            logger.exception(f"Failed to create individual from {model_name}: {e}")
             return None
 
     async def quick_fitness_evaluation(
@@ -371,7 +370,7 @@ class MathTutorEvolution:
             return final_score
 
         except Exception as e:
-            logger.error(f"Error in quick fitness evaluation: {e}")
+            logger.exception(f"Error in quick fitness evaluation: {e}")
             return 0.3  # Default low score
 
     def evaluate_math_response(self, problem: str, response: str) -> bool:
@@ -398,10 +397,7 @@ class MathTutorEvolution:
             return True
 
         # Check response length (not too short, not too long)
-        if 10 <= len(response.split()) <= 100:
-            return True
-
-        return False
+        return 10 <= len(response.split()) <= 100
 
     async def create_model_variation(
         self, base_individual: ModelIndividual
@@ -423,7 +419,7 @@ class MathTutorEvolution:
                     individual_id=variation_id,
                     model_name=f"{base_individual.model_name}_var",
                     model_path=None,
-                    lineage=base_individual.lineage + ["variation"],
+                    lineage=[*base_individual.lineage, "variation"],
                     generation=base_individual.generation,
                     fitness_score=base_individual.fitness_score
                     * (0.9 + np.random.random() * 0.2),  # Add noise
@@ -441,7 +437,7 @@ class MathTutorEvolution:
                 return variation
 
         except Exception as e:
-            logger.error(f"Failed to create model variation: {e}")
+            logger.exception(f"Failed to create model variation: {e}")
 
         return None
 
@@ -520,7 +516,7 @@ class MathTutorEvolution:
 
         return self.population
 
-    async def evaluate_population_fitness(self):
+    async def evaluate_population_fitness(self) -> None:
         """Evaluate fitness for all individuals in population."""
         logger.info("Evaluating population fitness")
 
@@ -551,7 +547,7 @@ class MathTutorEvolution:
                     self.fitness_history[individual.individual_id] = fitness_score
 
             except Exception as e:
-                logger.error(
+                logger.exception(
                     f"Error evaluating fitness for {individual.individual_id}: {e}"
                 )
                 individual.fitness_score = 0.1  # Low fitness for failed evaluation
@@ -639,7 +635,7 @@ class MathTutorEvolution:
                     return offspring
 
         except Exception as e:
-            logger.error(f"Error in crossover: {e}")
+            logger.exception(f"Error in crossover: {e}")
 
         return None
 
@@ -656,7 +652,7 @@ class MathTutorEvolution:
 
             if mutated:
                 mutated.generation = generation
-                mutated.lineage = parent.lineage + ["mutation"]
+                mutated.lineage = [*parent.lineage, "mutation"]
 
                 # Add some random fitness variation (simulating mutation effect)
                 mutation_strength = 0.1
@@ -668,7 +664,7 @@ class MathTutorEvolution:
                 return mutated
 
         except Exception as e:
-            logger.error(f"Error in mutation: {e}")
+            logger.exception(f"Error in mutation: {e}")
 
         return None
 
@@ -682,7 +678,8 @@ class MathTutorEvolution:
         await self.initialize_population()
 
         if not self.population:
-            raise ValueError("Failed to initialize population")
+            msg = "Failed to initialize population"
+            raise ValueError(msg)
 
         # Evolution loop
         for generation in range(1, self.config.max_generations + 1):
@@ -705,7 +702,7 @@ class MathTutorEvolution:
                 await self.cleanup_old_models(generation)
 
             except Exception as e:
-                logger.error(f"Error in generation {generation}: {e}")
+                logger.exception(f"Error in generation {generation}: {e}")
                 continue
 
         # Log final results
@@ -732,7 +729,7 @@ class MathTutorEvolution:
 
         return self.best_individual
 
-    async def cleanup_old_models(self, current_generation: int):
+    async def cleanup_old_models(self, current_generation: int) -> None:
         """Clean up old models to manage memory."""
         # Keep only recent generations and best individuals
         generations_to_keep = 2
@@ -768,7 +765,7 @@ class MathTutorEvolution:
                 f"Cleaned up {len(individuals_to_remove)} old models from memory"
             )
 
-    async def save_champion_model(self, champion: ModelIndividual):
+    async def save_champion_model(self, champion: ModelIndividual) -> None:
         """Save the champion model for deployment."""
         try:
             # Create save directory
@@ -821,7 +818,7 @@ class MathTutorEvolution:
                 logger.info(f"Champion model saved to {champion_path}")
 
         except Exception as e:
-            logger.error(f"Error saving champion model: {e}")
+            logger.exception(f"Error saving champion model: {e}")
 
     def get_evolution_summary(self) -> dict[str, Any]:
         """Get comprehensive evolution summary."""
@@ -851,18 +848,18 @@ class MathTutorEvolution:
             },
             "population_diversity": {
                 "unique_lineages": len(
-                    set(tuple(ind.lineage) for ind in self.population)
+                    {tuple(ind.lineage) for ind in self.population}
                 ),
                 "merge_strategies_used": list(
-                    set(
+                    {
                         ind.merge_strategy
                         for ind in self.population
                         if ind.merge_strategy
-                    )
+                    }
                 ),
                 "generation_distribution": {
                     gen: len([ind for ind in self.population if ind.generation == gen])
-                    for gen in set(ind.generation for ind in self.population)
+                    for gen in {ind.generation for ind in self.population}
                 },
             },
             "model_statistics": {

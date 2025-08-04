@@ -4,7 +4,7 @@ from torch import nn
 
 
 class Geo2Z(nn.Module):
-    def __init__(self, in_dim=5, z_dim=64):
+    def __init__(self, in_dim=5, z_dim=64) -> None:
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(in_dim, 128), nn.Tanh(), nn.Linear(128, z_dim), nn.Tanh()
@@ -15,10 +15,10 @@ class Geo2Z(nn.Module):
 
 
 class Replay:
-    def __init__(self, N):
+    def __init__(self, N) -> None:
         self.buf, self.N = [], N
 
-    def add(self, *t):
+    def add(self, *t) -> None:
         if len(self.buf) >= self.N:
             self.buf.pop(0)
         self.buf.append(t)

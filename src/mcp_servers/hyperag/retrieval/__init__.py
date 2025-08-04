@@ -1,4 +1,4 @@
-"""HypeRAG Retrieval Stack
+"""HypeRAG Retrieval Stack.
 
 Core retrieval components for personalized knowledge graph navigation:
 - PersonalizedPageRank: Standard PPR with α-weight fusion

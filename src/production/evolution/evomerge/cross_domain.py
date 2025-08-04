@@ -135,7 +135,7 @@ def adapt_model_to_domain(
         hidden_states = outputs[0]
         for layer in self.transformer.h:
             hidden_states = hidden_states + layer.adapter(hidden_states)
-        outputs = (hidden_states,) + outputs[1:]
+        outputs = (hidden_states, *outputs[1:])
         return outputs
 
     model.original_forward = model.forward

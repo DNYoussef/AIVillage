@@ -18,7 +18,7 @@ class DummyNode:
         self.use_tls = False
         self.ssl_context = None
 
-    async def send_to_peer(self, peer_id, message):  # pragma: no cover - placeholder
+    async def send_to_peer(self, peer_id, message) -> None:  # pragma: no cover - placeholder
         pass
 
 
@@ -58,7 +58,7 @@ def _start_discovery_server(host: str, port: int, stop_event: threading.Event) -
     while not stop_event.is_set():
         try:
             conn, _ = sock.accept()
-        except socket.timeout:
+        except TimeoutError:
             continue
         with conn:
             length_data = conn.recv(4)

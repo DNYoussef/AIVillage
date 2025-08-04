@@ -19,7 +19,7 @@ except ImportError:
 class TestMemoryManager:
     """Test memory management functionality."""
 
-    def test_memory_manager_exists(self):
+    def test_memory_manager_exists(self) -> None:
         """Test that memory manager can be imported."""
         try:
             from production.memory.memory_manager import MemoryManager
@@ -28,7 +28,7 @@ class TestMemoryManager:
         except ImportError:
             pytest.skip("MemoryManager not available")
 
-    def test_memory_monitoring(self):
+    def test_memory_monitoring(self) -> None:
         """Test basic memory monitoring."""
         # Get current memory usage
         process = psutil.Process()
@@ -37,11 +37,11 @@ class TestMemoryManager:
         assert memory_info.rss > 0  # Should have some memory usage
         assert memory_info.vms > 0  # Should have virtual memory
 
-    def test_memory_limits(self):
+    def test_memory_limits(self) -> None:
         """Test memory limit concepts."""
         # Test memory limit checking
         current_memory = psutil.virtual_memory().used / (1024**3)  # GB
-        total_memory = psutil.virtual_memory().total / (1024**3)  # GB
+        psutil.virtual_memory().total / (1024**3)  # GB
 
         memory_limit = 2.0  # 2GB limit
 
@@ -54,7 +54,7 @@ class TestMemoryManager:
 class TestWandbManager:
     """Test Weights & Biases integration."""
 
-    def test_wandb_manager_exists(self):
+    def test_wandb_manager_exists(self) -> None:
         """Test that wandb manager can be imported."""
         try:
             from production.memory.wandb_manager import WandbManager
@@ -64,7 +64,7 @@ class TestWandbManager:
             pytest.skip("WandbManager not available")
 
     @patch("wandb.init")
-    def test_wandb_initialization_concept(self, mock_wandb_init):
+    def test_wandb_initialization_concept(self, mock_wandb_init) -> None:
         """Test W&B initialization concept."""
         # Mock W&B initialization
         mock_wandb_init.return_value = Mock()
@@ -78,32 +78,32 @@ class TestWandbManager:
 
         assert config["project"] == "agent-forge"
 
-    def test_logging_concept(self):
+    def test_logging_concept(self) -> None:
         """Test logging concept."""
         # Mock metrics logging
         metrics = {"loss": 0.1, "accuracy": 0.95, "epoch": 1}
 
         # Test that metrics are properly formatted
         assert all(isinstance(k, str) for k in metrics)
-        assert all(isinstance(v, (int, float)) for v in metrics.values())
+        assert all(isinstance(v, int | float) for v in metrics.values())
 
 
 class TestResourceMonitoring:
     """Test resource monitoring capabilities."""
 
-    def test_cpu_monitoring(self):
+    def test_cpu_monitoring(self) -> None:
         """Test CPU monitoring."""
         cpu_percent = psutil.cpu_percent(interval=0.1)
         assert 0 <= cpu_percent <= 100
 
-    def test_disk_monitoring(self):
+    def test_disk_monitoring(self) -> None:
         """Test disk monitoring."""
         disk_usage = psutil.disk_usage(".")
         assert disk_usage.total > 0
         assert disk_usage.used >= 0
         assert disk_usage.free >= 0
 
-    def test_gpu_availability(self):
+    def test_gpu_availability(self) -> None:
         """Test GPU availability detection."""
         try:
             import torch

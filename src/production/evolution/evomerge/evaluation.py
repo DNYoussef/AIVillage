@@ -39,8 +39,9 @@ def evaluate_model(model_path: str) -> dict[str, float | str]:
         return results
 
     except Exception as e:
-        logger.error(f"Error during model evaluation: {e!s}")
-        raise EvoMergeException(f"Error evaluating model: {e!s}")
+        logger.exception(f"Error during model evaluation: {e!s}")
+        msg = f"Error evaluating model: {e!s}"
+        raise EvoMergeException(msg)
 
 
 def evaluate_perplexity(
@@ -230,7 +231,7 @@ def calculate_overall_score(results: dict[str, float]) -> float:
 
 
 def parallel_evaluate_models(
-    model_paths: list[str], max_workers: int = None
+    model_paths: list[str], max_workers: int | None = None
 ) -> list[dict[str, float | str]]:
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         return list(executor.map(evaluate_model, model_paths))

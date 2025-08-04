@@ -1,7 +1,7 @@
 """Task router for intelligent model selection based on task characteristics."""
 
-import logging
 from dataclasses import dataclass
+import logging
 from typing import Any
 
 from .model_config import MODEL_ROUTING_CONFIG, TaskType
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TaskContext:
-    """Context for a task to help with routing decisions"""
+    """Context for a task to help with routing decisions."""
 
     difficulty_level: int  # 1-10
     domain: str  # e.g., "python_programming", "mathematical_proofs"
@@ -26,7 +26,7 @@ class TaskContext:
 class TaskRouter:
     """Routes tasks to optimal models based on task characteristics and performance."""
 
-    def __init__(self, openrouter_client: OpenRouterClient | None = None):
+    def __init__(self, openrouter_client: OpenRouterClient | None = None) -> None:
         """Initialize task router.
 
         Args:
@@ -221,7 +221,7 @@ class TaskRouter:
 
         return response
 
-    def _update_performance(self, task_type: TaskType, model: str, score: float):
+    def _update_performance(self, task_type: TaskType, model: str, score: float) -> None:
         """Update performance history for a model on a task type."""
         key = (task_type, model)
 
@@ -275,8 +275,8 @@ Original Problem:
 {original_problem}
 
 Create variation #{
-                i +
-                1} that maintains the same difficulty level but changes the context, numbers, or specific details."""
+                i + 1
+            } that maintains the same difficulty level but changes the context, numbers, or specific details."""
 
             # Use a more cost-effective model for variations
             variation_context = TaskContext(

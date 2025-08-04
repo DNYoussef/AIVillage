@@ -66,7 +66,9 @@ class CommunityHub:
         )
         return ""
 
-    async def post_research_results(self, task_id: str, results: dict[str, Any]) -> None:
+    async def post_research_results(
+        self, task_id: str, results: dict[str, Any]
+    ) -> None:
         self.research_results[task_id] = results
         logger.info(f"Research results for task {task_id} posted")
 

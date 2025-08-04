@@ -1,4 +1,4 @@
-"""Test script for HypeRAG MCP Server
+"""Test script for HypeRAG MCP Server.
 
 Simple test to verify the server is working correctly.
 """
@@ -16,29 +16,30 @@ logger = logging.getLogger(__name__)
 
 
 class MCPTestClient:
-    """Simple test client for HypeRAG MCP Server"""
+    """Simple test client for HypeRAG MCP Server."""
 
-    def __init__(self, uri: str = "ws://localhost:8765"):
+    def __init__(self, uri: str = "ws://localhost:8765") -> None:
         self.uri = uri
         self.websocket = None
 
-    async def connect(self):
-        """Connect to the server"""
+    async def connect(self) -> None:
+        """Connect to the server."""
         self.websocket = await websockets.connect(self.uri)
         logger.info(f"Connected to {self.uri}")
 
-    async def disconnect(self):
-        """Disconnect from the server"""
+    async def disconnect(self) -> None:
+        """Disconnect from the server."""
         if self.websocket:
             await self.websocket.close()
             logger.info("Disconnected")
 
     async def send_request(
-        self, method: str, params: dict[str, Any], request_id: str = None
+        self, method: str, params: dict[str, Any], request_id: str | None = None
     ) -> dict[str, Any]:
-        """Send a request and get response"""
+        """Send a request and get response."""
         if not self.websocket:
-            raise RuntimeError("Not connected")
+            msg = "Not connected"
+            raise RuntimeError(msg)
 
         request = {
             "jsonrpc": "2.0",
@@ -59,8 +60,8 @@ class MCPTestClient:
         return response
 
 
-async def test_server():
-    """Test the HypeRAG MCP Server"""
+async def test_server() -> None:
+    """Test the HypeRAG MCP Server."""
     client = MCPTestClient()
 
     try:
@@ -155,15 +156,15 @@ async def test_server():
         print("\n=== All tests completed ===")
 
     except Exception as e:
-        logger.error(f"Test failed: {e!s}")
+        logger.exception(f"Test failed: {e!s}")
         print(f"✗ Test error: {e!s}")
 
     finally:
         await client.disconnect()
 
 
-async def run_interactive_test():
-    """Interactive test mode"""
+async def run_interactive_test() -> None:
+    """Interactive test mode."""
     client = MCPTestClient()
 
     try:
@@ -201,8 +202,8 @@ async def run_interactive_test():
         await client.disconnect()
 
 
-async def main():
-    """Main test function"""
+async def main() -> None:
+    """Main test function."""
     import sys
 
     if len(sys.argv) > 1 and sys.argv[1] == "interactive":

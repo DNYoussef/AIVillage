@@ -165,7 +165,7 @@ class EarningResponse:
 
 
 class CreditsConfig:
-    def __init__(self):
+    def __init__(self) -> None:
         self.database_url = os.getenv(
             "DATABASE_URL", "postgresql://user:password@localhost/aivillage"
         )
@@ -180,14 +180,14 @@ class CreditsConfig:
 
 
 class CreditsLedger:
-    def __init__(self, config: CreditsConfig):
+    def __init__(self, config: CreditsConfig) -> None:
         self.config = config
         self.engine = create_engine(config.database_url)
         self.SessionLocal = sessionmaker(
             autocommit=False, autoflush=False, bind=self.engine
         )
 
-    def create_tables(self):
+    def create_tables(self) -> None:
         """Create all database tables."""
         Base.metadata.create_all(bind=self.engine)
 
@@ -212,7 +212,8 @@ class CreditsLedger:
                 return user
             except IntegrityError:
                 session.rollback()
-                raise ValueError(f"User {username} already exists")
+                msg = f"User {username} already exists"
+                raise ValueError(msg)
 
     def get_user(self, username: str) -> User | None:
         """Get user by username."""
@@ -224,7 +225,8 @@ class CreditsLedger:
         with self.get_session() as session:
             user = session.query(User).filter(User.username == username).first()
             if not user:
-                raise ValueError(f"User {username} not found")
+                msg = f"User {username} not found"
+                raise ValueError(msg)
 
             wallet = user.wallet
             return BalanceResponse(
@@ -239,7 +241,8 @@ class CreditsLedger:
     ) -> TransactionResponse:
         """Transfer credits between users with 1% burn."""
         if amount <= 0:
-            raise ValueError("Amount must be positive")
+            msg = "Amount must be positive"
+            raise ValueError(msg)
 
         burn_amount = int(amount * self.config.burn_rate)
         net_amount = amount - burn_amount
@@ -252,13 +255,16 @@ class CreditsLedger:
             to_user = session.query(User).filter(User.username == to_username).first()
 
             if not from_user:
-                raise ValueError(f"Sender {from_username} not found")
+                msg = f"Sender {from_username} not found"
+                raise ValueError(msg)
             if not to_user:
-                raise ValueError(f"Recipient {to_username} not found")
+                msg = f"Recipient {to_username} not found"
+                raise ValueError(msg)
 
             # Check balance
             if from_user.wallet.balance < amount:
-                raise ValueError("Insufficient balance")
+                msg = "Insufficient balance"
+                raise ValueError(msg)
 
             # Create transaction record
             transaction = Transaction(
@@ -296,11 +302,11 @@ class CreditsLedger:
                     completed_at=transaction.completed_at,
                 )
 
-            except Exception as e:
+            except Exception:
                 session.rollback()
                 transaction.status = "failed"
                 session.commit()
-                raise e
+                raise
 
     def earn_credits(
         self,
@@ -314,7 +320,8 @@ class CreditsLedger:
         with self.get_session() as session:
             user = session.query(User).filter(User.username == username).first()
             if not user:
-                raise ValueError(f"User {username} not found")
+                msg = f"User {username} not found"
+                raise ValueError(msg)
 
             # Check if already earned for this scrape timestamp
             existing_earning = (
@@ -385,7 +392,8 @@ class CreditsLedger:
         with self.get_session() as session:
             user = session.query(User).filter(User.username == username).first()
             if not user:
-                raise ValueError(f"User {username} not found")
+                msg = f"User {username} not found"
+                raise ValueError(msg)
 
             # Get both sent and received transactions
             sent_txs = (

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HypeRAG MCP Server - Standard MCP Implementation
+"""HypeRAG MCP Server - Standard MCP Implementation.
 
 Standard MCP server implementation for HypeRAG using stdio transport.
 Compatible with Claude Desktop and other MCP clients.
@@ -10,7 +10,7 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Add project root to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class HypeRAGMCPServer:
     """Standard MCP server for HypeRAG."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.permission_manager = None
         self.model_registry = None
         self.protocol_handler = None
@@ -41,14 +41,16 @@ class HypeRAGMCPServer:
         try:
             # Initialize permission manager with secure config
             import os
+
             jwt_secret = os.getenv("MCP_SERVER_SECRET")
             if not jwt_secret or len(jwt_secret) < 32:
                 logger.warning("Using default MCP secret - CHANGE IN PRODUCTION!")
-                jwt_secret = "INSECURE_DEFAULT_MCP_SECRET_CHANGE_IMMEDIATELY_IN_PRODUCTION"
+                jwt_secret = (
+                    "INSECURE_DEFAULT_MCP_SECRET_CHANGE_IMMEDIATELY_IN_PRODUCTION"
+                )
 
             self.permission_manager = PermissionManager(
-                jwt_secret=jwt_secret,
-                enable_audit=False
+                jwt_secret=jwt_secret, enable_audit=False
             )
 
             # Initialize model registry
@@ -58,17 +60,17 @@ class HypeRAGMCPServer:
             self.protocol_handler = MCPProtocolHandler(
                 permission_manager=self.permission_manager,
                 model_registry=self.model_registry,
-                storage_backend=None
+                storage_backend=None,
             )
 
             self.initialized = True
             logger.info("HypeRAG MCP server initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize server: {e}")
+            logger.exception(f"Failed to initialize server: {e}")
             sys.exit(1)
 
-    async def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+    async def handle_request(self, request: dict[str, Any]) -> dict[str, Any]:
         """Handle MCP request."""
         try:
             method = request.get("method")
@@ -77,6 +79,7 @@ class HypeRAGMCPServer:
 
             # Create auth context for local MCP usage
             from datetime import datetime, timedelta
+
             auth_context = AuthContext(
                 user_id="mcp-user",
                 agent_id="mcp-agent",
@@ -84,7 +87,7 @@ class HypeRAGMCPServer:
                 role="admin",
                 permissions={"hyperag:*"},
                 expires_at=datetime.now() + timedelta(hours=24),
-                ip_address="127.0.0.1"
+                ip_address="127.0.0.1",
             )
 
             # Handle standard MCP methods
@@ -97,12 +100,12 @@ class HypeRAGMCPServer:
                         "capabilities": {
                             "tools": True,
                             "resources": True,
-                            "logging": True
-                        }
-                    }
+                            "logging": True,
+                        },
+                    },
                 }
 
-            elif method == "tools/list":
+            if method == "tools/list":
                 return {
                     "jsonrpc": "2.0",
                     "id": request_id,
@@ -116,15 +119,15 @@ class HypeRAGMCPServer:
                                     "properties": {
                                         "query": {
                                             "type": "string",
-                                            "description": "Natural language query"
+                                            "description": "Natural language query",
                                         },
                                         "context": {
                                             "type": "string",
-                                            "description": "Additional context"
-                                        }
+                                            "description": "Additional context",
+                                        },
                                     },
-                                    "required": ["query"]
-                                }
+                                    "required": ["query"],
+                                },
                             },
                             {
                                 "name": "hyperag_memory",
@@ -135,26 +138,26 @@ class HypeRAGMCPServer:
                                         "action": {
                                             "type": "string",
                                             "enum": ["store", "retrieve", "search"],
-                                            "description": "Memory operation"
+                                            "description": "Memory operation",
                                         },
                                         "content": {
                                             "type": "string",
-                                            "description": "Content to store or search for"
+                                            "description": "Content to store or search for",
                                         },
                                         "tags": {
                                             "type": "array",
                                             "items": {"type": "string"},
-                                            "description": "Optional tags"
-                                        }
+                                            "description": "Optional tags",
+                                        },
                                     },
-                                    "required": ["action"]
-                                }
-                            }
+                                    "required": ["action"],
+                                },
+                            },
                         ]
-                    }
+                    },
                 }
 
-            elif method == "tools/call":
+            if method == "tools/call":
                 tool_name = params.get("name")
                 arguments = params.get("arguments", {})
 
@@ -163,22 +166,20 @@ class HypeRAGMCPServer:
                 elif tool_name == "hyperag_memory":
                     result = await self._handle_memory(arguments, auth_context)
                 else:
-                    raise ValueError(f"Unknown tool: {tool_name}")
+                    msg = f"Unknown tool: {tool_name}"
+                    raise ValueError(msg)
 
                 return {
                     "jsonrpc": "2.0",
                     "id": request_id,
                     "result": {
                         "content": [
-                            {
-                                "type": "text",
-                                "text": json.dumps(result, indent=2)
-                            }
+                            {"type": "text", "text": json.dumps(result, indent=2)}
                         ]
-                    }
+                    },
                 }
 
-            elif method == "resources/list":
+            if method == "resources/list":
                 return {
                     "jsonrpc": "2.0",
                     "id": request_id,
@@ -188,41 +189,36 @@ class HypeRAGMCPServer:
                                 "uri": "hyperag://knowledge-graph",
                                 "name": "HypeRAG Knowledge Graph",
                                 "description": "Access to the hypergraph knowledge base",
-                                "mimeType": "application/json"
+                                "mimeType": "application/json",
                             },
                             {
                                 "uri": "hyperag://memory-index",
                                 "name": "HypeRAG Memory Index",
                                 "description": "Episodic memory storage and retrieval",
-                                "mimeType": "application/json"
-                            }
+                                "mimeType": "application/json",
+                            },
                         ]
-                    }
+                    },
                 }
 
-            else:
-                # Unknown method
-                return {
-                    "jsonrpc": "2.0",
-                    "id": request_id,
-                    "error": {
-                        "code": -32601,
-                        "message": f"Method not found: {method}"
-                    }
-                }
+            # Unknown method
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {"code": -32601, "message": f"Method not found: {method}"},
+            }
 
         except Exception as e:
-            logger.error(f"Error handling request: {e}")
+            logger.exception(f"Error handling request: {e}")
             return {
                 "jsonrpc": "2.0",
                 "id": request.get("id"),
-                "error": {
-                    "code": -32000,
-                    "message": f"Server error: {str(e)}"
-                }
+                "error": {"code": -32000, "message": f"Server error: {e!s}"},
             }
 
-    async def _handle_query(self, arguments: Dict[str, Any], context: AuthContext) -> Dict[str, Any]:
+    async def _handle_query(
+        self, arguments: dict[str, Any], context: AuthContext
+    ) -> dict[str, Any]:
         """Handle hyperag_query tool call."""
         query = arguments.get("query", "")
         additional_context = arguments.get("context", "")
@@ -233,12 +229,14 @@ class HypeRAGMCPServer:
             "context": additional_context,
             "response": "HypeRAG query processing not fully implemented yet",
             "sources": [],
-            "confidence": 0.5
+            "confidence": 0.5,
         }
 
         return result
 
-    async def _handle_memory(self, arguments: Dict[str, Any], context: AuthContext) -> Dict[str, Any]:
+    async def _handle_memory(
+        self, arguments: dict[str, Any], context: AuthContext
+    ) -> dict[str, Any]:
         """Handle hyperag_memory tool call."""
         action = arguments.get("action")
         content = arguments.get("content", "")
@@ -248,7 +246,7 @@ class HypeRAGMCPServer:
             "action": action,
             "content": content,
             "tags": tags,
-            "status": "Memory operations not fully implemented yet"
+            "status": "Memory operations not fully implemented yet",
         }
 
         return result
@@ -275,7 +273,7 @@ class HypeRAGMCPServer:
                 try:
                     request = json.loads(line)
                 except json.JSONDecodeError as e:
-                    logger.error(f"Invalid JSON: {e}")
+                    logger.exception(f"Invalid JSON: {e}")
                     continue
 
                 # Handle request
@@ -288,11 +286,11 @@ class HypeRAGMCPServer:
                 logger.info("Shutting down...")
                 break
             except Exception as e:
-                logger.error(f"Error in main loop: {e}")
+                logger.exception(f"Error in main loop: {e}")
                 break
 
 
-async def main():
+async def main() -> None:
     """Main entry point."""
     server = HypeRAGMCPServer()
     await server.run()

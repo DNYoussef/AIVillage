@@ -10,7 +10,7 @@ from .base_controller import ErrorRateController
 class LTTErrorController(ErrorRateController):
     def __init__(
         self, num_steps: int, target_error_rate: float, confidence_level: float
-    ):
+    ) -> None:
         """Initialize the LTTErrorController.
 
         :param num_steps: The number of steps in the multi-step process.
@@ -21,7 +21,7 @@ class LTTErrorController(ErrorRateController):
         self.confidence_level = confidence_level
         self.calibrated_error_rate = None
 
-    def calibrate(self, calibration_data: list[int]):
+    def calibrate(self, calibration_data: list[int]) -> None:
         """Calibrate the error rates using the Learn Then Test framework.
 
         :param calibration_data: A list indicating whether an error was observed in calibration (1 for error, 0 for no error).
@@ -43,11 +43,12 @@ class LTTErrorController(ErrorRateController):
             self.calibrated_error_rate = min(valid_lambdas)
             self._compute_step_error_rates()
         else:
+            msg = "No valid lambda found for the given confidence level and calibration data."
             raise ValueError(
-                "No valid lambda found for the given confidence level and calibration data."
+                msg
             )
 
-    def _compute_step_error_rates(self):
+    def _compute_step_error_rates(self) -> None:
         """Compute step error rates based on the calibrated error rate."""
         if self.calibrated_error_rate is not None:
             # Allocate the calibrated error rate across steps

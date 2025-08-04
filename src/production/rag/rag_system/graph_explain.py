@@ -1,6 +1,7 @@
 """Real shortest-/semantic-path explainer with in-memory cache."""
 
 import functools
+import itertools
 import logging
 import os
 import time
@@ -80,7 +81,7 @@ class GraphPathExplainer:
             if len(nodes) - 1 > max_hops:
                 return {"nodes": [], "edges": [], "hops": 0, "found": False}
 
-            for src, dst in zip(nodes[:-1], nodes[1:], strict=False):
+            for src, dst in itertools.pairwise(nodes):
                 data = dict(self.g.get_edge_data(src, dst, default={}))
                 edges.append({"source": src, "target": dst, **data})
 

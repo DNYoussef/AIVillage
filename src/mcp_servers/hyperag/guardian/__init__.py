@@ -1,4 +1,4 @@
-"""HypeRAG Guardian Module
+"""HypeRAG Guardian Module.
 
 Mandatory validation system for knowledge graph repairs and creative edge merges.
 Provides semantic utility scoring, fact checking, and decision gating.

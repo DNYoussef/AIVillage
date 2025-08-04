@@ -1,4 +1,4 @@
-"""Agent Forge Results Analysis & Interpretation System
+"""Agent Forge Results Analysis & Interpretation System.
 
 Provides comprehensive analysis of benchmark results:
 - W&B dashboard data extraction and interpretation
@@ -9,11 +9,11 @@ Provides comprehensive analysis of benchmark results:
 """
 
 import asyncio
-import json
-import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -65,7 +65,7 @@ class InsightSummary:
 class WandBDashboardAnalyzer:
     """Analyzes W&B dashboard data for insights."""
 
-    def __init__(self, project_name: str = "agent-forge-comprehensive-benchmark"):
+    def __init__(self, project_name: str = "agent-forge-comprehensive-benchmark") -> None:
         self.project_name = project_name
         self.api = wandb.Api()
 
@@ -109,7 +109,7 @@ class WandBDashboardAnalyzer:
 
                 # Aggregate metrics
                 for key, value in run.summary.items():
-                    if isinstance(value, (int, float)):
+                    if isinstance(value, int | float):
                         all_metrics[key].append(value)
 
             # Calculate summary statistics
@@ -127,14 +127,14 @@ class WandBDashboardAnalyzer:
             return dashboard_data
 
         except Exception as e:
-            logger.error(f"Failed to extract W&B data: {e}")
+            logger.exception(f"Failed to extract W&B data: {e}")
             return {"error": str(e)}
 
 
 class ResultsAnalyzer:
     """Main results analysis engine."""
 
-    def __init__(self, results_dir: str):
+    def __init__(self, results_dir: str) -> None:
         self.results_dir = Path(results_dir)
         self.wandb_analyzer = WandBDashboardAnalyzer()
 
@@ -274,7 +274,7 @@ class ResultsAnalyzer:
             for run in dashboard_data["runs"]:
                 for metric, value in run["summary"].items():
                     if (
-                        isinstance(value, (int, float))
+                        isinstance(value, int | float)
                         and metric in dashboard_data["summary_metrics"]
                     ):
                         stats_data = dashboard_data["summary_metrics"][metric]
@@ -300,7 +300,7 @@ class ResultsAnalyzer:
             return analysis
 
         except Exception as e:
-            logger.error(f"W&B analysis failed: {e}")
+            logger.exception(f"W&B analysis failed: {e}")
             return {"status": "failed", "error": str(e)}
 
     async def _analyze_pipeline_phases(self) -> dict[str, PhaseAnalysis]:
@@ -318,7 +318,7 @@ class ResultsAnalyzer:
         with open(comparison_file) as f:
             comparison_data = json.load(f)
 
-        model_averages = comparison_data.get("model_averages", {})
+        comparison_data.get("model_averages", {})
         benchmark_data = comparison_data.get("benchmark_comparison", [])
 
         # Create DataFrame for analysis
@@ -688,7 +688,7 @@ class ResultsAnalyzer:
 class SampleResultsAnalyzer:
     """Analyzes sample results to demonstrate the system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.sample_results = self._generate_sample_results()
 
     def _generate_sample_results(self) -> dict[str, Any]:
@@ -751,7 +751,7 @@ class SampleResultsAnalyzer:
             phase1 = phases[i]
             phase2 = phases[i + 1]
 
-            for benchmark in self.sample_results[phase1].keys():
+            for benchmark in self.sample_results[phase1]:
                 score1 = self.sample_results[phase1][benchmark]
                 score2 = self.sample_results[phase2][benchmark]
                 improvement = score2 - score1
@@ -783,7 +783,7 @@ class SampleResultsAnalyzer:
 
 
 # CLI interface
-async def main():
+async def main() -> None:
     """Main CLI for results analysis."""
     import argparse
 

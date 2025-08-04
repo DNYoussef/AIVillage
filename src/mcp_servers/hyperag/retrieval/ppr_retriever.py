@@ -1,4 +1,4 @@
-"""Personalized PageRank Retriever with Rel-GAT α-weight fusion
+"""Personalized PageRank Retriever with Rel-GAT α-weight fusion.
 
 Core retrieval engine that combines:
 - Standard PPR over hypergraph knowledge
@@ -17,16 +17,16 @@ from typing import Any
 
 import yaml
 
-from ..memory.hippo_index import HippoIndex
-from ..memory.hypergraph_kg import HypergraphKG
-from ..models import QueryPlan
+from AIVillage.src.mcp_servers.hyperag.memory.hippo_index import HippoIndex
+from AIVillage.src.mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
+from AIVillage.src.mcp_servers.hyperag.models import QueryPlan
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class PPRResults:
-    """Results from Personalized PageRank retrieval"""
+    """Results from Personalized PageRank retrieval."""
 
     nodes: list[dict[str, Any]]
     edges: list[dict[str, Any]]
@@ -42,7 +42,7 @@ class PPRResults:
 
 @dataclass
 class AlphaProfile:
-    """User's α-weight profile for relation personalization"""
+    """User's α-weight profile for relation personalization."""
 
     user_id: str
     relation_weights: dict[str, float]  # relation -> α-weight
@@ -51,20 +51,20 @@ class AlphaProfile:
     confidence: float = 1.0
 
     def get_weight(self, relation: str, default: float = 1.0) -> float:
-        """Get α-weight for a relation with fallback to default"""
+        """Get α-weight for a relation with fallback to default."""
         return self.relation_weights.get(relation, default)
 
 
 class AlphaProfileStore:
-    """Storage and management for user α-profiles"""
+    """Storage and management for user α-profiles."""
 
-    def __init__(self, redis_client=None):
+    def __init__(self, redis_client=None) -> None:
         self.redis_client = redis_client
         self.profiles_cache: dict[str, AlphaProfile] = {}
         self.cache_ttl = 3600  # 1 hour
 
     async def get_profile(self, user_id: str) -> AlphaProfile | None:
-        """Get user's α-profile"""
+        """Get user's α-profile."""
         # Check local cache first
         if user_id in self.profiles_cache:
             return self.profiles_cache[user_id]
@@ -92,7 +92,7 @@ class AlphaProfileStore:
     async def get_top_alpha(
         self, user_id: str, node_ids: list[str]
     ) -> dict[str, float]:
-        """Get α-weights for specific nodes based on their relations"""
+        """Get α-weights for specific nodes based on their relations."""
         profile = await self.get_profile(user_id)
         if not profile:
             return {}
@@ -108,7 +108,7 @@ class AlphaProfileStore:
         return alpha_scores
 
     async def update_profile(self, profile: AlphaProfile) -> bool:
-        """Update user's α-profile"""
+        """Update user's α-profile."""
         try:
             self.profiles_cache[profile.user_id] = profile
 
@@ -130,7 +130,7 @@ class AlphaProfileStore:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to update α-profile for {profile.user_id}: {e!s}")
+            logger.exception(f"Failed to update α-profile for {profile.user_id}: {e!s}")
             return False
 
 
@@ -152,7 +152,7 @@ class PersonalizedPageRank:
         alpha_store: AlphaProfileStore | None = None,
         damping: float = 0.85,
         config_path: str | None = None,
-    ):
+    ) -> None:
         self.hippo_index = hippo_index
         self.hypergraph = hypergraph
         self.alpha_store = alpha_store
@@ -256,7 +256,7 @@ class PersonalizedPageRank:
         except Exception as e:
             query_time = (time.time() - start_time) * 1000
             error_msg = f"PPR retrieval failed: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             reasoning_trace.append(error_msg)
 
             return PPRResults(
@@ -269,7 +269,7 @@ class PersonalizedPageRank:
             )
 
     async def _knn_hippo(self, query_seeds: list[str], plan: QueryPlan) -> list[str]:
-        """Recency-biased vector search on episodic memory"""
+        """Recency-biased vector search on episodic memory."""
         try:
             recency_config = self.config.get("recency_boost", {})
 
@@ -301,7 +301,7 @@ class PersonalizedPageRank:
     async def _pagerank(
         self, seed_nodes: list[str], plan: QueryPlan
     ) -> dict[str, float]:
-        """Run Personalized PageRank on the hypergraph"""
+        """Run Personalized PageRank on the hypergraph."""
         try:
             ppr_config = self.config.get("pagerank", {})
             max_iterations = ppr_config.get("max_iterations", 50)
@@ -334,14 +334,14 @@ class PersonalizedPageRank:
             return filtered_scores
 
         except Exception as e:
-            logger.error(f"PageRank computation failed: {e!s}")
+            logger.exception(f"PageRank computation failed: {e!s}")
             # Return uniform scores for seeds as fallback
             return {node_id: 1.0 / len(seed_nodes) for node_id in seed_nodes}
 
     async def _pagerank_iteration(
         self, seed_nodes: list[str], max_iterations: int, tolerance: float
     ) -> dict[str, float]:
-        """Fallback PPR implementation with uncertainty decay"""
+        """Fallback PPR implementation with uncertainty decay."""
         # Initialize scores
         scores = {node_id: 1.0 / len(seed_nodes) for node_id in seed_nodes}
         personalization = scores.copy()
@@ -381,7 +381,7 @@ class PersonalizedPageRank:
     def _fuse_with_alpha(
         self, base_scores: dict[str, float], alpha_scores: dict[str, float]
     ) -> dict[str, float]:
-        """Fuse base PPR scores with α-weights: score = base + λ₁·α - λ₂·popularity_rank"""
+        """Fuse base PPR scores with α-weights: score = base + λ₁·α - λ₂·popularity_rank."""
         fusion_config = self.config.get("alpha_fusion", {})
         base_weight = fusion_config.get("base_weight", 1.0)
         alpha_weight = fusion_config.get("alpha_weight", 0.3)
@@ -413,7 +413,7 @@ class PersonalizedPageRank:
     async def _apply_uncertainty(
         self, scores: dict[str, float], plan: QueryPlan
     ) -> dict[str, Any]:
-        """Apply uncertainty weighting and convert to result format"""
+        """Apply uncertainty weighting and convert to result format."""
         uncertainty_config = self.config.get("uncertainty", {})
         max_uncertainty = uncertainty_config.get("max_uncertainty", 0.8)
         confidence_weight = uncertainty_config.get("confidence_weight", 0.5)
@@ -485,7 +485,7 @@ class PersonalizedPageRank:
         plan: QueryPlan,
         reasoning_trace: list[str],
     ) -> PPRResults:
-        """Route to DivergentRetriever for creative mode"""
+        """Route to DivergentRetriever for creative mode."""
         try:
             # Dynamic import to avoid circular dependencies
             from .divergent_retriever import DivergentRetriever
@@ -519,7 +519,7 @@ class PersonalizedPageRank:
             )
         except Exception as e:
             error_msg = f"Creative mode routing failed: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             reasoning_trace.append(error_msg)
 
             # Return empty results
@@ -533,7 +533,7 @@ class PersonalizedPageRank:
             )
 
     def _load_config(self, config_path: str | None = None) -> dict[str, Any]:
-        """Load retrieval configuration"""
+        """Load retrieval configuration."""
         if config_path is None:
             # Default config path
             current_dir = Path(__file__).parent
@@ -557,7 +557,7 @@ class PersonalizedPageRank:
             }
 
     def get_performance_stats(self) -> dict[str, Any]:
-        """Get performance statistics"""
+        """Get performance statistics."""
         avg_time = (
             self.total_time_ms / self.query_count if self.query_count > 0 else 0.0
         )
@@ -580,7 +580,7 @@ def create_ppr_retriever(
     alpha_store: AlphaProfileStore | None = None,
     config_path: str | None = None,
 ) -> PersonalizedPageRank:
-    """Create a PersonalizedPageRank retriever with the given backends"""
+    """Create a PersonalizedPageRank retriever with the given backends."""
     return PersonalizedPageRank(
         hippo_index=hippo_index,
         hypergraph=hypergraph_kg,
@@ -590,5 +590,5 @@ def create_ppr_retriever(
 
 
 def create_alpha_profile_store(redis_client=None) -> AlphaProfileStore:
-    """Create an AlphaProfileStore for managing user personalization"""
+    """Create an AlphaProfileStore for managing user personalization."""
     return AlphaProfileStore(redis_client=redis_client)

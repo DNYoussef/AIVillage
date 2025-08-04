@@ -1,17 +1,17 @@
-"""Agent Evolution Engine - Core Self-Evolution System for the 18-Agent Ecosystem
+"""Agent Evolution Engine - Core Self-Evolution System for the 18-Agent Ecosystem.
 
 This is the central orchestration system for the Atlantis vision's self-evolving agents.
 It implements performance-based selection, genetic optimization, and autonomous improvement.
 """
 
 import asyncio
-import json
-import logging
-import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
+import json
+import logging
 from pathlib import Path
+import time
 from typing import Any
 
 import numpy as np
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class AgentKPIs:
-    """Key Performance Indicators for agent evaluation"""
+    """Key Performance Indicators for agent evaluation."""
 
     agent_id: str
     task_success_rate: float = 0.0
@@ -41,7 +41,7 @@ class AgentKPIs:
             self.timestamp = datetime.now()
 
     def fitness_score(self) -> float:
-        """Calculate overall fitness score from KPIs"""
+        """Calculate overall fitness score from KPIs."""
         weights = {
             "task_success_rate": 0.25,
             "user_satisfaction": 0.20,
@@ -61,7 +61,7 @@ class AgentKPIs:
 
 @dataclass
 class AgentGenome:
-    """Genetic representation of an agent's configuration"""
+    """Genetic representation of an agent's configuration."""
 
     agent_id: str
     architecture_params: dict[str, Any]
@@ -79,7 +79,7 @@ class AgentGenome:
 
 
 class GeneticOptimizer:
-    """Implements genetic algorithms for agent evolution"""
+    """Implements genetic algorithms for agent evolution."""
 
     def __init__(
         self,
@@ -87,7 +87,7 @@ class GeneticOptimizer:
         mutation_rate: float = 0.1,
         crossover_rate: float = 0.7,
         elitism_rate: float = 0.2,
-    ):
+    ) -> None:
         self.population_size = population_size
         self.mutation_rate = mutation_rate
         self.crossover_rate = crossover_rate
@@ -96,7 +96,7 @@ class GeneticOptimizer:
     def selection(
         self, population: list[AgentGenome], fitness_scores: list[float]
     ) -> list[AgentGenome]:
-        """Tournament selection for breeding"""
+        """Tournament selection for breeding."""
         selected = []
         tournament_size = 3
 
@@ -113,7 +113,7 @@ class GeneticOptimizer:
     def crossover(
         self, parent1: AgentGenome, parent2: AgentGenome
     ) -> tuple[AgentGenome, AgentGenome]:
-        """Uniform crossover of agent genomes"""
+        """Uniform crossover of agent genomes."""
         if np.random.random() > self.crossover_rate:
             return parent1, parent2
 
@@ -166,7 +166,7 @@ class GeneticOptimizer:
         return child1, child2
 
     def mutate(self, genome: AgentGenome) -> AgentGenome:
-        """Mutate agent genome"""
+        """Mutate agent genome."""
         if np.random.random() > self.mutation_rate:
             return genome
 
@@ -174,7 +174,7 @@ class GeneticOptimizer:
 
         # Mutate hyperparameters
         for key, value in mutated.hyperparameters.items():
-            if isinstance(value, (int, float)) and np.random.random() < 0.3:
+            if isinstance(value, int | float) and np.random.random() < 0.3:
                 if isinstance(value, int):
                     mutated.hyperparameters[key] = max(
                         1, int(value * np.random.normal(1.0, 0.1))
@@ -193,7 +193,7 @@ class GeneticOptimizer:
 
         # Mutate learning config
         for key, value in mutated.learning_config.items():
-            if isinstance(value, (int, float)) and np.random.random() < 0.2:
+            if isinstance(value, int | float) and np.random.random() < 0.2:
                 if isinstance(value, int):
                     mutated.learning_config[key] = max(
                         1, int(value * np.random.normal(1.0, 0.05))
@@ -207,16 +207,16 @@ class GeneticOptimizer:
 
 
 class KPITracker:
-    """Tracks and analyzes agent performance metrics"""
+    """Tracks and analyzes agent performance metrics."""
 
-    def __init__(self, storage_path: str = "evolution_data/kpi_history.json"):
+    def __init__(self, storage_path: str = "evolution_data/kpi_history.json") -> None:
         self.storage_path = Path(storage_path)
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
         self.kpi_history: dict[str, list[AgentKPIs]] = {}
         self.load_history()
 
-    def load_history(self):
-        """Load KPI history from disk"""
+    def load_history(self) -> None:
+        """Load KPI history from disk."""
         if self.storage_path.exists():
             try:
                 with open(self.storage_path) as f:
@@ -226,11 +226,11 @@ class KPITracker:
                             AgentKPIs(**kpi) for kpi in kpi_list
                         ]
             except Exception as e:
-                logger.error(f"Failed to load KPI history: {e}")
+                logger.exception(f"Failed to load KPI history: {e}")
                 self.kpi_history = {}
 
-    def save_history(self):
-        """Save KPI history to disk"""
+    def save_history(self) -> None:
+        """Save KPI history to disk."""
         try:
             data = {}
             for agent_id, kpi_list in self.kpi_history.items():
@@ -239,10 +239,10 @@ class KPITracker:
             with open(self.storage_path, "w") as f:
                 json.dump(data, f, indent=2, default=str)
         except Exception as e:
-            logger.error(f"Failed to save KPI history: {e}")
+            logger.exception(f"Failed to save KPI history: {e}")
 
-    def record_kpis(self, kpis: AgentKPIs):
-        """Record KPIs for an agent"""
+    def record_kpis(self, kpis: AgentKPIs) -> None:
+        """Record KPIs for an agent."""
         if kpis.agent_id not in self.kpi_history:
             self.kpi_history[kpis.agent_id] = []
 
@@ -257,7 +257,7 @@ class KPITracker:
     def get_fitness_scores(
         self, agent_ids: list[str], lookback_hours: int = 24
     ) -> dict[str, float]:
-        """Get recent fitness scores for agents"""
+        """Get recent fitness scores for agents."""
         cutoff_time = datetime.now() - timedelta(hours=lookback_hours)
         fitness_scores = {}
 
@@ -281,7 +281,7 @@ class KPITracker:
         return fitness_scores
 
     def get_performance_trends(self, agent_id: str) -> dict[str, list[float]]:
-        """Get performance trends for visualization"""
+        """Get performance trends for visualization."""
         if agent_id not in self.kpi_history:
             return {}
 
@@ -295,9 +295,9 @@ class KPITracker:
 
 
 class CodeMutator:
-    """Safe code modification for agent self-improvement"""
+    """Safe code modification for agent self-improvement."""
 
-    def __init__(self, sandbox_path: str = "evolution_data/sandbox"):
+    def __init__(self, sandbox_path: str = "evolution_data/sandbox") -> None:
         self.sandbox_path = Path(sandbox_path)
         self.sandbox_path.mkdir(parents=True, exist_ok=True)
         self.safe_mutations = [
@@ -308,7 +308,7 @@ class CodeMutator:
         ]
 
     async def mutate_agent_code(self, genome: AgentGenome) -> AgentGenome:
-        """Safely mutate agent code based on genome"""
+        """Safely mutate agent code based on genome."""
         mutation_type = np.random.choice(self.safe_mutations)
 
         try:
@@ -321,13 +321,13 @@ class CodeMutator:
             if mutation_type == "refine_specialization":
                 return self._mutate_specialization(genome)
         except Exception as e:
-            logger.error(f"Code mutation failed for {genome.agent_id}: {e}")
+            logger.exception(f"Code mutation failed for {genome.agent_id}: {e}")
             return genome
 
         return genome
 
     def _mutate_hyperparameters(self, genome: AgentGenome) -> AgentGenome:
-        """Mutate hyperparameters safely"""
+        """Mutate hyperparameters safely."""
         mutated = AgentGenome(**asdict(genome))
 
         for key, value in mutated.hyperparameters.items():
@@ -345,7 +345,7 @@ class CodeMutator:
         return mutated
 
     async def _mutate_prompt_templates(self, genome: AgentGenome) -> AgentGenome:
-        """Mutate prompt templates"""
+        """Mutate prompt templates."""
         mutated = AgentGenome(**asdict(genome))
 
         # Simple template variations - in production would use more sophisticated NLP
@@ -373,7 +373,7 @@ class CodeMutator:
         return mutated
 
     def _mutate_behavior_weights(self, genome: AgentGenome) -> AgentGenome:
-        """Mutate behavior weights"""
+        """Mutate behavior weights."""
         mutated = AgentGenome(**asdict(genome))
 
         for key, weight in mutated.behavior_weights.items():
@@ -391,7 +391,7 @@ class CodeMutator:
         return mutated
 
     def _mutate_specialization(self, genome: AgentGenome) -> AgentGenome:
-        """Mutate specialization configuration"""
+        """Mutate specialization configuration."""
         mutated = AgentGenome(**asdict(genome))
 
         # Adjust specialization focus
@@ -408,16 +408,16 @@ class CodeMutator:
 
 
 class MetaLearner:
-    """Learns how to learn better - optimizes learning strategies"""
+    """Learns how to learn better - optimizes learning strategies."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.learning_history = {}
         self.strategy_performance = {}
 
     async def optimize_learning_strategy(
         self, agent_id: str, current_performance: float, learning_config: dict[str, Any]
     ) -> dict[str, Any]:
-        """Optimize learning strategy based on performance history"""
+        """Optimize learning strategy based on performance history."""
         if agent_id not in self.learning_history:
             self.learning_history[agent_id] = []
 
@@ -443,7 +443,7 @@ class MetaLearner:
     def _analyze_and_optimize(
         self, agent_id: str, current_config: dict[str, Any]
     ) -> dict[str, Any]:
-        """Analyze learning history and optimize configuration"""
+        """Analyze learning history and optimize configuration."""
         history = self.learning_history[agent_id]
 
         # Find top performing configurations
@@ -455,7 +455,7 @@ class MetaLearner:
 
         # Average the best performing hyperparameters
         for key in current_config:
-            if isinstance(current_config[key], (int, float)):
+            if isinstance(current_config[key], int | float):
                 values = [
                     config["config"].get(key, current_config[key])
                     for config in top_configs
@@ -469,15 +469,15 @@ class MetaLearner:
 
 
 class SpecializationManager:
-    """Manages dynamic agent specialization and role assignment"""
+    """Manages dynamic agent specialization and role assignment."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.agent_roles = {}
         self.task_performance_matrix = {}
         self.specialization_templates = self._load_specialization_templates()
 
     def _load_specialization_templates(self) -> dict[str, dict]:
-        """Load specialization templates for the 18-agent ecosystem"""
+        """Load specialization templates for the 18-agent ecosystem."""
         return {
             "general-purpose": {
                 "focus_areas": {"general": 1.0},
@@ -623,7 +623,7 @@ class SpecializationManager:
         current_genome: AgentGenome,
         task_performance_history: dict[str, float],
     ) -> AgentGenome:
-        """Optimize agent specialization based on task performance"""
+        """Optimize agent specialization based on task performance."""
         # Analyze which tasks this agent performs best at
         best_tasks = sorted(
             task_performance_history.items(), key=lambda x: x[1], reverse=True
@@ -664,7 +664,7 @@ class SpecializationManager:
     def _calculate_specialization_match(
         self, best_tasks: list[tuple[str, float]], spec_config: dict
     ) -> float:
-        """Calculate how well tasks match a specialization template"""
+        """Calculate how well tasks match a specialization template."""
         focus_areas = spec_config.get("focus_areas", {})
         match_score = 0.0
 
@@ -680,11 +680,11 @@ class SpecializationManager:
 
 
 class AgentEvolutionEngine:
-    """Main orchestration system for the self-evolving 18-agent ecosystem"""
+    """Main orchestration system for the self-evolving 18-agent ecosystem."""
 
     def __init__(
         self, evolution_data_path: str = "evolution_data", population_size: int = 18
-    ):
+    ) -> None:
         self.evolution_data_path = Path(evolution_data_path)
         self.evolution_data_path.mkdir(parents=True, exist_ok=True)
 
@@ -710,8 +710,8 @@ class AgentEvolutionEngine:
             f"AgentEvolutionEngine initialized with population size {population_size}"
         )
 
-    async def initialize_population(self):
-        """Initialize the 18-agent population with diverse specializations"""
+    async def initialize_population(self) -> None:
+        """Initialize the 18-agent population with diverse specializations."""
         base_templates = list(
             self.specialization_manager.specialization_templates.keys()
         )
@@ -726,7 +726,7 @@ class AgentEvolutionEngine:
         logger.info(f"Initialized population with {len(self.agent_population)} agents")
 
     def _create_initial_genome(self, agent_id: str, specialization: str) -> AgentGenome:
-        """Create initial genome for an agent"""
+        """Create initial genome for an agent."""
         spec_config = self.specialization_manager.specialization_templates[
             specialization
         ]
@@ -761,9 +761,9 @@ class AgentEvolutionEngine:
         )
 
     async def run_evolution_cycle(
-        self, generations: int = 10, evaluation_tasks: list[Callable] = None
+        self, generations: int = 10, evaluation_tasks: list[Callable] | None = None
     ) -> dict[str, Any]:
-        """Run complete evolution cycle"""
+        """Run complete evolution cycle."""
         if not self.agent_population:
             await self.initialize_population()
 
@@ -811,9 +811,9 @@ class AgentEvolutionEngine:
         return evolution_results
 
     async def _evaluate_population(
-        self, evaluation_tasks: list[Callable] = None
+        self, evaluation_tasks: list[Callable] | None = None
     ) -> dict[str, float]:
-        """Evaluate current population fitness"""
+        """Evaluate current population fitness."""
         fitness_scores = {}
 
         for genome in self.agent_population:
@@ -847,13 +847,13 @@ class AgentEvolutionEngine:
                 fitness_scores[genome.agent_id] = combined_fitness
 
             except Exception as e:
-                logger.error(f"Failed to evaluate agent {genome.agent_id}: {e}")
+                logger.exception(f"Failed to evaluate agent {genome.agent_id}: {e}")
                 fitness_scores[genome.agent_id] = 0.0
 
         return fitness_scores
 
-    async def _evolve_population(self, fitness_scores: dict[str, float]):
-        """Evolve the agent population"""
+    async def _evolve_population(self, fitness_scores: dict[str, float]) -> None:
+        """Evolve the agent population."""
         # Sort population by fitness
         sorted_agents = sorted(
             self.agent_population,
@@ -923,7 +923,7 @@ class AgentEvolutionEngine:
         )
 
     def _calculate_population_diversity(self) -> float:
-        """Calculate genetic diversity of current population"""
+        """Calculate genetic diversity of current population."""
         if len(self.agent_population) < 2:
             return 0.0
 
@@ -943,14 +943,14 @@ class AgentEvolutionEngine:
     def _calculate_genome_distance(
         self, genome1: AgentGenome, genome2: AgentGenome
     ) -> float:
-        """Calculate distance between two genomes"""
+        """Calculate distance between two genomes."""
         distance = 0.0
 
         # Architecture parameter distance
         for key in genome1.architecture_params:
             val1 = genome1.architecture_params.get(key, 0)
             val2 = genome2.architecture_params.get(key, 0)
-            if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
+            if isinstance(val1, int | float) and isinstance(val2, int | float):
                 distance += abs(val1 - val2) / max(abs(val1), abs(val2), 1.0)
 
         # Behavior weight distance
@@ -964,7 +964,7 @@ class AgentEvolutionEngine:
         )
 
     def _get_specialization_distribution(self) -> dict[str, int]:
-        """Get distribution of specializations in current population"""
+        """Get distribution of specializations in current population."""
         distribution = {}
 
         for genome in self.agent_population:
@@ -979,8 +979,8 @@ class AgentEvolutionEngine:
 
         return distribution
 
-    async def _save_evolution_results(self, results: dict[str, Any]):
-        """Save evolution results to disk"""
+    async def _save_evolution_results(self, results: dict[str, Any]) -> None:
+        """Save evolution results to disk."""
         results_path = (
             self.evolution_data_path
             / f"evolution_results_gen_{self.current_generation}.json"
@@ -1003,10 +1003,10 @@ class AgentEvolutionEngine:
             logger.info(f"Evolution results saved to {results_path}")
 
         except Exception as e:
-            logger.error(f"Failed to save evolution results: {e}")
+            logger.exception(f"Failed to save evolution results: {e}")
 
     async def get_evolution_dashboard_data(self) -> dict[str, Any]:
-        """Get data for evolution monitoring dashboard"""
+        """Get data for evolution monitoring dashboard."""
         # Calculate current fitness scores
         fitness_scores = self.kpi_tracker.get_fitness_scores(
             [genome.agent_id for genome in self.agent_population]
@@ -1038,8 +1038,8 @@ class AgentEvolutionEngine:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def emergency_rollback(self, generations_back: int = 1):
-        """Emergency rollback to previous generation"""
+    async def emergency_rollback(self, generations_back: int = 1) -> bool | None:
+        """Emergency rollback to previous generation."""
         try:
             target_generation = max(0, self.current_generation - generations_back)
             population_path = (
@@ -1065,16 +1065,16 @@ class AgentEvolutionEngine:
             return False
 
         except Exception as e:
-            logger.error(f"Emergency rollback failed: {e}")
+            logger.exception(f"Emergency rollback failed: {e}")
             return False
 
 
 # Evolution utility functions
 async def create_evaluation_task(task_type: str) -> Callable:
-    """Create evaluation task for agent fitness testing"""
+    """Create evaluation task for agent fitness testing."""
 
     async def code_quality_task(genome: AgentGenome) -> float:
-        """Evaluate code quality capabilities"""
+        """Evaluate code quality capabilities."""
         # Simulate code quality evaluation
         quality_focus = genome.specialization_config.get("focus_areas", {}).get(
             "code_review", 0.0
@@ -1082,12 +1082,12 @@ async def create_evaluation_task(task_type: str) -> Callable:
         return min(1.0, quality_focus + np.random.normal(0, 0.1))
 
     async def performance_task(genome: AgentGenome) -> float:
-        """Evaluate performance optimization capabilities"""
+        """Evaluate performance optimization capabilities."""
         perf_weight = genome.behavior_weights.get("performance", 0.5)
         return min(1.0, perf_weight + np.random.normal(0, 0.1))
 
     async def collaboration_task(genome: AgentGenome) -> float:
-        """Evaluate collaboration capabilities"""
+        """Evaluate collaboration capabilities."""
         collab_score = genome.behavior_weights.get("collaboration", 0.5)
         return min(1.0, collab_score + np.random.normal(0, 0.1))
 
@@ -1102,7 +1102,7 @@ async def create_evaluation_task(task_type: str) -> Callable:
 
 if __name__ == "__main__":
 
-    async def main():
+    async def main() -> None:
         # Initialize evolution engine
         engine = AgentEvolutionEngine()
 

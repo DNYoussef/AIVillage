@@ -1,4 +1,4 @@
-"""Safe Code Modification System - Autonomous Agent Self-Improvement
+"""Safe Code Modification System - Autonomous Agent Self-Improvement.
 
 Implements safe, sandboxed code modification capabilities for agent self-evolution.
 Includes validation, rollback, and security measures to prevent harmful modifications.
@@ -6,18 +6,18 @@ Includes validation, rollback, and security measures to prevent harmful modifica
 
 import ast
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 import hashlib
 import json
 import logging
+from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
 import time
-from collections.abc import Callable
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Any
 
 import black
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CodeModification:
-    """Represents a code modification operation"""
+    """Represents a code modification operation."""
 
     modification_id: str
     agent_id: str
@@ -46,7 +46,7 @@ class CodeModification:
 
 @dataclass
 class SafetyPolicy:
-    """Safety policies for code modifications"""
+    """Safety policies for code modifications."""
 
     allowed_imports: set[str]
     forbidden_patterns: list[str]
@@ -57,9 +57,9 @@ class SafetyPolicy:
 
 
 class CodeValidator:
-    """Validates code modifications for safety and correctness"""
+    """Validates code modifications for safety and correctness."""
 
-    def __init__(self, safety_policy: SafetyPolicy):
+    def __init__(self, safety_policy: SafetyPolicy) -> None:
         self.safety_policy = safety_policy
 
         # Default forbidden patterns for security
@@ -86,7 +86,7 @@ class CodeValidator:
     async def validate_modification(
         self, modification: CodeModification
     ) -> dict[str, Any]:
-        """Comprehensive validation of code modification"""
+        """Comprehensive validation of code modification."""
         validation_results = {
             "syntax_valid": False,
             "security_safe": False,
@@ -140,7 +140,7 @@ class CodeValidator:
             validation_results["overall_safe"] = safety_score >= 0.8
 
         except Exception as e:
-            logger.error(
+            logger.exception(
                 f"Validation failed for modification {modification.modification_id}: {e}"
             )
             validation_results["errors"].append(f"Validation error: {e!s}")
@@ -148,7 +148,7 @@ class CodeValidator:
         return validation_results
 
     async def _validate_syntax(self, code: str) -> bool:
-        """Validate Python syntax"""
+        """Validate Python syntax."""
         try:
             ast.parse(code)
             return True
@@ -157,7 +157,7 @@ class CodeValidator:
             return False
 
     async def _validate_security(self, code: str) -> bool:
-        """Validate code security against forbidden patterns"""
+        """Validate code security against forbidden patterns."""
         for pattern in self.safety_policy.forbidden_patterns:
             if re.search(pattern, code, re.IGNORECASE):
                 logger.warning(
@@ -193,30 +193,28 @@ class CodeValidator:
                                         return False
 
         except Exception as e:
-            logger.error(f"Security validation error: {e}")
+            logger.exception(f"Security validation error: {e}")
             return False
 
         return True
 
     async def _validate_complexity(self, code: str) -> bool:
-        """Validate code complexity"""
+        """Validate code complexity."""
         try:
             tree = ast.parse(code)
             complexity = self._calculate_cyclomatic_complexity(tree)
             return complexity <= self.safety_policy.max_complexity
         except Exception as e:
-            logger.error(f"Complexity validation error: {e}")
+            logger.exception(f"Complexity validation error: {e}")
             return False
 
     def _calculate_cyclomatic_complexity(self, tree: ast.AST) -> int:
-        """Calculate cyclomatic complexity of AST"""
+        """Calculate cyclomatic complexity of AST."""
         complexity = 1  # Base complexity
 
         for node in ast.walk(tree):
             if (
-                isinstance(node, (ast.If, ast.While, ast.For, ast.AsyncFor))
-                or isinstance(node, ast.ExceptHandler)
-                or isinstance(node, ast.With)
+                isinstance(node, ast.If | ast.While | ast.For | ast.AsyncFor | ast.ExceptHandler | ast.With)
             ):
                 complexity += 1
             elif isinstance(node, ast.BoolOp):
@@ -225,7 +223,7 @@ class CodeValidator:
         return complexity
 
     async def _validate_imports(self, code: str) -> bool:
-        """Validate that only allowed imports are used"""
+        """Validate that only allowed imports are used."""
         try:
             tree = ast.parse(code)
 
@@ -236,28 +234,27 @@ class CodeValidator:
                             logger.warning(f"Forbidden import: {alias.name}")
                             return False
 
-                elif isinstance(node, ast.ImportFrom):
-                    if (
-                        node.module
-                        and node.module not in self.safety_policy.allowed_imports
-                    ):
-                        # Check if parent module is allowed
-                        parent_allowed = any(
-                            node.module.startswith(allowed)
-                            for allowed in self.safety_policy.allowed_imports
-                        )
-                        if not parent_allowed:
-                            logger.warning(f"Forbidden import: {node.module}")
-                            return False
+                elif isinstance(node, ast.ImportFrom) and (
+                    node.module
+                    and node.module not in self.safety_policy.allowed_imports
+                ):
+                    # Check if parent module is allowed
+                    parent_allowed = any(
+                        node.module.startswith(allowed)
+                        for allowed in self.safety_policy.allowed_imports
+                    )
+                    if not parent_allowed:
+                        logger.warning(f"Forbidden import: {node.module}")
+                        return False
 
         except Exception as e:
-            logger.error(f"Import validation error: {e}")
+            logger.exception(f"Import validation error: {e}")
             return False
 
         return True
 
     async def _validate_tests(self, modification: CodeModification) -> bool:
-        """Validate that tests exist for the modification"""
+        """Validate that tests exist for the modification."""
         # Simple heuristic: check if test functions are present
         code = modification.modified_code
 
@@ -271,14 +268,10 @@ class CodeValidator:
             r"from\s+pytest",
         ]
 
-        for pattern in test_patterns:
-            if re.search(pattern, code):
-                return True
-
-        return False
+        return any(re.search(pattern, code) for pattern in test_patterns)
 
     async def _validate_formatting(self, code: str) -> bool:
-        """Validate code formatting"""
+        """Validate code formatting."""
         try:
             # Check if black would modify the code
             formatted = black.format_str(code, mode=black.FileMode())
@@ -287,7 +280,7 @@ class CodeValidator:
             return False
 
     def _calculate_safety_score(self, validation_results: dict[str, Any]) -> float:
-        """Calculate overall safety score"""
+        """Calculate overall safety score."""
         weights = {
             "syntax_valid": 0.25,
             "security_safe": 0.30,
@@ -306,15 +299,15 @@ class CodeValidator:
 
 
 class SandboxEnvironment:
-    """Isolated environment for safe code execution and testing"""
+    """Isolated environment for safe code execution and testing."""
 
-    def __init__(self, base_path: str = "evolution_data/sandbox"):
+    def __init__(self, base_path: str = "evolution_data/sandbox") -> None:
         self.base_path = Path(base_path)
         self.base_path.mkdir(parents=True, exist_ok=True)
         self.active_sandboxes = {}
 
     async def create_sandbox(self, modification: CodeModification) -> str:
-        """Create isolated sandbox for testing modification"""
+        """Create isolated sandbox for testing modification."""
         sandbox_id = f"sandbox_{modification.modification_id}_{int(time.time())}"
         sandbox_path = self.base_path / sandbox_id
         sandbox_path.mkdir(parents=True, exist_ok=True)
@@ -343,7 +336,7 @@ class SandboxEnvironment:
         return sandbox_id
 
     def _generate_test_runner(self, modification: CodeModification) -> str:
-        """Generate test runner for sandbox"""
+        """Generate test runner for sandbox."""
         return '''
 import sys
 import traceback
@@ -409,9 +402,10 @@ if __name__ == "__main__":
     async def run_sandbox_test(
         self, sandbox_id: str, timeout: int = 30
     ) -> dict[str, Any]:
-        """Run test in sandbox environment"""
+        """Run test in sandbox environment."""
         if sandbox_id not in self.active_sandboxes:
-            raise ValueError(f"Sandbox {sandbox_id} not found")
+            msg = f"Sandbox {sandbox_id} not found"
+            raise ValueError(msg)
 
         sandbox_info = self.active_sandboxes[sandbox_id]
         sandbox_path = sandbox_info["path"]
@@ -460,8 +454,8 @@ if __name__ == "__main__":
 
         return test_results
 
-    async def cleanup_sandbox(self, sandbox_id: str):
-        """Clean up sandbox environment"""
+    async def cleanup_sandbox(self, sandbox_id: str) -> None:
+        """Clean up sandbox environment."""
         if sandbox_id in self.active_sandboxes:
             sandbox_path = self.active_sandboxes[sandbox_id]["path"]
 
@@ -470,10 +464,10 @@ if __name__ == "__main__":
                 del self.active_sandboxes[sandbox_id]
                 logger.info(f"Cleaned up sandbox {sandbox_id}")
             except Exception as e:
-                logger.error(f"Failed to cleanup sandbox {sandbox_id}: {e}")
+                logger.exception(f"Failed to cleanup sandbox {sandbox_id}: {e}")
 
-    async def cleanup_old_sandboxes(self, max_age_hours: int = 24):
-        """Clean up old sandbox environments"""
+    async def cleanup_old_sandboxes(self, max_age_hours: int = 24) -> None:
+        """Clean up old sandbox environments."""
         cutoff_time = datetime.now() - timedelta(hours=max_age_hours)
         to_cleanup = []
 
@@ -486,13 +480,13 @@ if __name__ == "__main__":
 
 
 class SafeCodeModifier:
-    """Main class for safe code modification operations"""
+    """Main class for safe code modification operations."""
 
     def __init__(
         self,
         safety_policy: SafetyPolicy | None = None,
         backup_path: str = "evolution_data/backups",
-    ):
+    ) -> None:
         # Default safety policy
         if safety_policy is None:
             safety_policy = SafetyPolicy(
@@ -551,7 +545,7 @@ class SafeCodeModifier:
         description: str,
         code_transformer: Callable[[str], str],
     ) -> CodeModification:
-        """Propose a code modification"""
+        """Propose a code modification."""
         modification_id = self._generate_modification_id(agent_id, file_path)
 
         # Read original code
@@ -559,13 +553,15 @@ class SafeCodeModifier:
             with open(file_path) as f:
                 original_code = f.read()
         except Exception as e:
-            raise ValueError(f"Failed to read file {file_path}: {e}")
+            msg = f"Failed to read file {file_path}: {e}"
+            raise ValueError(msg)
 
         # Apply transformation
         try:
             modified_code = code_transformer(original_code)
         except Exception as e:
-            raise ValueError(f"Code transformation failed: {e}")
+            msg = f"Code transformation failed: {e}"
+            raise ValueError(msg)
 
         # Create modification object
         modification = CodeModification(
@@ -596,9 +592,10 @@ class SafeCodeModifier:
         return modification
 
     async def test_modification(self, modification_id: str) -> dict[str, Any]:
-        """Test modification in sandbox environment"""
+        """Test modification in sandbox environment."""
         if modification_id not in self.modifications:
-            raise ValueError(f"Modification {modification_id} not found")
+            msg = f"Modification {modification_id} not found"
+            raise ValueError(msg)
 
         modification = self.modifications[modification_id]
 
@@ -626,9 +623,10 @@ class SafeCodeModifier:
     async def apply_modification(
         self, modification_id: str, force: bool = False
     ) -> bool:
-        """Apply validated modification to actual code"""
+        """Apply validated modification to actual code."""
         if modification_id not in self.modifications:
-            raise ValueError(f"Modification {modification_id} not found")
+            msg = f"Modification {modification_id} not found"
+            raise ValueError(msg)
 
         modification = self.modifications[modification_id]
 
@@ -665,7 +663,7 @@ class SafeCodeModifier:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to apply modification {modification_id}: {e}")
+            logger.exception(f"Failed to apply modification {modification_id}: {e}")
 
             # Attempt rollback if backup was created
             if (
@@ -677,9 +675,10 @@ class SafeCodeModifier:
             return False
 
     async def rollback_modification(self, modification_id: str) -> bool:
-        """Rollback a previously applied modification"""
+        """Rollback a previously applied modification."""
         if modification_id not in self.modifications:
-            raise ValueError(f"Modification {modification_id} not found")
+            msg = f"Modification {modification_id} not found"
+            raise ValueError(msg)
 
         modification = self.modifications[modification_id]
 
@@ -690,7 +689,7 @@ class SafeCodeModifier:
         return await self._rollback_modification(modification)
 
     async def _rollback_modification(self, modification: CodeModification) -> bool:
-        """Internal rollback implementation"""
+        """Internal rollback implementation."""
         try:
             if (
                 modification.rollback_data
@@ -719,13 +718,13 @@ class SafeCodeModifier:
             return True
 
         except Exception as e:
-            logger.error(
+            logger.exception(
                 f"Failed to rollback modification {modification.modification_id}: {e}"
             )
             return False
 
     async def _create_backup(self, file_path: str) -> Path:
-        """Create backup of file before modification"""
+        """Create backup of file before modification."""
         file_path = Path(file_path)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_name = f"{file_path.stem}_{timestamp}{file_path.suffix}.backup"
@@ -735,8 +734,8 @@ class SafeCodeModifier:
 
         return backup_file
 
-    async def _format_code(self, file_path: str):
-        """Format code using black and isort"""
+    async def _format_code(self, file_path: str) -> None:
+        """Format code using black and isort."""
         try:
             # Format with black
             with open(file_path) as f:
@@ -754,7 +753,7 @@ class SafeCodeModifier:
             logger.warning(f"Failed to format code in {file_path}: {e}")
 
     def _generate_modification_id(self, agent_id: str, file_path: str) -> str:
-        """Generate unique modification ID"""
+        """Generate unique modification ID."""
         timestamp = int(time.time())
         content = f"{agent_id}_{file_path}_{timestamp}"
         hash_obj = hashlib.md5(content.encode())
@@ -762,9 +761,10 @@ class SafeCodeModifier:
         return f"mod_{hash_obj.hexdigest()[:8]}_{timestamp}"
 
     async def get_modification_status(self, modification_id: str) -> dict[str, Any]:
-        """Get detailed status of a modification"""
+        """Get detailed status of a modification."""
         if modification_id not in self.modifications:
-            raise ValueError(f"Modification {modification_id} not found")
+            msg = f"Modification {modification_id} not found"
+            raise ValueError(msg)
 
         modification = self.modifications[modification_id]
 
@@ -783,7 +783,7 @@ class SafeCodeModifier:
     async def list_modifications(
         self, agent_id: str | None = None
     ) -> list[dict[str, Any]]:
-        """List all modifications, optionally filtered by agent"""
+        """List all modifications, optionally filtered by agent."""
         modifications = []
 
         for modification in self.modifications.values():
@@ -802,8 +802,8 @@ class SafeCodeModifier:
 
         return sorted(modifications, key=lambda x: x["timestamp"], reverse=True)
 
-    async def cleanup_old_backups(self, max_age_days: int = 30):
-        """Clean up old backup files"""
+    async def cleanup_old_backups(self, max_age_days: int = 30) -> None:
+        """Clean up old backup files."""
         cutoff_time = datetime.now() - timedelta(days=max_age_days)
 
         for backup_file in self.backup_path.glob("*.backup"):
@@ -818,11 +818,11 @@ class SafeCodeModifier:
 
 # Common code transformations for agent self-improvement
 class CodeTransformations:
-    """Collection of safe code transformations for agent improvement"""
+    """Collection of safe code transformations for agent improvement."""
 
     @staticmethod
     def optimize_hyperparameters(code: str, param_adjustments: dict[str, Any]) -> str:
-        """Optimize hyperparameters in code"""
+        """Optimize hyperparameters in code."""
         modified_code = code
 
         for param_name, new_value in param_adjustments.items():
@@ -834,7 +834,7 @@ class CodeTransformations:
             ]
 
             for pattern in patterns:
-                if isinstance(new_value, (int, float)):
+                if isinstance(new_value, int | float):
                     replacement = f"{param_name} = {new_value}"
                 else:
                     replacement = f'{param_name} = "{new_value}"'
@@ -845,7 +845,7 @@ class CodeTransformations:
 
     @staticmethod
     def add_error_handling(code: str, function_names: list[str]) -> str:
-        """Add error handling to specified functions"""
+        """Add error handling to specified functions."""
         # Parse AST and add try-except blocks
         try:
             tree = ast.parse(code)
@@ -901,12 +901,12 @@ class CodeTransformations:
             return ast.unparse(modified_tree)
 
         except Exception as e:
-            logger.error(f"Failed to add error handling: {e}")
+            logger.exception(f"Failed to add error handling: {e}")
             return code
 
     @staticmethod
     def improve_documentation(code: str) -> str:
-        """Add or improve docstrings and comments"""
+        """Add or improve docstrings and comments."""
         try:
             tree = ast.parse(code)
 
@@ -920,9 +920,9 @@ class CodeTransformations:
                     ):
                         # Generate basic docstring
                         args_str = ", ".join([arg.arg for arg in node.args.args])
-                        docstring = f'"""{
-                            node.name} function.\n\nArgs:\n    {args_str}\n\nReturns:\n    Result of {
-                            node.name}\n"""'
+                        docstring = f'"""{node.name} function.\n\nArgs:\n    {
+                            args_str
+                        }\n\nReturns:\n    Result of {node.name}\n"""'
 
                         docstring_node = ast.Expr(value=ast.Str(s=docstring))
                         node.body.insert(0, docstring_node)
@@ -948,25 +948,25 @@ class CodeTransformations:
             return ast.unparse(modified_tree)
 
         except Exception as e:
-            logger.error(f"Failed to improve documentation: {e}")
+            logger.exception(f"Failed to improve documentation: {e}")
             return code
 
     @staticmethod
     def optimize_imports(code: str) -> str:
-        """Optimize and clean up imports"""
+        """Optimize and clean up imports."""
         try:
             # Use isort to optimize imports
             from isort import code as isort_code
 
             return isort_code(code)
         except Exception as e:
-            logger.error(f"Failed to optimize imports: {e}")
+            logger.exception(f"Failed to optimize imports: {e}")
             return code
 
 
 if __name__ == "__main__":
 
-    async def example_usage():
+    async def example_usage() -> None:
         # Initialize safe code modifier
         modifier = SafeCodeModifier()
 

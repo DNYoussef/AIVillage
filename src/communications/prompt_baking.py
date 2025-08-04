@@ -8,7 +8,7 @@ from transformers import AutoTokenizer
 class PromptBank(nn.Module):
     """Frozen embeddings for baked-in system prompts and manifests."""
 
-    def __init__(self, manifest: dict, tokenizer_name: str, embed_dim: int):
+    def __init__(self, manifest: dict, tokenizer_name: str, embed_dim: int) -> None:
         super().__init__()
         prompt_text = json.dumps(manifest, sort_keys=True, indent=None)
         self.tokenizer = AutoTokenizer.from_pretrained(

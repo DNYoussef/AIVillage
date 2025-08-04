@@ -5,7 +5,7 @@ from torch.optim import Adam
 
 
 class GrokfastAdam(Adam):
-    def __init__(self, params, **kw):
+    def __init__(self, params, **kw) -> None:
         self.slow_freq = kw.pop("slow_freq", 0.08)
         self.boost = kw.pop("boost", 1.5)
         super().__init__(params, **kw)
@@ -20,10 +20,9 @@ class GrokfastAdam(Adam):
         return (tot / n) ** 0.5 if n else 0.0
 
     def step(self, closure=None):
-        loss = None
         if closure is not None:
             with torch.enable_grad():
-                loss = closure()
+                closure()
 
         self._step_count += 1
 

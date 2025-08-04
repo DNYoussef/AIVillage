@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manage test health alerts
+"""Manage test health alerts.
 
 Handles threshold checking, alert dispatch through multiple channels,
 and automated issue creation for test degradation.
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Alert:
-    """Test health alert"""
+    """Test health alert."""
 
     timestamp: str
     severity: str  # low, medium, high, critical
@@ -40,7 +40,7 @@ class Alert:
 
 @dataclass
 class AlertConfig:
-    """Alert configuration"""
+    """Alert configuration."""
 
     success_rate_threshold: float = 95.0
     performance_degradation_threshold: float = 1.5  # 50% slower
@@ -49,7 +49,7 @@ class AlertConfig:
 
     @classmethod
     def from_yaml(cls, config_path: Path) -> "AlertConfig":
-        """Load config from YAML file"""
+        """Load config from YAML file."""
         if not config_path.exists():
             return cls()
 
@@ -71,14 +71,14 @@ class AlertConfig:
                 ),
             )
         except Exception as e:
-            logger.error(f"Failed to load alert config: {e}")
+            logger.exception(f"Failed to load alert config: {e}")
             return cls()
 
 
 class AlertManager:
-    """Manage test health alerts"""
+    """Manage test health alerts."""
 
-    def __init__(self, config_path: Path = None, base_dir: Path = None):
+    def __init__(self, config_path: Path | None = None, base_dir: Path | None = None) -> None:
         self.base_dir = base_dir or Path(__file__).parent
         self.config_path = config_path or self.base_dir / "alert_config.yaml"
         self.alerts_log = self.base_dir / "alerts.log"
@@ -91,8 +91,8 @@ class AlertManager:
         self._load_config()
         self._load_active_alerts()
 
-    def _load_config(self):
-        """Load alert channels configuration"""
+    def _load_config(self) -> None:
+        """Load alert channels configuration."""
         if not self.config_path.exists():
             # Create default config
             self._create_default_config()
@@ -105,11 +105,11 @@ class AlertManager:
             logger.info(f"Loaded {len(self.channels)} alert channels")
 
         except Exception as e:
-            logger.error(f"Failed to load alert channels config: {e}")
+            logger.exception(f"Failed to load alert channels config: {e}")
             self.channels = []
 
-    def _create_default_config(self):
-        """Create default alert configuration"""
+    def _create_default_config(self) -> None:
+        """Create default alert configuration."""
         default_config = {
             "alerts": {
                 "success_rate_threshold": 95.0,
@@ -129,10 +129,10 @@ class AlertManager:
                 yaml.dump(default_config, f, default_flow_style=False)
             logger.info(f"Created default alert config: {self.config_path}")
         except Exception as e:
-            logger.error(f"Failed to create default config: {e}")
+            logger.exception(f"Failed to create default config: {e}")
 
-    def _load_active_alerts(self):
-        """Load active alerts from file"""
+    def _load_active_alerts(self) -> None:
+        """Load active alerts from file."""
         if not self.active_alerts_file.exists():
             self.active_alerts = []
             return
@@ -145,11 +145,11 @@ class AlertManager:
             logger.info(f"Loaded {len(self.active_alerts)} active alerts")
 
         except Exception as e:
-            logger.error(f"Failed to load active alerts: {e}")
+            logger.exception(f"Failed to load active alerts: {e}")
             self.active_alerts = []
 
-    def _save_active_alerts(self):
-        """Save active alerts to file"""
+    def _save_active_alerts(self) -> None:
+        """Save active alerts to file."""
         try:
             self.active_alerts_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.active_alerts_file, "w") as f:
@@ -157,12 +157,12 @@ class AlertManager:
                     [alert.to_dict() for alert in self.active_alerts], f, indent=2
                 )
         except Exception as e:
-            logger.error(f"Failed to save active alerts: {e}")
+            logger.exception(f"Failed to save active alerts: {e}")
 
     def check_thresholds(
-        self, current_stats: dict[str, Any], history: list[dict[str, Any]] = None
+        self, current_stats: dict[str, Any], history: list[dict[str, Any]] | None = None
     ) -> list[Alert]:
-        """Check if any thresholds are breached"""
+        """Check if any thresholds are breached."""
         alerts = []
         timestamp = datetime.now(timezone.utc).isoformat()
 
@@ -277,8 +277,8 @@ class AlertManager:
 
         return alerts
 
-    async def send_alert(self, alert: Alert):
-        """Dispatch alert through configured channels"""
+    async def send_alert(self, alert: Alert) -> None:
+        """Dispatch alert through configured channels."""
         logger.info(f"Sending alert: [{alert.severity}] {alert.message}")
 
         # Add to active alerts
@@ -300,10 +300,10 @@ class AlertManager:
                 elif channel["type"] == "email":
                     await self._send_email_alert(alert, channel)
             except Exception as e:
-                logger.error(f"Failed to send alert via {channel['type']}: {e}")
+                logger.exception(f"Failed to send alert via {channel['type']}: {e}")
 
-    async def _log_alert(self, alert: Alert):
-        """Log alert to file"""
+    async def _log_alert(self, alert: Alert) -> None:
+        """Log alert to file."""
         try:
             self.alerts_log.parent.mkdir(parents=True, exist_ok=True)
             with open(self.alerts_log, "a", encoding="utf-8") as f:
@@ -311,10 +311,10 @@ class AlertManager:
                     f"{alert.timestamp} [{alert.severity.upper()}] {alert.category}: {alert.message}\n"
                 )
         except Exception as e:
-            logger.error(f"Failed to log alert: {e}")
+            logger.exception(f"Failed to log alert: {e}")
 
-    async def _send_webhook_alert(self, alert: Alert, channel: dict[str, Any]):
-        """Send alert via webhook"""
+    async def _send_webhook_alert(self, alert: Alert, channel: dict[str, Any]) -> None:
+        """Send alert via webhook."""
         webhook_url = channel.get("url")
         if not webhook_url:
             logger.error("Webhook URL not configured")
@@ -339,10 +339,10 @@ class AlertManager:
                     else:
                         logger.error(f"Webhook failed with status {response.status}")
         except Exception as e:
-            logger.error(f"Failed to send webhook alert: {e}")
+            logger.exception(f"Failed to send webhook alert: {e}")
 
-    async def _create_github_issue(self, alert: Alert, channel: dict[str, Any]):
-        """Auto-create GitHub issue for test degradation"""
+    async def _create_github_issue(self, alert: Alert, channel: dict[str, Any]) -> None:
+        """Auto-create GitHub issue for test degradation."""
         github_token = os.getenv("GITHUB_TOKEN")
         if not github_token:
             logger.warning("GITHUB_TOKEN not set, skipping GitHub issue creation")
@@ -397,10 +397,10 @@ class AlertManager:
                             f"GitHub issue creation failed with status {response.status}"
                         )
         except Exception as e:
-            logger.error(f"Failed to create GitHub issue: {e}")
+            logger.exception(f"Failed to create GitHub issue: {e}")
 
-    async def _send_email_alert(self, alert: Alert, channel: dict[str, Any]):
-        """Send email alert"""
+    async def _send_email_alert(self, alert: Alert, channel: dict[str, Any]) -> None:
+        """Send email alert."""
         smtp_server = channel.get("smtp_server")
         smtp_port = channel.get("smtp_port", 587)
         username = channel.get("username")
@@ -444,10 +444,10 @@ Please investigate and resolve the issue.
             logger.info("Email alert sent successfully")
 
         except Exception as e:
-            logger.error(f"Failed to send email alert: {e}")
+            logger.exception(f"Failed to send email alert: {e}")
 
-    def resolve_alert(self, alert_id: str):
-        """Mark an alert as resolved"""
+    def resolve_alert(self, alert_id: str) -> None:
+        """Mark an alert as resolved."""
         for alert in self.active_alerts:
             if alert.timestamp == alert_id:
                 alert.resolved = True
@@ -456,12 +456,12 @@ Please investigate and resolve the issue.
                 break
 
     def get_active_alerts(self) -> list[Alert]:
-        """Get list of active (unresolved) alerts"""
+        """Get list of active (unresolved) alerts."""
         return [alert for alert in self.active_alerts if not alert.resolved]
 
 
-async def main():
-    """CLI interface for alert manager"""
+async def main() -> None:
+    """CLI interface for alert manager."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Test Alert Manager")

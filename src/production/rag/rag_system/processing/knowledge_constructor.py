@@ -3,12 +3,12 @@
 from datetime import datetime
 from typing import Any
 
-from ..core.config import RAGConfig
-from ..core.structures import RetrievalResult
+from AIVillage.src.production.rag.rag_system.core.config import RAGConfig
+from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
 
 
 class DefaultKnowledgeConstructor:
-    def __init__(self, config: RAGConfig):
+    def __init__(self, config: RAGConfig) -> None:
         self.config = config
 
     async def construct(

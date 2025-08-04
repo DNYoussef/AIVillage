@@ -2,7 +2,7 @@ from typing import Any
 
 
 class ConfidenceEstimator:
-    def __init__(self):
+    def __init__(self) -> None:
         self.history: list[float] = []
 
     def estimate_confidence(
@@ -29,7 +29,7 @@ class ConfidenceEstimator:
         context: list[dict[str, Any]],
         response: str,
         human_feedback: float,
-    ):
+    ) -> None:
         """Update the confidence estimation model based on human feedback.
 
         :param query: The original query

@@ -10,8 +10,12 @@ from typing import Any
 
 import torch
 
-from ..training.curriculum import CurriculumGenerator, Question
-from ..training.magi_specialization import FrontierQuestionGenerator, MagiConfig
+from AIVillage.src.agent_forge.training.curriculum import CurriculumGenerator, Question
+from AIVillage.src.agent_forge.training.magi_specialization import (
+    FrontierQuestionGenerator,
+    MagiConfig,
+)
+
 from .openrouter_client import OpenRouterClient
 from .task_router import TaskContext, TaskRouter
 
@@ -21,7 +25,7 @@ logger = logging.getLogger(__name__)
 class EnhancedFrontierQuestionGenerator(FrontierQuestionGenerator):
     """Enhanced question generator that uses OpenRouter for high-quality generation."""
 
-    def __init__(self, config: MagiConfig, use_openrouter: bool = True):
+    def __init__(self, config: MagiConfig, use_openrouter: bool = True) -> None:
         """Initialize enhanced question generator.
 
         Args:
@@ -49,7 +53,7 @@ class EnhancedFrontierQuestionGenerator(FrontierQuestionGenerator):
             try:
                 loop = asyncio.get_running_loop()
                 # If we're in an async context, create a task
-                task = loop.create_task(
+                loop.create_task(
                     self._generate_with_openrouter(area, difficulty)
                 )
                 # For now, fall back to sync generation to avoid blocking
@@ -213,7 +217,7 @@ The variation should:
 class EnhancedCurriculumGenerator(CurriculumGenerator):
     """Enhanced curriculum generator with OpenRouter integration."""
 
-    def __init__(self, frontier_model: str, domain: str, use_openrouter: bool = True):
+    def __init__(self, frontier_model: str, domain: str, use_openrouter: bool = True) -> None:
         """Initialize enhanced curriculum generator.
 
         Args:
@@ -258,7 +262,7 @@ class EnhancedCurriculumGenerator(CurriculumGenerator):
 class MultiModelOrchestrator:
     """Main orchestrator for multi-model training integration."""
 
-    def __init__(self, config: MagiConfig, enable_openrouter: bool = True):
+    def __init__(self, config: MagiConfig, enable_openrouter: bool = True) -> None:
         """Initialize the orchestrator.
 
         Args:
@@ -346,7 +350,7 @@ Be thorough and educational."""
             "routing_stats": self.router.get_routing_stats(),
         }
 
-    async def close(self):
+    async def close(self) -> None:
         """Clean up resources."""
         if self.enable_openrouter:
             await self.client.close()

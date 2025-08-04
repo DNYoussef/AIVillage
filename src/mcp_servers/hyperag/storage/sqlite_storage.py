@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sqlite3
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class SQLiteStorage:
@@ -34,7 +34,7 @@ class SQLiteStorage:
         node_id: str,
         content: str,
         content_type: str = "text",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         def _insert() -> None:
             cur = self.conn.cursor()
@@ -46,8 +46,8 @@ class SQLiteStorage:
 
         await asyncio.to_thread(_insert)
 
-    async def get_knowledge(self, node_id: str) -> Optional[Dict[str, Any]]:
-        def _get() -> Optional[Dict[str, Any]]:
+    async def get_knowledge(self, node_id: str) -> dict[str, Any] | None:
+        def _get() -> dict[str, Any] | None:
             cur = self.conn.cursor()
             cur.execute(
                 "SELECT id, content, content_type, metadata FROM knowledge WHERE id=?",
@@ -70,11 +70,11 @@ class SQLiteStorage:
         self,
         query: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
         like_query = f"%{query}%"
 
-        def _search() -> List[Dict[str, Any]]:
+        def _search() -> list[dict[str, Any]]:
             cur = self.conn.cursor()
             cur.execute(
                 "SELECT id, content, content_type, metadata FROM knowledge WHERE content LIKE ? LIMIT ?",
@@ -100,13 +100,15 @@ class SQLiteStorage:
     async def update_knowledge(
         self,
         node_id: str,
-        content: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        content: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         def _update() -> None:
             cur = self.conn.cursor()
             if content is not None:
-                cur.execute("UPDATE knowledge SET content=? WHERE id=?", (content, node_id))
+                cur.execute(
+                    "UPDATE knowledge SET content=? WHERE id=?", (content, node_id)
+                )
             if metadata is not None:
                 cur.execute(
                     "UPDATE knowledge SET metadata=? WHERE id=?",

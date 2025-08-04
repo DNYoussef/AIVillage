@@ -8,7 +8,7 @@ from typing import Any
 
 
 class TaskType(Enum):
-    """Types of tasks that can be routed to different models"""
+    """Types of tasks that can be routed to different models."""
 
     PROBLEM_GENERATION = "problem_generation"
     EVALUATION_GRADING = "evaluation_grading"
@@ -19,7 +19,7 @@ class TaskType(Enum):
 
 
 class CostTier(Enum):
-    """Cost tiers for model selection"""
+    """Cost tiers for model selection."""
 
     PREMIUM = "premium"  # Highest quality, highest cost
     BALANCED = "balanced"  # Good quality, moderate cost

@@ -1,4 +1,4 @@
-"""MCP (Model Context Protocol) Refiner
+"""MCP (Model Context Protocol) Refiner.
 
 Implements tool prompt refinement and optimization for MCP integration:
 - Automatic tool prompt optimization
@@ -9,19 +9,19 @@ Implements tool prompt refinement and optimization for MCP integration:
 """
 
 import asyncio
-import json
-import logging
-import re
-import time
 from collections import Counter, defaultdict
 from dataclasses import dataclass
+import json
+import logging
 from pathlib import Path
+import re
+import time
 from typing import Any
 
 import numpy as np
 import torch
-import wandb
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import wandb
 
 from agent_forge.geometry_feedback import GeometryTracker
 
@@ -79,7 +79,7 @@ class MCPRefinementConfig:
 class ToolAnalyzer:
     """Analyzes tool usage patterns and performance."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.usage_logs = []
         self.tool_patterns = defaultdict(list)
         self.performance_metrics = defaultdict(list)
@@ -93,7 +93,7 @@ class ToolAnalyzer:
         response_time: float,
         response_quality: float,
         error_message: str | None = None,
-    ):
+    ) -> None:
         """Log a tool usage event."""
         usage_event = {
             "tool_name": tool_name,
@@ -146,7 +146,7 @@ class ToolAnalyzer:
             words = re.findall(r"\b\w+\b", event["prompt"].lower())
             if len(words) >= 3:
                 for i in range(len(words) - 2):
-                    trigram = " ".join(words[i: i + 3])
+                    trigram = " ".join(words[i : i + 3])
                     context_patterns.append(trigram)
 
         # Get most common context patterns
@@ -191,13 +191,13 @@ class ToolAnalyzer:
 class PromptEvolver:
     """Evolves and optimizes tool prompts using genetic algorithms."""
 
-    def __init__(self, config: MCPRefinementConfig):
+    def __init__(self, config: MCPRefinementConfig) -> None:
         self.config = config
         self.tokenizer = None
         self.model = None
         self.geometry_tracker = None
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize model and tokenizer."""
         logger.info(f"Loading model from {self.config.model_path}")
 
@@ -366,7 +366,7 @@ class PromptEvolver:
 
             # Add usage notes
             if len(lines) > 2:
-                structured.extend(["## Usage Notes"] + lines[2:])
+                structured.extend(["## Usage Notes", *lines[2:]])
 
             return "\n".join(structured)
 
@@ -474,7 +474,7 @@ class PromptEvolver:
 class MCPRefiner:
     """Main MCP refinement orchestrator."""
 
-    def __init__(self, config: MCPRefinementConfig):
+    def __init__(self, config: MCPRefinementConfig) -> None:
         self.config = config
         self.output_dir = Path(config.output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -495,7 +495,7 @@ class MCPRefiner:
                 job_type="mcp_refinement",
             )
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize refiner components."""
         await self.prompt_evolver.initialize()
         logger.info("MCP Refiner initialized successfully")
@@ -503,7 +503,7 @@ class MCPRefiner:
     async def refine_tool_prompts(
         self,
         tool_definitions: dict[str, dict[str, Any]],
-        usage_logs: list[dict[str, Any]] = None,
+        usage_logs: list[dict[str, Any]] | None = None,
     ) -> dict[str, str]:
         """Refine prompts for multiple tools."""
         logger.info(f"Starting MCP refinement for {len(tool_definitions)} tools")
@@ -546,7 +546,7 @@ class MCPRefiner:
                 )
 
             except Exception as e:
-                logger.error(f"Failed to refine prompts for {tool_name}: {e}")
+                logger.exception(f"Failed to refine prompts for {tool_name}: {e}")
                 refined_prompts[tool_name] = tool_def.get(
                     "description", f"Use the {tool_name} tool."
                 )
@@ -709,7 +709,7 @@ class MCPRefiner:
         )
         return max(tournament, key=lambda x: x.performance_score)
 
-    async def _save_refinement_results(self, refined_prompts: dict[str, str]):
+    async def _save_refinement_results(self, refined_prompts: dict[str, str]) -> None:
         """Save refinement results."""
         results = {
             "refined_prompts": refined_prompts,
@@ -738,7 +738,7 @@ class MCPRefiner:
         underperforming = self.tool_analyzer.get_underperforming_tools()
 
         tool_stats = {}
-        for tool_name in self.tool_analyzer.tool_patterns.keys():
+        for tool_name in self.tool_analyzer.tool_patterns:
             pattern = self.tool_analyzer.analyze_tool_patterns(tool_name)
             tool_stats[tool_name] = {
                 "success_rate": pattern.success_rate,
@@ -756,7 +756,7 @@ class MCPRefiner:
 
 
 # CLI and usage
-async def main():
+async def main() -> None:
     """Main MCP refinement entry point."""
     import argparse
 

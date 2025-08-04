@@ -2,12 +2,12 @@ import logging
 import random
 import traceback
 
-import nltk
-import torch
-import torch.nn.functional as F
 from langroid import ChatAgent, ChatAgentConfig, Task
+import nltk
 from nltk.tokenize import sent_tokenize
 from nltk.translate.bleu_score import sentence_bleu
+import torch
+import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from agent_forge.self_awareness.metacognaitve_eval import MetacognitiveEvaluatorTask
@@ -25,7 +25,7 @@ class SelfGuidedEvolutionTask(Task):
         model: AutoModelForCausalLM,
         tokenizer: AutoTokenizer,
         evaluator: MetacognitiveEvaluatorTask,
-    ):
+    ) -> None:
         super().__init__(agent)
         self.model = model
         self.tokenizer = tokenizer
@@ -54,10 +54,11 @@ class SelfGuidedEvolutionTask(Task):
                     )
                     scores.append(combined_score)
                     logger.info(
-                        f"Variant score: {combined_score} (Performance: {score}, Coherence: {coherence_score}, Relevance: {relevance_score})")
+                        f"Variant score: {combined_score} (Performance: {score}, Coherence: {coherence_score}, Relevance: {relevance_score})"
+                    )
                 except Exception as e:
-                    logger.error(f"Error evaluating variant: {e!s}")
-                    logger.error(traceback.format_exc())
+                    logger.exception(f"Error evaluating variant: {e!s}")
+                    logger.exception(traceback.format_exc())
                     scores.append(0)  # Assign a zero score to failed evaluations
 
             if scores:
@@ -144,7 +145,7 @@ class SelfGuidedEvolutionTask(Task):
             combine_pos = random.randint(0, len(sentences) - 2)
             combined = f"{sentences[combine_pos]} Moreover, {sentences[combine_pos + 1].lower()}"
             sentences = (
-                sentences[:combine_pos] + [combined] + sentences[combine_pos + 2:]
+                [*sentences[:combine_pos], combined, *sentences[combine_pos + 2:]]
             )
         return " ".join(sentences)
 
@@ -154,7 +155,7 @@ class SelfGuidedEvolutionTask(Task):
         split_sentence = sentences[split_pos].split(", ", 1)
         if len(split_sentence) > 1:
             sentences = (
-                sentences[:split_pos] + split_sentence + sentences[split_pos + 1:]
+                sentences[:split_pos] + split_sentence + sentences[split_pos + 1 :]
             )
         return " ".join(sentences)
 
@@ -252,7 +253,7 @@ class SelfGuidedEvolutionTask(Task):
 class PromptBakerTask(Task):
     def __init__(
         self, agent: ChatAgent, model: AutoModelForCausalLM, tokenizer: AutoTokenizer
-    ):
+    ) -> None:
         super().__init__(agent)
         self.model = model
         self.tokenizer = tokenizer
@@ -260,7 +261,7 @@ class PromptBakerTask(Task):
 
     async def bake_prompt(
         self, prompt: str, num_iterations: int = 1000, lr: float = 1e-4
-    ):
+    ) -> None:
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
 
         for i in range(num_iterations):
@@ -273,8 +274,8 @@ class PromptBakerTask(Task):
                 if i % 100 == 0:
                     logger.info(f"Baking iteration {i}, Loss: {loss.item()}")
             except Exception as e:
-                logger.error(f"Error during baking iteration {i}: {e!s}")
-                logger.error(traceback.format_exc())
+                logger.exception(f"Error during baking iteration {i}: {e!s}")
+                logger.exception(traceback.format_exc())
                 break
 
     async def compute_kl_loss(
@@ -299,7 +300,7 @@ class PromptBakerTask(Task):
 
         return total_loss / num_samples
 
-    async def run(self, prompt: str, num_iterations: int = 1000, lr: float = 1e-4):
+    async def run(self, prompt: str, num_iterations: int = 1000, lr: float = 1e-4) -> str:
         await self.bake_prompt(prompt, num_iterations, lr)
         return "Prompt baking completed"
 
@@ -307,7 +308,7 @@ class PromptBakerTask(Task):
 class IterativeBakingCycleTask(Task):
     def __init__(
         self, agent: ChatAgent, model: AutoModelForCausalLM, tokenizer: AutoTokenizer
-    ):
+    ) -> None:
         super().__init__(agent)
         self.model = model
         self.tokenizer = tokenizer
@@ -339,8 +340,8 @@ class IterativeBakingCycleTask(Task):
                 # Update the current prompt for the next cycle
                 current_prompt = evolved_prompt
             except Exception as e:
-                logger.error(f"Error in baking cycle {cycle + 1}: {e!s}")
-                logger.error(traceback.format_exc())
+                logger.exception(f"Error in baking cycle {cycle + 1}: {e!s}")
+                logger.exception(traceback.format_exc())
                 break
 
         return self.model, current_prompt
@@ -352,7 +353,7 @@ if __name__ == "__main__":
 
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
-    async def main():
+    async def main() -> None:
         config = ChatAgentConfig(
             name="SelfGuidedMetacognitiveBaker",
             llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),

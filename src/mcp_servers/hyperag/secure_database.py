@@ -4,12 +4,12 @@ Fixes SQL injection vulnerabilities identified in security audit.
 """
 
 import asyncio
+from datetime import datetime
 import hashlib
 import json
 import logging
 import sqlite3
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class SecureDatabaseManager:
     """Secure database manager with parameterized queries to prevent SQL injection."""
 
-    def __init__(self, db_path: str = "data/hyperag_secure.db"):
+    def __init__(self, db_path: str = "data/hyperag_secure.db") -> None:
         self.db_path = db_path
         self.connection = None
         self._init_database()
@@ -28,7 +28,7 @@ class SecureDatabaseManager:
             self.connection = sqlite3.connect(
                 self.db_path,
                 check_same_thread=False,
-                isolation_level=None  # Autocommit mode
+                isolation_level=None,  # Autocommit mode
             )
 
             # Enable foreign keys and secure settings
@@ -41,7 +41,7 @@ class SecureDatabaseManager:
             logger.info(f"Secure database initialized: {self.db_path}")
 
         except Exception as e:
-            logger.error(f"Failed to initialize secure database: {e}")
+            logger.exception(f"Failed to initialize secure database: {e}")
             raise
 
     def _create_secure_schema(self) -> None:
@@ -96,7 +96,7 @@ class SecureDatabaseManager:
             """,
             """
             CREATE INDEX IF NOT EXISTS idx_embeddings_hash ON embeddings(content_hash)
-            """
+            """,
         ]
 
         for query in schema_queries:
@@ -104,13 +104,13 @@ class SecureDatabaseManager:
 
     def _generate_content_hash(self, content: str) -> str:
         """Generate secure hash for content using SHA-256."""
-        return hashlib.sha256(content.encode('utf-8')).hexdigest()
+        return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
     async def store_memory(
         self,
         content: str,
-        tags: Optional[List[str]] = None,
-        importance_score: float = 0.0
+        tags: list[str] | None = None,
+        importance_score: float = 0.0,
     ) -> str:
         """Store memory with secure parameterized query."""
         content_hash = self._generate_content_hash(content)
@@ -118,23 +118,23 @@ class SecureDatabaseManager:
 
         try:
             # Use parameterized query to prevent SQL injection
-            cursor = self.connection.execute(
+            self.connection.execute(
                 """
                 INSERT OR REPLACE INTO memories
                 (content_hash, content, tags, importance_score, updated_at)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                (content_hash, content, tags_json, importance_score, datetime.now())
+                (content_hash, content, tags_json, importance_score, datetime.now()),
             )
 
             logger.info(f"Stored memory with hash: {content_hash}")
             return content_hash
 
         except Exception as e:
-            logger.error(f"Failed to store memory: {e}")
+            logger.exception(f"Failed to store memory: {e}")
             raise
 
-    async def retrieve_memory(self, content_hash: str) -> Optional[Dict[str, Any]]:
+    async def retrieve_memory(self, content_hash: str) -> dict[str, Any] | None:
         """Retrieve memory with secure parameterized query."""
         try:
             cursor = self.connection.execute(
@@ -143,7 +143,7 @@ class SecureDatabaseManager:
                 FROM memories
                 WHERE content_hash = ?
                 """,
-                (content_hash,)
+                (content_hash,),
             )
 
             row = cursor.fetchone()
@@ -153,7 +153,7 @@ class SecureDatabaseManager:
             # Update access count securely
             self.connection.execute(
                 "UPDATE memories SET access_count = access_count + 1 WHERE content_hash = ?",
-                (content_hash,)
+                (content_hash,),
             )
 
             return {
@@ -163,19 +163,16 @@ class SecureDatabaseManager:
                 "created_at": row[2],
                 "updated_at": row[3],
                 "access_count": row[4] + 1,
-                "importance_score": row[5]
+                "importance_score": row[5],
             }
 
         except Exception as e:
-            logger.error(f"Failed to retrieve memory: {e}")
+            logger.exception(f"Failed to retrieve memory: {e}")
             return None
 
     async def search_memories(
-        self,
-        query: str,
-        tags: Optional[List[str]] = None,
-        limit: int = 10
-    ) -> List[Dict[str, Any]]:
+        self, query: str, tags: list[str] | None = None, limit: int = 10
+    ) -> list[dict[str, Any]]:
         """Search memories with secure parameterized queries."""
         try:
             # Build secure query with parameterized placeholders
@@ -203,18 +200,20 @@ class SecureDatabaseManager:
 
             results = []
             for row in rows:
-                results.append({
-                    "content_hash": row[0],
-                    "content": row[1],
-                    "tags": json.loads(row[2]),
-                    "created_at": row[3],
-                    "importance_score": row[4]
-                })
+                results.append(
+                    {
+                        "content_hash": row[0],
+                        "content": row[1],
+                        "tags": json.loads(row[2]),
+                        "created_at": row[3],
+                        "importance_score": row[4],
+                    }
+                )
 
             return results
 
         except Exception as e:
-            logger.error(f"Failed to search memories: {e}")
+            logger.exception(f"Failed to search memories: {e}")
             return []
 
     async def store_knowledge_triple(
@@ -223,7 +222,7 @@ class SecureDatabaseManager:
         predicate: str,
         obj: str,
         confidence: float = 1.0,
-        source: Optional[str] = None
+        source: str | None = None,
     ) -> bool:
         """Store knowledge graph triple with secure parameterized query."""
         try:
@@ -233,23 +232,23 @@ class SecureDatabaseManager:
                 (subject, predicate, object, confidence, source)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                (subject, predicate, obj, confidence, source)
+                (subject, predicate, obj, confidence, source),
             )
 
             logger.debug(f"Stored knowledge triple: ({subject}, {predicate}, {obj})")
             return True
 
         except Exception as e:
-            logger.error(f"Failed to store knowledge triple: {e}")
+            logger.exception(f"Failed to store knowledge triple: {e}")
             return False
 
     async def query_knowledge_graph(
         self,
-        subject: Optional[str] = None,
-        predicate: Optional[str] = None,
-        obj: Optional[str] = None,
-        limit: int = 100
-    ) -> List[Dict[str, Any]]:
+        subject: str | None = None,
+        predicate: str | None = None,
+        obj: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
         """Query knowledge graph with secure parameterized queries."""
         try:
             # Build dynamic query with proper parameterization
@@ -281,22 +280,24 @@ class SecureDatabaseManager:
 
             results = []
             for row in rows:
-                results.append({
-                    "subject": row[0],
-                    "predicate": row[1],
-                    "object": row[2],
-                    "confidence": row[3],
-                    "source": row[4],
-                    "created_at": row[5]
-                })
+                results.append(
+                    {
+                        "subject": row[0],
+                        "predicate": row[1],
+                        "object": row[2],
+                        "confidence": row[3],
+                        "source": row[4],
+                        "created_at": row[5],
+                    }
+                )
 
             return results
 
         except Exception as e:
-            logger.error(f"Failed to query knowledge graph: {e}")
+            logger.exception(f"Failed to query knowledge graph: {e}")
             return []
 
-    async def get_database_stats(self) -> Dict[str, Any]:
+    async def get_database_stats(self) -> dict[str, Any]:
         """Get database statistics securely."""
         try:
             stats = {}
@@ -314,13 +315,15 @@ class SecureDatabaseManager:
             stats["embedding_count"] = cursor.fetchone()[0]
 
             # Database size
-            cursor = self.connection.execute("SELECT page_count * page_size FROM pragma_page_count(), pragma_page_size()")
+            cursor = self.connection.execute(
+                "SELECT page_count * page_size FROM pragma_page_count(), pragma_page_size()"
+            )
             stats["database_size_bytes"] = cursor.fetchone()[0]
 
             return stats
 
         except Exception as e:
-            logger.error(f"Failed to get database stats: {e}")
+            logger.exception(f"Failed to get database stats: {e}")
             return {}
 
     def close(self) -> None:
@@ -335,14 +338,14 @@ class SecureHashingManager:
     """Secure hashing manager using SHA-256 instead of MD5."""
 
     @staticmethod
-    def hash_content(content: str, salt: Optional[str] = None) -> str:
+    def hash_content(content: str, salt: str | None = None) -> str:
         """Generate secure SHA-256 hash."""
         if salt:
             content = f"{content}{salt}"
-        return hashlib.sha256(content.encode('utf-8')).hexdigest()
+        return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
     @staticmethod
-    def verify_hash(content: str, hash_value: str, salt: Optional[str] = None) -> bool:
+    def verify_hash(content: str, hash_value: str, salt: str | None = None) -> bool:
         """Verify content against hash."""
         return SecureHashingManager.hash_content(content, salt) == hash_value
 
@@ -355,10 +358,13 @@ class SecureInputValidator:
     def sanitize_string(input_str: str, max_length: int = 1000) -> str:
         """Sanitize string input."""
         if not isinstance(input_str, str):
-            raise ValueError("Input must be a string")
+            msg = "Input must be a string"
+            raise ValueError(msg)
 
         # Remove null bytes and control characters
-        sanitized = ''.join(char for char in input_str if ord(char) >= 32 or char in '\n\r\t')
+        sanitized = "".join(
+            char for char in input_str if ord(char) >= 32 or char in "\n\r\t"
+        )
 
         # Truncate to max length
         if len(sanitized) > max_length:
@@ -385,7 +391,7 @@ class SecureInputValidator:
 
 if __name__ == "__main__":
     # Test the secure database manager
-    async def test_secure_database():
+    async def test_secure_database() -> None:
         db = SecureDatabaseManager("test_secure.db")
 
         # Test memory storage

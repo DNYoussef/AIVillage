@@ -120,14 +120,14 @@ __all__ = [
 #     dashboard_port: int = 5000,
 # ) -> EvolutionOrchestrator:
 #     """Quick initialization of the complete evolution system
-# 
+#
 #     Args:
 #         evolution_data_path: Path for storing evolution data
 #         population_size: Size of agent population (default: 18)
 #         auto_evolution: Enable automatic evolution cycles
 #         safety_mode: Enable safety restrictions for code modifications
 #         dashboard_port: Port for evolution dashboard
-# 
+#
 #     Returns:
 #         Configured EvolutionOrchestrator ready to start
 #     """
@@ -139,15 +139,15 @@ __all__ = [
 #         safety_mode=safety_mode,
 #         max_population_size=population_size,
 #     )
-# 
+#
 #     # Initialize orchestrator
 #     orchestrator = EvolutionOrchestrator(
 #         config=config, storage_path=evolution_data_path
 #     )
-# 
+#
 #     # Setup dashboard templates
 #     setup_dashboard_templates(f"{evolution_data_path}/templates")
-# 
+#
 #     return orchestrator
 
 
@@ -159,14 +159,14 @@ __all__ = [
 # if __name__ == "__main__":
 #     import asyncio
 #     import logging
-# 
+#
 #     # Configure logging
 #     logging.basicConfig(
 #         level=logging.INFO,
 #         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 #     )
-# 
+#
 #     async def main():
 #         print("Evolution system functionality disabled - dependencies missing")
-# 
+#
 #     asyncio.run(main())

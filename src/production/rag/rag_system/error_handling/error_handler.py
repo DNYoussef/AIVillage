@@ -9,11 +9,11 @@ class AIVillageException(Exception):
 
 
 class ErrorHandler:
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
         self.setup_logging()
 
-    def setup_logging(self):
+    def setup_logging(self) -> None:
         """Set up logging configuration."""
         logging.basicConfig(
             level=logging.INFO,
@@ -21,7 +21,7 @@ class ErrorHandler:
             filename="ai_village.log",
         )
 
-    def log_error(self, error: Exception, context: dict[str, Any] | None = None):
+    def log_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:
         """Log an error with optional context."""
         error_message = f"Error: {error!s}"
         if context:
@@ -39,7 +39,8 @@ class ErrorHandler:
                 self.log_error(
                     e, {"function": func.__name__, "args": args, "kwargs": kwargs}
                 )
-                raise AIVillageException(f"Error in {func.__name__}: {e!s}")
+                msg = f"Error in {func.__name__}: {e!s}"
+                raise AIVillageException(msg)
 
         return wrapper
 

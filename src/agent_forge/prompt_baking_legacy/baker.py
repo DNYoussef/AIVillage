@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import datetime as dt
+from datetime import timezone
 import json
 import logging
 import pathlib
-from datetime import timezone
+from typing import TYPE_CHECKING
 
 import torch
-from transformers import AutoTokenizer
+
+if TYPE_CHECKING:
+    from transformers import AutoTokenizer
 
 log = logging.getLogger("PromptBake")
 
@@ -27,7 +30,7 @@ def bake(
     ids = tokenizer(text, return_tensors="pt").input_ids.to(model.device)
 
     class PrefixEncoder(torch.nn.Module):
-        def __init__(self, hidden: int):
+        def __init__(self, hidden: int) -> None:
             super().__init__()
             self.embed = torch.nn.Parameter(torch.randn(prefix_len, hidden) * 0.02)
 
@@ -53,13 +56,13 @@ def bake(
     pe.eval().requires_grad_(False)
     model.prompt_bank.register_buffer(f"{ANCHOR_NS}_emb", pe.embed)
 
-    meta = dict(
-        ns=ANCHOR_NS,
-        txt=text[:160] + "…" if len(text) > 160 else text,
-        dt=dt.datetime.now(timezone.utc).isoformat(),
-        loss=float(loss.item()),
-        steps=step,
-    )
+    meta = {
+        "ns": ANCHOR_NS,
+        "txt": text[:160] + "…" if len(text) > 160 else text,
+        "dt": dt.datetime.now(timezone.utc).isoformat(),
+        "loss": float(loss.item()),
+        "steps": step,
+    }
     pathlib.Path("prompt_baking").mkdir(exist_ok=True)
     (pathlib.Path("prompt_baking") / f"{ANCHOR_NS}.json").write_text(
         json.dumps(meta, indent=2)

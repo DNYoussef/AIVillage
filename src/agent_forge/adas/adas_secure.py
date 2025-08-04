@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import ast
+from contextlib import contextmanager
 import json
 import os
 import signal
 import subprocess
 import sys
 import tempfile
-from contextlib import contextmanager
-from typing import Any
+from typing import Any, NoReturn
 
 from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
 from langroid.agent.task import Task
@@ -23,7 +23,7 @@ from .technique_archive import PROMPT_TECHNIQUE_ARCHIVE
 class ADASTask(Task):
     """ADAS Task for evolutionary agent development."""
 
-    def __init__(self, task_description: str):
+    def __init__(self, task_description: str) -> None:
         config = ChatAgentConfig(
             name="ADAS",
             system_message="You are an expert machine learning researcher designing agentic systems.",
@@ -82,7 +82,7 @@ class ADASTask(Task):
         try:
             import ast
 
-            tree = ast.parse(code)
+            ast.parse(code)
             score += 0.2  # Valid syntax
         except SyntaxError:
             return 0.0
@@ -138,15 +138,16 @@ class ADASTask(Task):
 class SecureCodeRunner:
     """Secure code execution using subprocess isolation."""
 
-    def __init__(self, logger=None):
+    def __init__(self, logger=None) -> None:
         self.logger = logger or get_logger("SecureCodeRunner")
 
     @contextmanager
     def _timeout(self, seconds: int):
         """Context manager for timeout."""
 
-        def timeout_handler(signum, frame):
-            raise TimeoutError(f"Code execution exceeded {seconds} seconds")
+        def timeout_handler(signum, frame) -> NoReturn:
+            msg = f"Code execution exceeded {seconds} seconds"
+            raise TimeoutError(msg)
 
         # Set the signal handler and alarm
         signal.signal(signal.SIGALRM, timeout_handler)
@@ -236,14 +237,14 @@ if __name__ == "__main__":
                 self.logger.error(f"Code error: {output.get('error')}")
                 return 0.0
             except json.JSONDecodeError:
-                self.logger.error(f"Invalid output: {result.stdout}")
+                self.logger.exception(f"Invalid output: {result.stdout}")
                 return 0.0
 
         except subprocess.TimeoutExpired:
-            self.logger.error("Code execution timeout")
+            self.logger.exception("Code execution timeout")
             return 0.0
         except Exception as e:
-            self.logger.error(f"Execution error: {e}")
+            self.logger.exception(f"Execution error: {e}")
             return 0.0
         finally:
             os.unlink(script_path)
@@ -257,15 +258,13 @@ class AgentTechnique(ToolMessage):
     technique_name: str
     code: str
 
-    def __init__(self, **data: Any):
+    def __init__(self, **data: Any) -> None:
         super().__init__(**data)
         self.logger = get_logger("ADAS")
         self.runner = SecureCodeRunner(self.logger)
 
     def validate_code(self, code: str) -> bool:
         """Validate code for basic safety checks."""
-        import ast
-
         # Check syntax
         try:
             tree = ast.parse(code)
@@ -326,7 +325,7 @@ class AgentTechnique(ToolMessage):
             )
             return score
         except Exception as e:
-            self.logger.error(f"Failed to run technique {self.technique_name}: {e}")
+            self.logger.exception(f"Failed to run technique {self.technique_name}: {e}")
             return 0.0
 
 

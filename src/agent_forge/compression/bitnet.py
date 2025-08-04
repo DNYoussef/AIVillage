@@ -1,10 +1,11 @@
 """BitNet: ternary 1.58-bit quantization utilities."""
+
 from __future__ import annotations
 
-import torch
-import numpy as np
-from typing import Dict
 import logging
+
+import numpy as np
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class BITNETCompressor:
         logger.info("BitNet 1.58-bit quantization initialized")
 
     # ------------------------------------------------------------------
-    def compress(self, weights: torch.Tensor) -> Dict[str, object]:
+    def compress(self, weights: torch.Tensor) -> dict[str, object]:
         """Quantize ``weights`` to ternary representation.
 
         Args:
@@ -51,7 +52,7 @@ class BITNETCompressor:
         }
 
     # ------------------------------------------------------------------
-    def decompress(self, compressed: Dict[str, object]) -> torch.Tensor:
+    def decompress(self, compressed: dict[str, object]) -> torch.Tensor:
         """Reconstruct tensor from compressed representation."""
         packed = compressed["packed_weights"]
         scale = torch.tensor(compressed["scale"], dtype=torch.float32)
@@ -65,6 +66,7 @@ class BITNETCompressor:
 # ----------------------------------------------------------------------
 # Helper functions
 # ----------------------------------------------------------------------
+
 
 def _pack_ternary(ternary: torch.Tensor) -> bytes:
     """Pack ternary values into bytes (2 bits per value)."""
@@ -83,12 +85,14 @@ def _unpack_ternary(packed: bytes, n: int) -> torch.Tensor:
     """Unpack bytes produced by :func:`_pack_ternary`."""
     vals = []
     for byte in packed:
-        vals.extend([
-            (byte >> 6) & 0b11,
-            (byte >> 4) & 0b11,
-            (byte >> 2) & 0b11,
-            byte & 0b11,
-        ])
+        vals.extend(
+            [
+                (byte >> 6) & 0b11,
+                (byte >> 4) & 0b11,
+                (byte >> 2) & 0b11,
+                byte & 0b11,
+            ]
+        )
     vals = vals[:n]
     ternary = torch.tensor(vals, dtype=torch.float32) - 1
     return ternary
@@ -96,6 +100,7 @@ def _unpack_ternary(packed: bytes, n: int) -> torch.Tensor:
 
 # Convenience wrapper ---------------------------------------------------
 
-def compress(weights: torch.Tensor) -> Dict[str, object]:
+
+def compress(weights: torch.Tensor) -> dict[str, object]:
     """Compress ``weights`` using :class:`BITNETCompressor`."""
     return BITNETCompressor().compress(weights)

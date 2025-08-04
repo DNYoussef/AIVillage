@@ -9,18 +9,20 @@ except Exception:  # pragma: no cover - handled by fallback logic
     nx = None  # type: ignore
 
 try:  # embedding dependencies are optional
-    from ..utils.embedding import BERTEmbeddingModel
+    from AIVillage.src.production.rag.rag_system.utils.embedding import (
+        BERTEmbeddingModel,
+    )
 except Exception:  # pragma: no cover - missing torch/transformers
     BERTEmbeddingModel = None  # type: ignore
 
-from ..core.config import UnifiedConfig
-from ..core.structures import RetrievalResult
+from AIVillage.src.production.rag.rag_system.core.config import UnifiedConfig
+from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
 
 
 class GraphStore:
     def __init__(
         self, config: UnifiedConfig | None = None, embedding_model: Any | None = None
-    ):
+    ) -> None:
         """Create a GraphStore.
 
         Similar to :class:`VectorStore`, older code instantiated ``GraphStore``
@@ -67,7 +69,7 @@ class GraphStore:
         rng = random.Random(abs(hash(text)) % (2**32))
         return [rng.random() for _ in range(64)]
 
-    def add_documents(self, documents: list[dict[str, Any]]):
+    def add_documents(self, documents: list[dict[str, Any]]) -> None:
         for doc in documents:
             # Ensure each document has an embedding
             if "embedding" not in doc or doc["embedding"] is None:
@@ -91,7 +93,7 @@ class GraphStore:
                     self.graph.add_edge(doc["id"], other["id"], weight=sim)
 
     async def retrieve(
-        self, query: str, k: int, timestamp: datetime = None
+        self, query: str, k: int, timestamp: datetime | None = None
     ) -> list[RetrievalResult]:
         """Return nodes that match ``query``.
 
@@ -174,7 +176,7 @@ class GraphStore:
 
     def update_causal_strength(
         self, source: str, target: str, observed_probability: float
-    ):
+    ) -> None:
         edge = self.causal_edges.get((source, target))
         if edge:
             learning_rate = 0.1
@@ -182,7 +184,7 @@ class GraphStore:
                 1 - learning_rate
             ) * edge.strength + learning_rate * observed_probability
 
-    def close(self):
+    def close(self) -> None:
         if self.driver:
             self.driver.close()
 
@@ -225,7 +227,7 @@ class GraphStore:
             for beam in beams:
                 neighbors = await self.get_neighbors(beam[-1])
                 for neighbor in neighbors:
-                    new_beam = beam + [neighbor]
+                    new_beam = [*beam, neighbor]
                     score = await self.llm.score_path(query, new_beam)
                     candidates.append((new_beam, score))
 

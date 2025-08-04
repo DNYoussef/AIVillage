@@ -3,7 +3,7 @@ from collections.abc import Callable
 from functools import wraps
 import logging
 import traceback
-from typing import Any
+from typing import Any, NoReturn
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class RAGSystemError(Exception):
     """Base exception class for RAG system errors."""
 
-    def __init__(self, message: str, error_code: str, details: dict[str, Any] = None):
+    def __init__(self, message: str, error_code: str, details: dict[str, Any] | None = None) -> None:
         self.message = message
         self.error_code = error_code
         self.details = details or {}
@@ -30,7 +30,7 @@ class OutputError(RAGSystemError):
     """Exception raised for errors in the output."""
 
 
-def log_error(error: Exception, context: dict[str, Any] = None):
+def log_error(error: Exception, context: dict[str, Any] | None = None) -> None:
     """Log the error with additional context."""
     error_message = f"{type(error).__name__}: {error!s}"
     if isinstance(error, RAGSystemError):
@@ -72,7 +72,7 @@ def error_handler(func: Callable):
 
 class ErrorHandler:
     @staticmethod
-    def handle_error(error: Exception, context: dict[str, Any] = None):
+    def handle_error(error: Exception, context: dict[str, Any] | None = None):
         """Handle errors globally."""
         log_error(error, context)
 
@@ -92,16 +92,16 @@ class ErrorHandler:
         }
 
     @staticmethod
-    def raise_input_error(message: str, details: dict[str, Any] = None):
+    def raise_input_error(message: str, details: dict[str, Any] | None = None) -> NoReturn:
         """Raise an InputError with the given message and details."""
         raise InputError(message, "INPUT_ERROR", details)
 
     @staticmethod
-    def raise_processing_error(message: str, details: dict[str, Any] = None):
+    def raise_processing_error(message: str, details: dict[str, Any] | None = None) -> NoReturn:
         """Raise a ProcessingError with the given message and details."""
         raise ProcessingError(message, "PROCESSING_ERROR", details)
 
     @staticmethod
-    def raise_output_error(message: str, details: dict[str, Any] = None):
+    def raise_output_error(message: str, details: dict[str, Any] | None = None) -> NoReturn:
         """Raise an OutputError with the given message and details."""
         raise OutputError(message, "OUTPUT_ERROR", details)

@@ -12,7 +12,6 @@ import random
 from typing import Any
 
 import numpy as np
-
 import wandb
 
 logger = logging.getLogger(__name__)
@@ -91,7 +90,7 @@ class LearningObjective:
 class PersonalizedTutorEngine:
     """Advanced personalized tutoring engine with real-time adaptation."""
 
-    def __init__(self, project_name: str = "aivillage-personalized-tutor"):
+    def __init__(self, project_name: str = "aivillage-personalized-tutor") -> None:
         self.project_name = project_name
         self.active_sessions = {}  # session_id -> TutoringSession
         self.tutoring_strategies = {}  # strategy_id -> TutoringStrategy
@@ -153,7 +152,7 @@ class PersonalizedTutorEngine:
 
         logger.info("Personalized Tutor Engine initialized")
 
-    def initialize_wandb_tracking(self):
+    def initialize_wandb_tracking(self) -> None:
         """Initialize W&B tracking for personalized tutoring."""
         try:
             wandb.init(
@@ -180,9 +179,9 @@ class PersonalizedTutorEngine:
             logger.info("Personalized tutor W&B tracking initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize W&B tracking: {e}")
+            logger.exception(f"Failed to initialize W&B tracking: {e}")
 
-    async def initialize_tutoring_strategies(self):
+    async def initialize_tutoring_strategies(self) -> None:
         """Initialize comprehensive tutoring strategies."""
         strategies = [
             # Visual Learning Strategy
@@ -311,7 +310,7 @@ class PersonalizedTutorEngine:
         self,
         student_id: str,
         target_concepts: list[str],
-        session_goals: list[str] = None,
+        session_goals: list[str] | None = None,
         preferred_duration_minutes: int = 30,
         mode: TutoringMode = TutoringMode.PRACTICE,
     ) -> str:
@@ -637,11 +636,12 @@ class PersonalizedTutorEngine:
         session_id: str,
         response_content: str,
         response_type: str = "text",
-        response_metadata: dict[str, Any] = None,
+        response_metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Process student response and generate next interaction."""
         if session_id not in self.active_sessions:
-            raise ValueError(f"Session {session_id} not found")
+            msg = f"Session {session_id} not found"
+            raise ValueError(msg)
 
         session = self.active_sessions[session_id]
 
@@ -872,7 +872,7 @@ class PersonalizedTutorEngine:
 
     async def _apply_adaptations(
         self, session: TutoringSession, adaptations: list[str]
-    ):
+    ) -> None:
         """Apply adaptations to the tutoring session."""
         for adaptation in adaptations:
             if adaptation == "increase_engagement":
@@ -1114,7 +1114,8 @@ class PersonalizedTutorEngine:
     ) -> dict[str, Any]:
         """End tutoring session and generate summary."""
         if session_id not in self.active_sessions:
-            raise ValueError(f"Session {session_id} not found")
+            msg = f"Session {session_id} not found"
+            raise ValueError(msg)
 
         session = self.active_sessions[session_id]
         session.end_time = datetime.now(timezone.utc).isoformat()
@@ -1242,7 +1243,7 @@ class PersonalizedTutorEngine:
 
         return recommendations
 
-    async def _update_student_adaptations(self, session: TutoringSession):
+    async def _update_student_adaptations(self, session: TutoringSession) -> None:
         """Update student-specific adaptations based on session results."""
         student_id = session.student_id
         strategy_id = session.tutor_engine_id

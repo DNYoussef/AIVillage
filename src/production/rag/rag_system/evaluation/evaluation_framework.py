@@ -11,13 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 class EvaluationMetric:
-    def __init__(self, name: str, description: str):
+    def __init__(self, name: str, description: str) -> None:
         self.name = name
         self.description = description
         self.values = []
         self.timestamps = []
 
-    def add_value(self, value: float):
+    def add_value(self, value: float) -> None:
         self.values.append(value)
         self.timestamps.append(datetime.now())
 
@@ -35,15 +35,15 @@ class EvaluationMetric:
 
 
 class EvaluationFramework:
-    def __init__(self, advanced_analytics: AdvancedAnalytics):
+    def __init__(self, advanced_analytics: AdvancedAnalytics) -> None:
         self.metrics: dict[str, EvaluationMetric] = {}
         self.advanced_analytics = advanced_analytics
 
-    def add_metric(self, name: str, description: str):
+    def add_metric(self, name: str, description: str) -> None:
         if name not in self.metrics:
             self.metrics[name] = EvaluationMetric(name, description)
 
-    def record_metric(self, name: str, value: float):
+    def record_metric(self, name: str, value: float) -> None:
         if name not in self.metrics:
             logger.warning(
                 f"Metric '{name}' not found. Adding it with a default description."

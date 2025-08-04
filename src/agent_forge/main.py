@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Agent Forge Service Entry Point
+"""Agent Forge Service Entry Point.
 
 This module provides the entry point for the Agent Forge service,
 handling agent creation, training, and management operations.
@@ -10,7 +10,7 @@ import sys
 
 
 def create_parser():
-    """Create argument parser for Agent Forge service"""
+    """Create argument parser for Agent Forge service."""
     parser = argparse.ArgumentParser(description="Agent Forge Service")
 
     parser.add_argument(
@@ -37,47 +37,44 @@ def create_parser():
     return parser
 
 
-def train_agent(args):
-    """Train an agent"""
+def train_agent(args) -> int:
+    """Train an agent."""
     print(f"Training {args.agent_type} agent: {args.name}")
     # Implementation would go here
     return 0
 
 
-def create_agent(args):
-    """Create a new agent"""
+def create_agent(args) -> int:
+    """Create a new agent."""
     print(f"Creating {args.agent_type} agent: {args.name}")
     # Implementation would go here
     return 0
 
 
-def list_agents(args):
-    """List all agents"""
+def list_agents(args) -> int:
+    """List all agents."""
     print("Listing all agents...")
     # Implementation would go here
     return 0
 
 
-def delete_agent(args):
-    """Delete an agent"""
+def delete_agent(args) -> int:
+    """Delete an agent."""
     print(f"Deleting agent: {args.name}")
     # Implementation would go here
     return 0
 
 
-def get_status(args):
-    """Get service status"""
+def get_status(args) -> int:
+    """Get service status."""
     print("Agent Forge service status: Running")
     return 0
 
 
 def main(args=None):
-    """Main entry point for Agent Forge service"""
+    """Main entry point for Agent Forge service."""
     parser = create_parser()
-    if args is None:
-        args = parser.parse_args()
-    else:
-        args = parser.parse_args(args)
+    args = parser.parse_args() if args is None else parser.parse_args(args)
 
     if args.verbose:
         print(f"Agent Forge: {args.action}")

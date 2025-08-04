@@ -14,7 +14,6 @@ from typing import Any
 import numpy as np
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
 import wandb
 
 # Import compression libraries (if available)
@@ -71,7 +70,7 @@ class DeploymentPackage:
 class TutorDeployment:
     """Deploy evolved tutor models to edge devices with compression pipeline."""
 
-    def __init__(self, project_name: str = "agent-forge"):
+    def __init__(self, project_name: str = "agent-forge") -> None:
         self.project_name = project_name
         self.compression_history = []
         self.deployment_packages = {}
@@ -117,7 +116,7 @@ class TutorDeployment:
         # Initialize deployment tracking
         self.initialize_deployment_tracking()
 
-    def initialize_deployment_tracking(self):
+    def initialize_deployment_tracking(self) -> None:
         """Initialize W&B tracking for deployment pipeline."""
         try:
             # Use existing wandb run or initialize new one
@@ -138,7 +137,7 @@ class TutorDeployment:
             logger.info("Deployment pipeline tracking initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize deployment tracking: {e}")
+            logger.exception(f"Failed to initialize deployment tracking: {e}")
 
     async def prepare_champion(
         self, champion_model: dict[str, Any], target_platform: str = "edge_server"
@@ -154,7 +153,8 @@ class TutorDeployment:
         model, tokenizer = await self.load_champion_model(champion_model)
 
         if model is None:
-            raise ValueError("Failed to load champion model")
+            msg = "Failed to load champion model"
+            raise ValueError(msg)
 
         # Get target platform constraints
         platform_config = self.deployment_targets.get(
@@ -278,7 +278,7 @@ class TutorDeployment:
             return model, tokenizer
 
         except Exception as e:
-            logger.error(f"Failed to load champion model: {e}")
+            logger.exception(f"Failed to load champion model: {e}")
             return None, None
 
     async def apply_compression_pipeline(
@@ -365,7 +365,7 @@ class TutorDeployment:
                     )
 
             except Exception as e:
-                logger.error(f"Error applying {technique_name} compression: {e}")
+                logger.exception(f"Error applying {technique_name} compression: {e}")
                 continue
 
         return current_model, compression_results
@@ -418,7 +418,7 @@ class TutorDeployment:
             return quantized_model
 
         except Exception as e:
-            logger.error(f"Error in quantization: {e}")
+            logger.exception(f"Error in quantization: {e}")
             return None
 
     async def apply_pruning(
@@ -442,7 +442,7 @@ class TutorDeployment:
             return model
 
         except Exception as e:
-            logger.error(f"Error in pruning: {e}")
+            logger.exception(f"Error in pruning: {e}")
             return None
 
     async def apply_distillation(
@@ -460,7 +460,7 @@ class TutorDeployment:
             return model
 
         except Exception as e:
-            logger.error(f"Error in distillation: {e}")
+            logger.exception(f"Error in distillation: {e}")
             return None
 
     async def extract_lora_adapter(
@@ -504,7 +504,7 @@ class TutorDeployment:
             }
 
         except Exception as e:
-            logger.error(f"Error extracting LoRA adapter: {e}")
+            logger.exception(f"Error extracting LoRA adapter: {e}")
             return None
 
     async def apply_bitnet_compression(
@@ -526,7 +526,7 @@ class TutorDeployment:
             return model
 
         except Exception as e:
-            logger.error(f"Error in BitNet compression: {e}")
+            logger.exception(f"Error in BitNet compression: {e}")
             return None
 
     async def apply_vptq_compression(
@@ -566,7 +566,7 @@ class TutorDeployment:
             return model
 
         except Exception as e:
-            logger.error(f"Error in VPTQ compression: {e}")
+            logger.exception(f"Error in VPTQ compression: {e}")
             return None
 
     def calculate_model_size_mb(self, model: Any) -> float:
@@ -810,7 +810,7 @@ echo "Installation complete! Model available at ~/.aivillage/models/{package_id}
         adapter: dict[str, Any],
         deployment_package: DeploymentPackage,
         champion_info: dict[str, Any],
-    ):
+    ) -> None:
         """Register LoRA adapter in HyperRAG system."""
         try:
             # This would integrate with the actual HyperRAG system
@@ -855,7 +855,7 @@ echo "Installation complete! Model available at ~/.aivillage/models/{package_id}
             )
 
         except Exception as e:
-            logger.error(f"Error registering in HyperRAG: {e}")
+            logger.exception(f"Error registering in HyperRAG: {e}")
 
     async def validate_deployment_package(
         self, package: DeploymentPackage, platform_config: dict[str, Any]

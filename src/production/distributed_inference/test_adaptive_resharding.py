@@ -1,10 +1,10 @@
 import argparse
 import asyncio
+import importlib.util
 import json
 from pathlib import Path
 import sys
 import types
-import importlib.util
 
 # Stub external dependencies required by the sharding modules
 sys.modules.setdefault("wandb", types.ModuleType("wandb"))
@@ -16,7 +16,7 @@ class _Dummy:
     def from_pretrained(cls, *args, **kwargs):
         return cls()
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.config = types.SimpleNamespace()
 
 
@@ -65,9 +65,9 @@ from src.core.p2p.p2p_node import PeerCapabilities
 
 
 class DummyP2PNode:
-    """Minimal P2P node for testing"""
+    """Minimal P2P node for testing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.node_id = "local"
         self.peer_registry: dict[str, PeerCapabilities] = {}
         self.local_capabilities = PeerCapabilities(
@@ -88,9 +88,9 @@ class DummyDeviceProfiler:
 
 
 class TestModelShardingEngine(ModelShardingEngine):
-    """Testing subclass used with adaptive resharding"""
+    """Testing subclass used with adaptive resharding."""
 
-    def __init__(self, device_count: int, constraint: str):
+    def __init__(self, device_count: int, constraint: str) -> None:
         super().__init__(DummyP2PNode(), DummyResourceMonitor(), DummyDeviceProfiler())
         self.device_count = device_count
         self.constraint = constraint
@@ -134,14 +134,16 @@ class TestModelShardingEngine(ModelShardingEngine):
     ):
         return await self._create_sequential_plan(model_analysis, device_profiles)
 
-    async def _activate_sharding_plan(self, plan):
+    async def _activate_sharding_plan(self, plan) -> None:
         self.active_shards = {s.shard_id: s for s in plan.shards}
         self.device_assignments = {}
         for shard in plan.shards:
-            self.device_assignments.setdefault(shard.device_id, []).append(shard.shard_id)
+            self.device_assignments.setdefault(shard.device_id, []).append(
+                shard.shard_id
+            )
 
 
-async def run_test(device_count: int, constraint: str, simulate_failures: bool):
+async def run_test(device_count: int, constraint: str, simulate_failures: bool) -> None:
     engine = TestModelShardingEngine(device_count, constraint)
     await engine.shard_model("dummy-model", strategy=ShardingStrategy.HYBRID)
 
@@ -166,7 +168,7 @@ async def run_test(device_count: int, constraint: str, simulate_failures: bool):
     print("Report written to sharding_performance_report.json")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Test adaptive resharding")
     parser.add_argument("--device-count", type=int, default=2)
     parser.add_argument("--constraint", type=str, default="none")

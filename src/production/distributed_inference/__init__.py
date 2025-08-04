@@ -1,4 +1,4 @@
-"""Distributed Inference System for Sprint 7
+"""Distributed Inference System for Sprint 7.
 
 This module implements distributed inference capabilities that shard models
 across multiple devices in a P2P network, enabling inference on resource-

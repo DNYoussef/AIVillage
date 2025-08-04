@@ -1,4 +1,4 @@
-"""Initial credits ledger schema
+"""Initial credits ledger schema.
 
 Revision ID: 001
 Revises:

@@ -86,12 +86,12 @@ class AgentCommunicationProtocol:
     each other using standardized message formats and protocols.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.subscribers: dict[str, Any] = {}
         self.message_history: list[AgentMessage] = []
         self.logger = None  # Will be set by get_component_logger
 
-    def subscribe(self, agent_name: str, handler: Any):
+    def subscribe(self, agent_name: str, handler: Any) -> None:
         """Subscribe an agent to receive messages.
 
         Args:
@@ -100,7 +100,7 @@ class AgentCommunicationProtocol:
         """
         self.subscribers[agent_name] = handler
 
-    def unsubscribe(self, agent_name: str):
+    def unsubscribe(self, agent_name: str) -> None:
         """Unsubscribe an agent from receiving messages.
 
         Args:
@@ -109,7 +109,7 @@ class AgentCommunicationProtocol:
         if agent_name in self.subscribers:
             del self.subscribers[agent_name]
 
-    async def send_message(self, message: AgentMessage):
+    async def send_message(self, message: AgentMessage) -> None:
         """Send a message to a specific agent.
 
         Args:
@@ -121,7 +121,7 @@ class AgentCommunicationProtocol:
             handler = self.subscribers[message.receiver]
             await handler(message)
 
-    async def broadcast(self, message: AgentMessage, exclude: list[str] = None):
+    async def broadcast(self, message: AgentMessage, exclude: list[str] | None = None) -> None:
         """Broadcast a message to all subscribed agents.
 
         Args:
@@ -170,7 +170,7 @@ class AgentCommunicationProtocol:
         return {"status": "query_sent", "query_id": query_message.id}
 
     def get_message_history(
-        self, agent_name: str = None, limit: int = 100
+        self, agent_name: str | None = None, limit: int = 100
     ) -> list[AgentMessage]:
         """Get message history for an agent or all messages.
 
@@ -185,14 +185,14 @@ class AgentCommunicationProtocol:
             messages = [
                 msg
                 for msg in self.message_history
-                if msg.sender == agent_name or msg.receiver == agent_name
+                if agent_name in (msg.sender, msg.receiver)
             ]
         else:
             messages = self.message_history
 
         return messages[-limit:] if limit else messages
 
-    def clear_history(self, agent_name: str = None):
+    def clear_history(self, agent_name: str | None = None) -> None:
         """Clear message history.
 
         Args:
@@ -202,7 +202,7 @@ class AgentCommunicationProtocol:
             self.message_history = [
                 msg
                 for msg in self.message_history
-                if msg.sender != agent_name and msg.receiver != agent_name
+                if agent_name not in (msg.sender, msg.receiver)
             ]
         else:
             self.message_history.clear()

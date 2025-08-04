@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Knowledge Graph Bootstrapper
+"""Knowledge Graph Bootstrapper.
 
 Constructs initial HypeRAG knowledge graph from multiple data sources.
 Handles entity resolution, relationship extraction, and confidence initialization.
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BootstrapConfig:
-    """Configuration for knowledge graph bootstrapping"""
+    """Configuration for knowledge graph bootstrapping."""
 
     entity_similarity_threshold: float = 0.8
     relationship_confidence_threshold: float = 0.5
@@ -42,7 +42,7 @@ class BootstrapConfig:
 
 @dataclass
 class BootstrapMetrics:
-    """Metrics for bootstrapping process"""
+    """Metrics for bootstrapping process."""
 
     total_sources: int
     entities_extracted: int
@@ -54,15 +54,15 @@ class BootstrapMetrics:
 
 
 class EntityResolver:
-    """Resolves entity references across documents"""
+    """Resolves entity references across documents."""
 
-    def __init__(self, similarity_threshold: float = 0.8):
+    def __init__(self, similarity_threshold: float = 0.8) -> None:
         self.similarity_threshold = similarity_threshold
         self.entity_signatures = {}
         self.entity_clusters = defaultdict(list)
 
     def _calculate_entity_signature(self, entity_text: str) -> str:
-        """Calculate signature for entity deduplication"""
+        """Calculate signature for entity deduplication."""
         # Normalize text
         normalized = entity_text.lower().strip()
 
@@ -75,7 +75,7 @@ class EntityResolver:
         return signature
 
     def _calculate_string_similarity(self, str1: str, str2: str) -> float:
-        """Calculate string similarity using Jaccard similarity"""
+        """Calculate string similarity using Jaccard similarity."""
         set1 = set(str1.lower().split())
         set2 = set(str2.lower().split())
 
@@ -92,7 +92,7 @@ class EntityResolver:
     def resolve_entities(
         self, entities: list[dict[str, Any]]
     ) -> dict[str, dict[str, Any]]:
-        """Resolve entity references and merge duplicates"""
+        """Resolve entity references and merge duplicates."""
         resolved_entities = {}
         entity_id_counter = 0
 
@@ -168,13 +168,13 @@ class EntityResolver:
 
 
 class RelationshipExtractor:
-    """Extracts relationships from various data sources"""
+    """Extracts relationships from various data sources."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.relationship_patterns = self._load_relationship_patterns()
 
     def _load_relationship_patterns(self) -> dict[str, list[str]]:
-        """Load patterns for relationship extraction"""
+        """Load patterns for relationship extraction."""
         return {
             "hierarchical": [
                 "is a",
@@ -236,7 +236,7 @@ class RelationshipExtractor:
     def extract_from_text(
         self, text: str, entities: dict[str, dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """Extract relationships from text using entities"""
+        """Extract relationships from text using entities."""
         relationships = []
 
         # Get entity mentions in text
@@ -290,7 +290,7 @@ class RelationshipExtractor:
         return relationships
 
     def _classify_relationship(self, text: str) -> str | None:
-        """Classify the relationship type based on text"""
+        """Classify the relationship type based on text."""
         text_lower = text.lower()
 
         for rel_type, patterns in self.relationship_patterns.items():
@@ -305,7 +305,7 @@ class RelationshipExtractor:
         return None
 
     def _calculate_relationship_confidence(self, text: str, rel_type: str) -> float:
-        """Calculate confidence score for relationship"""
+        """Calculate confidence score for relationship."""
         base_confidence = 0.6
 
         # Boost confidence for clear patterns
@@ -328,7 +328,7 @@ class RelationshipExtractor:
     def extract_from_hyperedges(
         self, hyperedges: list[Hyperedge]
     ) -> list[dict[str, Any]]:
-        """Extract relationships from hyperedge data"""
+        """Extract relationships from hyperedge data."""
         relationships = []
 
         for hyperedge in hyperedges:
@@ -351,9 +351,9 @@ class RelationshipExtractor:
 
 
 class ConfidenceBootstrapper:
-    """Initializes confidence scores for entities and relationships"""
+    """Initializes confidence scores for entities and relationships."""
 
-    def __init__(self, config: BootstrapConfig):
+    def __init__(self, config: BootstrapConfig) -> None:
         self.config = config
         self.source_reliability = {
             "academic_paper": 0.9,
@@ -367,7 +367,7 @@ class ConfidenceBootstrapper:
         }
 
     def calculate_source_confidence(self, source: str) -> float:
-        """Calculate confidence based on source reliability"""
+        """Calculate confidence based on source reliability."""
         source_lower = source.lower()
 
         for source_type, reliability in self.source_reliability.items():
@@ -379,7 +379,7 @@ class ConfidenceBootstrapper:
     def calculate_frequency_confidence(
         self, entity_id: str, entity_data: dict[str, Any]
     ) -> float:
-        """Calculate confidence based on entity frequency"""
+        """Calculate confidence based on entity frequency."""
         cluster_size = entity_data.get("cluster_size", 1)
         sources_count = len(entity_data.get("sources", []))
 
@@ -392,7 +392,7 @@ class ConfidenceBootstrapper:
         return 0.5 + (frequency_factor * 0.3) + (diversity_factor * 0.2)
 
     def calculate_temporal_confidence(self, timestamp: str | None) -> float:
-        """Calculate confidence based on temporal factors"""
+        """Calculate confidence based on temporal factors."""
         if not timestamp:
             return 1.0
 
@@ -411,7 +411,7 @@ class ConfidenceBootstrapper:
     def bootstrap_entity_confidence(
         self, entities: dict[str, dict[str, Any]]
     ) -> dict[str, dict[str, Any]]:
-        """Initialize confidence scores for entities"""
+        """Initialize confidence scores for entities."""
         for entity_id, entity_data in entities.items():
             # Base confidence from entity resolution
             base_confidence = entity_data.get("confidence", 0.5)
@@ -454,7 +454,7 @@ class ConfidenceBootstrapper:
     def bootstrap_relationship_confidence(
         self, relationships: list[dict[str, Any]], entities: dict[str, dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """Initialize confidence scores for relationships"""
+        """Initialize confidence scores for relationships."""
         for relationship in relationships:
             # Base confidence from extraction
             base_confidence = relationship.get("confidence", 0.5)
@@ -501,9 +501,9 @@ class ConfidenceBootstrapper:
 
 
 class KnowledgeGraphBootstrapper:
-    """Main bootstrapping system"""
+    """Main bootstrapping system."""
 
-    def __init__(self, config: BootstrapConfig = None):
+    def __init__(self, config: BootstrapConfig = None) -> None:
         self.config = config or BootstrapConfig()
         self.entity_resolver = EntityResolver(self.config.entity_similarity_threshold)
         self.relationship_extractor = RelationshipExtractor()
@@ -513,7 +513,7 @@ class KnowledgeGraphBootstrapper:
     def load_data_sources(
         self, source_configs: list[dict[str, Any]]
     ) -> tuple[list[dict[str, Any]], list[Hyperedge]]:
-        """Load data from multiple sources"""
+        """Load data from multiple sources."""
         all_entities = []
         all_hyperedges = []
 
@@ -581,7 +581,7 @@ class KnowledgeGraphBootstrapper:
     def bootstrap_knowledge_graph(
         self, source_configs: list[dict[str, Any]], output_path: Path
     ) -> BootstrapMetrics:
-        """Bootstrap complete knowledge graph from sources"""
+        """Bootstrap complete knowledge graph from sources."""
         start_time = datetime.now()
 
         logger.info("Starting knowledge graph bootstrapping...")
@@ -695,8 +695,8 @@ class KnowledgeGraphBootstrapper:
 
         return self.metrics
 
-    def save_bootstrap_report(self, output_path: Path):
-        """Save detailed bootstrapping report"""
+    def save_bootstrap_report(self, output_path: Path) -> None:
+        """Save detailed bootstrapping report."""
         report = {
             "bootstrap_metadata": {
                 "bootstrap_timestamp": datetime.now(timezone.utc).isoformat(),
@@ -735,7 +735,7 @@ class KnowledgeGraphBootstrapper:
         logger.info(f"Bootstrap report saved to {output_path}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Bootstrap HypeRAG knowledge graph from multiple sources"
     )
@@ -796,7 +796,7 @@ def main():
         print(f"  Entity reduction ratio: {reduction_ratio:.1%}")
 
     except Exception as e:
-        logger.error(f"Knowledge graph bootstrapping failed: {e}")
+        logger.exception(f"Knowledge graph bootstrapping failed: {e}")
         raise
 
 

@@ -1,4 +1,4 @@
-"""Standardized Logging Configuration for AIVillage
+"""Standardized Logging Configuration for AIVillage.
 
 This module provides centralized logging configuration with support for
 structured logging, multiple outputs, and component-specific loggers.
@@ -66,7 +66,7 @@ class StructuredFormatter(logging.Formatter):
 class AIVillageLoggerAdapter(logging.LoggerAdapter):
     """Logger adapter that adds contextual information to all log messages."""
 
-    def __init__(self, logger: logging.Logger, extra: dict[str, Any] | None = None):
+    def __init__(self, logger: logging.Logger, extra: dict[str, Any] | None = None) -> None:
         super().__init__(logger, extra or {})
 
     def process(self, msg: str, kwargs: dict[str, Any]) -> tuple:
@@ -306,7 +306,7 @@ def log_function_call(
 
             except Exception as e:
                 # Log function exception
-                logger.error(
+                logger.exception(
                     f"Exception in {func_name}: {e}",
                     extra={
                         "function": func_name,
@@ -341,7 +341,7 @@ def log_function_call(
 
             except Exception as e:
                 # Log function exception
-                logger.error(
+                logger.exception(
                     f"Exception in async {func_name}: {e}",
                     extra={
                         "function": func_name,
@@ -360,7 +360,7 @@ def log_function_call(
     return decorator
 
 
-def configure_third_party_logging():
+def configure_third_party_logging() -> None:
     """Configure logging for third-party libraries to reduce noise."""
     # Reduce verbosity of common libraries
     library_configs = {
@@ -383,11 +383,11 @@ def configure_third_party_logging():
 class PerformanceLogger:
     """Logger for performance metrics and timing."""
 
-    def __init__(self, component_name: str):
+    def __init__(self, component_name: str) -> None:
         self.logger = get_component_logger(f"Performance.{component_name}")
         self.timers = {}
 
-    def start_timer(self, operation: str):
+    def start_timer(self, operation: str) -> None:
         """Start timing an operation."""
         import time
 
@@ -416,7 +416,7 @@ class PerformanceLogger:
         self.logger.warning(f"Timer for {operation} was not started")
         return None
 
-    def log_metric(self, metric_name: str, value: float, unit: str = "", **metadata):
+    def log_metric(self, metric_name: str, value: float, unit: str = "", **metadata) -> None:
         """Log a performance metric."""
         self.logger.info(
             f"Metric: {metric_name}",
@@ -433,7 +433,7 @@ class PerformanceLogger:
 class timed_operation:
     """Context manager for timing operations."""
 
-    def __init__(self, logger: logging.Logger, operation_name: str, **metadata):
+    def __init__(self, logger: logging.Logger, operation_name: str, **metadata) -> None:
         self.logger = logger
         self.operation_name = operation_name
         self.metadata = metadata

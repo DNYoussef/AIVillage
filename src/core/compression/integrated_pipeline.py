@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """Integrated compression pipeline that avoids intermediate decompression."""
+
 from __future__ import annotations
 
 import gzip
 import logging
 import struct
-from typing import Any, Dict
+from typing import TYPE_CHECKING
 
-import numpy as np
 import torch
+
+if TYPE_CHECKING:
+    import numpy as np
 
 try:  # pragma: no cover - allow tests to run from repository root
     from agent_forge.compression.bitnet import BITNETCompressor
@@ -33,7 +36,7 @@ class IntegratedCompressionPipeline:
     # ------------------------------------------------------------------
     def compress_model(self, model: torch.nn.Module) -> bytes:
         """Compress all parameters of ``model`` without intermediate decompression."""
-        compressed_params: Dict[str, bytes] = {}
+        compressed_params: dict[str, bytes] = {}
         total_original = 0
         total_compressed = 0
 

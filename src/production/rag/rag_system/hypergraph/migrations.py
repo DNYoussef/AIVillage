@@ -1,4 +1,4 @@
-"""Neo4j Database Migrations for Hypergraph Schema
+"""Neo4j Database Migrations for Hypergraph Schema.
 
 Handles schema creation, constraints, and indexes for the hypergraph knowledge system.
 Includes both episodic (Hippo) and semantic (Hypergraph-KG) structures.
@@ -13,14 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 class HypergraphMigrations:
-    """Manages Neo4j schema migrations for hypergraph system"""
+    """Manages Neo4j schema migrations for hypergraph system."""
 
-    def __init__(self, driver: Driver):
+    def __init__(self, driver: Driver) -> None:
         self.driver = driver
         self.migrations = self._define_migrations()
 
     def _define_migrations(self) -> list[dict[str, Any]]:
-        """Define all schema migrations in order"""
+        """Define all schema migrations in order."""
         return [
             {
                 "version": "001",
@@ -119,7 +119,7 @@ class HypergraphMigrations:
         ]
 
     def run_migrations(self, target_version: str | None = None) -> None:
-        """Run migrations up to target version"""
+        """Run migrations up to target version."""
         with self.driver.session() as session:
             # Check current version
             current_version = self._get_current_version(session)
@@ -140,7 +140,7 @@ class HypergraphMigrations:
                 self._update_version(session, migration["version"])
 
     def rollback_migration(self, target_version: str) -> None:
-        """Rollback to specific version"""
+        """Rollback to specific version."""
         with self.driver.session() as session:
             current_version = self._get_current_version(session)
 
@@ -158,7 +158,7 @@ class HypergraphMigrations:
             self._update_version(session, target_version)
 
     def _get_current_version(self, session: Session) -> str:
-        """Get current schema version"""
+        """Get current schema version."""
         try:
             result = session.run(
                 "MATCH (v:SchemaVersion) RETURN v.version ORDER BY v.version DESC LIMIT 1"
@@ -169,7 +169,7 @@ class HypergraphMigrations:
             return "000"
 
     def _update_version(self, session: Session, version: str) -> None:
-        """Update schema version"""
+        """Update schema version."""
         session.run(
             "MERGE (v:SchemaVersion {version: $version}) "
             "ON CREATE SET v.created = datetime() "
@@ -178,18 +178,18 @@ class HypergraphMigrations:
         )
 
     def _run_migration(self, session: Session, migration: dict[str, Any]) -> None:
-        """Execute migration up queries"""
+        """Execute migration up queries."""
         for query in migration["up"]:
             try:
                 session.run(query)
                 logger.debug(f"Executed: {query[:100]}...")
             except Exception as e:
-                logger.error(f"Failed to execute migration query: {e}")
-                logger.error(f"Query: {query}")
+                logger.exception(f"Failed to execute migration query: {e}")
+                logger.exception(f"Query: {query}")
                 raise
 
     def _rollback_migration(self, session: Session, migration: dict[str, Any]) -> None:
-        """Execute migration down queries"""
+        """Execute migration down queries."""
         for query in migration["down"]:
             try:
                 session.run(query)
@@ -238,13 +238,13 @@ def run_cypher_migrations(session: Session) -> None:
         logger.info("Basic hypergraph schema migrations completed")
 
     except Exception as e:
-        logger.error(f"Migration failed: {e}")
+        logger.exception(f"Migration failed: {e}")
         raise
 
 
 # Async version for async drivers
 async def run_cypher_migrations_async(session: AsyncSession) -> None:
-    """Async version of migrations for AsyncSession"""
+    """Async version of migrations for AsyncSession."""
     try:
         constraints = [
             "CREATE CONSTRAINT hyperedge_id IF NOT EXISTS FOR (h:Hyperedge) REQUIRE h.id IS UNIQUE",
@@ -278,7 +278,7 @@ async def run_cypher_migrations_async(session: AsyncSession) -> None:
         logger.info("Async hypergraph schema migrations completed")
 
     except Exception as e:
-        logger.error(f"Async migration failed: {e}")
+        logger.exception(f"Async migration failed: {e}")
         raise
 
 
@@ -288,7 +288,7 @@ def create_neo4j_driver(
     username: str = "neo4j",
     password: str = "aivillage_neo4j",
 ) -> Driver:
-    """Create Neo4j driver with default settings"""
+    """Create Neo4j driver with default settings."""
     from neo4j import GraphDatabase
 
     return GraphDatabase.driver(
@@ -299,13 +299,13 @@ def create_neo4j_driver(
 
 
 def verify_neo4j_connection(driver: Driver) -> bool:
-    """Verify Neo4j connection is working"""
+    """Verify Neo4j connection is working."""
     try:
         with driver.session() as session:
             result = session.run("RETURN 1 as test")
             return result.single()["test"] == 1
     except Exception as e:
-        logger.error(f"Neo4j connection failed: {e}")
+        logger.exception(f"Neo4j connection failed: {e}")
         return False
 
 

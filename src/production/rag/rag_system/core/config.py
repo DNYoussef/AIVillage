@@ -34,7 +34,7 @@ class UnifiedConfig(BaseModel):
     # Extensible configuration dictionary for additional parameters
     extra_params: dict[str, Any] = Field(default_factory=dict)
 
-    def update(self, **kwargs):
+    def update(self, **kwargs) -> None:
         # Update configuration parameters
         for key, value in kwargs.items():
             if hasattr(self, key):

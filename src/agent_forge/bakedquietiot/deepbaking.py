@@ -1,6 +1,6 @@
+from langroid import ChatAgent, ChatAgentConfig, Task
 import torch
 import torch.nn.functional as F
-from langroid import ChatAgent, ChatAgentConfig, Task
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
@@ -10,7 +10,7 @@ class DeepSystemBakerTask(Task):
         agent: ChatAgent,
         model_name: str,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
-    ):
+    ) -> None:
         super().__init__(agent)
         self.device = device
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
@@ -60,12 +60,12 @@ class DeepSystemBakerTask(Task):
         ]
         self.add_special_tokens()
 
-    def add_special_tokens(self):
+    def add_special_tokens(self) -> None:
         special_tokens_dict = {"additional_special_tokens": self.special_tokens}
         self.tokenizer.add_special_tokens(special_tokens_dict)
         self.model.resize_token_embeddings(len(self.tokenizer))
 
-    async def deep_bake_system(self, max_iterations=50, consistency_threshold=0.95):
+    async def deep_bake_system(self, max_iterations=50, consistency_threshold=0.95) -> None:
         system_prompt = """
         You are an AI that uses the Quiet-STaR and IoT framework for reasoning, enhanced with advanced cognitive strategies. Always follow this process and thinking framework:
 
@@ -133,7 +133,7 @@ class DeepSystemBakerTask(Task):
         self.model.save_pretrained("deep_baked_model")
         self.tokenizer.save_pretrained("deep_baked_model")
 
-    async def bake(self, prompt):
+    async def bake(self, prompt) -> None:
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
             outputs = self.model(**inputs)
@@ -188,7 +188,7 @@ class DeepSystemBakerTask(Task):
 
         return score / (2 * len(expected_structure))  # Normalize to [0, 1]
 
-    async def run(self, max_iterations=50, consistency_threshold=0.95):
+    async def run(self, max_iterations=50, consistency_threshold=0.95) -> str:
         await self.deep_bake_system(max_iterations, consistency_threshold)
         return "Deep baking completed successfully"
 
@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
-    async def main():
+    async def main() -> None:
         config = ChatAgentConfig(
             name="DeepSystemBaker",
             llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),

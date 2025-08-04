@@ -13,11 +13,11 @@ Features:
 """
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass
 from enum import Enum
+import logging
 from pathlib import Path
+import time
 from typing import Any
 
 import torch
@@ -31,7 +31,6 @@ from agent_forge.compression import (
     VPTQCompressor,
     bitnet_compress,
     seedlm_compress,
-    vptq_compress,
 )
 
 # Import production pipeline components
@@ -42,15 +41,17 @@ logger = logging.getLogger(__name__)
 
 class CompressionStrategy(Enum):
     """Compression strategy selection."""
-    AUTO = "auto"           # Automatic selection based on model size
-    SIMPLE = "simple"       # 4x quantization only
-    ADVANCED = "advanced"   # Full 4-stage pipeline
-    MOBILE = "mobile"       # Mobile-optimized profile
+
+    AUTO = "auto"  # Automatic selection based on model size
+    SIMPLE = "simple"  # 4x quantization only
+    ADVANCED = "advanced"  # Full 4-stage pipeline
+    MOBILE = "mobile"  # Mobile-optimized profile
 
 
 @dataclass
 class CompressionResult:
     """Results from compression operation."""
+
     original_size_mb: float
     compressed_size_mb: float
     compression_ratio: float
@@ -69,10 +70,10 @@ class UnifiedCompressor:
         strategy: CompressionStrategy = CompressionStrategy.AUTO,
         mobile_target_mb: int = 100,
         accuracy_threshold: float = 0.95,
-        enable_benchmarking: bool = True
-    ):
+        enable_benchmarking: bool = True,
+    ) -> None:
         """Initialize unified compressor.
-        
+
         Args:
             strategy: Compression strategy to use
             mobile_target_mb: Target size for mobile deployment
@@ -118,22 +119,22 @@ class UnifiedCompressor:
         self,
         model: nn.Module | str,
         tokenizer: Any | None = None,
-        output_path: Path | None = None
+        output_path: Path | None = None,
     ) -> CompressionResult:
         """Compress model using unified pipeline.
-        
+
         Args:
             model: Model to compress or path to model
             tokenizer: Tokenizer for the model
             output_path: Where to save compressed model
-            
+
         Returns:
             CompressionResult with metrics and metadata
         """
         start_time = time.time()
 
         # Load model if path provided
-        if isinstance(model, (str, Path)):
+        if isinstance(model, str | Path):
             model_path = str(model)
             model = AutoModelForCausalLM.from_pretrained(model_path)
             if tokenizer is None:
@@ -154,9 +155,12 @@ class UnifiedCompressor:
             elif selected_strategy == CompressionStrategy.MOBILE:
                 compressed_model = await self._apply_mobile_compression(model)
             elif selected_strategy == CompressionStrategy.ADVANCED:
-                compressed_model = await self._apply_advanced_compression(model, tokenizer)
+                compressed_model = await self._apply_advanced_compression(
+                    model, tokenizer
+                )
             else:
-                raise ValueError(f"Unsupported strategy: {selected_strategy}")
+                msg = f"Unsupported strategy: {selected_strategy}"
+                raise ValueError(msg)
 
         except Exception as e:
             logger.warning(f"Compression failed, falling back to simple: {e}")
@@ -181,7 +185,9 @@ class UnifiedCompressor:
         benchmark_metrics = None
         model_accuracy = None
         if self.enable_benchmarking:
-            benchmark_metrics = await self._run_benchmarks(model, compressed_model, tokenizer)
+            benchmark_metrics = await self._run_benchmarks(
+                model, compressed_model, tokenizer
+            )
             model_accuracy = benchmark_metrics.get("accuracy_retained", None)
 
         result = CompressionResult(
@@ -192,10 +198,12 @@ class UnifiedCompressor:
             strategy_used=selected_strategy,
             model_accuracy_retained=model_accuracy,
             mobile_compatible=compressed_size_mb <= self.mobile_target_mb,
-            benchmark_metrics=benchmark_metrics
+            benchmark_metrics=benchmark_metrics,
         )
 
-        logger.info(f"Compression complete: {compression_ratio:.2f}x ratio in {compression_time:.2f}s")
+        logger.info(
+            f"Compression complete: {compression_ratio:.2f}x ratio in {compression_time:.2f}s"
+        )
         return result
 
     async def _apply_simple_compression(self, model: nn.Module) -> nn.Module:
@@ -216,7 +224,9 @@ class UnifiedCompressor:
 
         return compressed
 
-    async def _apply_advanced_compression(self, model: nn.Module, tokenizer: Any) -> nn.Module:
+    async def _apply_advanced_compression(
+        self, model: nn.Module, tokenizer: Any
+    ) -> nn.Module:
         """Apply full 4-stage advanced compression pipeline."""
         logger.info("Applying advanced 4-stage compression...")
 
@@ -230,10 +240,7 @@ class UnifiedCompressor:
         return result.compressed_model
 
     async def _run_benchmarks(
-        self,
-        original_model: nn.Module,
-        compressed_model: nn.Module,
-        tokenizer: Any
+        self, original_model: nn.Module, compressed_model: nn.Module, tokenizer: Any
     ) -> dict[str, Any]:
         """Run benchmark tests on compressed model."""
         logger.info("Running compression benchmarks...")
@@ -248,16 +255,26 @@ class UnifiedCompressor:
                 # Test original model
                 with torch.no_grad():
                     inputs = tokenizer(test_prompt, return_tensors="pt")
-                    original_outputs = original_model.generate(**inputs, max_new_tokens=20)
-                    original_text = tokenizer.decode(original_outputs[0], skip_special_tokens=True)
+                    original_outputs = original_model.generate(
+                        **inputs, max_new_tokens=20
+                    )
+                    original_text = tokenizer.decode(
+                        original_outputs[0], skip_special_tokens=True
+                    )
 
                 # Test compressed model
                 with torch.no_grad():
-                    compressed_outputs = compressed_model.generate(**inputs, max_new_tokens=20)
-                    compressed_text = tokenizer.decode(compressed_outputs[0], skip_special_tokens=True)
+                    compressed_outputs = compressed_model.generate(
+                        **inputs, max_new_tokens=20
+                    )
+                    compressed_text = tokenizer.decode(
+                        compressed_outputs[0], skip_special_tokens=True
+                    )
 
                 # Simple similarity check (could be improved)
-                similarity = len(set(original_text.split()) & set(compressed_text.split())) / len(set(original_text.split()))
+                similarity = len(
+                    set(original_text.split()) & set(compressed_text.split())
+                ) / len(set(original_text.split()))
                 benchmarks["text_similarity"] = similarity
                 benchmarks["accuracy_retained"] = similarity  # Rough approximation
 
@@ -279,8 +296,8 @@ class UnifiedCompressor:
             "compressors": {
                 "bitnet": "Ternary quantization",
                 "seedlm": "LFSR-based compression",
-                "vptq": "Vector quantization"
-            }
+                "vptq": "Vector quantization",
+            },
         }
 
 
@@ -310,25 +327,28 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Unified Model Compression")
     parser.add_argument("model_path", help="Path to model to compress")
     parser.add_argument("--output", "-o", help="Output directory")
-    parser.add_argument("--strategy", choices=["auto", "simple", "mobile", "advanced"],
-                       default="auto", help="Compression strategy")
-    parser.add_argument("--target-mb", type=int, default=100,
-                       help="Target size for mobile deployment")
-    parser.add_argument("--no-benchmark", action="store_true",
-                       help="Skip benchmarking")
+    parser.add_argument(
+        "--strategy",
+        choices=["auto", "simple", "mobile", "advanced"],
+        default="auto",
+        help="Compression strategy",
+    )
+    parser.add_argument(
+        "--target-mb", type=int, default=100, help="Target size for mobile deployment"
+    )
+    parser.add_argument("--no-benchmark", action="store_true", help="Skip benchmarking")
 
     args = parser.parse_args()
 
-    async def main():
+    async def main() -> None:
         compressor = UnifiedCompressor(
             strategy=CompressionStrategy(args.strategy),
             mobile_target_mb=args.target_mb,
-            enable_benchmarking=not args.no_benchmark
+            enable_benchmarking=not args.no_benchmark,
         )
 
         result = await compressor.compress_model(
-            args.model_path,
-            output_path=args.output
+            args.model_path, output_path=args.output
         )
 
         print("Compression Result:")

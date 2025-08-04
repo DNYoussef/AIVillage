@@ -4,14 +4,16 @@ import os
 import torch
 from transformers import AutoTokenizer
 
-from ..config import Configuration
-from ..cross_domain import merge_cross_domain_models
-from ..instruction_tuning import (
+from AIVillage.src.production.evolution.evomerge.config import Configuration
+from AIVillage.src.production.evolution.evomerge.cross_domain import (
+    merge_cross_domain_models,
+)
+from AIVillage.src.production.evolution.evomerge.instruction_tuning import (
     is_instruction_tuned_model,
     merge_instruction_tuned_models,
 )
-from ..model_tracker import model_tracker
-from ..utils import (
+from AIVillage.src.production.evolution.evomerge.model_tracker import model_tracker
+from AIVillage.src.production.evolution.evomerge.utils import (
     EvoMergeException,
     check_system_resources,
     clean_up_models,
@@ -20,13 +22,14 @@ from ..utils import (
     mask_model_weights,
     save_model,
 )
+
 from .merge_techniques import MERGE_TECHNIQUES
 
 logger = logging.getLogger(__name__)
 
 
 class AdvancedModelMerger:
-    def __init__(self, config: Configuration):
+    def __init__(self, config: Configuration) -> None:
         self.config = config
         self.models = None
         self.tokenizers = None
@@ -68,7 +71,8 @@ class AdvancedModelMerger:
                 ]  # Use the first tokenizer as the base
 
             if merged_model is None:
-                raise EvoMergeException("Merge process failed to produce a valid model")
+                msg = "Merge process failed to produce a valid model"
+                raise EvoMergeException(msg)
 
             merged_model_path = self._save_merged_model(merged_model, merged_tokenizer)
 
@@ -84,11 +88,11 @@ class AdvancedModelMerger:
             )
             return merged_model_path
         except Exception as e:
-            logger.error(f"Error during merge process: {e!s}")
+            logger.exception(f"Error during merge process: {e!s}")
             logger.exception("Traceback:")
             raise
 
-    def _prepare_merge_directory(self):
+    def _prepare_merge_directory(self) -> None:
         if not os.path.exists(self.config.merge_settings.custom_dir):
             logger.warning(
                 f"Custom directory does not exist: {self.config.merge_settings.custom_dir}"
@@ -96,10 +100,11 @@ class AdvancedModelMerger:
             logger.info("Creating custom directory")
             os.makedirs(self.config.merge_settings.custom_dir, exist_ok=True)
 
-    def _check_resources(self):
+    def _check_resources(self) -> None:
         if not check_system_resources([model.path for model in self.config.models]):
+            msg = "Insufficient system resources to proceed with merging"
             raise EvoMergeException(
-                "Insufficient system resources to proceed with merging"
+                msg
             )
 
     def _models_are_compatible(self, models: list[torch.nn.Module]) -> bool:
@@ -116,10 +121,11 @@ class AdvancedModelMerger:
             merged_model = self._dfs_merge(models)
         elif self.config.merge_settings.merge_method == "ps_dfs":
             ps_model = self._ps_merge(models)
-            merged_model = self._dfs_merge([ps_model] + models)
+            merged_model = self._dfs_merge([ps_model, *models])
         else:
+            msg = f"Merge method {self.config.merge_settings.merge_method} not implemented"
             raise EvoMergeException(
-                f"Merge method {self.config.merge_settings.merge_method} not implemented"
+                msg
             )
 
         # Apply weight masking if configured
@@ -163,7 +169,8 @@ class AdvancedModelMerger:
         merged_model = type(models[0])(**models[0].config.to_dict())
         for technique in self.config.merge_settings.dfs_techniques:
             if technique not in MERGE_TECHNIQUES:
-                raise ValueError(f"Unknown merge technique: {technique}")
+                msg = f"Unknown merge technique: {technique}"
+                raise ValueError(msg)
             merged_model = MERGE_TECHNIQUES[technique](
                 merged_model,
                 models,
@@ -200,7 +207,7 @@ class AdvancedModelMerger:
         tokenizer.save_pretrained(merged_model_path)
         return merged_model_path
 
-    def _track_merged_model(self, merged_model_path: str):
+    def _track_merged_model(self, merged_model_path: str) -> None:
         parent_models = [model.path for model in self.config.models]
         merge_techniques = (
             self.config.merge_settings.ps_techniques
@@ -215,7 +222,7 @@ class AdvancedModelMerger:
             score=score,
         )
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         clean_up_models(
             [model.path for model in self.config.models if os.path.exists(model.path)]
         )
@@ -223,7 +230,7 @@ class AdvancedModelMerger:
 
 if __name__ == "__main__":
     # For testing purposes
-    from ..config import create_default_config
+    from AIVillage.src.production.evolution.evomerge.config import create_default_config
 
     config = create_default_config()
     merger = AdvancedModelMerger(config)

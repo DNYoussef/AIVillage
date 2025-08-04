@@ -17,7 +17,6 @@ from typing import Any
 import numpy as np
 import torch
 from transformers import pipeline
-
 import wandb
 
 # Content filtering imports
@@ -104,7 +103,7 @@ class ShieldMetrics:
 class ShieldValidator:
     """Comprehensive AI safety and content validation system."""
 
-    def __init__(self, project_name: str = "aivillage-shield"):
+    def __init__(self, project_name: str = "aivillage-shield") -> None:
         self.project_name = project_name
         self.validation_rules = {}
         self.validation_history = []
@@ -162,7 +161,7 @@ class ShieldValidator:
         # Load validation rules and models
         asyncio.create_task(self.initialize_shield_system())
 
-    def initialize_wandb_tracking(self):
+    def initialize_wandb_tracking(self) -> None:
         """Initialize W&B tracking for Shield validation."""
         try:
             wandb.init(
@@ -187,9 +186,9 @@ class ShieldValidator:
             logger.info("Shield Validator W&B tracking initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize W&B tracking: {e}")
+            logger.exception(f"Failed to initialize W&B tracking: {e}")
 
-    def init_database(self):
+    def init_database(self) -> None:
         """Initialize database for validation logs."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -257,9 +256,9 @@ class ShieldValidator:
             logger.info("Shield validation database initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize database: {e}")
+            logger.exception(f"Failed to initialize database: {e}")
 
-    async def initialize_shield_system(self):
+    async def initialize_shield_system(self) -> None:
         """Initialize shield system with rules and models."""
         logger.info("Initializing Shield validation system...")
 
@@ -280,7 +279,7 @@ class ShieldValidator:
 
         logger.info("Shield validation system initialized")
 
-    async def load_validation_rules(self):
+    async def load_validation_rules(self) -> None:
         """Load comprehensive validation rules."""
         # Safety rules
         safety_rules = [
@@ -433,7 +432,7 @@ class ShieldValidator:
 
         logger.info(f"Loaded {len(all_rules)} validation rules")
 
-    async def initialize_ml_models(self):
+    async def initialize_ml_models(self) -> None:
         """Initialize ML models for content analysis."""
         try:
             # Toxicity classifier
@@ -455,7 +454,7 @@ class ShieldValidator:
         except Exception as e:
             logger.warning(f"Failed to initialize some ML models: {e}")
 
-    async def load_content_filters(self):
+    async def load_content_filters(self) -> None:
         """Load content filter lists."""
         # Basic profanity filter (placeholder - in production would load from secure source)
         self.profanity_filter = {
@@ -510,7 +509,7 @@ class ShieldValidator:
 
         logger.info("Content filters loaded")
 
-    async def initialize_nlp_processor(self):
+    async def initialize_nlp_processor(self) -> None:
         """Initialize NLP processor for advanced text analysis."""
         if SPACY_AVAILABLE:
             try:
@@ -532,7 +531,7 @@ class ShieldValidator:
         student_id: str,
         content_type: str = "tutor_response",
         student_age: int = 10,
-        context: dict[str, Any] = None,
+        context: dict[str, Any] | None = None,
     ) -> ValidationResult:
         """Comprehensive content validation."""
         start_time = asyncio.get_event_loop().time()
@@ -556,7 +555,7 @@ class ShieldValidator:
             content, student_age, violations, warnings
         )
         privacy_score = await self._check_privacy(content, violations, warnings)
-        content_score = await self._check_content_appropriateness(
+        await self._check_content_appropriateness(
             content, student_age, violations, warnings
         )
         educational_score = await self._check_educational_value(
@@ -1088,7 +1087,7 @@ class ShieldValidator:
 
         return recommendations
 
-    async def _save_validation_result(self, result: ValidationResult):
+    async def _save_validation_result(self, result: ValidationResult) -> None:
         """Save validation result to database."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -1123,9 +1122,9 @@ class ShieldValidator:
             conn.close()
 
         except Exception as e:
-            logger.error(f"Failed to save validation result: {e}")
+            logger.exception(f"Failed to save validation result: {e}")
 
-    def _update_metrics(self, result: ValidationResult):
+    def _update_metrics(self, result: ValidationResult) -> None:
         """Update shield metrics."""
         self.metrics.total_validations += 1
 
@@ -1157,7 +1156,7 @@ class ShieldValidator:
         for violation in result.violations:
             self.metrics.common_violations[violation.get("rule_id", "unknown")] += 1
 
-    async def process_validation_queue(self):
+    async def process_validation_queue(self) -> None:
         """Process validation requests from queue."""
         while True:
             try:
@@ -1165,13 +1164,13 @@ class ShieldValidator:
                 validation_request = await self.validation_queue.get()
 
                 # Process validation
-                result = await self.validate_content(**validation_request)
+                await self.validate_content(**validation_request)
 
                 # Mark task as done
                 self.validation_queue.task_done()
 
             except Exception as e:
-                logger.error(f"Error processing validation queue: {e}")
+                logger.exception(f"Error processing validation queue: {e}")
                 await asyncio.sleep(1)
 
     async def batch_validate(
@@ -1204,7 +1203,7 @@ class ShieldValidator:
         return valid_results
 
     async def get_validation_analytics(
-        self, student_id: str = None, days: int = 7
+        self, student_id: str | None = None, days: int = 7
     ) -> dict[str, Any]:
         """Get validation analytics."""
         # Filter results by student and time period

@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class SemanticNode(Node):
     """Node optimized for semantic/neocortical storage."""
 
-    def __init__(self, content: str, node_type: str = "concept", **kwargs):
+    def __init__(self, content: str, node_type: str = "concept", **kwargs) -> None:
         super().__init__(
             id=str(uuid.uuid4()),
             content=content,
@@ -59,7 +59,7 @@ class SemanticNode(Node):
 class Hyperedge(Edge):
     """Enhanced edge supporting true hypergraph relationships."""
 
-    def __init__(self, participants: list[str], relation: str, **kwargs):
+    def __init__(self, participants: list[str], relation: str, **kwargs) -> None:
         # Use first two participants as source/target for compatibility
         source_id = participants[0] if participants else str(uuid.uuid4())
         target_id = participants[1] if len(participants) > 1 else str(uuid.uuid4())
@@ -91,7 +91,7 @@ class Subgraph:
         edges: list[Hyperedge],
         center_node_id: str | None = None,
         confidence: float = 1.0,
-    ):
+    ) -> None:
         self.id = str(uuid.uuid4())
         self.nodes = nodes
         self.edges = edges
@@ -159,7 +159,7 @@ class HypergraphKG(MemoryBackend):
         qdrant_url: str = "http://localhost:6333",
         redis_url: str = "redis://localhost:6379",
         embedding_dim: int = 768,
-    ):
+    ) -> None:
         self.neo4j_uri = neo4j_uri
         self.neo4j_user = neo4j_user
         self.neo4j_password = neo4j_password
@@ -203,7 +203,7 @@ class HypergraphKG(MemoryBackend):
             logger.info("HypergraphKG initialization complete")
 
         except Exception as e:
-            logger.error("Failed to initialize HypergraphKG: %s", e)
+            logger.exception("Failed to initialize HypergraphKG: %s", e)
             raise
 
     async def close(self) -> None:
@@ -217,7 +217,7 @@ class HypergraphKG(MemoryBackend):
                 await self.redis_client.close()
             logger.info("HypergraphKG connections closed")
         except Exception as e:
-            logger.error("Error closing HypergraphKG: %s", e)
+            logger.exception("Error closing HypergraphKG: %s", e)
 
     async def health_check(self) -> dict[str, Any]:
         """Check health of all backend systems."""
@@ -235,7 +235,7 @@ class HypergraphKG(MemoryBackend):
 
         try:
             # Qdrant health
-            collections = self.qdrant_client.get_collections()
+            self.qdrant_client.get_collections()
             health["backends"]["qdrant"] = "healthy"
         except Exception as e:
             health["backends"]["qdrant"] = f"error: {e!s}"
@@ -324,7 +324,7 @@ class HypergraphKG(MemoryBackend):
             return True
 
         except Exception as e:
-            logger.error("Failed to store semantic node %s: %s", node.id, e)
+            logger.exception("Failed to store semantic node %s: %s", node.id, e)
             return False
 
     async def store_hyperedge(self, hyperedge: Hyperedge) -> bool:
@@ -400,7 +400,7 @@ class HypergraphKG(MemoryBackend):
             return True
 
         except Exception as e:
-            logger.error("Failed to store hyperedge %s: %s", hyperedge.id, e)
+            logger.exception("Failed to store hyperedge %s: %s", hyperedge.id, e)
             return False
 
     async def personalized_pagerank(
@@ -526,7 +526,7 @@ class HypergraphKG(MemoryBackend):
                 return current_scores
 
         except Exception as e:
-            logger.error("Failed to compute Personalized PageRank: %s", e)
+            logger.exception("Failed to compute Personalized PageRank: %s", e)
             return {}
 
     async def query_subgraph(
@@ -663,7 +663,7 @@ class HypergraphKG(MemoryBackend):
                 return subgraph
 
         except Exception as e:
-            logger.error("Failed to query subgraph: %s", e)
+            logger.exception("Failed to query subgraph: %s", e)
             return None
 
     async def semantic_similarity_search(
@@ -733,7 +733,7 @@ class HypergraphKG(MemoryBackend):
             return results
 
         except Exception as e:
-            logger.error("Semantic similarity search failed: %s", e)
+            logger.exception("Semantic similarity search failed: %s", e)
             return []
 
     async def detect_communities(self, algorithm: str = "louvain") -> dict[str, str]:
@@ -762,7 +762,8 @@ class HypergraphKG(MemoryBackend):
                         RETURN n.id as node_id, communityId as community_id
                     """)
                 else:
-                    raise ValueError(f"Unknown algorithm: {algorithm}")
+                    msg = f"Unknown algorithm: {algorithm}"
+                    raise ValueError(msg)
 
                 communities = {}
                 async for record in result:
@@ -779,12 +780,14 @@ class HypergraphKG(MemoryBackend):
                     )
 
                 logger.info(
-                    "Detected %d communities using %s", len(set(communities.values())), algorithm
+                    "Detected %d communities using %s",
+                    len(set(communities.values())),
+                    algorithm,
                 )
                 return communities
 
         except Exception as e:
-            logger.error("Community detection failed: %s", e)
+            logger.exception("Community detection failed: %s", e)
             return {}
 
     async def get_memory_stats(self) -> MemoryStats:
@@ -814,7 +817,7 @@ class HypergraphKG(MemoryBackend):
                 )
 
         except Exception as e:
-            logger.error("Failed to get memory stats: %s", e)
+            logger.exception("Failed to get memory stats: %s", e)
             return MemoryStats(
                 total_nodes=0,
                 total_edges=0,
@@ -883,7 +886,7 @@ class HypergraphKG(MemoryBackend):
                         logger.info("Created Qdrant collection: %s", collection_name)
 
                 except Exception as e:
-                    logger.error(
+                    logger.exception(
                         "Failed to setup Qdrant collection %s: %s", collection_name, e
                     )
 

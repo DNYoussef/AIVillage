@@ -11,7 +11,7 @@ from rag_system.utils.graph_utils import distance_sensitive_linearization
 
 
 class HybridRetriever:
-    def __init__(self, config: UnifiedConfig):
+    def __init__(self, config: UnifiedConfig) -> None:
         self.config = config
         self.vector_store = VectorStore()
         self.graph_store = GraphStore()

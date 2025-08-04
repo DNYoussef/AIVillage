@@ -5,18 +5,18 @@ including SHA256 hashes, size information, evaluation metrics, and
 deployment metadata according to the deployment_manifest_schema.md.
 """
 
+from datetime import datetime
 import hashlib
 import json
 import logging
-import time
-from datetime import datetime
 from pathlib import Path
+import time
 from typing import Any
 
 import torch
 
-from ..compression.eval_utils import CompressionEvaluator
-from ..version import __version__
+from AIVillage.src.agent_forge.compression.eval_utils import CompressionEvaluator
+from AIVillage.src.agent_forge.version import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +24,15 @@ logger = logging.getLogger(__name__)
 class DeploymentManifestGenerator:
     """Generates deployment manifests for Agent Forge models."""
 
-    def __init__(self, model_path: str, output_dir: str = "releases"):
+    def __init__(self, model_path: str, output_dir: str = "releases") -> None:
         self.model_path = Path(model_path)
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Ensure model exists
         if not self.model_path.exists():
-            raise FileNotFoundError(f"Model not found: {self.model_path}")
+            msg = f"Model not found: {self.model_path}"
+            raise FileNotFoundError(msg)
 
         logger.info(f"Initialized manifest generator for {self.model_path}")
 
@@ -59,7 +60,8 @@ class DeploymentManifestGenerator:
             if model_path.suffix == ".pt":
                 model_data = torch.load(model_path, map_location="cpu")
             else:
-                raise ValueError(f"Unsupported model format: {model_path.suffix}")
+                msg = f"Unsupported model format: {model_path.suffix}"
+                raise ValueError(msg)
 
             # Extract compression information
             compression_info = {}
@@ -127,7 +129,7 @@ class DeploymentManifestGenerator:
             }
 
         except Exception as e:
-            logger.error(f"Failed to extract metadata: {e}")
+            logger.exception(f"Failed to extract metadata: {e}")
             return {
                 "compression": {"pipeline": "unknown", "stage": "unknown"},
                 "training": {},
@@ -144,7 +146,7 @@ class DeploymentManifestGenerator:
             evaluator = CompressionEvaluator(str(model_path))
 
             # Load evaluation data
-            eval_data = evaluator.load_hellaswag_sample("eval/hellaswag_sample.jsonl")
+            evaluator.load_hellaswag_sample("eval/hellaswag_sample.jsonl")
 
             # For compressed models, we need to handle evaluation differently
             # This is a simplified evaluation - in practice, you'd need to
@@ -167,7 +169,7 @@ class DeploymentManifestGenerator:
             return evaluation_results
 
         except Exception as e:
-            logger.error(f"Evaluation failed: {e}")
+            logger.exception(f"Evaluation failed: {e}")
             return {
                 "accuracy": 0.0,
                 "perplexity": 999.0,
@@ -335,7 +337,7 @@ for inp, resp in zip(inputs, responses):
 
         return examples
 
-    def generate_manifest(self, version: str = None) -> dict[str, Any]:
+    def generate_manifest(self, version: str | None = None) -> dict[str, Any]:
         """Generate complete deployment manifest."""
         if version is None:
             version = f"v{__version__}-{datetime.now().strftime('%Y%m%d')}"
@@ -438,7 +440,7 @@ for inp, resp in zip(inputs, responses):
             shutil.copy2(self.model_path, model_dest)
 
         # Save manifest
-        manifest_path = self.save_manifest(manifest, version)
+        self.save_manifest(manifest, version)
 
         # Create README
         readme_path = version_dir / "README.md"
@@ -519,7 +521,7 @@ pip install -r requirements.txt
         return readme
 
 
-def main():
+def main() -> None:
     """CLI entry point for manifest generation."""
     import argparse
 

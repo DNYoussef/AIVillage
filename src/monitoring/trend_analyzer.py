@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Analyze test trends over time
+"""Analyze test trends over time.
 
 Provides trend analysis for test success rates, performance metrics,
 and flaky test detection.
@@ -16,7 +16,7 @@ from typing import Any
 
 @dataclass
 class TestRun:
-    """Single test run data"""
+    """Single test run data."""
 
     timestamp: datetime
     success_rate: float
@@ -29,22 +29,22 @@ class TestRun:
 
 @dataclass
 class TrendPoint:
-    """Single point in a trend"""
+    """Single point in a trend."""
 
     timestamp: datetime
     value: float
 
 
 class TrendAnalyzer:
-    """Analyze test trends over time"""
+    """Analyze test trends over time."""
 
-    def __init__(self, history_file: Path = None):
+    def __init__(self, history_file: Path | None = None) -> None:
         self.history_file = history_file or Path(__file__).parent / "test_history.json"
         self.runs: list[TestRun] = []
         self._load_history()
 
-    def _load_history(self):
-        """Load test history from JSON file"""
+    def _load_history(self) -> None:
+        """Load test history from JSON file."""
         if not self.history_file.exists():
             return
 
@@ -76,14 +76,14 @@ class TrendAnalyzer:
             self.runs = []
 
     def generate_success_trend(self, days: int = 30) -> list[TrendPoint]:
-        """Generate success rate trend data for graphing"""
+        """Generate success rate trend data for graphing."""
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         recent_runs = [run for run in self.runs if run.timestamp >= cutoff_date]
 
         return [TrendPoint(run.timestamp, run.success_rate) for run in recent_runs]
 
     def generate_performance_trend(self, days: int = 30) -> list[TrendPoint]:
-        """Generate performance trend data"""
+        """Generate performance trend data."""
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
         recent_runs = [run for run in self.runs if run.timestamp >= cutoff_date]
 
@@ -98,7 +98,7 @@ class TrendAnalyzer:
     def identify_degrading_modules(
         self, threshold: float = 10.0, min_runs: int = 5
     ) -> list[dict[str, Any]]:
-        """Find modules with declining test success"""
+        """Find modules with declining test success."""
         if len(self.runs) < min_runs:
             return []
 
@@ -167,7 +167,7 @@ class TrendAnalyzer:
     def detect_flaky_tests(
         self, instability_threshold: float = 0.2, min_runs: int = 10
     ) -> list[dict[str, Any]]:
-        """Identify tests that intermittently fail"""
+        """Identify tests that intermittently fail."""
         if len(self.runs) < min_runs:
             return []
 
@@ -188,7 +188,7 @@ class TrendAnalyzer:
 
             # Calculate standard deviation of success rates
             mean_rate = statistics.mean(rates)
-            if mean_rate == 0 or mean_rate == 100:
+            if mean_rate in {0, 100}:
                 continue  # Skip always-failing or always-passing modules
 
             try:
@@ -218,7 +218,7 @@ class TrendAnalyzer:
     def generate_ascii_trend_graph(
         self, data: list[float], width: int = 50, height: int = 10
     ) -> str:
-        """Generate ASCII art trend graph for markdown embedding"""
+        """Generate ASCII art trend graph for markdown embedding."""
         if not data or len(data) < 2:
             return "Insufficient data for graph"
 
@@ -285,7 +285,7 @@ class TrendAnalyzer:
         return "\n".join(result)
 
     def get_trend_summary(self, days: int = 30) -> dict[str, Any]:
-        """Get comprehensive trend summary"""
+        """Get comprehensive trend summary."""
         success_trend = self.generate_success_trend(days)
         performance_trend = self.generate_performance_trend(days)
         degrading_modules = self.identify_degrading_modules()
@@ -293,7 +293,7 @@ class TrendAnalyzer:
 
         summary = {
             "period_days": days,
-            "total_runs": len([p for p in success_trend]),
+            "total_runs": len(list(success_trend)),
             "success_trend": {
                 "current": success_trend[-1].value if success_trend else 0,
                 "min": min(p.value for p in success_trend) if success_trend else 0,
@@ -319,7 +319,7 @@ class TrendAnalyzer:
     def _get_trend_direction(
         self, trend_points: list[TrendPoint], lower_is_better: bool = False
     ) -> str:
-        """Determine trend direction from points"""
+        """Determine trend direction from points."""
         if len(trend_points) < 2:
             return "stable"
 
@@ -336,8 +336,8 @@ class TrendAnalyzer:
         return "improving" if lower_is_better else "declining"
 
 
-def main():
-    """CLI interface for trend analysis"""
+def main() -> None:
+    """CLI interface for trend analysis."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Test Trend Analyzer")

@@ -6,12 +6,12 @@ through evolutionary algorithms, meta-learning, and autonomous code modification
 
 import ast
 import asyncio
+from dataclasses import dataclass, field
+from datetime import datetime
 import json
 import logging
 import os
 import random
-from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ class AgentGenotype:
 class KPITracker:
     """Tracks KPIs for all agents in the 18-agent ecosystem."""
 
-    def __init__(self, data_path: str = "data/kpi_tracking.json"):
+    def __init__(self, data_path: str = "data/kpi_tracking.json") -> None:
         self.data_path = data_path
         self.metrics: dict[str, AgentPerformanceMetrics] = {}
         self.history: dict[str, list[dict[str, Any]]] = {}
@@ -95,7 +95,7 @@ class KPITracker:
                 self.history = data.get("history", {})
                 logger.info(f"Loaded KPI data for {len(self.metrics)} agents")
         except Exception as e:
-            logger.error(f"Failed to load KPI data: {e}")
+            logger.exception(f"Failed to load KPI data: {e}")
 
     def update_agent_metrics(
         self,
@@ -176,7 +176,7 @@ class KPITracker:
 
         return fitness
 
-    def get_top_performers(self, agent_type: str = None, limit: int = 5) -> list[str]:
+    def get_top_performers(self, agent_type: str | None = None, limit: int = 5) -> list[str]:
         """Get top performing agents."""
         candidates = self.metrics.values()
 
@@ -230,13 +230,13 @@ class KPITracker:
 
             logger.info(f"Saved KPI data for {len(self.metrics)} agents")
         except Exception as e:
-            logger.error(f"Failed to save KPI data: {e}")
+            logger.exception(f"Failed to save KPI data: {e}")
 
 
 class GeneticOptimizer:
     """Genetic algorithm optimizer for agent evolution."""
 
-    def __init__(self, parameters: EvolutionParameters):
+    def __init__(self, parameters: EvolutionParameters) -> None:
         self.params = parameters
         self.population: list[AgentGenotype] = []
         self.generation = 0
@@ -268,7 +268,7 @@ class GeneticOptimizer:
 
         for key, value in mutated.items():
             if (
-                isinstance(value, (int, float))
+                isinstance(value, int | float)
                 and random.random() < self.params.mutation_rate
             ):
                 if isinstance(value, int):
@@ -353,7 +353,7 @@ class GeneticOptimizer:
             arch_keys = list(mutated.architecture.keys())
             if arch_keys:
                 key = random.choice(arch_keys)
-                if isinstance(mutated.architecture[key], (int, float)):
+                if isinstance(mutated.architecture[key], int | float):
                     if isinstance(mutated.architecture[key], int):
                         mutated.architecture[key] += random.randint(-1, 1)
                     else:
@@ -397,7 +397,7 @@ class GeneticOptimizer:
 class CodeMutator:
     """Safe code modification for agent evolution."""
 
-    def __init__(self, safe_mode: bool = True):
+    def __init__(self, safe_mode: bool = True) -> None:
         self.safe_mode = safe_mode
         self.allowed_imports = {
             "asyncio",
@@ -459,7 +459,7 @@ class CodeMutator:
                         # Add or modify default values
                         for arg in node.args.defaults:
                             if isinstance(arg, ast.Constant) and isinstance(
-                                arg.value, (int, float)
+                                arg.value, int | float
                             ):
                                 if isinstance(arg.value, int):
                                     arg.value += random.randint(-1, 1)
@@ -478,7 +478,7 @@ class CodeMutator:
 
             return ast.unparse(tree)
         except Exception as e:
-            logger.error(f"Failed to mutate function: {e}")
+            logger.exception(f"Failed to mutate function: {e}")
             return function_code
 
     def generate_new_function(self, template: str, agent_type: str) -> str:
@@ -520,7 +520,7 @@ async def evolved_quality_check(self, code: str) -> float:
 class MetaLearner:
     """Meta-learning system for optimizing learning strategies."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.learning_strategies: dict[str, dict[str, Any]] = {}
         self.strategy_performance: dict[str, list[float]] = {}
 
@@ -571,7 +571,7 @@ class MetaLearner:
 class SpecializationManager:
     """Manages dynamic role assignment and specialization."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.agent_specializations: dict[str, dict[str, float]] = {}
         self.task_requirements: dict[str, dict[str, float]] = {}
 
@@ -620,7 +620,7 @@ class SpecializationManager:
 class AgentEvolutionEngine:
     """Main orchestration system for agent self-evolution."""
 
-    def __init__(self, config_path: str = "config/evolution_config.json"):
+    def __init__(self, config_path: str = "config/evolution_config.json") -> None:
         self.config_path = config_path
         self.kpi_tracker = KPITracker()
         self.genetic_optimizer = GeneticOptimizer(EvolutionParameters())
@@ -649,7 +649,7 @@ class AgentEvolutionEngine:
 
                 logger.info("Loaded evolution configuration")
         except Exception as e:
-            logger.error(f"Failed to load evolution config: {e}")
+            logger.exception(f"Failed to load evolution config: {e}")
 
     def _initialize_18_agent_ecosystem(self) -> None:
         """Initialize the 18-agent ecosystem for evolution."""
@@ -730,7 +730,7 @@ class AgentEvolutionEngine:
                 await asyncio.sleep(300)  # 5-minute cycles
 
         except Exception as e:
-            logger.error(f"Evolution cycle error: {e}")
+            logger.exception(f"Evolution cycle error: {e}")
         finally:
             self.is_running = False
 
@@ -797,7 +797,7 @@ class AgentEvolutionEngine:
                 logger.info(f"Deployed evolved agent: {agent.agent_id}")
 
             except Exception as e:
-                logger.error(f"Failed to deploy agent {agent.agent_id}: {e}")
+                logger.exception(f"Failed to deploy agent {agent.agent_id}: {e}")
 
     async def _generate_agent_implementation(self, agent: AgentGenotype) -> str:
         """Generate complete agent implementation from genotype."""
@@ -951,7 +951,7 @@ def create_evolved_agent() -> Evolved{agent.agent_type.replace("-", "_").title()
 
             logger.info("Saved evolution state")
         except Exception as e:
-            logger.error(f"Failed to save evolution state: {e}")
+            logger.exception(f"Failed to save evolution state: {e}")
 
     def get_evolution_dashboard(self) -> dict[str, Any]:
         """Get evolution dashboard data."""
@@ -996,7 +996,7 @@ def create_evolved_agent() -> Evolved{agent.agent_type.replace("-", "_").title()
 
 
 # Main entry point for testing
-async def main():
+async def main() -> None:
     """Test the self-evolution system."""
     engine = AgentEvolutionEngine()
 

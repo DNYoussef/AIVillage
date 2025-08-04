@@ -121,7 +121,7 @@ class PermissionChecker(ABC):
 class RoleBasedPermissionChecker(PermissionChecker):
     """Role-based permission checker."""
 
-    def __init__(self, permissions_config: dict[str, list[str]]):
+    def __init__(self, permissions_config: dict[str, list[str]]) -> None:
         self.permissions_config = permissions_config
 
     async def check_permission(
@@ -134,7 +134,7 @@ class RoleBasedPermissionChecker(PermissionChecker):
 class ResourceBasedPermissionChecker(PermissionChecker):
     """Resource-based permission checker with ownership rules."""
 
-    def __init__(self, base_checker: PermissionChecker):
+    def __init__(self, base_checker: PermissionChecker) -> None:
         self.base_checker = base_checker
 
     async def check_permission(
@@ -168,7 +168,7 @@ class TimeBasedPermissionChecker(PermissionChecker):
 
     def __init__(
         self, base_checker: PermissionChecker, business_hours: tuple | None = None
-    ):
+    ) -> None:
         self.base_checker = base_checker
         self.business_hours = business_hours or (9, 17)  # 9 AM to 5 PM
 
@@ -199,7 +199,7 @@ class PermissionManager:
         jwt_secret: str,
         permissions_config: dict[str, list[str]] | None = None,
         enable_audit: bool = True,
-    ):
+    ) -> None:
         self.jwt_secret = jwt_secret
         self.permissions_config = (
             permissions_config or HypeRAGPermissions.AGENT_PERMISSIONS
@@ -230,12 +230,14 @@ class PermissionManager:
             session_id = payload.get("jti", f"session_{int(time.time())}")
 
             if not user_id:
-                raise AuthenticationError("Invalid token: missing user ID")
+                msg = "Invalid token: missing user ID"
+                raise AuthenticationError(msg)
 
             # Check expiration
             exp = payload.get("exp")
             if exp and datetime.fromtimestamp(exp) < datetime.now():
-                raise AuthenticationError("Token expired")
+                msg = "Token expired"
+                raise AuthenticationError(msg)
 
             # Get permissions for role
             permissions = set(self.permissions_config.get(role, []))
@@ -263,7 +265,8 @@ class PermissionManager:
             return context
 
         except jwt.InvalidTokenError as e:
-            raise AuthenticationError(f"Invalid token: {e!s}")
+            msg = f"Invalid token: {e!s}"
+            raise AuthenticationError(msg)
 
     async def authenticate_api_key(
         self, api_key: str, ip_address: str | None = None
@@ -277,7 +280,8 @@ class PermissionManager:
         }
 
         if api_key not in key_mapping:
-            raise AuthenticationError("Invalid API key")
+            msg = "Invalid API key"
+            raise AuthenticationError(msg)
 
         key_info = key_mapping[api_key]
         user_id = key_info["user_id"]
@@ -350,8 +354,9 @@ class PermissionManager:
     ) -> None:
         """Require permission or raise AuthorizationError."""
         if not await self.check_permission(context, permission, resource):
+            msg = f"Permission denied: {permission} on {resource or 'system'} for role {context.role}"
             raise AuthorizationError(
-                f"Permission denied: {permission} on {resource or 'system'} for role {context.role}"
+                msg
             )
 
     async def invalidate_session(self, session_id: str) -> None:
@@ -493,7 +498,7 @@ def audit_operation(operation: str):
                 return result
             except Exception as e:
                 duration = time.time() - start_time
-                logger.error(
+                logger.exception(
                     f"Operation {operation} failed for {context.user_id} in {duration:.3f}s: {e!s}"
                 )
                 raise

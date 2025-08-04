@@ -1,4 +1,4 @@
-"""Distributed Agent System for Sprint 7
+"""Distributed Agent System for Sprint 7.
 
 This module implements distributed deployment of the 18 AIVillage agents across
 the P2P network, enabling cross-device collaboration and agent migration.

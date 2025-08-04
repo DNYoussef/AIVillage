@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from .message_protocol import MessageProtocol, EvolutionMessage, MessageType
+from .message_protocol import EvolutionMessage, MessageProtocol, MessageType
 
 
 class DummyNode:
@@ -41,7 +41,12 @@ async def test_send_message_tracks_retries() -> None:
     node = DummyNode()
     protocol = MessageProtocol(node)
     writer = DummyWriter()
-    msg = EvolutionMessage(message_id="1", message_type=MessageType.PING, sender_id="node", requires_ack=True)
+    msg = EvolutionMessage(
+        message_id="1",
+        message_type=MessageType.PING,
+        sender_id="node",
+        requires_ack=True,
+    )
     await protocol.send_message(msg, writer)
     queued = await protocol.retry_queue.get()
     assert queued.message_id == "1"
@@ -65,7 +70,9 @@ async def test_message_delivery_rate_and_latency() -> None:
     server_protocol = MessageProtocol(server_node)
     await server_protocol.start_protocol()
 
-    async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def handle_client(
+        reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         while True:
             data = await server_protocol.read_message(reader)
             if data is None:

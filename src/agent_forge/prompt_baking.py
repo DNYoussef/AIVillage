@@ -13,20 +13,20 @@ patterns through systematic testing and parameter adjustment.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import time
 import traceback
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
-import torch
-import wandb
 from pydantic import BaseModel, Field, validator
+import torch
 from torch import nn
 from tqdm import tqdm
 from transformers import AdamW, AutoModelForCausalLM, AutoTokenizer
+import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,7 @@ class PromptBakingConfig(BaseModel):
     )
 
     @validator("device")
-    def validate_device(cls, v):
+    def validate_device(self, v):
         if v == "auto":
             return "cuda" if torch.cuda.is_available() else "cpu"
         return v
@@ -116,7 +116,7 @@ class PromptBakingConfig(BaseModel):
 class ABTestHarness:
     """A/B testing system for prompt variants."""
 
-    def __init__(self, config: PromptBakingConfig):
+    def __init__(self, config: PromptBakingConfig) -> None:
         self.config = config
         self.variants = []
         self.test_results = []
@@ -256,7 +256,7 @@ class ABTestHarness:
 class PromptWeightBaker:
     """Bakes optimal prompts into model weights."""
 
-    def __init__(self, config: PromptBakingConfig):
+    def __init__(self, config: PromptBakingConfig) -> None:
         self.config = config
 
     async def bake_prompt_weights(
@@ -354,7 +354,7 @@ class PromptWeightBaker:
         # Create batches
         batch_size = self.config.batch_size
         for i in range(0, len(sample_tasks), batch_size):
-            batch_tasks = sample_tasks[i: i + batch_size]
+            batch_tasks = sample_tasks[i : i + batch_size]
             batch_prompts = [prompt_template.format(task=task) for task in batch_tasks]
             training_examples.append(batch_prompts)
 
@@ -369,7 +369,7 @@ class PromptWeightBaker:
 class ToolIntegrationSystem:
     """Integrates tools with prompt-optimized models."""
 
-    def __init__(self, config: PromptBakingConfig):
+    def __init__(self, config: PromptBakingConfig) -> None:
         self.config = config
         self.available_tools = {
             "calculator": self.calculator_tool,
@@ -395,7 +395,7 @@ class ToolIntegrationSystem:
                     integration_results[tool_name] = result
                     logger.info(f"Tool '{tool_name}' integration: {result['success']}")
                 except Exception as e:
-                    logger.error(f"Tool integration failed for {tool_name}: {e}")
+                    logger.exception(f"Tool integration failed for {tool_name}: {e}")
                     integration_results[tool_name] = {"success": False, "error": str(e)}
 
         return integration_results
@@ -466,14 +466,14 @@ class ToolIntegrationSystem:
 class PromptBakingPipeline:
     """Main pipeline for prompt baking optimization."""
 
-    def __init__(self, config: PromptBakingConfig):
+    def __init__(self, config: PromptBakingConfig) -> None:
         self.config = config
         self.ab_harness = ABTestHarness(config)
         self.weight_baker = PromptWeightBaker(config)
         self.tool_integration = ToolIntegrationSystem(config)
         self.wandb_run = None
 
-    def initialize_wandb(self):
+    def initialize_wandb(self) -> None:
         """Initialize Weights & Biases tracking."""
         try:
             self.wandb_run = wandb.init(
@@ -485,7 +485,7 @@ class PromptBakingPipeline:
             )
             logger.info(f"W&B initialized: {self.wandb_run.url}")
         except Exception as e:
-            logger.error(f"W&B initialization failed: {e}")
+            logger.exception(f"W&B initialization failed: {e}")
             self.wandb_run = None
 
     async def run_prompt_baking_pipeline(self) -> dict[str, Any]:
@@ -563,8 +563,8 @@ class PromptBakingPipeline:
             return results
 
         except Exception as e:
-            logger.error(f"Prompt baking pipeline failed: {e}")
-            logger.error(traceback.format_exc())
+            logger.exception(f"Prompt baking pipeline failed: {e}")
+            logger.exception(traceback.format_exc())
 
             return {"success": False, "error": str(e), "output_model_path": None}
 
@@ -580,6 +580,7 @@ class PromptBakingPipeline:
 
 async def run_prompt_baking(config: dict[str, Any]) -> "PhaseResult":
     from .forge_orchestrator import PhaseResult
+
     """Orchestrator entry point for Prompt Baking phase.
 
     Args:
@@ -678,8 +679,8 @@ async def run_prompt_baking(config: dict[str, Any]) -> "PhaseResult":
     except Exception as e:
         duration = time.time() - start_time
         error_msg = f"Prompt Baking phase failed: {e!s}"
-        logger.error(error_msg)
-        logger.error(traceback.format_exc())
+        logger.exception(error_msg)
+        logger.exception(traceback.format_exc())
 
         return PhaseResult(
             phase_type=PhaseType.PROMPT_BAKING,
@@ -736,5 +737,5 @@ if __name__ == "__main__":
             logger.error(results.get("error", "Unknown error"))
 
     except Exception as e:
-        logger.error(f"Prompt baking pipeline failed: {e}")
-        logger.error(traceback.format_exc())
+        logger.exception(f"Prompt baking pipeline failed: {e}")
+        logger.exception(traceback.format_exc())

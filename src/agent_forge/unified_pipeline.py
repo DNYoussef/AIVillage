@@ -11,20 +11,20 @@ ready for deployment.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import click
-import wandb
 from compression_pipeline import CompressionConfig, CompressionPipeline
 
 # Import pipeline components
 from evomerge_pipeline import EvolutionConfig, EvoMergePipeline
 from pydantic import BaseModel, Field
 from quietstar_baker import QuietSTaRBaker, QuietSTaRConfig
+import wandb
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -119,7 +119,7 @@ class PipelineState(BaseModel):
     total_improvement: float = 0.0
     compression_ratio: float = 1.0
 
-    def save_checkpoint(self, checkpoint_dir: Path):
+    def save_checkpoint(self, checkpoint_dir: Path) -> None:
         """Save pipeline state checkpoint."""
         checkpoint_path = checkpoint_dir / f"unified_pipeline_{self.run_id}.json"
 
@@ -149,7 +149,7 @@ class PipelineState(BaseModel):
 class UnifiedPipeline:
     """Main unified pipeline orchestrator."""
 
-    def __init__(self, config: UnifiedPipelineConfig):
+    def __init__(self, config: UnifiedPipelineConfig) -> None:
         self.config = config
         self.state = PipelineState(
             run_id=f"unified_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -159,14 +159,14 @@ class UnifiedPipeline:
 
         logger.info(f"Unified pipeline initialized - Run ID: {self.state.run_id}")
 
-    def initialize_wandb(self):
+    def initialize_wandb(self) -> None:
         """Initialize W&B tracking for unified pipeline."""
         try:
             self.wandb_run = wandb.init(
                 project=self.config.wandb_project,
                 entity=self.config.wandb_entity,
                 job_type="unified_pipeline",
-                tags=self.config.wandb_tags + [f"run-{self.state.run_id}"],
+                tags=[*self.config.wandb_tags, f"run-{self.state.run_id}"],
                 config=self.config.dict(),
                 name=f"unified_pipeline_{self.state.run_id}",
             )
@@ -174,7 +174,7 @@ class UnifiedPipeline:
             logger.info(f"W&B initialized: {self.wandb_run.url}")
 
         except Exception as e:
-            logger.error(f"W&B initialization failed: {e}")
+            logger.exception(f"W&B initialization failed: {e}")
             self.wandb_run = None
 
     async def run_complete_pipeline(self) -> dict[str, Any]:
@@ -198,8 +198,9 @@ class UnifiedPipeline:
                 and "quietstar" not in self.state.completed_phases
             ):
                 if not self.state.evomerge_model_path:
+                    msg = "EvoMerge model path required for Quiet-STaR phase"
                     raise ValueError(
-                        "EvoMerge model path required for Quiet-STaR phase"
+                        msg
                     )
 
                 await self.run_quietstar_phase()
@@ -215,7 +216,8 @@ class UnifiedPipeline:
                     self.state.quietstar_model_path or self.state.evomerge_model_path
                 )
                 if not source_model:
-                    raise ValueError("Source model path required for compression phase")
+                    msg = "Source model path required for compression phase"
+                    raise ValueError(msg)
 
                 await self.run_compression_phase(source_model)
                 self.state.completed_phases.append("compression")
@@ -228,14 +230,14 @@ class UnifiedPipeline:
             return await self.generate_final_report()
 
         except Exception as e:
-            logger.error(f"Unified pipeline failed: {e}")
+            logger.exception(f"Unified pipeline failed: {e}")
             raise
 
         finally:
             if self.wandb_run:
                 self.wandb_run.finish()
 
-    async def run_evomerge_phase(self):
+    async def run_evomerge_phase(self) -> None:
         """Run EvoMerge evolutionary optimization."""
         logger.info("🧬 Starting EvoMerge Phase")
         self.state.current_phase = "evomerge"
@@ -296,9 +298,10 @@ class UnifiedPipeline:
                 f"✅ EvoMerge completed - Best fitness: {best_candidate.overall_fitness:.3f}"
             )
         else:
-            raise RuntimeError("EvoMerge failed to produce a best candidate")
+            msg = "EvoMerge failed to produce a best candidate"
+            raise RuntimeError(msg)
 
-    async def run_quietstar_phase(self):
+    async def run_quietstar_phase(self) -> None:
         """Run Quiet-STaR reasoning enhancement."""
         logger.info("🤔 Starting Quiet-STaR Phase")
         self.state.current_phase = "quietstar"
@@ -342,7 +345,7 @@ class UnifiedPipeline:
             f"✅ Quiet-STaR completed - Winner: {results['winner']}, Improvement: {results['improvement']:.1f}%"
         )
 
-    async def run_compression_phase(self, source_model_path: str):
+    async def run_compression_phase(self, source_model_path: str) -> None:
         """Run BitNet compression."""
         logger.info("🗜️ Starting Compression Phase")
         self.state.current_phase = "compression"
@@ -381,7 +384,7 @@ class UnifiedPipeline:
             f"✅ Compression completed - Ratio: {results['compression_ratio']:.1f}x"
         )
 
-    async def calculate_final_metrics(self):
+    async def calculate_final_metrics(self) -> None:
         """Calculate final performance metrics."""
         logger.info("📊 Calculating final metrics")
 
@@ -484,10 +487,12 @@ class UnifiedPipeline:
             # Also log final model if available
             if self.state.final_model_path:
                 model_artifact = wandb.Artifact(
-                    f"agent_forge_final_model_{
-                        self.state.run_id}", type="model", description=f"Complete Agent Forge model with {
+                    f"agent_forge_final_model_{self.state.run_id}",
+                    type="model",
+                    description=f"Complete Agent Forge model with {
                         self.state.total_improvement:.1f}% improvement and {
-                        self.state.compression_ratio:.1f}x compression", )
+                        self.state.compression_ratio:.1f}x compression",
+                )
                 model_artifact.add_dir(self.state.final_model_path)
                 self.wandb_run.log_artifact(model_artifact)
 
@@ -496,7 +501,7 @@ class UnifiedPipeline:
 
         return report
 
-    def print_final_summary(self, report: dict):
+    def print_final_summary(self, report: dict) -> None:
         """Print comprehensive final summary."""
         print("\n" + "=" * 80)
         print("🎉 AGENT FORGE UNIFIED PIPELINE COMPLETE")
@@ -537,7 +542,7 @@ class UnifiedPipeline:
 
 
 @click.group()
-def forge():
+def forge() -> None:
     """Agent Forge CLI."""
 
 
@@ -560,7 +565,7 @@ def forge():
 @click.option("--resume", help="Resume from checkpoint file")
 def run_pipeline(
     config, evomerge, quietstar, compression, generations, output_dir, device, resume
-):
+) -> None:
     """Run complete Agent Forge pipeline: EvoMerge → Quiet-STaR → Compression."""
     try:
         # Load configuration
@@ -597,7 +602,7 @@ def run_pipeline(
         print(f"📊 Check full report at: {results['pipeline_summary']['run_id']}")
 
     except Exception as e:
-        logger.error(f"Unified pipeline failed: {e}")
+        logger.exception(f"Unified pipeline failed: {e}")
         raise click.ClickException(str(e))
 
 

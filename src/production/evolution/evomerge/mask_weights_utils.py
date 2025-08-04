@@ -19,7 +19,8 @@ def mask_input_with_mask_rate(
         threshold = torch.quantile(abs_tensor, mask_rate)
         mask = abs_tensor > threshold
     else:
-        raise ValueError(f"Invalid mask strategy: {mask_strategy}")
+        msg = f"Invalid mask strategy: {mask_strategy}"
+        raise ValueError(msg)
 
     masked_tensor = input_tensor * mask
 

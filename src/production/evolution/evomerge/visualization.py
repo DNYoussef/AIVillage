@@ -4,7 +4,7 @@ import pandas as pd
 import seaborn as sns
 
 
-def plot_fitness_over_generations(fitness_scores: list[float], output_path: str):
+def plot_fitness_over_generations(fitness_scores: list[float], output_path: str) -> None:
     plt.figure(figsize=(10, 6))
     plt.plot(fitness_scores)
     plt.title("Fitness Over Generations")
@@ -19,10 +19,11 @@ def plot_pareto_front(
     pareto_front_indices: list[int],
     objectives: list[str],
     output_path: str,
-):
+) -> None:
     if len(objectives) != 2:
+        msg = "Pareto front visualization is only supported for 2 objectives"
         raise ValueError(
-            "Pareto front visualization is only supported for 2 objectives"
+            msg
         )
 
     plt.figure(figsize=(10, 6))
@@ -46,7 +47,7 @@ def plot_evolution_progress(
     all_generation_scores: list[list[dict[str, float]]],
     objectives: list[str],
     output_path: str,
-):
+) -> None:
     num_generations = len(all_generation_scores)
     num_objectives = len(objectives)
 
@@ -78,7 +79,7 @@ def plot_evolution_progress(
     plt.close()
 
 
-def generate_html_report(benchmark_results, output_path):
+def generate_html_report(benchmark_results, output_path) -> None:
     html_content = """
     <html>
     <head>
@@ -124,7 +125,7 @@ def generate_html_report(benchmark_results, output_path):
         f.write(html_content)
 
 
-def plot_benchmark_comparison(benchmark_results, output_path):
+def plot_benchmark_comparison(benchmark_results, output_path) -> None:
     df = pd.DataFrame(benchmark_results)
 
     plt.figure(figsize=(12, 6))
@@ -138,7 +139,7 @@ def plot_benchmark_comparison(benchmark_results, output_path):
     plt.close()
 
 
-def plot_merge_technique_comparison(benchmark_results, output_path):
+def plot_merge_technique_comparison(benchmark_results, output_path) -> None:
     df = pd.DataFrame(benchmark_results)
     df["merge_techniques"] = df["merge_techniques"].apply(lambda x: ", ".join(x))
 
@@ -153,7 +154,7 @@ def plot_merge_technique_comparison(benchmark_results, output_path):
     plt.close()
 
 
-def plot_weight_mask_rate_effect(benchmark_results, output_path):
+def plot_weight_mask_rate_effect(benchmark_results, output_path) -> None:
     df = pd.DataFrame(benchmark_results)
 
     plt.figure(figsize=(10, 6))

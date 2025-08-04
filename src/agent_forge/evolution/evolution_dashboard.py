@@ -1,35 +1,35 @@
-"""Evolution Monitoring Dashboard - Real-time visualization of agent evolution
+"""Evolution Monitoring Dashboard - Real-time visualization of agent evolution.
 
 Provides comprehensive monitoring and visualization of the self-evolving agent ecosystem.
 """
 
 import asyncio
+from datetime import datetime, timedelta
 import json
 import logging
-import time
-from datetime import datetime, timedelta
 from pathlib import Path
+import time
 from typing import Any
 
-import matplotlib
+from flask import Flask, jsonify, render_template, request
+import matplotlib as mpl
 import numpy as np
 import plotly.express as px
 import plotly.graph_objs as go
-from flask import Flask, jsonify, render_template, request
 from plotly.utils import PlotlyJSONEncoder
 
 from .agent_evolution_engine import AgentEvolutionEngine
 
-matplotlib.use("Agg")  # Non-interactive backend
+mpl.use("Agg")  # Non-interactive backend
 
 
 logger = logging.getLogger(__name__)
 
 
 class EvolutionDashboard:
-    """Real-time dashboard for monitoring agent evolution"""
+    """Real-time dashboard for monitoring agent evolution."""
 
-    def __init__(self, evolution_engine: AgentEvolutionEngine, port: int = 5000):
+    def __init__(self, evolution_engine: AgentEvolutionEngine, port: int = 5000) -> None:
         self.evolution_engine = evolution_engine
         self.port = port
         self.app = Flask(__name__)
@@ -40,8 +40,8 @@ class EvolutionDashboard:
         self.last_update = None
         self.cache_duration = timedelta(minutes=1)  # Cache for 1 minute
 
-    def setup_routes(self):
-        """Setup Flask routes for the dashboard"""
+    def setup_routes(self) -> None:
+        """Setup Flask routes for the dashboard."""
 
         @self.app.route("/")
         def dashboard():
@@ -53,7 +53,7 @@ class EvolutionDashboard:
                 data = await self.get_evolution_status()
                 return jsonify(data)
             except Exception as e:
-                logger.error(f"Failed to get evolution status: {e}")
+                logger.exception(f"Failed to get evolution status: {e}")
                 return jsonify({"error": str(e)}), 500
 
         @self.app.route("/api/population_fitness")
@@ -62,7 +62,7 @@ class EvolutionDashboard:
                 data = await self.get_population_fitness_data()
                 return jsonify(data)
             except Exception as e:
-                logger.error(f"Failed to get population fitness: {e}")
+                logger.exception(f"Failed to get population fitness: {e}")
                 return jsonify({"error": str(e)}), 500
 
         @self.app.route("/api/specialization_distribution")
@@ -71,7 +71,7 @@ class EvolutionDashboard:
                 data = await self.get_specialization_distribution()
                 return jsonify(data)
             except Exception as e:
-                logger.error(f"Failed to get specialization distribution: {e}")
+                logger.exception(f"Failed to get specialization distribution: {e}")
                 return jsonify({"error": str(e)}), 500
 
         @self.app.route("/api/performance_trends")
@@ -81,7 +81,7 @@ class EvolutionDashboard:
                 data = await self.get_performance_trends(agent_id)
                 return jsonify(data)
             except Exception as e:
-                logger.error(f"Failed to get performance trends: {e}")
+                logger.exception(f"Failed to get performance trends: {e}")
                 return jsonify({"error": str(e)}), 500
 
         @self.app.route("/api/diversity_analysis")
@@ -90,7 +90,7 @@ class EvolutionDashboard:
                 data = await self.get_diversity_analysis()
                 return jsonify(data)
             except Exception as e:
-                logger.error(f"Failed to get diversity analysis: {e}")
+                logger.exception(f"Failed to get diversity analysis: {e}")
                 return jsonify({"error": str(e)}), 500
 
         @self.app.route("/api/trigger_evolution", methods=["POST"])
@@ -99,62 +99,75 @@ class EvolutionDashboard:
                 # Validate request data
                 if not request.json:
                     return jsonify({"error": "Missing JSON payload"}), 400
-                    
+
                 generations = request.json.get("generations", 1)
-                
+
                 # Validate generations parameter
-                if not isinstance(generations, int) or generations < 1 or generations > 100:
-                    return jsonify({
-                        "error": "Invalid generations parameter. Must be integer between 1 and 100"
-                    }), 400
-                
+                if (
+                    not isinstance(generations, int)
+                    or generations < 1
+                    or generations > 100
+                ):
+                    return jsonify(
+                        {
+                            "error": "Invalid generations parameter. Must be integer between 1 and 100"
+                        }
+                    ), 400
+
                 # Check if evolution engine is available
                 if not self.evolution_engine:
-                    return jsonify({
-                        "error": "Evolution engine not initialized"
-                    }), 500
-                    
+                    return jsonify({"error": "Evolution engine not initialized"}), 500
+
                 # Check if evolution is already running
-                if hasattr(self.evolution_engine, 'is_running') and self.evolution_engine.is_running:
-                    return jsonify({
-                        "error": "Evolution is already running. Please wait for current cycle to complete."
-                    }), 409
-                
+                if (
+                    hasattr(self.evolution_engine, "is_running")
+                    and self.evolution_engine.is_running
+                ):
+                    return jsonify(
+                        {
+                            "error": "Evolution is already running. Please wait for current cycle to complete."
+                        }
+                    ), 409
+
                 # Verify there are agents to evolve
                 try:
                     status = await self.evolution_engine.get_evolution_dashboard_data()
                     total_agents = status["population_stats"]["total_agents"]
-                    
+
                     if total_agents == 0:
-                        return jsonify({
-                            "error": "No agents available for evolution. Initialize population first."
-                        }), 400
-                        
+                        return jsonify(
+                            {
+                                "error": "No agents available for evolution. Initialize population first."
+                            }
+                        ), 400
+
                 except Exception as e:
                     logger.warning(f"Could not verify agent population: {e}")
                     # Continue anyway - the engine should handle this
-                
+
                 # Run evolution with timeout and validation
                 logger.info(f"Starting evolution cycle with {generations} generations")
                 start_time = time.time()
-                
+
                 try:
                     results = await asyncio.wait_for(
-                        self.evolution_engine.run_evolution_cycle(generations=generations),
-                        timeout=300.0  # 5 minute timeout
+                        self.evolution_engine.run_evolution_cycle(
+                            generations=generations
+                        ),
+                        timeout=300.0,  # 5 minute timeout
                     )
                 except asyncio.TimeoutError:
-                    return jsonify({
-                        "error": "Evolution cycle timed out after 5 minutes"
-                    }), 408
-                
+                    return jsonify(
+                        {"error": "Evolution cycle timed out after 5 minutes"}
+                    ), 408
+
                 duration = time.time() - start_time
 
                 # Validate results structure
                 if not isinstance(results, dict):
-                    return jsonify({
-                        "error": "Evolution cycle returned invalid results"
-                    }), 400
+                    return jsonify(
+                        {"error": "Evolution cycle returned invalid results"}
+                    ), 400
 
                 expected_fields = {
                     "initial_population": int,
@@ -166,15 +179,17 @@ class EvolutionDashboard:
 
                 missing = [f for f in expected_fields if f not in results]
                 if missing:
-                    return jsonify({
-                        "error": f"Evolution results missing fields: {', '.join(missing)}"
-                    }), 400
+                    return jsonify(
+                        {
+                            "error": f"Evolution results missing fields: {', '.join(missing)}"
+                        }
+                    ), 400
 
                 for field, field_type in expected_fields.items():
                     if not isinstance(results[field], field_type):
-                        return jsonify({
-                            "error": f"Invalid type for field '{field}'"
-                        }), 400
+                        return jsonify(
+                            {"error": f"Invalid type for field '{field}'"}
+                        ), 400
 
                 generations_run = results["generations_run"]
                 histories = [
@@ -182,34 +197,42 @@ class EvolutionDashboard:
                     results["diversity_history"],
                     results["specialization_distribution"],
                 ]
-                if generations_run < 1 or any(len(hist) != generations_run for hist in histories):
-                    return jsonify({
-                        "error": "Evolution results inconsistent with generations run"
-                    }), 400
+                if generations_run < 1 or any(
+                    len(hist) != generations_run for hist in histories
+                ):
+                    return jsonify(
+                        {"error": "Evolution results inconsistent with generations run"}
+                    ), 400
 
                 if results.get("status") == "failed":
-                    return jsonify({
-                        "error": f"Evolution failed: {results.get('error', 'Unknown error')}"
-                    }), 500
+                    return jsonify(
+                        {
+                            "error": f"Evolution failed: {results.get('error', 'Unknown error')}"
+                        }
+                    ), 500
 
-                logger.info(f"Evolution cycle completed successfully in {duration:.2f}s")
-                
-                return jsonify({
-                    "success": True,
-                    "results": results,
-                    "duration_seconds": duration,
-                    "generations_requested": generations,
-                    "completed_at": datetime.now().isoformat()
-                })
-                
+                logger.info(
+                    f"Evolution cycle completed successfully in {duration:.2f}s"
+                )
+
+                return jsonify(
+                    {
+                        "success": True,
+                        "results": results,
+                        "duration_seconds": duration,
+                        "generations_requested": generations,
+                        "completed_at": datetime.now().isoformat(),
+                    }
+                )
+
             except Exception as e:
-                logger.error(f"Failed to trigger evolution: {e}")
+                logger.exception(f"Failed to trigger evolution: {e}")
                 import traceback
-                logger.error(traceback.format_exc())
-                return jsonify({
-                    "error": f"Evolution failed: {str(e)}",
-                    "type": type(e).__name__
-                }), 500
+
+                logger.exception(traceback.format_exc())
+                return jsonify(
+                    {"error": f"Evolution failed: {e!s}", "type": type(e).__name__}
+                ), 500
 
         @self.app.route("/api/emergency_rollback", methods=["POST"])
         async def emergency_rollback():
@@ -220,11 +243,11 @@ class EvolutionDashboard:
                 )
                 return jsonify({"success": success})
             except Exception as e:
-                logger.error(f"Failed to rollback: {e}")
+                logger.exception(f"Failed to rollback: {e}")
                 return jsonify({"error": str(e)}), 500
 
     async def get_evolution_status(self) -> dict[str, Any]:
-        """Get current evolution status"""
+        """Get current evolution status."""
         if self._is_cache_valid("evolution_status"):
             return self.cached_data["evolution_status"]
 
@@ -249,7 +272,7 @@ class EvolutionDashboard:
         return status
 
     async def get_population_fitness_data(self) -> dict[str, Any]:
-        """Get population fitness data for visualization"""
+        """Get population fitness data for visualization."""
         if self._is_cache_valid("population_fitness"):
             return self.cached_data["population_fitness"]
 
@@ -293,7 +316,7 @@ class EvolutionDashboard:
         return data
 
     async def get_specialization_distribution(self) -> dict[str, Any]:
-        """Get specialization distribution visualization"""
+        """Get specialization distribution visualization."""
         if self._is_cache_valid("specialization_distribution"):
             return self.cached_data["specialization_distribution"]
 
@@ -327,7 +350,7 @@ class EvolutionDashboard:
     async def get_performance_trends(
         self, agent_id: str | None = None
     ) -> dict[str, Any]:
-        """Get performance trends for agents"""
+        """Get performance trends for agents."""
         cache_key = f"performance_trends_{agent_id or 'all'}"
         if self._is_cache_valid(cache_key):
             return self.cached_data[cache_key]
@@ -348,7 +371,7 @@ class EvolutionDashboard:
                         y=values,
                         mode="lines+markers",
                         name=metric.replace("_", " ").title(),
-                        line=dict(width=2),
+                        line={"width": 2},
                     )
                 )
 
@@ -408,7 +431,7 @@ class EvolutionDashboard:
         return data
 
     async def get_diversity_analysis(self) -> dict[str, Any]:
-        """Get population diversity analysis"""
+        """Get population diversity analysis."""
         if self._is_cache_valid("diversity_analysis"):
             return self.cached_data["diversity_analysis"]
 
@@ -439,8 +462,8 @@ class EvolutionDashboard:
                 y=diversity_history,
                 mode="lines+markers",
                 name="Population Diversity",
-                line=dict(color="purple", width=3),
-                marker=dict(size=6),
+                line={"color": "purple", "width": 3},
+                marker={"size": 6},
             )
         )
 
@@ -449,7 +472,7 @@ class EvolutionDashboard:
             xaxis_title="Generation",
             yaxis_title="Diversity Score",
             height=400,
-            yaxis=dict(range=[0, 1]),
+            yaxis={"range": [0, 1]},
         )
 
         chart_json = json.dumps(fig, cls=PlotlyJSONEncoder)
@@ -472,14 +495,14 @@ class EvolutionDashboard:
         return data
 
     def _is_cache_valid(self, cache_key: str) -> bool:
-        """Check if cached data is still valid"""
+        """Check if cached data is still valid."""
         if cache_key not in self.cached_data or self.last_update is None:
             return False
 
         return datetime.now() - self.last_update < self.cache_duration
 
     def _get_last_evolution_time(self) -> str | None:
-        """Get timestamp of last evolution run"""
+        """Get timestamp of last evolution run."""
         try:
             evolution_files = list(
                 self.evolution_engine.evolution_data_path.glob(
@@ -494,20 +517,20 @@ class EvolutionDashboard:
         except Exception:
             return None
 
-    def run(self, debug: bool = False):
-        """Run the dashboard server"""
+    def run(self, debug: bool = False) -> None:
+        """Run the dashboard server."""
         logger.info(f"Starting Evolution Dashboard on port {self.port}")
         self.app.run(host="0.0.0.0", port=self.port, debug=debug)
 
 
 class PerformanceAnalyzer:
-    """Advanced performance analysis for agent evolution"""
+    """Advanced performance analysis for agent evolution."""
 
-    def __init__(self, evolution_engine: AgentEvolutionEngine):
+    def __init__(self, evolution_engine: AgentEvolutionEngine) -> None:
         self.evolution_engine = evolution_engine
 
     async def generate_evolution_report(self) -> dict[str, Any]:
-        """Generate comprehensive evolution analysis report"""
+        """Generate comprehensive evolution analysis report."""
         dashboard_data = await self.evolution_engine.get_evolution_dashboard_data()
 
         # Performance analysis
@@ -549,7 +572,7 @@ class PerformanceAnalyzer:
     def _get_top_performers(
         self, fitness_scores: dict[str, float], top_n: int = 5
     ) -> list[dict[str, Any]]:
-        """Get top performing agents"""
+        """Get top performing agents."""
         sorted_agents = sorted(fitness_scores.items(), key=lambda x: x[1], reverse=True)
 
         top_performers = []
@@ -570,7 +593,7 @@ class PerformanceAnalyzer:
     def _analyze_performance_distribution(
         self, fitness_scores: dict[str, float]
     ) -> dict[str, float]:
-        """Analyze distribution of performance scores"""
+        """Analyze distribution of performance scores."""
         scores = list(fitness_scores.values())
 
         if not scores:
@@ -589,7 +612,7 @@ class PerformanceAnalyzer:
     def _identify_improvement_opportunities(
         self, fitness_scores: dict[str, float]
     ) -> list[dict[str, Any]]:
-        """Identify agents with improvement opportunities"""
+        """Identify agents with improvement opportunities."""
         sorted_agents = sorted(fitness_scores.items(), key=lambda x: x[1])
         bottom_quartile = len(sorted_agents) // 4
 
@@ -612,7 +635,7 @@ class PerformanceAnalyzer:
     def _analyze_specialization_balance(
         self, spec_dist: dict[str, int]
     ) -> dict[str, Any]:
-        """Analyze balance of specializations"""
+        """Analyze balance of specializations."""
         total_agents = sum(spec_dist.values())
 
         if total_agents == 0:
@@ -642,7 +665,7 @@ class PerformanceAnalyzer:
         }
 
     async def _analyze_specialization_effectiveness(self) -> dict[str, float]:
-        """Analyze effectiveness of each specialization"""
+        """Analyze effectiveness of each specialization."""
         dashboard_data = await self.evolution_engine.get_evolution_dashboard_data()
         fitness_scores = dashboard_data["fitness_scores"]
 
@@ -662,7 +685,7 @@ class PerformanceAnalyzer:
         return spec_effectiveness
 
     def _identify_niche_opportunities(self, spec_dist: dict[str, int]) -> list[str]:
-        """Identify underserved specialization niches"""
+        """Identify underserved specialization niches."""
         total_agents = sum(spec_dist.values())
         avg_per_spec = total_agents / len(spec_dist) if spec_dist else 0
 
@@ -674,7 +697,7 @@ class PerformanceAnalyzer:
         return underserved
 
     async def _analyze_evolution_trends(self) -> dict[str, Any]:
-        """Analyze evolution trends over generations"""
+        """Analyze evolution trends over generations."""
         # Load historical data
         fitness_history = []
         diversity_history = []
@@ -736,7 +759,7 @@ class PerformanceAnalyzer:
         performance_analysis: dict[str, Any],
         specialization_analysis: dict[str, Any],
     ) -> list[str]:
-        """Generate actionable recommendations"""
+        """Generate actionable recommendations."""
         recommendations = []
 
         # Performance-based recommendations
@@ -778,7 +801,7 @@ class PerformanceAnalyzer:
 
 
 def create_dashboard_html_template() -> str:
-    """Create HTML template for evolution dashboard"""
+    """Create HTML template for evolution dashboard."""
     template = """
 <!DOCTYPE html>
 <html lang="en">
@@ -1048,8 +1071,8 @@ def create_dashboard_html_template() -> str:
 
 
 # Create templates directory and save HTML template
-def setup_dashboard_templates(base_path: str = "agent_forge/evolution"):
-    """Setup dashboard templates directory"""
+def setup_dashboard_templates(base_path: str = "agent_forge/evolution") -> None:
+    """Setup dashboard templates directory."""
     templates_dir = Path(base_path) / "templates"
     templates_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1062,7 +1085,7 @@ def setup_dashboard_templates(base_path: str = "agent_forge/evolution"):
 
 if __name__ == "__main__":
     # Example usage
-    async def run_dashboard():
+    async def run_dashboard() -> None:
         from .agent_evolution_engine import AgentEvolutionEngine
 
         # Setup templates

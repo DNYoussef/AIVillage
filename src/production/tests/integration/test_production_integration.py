@@ -20,7 +20,7 @@ except ImportError:
 class TestProductionIntegration:
     """Test integration between all production components."""
 
-    def test_all_production_imports(self):
+    def test_all_production_imports(self) -> None:
         """Test that all production components can be imported."""
         import_tests = [
             ("production.compression.compression_pipeline", "CompressionPipeline"),
@@ -44,7 +44,7 @@ class TestProductionIntegration:
         # At least some components should be importable
         assert imported_count >= 0
 
-    def test_pipeline_integration_concept(self):
+    def test_pipeline_integration_concept(self) -> None:
         """Test pipeline integration concept."""
         # Mock pipeline flow
         pipeline_steps = [
@@ -66,7 +66,7 @@ class TestProductionIntegration:
         assert len(results) == len(pipeline_steps)
         assert all(step in results for step in pipeline_steps)
 
-    def test_component_compatibility(self):
+    def test_component_compatibility(self) -> None:
         """Test component compatibility."""
         # Test data format compatibility
         model_data = {
@@ -83,12 +83,12 @@ class TestProductionIntegration:
         assert "metadata" in model_data
         assert model_data["metadata"]["parameters"] == 110
 
-    def test_error_handling_integration(self):
+    def test_error_handling_integration(self) -> None:
         """Test error handling across components."""
         # Test error propagation concept
         errors = []
 
-        def mock_component_call(component_name, should_fail=False):
+        def mock_component_call(component_name, should_fail=False) -> str | None:
             if should_fail:
                 error = f"{component_name}_error"
                 errors.append(error)
@@ -107,7 +107,7 @@ class TestProductionIntegration:
         assert len(errors) == 1
         assert "compression_error" in errors
 
-    def test_memory_integration(self):
+    def test_memory_integration(self) -> None:
         """Test memory management integration."""
         # Test memory tracking across components
         memory_usage = {
@@ -124,14 +124,9 @@ class TestProductionIntegration:
         )
         assert compression_efficiency, "Compression should reduce memory usage"
 
-    def test_benchmarking_integration(self):
+    def test_benchmarking_integration(self) -> None:
         """Test benchmarking integration with other components."""
         # Test benchmark data flow
-        benchmark_input = {
-            "model": "test_model",
-            "dataset": "test_dataset",
-            "metrics": ["accuracy", "latency"],
-        }
 
         benchmark_output = {
             "accuracy": 0.85,
@@ -144,7 +139,7 @@ class TestProductionIntegration:
         assert benchmark_output["latency"] < 0.5
         assert benchmark_output["model_size"] < 5.0  # Reasonable size
 
-    def test_end_to_end_concept(self):
+    def test_end_to_end_concept(self) -> None:
         """Test end-to-end pipeline concept."""
         # Mock end-to-end flow
         pipeline_state = {
@@ -172,7 +167,7 @@ class TestProductionIntegration:
 class TestProductionQualityGates:
     """Test production quality gates."""
 
-    def test_no_experimental_imports(self):
+    def test_no_experimental_imports(self) -> None:
         """Test that production code doesn't import experimental."""
         # This test would scan production modules for experimental imports
         # For now, just test the concept
@@ -182,7 +177,7 @@ class TestProductionQualityGates:
         # In real test, would scan actual import statements
         assert not any(forbidden in test_import for forbidden in forbidden_imports)
 
-    def test_documentation_coverage(self):
+    def test_documentation_coverage(self) -> None:
         """Test documentation coverage concept."""
         # Mock documentation check
         components = [
@@ -199,7 +194,7 @@ class TestProductionQualityGates:
         coverage = len(documented_components) / len(components)
         assert coverage >= 0.7  # 70% documentation coverage
 
-    def test_performance_requirements(self):
+    def test_performance_requirements(self) -> None:
         """Test performance requirements."""
         # Mock performance metrics
         performance_metrics = {

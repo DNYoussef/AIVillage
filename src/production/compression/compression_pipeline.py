@@ -28,7 +28,6 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
 )
-
 import wandb
 
 # Import compression modules
@@ -85,7 +84,7 @@ class CompressionConfig(BaseModel):
     wandb_tags: list[str] = Field(default_factory=lambda: ["compression", "bitnet"])
 
     @validator("device")
-    def validate_device(cls, v):
+    def validate_device(self, v):
         if v == "auto":
             return "cuda" if torch.cuda.is_available() else "cpu"
         return v
@@ -99,7 +98,7 @@ class CompressionConfig(BaseModel):
 class ModelAnalyzer:
     """Analyzes model characteristics for optimal compression."""
 
-    def __init__(self, model: nn.Module, tokenizer):
+    def __init__(self, model: nn.Module, tokenizer) -> None:
         self.model = model
         self.tokenizer = tokenizer
         self.device = next(model.parameters()).device
@@ -146,11 +145,10 @@ class ModelAnalyzer:
         logger.info(
             "  Linear Parameters: %s (%s%%)",
             f"{analysis['linear_parameters']:,}",
-            f"{analysis['linear_parameters'] / analysis['total_parameters'] * 100:.1f}"
+            f"{analysis['linear_parameters'] / analysis['total_parameters'] * 100:.1f}",
         )
         logger.info(
-            "  Compression Potential: %.1f%%",
-            analysis['compression_potential'] * 100
+            "  Compression Potential: %.1f%%", analysis["compression_potential"] * 100
         )
 
         return analysis
@@ -195,7 +193,7 @@ class ModelAnalyzer:
         logger.info("  FP16: %.1f MB", fp16_size_mb)
         logger.info("  BitNet: %.1f MB", bitnet_size_mb)
         logger.info("  Compression Ratio: %.1fx", compression_ratio)
-        logger.info("  Memory Savings: %.1f MB", memory_usage['memory_savings_mb'])
+        logger.info("  Memory Savings: %.1f MB", memory_usage["memory_savings_mb"])
 
         return memory_usage
 
@@ -208,7 +206,7 @@ class ModelAnalyzer:
 class CompressionEvaluator:
     """Evaluates model performance before/after compression."""
 
-    def __init__(self, config: CompressionConfig):
+    def __init__(self, config: CompressionConfig) -> None:
         self.config = config
         self.device = torch.device(config.device)
 
@@ -281,7 +279,7 @@ class CompressionEvaluator:
             return correct / total if total > 0 else 0.0
 
         except Exception as e:
-            logger.error("GSM8K evaluation failed: %s", e)
+            logger.exception("GSM8K evaluation failed: %s", e)
             return 0.0
 
     async def evaluate_math(self, model: nn.Module, tokenizer) -> float:
@@ -322,7 +320,7 @@ class CompressionEvaluator:
             return correct / total if total > 0 else 0.0
 
         except Exception as e:
-            logger.error("MATH evaluation failed: %s", e)
+            logger.exception("MATH evaluation failed: %s", e)
             return 0.0
 
     def extract_final_answer(self, solution: str) -> str:
@@ -350,7 +348,7 @@ class CalibrationDataset:
 
     def __init__(
         self, dataset_name: str, num_samples: int, tokenizer, max_length: int = 512
-    ):
+    ) -> None:
         self.tokenizer = tokenizer
         self.max_length = max_length
 
@@ -359,7 +357,8 @@ class CalibrationDataset:
         elif dataset_name == "openwebtext":
             self.examples = self.load_openwebtext(num_samples)
         else:
-            raise ValueError(f"Unknown calibration dataset: {dataset_name}")
+            msg = f"Unknown calibration dataset: {dataset_name}"
+            raise ValueError(msg)
 
         logger.info("Loaded %s calibration examples", len(self.examples))
 
@@ -380,7 +379,7 @@ class CalibrationDataset:
             return examples
 
         except Exception as e:
-            logger.error("Failed to load WikiText: %s", e)
+            logger.exception("Failed to load WikiText: %s", e)
             # Fallback to synthetic data
             return [
                 "The quick brown fox jumps over the lazy dog. This is a test sentence for model calibration.",
@@ -405,7 +404,7 @@ class CalibrationDataset:
             return examples
 
         except Exception as e:
-            logger.error("Failed to load OpenWebText: %s", e)
+            logger.exception("Failed to load OpenWebText: %s", e)
             return self.load_wikitext(num_samples)
 
     def create_torch_dataset(self):
@@ -442,7 +441,7 @@ class CalibrationDataset:
 class CompressionPipeline:
     """Main compression pipeline orchestrator."""
 
-    def __init__(self, config: CompressionConfig):
+    def __init__(self, config: CompressionConfig) -> None:
         self.config = config
         self.wandb_run = None
 
@@ -451,7 +450,7 @@ class CompressionPipeline:
 
         logger.info("Compression pipeline initialized for %s", config.input_model_path)
 
-    def initialize_wandb(self):
+    def initialize_wandb(self) -> None:
         """Initialize W&B tracking."""
         try:
             self.wandb_run = wandb.init(
@@ -465,7 +464,7 @@ class CompressionPipeline:
             logger.info("W&B initialized: %s", self.wandb_run.url)
 
         except Exception as e:
-            logger.error("W&B initialization failed: %s", e)
+            logger.exception("W&B initialization failed: %s", e)
             self.wandb_run = None
 
     async def run_compression_pipeline(self) -> dict[str, Any]:
@@ -608,7 +607,7 @@ class CompressionPipeline:
             return results
 
         except Exception as e:
-            logger.error("Compression pipeline failed: %s", e)
+            logger.exception("Compression pipeline failed: %s", e)
             raise
 
         finally:
@@ -634,7 +633,7 @@ class CompressionPipeline:
 
         # Create mock config for fine-tuning
         class MockConfig:
-            def __init__(self, config: CompressionConfig):
+            def __init__(self, config: CompressionConfig) -> None:
                 self.bitnet_zero_threshold = config.bitnet_zero_threshold
                 self.bitnet_batch_size = config.bitnet_batch_size
                 self.bitnet_learning_rate = config.bitnet_learning_rate
@@ -708,7 +707,8 @@ class CompressionPipeline:
         logger.info("  Ratio: %.1fx", compression_ratio)
         logger.info(
             "  Savings: %.1f MB (%.1f%%)",
-            memory_savings, metrics['compression_efficiency']
+            memory_savings,
+            metrics["compression_efficiency"],
         )
 
         return metrics
@@ -720,7 +720,7 @@ class CompressionPipeline:
 
 
 @click.group()
-def forge():
+def forge() -> None:
     """Agent Forge CLI."""
 
 
@@ -746,7 +746,7 @@ def compress(
     eval_samples,
     device,
     config,
-):
+) -> None:
     """Apply BitNet compression to Quiet-STaR baked model."""
     try:
         # Load configuration
@@ -782,7 +782,7 @@ def compress(
         print("=" * 60)
 
     except Exception as e:
-        logger.error("Compression pipeline failed: %s", e)
+        logger.exception("Compression pipeline failed: %s", e)
         raise click.ClickException(str(e))
 
 
@@ -903,7 +903,7 @@ async def run_compression(config: dict[str, Any]) -> "PhaseResult":
     except Exception as e:
         duration = time.time() - start_time
         error_msg = f"Compression phase failed: {e!s}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
 
         return PhaseResult(
             phase_type=PhaseType.COMPRESSION,

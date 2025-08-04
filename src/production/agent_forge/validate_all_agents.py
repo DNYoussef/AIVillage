@@ -20,7 +20,7 @@ import argparse
 import asyncio
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from src.communications.message import Message, MessageType
 from src.communications.protocol import StandardCommunicationProtocol
@@ -28,16 +28,15 @@ from src.communications.protocol import StandardCommunicationProtocol
 from .agent_factory import AgentFactory
 
 
-async def _exercise_agent(agent: Any) -> Dict[str, Any]:
+async def _exercise_agent(agent: Any) -> dict[str, Any]:
     """Send a test message to ``agent`` using the standard protocol.
 
     The agent's ``process`` method is invoked when the message is received and
     its performance history is updated. The resulting output dictionary is
     returned for verification.
     """
-
     protocol = StandardCommunicationProtocol()
-    result: Dict[str, Any] = {}
+    result: dict[str, Any] = {}
 
     async def handler(msg: Message) -> None:
         nonlocal result
@@ -61,7 +60,7 @@ async def _exercise_agent(agent: Any) -> Dict[str, Any]:
     return result
 
 
-def validate_all_agents(full_test: bool = False) -> Dict[str, Dict[str, bool]]:
+def validate_all_agents(full_test: bool = False) -> dict[str, dict[str, bool]]:
     """Validate all agent templates.
 
     Parameters
@@ -70,15 +69,14 @@ def validate_all_agents(full_test: bool = False) -> Dict[str, Dict[str, bool]]:
         Currently unused but retained for CLI compatibility. When ``True`` the
         function performs the full validation suite.
 
-    Returns
+    Returns:
     -------
     dict
         Mapping of agent id to a dictionary describing which checks passed.
     """
-
     template_path = Path(__file__).resolve().parent / "templates"
     factory = AgentFactory(template_dir=str(template_path))
-    results: Dict[str, Dict[str, bool]] = {}
+    results: dict[str, dict[str, bool]] = {}
 
     for agent_id in factory.templates:
         status = {
@@ -107,13 +105,18 @@ def validate_all_agents(full_test: bool = False) -> Dict[str, Dict[str, bool]]:
 
 def main() -> None:
     """CLI entry point for agent validation."""
-
     parser = argparse.ArgumentParser(description="Validate agent templates")
-    parser.add_argument("--full-test", action="store_true", help="Run the full validation suite")
+    parser.add_argument(
+        "--full-test", action="store_true", help="Run the full validation suite"
+    )
     args = parser.parse_args()
 
     validation_results = validate_all_agents(full_test=args.full_test)
-    failures = {agent: checks for agent, checks in validation_results.items() if not all(checks.values())}
+    failures = {
+        agent: checks
+        for agent, checks in validation_results.items()
+        if not all(checks.values())
+    }
 
     if failures:
         for agent, checks in failures.items():

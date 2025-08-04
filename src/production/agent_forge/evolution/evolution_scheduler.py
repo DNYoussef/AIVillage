@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from .base import EvolvableAgent
 
@@ -15,7 +14,7 @@ class SchedulerConfig:
 class EvolutionScheduler:
     """Decides when an agent should evolve or retire based on KPIs."""
 
-    def __init__(self, config: Optional[SchedulerConfig] = None) -> None:
+    def __init__(self, config: SchedulerConfig | None = None) -> None:
         self.config = config or SchedulerConfig()
 
     def get_action(self, agent: EvolvableAgent) -> str:
@@ -33,4 +32,3 @@ class EvolutionScheduler:
             return "evolve"
 
         return "none"
-

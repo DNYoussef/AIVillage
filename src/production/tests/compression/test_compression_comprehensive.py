@@ -12,7 +12,8 @@ try:
     from production.compression import CompressionPipeline
 
     if CompressionPipeline is None:
-        raise ImportError("CompressionPipeline not available")
+        msg = "CompressionPipeline not available"
+        raise ImportError(msg)
 
     # Try to import ModelCompression, but don't fail if it's not available
     try:
@@ -64,7 +65,7 @@ class TestCompressionClaims:
         }
         return models
 
-    def test_compression_pipeline_exists(self):
+    def test_compression_pipeline_exists(self) -> None:
         """Test that compression pipeline can be imported and instantiated."""
         try:
             from production.compression.compression_pipeline import CompressionPipeline
@@ -74,7 +75,7 @@ class TestCompressionClaims:
         except ImportError:
             pytest.skip("CompressionPipeline not available")
 
-    def test_model_compression_exists(self):
+    def test_model_compression_exists(self) -> None:
         """Test that model compression modules exist."""
         try:
             from production.compression.model_compression import ModelCompression
@@ -84,7 +85,7 @@ class TestCompressionClaims:
             pytest.skip("ModelCompression not available")
 
     @pytest.mark.parametrize("model_type", ["small", "medium"])
-    def test_basic_compression(self, sample_models, model_type):
+    def test_basic_compression(self, sample_models, model_type) -> None:
         """Test basic compression functionality."""
         model = sample_models[model_type]
 
@@ -98,9 +99,9 @@ class TestCompressionClaims:
         assert ratio >= 3.5, f"Compression ratio {ratio:.2f}x below minimum threshold"
         assert ratio <= 10, f"Compression ratio {ratio:.2f}x suspiciously high"
 
-    def test_memory_constraints(self, sample_models):
+    def test_memory_constraints(self, sample_models) -> None:
         """Test that compression works within memory constraints."""
-        model = sample_models["mobile_sized"]
+        sample_models["mobile_sized"]
 
         # Monitor memory usage
         process = psutil.Process()
@@ -122,7 +123,7 @@ class TestCompressionClaims:
 class TestCompressionMethods:
     """Test specific compression methods."""
 
-    def test_seedlm_available(self):
+    def test_seedlm_available(self) -> None:
         """Test SeedLM compression method availability."""
         try:
             from production.compression.compression.seedlm import SeedLM
@@ -131,7 +132,7 @@ class TestCompressionMethods:
         except ImportError:
             pytest.skip("SeedLM not available")
 
-    def test_vptq_available(self):
+    def test_vptq_available(self) -> None:
         """Test VPTQ compression method availability."""
         try:
             from production.compression.compression.vptq import VPTQ
@@ -140,7 +141,7 @@ class TestCompressionMethods:
         except ImportError:
             pytest.skip("VPTQ not available")
 
-    def test_bitnet_available(self):
+    def test_bitnet_available(self) -> None:
         """Test BitNet compression method availability."""
         try:
             from production.compression.model_compression.bitlinearization import BitNet
@@ -153,14 +154,14 @@ class TestCompressionMethods:
 class TestCompressionIntegration:
     """Test compression pipeline integration."""
 
-    def test_pipeline_configuration(self):
+    def test_pipeline_configuration(self) -> None:
         """Test that compression pipeline can be configured."""
         # Test would verify pipeline accepts different compression methods
         config = {"method": "seedlm", "compression_ratio": 4.0, "memory_limit": "2GB"}
         # In real test: pipeline = CompressionPipeline(config)
         assert config["compression_ratio"] == 4.0
 
-    def test_compression_formats(self):
+    def test_compression_formats(self) -> None:
         """Test supported compression formats."""
         supported_formats = ["pt", "safetensors", "gguf"]
         for fmt in supported_formats:

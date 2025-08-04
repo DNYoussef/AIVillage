@@ -1,4 +1,4 @@
-"""Hybrid Retriever Orchestration
+"""Hybrid Retriever Orchestration.
 
 Orchestrates the complete retrieval pipeline:
 - Vector similarity search
@@ -12,9 +12,10 @@ import logging
 import time
 from typing import Any
 
-from ..memory.hippo_index import HippoIndex
-from ..memory.hypergraph_kg import HypergraphKG
-from ..models import QueryPlan
+from AIVillage.src.mcp_servers.hyperag.memory.hippo_index import HippoIndex
+from AIVillage.src.mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
+from AIVillage.src.mcp_servers.hyperag.models import QueryPlan
+
 from .ppr_retriever import AlphaProfileStore, PersonalizedPageRank, PPRResults
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class HybridResults:
-    """Combined results from hybrid retrieval"""
+    """Combined results from hybrid retrieval."""
 
     vector_results: list[dict[str, Any]]
     ppr_results: PPRResults
@@ -33,7 +34,7 @@ class HybridResults:
 
 
 class HybridRetriever:
-    """Orchestrates vector + PPR + α-fusion retrieval pipeline
+    """Orchestrates vector + PPR + α-fusion retrieval pipeline.
 
     Pipeline:
     1. Vector similarity search on both memory systems
@@ -48,7 +49,7 @@ class HybridRetriever:
         hypergraph_kg: HypergraphKG,
         ppr_retriever: PersonalizedPageRank,
         alpha_store: AlphaProfileStore | None = None,
-    ):
+    ) -> None:
         self.hippo_index = hippo_index
         self.hypergraph_kg = hypergraph_kg
         self.ppr_retriever = ppr_retriever
@@ -64,7 +65,7 @@ class HybridRetriever:
     async def retrieve(
         self, query: str, user_id: str | None, plan: QueryPlan, limit: int = 50
     ) -> HybridResults:
-        """Main retrieval method orchestrating the complete pipeline
+        """Main retrieval method orchestrating the complete pipeline.
 
         Args:
             query: Natural language query
@@ -133,7 +134,7 @@ class HybridRetriever:
         except Exception as e:
             total_time = (time.time() - start_time) * 1000
             error_msg = f"Hybrid retrieval failed: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             reasoning_trace.append(error_msg)
 
             return HybridResults(
@@ -146,7 +147,7 @@ class HybridRetriever:
             )
 
     def _should_use_creative_mode(self, plan: QueryPlan) -> bool:
-        """Determine if creative mode should be enabled"""
+        """Determine if creative mode should be enabled."""
         mode = getattr(plan, "mode", "NORMAL")
 
         if mode == "CREATIVE":
@@ -160,7 +161,7 @@ class HybridRetriever:
     async def _vector_search(
         self, query: str, user_id: str | None, limit: int
     ) -> list[dict[str, Any]]:
-        """Perform vector similarity search on both memory systems"""
+        """Perform vector similarity search on both memory systems."""
         try:
             vector_results = []
 
@@ -216,13 +217,13 @@ class HybridRetriever:
             return vector_results[:limit]
 
         except Exception as e:
-            logger.error(f"Vector search failed: {e!s}")
+            logger.exception(f"Vector search failed: {e!s}")
             return []
 
     def _extract_seeds(
         self, vector_results: list[dict[str, Any]], plan: QueryPlan
     ) -> list[str]:
-        """Extract seed node IDs for PPR from vector results"""
+        """Extract seed node IDs for PPR from vector results."""
         try:
             # Use top vector results as seeds
             max_seeds = getattr(plan, "max_seeds", 10)
@@ -241,19 +242,18 @@ class HybridRetriever:
             return seeds
 
         except Exception as e:
-            logger.error(f"Seed extraction failed: {e!s}")
+            logger.exception(f"Seed extraction failed: {e!s}")
             return []
 
     def _fuse_results(
         self, vector_results: list[dict[str, Any]], ppr_results: PPRResults, limit: int
     ) -> list[dict[str, Any]]:
-        """Fuse vector and PPR results with weighted scoring"""
+        """Fuse vector and PPR results with weighted scoring."""
         try:
             # Create lookup for vector scores
-            vector_scores = {result["id"]: result["score"] for result in vector_results}
+            {result["id"]: result["score"] for result in vector_results}
 
             # Create lookup for PPR scores
-            ppr_scores = ppr_results.scores
 
             # Combine all unique items
             all_items = {}
@@ -321,12 +321,12 @@ class HybridRetriever:
             return fused_items[:limit]
 
         except Exception as e:
-            logger.error(f"Result fusion failed: {e!s}")
+            logger.exception(f"Result fusion failed: {e!s}")
             # Return vector results as fallback
             return vector_results[:limit]
 
     def get_stats(self) -> dict[str, Any]:
-        """Get retrieval statistics"""
+        """Get retrieval statistics."""
         ppr_stats = self.ppr_retriever.get_performance_stats()
 
         return {
@@ -339,8 +339,8 @@ class HybridRetriever:
             "alpha_store_enabled": self.alpha_store is not None,
         }
 
-    def update_fusion_weights(self, vector_weight: float, ppr_weight: float):
-        """Update fusion weights (could be based on user feedback)"""
+    def update_fusion_weights(self, vector_weight: float, ppr_weight: float) -> None:
+        """Update fusion weights (could be based on user feedback)."""
         total = vector_weight + ppr_weight
         if total > 0:
             self.vector_weight = vector_weight / total
@@ -359,7 +359,7 @@ def create_hybrid_retriever(
     ppr_retriever: PersonalizedPageRank,
     alpha_store: AlphaProfileStore | None = None,
 ) -> HybridRetriever:
-    """Create a HybridRetriever with the given components"""
+    """Create a HybridRetriever with the given components."""
     return HybridRetriever(
         hippo_index=hippo_index,
         hypergraph_kg=hypergraph_kg,

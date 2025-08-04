@@ -6,7 +6,7 @@ from rag_system.utils.embedding import BERTEmbeddingModel
 class KeyConceptExtractorAgent(AgentInterface):
     """Agent responsible for extracting key concepts from text using advanced NLP techniques."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.embedding_model = BERTEmbeddingModel()
         self.named_entity_recognizer = NamedEntityRecognizer()

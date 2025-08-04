@@ -35,6 +35,10 @@ from .error_handling import (
 __all__ = [
     "AIVillageError",
     "AIVillageException",
+    "AgentCommunicationProtocol",
+    # Communication classes (renamed to avoid conflicts)
+    "AgentMessage",
+    "AgentMessageType",
     "ConfigurationException",
     "ErrorCategory",
     "ErrorContext",
@@ -44,6 +48,7 @@ __all__ = [
     "Message",
     "MessageType",
     "NetworkException",
+    "Priority",
     "ServiceException",
     "StandardCommunicationProtocol",
     "ValidationException",
@@ -52,9 +57,4 @@ __all__ = [
     "migrate_from_legacy_exception",
     "safe_execute",
     "with_error_handling",
-    # Communication classes (renamed to avoid conflicts)
-    "AgentMessage",
-    "AgentMessageType",
-    "AgentCommunicationProtocol",
-    "Priority",
 ]

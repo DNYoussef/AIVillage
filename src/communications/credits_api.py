@@ -297,7 +297,7 @@ async def metrics():
 
 # Startup event
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     """Initialize ledger on startup."""
     global ledger
     config = CreditsConfig()
@@ -308,7 +308,7 @@ async def startup_event():
         ledger.create_tables()
         logger.info("Credits ledger initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize credits ledger: {e}")
+        logger.exception(f"Failed to initialize credits ledger: {e}")
         raise
 
 

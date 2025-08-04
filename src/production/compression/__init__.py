@@ -6,21 +6,24 @@ __all__ = []
 # Primary unified compression interface
 try:
     from .unified_compressor import (
-        UnifiedCompressor,
-        CompressionStrategy,
         CompressionResult,
-        compress_simple,
+        CompressionStrategy,
+        UnifiedCompressor,
+        compress_advanced,
         compress_mobile,
-        compress_advanced
+        compress_simple,
     )
-    __all__.extend([
-        "UnifiedCompressor", 
-        "CompressionStrategy", 
-        "CompressionResult",
-        "compress_simple",
-        "compress_mobile", 
-        "compress_advanced"
-    ])
+
+    __all__.extend(
+        [
+            "CompressionResult",
+            "CompressionStrategy",
+            "UnifiedCompressor",
+            "compress_advanced",
+            "compress_mobile",
+            "compress_simple",
+        ]
+    )
 except ImportError:
     # Handle missing dependencies gracefully
     UnifiedCompressor = None

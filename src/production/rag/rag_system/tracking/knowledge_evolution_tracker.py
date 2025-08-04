@@ -4,19 +4,19 @@ import asyncio
 from datetime import datetime
 from typing import Any
 
-from ..retrieval.graph_store import GraphStore
-from ..retrieval.vector_store import VectorStore
+from AIVillage.src.production.rag.rag_system.retrieval.graph_store import GraphStore
+from AIVillage.src.production.rag.rag_system.retrieval.vector_store import VectorStore
 
 
 class KnowledgeEvolutionTracker:
-    def __init__(self, vector_store: VectorStore, graph_store: GraphStore):
+    def __init__(self, vector_store: VectorStore, graph_store: GraphStore) -> None:
         self.vector_store = vector_store
         self.graph_store = graph_store
         self.change_log: list[dict[str, Any]] = []
 
     async def track_change(
         self, entity_id: str, old_state: Any, new_state: Any, timestamp: datetime
-    ):
+    ) -> None:
         change_record = {
             "entity_id": entity_id,
             "old_state": old_state,
@@ -48,7 +48,7 @@ class KnowledgeEvolutionTracker:
             "graph_knowledge": graph_snapshot,
         }
 
-    async def _store_change_record(self, record: dict[str, Any]):
+    async def _store_change_record(self, record: dict[str, Any]) -> None:
         """Persist a change record to a simple JSONL log for now."""
         import json
         import os

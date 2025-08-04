@@ -2,7 +2,7 @@ from torch import nn
 
 
 class HiddenPredictor(nn.Module):
-    def __init__(self, hidden_size: int):
+    def __init__(self, hidden_size: int) -> None:
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(hidden_size, hidden_size * 2),

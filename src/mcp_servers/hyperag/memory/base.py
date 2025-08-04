@@ -83,7 +83,7 @@ class Node:
         if not self.created_at:
             self.created_at = datetime.now()
 
-    def update_access(self):
+    def update_access(self) -> None:
         """Update access tracking."""
         self.last_accessed = datetime.now()
         self.access_count += 1
@@ -158,12 +158,12 @@ class Edge:
         if self.target_id not in self.participants:
             self.participants.append(self.target_id)
 
-    def update_access(self):
+    def update_access(self) -> None:
         """Update access tracking."""
         self.last_accessed = datetime.now()
         self.access_count += 1
 
-    def add_evidence(self, doc_id: str, confidence_boost: float = 0.1):
+    def add_evidence(self, doc_id: str, confidence_boost: float = 0.1) -> None:
         """Add evidence supporting this edge."""
         if doc_id not in self.source_docs:
             self.source_docs.append(doc_id)
@@ -172,7 +172,7 @@ class Edge:
             confidence_gain = confidence_boost * (1.0 / np.sqrt(self.evidence_count))
             self.confidence = min(1.0, self.confidence + confidence_gain)
 
-    def update_bayesian_confidence(self, prior: float, likelihood: float):
+    def update_bayesian_confidence(self, prior: float, likelihood: float) -> None:
         """Update confidence using Bayesian inference."""
         # Simple Bayesian update: posterior ∝ likelihood × prior
         posterior = (likelihood * prior) / (
@@ -248,7 +248,7 @@ class MemoryStats:
 class EmbeddingManager:
     """Manages embeddings for memory systems."""
 
-    def __init__(self, dimension: int = 768):
+    def __init__(self, dimension: int = 768) -> None:
         self.dimension = dimension
 
     def create_embedding(self, text: str) -> np.ndarray:

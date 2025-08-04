@@ -17,10 +17,10 @@ except ImportError:
 
     class MockMetric:
         """Informative fallback metric that provides real feedback when Prometheus is unavailable."""
-        
+
         _instances = {}  # Class-level storage for all metrics
-        
-        def __init__(self, name: str, documentation: str = "", **kwargs):
+
+        def __init__(self, name: str, documentation: str = "", **kwargs) -> None:
             self.name = name
             self.documentation = documentation
             self.values = []
@@ -34,11 +34,11 @@ except ImportError:
                 "set": 0,
                 "info": 0,
             }
-            
+
             # Store in class registry
             MockMetric._instances[name] = self
-            
-        def inc(self, amount=1, **labels):
+
+        def inc(self, amount=1, **labels) -> None:
             """Increment counter with label tracking."""
             self.calls["inc"] += 1
             if not self._warn_once:
@@ -47,13 +47,13 @@ except ImportError:
                     f"Install prometheus_client for real monitoring."
                 )
                 self._warn_once = True
-                
+
             # Track counter by label combination
             label_key = frozenset(labels.items()) if labels else frozenset()
             if label_key not in self.counters:
                 self.counters[label_key] = 0
             self.counters[label_key] += amount
-            
+
             # Log significant counter increases
             if self.counters[label_key] % 10 == 0:
                 logger.info(
@@ -61,7 +61,7 @@ except ImportError:
                     f"(labels: {dict(labels) if labels else 'none'})"
                 )
 
-        def observe(self, amount, **labels):
+        def observe(self, amount, **labels) -> None:
             """Record observation with statistical tracking."""
             self.calls["observe"] += 1
             if not self._warn_once:
@@ -70,13 +70,13 @@ except ImportError:
                     f"Install prometheus_client for real monitoring."
                 )
                 self._warn_once = True
-                
+
             self.values.append(float(amount))
-            
+
             # Keep only last 1000 values to prevent memory growth
             if len(self.values) > 1000:
                 self.values = self.values[-1000:]
-                
+
             # Log statistical summary every 25 observations
             if len(self.values) % 25 == 0:
                 stats = self.get_stats()
@@ -85,7 +85,7 @@ except ImportError:
                     f"mean={stats['mean']:.3f}, range=[{stats['min']:.3f}, {stats['max']:.3f}]"
                 )
 
-        def set(self, value, **labels):
+        def set(self, value, **labels) -> None:
             """Set gauge value with change tracking."""
             self.calls["set"] += 1
             if not self._warn_once:
@@ -94,17 +94,17 @@ except ImportError:
                     f"Install prometheus_client for real monitoring."
                 )
                 self._warn_once = True
-                
+
             old_value = self.gauge_value
             self.gauge_value = float(value)
-            
+
             # Log significant changes
             if abs(self.gauge_value - old_value) > 0.1:
                 logger.info(
                     f"MockMetric {self.name}: gauge changed from {old_value:.3f} to {self.gauge_value:.3f}"
                 )
 
-        def info(self, info_dict):
+        def info(self, info_dict) -> None:
             """Store info metric data."""
             self.calls["info"] += 1
             if not self._warn_once:
@@ -113,16 +113,19 @@ except ImportError:
                     f"Install prometheus_client for real monitoring."
                 )
                 self._warn_once = True
-                
+
             self.info_data.update(info_dict)
-            logger.info(f"MockMetric {self.name}: info updated with {len(info_dict)} fields")
-            
+            logger.info(
+                f"MockMetric {self.name}: info updated with {len(info_dict)} fields"
+            )
+
         def get_stats(self) -> dict:
             """Get statistical summary of observations."""
             if not self.values:
                 return {"mean": 0, "count": 0, "min": 0, "max": 0, "std": 0}
-                
+
             import statistics
+
             return {
                 "mean": statistics.mean(self.values),
                 "max": max(self.values),
@@ -130,15 +133,12 @@ except ImportError:
                 "count": len(self.values),
                 "std": statistics.stdev(self.values) if len(self.values) > 1 else 0,
             }
-            
+
         @classmethod
         def get_all_metrics_summary(cls) -> dict:
             """Get summary of all MockMetric instances."""
-            summary = {
-                "total_metrics": len(cls._instances),
-                "metrics": {}
-            }
-            
+            summary = {"total_metrics": len(cls._instances), "metrics": {}}
+
             for name, metric in cls._instances.items():
                 summary["metrics"][name] = {
                     "type": "mock",
@@ -146,29 +146,29 @@ except ImportError:
                     "counters": dict(metric.counters),
                     "gauge_value": metric.gauge_value,
                     "info_data": metric.info_data,
-                    "stats": metric.get_stats()
+                    "stats": metric.get_stats(),
                 }
-                
+
             return summary
-            
+
         @classmethod
         def export_to_file(cls, filepath: str = "mock_metrics_export.json") -> None:
             """Export all metric data to JSON file for analysis."""
-            import json
             from datetime import datetime
-            
+            import json
+
             export_data = {
                 "timestamp": datetime.now().isoformat(),
                 "prometheus_available": False,
-                "metrics_summary": cls.get_all_metrics_summary()
+                "metrics_summary": cls.get_all_metrics_summary(),
             }
-            
+
             try:
-                with open(filepath, 'w') as f:
+                with open(filepath, "w") as f:
                     json.dump(export_data, f, indent=2, default=str)
                 logger.info(f"MockMetrics exported to {filepath}")
             except Exception as e:
-                logger.error(f"Failed to export MockMetrics: {e}")
+                logger.exception(f"Failed to export MockMetrics: {e}")
 
     Counter = Histogram = Gauge = Info = MockMetric
 
@@ -178,7 +178,7 @@ logger = logging.getLogger(__name__)
 class GuardianMetrics:
     """Prometheus metrics collector for Guardian Gate operations."""
 
-    def __init__(self, enabled: bool = True):
+    def __init__(self, enabled: bool = True) -> None:
         self.enabled = enabled and PROMETHEUS_AVAILABLE
 
         if not self.enabled:
@@ -274,7 +274,7 @@ class GuardianMetrics:
         component: str = "unknown",
         duration_seconds: float = 0.0,
         confidence: float = 0.0,
-    ):
+    ) -> None:
         """Record a Guardian Gate decision.
 
         Args:
@@ -313,9 +313,9 @@ class GuardianMetrics:
                 )
 
         except Exception as e:
-            logger.error(f"Failed to record Guardian decision metrics: {e}")
+            logger.exception(f"Failed to record Guardian decision metrics: {e}")
 
-    def record_query_validation(self, domain: str, decision: str, confidence: float):
+    def record_query_validation(self, domain: str, decision: str, confidence: float) -> None:
         """Record query pipeline validation."""
         if not self.enabled:
             return
@@ -328,11 +328,11 @@ class GuardianMetrics:
                 confidence_tier=confidence_tier,
             )
         except Exception as e:
-            logger.error(f"Failed to record query validation metrics: {e}")
+            logger.exception(f"Failed to record query validation metrics: {e}")
 
     def record_repair_validation(
         self, domain: str, decision: str, operation_count: int
-    ):
+    ) -> None:
         """Record repair pipeline validation."""
         if not self.enabled:
             return
@@ -345,11 +345,11 @@ class GuardianMetrics:
                 operation_count=op_count_bucket,
             )
         except Exception as e:
-            logger.error(f"Failed to record repair validation metrics: {e}")
+            logger.exception(f"Failed to record repair validation metrics: {e}")
 
     def record_consolidation_validation(
         self, domain: str, decision: str, item_type: str
-    ):
+    ) -> None:
         """Record consolidation pipeline validation."""
         if not self.enabled:
             return
@@ -359,9 +359,9 @@ class GuardianMetrics:
                 domain=domain, decision=decision.lower(), item_type=item_type
             )
         except Exception as e:
-            logger.error(f"Failed to record consolidation validation metrics: {e}")
+            logger.exception(f"Failed to record consolidation validation metrics: {e}")
 
-    def record_adapter_validation(self, domain: str, verification_result: str):
+    def record_adapter_validation(self, domain: str, verification_result: str) -> None:
         """Record adapter load validation."""
         if not self.enabled:
             return
@@ -371,9 +371,9 @@ class GuardianMetrics:
                 domain=domain, verification_result=verification_result
             )
         except Exception as e:
-            logger.error(f"Failed to record adapter validation metrics: {e}")
+            logger.exception(f"Failed to record adapter validation metrics: {e}")
 
-    def record_validation(self, domain: str, decision: str, validation_type: str):
+    def record_validation(self, domain: str, decision: str, validation_type: str) -> None:
         """Generic validation recording for different types."""
         if not self.enabled:
             return
@@ -393,9 +393,9 @@ class GuardianMetrics:
                     domain=domain, component=validation_type
                 )
         except Exception as e:
-            logger.error(f"Failed to record validation metrics: {e}")
+            logger.exception(f"Failed to record validation metrics: {e}")
 
-    def record_error(self, error_type: str, component: str):
+    def record_error(self, error_type: str, component: str) -> None:
         """Record Guardian error."""
         if not self.enabled:
             return
@@ -403,9 +403,9 @@ class GuardianMetrics:
         try:
             self.guardian_errors_total.inc(error_type=error_type, component=component)
         except Exception as e:
-            logger.error(f"Failed to record Guardian error metrics: {e}")
+            logger.exception(f"Failed to record Guardian error metrics: {e}")
 
-    def update_quarantine_count(self, domain: str, count: int):
+    def update_quarantine_count(self, domain: str, count: int) -> None:
         """Update active quarantine count."""
         if not self.enabled:
             return
@@ -413,9 +413,9 @@ class GuardianMetrics:
         try:
             self.guardian_active_quarantines.set(count, domain=domain)
         except Exception as e:
-            logger.error(f"Failed to update quarantine count metrics: {e}")
+            logger.exception(f"Failed to update quarantine count metrics: {e}")
 
-    def set_policy_info(self, policy_info: dict[str, Any]):
+    def set_policy_info(self, policy_info: dict[str, Any]) -> None:
         """Set Guardian policy information."""
         if not self.enabled:
             return
@@ -425,11 +425,11 @@ class GuardianMetrics:
             string_info = {
                 key: str(value)
                 for key, value in policy_info.items()
-                if isinstance(value, (str, int, float, bool))
+                if isinstance(value, str | int | float | bool)
             }
             self.guardian_policy_version.info(string_info)
         except Exception as e:
-            logger.error(f"Failed to set policy info metrics: {e}")
+            logger.exception(f"Failed to set policy info metrics: {e}")
 
     def _get_confidence_tier(self, confidence: float) -> str:
         """Convert confidence to tier label."""
@@ -461,41 +461,44 @@ class GuardianMetrics:
             "prometheus_available": PROMETHEUS_AVAILABLE,
             "metrics_initialized": True,
         }
-        
+
         # If using MockMetrics, include their data
         if not PROMETHEUS_AVAILABLE:
             try:
                 from .metrics import MockMetric  # Import the class
+
                 summary["mock_metrics"] = MockMetric.get_all_metrics_summary()
             except Exception as e:
-                logger.error(f"Failed to get MockMetric summary: {e}")
-                
+                logger.exception(f"Failed to get MockMetric summary: {e}")
+
         return summary
-        
-    def export_metrics_dashboard(self, filepath: str = "guardian_metrics_dashboard.html") -> None:
+
+    def export_metrics_dashboard(
+        self, filepath: str = "guardian_metrics_dashboard.html"
+    ) -> None:
         """Export metrics dashboard as HTML file."""
         if not PROMETHEUS_AVAILABLE:
             try:
                 # Generate simple HTML dashboard for MockMetrics
-                from .metrics import MockMetric
-                
+
                 html_content = self._generate_mock_metrics_dashboard()
-                
-                with open(filepath, 'w') as f:
+
+                with open(filepath, "w") as f:
                     f.write(html_content)
-                    
+
                 logger.info(f"Metrics dashboard exported to {filepath}")
-                
+
             except Exception as e:
-                logger.error(f"Failed to export metrics dashboard: {e}")
+                logger.exception(f"Failed to export metrics dashboard: {e}")
         else:
             logger.info("Prometheus metrics available - use Grafana for dashboards")
-            
+
     def _generate_mock_metrics_dashboard(self) -> str:
         """Generate HTML dashboard for MockMetrics."""
         from .metrics import MockMetric
+
         summary = MockMetric.get_all_metrics_summary()
-        
+
         html = """
 <!DOCTYPE html>
 <html>
@@ -515,28 +518,28 @@ class GuardianMetrics:
 <body>
     <h1>Guardian MockMetrics Dashboard</h1>
     <div class="warning">⚠️ Using MockMetrics fallback - install prometheus_client for production monitoring</div>
-    
+
     <h2>Summary</h2>
     <p>Total Metrics: {total_metrics}</p>
-    
-    <h2>Metrics Details</h2>
-""".format(total_metrics=summary.get('total_metrics', 0))
 
-        for name, data in summary.get('metrics', {}).items():
+    <h2>Metrics Details</h2>
+""".format(total_metrics=summary.get("total_metrics", 0))
+
+        for name, data in summary.get("metrics", {}).items():
             html += f"""
     <div class="metric">
         <div class="metric-name">{name}</div>
         <div class="metric-stats">
-            <div class="counter">Counters: {len(data.get('counters', {}))}</div>
-            <div class="gauge">Gauge Value: {data.get('gauge_value', 0):.3f}</div>
+            <div class="counter">Counters: {len(data.get("counters", {}))}</div>
+            <div class="gauge">Gauge Value: {data.get("gauge_value", 0):.3f}</div>
             <div class="histogram">
-                Observations: {data.get('values_count', 0)}<br>
-                Stats: {data.get('stats', {})}
+                Observations: {data.get("values_count", 0)}<br>
+                Stats: {data.get("stats", {})}
             </div>
         </div>
     </div>
 """
-        
+
         html += """
 </body>
 </html>

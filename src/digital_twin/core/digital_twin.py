@@ -15,7 +15,6 @@ import uuid
 
 from cryptography.fernet import Fernet
 import numpy as np
-
 import wandb
 
 logger = logging.getLogger(__name__)
@@ -454,7 +453,7 @@ class DigitalTwin:
     def identify_motivation_triggers(self, assessment: dict[str, Any]) -> list[str]:
         """Identify what motivates the student."""
         triggers = []
-        
+
         # Get age from assessment or use default
         age = assessment.get("age", 12)  # Default to 12 if age not provided
 
@@ -486,7 +485,9 @@ class DigitalTwin:
 
         return triggers
 
-    async def initialize_knowledge_states(self, student_id: str, grade_level: int) -> None:
+    async def initialize_knowledge_states(
+        self, student_id: str, grade_level: int
+    ) -> None:
         """Initialize knowledge states for grade-appropriate concepts."""
         # Import curriculum graph
         from hyperag.education.curriculum_graph import curriculum_graph
@@ -554,7 +555,9 @@ class DigitalTwin:
             f"Recorded learning session {session.session_id[:8]} for student {session.student_id[:8]}"
         )
 
-    async def update_knowledge_states_from_session(self, session: LearningSession) -> None:
+    async def update_knowledge_states_from_session(
+        self, session: LearningSession
+    ) -> None:
         """Update knowledge states based on session performance."""
         accuracy = session.questions_correct / max(session.questions_asked, 1)
 

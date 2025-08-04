@@ -1,8 +1,8 @@
 """SeedLM: lightweight seed-based weight compression."""
+
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
@@ -37,7 +37,8 @@ class SEEDLMCompressor:
         elif bits_per_weight == 4:
             self.C, self.P = 8, 3
         else:
-            raise ValueError("Unsupported bit width")
+            msg = "Unsupported bit width"
+            raise ValueError(msg)
         self.lfsr = LinearFeedbackShiftRegister(16)
         self.max_candidates = max_candidates
         self.Q = np.array(range(-8, 8), dtype=np.int8)  # 4-bit quantisation
@@ -49,7 +50,7 @@ class SEEDLMCompressor:
         )
 
     # ------------------------------------------------------------------
-    def compress(self, weights: torch.Tensor) -> Dict[str, object]:
+    def compress(self, weights: torch.Tensor) -> dict[str, object]:
         original_shape = tuple(weights.shape)
         flat = weights.flatten().cpu().numpy()
         pad = (-len(flat)) % self.C
@@ -57,9 +58,9 @@ class SEEDLMCompressor:
             flat = np.concatenate([flat, np.zeros(pad, dtype=flat.dtype)])
         blocks = flat.reshape(-1, self.C)
 
-        seeds: List[int] = []
-        coeffs: List[np.ndarray] = []
-        exps: List[int] = []
+        seeds: list[int] = []
+        coeffs: list[np.ndarray] = []
+        exps: list[int] = []
         for block in blocks:
             max_val = np.max(np.abs(block))
             exp = int(np.floor(np.log2(max_val))) if max_val > 0 else 0
@@ -82,7 +83,7 @@ class SEEDLMCompressor:
         return compressed
 
     # ------------------------------------------------------------------
-    def _find_best_seed(self, block: np.ndarray) -> Tuple[int, np.ndarray]:
+    def _find_best_seed(self, block: np.ndarray) -> tuple[int, np.ndarray]:
         best_seed, best_c, best_err = 0, None, float("inf")
         for seed in range(1, self.max_candidates + 1):
             U = self.lfsr.generate_matrix(seed, self.C, self.P)
@@ -99,24 +100,24 @@ class SEEDLMCompressor:
         return self.Q[idx]
 
     # ------------------------------------------------------------------
-    def decompress(self, compressed: Dict[str, object]) -> torch.Tensor:
+    def decompress(self, compressed: dict[str, object]) -> torch.Tensor:
         seeds = compressed["seeds"]
         coeffs = compressed["coefficients"]
         exps = compressed["shared_exponents"]
         blocks = []
-        for seed, c, exp in zip(seeds, coeffs, exps):
+        for seed, c, exp in zip(seeds, coeffs, exps, strict=False):
             U = self.lfsr.generate_matrix(int(seed), self.C, self.P)
             block = U @ c
-            block = block * (2**int(exp))
+            block = block * (2 ** int(exp))
             blocks.append(block)
         flat = np.concatenate(blocks)
         if compressed["pad_length"]:
-            flat = flat[:-compressed["pad_length"]]
+            flat = flat[: -compressed["pad_length"]]
         return torch.tensor(flat, dtype=torch.float32).reshape(
             compressed["original_shape"]
         )
 
 
-def compress(weights: torch.Tensor) -> Dict[str, object]:
+def compress(weights: torch.Tensor) -> dict[str, object]:
     """Convenience wrapper."""
     return SEEDLMCompressor().compress(weights)

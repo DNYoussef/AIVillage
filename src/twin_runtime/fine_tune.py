@@ -16,7 +16,7 @@ TOKENIZER_NAME = os.getenv("TWIN_TOKENIZER", "hf-internal-testing/llama-tokenize
 
 
 def run_nightly(user_id: str, steps: int = 2000):
-    tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
+    AutoTokenizer.from_pretrained(TOKENIZER_NAME)
     base = Llama(model_path=str(MODEL_PATH), n_ctx=2048)
     peft_cfg = LoraConfig(r=16, target_modules=["q_proj", "v_proj"], lora_alpha=32)
     model = get_peft_model(base, peft_cfg)

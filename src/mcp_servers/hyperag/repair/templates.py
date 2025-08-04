@@ -1,4 +1,4 @@
-"""Template Encoder for GDC Violation Subgraphs
+"""Template Encoder for GDC Violation Subgraphs.
 
 Converts violating subgraphs to human-readable template sentences
 including critical properties (ids, labels, domain fields).
@@ -11,7 +11,7 @@ from typing import Any
 
 
 class DomainField(Enum):
-    """Domain-specific critical fields for different KG schemas"""
+    """Domain-specific critical fields for different KG schemas."""
 
     # Medical domain
     ALLERGY = "allergy"
@@ -31,7 +31,7 @@ class DomainField(Enum):
 
 @dataclass
 class NodeTemplate:
-    """Template representation of a graph node"""
+    """Template representation of a graph node."""
 
     node_id: str
     label: str
@@ -39,7 +39,7 @@ class NodeTemplate:
     critical_fields: set[DomainField]
 
     def to_sentence(self) -> str:
-        """Convert node to human-readable sentence (research shows template > raw format)"""
+        """Convert node to human-readable sentence (research shows template > raw format)."""
         # Extract critical properties with natural language formatting
         critical_props = []
         for field in self.critical_fields:
@@ -79,7 +79,7 @@ class NodeTemplate:
 
 @dataclass
 class EdgeTemplate:
-    """Template representation of a graph edge"""
+    """Template representation of a graph edge."""
 
     edge_id: str
     source_id: str
@@ -89,7 +89,7 @@ class EdgeTemplate:
     critical_fields: set[DomainField]
 
     def to_sentence(self) -> str:
-        """Convert edge to human-readable sentence with natural language"""
+        """Convert edge to human-readable sentence with natural language."""
         # Extract critical properties with natural language formatting
         critical_props = []
         for field in self.critical_fields:
@@ -123,7 +123,7 @@ class EdgeTemplate:
 
 @dataclass
 class ViolationTemplate:
-    """Complete template for a GDC violation subgraph"""
+    """Complete template for a GDC violation subgraph."""
 
     violation_id: str
     gdc_rule: str
@@ -133,7 +133,7 @@ class ViolationTemplate:
     context: dict[str, Any]
 
     def to_description(self) -> str:
-        """Convert entire violation to human-readable description"""
+        """Convert entire violation to human-readable description."""
         lines = [
             f"=== GDC Violation {self.violation_id} ===",
             f"Rule: {self.gdc_rule}",
@@ -164,10 +164,10 @@ class ViolationTemplate:
 
 
 class TemplateEncoder:
-    """Encodes GDC violation subgraphs into human-readable templates"""
+    """Encodes GDC violation subgraphs into human-readable templates."""
 
-    def __init__(self, domain_config: dict[str, Any] | None = None):
-        """Initialize template encoder with domain-specific configuration
+    def __init__(self, domain_config: dict[str, Any] | None = None) -> None:
+        """Initialize template encoder with domain-specific configuration.
 
         Args:
             domain_config: Configuration for domain-specific field mappings
@@ -176,7 +176,7 @@ class TemplateEncoder:
         self.field_mappings = self._load_field_mappings()
 
     def _load_field_mappings(self) -> dict[str, set[DomainField]]:
-        """Load mappings from node/edge types to critical fields"""
+        """Load mappings from node/edge types to critical fields."""
         # Default mappings for HypeRAG schema
         mappings = {
             # Node type mappings
@@ -216,7 +216,7 @@ class TemplateEncoder:
         return mappings
 
     def encode_node(self, node_data: dict[str, Any]) -> NodeTemplate:
-        """Encode a single node into template format
+        """Encode a single node into template format.
 
         Args:
             node_data: Node data from Neo4j result
@@ -251,7 +251,7 @@ class TemplateEncoder:
         )
 
     def encode_edge(self, edge_data: dict[str, Any]) -> EdgeTemplate:
-        """Encode a single edge into template format
+        """Encode a single edge into template format.
 
         Args:
             edge_data: Edge data from Neo4j result
@@ -288,7 +288,7 @@ class TemplateEncoder:
         )
 
     def encode_violation(self, violation_data: dict[str, Any]) -> ViolationTemplate:
-        """Encode a complete GDC violation into template format
+        """Encode a complete GDC violation into template format.
 
         Args:
             violation_data: Complete violation data including subgraph
@@ -330,7 +330,7 @@ class TemplateEncoder:
         )
 
     def create_repair_context(self, violation: ViolationTemplate) -> dict[str, Any]:
-        """Create structured context for repair operations
+        """Create structured context for repair operations.
 
         Args:
             violation: The violation template
@@ -392,7 +392,7 @@ class TemplateEncoder:
     def extract_critical_conflicts(
         self, violation: ViolationTemplate
     ) -> list[dict[str, Any]]:
-        """Extract specific conflicts that need resolution
+        """Extract specific conflicts that need resolution.
 
         Args:
             violation: The violation template
@@ -422,7 +422,7 @@ class TemplateEncoder:
 
                     elif (
                         field == DomainField.CONFIDENCE
-                        and isinstance(value, (int, float))
+                        and isinstance(value, int | float)
                         and value < 0.5
                     ):
                         conflicts.append(
@@ -458,7 +458,7 @@ class TemplateEncoder:
         return conflicts
 
     def generate_repair_summary(self, violation: ViolationTemplate) -> str:
-        """Generate a concise summary for repair prompting
+        """Generate a concise summary for repair prompting.
 
         Args:
             violation: The violation template

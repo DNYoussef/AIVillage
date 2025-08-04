@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Agent Forge Real-Time Monitoring Dashboard
+"""Agent Forge Real-Time Monitoring Dashboard.
 
 Web-based dashboard for monitoring Agent Forge pipeline execution,
 model evolution progress, and system metrics in real-time.
@@ -16,7 +16,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import psutil
 import streamlit as st
-
 import wandb
 
 # Configure logging
@@ -25,9 +24,9 @@ logger = logging.getLogger(__name__)
 
 
 class AgentForgeDashboard:
-    """Real-time monitoring dashboard for Agent Forge"""
+    """Real-time monitoring dashboard for Agent Forge."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.data_dir = Path("./forge_output_enhanced")
         self.checkpoint_dir = Path("./forge_checkpoints_enhanced")
         self.logs_dir = Path("./logs")
@@ -37,7 +36,7 @@ class AgentForgeDashboard:
             dir_path.mkdir(parents=True, exist_ok=True)
 
     def get_system_metrics(self) -> dict:
-        """Get current system metrics"""
+        """Get current system metrics."""
         try:
             # CPU metrics
             cpu_percent = psutil.cpu_percent(interval=1)
@@ -74,11 +73,11 @@ class AgentForgeDashboard:
                 "gpu": gpu_metrics,
             }
         except Exception as e:
-            logger.error(f"Error getting system metrics: {e}")
+            logger.exception(f"Error getting system metrics: {e}")
             return {"error": str(e), "timestamp": datetime.now().isoformat()}
 
     def get_gpu_metrics(self) -> dict:
-        """Get GPU metrics if available"""
+        """Get GPU metrics if available."""
         try:
             import torch
 
@@ -119,7 +118,7 @@ class AgentForgeDashboard:
             return {"available": False, "reason": str(e)}
 
     def get_pipeline_status(self) -> dict:
-        """Get current pipeline execution status"""
+        """Get current pipeline execution status."""
         status = {
             "active_runs": 0,
             "completed_runs": 0,
@@ -181,13 +180,13 @@ class AgentForgeDashboard:
                     logger.warning(f"Could not parse report {report_file}: {e}")
 
         except Exception as e:
-            logger.error(f"Error getting pipeline status: {e}")
+            logger.exception(f"Error getting pipeline status: {e}")
             status["error"] = str(e)
 
         return status
 
     def get_wandb_metrics(self, project_name: str = "agent-forge-enhanced") -> dict:
-        """Get metrics from Weights & Biases"""
+        """Get metrics from Weights & Biases."""
         try:
             api = wandb.Api()
             runs = api.runs(f"your-entity/{project_name}")
@@ -220,8 +219,8 @@ class AgentForgeDashboard:
             return {"error": str(e)}
 
 
-def main():
-    """Main dashboard function"""
+def main() -> None:
+    """Main dashboard function."""
     st.set_page_config(
         page_title="Agent Forge Dashboard",
         page_icon="🤖",
@@ -383,7 +382,7 @@ def main():
                         y=cpu_data,
                         mode="lines",
                         name="CPU %",
-                        line=dict(color="blue"),
+                        line={"color": "blue"},
                     )
                 )
 
@@ -393,7 +392,7 @@ def main():
                         y=memory_data,
                         mode="lines",
                         name="Memory %",
-                        line=dict(color="red"),
+                        line={"color": "red"},
                     )
                 )
 

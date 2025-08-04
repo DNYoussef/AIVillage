@@ -13,7 +13,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ..guardian.gate import GuardianGate
+from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ class AdapterSignature:
 class AdapterRegistry:
     """Registry of verified LoRA adapters with Guardian signatures."""
 
-    def __init__(self, registry_path: str | None = None):
+    def __init__(self, registry_path: str | None = None) -> None:
         self.registry_path = (
             Path(registry_path) if registry_path else Path("lora_registry.json")
         )
@@ -64,7 +64,7 @@ class AdapterRegistry:
         self.guardian_gate = GuardianGate()
         self._load_registry()
 
-    def _load_registry(self):
+    def _load_registry(self) -> None:
         """Load adapter registry from disk."""
         try:
             if self.registry_path.exists():
@@ -76,10 +76,10 @@ class AdapterRegistry:
 
                 logger.info(f"Loaded {len(self.registry)} adapters from registry")
         except Exception as e:
-            logger.error(f"Failed to load adapter registry: {e}")
+            logger.exception(f"Failed to load adapter registry: {e}")
             self.registry = {}
 
-    def _save_registry(self):
+    def _save_registry(self) -> None:
         """Save adapter registry to disk."""
         try:
             registry_data = {
@@ -96,7 +96,7 @@ class AdapterRegistry:
 
             logger.debug(f"Saved adapter registry with {len(self.registry)} entries")
         except Exception as e:
-            logger.error(f"Failed to save adapter registry: {e}")
+            logger.exception(f"Failed to save adapter registry: {e}")
 
     def register_adapter(
         self,
@@ -120,7 +120,8 @@ class AdapterRegistry:
             # Calculate SHA256 hash of adapter file
             adapter_file = Path(adapter_path)
             if not adapter_file.exists():
-                raise FileNotFoundError(f"Adapter file not found: {adapter_path}")
+                msg = f"Adapter file not found: {adapter_path}"
+                raise FileNotFoundError(msg)
 
             with open(adapter_file, "rb") as f:
                 content = f.read()
@@ -166,7 +167,7 @@ class AdapterRegistry:
             return adapter_id
 
         except Exception as e:
-            logger.error(f"Failed to register adapter: {e}")
+            logger.exception(f"Failed to register adapter: {e}")
             raise
 
     def verify_adapter(self, adapter_id: str, adapter_path: str) -> tuple[bool, str]:
@@ -208,7 +209,7 @@ class AdapterRegistry:
                 return False, f"Signature too old: {age.days} days"
 
             # Verify Guardian signature (simplified verification)
-            payload = {
+            {
                 "sha": signature.sha256,
                 "domain": signature.domain,
                 "metrics": signature.metrics,
@@ -226,7 +227,7 @@ class AdapterRegistry:
 
         except Exception as e:
             error_msg = f"Adapter verification failed: {e}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             return False, error_msg
 
     def list_verified_adapters(
@@ -275,7 +276,7 @@ class AdapterRegistry:
 class SecureAdapterLoader:
     """Secure loader for LoRA adapters with Guardian verification."""
 
-    def __init__(self, registry: AdapterRegistry | None = None):
+    def __init__(self, registry: AdapterRegistry | None = None) -> None:
         self.registry = registry or AdapterRegistry()
         self.loaded_adapters: dict[str, Any] = {}
         self.guardian_gate = GuardianGate()
@@ -328,12 +329,12 @@ class SecureAdapterLoader:
 
             except Exception as load_error:
                 error_msg = f"Failed to load adapter: {load_error}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 return False, error_msg, None
 
         except Exception as e:
             error_msg = f"Adapter loading error: {e}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             return False, error_msg, None
 
     def unload_adapter(self, adapter_id: str) -> bool:

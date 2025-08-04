@@ -9,10 +9,10 @@ __version__ = "1.0.0"
 try:
     from .agent_factory import AgentFactory
     from .validate_all_agents import validate_all_agents
-    
+
     __all__ = [
-        'AgentFactory',
-        'validate_all_agents',
+        "AgentFactory",
+        "validate_all_agents",
     ]
 except ImportError:
     # Handle missing dependencies gracefully
@@ -22,15 +22,17 @@ except ImportError:
 try:
     from .evolution import (
         evolution_scheduler,
+        kpi_evolution_engine,
         resource_constrained_evolution,
-        kpi_evolution_engine
     )
-    __all__.extend([
-        'evolution_scheduler',
-        'resource_constrained_evolution',
-        'kpi_evolution_engine'
-    ])
+
+    __all__.extend(
+        [
+            "evolution_scheduler",
+            "kpi_evolution_engine",
+            "resource_constrained_evolution",
+        ]
+    )
 except ImportError:
     # Evolution system optional
     pass
-

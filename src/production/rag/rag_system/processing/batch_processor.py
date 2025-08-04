@@ -6,7 +6,7 @@ from .prompt_constructor import construct_extrapolation_prompt
 
 
 class BatchProcessor:
-    def __init__(self, knowledge_graph, llm):
+    def __init__(self, knowledge_graph, llm) -> None:
         self.knowledge_graph = knowledge_graph
         self.llm = llm
 

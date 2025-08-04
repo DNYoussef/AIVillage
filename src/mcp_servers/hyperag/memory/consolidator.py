@@ -13,12 +13,12 @@ from typing import Any
 
 import numpy as np
 
-from ..guardian.gate import GuardianGate
+from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
 
 from .base import (
+    ConsolidationBatch,
     Edge,
     Node,
-    ConsolidationBatch,
 )
 from .hippo_index import HippoIndex
 from .hypergraph_kg import (
@@ -506,7 +506,9 @@ class MemoryConsolidator:
             logger.exception(error_msg)
             result.errors.append(error_msg)
 
-    async def _consolidate_nodes(self, nodes: list[Node], result: ConsolidationResult) -> None:
+    async def _consolidate_nodes(
+        self, nodes: list[Node], result: ConsolidationResult
+    ) -> None:
         """Consolidate high-confidence episodic nodes into semantic nodes."""
         try:
             for node in nodes:

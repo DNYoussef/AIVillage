@@ -18,7 +18,7 @@ class QueryClassifier:
     Supports temporal, causal, comparative, and meta-reasoning detection.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.temporal_patterns = self._build_temporal_patterns()
         self.causal_patterns = self._build_causal_patterns()
         self.comparative_patterns = self._build_comparative_patterns()

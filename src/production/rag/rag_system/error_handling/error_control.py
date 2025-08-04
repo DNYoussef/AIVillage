@@ -6,7 +6,7 @@ from rag_system.utils.logging import setup_logger
 
 
 class ErrorController:
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = setup_logger(__name__)
         # Track how many times each error type has been seen
         self.error_counts: dict[str, int] = {}
@@ -17,7 +17,7 @@ class ErrorController:
         error_message: str,
         exception: Exception,
         context: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """Handle errors in a centralized manner.
 
         :param error_message: A descriptive message about the error
@@ -62,11 +62,12 @@ class ErrorController:
                 try:
                     return retry_cb()
                 except Exception as retry_err:
-                    self.logger.error(f"Retry failed: {retry_err}")
+                    self.logger.exception(f"Retry failed: {retry_err}")
         else:
             self.logger.warning("No specific recovery mechanism for this error type.")
+        return None
 
-    def log_warning(self, warning_message: str, context: dict[str, Any] | None = None):
+    def log_warning(self, warning_message: str, context: dict[str, Any] | None = None) -> None:
         """Log a warning message with optional context.
 
         :param warning_message: The warning message to log

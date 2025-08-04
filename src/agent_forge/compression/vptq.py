@@ -1,8 +1,8 @@
 """VPTQ: Vector post-training quantisation."""
+
 from __future__ import annotations
 
 import logging
-from typing import Dict, Tuple
 
 import torch
 
@@ -14,7 +14,7 @@ class VPTQCompressor:
 
     def __init__(self, bits: int = 2, vector_dim: int = 4, iterations: int = 5) -> None:
         self.bits = bits
-        self.codebook_size = 2 ** bits
+        self.codebook_size = 2**bits
         self.vector_dim = vector_dim
         self.iterations = iterations
         logger.info(
@@ -25,7 +25,7 @@ class VPTQCompressor:
         )
 
     # ------------------------------------------------------------------
-    def compress(self, weights: torch.Tensor) -> Dict[str, object]:
+    def compress(self, weights: torch.Tensor) -> dict[str, object]:
         original_shape = tuple(weights.shape)
         flat = weights.flatten()
         pad = (-len(flat)) % self.vector_dim
@@ -50,7 +50,9 @@ class VPTQCompressor:
     # ------------------------------------------------------------------
     def _init_codebook(self, vectors: torch.Tensor) -> torch.Tensor:
         n = vectors.size(0)
-        codebook = torch.empty(self.codebook_size, self.vector_dim, device=vectors.device)
+        codebook = torch.empty(
+            self.codebook_size, self.vector_dim, device=vectors.device
+        )
         idx = torch.randint(0, n, (1,))
         codebook[0] = vectors[idx]
         for i in range(1, self.codebook_size):
@@ -65,7 +67,9 @@ class VPTQCompressor:
             codebook[i] = vectors[idx]
         return codebook
 
-    def _optimize(self, vectors: torch.Tensor, codebook: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _optimize(
+        self, vectors: torch.Tensor, codebook: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         for _ in range(self.iterations):
             dist = torch.cdist(vectors, codebook)
             indices = dist.argmin(dim=1)
@@ -78,17 +82,17 @@ class VPTQCompressor:
         return codebook, indices
 
     # ------------------------------------------------------------------
-    def decompress(self, compressed: Dict[str, object]) -> torch.Tensor:
+    def decompress(self, compressed: dict[str, object]) -> torch.Tensor:
         codebook = compressed["codebook"]
         indices = compressed["indices"]
         vectors = codebook[indices]
         flat = vectors.flatten()
         if compressed["pad_length"]:
-            flat = flat[:-compressed["pad_length"]]
+            flat = flat[: -compressed["pad_length"]]
         flat = flat * compressed["scale"] + compressed["offset"]
         return flat.view(compressed["original_shape"])
 
 
-def compress(weights: torch.Tensor) -> Dict[str, object]:
+def compress(weights: torch.Tensor) -> dict[str, object]:
     """Convenience wrapper."""
     return VPTQCompressor().compress(weights)

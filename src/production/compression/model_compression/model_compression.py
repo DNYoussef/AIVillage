@@ -40,14 +40,14 @@ class TernaryQuantizer(torch.autograd.Function):
 
 
 class BitLinear(nn.Linear):
-    def __init__(self, in_features, out_features, bias=True):
+    def __init__(self, in_features, out_features, bias=True) -> None:
         super().__init__(in_features, out_features, bias)
         self.register_buffer("weight_scale", torch.ones(1))
         self.register_buffer(
             "quantized_weight", torch.zeros_like(self.weight, dtype=torch.int8)
         )
 
-    def quantize_weight(self):
+    def quantize_weight(self) -> None:
         self.quantized_weight, self.weight_scale = TernaryQuantizer.apply(self.weight)
 
     def forward(self, x):
@@ -81,7 +81,7 @@ def convert_to_bitnet(model: nn.Module) -> nn.Module:
 
 
 class BitNetModel(nn.Module):
-    def __init__(self, original_model: nn.Module):
+    def __init__(self, original_model: nn.Module) -> None:
         super().__init__()
         self.model = convert_to_bitnet(original_model)
 
@@ -163,7 +163,7 @@ def adaptive_parameter_selection(
 
 
 class HyperCompressor:
-    def __init__(self, K: int = 256, U: float = 1000000):
+    def __init__(self, K: int = 256, U: float = 1000000) -> None:
         self.K = K
         self.U = U
 
@@ -248,7 +248,7 @@ class HyperCompressor:
 
 # Combined ModelCompressionTask
 class ModelCompressionTask(Task):
-    def __init__(self, agent: ChatAgent, model: nn.Module):
+    def __init__(self, agent: ChatAgent, model: nn.Module) -> None:
         super().__init__(agent)
         self.model = model
         self.compressor = HyperCompressor()
@@ -440,7 +440,7 @@ if __name__ == "__main__":
 
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
-    async def main():
+    async def main() -> None:
         torch.manual_seed(0)
         np.random.seed(0)
         if CUPY_AVAILABLE:

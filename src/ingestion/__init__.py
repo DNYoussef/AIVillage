@@ -21,7 +21,7 @@ def _clean_text(text: str) -> str | None:
     return text
 
 
-def add_text(collection, text: str, meta: dict, doc_id: str):
+def add_text(collection, text: str, meta: dict, doc_id: str) -> bool:
     clean = _clean_text(text)
     if clean is None:
         return False

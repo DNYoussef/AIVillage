@@ -1,4 +1,4 @@
-"""Hypergraph Knowledge System
+"""Hypergraph Knowledge System.
 
 Dual-memory architecture for AI Village RAG system:
 - Hippo-Index: Fast episodic memory for recent interactions

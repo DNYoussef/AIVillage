@@ -30,13 +30,14 @@ def log_and_handle_errors(func: Callable) -> Callable:
         try:
             return await func(*args, **kwargs)
         except RAGSystemError as e:
-            logger.error(f"RAG System Error in {func.__name__}: {e!s}")
+            logger.exception(f"RAG System Error in {func.__name__}: {e!s}")
             # Here you can add custom error handling logic
             raise
         except Exception as e:
             logger.exception(f"Unexpected error in {func.__name__}: {e!s}")
             # Here you can add custom error handling logic
-            raise RAGSystemError(f"An unexpected error occurred: {e!s}")
+            msg = f"An unexpected error occurred: {e!s}"
+            raise RAGSystemError(msg)
 
     return wrapper
 

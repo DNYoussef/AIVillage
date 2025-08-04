@@ -12,10 +12,10 @@ logger = logging.getLogger(__name__)
 
 
 class AdvancedAnalytics:
-    def __init__(self):
+    def __init__(self) -> None:
         self.metrics = {}
 
-    def record_metric(self, metric_name: str, value: float):
+    def record_metric(self, metric_name: str, value: float) -> None:
         if metric_name not in self.metrics:
             self.metrics[metric_name] = []
         self.metrics[metric_name].append(value)
