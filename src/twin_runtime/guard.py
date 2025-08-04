@@ -15,30 +15,33 @@ class SecurityRiskGate:
     def __init__(self) -> None:
         # Risk thresholds
         self.low_risk_threshold = 0.3
-        self.high_risk_threshold = 0.7
+        self.high_risk_threshold = 0.8
 
-        # Dangerous patterns
-        self.dangerous_patterns = [
-            r"rm\s+-rf",
-            r"format\s+c:",
-            r"delete\s+from",
-            r"drop\s+table",
-            r"<script",
-            r"eval\(",
-            r"exec\(",
-            r"__import__",
-            r"os\.system",
-            r"subprocess",
+        # Dangerous patterns with names for logging
+        self.dangerous_patterns: list[tuple[str, str]] = [
+            (r"rm\s+-rf\s+/", "filesystem_wipe"),
+            (r"format\s+c:", "disk_format"),
+            (r"delete\s+from", "sql_delete"),
+            (r"drop\s+table", "sql_drop"),
+            (r"insert\s+into", "sql_insert"),
+            (r"select\s+.*from.*where\s+1=1", "sql_always_true"),
+            (r"<script.*?>", "script_tag"),
+            (r";\s*shutdown", "command_shutdown"),
+            (r"eval\(", "eval_call"),
+            (r"exec\(", "exec_call"),
+            (r"__import__", "python_import"),
+            (r"os\.system", "os_system"),
+            (r"subprocess", "subprocess"),
         ]
 
         # Sensitive data patterns
-        self.sensitive_patterns = [
-            r"\b\d{3}-\d{2}-\d{4}\b",  # SSN
-            r"\b\d{16}\b",  # Credit card
-            r"password\s*=",
-            r"api[_-]?key",
-            r"secret[_-]?key",
-            r"private[_-]?key",
+        self.sensitive_patterns: list[tuple[str, str]] = [
+            (r"\b\d{3}-\d{2}-\d{4}\b", "ssn"),
+            (r"\b(?:\d[ -]?){13,16}\b", "credit_card"),
+            (r"password\s*=", "password"),
+            (r"api[_-]?key", "api_key"),
+            (r"secret[_-]?key", "secret_key"),
+            (r"private[_-]?key", "private_key"),
         ]
 
     def risk_gate(self, msg: dict[str, Any], risk: float | None = None) -> Literal["allow", "ask", "deny"]:
@@ -64,22 +67,27 @@ class SecurityRiskGate:
         logger.info(f"Risk assessment: {risk:.2f} for message type: {msg_type}")
 
         # Check dangerous patterns
-        if self._contains_dangerous_patterns(content):
-            logger.warning(f"Dangerous pattern detected in: {content[:100]}...")
+        danger = self._contains_dangerous_patterns(content)
+        if danger:
+            logger.warning(
+                "Dangerous pattern detected: %s in %s", danger, content[:100]
+            )
             return "deny"
 
         # Check sensitive data
-        if self._contains_sensitive_data(content):
-            logger.warning("Sensitive data detected")
+        sensitive = self._contains_sensitive_data(content)
+        if sensitive:
+            logger.warning("Sensitive data detected: %s", sensitive)
             return "ask"
 
         # Risk-based decision
         if risk < self.low_risk_threshold:
+            logger.info("Decision: allow")
             return "allow"
         if risk < self.high_risk_threshold:
-            logger.info("Medium risk - requiring confirmation")
+            logger.info("Decision: ask")
             return "ask"
-        logger.warning(f"High risk {risk:.2f} - denying")
+        logger.warning("Decision: deny due to high risk %.2f", risk)
         return "deny"
 
     def _calculate_risk(self, content: str, msg_type: str) -> float:
@@ -116,19 +124,19 @@ class SecurityRiskGate:
         # Cap at 1.0
         return min(risk, 1.0)
 
-    def _contains_dangerous_patterns(self, content: str) -> bool:
-        """Check for dangerous patterns."""
-        for pattern in self.dangerous_patterns:
+    def _contains_dangerous_patterns(self, content: str) -> str | None:
+        """Return name of dangerous pattern if found."""
+        for pattern, name in self.dangerous_patterns:
             if re.search(pattern, content, re.IGNORECASE):
-                return True
-        return False
+                return name
+        return None
 
-    def _contains_sensitive_data(self, content: str) -> bool:
-        """Check for sensitive data patterns."""
-        for pattern in self.sensitive_patterns:
+    def _contains_sensitive_data(self, content: str) -> str | None:
+        """Return name of sensitive data pattern if found."""
+        for pattern, name in self.sensitive_patterns:
             if re.search(pattern, content, re.IGNORECASE):
-                return True
-        return False
+                return name
+        return None
 
 
 # Global instance
