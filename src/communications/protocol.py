@@ -35,11 +35,14 @@ class CommunicationsProtocol:
         self.message_handlers: dict[str, Callable] = {}
         self.running = False
         self.message_history: dict[str, list[dict]] = {}
+        self.pending_messages: dict[str, list[dict]] = {}
+        self.connection_info: dict[str, str] = {}
 
     async def connect(self, target_url: str, target_agent_id: str) -> bool:
         """Actually connect to another agent - NOT A STUB!
         Returns True if connection successful, False otherwise.
         """
+        self.connection_info[target_agent_id] = target_url
         try:
             logger.info(f"Connecting to {target_agent_id} at {target_url}")
 
@@ -74,6 +77,12 @@ class CommunicationsProtocol:
 
                 # Start message receiver task
                 asyncio.create_task(self._receive_messages(target_agent_id, websocket))
+
+                # Flush pending messages
+                if target_agent_id in self.pending_messages:
+                    for msg in self.pending_messages.pop(target_agent_id):
+                        await self.send_message(target_agent_id, msg)
+
                 return True
             await websocket.close()
             logger.warning(f"Connection rejected by {target_agent_id}")
@@ -99,22 +108,28 @@ class CommunicationsProtocol:
 
     async def send_message(self, agent_id: str, message: dict[str, Any] | Message) -> bool:
         """Actually send an encrypted message - NOT A STUB!"""
+        # Prepare message dict
+        if isinstance(message, Message):
+            message_dict = {
+                "type": message.type.value if hasattr(message.type, "value") else str(message.type),
+                "content": message.content,
+                "sender": message.sender,
+                "receiver": message.receiver,
+                "priority": message.priority.value if hasattr(message.priority, "value") else str(message.priority),
+            }
+        else:
+            message_dict = message
+
         if agent_id not in self.connections:
-            logger.error(f"Not connected to {agent_id}")
-            return False
+            url = self.connection_info.get(agent_id)
+            if url:
+                await self._reconnect(agent_id)
+            if agent_id not in self.connections:
+                self.pending_messages.setdefault(agent_id, []).append(message_dict)
+                logger.info(f"Queued message for {agent_id}")
+                return False
 
         try:
-            # Convert Message object to dict if needed
-            if isinstance(message, Message):
-                message_dict = {
-                    "type": message.type.value if hasattr(message.type, "value") else str(message.type),
-                    "content": message.content,
-                    "sender": message.sender,
-                    "receiver": message.receiver,
-                    "priority": message.priority.value if hasattr(message.priority, "value") else str(message.priority),
-                }
-            else:
-                message_dict = message
 
             # Add metadata
             message_dict["from"] = self.agent_id
@@ -136,6 +151,9 @@ class CommunicationsProtocol:
 
         except Exception as e:
             logger.exception(f"Failed to send message to {agent_id}: {e}")
+            await self.disconnect(agent_id)
+            asyncio.create_task(self._reconnect(agent_id))
+            self.pending_messages.setdefault(agent_id, []).append(message_dict)
             return False
 
     async def broadcast_message(self, message: dict[str, Any] | Message) -> int:
@@ -194,9 +212,11 @@ class CommunicationsProtocol:
 
                 except websockets.exceptions.ConnectionClosed:
                     logger.info(f"Connection closed by {agent_id}")
+                    asyncio.create_task(self._reconnect(agent_id))
                     break
                 except Exception as e:
                     logger.exception(f"Error receiving from {agent_id}: {e}")
+                    asyncio.create_task(self._reconnect(agent_id))
                     break
 
         finally:
@@ -284,8 +304,15 @@ class CommunicationsProtocol:
                     del self.connections[agent_id]
 
         # Start WebSocket server
+        ssl_context = None
+        cert = os.environ.get("SSL_CERTFILE")
+        key = os.environ.get("SSL_KEYFILE")
+        if cert and key and os.path.exists(cert) and os.path.exists(key):
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            ssl_context.load_cert_chain(cert, key)
+
         self.server = await websockets.serve(
-            handle_connection, "localhost", self.port, ping_interval=20, ping_timeout=10
+            handle_connection, "localhost", self.port, ping_interval=20, ping_timeout=10, ssl=ssl_context
         )
         self.running = True
         logger.info(f"Communications server started on port {self.port}")
@@ -316,6 +343,20 @@ class CommunicationsProtocol:
     def is_connected(self, agent_id: str) -> bool:
         """Check if connected to specific agent."""
         return agent_id in self.connections
+
+    async def _reconnect(self, agent_id: str) -> None:
+        """Attempt to reconnect to an agent with backoff."""
+        url = self.connection_info.get(agent_id)
+        if not url:
+            return
+        delay = 1
+        for _ in range(5):
+            if agent_id in self.connections:
+                return
+            await asyncio.sleep(delay)
+            if await self.connect(url, agent_id):
+                return
+            delay = min(delay * 2, 30)
 
 
 # Module-level instances for backward compatibility

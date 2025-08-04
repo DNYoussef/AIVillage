@@ -7,6 +7,7 @@ import logging
 import socket
 import threading
 import time
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -18,8 +19,12 @@ class DeviceMesh:
     def __init__(self, port: int = 8765) -> None:
         self.port = port
         self.peers: dict[str, Any] = {}
+        self.peer_failures: dict[str, int] = {}
+        self.peers_file = Path(__file__).with_name("peers.json")
+        self._load_peers()
         self.local_info = self._get_local_info()
         self.discovery_thread: threading.Thread | None = None
+        self.health_thread: threading.Thread | None = None
         self.running = False
 
     def _get_local_info(self) -> dict[str, Any]:
@@ -60,22 +65,25 @@ class DeviceMesh:
 
     def discover_network_peers(self) -> list[dict[str, Any]]:
         """Discover peers on local network."""
-        discovered = []
+        discovered: list[dict[str, Any]] = []
 
-        # Broadcast discovery message
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.settimeout(1.0)
 
+        message = json.dumps({"type": "discover", "from": self.local_info}).encode()
+
+        # Attempt broadcast; ignore failures
         try:
-            # Send discovery broadcast
-            message = json.dumps({"type": "discover", "from": self.local_info}).encode()
-
             sock.sendto(message, ("<broadcast>", self.port))
+        except Exception:
+            logger.debug("Broadcast failed, using loopback only")
 
-            # Listen for responses
+        sock.sendto(message, ("127.0.0.1", self.port))
+
+        try:
             start_time = time.time()
-            while time.time() - start_time < 2.0:  # 2 second discovery
+            while time.time() - start_time < 2.0:
                 try:
                     data, addr = sock.recvfrom(1024)
                     response = json.loads(data.decode())
@@ -84,10 +92,9 @@ class DeviceMesh:
                         peer_info = response.get("from", {})
                         peer_info["address"] = addr[0]
                         discovered.append(peer_info)
-
-                        # Add to known peers
                         peer_id = f"{addr[0]}:{peer_info.get('port', self.port)}"
                         self.peers[peer_id] = peer_info
+                        self.peer_failures.setdefault(peer_id, 0)
 
                 except socket.timeout:
                     continue
@@ -99,8 +106,9 @@ class DeviceMesh:
         finally:
             sock.close()
 
-        # Always include localhost for testing
-        if not discovered:
+        if discovered:
+            self._save_peers()
+        else:
             discovered.append(
                 {
                     "hostname": "localhost",
@@ -124,6 +132,11 @@ class DeviceMesh:
         self.discovery_thread = threading.Thread(target=self._discovery_service)
         self.discovery_thread.daemon = True
         self.discovery_thread.start()
+
+        self.health_thread = threading.Thread(target=self._health_check_service)
+        self.health_thread.daemon = True
+        self.health_thread.start()
+
         logger.info("Discovery service started")
 
     def _discovery_service(self) -> None:
@@ -171,6 +184,35 @@ class DeviceMesh:
         self.running = False
         if self.discovery_thread:
             self.discovery_thread.join(timeout=2.0)
+        if self.health_thread:
+            self.health_thread.join(timeout=2.0)
+
+    def _load_peers(self) -> None:
+        if self.peers_file.exists():
+            try:
+                self.peers = json.loads(self.peers_file.read_text())
+            except Exception:
+                self.peers = {}
+
+    def _save_peers(self) -> None:
+        try:
+            self.peers_file.write_text(json.dumps(self.peers))
+        except Exception:
+            logger.debug("Failed to save peers file")
+
+    def _health_check_service(self) -> None:
+        while self.running:
+            time.sleep(30)
+            for peer_id in list(self.peers.keys()):
+                if not self.connect_to_peer(peer_id):
+                    self.peer_failures[peer_id] = self.peer_failures.get(peer_id, 0) + 1
+                    if self.peer_failures[peer_id] >= 3:
+                        self.peers.pop(peer_id, None)
+                        self.peer_failures.pop(peer_id, None)
+                        self._save_peers()
+                        logger.info(f"Removed dead peer {peer_id}")
+                else:
+                    self.peer_failures[peer_id] = 0
 
 
 # Module-level functions for backward compatibility
