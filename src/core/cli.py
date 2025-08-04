@@ -31,9 +31,7 @@ def reliability_metrics() -> float:
 def latency_metrics() -> dict:
     """CLI entry point for latency metrics."""
     parser = argparse.ArgumentParser(description="Generate latency metrics")
-    parser.add_argument(
-        "latencies", nargs="+", type=float, help="Latency samples in ms"
-    )
+    parser.add_argument("latencies", nargs="+", type=float, help="Latency samples in ms")
     args = parser.parse_args()
     latencies: list[float] = args.latencies
     avg = sum(latencies) / len(latencies)

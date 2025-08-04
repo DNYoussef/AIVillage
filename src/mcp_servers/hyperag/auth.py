@@ -3,11 +3,11 @@
 Implements role-based access control with granular permissions for different agent types.
 """
 
+import logging
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import logging
-import time
 from typing import Any
 
 import jwt
@@ -112,9 +112,7 @@ class PermissionChecker(ABC):
     """Abstract base class for permission checking strategies."""
 
     @abstractmethod
-    async def check_permission(
-        self, context: AuthContext, permission: str, resource: str | None = None
-    ) -> bool:
+    async def check_permission(self, context: AuthContext, permission: str, resource: str | None = None) -> bool:
         """Check if the context has the required permission."""
 
 
@@ -124,9 +122,7 @@ class RoleBasedPermissionChecker(PermissionChecker):
     def __init__(self, permissions_config: dict[str, list[str]]) -> None:
         self.permissions_config = permissions_config
 
-    async def check_permission(
-        self, context: AuthContext, permission: str, resource: str | None = None
-    ) -> bool:
+    async def check_permission(self, context: AuthContext, permission: str, resource: str | None = None) -> bool:
         """Check if the role has the required permission."""
         return permission in context.permissions
 
@@ -137,9 +133,7 @@ class ResourceBasedPermissionChecker(PermissionChecker):
     def __init__(self, base_checker: PermissionChecker) -> None:
         self.base_checker = base_checker
 
-    async def check_permission(
-        self, context: AuthContext, permission: str, resource: str | None = None
-    ) -> bool:
+    async def check_permission(self, context: AuthContext, permission: str, resource: str | None = None) -> bool:
         """Check permission with resource ownership rules."""
         # Check base permission first
         if not await self.base_checker.check_permission(context, permission, resource):
@@ -166,15 +160,11 @@ class ResourceBasedPermissionChecker(PermissionChecker):
 class TimeBasedPermissionChecker(PermissionChecker):
     """Time-based permission checker with business hours restrictions."""
 
-    def __init__(
-        self, base_checker: PermissionChecker, business_hours: tuple | None = None
-    ) -> None:
+    def __init__(self, base_checker: PermissionChecker, business_hours: tuple | None = None) -> None:
         self.base_checker = base_checker
         self.business_hours = business_hours or (9, 17)  # 9 AM to 5 PM
 
-    async def check_permission(
-        self, context: AuthContext, permission: str, resource: str | None = None
-    ) -> bool:
+    async def check_permission(self, context: AuthContext, permission: str, resource: str | None = None) -> bool:
         """Check permission with time-based restrictions."""
         # Check base permission first
         if not await self.base_checker.check_permission(context, permission, resource):
@@ -201,9 +191,7 @@ class PermissionManager:
         enable_audit: bool = True,
     ) -> None:
         self.jwt_secret = jwt_secret
-        self.permissions_config = (
-            permissions_config or HypeRAGPermissions.AGENT_PERMISSIONS
-        )
+        self.permissions_config = permissions_config or HypeRAGPermissions.AGENT_PERMISSIONS
         self.enable_audit = enable_audit
         self.audit_log: list[AuditLogEntry] = []
         self.active_sessions: dict[str, AuthContext] = {}
@@ -217,9 +205,7 @@ class PermissionManager:
         self.rate_limits: dict[str, list[float]] = {}
         self.max_requests_per_minute = 1000
 
-    async def authenticate_jwt(
-        self, token: str, ip_address: str | None = None
-    ) -> AuthContext:
+    async def authenticate_jwt(self, token: str, ip_address: str | None = None) -> AuthContext:
         """Authenticate using JWT token."""
         try:
             payload = jwt.decode(token, self.jwt_secret, algorithms=["HS256"])
@@ -249,9 +235,7 @@ class PermissionManager:
                 role=role,
                 permissions=permissions,
                 session_id=session_id,
-                expires_at=datetime.fromtimestamp(exp)
-                if exp
-                else datetime.now() + timedelta(hours=24),
+                expires_at=datetime.fromtimestamp(exp) if exp else datetime.now() + timedelta(hours=24),
                 ip_address=ip_address,
                 metadata=payload.get("metadata", {}),
             )
@@ -259,18 +243,14 @@ class PermissionManager:
             # Store active session
             self.active_sessions[session_id] = context
 
-            logger.info(
-                f"Authenticated user {user_id} as {role} with session {session_id}"
-            )
+            logger.info(f"Authenticated user {user_id} as {role} with session {session_id}")
             return context
 
         except jwt.InvalidTokenError as e:
             msg = f"Invalid token: {e!s}"
             raise AuthenticationError(msg)
 
-    async def authenticate_api_key(
-        self, api_key: str, ip_address: str | None = None
-    ) -> AuthContext:
+    async def authenticate_api_key(self, api_key: str, ip_address: str | None = None) -> AuthContext:
         """Authenticate using API key (simplified for demo)."""
         # In production, this would lookup the API key in a secure store
         key_mapping = {
@@ -304,9 +284,7 @@ class PermissionManager:
         logger.info(f"API key authenticated user {user_id} as {role}")
         return context
 
-    async def check_permission(
-        self, context: AuthContext, permission: str, resource: str | None = None
-    ) -> bool:
+    async def check_permission(self, context: AuthContext, permission: str, resource: str | None = None) -> bool:
         """Check if the context has the required permission."""
         # Check rate limiting
         if not await self._check_rate_limit(context.user_id):
@@ -333,9 +311,7 @@ class PermissionManager:
             return False
 
         # Use permission checker
-        granted = await self.permission_checker.check_permission(
-            context, permission, resource
-        )
+        granted = await self.permission_checker.check_permission(context, permission, resource)
 
         # Audit log
         await self._audit_log(
@@ -349,33 +325,25 @@ class PermissionManager:
 
         return granted
 
-    async def require_permission(
-        self, context: AuthContext, permission: str, resource: str | None = None
-    ) -> None:
+    async def require_permission(self, context: AuthContext, permission: str, resource: str | None = None) -> None:
         """Require permission or raise AuthorizationError."""
         if not await self.check_permission(context, permission, resource):
             msg = f"Permission denied: {permission} on {resource or 'system'} for role {context.role}"
-            raise AuthorizationError(
-                msg
-            )
+            raise AuthorizationError(msg)
 
     async def invalidate_session(self, session_id: str) -> None:
         """Invalidate a session."""
         if session_id in self.active_sessions:
             context = self.active_sessions[session_id]
             del self.active_sessions[session_id]
-            await self._audit_log(
-                context, "logout", "system", "session", True, "Session invalidated"
-            )
+            await self._audit_log(context, "logout", "system", "session", True, "Session invalidated")
             logger.info(f"Invalidated session {session_id}")
 
     async def get_active_sessions(self) -> list[AuthContext]:
         """Get list of active sessions."""
         now = datetime.now()
         # Clean up expired sessions
-        expired_sessions = [
-            sid for sid, ctx in self.active_sessions.items() if ctx.expires_at < now
-        ]
+        expired_sessions = [sid for sid, ctx in self.active_sessions.items() if ctx.expires_at < now]
         for sid in expired_sessions:
             await self.invalidate_session(sid)
 
@@ -388,11 +356,7 @@ class PermissionManager:
 
         # Clean old entries
         if user_id in self.rate_limits:
-            self.rate_limits[user_id] = [
-                timestamp
-                for timestamp in self.rate_limits[user_id]
-                if timestamp > minute_ago
-            ]
+            self.rate_limits[user_id] = [timestamp for timestamp in self.rate_limits[user_id] if timestamp > minute_ago]
         else:
             self.rate_limits[user_id] = []
 
@@ -443,9 +407,7 @@ class PermissionManager:
                 f"attempted {permission} on {resource}: {reason}"
             )
 
-    async def get_audit_log(
-        self, user_id: str | None = None, limit: int = 100
-    ) -> list[AuditLogEntry]:
+    async def get_audit_log(self, user_id: str | None = None, limit: int = 100) -> list[AuditLogEntry]:
         """Get audit log entries."""
         entries = self.audit_log
 
@@ -473,9 +435,7 @@ def require_permission(permission: str, resource_param: str | None = None):
     def decorator(func):
         async def wrapper(self, context: AuthContext, *args, **kwargs):
             resource = kwargs.get(resource_param) if resource_param else None
-            await self.permission_manager.require_permission(
-                context, permission, resource
-            )
+            await self.permission_manager.require_permission(context, permission, resource)
             return await func(self, context, *args, **kwargs)
 
         return wrapper
@@ -492,15 +452,11 @@ def audit_operation(operation: str):
             try:
                 result = await func(self, context, *args, **kwargs)
                 duration = time.time() - start_time
-                logger.info(
-                    f"Operation {operation} completed for {context.user_id} in {duration:.3f}s"
-                )
+                logger.info(f"Operation {operation} completed for {context.user_id} in {duration:.3f}s")
                 return result
             except Exception as e:
                 duration = time.time() - start_time
-                logger.exception(
-                    f"Operation {operation} failed for {context.user_id} in {duration:.3f}s: {e!s}"
-                )
+                logger.exception(f"Operation {operation} failed for {context.user_id} in {duration:.3f}s: {e!s}")
                 raise
 
         return wrapper

@@ -3,19 +3,19 @@ Sprint R-5: Digital Twin MVP - Task A.1.
 """
 
 import asyncio
+import json
+import logging
+import sqlite3
+import uuid
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-import json
-import logging
-import sqlite3
 from typing import Any
-import uuid
 
-from cryptography.fernet import Fernet
 import numpy as np
 import wandb
+from cryptography.fernet import Fernet
 
 logger = logging.getLogger(__name__)
 
@@ -104,9 +104,7 @@ class DigitalTwin:
     def __init__(self, project_name: str = "aivillage-digital-twin") -> None:
         self.project_name = project_name
         self.students = {}  # student_id -> LearningProfile
-        self.knowledge_states = defaultdict(
-            dict
-        )  # student_id -> {concept: KnowledgeState}
+        self.knowledge_states = defaultdict(dict)  # student_id -> {concept: KnowledgeState}
         self.session_history = defaultdict(list)  # student_id -> List[LearningSession]
         self.personalization_vectors = {}  # student_id -> PersonalizationVector
 
@@ -173,17 +171,20 @@ class DigitalTwin:
             cursor = conn.cursor()
 
             # Students table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS students (
                     student_id TEXT PRIMARY KEY,
                     profile_data TEXT,  -- Encrypted JSON
                     created_at TEXT,
                     last_updated TEXT
                 )
-            """)
+            """
+            )
 
             # Knowledge states table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS knowledge_states (
                     student_id TEXT,
                     subject TEXT,
@@ -192,10 +193,12 @@ class DigitalTwin:
                     last_updated TEXT,
                     PRIMARY KEY (student_id, subject, concept)
                 )
-            """)
+            """
+            )
 
             # Sessions table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS learning_sessions (
                     session_id TEXT PRIMARY KEY,
                     student_id TEXT,
@@ -204,16 +207,19 @@ class DigitalTwin:
                     end_time TEXT,
                     created_at TEXT
                 )
-            """)
+            """
+            )
 
             # Personalization vectors table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS personalization_vectors (
                     student_id TEXT PRIMARY KEY,
                     vector_data TEXT,  -- Encrypted JSON
                     last_updated TEXT
                 )
-            """)
+            """
+            )
 
             conn.commit()
             conn.close()
@@ -238,9 +244,7 @@ class DigitalTwin:
 
         # Run initial assessment if provided
         if initial_assessment:
-            learning_profile = await self.analyze_initial_assessment(
-                student_id, age, grade_level, initial_assessment
-            )
+            learning_profile = await self.analyze_initial_assessment(student_id, age, grade_level, initial_assessment)
         else:
             # Create default profile
             learning_profile = LearningProfile(
@@ -374,9 +378,7 @@ class DigitalTwin:
 
         return max(style_scores, key=style_scores.get)
 
-    def analyze_math_abilities(
-        self, assessment: dict[str, Any], grade_level: int
-    ) -> tuple[list[str], list[str]]:
+    def analyze_math_abilities(self, assessment: dict[str, Any], grade_level: int) -> tuple[list[str], list[str]]:
         """Analyze mathematical strengths and challenges."""
         strengths = []
         challenges = []
@@ -485,9 +487,7 @@ class DigitalTwin:
 
         return triggers
 
-    async def initialize_knowledge_states(
-        self, student_id: str, grade_level: int
-    ) -> None:
+    async def initialize_knowledge_states(self, student_id: str, grade_level: int) -> None:
         """Initialize knowledge states for grade-appropriate concepts."""
         # Import curriculum graph
         from hyperag.education.curriculum_graph import curriculum_graph
@@ -540,8 +540,7 @@ class DigitalTwin:
             {
                 "session/duration_minutes": session.duration_minutes,
                 "session/engagement_score": session.engagement_score,
-                "session/accuracy": session.questions_correct
-                / max(session.questions_asked, 1),
+                "session/accuracy": session.questions_correct / max(session.questions_asked, 1),
                 "session/concepts_covered": len(session.concepts_covered),
                 "session/student_age": self.students[session.student_id].age,
                 "session/difficulty_level": session.difficulty_level,
@@ -551,13 +550,9 @@ class DigitalTwin:
             }
         )
 
-        logger.info(
-            f"Recorded learning session {session.session_id[:8]} for student {session.student_id[:8]}"
-        )
+        logger.info(f"Recorded learning session {session.session_id[:8]} for student {session.student_id[:8]}")
 
-    async def update_knowledge_states_from_session(
-        self, session: LearningSession
-    ) -> None:
+    async def update_knowledge_states_from_session(self, session: LearningSession) -> None:
         """Update knowledge states based on session performance."""
         accuracy = session.questions_correct / max(session.questions_asked, 1)
 
@@ -567,15 +562,11 @@ class DigitalTwin:
 
                 # Update mastery level using exponential moving average
                 alpha = 0.3  # Learning rate
-                state.mastery_level = (
-                    1 - alpha
-                ) * state.mastery_level + alpha * accuracy
+                state.mastery_level = (1 - alpha) * state.mastery_level + alpha * accuracy
 
                 # Update confidence based on consistency
                 confidence_adjustment = 0.1 if accuracy > 0.7 else -0.05
-                state.confidence_score = max(
-                    0, min(1, state.confidence_score + confidence_adjustment)
-                )
+                state.confidence_score = max(0, min(1, state.confidence_score + confidence_adjustment))
 
                 # Update practice count and time
                 state.practice_count += 1
@@ -583,23 +574,15 @@ class DigitalTwin:
 
                 # Estimate retention decay based on performance
                 if accuracy < 0.5:
-                    state.retention_decay_rate = min(
-                        0.3, state.retention_decay_rate + 0.02
-                    )
+                    state.retention_decay_rate = min(0.3, state.retention_decay_rate + 0.02)
                 else:
-                    state.retention_decay_rate = max(
-                        0.05, state.retention_decay_rate - 0.01
-                    )
+                    state.retention_decay_rate = max(0.05, state.retention_decay_rate - 0.01)
 
                 # Update estimated study time
                 if accuracy > 0.8:
-                    state.estimated_study_time = max(
-                        10, int(state.estimated_study_time * 0.9)
-                    )
+                    state.estimated_study_time = max(10, int(state.estimated_study_time * 0.9))
                 elif accuracy < 0.5:
-                    state.estimated_study_time = min(
-                        60, int(state.estimated_study_time * 1.2)
-                    )
+                    state.estimated_study_time = min(60, int(state.estimated_study_time * 1.2))
 
     async def update_personalization_vector(self, session: LearningSession) -> None:
         """Update personalization vector based on session outcomes."""
@@ -619,38 +602,24 @@ class DigitalTwin:
 
         if actual_duration > planned_duration and engagement > 0.7:
             # Student can handle longer sessions
-            vector.pacing_preference = min(
-                1.0, vector.pacing_preference + learning_rate * 0.1
-            )
+            vector.pacing_preference = min(1.0, vector.pacing_preference + learning_rate * 0.1)
         elif actual_duration < planned_duration * 0.7:
             # Student needs shorter sessions
-            vector.pacing_preference = max(
-                0.0, vector.pacing_preference - learning_rate * 0.1
-            )
+            vector.pacing_preference = max(0.0, vector.pacing_preference - learning_rate * 0.1)
 
         # Adjust challenge seeking based on difficulty vs performance
         if session.difficulty_level > 0.7 and accuracy > 0.6:
-            vector.challenge_seeking = min(
-                1.0, vector.challenge_seeking + learning_rate * 0.2
-            )
+            vector.challenge_seeking = min(1.0, vector.challenge_seeking + learning_rate * 0.2)
         elif session.difficulty_level < 0.4 and engagement < 0.5:
-            vector.challenge_seeking = min(
-                1.0, vector.challenge_seeking + learning_rate * 0.1
-            )
+            vector.challenge_seeking = min(1.0, vector.challenge_seeking + learning_rate * 0.1)
 
         # Adjust explanation depth based on adaptations made
-        explanation_adaptations = [
-            a for a in session.adaptations_made if "explanation" in a.lower()
-        ]
+        explanation_adaptations = [a for a in session.adaptations_made if "explanation" in a.lower()]
         if explanation_adaptations and engagement > 0.7:
             if "more_detail" in " ".join(explanation_adaptations):
-                vector.explanation_depth = min(
-                    1.0, vector.explanation_depth + learning_rate * 0.1
-                )
+                vector.explanation_depth = min(1.0, vector.explanation_depth + learning_rate * 0.1)
             elif "simpler" in " ".join(explanation_adaptations):
-                vector.explanation_depth = max(
-                    0.0, vector.explanation_depth - learning_rate * 0.1
-                )
+                vector.explanation_depth = max(0.0, vector.explanation_depth - learning_rate * 0.1)
 
         # Update gamification response
         gamification_elements = [
@@ -660,13 +629,9 @@ class DigitalTwin:
         ]
         if gamification_elements:
             if engagement > 0.8:
-                vector.gamification_response = min(
-                    1.0, vector.gamification_response + learning_rate * 0.15
-                )
+                vector.gamification_response = min(1.0, vector.gamification_response + learning_rate * 0.15)
             elif engagement < 0.4:
-                vector.gamification_response = max(
-                    0.0, vector.gamification_response - learning_rate * 0.1
-                )
+                vector.gamification_response = max(0.0, vector.gamification_response - learning_rate * 0.1)
 
     def update_learning_patterns(self, session: LearningSession) -> None:
         """Update detected learning patterns."""
@@ -691,9 +656,7 @@ class DigitalTwin:
         patterns["peak_performance_times"].append((hour_of_day, accuracy))
 
         # Track optimal session length
-        patterns["optimal_session_length"].append(
-            (session.duration_minutes, session.engagement_score)
-        )
+        patterns["optimal_session_length"].append((session.duration_minutes, session.engagement_score))
 
         # Track difficulty progression
         patterns["difficulty_progression"].append((session.difficulty_level, accuracy))
@@ -748,42 +711,26 @@ class DigitalTwin:
 
         # Sort by mastery level (focus on partially learned concepts first)
         ready_concepts.sort(key=lambda x: x[1], reverse=True)
-        recommendations["next_concepts"] = [
-            concept for concept, _ in ready_concepts[:3]
-        ]
+        recommendations["next_concepts"] = [concept for concept, _ in ready_concepts[:3]]
 
         # Determine optimal difficulty based on recent performance
         recent_sessions = self.session_history[student_id][-5:]  # Last 5 sessions
         if recent_sessions:
-            avg_accuracy = np.mean(
-                [
-                    s.questions_correct / max(s.questions_asked, 1)
-                    for s in recent_sessions
-                ]
-            )
+            avg_accuracy = np.mean([s.questions_correct / max(s.questions_asked, 1) for s in recent_sessions])
 
             if avg_accuracy > 0.8:
-                recommendations["difficulty_level"] = min(
-                    1.0, 0.6 + vector.challenge_seeking * 0.3
-                )
+                recommendations["difficulty_level"] = min(1.0, 0.6 + vector.challenge_seeking * 0.3)
             elif avg_accuracy < 0.5:
-                recommendations["difficulty_level"] = max(
-                    0.2, 0.4 - (0.5 - avg_accuracy) * 0.5
-                )
+                recommendations["difficulty_level"] = max(0.2, 0.4 - (0.5 - avg_accuracy) * 0.5)
             else:
                 recommendations["difficulty_level"] = 0.5
 
         # Adapt to learning style
         if student.learning_style == "visual" or vector.visual_learning_weight > 0.7:
-            recommendations["learning_style_adaptations"].extend(
-                ["use_diagrams", "color_coding", "visual_analogies"]
-            )
+            recommendations["learning_style_adaptations"].extend(["use_diagrams", "color_coding", "visual_analogies"])
             recommendations["content_format"] = "visual_heavy"
 
-        if (
-            student.learning_style == "kinesthetic"
-            or vector.kinesthetic_learning_weight > 0.7
-        ):
+        if student.learning_style == "kinesthetic" or vector.kinesthetic_learning_weight > 0.7:
             recommendations["learning_style_adaptations"].extend(
                 ["hands_on_activities", "physical_manipulatives", "movement_breaks"]
             )
@@ -871,23 +818,17 @@ class DigitalTwin:
 
         # Accuracy-based adaptations
         if current_accuracy < 0.4:
-            adaptations["difficulty_adjustment"] = min(
-                -1, adaptations["difficulty_adjustment"] - 1
-            )
+            adaptations["difficulty_adjustment"] = min(-1, adaptations["difficulty_adjustment"] - 1)
             adaptations["explanation_style"] = "simpler"
             adaptations["encouragement_level"] = "high"
         elif current_accuracy > 0.9:
-            adaptations["difficulty_adjustment"] = max(
-                1, adaptations["difficulty_adjustment"] + 1
-            )
+            adaptations["difficulty_adjustment"] = max(1, adaptations["difficulty_adjustment"] + 1)
 
         # Time-based adaptations
         if time_in_session > student.attention_span_minutes:
             if current_engagement > 0.6:
                 # Good engagement despite long session - minor break
-                adaptations["break_recommendation"] = (
-                    time_in_session > student.attention_span_minutes * 1.2
-                )
+                adaptations["break_recommendation"] = time_in_session > student.attention_span_minutes * 1.2
             else:
                 # Poor engagement and long session - definitely break
                 adaptations["break_recommendation"] = True
@@ -919,12 +860,8 @@ class DigitalTwin:
 
             # Save personalization vector
             if student_id in self.personalization_vectors:
-                vector_json = json.dumps(
-                    asdict(self.personalization_vectors[student_id])
-                )
-                encrypted_vector = self.cipher_suite.encrypt(
-                    vector_json.encode()
-                ).decode()
+                vector_json = json.dumps(asdict(self.personalization_vectors[student_id]))
+                encrypted_vector = self.cipher_suite.encrypt(vector_json.encode()).decode()
 
                 cursor.execute(
                     """
@@ -1045,9 +982,7 @@ class DigitalTwin:
                         elif 17 <= hour < 21:
                             preferred_times.append("evening")
 
-                    self.students[student_id].preferred_session_times = list(
-                        set(preferred_times)
-                    )
+                    self.students[student_id].preferred_session_times = list(set(preferred_times))
 
     async def generate_learning_insights(self) -> None:
         """Generate learning insights and log to W&B."""
@@ -1072,15 +1007,9 @@ class DigitalTwin:
             all_sessions.extend(sessions)
 
         if all_sessions:
-            insights["avg_session_duration"] = np.mean(
-                [s.duration_minutes for s in all_sessions]
-            )
-            insights["avg_engagement"] = np.mean(
-                [s.engagement_score for s in all_sessions]
-            )
-            insights["avg_accuracy"] = np.mean(
-                [s.questions_correct / max(s.questions_asked, 1) for s in all_sessions]
-            )
+            insights["avg_session_duration"] = np.mean([s.duration_minutes for s in all_sessions])
+            insights["avg_engagement"] = np.mean([s.engagement_score for s in all_sessions])
+            insights["avg_accuracy"] = np.mean([s.questions_correct / max(s.questions_asked, 1) for s in all_sessions])
 
         # Learning style distribution
         for student in self.students.values():
@@ -1093,15 +1022,9 @@ class DigitalTwin:
                 "insights/avg_session_duration": insights["avg_session_duration"],
                 "insights/avg_engagement": insights["avg_engagement"],
                 "insights/avg_accuracy": insights["avg_accuracy"],
-                "insights/visual_learners": insights["learning_style_distribution"][
-                    "visual"
-                ],
-                "insights/kinesthetic_learners": insights[
-                    "learning_style_distribution"
-                ]["kinesthetic"],
-                "insights/auditory_learners": insights["learning_style_distribution"][
-                    "auditory"
-                ],
+                "insights/visual_learners": insights["learning_style_distribution"]["visual"],
+                "insights/kinesthetic_learners": insights["learning_style_distribution"]["kinesthetic"],
+                "insights/auditory_learners": insights["learning_style_distribution"]["auditory"],
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         )
@@ -1117,27 +1040,14 @@ class DigitalTwin:
 
         # Calculate progress metrics
         total_concepts = len(knowledge)
-        mastered_concepts = len(
-            [k for k in knowledge.values() if k.mastery_level >= 0.8]
-        )
-        in_progress_concepts = len(
-            [k for k in knowledge.values() if 0.3 <= k.mastery_level < 0.8]
-        )
+        mastered_concepts = len([k for k in knowledge.values() if k.mastery_level >= 0.8])
+        in_progress_concepts = len([k for k in knowledge.values() if 0.3 <= k.mastery_level < 0.8])
 
         # Recent performance
         recent_sessions = sessions[-10:] if len(sessions) >= 10 else sessions
-        avg_recent_engagement = (
-            np.mean([s.engagement_score for s in recent_sessions])
-            if recent_sessions
-            else 0
-        )
+        avg_recent_engagement = np.mean([s.engagement_score for s in recent_sessions]) if recent_sessions else 0
         avg_recent_accuracy = (
-            np.mean(
-                [
-                    s.questions_correct / max(s.questions_asked, 1)
-                    for s in recent_sessions
-                ]
-            )
+            np.mean([s.questions_correct / max(s.questions_asked, 1) for s in recent_sessions])
             if recent_sessions
             else 0
         )
@@ -1145,10 +1055,7 @@ class DigitalTwin:
         # Study time analysis
         total_study_time = sum(s.duration_minutes for s in sessions)
         sessions_this_week = [
-            s
-            for s in sessions
-            if (datetime.now(timezone.utc) - datetime.fromisoformat(s.start_time)).days
-            <= 7
+            s for s in sessions if (datetime.now(timezone.utc) - datetime.fromisoformat(s.start_time)).days <= 7
         ]
         study_time_this_week = sum(s.duration_minutes for s in sessions_this_week)
 
@@ -1165,8 +1072,7 @@ class DigitalTwin:
                 "total_concepts": total_concepts,
                 "mastered_concepts": mastered_concepts,
                 "in_progress_concepts": in_progress_concepts,
-                "mastery_percentage": (mastered_concepts / max(total_concepts, 1))
-                * 100,
+                "mastery_percentage": (mastered_concepts / max(total_concepts, 1)) * 100,
             },
             "recent_performance": {
                 "sessions_completed": len(sessions),
@@ -1177,15 +1083,11 @@ class DigitalTwin:
             "study_habits": {
                 "total_study_time_minutes": total_study_time,
                 "study_time_this_week": study_time_this_week,
-                "avg_session_length": np.mean([s.duration_minutes for s in sessions])
-                if sessions
-                else 0,
+                "avg_session_length": np.mean([s.duration_minutes for s in sessions]) if sessions else 0,
                 "preferred_times": student.preferred_session_times,
                 "consistency_score": self.calculate_consistency_score(sessions),
             },
-            "next_recommendations": asyncio.create_task(
-                self.get_personalized_recommendations(student_id)
-            ),
+            "next_recommendations": asyncio.create_task(self.get_personalized_recommendations(student_id)),
             "achievements": self.get_student_achievements(student_id),
             "parent_insights": self.get_parent_insights(student_id),
         }
@@ -1202,12 +1104,8 @@ class DigitalTwin:
         first_half = sessions[:mid_point]
         second_half = sessions[mid_point:]
 
-        first_half_accuracy = np.mean(
-            [s.questions_correct / max(s.questions_asked, 1) for s in first_half]
-        )
-        second_half_accuracy = np.mean(
-            [s.questions_correct / max(s.questions_asked, 1) for s in second_half]
-        )
+        first_half_accuracy = np.mean([s.questions_correct / max(s.questions_asked, 1) for s in first_half])
+        second_half_accuracy = np.mean([s.questions_correct / max(s.questions_asked, 1) for s in second_half])
 
         improvement = second_half_accuracy - first_half_accuracy
 
@@ -1223,15 +1121,10 @@ class DigitalTwin:
             return 0.5
 
         # Calculate days between sessions
-        session_dates = [
-            datetime.fromisoformat(s.start_time).date() for s in sessions[-10:]
-        ]
+        session_dates = [datetime.fromisoformat(s.start_time).date() for s in sessions[-10:]]
         session_dates.sort()
 
-        day_gaps = [
-            (session_dates[i] - session_dates[i - 1]).days
-            for i in range(1, len(session_dates))
-        ]
+        day_gaps = [(session_dates[i] - session_dates[i - 1]).days for i in range(1, len(session_dates))]
 
         if not day_gaps:
             return 0.5
@@ -1263,12 +1156,7 @@ class DigitalTwin:
         # Consistency achievements
         if len(sessions) >= 7:
             recent_week = [
-                s
-                for s in sessions
-                if (
-                    datetime.now(timezone.utc) - datetime.fromisoformat(s.start_time)
-                ).days
-                <= 7
+                s for s in sessions if (datetime.now(timezone.utc) - datetime.fromisoformat(s.start_time)).days <= 7
             ]
             if len(recent_week) >= 5:
                 achievements.append(
@@ -1319,20 +1207,13 @@ class DigitalTwin:
 
         # Weekly summary
         week_sessions = [
-            s
-            for s in sessions
-            if (datetime.now(timezone.utc) - datetime.fromisoformat(s.start_time)).days
-            <= 7
+            s for s in sessions if (datetime.now(timezone.utc) - datetime.fromisoformat(s.start_time)).days <= 7
         ]
 
         if week_sessions:
             insights["weekly_summary"]["sessions_completed"] = len(week_sessions)
-            insights["weekly_summary"]["total_study_time"] = sum(
-                s.duration_minutes for s in week_sessions
-            )
-            insights["weekly_summary"]["avg_engagement"] = np.mean(
-                [s.engagement_score for s in week_sessions]
-            )
+            insights["weekly_summary"]["total_study_time"] = sum(s.duration_minutes for s in week_sessions)
+            insights["weekly_summary"]["avg_engagement"] = np.mean([s.engagement_score for s in week_sessions])
 
             all_concepts = []
             for s in week_sessions:
@@ -1353,27 +1234,17 @@ class DigitalTwin:
 
         # Strengths and support areas
         if week_sessions:
-            avg_accuracy = np.mean(
-                [s.questions_correct / max(s.questions_asked, 1) for s in week_sessions]
-            )
+            avg_accuracy = np.mean([s.questions_correct / max(s.questions_asked, 1) for s in week_sessions])
 
             if avg_accuracy > 0.8:
-                insights["strengths_observed"].append(
-                    "High accuracy in problem solving"
-                )
+                insights["strengths_observed"].append("High accuracy in problem solving")
             if insights["weekly_summary"]["avg_engagement"] > 0.7:
-                insights["strengths_observed"].append(
-                    "Strong engagement with learning material"
-                )
+                insights["strengths_observed"].append("Strong engagement with learning material")
 
             if avg_accuracy < 0.5:
-                insights["areas_for_support"].append(
-                    "May need additional practice with current concepts"
-                )
+                insights["areas_for_support"].append("May need additional practice with current concepts")
             if insights["weekly_summary"]["avg_engagement"] < 0.4:
-                insights["areas_for_support"].append(
-                    "Consider varying activity types to maintain interest"
-                )
+                insights["areas_for_support"].append("Consider varying activity types to maintain interest")
 
         return insights
 

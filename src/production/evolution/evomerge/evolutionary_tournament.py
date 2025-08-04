@@ -1,9 +1,9 @@
 import argparse
-from datetime import datetime
 import json
 import logging
 import os
 import random
+from datetime import datetime
 
 import torch
 from tqdm import tqdm
@@ -15,11 +15,7 @@ from .merging.merger import AdvancedModelMerger
 from .model_tracker import model_tracker
 from .multi_objective import calculate_pareto_front, nsga2_select
 from .utils import EvoMergeException, clean_up_models, parallel_evaluate_models
-from .visualization import (
-    plot_evolution_progress,
-    plot_fitness_over_generations,
-    plot_pareto_front,
-)
+from .visualization import plot_evolution_progress, plot_fitness_over_generations, plot_pareto_front
 
 logger = logging.getLogger(__name__)
 
@@ -30,35 +26,25 @@ class EvolutionaryTournament:
         self.merger = AdvancedModelMerger(config)
         self.fitness_scores = []
         self.diversity_scores = []
-        self.checkpoint_dir = os.path.join(
-            self.config.merge_settings.custom_dir, "checkpoints"
-        )
+        self.checkpoint_dir = os.path.join(self.config.merge_settings.custom_dir, "checkpoints")
         os.makedirs(self.checkpoint_dir, exist_ok=True)
         self.population_size = self.config.evolution_settings.population_size
         self.objectives = self.config.evolution_settings.objectives
         self.setup_logging()
 
     def setup_logging(self) -> None:
-        self.log_file = os.path.join(
-            self.config.merge_settings.custom_dir, "evolution_log.txt"
-        )
+        self.log_file = os.path.join(self.config.merge_settings.custom_dir, "evolution_log.txt")
         file_handler = logging.FileHandler(self.log_file)
         file_handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
-    def log_generation_info(
-        self, generation: int, population: list[str], scores: list[dict[str, float]]
-    ) -> None:
+    def log_generation_info(self, generation: int, population: list[str], scores: list[dict[str, float]]) -> None:
         logger.info(f"Generation {generation} completed")
         logger.info(f"Population size: {len(population)}")
         logger.info(f"Best scores: {max(scores, key=lambda x: x[self.objectives[0]])}")
-        logger.info(
-            "Average scores: {obj: np.mean([s[obj] for s in scores]) for obj in self.objectives}"
-        )
+        logger.info("Average scores: {obj: np.mean([s[obj] for s in scores]) for obj in self.objectives}")
         logger.info(f"Diversity: {self.diversity_scores[-1]}")
 
     def create_initial_population(self) -> list[str]:
@@ -83,9 +69,7 @@ class EvolutionaryTournament:
                 population.append(merged_model_path)
                 logger.info(f"Created merged model: {merged_model_path}")
             except Exception as e:
-                logger.exception(
-                    f"Failed to create merged model with techniques {techniques}: {e!s}"
-                )
+                logger.exception(f"Failed to create merged model with techniques {techniques}: {e!s}")
 
         return population
 
@@ -105,10 +89,7 @@ class EvolutionaryTournament:
     def merge_models(self, models: list[str]) -> str:
         logger.info(f"Merging models: {models}")
         merged_config = Configuration(
-            models=[
-                ModelReference(name=f"model_{i}", path=model)
-                for i, model in enumerate(models)
-            ],
+            models=[ModelReference(name=f"model_{i}", path=model) for i, model in enumerate(models)],
             merge_settings=self.config.merge_settings,
             evolution_settings=self.config.evolution_settings,
         )
@@ -144,9 +125,7 @@ class EvolutionaryTournament:
             "fitness_scores": self.fitness_scores,
             "diversity_scores": self.diversity_scores,
         }
-        checkpoint_path = os.path.join(
-            self.checkpoint_dir, f"checkpoint_gen_{generation}.json"
-        )
+        checkpoint_path = os.path.join(self.checkpoint_dir, f"checkpoint_gen_{generation}.json")
         with open(checkpoint_path, "w") as f:
             json.dump(checkpoint, f)
         logger.info(f"Saved checkpoint for generation {generation}")
@@ -173,9 +152,7 @@ class EvolutionaryTournament:
 
             if len(population) < self.population_size:
                 msg = "Failed to create enough initial models. Aborting evolution."
-                raise EvoMergeException(
-                    msg
-                )
+                raise EvoMergeException(msg)
 
             progress_bar = tqdm(
                 total=self.config.evolution_settings.num_generations,
@@ -185,9 +162,7 @@ class EvolutionaryTournament:
 
             all_generation_scores = []
 
-            for generation in range(
-                start_generation, self.config.evolution_settings.num_generations
-            ):
+            for generation in range(start_generation, self.config.evolution_settings.num_generations):
                 logger.info(f"Starting generation {generation + 1}")
 
                 try:
@@ -203,27 +178,19 @@ class EvolutionaryTournament:
                     # Adjust mutation rate based on diversity
                     if len(self.diversity_scores) > 1:
                         if diversity < self.diversity_scores[-2]:
-                            base_mutation_rate *= (
-                                1.1  # Increase mutation rate if diversity decreased
-                            )
+                            base_mutation_rate *= 1.1  # Increase mutation rate if diversity decreased
                         else:
-                            base_mutation_rate *= (
-                                0.9  # Decrease mutation rate if diversity increased
-                            )
+                            base_mutation_rate *= 0.9  # Decrease mutation rate if diversity increased
                     base_mutation_rate = max(
                         0.001, min(0.1, base_mutation_rate)
                     )  # Keep mutation rate within reasonable bounds
                     logger.info(f"Adjusted mutation rate: {base_mutation_rate}")
 
                     # Store the best score for this generation
-                    self.fitness_scores.append(
-                        max(score[self.objectives[0]] for score in scores)
-                    )
+                    self.fitness_scores.append(max(score[self.objectives[0]] for score in scores))
 
                     # Perform NSGA-II selection
-                    selected_population, selected_scores = nsga2_select(
-                        population, scores, self.population_size
-                    )
+                    selected_population, selected_scores = nsga2_select(population, scores, self.population_size)
 
                     # Create new population
                     new_population = []
@@ -237,9 +204,7 @@ class EvolutionaryTournament:
                         new_population.pop(random.randrange(len(new_population)))
 
                     # Clean up resources
-                    clean_up_models(
-                        [model for model in population if model not in new_population]
-                    )
+                    clean_up_models([model for model in population if model not in new_population])
 
                     # Update population
                     population = new_population
@@ -249,34 +214,18 @@ class EvolutionaryTournament:
 
                     # Save checkpoint
                     if (generation + 1) % 5 == 0:  # Save checkpoint every 5 generations
-                        self.save_checkpoint(
-                            generation + 1, population, scores, base_mutation_rate
-                        )
+                        self.save_checkpoint(generation + 1, population, scores, base_mutation_rate)
 
                     # Update real-time visualization
-                    plot_evolution_progress(
-                        all_generation_scores, self.objectives, "evolution_progress.png"
-                    )
+                    plot_evolution_progress(all_generation_scores, self.objectives, "evolution_progress.png")
 
                     # Early stopping check
-                    if (
-                        generation
-                        > self.config.evolution_settings.early_stopping_generations
-                    ):
+                    if generation > self.config.evolution_settings.early_stopping_generations:
                         if (
-                            max(
-                                self.fitness_scores[
-                                    -self.config.evolution_settings.early_stopping_generations :
-                                ]
-                            )
-                            <= self.fitness_scores[
-                                -self.config.evolution_settings.early_stopping_generations
-                                - 1
-                            ]
+                            max(self.fitness_scores[-self.config.evolution_settings.early_stopping_generations :])
+                            <= self.fitness_scores[-self.config.evolution_settings.early_stopping_generations - 1]
                         ):
-                            logger.info(
-                                "Early stopping criterion met. Ending evolution."
-                            )
+                            logger.info("Early stopping criterion met. Ending evolution.")
                             break
 
                     progress_bar.update(1)
@@ -298,9 +247,7 @@ class EvolutionaryTournament:
             pareto_optimal_models = [population[i] for i in pareto_front_indices]
 
             # Plot Pareto front
-            plot_pareto_front(
-                final_scores, pareto_front_indices, self.objectives, "pareto_front.png"
-            )
+            plot_pareto_front(final_scores, pareto_front_indices, self.objectives, "pareto_front.png")
 
             # Generate final report
             self.generate_final_report(pareto_optimal_models, final_scores)
@@ -311,9 +258,7 @@ class EvolutionaryTournament:
             logger.exception(f"Critical error in evolution process: {e!s}")
             raise
 
-    def generate_final_report(
-        self, pareto_optimal_models: list[str], final_scores: list[dict[str, float]]
-    ) -> None:
+    def generate_final_report(self, pareto_optimal_models: list[str], final_scores: list[dict[str, float]]) -> None:
         report = "EvoMerge Evolution Report\n"
         report += "========================\n\n"
         report += f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
@@ -340,9 +285,7 @@ class EvolutionaryTournament:
         logger.info("Generated final evolution report: evolution_report.txt")
 
 
-def run_evolutionary_tournament(
-    config: Configuration, start_from_checkpoint: str | None = None
-) -> list[str]:
+def run_evolutionary_tournament(config: Configuration, start_from_checkpoint: str | None = None) -> list[str]:
     evolutionary_tournament = EvolutionaryTournament(config)
     pareto_optimal_models = evolutionary_tournament.evolve(start_from_checkpoint)
 
@@ -364,16 +307,12 @@ def run_evolutionary_tournament(
 def main() -> None:
     parser = argparse.ArgumentParser(description="EvoMerge: Evolutionary Model Merging")
     parser.add_argument("--config", type=str, help="Path to the configuration file")
-    parser.add_argument(
-        "--checkpoint", type=str, help="Path to a checkpoint file to resume from"
-    )
+    parser.add_argument("--checkpoint", type=str, help="Path to a checkpoint file to resume from")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     args = parser.parse_args()
 
     log_level = logging.DEBUG if args.verbose else logging.INFO
-    logging.basicConfig(
-        level=log_level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=log_level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     if args.config:
         with open(args.config) as f:
@@ -392,9 +331,7 @@ def main() -> None:
             print(f"- {model}")
         print("See evolution_report.txt for detailed results.")
     else:
-        print(
-            "Evolution failed to produce Pareto-optimal models. Check the logs for details."
-        )
+        print("Evolution failed to produce Pareto-optimal models. Check the logs for details.")
 
 
 if __name__ == "__main__":

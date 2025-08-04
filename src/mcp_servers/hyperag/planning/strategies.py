@@ -4,17 +4,11 @@ Concrete implementations of reasoning strategies for different query types.
 Each strategy defines how to break down and execute specific types of queries.
 """
 
-from abc import ABC, abstractmethod
 import logging
+from abc import ABC, abstractmethod
 from typing import Any
 
-from .plan_structures import (
-    ExecutionStep,
-    QueryPlan,
-    QueryType,
-    ReasoningStrategy,
-    RetrievalConstraints,
-)
+from .plan_structures import ExecutionStep, QueryPlan, QueryType, ReasoningStrategy, RetrievalConstraints
 
 logger = logging.getLogger(__name__)
 
@@ -128,9 +122,7 @@ class SimpleFactStrategy(BaseStrategy):
         constraints: RetrievalConstraints,
         context: dict[str, Any],
     ) -> QueryPlan:
-        plan = self._create_base_plan(
-            query, query_type, ReasoningStrategy.DIRECT_RETRIEVAL, constraints
-        )
+        plan = self._create_base_plan(query, query_type, ReasoningStrategy.DIRECT_RETRIEVAL, constraints)
         plan.complexity_score = 0.2
 
         # Single retrieval step for simple facts
@@ -161,9 +153,7 @@ class TemporalStrategy(BaseStrategy):
         constraints: RetrievalConstraints,
         context: dict[str, Any],
     ) -> QueryPlan:
-        plan = self._create_base_plan(
-            query, query_type, ReasoningStrategy.TEMPORAL_REASONING, constraints
-        )
+        plan = self._create_base_plan(query, query_type, ReasoningStrategy.TEMPORAL_REASONING, constraints)
         plan.complexity_score = 0.6
 
         # Step 1: Extract temporal entities and events
@@ -219,9 +209,7 @@ class CausalStrategy(BaseStrategy):
         constraints: RetrievalConstraints,
         context: dict[str, Any],
     ) -> QueryPlan:
-        plan = self._create_base_plan(
-            query, query_type, ReasoningStrategy.CAUSAL_REASONING, constraints
-        )
+        plan = self._create_base_plan(query, query_type, ReasoningStrategy.CAUSAL_REASONING, constraints)
         plan.complexity_score = 0.7
 
         # Step 1: Identify causal entities
@@ -290,9 +278,7 @@ class ComparativeStrategy(BaseStrategy):
         constraints: RetrievalConstraints,
         context: dict[str, Any],
     ) -> QueryPlan:
-        plan = self._create_base_plan(
-            query, query_type, ReasoningStrategy.COMPARATIVE_ANALYSIS, constraints
-        )
+        plan = self._create_base_plan(query, query_type, ReasoningStrategy.COMPARATIVE_ANALYSIS, constraints)
         plan.complexity_score = 0.6
 
         # Step 1: Extract comparison entities
@@ -349,9 +335,7 @@ class MetaQueryStrategy(BaseStrategy):
         constraints: RetrievalConstraints,
         context: dict[str, Any],
     ) -> QueryPlan:
-        plan = self._create_base_plan(
-            query, query_type, ReasoningStrategy.META_REASONING, constraints
-        )
+        plan = self._create_base_plan(query, query_type, ReasoningStrategy.META_REASONING, constraints)
         plan.complexity_score = 0.4
 
         # Step 1: Knowledge source analysis
@@ -409,9 +393,7 @@ class MultiHopStrategy(BaseStrategy):
         constraints: RetrievalConstraints,
         context: dict[str, Any],
     ) -> QueryPlan:
-        plan = self._create_base_plan(
-            query, query_type, ReasoningStrategy.STEP_BY_STEP, constraints
-        )
+        plan = self._create_base_plan(query, query_type, ReasoningStrategy.STEP_BY_STEP, constraints)
         plan.complexity_score = 0.8
 
         # Step 1: Query decomposition
@@ -481,9 +463,7 @@ class AggregationStrategy(BaseStrategy):
         constraints: RetrievalConstraints,
         context: dict[str, Any],
     ) -> QueryPlan:
-        plan = self._create_base_plan(
-            query, query_type, ReasoningStrategy.GRAPH_TRAVERSAL, constraints
-        )
+        plan = self._create_base_plan(query, query_type, ReasoningStrategy.GRAPH_TRAVERSAL, constraints)
         plan.complexity_score = 0.5
 
         # Step 1: Identify aggregation target
@@ -540,9 +520,7 @@ class HypotheticalStrategy(BaseStrategy):
         constraints: RetrievalConstraints,
         context: dict[str, Any],
     ) -> QueryPlan:
-        plan = self._create_base_plan(
-            query, query_type, ReasoningStrategy.STEP_BY_STEP, constraints
-        )
+        plan = self._create_base_plan(query, query_type, ReasoningStrategy.STEP_BY_STEP, constraints)
         plan.complexity_score = 0.7
 
         # Step 1: Extract scenario conditions
@@ -611,9 +589,7 @@ class HybridStrategy(BaseStrategy):
         constraints: RetrievalConstraints,
         context: dict[str, Any],
     ) -> QueryPlan:
-        plan = self._create_base_plan(
-            query, query_type, ReasoningStrategy.HYBRID, constraints
-        )
+        plan = self._create_base_plan(query, query_type, ReasoningStrategy.HYBRID, constraints)
         plan.complexity_score = 0.9
 
         # Step 1: Multi-strategy analysis

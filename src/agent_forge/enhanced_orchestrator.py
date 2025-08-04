@@ -6,20 +6,13 @@ implementing the 20% -> 90% functionality gap to create a working pipeline.
 """
 
 import asyncio
-from datetime import datetime
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 
-from forge_orchestrator import (
-    ForgeOrchestrator,
-    OrchestratorConfig,
-    PhaseArtifact,
-    PhaseResult,
-    PhaseStatus,
-    PhaseType,
-)
 import torch
+from forge_orchestrator import ForgeOrchestrator, OrchestratorConfig, PhaseArtifact, PhaseResult, PhaseStatus, PhaseType
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 logger = logging.getLogger(__name__)
@@ -75,9 +68,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
 
             # Run evolution with real models
             from agent_forge.evomerge.config import create_default_config
-            from agent_forge.evomerge.evolutionary_tournament import (
-                EvolutionaryTournament,
-            )
+            from agent_forge.evomerge.evolutionary_tournament import EvolutionaryTournament
 
             # Create configuration with downloaded models
             config = create_default_config()
@@ -138,24 +129,18 @@ class EnhancedOrchestrator(ForgeOrchestrator):
         try:
             # Load model for analysis if available
             if self.current_model:
-                logger.info(
-                    f"Loading model for geometric analysis: {self.current_model}"
-                )
+                logger.info(f"Loading model for geometric analysis: {self.current_model}")
 
                 try:
                     tokenizer = AutoTokenizer.from_pretrained(self.current_model)
                     model = AutoModelForCausalLM.from_pretrained(
                         self.current_model,
-                        torch_dtype=torch.float16
-                        if self.device == "cuda"
-                        else torch.float32,
+                        torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
                         device_map=self.device,
                     )
 
                     # Perform actual geometric analysis
-                    from agent_forge.geometry.id_twonn import (
-                        estimate_intrinsic_dimensionality,
-                    )
+                    from agent_forge.geometry.id_twonn import estimate_intrinsic_dimensionality
                     from agent_forge.phase2.pid import EdgePID
 
                     # Sample some hidden states for analysis
@@ -169,21 +154,15 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                     model.eval()
                     with torch.no_grad():
                         for text in sample_inputs:
-                            inputs = tokenizer(text, return_tensors="pt").to(
-                                self.device
-                            )
+                            inputs = tokenizer(text, return_tensors="pt").to(self.device)
                             outputs = model(**inputs, output_hidden_states=True)
                             # Get last layer hidden states
-                            hidden_states.append(
-                                outputs.hidden_states[-1].cpu().numpy()
-                            )
+                            hidden_states.append(outputs.hidden_states[-1].cpu().numpy())
 
                     # Estimate intrinsic dimensionality
                     import numpy as np
 
-                    combined_states = np.concatenate(
-                        [h.reshape(-1, h.shape[-1]) for h in hidden_states]
-                    )
+                    combined_states = np.concatenate([h.reshape(-1, h.shape[-1]) for h in hidden_states])
                     id_estimate = estimate_intrinsic_dimensionality(combined_states)
 
                     # Initialize PID controller for edge of chaos
@@ -193,9 +172,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                     self.geometric_state = {
                         "intrinsic_dimensionality": float(id_estimate),
                         "hidden_dim": model.config.hidden_size,
-                        "compression_ratio": float(
-                            id_estimate / model.config.hidden_size
-                        ),
+                        "compression_ratio": float(id_estimate / model.config.hidden_size),
                         "edge_chaos_target": 0.7,
                         "pid_initialized": True,
                     }
@@ -266,9 +243,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                     def __init__(self, hidden_dim, geometric_state) -> None:
                         self.hidden_dim = hidden_dim
                         self.geometric_state = geometric_state
-                        self.prediction_layer = (
-                            None  # Would be nn.Linear in real implementation
-                        )
+                        self.prediction_layer = None  # Would be nn.Linear in real implementation
 
                     def predict_internal_state(self, current_hidden, context):
                         """Predict next internal state based on current state and context."""
@@ -285,9 +260,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                         }
 
                 # Create self-modeling gate
-                gate = SelfModelingGate(
-                    self.geometric_state.get("hidden_dim", 1536), self.geometric_state
-                )
+                gate = SelfModelingGate(self.geometric_state.get("hidden_dim", 1536), self.geometric_state)
 
                 # Test self-modeling capabilities
                 test_prediction = gate.predict_internal_state(None, "self-evaluation")
@@ -302,9 +275,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                     }
                 )
 
-                logger.info(
-                    f"Self-modeling implemented with awareness score: {test_prediction['prediction_accuracy']}"
-                )
+                logger.info(f"Self-modeling implemented with awareness score: {test_prediction['prediction_accuracy']}")
 
             # Create self-modeling artifact
             artifact = PhaseArtifact(
@@ -317,9 +288,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                         "geometric_state_integration",
                         "metacognitive_evaluation",
                     ],
-                    "integration_complete": self.geometric_state.get(
-                        "pid_initialized", False
-                    ),
+                    "integration_complete": self.geometric_state.get("pid_initialized", False),
                 },
             )
             artifacts.append(artifact)
@@ -373,8 +342,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                     "strategy": "step_by_step_decomposition",
                     "template": "Let me solve this step by step:\n1. Understand the problem\n2. Identify key information\n3. Apply mathematical operations\n4. Verify the answer",
                     "optimization_score": 0.87,
-                    "benchmark_validated": "gsm8k"
-                    in [s.split("_")[0] for s in benchmark_strategies],
+                    "benchmark_validated": "gsm8k" in [s.split("_")[0] for s in benchmark_strategies],
                 },
                 "code_generation": {
                     "strategy": "structured_programming",
@@ -396,9 +364,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                     strategy["geometric_augmentation"] = {
                         "intrinsic_dim_aware": True,
                         "complexity_adapted": True,
-                        "id_threshold": self.geometric_state.get(
-                            "intrinsic_dimensionality", 512
-                        ),
+                        "id_threshold": self.geometric_state.get("intrinsic_dimensionality", 512),
                     }
 
             logger.info(f"Baked {len(self.baked_prompts)} prompt strategies")
@@ -411,9 +377,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                     "baked_prompts": self.baked_prompts,
                     "strategies_count": len(self.baked_prompts),
                     "benchmark_integration": len(benchmark_strategies) > 0,
-                    "geometric_integration": self.self_modeling_state.get(
-                        "geometric_integration", False
-                    ),
+                    "geometric_integration": self.self_modeling_state.get("geometric_integration", False),
                     "optimization_complete": True,
                 },
             )
@@ -451,9 +415,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                 try:
                     model = AutoModelForCausalLM.from_pretrained(
                         self.current_model,
-                        torch_dtype=torch.float16
-                        if self.device == "cuda"
-                        else torch.float32,
+                        torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
                     )
 
                     # Apply quantization
@@ -461,8 +423,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
 
                     # Save compressed model
                     compressed_path = (
-                        Path(self.config.output_dir)
-                        / f"compressed_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                        Path(self.config.output_dir) / f"compressed_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                     )
                     compressed_path.mkdir(parents=True, exist_ok=True)
 
@@ -473,20 +434,11 @@ class EnhancedOrchestrator(ForgeOrchestrator):
                     tokenizer.save_pretrained(compressed_path)
 
                     # Calculate compression metrics
-                    original_size = sum(
-                        p.numel() * p.element_size() for p in model.parameters()
-                    )
-                    compressed_size = sum(
-                        p.numel() * p.element_size()
-                        for p in compressed_model.parameters()
-                    )
-                    compression_ratio = (
-                        original_size / compressed_size if compressed_size > 0 else 1
-                    )
+                    original_size = sum(p.numel() * p.element_size() for p in model.parameters())
+                    compressed_size = sum(p.numel() * p.element_size() for p in compressed_model.parameters())
+                    compression_ratio = original_size / compressed_size if compressed_size > 0 else 1
 
-                    logger.info(
-                        f"Compression complete: {compression_ratio:.2f}x reduction"
-                    )
+                    logger.info(f"Compression complete: {compression_ratio:.2f}x reduction")
 
                     # Create deployment package
                     deployment_manifest = {
@@ -545,9 +497,7 @@ class EnhancedOrchestrator(ForgeOrchestrator):
 
         return artifacts
 
-    async def execute_phase(
-        self, phase_type: PhaseType, input_artifacts: list[PhaseArtifact]
-    ) -> PhaseResult:
+    async def execute_phase(self, phase_type: PhaseType, input_artifacts: list[PhaseArtifact]) -> PhaseResult:
         """Execute phase with enhanced implementations."""
         logger.info(f"Executing enhanced phase: {phase_type.value}")
 
@@ -562,37 +512,27 @@ class EnhancedOrchestrator(ForgeOrchestrator):
 
         if phase_type in enhanced_executors:
             start_time = datetime.now()
-            result = PhaseResult(
-                phase_type=phase_type, status=PhaseStatus.RUNNING, start_time=start_time
-            )
+            result = PhaseResult(phase_type=phase_type, status=PhaseStatus.RUNNING, start_time=start_time)
 
             try:
                 # Get phase module
                 phase_module = self.discovered_phases.get(phase_type)
 
                 # Execute enhanced implementation
-                artifacts = await enhanced_executors[phase_type](
-                    phase_module, input_artifacts
-                )
+                artifacts = await enhanced_executors[phase_type](phase_module, input_artifacts)
 
                 result.artifacts_produced = artifacts
                 result.status = PhaseStatus.COMPLETED
                 result.end_time = datetime.now()
-                result.duration_seconds = (
-                    result.end_time - result.start_time
-                ).total_seconds()
+                result.duration_seconds = (result.end_time - result.start_time).total_seconds()
 
-                logger.info(
-                    f"Enhanced phase {phase_type.value} completed in {result.duration_seconds:.1f}s"
-                )
+                logger.info(f"Enhanced phase {phase_type.value} completed in {result.duration_seconds:.1f}s")
 
             except Exception as e:
                 result.status = PhaseStatus.FAILED
                 result.error_message = str(e)
                 result.end_time = datetime.now()
-                result.duration_seconds = (
-                    result.end_time - result.start_time
-                ).total_seconds()
+                result.duration_seconds = (result.end_time - result.start_time).total_seconds()
                 logger.exception(f"Enhanced phase {phase_type.value} failed: {e}")
 
             return result
@@ -643,13 +583,7 @@ async def run_enhanced_pipeline():
         print("=" * 60)
 
         for phase_type, result in results.items():
-            status_emoji = (
-                "✅"
-                if result.success
-                else "❌"
-                if result.status == PhaseStatus.FAILED
-                else "⚠️"
-            )
+            status_emoji = "✅" if result.success else "❌" if result.status == PhaseStatus.FAILED else "⚠️"
             print(f"{status_emoji} {phase_type.value}: {result.status.value}")
 
             if result.duration_seconds:

@@ -1,20 +1,15 @@
 """OpenRouter API client with error handling, rate limiting, and cost tracking."""
 
 import asyncio
-from dataclasses import dataclass
 import json
 import logging
 import os
 import time
+from dataclasses import dataclass
 from typing import Any
 
 import aiohttp
-from tenacity import (
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from .model_config import MODEL_ROUTING_CONFIG, RATE_LIMITS, TaskType
 
@@ -59,9 +54,7 @@ class OpenRouterClient:
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
         if not self.api_key:
             msg = "OpenRouter API key not found. Set OPENROUTER_API_KEY environment variable."
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -128,19 +121,20 @@ class OpenRouterClient:
 
         start_time = time.time()
 
-        async with aiohttp.ClientSession() as session, session.post(
-            f"{self.BASE_URL}/chat/completions",
-            headers=self.headers,
-            json=payload,
-            timeout=aiohttp.ClientTimeout(total=60),
-        ) as response:
+        async with (
+            aiohttp.ClientSession() as session,
+            session.post(
+                f"{self.BASE_URL}/chat/completions",
+                headers=self.headers,
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=60),
+            ) as response,
+        ):
             latency = time.time() - start_time
 
             if response.status != 200:
                 error_text = await response.text()
-                logger.error(
-                    f"OpenRouter API error: {response.status} - {error_text}"
-                )
+                logger.error(f"OpenRouter API error: {response.status} - {error_text}")
                 raise aiohttp.ClientResponseError(
                     request_info=response.request_info,
                     history=response.history,
@@ -227,9 +221,7 @@ class OpenRouterClient:
 
         # All models failed
         msg = f"All models failed for {task_type.value}. Last error: {last_error}"
-        raise Exception(
-            msg
-        )
+        raise Exception(msg)
 
     def _calculate_cost(self, model: str, usage: dict[str, int]) -> float:
         """Calculate cost based on token usage.
@@ -255,9 +247,7 @@ class OpenRouterClient:
 
         return (total_tokens / 1000) * rate
 
-    def _update_metrics(
-        self, model: str, usage: dict[str, int], cost: float, latency: float
-    ) -> None:
+    def _update_metrics(self, model: str, usage: dict[str, int], cost: float, latency: float) -> None:
         """Update model performance metrics."""
         if model not in self.model_metrics:
             self.model_metrics[model] = ModelMetrics()
@@ -273,9 +263,7 @@ class OpenRouterClient:
         """Get summary of all metrics."""
         summary = {
             "total_cost": self.total_cost,
-            "cost_by_task": {
-                task.value: cost for task, cost in self.cost_by_task.items()
-            },
+            "cost_by_task": {task.value: cost for task, cost in self.cost_by_task.items()},
             "model_performance": {},
         }
 

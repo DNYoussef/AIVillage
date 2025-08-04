@@ -6,11 +6,11 @@ This retriever uses non-standard graph traversal patterns to discover
 unexpected connections and creative insights.
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime
 import logging
 import random
 import time
+from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 
 from AIVillage.src.mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
@@ -48,9 +48,7 @@ class DivergentRetriever:
     5. Serendipity injection - add controlled randomness
     """
 
-    def __init__(
-        self, hypergraph: HypergraphKG, config: dict[str, Any] | None = None
-    ) -> None:
+    def __init__(self, hypergraph: HypergraphKG, config: dict[str, Any] | None = None) -> None:
         self.hypergraph = hypergraph
         self.config = config or self._default_config()
 
@@ -64,13 +62,9 @@ class DivergentRetriever:
         self.query_count = 0
         self.total_creativity_score = 0.0
 
-        logger.info(
-            f"DivergentRetriever initialized with divergence_factor={self.divergence_factor}"
-        )
+        logger.info(f"DivergentRetriever initialized with divergence_factor={self.divergence_factor}")
 
-    async def retrieve_creative(
-        self, query_seeds: list[str], user_id: str | None, plan: QueryPlan
-    ) -> DivergentResults:
+    async def retrieve_creative(self, query_seeds: list[str], user_id: str | None, plan: QueryPlan) -> DivergentResults:
         """Main creative retrieval method.
 
         Args:
@@ -82,9 +76,7 @@ class DivergentRetriever:
             DivergentResults with creative connections
         """
         start_time = time.time()
-        reasoning_trace = [
-            f"Starting divergent retrieval with {len(query_seeds)} seeds"
-        ]
+        reasoning_trace = [f"Starting divergent retrieval with {len(query_seeds)} seeds"]
 
         try:
             # 1. Generate reverse walks from distant nodes
@@ -94,12 +86,8 @@ class DivergentRetriever:
 
             # 2. Discover cross-domain bridges
             reasoning_trace.append("Step 2: Discovering cross-domain bridges")
-            bridge_connections = await self._find_cross_domain_bridges(
-                query_seeds, plan
-            )
-            reasoning_trace.append(
-                f"Found {len(bridge_connections)} bridge connections"
-            )
+            bridge_connections = await self._find_cross_domain_bridges(query_seeds, plan)
+            reasoning_trace.append(f"Found {len(bridge_connections)} bridge connections")
 
             # 3. Amplify weak ties for serendipity
             reasoning_trace.append("Step 3: Amplifying weak ties")
@@ -109,60 +97,38 @@ class DivergentRetriever:
             # 4. Inject controlled serendipity
             reasoning_trace.append("Step 4: Injecting serendipity")
             serendipity_nodes = await self._inject_serendipity(query_seeds, plan)
-            reasoning_trace.append(
-                f"Added {len(serendipity_nodes)} serendipitous nodes"
-            )
+            reasoning_trace.append(f"Added {len(serendipity_nodes)} serendipitous nodes")
 
             # 5. Find temporal anomalies
             reasoning_trace.append("Step 5: Finding temporal anomalies")
             temporal_anomalies = await self._find_temporal_anomalies(query_seeds, plan)
-            reasoning_trace.append(
-                f"Found {len(temporal_anomalies)} temporal anomalies"
-            )
+            reasoning_trace.append(f"Found {len(temporal_anomalies)} temporal anomalies")
 
             # 6. Combine and score all creative results
             reasoning_trace.append("Step 6: Combining and scoring creative results")
             all_creative_nodes = list(
-                set(
-                    reverse_nodes
-                    + bridge_connections
-                    + weak_tie_nodes
-                    + serendipity_nodes
-                    + temporal_anomalies
-                )
+                set(reverse_nodes + bridge_connections + weak_tie_nodes + serendipity_nodes + temporal_anomalies)
             )
 
             # Calculate creative scores
-            creative_scores = await self._calculate_creative_scores(
-                all_creative_nodes, query_seeds, plan
-            )
+            creative_scores = await self._calculate_creative_scores(all_creative_nodes, query_seeds, plan)
 
             # Apply divergence weighting
-            divergent_scores = self._apply_divergence_weighting(
-                creative_scores, query_seeds
-            )
+            divergent_scores = self._apply_divergence_weighting(creative_scores, query_seeds)
 
             # Format results
-            results = await self._format_creative_results(
-                divergent_scores, plan, reasoning_trace
-            )
+            results = await self._format_creative_results(divergent_scores, plan, reasoning_trace)
 
             query_time = (time.time() - start_time) * 1000
             self.query_count += 1
 
             # Calculate creativity metrics
-            creativity_score = self._calculate_creativity_score(
-                results["nodes"], query_seeds
-            )
-            surprise_factor = self._calculate_surprise_factor(
-                results["nodes"], query_seeds
-            )
+            creativity_score = self._calculate_creativity_score(results["nodes"], query_seeds)
+            surprise_factor = self._calculate_surprise_factor(results["nodes"], query_seeds)
 
             self.total_creativity_score += creativity_score
 
-            reasoning_trace.append(
-                f"Creative retrieval completed in {query_time:.2f}ms"
-            )
+            reasoning_trace.append(f"Creative retrieval completed in {query_time:.2f}ms")
             reasoning_trace.append(f"Creativity score: {creativity_score:.3f}")
             reasoning_trace.append(f"Surprise factor: {surprise_factor:.3f}")
 
@@ -203,9 +169,7 @@ class DivergentRetriever:
                 metadata={"error": str(e)},
             )
 
-    async def _find_distant_nodes(
-        self, query_seeds: list[str], plan: QueryPlan
-    ) -> list[str]:
+    async def _find_distant_nodes(self, query_seeds: list[str], plan: QueryPlan) -> list[str]:
         """Find nodes that are semantically/topologically distant from query seeds."""
         try:
             distant_nodes = []
@@ -230,9 +194,7 @@ class DivergentRetriever:
             logger.warning(f"Failed to find distant nodes: {e!s}")
             return []
 
-    async def _find_cross_domain_bridges(
-        self, query_seeds: list[str], plan: QueryPlan
-    ) -> list[str]:
+    async def _find_cross_domain_bridges(self, query_seeds: list[str], plan: QueryPlan) -> list[str]:
         """Find connections that bridge different semantic domains."""
         try:
             bridge_nodes = []
@@ -273,9 +235,7 @@ class DivergentRetriever:
             logger.warning(f"Failed to find cross-domain bridges: {e!s}")
             return []
 
-    async def _amplify_weak_ties(
-        self, query_seeds: list[str], plan: QueryPlan
-    ) -> list[str]:
+    async def _amplify_weak_ties(self, query_seeds: list[str], plan: QueryPlan) -> list[str]:
         """Amplify weak connections that might lead to surprising insights."""
         try:
             weak_tie_nodes = []
@@ -299,9 +259,7 @@ class DivergentRetriever:
             logger.warning(f"Failed to amplify weak ties: {e!s}")
             return []
 
-    async def _inject_serendipity(
-        self, query_seeds: list[str], plan: QueryPlan
-    ) -> list[str]:
+    async def _inject_serendipity(self, query_seeds: list[str], plan: QueryPlan) -> list[str]:
         """Add controlled randomness for serendipitous discoveries."""
         try:
             serendipity_nodes = []
@@ -341,9 +299,7 @@ class DivergentRetriever:
             logger.warning(f"Failed to inject serendipity: {e!s}")
             return []
 
-    async def _find_temporal_anomalies(
-        self, query_seeds: list[str], plan: QueryPlan
-    ) -> list[str]:
+    async def _find_temporal_anomalies(self, query_seeds: list[str], plan: QueryPlan) -> list[str]:
         """Find temporal patterns that deviate from expected."""
         try:
             anomaly_nodes = []
@@ -503,9 +459,7 @@ class DivergentRetriever:
                 item_data["item_type"] = "node"
                 nodes.append(item_data)
 
-        reasoning_trace.append(
-            f"Formatted {len(nodes)} creative nodes and {len(edges)} creative edges"
-        )
+        reasoning_trace.append(f"Formatted {len(nodes)} creative nodes and {len(edges)} creative edges")
 
         return {"nodes": nodes, "edges": edges, "scores": final_scores}
 
@@ -540,9 +494,7 @@ class DivergentRetriever:
         node_type = self._get_creative_type(node_id)
         return creativity_factors.get(node_type, 0.5)
 
-    def _calculate_creativity_score(
-        self, nodes: list[dict], query_seeds: list[str]
-    ) -> float:
+    def _calculate_creativity_score(self, nodes: list[dict], query_seeds: list[str]) -> float:
         """Calculate overall creativity score for the results."""
         if not nodes:
             return 0.0
@@ -557,9 +509,7 @@ class DivergentRetriever:
 
         return min(1.0, avg_creativity + diversity_bonus)
 
-    def _calculate_surprise_factor(
-        self, nodes: list[dict], query_seeds: list[str]
-    ) -> float:
+    def _calculate_surprise_factor(self, nodes: list[dict], query_seeds: list[str]) -> float:
         """Calculate how surprising/unexpected the results are."""
         if not nodes:
             return 0.0
@@ -567,9 +517,7 @@ class DivergentRetriever:
         # Count unexpected connection types
         unexpected_types = ["cross_domain_bridge", "serendipitous", "temporal_anomaly"]
 
-        unexpected_count = sum(
-            1 for node in nodes if node.get("type", "") in unexpected_types
-        )
+        unexpected_count = sum(1 for node in nodes if node.get("type", "") in unexpected_types)
 
         # Surprise factor based on proportion of unexpected results
         surprise_ratio = unexpected_count / len(nodes)
@@ -593,11 +541,7 @@ class DivergentRetriever:
 
     def get_performance_stats(self) -> dict[str, Any]:
         """Get performance statistics."""
-        avg_creativity = (
-            self.total_creativity_score / self.query_count
-            if self.query_count > 0
-            else 0.0
-        )
+        avg_creativity = self.total_creativity_score / self.query_count if self.query_count > 0 else 0.0
 
         return {
             "query_count": self.query_count,
@@ -611,9 +555,7 @@ class DivergentRetriever:
 
 
 # Factory function
-def create_divergent_retriever(
-    hypergraph_kg: HypergraphKG, config: dict[str, Any] | None = None
-) -> DivergentRetriever:
+def create_divergent_retriever(hypergraph_kg: HypergraphKG, config: dict[str, Any] | None = None) -> DivergentRetriever:
     """Create a DivergentRetriever for creative mode retrieval."""
     return DivergentRetriever(hypergraph=hypergraph_kg, config=config)
 
@@ -639,9 +581,7 @@ if __name__ == "__main__":
         print("Testing Divergent Retrieval...")
         query_seeds = ["ai", "creativity", "innovation"]
 
-        results = await retriever.retrieve_creative(
-            query_seeds=query_seeds, user_id="test_user", plan=plan
-        )
+        results = await retriever.retrieve_creative(query_seeds=query_seeds, user_id="test_user", plan=plan)
 
         print(f"Results: {results.total_results} items")
         print(f"Creativity score: {results.creativity_score:.3f}")
@@ -654,8 +594,6 @@ if __name__ == "__main__":
 
         print("\nFirst 5 creative nodes:")
         for i, node in enumerate(results.nodes[:5], 1):
-            print(
-                f"{i}. {node['id']} (type: {node['type']}, score: {node['score']:.3f})"
-            )
+            print(f"{i}. {node['id']} (type: {node['type']}, score: {node['score']:.3f})")
 
     asyncio.run(test_divergent_retrieval())

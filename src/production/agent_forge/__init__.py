@@ -20,11 +20,7 @@ except ImportError:
 
 # Evolution system
 try:
-    from .evolution import (
-        evolution_scheduler,
-        kpi_evolution_engine,
-        resource_constrained_evolution,
-    )
+    from .evolution import evolution_scheduler, kpi_evolution_engine, resource_constrained_evolution
 
     __all__.extend(
         [

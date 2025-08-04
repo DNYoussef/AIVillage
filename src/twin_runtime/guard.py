@@ -41,9 +41,7 @@ class SecurityRiskGate:
             r"private[_-]?key",
         ]
 
-    def risk_gate(
-        self, msg: dict[str, Any], risk: float | None = None
-    ) -> Literal["allow", "ask", "deny"]:
+    def risk_gate(self, msg: dict[str, Any], risk: float | None = None) -> Literal["allow", "ask", "deny"]:
         """Assess risk and determine action.
 
         Args:
@@ -145,9 +143,7 @@ def get_gate_instance():
     return _gate_instance
 
 
-def risk_gate(
-    msg: dict[str, Any], risk: float | None = None
-) -> Literal["allow", "ask", "deny"]:
+def risk_gate(msg: dict[str, Any], risk: float | None = None) -> Literal["allow", "ask", "deny"]:
     """Main risk gate function - NO LONGER ALWAYS "allow"!"""
     instance = get_gate_instance()
     return instance.risk_gate(msg, risk)

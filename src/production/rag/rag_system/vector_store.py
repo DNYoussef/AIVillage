@@ -30,9 +30,7 @@ class VectorStore:
             except Exception as e:  # pragma: no cover - network side effects
                 logger.warning("Qdrant unavailable (%s) – falling back to FAISS", e)
 
-    def add(
-        self, ids: list[str], embeddings: np.ndarray, payload: list[dict[str, Any]]
-    ) -> None:
+    def add(self, ids: list[str], embeddings: np.ndarray, payload: list[dict[str, Any]]) -> None:
         if self.backend is self.faiss:
             self.faiss.add(ids, embeddings, payload)
         else:

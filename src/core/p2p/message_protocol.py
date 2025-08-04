@@ -1,14 +1,14 @@
 """Evolution-Aware Message Protocol for P2P Communication."""
 
 import asyncio
-from dataclasses import dataclass
-from enum import Enum
 import json
 import logging
 import struct
 import time
-from typing import Any
 import uuid
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -128,9 +128,7 @@ class EvolutionMessage:
             sender_id=data.get("sender_id"),
             recipient_id=data.get("recipient_id"),
             timestamp=data.get("timestamp"),
-            priority=MessagePriority(
-                data.get("priority", MessagePriority.NORMAL.value)
-            ),
+            priority=MessagePriority(data.get("priority", MessagePriority.NORMAL.value)),
             evolution_id=data.get("evolution_id"),
             evolution_type=data.get("evolution_type"),
             agent_id=data.get("agent_id"),
@@ -216,9 +214,7 @@ class MessageProtocol:
             self.retry_processor_task.cancel()
         logger.info("Message protocol stopped")
 
-    async def send_message(
-        self, message: EvolutionMessage | dict, writer: asyncio.StreamWriter
-    ) -> bool | None:
+    async def send_message(self, message: EvolutionMessage | dict, writer: asyncio.StreamWriter) -> bool | None:
         """Send message with protocol handling."""
         if isinstance(message, dict):
             # Convert dict to EvolutionMessage
@@ -321,9 +317,7 @@ class MessageProtocol:
                 if handler:
                     await handler(message, writer)
                 else:
-                    logger.warning(
-                        f"No handler for message type: {message.message_type}"
-                    )
+                    logger.warning(f"No handler for message type: {message.message_type}")
 
                 # Calculate latency
                 latency = time.time() - message.timestamp
@@ -352,9 +346,7 @@ class MessageProtocol:
             except Exception as e:
                 logger.exception(f"Retry processor error: {e}")
 
-    async def _send_acknowledgment(
-        self, original_message: EvolutionMessage, writer: asyncio.StreamWriter
-    ) -> None:
+    async def _send_acknowledgment(self, original_message: EvolutionMessage, writer: asyncio.StreamWriter) -> None:
         """Send acknowledgment for received message."""
         ack_message = EvolutionMessage(
             message_id=str(uuid.uuid4()),
@@ -378,14 +370,10 @@ class MessageProtocol:
         """Update latency statistics."""
         # Simple moving average
         alpha = 0.1
-        self.stats["average_latency"] = (
-            alpha * latency + (1 - alpha) * self.stats["average_latency"]
-        )
+        self.stats["average_latency"] = alpha * latency + (1 - alpha) * self.stats["average_latency"]
 
     # Default message handlers
-    async def handle_ping(
-        self, message: EvolutionMessage, writer: asyncio.StreamWriter
-    ) -> None:
+    async def handle_ping(self, message: EvolutionMessage, writer: asyncio.StreamWriter) -> None:
         """Handle PING message."""
         pong_message = EvolutionMessage(
             message_id=str(uuid.uuid4()),
@@ -398,9 +386,7 @@ class MessageProtocol:
 
         await self.send_message(pong_message, writer)
 
-    async def handle_pong(
-        self, message: EvolutionMessage, writer: asyncio.StreamWriter
-    ) -> None:
+    async def handle_pong(self, message: EvolutionMessage, writer: asyncio.StreamWriter) -> None:
         """Handle PONG message."""
         correlation_id = message.correlation_id
         if correlation_id in self.pending_responses:
@@ -409,9 +395,7 @@ class MessageProtocol:
                 future.set_result(message)
             del self.pending_responses[correlation_id]
 
-    async def handle_heartbeat(
-        self, message: EvolutionMessage, writer: asyncio.StreamWriter
-    ) -> None:
+    async def handle_heartbeat(self, message: EvolutionMessage, writer: asyncio.StreamWriter) -> None:
         """Handle HEARTBEAT message."""
         sender_id = message.sender_id
         capabilities_data = message.data.get("capabilities", {})
@@ -422,19 +406,11 @@ class MessageProtocol:
 
             # Update with heartbeat data
             capabilities.last_seen = time.time()
-            capabilities.current_evolution_load = capabilities_data.get(
-                "current_evolution_load", 0.0
-            )
-            capabilities.available_for_evolution = capabilities_data.get(
-                "available_for_evolution", True
-            )
-            capabilities.thermal_state = capabilities_data.get(
-                "thermal_state", "normal"
-            )
+            capabilities.current_evolution_load = capabilities_data.get("current_evolution_load", 0.0)
+            capabilities.available_for_evolution = capabilities_data.get("available_for_evolution", True)
+            capabilities.thermal_state = capabilities_data.get("thermal_state", "normal")
 
-    async def handle_peer_discovery(
-        self, message: EvolutionMessage, writer: asyncio.StreamWriter
-    ) -> None:
+    async def handle_peer_discovery(self, message: EvolutionMessage, writer: asyncio.StreamWriter) -> None:
         """Handle PEER_DISCOVERY message."""
         # Respond with our information
         response = EvolutionMessage(
@@ -447,19 +423,13 @@ class MessageProtocol:
                     "node_id": self.p2p_node.node_id,
                     "listen_port": self.p2p_node.listen_port,
                 },
-                "capabilities": (
-                    self.p2p_node.local_capabilities.__dict__
-                    if self.p2p_node.local_capabilities
-                    else {}
-                ),
+                "capabilities": (self.p2p_node.local_capabilities.__dict__ if self.p2p_node.local_capabilities else {}),
             },
         )
 
         await self.send_message(response, writer)
 
-    async def handle_peer_introduction(
-        self, message: EvolutionMessage, writer: asyncio.StreamWriter
-    ) -> None:
+    async def handle_peer_introduction(self, message: EvolutionMessage, writer: asyncio.StreamWriter) -> None:
         """Handle PEER_INTRODUCTION message."""
         sender_id = message.sender_id
         capabilities_data = message.data.get("capabilities", {})
@@ -474,16 +444,12 @@ class MessageProtocol:
         # Register peer
         self.p2p_node.peer_registry[sender_id] = capabilities
 
-    async def handle_peer_announcement(
-        self, message: EvolutionMessage, writer: asyncio.StreamWriter
-    ) -> None:
+    async def handle_peer_announcement(self, message: EvolutionMessage, writer: asyncio.StreamWriter) -> None:
         """Handle PEER_ANNOUNCEMENT message."""
         # Process peer announcement (discovery response)
         await self.handle_peer_introduction(message, writer)
 
-    async def handle_peer_goodbye(
-        self, message: EvolutionMessage, writer: asyncio.StreamWriter
-    ) -> None:
+    async def handle_peer_goodbye(self, message: EvolutionMessage, writer: asyncio.StreamWriter) -> None:
         """Handle PEER_GOODBYE message."""
         sender_id = message.sender_id
 
@@ -497,9 +463,7 @@ class MessageProtocol:
 
         logger.info(f"Peer {sender_id} said goodbye")
 
-    async def handle_acknowledgment(
-        self, message: EvolutionMessage, writer: asyncio.StreamWriter
-    ) -> None:
+    async def handle_acknowledgment(self, message: EvolutionMessage, writer: asyncio.StreamWriter) -> None:
         """Handle ACKNOWLEDGMENT message."""
         correlation_id = message.correlation_id
 
@@ -509,9 +473,7 @@ class MessageProtocol:
 
         logger.debug(f"Received acknowledgment for {correlation_id}")
 
-    async def handle_error(
-        self, message: EvolutionMessage, writer: asyncio.StreamWriter
-    ) -> None:
+    async def handle_error(self, message: EvolutionMessage, writer: asyncio.StreamWriter) -> None:
         """Handle ERROR message."""
         error_info = message.data.get("error", "Unknown error")
         correlation_id = message.correlation_id
@@ -525,9 +487,7 @@ class MessageProtocol:
                 future.set_exception(Exception(error_info))
             del self.pending_responses[correlation_id]
 
-    async def handle_resource_status(
-        self, message: EvolutionMessage, writer: asyncio.StreamWriter
-    ) -> None:
+    async def handle_resource_status(self, message: EvolutionMessage, writer: asyncio.StreamWriter) -> None:
         """Handle RESOURCE_STATUS message."""
         sender_id = message.sender_id
         resource_data = message.data.get("resources", {})
@@ -535,15 +495,9 @@ class MessageProtocol:
         # Update peer capabilities with resource information
         if sender_id in self.p2p_node.peer_registry:
             capabilities = self.p2p_node.peer_registry[sender_id]
-            capabilities.ram_mb = resource_data.get(
-                "ram_available_mb", capabilities.ram_mb
-            )
-            capabilities.battery_percent = resource_data.get(
-                "battery_percent", capabilities.battery_percent
-            )
-            capabilities.current_evolution_load = resource_data.get(
-                "evolution_load", 0.0
-            )
+            capabilities.ram_mb = resource_data.get("ram_available_mb", capabilities.ram_mb)
+            capabilities.battery_percent = resource_data.get("battery_percent", capabilities.battery_percent)
+            capabilities.current_evolution_load = resource_data.get("evolution_load", 0.0)
             capabilities.thermal_state = resource_data.get("thermal_state", "normal")
 
     def register_handler(self, message_type: MessageType, handler: callable) -> None:
@@ -576,9 +530,7 @@ class MessageProtocol:
         if recipient_id:
             # Send to specific peer
             if recipient_id in self.p2p_node.connections:
-                await self.send_message(
-                    message, self.p2p_node.connections[recipient_id]
-                )
+                await self.send_message(message, self.p2p_node.connections[recipient_id])
         else:
             # Broadcast to all peers
             for writer in self.p2p_node.connections.values():
@@ -586,9 +538,7 @@ class MessageProtocol:
 
         return message.message_id
 
-    async def wait_for_response(
-        self, correlation_id: str, timeout: float = 30.0
-    ) -> EvolutionMessage | None:
+    async def wait_for_response(self, correlation_id: str, timeout: float = 30.0) -> EvolutionMessage | None:
         """Wait for response to a message."""
         future = asyncio.Future()
         self.pending_responses[correlation_id] = future

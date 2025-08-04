@@ -13,9 +13,7 @@ from .specs import GDCSpec
 logger = logging.getLogger(__name__)
 
 # Default path to GDC rules configuration
-_DEFAULT_GDC_YAML = (
-    pathlib.Path(__file__).parent.parent.parent.parent / "config" / "gdc_rules.yaml"
-)
+_DEFAULT_GDC_YAML = pathlib.Path(__file__).parent.parent.parent.parent / "config" / "gdc_rules.yaml"
 
 
 def load_gdc_registry(config_path: pathlib.Path | None = None) -> dict[str, GDCSpec]:
@@ -64,9 +62,7 @@ def load_gdc_registry(config_path: pathlib.Path | None = None) -> dict[str, GDCS
             for field in required_fields:
                 if field not in spec_data:
                     msg = f"Missing required field '{field}' in GDC spec: {spec_data}"
-                    raise ValueError(
-                        msg
-                    )
+                    raise ValueError(msg)
 
             # Create GDCSpec object
             spec = GDCSpec(**spec_data)
@@ -140,14 +136,8 @@ def validate_registry(registry: dict[str, GDCSpec]) -> list[str]:
 
         # Basic Cypher validation
         cypher_lower = spec.cypher.lower()
-        if (
-            "create " in cypher_lower
-            or "delete " in cypher_lower
-            or "merge " in cypher_lower
-        ):
-            issues.append(
-                f"GDC {spec.id} contains write operation - should be read-only"
-            )
+        if "create " in cypher_lower or "delete " in cypher_lower or "merge " in cypher_lower:
+            issues.append(f"GDC {spec.id} contains write operation - should be read-only")
 
     # Check severity distribution
     severities = [spec.severity for spec in registry.values()]

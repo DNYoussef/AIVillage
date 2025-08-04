@@ -11,8 +11,8 @@ Provides robust W&B integration with:
 import json
 import logging
 import os
-from pathlib import Path
 import time
+from pathlib import Path
 from typing import Any
 
 try:
@@ -68,9 +68,7 @@ class WandBManager:
             except Exception:
                 pass
 
-        logger.warning(
-            "No W&B authentication found. See: https://docs.wandb.ai/quickstart"
-        )
+        logger.warning("No W&B authentication found. See: https://docs.wandb.ai/quickstart")
         logger.info("Options:")
         logger.info("1. Set WANDB_API_KEY environment variable")
         logger.info("2. Run 'wandb login' in terminal")
@@ -152,14 +150,10 @@ class WandBManager:
             logger.warning(f"Failed to log metrics to W&B: {e}")
             self._log_to_file(metrics, step)
 
-    def log_artifact(
-        self, artifact_path: str, artifact_name: str, artifact_type: str = "model"
-    ) -> None:
+    def log_artifact(self, artifact_path: str, artifact_name: str, artifact_type: str = "model") -> None:
         """Log artifact to W&B with error handling."""
         if not self.is_initialized or self.offline_mode:
-            logger.info(
-                f"Offline mode: Artifact {artifact_name} saved locally at {artifact_path}"
-            )
+            logger.info(f"Offline mode: Artifact {artifact_name} saved locally at {artifact_path}")
             return
 
         try:

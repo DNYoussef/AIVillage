@@ -12,13 +12,13 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from dataclasses import dataclass
 import json
 import logging
-from pathlib import Path
 import sys
 import time
 import types
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import torch
@@ -77,23 +77,17 @@ class MockP2PNode:
             evolution_capacity=1.0,
         )
 
-    async def broadcast_to_peers(
-        self, _msg_type: str, _message: dict[str, Any]
-    ) -> bool:
+    async def broadcast_to_peers(self, _msg_type: str, _message: dict[str, Any]) -> bool:
         return True
 
     async def send_to_peer(self, _peer_id: str, _message: dict[str, Any]) -> bool:
         return True
 
-    def get_suitable_evolution_peers(
-        self, min_count: int = 1
-    ) -> list[PeerCapabilities]:
+    def get_suitable_evolution_peers(self, min_count: int = 1) -> list[PeerCapabilities]:
         return []
 
 
-async def run_test(
-    participants: int, dp_check: bool, efficiency: bool
-) -> dict[str, Any]:
+async def run_test(participants: int, dp_check: bool, efficiency: bool) -> dict[str, Any]:
     """Execute participant selection and return metrics."""
     config = FederatedLearningConfig(
         min_participants_per_round=1,

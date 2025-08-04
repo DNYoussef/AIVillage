@@ -1,5 +1,5 @@
-from langroid import ChatAgent, ChatAgentConfig, Task
 import torch
+from langroid import ChatAgent, ChatAgentConfig, Task
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -56,9 +56,7 @@ class QuietSTaRTask(Task):
         )
 
         return {
-            "text": self.tokenizer.decode(
-                outputs.sequences[0], skip_special_tokens=False
-            ),
+            "text": self.tokenizer.decode(outputs.sequences[0], skip_special_tokens=False),
             "hidden_states": outputs.hidden_states,
         }
 
@@ -80,12 +78,8 @@ class QuietSTaRTask(Task):
         for _ in range(max_iterations):
             thought = await self.generate_thought(thought["text"])
             insights = await self.extract_strategy_insights(thought["text"])
-            critique = await self.generate_critique(
-                thought["text"], insights, temperature=0.2
-            )
-            alternatives = await self.generate_alternatives(
-                thought["text"], insights, temperature=0.8
-            )
+            critique = await self.generate_critique(thought["text"], insights, temperature=0.2)
+            alternatives = await self.generate_alternatives(thought["text"], insights, temperature=0.8)
             evaluation = await self.self_evaluate(thought["text"], insights)
             thought = await self.revise(
                 thought["text"],
@@ -101,9 +95,7 @@ class QuietSTaRTask(Task):
         return thought, insights
 
     async def generate_critique(self, thought, insights, temperature=0.2):
-        prompt = (
-            f"Critique the following thought and insights:\n{thought}\n\nInsights:\n"
-        )
+        prompt = f"Critique the following thought and insights:\n{thought}\n\nInsights:\n"
         for strategy, insight in insights.items():
             prompt += f"{strategy}: {insight}\n"
         prompt += "\nCritique:"
@@ -170,9 +162,7 @@ class QuietSTaRTask(Task):
         combined_hidden = torch.cat([base_hidden, thought_hidden], dim=-1)
         mixing_weights = self.talk_head(combined_hidden)
 
-        mixed_hidden = (
-            1 - mixing_weights
-        ) * base_hidden + mixing_weights * thought_hidden
+        mixed_hidden = (1 - mixing_weights) * base_hidden + mixing_weights * thought_hidden
 
         lm_head = self.model.get_output_embeddings()
         mixed_logits = lm_head(mixed_hidden)
@@ -190,7 +180,15 @@ class QuietSTaRTask(Task):
         return self.tokenizer.decode(mixed_output[0], skip_special_tokens=False)
 
     async def format_output(self, output, insights):
-        sections = ["Initial Thought", "Critique", "Alternative Perspective", "Self-Evaluation", "Revised Thought", "Final Output", *self.cognitive_strategies]
+        sections = [
+            "Initial Thought",
+            "Critique",
+            "Alternative Perspective",
+            "Self-Evaluation",
+            "Revised Thought",
+            "Final Output",
+            *self.cognitive_strategies,
+        ]
 
         formatted_output = ""
         for section in sections:

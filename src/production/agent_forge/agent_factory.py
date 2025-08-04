@@ -5,8 +5,8 @@ Auto-generated from agent specifications.
 
 import json
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
 
 # Add the parent directory to the path to import our modules
@@ -88,9 +88,7 @@ class AgentFactory:
             agent_classes["sword_shield"] = SwordAndShieldAgent
         except ImportError:
             # Use generic agent if specialized not available
-            agent_classes["sword_shield"] = self._create_generic_agent_class(
-                "sword_shield"
-            )
+            agent_classes["sword_shield"] = self._create_generic_agent_class("sword_shield")
 
         # Legal AI Agent
         try:
@@ -233,9 +231,9 @@ class AgentFactory:
                 if not self.performance_history:
                     return {"performance": 0.7}
 
-                success_rate = sum(
-                    1 for p in self.performance_history if p.get("success", False)
-                ) / len(self.performance_history)
+                success_rate = sum(1 for p in self.performance_history if p.get("success", False)) / len(
+                    self.performance_history
+                )
 
                 return {
                     "success_rate": success_rate,
@@ -244,15 +242,11 @@ class AgentFactory:
 
         return GenericAgent
 
-    def create_agent(
-        self, agent_type: str, config: dict[str, Any] | None = None
-    ) -> BaseMetaAgent:
+    def create_agent(self, agent_type: str, config: dict[str, Any] | None = None) -> BaseMetaAgent:
         """Create an agent of the specified type."""
         if agent_type not in self.templates:
             msg = f"Unknown agent type: {agent_type}. Available: {list(self.templates.keys())}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         template = self.templates[agent_type]
         agent_class = self.agent_classes[agent_type]

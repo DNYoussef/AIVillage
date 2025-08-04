@@ -2,10 +2,10 @@ import argparse
 import asyncio
 import importlib.util
 import json
-from pathlib import Path
 import sys
 import time
 import types
+from pathlib import Path
 
 # Stub external dependencies required by the sharding modules
 sys.modules.setdefault("wandb", types.ModuleType("wandb"))
@@ -126,9 +126,7 @@ class TestModelShardingEngine(ModelShardingEngine):
         self.active_shards = {s.shard_id: s for s in plan.shards}
         self.device_assignments = {}
         for shard in plan.shards:
-            self.device_assignments.setdefault(shard.device_id, []).append(
-                shard.shard_id
-            )
+            self.device_assignments.setdefault(shard.device_id, []).append(shard.shard_id)
 
 
 def main() -> None:
@@ -141,9 +139,7 @@ def main() -> None:
     engine = TestModelShardingEngine(args.device_count, args.constraint)
 
     start = time.time()
-    plan = asyncio.run(
-        engine.shard_model("dummy-model", strategy=ShardingStrategy.HYBRID)
-    )
+    plan = asyncio.run(engine.shard_model("dummy-model", strategy=ShardingStrategy.HYBRID))
     duration = time.time() - start
 
     report = {

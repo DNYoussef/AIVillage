@@ -3,12 +3,12 @@ Sprint R-5: Digital Twin MVP - Task A.6.
 """
 
 import asyncio
+import logging
+import random
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
-import logging
-import random
 from typing import Any
 
 import numpy as np
@@ -99,9 +99,7 @@ class PersonalizedTutorEngine:
         # Student-specific adaptations
         self.student_adaptations = defaultdict(dict)  # student_id -> adaptations
         self.interaction_history = defaultdict(list)  # student_id -> interactions
-        self.effectiveness_tracking = defaultdict(
-            list
-        )  # strategy_id -> effectiveness scores
+        self.effectiveness_tracking = defaultdict(list)  # strategy_id -> effectiveness scores
 
         # Real-time adaptation engine
         self.adaptation_thresholds = {
@@ -322,14 +320,10 @@ class PersonalizedTutorEngine:
         student_profile = await self._get_student_profile(student_id)
 
         # Select optimal tutoring strategy
-        strategy = await self._select_tutoring_strategy(
-            student_id, student_profile, target_concepts, mode
-        )
+        strategy = await self._select_tutoring_strategy(student_id, student_profile, target_concepts, mode)
 
         # Create learning objectives
-        objectives = await self._create_learning_objectives(
-            target_concepts, student_profile, strategy
-        )
+        objectives = await self._create_learning_objectives(target_concepts, student_profile, strategy)
 
         # Initialize session
         session = TutoringSession(
@@ -354,9 +348,7 @@ class PersonalizedTutorEngine:
         self.active_sessions[session_id] = session
 
         # Generate opening interaction
-        opening_interaction = await self._generate_opening_interaction(
-            student_profile, strategy, objectives
-        )
+        opening_interaction = await self._generate_opening_interaction(student_profile, strategy, objectives)
         session.interactions.append(opening_interaction)
 
         # Log session start
@@ -371,9 +363,7 @@ class PersonalizedTutorEngine:
             }
         )
 
-        logger.info(
-            f"Started tutoring session {session_id} for student {student_id[:8]} using {strategy.name}"
-        )
+        logger.info(f"Started tutoring session {session_id} for student {student_id[:8]} using {strategy.name}")
 
         return session_id
 
@@ -385,9 +375,7 @@ class PersonalizedTutorEngine:
 
             if student_id in digital_twin.students:
                 student = digital_twin.students[student_id]
-                personalization_vector = digital_twin.personalization_vectors.get(
-                    student_id
-                )
+                personalization_vector = digital_twin.personalization_vectors.get(student_id)
                 knowledge_states = digital_twin.knowledge_states.get(student_id, {})
 
                 profile = {
@@ -401,16 +389,9 @@ class PersonalizedTutorEngine:
                     "interests": student.interests,
                     "attention_span_minutes": student.attention_span_minutes,
                     "motivation_triggers": student.motivation_triggers,
-                    "personalization_vector": asdict(personalization_vector)
-                    if personalization_vector
-                    else {},
-                    "knowledge_states": {
-                        concept: state.mastery_level
-                        for concept, state in knowledge_states.items()
-                    },
-                    "recent_sessions": len(
-                        digital_twin.session_history.get(student_id, [])
-                    ),
+                    "personalization_vector": asdict(personalization_vector) if personalization_vector else {},
+                    "knowledge_states": {concept: state.mastery_level for concept, state in knowledge_states.items()},
+                    "recent_sessions": len(digital_twin.session_history.get(student_id, [])),
                 }
 
                 return profile
@@ -447,9 +428,7 @@ class PersonalizedTutorEngine:
         learning_style = student_profile["learning_style"]
 
         # Get student's historical strategy effectiveness
-        historical_effectiveness = self.student_adaptations.get(student_id, {}).get(
-            "strategy_effectiveness", {}
-        )
+        historical_effectiveness = self.student_adaptations.get(student_id, {}).get("strategy_effectiveness", {})
 
         # Score each strategy
         strategy_scores = {}
@@ -462,10 +441,7 @@ class PersonalizedTutorEngine:
                 score += 0.3
 
             # Learning style match
-            if (
-                learning_style in strategy.target_learning_styles
-                or "balanced" in strategy.target_learning_styles
-            ):
+            if learning_style in strategy.target_learning_styles or "balanced" in strategy.target_learning_styles:
                 score += 0.25
 
             # Base effectiveness
@@ -609,9 +585,7 @@ class PersonalizedTutorEngine:
                 greeting += f" {interest_connections[interest]}"
 
         # Preview session objectives
-        concepts_preview = ", ".join(
-            [obj.concept.replace("_", " ") for obj in objectives[:3]]
-        )
+        concepts_preview = ", ".join([obj.concept.replace("_", " ") for obj in objectives[:3]])
         preview = f"Today we'll work on: {concepts_preview}."
 
         interaction = {
@@ -692,16 +666,12 @@ class PersonalizedTutorEngine:
                 "engagement_score": session.engagement_score,
                 "learning_progress": session.learning_progress,
                 "concepts_covered": len(session.concepts_covered),
-                "adaptations_made": session.adaptations_made[-5:]
-                if session.adaptations_made
-                else [],
+                "adaptations_made": session.adaptations_made[-5:] if session.adaptations_made else [],
             },
             "analysis": analysis,
         }
 
-    async def _analyze_student_response(
-        self, session: TutoringSession, response: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _analyze_student_response(self, session: TutoringSession, response: dict[str, Any]) -> dict[str, Any]:
         """Analyze student response for understanding and engagement."""
         content = response["content"].lower()
 
@@ -711,9 +681,7 @@ class PersonalizedTutorEngine:
             "engagement_indicators": [],
             "understanding_level": "partial",
             "emotional_state": "neutral",
-            "response_time": response.get("metadata", {}).get(
-                "response_time_seconds", 30
-            ),
+            "response_time": response.get("metadata", {}).get("response_time_seconds", 30),
             "effort_indicators": [],
         }
 
@@ -760,9 +728,7 @@ class PersonalizedTutorEngine:
 
         return analysis
 
-    def _update_engagement_score(
-        self, session: TutoringSession, analysis: dict[str, Any]
-    ) -> float:
+    def _update_engagement_score(self, session: TutoringSession, analysis: dict[str, Any]) -> float:
         """Update engagement score based on response analysis."""
         current_engagement = session.engagement_score
         learning_rate = 0.2
@@ -802,9 +768,7 @@ class PersonalizedTutorEngine:
         # Keep within bounds
         return max(0.0, min(1.0, new_engagement))
 
-    def _update_learning_progress(
-        self, session: TutoringSession, analysis: dict[str, Any]
-    ) -> float:
+    def _update_learning_progress(self, session: TutoringSession, analysis: dict[str, Any]) -> float:
         """Update learning progress based on response analysis."""
         current_progress = session.learning_progress
 
@@ -832,9 +796,7 @@ class PersonalizedTutorEngine:
 
         return max(0.0, min(1.0, new_progress))
 
-    async def _check_adaptations_needed(
-        self, session: TutoringSession, analysis: dict[str, Any]
-    ) -> list[str]:
+    async def _check_adaptations_needed(self, session: TutoringSession, analysis: dict[str, Any]) -> list[str]:
         """Check if adaptations are needed based on student performance."""
         adaptations = []
 
@@ -843,25 +805,18 @@ class PersonalizedTutorEngine:
             adaptations.append("increase_engagement")
 
         # Frustration detection
-        if (
-            analysis.get("correctness", 0.5) < 0.3
-            and analysis.get("confidence", 0.5) < 0.4
-        ):
+        if analysis.get("correctness", 0.5) < 0.3 and analysis.get("confidence", 0.5) < 0.4:
             adaptations.append("reduce_difficulty")
 
         # Boredom detection (high correctness, low engagement)
         if (
             analysis.get("correctness", 0.5) > 0.8
-            and session.engagement_score
-            < self.adaptation_thresholds["boredom_detected"]
+            and session.engagement_score < self.adaptation_thresholds["boredom_detected"]
         ):
             adaptations.append("increase_challenge")
 
         # Confusion detection
-        if (
-            "not sure" in analysis.get("effort_indicators", [])
-            and analysis.get("response_time", 30) > 60
-        ):
+        if "not sure" in analysis.get("effort_indicators", []) and analysis.get("response_time", 30) > 60:
             adaptations.append("provide_clarification")
 
         # Mastery achieved
@@ -870,9 +825,7 @@ class PersonalizedTutorEngine:
 
         return adaptations
 
-    async def _apply_adaptations(
-        self, session: TutoringSession, adaptations: list[str]
-    ) -> None:
+    async def _apply_adaptations(self, session: TutoringSession, adaptations: list[str]) -> None:
         """Apply adaptations to the tutoring session."""
         for adaptation in adaptations:
             if adaptation == "increase_engagement":
@@ -895,13 +848,9 @@ class PersonalizedTutorEngine:
                 session.adaptations_made.append("Advanced to next concept")
                 # Would move to next learning objective
 
-        logger.info(
-            f"Applied {len(adaptations)} adaptations to session {session.session_id}"
-        )
+        logger.info(f"Applied {len(adaptations)} adaptations to session {session.session_id}")
 
-    async def _generate_next_interaction(
-        self, session: TutoringSession, analysis: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _generate_next_interaction(self, session: TutoringSession, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate the next tutoring interaction."""
         # Get tutoring strategy
         strategy = self.tutoring_strategies[session.tutor_engine_id]
@@ -910,9 +859,7 @@ class PersonalizedTutorEngine:
         interaction_type = self._select_interaction_type(strategy, analysis, session)
 
         # Generate content based on interaction type
-        content = await self._generate_interaction_content(
-            interaction_type, session, analysis, strategy
-        )
+        content = await self._generate_interaction_content(interaction_type, session, analysis, strategy)
 
         interaction = {
             "interaction_id": f"int_{int(datetime.now().timestamp())}",
@@ -921,9 +868,7 @@ class PersonalizedTutorEngine:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "metadata": {
                 "strategy": strategy.strategy_id,
-                "adaptation_context": session.adaptations_made[-3:]
-                if session.adaptations_made
-                else [],
+                "adaptation_context": session.adaptations_made[-3:] if session.adaptations_made else [],
                 "engagement_level": session.engagement_score,
                 "learning_progress": session.learning_progress,
             },
@@ -991,9 +936,7 @@ class PersonalizedTutorEngine:
             return await self._generate_hint_content(session, analysis)
         return "Let's continue with our learning!"
 
-    async def _generate_question_content(
-        self, session: TutoringSession, strategy: TutoringStrategy
-    ) -> str:
+    async def _generate_question_content(self, session: TutoringSession, strategy: TutoringStrategy) -> str:
         """Generate a question based on current learning objectives."""
         # Get current learning focus
         if session.concepts_target:
@@ -1051,9 +994,7 @@ class PersonalizedTutorEngine:
                 "multiplication": "Multiplication is like repeated addition. If you have 3 groups of 4 items, that's 4 + 4 + 4 = 12, or 3 × 4 = 12!",
             }
 
-            explanation = explanations.get(
-                concept, f"Let me explain {concept.replace('_', ' ')} in a simple way."
-            )
+            explanation = explanations.get(concept, f"Let me explain {concept.replace('_', ' ')} in a simple way.")
         else:
             explanation = "Let me help clarify this concept for you."
 
@@ -1065,9 +1006,7 @@ class PersonalizedTutorEngine:
 
         return explanation
 
-    async def _generate_encouragement_content(
-        self, session: TutoringSession, analysis: dict[str, Any]
-    ) -> str:
+    async def _generate_encouragement_content(self, session: TutoringSession, analysis: dict[str, Any]) -> str:
         """Generate encouraging content."""
         correctness = analysis.get("correctness", 0.5)
 
@@ -1095,9 +1034,7 @@ class PersonalizedTutorEngine:
 
         return random.choice(encouragements)
 
-    async def _generate_hint_content(
-        self, session: TutoringSession, analysis: dict[str, Any]
-    ) -> str:
+    async def _generate_hint_content(self, session: TutoringSession, analysis: dict[str, Any]) -> str:
         """Generate helpful hint content."""
         hints = [
             "Here's a hint: try breaking the problem into smaller parts.",
@@ -1109,9 +1046,7 @@ class PersonalizedTutorEngine:
 
         return random.choice(hints)
 
-    async def end_tutoring_session(
-        self, session_id: str, session_summary: str = ""
-    ) -> dict[str, Any]:
+    async def end_tutoring_session(self, session_id: str, session_summary: str = "") -> dict[str, Any]:
         """End tutoring session and generate summary."""
         if session_id not in self.active_sessions:
             msg = f"Session {session_id} not found"
@@ -1136,9 +1071,7 @@ class PersonalizedTutorEngine:
             session.session_outcome = "limited_progress"
 
         # Generate recommendations for next session
-        session.next_session_recommendations = (
-            await self._generate_next_session_recommendations(session)
-        )
+        session.next_session_recommendations = await self._generate_next_session_recommendations(session)
 
         # Update student adaptations
         await self._update_student_adaptations(session)
@@ -1187,33 +1120,23 @@ class PersonalizedTutorEngine:
                 "end_time": session.end_time,
                 "duration_minutes": duration_minutes,
                 "concepts_covered": session.concepts_covered,
-                "questions_asked": len(
-                    [i for i in session.interactions if i["type"] == "question"]
-                ),
-                "questions_correct": int(
-                    session.learning_progress * len(session.student_responses)
-                ),
+                "questions_asked": len([i for i in session.interactions if i["type"] == "question"]),
+                "questions_correct": int(session.learning_progress * len(session.student_responses)),
                 "engagement_score": session.engagement_score,
                 "difficulty_level": 0.5,  # Would calculate based on actual problems
                 "adaptations_made": session.adaptations_made,
             }
 
-            await parent_progress_tracker.update_student_progress(
-                session.student_id, session_data
-            )
+            await parent_progress_tracker.update_student_progress(session.student_id, session_data)
 
         except Exception as e:
             logger.warning(f"Could not update parent tracker: {e}")
 
-        logger.info(
-            f"Completed tutoring session {session_id} - Outcome: {session.session_outcome}"
-        )
+        logger.info(f"Completed tutoring session {session_id} - Outcome: {session.session_outcome}")
 
         return summary
 
-    async def _generate_next_session_recommendations(
-        self, session: TutoringSession
-    ) -> list[str]:
+    async def _generate_next_session_recommendations(self, session: TutoringSession) -> list[str]:
         """Generate recommendations for the next tutoring session."""
         recommendations = []
 
@@ -1271,9 +1194,7 @@ class PersonalizedTutorEngine:
 
         # Keep only recent effectiveness scores
         if len(adaptations["strategy_effectiveness"][strategy_id]) > 10:
-            adaptations["strategy_effectiveness"][strategy_id] = adaptations[
-                "strategy_effectiveness"
-            ][strategy_id][-5:]
+            adaptations["strategy_effectiveness"][strategy_id] = adaptations["strategy_effectiveness"][strategy_id][-5:]
 
         # Update preferred interaction types
         for interaction in session.interactions:
@@ -1299,23 +1220,20 @@ class PersonalizedTutorEngine:
             strategy_stats[strategy_id] = {
                 "name": strategy.name,
                 "sessions_used": len(effectiveness_scores),
-                "avg_effectiveness": np.mean(effectiveness_scores)
-                if effectiveness_scores
-                else 0,
+                "avg_effectiveness": np.mean(effectiveness_scores) if effectiveness_scores else 0,
                 "base_effectiveness": strategy.effectiveness_score,
             }
 
         # Student adaptation statistics
         adaptation_stats = {
             "total_students_with_adaptations": len(self.student_adaptations),
-            "avg_strategies_per_student": np.mean(
-                [
-                    len(adaptations["strategy_effectiveness"])
-                    for adaptations in self.student_adaptations.values()
-                ]
-            )
-            if self.student_adaptations
-            else 0,
+            "avg_strategies_per_student": (
+                np.mean(
+                    [len(adaptations["strategy_effectiveness"]) for adaptations in self.student_adaptations.values()]
+                )
+                if self.student_adaptations
+                else 0
+            ),
         }
 
         analytics = {

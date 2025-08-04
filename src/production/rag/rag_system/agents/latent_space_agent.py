@@ -1,8 +1,6 @@
 from typing import Any
 
-from some_embedding_library import (
-    get_embedding,  # Replace with actual embedding library
-)
+from some_embedding_library import get_embedding  # Replace with actual embedding library
 from some_llm_library import LLMModel  # Replace with actual LLM library
 
 from AIVillage.src.production.rag.rag_system.core.agent_interface import AgentInterface
@@ -38,9 +36,7 @@ class LatentSpaceAgent(AgentInterface):
     async def get_embedding(self, text: str) -> list[float]:
         return get_embedding(text)  # Use your preferred embedding method
 
-    async def rerank(
-        self, query: str, results: list[dict[str, Any]], k: int
-    ) -> list[dict[str, Any]]:
+    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
         for result in results:
             result["score"] = await self._calculate_similarity(query, result["content"])
 
@@ -65,9 +61,7 @@ class LatentSpaceAgent(AgentInterface):
         # This could use cosine similarity between embeddings, for example
         embedding1 = await self.get_embedding(text1)
         embedding2 = await self.get_embedding(text2)
-        return cosine_similarity(
-            embedding1, embedding2
-        )  # Implement cosine_similarity function
+        return cosine_similarity(embedding1, embedding2)  # Implement cosine_similarity function
 
 
 def cosine_similarity(v1: list[float], v2: list[float]) -> float:

@@ -36,7 +36,7 @@ class DummyReader:
         return result
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_send_message_tracks_retries() -> None:
     node = DummyNode()
     protocol = MessageProtocol(node)
@@ -53,7 +53,7 @@ async def test_send_message_tracks_retries() -> None:
     assert protocol.stats["messages_sent"] == 1
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_read_message_rejects_large() -> None:
     node = DummyNode()
     protocol = MessageProtocol(node)
@@ -64,15 +64,13 @@ async def test_read_message_rejects_large() -> None:
     assert await protocol.read_message(reader) is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_message_delivery_rate_and_latency() -> None:
     server_node = DummyNode()
     server_protocol = MessageProtocol(server_node)
     await server_protocol.start_protocol()
 
-    async def handle_client(
-        reader: asyncio.StreamReader, writer: asyncio.StreamWriter
-    ) -> None:
+    async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         while True:
             data = await server_protocol.read_message(reader)
             if data is None:

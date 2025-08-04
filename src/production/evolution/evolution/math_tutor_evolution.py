@@ -2,23 +2,19 @@
 Sprint R-4+AF1: Model Merging and Evolution - Task B.1.
 """
 
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
 import gc
 import hashlib
 import json
 import logging
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import torch
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-)
 import wandb
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 logger = logging.getLogger(__name__)
 
@@ -169,9 +165,7 @@ class MathTutorEvolution:
 
             try:
                 # Load and quantize model
-                individual = await self.create_individual_from_base(
-                    model_info, generation=0
-                )
+                individual = await self.create_individual_from_base(model_info, generation=0)
 
                 if individual:
                     population_individuals.append(individual)
@@ -192,9 +186,7 @@ class MathTutorEvolution:
                     )
 
             except Exception as e:
-                logger.exception(
-                    f"Failed to create individual from {model_info['name']}: {e}"
-                )
+                logger.exception(f"Failed to create individual from {model_info['name']}: {e}")
                 continue
 
         # Fill remaining spots with variations if needed
@@ -214,15 +206,9 @@ class MathTutorEvolution:
         wandb.log(
             {
                 "population/size": len(self.population),
-                "population/avg_fitness": np.mean(
-                    [ind.fitness_score for ind in self.population]
-                ),
-                "population/best_fitness": max(
-                    [ind.fitness_score for ind in self.population]
-                ),
-                "population/total_size_mb": sum(
-                    [ind.model_size_mb for ind in self.population]
-                ),
+                "population/avg_fitness": np.mean([ind.fitness_score for ind in self.population]),
+                "population/best_fitness": max([ind.fitness_score for ind in self.population]),
+                "population/total_size_mb": sum([ind.model_size_mb for ind in self.population]),
                 "generation": 0,
             }
         )
@@ -231,9 +217,7 @@ class MathTutorEvolution:
 
         return self.population
 
-    async def create_individual_from_base(
-        self, model_info: dict[str, Any], generation: int
-    ) -> ModelIndividual | None:
+    async def create_individual_from_base(self, model_info: dict[str, Any], generation: int) -> ModelIndividual | None:
         """Create individual from base model with quantization and evaluation."""
         model_name = model_info["name"]
 
@@ -256,9 +240,7 @@ class MathTutorEvolution:
             )
 
             # Load tokenizer
-            tokenizer = AutoTokenizer.from_pretrained(
-                model_name, trust_remote_code=True
-            )
+            tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
             if tokenizer.pad_token is None:
                 tokenizer.pad_token = tokenizer.eos_token
 
@@ -267,14 +249,12 @@ class MathTutorEvolution:
             model_size_mb = param_count * 4 / (1024 * 1024)  # Approximate size in MB
 
             # Quick fitness evaluation
-            fitness_score = await self.quick_fitness_evaluation(
-                model, tokenizer, model_info
-            )
+            fitness_score = await self.quick_fitness_evaluation(model, tokenizer, model_info)
 
             # Create individual
-            individual_id = hashlib.md5(
-                f"{model_name}_{generation}_{datetime.now().isoformat()}".encode()
-            ).hexdigest()[:12]
+            individual_id = hashlib.md5(f"{model_name}_{generation}_{datetime.now().isoformat()}".encode()).hexdigest()[
+                :12
+            ]
 
             individual = ModelIndividual(
                 individual_id=individual_id,
@@ -285,9 +265,7 @@ class MathTutorEvolution:
                 fitness_score=fitness_score,
                 performance_metrics={
                     "base_reasoning": fitness_score,
-                    "model_size_penalty": max(
-                        0, 1.0 - (model_size_mb / self.config.max_model_size_mb)
-                    ),
+                    "model_size_penalty": max(0, 1.0 - (model_size_mb / self.config.max_model_size_mb)),
                 },
                 model_size_mb=model_size_mb,
                 parameters_count=param_count,
@@ -305,9 +283,7 @@ class MathTutorEvolution:
             logger.exception(f"Failed to create individual from {model_name}: {e}")
             return None
 
-    async def quick_fitness_evaluation(
-        self, model, tokenizer, model_info: dict[str, Any]
-    ) -> float:
+    async def quick_fitness_evaluation(self, model, tokenizer, model_info: dict[str, Any]) -> float:
         """Quick fitness evaluation for initial population."""
         try:
             # Simple math problems for quick evaluation
@@ -323,14 +299,10 @@ class MathTutorEvolution:
 
             for problem in test_problems:
                 # Create tutoring prompt
-                prompt = (
-                    f"You are a helpful math tutor. Explain step by step: {problem}"
-                )
+                prompt = f"You are a helpful math tutor. Explain step by step: {problem}"
 
                 # Tokenize
-                inputs = tokenizer(
-                    prompt, return_tensors="pt", truncation=True, max_length=512
-                )
+                inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
                 inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
                 # Generate response
@@ -344,18 +316,14 @@ class MathTutorEvolution:
                     )
 
                 # Decode response
-                response = tokenizer.decode(
-                    outputs[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True
-                )
+                response = tokenizer.decode(outputs[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True)
 
                 # Simple scoring heuristics
                 if self.evaluate_math_response(problem, response):
                     correct_responses += 1
 
             # Base fitness score
-            base_score = (
-                correct_responses / total_problems if total_problems > 0 else 0.0
-            )
+            base_score = correct_responses / total_problems if total_problems > 0 else 0.0
 
             # Adjust based on model strengths
             strength_bonus = 0.0
@@ -378,9 +346,7 @@ class MathTutorEvolution:
         response_lower = response.lower()
 
         # Check for basic math indicators
-        if any(
-            indicator in problem.lower() for indicator in ["what is", "calculate", "+"]
-        ):
+        if any(indicator in problem.lower() for indicator in ["what is", "calculate", "+"]):
             # Look for numerical answers
             if any(char.isdigit() for char in response):
                 return True
@@ -399,9 +365,7 @@ class MathTutorEvolution:
         # Check response length (not too short, not too long)
         return 10 <= len(response.split()) <= 100
 
-    async def create_model_variation(
-        self, base_individual: ModelIndividual
-    ) -> ModelIndividual | None:
+    async def create_model_variation(self, base_individual: ModelIndividual) -> ModelIndividual | None:
         """Create a variation of an existing individual through parameter perturbation."""
         try:
             # Create variation ID
@@ -421,8 +385,7 @@ class MathTutorEvolution:
                     model_path=None,
                     lineage=[*base_individual.lineage, "variation"],
                     generation=base_individual.generation,
-                    fitness_score=base_individual.fitness_score
-                    * (0.9 + np.random.random() * 0.2),  # Add noise
+                    fitness_score=base_individual.fitness_score * (0.9 + np.random.random() * 0.2),  # Add noise
                     performance_metrics=base_individual.performance_metrics.copy(),
                     model_size_mb=base_individual.model_size_mb,
                     parameters_count=base_individual.parameters_count,
@@ -455,9 +418,7 @@ class MathTutorEvolution:
         offspring = []
 
         # Elitism - keep best individuals
-        sorted_population = sorted(
-            self.population, key=lambda x: x.fitness_score, reverse=True
-        )
+        sorted_population = sorted(self.population, key=lambda x: x.fitness_score, reverse=True)
         for i in range(self.config.elitism_count):
             if i < len(sorted_population):
                 elite = sorted_population[i]
@@ -487,10 +448,7 @@ class MathTutorEvolution:
 
         # Update best individual
         current_best = max(self.population, key=lambda x: x.fitness_score)
-        if (
-            self.best_individual is None
-            or current_best.fitness_score > self.best_individual.fitness_score
-        ):
+        if self.best_individual is None or current_best.fitness_score > self.best_individual.fitness_score:
             self.best_individual = current_best
 
         # Log generation results
@@ -510,9 +468,7 @@ class MathTutorEvolution:
 
         self.convergence_history.append(best_fitness)
 
-        logger.info(
-            f"Generation {generation} complete - Avg fitness: {avg_fitness:.3f}, Best: {best_fitness:.3f}"
-        )
+        logger.info(f"Generation {generation} complete - Avg fitness: {avg_fitness:.3f}, Best: {best_fitness:.3f}")
 
         return self.population
 
@@ -547,17 +503,13 @@ class MathTutorEvolution:
                     self.fitness_history[individual.individual_id] = fitness_score
 
             except Exception as e:
-                logger.exception(
-                    f"Error evaluating fitness for {individual.individual_id}: {e}"
-                )
+                logger.exception(f"Error evaluating fitness for {individual.individual_id}: {e}")
                 individual.fitness_score = 0.1  # Low fitness for failed evaluation
 
     def select_parents(self) -> list[ModelIndividual]:
         """Select parents for reproduction using tournament selection."""
         # Sort population by fitness
-        sorted_population = sorted(
-            self.population, key=lambda x: x.fitness_score, reverse=True
-        )
+        sorted_population = sorted(self.population, key=lambda x: x.fitness_score, reverse=True)
 
         # Select top performers with some randomness
         selection_size = int(len(sorted_population) * self.config.selection_pressure)
@@ -567,9 +519,7 @@ class MathTutorEvolution:
         remaining = sorted_population[selection_size:]
         if remaining:
             random_additions = min(2, len(remaining))
-            selected_parents.extend(
-                np.random.choice(remaining, random_additions, replace=False)
-            )
+            selected_parents.extend(np.random.choice(remaining, random_additions, replace=False))
 
         return selected_parents
 
@@ -584,10 +534,7 @@ class MathTutorEvolution:
             merge_operator = MergeOperator()
 
             # Perform model merging
-            if (
-                parent1.individual_id in self.loaded_models
-                and parent2.individual_id in self.loaded_models
-            ):
+            if parent1.individual_id in self.loaded_models and parent2.individual_id in self.loaded_models:
                 parent1_model = self.loaded_models[parent1.individual_id]
                 parent2_model = self.loaded_models[parent2.individual_id]
 
@@ -596,9 +543,7 @@ class MathTutorEvolution:
                 strategy = np.random.choice(merge_strategies)
 
                 # Perform merge
-                merged_model = await merge_operator.merge_models(
-                    parent1_model, parent2_model, strategy, generation
-                )
+                merged_model = await merge_operator.merge_models(parent1_model, parent2_model, strategy, generation)
 
                 if merged_model:
                     # Create offspring individual
@@ -614,12 +559,8 @@ class MathTutorEvolution:
                         generation=generation,
                         fitness_score=0.0,  # Will be evaluated
                         performance_metrics={},
-                        model_size_mb=(parent1.model_size_mb + parent2.model_size_mb)
-                        / 2,
-                        parameters_count=(
-                            parent1.parameters_count + parent2.parameters_count
-                        )
-                        // 2,
+                        model_size_mb=(parent1.model_size_mb + parent2.model_size_mb) / 2,
+                        parameters_count=(parent1.parameters_count + parent2.parameters_count) // 2,
                         quantization_config=parent1.quantization_config,
                         merge_strategy=strategy,
                         created_at=datetime.now(timezone.utc).isoformat(),
@@ -628,9 +569,7 @@ class MathTutorEvolution:
                     # Cache merged model
                     self.loaded_models[offspring_id] = merged_model
                     # Use parent1's tokenizer for now
-                    self.tokenizers[offspring_id] = self.tokenizers[
-                        parent1.individual_id
-                    ]
+                    self.tokenizers[offspring_id] = self.tokenizers[parent1.individual_id]
 
                     return offspring
 
@@ -639,9 +578,7 @@ class MathTutorEvolution:
 
         return None
 
-    async def mutate(
-        self, parent: ModelIndividual, generation: int
-    ) -> ModelIndividual | None:
+    async def mutate(self, parent: ModelIndividual, generation: int) -> ModelIndividual | None:
         """Create offspring through mutation."""
         if np.random.random() > self.config.mutation_rate:
             return None
@@ -657,9 +594,7 @@ class MathTutorEvolution:
                 # Add some random fitness variation (simulating mutation effect)
                 mutation_strength = 0.1
                 fitness_delta = np.random.normal(0, mutation_strength)
-                mutated.fitness_score = max(
-                    0.0, min(1.0, parent.fitness_score + fitness_delta)
-                )
+                mutated.fitness_score = max(0.0, min(1.0, parent.fitness_score + fitness_delta))
 
                 return mutated
 
@@ -670,9 +605,7 @@ class MathTutorEvolution:
 
     async def run_evolution(self) -> ModelIndividual:
         """Run complete evolution process."""
-        logger.info(
-            f"Starting evolution with {self.config.max_generations} generations"
-        )
+        logger.info(f"Starting evolution with {self.config.max_generations} generations")
 
         # Initialize population
         await self.initialize_population()
@@ -688,11 +621,7 @@ class MathTutorEvolution:
                 self.population = await self.evolve_generation(generation)
 
                 # Check convergence
-                if (
-                    self.best_individual
-                    and self.best_individual.fitness_score
-                    >= self.config.fitness_threshold
-                ):
+                if self.best_individual and self.best_individual.fitness_score >= self.config.fitness_threshold:
                     logger.info(
                         f"Evolution converged at generation {generation} with fitness {self.best_individual.fitness_score:.3f}"
                     )
@@ -712,8 +641,7 @@ class MathTutorEvolution:
                     "evolution_complete": True,
                     "final_best_fitness": self.best_individual.fitness_score,
                     "final_generation": self.best_individual.generation,
-                    "convergence_achieved": self.best_individual.fitness_score
-                    >= self.config.fitness_threshold,
+                    "convergence_achieved": self.best_individual.fitness_score >= self.config.fitness_threshold,
                     "total_generations": len(self.convergence_history),
                 }
             )
@@ -737,14 +665,11 @@ class MathTutorEvolution:
 
         individuals_to_remove = []
 
-        for individual_id, individual in [
-            (ind.individual_id, ind) for ind in self.population
-        ]:
+        for individual_id, individual in [(ind.individual_id, ind) for ind in self.population]:
             if (
                 individual.generation < min_generation
                 and individual != self.best_individual
-                and individual.fitness_score
-                < np.percentile([ind.fitness_score for ind in self.population], 75)
+                and individual.fitness_score < np.percentile([ind.fitness_score for ind in self.population], 75)
             ):
                 individuals_to_remove.append(individual_id)
 
@@ -761,9 +686,7 @@ class MathTutorEvolution:
             torch.cuda.empty_cache()
 
         if individuals_to_remove:
-            logger.info(
-                f"Cleaned up {len(individuals_to_remove)} old models from memory"
-            )
+            logger.info(f"Cleaned up {len(individuals_to_remove)} old models from memory")
 
     async def save_champion_model(self, champion: ModelIndividual) -> None:
         """Save the champion model for deployment."""
@@ -788,9 +711,7 @@ class MathTutorEvolution:
                     "individual_data": asdict(champion),
                     "evolution_config": asdict(self.config),
                     "convergence_history": self.convergence_history,
-                    "fitness_history": self.fitness_history.get(
-                        champion.individual_id, []
-                    ),
+                    "fitness_history": self.fitness_history.get(champion.individual_id, []),
                 }
 
                 with open(champion_path / "evolution_metadata.json", "w") as f:
@@ -826,51 +747,29 @@ class MathTutorEvolution:
             "evolution_config": asdict(self.config),
             "population_size": len(self.population),
             "generations_completed": len(self.convergence_history),
-            "best_individual": asdict(self.best_individual)
-            if self.best_individual
-            else None,
+            "best_individual": asdict(self.best_individual) if self.best_individual else None,
             "convergence_history": self.convergence_history,
             "fitness_statistics": {
-                "current_avg": np.mean([ind.fitness_score for ind in self.population])
-                if self.population
-                else 0,
-                "current_max": max([ind.fitness_score for ind in self.population])
-                if self.population
-                else 0,
-                "current_min": min([ind.fitness_score for ind in self.population])
-                if self.population
-                else 0,
+                "current_avg": np.mean([ind.fitness_score for ind in self.population]) if self.population else 0,
+                "current_max": max([ind.fitness_score for ind in self.population]) if self.population else 0,
+                "current_min": min([ind.fitness_score for ind in self.population]) if self.population else 0,
                 "improvement": (
-                    self.convergence_history[-1] - self.convergence_history[0]
-                )
-                if len(self.convergence_history) > 1
-                else 0,
+                    (self.convergence_history[-1] - self.convergence_history[0])
+                    if len(self.convergence_history) > 1
+                    else 0
+                ),
             },
             "population_diversity": {
-                "unique_lineages": len(
-                    {tuple(ind.lineage) for ind in self.population}
-                ),
-                "merge_strategies_used": list(
-                    {
-                        ind.merge_strategy
-                        for ind in self.population
-                        if ind.merge_strategy
-                    }
-                ),
+                "unique_lineages": len({tuple(ind.lineage) for ind in self.population}),
+                "merge_strategies_used": list({ind.merge_strategy for ind in self.population if ind.merge_strategy}),
                 "generation_distribution": {
                     gen: len([ind for ind in self.population if ind.generation == gen])
                     for gen in {ind.generation for ind in self.population}
                 },
             },
             "model_statistics": {
-                "avg_model_size_mb": np.mean(
-                    [ind.model_size_mb for ind in self.population]
-                )
-                if self.population
-                else 0,
-                "total_parameters": sum(
-                    [ind.parameters_count for ind in self.population]
-                ),
+                "avg_model_size_mb": np.mean([ind.model_size_mb for ind in self.population]) if self.population else 0,
+                "total_parameters": sum([ind.parameters_count for ind in self.population]),
                 "models_cached": len(self.loaded_models),
             },
         }

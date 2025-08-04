@@ -1,5 +1,5 @@
-from datetime import datetime
 import logging
+from datetime import datetime
 from typing import Any
 
 import numpy as np
@@ -45,9 +45,7 @@ class EvaluationFramework:
 
     def record_metric(self, name: str, value: float) -> None:
         if name not in self.metrics:
-            logger.warning(
-                f"Metric '{name}' not found. Adding it with a default description."
-            )
+            logger.warning(f"Metric '{name}' not found. Adding it with a default description.")
             self.add_metric(name, "No description provided")
         self.metrics[name].add_value(value)
         self.advanced_analytics.record_metric(name, value)
@@ -85,18 +83,14 @@ class EvaluationFramework:
 
     def generate_visualizations(self) -> dict[str, bytes]:
         visualizations = {}
-        visualizations["metrics_over_time"] = (
-            self.advanced_analytics.visualize_metrics()
-        )
+        visualizations["metrics_over_time"] = self.advanced_analytics.visualize_metrics()
 
         # Generate correlation heatmap
         metric_values = {name: metric.values for name, metric in self.metrics.items()}
         df = pd.DataFrame(metric_values)
         correlation_matrix = df.corr()
-        visualizations["correlation_heatmap"] = (
-            self.advanced_analytics.generate_heatmap(
-                correlation_matrix.values.tolist(), correlation_matrix.index.tolist()
-            )
+        visualizations["correlation_heatmap"] = self.advanced_analytics.generate_heatmap(
+            correlation_matrix.values.tolist(), correlation_matrix.index.tolist()
         )
 
         return visualizations
@@ -106,11 +100,7 @@ class EvaluationFramework:
         visualizations = self.generate_visualizations()
 
         overall_performance = np.mean(
-            [
-                data["latest_value"]
-                for data in report.values()
-                if data["latest_value"] is not None
-            ]
+            [data["latest_value"] for data in report.values() if data["latest_value"] is not None]
         )
 
         return {

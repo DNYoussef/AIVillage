@@ -1,20 +1,15 @@
 """Resource Constraint Manager for Evolution Tasks."""
 
 import asyncio
-from collections.abc import Callable
 import contextlib
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
 import time
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
-from .device_profiler import (
-    DeviceProfiler,
-    DeviceType,
-    ResourceSnapshot,
-    ThermalState,
-)
+from .device_profiler import DeviceProfiler, DeviceType, ResourceSnapshot, ThermalState
 
 logger = logging.getLogger(__name__)
 
@@ -151,9 +146,7 @@ class ConstraintManager:
 
         # Violation callbacks
         self.violation_callbacks: list[Callable[[str, ConstraintViolation], None]] = []
-        self.enforcement_callbacks: list[
-            Callable[[str, str], None]
-        ] = []  # task_id, action
+        self.enforcement_callbacks: list[Callable[[str, str], None]] = []  # task_id, action
 
         # Statistics
         self.stats = {
@@ -327,9 +320,7 @@ class ConstraintManager:
             return
 
         for task_id, constraints in self.active_tasks.items():
-            violations = await self._check_task_constraints(
-                task_id, constraints, current_snapshot
-            )
+            violations = await self._check_task_constraints(task_id, constraints, current_snapshot)
 
             if violations:
                 self.task_violations[task_id] = violations
@@ -392,10 +383,7 @@ class ConstraintManager:
             )
 
         # Battery constraints
-        if (
-            constraints.min_battery_percent is not None
-            and snapshot.battery_percent is not None
-        ):
+        if constraints.min_battery_percent is not None and snapshot.battery_percent is not None:
             if snapshot.battery_percent < constraints.min_battery_percent:
                 violations.append(
                     ConstraintViolation(
@@ -421,10 +409,7 @@ class ConstraintManager:
                 )
 
         # Thermal constraints
-        if (
-            constraints.max_temperature_celsius is not None
-            and snapshot.cpu_temp is not None
-        ):
+        if constraints.max_temperature_celsius is not None and snapshot.cpu_temp is not None:
             if snapshot.cpu_temp > constraints.max_temperature_celsius:
                 violations.append(
                     ConstraintViolation(
@@ -490,16 +475,10 @@ class ConstraintManager:
 
         return violations
 
-    async def _handle_violations(
-        self, task_id: str, violations: list[ConstraintViolation]
-    ) -> None:
+    async def _handle_violations(self, task_id: str, violations: list[ConstraintViolation]) -> None:
         """Handle constraint violations."""
-        critical_violations = [
-            v for v in violations if v.severity == ConstraintSeverity.CRITICAL
-        ]
-        high_violations = [
-            v for v in violations if v.severity == ConstraintSeverity.HIGH
-        ]
+        critical_violations = [v for v in violations if v.severity == ConstraintSeverity.CRITICAL]
+        high_violations = [v for v in violations if v.severity == ConstraintSeverity.HIGH]
 
         self.stats["violations_detected"] += len(violations)
 
@@ -595,9 +574,7 @@ class ConstraintManager:
 
         # Check memory availability
         available_memory_mb = current_snapshot.memory_available / (1024 * 1024)
-        if (
-            available_memory_mb < constraints.max_memory_mb * 0.5
-        ):  # Need at least 50% of requested memory
+        if available_memory_mb < constraints.max_memory_mb * 0.5:  # Need at least 50% of requested memory
             return False
 
         # Check CPU availability
@@ -627,9 +604,7 @@ class ConstraintManager:
         constraints = self.active_tasks[task_id]
         return self._check_resource_availability(constraints)
 
-    def get_constraint_template(
-        self, evolution_type: str
-    ) -> ResourceConstraints | None:
+    def get_constraint_template(self, evolution_type: str) -> ResourceConstraints | None:
         """Get constraint template for evolution type."""
         return self.constraint_templates.get(evolution_type)
 
@@ -639,9 +614,7 @@ class ConstraintManager:
             self.active_tasks[task_id] = new_constraints
             logger.info(f"Updated constraints for task {task_id}")
 
-    def register_violation_callback(
-        self, callback: Callable[[str, ConstraintViolation], None]
-    ) -> None:
+    def register_violation_callback(self, callback: Callable[[str, ConstraintViolation], None]) -> None:
         """Register violation callback."""
         self.violation_callbacks.append(callback)
 

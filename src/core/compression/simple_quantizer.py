@@ -14,7 +14,6 @@ class CompressionError(Exception):
     """Raised when compression fails or doesn't meet requirements."""
 
 
-
 class SimpleQuantizer:
     """Quantize PyTorch models for 2GB mobile devices
     Target: 4x compression with <10% accuracy loss.
@@ -55,9 +54,7 @@ class SimpleQuantizer:
             )
         return compressed_bytes
 
-    def _load_model(
-        self, model_path: str | Path | torch.nn.Module
-    ) -> torch.nn.Module:
+    def _load_model(self, model_path: str | Path | torch.nn.Module) -> torch.nn.Module:
         if isinstance(model_path, torch.nn.Module):
             return model_path
         model_path = Path(model_path)
@@ -68,9 +65,7 @@ class SimpleQuantizer:
             model = torch.load(model_path, map_location="cpu", weights_only=False)
             if isinstance(model, dict):
                 msg = "Model file contains state_dict only. Please provide complete model or model instance."
-                raise CompressionError(
-                    msg
-                )
+                raise CompressionError(msg)
             return model
         except Exception as e:
             msg = f"Failed to load model: {e}"

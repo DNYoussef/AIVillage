@@ -100,9 +100,7 @@ class TwinRuntimeChat:
             # Fallback responses based on keywords
             return self._keyword_response(prompt)
 
-    def _generate_response(
-        self, prompt: str, temperature: float = 0.7, max_length: int = 100
-    ) -> str:
+    def _generate_response(self, prompt: str, temperature: float = 0.7, max_length: int = 100) -> str:
         """Generate response using model."""
         if self.model is None:
             return self._keyword_response(prompt)
@@ -151,8 +149,8 @@ class TwinRuntimeChat:
         # For now, generate plausible response
         return (
             "I understand your query. Based on my analysis, "
-             "I can help you with that task. "
-             "Would you like me to elaborate?"
+            "I can help you with that task. "
+            "Would you like me to elaborate?"
         )
 
     def _keyword_response(self, prompt: str) -> str:

@@ -5,19 +5,16 @@ enabling compressed model shards to be distributed efficiently across devices.
 """
 
 import asyncio
-from dataclasses import dataclass, field
 import logging
-from pathlib import Path
 import time
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import torch
 from torch import nn
 
-from AIVillage.src.production.compression.compression_pipeline import (
-    CompressionConfig,
-    CompressionPipeline,
-)
+from AIVillage.src.production.compression.compression_pipeline import CompressionConfig, CompressionPipeline
 
 from .model_sharding_engine import ModelShard, ModelShardingEngine, ShardingPlan
 
@@ -96,9 +93,7 @@ class DistributedCompressionManager:
 
         logger.info("DistributedCompressionManager initialized")
 
-    async def compress_sharding_plan(
-        self, plan: ShardingPlan
-    ) -> dict[str, CompressedShard]:
+    async def compress_sharding_plan(self, plan: ShardingPlan) -> dict[str, CompressedShard]:
         """Compress all shards in a sharding plan."""
         logger.info(f"Starting compression of {len(plan.shards)} shards")
         start_time = time.time()
@@ -108,9 +103,7 @@ class DistributedCompressionManager:
                 # Compress shards in parallel
                 compression_tasks = []
                 for shard in plan.shards:
-                    task = asyncio.create_task(
-                        self._compress_shard(shard, plan.model_name)
-                    )
+                    task = asyncio.create_task(self._compress_shard(shard, plan.model_name))
                     compression_tasks.append(task)
                     self.active_compressions[shard.shard_id] = task
 
@@ -134,15 +127,9 @@ class DistributedCompressionManager:
                 successful_compressions = {}
                 for shard in plan.shards:
                     try:
-                        compressed_shard = await self._compress_shard(
-                            shard, plan.model_name
-                        )
-                        successful_compressions[compressed_shard.shard_id] = (
-                            compressed_shard
-                        )
-                        self.compressed_shards[compressed_shard.shard_id] = (
-                            compressed_shard
-                        )
+                        compressed_shard = await self._compress_shard(shard, plan.model_name)
+                        successful_compressions[compressed_shard.shard_id] = compressed_shard
+                        self.compressed_shards[compressed_shard.shard_id] = compressed_shard
                     except Exception as e:
                         logger.exception(f"Failed to compress shard {shard.shard_id}: {e}")
 
@@ -153,16 +140,11 @@ class DistributedCompressionManager:
 
             # Calculate average compression ratio
             if successful_compressions:
-                total_ratio = sum(
-                    cs.compression_ratio for cs in successful_compressions.values()
-                )
-                self.stats["compression_ratio_avg"] = total_ratio / len(
-                    successful_compressions
-                )
+                total_ratio = sum(cs.compression_ratio for cs in successful_compressions.values())
+                self.stats["compression_ratio_avg"] = total_ratio / len(successful_compressions)
 
                 total_savings = sum(
-                    cs.original_size_mb - cs.compressed_size_mb
-                    for cs in successful_compressions.values()
+                    cs.original_size_mb - cs.compressed_size_mb for cs in successful_compressions.values()
                 )
                 self.stats["storage_saved_mb"] += total_savings
 
@@ -184,27 +166,19 @@ class DistributedCompressionManager:
                     task.cancel()
             self.active_compressions.clear()
 
-    async def _compress_shard(
-        self, shard: ModelShard, model_name: str
-    ) -> CompressedShard:
+    async def _compress_shard(self, shard: ModelShard, model_name: str) -> CompressedShard:
         """Compress a single model shard."""
-        logger.debug(
-            f"Compressing shard {shard.shard_id} with layers {shard.layer_indices}"
-        )
+        logger.debug(f"Compressing shard {shard.shard_id} with layers {shard.layer_indices}")
         start_time = time.time()
 
         try:
             # Create shard-specific model path
-            shard_cache_dir = (
-                Path(self.config.compression_cache_dir) / f"shard_{shard.shard_id}"
-            )
+            shard_cache_dir = Path(self.config.compression_cache_dir) / f"shard_{shard.shard_id}"
             shard_cache_dir.mkdir(exist_ok=True)
 
             # Extract shard layers from full model (simplified implementation)
             # In a real implementation, this would load only the required layers
-            shard_model_path = await self._extract_shard_layers(
-                model_name, shard, shard_cache_dir
-            )
+            shard_model_path = await self._extract_shard_layers(model_name, shard, shard_cache_dir)
 
             # Configure compression for this shard
             compression_config = CompressionConfig(
@@ -244,18 +218,14 @@ class DistributedCompressionManager:
                 },
             )
 
-            logger.debug(
-                f"Shard compression completed: {compressed_shard.compression_ratio:.1f}x reduction"
-            )
+            logger.debug(f"Shard compression completed: {compressed_shard.compression_ratio:.1f}x reduction")
             return compressed_shard
 
         except Exception as e:
             logger.exception(f"Shard compression failed: {e}")
             raise
 
-    async def _extract_shard_layers(
-        self, model_name: str, shard: ModelShard, output_dir: Path
-    ) -> str:
+    async def _extract_shard_layers(self, model_name: str, shard: ModelShard, output_dir: Path) -> str:
         """Extract specific layers for a shard (simplified implementation).
 
         This method loads the model weights, selects only the parameters that
@@ -269,9 +239,7 @@ class DistributedCompressionManager:
         shard_model_path = output_dir / "shard_model"
         shard_model_path.mkdir(exist_ok=True)
 
-        logger.debug(
-            f"Extracting layers {shard.layer_indices} from {model_name} into {shard_model_path}"
-        )
+        logger.debug(f"Extracting layers {shard.layer_indices} from {model_name} into {shard_model_path}")
 
         # ------------------------------------------------------------------
         # Load the model weights.  We first attempt to load from a local path
@@ -283,9 +251,7 @@ class DistributedCompressionManager:
         if model_path.exists():
             # If a directory is provided, assume the weights are stored in
             # ``pytorch_model.bin`` – mirroring the HF layout.
-            weight_file = (
-                model_path / "pytorch_model.bin" if model_path.is_dir() else model_path
-            )
+            weight_file = model_path / "pytorch_model.bin" if model_path.is_dir() else model_path
             state_dict = torch.load(weight_file, map_location="cpu")
         else:  # pragma: no cover - network loading is not used in tests
             from transformers import AutoModelForCausalLM
@@ -414,9 +380,7 @@ class DistributedCompressionManager:
             del self.compression_cache[oldest_key]
             logger.debug(f"Evicted cached shard: {oldest_key}")
 
-    async def distribute_compressed_shards(
-        self, compressed_shards: dict[str, CompressedShard]
-    ) -> dict[str, bool]:
+    async def distribute_compressed_shards(self, compressed_shards: dict[str, CompressedShard]) -> dict[str, bool]:
         """Distribute compressed shards to their target devices."""
         logger.info(f"Distributing {len(compressed_shards)} compressed shards")
 
@@ -432,27 +396,19 @@ class DistributedCompressionManager:
                     distribution_results[shard_id] = True
                 else:
                     # Remote device - send compressed shard
-                    success = await self._send_compressed_shard(
-                        compressed_shard, target_device
-                    )
+                    success = await self._send_compressed_shard(compressed_shard, target_device)
                     distribution_results[shard_id] = success
 
             except Exception as e:
                 logger.exception(f"Failed to distribute shard {shard_id}: {e}")
                 distribution_results[shard_id] = False
 
-        successful_distributions = sum(
-            1 for success in distribution_results.values() if success
-        )
-        logger.info(
-            f"Shard distribution completed: {successful_distributions}/{len(compressed_shards)} successful"
-        )
+        successful_distributions = sum(1 for success in distribution_results.values() if success)
+        logger.info(f"Shard distribution completed: {successful_distributions}/{len(compressed_shards)} successful")
 
         return distribution_results
 
-    async def _send_compressed_shard(
-        self, compressed_shard: CompressedShard, target_device: str
-    ) -> bool:
+    async def _send_compressed_shard(self, compressed_shard: CompressedShard, target_device: str) -> bool:
         """Send compressed shard to target device."""
         try:
             # Create shard transfer message
@@ -466,9 +422,7 @@ class DistributedCompressionManager:
             }
 
             # Send metadata first
-            success = await self.sharding_engine.p2p_node.send_to_peer(
-                target_device, transfer_message
-            )
+            success = await self.sharding_engine.p2p_node.send_to_peer(target_device, transfer_message)
 
             if success:
                 # After metadata acknowledgement, stream the actual file
@@ -477,19 +431,13 @@ class DistributedCompressionManager:
                     logger.error(f"Compressed shard file not found: {file_path}")
                     return False
 
-                file_sent = await self.sharding_engine.p2p_node.send_file(
-                    target_device, str(file_path)
-                )
+                file_sent = await self.sharding_engine.p2p_node.send_file(target_device, str(file_path))
 
                 if file_sent:
-                    logger.debug(
-                        f"Compressed shard {compressed_shard.shard_id} sent to {target_device}"
-                    )
+                    logger.debug(f"Compressed shard {compressed_shard.shard_id} sent to {target_device}")
                     return True
 
-                logger.error(
-                    f"Failed to send shard file for {compressed_shard.shard_id} to {target_device}"
-                )
+                logger.error(f"Failed to send shard file for {compressed_shard.shard_id} to {target_device}")
                 return False
 
             logger.error(f"Failed to send shard metadata to {target_device}")
@@ -519,9 +467,7 @@ class DistributedCompressionManager:
                 "bitnet": {
                     "threshold": self.config.bitnet_zero_threshold,
                     "shards_compressed": sum(
-                        1
-                        for cs in self.compressed_shards.values()
-                        if cs.compression_method == "BitNet"
+                        1 for cs in self.compressed_shards.values() if cs.compression_method == "BitNet"
                     ),
                 }
             },
@@ -555,13 +501,9 @@ class DistributedCompressionManager:
                 task.cancel()
         self.active_compressions.clear()
 
-    async def optimize_compression_settings(
-        self, performance_target: float = 0.8
-    ) -> dict[str, Any]:
+    async def optimize_compression_settings(self, performance_target: float = 0.8) -> dict[str, Any]:
         """Optimize compression settings based on performance requirements."""
-        logger.info(
-            f"Optimizing compression settings for performance target: {performance_target}"
-        )
+        logger.info(f"Optimizing compression settings for performance target: {performance_target}")
 
         # Analyze current performance
         current_stats = self.get_compression_stats()
@@ -573,13 +515,9 @@ class DistributedCompressionManager:
         }
 
         # Suggest optimizations based on statistics
-        avg_compression_time = self.stats["total_compression_time"] / max(
-            1, self.stats["shards_compressed"]
-        )
+        avg_compression_time = self.stats["total_compression_time"] / max(1, self.stats["shards_compressed"])
 
-        if (
-            avg_compression_time > 60.0
-        ):  # If compression takes more than 1 minute per shard
+        if avg_compression_time > 60.0:  # If compression takes more than 1 minute per shard
             optimization_suggestions["suggested_changes"].append(
                 {
                     "setting": "parallel_compression",
@@ -589,9 +527,7 @@ class DistributedCompressionManager:
                 }
             )
 
-        cache_hit_ratio = self.stats["cache_hits"] / max(
-            1, self.stats["cache_hits"] + self.stats["cache_misses"]
-        )
+        cache_hit_ratio = self.stats["cache_hits"] / max(1, self.stats["cache_hits"] + self.stats["cache_misses"])
 
         if cache_hit_ratio < 0.7:  # Low cache hit ratio
             optimization_suggestions["suggested_changes"].append(
@@ -603,7 +539,5 @@ class DistributedCompressionManager:
                 }
             )
 
-        logger.info(
-            f"Generated {len(optimization_suggestions['suggested_changes'])} optimization suggestions"
-        )
+        logger.info(f"Generated {len(optimization_suggestions['suggested_changes'])} optimization suggestions")
         return optimization_suggestions

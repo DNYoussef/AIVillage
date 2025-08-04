@@ -1,15 +1,13 @@
 import os
 import uuid
 
-from jose import jwt
 import requests
+from jose import jwt
 
 JWT_SECRET = os.getenv("JWT_SECRET")
 if not JWT_SECRET:
     msg = "JWT_SECRET environment variable must be set for secure authentication"
-    raise ValueError(
-        msg
-    )
+    raise ValueError(msg)
 
 
 class MCPClient:

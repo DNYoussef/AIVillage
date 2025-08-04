@@ -6,17 +6,17 @@ Integrates with Guardian Gate for signing and validation.
 """
 
 import argparse
-from datetime import datetime, timezone
 import hashlib
 import json
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+import torch
 from peft import LoraConfig, TaskType, get_peft_model
 from sklearn.metrics import accuracy_score
-import torch
 from torch.utils.data import DataLoader, Dataset
 from transformers import (
     AutoModelForCausalLM,
@@ -131,14 +131,10 @@ class LoRATrainer:
         """Train the LoRA adapter."""
         # Create datasets
         train_dataset = RepairDataset(train_data_path, self.tokenizer)
-        eval_dataset = (
-            RepairDataset(eval_data_path, self.tokenizer) if eval_data_path else None
-        )
+        eval_dataset = RepairDataset(eval_data_path, self.tokenizer) if eval_data_path else None
 
         # Data collator
-        data_collator = DataCollatorForLanguageModeling(
-            tokenizer=self.tokenizer, mlm=False
-        )
+        data_collator = DataCollatorForLanguageModeling(tokenizer=self.tokenizer, mlm=False)
 
         # Training arguments
         training_args = TrainingArguments(
@@ -239,9 +235,7 @@ class LoRATrainer:
 
         return sha256_hash.hexdigest()
 
-    def generate_registry_entry(
-        self, adapter_path: Path, domain: str, metrics: dict[str, float]
-    ) -> dict[str, Any]:
+    def generate_registry_entry(self, adapter_path: Path, domain: str, metrics: dict[str, float]) -> dict[str, Any]:
         """Generate a registry entry for the trained adapter."""
         adapter_hash = self.compute_adapter_hash(adapter_path)
 
@@ -267,9 +261,7 @@ class LoRATrainer:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train LoRA adapter for HypeRAG")
-    parser.add_argument(
-        "--train-data", required=True, type=Path, help="Path to training JSONL file"
-    )
+    parser.add_argument("--train-data", required=True, type=Path, help="Path to training JSONL file")
     parser.add_argument("--eval-data", type=Path, help="Path to evaluation JSONL file")
     parser.add_argument("--domain", required=True, help="Domain name for the adapter")
     parser.add_argument(
@@ -283,13 +275,9 @@ def main() -> None:
         default=Path("./lora_output"),
         help="Output directory for trained adapter",
     )
-    parser.add_argument(
-        "--epochs", type=int, default=3, help="Number of training epochs"
-    )
+    parser.add_argument("--epochs", type=int, default=3, help="Number of training epochs")
     parser.add_argument("--batch-size", type=int, default=4, help="Training batch size")
-    parser.add_argument(
-        "--learning-rate", type=float, default=2e-4, help="Learning rate"
-    )
+    parser.add_argument("--learning-rate", type=float, default=2e-4, help="Learning rate")
     parser.add_argument("--lora-r", type=int, default=16, help="LoRA rank")
     parser.add_argument("--lora-alpha", type=int, default=32, help="LoRA alpha")
     parser.add_argument("--device", default="cuda", help="Device to use (cuda/cpu)")

@@ -8,13 +8,7 @@ from .learning import PlanLearner, StrategyFeedback
 from .plan_structures import ExecutionStep, PlanCheckpoint, QueryPlan
 from .query_classifier import QueryClassifier, QueryType
 from .query_planner import QueryPlanner
-from .strategies import (
-    CausalStrategy,
-    ComparativeStrategy,
-    MetaQueryStrategy,
-    SimpleFactStrategy,
-    TemporalStrategy,
-)
+from .strategies import CausalStrategy, ComparativeStrategy, MetaQueryStrategy, SimpleFactStrategy, TemporalStrategy
 from .strategy_selector import ReasoningStrategy, StrategySelector
 
 __all__ = [

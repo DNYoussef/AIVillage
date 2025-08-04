@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-from collections import Counter
 import lzma
+from collections import Counter
 from typing import Any
 
 import torch
@@ -26,9 +26,7 @@ class CascadeCompressor:
         return metadata + entropy_data
 
     # ------------------------------------------------------------------
-    def quantize_cascade(
-        self, weights: torch.Tensor
-    ) -> tuple[torch.Tensor, dict[str, Any]]:
+    def quantize_cascade(self, weights: torch.Tensor) -> tuple[torch.Tensor, dict[str, Any]]:
         levels = 8
         scale = torch.quantile(weights.abs(), 0.99)
         normalised = weights / (scale or 1.0)

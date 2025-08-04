@@ -3,13 +3,13 @@
 import asyncio
 import base64
 import contextlib
-from dataclasses import dataclass
 import hashlib
 import hmac
 import logging
 import os
 import secrets
 import time
+from dataclasses import dataclass
 from typing import Any
 
 from cryptography.hazmat.backends import default_backend
@@ -102,9 +102,7 @@ class EncryptionLayer:
 
         logger.info("Encryption layer shutdown")
 
-    async def encrypt_message(
-        self, message_data: str, recipient_id: str | None = None
-    ) -> bytes:
+    async def encrypt_message(self, message_data: str, recipient_id: str | None = None) -> bytes:
         """Encrypt message for transmission."""
         try:
             # Convert to bytes
@@ -125,9 +123,7 @@ class EncryptionLayer:
             self.stats["encryption_failures"] += 1
             raise
 
-    async def decrypt_message(
-        self, encrypted_data: bytes, sender_id: str | None = None
-    ) -> str:
+    async def decrypt_message(self, encrypted_data: bytes, sender_id: str | None = None) -> str:
         """Decrypt received message."""
         try:
             if sender_id:
@@ -159,9 +155,7 @@ class EncryptionLayer:
         auth_data = peer_id.encode("utf-8") + timestamp + nonce
 
         # Encrypt with AES-GCM
-        cipher = Cipher(
-            algorithms.AES(session_key), modes.GCM(iv), backend=default_backend()
-        )
+        cipher = Cipher(algorithms.AES(session_key), modes.GCM(iv), backend=default_backend())
 
         encryptor = cipher.encryptor()
         encryptor.authenticate_additional_data(auth_data)
@@ -176,16 +170,10 @@ class EncryptionLayer:
         """Decrypt message from specific peer using session key."""
         try:
             # Parse message components
-            auth_data_size = (
-                len(sender_id.encode("utf-8")) + 8 + 16
-            )  # sender + timestamp + nonce
+            auth_data_size = len(sender_id.encode("utf-8")) + 8 + 16  # sender + timestamp + nonce
             auth_data = encrypted_data[:auth_data_size]
             iv = encrypted_data[auth_data_size : auth_data_size + self.config.iv_size]
-            tag = encrypted_data[
-                auth_data_size + self.config.iv_size : auth_data_size
-                + self.config.iv_size
-                + 16
-            ]
+            tag = encrypted_data[auth_data_size + self.config.iv_size : auth_data_size + self.config.iv_size + 16]
             ciphertext = encrypted_data[auth_data_size + self.config.iv_size + 16 :]
 
             # Extract timestamp and nonce for replay protection
@@ -250,9 +238,7 @@ class EncryptionLayer:
 
         # Encrypt with AES-CTR (simpler than GCM for broadcast)
         iv = os.urandom(16)
-        cipher = Cipher(
-            algorithms.AES(broadcast_key), modes.CTR(iv), backend=default_backend()
-        )
+        cipher = Cipher(algorithms.AES(broadcast_key), modes.CTR(iv), backend=default_backend())
 
         encryptor = cipher.encryptor()
         ciphertext = encryptor.update(plaintext) + encryptor.finalize()
@@ -275,9 +261,7 @@ class EncryptionLayer:
             # This is a limitation of the broadcast encryption approach
             # In a real implementation, we'd need a different strategy
             msg = "Cannot decrypt broadcast message without sender information"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         except Exception as e:
             logger.exception(f"Failed to decrypt broadcast message: {e}")
@@ -291,8 +275,7 @@ class EncryptionLayer:
         if (
             peer_id in self.session_keys
             and peer_id in self.session_created
-            and current_time - self.session_created[peer_id]
-            > self.config.key_rotation_interval
+            and current_time - self.session_created[peer_id] > self.config.key_rotation_interval
         ):
             # Rotate key
             await self._rotate_session_key(peer_id)
@@ -345,9 +328,7 @@ class EncryptionLayer:
         """Exchange public keys with peer."""
         try:
             # Parse peer's public key
-            peer_public_key = serialization.load_der_public_key(
-                peer_public_key_data, backend=default_backend()
-            )
+            peer_public_key = serialization.load_der_public_key(peer_public_key_data, backend=default_backend())
 
             # Verify it's an RSA key
             if not isinstance(peer_public_key, rsa.RSAPublicKey):
@@ -410,9 +391,7 @@ class EncryptionLayer:
                 logger.exception(f"Cleanup loop error: {e}")
                 await asyncio.sleep(60)
 
-    def verify_message_integrity(
-        self, message_data: bytes, signature: bytes, sender_id: str
-    ) -> bool:
+    def verify_message_integrity(self, message_data: bytes, signature: bytes, sender_id: str) -> bool:
         """Verify message integrity using sender's public key."""
         try:
             if sender_id not in self.peer_public_keys:

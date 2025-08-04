@@ -1,6 +1,6 @@
-from functools import wraps
 import logging
 import traceback
+from functools import wraps
 from typing import Any
 
 
@@ -36,9 +36,7 @@ class ErrorHandler:
             try:
                 return await func(*args, **kwargs)
             except Exception as e:
-                self.log_error(
-                    e, {"function": func.__name__, "args": args, "kwargs": kwargs}
-                )
+                self.log_error(e, {"function": func.__name__, "args": args, "kwargs": kwargs})
                 msg = f"Error in {func.__name__}: {e!s}"
                 raise AIVillageException(msg)
 
@@ -56,9 +54,7 @@ def safe_execute(func):
         try:
             return await func(*args, **kwargs)
         except Exception as e:
-            error_handler.log_error(
-                e, {"function": func.__name__, "args": args, "kwargs": kwargs}
-            )
+            error_handler.log_error(e, {"function": func.__name__, "args": args, "kwargs": kwargs})
             return {"error": str(e), "traceback": traceback.format_exc()}
 
     return wrapper

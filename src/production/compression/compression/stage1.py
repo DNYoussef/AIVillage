@@ -70,9 +70,7 @@ def load_model_and_tokenizer(model_path: str):
         raise
 
 
-def run_stage1_compression(
-    input_path: str, output_path: str, config: Stage1Config
-) -> dict[str, Any]:
+def run_stage1_compression(input_path: str, output_path: str, config: Stage1Config) -> dict[str, Any]:
     """Run the complete Stage-1 compression pipeline."""
     logger = logging.getLogger(__name__)
 
@@ -97,9 +95,7 @@ def run_stage1_compression(
 
             # Note: For this implementation, we'll skip actual fine-tuning
             # In practice, you'd need training data and the full training loop
-            logger.info(
-                "BitNet conversion completed (fine-tuning skipped in this implementation)"
-            )
+            logger.info("BitNet conversion completed (fine-tuning skipped in this implementation)")
 
         except Exception as e:
             logger.warning(f"BitNet conversion failed: {e}, continuing without BitNet")
@@ -131,14 +127,9 @@ def run_stage1_compression(
                 compressed_state[name] = param.data.cpu()
 
         # Calculate overall compression ratio
-        total_original = sum(
-            stats["original_size"] for stats in compression_stats.values()
-        )
+        total_original = sum(stats["original_size"] for stats in compression_stats.values())
         weighted_ratio = (
-            sum(
-                stats["original_size"] * stats["compression_ratio"]
-                for stats in compression_stats.values()
-            )
+            sum(stats["original_size"] * stats["compression_ratio"] for stats in compression_stats.values())
             / total_original
             if total_original > 0
             else 0
@@ -154,9 +145,7 @@ def run_stage1_compression(
         "config": config.__dict__,
         "model_info": {
             "model_path": input_path,
-            "tokenizer_config": tokenizer.init_kwargs
-            if hasattr(tokenizer, "init_kwargs")
-            else {},
+            "tokenizer_config": tokenizer.init_kwargs if hasattr(tokenizer, "init_kwargs") else {},
         },
     }
 
@@ -169,14 +158,10 @@ def run_stage1_compression(
 
     # For this implementation, we'll use the original model for evaluation
     # In practice, you'd reconstruct the compressed model
-    result = evaluator.evaluate_compressed_model(
-        original_model, model, tokenizer, eval_data[: config.eval_max_samples]
-    )
+    result = evaluator.evaluate_compressed_model(original_model, model, tokenizer, eval_data[: config.eval_max_samples])
 
     # Check constraints
-    constraints_met = evaluator.check_constraints(
-        result, config.max_accuracy_drop, config.target_compression_ratio
-    )
+    constraints_met = evaluator.check_constraints(result, config.max_accuracy_drop, config.target_compression_ratio)
 
     # Print report
     evaluator.print_evaluation_report(result)
@@ -205,9 +190,7 @@ def run_stage1_compression(
 def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(description="Stage-1 Compression Pipeline")
-    parser.add_argument(
-        "--in", "--input", "-i", required=True, help="Input model path", dest="input"
-    )
+    parser.add_argument("--in", "--input", "-i", required=True, help="Input model path", dest="input")
     parser.add_argument(
         "--out",
         "--output",
@@ -218,9 +201,7 @@ def main() -> None:
     )
     parser.add_argument("--config", "-c", help="Configuration file path")
     parser.add_argument("--log-level", default="INFO", help="Logging level")
-    parser.add_argument(
-        "--device", default="auto", help="Device to use (cuda/cpu/auto)"
-    )
+    parser.add_argument("--device", default="auto", help="Device to use (cuda/cpu/auto)")
 
     args = parser.parse_args()
 

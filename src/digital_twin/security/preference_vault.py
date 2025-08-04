@@ -3,23 +3,23 @@ Sprint R-5: Digital Twin MVP - Task A.2.
 """
 
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import logging
 import os
-from pathlib import Path
 import secrets
 import sqlite3
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
+import wandb
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
-import wandb
 
 logger = logging.getLogger(__name__)
 
@@ -120,9 +120,7 @@ class SecurePreferenceVault:
         # Start security monitoring
         asyncio.create_task(self.start_security_monitoring())
 
-        logger.info(
-            "Secure Preference Vault initialized with military-grade encryption"
-        )
+        logger.info("Secure Preference Vault initialized with military-grade encryption")
 
     def initialize_wandb_tracking(self) -> None:
         """Initialize W&B tracking with privacy protection."""
@@ -183,14 +181,10 @@ class SecurePreferenceVault:
         if private_key_file.exists() and public_key_file.exists():
             try:
                 with open(private_key_file, "rb") as f:
-                    private_key = serialization.load_pem_private_key(
-                        f.read(), password=None, backend=default_backend()
-                    )
+                    private_key = serialization.load_pem_private_key(f.read(), password=None, backend=default_backend())
 
                 with open(public_key_file, "rb") as f:
-                    public_key = serialization.load_pem_public_key(
-                        f.read(), backend=default_backend()
-                    )
+                    public_key = serialization.load_pem_public_key(f.read(), backend=default_backend())
 
                 return private_key, public_key
 
@@ -198,9 +192,7 @@ class SecurePreferenceVault:
                 logger.warning("Could not load RSA keys: %s", e)
 
         # Generate new RSA key pair (4096-bit for maximum security)
-        private_key = rsa.generate_private_key(
-            public_exponent=65537, key_size=4096, backend=default_backend()
-        )
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096, backend=default_backend())
         public_key = private_key.public_key()
 
         try:
@@ -240,7 +232,8 @@ class SecurePreferenceVault:
             cursor = conn.cursor()
 
             # Preferences table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS secure_preferences (
                     preference_id TEXT PRIMARY KEY,
                     student_id TEXT NOT NULL,
@@ -255,10 +248,12 @@ class SecurePreferenceVault:
                     expiry_date TEXT,
                     checksum TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             # Access tokens table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS access_tokens (
                     token_id TEXT PRIMARY KEY,
                     student_id TEXT NOT NULL,
@@ -269,10 +264,12 @@ class SecurePreferenceVault:
                     revoked INTEGER DEFAULT 0,
                     checksum TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             # Audit logs table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS vault_audit_logs (
                     log_id TEXT PRIMARY KEY,
                     student_id TEXT NOT NULL,
@@ -285,10 +282,12 @@ class SecurePreferenceVault:
                     encrypted_details BLOB,
                     checksum TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             # Security events table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS security_events (
                     event_id TEXT PRIMARY KEY,
                     event_type TEXT NOT NULL,
@@ -300,21 +299,14 @@ class SecurePreferenceVault:
                     severity TEXT NOT NULL,
                     resolved INTEGER DEFAULT 0
                 )
-            """)
+            """
+            )
 
             # Create indexes for performance
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_prefs_student ON secure_preferences(student_id)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_tokens_student ON access_tokens(student_id)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_audit_student ON vault_audit_logs(student_id)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON vault_audit_logs(timestamp)"
-            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_prefs_student ON secure_preferences(student_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_tokens_student ON access_tokens(student_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_student ON vault_audit_logs(student_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON vault_audit_logs(timestamp)")
 
             conn.commit()
             conn.close()
@@ -338,9 +330,7 @@ class SecurePreferenceVault:
         """Store encrypted preference with access control."""
         # Validate access
         if not await self._validate_access(student_id, "write", accessor_token):
-            await self._log_security_event(
-                "unauthorized_write_attempt", student_id, accessor_token
-            )
+            await self._log_security_event("unauthorized_write_attempt", student_id, accessor_token)
             msg = "Unauthorized access to preference vault"
             raise PermissionError(msg)
 
@@ -381,9 +371,7 @@ class SecurePreferenceVault:
         # Calculate expiry date
         expiry_date = None
         if expiry_hours:
-            expiry_date = (
-                datetime.now(timezone.utc) + timedelta(hours=expiry_hours)
-            ).isoformat()
+            expiry_date = (datetime.now(timezone.utc) + timedelta(hours=expiry_hours)).isoformat()
 
         # Create preference object
         preference = SecurePreference(
@@ -452,9 +440,7 @@ class SecurePreferenceVault:
         """Retrieve and decrypt preference with access control."""
         # Validate access
         if not await self._validate_access(student_id, "read", accessor_token):
-            await self._log_security_event(
-                "unauthorized_read_attempt", student_id, accessor_token
-            )
+            await self._log_security_event("unauthorized_read_attempt", student_id, accessor_token)
             msg = "Unauthorized access to preference vault"
             raise PermissionError(msg)
 
@@ -491,16 +477,12 @@ class SecurePreferenceVault:
         if preference.expiry_date:
             expiry = datetime.fromisoformat(preference.expiry_date)
             if datetime.now(timezone.utc) > expiry:
-                await self.delete_preference(
-                    student_id, preference.preference_id, accessor_token
-                )
+                await self.delete_preference(student_id, preference.preference_id, accessor_token)
                 return None
 
         # Check access permissions
         if not self._check_preference_permissions(preference, accessor_token):
-            await self._log_security_event(
-                "permission_denied", student_id, accessor_token
-            )
+            await self._log_security_event("permission_denied", student_id, accessor_token)
             msg = "Insufficient permissions for this preference"
             raise PermissionError(msg)
 
@@ -574,9 +556,7 @@ class SecurePreferenceVault:
         """Update existing preference with access control."""
         # Validate access
         if not await self._validate_access(student_id, "write", accessor_token):
-            await self._log_security_event(
-                "unauthorized_update_attempt", student_id, accessor_token
-            )
+            await self._log_security_event("unauthorized_update_attempt", student_id, accessor_token)
             msg = "Unauthorized access to preference vault"
             raise PermissionError(msg)
 
@@ -587,9 +567,7 @@ class SecurePreferenceVault:
 
         # Check permissions
         if not self._check_preference_permissions(preference, accessor_token):
-            await self._log_security_event(
-                "permission_denied", student_id, accessor_token
-            )
+            await self._log_security_event("permission_denied", student_id, accessor_token)
             msg = "Insufficient permissions for this preference"
             raise PermissionError(msg)
 
@@ -642,15 +620,11 @@ class SecurePreferenceVault:
             logger.exception("Failed to update preference: %s", e)
             return False
 
-    async def delete_preference(
-        self, student_id: str, preference_id: str, accessor_token: str | None = None
-    ) -> bool:
+    async def delete_preference(self, student_id: str, preference_id: str, accessor_token: str | None = None) -> bool:
         """Delete preference with access control."""
         # Validate access
         if not await self._validate_access(student_id, "delete", accessor_token):
-            await self._log_security_event(
-                "unauthorized_delete_attempt", student_id, accessor_token
-            )
+            await self._log_security_event("unauthorized_delete_attempt", student_id, accessor_token)
             msg = "Unauthorized access to preference vault"
             raise PermissionError(msg)
 
@@ -661,9 +635,7 @@ class SecurePreferenceVault:
 
         # Check permissions
         if not self._check_preference_permissions(preference, accessor_token):
-            await self._log_security_event(
-                "permission_denied", student_id, accessor_token
-            )
+            await self._log_security_event("permission_denied", student_id, accessor_token)
             msg = "Insufficient permissions for this preference"
             raise PermissionError(msg)
 
@@ -712,9 +684,7 @@ class SecurePreferenceVault:
         """Create secure access token."""
         token_id = self._generate_secure_id()
 
-        expires_at = (
-            datetime.now(timezone.utc) + timedelta(hours=expiry_hours)
-        ).isoformat()
+        expires_at = (datetime.now(timezone.utc) + timedelta(hours=expiry_hours)).isoformat()
 
         token = AccessToken(
             token_id=token_id,
@@ -746,9 +716,7 @@ class SecurePreferenceVault:
             },
         )
 
-        logger.info(
-            "Created access token %s for student %s", token_id[:8], student_id[:8]
-        )
+        logger.info("Created access token %s for student %s", token_id[:8], student_id[:8])
 
         return token_id
 
@@ -783,9 +751,7 @@ class SecurePreferenceVault:
         """Get all preferences for a student."""
         # Validate access
         if not await self._validate_access(student_id, "read", accessor_token):
-            await self._log_security_event(
-                "unauthorized_bulk_read", student_id, accessor_token
-            )
+            await self._log_security_event("unauthorized_bulk_read", student_id, accessor_token)
             msg = "Unauthorized access to preference vault"
             raise PermissionError(msg)
 
@@ -796,14 +762,10 @@ class SecurePreferenceVault:
                 if category is None or pref.category == category:
                     if self._check_preference_permissions(pref, accessor_token):
                         try:
-                            value = await self.retrieve_preference(
-                                student_id, pref_id, accessor_token=accessor_token
-                            )
+                            value = await self.retrieve_preference(student_id, pref_id, accessor_token=accessor_token)
                             preferences[pref.key] = value
                         except Exception as e:
-                            logger.warning(
-                                "Could not retrieve preference %s: %s", pref_id, e
-                            )
+                            logger.warning("Could not retrieve preference %s: %s", pref_id, e)
 
         return preferences
 
@@ -811,9 +773,7 @@ class SecurePreferenceVault:
         """Generate cryptographically secure ID."""
         return secrets.token_urlsafe(32)
 
-    async def _validate_access(
-        self, student_id: str, action: str, accessor_token: str | None = None
-    ) -> bool:
+    async def _validate_access(self, student_id: str, action: str, accessor_token: str | None = None) -> bool:
         """Validate access permissions."""
         # System access (internal operations)
         if accessor_token is None:
@@ -850,9 +810,7 @@ class SecurePreferenceVault:
         required_permission = f"{action}:{student_id}"
         return not (required_permission not in token.permissions and "admin" not in token.permissions)
 
-    def _check_preference_permissions(
-        self, preference: SecurePreference, accessor_token: str | None = None
-    ) -> bool:
+    def _check_preference_permissions(self, preference: SecurePreference, accessor_token: str | None = None) -> bool:
         """Check if accessor has permission for specific preference."""
         if accessor_token is None:
             return True  # System access
@@ -904,9 +862,7 @@ class SecurePreferenceVault:
         if len(self.audit_logs) > 10000:
             self.audit_logs = self.audit_logs[-5000:]  # Keep most recent 5000
 
-    async def _log_security_event(
-        self, event_type: str, student_id: str, accessor_token: str | None = None
-    ) -> None:
+    async def _log_security_event(self, event_type: str, student_id: str, accessor_token: str | None = None) -> None:
         """Log security event."""
         event_id = self._generate_secure_id()
 
@@ -977,9 +933,7 @@ class SecurePreferenceVault:
         try:
             # Encrypt permissions
             permissions_json = json.dumps(token.permissions)
-            encrypted_permissions = self.encryption_suite.encrypt(
-                permissions_json.encode()
-            )
+            encrypted_permissions = self.encryption_suite.encrypt(permissions_json.encode())
 
             # Calculate checksum
             data_to_hash = f"{token.token_id}{token.student_id}{token.permissions}"
@@ -1120,10 +1074,7 @@ class SecurePreferenceVault:
         recent_events = [
             e
             for e in self.security_alerts
-            if (
-                datetime.now(timezone.utc) - datetime.fromisoformat(e["timestamp"])
-            ).seconds
-            < 3600
+            if (datetime.now(timezone.utc) - datetime.fromisoformat(e["timestamp"])).seconds < 3600
         ]
 
         if len(recent_events) > 10:  # More than 10 security events in an hour
@@ -1141,9 +1092,7 @@ class SecurePreferenceVault:
                 }
             )
 
-    async def get_security_report(
-        self, student_id: str, accessor_token: str
-    ) -> dict[str, Any]:
+    async def get_security_report(self, student_id: str, accessor_token: str) -> dict[str, Any]:
         """Generate security report for a student."""
         # Validate access
         if not await self._validate_access(student_id, "read", accessor_token):
@@ -1154,16 +1103,10 @@ class SecurePreferenceVault:
         student_logs = [log for log in self.audit_logs if log.student_id == student_id]
 
         # Get access tokens for student
-        student_tokens = [
-            token
-            for token in self.access_tokens.values()
-            if token.student_id == student_id
-        ]
+        student_tokens = [token for token in self.access_tokens.values() if token.student_id == student_id]
 
         # Get preferences for student
-        student_prefs = [
-            pref for pref in self.preferences.values() if pref.student_id == student_id
-        ]
+        student_prefs = [pref for pref in self.preferences.values() if pref.student_id == student_id]
 
         report = {
             "student_id": student_id,
@@ -1172,13 +1115,7 @@ class SecurePreferenceVault:
                 "total_preferences": len(student_prefs),
                 "active_tokens": len([t for t in student_tokens if not t.revoked]),
                 "audit_entries": len(student_logs),
-                "security_events": len(
-                    [
-                        e
-                        for e in self.security_alerts
-                        if e.get("student_id") == student_id
-                    ]
-                ),
+                "security_events": len([e for e in self.security_alerts if e.get("student_id") == student_id]),
             },
             "preferences_by_category": {},
             "recent_access": [],
@@ -1207,9 +1144,7 @@ class SecurePreferenceVault:
         security_score = 1.0
 
         # Deduct for security events
-        security_events = [
-            e for e in self.security_alerts if e.get("student_id") == student_id
-        ]
+        security_events = [e for e in self.security_alerts if e.get("student_id") == student_id]
         security_score -= len(security_events) * 0.1
 
         # Deduct for failed access attempts

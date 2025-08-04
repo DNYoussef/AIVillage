@@ -21,7 +21,6 @@ This system implements:
 6. Comprehensive evolution analytics and reporting
 """
 
-import asyncio
 import logging
 
 logger = logging.getLogger(__name__)

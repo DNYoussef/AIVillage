@@ -18,7 +18,7 @@ except ImportError:
 class TestEvolutionSystem:
     """Test the evolutionary model merging system."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def sample_population(self):
         """Create a population of models for testing."""
         models = []
@@ -38,9 +38,7 @@ class TestEvolutionSystem:
     def test_evolution_imports(self) -> None:
         """Test that evolution modules can be imported."""
         try:
-            from production.evolution.evomerge.evolutionary_tournament import (
-                EvolutionaryTournament,
-            )
+            from production.evolution.evomerge.evolutionary_tournament import EvolutionaryTournament
 
             assert EvolutionaryTournament is not None
         except ImportError:
@@ -68,9 +66,7 @@ class TestEvolutionSystem:
         scores = [0.1, 0.5, 0.8, 0.3, 0.9]
 
         # Test ranking
-        ranked_indices = sorted(
-            range(len(scores)), key=lambda i: scores[i], reverse=True
-        )
+        ranked_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
         assert ranked_indices[0] == 4  # Index of highest score (0.9)
         assert ranked_indices[-1] == 0  # Index of lowest score (0.1)
 
@@ -124,9 +120,7 @@ class TestEvolutionPipeline:
     def test_math_tutor_evolution(self) -> None:
         """Test math tutor evolution."""
         try:
-            from production.evolution.evolution.math_tutor_evolution import (
-                MathTutorEvolution,
-            )
+            from production.evolution.evolution.math_tutor_evolution import MathTutorEvolution
 
             assert MathTutorEvolution is not None
         except ImportError:

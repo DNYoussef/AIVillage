@@ -1,8 +1,8 @@
-from dataclasses import dataclass
 import json
 import os
 import tempfile
 import time
+from dataclasses import dataclass
 
 import torch
 
@@ -94,9 +94,7 @@ class CompressionEvaluator:
                 likelihoods = []
                 for ending in endings:
                     full_text = ctx + " " + ending
-                    inputs = tokenizer(
-                        full_text, return_tensors="pt", truncation=True, max_length=512
-                    )
+                    inputs = tokenizer(full_text, return_tensors="pt", truncation=True, max_length=512)
                     inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
                     outputs = model(**inputs)
@@ -109,11 +107,7 @@ class CompressionEvaluator:
 
                     if len(ending_tokens) > 0:
                         log_probs = torch.log_softmax(ending_logits, dim=-1)
-                        likelihood = (
-                            torch.gather(log_probs, 1, ending_tokens.unsqueeze(1))
-                            .sum()
-                            .item()
-                        )
+                        likelihood = torch.gather(log_probs, 1, ending_tokens.unsqueeze(1)).sum().item()
                         likelihoods.append(likelihood)
                     else:
                         likelihoods.append(float("-inf"))
@@ -179,9 +173,7 @@ class CompressionEvaluator:
         # Size measurements
         original_size = self.measure_model_size(original_model)
         compressed_size = self.measure_model_size(compressed_model)
-        compression_ratio = (
-            original_size / compressed_size if compressed_size > 0 else 0
-        )
+        compression_ratio = original_size / compressed_size if compressed_size > 0 else 0
 
         # Performance measurements
         inference_time = self.measure_inference_time(compressed_model, tokenizer)
@@ -222,11 +214,7 @@ class CompressionEvaluator:
         compression_ok = result.compression_ratio >= min_compression_ratio
 
         print("\nConstraint Check:")
-        print(
-            f"Accuracy constraint (>{1.0 - max_accuracy_drop:.3f}): {'PASS' if accuracy_ok else 'FAIL'}"
-        )
-        print(
-            f"Compression constraint (>={min_compression_ratio}x): {'PASS' if compression_ok else 'FAIL'}"
-        )
+        print(f"Accuracy constraint (>{1.0 - max_accuracy_drop:.3f}): {'PASS' if accuracy_ok else 'FAIL'}")
+        print(f"Compression constraint (>={min_compression_ratio}x): {'PASS' if compression_ok else 'FAIL'}")
 
         return accuracy_ok and compression_ok

@@ -17,9 +17,7 @@ class ModelReference(BaseModel):
 
 class MergeSettings(BaseModel):
     merge_method: str
-    parameters: dict[str, float | list[float] | dict[str, float | list[float]]] = Field(
-        default_factory=dict
-    )
+    parameters: dict[str, float | list[float] | dict[str, float | list[float]]] = Field(default_factory=dict)
     custom_dir: str = Field(default="./merged_models")
     ps_techniques: list[str] = ["linear"]
     dfs_techniques: list[str] = []
@@ -41,9 +39,7 @@ class MergeSettings(BaseModel):
         valid_methods = ["ps", "dfs", "ps_dfs"]
         if v not in valid_methods:
             msg = f"Invalid merge method. Choose from: {', '.join(valid_methods)}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
         return v
 
     @validator("ps_techniques", "dfs_techniques")
@@ -60,9 +56,7 @@ class MergeSettings(BaseModel):
         for technique in v:
             if technique not in valid_techniques:
                 msg = f"Invalid technique: {technique}. Choose from: {', '.join(valid_techniques)}"
-                raise ValueError(
-                    msg
-                )
+                raise ValueError(msg)
         return v
 
     @validator("custom_dir")
@@ -76,9 +70,7 @@ class MergeSettings(BaseModel):
         valid_strategies = ["adapter", "embedding_only", "full"]
         if v not in valid_strategies:
             msg = f"Invalid cross-domain strategy. Choose from: {', '.join(valid_strategies)}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
         return v
 
     @validator("mask_strategy")
@@ -86,9 +78,7 @@ class MergeSettings(BaseModel):
         valid_strategies = ["random", "magnitude"]
         if v not in valid_strategies:
             msg = f"Invalid mask strategy. Choose from: {', '.join(valid_strategies)}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
         return v
 
 
@@ -106,9 +96,7 @@ class EvolutionSettings(BaseModel):
     def validate_tournament_size(self, v, values):
         if "population_size" in values and v > values["population_size"]:
             msg = "Tournament size must be less than or equal to population size"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
         return v
 
     @validator("objectives")
@@ -117,9 +105,7 @@ class EvolutionSettings(BaseModel):
         for obj in v:
             if obj not in valid_objectives:
                 msg = f"Invalid objective: {obj}. Choose from: {', '.join(valid_objectives)}"
-                raise ValueError(
-                    msg
-                )
+                raise ValueError(msg)
         return v
 
 
@@ -128,17 +114,13 @@ class Configuration(BaseModel):
     merge_settings: MergeSettings
     evolution_settings: EvolutionSettings
     target_domain: ModelDomain | None = None
-    enable_adas: bool = Field(
-        default=True, description="Run ADAS optimization after training"
-    )
+    enable_adas: bool = Field(default=True, description="Run ADAS optimization after training")
 
 
 def create_default_config() -> Configuration:
     return Configuration(
         models=[
-            ModelReference(
-                name="Qwen2.5-1.5B-Instruct", path="Qwen/Qwen2.5-1.5B-Instruct"
-            ),
+            ModelReference(name="Qwen2.5-1.5B-Instruct", path="Qwen/Qwen2.5-1.5B-Instruct"),
             ModelReference(
                 name="Qwen2.5-Coder-1.5B-Instruct",
                 path="Qwen/Qwen2.5-Coder-1.5B-Instruct",

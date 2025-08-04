@@ -39,7 +39,7 @@ def test_discovery_stats_counts() -> None:
     assert stats["discovered_peers_count"] == 1
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_retry_targets() -> None:
     node = DummyNode()
     discovery = PeerDiscovery(node)
@@ -83,9 +83,7 @@ def test_discovery_delivery_rate_and_latency() -> None:
     host, port = server_sock.getsockname()
     server_sock.close()
 
-    server_thread = threading.Thread(
-        target=_start_discovery_server, args=(host, port, stop_event), daemon=True
-    )
+    server_thread = threading.Thread(target=_start_discovery_server, args=(host, port, stop_event), daemon=True)
     server_thread.start()
     time.sleep(0.1)
 

@@ -21,9 +21,7 @@ DEFAULT_DIM = 768
 class FaissAdapter:
     """Thin wrapper around a FAISS index with optional disk loading."""
 
-    def __init__(
-        self, path: str | None = DEFAULT_STORE_PATH, dimension: int = DEFAULT_DIM
-    ) -> None:
+    def __init__(self, path: str | None = DEFAULT_STORE_PATH, dimension: int = DEFAULT_DIM) -> None:
         self.dimension = dimension
         self.index = faiss.IndexFlatL2(self.dimension)
         self.metadata: list[dict[str, Any]] = []
@@ -31,15 +29,10 @@ class FaissAdapter:
             store = PickledStore.load(path, UnifiedConfig())
             vecs = [d["embedding"] for d in store.documents]
             self.index.add(np.array(vecs, dtype="float32"))
-            self.metadata = [
-                {k: v for k, v in doc.items() if k != "embedding"}
-                for doc in store.documents
-            ]
+            self.metadata = [{k: v for k, v in doc.items() if k != "embedding"} for doc in store.documents]
 
     # ----------------------------- iteration -----------------------------
-    def iter_embeddings(
-        self, batch_size: int = 100
-    ) -> Iterable[tuple[list[Any], list[Any], list[dict[str, Any]]]]:
+    def iter_embeddings(self, batch_size: int = 100) -> Iterable[tuple[list[Any], list[Any], list[dict[str, Any]]]]:
         for i in range(0, len(self.metadata), batch_size):
             batch_meta = self.metadata[i : i + batch_size]
             ids = [d["id"] for d in batch_meta]
@@ -48,9 +41,7 @@ class FaissAdapter:
             yield ids, vecs, payload
 
     # ----------------------------- add/search ----------------------------
-    def add(
-        self, ids: list[str], embeddings: np.ndarray, payload: list[dict[str, Any]]
-    ) -> None:
+    def add(self, ids: list[str], embeddings: np.ndarray, payload: list[dict[str, Any]]) -> None:
         vecs = np.asarray(embeddings, dtype="float32")
         self.index.add(vecs)
         for pid, meta in zip(ids, payload, strict=False):

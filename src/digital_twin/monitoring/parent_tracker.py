@@ -3,16 +3,16 @@ Sprint R-5: Digital Twin MVP - Task A.4.
 """
 
 import asyncio
+import hashlib
+import json
+import logging
+import sqlite3
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import Enum
-import hashlib
-import json
-import logging
-import sqlite3
 from typing import Any
 
 import numpy as np
@@ -194,7 +194,8 @@ class ParentProgressTracker:
             cursor = conn.cursor()
 
             # Progress milestones table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS progress_milestones (
                     milestone_id TEXT PRIMARY KEY,
                     student_id TEXT NOT NULL,
@@ -211,10 +212,12 @@ class ParentProgressTracker:
                     celebration_message TEXT,
                     created_at TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             # Learning alerts table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS learning_alerts (
                     alert_id TEXT PRIMARY KEY,
                     student_id TEXT NOT NULL,
@@ -230,10 +233,12 @@ class ParentProgressTracker:
                     suggested_actions TEXT, -- JSON
                     expires_at TEXT
                 )
-            """)
+            """
+            )
 
             # Weekly reports table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS weekly_reports (
                     report_id TEXT PRIMARY KEY,
                     student_id TEXT NOT NULL,
@@ -242,10 +247,12 @@ class ParentProgressTracker:
                     report_data TEXT NOT NULL,  -- JSON
                     generated_at TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             # Parent insights table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS parent_insights (
                     insight_id TEXT PRIMARY KEY,
                     student_id TEXT NOT NULL,
@@ -259,10 +266,12 @@ class ParentProgressTracker:
                     created_at TEXT NOT NULL,
                     implemented INTEGER DEFAULT 0
                 )
-            """)
+            """
+            )
 
             # Parent settings table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS parent_settings (
                     student_id TEXT PRIMARY KEY,
                     parent_email TEXT,
@@ -274,29 +283,15 @@ class ParentProgressTracker:
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             # Create indexes
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_milestones_student "
-                "ON progress_milestones(student_id)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_alerts_student "
-                "ON learning_alerts(student_id)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_reports_student "
-                "ON weekly_reports(student_id)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_insights_student "
-                "ON parent_insights(student_id)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_alerts_created "
-                "ON learning_alerts(created_at)"
-            )
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_milestones_student " "ON progress_milestones(student_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_alerts_student " "ON learning_alerts(student_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_reports_student " "ON weekly_reports(student_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_insights_student " "ON parent_insights(student_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_alerts_created " "ON learning_alerts(created_at)")
 
             conn.commit()
             conn.close()
@@ -375,9 +370,7 @@ class ParentProgressTracker:
             {
                 "parent_tracker/parent_registered": True,
                 "parent_tracker/student_id": student_id,
-                "parent_tracker/notifications_enabled": (
-                    notification_preferences.get("email_enabled", False)
-                ),
+                "parent_tracker/notifications_enabled": (notification_preferences.get("email_enabled", False)),
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         )
@@ -397,9 +390,7 @@ class ParentProgressTracker:
                 grade_level = student.grade_level
 
                 # Create grade-appropriate milestones
-                milestones = await self._generate_grade_milestones(
-                    student_id, grade_level
-                )
+                milestones = await self._generate_grade_milestones(student_id, grade_level)
 
                 for milestone in milestones:
                     self.milestones[student_id].append(milestone)
@@ -414,9 +405,7 @@ class ParentProgressTracker:
         except Exception as e:
             logger.warning("Could not initialize milestones: %s", e)
 
-    async def _generate_grade_milestones(
-        self, student_id: str, grade_level: int
-    ) -> list[ProgressMilestone]:
+    async def _generate_grade_milestones(self, student_id: str, grade_level: int) -> list[ProgressMilestone]:
         """Generate appropriate milestones for grade level."""
         milestones = []
 
@@ -463,18 +452,12 @@ class ParentProgressTracker:
                 ("probability", "Understand basic probability", 0.6, "helpful"),
             ]
 
-        for i, (concept, description, target_mastery, importance) in enumerate(
-            milestone_concepts
-        ):
+        for i, (concept, description, target_mastery, importance) in enumerate(milestone_concepts):
             milestone_id = f"milestone_{student_id[:8]}_{concept}_{i}"
 
             # Estimate completion based on current progress
-            estimated_weeks = (
-                4 if importance == "critical" else 6 if importance == "important" else 8
-            )
-            estimated_completion = (
-                datetime.now(timezone.utc) + timedelta(weeks=estimated_weeks)
-            ).isoformat()
+            estimated_weeks = 4 if importance == "critical" else 6 if importance == "important" else 8
+            estimated_completion = (datetime.now(timezone.utc) + timedelta(weeks=estimated_weeks)).isoformat()
 
             milestone = ProgressMilestone(
                 milestone_id=milestone_id,
@@ -489,9 +472,7 @@ class ParentProgressTracker:
                 estimated_completion=estimated_completion,
                 difficulty_level="grade_appropriate",
                 importance=importance,
-                celebration_message=(
-                    f"🎉 Amazing work! You've mastered {description.lower()}!"
-                ),
+                celebration_message=(f"🎉 Amazing work! You've mastered {description.lower()}!"),
                 next_milestone=None,
             )
 
@@ -499,9 +480,7 @@ class ParentProgressTracker:
 
         return milestones
 
-    async def update_student_progress(
-        self, student_id: str, session_data: dict[str, Any]
-    ) -> None:
+    async def update_student_progress(self, student_id: str, session_data: dict[str, Any]) -> None:
         """Update student progress and check for alerts/milestones."""
         try:
             # Update milestone progress
@@ -524,12 +503,8 @@ class ParentProgressTracker:
                 {
                     "parent_tracker/progress_updated": True,
                     "parent_tracker/student_id": student_id,
-                    "parent_tracker/session_engagement": (
-                        session_data.get("engagement_score", 0)
-                    ),
-                    "parent_tracker/session_accuracy": (
-                        session_data.get("accuracy", 0)
-                    ),
+                    "parent_tracker/session_engagement": (session_data.get("engagement_score", 0)),
+                    "parent_tracker/session_accuracy": (session_data.get("accuracy", 0)),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             )
@@ -537,9 +512,7 @@ class ParentProgressTracker:
         except Exception as e:
             logger.exception("Error updating student progress: %s", e)
 
-    async def _update_milestone_progress(
-        self, student_id: str, session_data: dict[str, Any]
-    ) -> None:
+    async def _update_milestone_progress(self, student_id: str, session_data: dict[str, Any]) -> None:
         """Update milestone progress based on session data."""
         concepts_practiced = session_data.get("concepts_covered", [])
         accuracy = session_data.get("accuracy", 0.0)
@@ -552,9 +525,7 @@ class ParentProgressTracker:
             if milestone.concept in concepts_practiced:
                 # Update mastery level (simplified calculation)
                 learning_rate = 0.1
-                milestone.current_mastery_level = min(
-                    1.0, milestone.current_mastery_level + learning_rate * accuracy
-                )
+                milestone.current_mastery_level = min(1.0, milestone.current_mastery_level + learning_rate * accuracy)
 
                 # Check if milestone is achieved
                 if milestone.current_mastery_level >= milestone.target_mastery_level:
@@ -583,9 +554,7 @@ class ParentProgressTracker:
                 # Update in database
                 await self._save_milestone(milestone)
 
-    async def _check_progress_alerts(
-        self, student_id: str, session_data: dict[str, Any]
-    ) -> None:
+    async def _check_progress_alerts(self, student_id: str, session_data: dict[str, Any]) -> None:
         """Check for progress-based alerts."""
         session_data.get("engagement_score", 0.5)
         session_data.get("accuracy", 0.5)
@@ -595,9 +564,7 @@ class ParentProgressTracker:
         recent_sessions = self._get_recent_sessions(student_id, days=7)
 
         if len(recent_sessions) >= 3:
-            avg_engagement = np.mean(
-                [s.get("engagement_score", 0.5) for s in recent_sessions]
-            )
+            avg_engagement = np.mean([s.get("engagement_score", 0.5) for s in recent_sessions])
             avg_accuracy = np.mean([s.get("accuracy", 0.5) for s in recent_sessions])
 
             # Low engagement alert
@@ -661,9 +628,7 @@ class ParentProgressTracker:
                         ],
                     )
 
-    def _get_recent_sessions(
-        self, student_id: str, days: int = 7
-    ) -> list[dict[str, Any]]:
+    def _get_recent_sessions(self, student_id: str, days: int = 7) -> list[dict[str, Any]]:
         """Get recent session data for analysis."""
         # This would integrate with the digital twin session history
         # For now, return mock data structure
@@ -720,9 +685,7 @@ class ParentProgressTracker:
                 maxlen=100,
             )
 
-    def _update_engagement_patterns(
-        self, student_id: str, session_data: dict[str, Any]
-    ) -> None:
+    def _update_engagement_patterns(self, student_id: str, session_data: dict[str, Any]) -> None:
         """Update engagement pattern analysis."""
         session_start = session_data.get("start_time")
         if session_start:
@@ -764,11 +727,7 @@ class ParentProgressTracker:
             engagement_by_hour[hour].append(session["engagement_score"])
 
         # Find best and worst performance times
-        hour_averages = {
-            hour: np.mean(scores)
-            for hour, scores in engagement_by_hour.items()
-            if len(scores) >= 3
-        }
+        hour_averages = {hour: np.mean(scores) for hour, scores in engagement_by_hour.items() if len(scores) >= 3}
 
         if hour_averages:
             best_hour = max(hour_averages, key=hour_averages.get)
@@ -777,9 +736,7 @@ class ParentProgressTracker:
             if hour_averages[best_hour] - hour_averages[worst_hour] > 0.2:
                 insights.append(
                     ParentInsight(
-                        insight_id=(
-                            f"timing_{student_id}_{datetime.now().strftime('%Y%m%d')}"
-                        ),
+                        insight_id=(f"timing_{student_id}_{datetime.now().strftime('%Y%m%d')}"),
                         student_id=student_id,
                         category="schedule",
                         title="Optimal Study Time Identified",
@@ -788,14 +745,11 @@ class ParentProgressTracker:
                             f"{best_hour}:00 and lowest around {worst_hour}:00."
                         ),
                         evidence=[
-                            f"Best performance: {best_hour}:00 "
-                            f"(engagement: {hour_averages[best_hour]:.2f})",
-                            f"Challenging time: {worst_hour}:00 "
-                            f"(engagement: {hour_averages[worst_hour]:.2f})",
+                            f"Best performance: {best_hour}:00 " f"(engagement: {hour_averages[best_hour]:.2f})",
+                            f"Challenging time: {worst_hour}:00 " f"(engagement: {hour_averages[worst_hour]:.2f})",
                         ],
                         recommended_actions=[
-                            f"Schedule important learning sessions around "
-                            f"{best_hour}:00",
+                            f"Schedule important learning sessions around " f"{best_hour}:00",
                             f"Use {worst_hour}:00 for lighter review or break time",
                             "Be consistent with timing to build routine",
                         ],
@@ -807,29 +761,19 @@ class ParentProgressTracker:
 
         # Analyze learning velocity trends
         if len(self.learning_velocity[student_id]) >= 5:
-            velocities = [
-                entry["velocity"] for entry in self.learning_velocity[student_id]
-            ]
-            velocity_trend = self._calculate_improvement_trend(
-                [{"accuracy": v} for v in velocities]
-            )
+            velocities = [entry["velocity"] for entry in self.learning_velocity[student_id]]
+            velocity_trend = self._calculate_improvement_trend([{"accuracy": v} for v in velocities])
 
             if velocity_trend > 0.1:
                 insights.append(
                     ParentInsight(
-                        insight_id=(
-                            f"velocity_{student_id}_{datetime.now().strftime('%Y%m%d')}"
-                        ),
+                        insight_id=(f"velocity_{student_id}_{datetime.now().strftime('%Y%m%d')}"),
                         student_id=student_id,
                         category="motivation",
                         title="Learning Speed is Increasing",
-                        description=(
-                            "Your child is learning concepts faster over time, "
-                            "showing great progress!"
-                        ),
+                        description=("Your child is learning concepts faster over time, " "showing great progress!"),
                         evidence=[
-                            f"Average learning velocity: "
-                            f"{np.mean(velocities):.2f} concepts/hour",
+                            f"Average learning velocity: " f"{np.mean(velocities):.2f} concepts/hour",
                             f"Positive trend: +{velocity_trend:.3f} improvement rate",
                         ],
                         recommended_actions=[
@@ -864,9 +808,7 @@ class ParentProgressTracker:
         message_to_hash = f"{student_id}_{title}_{datetime.now().isoformat()}"
         alert_id = f"alert_{hashlib.md5(message_to_hash.encode()).hexdigest()[:12]}"
 
-        expires_at = (
-            datetime.now(timezone.utc) + timedelta(hours=expires_hours)
-        ).isoformat()
+        expires_at = (datetime.now(timezone.utc) + timedelta(hours=expires_hours)).isoformat()
 
         alert = LearningAlert(
             alert_id=alert_id,
@@ -902,9 +844,7 @@ class ParentProgressTracker:
             }
         )
 
-        logger.info(
-            "Created %s alert for student %s: %s", level.value, student_id[:8], title
-        )
+        logger.info("Created %s alert for student %s: %s", level.value, student_id[:8], title)
 
         return alert_id
 
@@ -932,10 +872,7 @@ class ParentProgressTracker:
             [
                 a
                 for a in self.parent_alerts[student_id]
-                if (
-                    datetime.now(timezone.utc) - datetime.fromisoformat(a.created_at)
-                ).days
-                == 0
+                if (datetime.now(timezone.utc) - datetime.fromisoformat(a.created_at)).days == 0
             ]
         )
 
@@ -969,9 +906,7 @@ class ParentProgressTracker:
         except Exception:
             return False
 
-    async def _send_email_notification(
-        self, parent_settings: dict[str, Any], alert: LearningAlert
-    ) -> None:
+    async def _send_email_notification(self, parent_settings: dict[str, Any], alert: LearningAlert) -> None:
         """Send email notification to parent."""
         try:
             parent_email = parent_settings.get("parent_email")
@@ -1049,9 +984,7 @@ progress updates.
 
             # Send email (would need proper SMTP configuration)
             # This is a placeholder for the actual email sending logic
-            logger.info(
-                "Email notification prepared for %s: %s", parent_email, alert.title
-            )
+            logger.info("Email notification prepared for %s: %s", parent_email, alert.title)
 
         except Exception as e:
             logger.exception("Failed to send email notification: %s", e)
@@ -1078,36 +1011,20 @@ progress updates.
         concepts_practiced = list(set(all_concepts))
 
         # Get concepts mastered this week
-        concepts_mastered = self._get_concepts_mastered_this_week(
-            student_id, week_start, week_end
-        )
+        concepts_mastered = self._get_concepts_mastered_this_week(student_id, week_start, week_end)
 
         # Calculate averages
-        avg_engagement = (
-            np.mean([s.get("engagement_score", 0) for s in week_sessions])
-            if week_sessions
-            else 0
-        )
-        avg_accuracy = (
-            np.mean([s.get("accuracy", 0) for s in week_sessions])
-            if week_sessions
-            else 0
-        )
+        avg_engagement = np.mean([s.get("engagement_score", 0) for s in week_sessions]) if week_sessions else 0
+        avg_accuracy = np.mean([s.get("accuracy", 0) for s in week_sessions]) if week_sessions else 0
 
         # Get achievements
-        achievements_earned = self._get_achievements_this_week(
-            student_id, week_start, week_end
-        )
+        achievements_earned = self._get_achievements_this_week(student_id, week_start, week_end)
 
         # Analyze strengths and areas for improvement
-        areas_of_strength, areas_for_improvement = self._analyze_performance_areas(
-            week_sessions
-        )
+        areas_of_strength, areas_for_improvement = self._analyze_performance_areas(week_sessions)
 
         # Generate recommendations
-        recommended_focus = self._generate_focus_recommendations(
-            student_id, week_sessions, concepts_mastered
-        )
+        recommended_focus = self._generate_focus_recommendations(student_id, week_sessions, concepts_mastered)
 
         report = WeeklyReport(
             report_id=report_id,
@@ -1151,16 +1068,12 @@ progress updates.
 
         return report
 
-    def _get_week_sessions(
-        self, student_id: str, week_start: datetime, week_end: datetime
-    ) -> list[dict[str, Any]]:
+    def _get_week_sessions(self, student_id: str, week_start: datetime, week_end: datetime) -> list[dict[str, Any]]:
         """Get sessions for the specified week."""
         # This would integrate with actual session data
         return []
 
-    def _get_concepts_mastered_this_week(
-        self, student_id: str, week_start: datetime, week_end: datetime
-    ) -> list[str]:
+    def _get_concepts_mastered_this_week(self, student_id: str, week_start: datetime, week_end: datetime) -> list[str]:
         """Get concepts that were mastered this week."""
         mastered = []
 
@@ -1172,9 +1085,7 @@ progress updates.
 
         return mastered
 
-    def _get_achievements_this_week(
-        self, student_id: str, week_start: datetime, week_end: datetime
-    ) -> list[str]:
+    def _get_achievements_this_week(self, student_id: str, week_start: datetime, week_end: datetime) -> list[str]:
         """Get achievements earned this week."""
         achievements = []
 
@@ -1187,9 +1098,7 @@ progress updates.
 
         return achievements
 
-    def _analyze_performance_areas(
-        self, sessions: list[dict[str, Any]]
-    ) -> tuple[list[str], list[str]]:
+    def _analyze_performance_areas(self, sessions: list[dict[str, Any]]) -> tuple[list[str], list[str]]:
         """Analyze performance to identify strengths and improvement areas."""
         if not sessions:
             return [], []
@@ -1251,26 +1160,20 @@ progress updates.
         # Engagement-based recommendations
         avg_engagement = np.mean([s.get("engagement_score", 0) for s in sessions])
         if avg_engagement < 0.5:
-            recommendations.append(
-                "Try incorporating more interactive or hands-on activities"
-            )
+            recommendations.append("Try incorporating more interactive or hands-on activities")
 
         # Session length optimization
         session_lengths = [s.get("duration_minutes", 0) for s in sessions]
         if session_lengths:
             avg_length = np.mean(session_lengths)
             if avg_length < 15:
-                recommendations.append(
-                    "Consider slightly longer sessions for deeper learning"
-                )
+                recommendations.append("Consider slightly longer sessions for deeper learning")
             elif avg_length > 45:
                 recommendations.append("Consider shorter, more frequent sessions")
 
         return recommendations or ["Continue current learning approach"]
 
-    async def _send_weekly_report_notification(
-        self, student_id: str, report: WeeklyReport
-    ) -> None:
+    async def _send_weekly_report_notification(self, student_id: str, report: WeeklyReport) -> None:
         """Send weekly report to parent."""
         parent_settings = self.parent_settings.get(student_id)
         if not parent_settings:
@@ -1282,9 +1185,7 @@ progress updates.
 
         # Create summary alert
         achievements_text = (
-            "🎉 " + ", ".join(report.achievements_earned)
-            if report.achievements_earned
-            else "Keep up the great work!"
+            "🎉 " + ", ".join(report.achievements_earned) if report.achievements_earned else "Keep up the great work!"
         )
         summary_message = f"""
         This week your child completed {report.sessions_completed} learning
@@ -1340,9 +1241,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
                 try:
                     await self.generate_weekly_report(student_id)
                 except Exception as e:
-                    logger.exception(
-                        "Error generating weekly report for %s: %s", student_id, e
-                    )
+                    logger.exception("Error generating weekly report for %s: %s", student_id, e)
 
     async def _cleanup_expired_alerts(self) -> None:
         """Clean up expired alerts."""
@@ -1542,9 +1441,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
     def get_parent_dashboard_data(self, student_id: str) -> dict[str, Any]:
         """Get comprehensive dashboard data for parents."""
         # Get recent alerts
-        recent_alerts = [
-            asdict(alert) for alert in self.parent_alerts[student_id][-10:]
-        ]
+        recent_alerts = [asdict(alert) for alert in self.parent_alerts[student_id][-10:]]
 
         # Get milestone progress
         milestone_progress = [
@@ -1559,9 +1456,7 @@ sessions with {report.total_study_time_minutes} minutes of study time.
         ]
 
         # Get recent insights
-        recent_insights = [
-            asdict(insight) for insight in self.parent_insights[student_id][-5:]
-        ]
+        recent_insights = [asdict(insight) for insight in self.parent_insights[student_id][-5:]]
 
         # Get latest weekly report
         latest_report = None
@@ -1573,32 +1468,20 @@ sessions with {report.total_study_time_minutes} minutes of study time.
             "last_updated": datetime.now(timezone.utc).isoformat(),
             "alerts": {
                 "recent": recent_alerts,
-                "unread_count": len(
-                    [a for a in self.parent_alerts[student_id] if not a.read]
-                ),
+                "unread_count": len([a for a in self.parent_alerts[student_id] if not a.read]),
                 "action_required_count": len(
-                    [
-                        a
-                        for a in self.parent_alerts[student_id]
-                        if a.action_required and not a.acknowledged
-                    ]
+                    [a for a in self.parent_alerts[student_id] if a.action_required and not a.acknowledged]
                 ),
             },
             "milestones": {
                 "progress": milestone_progress,
-                "completed_count": len(
-                    [m for m in self.milestones[student_id] if m.achieved]
-                ),
+                "completed_count": len([m for m in self.milestones[student_id] if m.achieved]),
                 "total_count": len(self.milestones[student_id]),
             },
             "insights": {
                 "recent": recent_insights,
                 "high_priority_count": len(
-                    [
-                        i
-                        for i in self.parent_insights[student_id]
-                        if i.priority == "high" and not i.implemented
-                    ]
+                    [i for i in self.parent_insights[student_id] if i.priority == "high" and not i.implemented]
                 ),
             },
             "latest_report": latest_report,
@@ -1608,12 +1491,8 @@ sessions with {report.total_study_time_minutes} minutes of study time.
                     if self.learning_velocity[student_id]
                     else 0
                 ),
-                "engagement_trend": self.progress_trends.get(student_id, {}).get(
-                    "engagement_trend", "unknown"
-                ),
-                "accuracy_trend": self.progress_trends.get(student_id, {}).get(
-                    "accuracy_trend", "unknown"
-                ),
+                "engagement_trend": self.progress_trends.get(student_id, {}).get("engagement_trend", "unknown"),
+                "accuracy_trend": self.progress_trends.get(student_id, {}).get("accuracy_trend", "unknown"),
             },
         }
 

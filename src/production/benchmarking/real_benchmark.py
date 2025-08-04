@@ -11,22 +11,18 @@ Implements actual model evaluation on standard benchmarks:
 No simulations - all evaluations are performed on real models with real data.
 """
 
-from datetime import datetime
 import logging
 import re
 import time
+from datetime import datetime
 from typing import Any
 
-from datasets import load_dataset
 import numpy as np
 import torch
+from datasets import load_dataset
 from tqdm import tqdm
 
-from .memory_manager import (
-    memory_efficient_operation,
-    memory_manager,
-    safe_model_loader,
-)
+from .memory_manager import memory_efficient_operation, memory_manager, safe_model_loader
 from .wandb_manager import log_metrics
 
 logger = logging.getLogger(__name__)
@@ -49,20 +45,14 @@ class RealModelBenchmark:
             logger.info(f"Loading model for benchmarking: {self.model_path}")
             self.model, self.tokenizer = safe_model_loader.load_model_safely(
                 self.model_path,
-                torch_dtype=torch.float16
-                if self.device.type == "cuda"
-                else torch.float32,
+                torch_dtype=torch.float16 if self.device.type == "cuda" else torch.float32,
             )
             self.model.eval()  # Set to evaluation mode
             logger.info(f"Model loaded successfully: {self.model_name}")
 
-    def generate_response(
-        self, prompt: str, max_length: int = 100, temperature: float = 0.1
-    ) -> str:
+    def generate_response(self, prompt: str, max_length: int = 100, temperature: float = 0.1) -> str:
         """Generate response from model."""
-        inputs = self.tokenizer(
-            prompt, return_tensors="pt", truncation=True, max_length=512
-        )
+        inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
         with torch.no_grad():
@@ -138,9 +128,7 @@ class RealModelBenchmark:
 
             subject_accuracies = {}
             for subject, scores in category_scores.items():
-                subject_accuracies[subject] = (
-                    scores["correct"] / scores["total"] if scores["total"] > 0 else 0
-                )
+                subject_accuracies[subject] = scores["correct"] / scores["total"] if scores["total"] > 0 else 0
 
             results = {
                 "overall_accuracy": overall_accuracy,
@@ -149,9 +137,7 @@ class RealModelBenchmark:
                 "subject_accuracies": subject_accuracies,
             }
 
-            logger.info(
-                f"MMLU Results: {overall_accuracy:.3f} accuracy ({correct}/{total})"
-            )
+            logger.info(f"MMLU Results: {overall_accuracy:.3f} accuracy ({correct}/{total})")
             return results
 
         except Exception as e:
@@ -188,9 +174,7 @@ class RealModelBenchmark:
                 predicted_number = self.extract_number_from_response(response)
 
                 if predicted_number is not None and correct_number is not None:
-                    if (
-                        abs(predicted_number - correct_number) < 0.01
-                    ):  # Allow small floating point errors
+                    if abs(predicted_number - correct_number) < 0.01:  # Allow small floating point errors
                         correct += 1
 
                 total += 1
@@ -253,9 +237,7 @@ class RealModelBenchmark:
 
             results = {"accuracy": accuracy, "correct": correct, "total": total}
 
-            logger.info(
-                f"HellaSwag Results: {accuracy:.3f} accuracy ({correct}/{total})"
-            )
+            logger.info(f"HellaSwag Results: {accuracy:.3f} accuracy ({correct}/{total})")
             return results
 
         except Exception as e:
@@ -264,9 +246,7 @@ class RealModelBenchmark:
 
     def calculate_text_likelihood(self, text: str) -> float:
         """Calculate likelihood of text for ranking."""
-        inputs = self.tokenizer(
-            text, return_tensors="pt", truncation=True, max_length=512
-        )
+        inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
         with torch.no_grad():
@@ -331,9 +311,7 @@ class RealModelBenchmark:
 
         return None
 
-    async def run_comprehensive_benchmark(
-        self, quick_mode: bool = False
-    ) -> dict[str, Any]:
+    async def run_comprehensive_benchmark(self, quick_mode: bool = False) -> dict[str, Any]:
         """Run comprehensive benchmark suite."""
         self.load_model()  # Ensure model is loaded
 
@@ -408,9 +386,7 @@ class RealModelBenchmark:
 
 
 # Factory function for easy use
-def create_real_benchmark(
-    model_path: str, model_name: str | None = None
-) -> RealModelBenchmark:
+def create_real_benchmark(model_path: str, model_name: str | None = None) -> RealModelBenchmark:
     """Create a real benchmark instance."""
     return RealModelBenchmark(model_path, model_name)
 

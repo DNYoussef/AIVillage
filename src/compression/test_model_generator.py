@@ -1,16 +1,14 @@
 """Test model generator for consistent compression testing."""
 
 import logging
-from pathlib import Path
 import tempfile
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def create_test_model(
-    layers: int = 3, hidden_size: int = 256, size_mb: float = 10.0
-) -> Any:
+def create_test_model(layers: int = 3, hidden_size: int = 256, size_mb: float = 10.0) -> Any:
     """Create a test PyTorch model for compression testing.
 
     Args:

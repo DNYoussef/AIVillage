@@ -22,9 +22,7 @@ def plot_pareto_front(
 ) -> None:
     if len(objectives) != 2:
         msg = "Pareto front visualization is only supported for 2 objectives"
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     plt.figure(figsize=(10, 6))
     x = [scores[i][objectives[0]] for i in range(len(scores))]
@@ -51,9 +49,7 @@ def plot_evolution_progress(
     num_generations = len(all_generation_scores)
     num_objectives = len(objectives)
 
-    fig, axes = plt.subplots(
-        num_objectives, 1, figsize=(10, 5 * num_objectives), sharex=True
-    )
+    fig, axes = plt.subplots(num_objectives, 1, figsize=(10, 5 * num_objectives), sharex=True)
     if num_objectives == 1:
         axes = [axes]
 

@@ -6,9 +6,6 @@ This module previously contained a standalone implementation of the
 source of truth while maintaining backwards compatibility.
 """
 
-from src.core.compression.simple_quantizer import (
-    CompressionError,
-    SimpleQuantizer,
-)
+from src.core.compression.simple_quantizer import CompressionError, SimpleQuantizer
 
 __all__ = ["CompressionError", "SimpleQuantizer"]

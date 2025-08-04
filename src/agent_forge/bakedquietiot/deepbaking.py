@@ -1,6 +1,6 @@
-from langroid import ChatAgent, ChatAgentConfig, Task
 import torch
 import torch.nn.functional as F
+from langroid import ChatAgent, ChatAgentConfig, Task
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
@@ -137,9 +137,7 @@ class DeepSystemBakerTask(Task):
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
             outputs = self.model(**inputs)
-        loss = F.cross_entropy(
-            outputs.logits.view(-1, outputs.logits.size(-1)), inputs.input_ids.view(-1)
-        )
+        loss = F.cross_entropy(outputs.logits.view(-1, outputs.logits.size(-1)), inputs.input_ids.view(-1))
         loss.backward()
 
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=1e-5)
@@ -165,9 +163,7 @@ class DeepSystemBakerTask(Task):
 
     async def generate_response(self, prompt):
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
-        outputs = self.model.generate(
-            **inputs, max_length=500, num_return_sequences=1, do_sample=True
-        )
+        outputs = self.model.generate(**inputs, max_length=500, num_return_sequences=1, do_sample=True)
         return self.tokenizer.decode(outputs[0], skip_special_tokens=False)
 
     async def score_response(self, response):

@@ -6,21 +6,17 @@ Main server implementation for HypeRAG Model Context Protocol server.
 import asyncio
 import json
 import logging
-from pathlib import Path
 import signal
 import sys
 import time
+from pathlib import Path
 from typing import Any
 
 import websockets
-from websockets.server import WebSocketServerProtocol
 import yaml
+from websockets.server import WebSocketServerProtocol
 
-from .auth import (
-    AuthContext,
-    AuthenticationError,
-    PermissionManager,
-)
+from .auth import AuthContext, AuthenticationError, PermissionManager
 from .models import ModelRegistry
 from .protocol import MCPProtocolHandler, MCPRequest
 from .storage import SQLiteStorage
@@ -52,9 +48,7 @@ class HypeRAGMCPServer:
         await self._load_config()
 
         # Initialize permission manager
-        jwt_secret = self.config.get("auth", {}).get(
-            "jwt_secret", "dev-secret-change-in-production"
-        )
+        jwt_secret = self.config.get("auth", {}).get("jwt_secret", "dev-secret-change-in-production")
         self.permission_manager = PermissionManager(
             jwt_secret=jwt_secret,
             enable_audit=self.config.get("audit", {}).get("enabled", True),
@@ -87,9 +81,7 @@ class HypeRAGMCPServer:
                     self.config = yaml.safe_load(f) or {}
                 logger.info(f"Loaded configuration from {self.config_path}")
             else:
-                logger.warning(
-                    f"Configuration file {self.config_path} not found, using defaults"
-                )
+                logger.warning(f"Configuration file {self.config_path} not found, using defaults")
                 self.config = self._get_default_config()
         except Exception as e:
             logger.exception(f"Failed to load configuration: {e!s}")
@@ -131,9 +123,7 @@ class HypeRAGMCPServer:
         # Set up signal handlers
         if sys.platform != "win32":
             for sig in (signal.SIGTERM, signal.SIGINT):
-                asyncio.get_event_loop().add_signal_handler(
-                    sig, lambda: asyncio.create_task(self.shutdown())
-                )
+                asyncio.get_event_loop().add_signal_handler(sig, lambda: asyncio.create_task(self.shutdown()))
 
         # Start WebSocket server
         self.server = await websockets.serve(
@@ -151,9 +141,7 @@ class HypeRAGMCPServer:
         # Wait for shutdown
         await self.shutdown_event.wait()
 
-    async def handle_connection(
-        self, websocket: WebSocketServerProtocol, path: str
-    ) -> None:
+    async def handle_connection(self, websocket: WebSocketServerProtocol, path: str) -> None:
         """Handle new WebSocket connection."""
         connection_id = f"conn_{int(time.time() * 1000)}_{id(websocket)}"
         self.active_connections[connection_id] = websocket
@@ -175,9 +163,7 @@ class HypeRAGMCPServer:
                 await self.permission_manager.invalidate_session(context.session_id)
                 del self.connection_contexts[connection_id]
 
-    async def _handle_client_session(
-        self, connection_id: str, websocket: WebSocketServerProtocol
-    ) -> None:
+    async def _handle_client_session(self, connection_id: str, websocket: WebSocketServerProtocol) -> None:
         """Handle client session."""
         context: AuthContext | None = None
 
@@ -188,9 +174,7 @@ class HypeRAGMCPServer:
 
                 # Validate JSON-RPC format
                 if not isinstance(data, dict) or data.get("jsonrpc") != "2.0":
-                    await self._send_error(
-                        websocket, "INVALID_REQUEST", "Invalid JSON-RPC format"
-                    )
+                    await self._send_error(websocket, "INVALID_REQUEST", "Invalid JSON-RPC format")
                     continue
 
                 method = data.get("method")
@@ -198,26 +182,18 @@ class HypeRAGMCPServer:
                 request_id = data.get("id")
 
                 if not method:
-                    await self._send_error(
-                        websocket, "INVALID_REQUEST", "Missing method", request_id
-                    )
+                    await self._send_error(websocket, "INVALID_REQUEST", "Missing method", request_id)
                     continue
 
                 # Create MCP request
-                request = MCPRequest(
-                    method=method, params=params, request_id=request_id
-                )
+                request = MCPRequest(method=method, params=params, request_id=request_id)
 
                 # Handle authentication
                 if not context and method != "hyperag/health":
-                    context = await self._authenticate_request(
-                        params, websocket.remote_address[0]
-                    )
+                    context = await self._authenticate_request(params, websocket.remote_address[0])
                     if context:
                         self.connection_contexts[connection_id] = context
-                        logger.info(
-                            f"Authenticated connection {connection_id} as {context.user_id}"
-                        )
+                        logger.info(f"Authenticated connection {connection_id} as {context.user_id}")
                     else:
                         await self._send_error(
                             websocket,
@@ -237,13 +213,9 @@ class HypeRAGMCPServer:
                 await self._send_error(websocket, "PARSE_ERROR", "Invalid JSON")
             except Exception as e:
                 logger.exception(f"Error processing message from {connection_id}: {e!s}")
-                await self._send_error(
-                    websocket, "INTERNAL_ERROR", f"Internal error: {e!s}"
-                )
+                await self._send_error(websocket, "INTERNAL_ERROR", f"Internal error: {e!s}")
 
-    async def _authenticate_request(
-        self, params: dict[str, Any], ip_address: str
-    ) -> AuthContext | None:
+    async def _authenticate_request(self, params: dict[str, Any], ip_address: str) -> AuthContext | None:
         """Authenticate a request."""
         try:
             # Check for JWT token
@@ -255,9 +227,7 @@ class HypeRAGMCPServer:
             # Check for API key
             api_key = params.get("api_key") or params.get("x-api-key", "")
             if api_key:
-                return await self.permission_manager.authenticate_api_key(
-                    api_key, ip_address
-                )
+                return await self.permission_manager.authenticate_api_key(api_key, ip_address)
 
             return None
 
@@ -309,14 +279,8 @@ class HypeRAGMCPServer:
 
     async def get_server_stats(self) -> dict[str, Any]:
         """Get server statistics."""
-        active_sessions = (
-            await self.permission_manager.get_active_sessions()
-            if self.permission_manager
-            else []
-        )
-        model_stats = (
-            self.model_registry.get_model_stats() if self.model_registry else {}
-        )
+        active_sessions = await self.permission_manager.get_active_sessions() if self.permission_manager else []
+        model_stats = self.model_registry.get_model_stats() if self.model_registry else {}
 
         return {
             "uptime_seconds": time.time() - self.start_time,
@@ -325,15 +289,9 @@ class HypeRAGMCPServer:
             "registered_models": len(model_stats),
             "config_loaded": bool(self.config),
             "components": {
-                "permission_manager": "initialized"
-                if self.permission_manager
-                else "not_initialized",
-                "model_registry": "initialized"
-                if self.model_registry
-                else "not_initialized",
-                "protocol_handler": "initialized"
-                if self.protocol_handler
-                else "not_initialized",
+                "permission_manager": "initialized" if self.permission_manager else "not_initialized",
+                "model_registry": "initialized" if self.model_registry else "not_initialized",
+                "protocol_handler": "initialized" if self.protocol_handler else "not_initialized",
             },
         }
 

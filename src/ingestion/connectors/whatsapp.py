@@ -3,11 +3,11 @@
 Actually connects and retrieves messages - NO MORE STUBS!
 """
 
-from datetime import datetime, timedelta
 import logging
 import os
 import random
 import time
+from datetime import datetime, timedelta
 from typing import Any
 
 import requests
@@ -29,9 +29,7 @@ class WhatsAppConnector:
         self.messages_cache = []
         self.last_fetch_time = 0
 
-        logger.info(
-            f"WhatsApp connector initialized with API token: {'✓' if self.api_token else '✗'}"
-        )
+        logger.info(f"WhatsApp connector initialized with API token: {'✓' if self.api_token else '✗'}")
 
     def get_auth_url(self) -> str:
         """Get OAuth URL for WhatsApp Business
@@ -41,9 +39,7 @@ class WhatsAppConnector:
             logger.warning("WhatsApp App ID not configured, using fallback")
             return "https://developers.facebook.com/docs/whatsapp/business-management-api/get-started"
 
-        redirect_uri = os.environ.get(
-            "WHATSAPP_REDIRECT_URI", "http://localhost:8000/callback"
-        )
+        redirect_uri = os.environ.get("WHATSAPP_REDIRECT_URI", "http://localhost:8000/callback")
 
         auth_url = (
             f"https://www.facebook.com/v17.0/dialog/oauth?"
@@ -87,9 +83,7 @@ class WhatsAppConnector:
             if response.status_code == 401:
                 logger.warning("WhatsApp API authentication failed, using fallback")
                 return self._get_local_message_count()
-            logger.warning(
-                f"WhatsApp API error {response.status_code}, using fallback"
-            )
+            logger.warning(f"WhatsApp API error {response.status_code}, using fallback")
             return self._get_local_message_count()
 
         except requests.RequestException as e:
@@ -122,9 +116,7 @@ class WhatsAppConnector:
                 messages = self._format_api_messages(data.get("data", []))
                 logger.info(f"Retrieved {len(messages)} messages from WhatsApp API")
                 return messages[:limit]
-            logger.warning(
-                f"WhatsApp API error {response.status_code}, using fallback"
-            )
+            logger.warning(f"WhatsApp API error {response.status_code}, using fallback")
             return self._get_local_messages(limit)
 
         except requests.RequestException as e:
@@ -203,9 +195,7 @@ class WhatsAppConnector:
             hours_ago = random.randint(0, 23)
             minutes_ago = random.randint(0, 59)
 
-            msg_time = now - timedelta(
-                days=days_ago, hours=hours_ago, minutes=minutes_ago
-            )
+            msg_time = now - timedelta(days=days_ago, hours=hours_ago, minutes=minutes_ago)
 
             # Choose random contact and message
             contact = random.choice(contacts)
@@ -261,19 +251,13 @@ class WhatsAppConnector:
                 if msg.get("type") == "text":
                     formatted_msg["text"] = msg.get("text", {}).get("body", "")
                 elif msg.get("type") == "image":
-                    formatted_msg["text"] = (
-                        f"[IMAGE] {msg.get('image', {}).get('caption', 'Photo')}"
-                    )
+                    formatted_msg["text"] = f"[IMAGE] {msg.get('image', {}).get('caption', 'Photo')}"
                 elif msg.get("type") == "document":
-                    formatted_msg["text"] = (
-                        f"[DOCUMENT] {msg.get('document', {}).get('filename', 'File')}"
-                    )
+                    formatted_msg["text"] = f"[DOCUMENT] {msg.get('document', {}).get('filename', 'File')}"
                 elif msg.get("type") == "audio":
                     formatted_msg["text"] = "[AUDIO] Voice message"
                 else:
-                    formatted_msg["text"] = (
-                        f"[{msg.get('type', 'UNKNOWN').upper()}] Message"
-                    )
+                    formatted_msg["text"] = f"[{msg.get('type', 'UNKNOWN').upper()}] Message"
 
                 formatted.append(formatted_msg)
 
@@ -308,9 +292,7 @@ class WhatsAppConnector:
             if response.status_code == 200:
                 logger.info(f"Message sent successfully to {to_number}")
                 return True
-            logger.error(
-                f"Failed to send message: {response.status_code} - {response.text}"
-            )
+            logger.error(f"Failed to send message: {response.status_code} - {response.text}")
             return False
 
         except Exception as e:
@@ -362,9 +344,7 @@ class WhatsAppConnector:
 
             # Hourly activity
             try:
-                hour = datetime.fromisoformat(
-                    msg["timestamp"].replace("Z", "+00:00")
-                ).hour
+                hour = datetime.fromisoformat(msg["timestamp"].replace("Z", "+00:00")).hour
                 hourly_activity[hour] += 1
             except:
                 pass

@@ -1,30 +1,21 @@
 """Credits API - REST endpoints for credits ledger operations."""
 
-from datetime import datetime, timezone
 import logging
+from datetime import datetime, timezone
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from prometheus_client import Counter, Histogram, generate_latest
 from pydantic import BaseModel, Field
 
-from .credits_ledger import (
-    CreditsConfig,
-    CreditsLedger,
-)
+from .credits_ledger import CreditsConfig, CreditsLedger
 
 logger = logging.getLogger(__name__)
 
 # Prometheus metrics
-CREDITS_REQUESTS = Counter(
-    "credits_requests_total", "Credits API requests", ["endpoint", "method"]
-)
-CREDITS_ERRORS = Counter(
-    "credits_errors_total", "Credits API errors", ["endpoint", "error_type"]
-)
-CREDITS_LATENCY = Histogram(
-    "credits_latency_seconds", "Credits API latency", ["endpoint"]
-)
+CREDITS_REQUESTS = Counter("credits_requests_total", "Credits API requests", ["endpoint", "method"])
+CREDITS_ERRORS = Counter("credits_errors_total", "Credits API errors", ["endpoint", "error_type"])
+CREDITS_LATENCY = Histogram("credits_latency_seconds", "Credits API latency", ["endpoint"])
 
 # Pydantic models for API
 
@@ -137,9 +128,7 @@ async def general_error_handler(request, exc):
 
 
 @app.post("/users", response_model=dict, status_code=201)
-async def create_user(
-    request: CreateUserRequest, ledger: CreditsLedger = Depends(get_ledger)
-):
+async def create_user(request: CreateUserRequest, ledger: CreditsLedger = Depends(get_ledger)):
     """Create a new user with wallet."""
     CREDITS_REQUESTS.labels(endpoint="/users", method="POST").inc()
 
@@ -176,17 +165,13 @@ async def get_balance(username: str, ledger: CreditsLedger = Depends(get_ledger)
 
 
 @app.post("/transfer", response_model=TransactionResponseAPI)
-async def transfer_credits(
-    request: TransferRequest, ledger: CreditsLedger = Depends(get_ledger)
-):
+async def transfer_credits(request: TransferRequest, ledger: CreditsLedger = Depends(get_ledger)):
     """Transfer credits between users with 1% burn."""
     CREDITS_REQUESTS.labels(endpoint="/transfer", method="POST").inc()
 
     with CREDITS_LATENCY.labels(endpoint="/transfer").time():
         try:
-            transaction = ledger.transfer(
-                request.from_username, request.to_username, request.amount
-            )
+            transaction = ledger.transfer(request.from_username, request.to_username, request.amount)
             return TransactionResponseAPI(
                 id=transaction.id,
                 from_user=transaction.from_user,
@@ -204,9 +189,7 @@ async def transfer_credits(
 
 
 @app.post("/earn", response_model=EarningResponseAPI)
-async def earn_credits(
-    request: EarnRequest, ledger: CreditsLedger = Depends(get_ledger)
-):
+async def earn_credits(request: EarnRequest, ledger: CreditsLedger = Depends(get_ledger)):
     """Mint credits based on Prometheus metrics. Idempotent by scrape timestamp."""
     CREDITS_REQUESTS.labels(endpoint="/earn", method="POST").inc()
 

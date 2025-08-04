@@ -4,19 +4,19 @@ Brain-inspired hippocampal memory system for rapid storage and retrieval
 of recent episodic information with time-based decay and PPR access patterns.
 """
 
-from datetime import datetime, timedelta
 import json
 import logging
 import os
 import time
-from typing import TYPE_CHECKING, Any
 import uuid
+from datetime import datetime, timedelta
+from typing import TYPE_CHECKING, Any
 
 import duckdb
 import numpy as np
+import redis.asyncio as redis
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
-import redis.asyncio as redis
 
 from .base import (
     ConfidenceType,
@@ -40,9 +40,7 @@ logger = logging.getLogger(__name__)
 class EpisodicDocument(Document):
     """Document optimized for episodic storage."""
 
-    def __init__(
-        self, content: str, doc_type: str, user_id: str | None = None, **kwargs
-    ) -> None:
+    def __init__(self, content: str, doc_type: str, user_id: str | None = None, **kwargs) -> None:
         super().__init__(
             id=str(uuid.uuid4()),
             content=content,
@@ -196,9 +194,7 @@ class HippoIndex(MemoryBackend):
                 node.embedding = self.embedding_manager.create_embedding(node.content)
 
             # Store in DuckDB
-            embedding_list = (
-                node.embedding.tolist() if node.embedding is not None else None
-            )
+            embedding_list = node.embedding.tolist() if node.embedding is not None else None
 
             self.duckdb_conn.execute(
                 """
@@ -246,9 +242,7 @@ class HippoIndex(MemoryBackend):
                     },
                 )
 
-                self.qdrant_client.upsert(
-                    collection_name="hippo_embeddings", points=[point]
-                )
+                self.qdrant_client.upsert(collection_name="hippo_embeddings", points=[point])
 
             # Cache in Redis
             await self._cache_node(node)
@@ -308,13 +302,9 @@ class HippoIndex(MemoryBackend):
         try:
             # Generate embedding if needed
             if document.embedding is None:
-                document.embedding = self.embedding_manager.create_embedding(
-                    document.content
-                )
+                document.embedding = self.embedding_manager.create_embedding(document.content)
 
-            embedding_list = (
-                document.embedding.tolist() if document.embedding is not None else None
-            )
+            embedding_list = document.embedding.tolist() if document.embedding is not None else None
 
             self.duckdb_conn.execute(
                 """
@@ -505,9 +495,7 @@ class HippoIndex(MemoryBackend):
             logger.exception("Vector similarity search failed: %s", e)
             return []
 
-    async def get_recent_nodes(
-        self, hours: int = 24, user_id: str | None = None, limit: int = 50
-    ) -> list[Node]:
+    async def get_recent_nodes(self, hours: int = 24, user_id: str | None = None, limit: int = 50) -> list[Node]:
         """Get recent episodic nodes."""
         cutoff_time = datetime.now() - timedelta(hours=hours)
 
@@ -599,15 +587,11 @@ class HippoIndex(MemoryBackend):
                 )
 
                 # Delete from Qdrant
-                self.qdrant_client.delete(
-                    collection_name="hippo_embeddings", points_selector=expired_ids
-                )
+                self.qdrant_client.delete(collection_name="hippo_embeddings", points_selector=expired_ids)
 
                 # Clear from Redis cache
                 for node_id in expired_ids:
-                    cache_key = self.redis_schema.get_key_patterns()["node"].format(
-                        node_id=node_id
-                    )
+                    cache_key = self.redis_schema.get_key_patterns()["node"].format(node_id=node_id)
                     await self.redis_client.delete(cache_key)
 
                 logger.info("Cleaned up %d expired episodic nodes", expired_count)
@@ -622,29 +606,25 @@ class HippoIndex(MemoryBackend):
         """Get statistics about episodic memory usage."""
         try:
             # Get node counts
-            node_stats = self.duckdb_conn.execute("""
+            node_stats = self.duckdb_conn.execute(
+                """
                 SELECT
                     COUNT(*) as total_nodes,
                     COUNT(CASE WHEN memory_type = 'episodic' THEN 1 END) as episodic_nodes,
                     AVG(confidence) as avg_confidence
                 FROM hippo_nodes
-            """).fetchone()
+            """
+            ).fetchone()
 
             # Get edge count
-            edge_count = self.duckdb_conn.execute("""
+            edge_count = self.duckdb_conn.execute(
+                """
                 SELECT COUNT(*) FROM hippo_edges
-            """).fetchone()[0]
+            """
+            ).fetchone()[0]
             memory_usage_mb = self._calculate_memory_usage_mb()
-            last_consolidation = (
-                self.consolidator.last_consolidation
-                if self.consolidator is not None
-                else None
-            )
-            pending_consolidations = (
-                self.consolidator.pending_consolidations
-                if self.consolidator is not None
-                else 0
-            )
+            last_consolidation = self.consolidator.last_consolidation if self.consolidator is not None else None
+            pending_consolidations = self.consolidator.pending_consolidations if self.consolidator is not None else 0
 
             return MemoryStats(
                 total_nodes=node_stats[0] or 0,
@@ -735,31 +715,23 @@ class HippoIndex(MemoryBackend):
             try:
                 # Check if collection exists
                 existing_collections = self.qdrant_client.get_collections()
-                if collection_name not in [
-                    c.name for c in existing_collections.collections
-                ]:
+                if collection_name not in [c.name for c in existing_collections.collections]:
                     # Create collection
                     self.qdrant_client.create_collection(
                         collection_name=collection_name,
-                        vectors_config=VectorParams(
-                            size=config["vectors"]["size"], distance=Distance.COSINE
-                        ),
+                        vectors_config=VectorParams(size=config["vectors"]["size"], distance=Distance.COSINE),
                     )
                     logger.info("Created Qdrant collection: %s", collection_name)
 
             except Exception as e:
-                logger.exception(
-                    "Failed to setup Qdrant collection %s: %s", collection_name, e
-                )
+                logger.exception("Failed to setup Qdrant collection %s: %s", collection_name, e)
 
         logger.info("Qdrant collections setup complete")
 
     async def _cache_node(self, node: Node) -> None:
         """Cache node in Redis."""
         try:
-            cache_key = self.redis_schema.get_key_patterns()["node"].format(
-                node_id=node.id
-            )
+            cache_key = self.redis_schema.get_key_patterns()["node"].format(node_id=node.id)
 
             node_data = {
                 "id": node.id,
@@ -782,9 +754,7 @@ class HippoIndex(MemoryBackend):
     async def _cache_edge(self, edge: Edge) -> None:
         """Cache edge in Redis."""
         try:
-            cache_key = self.redis_schema.get_key_patterns()["edge"].format(
-                edge_id=edge.id
-            )
+            cache_key = self.redis_schema.get_key_patterns()["edge"].format(edge_id=edge.id)
 
             edge_data = {
                 "id": edge.id,
@@ -808,9 +778,7 @@ class HippoIndex(MemoryBackend):
 # Factory functions for creating episodic memory components
 
 
-def create_episodic_document(
-    content: str, doc_type: str = "episodic", user_id: str | None = None
-) -> EpisodicDocument:
+def create_episodic_document(content: str, doc_type: str = "episodic", user_id: str | None = None) -> EpisodicDocument:
     """Create an episodic document."""
     return EpisodicDocument(
         content=content,
@@ -821,9 +789,7 @@ def create_episodic_document(
     )
 
 
-def create_hippo_node(
-    content: str, user_id: str | None = None, ttl_hours: int = 168
-) -> HippoNode:  # 7 days default
+def create_hippo_node(content: str, user_id: str | None = None, ttl_hours: int = 168) -> HippoNode:  # 7 days default
     """Create a hippocampal episodic node."""
     return HippoNode(
         content=content,

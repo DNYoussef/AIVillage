@@ -14,24 +14,24 @@ Usage:
 """
 
 import asyncio
-from datetime import datetime
 import json
 import logging
-from pathlib import Path
 import random
 import sys
 import time
 import traceback
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 import click
 import numpy as np
-from pydantic import BaseModel, Field, validator
 import torch
+import wandb
+from pydantic import BaseModel, Field, validator
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import wandb
 
 # Configure logging
 logging.basicConfig(
@@ -231,9 +231,7 @@ class MergeOperators:
     """Implementation of model merging operators."""
 
     @staticmethod
-    def linear_interpolation(
-        models: list[torch.nn.Module], weights: list[float]
-    ) -> torch.nn.Module:
+    def linear_interpolation(models: list[torch.nn.Module], weights: list[float]) -> torch.nn.Module:
         """Linear interpolation between models."""
         if len(models) != len(weights):
             msg = "Number of models must match number of weights"
@@ -263,9 +261,7 @@ class MergeOperators:
         return merged_model
 
     @staticmethod
-    def slerp_interpolation(
-        model1: torch.nn.Module, model2: torch.nn.Module, t: float = 0.5
-    ) -> torch.nn.Module:
+    def slerp_interpolation(model1: torch.nn.Module, model2: torch.nn.Module, t: float = 0.5) -> torch.nn.Module:
         """Spherical linear interpolation between two models."""
         merged_model = model1.__class__(model1.config)
         merged_state_dict = {}
@@ -283,9 +279,7 @@ class MergeOperators:
                 param2_norm = torch.nn.functional.normalize(param2, dim=0)
 
                 # Compute angle
-                dot_product = torch.clamp(
-                    torch.dot(param1_norm, param2_norm), -1.0, 1.0
-                )
+                dot_product = torch.clamp(torch.dot(param1_norm, param2_norm), -1.0, 1.0)
                 omega = torch.acos(torch.abs(dot_product))
 
                 # SLERP interpolation
@@ -293,10 +287,7 @@ class MergeOperators:
                     interpolated = (1 - t) * param1 + t * param2
                 else:
                     sin_omega = torch.sin(omega)
-                    interpolated = (
-                        torch.sin((1 - t) * omega) * param1
-                        + torch.sin(t * omega) * param2
-                    ) / sin_omega
+                    interpolated = (torch.sin((1 - t) * omega) * param1 + torch.sin(t * omega) * param2) / sin_omega
 
                 merged_state_dict[key] = interpolated.reshape(state_dict1[key].shape)
             else:
@@ -306,9 +297,7 @@ class MergeOperators:
         return merged_model
 
     @staticmethod
-    def ties_merge(
-        models: list[torch.nn.Module], threshold: float = 0.1
-    ) -> torch.nn.Module:
+    def ties_merge(models: list[torch.nn.Module], threshold: float = 0.1) -> torch.nn.Module:
         """TIES merging algorithm."""
         merged_model = models[0].__class__(models[0].config)
         merged_state_dict = {}
@@ -387,9 +376,7 @@ class MergeOperators:
         return merged_model
 
     @staticmethod
-    def frankenmerge(
-        models: list[torch.nn.Module], layer_assignment: list[int]
-    ) -> torch.nn.Module:
+    def frankenmerge(models: list[torch.nn.Module], layer_assignment: list[int]) -> torch.nn.Module:
         """Frankenmerge - layer-wise model combination."""
         if len(models) != 3:
             msg = "Frankenmerge requires exactly 3 models"
@@ -422,9 +409,7 @@ class MergeOperators:
         return merged_model
 
     @staticmethod
-    def dfs_merge(
-        models: list[torch.nn.Module], merge_ratio: float = 0.3
-    ) -> torch.nn.Module:
+    def dfs_merge(models: list[torch.nn.Module], merge_ratio: float = 0.3) -> torch.nn.Module:
         """Depth-First Search merge strategy."""
         merged_model = models[0].__class__(models[0].config)
         merged_state_dict = {}
@@ -464,18 +449,12 @@ class BaseEvaluator:
 
     def __init__(self, device: str = "auto") -> None:
         """Initialize BaseEvaluator."""
-        self.device = (
-            device
-            if device != "auto"
-            else ("cuda" if torch.cuda.is_available() else "cpu")
-        )
+        self.device = device if device != "auto" else ("cuda" if torch.cuda.is_available() else "cpu")
 
     async def evaluate(self, model_path: str) -> float:
         """Evaluate model and return fitness score [0.0, 1.0]."""
         # Base implementation returns 0.0 - subclasses should override
-        logger.warning(
-            "BaseEvaluator.evaluate() called directly - should be overridden by subclass"
-        )
+        logger.warning("BaseEvaluator.evaluate() called directly - should be overridden by subclass")
         return 0.0
 
 
@@ -519,9 +498,7 @@ class CodeEvaluator(BaseEvaluator):
                             pad_token_id=tokenizer.eos_token_id,
                         )
 
-                    generated_text = tokenizer.decode(
-                        outputs[0], skip_special_tokens=True
-                    )
+                    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
                     # Simple heuristic scoring
                     code_indicators = [
@@ -533,17 +510,11 @@ class CodeEvaluator(BaseEvaluator):
                         "for ",
                         "while ",
                     ]
-                    score = sum(
-                        1
-                        for indicator in code_indicators
-                        if indicator in generated_text.lower()
-                    )
+                    score = sum(1 for indicator in code_indicators if indicator in generated_text.lower())
                     scores.append(min(score / len(code_indicators), 1.0))
 
                 except Exception as e:
-                    logger.warning(
-                        "Code evaluation error for prompt '%s...': %s", prompt[:30], e
-                    )
+                    logger.warning("Code evaluation error for prompt '%s...': %s", prompt[:30], e)
                     scores.append(0.0)
 
             return np.mean(scores) if scores else 0.0
@@ -581,13 +552,9 @@ class MathEvaluator(BaseEvaluator):
 
             scores = []
 
-            for problem, expected in zip(
-                self.test_problems, self.expected_answers, strict=False
-            ):
+            for problem, expected in zip(self.test_problems, self.expected_answers, strict=False):
                 try:
-                    inputs = tokenizer(
-                        f"Problem: {problem}\nSolution:", return_tensors="pt"
-                    ).to(self.device)
+                    inputs = tokenizer(f"Problem: {problem}\nSolution:", return_tensors="pt").to(self.device)
 
                     with torch.no_grad():
                         outputs = model.generate(
@@ -597,18 +564,14 @@ class MathEvaluator(BaseEvaluator):
                             pad_token_id=tokenizer.eos_token_id,
                         )
 
-                    generated_text = tokenizer.decode(
-                        outputs[0], skip_special_tokens=True
-                    )
+                    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
                     # Check if expected answer appears in response
                     score = 1.0 if expected.lower() in generated_text.lower() else 0.0
                     scores.append(score)
 
                 except Exception as e:
-                    logger.warning(
-                        "Math evaluation error for problem '%s...': %s", problem[:30], e
-                    )
+                    logger.warning("Math evaluation error for problem '%s...': %s", problem[:30], e)
                     scores.append(0.0)
 
             return np.mean(scores) if scores else 0.0
@@ -658,9 +621,7 @@ class MultilingualEvaluator(BaseEvaluator):
                             pad_token_id=tokenizer.eos_token_id,
                         )
 
-                    generated_text = tokenizer.decode(
-                        outputs[0], skip_special_tokens=True
-                    )
+                    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
                     # Simple heuristic: check if language name or common words appear
                     language_indicators = {
@@ -671,13 +632,7 @@ class MultilingualEvaluator(BaseEvaluator):
                     }
 
                     indicators = language_indicators.get(language, [language])
-                    score = (
-                        1.0
-                        if any(
-                            ind.lower() in generated_text.lower() for ind in indicators
-                        )
-                        else 0.0
-                    )
+                    score = 1.0 if any(ind.lower() in generated_text.lower() for ind in indicators) else 0.0
                     scores.append(score)
 
                 except Exception as e:
@@ -735,15 +690,11 @@ class StructuredDataEvaluator(BaseEvaluator):
                             pad_token_id=tokenizer.eos_token_id,
                         )
 
-                    generated_text = tokenizer.decode(
-                        outputs[0], skip_special_tokens=True
-                    )
+                    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
                     # Check for structured data indicators
                     structure_indicators = ["{", "}", "[", "]", ":", ",", "|", "-", "="]
-                    structure_count = sum(
-                        1 for ind in structure_indicators if ind in generated_text
-                    )
+                    structure_count = sum(1 for ind in structure_indicators if ind in generated_text)
                     score = min(structure_count / 5, 1.0)  # Normalize to [0, 1]
                     scores.append(score)
 
@@ -835,9 +786,7 @@ class EvoMergePipeline:
 
         return models
 
-    def generate_seed_candidates(
-        self, base_models: list[torch.nn.Module]
-    ) -> list[ModelCandidate]:
+    def generate_seed_candidates(self, base_models: list[torch.nn.Module]) -> list[ModelCandidate]:
         """Generate 8 seed candidates using 2³ combinations."""
         candidates = []
 
@@ -865,9 +814,7 @@ class EvoMergePipeline:
                 )
 
                 # Apply merge operations in sequence
-                merged_model = self.apply_merge_sequence(
-                    base_models, continuous, ensemble, structured
-                )
+                merged_model = self.apply_merge_sequence(base_models, continuous, ensemble, structured)
 
                 # Save merged model
                 model_name = f"seed_{i + 1}_{continuous}_{ensemble}_{structured}"
@@ -913,21 +860,15 @@ class EvoMergePipeline:
             merged = self.merge_ops.linear_interpolation(models, weights)
         elif continuous == "slerp":
             # SLERP between first two, then linear with third
-            temp = self.merge_ops.slerp_interpolation(
-                models[0], models[1], self.config.merge_operators.slerp_t
-            )
-            merged = self.merge_ops.linear_interpolation(
-                [temp, models[2]], [0.67, 0.33]
-            )
+            temp = self.merge_ops.slerp_interpolation(models[0], models[1], self.config.merge_operators.slerp_t)
+            merged = self.merge_ops.linear_interpolation([temp, models[2]], [0.67, 0.33])
         else:
             msg = f"Unknown continuous method: {continuous}"
             raise ValueError(msg)
 
         # Step 2: Ensemble crossover
         if ensemble == "ties":
-            merged = self.merge_ops.ties_merge(
-                [merged, *models], self.config.merge_operators.ties_threshold
-            )
+            merged = self.merge_ops.ties_merge([merged, *models], self.config.merge_operators.ties_threshold)
         elif ensemble == "dare":
             merged = self.merge_ops.dare_merge(
                 [merged, *models],
@@ -940,30 +881,22 @@ class EvoMergePipeline:
 
         # Step 3: Structured recombination
         if structured == "frankenmerge":
-            merged = self.merge_ops.frankenmerge(
-                [merged, *models[:2]], self.config.merge_operators.frankenmerge_layers
-            )
+            merged = self.merge_ops.frankenmerge([merged, *models[:2]], self.config.merge_operators.frankenmerge_layers)
         elif structured == "dfs":
-            merged = self.merge_ops.dfs_merge(
-                [merged, *models], self.config.merge_operators.dfs_merge_ratio
-            )
+            merged = self.merge_ops.dfs_merge([merged, *models], self.config.merge_operators.dfs_merge_ratio)
         else:
             msg = f"Unknown structured method: {structured}"
             raise ValueError(msg)
 
         return merged
 
-    async def evaluate_candidates(
-        self, candidates: list[ModelCandidate]
-    ) -> list[ModelCandidate]:
+    async def evaluate_candidates(self, candidates: list[ModelCandidate]) -> list[ModelCandidate]:
         """Evaluate all candidates."""
         logger.info("Evaluating %d candidates", len(candidates))
 
         for candidate in tqdm(candidates, desc="Evaluating candidates"):
             if not candidate.model_path or not Path(candidate.model_path).exists():
-                logger.warning(
-                    "Model path not found for candidate %s", candidate.short_id
-                )
+                logger.warning("Model path not found for candidate %s", candidate.short_id)
                 continue
 
             try:
@@ -971,9 +904,7 @@ class EvoMergePipeline:
                 for domain, evaluator in self.evaluators.items():
                     score = await evaluator.evaluate(candidate.model_path)
                     candidate.fitness_scores[domain] = score
-                    logger.debug(
-                        "Candidate %s %s score: %.3f", candidate.short_id, domain, score
-                    )
+                    logger.debug("Candidate %s %s score: %.3f", candidate.short_id, domain, score)
 
                 # Calculate overall fitness
                 candidate.calculate_overall_fitness(self.config.evaluation_weights)
@@ -984,18 +915,14 @@ class EvoMergePipeline:
                 )
 
             except Exception as e:
-                logger.exception(
-                    "Evaluation failed for candidate %s: %s", candidate.short_id, e
-                )
+                logger.exception("Evaluation failed for candidate %s: %s", candidate.short_id, e)
                 candidate.overall_fitness = 0.0
 
         # Sort by fitness
         candidates.sort(key=lambda x: x.overall_fitness, reverse=True)
         return candidates
 
-    def select_and_mutate(
-        self, candidates: list[ModelCandidate]
-    ) -> list[ModelCandidate]:
+    def select_and_mutate(self, candidates: list[ModelCandidate]) -> list[ModelCandidate]:
         """Selection and mutation for next generation."""
         # Select top 2 candidates
         top_candidates = candidates[:2]
@@ -1044,9 +971,7 @@ class EvoMergePipeline:
             mutation_applied = f"structured->{mutated_recipe['structured']}"
 
         # Apply noise to model parameters
-        mutated_model = self.apply_parameter_noise(
-            parent_model, self.config.mutation_rate
-        )
+        mutated_model = self.apply_parameter_noise(parent_model, self.config.mutation_rate)
 
         # Save mutated model
         model_name = f"gen_{self.state.current_generation + 1}_mutant_{parent.short_id}_{mutation_id}"
@@ -1071,9 +996,7 @@ class EvoMergePipeline:
         )
         return mutant
 
-    def apply_parameter_noise(
-        self, model: torch.nn.Module, noise_scale: float
-    ) -> torch.nn.Module:
+    def apply_parameter_noise(self, model: torch.nn.Module, noise_scale: float) -> torch.nn.Module:
         """Apply random noise to model parameters."""
         with torch.no_grad():
             for param in model.parameters():
@@ -1083,9 +1006,7 @@ class EvoMergePipeline:
 
         return model
 
-    def create_failure_children(
-        self, failure_candidates: list[ModelCandidate]
-    ) -> list[ModelCandidate]:
+    def create_failure_children(self, failure_candidates: list[ModelCandidate]) -> list[ModelCandidate]:
         """Create children from failure candidates by merging triples."""
         children = []
 
@@ -1098,9 +1019,7 @@ class EvoMergePipeline:
                     # Load models
                     models = []
                     for candidate in triple:
-                        model = AutoModelForCausalLM.from_pretrained(
-                            candidate.model_path
-                        )
+                        model = AutoModelForCausalLM.from_pretrained(candidate.model_path)
                         models.append(model)
 
                     # Merge using linear interpolation
@@ -1133,18 +1052,14 @@ class EvoMergePipeline:
                     )
 
                 except Exception as e:
-                    logger.exception(
-                        "Failed to create failure child from triple %d: %s", i // 3, e
-                    )
+                    logger.exception("Failed to create failure child from triple %d: %s", i // 3, e)
                     continue
 
         return children
 
     def save_checkpoint(self) -> None:
         """Save evolution checkpoint."""
-        checkpoint_name = (
-            f"evolution_checkpoint_gen_{self.state.current_generation}.json"
-        )
+        checkpoint_name = f"evolution_checkpoint_gen_{self.state.current_generation}.json"
         checkpoint_path = self.config.checkpoint_dir / checkpoint_name
 
         checkpoint_data = {
@@ -1172,9 +1087,7 @@ class EvoMergePipeline:
             state_data = checkpoint_data["state"]
             self.state = EvolutionState(**state_data)
 
-            logger.info(
-                "Checkpoint loaded from generation %d", self.state.current_generation
-            )
+            logger.info("Checkpoint loaded from generation %d", self.state.current_generation)
             return True
 
         except Exception as e:
@@ -1198,9 +1111,7 @@ class EvoMergePipeline:
 
         # Domain-specific metrics
         for domain in self.config.evaluation_weights:
-            domain_scores = [
-                c.fitness_scores.get(domain, 0.0) for c in self.state.population
-            ]
+            domain_scores = [c.fitness_scores.get(domain, 0.0) for c in self.state.population]
             if domain_scores:
                 generation_metrics[f"{domain}_avg"] = np.mean(domain_scores)
                 generation_metrics[f"{domain}_best"] = max(domain_scores)
@@ -1216,9 +1127,7 @@ class EvoMergePipeline:
             if self.state.best_candidate and self.state.best_candidate.model_path:
                 try:
                     artifact_name = f"model_gen_{self.state.current_generation}"
-                    description = (
-                        f"Best model from generation {self.state.current_generation}"
-                    )
+                    description = f"Best model from generation {self.state.current_generation}"
                     artifact = wandb.Artifact(
                         artifact_name,
                         type="model",
@@ -1259,9 +1168,7 @@ class EvoMergePipeline:
                 self.state.population = seed_candidates
 
             # Evolution loop
-            for generation in range(
-                self.state.current_generation, self.config.max_generations
-            ):
+            for generation in range(self.state.current_generation, self.config.max_generations):
                 logger.info(
                     "=== Generation %d/%d ===",
                     generation + 1,
@@ -1270,9 +1177,7 @@ class EvoMergePipeline:
                 self.state.current_generation = generation
 
                 # Evaluate current population
-                self.state.population = await self.evaluate_candidates(
-                    self.state.population
-                )
+                self.state.population = await self.evaluate_candidates(self.state.population)
 
                 # Update best candidate
                 self.state.update_best_candidate()
@@ -1300,9 +1205,7 @@ class EvoMergePipeline:
 
                 # Generate next generation (unless this is the last)
                 if generation < self.config.max_generations - 1:
-                    self.state.population = self.select_and_mutate(
-                        self.state.population
-                    )
+                    self.state.population = self.select_and_mutate(self.state.population)
                     self.state.current_generation += 1
 
             # Final evaluation and cleanup
@@ -1376,9 +1279,7 @@ def evo(
             base_model_configs = []
             for name in base_model_names:
                 if name in model_mapping:
-                    base_model_configs.append(
-                        BaseModelConfig(name=name, path=model_mapping[name])
-                    )
+                    base_model_configs.append(BaseModelConfig(name=name, path=model_mapping[name]))
 
             evolution_config = EvolutionConfig(
                 max_generations=gens,
@@ -1422,12 +1323,7 @@ async def run_evomerge(config: dict[str, Any]) -> "PhaseResult":
     Returns:
         PhaseResult with status, artifacts, and metrics.
     """
-    from agent_forge.forge_orchestrator import (
-        PhaseArtifact,
-        PhaseResult,
-        PhaseStatus,
-        PhaseType,
-    )
+    from agent_forge.forge_orchestrator import PhaseArtifact, PhaseResult, PhaseStatus, PhaseType
 
     start_time = time.time()
 

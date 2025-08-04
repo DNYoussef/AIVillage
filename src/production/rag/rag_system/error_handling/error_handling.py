@@ -1,8 +1,8 @@
 import asyncio
-from collections.abc import Callable
-from functools import wraps
 import logging
 import traceback
+from collections.abc import Callable
+from functools import wraps
 from typing import Any, NoReturn
 
 logger = logging.getLogger(__name__)
@@ -62,9 +62,7 @@ def error_handler(func: Callable):
                 "UNEXPECTED_ERROR",
                 {"original_error": str(e), "error_type": type(e).__name__},
             )
-            log_error(
-                error, {"function": func.__name__, "args": args, "kwargs": kwargs}
-            )
+            log_error(error, {"function": func.__name__, "args": args, "kwargs": kwargs})
             raise error
 
     return wrapper

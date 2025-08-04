@@ -1,7 +1,7 @@
 import bitsandbytes as bnb
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 from transformers import Trainer, TrainerCallback, TrainingArguments
 
 
@@ -52,9 +52,7 @@ class BitNetLinear(nn.Module):
         if self.training:
             # During training, interpolate between full precision and quantized
             quantized_weights = self.quantize_weights(self.weight_fp)
-            effective_weights = (
-                1 - self.lambda_val
-            ) * self.weight_fp + self.lambda_val * quantized_weights
+            effective_weights = (1 - self.lambda_val) * self.weight_fp + self.lambda_val * quantized_weights
         else:
             # During inference, use quantized weights
             effective_weights = self.quantize_weights(self.weight_fp)
@@ -73,9 +71,7 @@ def convert_to_bitnet(model, threshold: float = 0.02):
     """In-place replace every nn.Linear with BitNet implementation."""
     # Handle case where model itself is a Linear layer
     if isinstance(model, nn.Linear):
-        bitnet_layer = BitNetLinear(
-            model.in_features, model.out_features, bias=model.bias is not None
-        )
+        bitnet_layer = BitNetLinear(model.in_features, model.out_features, bias=model.bias is not None)
 
         # Initialize with original weights
         with torch.no_grad():
@@ -89,9 +85,7 @@ def convert_to_bitnet(model, threshold: float = 0.02):
         for child_name, child in module.named_children():
             if isinstance(child, nn.Linear):
                 # Replace with BitNet linear
-                bitnet_layer = BitNetLinear(
-                    child.in_features, child.out_features, bias=child.bias is not None
-                )
+                bitnet_layer = BitNetLinear(child.in_features, child.out_features, bias=child.bias is not None)
 
                 # Initialize with original weights
                 with torch.no_grad():
@@ -101,9 +95,7 @@ def convert_to_bitnet(model, threshold: float = 0.02):
 
                 setattr(module, child_name, bitnet_layer)
             else:
-                replace_linear_recursive(
-                    child, f"{name}.{child_name}" if name else child_name
-                )
+                replace_linear_recursive(child, f"{name}.{child_name}" if name else child_name)
 
     # Use custom implementation directly since bitsandbytes doesn't have LinearBitNet
     replace_linear_recursive(model)
@@ -169,8 +161,7 @@ def apply_hf_bitnet_finetune(model, train_dataset, config):
     )
 
     total_steps_est = (
-        len(train_dataset)
-        // (args.per_device_train_batch_size * torch.cuda.device_count())
+        len(train_dataset) // (args.per_device_train_batch_size * torch.cuda.device_count())
     ) * args.num_train_epochs
 
     trainer = Trainer(

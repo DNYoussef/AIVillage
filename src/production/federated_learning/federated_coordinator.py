@@ -5,13 +5,13 @@ Sprint 6's evolution system and P2P infrastructure.
 """
 
 import asyncio
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
 import random
 import time
-from typing import Any
 import uuid
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 import numpy as np
 import torch
@@ -19,9 +19,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
 from AIVillage.src.core.p2p.p2p_node import P2PNode, PeerCapabilities
-from AIVillage.src.production.evolution.infrastructure_aware_evolution import (
-    InfrastructureAwareEvolution,
-)
+from AIVillage.src.production.evolution.infrastructure_aware_evolution import InfrastructureAwareEvolution
 
 logger = logging.getLogger(__name__)
 
@@ -179,9 +177,7 @@ class DistributedFederatedLearning:
         """Register P2P message handlers for federated learning."""
         # These would be registered with the P2P node's message handling system
 
-    async def initialize_federated_learning(
-        self, model: nn.Module, is_coordinator: bool = True
-    ) -> bool:
+    async def initialize_federated_learning(self, model: nn.Module, is_coordinator: bool = True) -> bool:
         """Initialize federated learning system."""
         logger.info(f"Initializing federated learning (coordinator: {is_coordinator})")
 
@@ -220,9 +216,7 @@ class DistributedFederatedLearning:
         suitable_peers = self.p2p_node.get_suitable_evolution_peers(min_count=1)
 
         # Add local device if suitable
-        if self.p2p_node.local_capabilities and self._is_device_suitable_for_fl(
-            self.p2p_node.local_capabilities
-        ):
+        if self.p2p_node.local_capabilities and self._is_device_suitable_for_fl(self.p2p_node.local_capabilities):
             suitable_peers.insert(0, self.p2p_node.local_capabilities)
 
         # Create participant records
@@ -237,9 +231,7 @@ class DistributedFederatedLearning:
                 self.available_participants[peer.device_id] = participant
                 self.participant_pool.add(peer.device_id)
 
-        logger.info(
-            f"Discovered {len(self.available_participants)} suitable FL participants"
-        )
+        logger.info(f"Discovered {len(self.available_participants)} suitable FL participants")
 
     def _is_device_suitable_for_fl(self, capabilities: PeerCapabilities) -> bool:
         """Check if device is suitable for federated learning."""
@@ -250,10 +242,7 @@ class DistributedFederatedLearning:
             return False
 
         # Battery constraint (for mobile devices)
-        if (
-            capabilities.battery_percent is not None
-            and capabilities.battery_percent < min_resources["battery_percent"]
-        ):
+        if capabilities.battery_percent is not None and capabilities.battery_percent < min_resources["battery_percent"]:
             return False
 
         # Trust score constraint
@@ -263,9 +252,7 @@ class DistributedFederatedLearning:
         # Evolution capacity (proxy for network stability and compute)
         return not capabilities.evolution_capacity < min_resources["network_stability"]
 
-    def _calculate_initial_contribution_score(
-        self, capabilities: PeerCapabilities
-    ) -> float:
+    def _calculate_initial_contribution_score(self, capabilities: PeerCapabilities) -> float:
         """Calculate initial contribution score for participant."""
         score = 0.0
 
@@ -297,9 +284,7 @@ class DistributedFederatedLearning:
 
         for device_id in self.available_participants:
             self.privacy_budgets[device_id] = initial_budget
-            self.available_participants[
-                device_id
-            ].privacy_budget_remaining = initial_budget
+            self.available_participants[device_id].privacy_budget_remaining = initial_budget
 
     async def _announce_fl_capability(self) -> None:
         """Announce federated learning capability to network."""
@@ -315,9 +300,7 @@ class DistributedFederatedLearning:
             "timestamp": time.time(),
         }
 
-        await self.p2p_node.broadcast_to_peers(
-            "FL_CAPABILITY_ANNOUNCEMENT", announcement
-        )
+        await self.p2p_node.broadcast_to_peers("FL_CAPABILITY_ANNOUNCEMENT", announcement)
 
     async def run_distributed_training_round(self) -> FederatedTrainingRound:
         """Run a complete federated training round."""
@@ -357,16 +340,12 @@ class DistributedFederatedLearning:
         try:
             # Phase 1: Participant Selection
             training_round.status = TrainingRoundStatus.PARTICIPANT_SELECTION
-            selected_participants = await self._select_participants_for_round(
-                training_round
-            )
+            selected_participants = await self._select_participants_for_round(training_round)
 
             if len(selected_participants) < self.config.min_participants_per_round:
                 training_round.status = TrainingRoundStatus.FAILED
                 msg = f"Insufficient participants: {len(selected_participants)} < {self.config.min_participants_per_round}"
-                raise ValueError(
-                    msg
-                )
+                raise ValueError(msg)
 
             training_round.participants = selected_participants
 
@@ -409,9 +388,7 @@ class DistributedFederatedLearning:
             self.training_history.append(training_round)
             self.current_round = None
 
-            logger.info(
-                f"Federated training round {round_number} completed successfully"
-            )
+            logger.info(f"Federated training round {round_number} completed successfully")
             return training_round
 
         except Exception as e:
@@ -425,9 +402,7 @@ class DistributedFederatedLearning:
 
             raise
 
-    async def _select_participants_for_round(
-        self, training_round: FederatedTrainingRound
-    ) -> list[TrainingParticipant]:
+    async def _select_participants_for_round(self, training_round: FederatedTrainingRound) -> list[TrainingParticipant]:
         """Select participants for training round."""
         logger.info("Selecting participants for training round")
 
@@ -449,14 +424,10 @@ class DistributedFederatedLearning:
 
         if len(eligible_participants) < self.config.min_participants_per_round:
             msg = f"Insufficient eligible participants: {len(eligible_participants)}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         # Select participants using contribution-based sampling
-        selected_participants = self._sample_participants(
-            eligible_participants, target_count
-        )
+        selected_participants = self._sample_participants(eligible_participants, target_count)
 
         # Send invitations
         successful_participants = []
@@ -468,18 +439,13 @@ class DistributedFederatedLearning:
             else:
                 participant.status = ParticipantStatus.DROPPED
 
-        logger.info(
-            f"Selected {len(successful_participants)} participants for training"
-        )
+        logger.info(f"Selected {len(successful_participants)} participants for training")
         return successful_participants
 
     def _is_participant_eligible(self, participant: TrainingParticipant) -> bool:
         """Check if participant is eligible for current round."""
         # Privacy budget check
-        if (
-            participant.privacy_budget_remaining
-            < self.config.differential_privacy_epsilon
-        ):
+        if participant.privacy_budget_remaining < self.config.differential_privacy_epsilon:
             return False
 
         # Device availability check
@@ -574,9 +540,7 @@ class DistributedFederatedLearning:
             "round_id": training_round.round_id,
             "model_state": model_state_data,
             "model_metadata": {
-                "parameter_count": sum(
-                    p.numel() for p in self.global_model.parameters()
-                ),
+                "parameter_count": sum(p.numel() for p in self.global_model.parameters()),
                 "model_architecture": self.global_model.__class__.__name__,
             },
         }
@@ -585,9 +549,7 @@ class DistributedFederatedLearning:
         distribution_tasks = []
         for participant in training_round.participants:
             if participant.device_id != self.p2p_node.node_id:
-                task = self.p2p_node.send_to_peer(
-                    participant.device_id, distribution_message
-                )
+                task = self.p2p_node.send_to_peer(participant.device_id, distribution_message)
                 distribution_tasks.append(task)
 
         # Wait for distribution completion
@@ -610,17 +572,11 @@ class DistributedFederatedLearning:
         }
 
         # Broadcast to all participants
-        await self.p2p_node.broadcast_to_peers(
-            "FL_START_LOCAL_TRAINING", training_start_message
-        )
+        await self.p2p_node.broadcast_to_peers("FL_START_LOCAL_TRAINING", training_start_message)
 
         # Start local training if participating
         local_participant = next(
-            (
-                p
-                for p in training_round.participants
-                if p.device_id == self.p2p_node.node_id
-            ),
+            (p for p in training_round.participants if p.device_id == self.p2p_node.node_id),
             None,
         )
 
@@ -647,9 +603,7 @@ class DistributedFederatedLearning:
             local_dataset = self._get_local_dataset()
 
             # Train locally
-            gradients = await self._train_model_locally(
-                local_model, local_dataset, training_round.training_config
-            )
+            gradients = await self._train_model_locally(local_model, local_dataset, training_round.training_config)
 
             # Apply differential privacy noise
             if self.config.differential_privacy_epsilon > 0:
@@ -664,9 +618,7 @@ class DistributedFederatedLearning:
             participant.status = ParticipantStatus.COMPLETED
 
             # Update privacy budget
-            participant.privacy_budget_remaining -= (
-                self.config.differential_privacy_epsilon
-            )
+            participant.privacy_budget_remaining -= self.config.differential_privacy_epsilon
 
             logger.info("Local training completed successfully")
 
@@ -702,19 +654,13 @@ class DistributedFederatedLearning:
     ) -> dict[str, torch.Tensor]:
         """Train model locally and return gradients."""
         model.train()
-        optimizer = torch.optim.SGD(
-            model.parameters(), lr=config["local_learning_rate"]
-        )
+        optimizer = torch.optim.SGD(model.parameters(), lr=config["local_learning_rate"])
         criterion = nn.CrossEntropyLoss()
 
-        dataloader = DataLoader(
-            dataset, batch_size=config["local_batch_size"], shuffle=True
-        )
+        dataloader = DataLoader(dataset, batch_size=config["local_batch_size"], shuffle=True)
 
         # Store initial parameters
-        initial_params = {
-            name: param.clone() for name, param in model.named_parameters()
-        }
+        initial_params = {name: param.clone() for name, param in model.named_parameters()}
 
         # Local training loop
         for _epoch in range(config["local_epochs"]):
@@ -728,9 +674,7 @@ class DistributedFederatedLearning:
 
                 # Gradient clipping
                 if config.get("gradient_clipping", 0) > 0:
-                    torch.nn.utils.clip_grad_norm_(
-                        model.parameters(), config["gradient_clipping"]
-                    )
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), config["gradient_clipping"])
 
                 optimizer.step()
 
@@ -760,9 +704,7 @@ class DistributedFederatedLearning:
 
         return noisy_gradients
 
-    async def _wait_for_training_completion(
-        self, training_round: FederatedTrainingRound
-    ) -> None:
+    async def _wait_for_training_completion(self, training_round: FederatedTrainingRound) -> None:
         """Wait for all participants to complete training."""
         logger.info("Waiting for training completion")
 
@@ -777,9 +719,7 @@ class DistributedFederatedLearning:
                 if p.status in [ParticipantStatus.COMPLETED, ParticipantStatus.FAILED]
             )
 
-            if (
-                completed_count >= len(training_round.participants) * 0.8
-            ):  # 80% completion
+            if completed_count >= len(training_round.participants) * 0.8:  # 80% completion
                 break
 
             await asyncio.sleep(check_interval)
@@ -789,11 +729,7 @@ class DistributedFederatedLearning:
             if participant.status == ParticipantStatus.TRAINING:
                 participant.status = ParticipantStatus.DROPPED
 
-        completed_participants = [
-            p
-            for p in training_round.participants
-            if p.status == ParticipantStatus.COMPLETED
-        ]
+        completed_participants = [p for p in training_round.participants if p.status == ParticipantStatus.COMPLETED]
 
         logger.info(f"Training completed: {len(completed_participants)} participants")
 
@@ -809,28 +745,19 @@ class DistributedFederatedLearning:
 
         # Request gradients from remote participants
         for participant in training_round.participants:
-            if (
-                participant.device_id != self.p2p_node.node_id
-                and participant.status == ParticipantStatus.COMPLETED
-            ):
-                await self.p2p_node.send_to_peer(
-                    participant.device_id, collection_message
-                )
+            if participant.device_id != self.p2p_node.node_id and participant.status == ParticipantStatus.COMPLETED:
+                await self.p2p_node.send_to_peer(participant.device_id, collection_message)
 
         # Wait for gradient collection
         await self._wait_for_gradient_collection(training_round)
 
-    async def _wait_for_gradient_collection(
-        self, training_round: FederatedTrainingRound
-    ) -> None:
+    async def _wait_for_gradient_collection(self, training_round: FederatedTrainingRound) -> None:
         """Wait for gradient collection from participants."""
         timeout = time.time() + self.config.communication_timeout_seconds
 
         while time.time() < timeout:
             # Check how many gradients we have
-            participants_with_gradients = sum(
-                1 for p in training_round.participants if p.gradients is not None
-            )
+            participants_with_gradients = sum(1 for p in training_round.participants if p.gradients is not None)
 
             # Need at least minimum participants with gradients
             if participants_with_gradients >= self.config.min_participants_per_round:
@@ -838,63 +765,45 @@ class DistributedFederatedLearning:
 
             await asyncio.sleep(5.0)
 
-        participants_with_gradients = sum(
-            1 for p in training_round.participants if p.gradients is not None
-        )
+        participants_with_gradients = sum(1 for p in training_round.participants if p.gradients is not None)
 
-        logger.info(
-            f"Collected gradients from {participants_with_gradients} participants"
-        )
+        logger.info(f"Collected gradients from {participants_with_gradients} participants")
 
     async def _aggregate_gradients(self, training_round: FederatedTrainingRound) -> None:
         """Aggregate gradients using secure aggregation."""
         logger.info("Aggregating gradients")
 
         # Get participants with gradients
-        participants_with_gradients = [
-            p for p in training_round.participants if p.gradients is not None
-        ]
+        participants_with_gradients = [p for p in training_round.participants if p.gradients is not None]
 
         if len(participants_with_gradients) < self.config.min_participants_per_round:
             msg = f"Insufficient gradients for aggregation: {len(participants_with_gradients)}"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         # Perform aggregation
         if self.config.secure_aggregation_enabled and self.secure_aggregation:
             # Secure aggregation
-            aggregated_gradients = await self._secure_aggregate_gradients(
-                participants_with_gradients
-            )
+            aggregated_gradients = await self._secure_aggregate_gradients(participants_with_gradients)
         else:
             # Simple averaging
-            aggregated_gradients = self._simple_average_gradients(
-                participants_with_gradients
-            )
+            aggregated_gradients = self._simple_average_gradients(participants_with_gradients)
 
         # Byzantine robustness check
         if self.config.byzantine_robust:
-            aggregated_gradients = self._apply_byzantine_robustness(
-                participants_with_gradients, aggregated_gradients
-            )
+            aggregated_gradients = self._apply_byzantine_robustness(participants_with_gradients, aggregated_gradients)
 
         training_round.aggregated_gradients = aggregated_gradients
 
         logger.info("Gradient aggregation completed")
 
-    async def _secure_aggregate_gradients(
-        self, participants: list[TrainingParticipant]
-    ) -> dict[str, torch.Tensor]:
+    async def _secure_aggregate_gradients(self, participants: list[TrainingParticipant]) -> dict[str, torch.Tensor]:
         """Perform secure aggregation of gradients."""
         # Simplified secure aggregation
         # In practice, this would use cryptographic protocols
 
         return self._simple_average_gradients(participants)
 
-    def _simple_average_gradients(
-        self, participants: list[TrainingParticipant]
-    ) -> dict[str, torch.Tensor]:
+    def _simple_average_gradients(self, participants: list[TrainingParticipant]) -> dict[str, torch.Tensor]:
         """Simple averaging of gradients."""
         if not participants:
             return {}
@@ -953,9 +862,7 @@ class DistributedFederatedLearning:
                 byzantine_count += 1
 
         if byzantine_count > 0:
-            logger.warning(
-                f"Detected {byzantine_count} potential Byzantine participants"
-            )
+            logger.warning(f"Detected {byzantine_count} potential Byzantine participants")
             self.fl_stats["byzantine_attacks_detected"] += byzantine_count
 
             # Re-aggregate with honest participants only
@@ -990,20 +897,15 @@ class DistributedFederatedLearning:
         training_round.metrics = {
             "participants_invited": len(training_round.participants),
             "participants_completed": sum(
-                1
-                for p in training_round.participants
-                if p.status == ParticipantStatus.COMPLETED
+                1 for p in training_round.participants if p.status == ParticipantStatus.COMPLETED
             ),
-            "completion_rate": sum(
-                1
-                for p in training_round.participants
-                if p.status == ParticipantStatus.COMPLETED
-            )
-            / len(training_round.participants)
-            if training_round.participants
-            else 0,
-            "round_duration": (training_round.end_time or time.time())
-            - training_round.start_time,
+            "completion_rate": (
+                sum(1 for p in training_round.participants if p.status == ParticipantStatus.COMPLETED)
+                / len(training_round.participants)
+                if training_round.participants
+                else 0
+            ),
+            "round_duration": (training_round.end_time or time.time()) - training_round.start_time,
             "privacy_budget_consumed": sum(
                 self.config.differential_privacy_epsilon
                 for p in training_round.participants
@@ -1030,15 +932,11 @@ class DistributedFederatedLearning:
         for participant in training_round.participants:
             if participant.status == ParticipantStatus.COMPLETED:
                 # Positive contribution
-                participant.contribution_score = min(
-                    1.0, participant.contribution_score + 0.05
-                )
+                participant.contribution_score = min(1.0, participant.contribution_score + 0.05)
                 participant.participation_history.append(True)
             else:
                 # Negative contribution
-                participant.contribution_score = max(
-                    0.1, participant.contribution_score - 0.02
-                )
+                participant.contribution_score = max(0.1, participant.contribution_score - 0.02)
                 participant.participation_history.append(False)
 
             # Keep only recent history
@@ -1051,16 +949,12 @@ class DistributedFederatedLearning:
         self.fl_stats["avg_round_time"] = (
             self.fl_stats["avg_round_time"] + training_round.metrics["round_duration"]
         ) / 2
-        self.fl_stats["privacy_budget_consumed"] += training_round.metrics[
-            "privacy_budget_consumed"
-        ]
+        self.fl_stats["privacy_budget_consumed"] += training_round.metrics["privacy_budget_consumed"]
 
         # Check for convergence
         if len(self.training_history) >= 2:
             current_loss = training_round.metrics["model_loss"]
-            previous_loss = self.training_history[-2].metrics.get(
-                "model_loss", float("inf")
-            )
+            previous_loss = self.training_history[-2].metrics.get("model_loss", float("inf"))
 
             if abs(current_loss - previous_loss) < self.config.convergence_threshold:
                 self.fl_stats["convergence_rounds"] += 1
@@ -1110,11 +1004,7 @@ class DistributedFederatedLearning:
                 "secure_aggregation": self.config.secure_aggregation_enabled,
                 "byzantine_robust": self.config.byzantine_robust,
             },
-            "privacy_budgets": {
-                device_id: budget
-                for device_id, budget in self.privacy_budgets.items()
-                if budget > 0
-            },
+            "privacy_budgets": {device_id: budget for device_id, budget in self.privacy_budgets.items() if budget > 0},
         }
 
     async def implement_hierarchical_aggregation(self) -> dict[str, Any]:
@@ -1151,21 +1041,15 @@ class DistributedFederatedLearning:
         # Global aggregation of cluster aggregates
         if cluster_aggregates:
             self._aggregate_clusters(cluster_aggregates)
-            aggregation_results["aggregation_tiers"].append(
-                {"tier": "global", "clusters": len(cluster_aggregates)}
-            )
+            aggregation_results["aggregation_tiers"].append({"tier": "global", "clusters": len(cluster_aggregates)})
 
         # Estimate bandwidth savings (60-80% typical)
         baseline_communications = len(self.available_participants)
         hierarchical_communications = len(clusters) + 1  # cluster heads + coordinator
-        bandwidth_savings = 1.0 - (
-            hierarchical_communications / baseline_communications
-        )
+        bandwidth_savings = 1.0 - (hierarchical_communications / baseline_communications)
         aggregation_results["bandwidth_savings"] = bandwidth_savings
 
-        logger.info(
-            f"Hierarchical aggregation: {bandwidth_savings:.1%} bandwidth savings"
-        )
+        logger.info(f"Hierarchical aggregation: {bandwidth_savings:.1%} bandwidth savings")
         return aggregation_results
 
     def _create_participant_clusters(self) -> dict[str, list[TrainingParticipant]]:
@@ -1198,23 +1082,17 @@ class DistributedFederatedLearning:
 
         return clusters
 
-    def _aggregate_cluster(
-        self, cluster_participants: list[TrainingParticipant]
-    ) -> dict[str, torch.Tensor]:
+    def _aggregate_cluster(self, cluster_participants: list[TrainingParticipant]) -> dict[str, torch.Tensor]:
         """Aggregate gradients within a cluster."""
         # Filter participants with gradients
-        participants_with_gradients = [
-            p for p in cluster_participants if p.gradients is not None
-        ]
+        participants_with_gradients = [p for p in cluster_participants if p.gradients is not None]
 
         if not participants_with_gradients:
             return {}
 
         return self._simple_average_gradients(participants_with_gradients)
 
-    def _aggregate_clusters(
-        self, cluster_aggregates: list[dict[str, torch.Tensor]]
-    ) -> dict[str, torch.Tensor]:
+    def _aggregate_clusters(self, cluster_aggregates: list[dict[str, torch.Tensor]]) -> dict[str, torch.Tensor]:
         """Aggregate cluster-level aggregates into global aggregate."""
         if not cluster_aggregates:
             return {}

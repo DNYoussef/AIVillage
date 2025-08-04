@@ -1,7 +1,7 @@
 import math
 
-from scipy.optimize import minimize
 import torch
+from scipy.optimize import minimize
 
 
 def fit_hyperfunc(values: torch.Tensor):
@@ -25,9 +25,4 @@ def fit_hyperfunc(values: torch.Tensor):
 def reconstruct(params, length):
     n = torch.arange(length, dtype=torch.float32)
     A, B, alpha, C, tau, D = params
-    return (
-        A * torch.sin(2 * math.pi * n * alpha)
-        + B * torch.cos(2 * math.pi * n * alpha)
-        + C * torch.exp(-n / tau)
-        + D
-    )
+    return A * torch.sin(2 * math.pi * n * alpha) + B * torch.cos(2 * math.pi * n * alpha) + C * torch.exp(-n / tau) + D

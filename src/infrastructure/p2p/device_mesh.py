@@ -139,9 +139,7 @@ class DeviceMesh:
 
                 if message.get("type") == "discover":
                     # Respond with announce
-                    response = json.dumps(
-                        {"type": "announce", "from": self.local_info}
-                    ).encode()
+                    response = json.dumps({"type": "announce", "from": self.local_info}).encode()
 
                     sock.sendto(response, addr)
 
