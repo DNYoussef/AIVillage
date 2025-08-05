@@ -12,12 +12,12 @@ This script handles:
 
 import argparse
 import asyncio
+from datetime import datetime
 import logging
+from pathlib import Path
 import subprocess
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
@@ -99,9 +99,7 @@ class AgentForgeRunner:
             if skip_downloads:
                 setup_cmd.append("--skip-downloads")
 
-            result = subprocess.run(
-                setup_cmd, check=False, capture_output=True, text=True
-            )
+            result = subprocess.run(setup_cmd, check=False, capture_output=True, text=True)
 
             if result.returncode == 0:
                 logger.info("✅ Environment setup completed")
@@ -192,9 +190,7 @@ class AgentForgeRunner:
             total_phases = len(results)
             success_rate = completed_phases / total_phases if total_phases > 0 else 0
 
-            logger.info(
-                f"Pipeline completed: {completed_phases}/{total_phases} phases ({success_rate:.1%})"
-            )
+            logger.info(f"Pipeline completed: {completed_phases}/{total_phases} phases ({success_rate:.1%})")
 
             if success_rate >= 0.6:  # 60% success threshold
                 logger.info("✅ Pipeline execution successful")
@@ -214,9 +210,7 @@ class AgentForgeRunner:
         try:
             # Launch dashboard in background
             dashboard_cmd = [sys.executable, "scripts/run_dashboard.py"]
-            self.dashboard_process = subprocess.Popen(
-                dashboard_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
+            self.dashboard_process = subprocess.Popen(dashboard_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             # Give it a moment to start
             time.sleep(3)
@@ -257,9 +251,7 @@ NEXT STEPS:
         logger.info(report)
 
         # Save report to file
-        report_file = (
-            f"agent_forge_report_{self.start_time.strftime('%Y%m%d_%H%M%S')}.txt"
-        )
+        report_file = f"agent_forge_report_{self.start_time.strftime('%Y%m%d_%H%M%S')}.txt"
         with open(report_file, "w") as f:
             f.write(report)
 
@@ -305,21 +297,11 @@ NEXT STEPS:
 async def main():
     """Main execution function"""
     parser = argparse.ArgumentParser(description="Run complete Agent Forge pipeline")
-    parser.add_argument(
-        "--skip-setup", action="store_true", help="Skip environment setup"
-    )
-    parser.add_argument(
-        "--skip-downloads", action="store_true", help="Skip model/benchmark downloads"
-    )
-    parser.add_argument(
-        "--skip-pipeline", action="store_true", help="Skip pipeline execution"
-    )
-    parser.add_argument(
-        "--skip-dashboard", action="store_true", help="Skip dashboard launch"
-    )
-    parser.add_argument(
-        "--validate-only", action="store_true", help="Only validate environment"
-    )
+    parser.add_argument("--skip-setup", action="store_true", help="Skip environment setup")
+    parser.add_argument("--skip-downloads", action="store_true", help="Skip model/benchmark downloads")
+    parser.add_argument("--skip-pipeline", action="store_true", help="Skip pipeline execution")
+    parser.add_argument("--skip-dashboard", action="store_true", help="Skip dashboard launch")
+    parser.add_argument("--validate-only", action="store_true", help="Only validate environment")
 
     args = parser.parse_args()
 
@@ -359,11 +341,7 @@ async def main():
         runner.generate_report()
 
         # Keep dashboard running if successful
-        if (
-            runner.dashboard_process
-            and runner.dashboard_process.poll() is None
-            and runner.pipeline_success
-        ):
+        if runner.dashboard_process and runner.dashboard_process.poll() is None and runner.pipeline_success:
             logger.info("🎉 Agent Forge execution completed successfully!")
             logger.info("📊 Dashboard running at http://localhost:8501")
             logger.info("Press Ctrl+C to stop and exit")

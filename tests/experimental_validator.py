@@ -16,6 +16,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 class ExperimentalValidator:
     def __init__(self, base_path: str):
         self.base_path = Path(base_path)
@@ -32,7 +33,7 @@ class ExperimentalValidator:
             "requires_performance_benchmarks": True,
             "requires_integration_tests": True,
             "min_api_stability_weeks": 4,  # API must be stable for 4 weeks
-            "requires_operational_monitoring": True
+            "requires_operational_monitoring": True,
         }
 
         self.experimental_markers = [
@@ -42,12 +43,12 @@ class ExperimentalValidator:
             "# HACK",
             "# PROTOTYPE",
             "raise NotImplementedError",
-            "pass  # placeholder"
+            "pass  # placeholder",
         ]
 
     def analyze_file_stability(self, file_path: Path) -> dict:
         """Analyze a Python file for stability indicators."""
-        if not file_path.suffix == ".py":
+        if file_path.suffix != ".py":
             return {"stable": True, "issues": []}
 
         try:
@@ -102,7 +103,7 @@ class ExperimentalValidator:
             "stable": is_stable,
             "issues": issues,
             "experimental_markers": experimental_markers_found,
-            "max_nesting": max_nesting
+            "max_nesting": max_nesting,
         }
 
     def calculate_max_nesting(self, tree: ast.AST) -> int:
@@ -149,11 +150,7 @@ class ExperimentalValidator:
         return {
             "stable": is_directory_stable,
             "files": file_results,
-            "summary": {
-                "total_files": total_files,
-                "stable_files": stable_files,
-                "stability_ratio": stability_ratio
-            }
+            "summary": {"total_files": total_files, "stable_files": stable_files, "stability_ratio": stability_ratio},
         }
 
     def validate_component_for_production(self, component_path: str) -> bool:
@@ -183,7 +180,7 @@ class ExperimentalValidator:
             "agent_forge/core",
             "agent_forge/evaluation",
             "agent_forge/self_awareness",
-            "agent_forge/bakedquietiot"
+            "agent_forge/bakedquietiot",
         ]
 
         production_ready = []
@@ -205,12 +202,12 @@ class ExperimentalValidator:
             "validation_summary": {
                 "total_components_checked": len(self.validation_results),
                 "production_ready_count": len(production_ready),
-                "experimental_only_count": len(experimental_only)
+                "experimental_only_count": len(experimental_only),
             },
             "production_ready_components": production_ready,
             "experimental_only_components": experimental_only,
             "detailed_results": self.validation_results,
-            "recommendations": self.generate_recommendations(experimental_only)
+            "recommendations": self.generate_recommendations(experimental_only),
         }
 
         return report
@@ -287,7 +284,7 @@ class ExperimentalValidator:
             "ready": readiness_score >= 85 and len(blockers) == 0,
             "score": readiness_score,
             "blockers": blockers,
-            "max_score": max_score
+            "max_score": max_score,
         }
 
     def check_import_leakage(self) -> dict:
@@ -315,10 +312,7 @@ class ExperimentalValidator:
                 except Exception as e:
                     logger.warning(f"Could not read {py_file}: {e}")
 
-        return {
-            "clean": len(leakage_found) == 0,
-            "violations": leakage_found
-        }
+        return {"clean": len(leakage_found) == 0, "violations": leakage_found}
 
     def should_move_to_production(self, component_path: str) -> bool:
         """Final decision on whether component should move to src/ or experimental/."""
@@ -329,6 +323,7 @@ class ExperimentalValidator:
         # Advanced graduation readiness check
         readiness = self.get_graduation_readiness(component_path)
         return readiness["ready"]
+
 
 if __name__ == "__main__":
     validator = ExperimentalValidator(os.getcwd())

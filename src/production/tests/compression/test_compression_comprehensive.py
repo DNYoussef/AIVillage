@@ -35,7 +35,7 @@ except ImportError as e:
 class TestCompressionClaims:
     """Test documented compression claims."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def sample_models(self):
         """Create models of various sizes for testing."""
         models = {

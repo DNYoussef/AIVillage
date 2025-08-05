@@ -1,10 +1,5 @@
 from .orchestration import main
-from .unified_base_agent import (
-    SelfEvolvingSystem,
-    UnifiedAgentConfig,
-    UnifiedBaseAgent,
-    create_agent,
-)
+from .unified_base_agent import SelfEvolvingSystem, UnifiedAgentConfig, UnifiedBaseAgent, create_agent
 
 __all__ = [
     "SelfEvolvingSystem",

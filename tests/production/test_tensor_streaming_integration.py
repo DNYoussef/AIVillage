@@ -1,10 +1,11 @@
 """Integration tests for tensor streaming over P2P nodes."""
 
 import hashlib
+
 import numpy as np
 import pytest
 
-from src.production.communications.p2p.p2p_node import P2PNode, P2PMessage, MessageType
+from src.production.communications.p2p.p2p_node import MessageType, P2PMessage, P2PNode
 from src.production.communications.p2p.tensor_streaming import TensorStreaming
 
 
@@ -105,4 +106,3 @@ async def test_corrupted_chunk_failure(monkeypatch):
 
     with pytest.raises(RuntimeError):
         await recv_stream._reconstruct_tensor(tensor_id)
-

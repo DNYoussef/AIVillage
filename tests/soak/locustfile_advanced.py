@@ -12,9 +12,7 @@ from prometheus_client import CollectorRegistry, Counter, Gauge, push_to_gateway
 PUSHGATEWAY_URL = os.getenv("PUSHGATEWAY_URL", "localhost:9091")
 registry = CollectorRegistry()
 
-memory_usage = Gauge(
-    "soak_test_memory_usage_mb", "Memory usage in MB", ["service"], registry=registry
-)
+memory_usage = Gauge("soak_test_memory_usage_mb", "Memory usage in MB", ["service"], registry=registry)
 error_count = Counter(
     "soak_test_errors_total",
     "Total errors during soak test",
@@ -60,26 +58,20 @@ class AdvancedVillageUser(HttpUser):
         }
 
         start_time = time.time()
-        with self.client.post(
-            "/v1/chat", json=payload, catch_response=True
-        ) as response:
+        with self.client.post("/v1/chat", json=payload, catch_response=True) as response:
             duration = time.time() - start_time
             task_duration.labels(task_type="simple_chat").set(duration)
 
             if response.status_code == 200:
                 response.success()
                 result = response.json()
-                self.conversation_history.append(
-                    {"user": payload["prompt"], "assistant": result.get("response", "")}
-                )
+                self.conversation_history.append({"user": payload["prompt"], "assistant": result.get("response", "")})
             elif response.status_code == 429:
                 response.failure("Rate limited")
                 error_count.labels(service="gateway", error_type="rate_limit").inc()
             else:
                 response.failure(f"Got status code {response.status_code}")
-                error_count.labels(
-                    service="twin", error_type=f"http_{response.status_code}"
-                ).inc()
+                error_count.labels(service="twin", error_type=f"http_{response.status_code}").inc()
 
     @task(30)
     def chat_complex(self):
@@ -101,9 +93,7 @@ class AdvancedVillageUser(HttpUser):
         }
 
         start_time = time.time()
-        with self.client.post(
-            "/v1/chat", json=payload, catch_response=True
-        ) as response:
+        with self.client.post("/v1/chat", json=payload, catch_response=True) as response:
             duration = time.time() - start_time
             task_duration.labels(task_type="complex_chat").set(duration)
 

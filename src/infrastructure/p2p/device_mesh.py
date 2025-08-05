@@ -4,10 +4,10 @@ Currently returns empty list - no peers ever found!
 
 import json
 import logging
+from pathlib import Path
 import socket
 import threading
 import time
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -96,7 +96,7 @@ class DeviceMesh:
                         self.peers[peer_id] = peer_info
                         self.peer_failures.setdefault(peer_id, 0)
 
-                except socket.timeout:
+                except TimeoutError:
                     continue
                 except Exception as e:
                     logger.debug(f"Discovery receive error: {e}")
@@ -156,7 +156,7 @@ class DeviceMesh:
 
                     sock.sendto(response, addr)
 
-            except socket.timeout:
+            except TimeoutError:
                 continue
             except Exception as e:
                 logger.debug(f"Discovery service error: {e}")

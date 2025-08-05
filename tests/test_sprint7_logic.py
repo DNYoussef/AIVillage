@@ -12,6 +12,7 @@ print()
 # Test 1: Memory-Aware Sharding Algorithm
 print("Test 1: Memory-Aware Sharding Algorithm")
 try:
+
     @dataclass
     class DeviceProfile:
         device_id: str
@@ -27,7 +28,9 @@ try:
         memory_mb: float
         compute_requirement: float
 
-    def memory_aware_sharding(num_layers: int, layer_memory_mb: float, devices: list[DeviceProfile]) -> list[ModelShard]:
+    def memory_aware_sharding(
+        num_layers: int, layer_memory_mb: float, devices: list[DeviceProfile]
+    ) -> list[ModelShard]:
         """Simplified memory-aware sharding algorithm"""
         shards = []
         current_shard_layers = []
@@ -47,7 +50,7 @@ try:
                         device_id=current_device.device_id,
                         layer_indices=current_shard_layers.copy(),
                         memory_mb=current_memory,
-                        compute_requirement=len(current_shard_layers) * 1.0
+                        compute_requirement=len(current_shard_layers) * 1.0,
                     )
                     shards.append(shard)
 
@@ -63,7 +66,7 @@ try:
                 device_id=devices[device_idx % len(devices)].device_id,
                 layer_indices=current_shard_layers,
                 memory_mb=current_memory,
-                compute_requirement=len(current_shard_layers) * 1.0
+                compute_requirement=len(current_shard_layers) * 1.0,
             )
             shards.append(shard)
 
@@ -73,7 +76,7 @@ try:
     devices = [
         DeviceProfile("device_1", 1024.0, 4.0, 0.9),
         DeviceProfile("device_2", 2048.0, 6.0, 0.8),
-        DeviceProfile("device_3", 512.0, 2.0, 0.7)
+        DeviceProfile("device_3", 512.0, 2.0, 0.7),
     ]
 
     shards = memory_aware_sharding(12, 200.0, devices)
@@ -97,6 +100,7 @@ print()
 # Test 2: Agent Priority Placement Algorithm
 print("Test 2: Agent Priority Placement Algorithm")
 try:
+
     class AgentPriority(Enum):
         CRITICAL = 0
         HIGH = 1
@@ -124,13 +128,15 @@ try:
 
             for device in devices:
                 # Check if device can accommodate agent
-                if (device_usage[device.device_id]["memory"] + agent.memory_requirement_mb <= device.available_memory_mb and
-                    device_usage[device.device_id]["compute"] + agent.compute_requirement <= device.compute_score):
+                if (
+                    device_usage[device.device_id]["memory"] + agent.memory_requirement_mb <= device.available_memory_mb
+                    and device_usage[device.device_id]["compute"] + agent.compute_requirement <= device.compute_score
+                ):
 
                     # Calculate suitability score
                     memory_ratio = device.available_memory_mb / agent.memory_requirement_mb
                     compute_ratio = device.compute_score / agent.compute_requirement
-                    score = (memory_ratio * 0.5 + compute_ratio * 0.3 + device.reliability_score * 0.2)
+                    score = memory_ratio * 0.5 + compute_ratio * 0.3 + device.reliability_score * 0.2
 
                     if score > best_score:
                         best_score = score
@@ -149,7 +155,7 @@ try:
         AgentSpec("sage", AgentPriority.HIGH, 1024.0, 4.0),
         AgentSpec("magi", AgentPriority.HIGH, 2048.0, 6.0),
         AgentSpec("auditor", AgentPriority.MEDIUM, 256.0, 1.5),
-        AgentSpec("tutor", AgentPriority.LOW, 512.0, 2.0)
+        AgentSpec("tutor", AgentPriority.LOW, 512.0, 2.0),
     ]
 
     placement = priority_based_placement(agents, devices)
@@ -173,9 +179,15 @@ print()
 # Test 3: Migration Decision Logic
 print("Test 3: Migration Decision Logic")
 try:
-    def should_migrate_agent(agent_health: float, device_battery: float, device_load: float,
-                           performance_threshold: float = 0.7, battery_threshold: float = 25.0,
-                           load_threshold: float = 0.9) -> tuple[bool, str]:
+
+    def should_migrate_agent(
+        agent_health: float,
+        device_battery: float,
+        device_load: float,
+        performance_threshold: float = 0.7,
+        battery_threshold: float = 25.0,
+        load_threshold: float = 0.9,
+    ) -> tuple[bool, str]:
         """Determine if agent should be migrated"""
         if agent_health < performance_threshold:
             return True, "performance_degradation"
@@ -193,7 +205,7 @@ try:
         (0.6, 50.0, 0.5, True, "performance_degradation"),
         (0.8, 20.0, 0.5, True, "battery_low"),
         (0.8, 50.0, 0.95, True, "device_overload"),
-        (0.8, 50.0, 0.5, False, "stable")
+        (0.8, 50.0, 0.5, False, "stable"),
     ]
 
     passed = 0
@@ -215,6 +227,7 @@ print()
 # Test 4: Federated Learning Aggregation Logic
 print("Test 4: Federated Learning Aggregation Logic")
 try:
+
     def federated_average(gradients_list: list[dict[str, float]], weights: list[float] = None) -> dict[str, float]:
         """Simple federated averaging of gradients"""
         if not gradients_list:
@@ -260,12 +273,14 @@ try:
     # Test weighted averaging
     weights = [2.0, 1.0, 1.0]  # Give first client double weight
     weighted_avg = federated_average([gradients_1, gradients_2, gradients_3], weights)
-    expected_layer1_weighted = (0.1 * 0.5 + 0.15 * 0.25 + 0.05 * 0.25)
+    expected_layer1_weighted = 0.1 * 0.5 + 0.15 * 0.25 + 0.05 * 0.25
 
     if abs(weighted_avg["layer1"] - expected_layer1_weighted) < 0.001:
         print(f"  PASS: Weighted federated averaging - layer1 = {weighted_avg['layer1']:.3f}")
     else:
-        print(f"  FAIL: Weighted federated averaging - expected {expected_layer1_weighted:.3f}, got {weighted_avg['layer1']:.3f}")
+        print(
+            f"  FAIL: Weighted federated averaging - expected {expected_layer1_weighted:.3f}, got {weighted_avg['layer1']:.3f}"
+        )
 
 except Exception as e:
     print(f"  FAIL: Federated learning aggregation - {e}")
@@ -275,6 +290,7 @@ print()
 # Test 5: Resource Utilization Calculator
 print("Test 5: Resource Utilization Calculator")
 try:
+
     def calculate_utilization(shards: list[ModelShard], devices: list[DeviceProfile]) -> dict[str, float]:
         """Calculate resource utilization across devices"""
         device_memory_map = {d.device_id: d.available_memory_mb for d in devices}
@@ -296,7 +312,7 @@ try:
     test_shards = [
         ModelShard("shard1", "device_1", [0, 1], 500.0, 2.0),
         ModelShard("shard2", "device_2", [2, 3], 1000.0, 4.0),
-        ModelShard("shard3", "device_3", [4, 5], 300.0, 2.0)
+        ModelShard("shard3", "device_3", [4, 5], 300.0, 2.0),
     ]
 
     utilization = calculate_utilization(test_shards, devices)

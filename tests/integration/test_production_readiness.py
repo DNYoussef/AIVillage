@@ -162,9 +162,7 @@ class ProductionReadinessTestSuite:
 
             # Validate recovery performance
             all_recovered = all(r["success"] for r in recovery_results.values())
-            avg_recovery_time = np.mean(
-                [r["recovery_time"] for r in recovery_results.values()]
-            )
+            avg_recovery_time = np.mean([r["recovery_time"] for r in recovery_results.values()])
 
             success = all_recovered and avg_recovery_time < 1.0
 
@@ -183,9 +181,7 @@ class ProductionReadinessTestSuite:
             return success
 
         except Exception as e:
-            self.record_test_result(
-                "error_recovery", False, duration=time.time() - start_time, error=str(e)
-            )
+            self.record_test_result("error_recovery", False, duration=time.time() - start_time, error=str(e))
             return False
 
     async def test_security_integration(self) -> bool:
@@ -268,9 +264,7 @@ class ProductionReadinessTestSuite:
                     "duration": time.time() - check_start,
                 }
 
-            overall_consistency = np.mean(
-                [r["integrity_score"] for r in consistency_results.values()]
-            )
+            overall_consistency = np.mean([r["integrity_score"] for r in consistency_results.values()])
             all_consistent = all(r["success"] for r in consistency_results.values())
 
             success = all_consistent and overall_consistency > 0.95
@@ -281,9 +275,7 @@ class ProductionReadinessTestSuite:
                 duration=time.time() - start_time,
                 details={
                     "overall_consistency": overall_consistency,
-                    "checks_passed": sum(
-                        1 for r in consistency_results.values() if r["success"]
-                    ),
+                    "checks_passed": sum(1 for r in consistency_results.values() if r["success"]),
                     "total_checks": len(consistency_checks),
                     "consistency_results": consistency_results,
                 },
@@ -330,9 +322,9 @@ class ProductionReadinessTestSuite:
                     "load_level": load_level,
                 }
 
-            scalability_score = sum(
-                1 for test in scalability_tests.values() if test["success"]
-            ) / len(scalability_tests)
+            scalability_score = sum(1 for test in scalability_tests.values() if test["success"]) / len(
+                scalability_tests
+            )
             success = scalability_score >= 0.75  # At least 75% of load tests pass
 
             self.record_test_result(
@@ -341,9 +333,7 @@ class ProductionReadinessTestSuite:
                 duration=time.time() - start_time,
                 details={
                     "scalability_score": scalability_score,
-                    "tests_passed": sum(
-                        1 for test in scalability_tests.values() if test["success"]
-                    ),
+                    "tests_passed": sum(1 for test in scalability_tests.values() if test["success"]),
                     "total_tests": len(scalability_tests),
                     "scalability_tests": scalability_tests,
                 },
@@ -385,9 +375,7 @@ class ProductionReadinessTestSuite:
     def get_production_summary(self) -> dict[str, Any]:
         """Generate production readiness summary."""
         total_tests = len(self.test_results)
-        passed_tests = sum(
-            1 for result in self.test_results.values() if result["success"]
-        )
+        passed_tests = sum(1 for result in self.test_results.values() if result["success"])
         failed_tests = total_tests - passed_tests
 
         total_duration = time.time() - self.start_time
@@ -425,17 +413,11 @@ class ProductionReadinessTestSuite:
         for test_name, result in self.test_results.items():
             if not result["success"]:
                 if test_name == "load_performance":
-                    recommendations.append(
-                        f"Optimize {test_name}: Consider horizontal scaling or performance tuning"
-                    )
+                    recommendations.append(f"Optimize {test_name}: Consider horizontal scaling or performance tuning")
                 elif test_name == "security_integration":
-                    recommendations.append(
-                        f"Address {test_name}: Review security policies and implementations"
-                    )
+                    recommendations.append(f"Address {test_name}: Review security policies and implementations")
                 else:
-                    recommendations.append(
-                        f"Fix {test_name}: {result.get('error', 'Review test criteria')}"
-                    )
+                    recommendations.append(f"Fix {test_name}: {result.get('error', 'Review test criteria')}")
 
         if not recommendations:
             recommendations.append("System is production ready - all tests passed!")
@@ -468,12 +450,8 @@ async def test_production_readiness():
         json.dump(serializable_report, f, indent=2)
 
     # Assert production readiness
-    assert report["production_ready"], (
-        f"Production readiness failed: {report['success_rate']:.1%} success rate"
-    )
-    assert report["success_rate"] >= 0.95, (
-        f"Success rate {report['success_rate']:.1%} below 95% threshold"
-    )
+    assert report["production_ready"], f"Production readiness failed: {report['success_rate']:.1%} success rate"
+    assert report["success_rate"] >= 0.95, f"Success rate {report['success_rate']:.1%} below 95% threshold"
 
     logger.info(f"Production readiness: {report['success_rate']:.1%} success rate")
     return report

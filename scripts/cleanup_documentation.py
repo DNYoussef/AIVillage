@@ -31,50 +31,78 @@ class DocumentationCleanup:
         # Define target structure
         self.target_structure = {
             "docs/architecture/": [
-                "architecture.md", "architecture_updated.md", "system_overview.md",
-                "design/", "hyperag_mcp_architecture.md"
+                "architecture.md",
+                "architecture_updated.md",
+                "system_overview.md",
+                "design/",
+                "hyperag_mcp_architecture.md",
             ],
             "docs/guides/": [
-                "onboarding.md", "advanced_setup.md", "usage_examples.md",
-                "migration_notes.md", "EVOMERGE_GUIDE.md", "QUIETSTAR_GUIDE.md",
-                "compression_guide.md", "process_standardization_guide.md",
-                "interface_standardization_guide.md"
+                "onboarding.md",
+                "advanced_setup.md",
+                "usage_examples.md",
+                "migration_notes.md",
+                "EVOMERGE_GUIDE.md",
+                "QUIETSTAR_GUIDE.md",
+                "compression_guide.md",
+                "process_standardization_guide.md",
+                "interface_standardization_guide.md",
             ],
-            "docs/api/": [
-                "API_DOCUMENTATION.md", "specs/", "hyperag_api.md"
-            ],
+            "docs/api/": ["API_DOCUMENTATION.md", "specs/", "hyperag_api.md"],
             "docs/components/": [
-                "mesh/", "rag/", "twin/", "agent_forge_pipeline_overview.md",
-                "complete_agent_forge_pipeline.md", "AGENT_FORGE_ANALYSIS.md"
+                "mesh/",
+                "rag/",
+                "twin/",
+                "agent_forge_pipeline_overview.md",
+                "complete_agent_forge_pipeline.md",
+                "AGENT_FORGE_ANALYSIS.md",
             ],
             "docs/development/": [
-                "BRANCHING_STRATEGY.md", "testing-best-practices.md",
-                "test-discovered-behaviors.md", "COMPRESSION_INTEGRATION.md",
-                "SMOKE_TEST_INTEGRATION.md"
+                "BRANCHING_STRATEGY.md",
+                "testing-best-practices.md",
+                "test-discovered-behaviors.md",
+                "COMPRESSION_INTEGRATION.md",
+                "SMOKE_TEST_INTEGRATION.md",
             ],
             "docs/reference/": [
-                "TODO_1.md", "roadmap.md", "benchmark_results.md",
-                "DIRECTORY_STRUCTURE_1.md", "ENTRY_POINTS.md", "ENTRY_POINT_MAPPING_1.md"
+                "TODO_1.md",
+                "roadmap.md",
+                "benchmark_results.md",
+                "DIRECTORY_STRUCTURE_1.md",
+                "ENTRY_POINTS.md",
+                "ENTRY_POINT_MAPPING_1.md",
             ],
             "deprecated/old_reports/": [
                 # All report files will go here
-            ]
+            ],
         }
 
         # Files to keep in root
-        self.root_files = [
-            "README.md", "CONTRIBUTING.md", "CHANGELOG.md", "CLAUDE.local.md"
-        ]
+        self.root_files = ["README.md", "CONTRIBUTING.md", "CHANGELOG.md", "CLAUDE.local.md"]
 
         # Report patterns to archive
         self.report_patterns = [
-            r".*_REPORT\.md$", r".*REPORT\.md$", r".*_SUMMARY\.md$",
-            r".*SUMMARY\.md$", r".*_COMPLETE\.md$", r".*COMPLETE\.md$",
-            r".*_STATUS\.md$", r".*STATUS\.md$", r".*_PLAN\.md$",
-            r".*PLAN\.md$", r".*_CHECKLIST\.md$", r".*CHECKLIST\.md$",
-            r".*_DASHBOARD\.md$", r".*DASHBOARD\.md$", r".*_ANALYSIS\.md$",
-            r".*ANALYSIS\.md$", r".*_AUDIT\.md$", r".*AUDIT\.md$",
-            r".*_ROADMAP\.md$", r".*ROADMAP\.md$", r".*_GUIDE\.md$"
+            r".*_REPORT\.md$",
+            r".*REPORT\.md$",
+            r".*_SUMMARY\.md$",
+            r".*SUMMARY\.md$",
+            r".*_COMPLETE\.md$",
+            r".*COMPLETE\.md$",
+            r".*_STATUS\.md$",
+            r".*STATUS\.md$",
+            r".*_PLAN\.md$",
+            r".*PLAN\.md$",
+            r".*_CHECKLIST\.md$",
+            r".*CHECKLIST\.md$",
+            r".*_DASHBOARD\.md$",
+            r".*DASHBOARD\.md$",
+            r".*_ANALYSIS\.md$",
+            r".*ANALYSIS\.md$",
+            r".*_AUDIT\.md$",
+            r".*AUDIT\.md$",
+            r".*_ROADMAP\.md$",
+            r".*ROADMAP\.md$",
+            r".*_GUIDE\.md$",
         ]
 
     def create_directory_structure(self):
@@ -210,8 +238,11 @@ class DocumentationCleanup:
     def cleanup_hidden_directories(self):
         """Remove hidden cleanup directories"""
         hidden_dirs = [
-            ".claude_analysis", ".claude_cleanup", ".cleanup_analysis",
-            ".cleanup_backups", ".test_repair_backup"
+            ".claude_analysis",
+            ".claude_cleanup",
+            ".cleanup_analysis",
+            ".cleanup_backups",
+            ".test_repair_backup",
         ]
 
         for hidden_dir in hidden_dirs:
@@ -256,7 +287,7 @@ class DocumentationCleanup:
             "components": "docs/components/",
             "development": "docs/development/",
             "reference": "docs/reference/",
-            "archive": "deprecated/old_reports/"
+            "archive": "deprecated/old_reports/",
         }
 
         for file_path, relative_path in md_files:
@@ -344,6 +375,7 @@ All documentation in this project follows our [Style Guide](../STYLE_GUIDE.md) f
 """
 
         from datetime import datetime
+
         index_content = index_content.format(date=datetime.now().strftime("%Y-%m-%d"))
 
         index_path = self.base_path / "docs" / "README.md"
@@ -467,7 +499,9 @@ deprecated/
         except Exception as e:
             print(f"\nERROR during cleanup: {e}")
             import traceback
+
             traceback.print_exc()
+
 
 if __name__ == "__main__":
     cleanup = DocumentationCleanup()

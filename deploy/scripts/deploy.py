@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
-"""
-Comprehensive deployment orchestration script for AIVillage.
+"""Comprehensive deployment orchestration script for AIVillage.
 """
 
 import argparse
 import asyncio
 import json
 import logging
+from pathlib import Path
 import subprocess
 import sys
 import time
-from pathlib import Path
-from typing import Dict, List, Optional
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class AIVillageDeploymentOrchestrator:
     def __init__(self, environment: str, namespace: str, image_tag: str = "latest"):
@@ -25,7 +24,7 @@ class AIVillageDeploymentOrchestrator:
         self.helm_chart_path = Path(__file__).parent.parent / "helm" / "aivillage"
         self.k8s_manifests_path = Path(__file__).parent.parent / "k8s"
 
-    def run_command(self, cmd: List[str], timeout: int = 300) -> subprocess.CompletedProcess:
+    def run_command(self, cmd: list[str], timeout: int = 300) -> subprocess.CompletedProcess:
         """Run a command with error handling."""
         logger.info(f"Running: {' '.join(cmd)}")
         try:
@@ -95,12 +94,7 @@ class AIVillageDeploymentOrchestrator:
         """Deploy database services."""
         logger.info("🗄️ Deploying database services...")
 
-        database_manifests = [
-            "postgres.yaml",
-            "redis.yaml",
-            "neo4j.yaml",
-            "qdrant.yaml"
-        ]
+        database_manifests = ["postgres.yaml", "redis.yaml", "neo4j.yaml", "qdrant.yaml"]
 
         try:
             for manifest in database_manifests:
@@ -128,7 +122,7 @@ class AIVillageDeploymentOrchestrator:
             ("statefulset", "aivillage-postgres"),
             ("statefulset", "aivillage-redis"),
             ("statefulset", "aivillage-neo4j"),
-            ("statefulset", "aivillage-qdrant")
+            ("statefulset", "aivillage-qdrant"),
         ]
 
         start_time = time.time()
@@ -138,10 +132,18 @@ class AIVillageDeploymentOrchestrator:
 
             while time.time() - start_time < timeout:
                 try:
-                    result = self.run_command([
-                        "kubectl", "get", resource_type, resource_name,
-                        "-n", self.namespace, "-o", "jsonpath={.status.readyReplicas}"
-                    ])
+                    result = self.run_command(
+                        [
+                            "kubectl",
+                            "get",
+                            resource_type,
+                            resource_name,
+                            "-n",
+                            self.namespace,
+                            "-o",
+                            "jsonpath={.status.readyReplicas}",
+                        ]
+                    )
 
                     if result.stdout.strip() and int(result.stdout.strip()) > 0:
                         logger.info(f"✅ {resource_name} is ready")
@@ -164,31 +166,47 @@ class AIVillageDeploymentOrchestrator:
         try:
             # Build Helm command
             helm_cmd = [
-                "helm", "upgrade", "--install",
+                "helm",
+                "upgrade",
+                "--install",
                 f"aivillage-{self.environment.lower()}",
                 str(self.helm_chart_path),
-                "--namespace", self.namespace,
+                "--namespace",
+                self.namespace,
                 "--create-namespace",
-                "--set", f"image.tag={self.image_tag}",
-                "--set", f"environment={self.environment}",
-                "--values", str(self.helm_chart_path / f"values-{self.environment.lower()}.yaml"),
+                "--set",
+                f"image.tag={self.image_tag}",
+                "--set",
+                f"environment={self.environment}",
+                "--values",
+                str(self.helm_chart_path / f"values-{self.environment.lower()}.yaml"),
                 "--wait",
-                "--timeout=15m"
+                "--timeout=15m",
             ]
 
             # Add environment-specific configurations
             if self.environment.lower() == "production":
-                helm_cmd.extend([
-                    "--set", "deployment.replicaCount=5",
-                    "--set", "resources.requests.cpu=20",
-                    "--set", "resources.requests.memory=40Gi"
-                ])
+                helm_cmd.extend(
+                    [
+                        "--set",
+                        "deployment.replicaCount=5",
+                        "--set",
+                        "resources.requests.cpu=20",
+                        "--set",
+                        "resources.requests.memory=40Gi",
+                    ]
+                )
             elif self.environment.lower() == "staging":
-                helm_cmd.extend([
-                    "--set", "deployment.replicaCount=2",
-                    "--set", "resources.requests.cpu=5",
-                    "--set", "resources.requests.memory=10Gi"
-                ])
+                helm_cmd.extend(
+                    [
+                        "--set",
+                        "deployment.replicaCount=2",
+                        "--set",
+                        "resources.requests.cpu=5",
+                        "--set",
+                        "resources.requests.memory=10Gi",
+                    ]
+                )
 
             self.run_command(helm_cmd, timeout=900)  # 15 minute timeout
             logger.info("✅ Application deployed successfully with Helm")
@@ -204,10 +222,9 @@ class AIVillageDeploymentOrchestrator:
 
         try:
             # Check pod status
-            result = self.run_command([
-                "kubectl", "get", "pods", "-n", self.namespace,
-                "-o", "jsonpath={.items[*].status.phase}"
-            ])
+            result = self.run_command(
+                ["kubectl", "get", "pods", "-n", self.namespace, "-o", "jsonpath={.items[*].status.phase}"]
+            )
 
             phases = result.stdout.strip().split()
             running_pods = phases.count("Running")
@@ -222,11 +239,12 @@ class AIVillageDeploymentOrchestrator:
             # Run basic health checks
             health_script = Path(__file__).parent / "health_check.py"
             if health_script.exists():
-                result = subprocess.run([
-                    "python", str(health_script),
-                    "--environment", self.environment.lower(),
-                    "--quiet"
-                ], capture_output=True, text=True)
+                result = subprocess.run(
+                    ["python", str(health_script), "--environment", self.environment.lower(), "--quiet"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
 
                 if result.returncode == 0:
                     logger.info("✅ Health checks passed")
@@ -247,7 +265,7 @@ class AIVillageDeploymentOrchestrator:
 
         try:
             # Remove old ConfigMaps and Secrets (keep current ones)
-            cutoff_time = int(time.time()) - 7*24*3600  # 7 days ago
+            cutoff_time = int(time.time()) - 7 * 24 * 3600  # 7 days ago
 
             # This is a placeholder - implement actual cleanup logic based on your needs
             logger.info("✅ Cleanup completed")
@@ -257,16 +275,12 @@ class AIVillageDeploymentOrchestrator:
             logger.error(f"❌ Cleanup failed: {e}")
             return False
 
-    def rollback_deployment(self, revision: Optional[int] = None) -> bool:
+    def rollback_deployment(self, revision: int | None = None) -> bool:
         """Rollback the deployment to a previous revision."""
         logger.info("🔄 Rolling back deployment...")
 
         try:
-            helm_cmd = [
-                "helm", "rollback",
-                f"aivillage-{self.environment.lower()}",
-                "--namespace", self.namespace
-            ]
+            helm_cmd = ["helm", "rollback", f"aivillage-{self.environment.lower()}", "--namespace", self.namespace]
 
             if revision:
                 helm_cmd.append(str(revision))
@@ -289,7 +303,7 @@ class AIVillageDeploymentOrchestrator:
             ("Deploy Databases", self.deploy_databases),
             ("Deploy Application", self.deploy_with_helm),
             ("Verify Deployment", self.verify_deployment),
-            ("Cleanup", self.cleanup_old_resources)
+            ("Cleanup", self.cleanup_old_resources),
         ]
 
         for step_name, step_func in deployment_steps:
@@ -307,21 +321,18 @@ class AIVillageDeploymentOrchestrator:
         logger.info("🎉 Full deployment completed successfully!")
         return True
 
-    def get_deployment_status(self) -> Dict:
+    def get_deployment_status(self) -> dict:
         """Get current deployment status."""
         try:
             # Get Helm release info
-            result = self.run_command([
-                "helm", "status", f"aivillage-{self.environment.lower()}",
-                "--namespace", self.namespace, "-o", "json"
-            ])
+            result = self.run_command(
+                ["helm", "status", f"aivillage-{self.environment.lower()}", "--namespace", self.namespace, "-o", "json"]
+            )
 
             helm_status = json.loads(result.stdout)
 
             # Get pod status
-            result = self.run_command([
-                "kubectl", "get", "pods", "-n", self.namespace, "-o", "json"
-            ])
+            result = self.run_command(["kubectl", "get", "pods", "-n", self.namespace, "-o", "json"])
 
             pods_data = json.loads(result.stdout)
 
@@ -331,7 +342,7 @@ class AIVillageDeploymentOrchestrator:
                 pod_status[pod_name] = {
                     "phase": pod["status"]["phase"],
                     "ready": all(cs["ready"] for cs in pod["status"].get("containerStatuses", [])),
-                    "restarts": sum(cs.get("restartCount", 0) for cs in pod["status"].get("containerStatuses", []))
+                    "restarts": sum(cs.get("restartCount", 0) for cs in pod["status"].get("containerStatuses", [])),
                 }
 
             return {
@@ -339,18 +350,23 @@ class AIVillageDeploymentOrchestrator:
                 "namespace": self.namespace,
                 "helm_status": helm_status,
                 "pod_status": pod_status,
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
 
         except Exception as e:
             logger.error(f"Failed to get deployment status: {e}")
             return {"error": str(e)}
 
+
 def main():
     parser = argparse.ArgumentParser(description="AIVillage Deployment Orchestrator")
-    parser.add_argument("--environment", required=True, choices=["staging", "production"], help="Deployment environment")
+    parser.add_argument(
+        "--environment", required=True, choices=["staging", "production"], help="Deployment environment"
+    )
     parser.add_argument("--image-tag", default="latest", help="Docker image tag to deploy")
-    parser.add_argument("--action", default="deploy", choices=["deploy", "rollback", "status"], help="Action to perform")
+    parser.add_argument(
+        "--action", default="deploy", choices=["deploy", "rollback", "status"], help="Action to perform"
+    )
     parser.add_argument("--rollback-revision", type=int, help="Revision to rollback to")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be done without executing")
 
@@ -388,6 +404,7 @@ def main():
     except Exception as e:
         logger.error(f"Deployment failed: {e}")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

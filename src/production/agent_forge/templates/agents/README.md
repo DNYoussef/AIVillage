@@ -55,4 +55,3 @@ Handles multilingual communication.
 
 ## Strategist
 Plans and optimizes long-term actions.
-

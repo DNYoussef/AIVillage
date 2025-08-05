@@ -5,9 +5,9 @@ Validates that compression performance meets the ≤40% throughput drop requirem
 
 import argparse
 import json
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 import torch
 
@@ -91,16 +91,12 @@ def run_performance_benchmark(threshold_percent=40):
 
             status = "PASS" if meets_requirement else "FAIL"
             print(f"   {status} - {throughput_drop_percent:+.1f}% throughput change")
-            print(
-                f"   FP16: {fp16_time * 1000:.1f}ms | Compressed: {total_compressed_time * 1000:.1f}ms"
-            )
+            print(f"   FP16: {fp16_time * 1000:.1f}ms | Compressed: {total_compressed_time * 1000:.1f}ms")
             print(f"   Quality: {mse:.6f} MSE, {compression_ratio:.1f}x ratio")
 
         except Exception as e:
             print(f"   ERROR - {e}")
-            results.append(
-                {"test_case": name, "error": str(e), "meets_requirement": False}
-            )
+            results.append({"test_case": name, "error": str(e), "meets_requirement": False})
 
     # Summary
     total_tests = len(test_cases)
@@ -140,9 +136,7 @@ def run_performance_benchmark(threshold_percent=40):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Check compression performance regression"
-    )
+    parser = argparse.ArgumentParser(description="Check compression performance regression")
     parser.add_argument(
         "--threshold",
         type=int,

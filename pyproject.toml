@@ -267,7 +267,7 @@ force-sort-within-sections = true
 
 [tool.black]
 line-length = 120
-target-version = ['py38'] 
+target-version = ['py38']
 include = '\.pyi?$'
 extend-exclude = '''
 # Exclude generated files

@@ -1,9 +1,8 @@
 """Test Resource Monitor functionality"""
+
 import time
-from src.core.resources.resource_monitor import (
-    get_cpu_usage, get_memory_usage, get_all_metrics, 
-    get_monitor_instance
-)
+
+from src.core.resources.resource_monitor import get_all_metrics, get_cpu_usage, get_memory_usage, get_monitor_instance
 
 print("=== Testing Individual Metrics ===")
 
@@ -43,7 +42,7 @@ print(f"   Bytes sent: {net['bytes_sent_mb']:.2f} MB")
 print(f"   Bytes received: {net['bytes_recv_mb']:.2f} MB")
 print(f"   Packets sent: {net['packets_sent']}")
 print(f"   Packets received: {net['packets_recv']}")
-if net['latency_ms']:
+if net["latency_ms"]:
     print(f"   Network latency: {net['latency_ms']:.1f} ms")
 
 # Test battery (if available)
@@ -66,9 +65,11 @@ for i in range(5):
     time.sleep(1)
 
 # Check if values are changing
-cpu_changing = len(set(m['cpu_percent'] for m in metrics_list)) > 1
+cpu_changing = len(set(m["cpu_percent"] for m in metrics_list)) > 1
 print(f"\nCPU values changing: {cpu_changing}")
-print(f"Timestamps incrementing: {all(metrics_list[i]['timestamp'] < metrics_list[i+1]['timestamp'] for i in range(4))}")
+print(
+    f"Timestamps incrementing: {all(metrics_list[i]['timestamp'] < metrics_list[i+1]['timestamp'] for i in range(4))}"
+)
 
 # Test resource allocation checks
 print("\n=== Testing Resource Allocation Checks ===")
@@ -84,7 +85,7 @@ print(f"Can run 100 MB model: {can_run_small}")
 print(f"Can run 1 TB model: {can_run_huge}")
 
 # Check history tracking
-print(f"\n=== History Tracking ===")
+print("\n=== History Tracking ===")
 print(f"CPU history length: {len(monitor.cpu_history)}")
 print(f"Memory history length: {len(monitor.memory_history)}")
 print(f"Full metrics history length: {len(monitor.history)}")

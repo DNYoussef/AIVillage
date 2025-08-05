@@ -159,9 +159,7 @@ class TestChatEngineIntegration:
         # Mock the chat request
         from services.core.interfaces import ChatRequest
 
-        mock_request = ChatRequest(
-            message="Hello, how are you?", conversation_id="test-123", context={}
-        )
+        mock_request = ChatRequest(message="Hello, how are you?", conversation_id="test-123", context={})
 
         # Test the chat processing
         with caplog.at_level(logging.INFO):
@@ -215,9 +213,7 @@ class TestEvidenceLoggingIntegration:
         )
 
         with caplog.at_level(logging.INFO):
-            evidence_pack = EvidencePack(
-                query="test query", chunks=[chunk], proto_confidence=0.8
-            )
+            evidence_pack = EvidencePack(query="test query", chunks=[chunk], proto_confidence=0.8)
 
             logger.info(
                 "Created evidence pack",
@@ -343,9 +339,7 @@ class TestEndToEndIntegration:
                     )
 
                 processed_messages.append(message)
-                logger.info(
-                    "Message processed successfully", extra={"message_id": message.id}
-                )
+                logger.info("Message processed successfully", extra={"message_id": message.id})
 
             except AIVillageException as e:
                 logger.exception(

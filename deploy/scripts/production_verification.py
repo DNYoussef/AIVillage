@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""
-Production verification script for AIVillage deployment.
+"""Production verification script for AIVillage deployment.
 Validates the production deployment is working correctly after traffic switch.
 """
 
-import asyncio
-import aiohttp
 import argparse
+import asyncio
 import json
+import logging
+import statistics
+import subprocess
 import sys
 import time
-import logging
-import subprocess
-from typing import Dict, List, Optional
-import statistics
+
+import aiohttp
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class ProductionVerificationSuite:
     def __init__(self, environment: str, slot: str):
@@ -34,7 +34,7 @@ class ProductionVerificationSuite:
         try:
             # Get the external IP of the load balancer
             cmd = ["kubectl", "get", "service", "aivillage-active", "-n", self.namespace, "-o", "json"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             if result.returncode != 0:
                 raise Exception(f"Failed to get service info: {result.stderr}")
@@ -43,8 +43,12 @@ class ProductionVerificationSuite:
 
             # For testing, we'll use port forwarding
             port_forward_cmd = [
-                "kubectl", "port-forward", "-n", self.namespace,
-                "service/aivillage-active", "8000:8000"
+                "kubectl",
+                "port-forward",
+                "-n",
+                self.namespace,
+                "service/aivillage-active",
+                "8000:8000",
             ]
 
             proc = subprocess.Popen(port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -53,55 +57,51 @@ class ProductionVerificationSuite:
             # Test workflow: Gateway -> Twin -> MCP interaction
             async with aiohttp.ClientSession() as session:
                 # 1. Health check
-                async with session.get("http://localhost:8000/healthz", timeout=aiohttp.ClientTimeout(total=10)) as response:
+                async with session.get(
+                    "http://localhost:8000/healthz", timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
                     if response.status != 200:
                         raise Exception(f"Gateway health check failed: {response.status}")
 
                 # 2. Test basic functionality (adjust based on your API)
-                test_payload = {
-                    "query": "Test production deployment",
-                    "type": "health_check"
-                }
+                test_payload = {"query": "Test production deployment", "type": "health_check"}
 
                 async with session.post(
-                    "http://localhost:8000/api/v1/query",
-                    json=test_payload,
-                    timeout=aiohttp.ClientTimeout(total=30)
+                    "http://localhost:8000/api/v1/query", json=test_payload, timeout=aiohttp.ClientTimeout(total=30)
                 ) as response:
                     if response.status == 200:
                         response_data = await response.json()
                         logger.info("✅ End-to-end workflow test passed")
-                        self.results.append({
-                            "test": "end_to_end_workflow",
-                            "status": "PASS",
-                            "response": response_data
-                        })
+                        self.results.append(
+                            {"test": "end_to_end_workflow", "status": "PASS", "response": response_data}
+                        )
                         proc.terminate()
                         return True
-                    else:
-                        raise Exception(f"API request failed: {response.status}")
+                    raise Exception(f"API request failed: {response.status}")
 
         except Exception as e:
             logger.error(f"❌ End-to-end workflow test failed: {e}")
-            self.results.append({
-                "test": "end_to_end_workflow",
-                "status": "FAIL",
-                "error": str(e)
-            })
+            self.results.append({"test": "end_to_end_workflow", "status": "FAIL", "error": str(e)})
             self.verification_passed = False
-            if 'proc' in locals():
+            if "proc" in locals():
                 proc.terminate()
             return False
 
     async def test_load_performance(self, concurrent_requests: int = 10, duration_seconds: int = 30) -> bool:
         """Test system performance under load."""
-        logger.info(f"🏋️ Testing load performance ({concurrent_requests} concurrent requests for {duration_seconds}s)...")
+        logger.info(
+            f"🏋️ Testing load performance ({concurrent_requests} concurrent requests for {duration_seconds}s)..."
+        )
 
         try:
             # Port forward to the service
             port_forward_cmd = [
-                "kubectl", "port-forward", "-n", self.namespace,
-                "service/aivillage-active", "8000:8000"
+                "kubectl",
+                "port-forward",
+                "-n",
+                self.namespace,
+                "service/aivillage-active",
+                "8000:8000",
             ]
 
             proc = subprocess.Popen(port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -119,8 +119,7 @@ class ProductionVerificationSuite:
                 request_start = time.time()
                 try:
                     async with session.get(
-                        "http://localhost:8000/healthz",
-                        timeout=aiohttp.ClientTimeout(total=10)
+                        "http://localhost:8000/healthz", timeout=aiohttp.ClientTimeout(total=10)
                     ) as response:
                         request_time = (time.time() - request_start) * 1000
                         response_times.append(request_time)
@@ -154,9 +153,9 @@ class ProductionVerificationSuite:
 
             # Define success criteria
             success = (
-                success_rate >= 95 and  # 95% success rate
-                avg_response_time < 1000 and  # <1s average response time
-                p95_response_time < 2000  # <2s 95th percentile
+                success_rate >= 95  # 95% success rate
+                and avg_response_time < 1000  # <1s average response time
+                and p95_response_time < 2000  # <2s 95th percentile
             )
 
             result = {
@@ -167,13 +166,15 @@ class ProductionVerificationSuite:
                 "error_count": error_count,
                 "success_rate": round(success_rate, 2),
                 "avg_response_time_ms": round(avg_response_time, 2),
-                "p95_response_time_ms": round(p95_response_time, 2)
+                "p95_response_time_ms": round(p95_response_time, 2),
             }
 
             if success:
                 logger.info(f"✅ Load performance test passed ({success_rate}% success, {avg_response_time:.2f}ms avg)")
             else:
-                logger.error(f"❌ Load performance test failed ({success_rate}% success, {avg_response_time:.2f}ms avg)")
+                logger.error(
+                    f"❌ Load performance test failed ({success_rate}% success, {avg_response_time:.2f}ms avg)"
+                )
                 self.verification_passed = False
 
             self.results.append(result)
@@ -181,13 +182,9 @@ class ProductionVerificationSuite:
 
         except Exception as e:
             logger.error(f"❌ Load performance test failed: {e}")
-            self.results.append({
-                "test": "load_performance",
-                "status": "FAIL",
-                "error": str(e)
-            })
+            self.results.append({"test": "load_performance", "status": "FAIL", "error": str(e)})
             self.verification_passed = False
-            if 'proc' in locals():
+            if "proc" in locals():
                 proc.terminate()
             return False
 
@@ -201,12 +198,21 @@ class ProductionVerificationSuite:
         # Test PostgreSQL
         try:
             cmd = [
-                "kubectl", "exec", "-n", self.namespace,
+                "kubectl",
+                "exec",
+                "-n",
+                self.namespace,
                 "statefulset/aivillage-postgres",
-                "--", "psql", "-U", "aivillage_user", "-d", "aivillage_production",
-                "-c", "SELECT version();"
+                "--",
+                "psql",
+                "-U",
+                "aivillage_user",
+                "-d",
+                "aivillage_production",
+                "-c",
+                "SELECT version();",
             ]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             if result.returncode == 0:
                 db_results["postgres"] = {"status": "PASS", "version": result.stdout.strip()}
@@ -223,11 +229,17 @@ class ProductionVerificationSuite:
         # Test Redis
         try:
             cmd = [
-                "kubectl", "exec", "-n", self.namespace,
+                "kubectl",
+                "exec",
+                "-n",
+                self.namespace,
                 "statefulset/aivillage-redis",
-                "--", "redis-cli", "info", "server"
+                "--",
+                "redis-cli",
+                "info",
+                "server",
             ]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             if result.returncode == 0:
                 db_results["redis"] = {"status": "PASS", "info": result.stdout[:200]}
@@ -244,12 +256,20 @@ class ProductionVerificationSuite:
         # Test Neo4j
         try:
             cmd = [
-                "kubectl", "exec", "-n", self.namespace,
+                "kubectl",
+                "exec",
+                "-n",
+                self.namespace,
                 "statefulset/aivillage-neo4j",
-                "--", "cypher-shell", "-u", "neo4j", "-p", "production_password",
-                "CALL dbms.components() YIELD name, versions RETURN name, versions[0] as version;"
+                "--",
+                "cypher-shell",
+                "-u",
+                "neo4j",
+                "-p",
+                "production_password",
+                "CALL dbms.components() YIELD name, versions RETURN name, versions[0] as version;",
             ]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             if result.returncode == 0:
                 db_results["neo4j"] = {"status": "PASS", "info": result.stdout[:200]}
@@ -263,11 +283,9 @@ class ProductionVerificationSuite:
             db_results["neo4j"] = {"status": "FAIL", "error": str(e)}
             all_db_passed = False
 
-        self.results.append({
-            "test": "database_integrity",
-            "status": "PASS" if all_db_passed else "FAIL",
-            "databases": db_results
-        })
+        self.results.append(
+            {"test": "database_integrity", "status": "PASS" if all_db_passed else "FAIL", "databases": db_results}
+        )
 
         if not all_db_passed:
             self.verification_passed = False
@@ -281,8 +299,12 @@ class ProductionVerificationSuite:
         try:
             # Check if Prometheus is collecting metrics
             port_forward_cmd = [
-                "kubectl", "port-forward", "-n", self.namespace,
-                "service/aivillage-prometheus", "9090:9090"
+                "kubectl",
+                "port-forward",
+                "-n",
+                self.namespace,
+                "service/aivillage-prometheus",
+                "9090:9090",
             ]
 
             proc = subprocess.Popen(port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -291,8 +313,7 @@ class ProductionVerificationSuite:
             async with aiohttp.ClientSession() as session:
                 # Test Prometheus API
                 async with session.get(
-                    "http://localhost:9090/api/v1/query?query=up",
-                    timeout=aiohttp.ClientTimeout(total=10)
+                    "http://localhost:9090/api/v1/query?query=up", timeout=aiohttp.ClientTimeout(total=10)
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
@@ -300,27 +321,23 @@ class ProductionVerificationSuite:
 
                         if metrics_available:
                             logger.info("✅ Monitoring system test passed")
-                            self.results.append({
-                                "test": "monitoring_system",
-                                "status": "PASS",
-                                "metrics_count": len(data["data"]["result"])
-                            })
+                            self.results.append(
+                                {
+                                    "test": "monitoring_system",
+                                    "status": "PASS",
+                                    "metrics_count": len(data["data"]["result"]),
+                                }
+                            )
                             proc.terminate()
                             return True
-                        else:
-                            raise Exception("No metrics available")
-                    else:
-                        raise Exception(f"Prometheus API returned {response.status}")
+                        raise Exception("No metrics available")
+                    raise Exception(f"Prometheus API returned {response.status}")
 
         except Exception as e:
             logger.error(f"❌ Monitoring system test failed: {e}")
-            self.results.append({
-                "test": "monitoring_system",
-                "status": "FAIL",
-                "error": str(e)
-            })
+            self.results.append({"test": "monitoring_system", "status": "FAIL", "error": str(e)})
             self.verification_passed = False
-            if 'proc' in locals():
+            if "proc" in locals():
                 proc.terminate()
             return False
 
@@ -331,7 +348,7 @@ class ProductionVerificationSuite:
         try:
             # Check network policies
             cmd = ["kubectl", "get", "networkpolicies", "-n", self.namespace, "-o", "json"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             if result.returncode == 0:
                 policies_data = json.loads(result.stdout)
@@ -339,7 +356,7 @@ class ProductionVerificationSuite:
 
                 # Check pod security standards
                 cmd = ["kubectl", "get", "pods", "-n", self.namespace, "-o", "json"]
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
                 if result.returncode == 0:
                     pods_data = json.loads(result.stdout)
@@ -357,7 +374,9 @@ class ProductionVerificationSuite:
                             for container in spec.get("containers", []):
                                 container_security = container.get("securityContext", {})
                                 if container_security.get("allowPrivilegeEscalation", True):
-                                    security_violations.append(f"Container in {pod['metadata']['name']} allows privilege escalation")
+                                    security_violations.append(
+                                        f"Container in {pod['metadata']['name']} allows privilege escalation"
+                                    )
 
                     success = len(security_violations) == 0
 
@@ -365,7 +384,7 @@ class ProductionVerificationSuite:
                         "test": "security_posture",
                         "status": "PASS" if success else "FAIL",
                         "network_policies_count": policies_count,
-                        "security_violations": security_violations
+                        "security_violations": security_violations,
                     }
 
                     if success:
@@ -381,11 +400,7 @@ class ProductionVerificationSuite:
 
         except Exception as e:
             logger.error(f"❌ Security posture test failed: {e}")
-            self.results.append({
-                "test": "security_posture",
-                "status": "FAIL",
-                "error": str(e)
-            })
+            self.results.append({"test": "security_posture", "status": "FAIL", "error": str(e)})
             self.verification_passed = False
             return False
 
@@ -401,7 +416,7 @@ class ProductionVerificationSuite:
             self.test_load_performance(),
             self.test_database_integrity(),
             self.test_monitoring_and_alerting(),
-            self.test_security_posture()
+            self.test_security_posture(),
         ]
 
         # Execute all tests
@@ -425,15 +440,20 @@ class ProductionVerificationSuite:
 
     def save_results(self, output_file: str):
         """Save verification results to a file."""
-        with open(output_file, 'w') as f:
-            json.dump({
-                "environment": self.environment,
-                "slot": self.slot,
-                "namespace": self.namespace,
-                "timestamp": time.time(),
-                "verification_passed": self.verification_passed,
-                "results": self.results
-            }, f, indent=2)
+        with open(output_file, "w") as f:
+            json.dump(
+                {
+                    "environment": self.environment,
+                    "slot": self.slot,
+                    "namespace": self.namespace,
+                    "timestamp": time.time(),
+                    "verification_passed": self.verification_passed,
+                    "results": self.results,
+                },
+                f,
+                indent=2,
+            )
+
 
 async def main():
     parser = argparse.ArgumentParser(description="Run production verification for AIVillage deployment")
@@ -449,6 +469,7 @@ async def main():
     verifier.save_results(args.output)
 
     sys.exit(0 if success else 1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

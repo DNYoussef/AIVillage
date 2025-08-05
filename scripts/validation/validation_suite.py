@@ -14,15 +14,15 @@ Provides comprehensive validation including:
 """
 
 import ast
+from dataclasses import asdict, dataclass
+from enum import Enum
 import importlib
 import json
+from pathlib import Path
 import re
 import subprocess
 import sys
-from dataclasses import asdict, dataclass
-from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any
 
 try:
     import toml
@@ -34,6 +34,7 @@ from ..core import BaseScript, ScriptResult
 
 class ValidationSeverity(Enum):
     """Severity levels for validation issues."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -42,6 +43,7 @@ class ValidationSeverity(Enum):
 
 class ValidationType(Enum):
     """Types of validation checks."""
+
     DEPENDENCIES = "dependencies"
     QUALITY_GATES = "quality_gates"
     DOCUMENTATION = "documentation"
@@ -53,32 +55,35 @@ class ValidationType(Enum):
 @dataclass
 class ValidationIssue:
     """Individual validation issue."""
+
     type: ValidationType
     severity: ValidationSeverity
     message: str
-    file_path: Optional[str] = None
-    line_number: Optional[int] = None
-    details: Optional[Dict[str, Any]] = None
+    file_path: str | None = None
+    line_number: int | None = None
+    details: dict[str, Any] | None = None
 
 
 @dataclass
 class ValidationResult:
     """Result of validation check."""
+
     type: ValidationType
     passed: bool
-    issues: List[ValidationIssue]
-    metrics: Dict[str, Any]
+    issues: list[ValidationIssue]
+    metrics: dict[str, Any]
     duration: float
 
 
 @dataclass
 class ValidationConfig:
     """Configuration for validation suite."""
-    enabled_validations: List[ValidationType]
+
+    enabled_validations: list[ValidationType]
     production_mode: bool = False
     strict_mode: bool = False
-    exclude_patterns: List[str] = None
-    dependency_sources: List[str] = None
+    exclude_patterns: list[str] = None
+    dependency_sources: list[str] = None
 
     def __post_init__(self):
         if self.exclude_patterns is None:
@@ -101,12 +106,7 @@ class ValidationConfig:
 class ValidationSuite(BaseScript):
     """Comprehensive validation suite for AIVillage."""
 
-    def __init__(
-        self,
-        config: Optional[ValidationConfig] = None,
-        target_dir: Optional[Path] = None,
-        **kwargs
-    ):
+    def __init__(self, config: ValidationConfig | None = None, target_dir: Path | None = None, **kwargs):
         """Initialize validation suite.
 
         Args:
@@ -114,11 +114,7 @@ class ValidationSuite(BaseScript):
             target_dir: Directory to validate
             **kwargs: Additional arguments for BaseScript
         """
-        super().__init__(
-            name="validation_suite",
-            description="Integrated validation framework for AIVillage",
-            **kwargs
-        )
+        super().__init__(name="validation_suite", description="Integrated validation framework for AIVillage", **kwargs)
 
         self.config = config or ValidationConfig(
             enabled_validations=[
@@ -129,8 +125,8 @@ class ValidationSuite(BaseScript):
         )
 
         self.target_dir = target_dir or Path.cwd()
-        self.python_files: List[Path] = []
-        self.validation_results: List[ValidationResult] = []
+        self.python_files: list[Path] = []
+        self.validation_results: list[ValidationResult] = []
 
         self.logger.info(f"ValidationSuite initialized for {self.target_dir}")
 
@@ -160,6 +156,7 @@ class ValidationSuite(BaseScript):
             ValidationResult for dependency validation
         """
         import time
+
         start_time = time.time()
         issues = []
         metrics = {}
@@ -186,16 +183,19 @@ class ValidationSuite(BaseScript):
                         for dep in deps:
                             all_dependencies.add(self._parse_requirement(dep))
 
-                    metrics["pyproject_dependencies"] = len(core_deps) + sum(len(deps)
-                                                                             for deps in optional_deps.values())
+                    metrics["pyproject_dependencies"] = len(core_deps) + sum(
+                        len(deps) for deps in optional_deps.values()
+                    )
 
                 except Exception as e:
-                    issues.append(ValidationIssue(
-                        type=ValidationType.DEPENDENCIES,
-                        severity=ValidationSeverity.ERROR,
-                        message=f"Failed to parse pyproject.toml: {e}",
-                        file_path=str(pyproject_path)
-                    ))
+                    issues.append(
+                        ValidationIssue(
+                            type=ValidationType.DEPENDENCIES,
+                            severity=ValidationSeverity.ERROR,
+                            message=f"Failed to parse pyproject.toml: {e}",
+                            file_path=str(pyproject_path),
+                        )
+                    )
 
             # Check requirements.txt files
             for req_file in ["requirements.txt", "requirements-dev.txt", "requirements-prod.txt"]:
@@ -205,17 +205,19 @@ class ValidationSuite(BaseScript):
                         with open(req_path, encoding="utf-8") as f:
                             for line in f:
                                 line = line.strip()
-                                if line and not line.startswith('#'):
+                                if line and not line.startswith("#"):
                                     dep = self._parse_requirement(line)
                                     if dep:
                                         all_dependencies.add(dep)
                     except Exception as e:
-                        issues.append(ValidationIssue(
-                            type=ValidationType.DEPENDENCIES,
-                            severity=ValidationSeverity.WARNING,
-                            message=f"Failed to parse {req_file}: {e}",
-                            file_path=str(req_path)
-                        ))
+                        issues.append(
+                            ValidationIssue(
+                                type=ValidationType.DEPENDENCIES,
+                                severity=ValidationSeverity.WARNING,
+                                message=f"Failed to parse {req_file}: {e}",
+                                file_path=str(req_path),
+                            )
+                        )
 
             # Remove None values
             all_dependencies = {dep for dep in all_dependencies if dep}
@@ -232,19 +234,23 @@ class ValidationSuite(BaseScript):
                     successful_imports.append(package)
                 except ImportError as e:
                     failed_imports.append(package)
-                    issues.append(ValidationIssue(
-                        type=ValidationType.DEPENDENCIES,
-                        severity=ValidationSeverity.ERROR,
-                        message=f"Failed to import {package} ({import_name}): {e}",
-                        details={"package": package, "import_name": import_name}
-                    ))
+                    issues.append(
+                        ValidationIssue(
+                            type=ValidationType.DEPENDENCIES,
+                            severity=ValidationSeverity.ERROR,
+                            message=f"Failed to import {package} ({import_name}): {e}",
+                            details={"package": package, "import_name": import_name},
+                        )
+                    )
                 except Exception as e:
-                    issues.append(ValidationIssue(
-                        type=ValidationType.DEPENDENCIES,
-                        severity=ValidationSeverity.WARNING,
-                        message=f"Unexpected error importing {package}: {e}",
-                        details={"package": package, "import_name": import_name}
-                    ))
+                    issues.append(
+                        ValidationIssue(
+                            type=ValidationType.DEPENDENCIES,
+                            severity=ValidationSeverity.WARNING,
+                            message=f"Unexpected error importing {package}: {e}",
+                            details={"package": package, "import_name": import_name},
+                        )
+                    )
 
             metrics["successful_imports"] = len(successful_imports)
             metrics["failed_imports"] = len(failed_imports)
@@ -261,48 +267,52 @@ class ValidationSuite(BaseScript):
                 )
 
                 if result.returncode != 0 and result.stdout:
-                    conflicts = result.stdout.strip().split('\n')
+                    conflicts = result.stdout.strip().split("\n")
                     for conflict in conflicts:
                         if conflict.strip():
-                            issues.append(ValidationIssue(
-                                type=ValidationType.DEPENDENCIES,
-                                severity=ValidationSeverity.ERROR,
-                                message=f"Version conflict: {conflict}",
-                                details={"pip_check_output": conflict}
-                            ))
+                            issues.append(
+                                ValidationIssue(
+                                    type=ValidationType.DEPENDENCIES,
+                                    severity=ValidationSeverity.ERROR,
+                                    message=f"Version conflict: {conflict}",
+                                    details={"pip_check_output": conflict},
+                                )
+                            )
                     metrics["version_conflicts"] = len(conflicts)
                 else:
                     metrics["version_conflicts"] = 0
 
             except subprocess.TimeoutExpired:
-                issues.append(ValidationIssue(
-                    type=ValidationType.DEPENDENCIES,
-                    severity=ValidationSeverity.WARNING,
-                    message="Dependency conflict check timed out"
-                ))
+                issues.append(
+                    ValidationIssue(
+                        type=ValidationType.DEPENDENCIES,
+                        severity=ValidationSeverity.WARNING,
+                        message="Dependency conflict check timed out",
+                    )
+                )
             except Exception as e:
-                issues.append(ValidationIssue(
-                    type=ValidationType.DEPENDENCIES,
-                    severity=ValidationSeverity.WARNING,
-                    message=f"Failed to check version conflicts: {e}"
-                ))
+                issues.append(
+                    ValidationIssue(
+                        type=ValidationType.DEPENDENCIES,
+                        severity=ValidationSeverity.WARNING,
+                        message=f"Failed to check version conflicts: {e}",
+                    )
+                )
 
         except Exception as e:
-            issues.append(ValidationIssue(
-                type=ValidationType.DEPENDENCIES,
-                severity=ValidationSeverity.CRITICAL,
-                message=f"Dependency validation failed: {e}"
-            ))
+            issues.append(
+                ValidationIssue(
+                    type=ValidationType.DEPENDENCIES,
+                    severity=ValidationSeverity.CRITICAL,
+                    message=f"Dependency validation failed: {e}",
+                )
+            )
 
         duration = time.time() - start_time
         passed = not any(issue.severity in [ValidationSeverity.ERROR, ValidationSeverity.CRITICAL] for issue in issues)
 
         return ValidationResult(
-            type=ValidationType.DEPENDENCIES,
-            passed=passed,
-            issues=issues,
-            metrics=metrics,
-            duration=duration
+            type=ValidationType.DEPENDENCIES, passed=passed, issues=issues, metrics=metrics, duration=duration
         )
 
     def validate_quality_gates(self) -> ValidationResult:
@@ -312,6 +322,7 @@ class ValidationSuite(BaseScript):
             ValidationResult for quality gate validation
         """
         import time
+
         start_time = time.time()
         issues = []
         metrics = {}
@@ -333,30 +344,36 @@ class ValidationSuite(BaseScript):
                         # Check for experimental imports
                         if re.search(r"^(from experimental|import experimental)", content, re.MULTILINE):
                             forbidden_imports.append(str(py_file))
-                            issues.append(ValidationIssue(
-                                type=ValidationType.QUALITY_GATES,
-                                severity=ValidationSeverity.ERROR,
-                                message="Production code imports experimental modules",
-                                file_path=str(py_file)
-                            ))
+                            issues.append(
+                                ValidationIssue(
+                                    type=ValidationType.QUALITY_GATES,
+                                    severity=ValidationSeverity.ERROR,
+                                    message="Production code imports experimental modules",
+                                    file_path=str(py_file),
+                                )
+                            )
 
                         # Check for deprecated imports
                         if re.search(r"^(from deprecated|import deprecated)", content, re.MULTILINE):
                             forbidden_imports.append(str(py_file))
-                            issues.append(ValidationIssue(
-                                type=ValidationType.QUALITY_GATES,
-                                severity=ValidationSeverity.ERROR,
-                                message="Production code imports deprecated modules",
-                                file_path=str(py_file)
-                            ))
+                            issues.append(
+                                ValidationIssue(
+                                    type=ValidationType.QUALITY_GATES,
+                                    severity=ValidationSeverity.ERROR,
+                                    message="Production code imports deprecated modules",
+                                    file_path=str(py_file),
+                                )
+                            )
 
                     except Exception as e:
-                        issues.append(ValidationIssue(
-                            type=ValidationType.QUALITY_GATES,
-                            severity=ValidationSeverity.WARNING,
-                            message=f"Could not check imports in {py_file}: {e}",
-                            file_path=str(py_file)
-                        ))
+                        issues.append(
+                            ValidationIssue(
+                                type=ValidationType.QUALITY_GATES,
+                                severity=ValidationSeverity.WARNING,
+                                message=f"Could not check imports in {py_file}: {e}",
+                                file_path=str(py_file),
+                            )
+                        )
 
                 metrics["production_files_checked"] = len(production_files)
                 metrics["forbidden_imports"] = len(forbidden_imports)
@@ -372,26 +389,32 @@ class ValidationSuite(BaseScript):
                         if re.search(r"TODO|FIXME|XXX", content, re.IGNORECASE):
                             todo_files.append(str(py_file))
                             if self.config.production_mode:
-                                issues.append(ValidationIssue(
-                                    type=ValidationType.QUALITY_GATES,
-                                    severity=ValidationSeverity.ERROR,
-                                    message="TODO found in production code",
-                                    file_path=str(py_file)
-                                ))
+                                issues.append(
+                                    ValidationIssue(
+                                        type=ValidationType.QUALITY_GATES,
+                                        severity=ValidationSeverity.ERROR,
+                                        message="TODO found in production code",
+                                        file_path=str(py_file),
+                                    )
+                                )
                             else:
-                                issues.append(ValidationIssue(
-                                    type=ValidationType.QUALITY_GATES,
-                                    severity=ValidationSeverity.WARNING,
-                                    message="TODO found in production code",
-                                    file_path=str(py_file)
-                                ))
+                                issues.append(
+                                    ValidationIssue(
+                                        type=ValidationType.QUALITY_GATES,
+                                        severity=ValidationSeverity.WARNING,
+                                        message="TODO found in production code",
+                                        file_path=str(py_file),
+                                    )
+                                )
                     except Exception as e:
-                        issues.append(ValidationIssue(
-                            type=ValidationType.QUALITY_GATES,
-                            severity=ValidationSeverity.WARNING,
-                            message=f"Could not check TODOs in {py_file}: {e}",
-                            file_path=str(py_file)
-                        ))
+                        issues.append(
+                            ValidationIssue(
+                                type=ValidationType.QUALITY_GATES,
+                                severity=ValidationSeverity.WARNING,
+                                message=f"Could not check TODOs in {py_file}: {e}",
+                                file_path=str(py_file),
+                            )
+                        )
 
             metrics["todo_files"] = len(todo_files)
 
@@ -407,19 +430,23 @@ class ValidationSuite(BaseScript):
                         if re.search(r"warnings\.warn|ExperimentalWarning|warn_experimental", content):
                             experimental_warnings += 1
                         else:
-                            issues.append(ValidationIssue(
+                            issues.append(
+                                ValidationIssue(
+                                    type=ValidationType.QUALITY_GATES,
+                                    severity=ValidationSeverity.WARNING,
+                                    message="Experimental file missing warning",
+                                    file_path=str(py_file),
+                                )
+                            )
+                    except Exception as e:
+                        issues.append(
+                            ValidationIssue(
                                 type=ValidationType.QUALITY_GATES,
                                 severity=ValidationSeverity.WARNING,
-                                message="Experimental file missing warning",
-                                file_path=str(py_file)
-                            ))
-                    except Exception as e:
-                        issues.append(ValidationIssue(
-                            type=ValidationType.QUALITY_GATES,
-                            severity=ValidationSeverity.WARNING,
-                            message=f"Could not check experimental warnings in {py_file}: {e}",
-                            file_path=str(py_file)
-                        ))
+                                message=f"Could not check experimental warnings in {py_file}: {e}",
+                                file_path=str(py_file),
+                            )
+                        )
 
                 metrics["experimental_files"] = len(experimental_files)
                 metrics["experimental_warnings"] = experimental_warnings
@@ -436,41 +463,43 @@ class ValidationSuite(BaseScript):
                         ast.parse(content)
                     except SyntaxError as e:
                         syntax_errors += 1
-                        issues.append(ValidationIssue(
-                            type=ValidationType.QUALITY_GATES,
-                            severity=ValidationSeverity.ERROR,
-                            message=f"Syntax error: {e}",
-                            file_path=str(py_file),
-                            line_number=e.lineno
-                        ))
+                        issues.append(
+                            ValidationIssue(
+                                type=ValidationType.QUALITY_GATES,
+                                severity=ValidationSeverity.ERROR,
+                                message=f"Syntax error: {e}",
+                                file_path=str(py_file),
+                                line_number=e.lineno,
+                            )
+                        )
 
                 except Exception as e:
-                    issues.append(ValidationIssue(
-                        type=ValidationType.QUALITY_GATES,
-                        severity=ValidationSeverity.WARNING,
-                        message=f"Could not validate {py_file}: {e}",
-                        file_path=str(py_file)
-                    ))
+                    issues.append(
+                        ValidationIssue(
+                            type=ValidationType.QUALITY_GATES,
+                            severity=ValidationSeverity.WARNING,
+                            message=f"Could not validate {py_file}: {e}",
+                            file_path=str(py_file),
+                        )
+                    )
 
             metrics["syntax_errors"] = syntax_errors
             metrics["files_checked"] = min(len(self.python_files), 100)
 
         except Exception as e:
-            issues.append(ValidationIssue(
-                type=ValidationType.QUALITY_GATES,
-                severity=ValidationSeverity.CRITICAL,
-                message=f"Quality gate validation failed: {e}"
-            ))
+            issues.append(
+                ValidationIssue(
+                    type=ValidationType.QUALITY_GATES,
+                    severity=ValidationSeverity.CRITICAL,
+                    message=f"Quality gate validation failed: {e}",
+                )
+            )
 
         duration = time.time() - start_time
         passed = not any(issue.severity in [ValidationSeverity.ERROR, ValidationSeverity.CRITICAL] for issue in issues)
 
         return ValidationResult(
-            type=ValidationType.QUALITY_GATES,
-            passed=passed,
-            issues=issues,
-            metrics=metrics,
-            duration=duration
+            type=ValidationType.QUALITY_GATES, passed=passed, issues=issues, metrics=metrics, duration=duration
         )
 
     def validate_documentation(self) -> ValidationResult:
@@ -480,6 +509,7 @@ class ValidationSuite(BaseScript):
             ValidationResult for documentation validation
         """
         import time
+
         start_time = time.time()
         issues = []
         metrics = {}
@@ -498,12 +528,14 @@ class ValidationSuite(BaseScript):
                 if not doc_path.exists():
                     missing_docs.append(doc_file)
                     severity = ValidationSeverity.ERROR if self.config.strict_mode else ValidationSeverity.WARNING
-                    issues.append(ValidationIssue(
-                        type=ValidationType.DOCUMENTATION,
-                        severity=severity,
-                        message=f"Missing required documentation: {doc_file}",
-                        file_path=doc_file
-                    ))
+                    issues.append(
+                        ValidationIssue(
+                            type=ValidationType.DOCUMENTATION,
+                            severity=severity,
+                            message=f"Missing required documentation: {doc_file}",
+                            file_path=doc_file,
+                        )
+                    )
 
             metrics["missing_required_docs"] = len(missing_docs)
 
@@ -526,47 +558,51 @@ class ValidationSuite(BaseScript):
                             if not ast.get_docstring(node):
                                 functions_without_docstrings += 1
                                 if self.config.strict_mode:
-                                    issues.append(ValidationIssue(
-                                        type=ValidationType.DOCUMENTATION,
-                                        severity=ValidationSeverity.WARNING,
-                                        message=f"Function '{node.name}' missing docstring",
-                                        file_path=str(py_file),
-                                        line_number=node.lineno
-                                    ))
+                                    issues.append(
+                                        ValidationIssue(
+                                            type=ValidationType.DOCUMENTATION,
+                                            severity=ValidationSeverity.WARNING,
+                                            message=f"Function '{node.name}' missing docstring",
+                                            file_path=str(py_file),
+                                            line_number=node.lineno,
+                                        )
+                                    )
 
                         elif isinstance(node, ast.ClassDef):
                             total_classes += 1
                             if not ast.get_docstring(node):
                                 classes_without_docstrings += 1
                                 if self.config.strict_mode:
-                                    issues.append(ValidationIssue(
-                                        type=ValidationType.DOCUMENTATION,
-                                        severity=ValidationSeverity.WARNING,
-                                        message=f"Class '{node.name}' missing docstring",
-                                        file_path=str(py_file),
-                                        line_number=node.lineno
-                                    ))
+                                    issues.append(
+                                        ValidationIssue(
+                                            type=ValidationType.DOCUMENTATION,
+                                            severity=ValidationSeverity.WARNING,
+                                            message=f"Class '{node.name}' missing docstring",
+                                            file_path=str(py_file),
+                                            line_number=node.lineno,
+                                        )
+                                    )
 
                 except Exception as e:
-                    issues.append(ValidationIssue(
-                        type=ValidationType.DOCUMENTATION,
-                        severity=ValidationSeverity.WARNING,
-                        message=f"Could not check docstrings in {py_file}: {e}",
-                        file_path=str(py_file)
-                    ))
+                    issues.append(
+                        ValidationIssue(
+                            type=ValidationType.DOCUMENTATION,
+                            severity=ValidationSeverity.WARNING,
+                            message=f"Could not check docstrings in {py_file}: {e}",
+                            file_path=str(py_file),
+                        )
+                    )
 
             metrics["total_functions"] = total_functions
             metrics["functions_without_docstrings"] = functions_without_docstrings
             metrics["function_docstring_coverage"] = (
-                (total_functions - functions_without_docstrings) / total_functions
-                if total_functions > 0 else 1.0
+                (total_functions - functions_without_docstrings) / total_functions if total_functions > 0 else 1.0
             )
 
             metrics["total_classes"] = total_classes
             metrics["classes_without_docstrings"] = classes_without_docstrings
             metrics["class_docstring_coverage"] = (
-                (total_classes - classes_without_docstrings) / total_classes
-                if total_classes > 0 else 1.0
+                (total_classes - classes_without_docstrings) / total_classes if total_classes > 0 else 1.0
             )
 
             # Check for documentation directories
@@ -577,31 +613,31 @@ class ValidationSuite(BaseScript):
             else:
                 metrics["documentation_files"] = 0
                 if self.config.strict_mode:
-                    issues.append(ValidationIssue(
-                        type=ValidationType.DOCUMENTATION,
-                        severity=ValidationSeverity.WARNING,
-                        message="No docs directory found"
-                    ))
+                    issues.append(
+                        ValidationIssue(
+                            type=ValidationType.DOCUMENTATION,
+                            severity=ValidationSeverity.WARNING,
+                            message="No docs directory found",
+                        )
+                    )
 
         except Exception as e:
-            issues.append(ValidationIssue(
-                type=ValidationType.DOCUMENTATION,
-                severity=ValidationSeverity.CRITICAL,
-                message=f"Documentation validation failed: {e}"
-            ))
+            issues.append(
+                ValidationIssue(
+                    type=ValidationType.DOCUMENTATION,
+                    severity=ValidationSeverity.CRITICAL,
+                    message=f"Documentation validation failed: {e}",
+                )
+            )
 
         duration = time.time() - start_time
         passed = not any(issue.severity in [ValidationSeverity.ERROR, ValidationSeverity.CRITICAL] for issue in issues)
 
         return ValidationResult(
-            type=ValidationType.DOCUMENTATION,
-            passed=passed,
-            issues=issues,
-            metrics=metrics,
-            duration=duration
+            type=ValidationType.DOCUMENTATION, passed=passed, issues=issues, metrics=metrics, duration=duration
         )
 
-    def run_all_validations(self) -> List[ValidationResult]:
+    def run_all_validations(self) -> list[ValidationResult]:
         """Run all enabled validations.
 
         Returns:
@@ -636,17 +672,21 @@ class ValidationSuite(BaseScript):
 
             except Exception as e:
                 self.logger.error(f"Validation {validation_type.value} failed: {e}")
-                results.append(ValidationResult(
-                    type=validation_type,
-                    passed=False,
-                    issues=[ValidationIssue(
+                results.append(
+                    ValidationResult(
                         type=validation_type,
-                        severity=ValidationSeverity.CRITICAL,
-                        message=f"Validation failed: {e}"
-                    )],
-                    metrics={},
-                    duration=0.0
-                ))
+                        passed=False,
+                        issues=[
+                            ValidationIssue(
+                                type=validation_type,
+                                severity=ValidationSeverity.CRITICAL,
+                                message=f"Validation failed: {e}",
+                            )
+                        ],
+                        metrics={},
+                        duration=0.0,
+                    )
+                )
 
         self.validation_results = results
         return results
@@ -712,7 +752,7 @@ class ValidationSuite(BaseScript):
 
         return report
 
-    def save_results(self, output_file: Optional[Path] = None) -> None:
+    def save_results(self, output_file: Path | None = None) -> None:
         """Save validation results to JSON file.
 
         Args:
@@ -731,10 +771,10 @@ class ValidationSuite(BaseScript):
                 "total_issues": sum(len(r.issues) for r in self.validation_results),
                 "overall_passed": all(r.passed for r in self.validation_results),
             },
-            "results": [asdict(result) for result in self.validation_results]
+            "results": [asdict(result) for result in self.validation_results],
         }
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(results_data, f, indent=2, default=str)
 
         self.logger.info(f"Validation results saved to {output_file}")
@@ -778,30 +818,27 @@ class ValidationSuite(BaseScript):
                         result.type.value: {
                             "passed": result.passed,
                             "issues": len(result.issues),
-                            "duration": result.duration
+                            "duration": result.duration,
                         }
                         for result in results
-                    }
+                    },
                 },
                 metrics={
                     "total_execution_time": sum(r.duration for r in results),
                     "files_discovered": len(self.python_files),
                     "validations_run": len(results),
                 },
-                warnings=[
-                    f"{result.type.value} validation failed"
-                    for result in results if not result.passed
-                ] if not overall_success else None
+                warnings=(
+                    [f"{result.type.value} validation failed" for result in results if not result.passed]
+                    if not overall_success
+                    else None
+                ),
             )
 
         except Exception as e:
-            return ScriptResult(
-                success=False,
-                message=f"Validation suite failed: {e}",
-                errors=[str(e)]
-            )
+            return ScriptResult(success=False, message=f"Validation suite failed: {e}", errors=[str(e)])
 
-    def _parse_requirement(self, req: str) -> Optional[str]:
+    def _parse_requirement(self, req: str) -> str | None:
         """Parse requirement string to extract package name.
 
         Args:
@@ -812,7 +849,7 @@ class ValidationSuite(BaseScript):
         """
         req = req.strip()
 
-        if not req or req.startswith('#'):
+        if not req or req.startswith("#"):
             return None
 
         # Remove environment markers

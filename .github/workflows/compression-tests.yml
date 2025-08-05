@@ -88,7 +88,7 @@ jobs:
     - name: Install base dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
-        
+
         # Set pip options for better performance
         export PIP_NO_WARN_SCRIPT_LOCATION=1
         export PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -133,7 +133,7 @@ jobs:
         pip install numpy scipy scikit-learn || {
           echo "Installing packages individually..."
           pip install numpy || echo "NumPy failed"
-          pip install scipy || echo "SciPy failed" 
+          pip install scipy || echo "SciPy failed"
           pip install scikit-learn || echo "scikit-learn failed"
         }
 
@@ -291,7 +291,7 @@ except Exception as e:
     - name: Install minimal dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
-        
+
         # Install with retry and timeout
         for i in {1..2}; do
           if pip install torch --index-url https://download.pytorch.org/whl/cpu --timeout 180; then
@@ -301,7 +301,7 @@ except Exception as e:
             sleep 3
           fi
         done
-        
+
         pip install numpy scipy --timeout 120
 
     - name: Run basic benchmark
@@ -378,10 +378,10 @@ print(f'✅ Completed {len(results)} benchmark tests')
     - name: Install linting tools
       run: |
         python -m pip install --upgrade pip setuptools wheel
-        
+
         # Install linting tools with fallbacks
         pip install ruff || echo "ruff installation failed"
-        pip install black || echo "black installation failed" 
+        pip install black || echo "black installation failed"
         pip install flake8 || echo "flake8 installation failed"
         pip install mypy || echo "mypy installation failed"
 

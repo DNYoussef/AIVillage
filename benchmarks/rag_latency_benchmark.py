@@ -7,8 +7,8 @@ and retrieval accuracy.
 """
 import argparse
 import json
-import time
 from pathlib import Path
+import time
 
 # Simple corpus for deterministic retrieval
 CORPUS = {
@@ -46,9 +46,7 @@ def run_benchmark() -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Run a simple RAG latency benchmark and output JSON metrics"
-    )
+    parser = argparse.ArgumentParser(description="Run a simple RAG latency benchmark and output JSON metrics")
     parser.add_argument(
         "--output",
         type=Path,

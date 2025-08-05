@@ -5,8 +5,8 @@ Test suite for deployment system components
 import hashlib
 import json
 import os
-import tempfile
 from pathlib import Path
+import tempfile
 from unittest.mock import patch
 
 import pytest
@@ -118,10 +118,7 @@ class TestDeploymentManifestGenerator:
             assert "timestamp" in metadata
 
             # Verify compression info
-            assert (
-                metadata["compression"]["pipeline"]
-                == "BitNet -> SeedLM -> VPTQ -> HyperFn"
-            )
+            assert metadata["compression"]["pipeline"] == "BitNet -> SeedLM -> VPTQ -> HyperFn"
             assert metadata["compression"]["stage"] == "stage2"
             assert metadata["compression"]["compression_ratio"] == 20.0
 
@@ -290,9 +287,7 @@ class TestDeploymentManifestGenerator:
             assert isinstance(example["code"], str)
             assert isinstance(example["expected_output"], str)
 
-    @patch(
-        "agent_forge.deployment.manifest_generator.DeploymentManifestGenerator.run_evaluation"
-    )
+    @patch("agent_forge.deployment.manifest_generator.DeploymentManifestGenerator.run_evaluation")
     def test_generate_manifest(self, mock_evaluation):
         """Test complete manifest generation"""
         # Mock evaluation results
@@ -406,9 +401,7 @@ class TestDeploymentManifestGenerator:
                     "deployment_requirements": {
                         "deployment_tier": "edge",
                         "hardware_requirements": {"min_ram_gb": 2},
-                        "software_requirements": {
-                            "additional_dependencies": ["torch", "transformers"]
-                        },
+                        "software_requirements": {"additional_dependencies": ["torch", "transformers"]},
                     },
                     "security": {"sha256_hash": "abc123", "file_size_bytes": 1000},
                     "contact": {
@@ -510,9 +503,7 @@ class TestDeploymentManifestGenerator:
 class TestDeploymentIntegration:
     """Integration tests for deployment system"""
 
-    @patch(
-        "agent_forge.deployment.manifest_generator.DeploymentManifestGenerator.run_evaluation"
-    )
+    @patch("agent_forge.deployment.manifest_generator.DeploymentManifestGenerator.run_evaluation")
     def test_end_to_end_manifest_generation(self, mock_evaluation):
         """Test end-to-end manifest generation"""
         # Mock evaluation to avoid dependencies
@@ -606,13 +597,8 @@ class TestDeploymentIntegration:
                     loaded_manifest = json.load(f)
 
                 # Verify key fields
-                assert (
-                    loaded_manifest["model_info"]["name"] == "agent-forge-v0.1.0-test"
-                )
-                assert (
-                    loaded_manifest["model_info"]["compression_pipeline"]
-                    == "BitNet -> SeedLM"
-                )
+                assert loaded_manifest["model_info"]["name"] == "agent-forge-v0.1.0-test"
+                assert loaded_manifest["model_info"]["compression_pipeline"] == "BitNet -> SeedLM"
                 assert loaded_manifest["evaluation_metrics"]["accuracy"] == 0.78
                 assert loaded_manifest["security"]["sha256_hash"] is not None
 

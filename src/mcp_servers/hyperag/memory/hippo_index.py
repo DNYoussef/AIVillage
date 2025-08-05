@@ -4,19 +4,19 @@ Brain-inspired hippocampal memory system for rapid storage and retrieval
 of recent episodic information with time-based decay and PPR access patterns.
 """
 
+from datetime import datetime, timedelta
 import json
 import logging
 import os
 import time
-import uuid
-from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
+import uuid
 
 import duckdb
 import numpy as np
-import redis.asyncio as redis
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
+import redis.asyncio as redis
 
 from .base import (
     ConfidenceType,

@@ -5,14 +5,14 @@ including few-shot learning, learning rate adaptation, and strategy optimization
 """
 
 import asyncio
-import json
-import logging
-import pickle
-import time
 from collections import defaultdict, deque
 from dataclasses import asdict, dataclass
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
+import pickle
+import time
 from typing import Any
 
 import numpy as np
@@ -85,9 +85,7 @@ class LearningRateOptimizer:
         self.lr_history[agent_id].append(learning_rate)
         self.performance_history[agent_id].append(performance_improvement)
 
-    def optimize_learning_rate(
-        self, agent_id: str, task_difficulty: float, base_lr: float = 0.001
-    ) -> float:
+    def optimize_learning_rate(self, agent_id: str, task_difficulty: float, base_lr: float = 0.001) -> float:
         """Optimize learning rate based on historical performance."""
         if agent_id not in self.lr_history or len(self.lr_history[agent_id]) < 3:
             return base_lr
@@ -96,8 +94,7 @@ class LearningRateOptimizer:
         relevant_experiences = [
             exp
             for exp in self.experience_buffer
-            if exp["agent_id"] == agent_id
-            and abs(exp["task_difficulty"] - task_difficulty) < 0.3
+            if exp["agent_id"] == agent_id and abs(exp["task_difficulty"] - task_difficulty) < 0.3
         ]
 
         if not relevant_experiences:
@@ -151,9 +148,7 @@ class FewShotLearner:
         self.support_memory = {}
         self.prototypes = {}
 
-    def create_prototype(
-        self, task_id: str, support_examples: list[Any], support_labels: list[int]
-    ) -> np.ndarray:
+    def create_prototype(self, task_id: str, support_examples: list[Any], support_labels: list[int]) -> np.ndarray:
         """Create prototype representation from support examples."""
         # Simple centroid-based prototype (in practice, would use learned embeddings)
         embeddings = []
@@ -164,9 +159,7 @@ class FewShotLearner:
                 embedding = np.array(example)
             else:
                 # Hash-based embedding for other types
-                embedding = np.random.RandomState(hash(str(example)) % 2**32).normal(
-                    size=self.embedding_dim
-                )
+                embedding = np.random.RandomState(hash(str(example)) % 2**32).normal(size=self.embedding_dim)
             embeddings.append(embedding)
 
         embeddings = np.array(embeddings)
@@ -194,9 +187,7 @@ class FewShotLearner:
         if isinstance(query_example, list | np.ndarray):
             query_embedding = np.array(query_example)
         else:
-            query_embedding = np.random.RandomState(
-                hash(str(query_example)) % 2**32
-            ).normal(size=self.embedding_dim)
+            query_embedding = np.random.RandomState(hash(str(query_example)) % 2**32).normal(size=self.embedding_dim)
 
         # Find closest prototype
         min_distance = float("inf")
@@ -231,9 +222,7 @@ class FewShotLearner:
             if isinstance(example, list | np.ndarray):
                 embedding = np.array(example)
             else:
-                embedding = np.random.RandomState(hash(str(example)) % 2**32).normal(
-                    size=self.embedding_dim
-                )
+                embedding = np.random.RandomState(hash(str(example)) % 2**32).normal(size=self.embedding_dim)
             new_embeddings.append(embedding)
 
         new_embeddings = np.array(new_embeddings)
@@ -253,17 +242,13 @@ class FewShotLearner:
 class ModelAgnosticMetaLearner:
     """Model-Agnostic Meta-Learning (MAML) implementation."""
 
-    def __init__(
-        self, model: nn.Module, inner_lr: float = 0.01, meta_lr: float = 0.001
-    ) -> None:
+    def __init__(self, model: nn.Module, inner_lr: float = 0.01, meta_lr: float = 0.001) -> None:
         self.model = model
         self.inner_lr = inner_lr
         self.meta_lr = meta_lr
         self.meta_optimizer = optim.Adam(self.model.parameters(), lr=meta_lr)
 
-    def inner_update(
-        self, support_x: torch.Tensor, support_y: torch.Tensor, num_steps: int = 1
-    ) -> nn.Module:
+    def inner_update(self, support_x: torch.Tensor, support_y: torch.Tensor, num_steps: int = 1) -> nn.Module:
         """Perform inner loop update on support set."""
         # Clone model for inner update
         model_copy = type(self.model)(**self.model.__dict__)
@@ -283,9 +268,7 @@ class ModelAgnosticMetaLearner:
 
     def meta_update(
         self,
-        tasks_batch: list[
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
-        ],
+        tasks_batch: list[tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]],
     ):
         """Perform meta-update across batch of tasks."""
         meta_loss = 0.0
@@ -341,18 +324,13 @@ class StrategyOptimizer:
             # Update success rate and average improvement
             if len(strategy.performance_history) > 1:
                 improvements = [
-                    strategy.performance_history[i]
-                    - strategy.performance_history[i - 1]
+                    strategy.performance_history[i] - strategy.performance_history[i - 1]
                     for i in range(1, len(strategy.performance_history))
                 ]
                 strategy.avg_improvement = np.mean(improvements)
-                strategy.success_rate = sum(1 for imp in improvements if imp > 0) / len(
-                    improvements
-                )
+                strategy.success_rate = sum(1 for imp in improvements if imp > 0) / len(improvements)
 
-    def recommend_strategy(
-        self, task_characteristics: dict[str, Any]
-    ) -> MetaLearningStrategy | None:
+    def recommend_strategy(self, task_characteristics: dict[str, Any]) -> MetaLearningStrategy | None:
         """Recommend best strategy for given task characteristics."""
         best_strategy = None
         best_score = -float("inf")
@@ -366,9 +344,7 @@ class StrategyOptimizer:
 
         return best_strategy
 
-    def _calculate_strategy_score(
-        self, strategy: MetaLearningStrategy, task_characteristics: dict[str, Any]
-    ) -> float:
+    def _calculate_strategy_score(self, strategy: MetaLearningStrategy, task_characteristics: dict[str, Any]) -> float:
         """Calculate compatibility score between strategy and task."""
         if strategy.strategy_id not in self.strategy_performance:
             return 0.0
@@ -376,9 +352,7 @@ class StrategyOptimizer:
         # Find similar tasks
         similar_tasks = []
         for record in self.strategy_performance[strategy.strategy_id]:
-            similarity = self._calculate_task_similarity(
-                record["task_characteristics"], task_characteristics
-            )
+            similarity = self._calculate_task_similarity(record["task_characteristics"], task_characteristics)
             if similarity > 0.7:  # Similarity threshold
                 similar_tasks.append(record["performance"])
 
@@ -388,15 +362,11 @@ class StrategyOptimizer:
 
         # Average performance on similar tasks
         avg_performance = np.mean(similar_tasks)
-        confidence = min(
-            1.0, len(similar_tasks) / 10.0
-        )  # Confidence based on sample size
+        confidence = min(1.0, len(similar_tasks) / 10.0)  # Confidence based on sample size
 
         return avg_performance * confidence
 
-    def _calculate_task_similarity(
-        self, task1: dict[str, Any], task2: dict[str, Any]
-    ) -> float:
+    def _calculate_task_similarity(self, task1: dict[str, Any], task2: dict[str, Any]) -> float:
         """Calculate similarity between two task characteristic sets."""
         common_keys = set(task1.keys()) & set(task2.keys())
         if not common_keys:
@@ -519,24 +489,16 @@ class MetaLearningEngine:
         )
 
         # Optimize learning rate
-        optimal_lr = self.lr_optimizer.optimize_learning_rate(
-            agent_id, task_characteristics.get("difficulty", 0.5)
-        )
+        optimal_lr = self.lr_optimizer.optimize_learning_rate(agent_id, task_characteristics.get("difficulty", 0.5))
 
         # Recommend strategy
-        recommended_strategy = self.strategy_optimizer.recommend_strategy(
-            task_characteristics
-        )
+        recommended_strategy = self.strategy_optimizer.recommend_strategy(task_characteristics)
 
         # Generate learning configuration
         learning_config = {
             "learning_rate": optimal_lr,
-            "strategy": recommended_strategy.strategy_id
-            if recommended_strategy
-            else "conservative_lr",
-            "strategy_parameters": recommended_strategy.parameters
-            if recommended_strategy
-            else {},
+            "strategy": recommended_strategy.strategy_id if recommended_strategy else "conservative_lr",
+            "strategy_parameters": recommended_strategy.parameters if recommended_strategy else {},
             "adaptive_schedule": self.lr_optimizer.get_adaptive_schedule(agent_id, 100),
             "few_shot_enabled": task_characteristics.get("data_limited", False),
             "meta_features": task_characteristics,
@@ -576,8 +538,7 @@ class MetaLearningEngine:
             initial_performance=initial_performance,
             final_performance=final_performance,
             learning_time=learning_time,
-            data_efficiency=(final_performance - initial_performance)
-            / max(learning_time, 1.0),
+            data_efficiency=(final_performance - initial_performance) / max(learning_time, 1.0),
             convergence_rate=1.0 / max(convergence_steps, 1),
             stability_score=min(1.0, final_performance / max(initial_performance, 0.1)),
             meta_features=learning_config.get("meta_features", {}),
@@ -604,9 +565,7 @@ class MetaLearningEngine:
                 performance_improvement,
             )
 
-        logger.info(
-            f"Recorded learning outcome for {agent_id}: {initial_performance:.3f} -> {final_performance:.3f}"
-        )
+        logger.info(f"Recorded learning outcome for {agent_id}: {initial_performance:.3f} -> {final_performance:.3f}")
 
     async def few_shot_adapt(
         self,
@@ -617,9 +576,7 @@ class MetaLearningEngine:
     ) -> dict[str, Any]:
         """Perform few-shot adaptation for an agent."""
         # Create prototypes
-        self.few_shot_learner.create_prototype(
-            f"{agent_id}_{task_id}", support_examples, support_labels
-        )
+        self.few_shot_learner.create_prototype(f"{agent_id}_{task_id}", support_examples, support_labels)
 
         # Generate few-shot learning configuration
         config = {
@@ -637,32 +594,18 @@ class MetaLearningEngine:
         self.agent_profiles.get(agent_id, {})
 
         # Calculate statistics
-        agent_experiences = [
-            exp for exp in self.experiences if exp.agent_id == agent_id
-        ]
+        agent_experiences = [exp for exp in self.experiences if exp.agent_id == agent_id]
 
         if agent_experiences:
-            avg_improvement = np.mean(
-                [
-                    exp.final_performance - exp.initial_performance
-                    for exp in agent_experiences
-                ]
-            )
-            avg_learning_time = np.mean(
-                [exp.learning_time for exp in agent_experiences]
-            )
-            avg_data_efficiency = np.mean(
-                [exp.data_efficiency for exp in agent_experiences]
-            )
+            avg_improvement = np.mean([exp.final_performance - exp.initial_performance for exp in agent_experiences])
+            avg_learning_time = np.mean([exp.learning_time for exp in agent_experiences])
+            avg_data_efficiency = np.mean([exp.data_efficiency for exp in agent_experiences])
 
             # Learning trend
-            recent_performances = [
-                exp.final_performance for exp in agent_experiences[-10:]
-            ]
+            recent_performances = [exp.final_performance for exp in agent_experiences[-10:]]
             learning_trend = (
                 "improving"
-                if len(recent_performances) > 1
-                and recent_performances[-1] > recent_performances[0]
+                if len(recent_performances) > 1 and recent_performances[-1] > recent_performances[0]
                 else "stable"
             )
         else:
@@ -685,9 +628,7 @@ class MetaLearningEngine:
 
     def _get_preferred_strategies(self, agent_id: str) -> list[str]:
         """Get preferred strategies for an agent based on historical performance."""
-        agent_experiences = [
-            exp for exp in self.experiences if exp.agent_id == agent_id
-        ]
+        agent_experiences = [exp for exp in self.experiences if exp.agent_id == agent_id]
 
         strategy_performance = defaultdict(list)
 
@@ -718,11 +659,7 @@ class MetaLearningEngine:
             return (0.001, 0.01)
 
         # Find LRs that led to good performance
-        good_lrs = [
-            lr
-            for lr, perf in zip(lr_history, performance_history, strict=False)
-            if perf > 0.1
-        ]
+        good_lrs = [lr for lr, perf in zip(lr_history, performance_history, strict=False) if perf > 0.1]
 
         if good_lrs:
             return (min(good_lrs), max(good_lrs))
@@ -788,12 +725,8 @@ class MetaLearningEngine:
             if lr_file.exists():
                 with open(lr_file) as f:
                     lr_data = json.load(f)
-                    self.lr_optimizer.lr_history = defaultdict(
-                        list, lr_data.get("lr_history", {})
-                    )
-                    self.lr_optimizer.performance_history = defaultdict(
-                        list, lr_data.get("performance_history", {})
-                    )
+                    self.lr_optimizer.lr_history = defaultdict(list, lr_data.get("lr_history", {}))
+                    self.lr_optimizer.performance_history = defaultdict(list, lr_data.get("performance_history", {}))
 
             # Load strategies
             strategy_file = self.storage_path / "strategies.json"
@@ -827,33 +760,25 @@ class MetaLearningEngine:
                     "avg_improvement": strategy.avg_improvement,
                     "success_rate": strategy.success_rate,
                     "total_uses": len(strategy.performance_history),
-                    "recent_trend": "improving"
-                    if len(strategy.performance_history) > 3
-                    and strategy.performance_history[-1]
-                    > strategy.performance_history[-3]
-                    else "stable",
+                    "recent_trend": (
+                        "improving"
+                        if len(strategy.performance_history) > 3
+                        and strategy.performance_history[-1] > strategy.performance_history[-3]
+                        else "stable"
+                    ),
                 }
 
         # Analyze learning trends
         if self.experiences:
             recent_experiences = list(self.experiences)[-100:]  # Last 100 experiences
 
-            avg_improvement = np.mean(
-                [
-                    exp.final_performance - exp.initial_performance
-                    for exp in recent_experiences
-                ]
-            )
-            avg_efficiency = np.mean(
-                [exp.data_efficiency for exp in recent_experiences]
-            )
+            avg_improvement = np.mean([exp.final_performance - exp.initial_performance for exp in recent_experiences])
+            avg_efficiency = np.mean([exp.data_efficiency for exp in recent_experiences])
 
             report["learning_trends"] = {
                 "avg_improvement": avg_improvement,
                 "avg_data_efficiency": avg_efficiency,
-                "convergence_speed": np.mean(
-                    [exp.convergence_rate for exp in recent_experiences]
-                ),
+                "convergence_speed": np.mean([exp.convergence_rate for exp in recent_experiences]),
             }
 
         # Generate recommendations
@@ -872,18 +797,12 @@ class MetaLearningEngine:
 
         # Learning rate recommendations
         if len(self.lr_optimizer.experience_buffer) > 10:
-            avg_lr = np.mean(
-                [exp["learning_rate"] for exp in self.lr_optimizer.experience_buffer]
-            )
-            recommendations.append(
-                f"Optimal learning rate range appears to be around {avg_lr:.4f}"
-            )
+            avg_lr = np.mean([exp["learning_rate"] for exp in self.lr_optimizer.experience_buffer])
+            recommendations.append(f"Optimal learning rate range appears to be around {avg_lr:.4f}")
 
         # General recommendations
         if report["learning_trends"].get("avg_improvement", 0) < 0.1:
-            recommendations.append(
-                "Overall learning improvement is low. Consider adjusting meta-learning parameters."
-            )
+            recommendations.append("Overall learning improvement is low. Consider adjusting meta-learning parameters.")
 
         report["recommendations"] = recommendations
 

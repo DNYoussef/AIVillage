@@ -33,7 +33,7 @@ Automatically selects the best strategy based on model size:
 - **>100M params**: Mobile or advanced compression
 - **Very large models**: Full advanced pipeline
 
-### SIMPLE 
+### SIMPLE
 Fast 4x compression using ternary quantization:
 - BitNet 1.58-bit quantization
 - Suitable for models under 100M parameters
@@ -140,7 +140,7 @@ seedlm_config:
     compression_preset: "balanced"  # fast, balanced, quality
     target_compression_ratio: 15.0
     max_accuracy_drop: 0.05
-  
+
   progressive_encoding:
     base_quality: 0.3
     enhancement_layers: 3

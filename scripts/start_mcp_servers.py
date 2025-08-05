@@ -14,10 +14,7 @@ import subprocess
 import sys
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -80,7 +77,7 @@ class MCPServerManager:
                 env=env,
                 text=True,
                 bufsize=1,
-                universal_newlines=True
+                universal_newlines=True,
             )
 
             # Wait a moment to check if it started successfully
@@ -107,10 +104,7 @@ class MCPServerManager:
 
             # Wait for graceful shutdown
             try:
-                await asyncio.wait_for(
-                    asyncio.create_task(self._wait_for_process(process)),
-                    timeout=10
-                )
+                await asyncio.wait_for(asyncio.create_task(self._wait_for_process(process)), timeout=10)
                 logger.info(f"MCP server {name} stopped gracefully")
             except asyncio.TimeoutError:
                 # Force kill if graceful shutdown failed
@@ -181,6 +175,7 @@ class MCPServerManager:
 
     async def run(self) -> None:
         """Main run loop."""
+
         # Set up signal handlers
         def signal_handler():
             logger.info("Received shutdown signal")
@@ -242,16 +237,8 @@ async def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="MCP Server Manager")
-    parser.add_argument(
-        "action",
-        choices=["start", "stop", "status", "restart"],
-        help="Action to perform"
-    )
-    parser.add_argument(
-        "--config",
-        default="mcp_config.json",
-        help="Configuration file path"
-    )
+    parser.add_argument("action", choices=["start", "stop", "status", "restart"], help="Action to perform")
+    parser.add_argument("--config", default="mcp_config.json", help="Configuration file path")
 
     args = parser.parse_args()
 

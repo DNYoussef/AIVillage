@@ -34,9 +34,7 @@ import warnings
 def _check_imports():
     """Check that no experimental modules are imported."""
     for module_name in sys.modules:
-        if module_name.startswith("experimental.") or module_name.startswith(
-            "deprecated."
-        ):
+        if module_name.startswith("experimental.") or module_name.startswith("deprecated."):
             warnings.warn(
                 f"Production code should not import {module_name}",
                 UserWarning,

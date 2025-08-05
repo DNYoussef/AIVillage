@@ -10,30 +10,29 @@ This module provides shared functionality including:
 """
 
 import argparse
+from collections.abc import Callable
+from datetime import datetime
 import functools
 import logging
 import os
+from pathlib import Path
 import signal
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, TypeVar
 
 import psutil
 
 # Type variable for decorated functions
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class ScriptError(Exception):
     """Base exception for script errors."""
-    pass
 
 
 class ScriptTimeoutError(ScriptError):
     """Raised when script execution times out."""
-    pass
 
 
 class ResourceMonitor:
@@ -41,7 +40,7 @@ class ResourceMonitor:
 
     def __init__(self):
         """Initialize the resource monitor."""
-        self.start_time: Optional[float] = None
+        self.start_time: float | None = None
         self.peak_memory: float = 0.0
         self.peak_cpu: float = 0.0
         self.initial_memory: float = 0.0
@@ -53,7 +52,7 @@ class ResourceMonitor:
         self.peak_memory = self.initial_memory
         self.peak_cpu = 0.0
 
-    def update(self) -> Dict[str, float]:
+    def update(self) -> dict[str, float]:
         """Update resource measurements.
 
         Returns:
@@ -77,7 +76,7 @@ class ResourceMonitor:
             "peak_cpu_percent": self.peak_cpu,
         }
 
-    def get_summary(self) -> Dict[str, float]:
+    def get_summary(self) -> dict[str, float]:
         """Get resource usage summary.
 
         Returns:
@@ -96,9 +95,9 @@ class ResourceMonitor:
 
 
 def setup_logging(
-    level: Union[int, str] = logging.INFO,
-    format_string: Optional[str] = None,
-    log_file: Optional[Union[str, Path]] = None,
+    level: int | str = logging.INFO,
+    format_string: str | None = None,
+    log_file: str | Path | None = None,
     include_console: bool = True,
 ) -> logging.Logger:
     """Set up standardized logging for scripts.
@@ -141,7 +140,7 @@ def setup_logging(
         log_path = Path(log_file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
 
-        file_handler = logging.FileHandler(log_path, encoding='utf-8')
+        file_handler = logging.FileHandler(log_path, encoding="utf-8")
         file_handler.setLevel(level)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
@@ -240,6 +239,7 @@ def handle_errors(
     Returns:
         Decorated function
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -264,6 +264,7 @@ def handle_errors(
                 return return_value_on_error
 
         return wrapper
+
     return decorator
 
 
@@ -276,6 +277,7 @@ def monitor_resources(log_interval: int = 30) -> Callable[[F], F]:
     Returns:
         Decorated function
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -297,6 +299,7 @@ def monitor_resources(log_interval: int = 30) -> Callable[[F], F]:
             try:
                 # Set up periodic resource logging
                 if log_interval > 0:
+
                     def signal_handler(signum, frame):
                         log_resources()
                         # Re-schedule the signal
@@ -326,6 +329,7 @@ def monitor_resources(log_interval: int = 30) -> Callable[[F], F]:
                     signal.alarm(0)
 
         return wrapper
+
     return decorator
 
 
@@ -341,15 +345,14 @@ def timeout_handler(timeout_seconds: int) -> Callable[[F], F]:
     Raises:
         ScriptTimeoutError: If function execution exceeds timeout
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             logger = logging.getLogger(func.__module__)
 
             def timeout_signal_handler(signum, frame):
-                raise ScriptTimeoutError(
-                    f"Function {func.__name__} timed out after {timeout_seconds} seconds"
-                )
+                raise ScriptTimeoutError(f"Function {func.__name__} timed out after {timeout_seconds} seconds")
 
             # Set up timeout signal
             old_handler = signal.signal(signal.SIGALRM, timeout_signal_handler)
@@ -366,10 +369,11 @@ def timeout_handler(timeout_seconds: int) -> Callable[[F], F]:
                 signal.signal(signal.SIGALRM, old_handler)
 
         return wrapper
+
     return decorator
 
 
-def ensure_directory(path: Union[str, Path]) -> Path:
+def ensure_directory(path: str | Path) -> Path:
     """Ensure a directory exists, creating it if necessary.
 
     Args:
@@ -384,7 +388,7 @@ def ensure_directory(path: Union[str, Path]) -> Path:
 
 
 def safe_file_write(
-    file_path: Union[str, Path],
+    file_path: str | Path,
     content: str,
     backup: bool = True,
     encoding: str = "utf-8",
@@ -422,15 +426,14 @@ def format_duration(seconds: float) -> str:
     """
     if seconds < 60:
         return f"{seconds:.1f}s"
-    elif seconds < 3600:
+    if seconds < 3600:
         minutes = seconds / 60
         return f"{minutes:.1f}m"
-    else:
-        hours = seconds / 3600
-        return f"{hours:.1f}h"
+    hours = seconds / 3600
+    return f"{hours:.1f}h"
 
 
-def format_bytes(bytes_value: Union[int, float]) -> str:
+def format_bytes(bytes_value: int | float) -> str:
     """Format bytes to human-readable string.
 
     Args:
@@ -439,14 +442,14 @@ def format_bytes(bytes_value: Union[int, float]) -> str:
     Returns:
         Formatted size string
     """
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
         if bytes_value < 1024.0:
             return f"{bytes_value:.1f}{unit}"
         bytes_value /= 1024.0
     return f"{bytes_value:.1f}PB"
 
 
-def get_system_info() -> Dict[str, Any]:
+def get_system_info() -> dict[str, Any]:
     """Get current system information.
 
     Returns:
@@ -454,7 +457,7 @@ def get_system_info() -> Dict[str, Any]:
     """
     try:
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage("/")
 
         return {
             "timestamp": datetime.now().isoformat(),
@@ -467,11 +470,8 @@ def get_system_info() -> Dict[str, Any]:
             "disk_total_gb": disk.total / (1024**3),
             "disk_free_gb": disk.free / (1024**3),
             "disk_percent": (disk.used / disk.total) * 100,
-            "load_average": list(os.getloadavg()) if hasattr(os, 'getloadavg') else None,
+            "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
         }
     except Exception as e:
         logging.getLogger(__name__).warning(f"Failed to get system info: {e}")
-        return {
-            "timestamp": datetime.now().isoformat(),
-            "error": str(e)
-        }
+        return {"timestamp": datetime.now().isoformat(), "error": str(e)}

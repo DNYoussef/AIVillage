@@ -94,9 +94,7 @@ def main():
                 f.write(f"Checksum: {checksum}\n")
                 f.write(f"Files ({len(files)} total):\n")
                 for file_info in files:
-                    f.write(
-                        f"  - {file_info['path']} ({file_info['size_bytes']} bytes)\n"
-                    )
+                    f.write(f"  - {file_info['path']} ({file_info['size_bytes']} bytes)\n")
                 f.write("\n")
         else:
             f.write("No identical main.py files found.\n")

@@ -5,16 +5,14 @@ automated rollback, and production hardening.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
 import os
-import shutil
 import subprocess
-import tempfile
 import time
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
+
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -27,7 +25,7 @@ class DeploymentConfig:
         self.config_path = config_path
         self.config = self._load_config()
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """Load deployment configuration."""
         default_config = {
             "environments": {
@@ -35,66 +33,49 @@ class DeploymentConfig:
                     "replicas": 1,
                     "resources": {"cpu": "500m", "memory": "1Gi"},
                     "auto_deploy": True,
-                    "health_checks": {"timeout": 30, "retries": 3}
+                    "health_checks": {"timeout": 30, "retries": 3},
                 },
                 "staging": {
                     "replicas": 2,
                     "resources": {"cpu": "1000m", "memory": "2Gi"},
                     "auto_deploy": False,
-                    "health_checks": {"timeout": 60, "retries": 5}
+                    "health_checks": {"timeout": 60, "retries": 5},
                 },
                 "production": {
                     "replicas": 3,
                     "resources": {"cpu": "2000m", "memory": "4Gi"},
                     "auto_deploy": False,
-                    "health_checks": {"timeout": 120, "retries": 10}
-                }
+                    "health_checks": {"timeout": 120, "retries": 10},
+                },
             },
             "services": {
-                "hyperag-mcp": {
-                    "port": 8765,
-                    "health_endpoint": "/health",
-                    "image": "aivillage/hyperag-mcp:latest"
-                },
-                "mesh-network": {
-                    "port": 9000,
-                    "health_endpoint": "/status",
-                    "image": "aivillage/mesh-network:latest"
-                },
+                "hyperag-mcp": {"port": 8765, "health_endpoint": "/health", "image": "aivillage/hyperag-mcp:latest"},
+                "mesh-network": {"port": 9000, "health_endpoint": "/status", "image": "aivillage/mesh-network:latest"},
                 "evolution-engine": {
                     "port": 8080,
                     "health_endpoint": "/api/health",
-                    "image": "aivillage/evolution-engine:latest"
+                    "image": "aivillage/evolution-engine:latest",
                 },
                 "compression-service": {
                     "port": 8081,
                     "health_endpoint": "/api/health",
-                    "image": "aivillage/compression:latest"
+                    "image": "aivillage/compression:latest",
                 },
-                "rag-system": {
-                    "port": 8082,
-                    "health_endpoint": "/api/health",
-                    "image": "aivillage/rag-system:latest"
-                }
+                "rag-system": {"port": 8082, "health_endpoint": "/api/health", "image": "aivillage/rag-system:latest"},
             },
             "deployment": {
                 "strategy": "blue-green",
                 "timeout_seconds": 600,
                 "rollback_on_failure": True,
                 "pre_deployment_tests": True,
-                "post_deployment_validation": True
+                "post_deployment_validation": True,
             },
-            "monitoring": {
-                "enabled": True,
-                "prometheus_port": 9090,
-                "grafana_port": 3000,
-                "alert_manager_port": 9093
-            }
+            "monitoring": {"enabled": True, "prometheus_port": 9090, "grafana_port": 3000, "alert_manager_port": 9093},
         }
 
         try:
             if os.path.exists(self.config_path):
-                with open(self.config_path, 'r') as f:
+                with open(self.config_path) as f:
                     loaded_config = yaml.safe_load(f)
                     # Merge with defaults
                     default_config.update(loaded_config)
@@ -103,11 +84,11 @@ class DeploymentConfig:
 
         return default_config
 
-    def get_environment_config(self, env: str) -> Dict[str, Any]:
+    def get_environment_config(self, env: str) -> dict[str, Any]:
         """Get configuration for specific environment."""
         return self.config["environments"].get(env, {})
 
-    def get_service_config(self, service: str) -> Dict[str, Any]:
+    def get_service_config(self, service: str) -> dict[str, Any]:
         """Get configuration for specific service."""
         return self.config["services"].get(service, {})
 
@@ -119,12 +100,12 @@ class ContainerBuilder:
         self.build_dir = build_dir
         os.makedirs(build_dir, exist_ok=True)
 
-    def create_dockerfile(self, service: str, service_config: Dict[str, Any]) -> str:
+    def create_dockerfile(self, service: str, service_config: dict[str, Any]) -> str:
         """Create Dockerfile for service."""
         dockerfile_content = self._get_dockerfile_template(service)
         dockerfile_path = os.path.join(self.build_dir, f"Dockerfile.{service}")
 
-        with open(dockerfile_path, 'w') as f:
+        with open(dockerfile_path, "w") as f:
             f.write(dockerfile_content)
 
         return dockerfile_path
@@ -167,26 +148,11 @@ CMD ["{cmd}"]
 """
 
         service_configs = {
-            "hyperag-mcp": {
-                "port": 8765,
-                "cmd": "python -m mcp_servers.hyperag.mcp_server"
-            },
-            "mesh-network": {
-                "port": 9000,
-                "cmd": "python mesh_network_manager.py"
-            },
-            "evolution-engine": {
-                "port": 8080,
-                "cmd": "python agent_forge/self_evolution_engine.py"
-            },
-            "compression-service": {
-                "port": 8081,
-                "cmd": "python -m production.compression.compression_pipeline"
-            },
-            "rag-system": {
-                "port": 8082,
-                "cmd": "python -m production.rag.rag_system.main"
-            }
+            "hyperag-mcp": {"port": 8765, "cmd": "python -m mcp_servers.hyperag.mcp_server"},
+            "mesh-network": {"port": 9000, "cmd": "python mesh_network_manager.py"},
+            "evolution-engine": {"port": 8080, "cmd": "python agent_forge/self_evolution_engine.py"},
+            "compression-service": {"port": 8081, "cmd": "python -m production.compression.compression_pipeline"},
+            "rag-system": {"port": 8082, "cmd": "python -m production.rag.rag_system.main"},
         }
 
         config = service_configs.get(service, {"port": 8000, "cmd": "python app.py"})
@@ -199,27 +165,18 @@ CMD ["{cmd}"]
             image_name = f"aivillage/{service}:{tag}"
 
             # Build command
-            build_cmd = [
-                "docker", "build",
-                "-f", dockerfile_path,
-                "-t", image_name,
-                "."
-            ]
+            build_cmd = ["docker", "build", "-f", dockerfile_path, "-t", image_name, "."]
 
             logger.info(f"Building image: {image_name}")
             result = subprocess.run(
-                build_cmd,
-                capture_output=True,
-                text=True,
-                timeout=600  # 10 minute timeout
-            )
+                build_cmd, capture_output=True, text=True, timeout=600, check=False
+            )  # 10 minute timeout
 
             if result.returncode == 0:
                 logger.info(f"Successfully built image: {image_name}")
                 return True
-            else:
-                logger.error(f"Failed to build image: {result.stderr}")
-                return False
+            logger.error(f"Failed to build image: {result.stderr}")
+            return False
 
         except Exception as e:
             logger.error(f"Error building image for {service}: {e}")
@@ -234,12 +191,7 @@ class KubernetesDeployer:
         self.manifests_dir = "deploy/k8s"
         os.makedirs(self.manifests_dir, exist_ok=True)
 
-    def create_deployment_manifest(
-        self,
-        service: str,
-        environment: str,
-        version: str = "latest"
-    ) -> str:
+    def create_deployment_manifest(self, service: str, environment: str, version: str = "latest") -> str:
         """Create Kubernetes deployment manifest."""
         env_config = self.config.get_environment_config(environment)
         service_config = self.config.get_service_config(service)
@@ -250,88 +202,61 @@ class KubernetesDeployer:
             "metadata": {
                 "name": f"{service}-{environment}",
                 "namespace": f"aivillage-{environment}",
-                "labels": {
-                    "app": service,
-                    "environment": environment,
-                    "version": version
-                }
+                "labels": {"app": service, "environment": environment, "version": version},
             },
             "spec": {
                 "replicas": env_config.get("replicas", 1),
-                "selector": {
-                    "matchLabels": {
-                        "app": service,
-                        "environment": environment
-                    }
-                },
+                "selector": {"matchLabels": {"app": service, "environment": environment}},
                 "template": {
-                    "metadata": {
-                        "labels": {
-                            "app": service,
-                            "environment": environment,
-                            "version": version
-                        }
-                    },
+                    "metadata": {"labels": {"app": service, "environment": environment, "version": version}},
                     "spec": {
-                        "containers": [{
-                            "name": service,
-                            "image": f"{service_config.get('image', f'aivillage/{service}:latest')}",
-                            "ports": [{
-                                "containerPort": service_config.get("port", 8000),
-                                "name": "http"
-                            }],
-                            "resources": env_config.get("resources", {}),
-                            "livenessProbe": {
-                                "httpGet": {
-                                    "path": service_config.get("health_endpoint", "/health"),
-                                    "port": "http"
+                        "containers": [
+                            {
+                                "name": service,
+                                "image": f"{service_config.get('image', f'aivillage/{service}:latest')}",
+                                "ports": [{"containerPort": service_config.get("port", 8000), "name": "http"}],
+                                "resources": env_config.get("resources", {}),
+                                "livenessProbe": {
+                                    "httpGet": {
+                                        "path": service_config.get("health_endpoint", "/health"),
+                                        "port": "http",
+                                    },
+                                    "initialDelaySeconds": 30,
+                                    "periodSeconds": 10,
+                                    "timeoutSeconds": 5,
+                                    "failureThreshold": 3,
                                 },
-                                "initialDelaySeconds": 30,
-                                "periodSeconds": 10,
-                                "timeoutSeconds": 5,
-                                "failureThreshold": 3
-                            },
-                            "readinessProbe": {
-                                "httpGet": {
-                                    "path": service_config.get("health_endpoint", "/health"),
-                                    "port": "http"
+                                "readinessProbe": {
+                                    "httpGet": {
+                                        "path": service_config.get("health_endpoint", "/health"),
+                                        "port": "http",
+                                    },
+                                    "initialDelaySeconds": 5,
+                                    "periodSeconds": 5,
+                                    "timeoutSeconds": 3,
+                                    "failureThreshold": 3,
                                 },
-                                "initialDelaySeconds": 5,
-                                "periodSeconds": 5,
-                                "timeoutSeconds": 3,
-                                "failureThreshold": 3
-                            },
-                            "env": [
-                                {"name": "ENVIRONMENT", "value": environment},
-                                {"name": "SERVICE_NAME", "value": service},
-                                {"name": "LOG_LEVEL", "value": "INFO"}
-                            ]
-                        }],
-                        "securityContext": {
-                            "runAsNonRoot": True,
-                            "runAsUser": 1000,
-                            "fsGroup": 1000
-                        }
-                    }
-                }
-            }
+                                "env": [
+                                    {"name": "ENVIRONMENT", "value": environment},
+                                    {"name": "SERVICE_NAME", "value": service},
+                                    {"name": "LOG_LEVEL", "value": "INFO"},
+                                ],
+                            }
+                        ],
+                        "securityContext": {"runAsNonRoot": True, "runAsUser": 1000, "fsGroup": 1000},
+                    },
+                },
+            },
         }
 
-        manifest_path = os.path.join(
-            self.manifests_dir,
-            f"{service}-{environment}-deployment.yaml"
-        )
+        manifest_path = os.path.join(self.manifests_dir, f"{service}-{environment}-deployment.yaml")
 
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             yaml.dump(manifest, f, default_flow_style=False)
 
         return manifest_path
 
-    def create_service_manifest(
-        self,
-        service: str,
-        environment: str
-    ) -> str:
+    def create_service_manifest(self, service: str, environment: str) -> str:
         """Create Kubernetes service manifest."""
         service_config = self.config.get_service_config(service)
 
@@ -341,42 +266,25 @@ class KubernetesDeployer:
             "metadata": {
                 "name": f"{service}-{environment}",
                 "namespace": f"aivillage-{environment}",
-                "labels": {
-                    "app": service,
-                    "environment": environment
-                }
+                "labels": {"app": service, "environment": environment},
             },
             "spec": {
-                "selector": {
-                    "app": service,
-                    "environment": environment
-                },
-                "ports": [{
-                    "port": service_config.get("port", 8000),
-                    "targetPort": "http",
-                    "protocol": "TCP",
-                    "name": "http"
-                }],
-                "type": "ClusterIP"
-            }
+                "selector": {"app": service, "environment": environment},
+                "ports": [
+                    {"port": service_config.get("port", 8000), "targetPort": "http", "protocol": "TCP", "name": "http"}
+                ],
+                "type": "ClusterIP",
+            },
         }
 
-        manifest_path = os.path.join(
-            self.manifests_dir,
-            f"{service}-{environment}-service.yaml"
-        )
+        manifest_path = os.path.join(self.manifests_dir, f"{service}-{environment}-service.yaml")
 
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             yaml.dump(manifest, f, default_flow_style=False)
 
         return manifest_path
 
-    async def deploy_service(
-        self,
-        service: str,
-        environment: str,
-        version: str = "latest"
-    ) -> bool:
+    async def deploy_service(self, service: str, environment: str, version: str = "latest") -> bool:
         """Deploy service to Kubernetes."""
         try:
             # Create manifests
@@ -386,7 +294,7 @@ class KubernetesDeployer:
             # Apply manifests
             for manifest in [deployment_manifest, service_manifest]:
                 cmd = ["kubectl", "apply", "-f", manifest]
-                result = subprocess.run(cmd, capture_output=True, text=True)
+                result = subprocess.run(cmd, capture_output=True, text=True, check=False)
 
                 if result.returncode != 0:
                     logger.error(f"Failed to apply manifest {manifest}: {result.stderr}")
@@ -394,20 +302,22 @@ class KubernetesDeployer:
 
             # Wait for rollout
             rollout_cmd = [
-                "kubectl", "rollout", "status",
+                "kubectl",
+                "rollout",
+                "status",
                 f"deployment/{service}-{environment}",
-                f"-n", f"aivillage-{environment}",
-                "--timeout=300s"
+                "-n",
+                f"aivillage-{environment}",
+                "--timeout=300s",
             ]
 
-            result = subprocess.run(rollout_cmd, capture_output=True, text=True)
+            result = subprocess.run(rollout_cmd, capture_output=True, text=True, check=False)
 
             if result.returncode == 0:
                 logger.info(f"Successfully deployed {service} to {environment}")
                 return True
-            else:
-                logger.error(f"Deployment rollout failed: {result.stderr}")
-                return False
+            logger.error(f"Deployment rollout failed: {result.stderr}")
+            return False
 
         except Exception as e:
             logger.error(f"Error deploying {service} to {environment}: {e}")
@@ -420,12 +330,7 @@ class HealthChecker:
     def __init__(self, config: DeploymentConfig):
         self.config = config
 
-    async def check_service_health(
-        self,
-        service: str,
-        environment: str,
-        timeout: int = 60
-    ) -> bool:
+    async def check_service_health(self, service: str, environment: str, timeout: int = 60) -> bool:
         """Check if service is healthy."""
         service_config = self.config.get_service_config(service)
         health_endpoint = service_config.get("health_endpoint", "/health")
@@ -452,11 +357,7 @@ class HealthChecker:
         logger.error(f"Service {service} failed health check in {environment}")
         return False
 
-    async def validate_deployment(
-        self,
-        services: List[str],
-        environment: str
-    ) -> bool:
+    async def validate_deployment(self, services: list[str], environment: str) -> bool:
         """Validate all services in deployment."""
         health_checks = []
         for service in services:
@@ -480,12 +381,7 @@ class BlueGreenDeployer:
         self.k8s_deployer = k8s_deployer
         self.health_checker = HealthChecker(config)
 
-    async def deploy_blue_green(
-        self,
-        services: List[str],
-        environment: str,
-        version: str
-    ) -> bool:
+    async def deploy_blue_green(self, services: list[str], environment: str, version: str) -> bool:
         """Execute blue-green deployment."""
         logger.info(f"Starting blue-green deployment to {environment}")
 
@@ -536,33 +432,22 @@ class BlueGreenDeployer:
         await asyncio.sleep(2)
         return True
 
-    async def _cleanup_green_environment(self, services: List[str], green_env: str) -> None:
+    async def _cleanup_green_environment(self, services: list[str], green_env: str) -> None:
         """Clean up failed green environment."""
         for service in services:
             try:
-                cmd = [
-                    "kubectl", "delete", "deployment",
-                    f"{service}-{green_env}",
-                    f"-n", f"aivillage-{green_env}"
-                ]
-                subprocess.run(cmd, capture_output=True)
+                cmd = ["kubectl", "delete", "deployment", f"{service}-{green_env}", "-n", f"aivillage-{green_env}"]
+                subprocess.run(cmd, capture_output=True, check=False)
             except Exception as e:
                 logger.warning(f"Failed to cleanup green deployment for {service}: {e}")
 
-    async def _cleanup_blue_environment(self, services: List[str], blue_env: str) -> None:
+    async def _cleanup_blue_environment(self, services: list[str], blue_env: str) -> None:
         """Clean up old blue environment."""
         # Similar to green cleanup
-        pass
 
-    async def _promote_green_to_blue(
-        self,
-        services: List[str],
-        blue_env: str,
-        green_env: str
-    ) -> None:
+    async def _promote_green_to_blue(self, services: list[str], blue_env: str, green_env: str) -> None:
         """Promote green environment to blue."""
         # Update labels and configurations
-        pass
 
 
 class ProductionDeploymentOrchestrator:
@@ -575,14 +460,10 @@ class ProductionDeploymentOrchestrator:
         self.blue_green_deployer = BlueGreenDeployer(self.config, self.k8s_deployer)
         self.health_checker = HealthChecker(self.config)
 
-        self.deployment_history: List[Dict[str, Any]] = []
+        self.deployment_history: list[dict[str, Any]] = []
 
     async def deploy_to_environment(
-        self,
-        environment: str,
-        services: Optional[List[str]] = None,
-        version: str = "latest",
-        run_tests: bool = True
+        self, environment: str, services: list[str] | None = None, version: str = "latest", run_tests: bool = True
     ) -> bool:
         """Deploy services to specified environment."""
         if services is None:
@@ -614,9 +495,7 @@ class ProductionDeploymentOrchestrator:
             strategy = deployment_config.get("strategy", "rolling")
 
             if strategy == "blue-green":
-                deploy_success = await self.blue_green_deployer.deploy_blue_green(
-                    services, environment, version
-                )
+                deploy_success = await self.blue_green_deployer.deploy_blue_green(services, environment, version)
             else:
                 deploy_success = await self._rolling_deployment(services, environment, version)
 
@@ -625,9 +504,7 @@ class ProductionDeploymentOrchestrator:
                 return False
 
             # Step 4: Post-deployment validation
-            validation_success = await self.health_checker.validate_deployment(
-                services, environment
-            )
+            validation_success = await self.health_checker.validate_deployment(services, environment)
 
             if not validation_success:
                 logger.error("Post-deployment validation failed")
@@ -648,7 +525,7 @@ class ProductionDeploymentOrchestrator:
                 "start_time": deployment_start.isoformat(),
                 "end_time": datetime.now().isoformat(),
                 "duration_seconds": (datetime.now() - deployment_start).total_seconds(),
-                "status": "success"
+                "status": "success",
             }
 
             self.deployment_history.append(deployment_record)
@@ -670,7 +547,7 @@ class ProductionDeploymentOrchestrator:
                 "end_time": datetime.now().isoformat(),
                 "duration_seconds": (datetime.now() - deployment_start).total_seconds(),
                 "status": "failed",
-                "error": str(e)
+                "error": str(e),
             }
 
             self.deployment_history.append(deployment_record)
@@ -687,24 +564,20 @@ class ProductionDeploymentOrchestrator:
 
         try:
             result = subprocess.run(
-                test_cmd,
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout
-            )
+                test_cmd, capture_output=True, text=True, timeout=300, check=False
+            )  # 5 minute timeout
 
             if result.returncode == 0:
                 logger.info("Pre-deployment tests passed")
                 return True
-            else:
-                logger.error(f"Pre-deployment tests failed: {result.stderr}")
-                return False
+            logger.error(f"Pre-deployment tests failed: {result.stderr}")
+            return False
 
         except Exception as e:
             logger.error(f"Error running pre-deployment tests: {e}")
             return False
 
-    async def _build_all_images(self, services: List[str], version: str) -> bool:
+    async def _build_all_images(self, services: list[str], version: str) -> bool:
         """Build all container images."""
         logger.info(f"Building container images for version {version}")
 
@@ -721,12 +594,7 @@ class ProductionDeploymentOrchestrator:
 
         return success_count == total_count
 
-    async def _rolling_deployment(
-        self,
-        services: List[str],
-        environment: str,
-        version: str
-    ) -> bool:
+    async def _rolling_deployment(self, services: list[str], environment: str, version: str) -> bool:
         """Execute rolling deployment."""
         logger.info("Executing rolling deployment")
 
@@ -736,9 +604,7 @@ class ProductionDeploymentOrchestrator:
                 return False
 
             # Wait for service to be healthy before continuing
-            health_success = await self.health_checker.check_service_health(
-                service, environment
-            )
+            health_success = await self.health_checker.check_service_health(service, environment)
             if not health_success:
                 return False
 
@@ -749,10 +615,7 @@ class ProductionDeploymentOrchestrator:
         logger.info(f"Rolling back deployment {deployment_id}")
 
         # Find previous successful deployment
-        successful_deployments = [
-            d for d in self.deployment_history
-            if d["status"] == "success"
-        ]
+        successful_deployments = [d for d in self.deployment_history if d["status"] == "success"]
 
         if not successful_deployments:
             logger.error("No previous successful deployment found for rollback")
@@ -765,7 +628,7 @@ class ProductionDeploymentOrchestrator:
             previous_deployment["environment"],
             previous_deployment["services"],
             previous_deployment["version"],
-            run_tests=False  # Skip tests for rollback
+            run_tests=False,  # Skip tests for rollback
         )
 
         return rollback_success
@@ -776,19 +639,17 @@ class ProductionDeploymentOrchestrator:
             os.makedirs("deploy/history", exist_ok=True)
             history_path = "deploy/history/deployments.json"
 
-            with open(history_path, 'w') as f:
+            with open(history_path, "w") as f:
                 json.dump(self.deployment_history, f, indent=2)
 
         except Exception as e:
             logger.error(f"Failed to save deployment history: {e}")
 
-    def get_deployment_status(self) -> Dict[str, Any]:
+    def get_deployment_status(self) -> dict[str, Any]:
         """Get current deployment status."""
         recent_deployments = self.deployment_history[-10:]  # Last 10 deployments
 
-        successful_deployments = sum(
-            1 for d in recent_deployments if d["status"] == "success"
-        )
+        successful_deployments = sum(1 for d in recent_deployments if d["status"] == "success")
 
         return {
             "total_deployments": len(self.deployment_history),
@@ -796,7 +657,7 @@ class ProductionDeploymentOrchestrator:
             "recent_success_rate": successful_deployments / len(recent_deployments) if recent_deployments else 0,
             "last_deployment": self.deployment_history[-1] if self.deployment_history else None,
             "environments": list(set(d["environment"] for d in self.deployment_history)),
-            "available_services": list(self.config.config["services"].keys())
+            "available_services": list(self.config.config["services"].keys()),
         }
 
 
@@ -807,14 +668,10 @@ async def main():
 
     parser = argparse.ArgumentParser(description="AIVillage Production Deployment")
     parser.add_argument("action", choices=["deploy", "status", "rollback"])
-    parser.add_argument("--environment", "-e", default="staging",
-                       help="Target environment")
-    parser.add_argument("--services", "-s", nargs="+",
-                       help="Services to deploy (default: all)")
-    parser.add_argument("--version", "-v", default="latest",
-                       help="Version to deploy")
-    parser.add_argument("--skip-tests", action="store_true",
-                       help="Skip pre-deployment tests")
+    parser.add_argument("--environment", "-e", default="staging", help="Target environment")
+    parser.add_argument("--services", "-s", nargs="+", help="Services to deploy (default: all)")
+    parser.add_argument("--version", "-v", default="latest", help="Version to deploy")
+    parser.add_argument("--skip-tests", action="store_true", help="Skip pre-deployment tests")
 
     args = parser.parse_args()
 
@@ -822,10 +679,7 @@ async def main():
 
     if args.action == "deploy":
         success = await orchestrator.deploy_to_environment(
-            args.environment,
-            args.services,
-            args.version,
-            run_tests=not args.skip_tests
+            args.environment, args.services, args.version, run_tests=not args.skip_tests
         )
 
         if success:

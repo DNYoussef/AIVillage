@@ -7,11 +7,11 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.core.p2p.p2p_node import P2PNode, PeerCapabilities
+from src.core.p2p.p2p_node import P2PNode
 from src.core.resources.adaptive_loader import AdaptiveLoader
 from src.core.resources.constraint_manager import ConstraintManager
 from src.core.resources.device_profiler import DeviceProfiler, DeviceType
-from src.core.resources.resource_monitor import MonitoringMode, ResourceMonitor
+from src.core.resources.resource_monitor import ResourceMonitor
 
 
 @pytest.mark.benchmark
@@ -85,10 +85,10 @@ class TestPerformanceBenchmarks:
             node = P2PNode(node_id="benchmark_node")
 
             # Mock server to avoid actual network binding
-            with patch('asyncio.start_server') as mock_server:
+            with patch("asyncio.start_server") as mock_server:
                 mock_server_obj = Mock()
                 mock_server_obj.sockets = [Mock()]
-                mock_server_obj.sockets[0].getsockname.return_value = ('localhost', 9000)
+                mock_server_obj.sockets[0].getsockname.return_value = ("localhost", 9000)
                 mock_server.return_value = mock_server_obj
 
                 start_time = time.time()
@@ -127,12 +127,13 @@ class TestPerformanceBenchmarks:
 
         # Create loading context
         from src.core.resources.adaptive_loader import LoadingContext
+
         context = LoadingContext(
             task_type="nightly",
             priority_level=2,
             max_loading_time_seconds=120.0,
             quality_preference=0.7,
-            resource_constraints=constraint_manager.default_constraints
+            resource_constraints=constraint_manager.default_constraints,
         )
 
         def select_variant():
@@ -142,7 +143,7 @@ class TestPerformanceBenchmarks:
         result = benchmark(select_variant)
 
         # Should find a variant or return None
-        assert result is None or hasattr(result, 'memory_mb')
+        assert result is None or hasattr(result, "memory_mb")
 
         # Should be fast
         stats = benchmark.stats
@@ -167,7 +168,7 @@ class TestScalabilityTests:
         for i in range(100):  # 100 rapid updates
             snapshot = Mock()
             snapshot.memory_percent = 50.0 + (i % 20)  # Varying memory
-            snapshot.cpu_percent = 30.0 + (i % 30)     # Varying CPU
+            snapshot.cpu_percent = 30.0 + (i % 30)  # Varying CPU
             snapshot.timestamp = start_time + (i * 0.01)  # 10ms intervals
 
             snapshots.append(snapshot)
@@ -185,7 +186,7 @@ class TestScalabilityTests:
         assert processing_time < 2.0  # Process 100 updates in under 2 seconds
 
         # Should maintain reasonable history size
-        cpu_history = monitor.resource_history.get('cpu_percent', [])
+        cpu_history = monitor.resource_history.get("cpu_percent", [])
         assert len(cpu_history) <= monitor.max_history_size
 
     def test_constraint_manager_many_concurrent_tasks(self):
@@ -265,15 +266,9 @@ class TestScalabilityTests:
         # Send messages concurrently
         tasks = []
         for i in range(message_count):
-            message = {
-                "type": "benchmark_message",
-                "id": f"msg_{i}",
-                "data": {"index": i, "timestamp": time.time()}
-            }
+            message = {"type": "benchmark_message", "id": f"msg_{i}", "data": {"index": i, "timestamp": time.time()}}
 
-            task = asyncio.create_task(
-                node._handle_message(message, "benchmark_peer")
-            )
+            task = asyncio.create_task(node._handle_message(message, "benchmark_peer"))
             tasks.append(task)
 
         # Wait for all messages to be processed
@@ -296,9 +291,9 @@ class TestScalabilityTests:
         """Test adaptive loader memory usage with different device configurations"""
         device_configs = [
             # (total_memory_gb, max_evolution_mb, expected_variants)
-            (1.0, 256, 1),    # Very low memory device
-            (4.0, 1024, 2),   # Low memory device
-            (8.0, 2048, 3),   # Medium memory device
+            (1.0, 256, 1),  # Very low memory device
+            (4.0, 1024, 2),  # Low memory device
+            (8.0, 2048, 3),  # Medium memory device
             (16.0, 4096, 4),  # High memory device
         ]
 
@@ -330,8 +325,9 @@ class TestScalabilityTests:
                     suitable_variants.append(variant)
 
             # Should have appropriate number of variants for device class
-            assert len(suitable_variants) >= expected_min_variants, \
-                f"Device with {total_memory}GB should have at least {expected_min_variants} variants, got {len(suitable_variants)}"
+            assert (
+                len(suitable_variants) >= expected_min_variants
+            ), f"Device with {total_memory}GB should have at least {expected_min_variants} variants, got {len(suitable_variants)}"
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ This file contains all TODO, FIXME, XXX, HACK, BUG, and REFACTOR comments found 
 Key TODOs in the orchestration system:
 - Line 83: `todos: list[str] = Field(default_factory=list)` - TODO tracking system
 - Line 136: Detection pattern includes "TODO"
-- Line 137: Detection pattern includes "FIXME" 
+- Line 137: Detection pattern includes "FIXME"
 - Line 390: `result.todos.append(f"Implement {phase_type.value} module")`
 - Line 401: `result.todos.extend([...])`
 - Lines 919-992: Complete TODO collection and reporting system

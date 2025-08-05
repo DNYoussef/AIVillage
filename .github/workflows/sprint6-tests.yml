@@ -38,23 +38,23 @@ jobs:
     name: Sprint 6 Validation
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         cache: 'pip'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r tests/requirements.txt || true
-    
+
     - name: Run Sprint 6 Validation
       id: validation
       run: |
@@ -62,7 +62,7 @@ jobs:
         python validate_sprint6.py
         echo "validation_success=true" >> $GITHUB_OUTPUT
       continue-on-error: true
-    
+
     - name: Upload validation results
       if: always()
       uses: actions/upload-artifact@v3
@@ -79,7 +79,7 @@ jobs:
     timeout-minutes: 20
     needs: [sprint6-validation]
     if: github.event.inputs.test_mode != 'validation-only'
-    
+
     strategy:
       matrix:
         test-group:
@@ -87,31 +87,31 @@ jobs:
           - resource-management
           - evolution-systems
           - integration
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         cache: 'pip'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-cov pytest-benchmark pytest-asyncio
         pip install -r tests/requirements.txt || true
-    
+
     - name: Run P2P Communication Tests
       if: matrix.test-group == 'p2p-communication'
       run: |
         echo "🌐 Testing P2P communication layer..."
         python -m pytest tests/communications/test_p2p.py -v --tb=short --durations=10
         python -m pytest tests/test_sprint6_infrastructure.py::TestP2PNodeIntegration -v
-    
+
     - name: Run Resource Management Tests
       if: matrix.test-group == 'resource-management'
       run: |
@@ -120,7 +120,7 @@ jobs:
         python -m pytest tests/test_sprint6_infrastructure.py::TestResourceMonitor -v
         python -m pytest tests/test_sprint6_infrastructure.py::TestConstraintManager -v
         python -m pytest tests/test_sprint6_infrastructure.py::TestAdaptiveLoader -v
-    
+
     - name: Run Evolution Systems Tests
       if: matrix.test-group == 'evolution-systems'
       run: |
@@ -128,14 +128,14 @@ jobs:
         python -m pytest tests/test_sprint6_infrastructure.py::TestInfrastructureAwareEvolution -v
         python -m pytest tests/test_sprint6_infrastructure.py::TestResourceConstrainedEvolution -v
         python -m pytest tests/evolution/test_evolution_comprehensive.py -v --tb=short
-    
+
     - name: Run Integration Tests
       if: matrix.test-group == 'integration'
       run: |
         echo "🔗 Testing system integration..."
         python -m pytest tests/test_sprint6_infrastructure.py::TestIntegrationScenarios -v
         python -m pytest tests/test_sprint6_infrastructure.py::test_sprint6_complete_integration -v
-    
+
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v3
@@ -152,29 +152,29 @@ jobs:
     timeout-minutes: 30
     needs: [sprint6-infrastructure]
     if: github.event.inputs.test_mode != 'infrastructure-only' && github.event.inputs.test_mode != 'validation-only'
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         cache: 'pip'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-benchmark pytest-asyncio
         pip install -r tests/requirements.txt || true
-    
+
     - name: Run Performance Benchmarks
       run: |
         echo "⚡ Running Sprint 6 performance benchmarks..."
         python -m pytest tests/test_sprint6_performance.py -v --benchmark-only --benchmark-json=benchmark_results.json
-    
+
     - name: Upload benchmark results
       if: always()
       uses: actions/upload-artifact@v3
@@ -190,35 +190,35 @@ jobs:
     timeout-minutes: 15
     needs: [sprint6-validation, sprint6-infrastructure, sprint6-performance]
     if: always()
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         cache: 'pip'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install psutil
-    
+
     - name: Download all artifacts
       uses: actions/download-artifact@v3
       with:
         path: test-results
-    
+
     - name: Generate comprehensive dashboard
       run: |
         echo "📊 Generating Sprint 6 test dashboard..."
         python scripts/run_sprint6_dashboard.py --coverage-only --no-reports
         python tests/test_coverage_dashboard.py
       continue-on-error: true
-    
+
     - name: Upload dashboard
       if: always()
       uses: actions/upload-artifact@v3
@@ -228,7 +228,7 @@ jobs:
           coverage_reports/
           sprint6_test_results.json
         retention-days: 30
-    
+
     - name: Deploy dashboard to GitHub Pages
       if: github.ref == 'refs/heads/main' && github.event_name != 'schedule'
       uses: peaceiris/actions-gh-pages@v3
@@ -242,27 +242,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: github.event_name == 'schedule'
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         cache: 'pip'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    
+
     - name: Quick health check
       run: |
         echo "⚡ Running Sprint 6 quick health check..."
         python scripts/run_sprint6_dashboard.py --quick
-    
+
     - name: Create health report
       if: always()
       run: |
@@ -271,7 +271,7 @@ jobs:
         echo "" >> health_report.md
         echo "## System Status" >> health_report.md
         python scripts/run_sprint6_dashboard.py --quick >> health_report.md
-    
+
     - name: Upload health report
       if: always()
       uses: actions/upload-artifact@v3

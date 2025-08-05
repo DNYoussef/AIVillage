@@ -2,14 +2,14 @@
 """Earn Shells Worker - Mints credits based on Prometheus metrics."""
 
 import argparse
+from datetime import datetime, timezone
 import logging
 import sys
 import time
-from datetime import datetime, timezone
 from urllib.parse import urljoin
 
-import requests
 from credits_ledger import CreditsConfig, CreditsLedger
+import requests
 
 # Configure logging
 logging.basicConfig(

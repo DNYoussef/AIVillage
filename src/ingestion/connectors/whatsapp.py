@@ -3,11 +3,11 @@
 Actually connects and retrieves messages - NO MORE STUBS!
 """
 
+from datetime import datetime, timedelta
 import logging
 import os
 import random
 import time
-from datetime import datetime, timedelta
 from typing import Any
 
 import requests

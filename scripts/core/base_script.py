@@ -10,18 +10,16 @@ should inherit from. It provides:
 - Resource monitoring
 """
 
-import json
-import logging
-import sys
-import time
 from abc import ABC, abstractmethod
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+import time
+from typing import Any
 
 from .common_utils import (
     ResourceMonitor,
-    ScriptError,
     ScriptTimeoutError,
     format_duration,
     get_system_info,
@@ -40,10 +38,10 @@ class ScriptResult:
         self,
         success: bool = True,
         message: str = "",
-        data: Optional[Dict[str, Any]] = None,
-        metrics: Optional[Dict[str, Any]] = None,
-        errors: Optional[List[str]] = None,
-        warnings: Optional[List[str]] = None,
+        data: dict[str, Any] | None = None,
+        metrics: dict[str, Any] | None = None,
+        errors: list[str] | None = None,
+        warnings: list[str] | None = None,
     ):
         """Initialize script result.
 
@@ -63,7 +61,7 @@ class ScriptResult:
         self.warnings = warnings or []
         self.timestamp = datetime.now().isoformat()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert result to dictionary.
 
         Returns:
@@ -79,7 +77,7 @@ class ScriptResult:
             "timestamp": self.timestamp,
         }
 
-    def save_to_file(self, file_path: Union[str, Path]) -> None:
+    def save_to_file(self, file_path: str | Path) -> None:
         """Save result to JSON file.
 
         Args:
@@ -88,7 +86,7 @@ class ScriptResult:
         path = Path(file_path)
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=2, default=str)
 
 
@@ -99,10 +97,10 @@ class BaseScript(ABC):
         self,
         name: str,
         description: str = "",
-        config_name: Optional[str] = None,
-        log_level: Union[int, str] = logging.INFO,
-        log_file: Optional[Union[str, Path]] = None,
-        timeout: Optional[int] = None,
+        config_name: str | None = None,
+        log_level: int | str = logging.INFO,
+        log_file: str | Path | None = None,
+        timeout: int | None = None,
     ):
         """Initialize the base script.
 
@@ -133,9 +131,9 @@ class BaseScript(ABC):
         self.resource_monitor = ResourceMonitor()
 
         # Script state
-        self.start_time: Optional[float] = None
-        self.end_time: Optional[float] = None
-        self.result: Optional[ScriptResult] = None
+        self.start_time: float | None = None
+        self.end_time: float | None = None
+        self.result: ScriptResult | None = None
         self.dry_run = False
 
         self.logger.info(f"Initialized script: {self.name}")
@@ -149,7 +147,6 @@ class BaseScript(ABC):
         Returns:
             ScriptResult with execution results
         """
-        pass
 
     def pre_execute(self) -> None:
         """Pre-execution hook for setup tasks.
@@ -181,12 +178,12 @@ class BaseScript(ABC):
         self.logger.info(f"Starting post-execution cleanup for {self.name}")
 
         # Add resource metrics to result
-        if hasattr(self, 'resource_monitor'):
+        if hasattr(self, "resource_monitor"):
             resource_summary = self.resource_monitor.get_summary()
             result.metrics.update(resource_summary)
 
         # Log execution summary
-        execution_time = result.metrics.get('total_execution_time', 0)
+        execution_time = result.metrics.get("total_execution_time", 0)
         self.logger.info(
             f"Script {self.name} completed - "
             f"Success: {result.success}, "
@@ -213,10 +210,10 @@ class BaseScript(ABC):
             success=False,
             message=error_message,
             errors=[str(error)],
-            metrics=self.resource_monitor.get_summary() if hasattr(self, 'resource_monitor') else {},
+            metrics=self.resource_monitor.get_summary() if hasattr(self, "resource_monitor") else {},
         )
 
-    def validate_configuration(self) -> List[str]:
+    def validate_configuration(self) -> list[str]:
         """Validate script configuration.
 
         Override this method to add custom configuration validation.
@@ -253,7 +250,7 @@ class BaseScript(ABC):
         self,
         dry_run: bool = False,
         save_result: bool = True,
-        result_file: Optional[Union[str, Path]] = None,
+        result_file: str | Path | None = None,
     ) -> ScriptResult:
         """Run the complete script lifecycle.
 
@@ -284,6 +281,7 @@ class BaseScript(ABC):
 
             # Execute main logic with timeout if configured
             if self.timeout:
+
                 @timeout_handler(self.timeout)
                 def execute_with_timeout():
                     return self.execute()
@@ -327,7 +325,7 @@ class BaseScript(ABC):
 
         return result
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current script status.
 
         Returns:
@@ -357,7 +355,7 @@ class BaseScript(ABC):
             }
 
         # Add resource usage if available
-        if hasattr(self, 'resource_monitor') and self.resource_monitor.start_time:
+        if hasattr(self, "resource_monitor") and self.resource_monitor.start_time:
             try:
                 resource_stats = self.resource_monitor.update()
                 status["resources"] = resource_stats
@@ -374,13 +372,7 @@ class SimpleScript(BaseScript):
     the execution function as a parameter.
     """
 
-    def __init__(
-        self,
-        name: str,
-        execute_func: callable,
-        description: str = "",
-        **kwargs
-    ):
+    def __init__(self, name: str, execute_func: callable, description: str = "", **kwargs):
         """Initialize simple script.
 
         Args:
@@ -402,12 +394,7 @@ class SimpleScript(BaseScript):
 
 
 # Utility function for creating simple scripts
-def create_script(
-    name: str,
-    execute_func: callable,
-    description: str = "",
-    **kwargs
-) -> SimpleScript:
+def create_script(name: str, execute_func: callable, description: str = "", **kwargs) -> SimpleScript:
     """Create a simple script.
 
     Args:

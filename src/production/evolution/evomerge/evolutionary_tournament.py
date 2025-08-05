@@ -1,9 +1,9 @@
 import argparse
+from datetime import datetime
 import json
 import logging
 import os
 import random
-from datetime import datetime
 
 import torch
 from tqdm import tqdm

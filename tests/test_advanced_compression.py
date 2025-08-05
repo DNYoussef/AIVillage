@@ -1,19 +1,19 @@
 import os
-import sys
 from pathlib import Path
+import sys
 
 import psutil
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 
 # Ensure src is on path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from core.compression.advanced_pipeline import AdvancedCompressionPipeline
 from agent_forge.compression.bitnet import BITNETCompressor
 from agent_forge.compression.seedlm import SEEDLMCompressor
 from agent_forge.compression.vptq import VPTQCompressor
+from core.compression.advanced_pipeline import AdvancedCompressionPipeline
 
 
 class TestIndividualStages:

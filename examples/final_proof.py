@@ -57,10 +57,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
     original_file_size = original_file.stat().st_size
 
     # Run mobile compression pipeline
-    compressed_file_path = quantizer.compress_for_mobile(
-        str(original_file),
-        output_dir=str(temp_path / "mobile")
-    )
+    compressed_file_path = quantizer.compress_for_mobile(str(original_file), output_dir=str(temp_path / "mobile"))
 
     compressed_file_size = Path(compressed_file_path).stat().st_size
     file_ratio = original_file_size / compressed_file_size

@@ -5,13 +5,13 @@ Sprint 6's evolution system and P2P infrastructure.
 """
 
 import asyncio
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import random
 import time
-import uuid
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
+import uuid
 
 import numpy as np
 import torch

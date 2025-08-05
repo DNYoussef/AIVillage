@@ -12,10 +12,10 @@ import argparse
 import json
 import logging
 import os
+from pathlib import Path
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent
@@ -57,12 +57,8 @@ class AgentForgePipelineRunner:
         # Handle frontier API key - REQUIRED for real data execution (except dry-run)
         frontier_api_key = self.args.frontier_api_key or os.getenv("FRONTIER_API_KEY")
         if not frontier_api_key and not getattr(self.args, "dry_run", False):
-            logger.error(
-                "FRONTIER_API_KEY is required for real-data pipeline execution"
-            )
-            logger.error(
-                "Provide via --frontier-api-key argument or FRONTIER_API_KEY environment variable"
-            )
+            logger.error("FRONTIER_API_KEY is required for real-data pipeline execution")
+            logger.error("Provide via --frontier-api-key argument or FRONTIER_API_KEY environment variable")
             logger.error("Use --dry-run flag to test configuration without API key")
             sys.exit(1)
 
@@ -118,9 +114,7 @@ class AgentForgePipelineRunner:
                 local_path = self.models_dir / model_name
 
                 if local_path.exists() and any(local_path.iterdir()):
-                    logger.info(
-                        "Model %s already exists, skipping download", model_name
-                    )
+                    logger.info("Model %s already exists, skipping download", model_name)
                     downloaded_models.append(model_name)
                     continue
 
@@ -149,26 +143,20 @@ except Exception as e:
     raise
 """
 
-                with tempfile.NamedTemporaryFile(
-                    mode="w", suffix=".py", delete=False
-                ) as temp_script:
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as temp_script:
                     temp_script.write(script_content)
                     temp_script_path = temp_script.name
 
                 cmd = [sys.executable, temp_script_path]
 
                 try:
-                    result = subprocess.run(
-                        cmd, check=False, capture_output=True, text=True, timeout=1800
-                    )
+                    result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=1800)
 
                     if result.returncode == 0:
                         logger.info("Successfully downloaded %s", model_name)
                         downloaded_models.append(model_name)
                     else:
-                        logger.error(
-                            "Failed to download %s: %s", repo_id, result.stderr
-                        )
+                        logger.error("Failed to download %s: %s", repo_id, result.stderr)
                 finally:
                     # Clean up temporary file
                     import os
@@ -186,9 +174,7 @@ except Exception as e:
             logger.error("No models were successfully downloaded")
             raise RuntimeError("Model download failed")
 
-        logger.info(
-            "Downloaded %d models: %s", len(downloaded_models), downloaded_models
-        )
+        logger.info("Downloaded %d models: %s", len(downloaded_models), downloaded_models)
         return downloaded_models
 
     async def run_agent_forge_orchestrator(self, models: list[str], device: str):
@@ -197,11 +183,7 @@ except Exception as e:
 
         try:
             # Import orchestrator directly instead of subprocess
-            from agent_forge.forge_orchestrator import (
-                ForgeOrchestrator,
-                OrchestratorConfig,
-                PhaseType,
-            )
+            from agent_forge.forge_orchestrator import ForgeOrchestrator, OrchestratorConfig, PhaseType
 
             # Create configuration
             config = OrchestratorConfig(
@@ -315,9 +297,7 @@ except Exception as e:
             logger.info("Benchmarking completed successfully")
 
         except subprocess.TimeoutExpired:
-            logger.error(
-                "Benchmarking timed out after %d seconds", self.args.benchmark_timeout
-            )
+            logger.error("Benchmarking timed out after %d seconds", self.args.benchmark_timeout)
             raise
         except subprocess.CalledProcessError as e:
             logger.error("Benchmarking failed with return code %d", e.returncode)
@@ -374,8 +354,7 @@ except Exception as e:
 
         comparison_data = {
             "model_averages": {
-                model: sum(scores.values()) / len(scores.values())
-                for model, scores in mock_results.items()
+                model: sum(scores.values()) / len(scores.values()) for model, scores in mock_results.items()
             },
             "benchmark_comparison": [],
         }
@@ -395,9 +374,7 @@ except Exception as e:
 
     def run_deployment_smoke_test(self):
         """Run optional deployment smoke test."""
-        if self.args.no_deploy or (
-            hasattr(self.args, "smoke_test") and not self.args.smoke_test
-        ):
+        if self.args.no_deploy or (hasattr(self.args, "smoke_test") and not self.args.smoke_test):
             logger.info("Skipping deployment smoke test")
             return
 
@@ -431,9 +408,7 @@ except Exception as e:
                     if response.status_code == 200:
                         logger.info("Deployment smoke test passed")
                     else:
-                        logger.warning(
-                            "Smoke test warning: HTTP %d", response.status_code
-                        )
+                        logger.warning("Smoke test warning: HTTP %d", response.status_code)
                 except Exception as e:
                     logger.warning("Smoke test couldn't connect: %s", e)
                 finally:
@@ -563,9 +538,7 @@ except Exception as e:
 
             # Check benchmark comparison for regressions
             benchmark_comparison = current_results.get("benchmark_comparison", [])
-            best_model = (
-                max(model_averages, key=model_averages.get) if model_averages else None
-            )
+            best_model = max(model_averages, key=model_averages.get) if model_averages else None
 
             if not best_model or not benchmark_comparison:
                 return
@@ -603,9 +576,7 @@ except Exception as e:
                             f"(below threshold of {regression['threshold']:.3f})",
                             level=wandb.AlertLevel.WARN,
                         )
-                        logger.warning(
-                            "W&B alert sent for %s regression", regression["benchmark"]
-                        )
+                        logger.warning("W&B alert sent for %s regression", regression["benchmark"])
                     except Exception as e:
                         logger.error("Failed to send W&B alert: %s", e)
 
@@ -632,9 +603,7 @@ except Exception as e:
 
 async def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Run the complete Agent Forge pipeline"
-    )
+    parser = argparse.ArgumentParser(description="Run the complete Agent Forge pipeline")
 
     parser.add_argument(
         "--device",
@@ -650,13 +619,9 @@ async def main():
         help="Number of generations for evolutionary training",
     )
 
-    parser.add_argument(
-        "--frontier-api-key", help="Frontier API key for live model evaluation"
-    )
+    parser.add_argument("--frontier-api-key", help="Frontier API key for live model evaluation")
 
-    parser.add_argument(
-        "--no-deploy", action="store_true", help="Skip deployment smoke test (for CI)"
-    )
+    parser.add_argument("--no-deploy", action="store_true", help="Skip deployment smoke test (for CI)")
 
     parser.add_argument(
         "--dry-run",
@@ -664,13 +629,9 @@ async def main():
         help="Dry run mode - validate config but don't execute",
     )
 
-    parser.add_argument(
-        "--quick", action="store_true", help="Run in quick mode with reduced iterations"
-    )
+    parser.add_argument("--quick", action="store_true", help="Run in quick mode with reduced iterations")
 
-    parser.add_argument(
-        "--smoke-test", action="store_true", help="Run deployment smoke test"
-    )
+    parser.add_argument("--smoke-test", action="store_true", help="Run deployment smoke test")
 
     parser.add_argument(
         "--timeout",

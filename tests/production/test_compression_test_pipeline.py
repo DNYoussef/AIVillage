@@ -1,5 +1,3 @@
-import pytest
-
 from src.production.compression import test_pipeline
 
 

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Benchmark compression performance"""
-import time
-import torch
-import torch.nn as nn
 from pathlib import Path
 import sys
+import time
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+import torch
+from torch import nn
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from core.compression import SimpleQuantizer
 
 
@@ -75,4 +76,5 @@ def benchmark_compression():
 
 if __name__ == "__main__":
     import io
+
     benchmark_compression()

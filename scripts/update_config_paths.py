@@ -25,6 +25,7 @@ def update_file(file_path: Path, patterns_to_replace: list[tuple[str, str]]):
         print(f"Error updating {file_path}: {e}")
         return False
 
+
 def main():
     """Main function to update all config paths"""
     root_dir = Path()
@@ -58,6 +59,7 @@ def main():
     print(f"\nUpdated {len(updated_files)} files:")
     for file_path in updated_files:
         print(f"  - {file_path}")
+
 
 if __name__ == "__main__":
     main()

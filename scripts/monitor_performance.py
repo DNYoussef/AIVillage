@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Monitor test performance and track regressions."""
 
+from datetime import datetime
 import json
+from pathlib import Path
 import subprocess
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
 
 
 class PerformanceMonitor:
@@ -127,18 +127,17 @@ class PerformanceMonitor:
         test_results = {}
 
         test_categories = [
-            ("core_communication",
-             "tests/core/test_communication.py"),
-            ("core_evidencepack",
-             "tests/core/test_evidencepack.py"),
-            ("message_tests",
-             "tests/test_message.py"),
-            ("compression_basic",
+            ("core_communication", "tests/core/test_communication.py"),
+            ("core_evidencepack", "tests/core/test_evidencepack.py"),
+            ("message_tests", "tests/test_message.py"),
+            (
+                "compression_basic",
                 "tests/compression/test_compression_comprehensive.py::TestCompressionPipeline::test_seedlm_compression_basic",
-             ),
-            ("evolution_basic",
+            ),
+            (
+                "evolution_basic",
                 "tests/evolution/test_evolution_comprehensive.py::TestEvolutionaryTournament::test_tournament_basic_selection",
-             ),
+            ),
         ]
 
         for category, test_path in test_categories:
@@ -163,11 +162,7 @@ class PerformanceMonitor:
                 "passed": passed,
                 "failed": failed,
                 "errors": errors,
-                "success_rate": (
-                    (passed / (passed + failed + errors))
-                    if (passed + failed + errors) > 0
-                    else 0
-                ),
+                "success_rate": ((passed / (passed + failed + errors)) if (passed + failed + errors) > 0 else 0),
             }
 
         total_time = time.time() - start_time
@@ -181,10 +176,7 @@ class PerformanceMonitor:
                 "total_passed": sum(r["passed"] for r in test_results.values()),
                 "total_failed": sum(r["failed"] for r in test_results.values()),
                 "total_errors": sum(r["errors"] for r in test_results.values()),
-                "avg_execution_time": sum(
-                    r["execution_time"] for r in test_results.values()
-                )
-                / len(test_results),
+                "avg_execution_time": sum(r["execution_time"] for r in test_results.values()) / len(test_results),
             },
         }
 
@@ -216,15 +208,14 @@ class PerformanceMonitor:
                     results['passed']:2d}P {
                     results['failed']:2d}F {
                         results['errors']:2d}E | {
-                            success_rate:5.1f}%")
+                            success_rate:5.1f}%"
+            )
 
         print()
         overall = summary["overall_metrics"]
         print("Overall Metrics:")
         print("-" * 40)
-        print(
-            f"Total Tests: {overall['total_passed'] + overall['total_failed'] + overall['total_errors']}"
-        )
+        print(f"Total Tests: {overall['total_passed'] + overall['total_failed'] + overall['total_errors']}")
         print(f"Passed: {overall['total_passed']}")
         print(f"Failed: {overall['total_failed']}")
         print(f"Errors: {overall['total_errors']}")
@@ -232,11 +223,7 @@ class PerformanceMonitor:
 
         overall_success = (
             overall["total_passed"]
-            / (
-                overall["total_passed"]
-                + overall["total_failed"]
-                + overall["total_errors"]
-            )
+            / (overall["total_passed"] + overall["total_failed"] + overall["total_errors"])
             * 100
         )
         print(f"Overall Success Rate: {overall_success:.1f}%")

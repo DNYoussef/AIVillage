@@ -26,7 +26,7 @@
 
 ## Production-Ready Components
 
-### 1. **Gateway Service** 
+### 1. **Gateway Service**
 **Location**: `experimental/services/gateway/`
 **Purpose**: Main API gateway and request routing
 **Features**:

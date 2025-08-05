@@ -10,10 +10,9 @@ Usage:
 """
 
 import importlib
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 try:
     import toml
@@ -22,7 +21,7 @@ except ImportError:
     sys.exit(1)
 
 
-def load_pyproject_dependencies() -> Dict[str, List[str]]:
+def load_pyproject_dependencies() -> dict[str, list[str]]:
     """Load dependencies from pyproject.toml.
 
     Returns:
@@ -48,7 +47,7 @@ def load_pyproject_dependencies() -> Dict[str, List[str]]:
     return dependencies
 
 
-def parse_requirement(req: str) -> Optional[str]:
+def parse_requirement(req: str) -> str | None:
     """Extract package name from requirement string.
 
     Args:
@@ -60,7 +59,7 @@ def parse_requirement(req: str) -> Optional[str]:
     # Handle various requirement formats
     req = req.strip()
 
-    if not req or req.startswith('#'):
+    if not req or req.startswith("#"):
         return None
 
     # Remove environment markers
@@ -121,7 +120,7 @@ def get_import_name(package_name: str) -> str:
     return mapping.get(package_name.lower(), package_name.replace("-", "_"))
 
 
-def check_imports(packages: Set[str]) -> Tuple[List[str], List[str]]:
+def check_imports(packages: set[str]) -> tuple[list[str], list[str]]:
     """Check if packages can be imported.
 
     Args:
@@ -130,8 +129,8 @@ def check_imports(packages: Set[str]) -> Tuple[List[str], List[str]]:
     Returns:
         Tuple of (successful imports, failed imports)
     """
-    successful: List[str] = []
-    failed: List[str] = []
+    successful: list[str] = []
+    failed: list[str] = []
 
     for package in sorted(packages):
         if not package:  # Skip empty packages
@@ -210,9 +209,7 @@ def generate_requirements_txt() -> None:
 
         filename = f"requirements-{group}.txt"
         with open(filename, "w", encoding="utf-8") as f:
-            f.write(
-                f"# Generated from pyproject.toml [{group}] - do not edit manually\n"
-            )
+            f.write(f"# Generated from pyproject.toml [{group}] - do not edit manually\n")
             f.write(f"# Use 'pip install -e \".[{group}]\"' for installation\n\n")
             for dep in deps:
                 f.write(f"{dep}\n")
@@ -255,7 +252,7 @@ def main() -> int:
         print(f"Loaded {len(dependencies)} dependency groups")
 
         # Extract all unique packages
-        all_packages: Set[str] = set()
+        all_packages: set[str] = set()
         for group, deps in dependencies.items():
             packages = [parse_requirement(dep) for dep in deps]
             packages = [p for p in packages if p]  # Remove None values
@@ -292,9 +289,7 @@ def main() -> int:
         success_rate = len(successful) / len(all_packages) * 100 if all_packages else 0
         print(f"  Import success rate: {success_rate:.1f}%")
         print(f"  Version conflicts: {'None' if conflicts_ok else 'Found'}")
-        print(
-            f"  Status: {'PASS' if len(failed) == 0 and conflicts_ok else 'ISSUES FOUND'}"
-        )
+        print(f"  Status: {'PASS' if len(failed) == 0 and conflicts_ok else 'ISSUES FOUND'}")
 
         if failed or not conflicts_ok:
             return 1
@@ -304,6 +299,7 @@ def main() -> int:
     except Exception as e:
         print(f"Validation failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

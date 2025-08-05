@@ -48,9 +48,7 @@ def analyze_model_capabilities():
         improvements[metric] = improvement
         capability = capability_mapping.get(metric, metric.upper())
 
-        print(
-            f"{capability:25s}: {score:.3f} vs {baseline:.3f} baseline (+{improvement:+5.1f}%)"
-        )
+        print(f"{capability:25s}: {score:.3f} vs {baseline:.3f} baseline (+{improvement:+5.1f}%)")
 
     # Identify strongest improvements
     sorted_improvements = sorted(improvements.items(), key=lambda x: x[1], reverse=True)
@@ -73,13 +71,9 @@ def analyze_model_capabilities():
         # Parameter significance analysis
         if param == "scaling_coefficient":
             if value > 1.0:
-                print(
-                    f"  → Amplification: {((value - 1.0) * 100):+.1f}% capability boost"
-                )
+                print(f"  → Amplification: {((value - 1.0) * 100):+.1f}% capability boost")
             else:
-                print(
-                    f"  → Conservation: {((1.0 - value) * 100):.1f}% capability preservation"
-                )
+                print(f"  → Conservation: {((1.0 - value) * 100):.1f}% capability preservation")
         elif param == "density":
             print(f"  → Sparsity: {((1.0 - value) * 100):.1f}% parameter pruning")
 
@@ -161,9 +155,7 @@ def analyze_model_capabilities():
 
         print(f"  Primary capabilities:   {primary_score:.3f}")
         print(f"  Secondary capabilities: {secondary_score:.3f}")
-        print(
-            f"  Overall readiness:      {(primary_score * 0.7 + secondary_score * 0.3):.3f}"
-        )
+        print(f"  Overall readiness:      {(primary_score * 0.7 + secondary_score * 0.3):.3f}")
 
     # Recommendations
     print("\nRECOMMENDATIONS FOR SPECIALIZATION:")

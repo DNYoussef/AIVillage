@@ -39,7 +39,7 @@ def risk_gate(msg: dict, risk: float) -> Literal["allow", "ask"]:
 #### resource_monitor.py (Lines 106, 323, 333, 350, 364, 374, 391, 416, 434)
 Multiple critical functions return None or pass:
 - `_get_process_memory_info()` → returns None
-- `get_memory_info()` → returns None  
+- `get_memory_info()` → returns None
 - `get_disk_info()` → returns None
 - `get_network_info()` → returns None
 - `get_gpu_memory_info()` → returns None

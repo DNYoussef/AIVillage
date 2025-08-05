@@ -44,19 +44,9 @@ class ReasoningEngine:
             reasoning_result = response.text  # Assuming this returns a JSON string
 
             # Perform a quality check on the reasoning
-            task_vector = (
-                self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(
-                    reasoning_result
-                )
-            )
-            eudaimonia_score = (
-                self.quality_assurance_layer.eudaimonia_triangulator.triangulate(
-                    task_vector
-                )
-            )
-            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(
-                task_vector
-            )
+            task_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(reasoning_result)
+            eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(task_vector)
+            rule_compliance = self.quality_assurance_layer.evaluate_rule_compliance(task_vector)
 
             quality_check = {
                 "eudaimonia_score": eudaimonia_score,

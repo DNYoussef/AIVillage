@@ -1,22 +1,17 @@
-import asyncio
 from uuid import uuid4
 
 import pytest
 
-from src.production.agent_forge.evolution import (
-    EvolutionScheduler,
-    DualEvolutionSystem,
-    EvolvableAgent,
-)
+from src.production.agent_forge.evolution import DualEvolutionSystem, EvolutionScheduler, EvolvableAgent
 
 
 class DummyAgent(EvolvableAgent):
     def __init__(self, performance: float):
-        super().__init__({'agent_id': str(uuid4())})
+        super().__init__({"agent_id": str(uuid4())})
         self._performance = performance
 
     def evaluate_kpi(self):
-        return {'performance': self._performance, 'reliability': 0.5}
+        return {"performance": self._performance, "reliability": 0.5}
 
     def should_retire(self) -> bool:
         return self._performance < self.retirement_threshold
@@ -31,9 +26,9 @@ def test_scheduler_basic_actions():
     agent_evolve = DummyAgent(0.5)
     agent_none = DummyAgent(0.8)
 
-    assert scheduler.get_action(agent_retire) == 'retire'
-    assert scheduler.get_action(agent_evolve) == 'evolve'
-    assert scheduler.get_action(agent_none) == 'none'
+    assert scheduler.get_action(agent_retire) == "retire"
+    assert scheduler.get_action(agent_evolve) == "evolve"
+    assert scheduler.get_action(agent_none) == "none"
 
 
 @pytest.mark.asyncio
@@ -47,7 +42,7 @@ async def test_dual_evolution_system_triggers_scheduler_actions():
     evolved = {}
 
     async def fake_evolve(agent):
-        evolved['id'] = agent.agent_id
+        evolved["id"] = agent.agent_id
         return True
 
     system._evolve_agent_nightly = fake_evolve
@@ -55,5 +50,4 @@ async def test_dual_evolution_system_triggers_scheduler_actions():
     await system._monitor_agent_performance()
 
     assert agent_retire.agent_id not in system.registered_agents
-    assert evolved['id'] == agent_evolve.agent_id
-
+    assert evolved["id"] == agent_evolve.agent_id

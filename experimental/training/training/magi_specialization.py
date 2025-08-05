@@ -26,7 +26,6 @@ import numpy as np
 import torch
 from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
-
 import wandb
 
 try:
@@ -35,17 +34,12 @@ except ImportError:
     click = None
 
 # Import existing Agent Forge components
-from AIVillage.experimental.training.quietstar_baker import (
-    QuietSTaRBaker,
-    QuietSTaRConfig,
-)
+from AIVillage.experimental.training.quietstar_baker import QuietSTaRBaker, QuietSTaRConfig
 
 from .curriculum import Question
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # ============================================================================
@@ -106,9 +100,7 @@ class MagiConfig:
     # W&B configuration
     wandb_project: str = "agent-forge-magi"
     wandb_entity: str | None = None
-    wandb_tags: list[str] = field(
-        default_factory=lambda: ["magi", "specialization", "self-aware"]
-    )
+    wandb_tags: list[str] = field(default_factory=lambda: ["magi", "specialization", "self-aware"])
 
 
 # ============================================================================
@@ -178,9 +170,7 @@ class FrontierQuestionGenerator:
     def _generate_level_questions(self, level: int) -> list[Question]:
         """Generate questions for a specific difficulty level."""
         questions = []
-        questions_per_area = self.config.questions_per_level // len(
-            self.config.specialization_areas
-        )
+        questions_per_area = self.config.questions_per_level // len(self.config.specialization_areas)
 
         for area in self.config.specialization_areas:
             for _i in range(questions_per_area):
@@ -203,9 +193,7 @@ class FrontierQuestionGenerator:
         question_text = template.format(**difficulty_params)
         answer = self._generate_answer(question_text, area, level)
 
-        return Question(
-            text=question_text, answer=answer, difficulty=level, domain=area
-        )
+        return Question(text=question_text, answer=answer, difficulty=level, domain=area)
 
     def _get_difficulty_parameters(self, area: str, level: int) -> dict[str, str]:
         """Get difficulty-appropriate parameters for question generation."""
@@ -239,9 +227,7 @@ class FrontierQuestionGenerator:
                 {
                     "theorem_statement": f"complex theorem at level {level}",
                     "false_statement": f"plausible but false statement (level {level})",
-                    "proof_method": random.choice(
-                        ["induction", "contradiction", "construction"]
-                    ),
+                    "proof_method": random.choice(["induction", "contradiction", "construction"]),
                     "proposition": f"mathematical proposition (difficulty {base_difficulty})",
                     "equation": f"differential equation of order {min(level, 4)}",
                     "proof_to_check": f"mathematical proof at level {level}",
@@ -259,9 +245,7 @@ class FrontierQuestionGenerator:
             )
 
         elif area == "algorithm_design":
-            common_params.update(
-                {"operations": f"operations at complexity level {level}"}
-            )
+            common_params.update({"operations": f"operations at complexity level {level}"})
 
         return common_params
 
@@ -472,9 +456,7 @@ class SelfModificationFramework:
         """Capture current model state for rollback purposes."""
         state = {
             "timestamp": datetime.now().isoformat(),
-            "state_dict": {
-                name: param.data.clone() for name, param in model.named_parameters()
-            },
+            "state_dict": {name: param.data.clone() for name, param in model.named_parameters()},
             "architecture_hash": self._calculate_architecture_hash(model),
         }
 
@@ -490,9 +472,7 @@ class SelfModificationFramework:
 
         return hashlib.md5(architecture_str.encode()).hexdigest()
 
-    def apply_modification(
-        self, model: nn.Module, modification_request: dict[str, Any]
-    ) -> dict[str, Any]:
+    def apply_modification(self, model: nn.Module, modification_request: dict[str, Any]) -> dict[str, Any]:
         """Apply a self-modification request with safety checks."""
         # Save checkpoint before modification
         checkpoint = self._capture_model_state(model)
@@ -535,18 +515,14 @@ class SelfModificationFramework:
 
         return result
 
-    def _adjust_layer_weights(
-        self, model: nn.Module, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _adjust_layer_weights(self, model: nn.Module, parameters: dict[str, Any]) -> dict[str, Any]:
         """Adjust weights in a specific layer."""
         layer_name = parameters.get("layer_name")
         adjustment_factor = parameters.get("adjustment_factor", 1.0)
         max_change = self.config.modification_safety_bounds["max_weight_change"]
 
         # Clamp adjustment to safety bounds
-        adjustment_factor = np.clip(
-            adjustment_factor, 1.0 - max_change, 1.0 + max_change
-        )
+        adjustment_factor = np.clip(adjustment_factor, 1.0 - max_change, 1.0 + max_change)
 
         for name, param in model.named_parameters():
             if layer_name in name:
@@ -560,9 +536,7 @@ class SelfModificationFramework:
 
         return {"success": False, "error": f"Layer {layer_name} not found"}
 
-    def _adjust_temperature(
-        self, model: nn.Module, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _adjust_temperature(self, model: nn.Module, parameters: dict[str, Any]) -> dict[str, Any]:
         """Adjust the temperature parameter for generation."""
         temperature_change = parameters.get("temperature_change", 0.0)
         max_change = self.config.modification_safety_bounds["max_temperature_change"]
@@ -575,9 +549,7 @@ class SelfModificationFramework:
             model.magi_temperature = 1.0
 
         model.magi_temperature += temperature_change
-        model.magi_temperature = np.clip(
-            model.magi_temperature, 0.1, 2.0
-        )  # Reasonable bounds
+        model.magi_temperature = np.clip(model.magi_temperature, 0.1, 2.0)  # Reasonable bounds
 
         return {
             "success": True,
@@ -585,9 +557,7 @@ class SelfModificationFramework:
             "safety_check": True,
         }
 
-    def _prune_connections(
-        self, model: nn.Module, parameters: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _prune_connections(self, model: nn.Module, parameters: dict[str, Any]) -> dict[str, Any]:
         """Prune low-magnitude connections."""
         threshold = parameters.get("threshold", 1e-6)
         layer_pattern = parameters.get("layer_pattern", "")
@@ -627,9 +597,7 @@ class SelfModificationFramework:
             if name in checkpoint["state_dict"]:
                 param.data.copy_(checkpoint["state_dict"][name])
 
-        logger.info(
-            f"Rolled back to checkpoint {checkpoint_id} from {checkpoint['timestamp']}"
-        )
+        logger.info(f"Rolled back to checkpoint {checkpoint_id} from {checkpoint['timestamp']}")
         return True
 
 
@@ -649,11 +617,7 @@ class MagiSpecializationPipeline:
         # Initialize components
         self.question_generator = FrontierQuestionGenerator(config)
         self.geometric_awareness = GeometricSelfAwareness(config)
-        self.self_modification = (
-            SelfModificationFramework(config)
-            if config.enable_self_modification
-            else None
-        )
+        self.self_modification = SelfModificationFramework(config) if config.enable_self_modification else None
 
         # Training state
         self.current_level = 1
@@ -716,9 +680,7 @@ class MagiSpecializationPipeline:
 
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            torch_dtype=torch.float16
-            if self.config.device == "cuda"
-            else torch.float32,
+            torch_dtype=torch.float16 if self.config.device == "cuda" else torch.float32,
         )
 
         # Store for later use
@@ -754,22 +716,16 @@ class MagiSpecializationPipeline:
 
             # Generate curriculum questions
             logger.info("Generating Magi curriculum questions...")
-            curriculum_questions = (
-                self.question_generator.generate_curriculum_questions()
-            )
+            curriculum_questions = self.question_generator.generate_curriculum_questions()
 
             # Enable self-modification if configured
             if self.self_modification:
-                (
-                    self.self_modification.enable_self_modification(model)
-                )
+                (self.self_modification.enable_self_modification(model))
                 logger.info("Self-modification enabled with safety bounds")
 
             # Execute 10-level curriculum
             logger.info("Starting 10-level Magi curriculum...")
-            curriculum_results = await self.execute_curriculum(
-                model, tokenizer, curriculum_questions
-            )
+            curriculum_results = await self.execute_curriculum(model, tokenizer, curriculum_questions)
 
             # Final evaluation and deployment preparation
             final_evaluation = await self.final_evaluation(model, tokenizer)
@@ -786,11 +742,9 @@ class MagiSpecializationPipeline:
                     "levels_completed": self.current_level - 1,
                     "final_performance": final_evaluation,
                     "geometric_evolution": self.geometric_history,
-                    "self_modifications_applied": len(
-                        self.self_modification.modification_history
-                    )
-                    if self.self_modification
-                    else 0,
+                    "self_modifications_applied": (
+                        len(self.self_modification.modification_history) if self.self_modification else 0
+                    ),
                 },
                 "quietstar_results": quietstar_results,
                 "curriculum_results": curriculum_results,
@@ -819,9 +773,7 @@ class MagiSpecializationPipeline:
             if self.wandb_run:
                 self.wandb_run.finish()
 
-    async def execute_curriculum(
-        self, model: nn.Module, tokenizer: Any, questions: list[Question]
-    ) -> dict[str, Any]:
+    async def execute_curriculum(self, model: nn.Module, tokenizer: Any, questions: list[Question]) -> dict[str, Any]:
         """Execute the 10-level curriculum with geometric monitoring and self-modification."""
         logger.info("Executing Magi curriculum with geometric self-awareness...")
 
@@ -839,9 +791,7 @@ class MagiSpecializationPipeline:
             level_questions = [q for q in questions if q.difficulty == level]
 
             # Execute level with monitoring
-            level_results = await self.execute_level(
-                model, tokenizer, level_questions, level
-            )
+            level_results = await self.execute_level(model, tokenizer, level_questions, level)
             curriculum_results["level_results"].append(level_results)
 
             # Geometric analysis
@@ -896,17 +846,13 @@ class MagiSpecializationPipeline:
             # Geometric monitoring
             if self.questions_completed % self.config.weight_visualization_freq == 0:
                 if self.config.enable_geometric_awareness:
-                    weight_analysis = self.geometric_awareness.analyze_weight_space(
-                        model
-                    )
+                    weight_analysis = self.geometric_awareness.analyze_weight_space(model)
                     self.geometric_history.append(weight_analysis)
 
             # Progress logging
             if (i + 1) % 100 == 0:
                 accuracy = correct_answers / (i + 1)
-                logger.info(
-                    f"Level {level} progress: {i + 1}/{len(questions)} questions, accuracy: {accuracy:.3f}"
-                )
+                logger.info(f"Level {level} progress: {i + 1}/{len(questions)} questions, accuracy: {accuracy:.3f}")
 
         level_accuracy = correct_answers / len(questions)
 
@@ -922,9 +868,7 @@ class MagiSpecializationPipeline:
 
         return level_results
 
-    def answer_question(
-        self, model: nn.Module, tokenizer: Any, question: Question
-    ) -> str:
+    def answer_question(self, model: nn.Module, tokenizer: Any, question: Question) -> str:
         """Generate answer to a curriculum question."""
         prompt = f"Question: {question.text}\n\nAnswer:"
 
@@ -953,9 +897,7 @@ class MagiSpecializationPipeline:
 
         # Check for keyword overlap
         keyword_overlap = len(set(expected_keywords) & set(generated_keywords))
-        overlap_ratio = (
-            keyword_overlap / len(expected_keywords) if expected_keywords else 0
-        )
+        overlap_ratio = keyword_overlap / len(expected_keywords) if expected_keywords else 0
 
         # Simple correctness heuristic
         return overlap_ratio > 0.3 and len(generated_answer) > 20
@@ -976,9 +918,7 @@ class MagiSpecializationPipeline:
 
         logger.info("Sleep/dream cycle completed")
 
-    async def final_evaluation(
-        self, model: nn.Module, tokenizer: Any
-    ) -> dict[str, Any]:
+    async def final_evaluation(self, model: nn.Module, tokenizer: Any) -> dict[str, Any]:
         """Conduct final evaluation of the specialized Magi agent."""
         logger.info("Conducting final evaluation of Magi specialization...")
 
@@ -988,10 +928,7 @@ class MagiSpecializationPipeline:
         for area in self.config.specialization_areas:
             # Generate test questions for this area
             test_questions = [
-                self.question_generator._generate_single_question(
-                    area, 10
-                )  # Max difficulty
-                for _ in range(20)
+                self.question_generator._generate_single_question(area, 10) for _ in range(20)  # Max difficulty
             ]
 
             correct = 0
@@ -1007,24 +944,18 @@ class MagiSpecializationPipeline:
             }
 
         # Overall metrics
-        overall_accuracy = np.mean(
-            [result["accuracy"] for result in evaluation_results.values()]
-        )
+        overall_accuracy = np.mean([result["accuracy"] for result in evaluation_results.values()])
 
         final_eval = {
             "overall_accuracy": overall_accuracy,
             "area_results": evaluation_results,
-            "specialization_level": "Expert"
-            if overall_accuracy > 0.8
-            else "Advanced"
-            if overall_accuracy > 0.6
-            else "Intermediate",
+            "specialization_level": (
+                "Expert" if overall_accuracy > 0.8 else "Advanced" if overall_accuracy > 0.6 else "Intermediate"
+            ),
             "ready_for_deployment": overall_accuracy > 0.7,
         }
 
-        logger.info(
-            f"Final evaluation complete - Overall accuracy: {overall_accuracy:.3f}"
-        )
+        logger.info(f"Final evaluation complete - Overall accuracy: {overall_accuracy:.3f}")
 
         return final_eval
 
@@ -1049,11 +980,9 @@ class MagiSpecializationPipeline:
                 "total_questions_completed": self.questions_completed,
                 "curriculum_levels_completed": self.current_level - 1,
                 "geometric_snapshots_captured": len(self.geometric_history),
-                "self_modifications_applied": len(
-                    self.self_modification.modification_history
-                )
-                if self.self_modification
-                else 0,
+                "self_modifications_applied": (
+                    len(self.self_modification.modification_history) if self.self_modification else 0
+                ),
             },
         }
 
@@ -1113,14 +1042,13 @@ if click:
 
     @click.command()
     @click.option("--config", help="Configuration JSON file")
-    @click.option(
-        "--output-dir", default="D:/AgentForge/magi_output", help="Output directory"
-    )
+    @click.option("--output-dir", default="D:/AgentForge/magi_output", help="Output directory")
     @click.option("--levels", default=10, help="Number of curriculum levels")
     @click.option("--questions-per-level", default=1000, help="Questions per level")
     @click.option("--enable-self-mod", is_flag=True, help="Enable self-modification")
     def main_cli(config, output_dir, levels, questions_per_level, enable_self_mod):
         return main(config, output_dir, levels, questions_per_level, enable_self_mod)
+
 else:
     main_cli = main
 

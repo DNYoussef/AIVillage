@@ -7,11 +7,11 @@ Tracks the progress from 40% to >60% completion after stub replacement sprint.
 """
 
 import asyncio
+from datetime import datetime
 import json
 import logging
-import sys
-from datetime import datetime
 from pathlib import Path
+import sys
 from typing import Any
 
 logging.basicConfig(level=logging.INFO)

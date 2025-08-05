@@ -1,16 +1,18 @@
 """Test compression actually works with real models"""
+
+import os
+import tempfile
+
 import pytest
 import torch
-import torch.nn as nn
-import tempfile
-import os
-from pathlib import Path
+from torch import nn
 
-from core.compression import SimpleQuantizer, CompressionError
+from core.compression import CompressionError, SimpleQuantizer
 
 
 class SimpleModel(nn.Module):
     """Test model that's realistic but small"""
+
     def __init__(self):
         super().__init__()
         self.features = nn.Sequential(
@@ -79,7 +81,7 @@ class TestSimpleQuantizer:
     def test_compress_from_file(self):
         """Test compression from saved model file"""
         model = SimpleModel()
-        with tempfile.NamedTemporaryFile(suffix='.pth', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".pth", delete=False) as tmp:
             torch.save(model, tmp.name)
             model_path = tmp.name
         try:
@@ -110,6 +112,7 @@ class TestSimpleQuantizer:
     def test_memory_constraint(self):
         """Test compression works within 2GB memory limit"""
         import psutil
+
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024
         model = SimpleModel()
@@ -137,6 +140,7 @@ class TestSimpleQuantizer:
 
     def _get_model_size(self, model):
         import io
+
         buffer = io.BytesIO()
         torch.save(model, buffer)
         return buffer.tell()

@@ -9,12 +9,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from core.communication import (
-    AgentCommunicationProtocol,
-    AgentMessage,
-    AgentMessageType,
-    Priority,
-)
+from core.communication import AgentCommunicationProtocol, AgentMessage, AgentMessageType, Priority
 
 
 class TestAgentMessageType:
@@ -354,9 +349,7 @@ class TestAgentCommunicationProtocol:
 
         # Add multiple messages
         for i in range(5):
-            msg = AgentMessage(
-                AgentMessageType.TASK, f"agent{i}", "target", f"content{i}"
-            )
+            msg = AgentMessage(AgentMessageType.TASK, f"agent{i}", "target", f"content{i}")
             protocol.message_history.append(msg)
 
         history = protocol.get_message_history(limit=3)

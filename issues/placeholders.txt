@@ -19,7 +19,7 @@ stub_patterns = [
     "NotImplementedError",
     "pass",
     "TODO",
-    "FIXME", 
+    "FIXME",
     "raise NotImplementedError",
 ]
 ```
@@ -49,7 +49,7 @@ base_models: list[BaseModelConfig] = Field(
             domain_specialty="reasoning",
         ),
         BaseModelConfig(
-            name="nemotron", 
+            name="nemotron",
             path="nvidia/Nemotron-Research-Reasoning-Qwen-1.5B",
             domain_specialty="reasoning",
         ),

@@ -4,27 +4,24 @@ Comprehensive Test Coverage Dashboard for AIVillage
 Real-time monitoring and analysis of test coverage across all components.
 """
 
-import ast
-import asyncio
-import glob
+from dataclasses import dataclass
+from datetime import datetime
 import json
 import os
+from pathlib import Path
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 
 @dataclass
 class CoverageMetrics:
     """Container for coverage metrics."""
+
     total_lines: int
     covered_lines: int
     coverage_percent: float
-    missing_lines: List[int]
+    missing_lines: list[int]
     file_path: str
     timestamp: str
 
@@ -32,12 +29,13 @@ class CoverageMetrics:
 @dataclass
 class TestSuiteMetrics:
     """Container for test suite metrics."""
+
     total_tests: int
     passed_tests: int
     failed_tests: int
     skipped_tests: int
     execution_time: float
-    test_files: List[str]
+    test_files: list[str]
 
 
 class TestCoverageDashboard:
@@ -49,7 +47,7 @@ class TestCoverageDashboard:
         self.test_metrics = {}
         self.critical_components = self._identify_critical_components()
 
-    def _identify_critical_components(self) -> Dict[str, List[str]]:
+    def _identify_critical_components(self) -> dict[str, list[str]]:
         """Identify critical components that require high test coverage."""
         return {
             "sprint6_infrastructure": [
@@ -57,52 +55,48 @@ class TestCoverageDashboard:
                 "src/core/resources/",
                 "src/production/agent_forge/evolution/infrastructure_aware_evolution.py",
                 "src/production/agent_forge/evolution/resource_constrained_evolution.py",
-                "src/production/agent_forge/evolution/evolution_coordination_protocol.py"
+                "src/production/agent_forge/evolution/evolution_coordination_protocol.py",
             ],
             "sprint6_p2p_layer": [
                 "src/core/p2p/p2p_node.py",
                 "src/core/p2p/peer_discovery.py",
                 "src/core/p2p/message_protocol.py",
-                "src/core/p2p/encryption_layer.py"
+                "src/core/p2p/encryption_layer.py",
             ],
             "sprint6_resource_management": [
                 "src/core/resources/device_profiler.py",
                 "src/core/resources/resource_monitor.py",
                 "src/core/resources/constraint_manager.py",
-                "src/core/resources/adaptive_loader.py"
+                "src/core/resources/adaptive_loader.py",
             ],
             "sprint6_evolution_systems": [
                 "src/production/agent_forge/evolution/base.py",
                 "src/production/agent_forge/evolution/dual_evolution_system.py",
                 "src/production/agent_forge/evolution/magi_architectural_evolution.py",
-                "src/production/agent_forge/evolution/nightly_evolution_orchestrator.py"
+                "src/production/agent_forge/evolution/nightly_evolution_orchestrator.py",
             ],
             "production_critical": [
                 "production/compression/",
                 "production/evolution/",
                 "production/rag/",
                 "mcp_servers/hyperag/server.py",
-                "mcp_servers/hyperag/protocol.py"
+                "mcp_servers/hyperag/protocol.py",
             ],
             "core_systems": [
                 "agent_forge/core/",
                 "agent_forge/orchestrator.py",
                 "communications/protocol.py",
-                "digital_twin/core/"
+                "digital_twin/core/",
             ],
             "security_components": [
                 "mcp_servers/hyperag/auth.py",
                 "digital_twin/security/",
-                "mcp_servers/hyperag/guardian/"
+                "mcp_servers/hyperag/guardian/",
             ],
-            "integration_points": [
-                "experimental/services/",
-                "mcp_servers/hyperag/memory/",
-                "hyperag/education/"
-            ]
+            "integration_points": ["experimental/services/", "mcp_servers/hyperag/memory/", "hyperag/education/"],
         }
 
-    def run_coverage_analysis(self) -> Dict:
+    def run_coverage_analysis(self) -> dict:
         """Run comprehensive coverage analysis."""
         print("🔍 Running comprehensive test coverage analysis...")
 
@@ -137,22 +131,25 @@ class TestCoverageDashboard:
             "component_coverage": component_coverage,
             "coverage_gaps": coverage_gaps,
             "recommendations": recommendations,
-            "test_suite_health": self._analyze_test_suite_health()
+            "test_suite_health": self._analyze_test_suite_health(),
         }
 
         return dashboard_data
 
-    def _run_pytest_coverage(self) -> Dict:
+    def _run_pytest_coverage(self) -> dict:
         """Run pytest with coverage collection."""
         cmd = [
-            sys.executable, "-m", "pytest",
+            sys.executable,
+            "-m",
+            "pytest",
             "--cov=.",
             "--cov-report=json:coverage_report.json",
             "--cov-report=html:htmlcov",
             "--cov-report=term-missing",
             "--cov-config=.coveragerc",
-            "-v", "--tb=short",
-            "--durations=10"
+            "-v",
+            "--tb=short",
+            "--durations=10",
         ]
 
         print(f"Executing: {' '.join(cmd)}")
@@ -163,8 +160,9 @@ class TestCoverageDashboard:
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=600,  # 10 minute timeout
-                cwd=self.project_root
+                timeout=600,
+                cwd=self.project_root,
+                check=False,  # 10 minute timeout
             )
             execution_time = time.time() - start_time
 
@@ -177,7 +175,7 @@ class TestCoverageDashboard:
             # Load coverage results
             coverage_file = self.project_root / "coverage_report.json"
             if coverage_file.exists():
-                with open(coverage_file, 'r') as f:
+                with open(coverage_file) as f:
                     coverage_data = json.load(f)
 
                 return {
@@ -185,39 +183,26 @@ class TestCoverageDashboard:
                     "execution_time": execution_time,
                     "coverage_data": coverage_data,
                     "stdout": result.stdout,
-                    "stderr": result.stderr
+                    "stderr": result.stderr,
                 }
-            else:
-                return {
-                    "success": False,
-                    "error": "Coverage report not generated",
-                    "stdout": result.stdout,
-                    "stderr": result.stderr
-                }
+            return {
+                "success": False,
+                "error": "Coverage report not generated",
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+            }
 
         except subprocess.TimeoutExpired:
-            return {
-                "success": False,
-                "error": "Pytest execution timed out",
-                "execution_time": 600
-            }
+            return {"success": False, "error": "Pytest execution timed out", "execution_time": 600}
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
-    def _analyze_component_coverage(self) -> Dict:
+    def _analyze_component_coverage(self) -> dict:
         """Analyze coverage by critical components."""
         component_metrics = {}
 
         for category, components in self.critical_components.items():
-            category_metrics = {
-                "total_files": 0,
-                "covered_files": 0,
-                "average_coverage": 0.0,
-                "files": {}
-            }
+            category_metrics = {"total_files": 0, "covered_files": 0, "average_coverage": 0.0, "files": {}}
 
             total_coverage = 0
             file_count = 0
@@ -245,18 +230,17 @@ class TestCoverageDashboard:
 
         return component_metrics
 
-    def _find_python_files(self, path_pattern: str) -> List[Path]:
+    def _find_python_files(self, path_pattern: str) -> list[Path]:
         """Find Python files matching pattern."""
-        if path_pattern.endswith('/'):
+        if path_pattern.endswith("/"):
             # Directory pattern
             pattern = self.project_root / path_pattern / "**/*.py"
             return list(Path().glob(str(pattern)))
-        else:
-            # Specific file
-            file_path = self.project_root / path_pattern
-            return [file_path] if file_path.exists() else []
+        # Specific file
+        file_path = self.project_root / path_pattern
+        return [file_path] if file_path.exists() else []
 
-    def _get_file_coverage(self, file_path: Path) -> Optional[Dict]:
+    def _get_file_coverage(self, file_path: Path) -> dict | None:
         """Get coverage data for specific file."""
         # This would integrate with coverage.py data
         # For now, return mock data structure
@@ -266,9 +250,9 @@ class TestCoverageDashboard:
 
         # Count lines in file
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 lines = f.readlines()
-                total_lines = len([l for l in lines if l.strip() and not l.strip().startswith('#')])
+                total_lines = len([l for l in lines if l.strip() and not l.strip().startswith("#")])
         except Exception:
             total_lines = 0
 
@@ -283,7 +267,7 @@ class TestCoverageDashboard:
             "covered_lines": covered_lines,
             "missing_lines": missing_lines,
             "file_path": str(file_path),
-            "has_tests": self._file_has_tests(file_path)
+            "has_tests": self._file_has_tests(file_path),
         }
 
     def _file_has_tests(self, file_path: Path) -> bool:
@@ -292,19 +276,14 @@ class TestCoverageDashboard:
         test_patterns = [
             self.project_root / "tests" / f"test_{file_path.stem}.py",
             self.project_root / "tests" / file_path.parent.name / f"test_{file_path.stem}.py",
-            file_path.parent / f"test_{file_path.stem}.py"
+            file_path.parent / f"test_{file_path.stem}.py",
         ]
 
         return any(test_path.exists() for test_path in test_patterns)
 
-    def _identify_coverage_gaps(self) -> Dict:
+    def _identify_coverage_gaps(self) -> dict:
         """Identify critical coverage gaps."""
-        gaps = {
-            "critical_untested": [],
-            "low_coverage": [],
-            "missing_integration_tests": [],
-            "security_gaps": []
-        }
+        gaps = {"critical_untested": [], "low_coverage": [], "missing_integration_tests": [], "security_gaps": []}
 
         # Find untested critical files
         for category, components in self.critical_components.items():
@@ -313,78 +292,87 @@ class TestCoverageDashboard:
 
                 for file_path in files:
                     if not self._file_has_tests(file_path):
-                        gaps["critical_untested"].append({
-                            "file": str(file_path),
-                            "category": category,
-                            "priority": "high" if "production_critical" in category else "medium"
-                        })
+                        gaps["critical_untested"].append(
+                            {
+                                "file": str(file_path),
+                                "category": category,
+                                "priority": "high" if "production_critical" in category else "medium",
+                            }
+                        )
 
         return gaps
 
-    def _generate_recommendations(self, coverage_gaps: Dict) -> List[Dict]:
+    def _generate_recommendations(self, coverage_gaps: dict) -> list[dict]:
         """Generate recommendations for improving coverage."""
         recommendations = []
 
         # High priority recommendations
         if coverage_gaps["critical_untested"]:
-            recommendations.append({
-                "priority": "critical",
-                "title": "Create tests for production-critical components",
-                "description": f"Found {len(coverage_gaps['critical_untested'])} untested critical files",
-                "action_items": [
-                    f"Create test file for {gap['file']}"
-                    for gap in coverage_gaps["critical_untested"][:5]
-                ],
-                "estimated_effort": "2-3 days",
-                "impact": "High - Essential for production reliability"
-            })
+            recommendations.append(
+                {
+                    "priority": "critical",
+                    "title": "Create tests for production-critical components",
+                    "description": f"Found {len(coverage_gaps['critical_untested'])} untested critical files",
+                    "action_items": [
+                        f"Create test file for {gap['file']}" for gap in coverage_gaps["critical_untested"][:5]
+                    ],
+                    "estimated_effort": "2-3 days",
+                    "impact": "High - Essential for production reliability",
+                }
+            )
 
         # Coverage improvement recommendations
-        recommendations.append({
-            "priority": "high",
-            "title": "Improve MCP server test coverage",
-            "description": "MCP servers are core to the system but lack comprehensive tests",
-            "action_items": [
-                "Create integration tests for server.py",
-                "Add unit tests for protocol.py",
-                "Test authentication and authorization",
-                "Add performance tests for concurrent connections"
-            ],
-            "estimated_effort": "3-4 days",
-            "impact": "High - Critical for system stability"
-        })
+        recommendations.append(
+            {
+                "priority": "high",
+                "title": "Improve MCP server test coverage",
+                "description": "MCP servers are core to the system but lack comprehensive tests",
+                "action_items": [
+                    "Create integration tests for server.py",
+                    "Add unit tests for protocol.py",
+                    "Test authentication and authorization",
+                    "Add performance tests for concurrent connections",
+                ],
+                "estimated_effort": "3-4 days",
+                "impact": "High - Critical for system stability",
+            }
+        )
 
-        recommendations.append({
-            "priority": "high",
-            "title": "Implement compression pipeline testing",
-            "description": "Production compression needs comprehensive test coverage",
-            "action_items": [
-                "Test compression algorithms",
-                "Add performance benchmarks",
-                "Test model loading and saving",
-                "Add integration tests with evolution system"
-            ],
-            "estimated_effort": "2-3 days",
-            "impact": "High - Production critical component"
-        })
+        recommendations.append(
+            {
+                "priority": "high",
+                "title": "Implement compression pipeline testing",
+                "description": "Production compression needs comprehensive test coverage",
+                "action_items": [
+                    "Test compression algorithms",
+                    "Add performance benchmarks",
+                    "Test model loading and saving",
+                    "Add integration tests with evolution system",
+                ],
+                "estimated_effort": "2-3 days",
+                "impact": "High - Production critical component",
+            }
+        )
 
-        recommendations.append({
-            "priority": "medium",
-            "title": "Add integration test framework",
-            "description": "Need end-to-end integration testing",
-            "action_items": [
-                "Create integration test fixtures",
-                "Add multi-component workflow tests",
-                "Test external API integrations",
-                "Add load testing capabilities"
-            ],
-            "estimated_effort": "1-2 weeks",
-            "impact": "Medium - Improves system reliability"
-        })
+        recommendations.append(
+            {
+                "priority": "medium",
+                "title": "Add integration test framework",
+                "description": "Need end-to-end integration testing",
+                "action_items": [
+                    "Create integration test fixtures",
+                    "Add multi-component workflow tests",
+                    "Test external API integrations",
+                    "Add load testing capabilities",
+                ],
+                "estimated_effort": "1-2 weeks",
+                "impact": "Medium - Improves system reliability",
+            }
+        )
 
         return recommendations
 
-    def _analyze_test_suite_health(self) -> Dict:
+    def _analyze_test_suite_health(self) -> dict:
         """Analyze overall test suite health."""
         test_files = list(self.project_root.rglob("test_*.py"))
         test_files.extend(list(self.project_root.rglob("*_test.py")))
@@ -393,7 +381,7 @@ class TestCoverageDashboard:
             "total_test_files": len(test_files),
             "test_distribution": {},
             "test_quality_issues": [],
-            "performance_issues": []
+            "performance_issues": [],
         }
 
         # Analyze test distribution
@@ -405,17 +393,13 @@ class TestCoverageDashboard:
 
         return health_metrics
 
-    def _run_sprint6_validation(self) -> Dict:
+    def _run_sprint6_validation(self) -> dict:
         """Run Sprint 6 validation script."""
         print("🚀 Running Sprint 6 validation...")
 
         validation_script = self.project_root / "validate_sprint6.py"
         if not validation_script.exists():
-            return {
-                "success": False,
-                "error": "validate_sprint6.py not found",
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"success": False, "error": "validate_sprint6.py not found", "timestamp": datetime.now().isoformat()}
 
         try:
             start_time = time.time()
@@ -424,7 +408,8 @@ class TestCoverageDashboard:
                 capture_output=True,
                 text=True,
                 timeout=300,
-                cwd=self.project_root
+                cwd=self.project_root,
+                check=False,
             )
             execution_time = time.time() - start_time
 
@@ -434,7 +419,7 @@ class TestCoverageDashboard:
                 "returncode": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except subprocess.TimeoutExpired:
@@ -442,23 +427,19 @@ class TestCoverageDashboard:
                 "success": False,
                 "error": "Sprint 6 validation timed out",
                 "execution_time": 300,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"success": False, "error": str(e), "timestamp": datetime.now().isoformat()}
 
-    def _run_sprint6_infrastructure_tests(self) -> Dict:
+    def _run_sprint6_infrastructure_tests(self) -> dict:
         """Run Sprint 6 infrastructure tests."""
         print("🏗️ Running Sprint 6 infrastructure tests...")
 
         test_files = [
             "tests/test_sprint6_infrastructure.py",
             "tests/communications/test_p2p.py",
-            "tests/core/test_integration.py"
+            "tests/core/test_integration.py",
         ]
 
         results = {
@@ -466,16 +447,13 @@ class TestCoverageDashboard:
             "passed_files": 0,
             "failed_files": 0,
             "results": {},
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         for test_file in test_files:
             test_path = self.project_root / test_file
             if not test_path.exists():
-                results["results"][test_file] = {
-                    "success": False,
-                    "error": "Test file not found"
-                }
+                results["results"][test_file] = {"success": False, "error": "Test file not found"}
                 results["failed_files"] += 1
                 continue
 
@@ -486,7 +464,8 @@ class TestCoverageDashboard:
                     capture_output=True,
                     text=True,
                     timeout=180,
-                    cwd=self.project_root
+                    cwd=self.project_root,
+                    check=False,
                 )
                 execution_time = time.time() - start_time
 
@@ -500,26 +479,23 @@ class TestCoverageDashboard:
                     "execution_time": execution_time,
                     "returncode": result.returncode,
                     "stdout": result.stdout,
-                    "stderr": result.stderr
+                    "stderr": result.stderr,
                 }
 
             except subprocess.TimeoutExpired:
                 results["results"][test_file] = {
                     "success": False,
                     "error": "Test execution timed out",
-                    "execution_time": 180
+                    "execution_time": 180,
                 }
                 results["failed_files"] += 1
             except Exception as e:
-                results["results"][test_file] = {
-                    "success": False,
-                    "error": str(e)
-                }
+                results["results"][test_file] = {"success": False, "error": str(e)}
                 results["failed_files"] += 1
 
         return results
 
-    def _run_sprint6_performance_tests(self) -> Dict:
+    def _run_sprint6_performance_tests(self) -> dict:
         """Run Sprint 6 performance tests."""
         print("⚡ Running Sprint 6 performance tests...")
 
@@ -530,7 +506,7 @@ class TestCoverageDashboard:
             return {
                 "success": False,
                 "error": "Performance test file not found",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         try:
@@ -540,7 +516,8 @@ class TestCoverageDashboard:
                 capture_output=True,
                 text=True,
                 timeout=300,
-                cwd=self.project_root
+                cwd=self.project_root,
+                check=False,
             )
             execution_time = time.time() - start_time
 
@@ -550,7 +527,7 @@ class TestCoverageDashboard:
                 "returncode": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except subprocess.TimeoutExpired:
@@ -558,16 +535,12 @@ class TestCoverageDashboard:
                 "success": False,
                 "error": "Performance tests timed out",
                 "execution_time": 300,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+            return {"success": False, "error": str(e), "timestamp": datetime.now().isoformat()}
 
-    def run_sprint6_test_suite(self) -> Dict:
+    def run_sprint6_test_suite(self) -> dict:
         """Run comprehensive Sprint 6 test suite."""
         print("🧪 Running comprehensive Sprint 6 test suite...")
 
@@ -584,9 +557,9 @@ class TestCoverageDashboard:
 
         # Determine overall success
         overall_success = (
-            validation_results.get("success", False) and
-            infrastructure_results.get("passed_files", 0) == infrastructure_results.get("total_files", 1) and
-            performance_results.get("success", False)
+            validation_results.get("success", False)
+            and infrastructure_results.get("passed_files", 0) == infrastructure_results.get("total_files", 1)
+            and performance_results.get("success", False)
         )
 
         suite_results = {
@@ -600,13 +573,13 @@ class TestCoverageDashboard:
                 "validation_passed": validation_results.get("success", False),
                 "infrastructure_tests_passed": infrastructure_results.get("passed_files", 0),
                 "infrastructure_tests_failed": infrastructure_results.get("failed_files", 0),
-                "performance_tests_passed": performance_results.get("success", False)
-            }
+                "performance_tests_passed": performance_results.get("success", False),
+            },
         }
 
         # Save results
         results_file = self.project_root / "sprint6_test_results.json"
-        with open(results_file, 'w') as f:
+        with open(results_file, "w") as f:
             json.dump(suite_results, f, indent=2)
 
         print(f"✅ Sprint 6 test suite completed in {total_execution_time:.2f} seconds")
@@ -615,16 +588,16 @@ class TestCoverageDashboard:
 
         return suite_results
 
-    def generate_html_dashboard(self, dashboard_data: Dict) -> str:
+    def generate_html_dashboard(self, dashboard_data: dict) -> str:
         """Generate HTML dashboard."""
         # Determine Sprint 6 status
         sprint6_status = "🟢 Healthy"
         sprint6_class = "success"
 
-        if 'sprint6_validation' in dashboard_data:
-            validation_success = dashboard_data['sprint6_validation'].get('success', False)
-            infrastructure_success = dashboard_data.get('sprint6_infrastructure', {}).get('passed_files', 0) > 0
-            performance_success = dashboard_data.get('sprint6_performance', {}).get('success', False)
+        if "sprint6_validation" in dashboard_data:
+            validation_success = dashboard_data["sprint6_validation"].get("success", False)
+            infrastructure_success = dashboard_data.get("sprint6_infrastructure", {}).get("passed_files", 0) > 0
+            performance_success = dashboard_data.get("sprint6_performance", {}).get("success", False)
 
             if validation_success and infrastructure_success and performance_success:
                 sprint6_status = "🟢 All Systems Operational"
@@ -714,17 +687,17 @@ class TestCoverageDashboard:
         </div>"""
 
         # Add Sprint 6 test results sections
-        if 'sprint6_validation' in dashboard_data:
-            validation = dashboard_data['sprint6_validation']
-            validation_status = "✅ Passed" if validation.get('success', False) else "❌ Failed"
-            validation_class = "success" if validation.get('success', False) else "critical"
+        if "sprint6_validation" in dashboard_data:
+            validation = dashboard_data["sprint6_validation"]
+            validation_status = "✅ Passed" if validation.get("success", False) else "❌ Failed"
+            validation_class = "success" if validation.get("success", False) else "critical"
 
             html_content += f"""
         <div class="test-results {validation_class}">
             <h2>🔧 Sprint 6 Validation Results</h2>
             <p><strong>Status:</strong> <span class="test-status-{'pass' if validation.get('success', False) else 'fail'}">{validation_status}</span></p>
             <p><strong>Execution Time:</strong> <span class="execution-time">{validation.get('execution_time', 0):.2f} seconds</span></p>
-            
+
             <button class="collapsible" onclick="toggleContent('validation-details')">View Validation Output</button>
             <div id="validation-details" class="content">
                 <h4>Standard Output:</h4>
@@ -733,8 +706,8 @@ class TestCoverageDashboard:
             </div>
         </div>"""
 
-        if 'sprint6_infrastructure' in dashboard_data:
-            infra = dashboard_data['sprint6_infrastructure']
+        if "sprint6_infrastructure" in dashboard_data:
+            infra = dashboard_data["sprint6_infrastructure"]
 
             html_content += f"""
         <div class="test-results">
@@ -760,10 +733,10 @@ class TestCoverageDashboard:
             <table>
                 <tr><th>Test File</th><th>Status</th><th>Execution Time</th><th>Details</th></tr>"""
 
-            for test_file, result in infra.get('results', {}).items():
-                status_icon = "✅" if result.get('success', False) else "❌"
-                status_class = "test-status-pass" if result.get('success', False) else "test-status-fail"
-                exec_time = result.get('execution_time', 0)
+            for test_file, result in infra.get("results", {}).items():
+                status_icon = "✅" if result.get("success", False) else "❌"
+                status_class = "test-status-pass" if result.get("success", False) else "test-status-fail"
+                exec_time = result.get("execution_time", 0)
 
                 html_content += f"""
                 <tr>
@@ -776,8 +749,8 @@ class TestCoverageDashboard:
             html_content += "</table>"
 
             # Add collapsible details for each test
-            for test_file, result in infra.get('results', {}).items():
-                content_id = test_file.replace('/', '-').replace('.', '-')
+            for test_file, result in infra.get("results", {}).items():
+                content_id = test_file.replace("/", "-").replace(".", "-")
                 html_content += f"""
             <div id="{content_id}" class="content">
                 <h4>{test_file}</h4>
@@ -790,17 +763,17 @@ class TestCoverageDashboard:
 
             html_content += "</div>"
 
-        if 'sprint6_performance' in dashboard_data:
-            perf = dashboard_data['sprint6_performance']
-            perf_status = "✅ Passed" if perf.get('success', False) else "❌ Failed"
-            perf_class = "success" if perf.get('success', False) else "warning"
+        if "sprint6_performance" in dashboard_data:
+            perf = dashboard_data["sprint6_performance"]
+            perf_status = "✅ Passed" if perf.get("success", False) else "❌ Failed"
+            perf_class = "success" if perf.get("success", False) else "warning"
 
             html_content += f"""
         <div class="test-results {perf_class}">
             <h2>⚡ Sprint 6 Performance Tests</h2>
             <p><strong>Status:</strong> <span class="test-status-{'pass' if perf.get('success', False) else 'fail'}">{perf_status}</span></p>
             <p><strong>Execution Time:</strong> <span class="execution-time">{perf.get('execution_time', 0):.2f} seconds</span></p>
-            
+
             <button class="collapsible" onclick="toggleContent('performance-details')">View Performance Results</button>
             <div id="performance-details" class="content">
                 <h4>Benchmark Output:</h4>
@@ -809,7 +782,7 @@ class TestCoverageDashboard:
             </div>
         </div>"""
 
-        html_content += f"""
+        html_content += """
         <div class="test-results">
             <h2>🎯 Critical Component Coverage</h2>
             <table>
@@ -848,14 +821,18 @@ class TestCoverageDashboard:
         </div>
 """
 
-        html_content += """
+        html_content += (
+            """
     </div>
 
     <div class="metric-card">
         <h2>📈 Test Suite Health</h2>
-        <p><strong>Total Test Files:</strong> """ + str(dashboard_data["test_suite_health"]["total_test_files"]) + """</p>
+        <p><strong>Total Test Files:</strong> """
+            + str(dashboard_data["test_suite_health"]["total_test_files"])
+            + """</p>
         <p><strong>Test Distribution:</strong></p>
         <ul>"""
+        )
 
         for category, count in dashboard_data["test_suite_health"]["test_distribution"].items():
             html_content += f"<li>{category}: {count} files</li>"
@@ -891,7 +868,7 @@ class TestCoverageDashboard:
 
         return html_content
 
-    def save_dashboard(self, dashboard_data: Dict, output_dir: Path = None) -> Dict[str, str]:
+    def save_dashboard(self, dashboard_data: dict, output_dir: Path = None) -> dict[str, str]:
         """Save dashboard data and reports."""
         if output_dir is None:
             output_dir = self.project_root / "coverage_reports"
@@ -901,30 +878,27 @@ class TestCoverageDashboard:
 
         # Save JSON data
         json_file = output_dir / f"coverage_analysis_{timestamp}.json"
-        with open(json_file, 'w') as f:
+        with open(json_file, "w") as f:
             json.dump(dashboard_data, f, indent=2)
 
         # Save HTML dashboard
         html_content = self.generate_html_dashboard(dashboard_data)
         html_file = output_dir / f"coverage_dashboard_{timestamp}.html"
-        with open(html_file, 'w') as f:
+        with open(html_file, "w") as f:
             f.write(html_content)
 
         # Save markdown summary
         md_content = self._generate_markdown_summary(dashboard_data)
         md_file = output_dir / f"coverage_summary_{timestamp}.md"
-        with open(md_file, 'w') as f:
+        with open(md_file, "w") as f:
             f.write(md_content)
 
-        return {
-            "json_report": str(json_file),
-            "html_dashboard": str(html_file),
-            "markdown_summary": str(md_file)
-        }
+        return {"json_report": str(json_file), "html_dashboard": str(html_file), "markdown_summary": str(md_file)}
 
-    def _generate_markdown_summary(self, dashboard_data: Dict) -> str:
+    def _generate_markdown_summary(self, dashboard_data: dict) -> str:
         """Generate markdown summary report."""
-        return f"""# Test Coverage Analysis Summary
+        return (
+            f"""# Test Coverage Analysis Summary
 
 Generated: {dashboard_data['timestamp']}
 
@@ -937,13 +911,26 @@ Generated: {dashboard_data['timestamp']}
 
 | Category | Files | Avg Coverage | Status |
 |----------|-------|--------------|--------|
-""" + "\n".join([f"| {cat.replace('_',
-                                  ' ').title()} | {metrics['total_files']} | {metrics['average_coverage']:.1f}% | {'🟢' if metrics['average_coverage'] > 80 else '🟡' if metrics['average_coverage'] > 50 else '🔴'} |" for cat,
-                 metrics in dashboard_data["component_coverage"].items()]) + f"""
+"""
+            + "\n".join(
+                [
+                    f"| {cat.replace('_',
+                                  ' ').title()} | {metrics['total_files']} | {metrics['average_coverage']:.1f}% | {'🟢' if metrics['average_coverage'] > 80 else '🟡' if metrics['average_coverage'] > 50 else '🔴'} |"
+                    for cat, metrics in dashboard_data["component_coverage"].items()
+                ]
+            )
+            + """
 
 ## Priority Recommendations
 
-""" + "\n".join([f"### {rec['priority'].upper()}: {rec['title']}\n{rec['description']}\n**Effort**: {rec['estimated_effort']}\n" for rec in dashboard_data["recommendations"][:3]]) + """
+"""
+            + "\n".join(
+                [
+                    f"### {rec['priority'].upper()}: {rec['title']}\n{rec['description']}\n**Effort**: {rec['estimated_effort']}\n"
+                    for rec in dashboard_data["recommendations"][:3]
+                ]
+            )
+            + """
 
 ## Action Items
 1. Create tests for production-critical components
@@ -964,6 +951,7 @@ open htmlcov/index.html
 python test_coverage_dashboard.py
 ```
 """
+        )
 
 
 def main():
@@ -981,20 +969,20 @@ def main():
     saved_files = dashboard.save_dashboard(dashboard_data)
 
     print("✅ Coverage analysis complete!")
-    print(f"📄 Reports saved:")
+    print("📄 Reports saved:")
     for report_type, file_path in saved_files.items():
         print(f"   {report_type}: {file_path}")
 
     # Print summary
-    print(f"\n📋 Quick Summary:")
+    print("\n📋 Quick Summary:")
     print(f"   - Critical untested files: {len(dashboard_data['coverage_gaps']['critical_untested'])}")
     print(f"   - Total test files: {dashboard_data['test_suite_health']['total_test_files']}")
     print(f"   - Priority recommendations: {len(dashboard_data['recommendations'])}")
 
     # Show top priority files
-    untested = dashboard_data['coverage_gaps']['critical_untested']
+    untested = dashboard_data["coverage_gaps"]["critical_untested"]
     if untested:
-        print(f"\n🎯 Top priority files needing tests:")
+        print("\n🎯 Top priority files needing tests:")
         for i, gap in enumerate(untested[:5], 1):
             print(f"   {i}. {gap['file']} ({gap['category']})")
 

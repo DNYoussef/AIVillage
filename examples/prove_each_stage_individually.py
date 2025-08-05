@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """PROVE each compression stage works individually - no excuses."""
 
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 import torch
 
 # Add source paths
 sys.path.insert(0, str(Path("src").resolve()))
+
 
 def prove_stage_1_bitnet():
     """PROVE Stage 1 (BitNet) works with exact measurements."""
@@ -78,8 +79,10 @@ def prove_stage_1_bitnet():
     except Exception as e:
         print(f"\nSTAGE 1 VERDICT: FAILED - {e}")
         import traceback
+
         traceback.print_exc()
         return False, 0
+
 
 def prove_stage_2_seedlm():
     """PROVE Stage 2 (SeedLM) works with exact measurements."""
@@ -153,8 +156,10 @@ def prove_stage_2_seedlm():
     except Exception as e:
         print(f"\nSTAGE 2 VERDICT: FAILED - {e}")
         import traceback
+
         traceback.print_exc()
         return False, 0
+
 
 def prove_stage_3_vptq():
     """PROVE Stage 3 (VPTQ) works with exact measurements."""
@@ -231,8 +236,10 @@ def prove_stage_3_vptq():
     except Exception as e:
         print(f"\nSTAGE 3 VERDICT: FAILED - {e}")
         import traceback
+
         traceback.print_exc()
         return False, 0
+
 
 def prove_stage_4_hyper():
     """PROVE Stage 4 (HyperCompression) works with exact measurements."""
@@ -252,11 +259,11 @@ def prove_stage_4_hyper():
         try:
             if location == "src.agent_forge.compression.hyperfn":
                 from src.agent_forge.compression.hyperfn import compress
+
                 compress_func = compress
             elif location == "src.production.compression.hyper_compression":
-                from src.production.compression.hyper_compression import (
-                    HyperCompressionEncoder,
-                )
+                from src.production.compression.hyper_compression import HyperCompressionEncoder
+
                 encoder = HyperCompressionEncoder()
                 compress_func = encoder.encode
             else:
@@ -338,6 +345,7 @@ def prove_stage_4_hyper():
         print(f"\nSTAGE 4 VERDICT: COMPLETELY FAILED - {e}")
         return False, 0
 
+
 def prove_all_stages():
     """PROVE all 4 stages work (or admit which ones don't)."""
     print("PROVING ALL 4 COMPRESSION STAGES WORK")
@@ -358,7 +366,7 @@ def prove_all_stages():
         ("Stage 1 (BitNet)", stage1_works, stage1_ratio),
         ("Stage 2 (SeedLM)", stage2_works, stage2_ratio),
         ("Stage 3 (VPTQ)", stage3_works, stage3_ratio),
-        ("Stage 4 (HyperCompression)", stage4_works, stage4_ratio)
+        ("Stage 4 (HyperCompression)", stage4_works, stage4_ratio),
     ]
 
     working_count = 0
@@ -396,6 +404,7 @@ def prove_all_stages():
         print(f"  ✓ Only {working_count} stages actually work")
 
     return working_count, total_ratio
+
 
 if __name__ == "__main__":
     working_count, total_ratio = prove_all_stages()

@@ -1,4 +1,3 @@
-import asyncio
 from pathlib import Path
 import sys
 import types
@@ -16,6 +15,7 @@ click_stub = types.ModuleType("click")
 def _decorator(*_args, **_kwargs):
     def wrapper(func):
         return func
+
     return wrapper
 
 
@@ -67,10 +67,7 @@ transformers_stub.TrainerCallback = type("TrainerCallback", (), {})
 transformers_stub.TrainingArguments = type("TrainingArguments", (), {})
 sys.modules.setdefault("transformers", transformers_stub)
 
-from src.production.distributed_inference.compression_integration import (
-    CompressedShard,
-    DistributedCompressionManager,
-)
+from src.production.distributed_inference.compression_integration import CompressedShard, DistributedCompressionManager
 from src.production.distributed_inference.model_sharding_engine import ModelShard
 
 
@@ -127,10 +124,7 @@ async def test_extract_shard_layers_saves_correct_layers(tmp_path):
     result_dir = await manager._extract_shard_layers(str(model_dir), shard, tmp_path)
 
     shard_state = torch.load(Path(result_dir) / "pytorch_model.bin")
-    assert all(
-        key.startswith("layers.1") or key.startswith("layers.3")
-        for key in shard_state.keys()
-    )
+    assert all(key.startswith("layers.1") or key.startswith("layers.3") for key in shard_state.keys())
     # Each linear layer has weight and bias tensors
     assert len(shard_state) == 4
 

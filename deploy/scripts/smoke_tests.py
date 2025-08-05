@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""
-Smoke tests for AIVillage deployment verification.
+"""Smoke tests for AIVillage deployment verification.
 """
 
-import asyncio
-import aiohttp
 import argparse
+import asyncio
 import json
+import subprocess
 import sys
 import time
-from typing import Dict, List, Optional
-import subprocess
+
+import aiohttp
+
 
 class SmokeTestRunner:
     def __init__(self, environment: str, namespace: str):
@@ -23,10 +23,11 @@ class SmokeTestRunner:
         try:
             # Get service endpoint using kubectl port-forward
             port_forward_cmd = [
-                "kubectl", "port-forward",
+                "kubectl",
+                "port-forward",
                 f"service/{service_name}",
                 f"{port}:{port}",
-                f"--namespace={self.namespace}"
+                f"--namespace={self.namespace}",
             ]
 
             # Start port forwarding in background
@@ -53,7 +54,7 @@ class SmokeTestRunner:
             result = {"service": service_name, "status": "FAIL", "error": str(e)}
             print(f"❌ {service_name} health check failed: {e}")
             self.results.append(result)
-            if 'proc' in locals():
+            if "proc" in locals():
                 proc.terminate()
             return False
 
@@ -63,35 +64,56 @@ class SmokeTestRunner:
             # Test database connection using kubectl exec
             if db_type == "postgres":
                 cmd = [
-                    "kubectl", "exec", "-n", self.namespace,
+                    "kubectl",
+                    "exec",
+                    "-n",
+                    self.namespace,
                     f"statefulset/{service_name}",
-                    "--", "pg_isready", "-h", "localhost", "-p", str(port)
+                    "--",
+                    "pg_isready",
+                    "-h",
+                    "localhost",
+                    "-p",
+                    str(port),
                 ]
             elif db_type == "redis":
                 cmd = [
-                    "kubectl", "exec", "-n", self.namespace,
+                    "kubectl",
+                    "exec",
+                    "-n",
+                    self.namespace,
                     f"statefulset/{service_name}",
-                    "--", "redis-cli", "ping"
+                    "--",
+                    "redis-cli",
+                    "ping",
                 ]
             elif db_type == "neo4j":
                 cmd = [
-                    "kubectl", "exec", "-n", self.namespace,
+                    "kubectl",
+                    "exec",
+                    "-n",
+                    self.namespace,
                     f"statefulset/{service_name}",
-                    "--", "cypher-shell", "-u", "neo4j", "-p", "test_password", "RETURN 1"
+                    "--",
+                    "cypher-shell",
+                    "-u",
+                    "neo4j",
+                    "-p",
+                    "test_password",
+                    "RETURN 1",
                 ]
             else:
                 raise ValueError(f"Unknown database type: {db_type}")
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             if result.returncode == 0:
                 print(f"✅ {db_type} database connectivity test passed")
                 self.results.append({"service": service_name, "db_type": db_type, "status": "PASS"})
                 return True
-            else:
-                print(f"❌ {db_type} database connectivity test failed: {result.stderr}")
-                self.results.append({"service": service_name, "db_type": db_type, "status": "FAIL", "error": result.stderr})
-                return False
+            print(f"❌ {db_type} database connectivity test failed: {result.stderr}")
+            self.results.append({"service": service_name, "db_type": db_type, "status": "FAIL", "error": result.stderr})
+            return False
 
         except Exception as e:
             print(f"❌ {db_type} database test failed: {e}")
@@ -109,29 +131,33 @@ class SmokeTestRunner:
 
             # For now, just verify all services are running
             cmd = ["kubectl", "get", "pods", "-n", self.namespace, "-o", "json"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             if result.returncode == 0:
                 pods_data = json.loads(result.stdout)
-                running_pods = [
-                    pod for pod in pods_data["items"]
-                    if pod["status"]["phase"] == "Running"
-                ]
+                running_pods = [pod for pod in pods_data["items"] if pod["status"]["phase"] == "Running"]
 
                 total_pods = len(pods_data["items"])
                 running_count = len(running_pods)
 
                 if running_count == total_pods and total_pods > 0:
                     print(f"✅ Service integration test passed ({running_count}/{total_pods} pods running)")
-                    self.results.append({"test": "service_integration", "status": "PASS", "pods_running": running_count})
+                    self.results.append(
+                        {"test": "service_integration", "status": "PASS", "pods_running": running_count}
+                    )
                     return True
-                else:
-                    print(f"❌ Service integration test failed ({running_count}/{total_pods} pods running)")
-                    self.results.append({"test": "service_integration", "status": "FAIL", "pods_running": running_count, "total_pods": total_pods})
-                    return False
-            else:
-                print(f"❌ Failed to get pod status: {result.stderr}")
+                print(f"❌ Service integration test failed ({running_count}/{total_pods} pods running)")
+                self.results.append(
+                    {
+                        "test": "service_integration",
+                        "status": "FAIL",
+                        "pods_running": running_count,
+                        "total_pods": total_pods,
+                    }
+                )
                 return False
+            print(f"❌ Failed to get pod status: {result.stderr}")
+            return False
 
         except Exception as e:
             print(f"❌ Service integration test failed: {e}")
@@ -186,13 +212,18 @@ class SmokeTestRunner:
 
     def save_results(self, output_file: str):
         """Save test results to a file."""
-        with open(output_file, 'w') as f:
-            json.dump({
-                "environment": self.environment,
-                "namespace": self.namespace,
-                "timestamp": time.time(),
-                "results": self.results
-            }, f, indent=2)
+        with open(output_file, "w") as f:
+            json.dump(
+                {
+                    "environment": self.environment,
+                    "namespace": self.namespace,
+                    "timestamp": time.time(),
+                    "results": self.results,
+                },
+                f,
+                indent=2,
+            )
+
 
 async def main():
     parser = argparse.ArgumentParser(description="Run AIVillage smoke tests")
@@ -208,6 +239,7 @@ async def main():
     runner.save_results(args.output)
 
     sys.exit(0 if success else 1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

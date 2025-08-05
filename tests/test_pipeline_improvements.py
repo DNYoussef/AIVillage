@@ -3,13 +3,14 @@
 
 import gzip
 import lzma
+from pathlib import Path
 import pickle
 import struct
 import sys
-from pathlib import Path
 
 # Add source paths
 sys.path.insert(0, str(Path("src").resolve()))
+
 
 def test_key_improvements():
     """Test the key improvements implemented in the optimized pipeline."""
@@ -52,10 +53,7 @@ def test_key_improvements():
     print("-" * 40)
 
     # Test old vs new packing format
-    test_params = {
-        "layer.weight": ((512, 256), sample_data),
-        "layer.bias": ((256,), sample_data[:256])
-    }
+    test_params = {"layer.weight": ((512, 256), sample_data), "layer.bias": ((256,), sample_data[:256])}
 
     # Old method (pickle)
     old_packed = pickle.dumps(test_params)
@@ -68,15 +66,15 @@ def test_key_improvements():
 
         for name, (shape, data) in params.items():
             name_b = name.encode("utf-8")
-            blob.append(len(name_b))      # Name length
-            blob.extend(name_b)           # Name bytes
-            blob.append(len(shape))       # Number of dimensions
+            blob.append(len(name_b))  # Name length
+            blob.extend(name_b)  # Name bytes
+            blob.append(len(shape))  # Number of dimensions
 
             for dim in shape:
                 blob.extend(struct.pack("I", dim))  # Each dimension as uint32
 
             blob.extend(struct.pack("I", len(data)))  # Data length
-            blob.extend(data)             # Actual data
+            blob.extend(data)  # Actual data
 
         return bytes(blob)
 
@@ -142,6 +140,7 @@ def test_key_improvements():
 
     return estimated_new_ratio, new_efficiency
 
+
 def test_mobile_deployment_scenarios():
     """Test mobile deployment with improved compression."""
     print(f"\n{'='*50}")
@@ -154,13 +153,13 @@ def test_mobile_deployment_scenarios():
     model_scenarios = [
         ("1B parameter model", 1_000_000_000),
         ("7B parameter model", 7_000_000_000),
-        ("13B parameter model", 13_000_000_000)
+        ("13B parameter model", 13_000_000_000),
     ]
 
     device_limits = [
-        ("Budget phone (2GB)", 1000),   # 1GB available for model
-        ("Mid-range (4GB)", 2000),      # 2GB available for model
-        ("High-end (8GB)", 4000)        # 4GB available for model
+        ("Budget phone (2GB)", 1000),  # 1GB available for model
+        ("Mid-range (4GB)", 2000),  # 2GB available for model
+        ("High-end (8GB)", 4000),  # 4GB available for model
     ]
 
     print(f"Using estimated compression ratio: {estimated_ratio:.1f}x")
@@ -193,6 +192,7 @@ def test_mobile_deployment_scenarios():
     print(f"  Ready for Kenya deployment: {'YES' if mobile_ready_7b else 'NO'}")
 
     return mobile_ready_7b
+
 
 def main():
     """Run improvement validation."""
@@ -243,8 +243,10 @@ def main():
     except Exception as e:
         print(f"Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     success = main()

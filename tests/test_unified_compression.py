@@ -1,6 +1,4 @@
-import torch
-import torch.nn as nn
-import pytest
+from torch import nn
 
 from core.compression.unified_compressor import UnifiedCompressor
 

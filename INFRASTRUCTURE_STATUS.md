@@ -29,4 +29,3 @@ Development tools expected:
 - `pytest`
 
 These should be installed via `requirements-dev.txt` and `requirements-test.txt`.
-

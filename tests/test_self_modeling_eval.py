@@ -1,10 +1,7 @@
 import importlib.util
 import unittest
 
-if (
-    importlib.util.find_spec("torch") is None
-    or importlib.util.find_spec("transformers") is None
-):
+if importlib.util.find_spec("torch") is None or importlib.util.find_spec("transformers") is None:
     msg = "Required dependency not installed"
     raise unittest.SkipTest(msg)
 
@@ -53,9 +50,7 @@ class TestSelfModelingEval(unittest.TestCase):
                 self.tok = tok
 
             def forward(self, input_ids, attention_mask=None, labels=None):
-                return self.m(
-                    input_ids=input_ids, attention_mask=attention_mask, labels=labels
-                )
+                return self.m(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
 
             def generate_thoughts(self, inputs, attention_mask):
                 with torch.no_grad():

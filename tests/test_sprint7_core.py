@@ -34,10 +34,7 @@ print("=== Sprint 7 Distributed Inference System Tests ===\n")
 # Test 1: Core Data Structures
 print("Test 1: Core Data Structures")
 try:
-    from src.production.distributed_inference.model_sharding_engine import (
-        ModelShard,
-        ShardingStrategy,
-    )
+    from src.production.distributed_inference.model_sharding_engine import ModelShard, ShardingStrategy
 
     # Test enum
     strategy = ShardingStrategy.MEMORY_AWARE
@@ -50,7 +47,7 @@ try:
         layer_indices=[0, 1, 2],
         parameters_count=1000000,
         memory_mb=256.0,
-        compute_requirement=2.5
+        compute_requirement=2.5,
     )
     print(f"  ✓ ModelShard: {shard.shard_id} -> {shard.device_id}")
 
@@ -62,11 +59,7 @@ except Exception as e:
 # Test 2: Agent System Data Structures
 print("Test 2: Agent System Data Structures")
 try:
-    from src.production.distributed_agents.distributed_agent_orchestrator import (
-        AgentPriority,
-        AgentSpec,
-        AgentType,
-    )
+    from src.production.distributed_agents.distributed_agent_orchestrator import AgentPriority, AgentSpec, AgentType
 
     # Test agent types
     king_agent = AgentType.KING
@@ -82,7 +75,7 @@ try:
         priority=AgentPriority.CRITICAL,
         memory_requirement_mb=512.0,
         compute_requirement=3.0,
-        specialization="coordination"
+        specialization="coordination",
     )
     print(f"  ✓ AgentSpec: {spec.agent_type.value} - {spec.specialization}")
 
@@ -111,7 +104,7 @@ try:
         agent_instance_id="test_agent",
         reason=reason,
         source_device_id="device_1",
-        strategy=strategy
+        strategy=strategy,
     )
     print(f"  ✓ MigrationRequest: {request.agent_instance_id} from {request.source_device_id}")
 
@@ -135,11 +128,7 @@ try:
     print(f"  ✓ Resharding enums: {reason.value} -> {strategy.value}")
 
     # Test resharding event
-    event = ReshardingEvent(
-        event_id=str(uuid.uuid4()),
-        reason=reason,
-        trigger_device_id="new_device"
-    )
+    event = ReshardingEvent(event_id=str(uuid.uuid4()), reason=reason, trigger_device_id="new_device")
     print(f"  ✓ ReshardingEvent: {event.reason.value} triggered by {event.trigger_device_id}")
 
     print("  PASS: Resharding system working\n")
@@ -162,11 +151,7 @@ try:
     print(f"  ✓ Federated enums: {round_status.value} -> {participant_status.value}")
 
     # Test config
-    config = FederatedLearningConfig(
-        min_participants_per_round=3,
-        max_participants_per_round=10,
-        target_accuracy=0.85
-    )
+    config = FederatedLearningConfig(min_participants_per_round=3, max_participants_per_round=10, target_accuracy=0.85)
     print(f"  ✓ FederatedConfig: {config.min_participants_per_round}-{config.max_participants_per_round} participants")
 
     print("  PASS: Federated learning system working\n")
@@ -176,6 +161,8 @@ except Exception as e:
 
 # Test 6: Async Functionality
 print("Test 6: Async Operations")
+
+
 async def test_async_operations():
     try:
         # Test basic async operation
@@ -191,6 +178,7 @@ async def test_async_operations():
         class AsyncContextManager:
             async def __aenter__(self):
                 return self
+
             async def __aexit__(self, exc_type, exc_val, exc_tb):
                 pass
 
@@ -202,6 +190,7 @@ async def test_async_operations():
         print(f"  FAIL: Async operations - {e}")
         return False
 
+
 # Run async test
 async_result = asyncio.run(test_async_operations())
 if async_result:
@@ -212,7 +201,7 @@ print("Test 7: Module Import Validation")
 modules_to_test = [
     "src.production.distributed_inference",
     "src.production.distributed_agents",
-    "src.production.federated_learning"
+    "src.production.federated_learning",
 ]
 
 import_results = []

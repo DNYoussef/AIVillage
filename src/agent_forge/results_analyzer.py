@@ -9,11 +9,11 @@ Provides comprehensive analysis of benchmark results:
 """
 
 import asyncio
-import json
-import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
 from typing import Any
 

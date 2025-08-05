@@ -9,9 +9,9 @@ Tests all components of the evolution system including:
 - Dashboard Integration
 """
 
+from pathlib import Path
 import sys
 import unittest
-from pathlib import Path
 
 # Add the project root to the path for imports
 project_root = Path(__file__).parent.parent.parent

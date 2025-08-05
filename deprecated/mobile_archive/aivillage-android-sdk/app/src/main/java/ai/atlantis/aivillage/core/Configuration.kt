@@ -14,7 +14,7 @@ data class Configuration(
     val maxMemoryMB: Int = 512,
     val maxCpuPercent: Int = 50
 ) {
-    
+
     class Builder {
         private var deviceId: String = ""
         private var meshConfig = MeshConfiguration()
@@ -25,7 +25,7 @@ data class Configuration(
         private var dataDirectory = "aivillage"
         private var maxMemoryMB = 512
         private var maxCpuPercent = 50
-        
+
         fun deviceId(id: String) = apply { deviceId = id }
         fun meshConfig(config: MeshConfiguration) = apply { meshConfig = config }
         fun agentConfig(config: AgentConfiguration) = apply { agentConfig = config }
@@ -35,7 +35,7 @@ data class Configuration(
         fun dataDirectory(dir: String) = apply { dataDirectory = dir }
         fun maxMemoryMB(mb: Int) = apply { maxMemoryMB = mb }
         fun maxCpuPercent(percent: Int) = apply { maxCpuPercent = percent }
-        
+
         fun build(): Configuration {
             require(deviceId.isNotEmpty()) { "Device ID must be set" }
             return Configuration(

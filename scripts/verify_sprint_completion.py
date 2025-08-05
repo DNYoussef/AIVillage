@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Verify Sprints 8-9 are actually complete"""
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 
 
 def run_command(cmd):
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
         return result.returncode == 0, result.stdout, result.stderr
     except Exception as e:
         return False, "", str(e)
@@ -46,6 +46,7 @@ def verify_sprint_9():
     try:
         sys.path.insert(0, "src")
         from core.compression import SimpleQuantizer  # noqa: F401
+
         checks.append(("SimpleQuantizer imports", True))
     except Exception:
         checks.append(("SimpleQuantizer imports", False))
@@ -71,9 +72,8 @@ def main():
     if sprint8_done and sprint9_done:
         print("\n🎉 Both sprints successfully completed!")
         return 0
-    else:
-        print("\n❌ Sprints incomplete - see failures above")
-        return 1
+    print("\n❌ Sprints incomplete - see failures above")
+    return 1
 
 
 if __name__ == "__main__":

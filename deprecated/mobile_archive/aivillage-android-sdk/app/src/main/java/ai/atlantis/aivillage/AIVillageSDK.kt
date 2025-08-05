@@ -13,19 +13,19 @@ class AIVillageSDK private constructor(
     private val context: Context,
     private val configuration: Configuration
 ) {
-    
+
     private val meshNetwork: MeshNetwork by lazy {
         MeshNetwork(context, configuration.meshConfig)
     }
-    
+
     private val agentManager: AgentManager by lazy {
         AgentManager(context, configuration.agentConfig)
     }
-    
+
     private val flClient: FederatedLearningClient by lazy {
         FederatedLearningClient(context, configuration.flConfig)
     }
-    
+
     /**
      * Initialize the SDK
      */
@@ -34,13 +34,13 @@ class AIVillageSDK private constructor(
         meshNetwork.initialize()
         agentManager.initialize()
         flClient.initialize()
-        
+
         // Start background services
         if (configuration.autoStart) {
             start()
         }
     }
-    
+
     /**
      * Start SDK services
      */
@@ -49,7 +49,7 @@ class AIVillageSDK private constructor(
         agentManager.startAgents()
         flClient.startParticipation()
     }
-    
+
     /**
      * Stop SDK services
      */
@@ -58,26 +58,26 @@ class AIVillageSDK private constructor(
         agentManager.stopAgents()
         flClient.stopParticipation()
     }
-    
+
     /**
      * Get mesh network interface
      */
     fun getMeshNetwork(): MeshNetwork = meshNetwork
-    
+
     /**
      * Get agent manager interface
      */
     fun getAgentManager(): AgentManager = agentManager
-    
+
     /**
      * Get federated learning client
      */
     fun getFLClient(): FederatedLearningClient = flClient
-    
+
     companion object {
         @Volatile
         private var INSTANCE: AIVillageSDK? = null
-        
+
         /**
          * Initialize the SDK with configuration
          */
@@ -89,7 +89,7 @@ class AIVillageSDK private constructor(
                 }
             }
         }
-        
+
         /**
          * Get SDK instance
          */

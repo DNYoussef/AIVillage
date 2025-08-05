@@ -26,16 +26,17 @@ def analyze_file(filepath):
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 # Check if function body is just pass
-                if (len(node.body) == 1 and
-                    isinstance(node.body[0], ast.Pass)):
+                if len(node.body) == 1 and isinstance(node.body[0], ast.Pass):
                     issues.append(f"Empty function: {node.name}")
 
                 # Check for functions that just raise NotImplementedError
-                if (len(node.body) == 1 and
-                    isinstance(node.body[0], ast.Raise) and
-                    isinstance(node.body[0].exc, ast.Call) and
-                    hasattr(node.body[0].exc.func, "id") and
-                    node.body[0].exc.func.id == "NotImplementedError"):
+                if (
+                    len(node.body) == 1
+                    and isinstance(node.body[0], ast.Raise)
+                    and isinstance(node.body[0].exc, ast.Call)
+                    and hasattr(node.body[0].exc.func, "id")
+                    and node.body[0].exc.func.id == "NotImplementedError"
+                ):
                     issues.append(f"Stub function: {node.name}")
 
         return issues

@@ -2,14 +2,14 @@
 """Create comprehensive visualizations for 50-generation evolution results."""
 
 import json
-import warnings
 from pathlib import Path
+import warnings
 
+from matplotlib.gridspec import GridSpec
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib.gridspec import GridSpec
 
 warnings.filterwarnings("ignore")
 
@@ -57,9 +57,7 @@ class Evolution50GenVisualizer:
 
         # Create large figure with multiple subplots
         fig = plt.figure(figsize=(24, 16))
-        gs = GridSpec(
-            4, 4, figure=fig, height_ratios=[1.5, 1, 1, 1], width_ratios=[1, 1, 1, 1]
-        )
+        gs = GridSpec(4, 4, figure=fig, height_ratios=[1.5, 1, 1, 1], width_ratios=[1, 1, 1, 1])
 
         # Main evolutionary tree (spans top row)
         ax_tree = fig.add_subplot(gs[0, :])
@@ -131,11 +129,7 @@ class Evolution50GenVisualizer:
         generations = self.data["generation_history"]
 
         # Sample every 5th generation for clarity (10 points total)
-        sample_gens = [
-            gen
-            for i, gen in enumerate(generations)
-            if i % 5 == 0 or i == len(generations) - 1
-        ]
+        sample_gens = [gen for i, gen in enumerate(generations) if i % 5 == 0 or i == len(generations) - 1]
 
         x_positions = []
         y_positions = []
@@ -194,11 +188,7 @@ class Evolution50GenVisualizer:
         # Create method legend
         legend_elements = []
         for method, color in self.method_colors.items():
-            legend_elements.append(
-                plt.scatter(
-                    [], [], c=color, s=100, label=method.replace("_", " ").title()
-                )
-            )
+            legend_elements.append(plt.scatter([], [], c=color, s=100, label=method.replace("_", " ").title()))
 
         ax.legend(
             handles=legend_elements,
@@ -254,9 +244,7 @@ class Evolution50GenVisualizer:
                 label="10-Gen Moving Avg",
             )
 
-        ax.fill_between(
-            gen_numbers, best_fitness, avg_fitness, alpha=0.2, color="#4ECDC4"
-        )
+        ax.fill_between(gen_numbers, best_fitness, avg_fitness, alpha=0.2, color="#4ECDC4")
 
         ax.set_xlabel("Generation", color="white", fontweight="bold")
         ax.set_ylabel("Fitness Score", color="white", fontweight="bold")
@@ -394,10 +382,7 @@ class Evolution50GenVisualizer:
         params = best_config.get("parameters", {})
         if params:
             param_text = "\n".join(
-                [
-                    f"{k}: {v:.3f}" if isinstance(v, float) else f"{k}: {v}"
-                    for k, v in params.items()
-                ]
+                [f"{k}: {v:.3f}" if isinstance(v, float) else f"{k}: {v}" for k, v in params.items()]
             )
             ax.text(
                 0.05,
@@ -484,9 +469,7 @@ class Evolution50GenVisualizer:
         }
         for metric, threshold in thresholds.items():
             if metric in benchmark_evolution:
-                ax.axhline(
-                    y=threshold, color="red", linestyle="--", alpha=0.5, linewidth=1
-                )
+                ax.axhline(y=threshold, color="red", linestyle="--", alpha=0.5, linewidth=1)
 
         ax.set_xlabel("Generation", color="white", fontweight="bold")
         ax.set_ylabel("Benchmark Score", color="white", fontweight="bold")
@@ -528,9 +511,7 @@ class Evolution50GenVisualizer:
             patch.set_alpha(0.7)
 
         ax.set_ylabel("Fitness Score", color="white", fontweight="bold")
-        ax.set_title(
-            "Method Performance Distribution", color="white", fontweight="bold"
-        )
+        ax.set_title("Method Performance Distribution", color="white", fontweight="bold")
         ax.tick_params(colors="white", labelsize=8)
         ax.grid(True, alpha=0.3)
         ax.set_facecolor("black")
@@ -568,18 +549,11 @@ class Evolution50GenVisualizer:
             gen_numbers.append(gen_data["generation"])
 
             # Get all task_arithmetic individuals
-            ta_individuals = [
-                ind
-                for ind in gen_data["population"]
-                if ind["merge_method"] == "task_arithmetic"
-            ]
+            ta_individuals = [ind for ind in gen_data["population"] if ind["merge_method"] == "task_arithmetic"]
 
             if ta_individuals:
                 # Average scaling coefficient
-                coeffs = [
-                    ind.get("parameters", {}).get("scaling_coefficient", 1.0)
-                    for ind in ta_individuals
-                ]
+                coeffs = [ind.get("parameters", {}).get("scaling_coefficient", 1.0) for ind in ta_individuals]
                 avg_coeff = np.mean(coeffs)
                 scaling_coeffs.append(avg_coeff)
             else:
@@ -640,9 +614,7 @@ class Evolution50GenVisualizer:
             prev_best = current_best
 
         # Plot improvements
-        colors = [
-            "green" if imp > 0 else "red" if imp < 0 else "gray" for imp in improvements
-        ]
+        colors = ["green" if imp > 0 else "red" if imp < 0 else "gray" for imp in improvements]
         ax.bar(gen_numbers, improvements, color=colors, alpha=0.7, width=0.8)
 
         ax.axhline(y=0, color="white", linestyle="-", alpha=0.5)
@@ -667,9 +639,7 @@ class Evolution50GenVisualizer:
             counts = list(method_counts.values())
             colors = [self.method_colors.get(method, "#CCCCCC") for method in methods]
 
-            wedges, texts, autotexts = ax.pie(
-                counts, labels=methods, colors=colors, autopct="%1.0f%%", startangle=90
-            )
+            wedges, texts, autotexts = ax.pie(counts, labels=methods, colors=colors, autopct="%1.0f%%", startangle=90)
 
             for autotext in autotexts:
                 autotext.set_color("white")
@@ -681,9 +651,7 @@ class Evolution50GenVisualizer:
                 text.set_fontweight("bold")
                 text.set_fontsize(8)
 
-        ax.set_title(
-            "Final Population\nMethod Distribution", color="white", fontweight="bold"
-        )
+        ax.set_title("Final Population\nMethod Distribution", color="white", fontweight="bold")
 
 
 def main() -> None:

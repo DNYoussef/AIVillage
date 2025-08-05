@@ -75,9 +75,7 @@ class TestSeedLMCore:
             compressed = encoder.encode(weight)
 
             # Verify compressed format
-            assert isinstance(compressed, dict), (
-                "Compressed data should be a dictionary"
-            )
+            assert isinstance(compressed, dict), "Compressed data should be a dictionary"
             assert "data" in compressed, "Compressed dict should contain 'data'"
             assert "metadata" in compressed, "Compressed dict should contain 'metadata'"
             assert compressed["metadata"]["original_shape"] == list(weight.shape)
@@ -110,22 +108,18 @@ class TestSeedLMCore:
 
             # Calculate metrics
             compression_ratio = weight.numel() * 4 / len(str(compressed))
-            reconstruction_error = torch.norm(reconstructed - weight) / torch.norm(
-                weight
-            )
+            reconstruction_error = torch.norm(reconstructed - weight) / torch.norm(weight)
 
             compression_ratios.append(compression_ratio)
             reconstruction_errors.append(reconstruction_error.item())
 
         # Verify progressive behavior
         assert all(
-            compression_ratios[i] >= compression_ratios[i + 1]
-            for i in range(len(compression_ratios) - 1)
+            compression_ratios[i] >= compression_ratios[i + 1] for i in range(len(compression_ratios) - 1)
         ), "Higher compression levels should yield higher ratios"
 
         assert all(
-            reconstruction_errors[i] <= reconstruction_errors[i + 1]
-            for i in range(len(reconstruction_errors) - 1)
+            reconstruction_errors[i] <= reconstruction_errors[i + 1] for i in range(len(reconstruction_errors) - 1)
         ), "Higher compression levels should have more error"
 
     def test_compression_ratio_verification(self, encoder, sample_weights):
@@ -145,9 +139,9 @@ class TestSeedLMCore:
             compressed_size = len(str(compressed))  # Simplified size estimation
             actual_ratio = original_size / compressed_size
 
-            assert actual_ratio >= min_ratio * 0.8, (
-                f"Compression ratio {actual_ratio} below target {min_ratio} for level {level}"
-            )
+            assert (
+                actual_ratio >= min_ratio * 0.8
+            ), f"Compression ratio {actual_ratio} below target {min_ratio} for level {level}"
 
     def test_adaptive_block_sizing(self):
         """Test adaptive block size selection based on weight variance"""
@@ -171,9 +165,7 @@ class TestSeedLMCore:
         if MultiScaleLFSRGenerator is None:
             pytest.skip("MultiScaleLFSRGenerator not implemented yet")
 
-        generator = MultiScaleLFSRGenerator(
-            seeds=[12345, 67890], tap_configs=[[16, 14, 13, 11], [16, 15, 13, 4]]
-        )
+        generator = MultiScaleLFSRGenerator(seeds=[12345, 67890], tap_configs=[[16, 14, 13, 11], [16, 15, 13, 4]])
 
         # Generate bases at different scales
         bases = []
@@ -184,15 +176,13 @@ class TestSeedLMCore:
             # Verify orthogonality
             gram = torch.mm(basis.T, basis)
             identity_like = torch.eye(scale)
-            assert torch.allclose(gram, identity_like, atol=0.1), (
-                f"Basis at scale {scale} should be approximately orthogonal"
-            )
+            assert torch.allclose(
+                gram, identity_like, atol=0.1
+            ), f"Basis at scale {scale} should be approximately orthogonal"
 
         # Verify multi-scale consistency
         # Larger scales should preserve patterns from smaller scales
-        assert torch.norm(bases[0]) < torch.norm(bases[2]), (
-            "Larger scale bases should have more energy"
-        )
+        assert torch.norm(bases[0]) < torch.norm(bases[2]), "Larger scale bases should have more energy"
 
     @pytest.mark.parametrize(
         "weight_shape",
@@ -235,9 +225,9 @@ class TestSeedLMCore:
 
         # Should not use more than 2x the weight size in memory
         weight_size_mb = large_weight.numel() * 4 / 1024 / 1024
-        assert memory_increase < weight_size_mb * 2, (
-            f"Memory usage {memory_increase}MB exceeds 2x weight size {weight_size_mb}MB"
-        )
+        assert (
+            memory_increase < weight_size_mb * 2
+        ), f"Memory usage {memory_increase}MB exceeds 2x weight size {weight_size_mb}MB"
 
     def test_encoding_determinism(self, encoder):
         """Test that encoding is deterministic with same seed"""
@@ -272,29 +262,20 @@ class TestSeedLMCore:
         assert compressed["metadata"]["original_dtype"] == "torch.float16"
         assert compressed["metadata"]["requires_grad"]
         assert compressed["metadata"]["layer_name"] == custom_metadata["layer_name"]
-        assert (
-            compressed["metadata"]["importance_score"]
-            == custom_metadata["importance_score"]
-        )
+        assert compressed["metadata"]["importance_score"] == custom_metadata["importance_score"]
 
     def test_error_handling_invalid_input(self, encoder):
         """Test error handling for invalid inputs"""
         # Non-tensor input
-        with pytest.raises(
-            SeedLMCompressionError, match="Input must be a torch.Tensor"
-        ):
+        with pytest.raises(SeedLMCompressionError, match="Input must be a torch.Tensor"):
             encoder.encode("not a tensor")
 
         # Invalid compression level
-        with pytest.raises(
-            ValueError, match="Compression level must be between 0 and 1"
-        ):
+        with pytest.raises(ValueError, match="Compression level must be between 0 and 1"):
             encoder.encode(torch.randn(10, 10), compression_level=1.5)
 
         # Corrupted compressed data
-        with pytest.raises(
-            SeedLMDecompressionError, match="Invalid compressed data format"
-        ):
+        with pytest.raises(SeedLMDecompressionError, match="Invalid compressed data format"):
             encoder.decode({"invalid": "data"})
 
     def test_verification_integrity(self, encoder):
@@ -348,9 +329,7 @@ class TestProgressiveEncoding:
         if ProgressiveSeedLMEncoder is None:
             pytest.skip("ProgressiveSeedLMEncoder not implemented yet")
 
-        return ProgressiveSeedLMEncoder(
-            base_quality=0.3, enhancement_layers=3, quality_increments=[0.2, 0.3, 0.2]
-        )
+        return ProgressiveSeedLMEncoder(base_quality=0.3, enhancement_layers=3, quality_increments=[0.2, 0.3, 0.2])
 
     def test_progressive_layers(self, progressive_encoder):
         """Test progressive enhancement layers"""
@@ -367,12 +346,8 @@ class TestProgressiveEncoding:
         # Test progressive reconstruction
         qualities = []
         for i in range(4):  # Base + 3 enhancements
-            reconstructed = progressive_encoder.decode_progressive(
-                compressed, num_layers=i + 1
-            )
-            quality = (
-                1 - (torch.norm(reconstructed - weight) / torch.norm(weight)).item()
-            )
+            reconstructed = progressive_encoder.decode_progressive(compressed, num_layers=i + 1)
+            quality = 1 - (torch.norm(reconstructed - weight) / torch.norm(weight)).item()
             qualities.append(quality)
 
         # Quality should improve with more layers
@@ -390,13 +365,9 @@ class TestProgressiveEncoding:
 
         for limit in bandwidth_limits:
             # Get data within bandwidth limit
-            streamed_data = progressive_encoder.get_streaming_data(
-                compressed, max_bytes=limit
-            )
+            streamed_data = progressive_encoder.get_streaming_data(compressed, max_bytes=limit)
 
-            assert len(str(streamed_data)) <= limit, (
-                f"Streamed data exceeds bandwidth limit {limit}"
-            )
+            assert len(str(streamed_data)) <= limit, f"Streamed data exceeds bandwidth limit {limit}"
 
             # Should still be decodable
             reconstructed = progressive_encoder.decode_progressive(streamed_data)

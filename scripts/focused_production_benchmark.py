@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
-"""
-Focused Production Benchmark
+"""Focused Production Benchmark
 Tests the actual working components post-cleanup
 """
+from datetime import datetime
 import json
 import logging
-import os
+from pathlib import Path
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import psutil
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -28,7 +26,7 @@ class ProductionBenchmark:
         self.results = {}
         self.start_time = None
 
-    def benchmark_compression_stubs(self) -> Dict[str, Any]:
+    def benchmark_compression_stubs(self) -> dict[str, Any]:
         """Test the compression stub implementations"""
         logger.info("Testing compression stub implementations...")
 
@@ -38,6 +36,7 @@ class ProductionBenchmark:
         try:
             # Suppress warnings for benchmarking
             import warnings
+
             warnings.filterwarnings("ignore", category=UserWarning)
 
             from agent_forge.compression import (
@@ -56,7 +55,7 @@ class ProductionBenchmark:
             compressors = [
                 ("BITNET", BITNETCompressor(), bitnet_compress),
                 ("SEEDLM", SEEDLMCompressor(), seedlm_compress),
-                ("VPTQ", VPTQCompressor(), vptq_compress)
+                ("VPTQ", VPTQCompressor(), vptq_compress),
             ]
 
             for name, compressor, compress_fn in compressors:
@@ -76,14 +75,11 @@ class ProductionBenchmark:
                         "function_time_ms": round(fn_time * 1000, 3),
                         "compression_ratio": result.get("ratio", 0),
                         "method_consistent": result == fn_result,
-                        "status": "success"
+                        "status": "success",
                     }
 
                 except Exception as e:
-                    results["compressions"][name] = {
-                        "status": "error",
-                        "error": str(e)
-                    }
+                    results["compressions"][name] = {"status": "error", "error": str(e)}
                     logger.error(f"{name} compression test failed: {e}")
 
             total_time = time.time() - start_time
@@ -96,7 +92,7 @@ class ProductionBenchmark:
             logger.error(f"Compression benchmark failed: {e}")
             return {"status": "error", "error": str(e)}
 
-    def benchmark_basic_evolution(self) -> Dict[str, Any]:
+    def benchmark_basic_evolution(self) -> dict[str, Any]:
         """Test basic evolution components that don't require heavy dependencies"""
         logger.info("Testing basic evolution components...")
 
@@ -136,16 +132,18 @@ class ProductionBenchmark:
                 offspring.append({"id": f"child_{i}", "fitness": child_fitness})
             crossover_time = time.time() - crossover_start
 
-            results.update({
-                "population_size": population_size,
-                "tournament_time_ms": round(tournament_time * 1000, 3),
-                "crossover_time_ms": round(crossover_time * 1000, 3),
-                "selection_pressure": len(selected) / population_size,
-                "avg_fitness_before": round(np.mean([p["fitness"] for p in population]), 3),
-                "avg_fitness_selected": round(np.mean([s["fitness"] for s in selected]), 3),
-                "avg_fitness_offspring": round(np.mean([o["fitness"] for o in offspring]), 3),
-                "status": "success"
-            })
+            results.update(
+                {
+                    "population_size": population_size,
+                    "tournament_time_ms": round(tournament_time * 1000, 3),
+                    "crossover_time_ms": round(crossover_time * 1000, 3),
+                    "selection_pressure": len(selected) / population_size,
+                    "avg_fitness_before": round(np.mean([p["fitness"] for p in population]), 3),
+                    "avg_fitness_selected": round(np.mean([s["fitness"] for s in selected]), 3),
+                    "avg_fitness_offspring": round(np.mean([o["fitness"] for o in offspring]), 3),
+                    "status": "success",
+                }
+            )
 
             total_time = time.time() - start_time
             results["total_time_seconds"] = round(total_time, 3)
@@ -156,7 +154,7 @@ class ProductionBenchmark:
             logger.error(f"Evolution benchmark failed: {e}")
             return {"status": "error", "error": str(e)}
 
-    def benchmark_basic_rag(self) -> Dict[str, Any]:
+    def benchmark_basic_rag(self) -> dict[str, Any]:
         """Test basic RAG components without heavy ML dependencies"""
         logger.info("Testing basic RAG components...")
 
@@ -165,8 +163,8 @@ class ProductionBenchmark:
 
         try:
             # Test basic text processing
-            import re
             from collections import Counter
+            import re
 
             # Sample documents
             docs = [
@@ -174,7 +172,7 @@ class ProductionBenchmark:
                 "Deep learning uses neural networks with multiple layers.",
                 "Natural language processing helps computers understand text.",
                 "Computer vision enables machines to interpret images.",
-                "Reinforcement learning teaches agents through rewards."
+                "Reinforcement learning teaches agents through rewards.",
             ]
 
             # Test document indexing (basic keyword extraction)
@@ -182,7 +180,7 @@ class ProductionBenchmark:
             index = {}
             for doc_id, doc in enumerate(docs):
                 # Simple tokenization and indexing
-                words = re.findall(r'\b\w+\b', doc.lower())
+                words = re.findall(r"\b\w+\b", doc.lower())
                 for word in words:
                     if word not in index:
                         index[word] = []
@@ -198,7 +196,7 @@ class ProductionBenchmark:
                 query_start = time.time()
 
                 # Simple keyword matching
-                query_words = re.findall(r'\b\w+\b', query.lower())
+                query_words = re.findall(r"\b\w+\b", query.lower())
                 matches = Counter()
 
                 for word in query_words:
@@ -211,23 +209,27 @@ class ProductionBenchmark:
                 query_time = time.time() - query_start
                 total_query_time += query_time
 
-                query_results.append({
-                    "query": query,
-                    "matches_found": len(top_matches),
-                    "response_time_ms": round(query_time * 1000, 3),
-                    "top_score": top_matches[0][1] if top_matches else 0
-                })
+                query_results.append(
+                    {
+                        "query": query,
+                        "matches_found": len(top_matches),
+                        "response_time_ms": round(query_time * 1000, 3),
+                        "top_score": top_matches[0][1] if top_matches else 0,
+                    }
+                )
 
-            results.update({
-                "documents_indexed": len(docs),
-                "index_size": len(index),
-                "index_time_ms": round(index_time * 1000, 3),
-                "queries_processed": len(queries),
-                "avg_query_time_ms": round((total_query_time / len(queries)) * 1000, 3),
-                "total_query_time_ms": round(total_query_time * 1000, 3),
-                "query_results": query_results,
-                "status": "success"
-            })
+            results.update(
+                {
+                    "documents_indexed": len(docs),
+                    "index_size": len(index),
+                    "index_time_ms": round(index_time * 1000, 3),
+                    "queries_processed": len(queries),
+                    "avg_query_time_ms": round((total_query_time / len(queries)) * 1000, 3),
+                    "total_query_time_ms": round(total_query_time * 1000, 3),
+                    "query_results": query_results,
+                    "status": "success",
+                }
+            )
 
             total_time = time.time() - start_time
             results["total_time_seconds"] = round(total_time, 3)
@@ -238,7 +240,7 @@ class ProductionBenchmark:
             logger.error(f"RAG benchmark failed: {e}")
             return {"status": "error", "error": str(e)}
 
-    def benchmark_system_resources(self) -> Dict[str, Any]:
+    def benchmark_system_resources(self) -> dict[str, Any]:
         """Benchmark system resource usage during operations"""
         logger.info("Testing system resource usage...")
 
@@ -246,7 +248,7 @@ class ProductionBenchmark:
             # Get baseline metrics
             baseline_cpu = psutil.cpu_percent(interval=1)
             baseline_memory = psutil.virtual_memory()
-            baseline_disk = psutil.disk_usage('.')
+            baseline_disk = psutil.disk_usage(".")
 
             # Simulate some workload
             start_time = time.time()
@@ -275,14 +277,14 @@ class ProductionBenchmark:
                 "available_memory_gb": round(baseline_memory.available / (1024 * 1024 * 1024), 2),
                 "disk_free_gb": round(baseline_disk.free / (1024 * 1024 * 1024), 2),
                 "workload_time_seconds": round(elapsed, 3),
-                "status": "success"
+                "status": "success",
             }
 
         except Exception as e:
             logger.error(f"Resource benchmark failed: {e}")
             return {"status": "error", "error": str(e)}
 
-    def run_all_benchmarks(self) -> Dict[str, Any]:
+    def run_all_benchmarks(self) -> dict[str, Any]:
         """Run all available benchmarks"""
         logger.info("Starting focused production benchmarks...")
 
@@ -295,13 +297,10 @@ class ProductionBenchmark:
             "platform": sys.platform,
             "cpu_count": psutil.cpu_count(),
             "total_memory_gb": round(psutil.virtual_memory().total / (1024**3), 2),
-            "available_memory_gb": round(psutil.virtual_memory().available / (1024**3), 2)
+            "available_memory_gb": round(psutil.virtual_memory().available / (1024**3), 2),
         }
 
-        results = {
-            "system_info": system_info,
-            "benchmarks": {}
-        }
+        results = {"system_info": system_info, "benchmarks": {}}
 
         # Run benchmarks
         try:
@@ -330,7 +329,7 @@ class ProductionBenchmark:
 
         return results
 
-    def save_results(self, results: Dict[str, Any]) -> str:
+    def save_results(self, results: dict[str, Any]) -> str:
         """Save results to file"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"focused_benchmark_{timestamp}.json"
@@ -340,13 +339,13 @@ class ProductionBenchmark:
 
         filepath = results_dir / filename
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(results, f, indent=2)
 
         logger.info(f"Results saved to {filepath}")
         return str(filepath)
 
-    def print_summary(self, results: Dict[str, Any]):
+    def print_summary(self, results: dict[str, Any]):
         """Print human-readable summary"""
         print("\n" + "=" * 60)
         print("FOCUSED PRODUCTION BENCHMARK RESULTS")
@@ -400,7 +399,7 @@ class ProductionBenchmark:
         # Resource usage
         res = benchmarks.get("resources", {})
         if res.get("status") == "success":
-            print(f"\nRESOURCE USAGE:")
+            print("\nRESOURCE USAGE:")
             print(f"  CPU increase: +{res['cpu_increase']:.1f}%")
             print(f"  Memory increase: +{res['memory_increase_mb']:.1f}MB")
             print(f"  Available memory: {res['available_memory_gb']:.1f}GB")
@@ -440,13 +439,13 @@ def main():
         if failed_systems:
             print(f"\nWARNING: {len(failed_systems)} systems failed: {', '.join(failed_systems)}")
             return 1
-        else:
-            print(f"\nSUCCESS: All {len(results['benchmarks'])} systems tested successfully")
-            return 0
+        print(f"\nSUCCESS: All {len(results['benchmarks'])} systems tested successfully")
+        return 0
 
     except Exception as e:
         logger.error(f"Benchmark failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

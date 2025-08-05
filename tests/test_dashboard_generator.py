@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Generate comprehensive test dashboard for AIVillage project."""
 
+from datetime import datetime
 import json
 import subprocess
 import time
-from datetime import datetime
-from pathlib import Path
 
 
 class TestDashboard:
@@ -16,7 +15,7 @@ class TestDashboard:
             "test_suites": {},
             "performance": {},
             "coverage": {},
-            "issues": []
+            "issues": [],
         }
 
     def run_test_suite(self, name: str, command: list[str], timeout: int = 60) -> dict:
@@ -25,13 +24,7 @@ class TestDashboard:
         start_time = time.time()
 
         try:
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                cwd="."
-            )
+            result = subprocess.run(command, capture_output=True, text=True, timeout=timeout, cwd=".", check=False)
 
             duration = time.time() - start_time
 
@@ -42,7 +35,7 @@ class TestDashboard:
                 "return_code": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
-                "status": "PASSED" if result.returncode == 0 else "FAILED"
+                "status": "PASSED" if result.returncode == 0 else "FAILED",
             }
 
         except subprocess.TimeoutExpired:
@@ -53,7 +46,7 @@ class TestDashboard:
                 "return_code": -1,
                 "stdout": "",
                 "stderr": "Test timed out",
-                "status": "TIMEOUT"
+                "status": "TIMEOUT",
             }
         except Exception as e:
             return {
@@ -63,7 +56,7 @@ class TestDashboard:
                 "return_code": -1,
                 "stdout": "",
                 "stderr": str(e),
-                "status": "ERROR"
+                "status": "ERROR",
             }
 
     def run_sprint4_tests(self):
@@ -71,14 +64,12 @@ class TestDashboard:
         print("=== Sprint 4 Integration Tests ===")
 
         result = self.run_test_suite(
-            "Sprint 4 - Distributed Infrastructure",
-            ["python", "scripts/create_integration_tests.py"],
-            timeout=120
+            "Sprint 4 - Distributed Infrastructure", ["python", "scripts/create_integration_tests.py"], timeout=120
         )
 
         # Parse Sprint 4 results
         if "Passed:" in result["stdout"]:
-            passed_line = [line for line in result["stdout"].split('\n') if "Passed:" in line][0]
+            passed_line = [line for line in result["stdout"].split("\n") if "Passed:" in line][0]
             try:
                 # Parse "Passed: 3/6 tests"
                 parts = passed_line.split("Passed: ")[1].split("/")
@@ -110,7 +101,7 @@ class TestDashboard:
 
             # Parse pytest results
             if "passed" in result["stdout"] or "failed" in result["stdout"]:
-                lines = result["stdout"].split('\n')
+                lines = result["stdout"].split("\n")
                 summary_line = [line for line in lines if " passed" in line or " failed" in line][-1]
                 if "passed" in summary_line:
                     passed = int(summary_line.split(" passed")[0].split("=")[-1].strip())
@@ -138,11 +129,7 @@ class TestDashboard:
         """Run code quality checks."""
         print("=== Code Quality Check ===")
 
-        result = self.run_test_suite(
-            "Ruff Linting",
-            ["ruff", "check", "scripts/", "--output-format=json"],
-            timeout=60
-        )
+        result = self.run_test_suite("Ruff Linting", ["ruff", "check", "scripts/", "--output-format=json"], timeout=60)
 
         # Parse ruff results
         if result["return_code"] == 0:
@@ -160,8 +147,7 @@ class TestDashboard:
     def generate_summary(self):
         """Generate test summary."""
         total_suites = len(self.results["test_suites"])
-        passed_suites = sum(1 for suite in self.results["test_suites"].values()
-                            if suite["status"] == "PASSED")
+        passed_suites = sum(1 for suite in self.results["test_suites"].values() if suite["status"] == "PASSED")
 
         total_tests = sum(suite.get("tests_total", 0) for suite in self.results["test_suites"].values())
         total_passed = sum(suite.get("tests_passed", 0) for suite in self.results["test_suites"].values())
@@ -173,7 +159,7 @@ class TestDashboard:
             "total_individual_tests": total_tests,
             "total_passed_tests": total_passed,
             "overall_pass_rate": (total_passed / total_tests * 100) if total_tests > 0 else 0,
-            "total_issues": len(self.results["issues"])
+            "total_issues": len(self.results["issues"]),
         }
 
     def generate_report(self):
@@ -184,23 +170,29 @@ class TestDashboard:
 
         # Summary
         summary = self.results["summary"]
-        print(f"\n📊 OVERALL SUMMARY")
+        print("\n📊 OVERALL SUMMARY")
         print(
             f"   Test Suites: {
                 summary['passed_test_suites']}/{
                 summary['total_test_suites']} passed ({
-                summary['suite_pass_rate']:.1f}%)")
+                summary['suite_pass_rate']:.1f}%)"
+        )
         print(
             f"   Individual Tests: {
                 summary['total_passed_tests']}/{
                 summary['total_individual_tests']} passed ({
-                summary['overall_pass_rate']:.1f}%)")
+                summary['overall_pass_rate']:.1f}%)"
+        )
         print(f"   Code Quality Issues: {summary['total_issues']}")
 
         # Detailed results
-        print(f"\n🔍 DETAILED RESULTS")
+        print("\n🔍 DETAILED RESULTS")
         for _name, suite in self.results["test_suites"].items():
-            status_emoji = "✅" if suite["status"] == "PASSED" else "❌" if suite["status"] == "FAILED" else "⏱️" if suite["status"] == "TIMEOUT" else "⚠️"
+            status_emoji = (
+                "✅"
+                if suite["status"] == "PASSED"
+                else "❌" if suite["status"] == "FAILED" else "⏱️" if suite["status"] == "TIMEOUT" else "⚠️"
+            )
             duration = f"({suite['duration']:.1f}s)"
 
             print(f"   {status_emoji} {suite['name']} {duration}")
@@ -212,7 +204,8 @@ class TestDashboard:
                         suite['tests_total']} tests passed ({
                         suite.get(
                             'pass_rate',
-                            0):.1f}%)")
+                            0):.1f}%)"
+                )
 
             if suite["status"] != "PASSED" and suite["stderr"]:
                 error_preview = suite["stderr"][:100] + "..." if len(suite["stderr"]) > 100 else suite["stderr"]
@@ -221,13 +214,13 @@ class TestDashboard:
         # Sprint 4 specific results
         if "sprint4" in self.results["test_suites"]:
             sprint4 = self.results["test_suites"]["sprint4"]
-            print(f"\n🚀 SPRINT 4 - DISTRIBUTED INFRASTRUCTURE")
+            print("\n🚀 SPRINT 4 - DISTRIBUTED INFRASTRUCTURE")
             print(f"   Status: {sprint4['status']}")
             print(f"   Tests: {sprint4.get('tests_passed', 0)}/{sprint4.get('tests_total', 0)} passed")
 
             if "stdout" in sprint4:
                 # Extract specific test results
-                lines = sprint4["stdout"].split('\n')
+                lines = sprint4["stdout"].split("\n")
                 test_results = [line for line in lines if "[PASS]" in line or "[FAIL]" in line]
                 for result in test_results:
                     status_emoji = "✅" if "[PASS]" in result else "❌"
@@ -235,7 +228,7 @@ class TestDashboard:
                     print(f"   {status_emoji} {test_name}")
 
         # Performance insights
-        print(f"\n⚡ PERFORMANCE INSIGHTS")
+        print("\n⚡ PERFORMANCE INSIGHTS")
         longest_test = max(self.results["test_suites"].values(), key=lambda x: x["duration"])
         print(f"   Longest test: {longest_test['name']} ({longest_test['duration']:.1f}s)")
 
@@ -243,7 +236,7 @@ class TestDashboard:
         print(f"   Total test time: {total_duration:.1f}s")
 
         # Recommendations
-        print(f"\n💡 RECOMMENDATIONS")
+        print("\n💡 RECOMMENDATIONS")
         if summary["overall_pass_rate"] >= 90:
             print("   🎉 Excellent test coverage! System is in great shape.")
         elif summary["overall_pass_rate"] >= 70:
@@ -260,7 +253,7 @@ class TestDashboard:
 
     def save_report(self, filename: str = "test_dashboard_results.json"):
         """Save detailed results to JSON file."""
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(self.results, f, indent=2)
         print(f"\n📄 Detailed results saved to: {filename}")
 

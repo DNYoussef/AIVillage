@@ -5,9 +5,9 @@ This replaces the fragmented test suite with a consolidated set of tests
 that cover all compression functionality in a structured way.
 """
 
+from pathlib import Path
 import shutil
 import tempfile
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
@@ -26,6 +26,7 @@ from src.production.compression import (
 
 class TinyModel(nn.Module):
     """Tiny model for testing."""
+
     def __init__(self, vocab_size=1000, hidden_dim=64):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, hidden_dim)
@@ -40,12 +41,11 @@ class TinyModel(nn.Module):
 
 class MediumModel(nn.Module):
     """Medium model for testing (simulates 100M+ params)."""
+
     def __init__(self):
         super().__init__()
         # Create a model with ~100M parameters
-        self.layers = nn.ModuleList([
-            nn.Linear(1024, 1024) for _ in range(100)
-        ])
+        self.layers = nn.ModuleList([nn.Linear(1024, 1024) for _ in range(100)])
 
     def forward(self, x):
         for layer in self.layers:
@@ -95,9 +95,7 @@ class TestUnifiedCompressor:
 
         # Custom initialization
         compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.SIMPLE,
-            mobile_target_mb=50,
-            accuracy_threshold=0.90
+            strategy=CompressionStrategy.SIMPLE, mobile_target_mb=50, accuracy_threshold=0.90
         )
         assert compressor.strategy == CompressionStrategy.SIMPLE
         assert compressor.mobile_target_mb == 50
@@ -131,10 +129,7 @@ class TestUnifiedCompressor:
     @pytest.mark.asyncio
     async def test_simple_compression(self, tiny_model):
         """Test simple compression pipeline."""
-        compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.SIMPLE,
-            enable_benchmarking=False
-        )
+        compressor = UnifiedCompressor(strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False)
 
         result = await compressor.compress_model(tiny_model)
 
@@ -147,10 +142,7 @@ class TestUnifiedCompressor:
     @pytest.mark.asyncio
     async def test_mobile_compression(self, tiny_model):
         """Test mobile compression pipeline."""
-        compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.MOBILE,
-            enable_benchmarking=False
-        )
+        compressor = UnifiedCompressor(strategy=CompressionStrategy.MOBILE, enable_benchmarking=False)
 
         result = await compressor.compress_model(tiny_model)
 
@@ -161,10 +153,7 @@ class TestUnifiedCompressor:
     @pytest.mark.asyncio
     async def test_compression_with_output_path(self, tiny_model, temp_dir):
         """Test compression with file output."""
-        compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.SIMPLE,
-            enable_benchmarking=False
-        )
+        compressor = UnifiedCompressor(strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False)
 
         output_path = temp_dir / "compressed_model"
         result = await compressor.compress_model(tiny_model, output_path=output_path)
@@ -176,10 +165,7 @@ class TestUnifiedCompressor:
     @pytest.mark.asyncio
     async def test_compression_with_benchmarking(self, tiny_model, mock_tokenizer):
         """Test compression with benchmarking enabled."""
-        compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.SIMPLE,
-            enable_benchmarking=True
-        )
+        compressor = UnifiedCompressor(strategy=CompressionStrategy.SIMPLE, enable_benchmarking=True)
 
         with patch.object(tiny_model, "generate", return_value=torch.tensor([[1, 2, 3]])):
             result = await compressor.compress_model(tiny_model, tokenizer=mock_tokenizer)
@@ -251,7 +237,7 @@ class TestCompressionResult:
             compressed_size_mb=25.0,
             compression_ratio=4.0,
             compression_time_seconds=10.5,
-            strategy_used=CompressionStrategy.SIMPLE
+            strategy_used=CompressionStrategy.SIMPLE,
         )
 
         assert result.original_size_mb == 100.0
@@ -272,7 +258,7 @@ class TestCompressionResult:
             compression_ratio=10.0,
             compression_time_seconds=5.0,
             strategy_used=CompressionStrategy.MOBILE,
-            mobile_compatible=True
+            mobile_compatible=True,
         )
         assert result.mobile_compatible is True
 
@@ -283,7 +269,7 @@ class TestCompressionResult:
             compression_ratio=3.33,
             compression_time_seconds=5.0,
             strategy_used=CompressionStrategy.SIMPLE,
-            mobile_compatible=False
+            mobile_compatible=False,
         )
         assert result.mobile_compatible is False
 
@@ -335,16 +321,11 @@ class TestIntegration:
     async def test_end_to_end_compression_pipeline(self, tiny_model, temp_dir):
         """Test complete compression pipeline."""
         compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.AUTO,
-            mobile_target_mb=50,
-            enable_benchmarking=False
+            strategy=CompressionStrategy.AUTO, mobile_target_mb=50, enable_benchmarking=False
         )
 
         output_path = temp_dir / "integrated_test"
-        result = await compressor.compress_model(
-            tiny_model,
-            output_path=output_path
-        )
+        result = await compressor.compress_model(tiny_model, output_path=output_path)
 
         # Verify results
         assert result.compression_ratio > 1.0
@@ -365,13 +346,11 @@ class TestPerformance:
     @pytest.mark.asyncio
     async def test_compression_performance_simple(self, tiny_model):
         """Test performance of simple compression."""
-        compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.SIMPLE,
-            enable_benchmarking=False
-        )
+        compressor = UnifiedCompressor(strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False)
 
         # Measure compression time
         import time
+
         start_time = time.time()
         result = await compressor.compress_model(tiny_model)
         end_time = time.time()

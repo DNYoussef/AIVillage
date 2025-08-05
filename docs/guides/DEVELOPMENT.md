@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-- Python 3.10+ 
+- Python 3.10+
 - Git
 - 4GB+ RAM (8GB recommended)
 - CUDA-compatible GPU (optional but recommended)
@@ -15,11 +15,11 @@
    ```bash
    git clone https://github.com/DNYoussef/AIVillage.git
    cd AIVillage
-   
+
    # Create virtual environment
    python -m venv venv
    source venv/bin/activate  # Windows: venv\Scripts\activate
-   
+
    # Install development dependencies
    make dev-setup
    ```
@@ -28,7 +28,7 @@
    ```bash
    # Run validation
    make validate-all
-   
+
    # Check health
    make health-check
    ```
@@ -107,12 +107,12 @@ To add a new agent type:
 {
   "agent_id": "new_agent",
   "specification": {
-    "name": "NewAgent", 
+    "name": "NewAgent",
     "description": "Description of capabilities",
     "primary_capabilities": ["capability1", "capability2"],
     "resource_requirements": {
       "cpu": "medium",
-      "memory": "low", 
+      "memory": "low",
       "network": "high"
     }
   }
@@ -144,7 +144,7 @@ node.register_handler("NEW_PROTOCOL", handle_new_protocol)
 async def handle_new_protocol(message: dict, writer):
     # Process message
     result = process_protocol_data(message)
-    
+
     # Send response
     await node.send_response(writer, result)
 ```
@@ -157,7 +157,7 @@ class NewCompressionAlgorithm(CompressionAlgorithm):
     def compress(self, model: torch.nn.Module) -> torch.nn.Module:
         # Implement compression logic
         return compressed_model
-    
+
     def get_compression_ratio(self) -> float:
         return self.compression_ratio
 
@@ -241,15 +241,15 @@ class TestAgentDeployment:
     @pytest.fixture
     def orchestrator(self):
         return ForgeOrchestrator()
-    
+
     @patch('agent_forge.orchestrator.DeviceProfiler')
     async def test_deploy_agent_success(self, mock_profiler, orchestrator):
         # Setup mocks
         mock_profiler.return_value.get_available_memory.return_value = 4096
-        
+
         # Test deployment
         agent = await orchestrator.deploy_agent("king")
-        
+
         # Assertions
         assert agent.agent_type == "king"
         assert agent.status == "running"
@@ -263,19 +263,19 @@ class TestP2PNetworking:
     async def test_multi_node_communication(self):
         # Setup multiple nodes
         nodes = [P2PNode() for _ in range(3)]
-        
+
         # Start nodes
         for i, node in enumerate(nodes):
             await node.start_server(port=9000 + i)
-        
+
         # Connect nodes
         await nodes[0].connect_to_peer("localhost", 9001)
         await nodes[1].connect_to_peer("localhost", 9002)
-        
+
         # Test message passing
         message = {"type": "TEST", "data": "hello"}
         await nodes[0].broadcast_message(message)
-        
+
         # Verify delivery
         received = await nodes[2].receive_message(timeout=5.0)
         assert received["data"] == "hello"
@@ -288,9 +288,9 @@ class TestP2PNetworking:
 def test_compression_performance(benchmark):
     """Test compression speed meets requirements."""
     model = create_test_model(size="1GB")
-    
+
     result = benchmark(compress_model, model)
-    
+
     # Verify performance requirements
     assert result.compression_ratio >= 3.8
     assert result.compression_time < 300  # 5 minutes max
@@ -303,14 +303,14 @@ def test_compression_performance(benchmark):
 ```python
 class AgentDeployer:
     """Deploys agents across distributed devices.
-    
+
     This class handles the deployment of AI agents to appropriate devices
     based on resource constraints and performance requirements.
-    
+
     Attributes:
         device_manager: Manages device discovery and capabilities
         resource_monitor: Monitors resource usage across devices
-        
+
     Example:
         ```python
         deployer = AgentDeployer()
@@ -320,25 +320,25 @@ class AgentDeployer:
         })
         ```
     """
-    
+
     async def deploy_agent(
-        self, 
-        agent_type: str, 
+        self,
+        agent_type: str,
         constraints: Optional[Dict[str, Any]] = None
     ) -> DeployedAgent:
         """Deploy an agent with resource constraints.
-        
+
         Args:
             agent_type: Type of agent to deploy (e.g., "king", "sage")
             constraints: Resource constraints for deployment
-            
+
         Returns:
             DeployedAgent instance with deployment information
-            
+
         Raises:
             InsufficientResourcesError: If no device meets constraints
             AgentDeploymentError: If deployment fails
-            
+
         Note:
             This method automatically selects the best available device
             based on current resource availability and agent requirements.

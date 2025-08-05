@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import ast
+from contextlib import contextmanager
 import json
 import os
 import signal
 import subprocess
 import sys
 import tempfile
-from contextlib import contextmanager
 from typing import Any, NoReturn
 
 from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig

@@ -9,21 +9,13 @@ import asyncio
 import json
 import logging
 
-from agent_forge.orchestration import (
-    OpenRouterClient,
-    TaskRouter,
-    TaskType,
-)
-from agent_forge.orchestration.curriculum_integration import (
-    MultiModelOrchestrator,
-)
+from agent_forge.orchestration import OpenRouterClient, TaskRouter, TaskType
+from agent_forge.orchestration.curriculum_integration import MultiModelOrchestrator
 from agent_forge.orchestration.task_router import TaskContext
 from agent_forge.training.magi_specialization import MagiConfig
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -123,9 +115,7 @@ class OrchestrationTester:
 
             for test in test_cases:
                 # Test classification
-                classified_type = self.router.classify_task(
-                    test["prompt"], test["context"]
-                )
+                classified_type = self.router.classify_task(test["prompt"], test["context"])
                 logger.info(
                     "Classified '%s...' as %s",
                     test["prompt"][:50],
@@ -133,15 +123,11 @@ class OrchestrationTester:
                 )
 
                 # Test model selection
-                selected_model = self.router.select_model_for_task(
-                    classified_type, test["context"]
-                )
+                selected_model = self.router.select_model_for_task(classified_type, test["context"])
                 logger.info("Selected model: %s", selected_model)
 
                 # Test actual routing (small request)
-                response = await self.router.route_task(
-                    test["prompt"], test["context"], max_tokens=100
-                )
+                response = await self.router.route_task(test["prompt"], test["context"], max_tokens=100)
 
                 routing_results.append(
                     {
@@ -157,8 +143,7 @@ class OrchestrationTester:
             self.results["routing_test"] = {
                 "success": True,
                 "results": routing_results,
-                "accuracy": sum(r["correct"] for r in routing_results)
-                / len(routing_results),
+                "accuracy": sum(r["correct"] for r in routing_results) / len(routing_results),
             }
 
             return True
@@ -201,9 +186,7 @@ class OrchestrationTester:
 
         try:
             # Create test configuration
-            config = MagiConfig(
-                curriculum_levels=2, questions_per_level=5, total_questions=10
-            )
+            config = MagiConfig(curriculum_levels=2, questions_per_level=5, total_questions=10)
 
             # Initialize orchestrator
             self.orchestrator = MultiModelOrchestrator(config, enable_openrouter=True)
@@ -215,15 +198,11 @@ class OrchestrationTester:
             question = generator._generate_single_question("python_programming", 5)
 
             logger.info("Generated question: %s...", question.text[:200])
-            logger.info(
-                "Domain: %s, Difficulty: %s", question.domain, question.difficulty
-            )
+            logger.info("Domain: %s, Difficulty: %s", question.domain, question.difficulty)
 
             # Test evaluation
             test_answer = "This is a test answer to the programming question."
-            eval_result = await self.orchestrator.evaluate_answer_with_explanation(
-                question, test_answer
-            )
+            eval_result = await self.orchestrator.evaluate_answer_with_explanation(question, test_answer)
 
             logger.info("Evaluation result: %s", eval_result)
 
@@ -251,9 +230,7 @@ class OrchestrationTester:
 
                 logger.info("Cost tracking metrics:")
                 logger.info("Total cost: $%.4f", metrics["total_cost"])
-                logger.info(
-                    "Cost by task: %s", json.dumps(metrics["cost_by_task"], indent=2)
-                )
+                logger.info("Cost by task: %s", json.dumps(metrics["cost_by_task"], indent=2))
 
                 self.results["cost_tracking"] = {"success": True, "metrics": metrics}
 

@@ -5,8 +5,8 @@ Auto-generated from agent specifications.
 
 import json
 import os
-import sys
 from pathlib import Path
+import sys
 from typing import Any
 
 # Add the parent directory to the path to import our modules

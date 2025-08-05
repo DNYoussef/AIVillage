@@ -6,8 +6,8 @@ Tests that the compression phase entry point executes successfully
 and returns valid PhaseResult objects with real compression operations.
 """
 
-import sys
 from pathlib import Path
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -48,9 +48,7 @@ class TestCompressionIntegration:
         """Test that run_compression executes successfully with minimal config."""
 
         # Mock heavy operations for testing
-        with patch(
-            "agent_forge.compression_pipeline.CompressionPipeline"
-        ) as mock_pipeline:
+        with patch("agent_forge.compression_pipeline.CompressionPipeline") as mock_pipeline:
             mock_instance = MagicMock()
             mock_pipeline.return_value = mock_instance
 
@@ -58,9 +56,7 @@ class TestCompressionIntegration:
             async def mock_compression():
                 return {
                     "success": True,
-                    "model_path": compression_config[
-                        "output_model_path"
-                    ],  # This is the key used in the actual code
+                    "model_path": compression_config["output_model_path"],  # This is the key used in the actual code
                     "compression_ratio": 4.2,
                     "memory_savings_mb": 150.0,
                     "metadata": {
@@ -107,9 +103,7 @@ class TestCompressionIntegration:
         """Test compression error handling returns proper failed PhaseResult."""
 
         # Mock compression failure
-        with patch(
-            "agent_forge.compression_pipeline.CompressionPipeline"
-        ) as mock_pipeline:
+        with patch("agent_forge.compression_pipeline.CompressionPipeline") as mock_pipeline:
             mock_instance = MagicMock()
             mock_pipeline.return_value = mock_instance
 
@@ -165,9 +159,7 @@ class TestCompressionIntegration:
         # Ensure CPU device
         compression_config["device"] = "cpu"
 
-        with patch(
-            "agent_forge.compression_pipeline.CompressionPipeline"
-        ) as mock_pipeline:
+        with patch("agent_forge.compression_pipeline.CompressionPipeline") as mock_pipeline:
             mock_instance = MagicMock()
             mock_pipeline.return_value = mock_instance
 

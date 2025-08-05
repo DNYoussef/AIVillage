@@ -1,9 +1,9 @@
 """Infrastructure-Aware Evolution System for Sprint 6."""
 
-import logging
-import time
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
 
 # Import P2P and resource management components

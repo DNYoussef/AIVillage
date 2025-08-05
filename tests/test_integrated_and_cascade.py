@@ -2,9 +2,9 @@
 """Test the IntegratedCompressionPipeline and CascadeCompressor."""
 
 import logging
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
 import torch
 from torch import nn
@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path("src").resolve()))
 # Set up logging to capture messages
 logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
 
+
 def test_integrated_pipeline():
     """Test the IntegratedCompressionPipeline that avoids intermediate decompression."""
     print("TESTING INTEGRATED COMPRESSION PIPELINE")
@@ -23,13 +24,7 @@ def test_integrated_pipeline():
     from src.core.compression.integrated_pipeline import IntegratedCompressionPipeline
 
     # Create test model
-    model = nn.Sequential(
-        nn.Linear(2048, 1024),
-        nn.ReLU(),
-        nn.Linear(1024, 512),
-        nn.ReLU(),
-        nn.Linear(512, 256)
-    )
+    model = nn.Sequential(nn.Linear(2048, 1024), nn.ReLU(), nn.Linear(1024, 512), nn.ReLU(), nn.Linear(512, 256))
 
     param_count = sum(p.numel() for p in model.parameters())
     original_size = param_count * 4
@@ -43,6 +38,7 @@ def test_integrated_pipeline():
 
     # Capture logs to verify no intermediate decompression
     import io
+
     log_capture = io.StringIO()
     handler = logging.StreamHandler(log_capture)
     logger = logging.getLogger("src.core.compression.integrated_pipeline")
@@ -69,7 +65,9 @@ def test_integrated_pipeline():
 
     print("\nDecompression Check:")
     print(f"  Found 'decompress' in logs: {'YES' if has_decompress else 'NO'}")
-    print(f"  Optimization confirmed: {'NO intermediate decompression' if not has_decompress else 'May have decompression'}")
+    print(
+        f"  Optimization confirmed: {'NO intermediate decompression' if not has_decompress else 'May have decompression'}"
+    )
 
     if log_contents.strip():
         print("  Log messages:")
@@ -83,6 +81,7 @@ def test_integrated_pipeline():
 
     return ratio, not has_decompress, significant_improvement
 
+
 def test_cascade_compressor():
     """Test the CascadeCompressor for multiplicative gains."""
     print(f"\n{'='*60}")
@@ -93,9 +92,9 @@ def test_cascade_compressor():
 
     # Test on various tensor sizes
     test_sizes = [
-        (100, 100, "Small"),      # 10K params
-        (1000, 1000, "Medium"),   # 1M params
-        (2048, 2048, "Large"),    # 4M params
+        (100, 100, "Small"),  # 10K params
+        (1000, 1000, "Medium"),  # 1M params
+        (2048, 2048, "Large"),  # 4M params
     ]
 
     cascade = CascadeCompressor()
@@ -137,6 +136,7 @@ def test_cascade_compressor():
         print(f"  Pattern detection working: {'YES' if pattern_detected else 'NO'}")
 
     return results
+
 
 def test_cascade_stage_contributions():
     """Test that each cascade stage contributes to compression."""
@@ -203,6 +203,7 @@ def test_cascade_stage_contributions():
 
     return full_ratio > 40  # Success if we get >40x
 
+
 def comprehensive_comparison():
     """Compare all compression methods."""
     print(f"\n{'='*60}")
@@ -210,13 +211,7 @@ def comprehensive_comparison():
     print("=" * 60)
 
     # Test model for comparison
-    model = nn.Sequential(
-        nn.Linear(1024, 512),
-        nn.ReLU(),
-        nn.Linear(512, 256),
-        nn.ReLU(),
-        nn.Linear(256, 128)
-    )
+    model = nn.Sequential(nn.Linear(1024, 512), nn.ReLU(), nn.Linear(512, 256), nn.ReLU(), nn.Linear(256, 128))
 
     param_count = sum(p.numel() for p in model.parameters())
     original_mb = param_count * 4 / 1024 / 1024
@@ -228,9 +223,8 @@ def comprehensive_comparison():
 
     # 1. Integrated Pipeline
     try:
-        from src.core.compression.integrated_pipeline import (
-            IntegratedCompressionPipeline,
-        )
+        from src.core.compression.integrated_pipeline import IntegratedCompressionPipeline
+
         integrated = IntegratedCompressionPipeline()
 
         start = time.time()
@@ -238,7 +232,7 @@ def comprehensive_comparison():
         duration = time.time() - start
 
         ratio = (param_count * 4) / len(compressed)
-        results["IntegratedPipeline"] = {"ratio": ratio, "time": duration, "size_mb": len(compressed)/1024/1024}
+        results["IntegratedPipeline"] = {"ratio": ratio, "time": duration, "size_mb": len(compressed) / 1024 / 1024}
 
     except Exception as e:
         print(f"IntegratedPipeline failed: {e}")
@@ -247,6 +241,7 @@ def comprehensive_comparison():
     # 2. Cascade Compressor (on concatenated weights)
     try:
         from src.core.compression.cascade_compressor import CascadeCompressor
+
         cascade = CascadeCompressor()
 
         # Concatenate all model weights
@@ -257,7 +252,7 @@ def comprehensive_comparison():
         duration = time.time() - start
 
         ratio = (all_weights.numel() * 4) / len(compressed)
-        results["CascadeCompressor"] = {"ratio": ratio, "time": duration, "size_mb": len(compressed)/1024/1024}
+        results["CascadeCompressor"] = {"ratio": ratio, "time": duration, "size_mb": len(compressed) / 1024 / 1024}
 
     except Exception as e:
         print(f"CascadeCompressor failed: {e}")
@@ -277,6 +272,7 @@ def comprehensive_comparison():
     print(f"{'AdvancedPipeline':<20} {'20.8':<10} {'~1.0':<8} {original_mb/20.8:<10.3f}")
 
     return results
+
 
 def main():
     """Run all integrated and cascade tests."""
@@ -313,7 +309,7 @@ def main():
             ("Integrated Pipeline >50x", integrated_ratio >= 50),
             ("Cascade >40x", cascade_effective),
             ("No intermediate decompression", no_decomp),
-            ("Mobile viable compression", integrated_ratio >= 50)
+            ("Mobile viable compression", integrated_ratio >= 50),
         ]
 
         print("\nSuccess Criteria:")
@@ -339,8 +335,10 @@ def main():
     except Exception as e:
         print(f"\nTesting failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     success = main()

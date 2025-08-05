@@ -21,8 +21,7 @@ files = _git("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD").split()
 adr_links = [f for f in files if re.match(r"docs/adr/\d+.*\.md", f)]
 if adr_links:
     adr_section = "\n> _Updated ADRs:_\n" + "\n".join(
-        f"\u2022 <https://github.com/AtlantisAI/atlantis/blob/main/{p}|{p}>"
-        for p in adr_links
+        f"\u2022 <https://github.com/AtlantisAI/atlantis/blob/main/{p}|{p}>" for p in adr_links
     )
 else:
     adr_section = ""

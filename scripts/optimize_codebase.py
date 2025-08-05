@@ -15,10 +15,9 @@ Usage:
 import argparse
 import ast
 import logging
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 # Configure logging
 logging.basicConfig(
@@ -44,8 +43,8 @@ class CodeQualityAnalyzer:
         """
         self.root_path = root_path
         self.fix_issues = fix_issues
-        self.python_files: List[Path] = []
-        self.issues: Dict[str, List[str]] = {}
+        self.python_files: list[Path] = []
+        self.issues: dict[str, list[str]] = {}
 
     def discover_files(self) -> None:
         """Discover Python files to analyze."""
@@ -77,7 +76,7 @@ class CodeQualityAnalyzer:
 
         logger.info(f"Discovered {len(self.python_files)} Python files")
 
-    def analyze_imports(self, file_path: Path) -> List[str]:
+    def analyze_imports(self, file_path: Path) -> list[str]:
         """Analyze imports in a Python file.
 
         Args:
@@ -89,7 +88,7 @@ class CodeQualityAnalyzer:
         issues = []
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -115,7 +114,7 @@ class CodeQualityAnalyzer:
 
         return issues
 
-    def check_type_hints(self, file_path: Path) -> List[str]:
+    def check_type_hints(self, file_path: Path) -> list[str]:
         """Check for missing type hints.
 
         Args:
@@ -127,7 +126,7 @@ class CodeQualityAnalyzer:
         issues = []
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -141,16 +140,14 @@ class CodeQualityAnalyzer:
                     # Check for missing argument type annotations
                     for arg in node.args.args:
                         if not arg.annotation and arg.arg != "self":
-                            issues.append(
-                                f"Function {node.name} argument {arg.arg} missing type hint"
-                            )
+                            issues.append(f"Function {node.name} argument {arg.arg} missing type hint")
 
         except Exception as e:
             issues.append(f"Failed to check type hints: {e}")
 
         return issues
 
-    def run_linting_tools(self) -> Dict[str, List[str]]:
+    def run_linting_tools(self) -> dict[str, list[str]]:
         """Run various linting tools on the codebase.
 
         Returns:
@@ -164,9 +161,7 @@ class CodeQualityAnalyzer:
             if self.fix_issues:
                 cmd.append("--fix")
 
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=300
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=False)
 
             if result.stdout:
                 results["ruff"] = result.stdout.strip().split("\n")
@@ -183,14 +178,15 @@ class CodeQualityAnalyzer:
             if dir_path.exists():
                 try:
                     cmd = [
-                        "python", "-m", "mypy", str(dir_path),
+                        "python",
+                        "-m",
+                        "mypy",
+                        str(dir_path),
                         "--ignore-missing-imports",
                         "--show-error-codes",
                     ]
 
-                    result = subprocess.run(
-                        cmd, capture_output=True, text=True, timeout=180
-                    )
+                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=180, check=False)
 
                     if result.stdout:
                         results[f"mypy-{dir_name}"] = result.stdout.strip().split("\n")
@@ -240,16 +236,20 @@ class CodeQualityAnalyzer:
         ]
 
         if self.issues:
-            report_lines.extend([
-                "## File-specific Issues",
-                "",
-            ])
+            report_lines.extend(
+                [
+                    "## File-specific Issues",
+                    "",
+                ]
+            )
 
             for file_path, file_issues in self.issues.items():
-                report_lines.extend([
-                    f"### {file_path}",
-                    "",
-                ])
+                report_lines.extend(
+                    [
+                        f"### {file_path}",
+                        "",
+                    ]
+                )
 
                 for issue in file_issues:
                     report_lines.append(f"- {issue}")
@@ -260,16 +260,20 @@ class CodeQualityAnalyzer:
         linting_results = self.run_linting_tools()
 
         if linting_results:
-            report_lines.extend([
-                "## Linting Results",
-                "",
-            ])
+            report_lines.extend(
+                [
+                    "## Linting Results",
+                    "",
+                ]
+            )
 
             for tool, tool_results in linting_results.items():
-                report_lines.extend([
-                    f"### {tool.upper()}",
-                    "",
-                ])
+                report_lines.extend(
+                    [
+                        f"### {tool.upper()}",
+                        "",
+                    ]
+                )
 
                 for result in tool_results[:10]:  # Limit to first 10 results
                     report_lines.append(f"- {result}")
@@ -375,7 +379,9 @@ Examples:
                 except Exception:
                     pass
 
-            print(f"Quick check: {quick_issues} files have issues (out of {min(10, len(analyzer.python_files))} checked)")
+            print(
+                f"Quick check: {quick_issues} files have issues (out of {min(10, len(analyzer.python_files))} checked)"
+            )
             return 0
 
         analyzer.optimize()

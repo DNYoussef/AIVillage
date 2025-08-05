@@ -11,13 +11,13 @@ class AgentManager(
     private val context: Context,
     private val config: AgentConfiguration
 ) {
-    
+
     private val agents = mutableMapOf<String, Agent>()
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    
+
     private val _agentStates = MutableStateFlow<Map<String, AgentState>>(emptyMap())
     val agentStates: StateFlow<Map<String, AgentState>> = _agentStates.asStateFlow()
-    
+
     /**
      * Initialize agent manager
      */
@@ -27,7 +27,7 @@ class AgentManager(
             loadAgent(agentType)
         }
     }
-    
+
     /**
      * Start all agents
      */
@@ -39,7 +39,7 @@ class AgentManager(
             }
         }
     }
-    
+
     /**
      * Stop all agents
      */
@@ -49,35 +49,35 @@ class AgentManager(
             updateAgentState(agent.id, AgentState.STOPPED)
         }
     }
-    
+
     /**
      * Process task with appropriate agent
      */
     suspend fun processTask(task: AgentTask): AgentResult {
-        val agent = agents[task.agentType] 
+        val agent = agents[task.agentType]
             ?: return AgentResult.Error("Agent ${task.agentType} not available")
-        
+
         return agent.processTask(task)
     }
-    
+
     /**
      * Get agent by type
      */
     fun getAgent(agentType: String): Agent? = agents[agentType]
-    
+
     private fun loadAgent(agentType: String) {
         val agent = when (agentType) {
             "translator" -> TranslatorAgent(context)
             "classifier" -> ClassifierAgent(context)
             else -> null
         }
-        
+
         agent?.let {
             agents[agentType] = it
             updateAgentState(it.id, AgentState.LOADED)
         }
     }
-    
+
     private fun updateAgentState(agentId: String, state: AgentState) {
         _agentStates.value = _agentStates.value + (agentId to state)
     }
@@ -91,7 +91,7 @@ abstract class Agent(
     protected val context: Context
 ) {
     protected val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    
+
     abstract suspend fun start()
     abstract fun stop()
     abstract suspend fun processTask(task: AgentTask): AgentResult
@@ -101,15 +101,15 @@ abstract class Agent(
  * Translator agent implementation
  */
 class TranslatorAgent(context: Context) : Agent("translator", context) {
-    
+
     override suspend fun start() {
         // Initialize translation model
     }
-    
+
     override fun stop() {
         coroutineScope.cancel()
     }
-    
+
     override suspend fun processTask(task: AgentTask): AgentResult {
         return withContext(Dispatchers.Default) {
             when (task) {
@@ -118,7 +118,7 @@ class TranslatorAgent(context: Context) : Agent("translator", context) {
             }
         }
     }
-    
+
     private fun translate(text: String, sourceLang: String, targetLang: String): AgentResult {
         // Simulate translation
         return AgentResult.Success(
@@ -136,15 +136,15 @@ class TranslatorAgent(context: Context) : Agent("translator", context) {
  * Classifier agent implementation
  */
 class ClassifierAgent(context: Context) : Agent("classifier", context) {
-    
+
     override suspend fun start() {
         // Initialize classification model
     }
-    
+
     override fun stop() {
         coroutineScope.cancel()
     }
-    
+
     override suspend fun processTask(task: AgentTask): AgentResult {
         return AgentResult.Success("Classification result")
     }

@@ -114,11 +114,11 @@ Message(
 def evaluate_kpi(self) -> Dict[str, float]:
     if not self.performance_history:
         return {"performance": 0.7}  # Default baseline
-    
+
     success_rate = sum(
         1 for p in self.performance_history if p.get('success', False)
     ) / len(self.performance_history)
-    
+
     return {"success_rate": success_rate, "performance": success_rate * 0.8 + 0.2}
 ```
 

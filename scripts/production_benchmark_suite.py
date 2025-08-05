@@ -7,16 +7,14 @@ Provides comprehensive benchmarking of compression, evolution, and RAG pipelines
 Usage:
     python production_benchmark_suite.py
 """
+from datetime import datetime
 import json
 import logging
-import os
-import subprocess
+from pathlib import Path
 import sys
 import time
 import traceback
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import psutil
@@ -30,11 +28,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('benchmark_suite.log')
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("benchmark_suite.log")],
 )
 logger = logging.getLogger(__name__)
 
@@ -48,8 +43,8 @@ class PerformanceMonitor:
 
     def __init__(self) -> None:
         """Initialize performance monitor."""
-        self.start_time: Optional[float] = None
-        self.start_memory: Optional[int] = None
+        self.start_time: float | None = None
+        self.start_memory: int | None = None
         self.peak_memory: int = 0
 
     def start(self):
@@ -61,7 +56,7 @@ class PerformanceMonitor:
         current = psutil.virtual_memory().used
         self.peak_memory = max(self.peak_memory, current)
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         if self.start_time is None:
             return {}
 
@@ -72,7 +67,7 @@ class PerformanceMonitor:
             "elapsed_time_seconds": round(elapsed, 3),
             "memory_delta_mb": round(memory_delta / (1024 * 1024), 2),
             "peak_memory_mb": round(self.peak_memory / (1024 * 1024), 2),
-            "cpu_percent": psutil.cpu_percent(interval=1)
+            "cpu_percent": psutil.cpu_percent(interval=1),
         }
 
 
@@ -82,7 +77,7 @@ class CompressionBenchmark:
     def __init__(self):
         self.results = {}
 
-    def run_compression_test(self) -> Dict[str, Any]:
+    def run_compression_test(self) -> dict[str, Any]:
         """Test compression pipeline with sample model"""
         logger.info("Starting compression pipeline benchmark...")
         monitor = PerformanceMonitor()
@@ -94,20 +89,14 @@ class CompressionBenchmark:
             import torch
 
             from agent_forge.compression import BitNetCompressor, SeedLMCompressor, VPTQCompressor
+
             test_tensor = torch.randn(1000, 1000)  # 4MB test tensor
             original_size = test_tensor.numel() * 4  # 4 bytes per float32
 
-            results = {
-                "original_size_mb": round(original_size / (1024 * 1024), 2),
-                "compressions": {}
-            }
+            results = {"original_size_mb": round(original_size / (1024 * 1024), 2), "compressions": {}}
 
             # Test each compression method
-            compressors = [
-                ("BitNet", BitNetCompressor()),
-                ("SeedLM", SeedLMCompressor()),
-                ("VPTQ", VPTQCompressor())
-            ]
+            compressors = [("BitNet", BitNetCompressor()), ("SeedLM", SeedLMCompressor()), ("VPTQ", VPTQCompressor())]
 
             for name, compressor in compressors:
                 try:
@@ -123,16 +112,13 @@ class CompressionBenchmark:
                         "compression_ratio": round(ratio, 2),
                         "compressed_size_mb": round(compressed_size / (1024 * 1024), 2),
                         "compression_time_seconds": round(compression_time, 3),
-                        "status": "success"
+                        "status": "success",
                     }
 
                     logger.info(f"{name}: {ratio:.1f}x compression in {compression_time:.3f}s")
 
                 except Exception as e:
-                    results["compressions"][name] = {
-                        "status": "error",
-                        "error": str(e)
-                    }
+                    results["compressions"][name] = {"status": "error", "error": str(e)}
                     logger.error(f"{name} compression failed: {e}")
 
                 monitor.update_peak_memory()
@@ -154,7 +140,7 @@ class EvolutionBenchmark:
     def __init__(self):
         self.results = {}
 
-    def run_evolution_test(self) -> Dict[str, Any]:
+    def run_evolution_test(self) -> dict[str, Any]:
         """Test evolution system with mini tournament"""
         logger.info("Starting evolution system benchmark...")
         monitor = PerformanceMonitor()
@@ -172,7 +158,7 @@ class EvolutionBenchmark:
                 "population_size": 4,  # Small for quick test
                 "generations": 2,
                 "mutation_rate": 0.1,
-                "crossover_rate": 0.7
+                "crossover_rate": 0.7,
             }
 
             start_time = time.time()
@@ -190,7 +176,7 @@ class EvolutionBenchmark:
                 "final_fitness": result.get("best_fitness", 0) if result else 0,
                 "convergence_generation": result.get("convergence_gen", -1) if result else -1,
                 "performance": monitor.get_metrics(),
-                "status": "success" if result else "failed"
+                "status": "success" if result else "failed",
             }
 
             logger.info(f"Evolution completed in {evolution_time:.3f}s")
@@ -210,7 +196,7 @@ class RAGBenchmark:
     def __init__(self):
         self.results = {}
 
-    def run_rag_test(self) -> Dict[str, Any]:
+    def run_rag_test(self) -> dict[str, Any]:
         """Test RAG pipeline with sample documents and queries"""
         logger.info("Starting RAG pipeline benchmark...")
         monitor = PerformanceMonitor()
@@ -226,7 +212,7 @@ class RAGBenchmark:
                 "Deep learning uses neural networks with multiple layers to process data.",
                 "Natural language processing enables computers to understand human language.",
                 "Computer vision allows machines to interpret and understand visual information.",
-                "Reinforcement learning teaches agents to make decisions through trial and error."
+                "Reinforcement learning teaches agents to make decisions through trial and error.",
             ]
 
             # Initialize RAG system
@@ -240,11 +226,7 @@ class RAGBenchmark:
             monitor.update_peak_memory()
 
             # Test queries
-            test_queries = [
-                "What is machine learning?",
-                "How does deep learning work?",
-                "What is computer vision?"
-            ]
+            test_queries = ["What is machine learning?", "How does deep learning work?", "What is computer vision?"]
 
             query_results = []
             total_query_time = 0
@@ -255,12 +237,14 @@ class RAGBenchmark:
                 query_time = time.time() - query_start
                 total_query_time += query_time
 
-                query_results.append({
-                    "query": query,
-                    "response_time_seconds": round(query_time, 3),
-                    "results_count": len(result.get("results", [])),
-                    "confidence": result.get("confidence", 0)
-                })
+                query_results.append(
+                    {
+                        "query": query,
+                        "response_time_seconds": round(query_time, 3),
+                        "results_count": len(result.get("results", [])),
+                        "confidence": result.get("confidence", 0),
+                    }
+                )
 
                 monitor.update_peak_memory()
 
@@ -273,7 +257,7 @@ class RAGBenchmark:
                 "total_queries": len(test_queries),
                 "query_results": query_results,
                 "performance": monitor.get_metrics(),
-                "status": "success"
+                "status": "success",
             }
 
             logger.info(f"RAG indexing: {index_time:.3f}s, avg query: {avg_query_time:.3f}s")
@@ -294,7 +278,7 @@ class ProductionBenchmarkSuite:
         self.results = {}
         self.timestamp = datetime.now().isoformat()
 
-    def run_all_benchmarks(self) -> Dict[str, Any]:
+    def run_all_benchmarks(self) -> dict[str, Any]:
         """Run all production system benchmarks"""
         logger.info("Starting production benchmark suite...")
 
@@ -306,13 +290,10 @@ class ProductionBenchmarkSuite:
             "platform": sys.platform,
             "cpu_count": psutil.cpu_count(),
             "total_memory_gb": round(psutil.virtual_memory().total / (1024**3), 2),
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
         }
 
-        results = {
-            "system_info": system_info,
-            "benchmarks": {}
-        }
+        results = {"system_info": system_info, "benchmarks": {}}
 
         # Run compression benchmark
         compression_bench = CompressionBenchmark()
@@ -333,7 +314,7 @@ class ProductionBenchmarkSuite:
         logger.info(f"All benchmarks completed in {total_time:.3f}s")
         return results
 
-    def save_results(self, results: Dict[str, Any], filename: Optional[str] = None):
+    def save_results(self, results: dict[str, Any], filename: str | None = None):
         """Save benchmark results to file"""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -344,13 +325,13 @@ class ProductionBenchmarkSuite:
 
         filepath = results_dir / filename
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(results, f, indent=2)
 
         logger.info(f"Results saved to {filepath}")
         return str(filepath)
 
-    def compare_with_baseline(self, results: Dict[str, Any]) -> Dict[str, Any]:
+    def compare_with_baseline(self, results: dict[str, Any]) -> dict[str, Any]:
         """Compare current results with baseline if available"""
         try:
             baseline_path = Path(__file__).parent / "benchmark_results" / "baseline.json"
@@ -359,14 +340,13 @@ class ProductionBenchmarkSuite:
                 logger.info("No baseline found, current results will serve as baseline")
                 return {"status": "no_baseline", "message": "First run - establishing baseline"}
 
-            with open(baseline_path, 'r') as f:
+            with open(baseline_path) as f:
                 baseline = json.load(f)
 
             comparison = {"status": "comparison_available", "changes": {}}
 
             # Compare compression ratios
-            if ("compression" in results["benchmarks"] and
-                    "compression" in baseline.get("benchmarks", {})):
+            if "compression" in results["benchmarks"] and "compression" in baseline.get("benchmarks", {}):
 
                 current_comp = results["benchmarks"]["compression"]
                 baseline_comp = baseline["benchmarks"]["compression"]
@@ -382,7 +362,7 @@ class ProductionBenchmarkSuite:
                                 comparison["changes"][f"compression_{method}_ratio"] = {
                                     "current": current_ratio,
                                     "baseline": baseline_ratio,
-                                    "change_percent": round(change_pct, 2)
+                                    "change_percent": round(change_pct, 2),
                                 }
 
             return comparison
@@ -473,7 +453,8 @@ def main():
                         f"  {metric}: {
                             data['current']:.2f} vs {
                             data['baseline']:.2f} ({
-                            change_pct:+.1f}%) {direction}")
+                            change_pct:+.1f}%) {direction}"
+                    )
             else:
                 print("  No significant changes detected")
 

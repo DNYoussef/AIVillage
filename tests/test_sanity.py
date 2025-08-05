@@ -1,8 +1,9 @@
 """Basic sanity tests that actually verify functionality"""
-import sys
-import os
-import pytest
+
 from pathlib import Path
+import sys
+
+import pytest
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -16,12 +17,13 @@ def test_imports_work():
         import production
 
         # Verify they're not empty modules
-        assert hasattr(core, '__file__')
-        assert hasattr(production, '__file__')
+        assert hasattr(core, "__file__")
+        assert hasattr(production, "__file__")
 
         # Try specific imports that should work
-        from core.compression import SimpleQuantizer  # noqa: F401
         from core import __version__
+        from core.compression import SimpleQuantizer  # noqa: F401
+
         assert __version__ is not None
 
     except ImportError as e:
@@ -35,18 +37,19 @@ def test_no_syntax_errors():
     errors = []
     for py_file in paths:
         try:
-            with open(py_file, "r", encoding="utf-8") as f:
+            with open(py_file, encoding="utf-8") as f:
                 compile(f.read(), py_file, "exec")
         except SyntaxError as e:
             errors.append(f"{py_file}: {e}")
 
-    assert not errors, f"Syntax errors found:\n" + "\n".join(errors)
+    assert not errors, "Syntax errors found:\n" + "\n".join(errors)
 
 
 def test_no_import_cycles():
     """Test that there are no circular imports"""
     # This will fail immediately if there are import cycles
     from core import __version__
+
     assert __version__ is not None
 
 
@@ -56,11 +59,13 @@ class TestBasicFunctionality:
     def test_compression_module_exists(self):
         """Compression module should be importable"""
         from core.compression import SimpleQuantizer
+
         assert SimpleQuantizer is not None
 
     def test_can_create_quantizer(self):
         """Should be able to create a quantizer instance"""
         from core.compression import SimpleQuantizer
+
         quantizer = SimpleQuantizer()
         assert quantizer is not None
-        assert hasattr(quantizer, 'quantize_model')
+        assert hasattr(quantizer, "quantize_model")

@@ -61,7 +61,7 @@ LLM Attention Head (4.2M params):
 Test: 256x256 tensor (262,144 bytes)
 
 Stage 1 BitNet:    262,144 → 16,416 bytes  (16.0x)
-Stage 2 SeedLM:     16,416 → 49,184 bytes  (0.3x) 
+Stage 2 SeedLM:     16,416 → 49,184 bytes  (0.3x)
 Stage 3 VPTQ:       49,184 → 16,480 bytes  (3.0x)
 Stage 4 Entropy:    16,480 → 8,346 bytes   (2.0x)
 

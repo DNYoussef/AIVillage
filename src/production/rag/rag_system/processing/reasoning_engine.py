@@ -56,9 +56,7 @@ class UncertaintyAwareReasoningEngine:
         summary = " ".join(top_evidence) if top_evidence else "No relevant documents."
         confidence = 0.0
         if retrieved_info:
-            confidence = float(
-                np.clip(np.mean([r.score for r in retrieved_info[:3]]), 0.0, 1.0)
-            )
+            confidence = float(np.clip(np.mean([r.score for r in retrieved_info[:3]]), 0.0, 1.0))
         conclusion = f"Based on the retrieved information, {summary}"
         uncertainty = 1.0 - confidence
         return {
@@ -70,15 +68,11 @@ class UncertaintyAwareReasoningEngine:
             "activated_concepts": list(activated_knowledge.keys())[:5],
         }
 
-    def update_causal_strength(
-        self, source: str, target: str, observed_probability: float
-    ) -> None:
+    def update_causal_strength(self, source: str, target: str, observed_probability: float) -> None:
         edge = self.causal_edges.get((source, target))
         if edge:
             learning_rate = 0.1
-            edge.strength = (
-                1 - learning_rate
-            ) * edge.strength + learning_rate * observed_probability
+            edge.strength = (1 - learning_rate) * edge.strength + learning_rate * observed_probability
 
     def close(self) -> None:
         """Close the underlying driver if it exists."""
@@ -101,9 +95,7 @@ class UncertaintyAwareReasoningEngine:
             "edges": list(snapshot.edges(data=True)),
         }
 
-    async def beam_search(
-        self, query: str, beam_width: int, max_depth: int
-    ) -> list[tuple[list[str], float]]:
+    async def beam_search(self, query: str, beam_width: int, max_depth: int) -> list[tuple[list[str], float]]:
         initial_entities = await self.get_initial_entities(query)
         beams = [[entity] for entity in initial_entities]
 
@@ -149,9 +141,7 @@ class UncertaintyAwareReasoningEngine:
         """Return the complement of the confidence score."""
         return 1.0 - reasoning_result.get("confidence", 0.0)
 
-    def adjust_conclusion(
-        self, reasoning_result: dict[str, Any], uncertainty: float
-    ) -> dict[str, Any]:
+    def adjust_conclusion(self, reasoning_result: dict[str, Any], uncertainty: float) -> dict[str, Any]:
         """Append a note to the conclusion if uncertainty is high."""
         if uncertainty > 0.5:
             reasoning_result["conclusion"] += " (High uncertainty)"
@@ -168,13 +158,8 @@ class UncertaintyAwareReasoningEngine:
             uncertainty = 0.1  # Low uncertainty
         elif step["type"] == "analyze_knowledge":
             # Uncertainty could be based on the uncertainties of the knowledge components
-            knowledge_uncertainties = [
-                item["uncertainty"]
-                for item in step["content"].get("relevant_facts", [])
-            ]
-            uncertainty = (
-                np.mean(knowledge_uncertainties) if knowledge_uncertainties else 0.5
-            )
+            knowledge_uncertainties = [item["uncertainty"] for item in step["content"].get("relevant_facts", [])]
+            uncertainty = np.mean(knowledge_uncertainties) if knowledge_uncertainties else 0.5
         elif step["type"] == "synthesize_answer":
             uncertainty = 0.2  # Moderate uncertainty
         else:
@@ -191,9 +176,7 @@ class UncertaintyAwareReasoningEngine:
         reasoning = "\n".join(steps)
         return reasoning
 
-    def propagate_uncertainty(
-        self, reasoning_steps: list[str], uncertainties: list[float]
-    ) -> float:
+    def propagate_uncertainty(self, reasoning_steps: list[str], uncertainties: list[float]) -> float:
         """Propagate uncertainty throughout the reasoning process.
 
         :param reasoning_steps: A list of reasoning step results.
@@ -244,9 +227,7 @@ class UncertaintyAwareReasoningEngine:
 
         return reasoning, overall_uncertainty, detailed_steps
 
-    def analyze_uncertainty_sources(
-        self, detailed_steps: list[dict[str, Any]]
-    ) -> dict[str, float]:
+    def analyze_uncertainty_sources(self, detailed_steps: list[dict[str, Any]]) -> dict[str, float]:
         """Analyze the sources of uncertainty in the reasoning process.
 
         :param detailed_steps: A list of dictionaries containing detailed step information.
@@ -256,41 +237,29 @@ class UncertaintyAwareReasoningEngine:
         total_uncertainty = sum(step["uncertainty"] for step in detailed_steps)
 
         for step in detailed_steps:
-            contribution = (
-                step["uncertainty"] / total_uncertainty if total_uncertainty > 0 else 0
-            )
+            contribution = step["uncertainty"] / total_uncertainty if total_uncertainty > 0 else 0
             uncertainty_sources[step["type"]] = contribution
 
         return uncertainty_sources
 
-    def suggest_uncertainty_reduction(
-        self, uncertainty_sources: dict[str, float]
-    ) -> list[str]:
+    def suggest_uncertainty_reduction(self, uncertainty_sources: dict[str, float]) -> list[str]:
         """Suggest strategies to reduce uncertainty based on the main sources.
 
         :param uncertainty_sources: A dictionary mapping uncertainty sources to their contributions.
         :return: A list of suggestions for reducing uncertainty.
         """
         suggestions = []
-        for source, _contribution in sorted(
-            uncertainty_sources.items(), key=lambda x: x[1], reverse=True
-        ):
+        for source, _contribution in sorted(uncertainty_sources.items(), key=lambda x: x[1], reverse=True):
             if source == "interpret_query":
                 suggestions.append("Clarify the query to reduce ambiguity.")
             elif source == "analyze_knowledge":
-                suggestions.append(
-                    "Gather more relevant information to improve knowledge base."
-                )
+                suggestions.append("Gather more relevant information to improve knowledge base.")
             elif source == "synthesize_answer":
-                suggestions.append(
-                    "Refine the answer synthesis process for better accuracy."
-                )
+                suggestions.append("Refine the answer synthesis process for better accuracy.")
 
         return suggestions
 
-    def _generate_reasoning_steps(
-        self, query: str, constructed_knowledge: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    def _generate_reasoning_steps(self, query: str, constructed_knowledge: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate reasoning steps based on the query and constructed knowledge.
 
         :param query: The user's query.

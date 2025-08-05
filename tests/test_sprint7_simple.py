@@ -44,6 +44,7 @@ print()
 # Test 2: Agent System Enums
 print("Test 2: Agent System Enums")
 try:
+
     class AgentType(Enum):
         KING = "king"
         SAGE = "sage"
@@ -69,6 +70,7 @@ print()
 # Test 3: Migration System Enums
 print("Test 3: Migration System Enums")
 try:
+
     class MigrationReason(Enum):
         DEVICE_OVERLOAD = "device_overload"
         PERFORMANCE_DEGRADATION = "performance_degradation"
@@ -92,6 +94,7 @@ print()
 # Test 4: Async Operations
 print("Test 4: Async Operations")
 try:
+
     async def test_async():
         await asyncio.sleep(0.001)
         return "async_working"
@@ -101,6 +104,7 @@ try:
 
     # Test async mock functionality
     from unittest.mock import AsyncMock
+
     mock_func = AsyncMock(return_value="mock_result")
 
     async def test_mock():
@@ -129,7 +133,7 @@ try:
         "src/production/federated_learning/federated_coordinator.py",
         "tests/distributed_inference/__init__.py",
         "tests/distributed_inference/test_model_sharding.py",
-        "tests/distributed_inference/test_adaptive_resharding.py"
+        "tests/distributed_inference/test_adaptive_resharding.py",
     ]
 
     missing_files = []
@@ -201,7 +205,7 @@ try:
     p2p_files = [
         "src/core/p2p/p2p_node.py",
         "src/core/resources/resource_monitor.py",
-        "src/core/resources/device_profiler.py"
+        "src/core/resources/device_profiler.py",
     ]
 
     integration_ready = True

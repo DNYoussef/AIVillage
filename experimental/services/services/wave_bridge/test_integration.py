@@ -40,9 +40,9 @@ class TestWhatsAppIntegration:
         response_time = time.time() - start_time
 
         # Assert response time meets target
-        assert response_time < PERFORMANCE_TARGET, (
-            f"Response took {response_time:.2f}s, target is {PERFORMANCE_TARGET}s"
-        )
+        assert (
+            response_time < PERFORMANCE_TARGET
+        ), f"Response took {response_time:.2f}s, target is {PERFORMANCE_TARGET}s"
         assert response.status_code == 200
         assert "application/xml" in response.headers["content-type"]
 

@@ -2,11 +2,11 @@
 """Download the 3 new 1.5B parameter models for 50-generation evolution merge."""
 
 import os
-import time
 from pathlib import Path
+import time
 
-import torch
 from huggingface_hub import snapshot_download
+import torch
 
 
 def check_gpu_availability():
@@ -90,9 +90,7 @@ def main():
     print(f"Available disk space: {free_gb:.1f} GB")
 
     if free_gb < 20:
-        print(
-            "⚠️  Warning: Less than 20GB free space. Models may not download completely."
-        )
+        print("⚠️  Warning: Less than 20GB free space. Models may not download completely.")
         proceed = input("Continue anyway? (y/N): ")
         if proceed.lower() != "y":
             return None
@@ -115,9 +113,7 @@ def main():
     print("DOWNLOAD SUMMARY")
     print("=" * 80)
     print(f"Total time: {duration:.1f} seconds ({duration / 60:.1f} minutes)")
-    print(
-        f"Successfully downloaded: {len(downloaded_models)}/{len(target_models)} models"
-    )
+    print(f"Successfully downloaded: {len(downloaded_models)}/{len(target_models)} models")
 
     for name, path in downloaded_models:
         print(f"  ✓ {name}")

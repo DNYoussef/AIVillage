@@ -3,8 +3,6 @@
 
 import time
 
-import pytest
-
 
 class TestAgentForgePerformance:
     """Test performance characteristics of AgentForge."""
@@ -14,7 +12,6 @@ class TestAgentForgePerformance:
         start_time = time.time()
 
         # This will fail initially due to heavy imports
-        import agent_forge
 
         import_time = time.time() - start_time
 

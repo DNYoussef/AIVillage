@@ -20,6 +20,7 @@ import shutil
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+
 class CodebaseRestructurer:
     def __init__(self, base_path: str):
         self.base_path = Path(base_path)
@@ -32,34 +33,54 @@ class CodebaseRestructurer:
             "production": "src/production",
             "digital_twin": "src/digital_twin",
             "mcp_servers": "src/mcp_servers",
-
             # Core infrastructure (stable parts of agent_forge)
             "agent_forge/core": "src/agent_forge/core",
             "agent_forge/evaluation": "src/agent_forge/evaluation",
-
             # Experimental code -> experimental/
             "experimental": "experimental",
             "agent_forge/self_awareness": "experimental/agent_forge_experimental/self_awareness",
             "agent_forge/bakedquietiot": "experimental/agent_forge_experimental/bakedquietiot",
-
             # Tools consolidation -> tools/
             "scripts": "tools/scripts",
             "benchmarks": "tools/benchmarks",
             "examples": "tools/examples",
-
             # Mobile projects -> mobile/ (if maintained)
             # Will be handled separately based on maintenance status
         }
 
         # Files/directories to skip during restructuring
         self.skip_items = {
-            ".git", ".github", "node_modules", "__pycache__", ".pytest_cache",
-            "new_env", ".env", "venv", "env",
+            ".git",
+            ".github",
+            "node_modules",
+            "__pycache__",
+            ".pytest_cache",
+            "new_env",
+            ".env",
+            "venv",
+            "env",
             # Config and root files stay at root
-            "pyproject.toml", "requirements*.txt", "setup.py", "Dockerfile*",
-            "docker-compose*.yml", "Makefile", "pytest.ini", "*.md", "*.txt",
-            "LICENSE", "CHANGELOG.md", "README.md", "*.log", "*.json", "*.xml",
-            "coverage.xml", "*.db", "*.sh", "*.py", "main.py", "server.py"
+            "pyproject.toml",
+            "requirements*.txt",
+            "setup.py",
+            "Dockerfile*",
+            "docker-compose*.yml",
+            "Makefile",
+            "pytest.ini",
+            "*.md",
+            "*.txt",
+            "LICENSE",
+            "CHANGELOG.md",
+            "README.md",
+            "*.log",
+            "*.json",
+            "*.xml",
+            "coverage.xml",
+            "*.db",
+            "*.sh",
+            "*.py",
+            "main.py",
+            "server.py",
         }
 
     def validate_source_exists(self, source_path: Path) -> bool:
@@ -90,7 +111,7 @@ class CodebaseRestructurer:
             "tools/examples",
             "mobile/android-sdk",
             "mobile/mobile-app",
-            "mobile/monorepo"
+            "mobile/monorepo",
         ]
 
         for dir_path in directories_to_create:
@@ -162,36 +183,24 @@ class CodebaseRestructurer:
         # Move production directory - preserve internal structure
         production_source = self.base_path / "production"
         if production_source.exists():
-            self.move_directory_contents(
-                production_source,
-                self.base_path / "src" / "production"
-            )
+            self.move_directory_contents(production_source, self.base_path / "src" / "production")
 
         # Move digital_twin
         digital_twin_source = self.base_path / "digital_twin"
         if digital_twin_source.exists():
-            self.move_directory_contents(
-                digital_twin_source,
-                self.base_path / "src" / "digital_twin"
-            )
+            self.move_directory_contents(digital_twin_source, self.base_path / "src" / "digital_twin")
 
         # Move mcp_servers
         mcp_source = self.base_path / "mcp_servers"
         if mcp_source.exists():
-            self.move_directory_contents(
-                mcp_source,
-                self.base_path / "src" / "mcp_servers"
-            )
+            self.move_directory_contents(mcp_source, self.base_path / "src" / "mcp_servers")
 
         # Move other production-ready directories
         other_production_dirs = ["monitoring", "jobs", "communications", "calibration"]
         for prod_dir in other_production_dirs:
             prod_source = self.base_path / prod_dir
             if prod_source.exists():
-                self.move_directory_contents(
-                    prod_source,
-                    self.base_path / "src" / prod_dir
-                )
+                self.move_directory_contents(prod_source, self.base_path / "src" / prod_dir)
 
     def restructure_agent_forge(self):
         """Split agent_forge between src/ (stable) and experimental/."""
@@ -207,10 +216,7 @@ class CodebaseRestructurer:
         for component in stable_components:
             component_path = agent_forge_source / component
             if component_path.exists():
-                self.move_directory_contents(
-                    component_path,
-                    self.base_path / "src" / "agent_forge" / component
-                )
+                self.move_directory_contents(component_path, self.base_path / "src" / "agent_forge" / component)
 
         # Experimental components go to experimental/agent_forge_experimental/
         experimental_components = ["self_awareness", "bakedquietiot"]
@@ -219,8 +225,7 @@ class CodebaseRestructurer:
             component_path = agent_forge_source / component
             if component_path.exists():
                 self.move_directory_contents(
-                    component_path,
-                    self.base_path / "experimental" / "agent_forge_experimental" / component
+                    component_path, self.base_path / "experimental" / "agent_forge_experimental" / component
                 )
 
     def restructure_experimental(self):
@@ -244,26 +249,17 @@ class CodebaseRestructurer:
         # Move scripts
         scripts_source = self.base_path / "scripts"
         if scripts_source.exists():
-            self.move_directory_contents(
-                scripts_source,
-                self.base_path / "tools" / "scripts"
-            )
+            self.move_directory_contents(scripts_source, self.base_path / "tools" / "scripts")
 
         # Move benchmarks
         benchmarks_source = self.base_path / "benchmarks"
         if benchmarks_source.exists():
-            self.move_directory_contents(
-                benchmarks_source,
-                self.base_path / "tools" / "benchmarks"
-            )
+            self.move_directory_contents(benchmarks_source, self.base_path / "tools" / "benchmarks")
 
         # Move examples
         examples_source = self.base_path / "examples"
         if examples_source.exists():
-            self.move_directory_contents(
-                examples_source,
-                self.base_path / "tools" / "examples"
-            )
+            self.move_directory_contents(examples_source, self.base_path / "tools" / "examples")
 
     def handle_mobile_projects(self):
         """Handle mobile projects - move if maintained, create submodule refs if separate."""
@@ -276,10 +272,7 @@ class CodebaseRestructurer:
         for mobile_dir in mobile_dirs:
             mobile_path = self.base_path / mobile_dir
             if mobile_path.exists():
-                self.move_directory_contents(
-                    mobile_path,
-                    self.base_path / "mobile" / mobile_dir
-                )
+                self.move_directory_contents(mobile_path, self.base_path / "mobile" / mobile_dir)
 
     def cleanup_empty_directories(self):
         """Remove empty directories after restructuring."""
@@ -305,8 +298,14 @@ class CodebaseRestructurer:
 
         # Clean up potential empty directories
         cleanup_candidates = [
-            "production", "digital_twin", "mcp_servers", "agent_forge",
-            "experimental", "scripts", "benchmarks", "examples"
+            "production",
+            "digital_twin",
+            "mcp_servers",
+            "agent_forge",
+            "experimental",
+            "scripts",
+            "benchmarks",
+            "examples",
         ]
 
         for candidate in cleanup_candidates:
@@ -330,7 +329,7 @@ class CodebaseRestructurer:
             "from agent_forge.core.": "from src.agent_forge.core.",
             "from agent_forge.evaluation.": "from src.agent_forge.evaluation.",
             "from scripts.": "from tools.scripts.",
-            "import scripts.": "import tools.scripts."
+            "import scripts.": "import tools.scripts.",
         }
 
         # Find all Python files in new structure
@@ -362,7 +361,7 @@ class CodebaseRestructurer:
             "restructure_summary": {
                 "timestamp": str(Path().resolve()),
                 "files_moved": len(self.moved_files),
-                "errors_encountered": len(self.errors)
+                "errors_encountered": len(self.errors),
             },
             "moved_files": self.moved_files,
             "errors": self.errors,
@@ -370,8 +369,8 @@ class CodebaseRestructurer:
                 "src/": "Production-ready code",
                 "experimental/": "Experimental and prototype code",
                 "tools/": "Scripts, benchmarks, and examples",
-                "mobile/": "Mobile projects"
-            }
+                "mobile/": "Mobile projects",
+            },
         }
 
         report_file = self.base_path / "restructure_report.json"
@@ -422,6 +421,7 @@ class CodebaseRestructurer:
         except Exception as e:
             logger.error(f"Critical error during restructuring: {e!s}")
             raise
+
 
 if __name__ == "__main__":
     base_path = os.getcwd()  # Current working directory

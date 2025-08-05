@@ -1,18 +1,16 @@
-import time
 from dataclasses import dataclass
+import time
 from typing import Any
 
 import pytest
 
-from src.production.distributed_agents.distributed_agent_orchestrator import (
-    AgentInstance,
-    DistributedAgentOrchestrator,
-)
+from src.production.distributed_agents.distributed_agent_orchestrator import AgentInstance, DistributedAgentOrchestrator
 
 
 @dataclass
 class DeviceProfile:
     """Minimal device profile for orchestrator tests."""
+
     device_id: str
     capabilities: Any = None
     available_memory_mb: float = 0.0
@@ -28,7 +26,7 @@ class DummyShardingEngine:
     def __init__(self, devices: list[DeviceProfile]):
         self.devices = devices
 
-    async def _get_device_profiles(self, target_devices=None):  # noqa: D401 - matches orchestrator expectations
+    async def _get_device_profiles(self, target_devices=None):  # - matches orchestrator expectations
         return self.devices
 
 
@@ -40,18 +38,17 @@ class DummyP2PNode:
         self.broadcasts = []
         self.sent_messages = []
 
-    async def send_to_peer(self, device_id, message):  # noqa: D401 - simple passthrough
+    async def send_to_peer(self, device_id, message):  # - simple passthrough
         self.sent_messages.append((device_id, message))
         return True
 
-    async def broadcast_to_peers(self, event, message):  # noqa: D401 - simple passthrough
+    async def broadcast_to_peers(self, event, message):  # - simple passthrough
         self.broadcasts.append((event, message))
         return True
 
 
 class DummyResourceMonitor:
     """Placeholder resource monitor."""
-    pass
 
 
 async def _fast_deploy(self, instance):

@@ -27,9 +27,7 @@ def create_parser():
 
     parser.add_argument("--output", help="Output file or directory")
 
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose output"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
 
     return parser
 

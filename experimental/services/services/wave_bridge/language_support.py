@@ -9,7 +9,6 @@ import anthropic
 from googletrans import Translator
 import langdetect
 import openai
-
 import wandb
 
 logger = logging.getLogger(__name__)
@@ -148,20 +147,14 @@ class TranslationEngine:
 
     def __init__(self):
         self.google_translator = Translator()
-        self.anthropic_client = (
-            anthropic.Anthropic() if hasattr(anthropic, "Anthropic") else None
-        )
+        self.anthropic_client = anthropic.Anthropic() if hasattr(anthropic, "Anthropic") else None
         self.openai_client = openai.OpenAI() if hasattr(openai, "OpenAI") else None
 
-    async def edge_translate(
-        self, text: str, target_lang: str, source_lang: str = "en"
-    ) -> str:
+    async def edge_translate(self, text: str, target_lang: str, source_lang: str = "en") -> str:
         """Fast edge translation using Google Translate"""
         try:
             # Use Google Translate for edge cases
-            result = self.google_translator.translate(
-                text, src=source_lang, dest=target_lang
-            )
+            result = self.google_translator.translate(text, src=source_lang, dest=target_lang)
 
             wandb.log(
                 {
@@ -178,9 +171,7 @@ class TranslationEngine:
             logger.warning(f"Edge translation failed: {e}")
             raise
 
-    async def cloud_translate(
-        self, text: str, target_lang: str, source_lang: str = "en"
-    ) -> str:
+    async def cloud_translate(self, text: str, target_lang: str, source_lang: str = "en") -> str:
         """High-quality cloud translation using AI models"""
         # Try Anthropic first for quality
         if self.anthropic_client:
@@ -256,9 +247,7 @@ Translation:"""
 translation_engine = TranslationEngine()
 
 
-async def auto_translate_flow(
-    message: str, target_lang: str, source_lang: str = "en"
-) -> str:
+async def auto_translate_flow(message: str, target_lang: str, source_lang: str = "en") -> str:
     """Translate with fallback options prioritizing speed and quality"""
     # Skip translation if same language
     if source_lang == target_lang:
@@ -270,9 +259,7 @@ async def auto_translate_flow(
         # Try edge model first (fastest)
         if edge_model_available(target_lang):
             try:
-                result = await translation_engine.edge_translate(
-                    message, target_lang, source_lang
-                )
+                result = await translation_engine.edge_translate(message, target_lang, source_lang)
                 translation_time = (datetime.now() - start_time).total_seconds()
 
                 wandb.log(
@@ -289,9 +276,7 @@ async def auto_translate_flow(
                 logger.info(f"Edge translation failed, trying cloud: {e}")
 
         # Fallback to cloud translation (higher quality)
-        result = await translation_engine.cloud_translate(
-            message, target_lang, source_lang
-        )
+        result = await translation_engine.cloud_translate(message, target_lang, source_lang)
         translation_time = (datetime.now() - start_time).total_seconds()
 
         wandb.log(
@@ -343,10 +328,7 @@ def get_supported_languages_list(user_language: str = "en") -> str:
     """Get formatted list of supported languages"""
     if user_language == "en":
         return "I support: " + ", ".join(
-            [
-                f"{info['native']} ({info['name']})"
-                for info in SUPPORTED_LANGUAGES.values()
-            ]
+            [f"{info['native']} ({info['name']})" for info in SUPPORTED_LANGUAGES.values()]
         )
     # Return in user's language
     intro_text = {
@@ -365,9 +347,7 @@ def get_supported_languages_list(user_language: str = "en") -> str:
     return intro + ", ".join([info["native"] for info in SUPPORTED_LANGUAGES.values()])
 
 
-async def validate_translation_quality(
-    original: str, translated: str, target_lang: str
-) -> float:
+async def validate_translation_quality(original: str, translated: str, target_lang: str) -> float:
     """Validate translation quality using back-translation
     Returns confidence score 0-1
     """

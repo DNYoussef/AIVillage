@@ -10,16 +10,15 @@ from __future__ import annotations
 
 import asyncio
 import random
-from typing import Dict, List
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Mock / reference implementations
 # ---------------------------------------------------------------------------
 
-async def deploy_all_18_agents() -> List[str]:
+
+async def deploy_all_18_agents() -> list[str]:
     """Pretend to deploy all agents and return their identifiers."""
 
     # simulate a small delay for asynchronous behaviour
@@ -27,14 +26,14 @@ async def deploy_all_18_agents() -> List[str]:
     return [f"agent_{i}" for i in range(18)]
 
 
-async def establish_p2p_network(agents: List[str]) -> Dict[str, List[str]]:
+async def establish_p2p_network(agents: list[str]) -> dict[str, list[str]]:
     """Create a fully connected peer‑to‑peer network."""
 
     await asyncio.sleep(0.01)
     return {a: [b for b in agents if b != a] for a in agents}
 
 
-async def profile_device_resources(agents: List[str]) -> List[Dict[str, int]]:
+async def profile_device_resources(agents: list[str]) -> list[dict[str, int]]:
     """Profile edge devices.  Each device exposes a simple RAM metric."""
 
     await asyncio.sleep(0.01)
@@ -46,12 +45,12 @@ async def profile_device_resources(agents: List[str]) -> List[Dict[str, int]]:
     ]
 
 
-async def distribute_model(devices: List[Dict[str, int]], model_size: int) -> Dict[str, int]:
+async def distribute_model(devices: list[dict[str, int]], model_size: int) -> dict[str, int]:
     """Distribute model shards across devices based on RAM capacity."""
 
     await asyncio.sleep(0.01)
     total_ram = sum(d["ram"] for d in devices)
-    shards: Dict[str, int] = {}
+    shards: dict[str, int] = {}
     assigned = 0
     for device in devices:
         share = int(model_size * device["ram"] / total_ram)
@@ -62,7 +61,7 @@ async def distribute_model(devices: List[Dict[str, int]], model_size: int) -> Di
     return shards
 
 
-async def distributed_inference(shards: Dict[str, int]) -> float:
+async def distributed_inference(shards: dict[str, int]) -> float:
     """Run a tiny distributed inference returning an aggregate score."""
 
     inputs = [random.random() for _ in range(5)]
@@ -73,7 +72,7 @@ async def distributed_inference(shards: Dict[str, int]) -> float:
     return sum(partials)
 
 
-async def run_evolution_cycle(agents: List[str]) -> Dict[str, float]:
+async def run_evolution_cycle(agents: list[str]) -> dict[str, float]:
     """Mock an evolution cycle producing a best fitness score."""
 
     await asyncio.sleep(0.01)
@@ -81,7 +80,7 @@ async def run_evolution_cycle(agents: List[str]) -> Dict[str, float]:
     return {"generations": 1, "best_fitness": fitness}
 
 
-async def federated_learning_round(shards: Dict[str, int]) -> Dict[str, float]:
+async def federated_learning_round(shards: dict[str, int]) -> dict[str, float]:
     """Simulate one round of federated learning."""
 
     await asyncio.sleep(0.01)

@@ -1,7 +1,7 @@
 import importlib.util
 
-import pytest
 from chromadb import PersistentClient
+import pytest
 
 from ingestion import run_all
 from ingestion.vector_ds import personal_ds

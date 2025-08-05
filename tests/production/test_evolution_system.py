@@ -2,23 +2,18 @@
 Comprehensive tests for Production Evolution System.
 """
 
-import json
 from dataclasses import dataclass
+import json
 from unittest.mock import Mock, patch
-
-import torch
 
 import numpy as np
 import pytest
+import torch
 
 # Mock external dependencies
 try:
     from production.evolution.evolution.math_fitness import FitnessEvaluator
-    from production.evolution.evolution.math_tutor_evolution import (
-        EvolutionConfig,
-        MathTutorEvolution,
-        ModelIndividual,
-    )
+    from production.evolution.evolution.math_tutor_evolution import EvolutionConfig, MathTutorEvolution, ModelIndividual
     from production.evolution.evolution.merge_operators import MergeOperator
 except ImportError:
     # Create mock classes for testing structure

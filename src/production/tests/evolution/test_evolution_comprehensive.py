@@ -18,7 +18,7 @@ except ImportError:
 class TestEvolutionSystem:
     """Test the evolutionary model merging system."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def sample_population(self):
         """Create a population of models for testing."""
         models = []

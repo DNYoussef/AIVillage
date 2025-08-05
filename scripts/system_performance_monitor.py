@@ -13,13 +13,13 @@ Usage:
 """
 
 import argparse
+from datetime import datetime, timedelta
 import json
 import logging
+from pathlib import Path
 import sys
 import time
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import psutil
@@ -54,11 +54,11 @@ class SystemMetrics:
         self.disk_io_write_mb: float = 0.0
         self.network_sent_mb: float = 0.0
         self.network_recv_mb: float = 0.0
-        self.load_average: List[float] = []
+        self.load_average: list[float] = []
         self.process_count: int = 0
-        self.python_processes: List[Dict[str, Any]] = []
+        self.python_processes: list[dict[str, Any]] = []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization.
 
         Returns:
@@ -81,7 +81,7 @@ class SystemMetrics:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SystemMetrics":
+    def from_dict(cls, data: dict[str, Any]) -> "SystemMetrics":
         """Create from dictionary.
 
         Args:
@@ -100,11 +100,7 @@ class SystemMetrics:
 class PerformanceMonitor:
     """System performance monitor."""
 
-    def __init__(
-        self,
-        interval: float = 5.0,
-        data_file: str = "system_metrics.json"
-    ) -> None:
+    def __init__(self, interval: float = 5.0, data_file: str = "system_metrics.json") -> None:
         """Initialize the performance monitor.
 
         Args:
@@ -113,7 +109,7 @@ class PerformanceMonitor:
         """
         self.interval = interval
         self.data_file = Path(data_file)
-        self.metrics_history: List[SystemMetrics] = []
+        self.metrics_history: list[SystemMetrics] = []
         self.is_monitoring = False
 
         # Load existing metrics
@@ -133,9 +129,7 @@ class PerformanceMonitor:
             try:
                 with open(self.data_file, encoding="utf-8") as f:
                     data = json.load(f)
-                    self.metrics_history = [
-                        SystemMetrics.from_dict(item) for item in data
-                    ]
+                    self.metrics_history = [SystemMetrics.from_dict(item) for item in data]
                 logger.info(f"Loaded {len(self.metrics_history)} historical metrics")
             except Exception as e:
                 logger.error(f"Failed to load metrics history: {e}")
@@ -201,15 +195,17 @@ class PerformanceMonitor:
 
             # Python process details
             python_processes = []
-            for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+            for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
                 try:
-                    if 'python' in proc.info['name'].lower():
-                        python_processes.append({
-                            'pid': proc.info['pid'],
-                            'name': proc.info['name'],
-                            'cpu_percent': proc.info['cpu_percent'] or 0.0,
-                            'memory_percent': proc.info['memory_percent'] or 0.0,
-                        })
+                    if "python" in proc.info["name"].lower():
+                        python_processes.append(
+                            {
+                                "pid": proc.info["pid"],
+                                "name": proc.info["name"],
+                                "cpu_percent": proc.info["cpu_percent"] or 0.0,
+                                "memory_percent": proc.info["memory_percent"] or 0.0,
+                            }
+                        )
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
 
@@ -220,7 +216,7 @@ class PerformanceMonitor:
 
         return metrics
 
-    def check_alerts(self, metrics: SystemMetrics) -> List[str]:
+    def check_alerts(self, metrics: SystemMetrics) -> list[str]:
         """Check for performance alerts.
 
         Args:
@@ -257,13 +253,12 @@ class PerformanceMonitor:
             load_1min = metrics.load_average[0]
             if load_1min > self.thresholds["load_average_high"]:
                 alerts.append(
-                    f"High load average: {load_1min:.2f} "
-                    f"(threshold: {self.thresholds['load_average_high']:.2f})"
+                    f"High load average: {load_1min:.2f} " f"(threshold: {self.thresholds['load_average_high']:.2f})"
                 )
 
         return alerts
 
-    def monitor(self, duration_minutes: Optional[float] = None) -> None:
+    def monitor(self, duration_minutes: float | None = None) -> None:
         """Start monitoring system performance.
 
         Args:
@@ -327,10 +322,7 @@ class PerformanceMonitor:
             Formatted report string
         """
         cutoff_time = datetime.now() - timedelta(hours=hours)
-        recent_metrics = [
-            m for m in self.metrics_history
-            if datetime.fromisoformat(m.timestamp) > cutoff_time
-        ]
+        recent_metrics = [m for m in self.metrics_history if datetime.fromisoformat(m.timestamp) > cutoff_time]
 
         if not recent_metrics:
             return "No metrics available for the specified time period."
@@ -386,10 +378,7 @@ class PerformanceMonitor:
         cutoff_date = datetime.now() - timedelta(days=days_to_keep)
         original_count = len(self.metrics_history)
 
-        self.metrics_history = [
-            m for m in self.metrics_history
-            if datetime.fromisoformat(m.timestamp) > cutoff_date
-        ]
+        self.metrics_history = [m for m in self.metrics_history if datetime.fromisoformat(m.timestamp) > cutoff_date]
 
         removed_count = original_count - len(self.metrics_history)
         if removed_count > 0:
@@ -445,10 +434,7 @@ Examples:
     args = parser.parse_args()
 
     try:
-        monitor = PerformanceMonitor(
-            interval=args.interval,
-            data_file=args.data_file
-        )
+        monitor = PerformanceMonitor(interval=args.interval, data_file=args.data_file)
 
         if args.report:
             logger.info(f"Generating performance report for {args.report} hours...")

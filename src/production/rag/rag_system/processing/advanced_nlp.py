@@ -1,8 +1,8 @@
 from typing import Any
 
 import numpy as np
-import torch
 from sklearn.metrics.pairwise import cosine_similarity
+import torch
 from transformers import BertForQuestionAnswering, BertForSequenceClassification, BertModel, BertTokenizer
 
 

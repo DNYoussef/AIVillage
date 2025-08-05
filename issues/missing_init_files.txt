@@ -16,7 +16,7 @@ This file documents directories that are missing __init__.py files, which can ca
 #### src/hyperag/
 **Impact**: HIGH - Hyperag module cannot be imported as a package
 **Issue**: The main hyperag directory lacks __init__.py
-**Files affected**: 
+**Files affected**:
 - `src/hyperag/education/curriculum_graph.py`
 - `src/hyperag/education/eli5_chain.py`
 **Fix Required**: Add __init__.py to enable `from hyperag.education import curriculum_graph`
@@ -27,7 +27,7 @@ This file documents directories that are missing __init__.py files, which can ca
 **Potential content**: Data loading utilities, dataset management
 
 #### src/agent_forge/models/
-**Impact**: MEDIUM - Model utilities may not be importable  
+**Impact**: MEDIUM - Model utilities may not be importable
 **Issue**: Agent forge models directory lacks package structure
 **Potential content**: Model loading, configuration classes
 
@@ -209,7 +209,7 @@ from core.resources import adaptive_loader
 touch "src/hyperag/__init__.py"
 touch "src/production/agent_forge/__init__.py"
 
-# High priority fixes  
+# High priority fixes
 touch "src/agent_forge/data/__init__.py"
 touch "src/agent_forge/models/__init__.py"
 touch "src/production/monitoring/__init__.py"
@@ -301,7 +301,7 @@ def test_imports():
         print("✓ HyperAG imports successful")
     except ImportError as e:
         print(f"✗ HyperAG import failed: {e}")
-    
+
     try:
         # Test production agent forge imports
         import production.agent_forge
@@ -309,7 +309,7 @@ def test_imports():
         print("✓ Production Agent Forge imports successful")
     except ImportError as e:
         print(f"✗ Production Agent Forge import failed: {e}")
-    
+
     try:
         # Test other critical imports
         from agent_forge.data import *  # Should work if __init__.py added

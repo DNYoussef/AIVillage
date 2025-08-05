@@ -6,16 +6,13 @@ import asyncio
 from src.core.resources.constraint_manager import ConstraintManager
 from src.core.resources.device_profiler import DeviceProfiler
 from src.core.resources.resource_monitor import ResourceMonitor
-from src.production.agent_forge.evolution.infrastructure_aware_evolution import (
-    InfrastructureAwareEvolution,
-)
-from src.production.agent_forge.evolution.resource_constrained_evolution import (
-    ResourceConstrainedEvolution,
-)
+from src.production.agent_forge.evolution.infrastructure_aware_evolution import InfrastructureAwareEvolution
+from src.production.agent_forge.evolution.resource_constrained_evolution import ResourceConstrainedEvolution
 
 
 class MockAgent:
     """Mock evolvable agent for testing."""
+
     def __init__(self, agent_id: str = "test_agent"):
         self.agent_id = agent_id
         self.version = "1.0"
@@ -31,9 +28,9 @@ class MockAgent:
 
 async def test_evolution_with_constraints():
     """Test evolution system with resource constraints."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(" Testing Evolution with Resource Constraints")
-    print("="*60)
+    print("=" * 60)
 
     # Initialize resource management
     profiler = DeviceProfiler()
@@ -45,9 +42,7 @@ async def test_evolution_with_constraints():
 
     # Create evolution system
     evolution_system = ResourceConstrainedEvolution(
-        monitor=monitor,
-        constraint_manager=constraint_manager,
-        resource_usage_threshold=0.75
+        monitor=monitor, constraint_manager=constraint_manager, resource_usage_threshold=0.75
     )
 
     # Create test agent
@@ -92,10 +87,7 @@ async def test_evolution_with_constraints():
 
     # Test infrastructure-aware evolution
     print("\n[TEST] Infrastructure-Aware Evolution")
-    infra_evolution = InfrastructureAwareEvolution(
-        resource_monitor=monitor,
-        constraint_manager=constraint_manager
-    )
+    infra_evolution = InfrastructureAwareEvolution(resource_monitor=monitor, constraint_manager=constraint_manager)
 
     try:
         # Test evolution mode selection
@@ -113,9 +105,9 @@ async def test_evolution_with_constraints():
     # Stop monitoring
     await monitor.stop_monitoring()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(" Evolution Constraint Test Complete")
-    print("="*60)
+    print("=" * 60)
 
 
 if __name__ == "__main__":

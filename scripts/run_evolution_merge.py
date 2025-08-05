@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 """Run Agent Forge Evolution Merge with real benchmarking for 10 generations."""
 
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import random
 import time
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 import torch
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -88,9 +86,7 @@ class EvolutionMerger:
 
         if random.random() < self.mutation_rate:
             if mutated["merge_method"] == "slerp":
-                mutated["parameters"]["t"] = max(
-                    0.1, min(0.9, mutated["parameters"]["t"] + random.gauss(0, 0.2))
-                )
+                mutated["parameters"]["t"] = max(0.1, min(0.9, mutated["parameters"]["t"] + random.gauss(0, 0.2)))
             elif mutated["merge_method"] == "linear":
                 mutated["parameters"]["weight"] = max(
                     0.1,
@@ -101,22 +97,17 @@ class EvolutionMerger:
                     0.5,
                     min(
                         2.0,
-                        mutated["parameters"]["scaling_coefficient"]
-                        + random.gauss(0, 0.3),
+                        mutated["parameters"]["scaling_coefficient"] + random.gauss(0, 0.3),
                     ),
                 )
 
         return mutated
 
-    def crossover_configs(
-        self, parent1: dict[str, Any], parent2: dict[str, Any]
-    ) -> dict[str, Any]:
+    def crossover_configs(self, parent1: dict[str, Any], parent2: dict[str, Any]) -> dict[str, Any]:
         """Create offspring via crossover."""
         if random.random() < self.crossover_rate:
             child = parent1.copy()
-            child["merge_method"] = random.choice(
-                [parent1["merge_method"], parent2["merge_method"]]
-            )
+            child["merge_method"] = random.choice([parent1["merge_method"], parent2["merge_method"]])
 
             # Blend parameters
             if child["merge_method"] == "slerp":
@@ -212,16 +203,12 @@ class EvolutionMerger:
 
         # Log generation results
         best_individual = self.population[0]
-        avg_fitness = sum(ind["fitness"] for ind in self.population) / len(
-            self.population
-        )
+        avg_fitness = sum(ind["fitness"] for ind in self.population) / len(self.population)
 
         logger.info(f"Generation {self.generation} Results:")
         logger.info(f"Best fitness: {best_individual['fitness']:.3f}")
         logger.info(f"Average fitness: {avg_fitness:.3f}")
-        logger.info(
-            f"Best config: {best_individual['merge_method']} - {best_individual['parameters']}"
-        )
+        logger.info(f"Best config: {best_individual['merge_method']} - {best_individual['parameters']}")
 
         # Save generation results
         gen_results = {

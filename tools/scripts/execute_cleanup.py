@@ -4,15 +4,19 @@
 import os
 import subprocess
 import sys
-from pathlib import Path
 
 # Change to the correct directory
-os.chdir(r'C:\Users\17175\Desktop\AIVillage')
+os.chdir(r"C:\Users\17175\Desktop\AIVillage")
 
 # Execute the main cleanup script
 try:
-    result = subprocess.run([sys.executable, 'cleanup_documentation.py'],
-                          capture_output=True, text=True, cwd=r'C:\Users\17175\Desktop\AIVillage')
+    result = subprocess.run(
+        [sys.executable, "cleanup_documentation.py"],
+        capture_output=True,
+        text=True,
+        cwd=r"C:\Users\17175\Desktop\AIVillage",
+        check=False,
+    )
 
     print("STDOUT:")
     print(result.stdout)
@@ -28,7 +32,7 @@ except Exception as e:
 
     # If subprocess fails, try importing and running directly
     try:
-        sys.path.insert(0, r'C:\Users\17175\Desktop\AIVillage')
+        sys.path.insert(0, r"C:\Users\17175\Desktop\AIVillage")
         from cleanup_documentation import DocumentationCleanup
 
         print("Running cleanup directly...")

@@ -5,10 +5,10 @@ import time
 
 import pytest
 
-from src.twin_runtime.guard import risk_gate
+from src.communications.protocol import CommunicationsProtocol
 from src.core.resources.resource_monitor import ResourceMonitor
 from src.infrastructure.p2p.device_mesh import DeviceMesh
-from src.communications.protocol import CommunicationsProtocol
+from src.twin_runtime.guard import risk_gate
 
 
 def test_security_gate_blocks_attacks() -> None:
@@ -70,4 +70,3 @@ async def test_websocket_communication() -> None:
     await proto2.stop_server()
 
     assert any(m["message"]["content"] == "Hello" for m in history)
-

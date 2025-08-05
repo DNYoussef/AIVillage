@@ -13,18 +13,17 @@ Based on "Quiet-STaR: Language Models Can Teach Themselves to Think Before Speak
 import asyncio
 import json
 import logging
-import time
 from pathlib import Path
+import time
 from typing import Any
 
 import click
-import numpy as np
-import torch
-import torch.nn.functional as F
-import wandb
 from datasets import load_dataset
+import numpy as np
 from pydantic import BaseModel, Field, validator
+import torch
 from torch import nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from transformers import (
@@ -34,6 +33,7 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
+import wandb
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

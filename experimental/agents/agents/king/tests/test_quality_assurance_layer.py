@@ -29,21 +29,14 @@ except ValueError:
 if torch_spec is None:
     raise unittest.SkipTest("PyTorch not installed")
 
-from agents.king.quality_assurance_layer import (
-    EudaimoniaTriangulator,
-    QualityAssuranceLayer,
-)
+from agents.king.quality_assurance_layer import EudaimoniaTriangulator, QualityAssuranceLayer
 from agents.utils.task import Task as LangroidTask
 
 
 class TestQualityAssuranceLayer(unittest.TestCase):
     def setUp(self):
-        tok_patch = patch(
-            "transformers.AutoTokenizer.from_pretrained", return_value=DummyTok()
-        )
-        model_patch = patch(
-            "transformers.AutoModel.from_pretrained", return_value=DummyModel()
-        )
+        tok_patch = patch("transformers.AutoTokenizer.from_pretrained", return_value=DummyTok())
+        model_patch = patch("transformers.AutoModel.from_pretrained", return_value=DummyModel())
         self.addCleanup(tok_patch.stop)
         self.addCleanup(model_patch.stop)
         tok_patch.start()
@@ -66,9 +59,7 @@ class TestQualityAssuranceLayer(unittest.TestCase):
         self.assertLessEqual(uncertainty, 1)
 
     def test_evaluate_rule_compliance(self):
-        task_vector = self.qa_layer.eudaimonia_triangulator.get_embedding(
-            "Test task content"
-        )
+        task_vector = self.qa_layer.eudaimonia_triangulator.get_embedding("Test task content")
         rule_compliance = self.qa_layer.evaluate_rule_compliance(task_vector)
         self.assertGreaterEqual(rule_compliance, 0)
         self.assertLessEqual(rule_compliance, 1)
@@ -95,12 +86,8 @@ class TestQualityAssuranceLayer(unittest.TestCase):
 
 class TestEudaimoniaTriangulator(unittest.TestCase):
     def setUp(self):
-        tok_patch = patch(
-            "transformers.AutoTokenizer.from_pretrained", return_value=DummyTok()
-        )
-        model_patch = patch(
-            "transformers.AutoModel.from_pretrained", return_value=DummyModel()
-        )
+        tok_patch = patch("transformers.AutoTokenizer.from_pretrained", return_value=DummyTok())
+        model_patch = patch("transformers.AutoModel.from_pretrained", return_value=DummyModel())
         self.addCleanup(tok_patch.stop)
         self.addCleanup(model_patch.stop)
         tok_patch.start()

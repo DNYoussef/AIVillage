@@ -22,9 +22,7 @@ def validate_workflow(workflow_path: Path) -> bool:
             workflow = yaml.safe_load(content)
         except yaml.YAMLError:
             # If YAML parsing fails due to shell scripts, try a more targeted approach
-            print(
-                "  Warning: YAML parser encountered issues, attempting basic validation..."
-            )
+            print("  Warning: YAML parser encountered issues, attempting basic validation...")
 
             # For validation purposes, just check if the file has basic structure
             has_name = "name:" in content
@@ -34,9 +32,7 @@ def validate_workflow(workflow_path: Path) -> bool:
             # Count apparent job definitions (lines ending with : at start of line)
             import re
 
-            job_matches = re.findall(
-                r"^\s*([a-zA-Z0-9_-]+):\s*$", content, re.MULTILINE
-            )
+            job_matches = re.findall(r"^\s*([a-zA-Z0-9_-]+):\s*$", content, re.MULTILINE)
             # Filter out common YAML keys that aren't jobs
             non_job_keys = {
                 "name",
@@ -58,18 +54,14 @@ def validate_workflow(workflow_path: Path) -> bool:
             if has_on:
                 workflow["on"] = True
             if has_jobs and apparent_jobs:
-                workflow["jobs"] = {
-                    job: {"runs-on": "unknown", "steps": [{"run": "echo"}]}
-                    for job in apparent_jobs
-                }
+                workflow["jobs"] = {job: {"runs-on": "unknown", "steps": [{"run": "echo"}]} for job in apparent_jobs}
             elif has_jobs:
-                workflow["jobs"] = {
-                    "unknown": {"runs-on": "unknown", "steps": [{"run": "echo"}]}
-                }
+                workflow["jobs"] = {"unknown": {"runs-on": "unknown", "steps": [{"run": "echo"}]}}
 
             print(
                 f"  Basic structure detected: name={has_name}, triggers={has_on}, jobs={
-                    len(apparent_jobs) if apparent_jobs else 0}")
+                    len(apparent_jobs) if apparent_jobs else 0}"
+            )
 
             if not workflow:
                 raise  # Re-raise original error if fallback fails
@@ -105,15 +97,11 @@ def validate_workflow(workflow_path: Path) -> bool:
                     # Validate steps
                     for i, step in enumerate(job_config["steps"]):
                         if not isinstance(step, dict):
-                            issues.append(
-                                f"Job '{job_name}' step {i + 1} is not properly configured"
-                            )
+                            issues.append(f"Job '{job_name}' step {i + 1} is not properly configured")
                             continue
 
                         if "uses" not in step and "run" not in step:
-                            issues.append(
-                                f"Job '{job_name}' step {i + 1} missing 'uses' or 'run'"
-                            )
+                            issues.append(f"Job '{job_name}' step {i + 1} missing 'uses' or 'run'")
 
         # Check for common action version issues
         content_lower = content.lower()
@@ -170,9 +158,7 @@ def analyze_workflow_coverage(workflows_dir: Path) -> dict[str, Any]:
                 workflow = yaml.safe_load(content)
             except yaml.YAMLError:
                 # Skip analysis for files with YAML parsing issues
-                print(
-                    f"Warning: Skipping analysis of {workflow_file.name} due to YAML parsing issues"
-                )
+                print(f"Warning: Skipping analysis of {workflow_file.name} due to YAML parsing issues")
                 continue
 
             analysis["total_workflows"] += 1
@@ -182,9 +168,7 @@ def analyze_workflow_coverage(workflows_dir: Path) -> dict[str, Any]:
             analysis["total_jobs"] += len(jobs)
 
             # Analyze triggers
-            triggers = workflow.get(
-                True, workflow.get("on", {})
-            )  # Handle 'on' key issue
+            triggers = workflow.get(True, workflow.get("on", {}))  # Handle 'on' key issue
             if isinstance(triggers, dict):
                 analysis["triggers"].update(triggers.keys())
             elif isinstance(triggers, list):
@@ -215,17 +199,9 @@ def analyze_workflow_coverage(workflows_dir: Path) -> dict[str, Any]:
                 analysis["coverage"]["has_tests"] = True
             if "doc" in workflow_name or "doc" in file_name:
                 analysis["coverage"]["has_docs"] = True
-            if (
-                "security" in workflow_name
-                or "security" in file_name
-                or "privacy" in file_name
-            ):
+            if "security" in workflow_name or "security" in file_name or "privacy" in file_name:
                 analysis["coverage"]["has_security"] = True
-            if (
-                "deploy" in workflow_name
-                or "deploy" in file_name
-                or "publish" in file_name
-            ):
+            if "deploy" in workflow_name or "deploy" in file_name or "publish" in file_name:
                 analysis["coverage"]["has_deployment"] = True
 
         except Exception as e:
@@ -242,9 +218,7 @@ def main() -> int:
         print("No .github/workflows directory found!")
         return 1
 
-    workflow_files = list(workflows_dir.glob("*.yml")) + list(
-        workflows_dir.glob("*.yaml")
-    )
+    workflow_files = list(workflows_dir.glob("*.yml")) + list(workflows_dir.glob("*.yaml"))
 
     if not workflow_files:
         print("No workflow files found!")

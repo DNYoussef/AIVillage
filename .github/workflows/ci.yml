@@ -14,16 +14,16 @@ jobs:
   lint:
     name: Code Quality & Linting
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Cache pip dependencies
         uses: actions/cache@v3
         with:
@@ -31,24 +31,24 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      
+
       - name: Run Black formatter check
         run: |
           black src/ tests/ --check --verbose --diff
-      
+
       - name: Run Ruff linting
         run: |
           ruff check src/ tests/ --output-format=github
-      
+
       - name: Run isort import sorting check
         run: |
           isort src/ tests/ --check-only --diff --profile black
-      
+
       - name: Run MyPy type checking
         run: |
           mypy src/ --ignore-missing-imports --show-error-codes
@@ -57,31 +57,31 @@ jobs:
   security:
     name: Security Scanning
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install bandit safety
-      
+
       - name: Run Bandit security scan
         run: |
           bandit -r src/ -f json -o bandit-report.json || true
           bandit -r src/ -f txt
-      
+
       - name: Run Safety dependency check
         run: |
           safety check --json --output safety-report.json || true
           safety check
-      
+
       - name: Upload security reports
         uses: actions/upload-artifact@v3
         if: always()
@@ -98,16 +98,16 @@ jobs:
     strategy:
       matrix:
         test-group: [unit, integration]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Cache pip dependencies
         uses: actions/cache@v3
         with:
@@ -115,12 +115,12 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[test]"
-      
+
       - name: Run ${{ matrix.test-group }} tests
         run: |
           if [ "${{ matrix.test-group }}" == "unit" ]; then
@@ -128,7 +128,7 @@ jobs:
           elif [ "${{ matrix.test-group }}" == "integration" ]; then
             pytest tests/integration -v --timeout=300
           fi
-      
+
       - name: Upload coverage to Codecov
         if: matrix.test-group == 'unit'
         uses: codecov/codecov-action@v3
@@ -141,29 +141,29 @@ jobs:
     name: Build Package
     runs-on: ubuntu-latest
     needs: [lint, security, test]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Install build dependencies
         run: |
           python -m pip install --upgrade pip
           pip install build twine
-      
+
       - name: Build package
         run: |
           python -m build
-      
+
       - name: Check package integrity
         run: |
           twine check dist/*
-      
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -175,7 +175,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, security, test, build]
     if: always()
-    
+
     steps:
       - name: Generate status summary
         run: |

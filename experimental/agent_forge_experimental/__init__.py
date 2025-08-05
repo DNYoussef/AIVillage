@@ -24,7 +24,17 @@ __status__ = "Experimental"
 
 # Experimental components
 __all__ = [
-    "self_awareness", "bakedquietiot", "sleepdream", "foundation",
-    "prompt_baking_legacy", "tool_baking", "adas", "optim", "svf",
-    "meta", "training", "evolution", "compression"
+    "self_awareness",
+    "bakedquietiot",
+    "sleepdream",
+    "foundation",
+    "prompt_baking_legacy",
+    "tool_baking",
+    "adas",
+    "optim",
+    "svf",
+    "meta",
+    "training",
+    "evolution",
+    "compression",
 ]

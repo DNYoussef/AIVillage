@@ -1,8 +1,8 @@
+from dataclasses import dataclass
 import json
 import os
 import tempfile
 import time
-from dataclasses import dataclass
 
 import torch
 

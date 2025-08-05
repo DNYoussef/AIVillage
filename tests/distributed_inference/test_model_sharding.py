@@ -29,12 +29,7 @@ def mock_p2p_node():
     node.node_id = "test_node_1"
     node.peer_registry = {}
     node.local_capabilities = PeerCapabilities(
-        device_id="test_node_1",
-        cpu_cores=4,
-        ram_mb=8192,
-        battery_percent=80,
-        trust_score=0.9,
-        evolution_capacity=0.8
+        device_id="test_node_1", cpu_cores=4, ram_mb=8192, battery_percent=80, trust_score=0.9, evolution_capacity=0.8
     )
     node.get_suitable_evolution_peers.return_value = []
     node.broadcast_to_peers = AsyncMock(return_value=1)
@@ -63,45 +58,33 @@ def device_profiles():
         DeviceProfile(
             device_id="device_1",
             capabilities=PeerCapabilities(
-                device_id="device_1",
-                cpu_cores=8,
-                ram_mb=16384,
-                trust_score=0.9,
-                evolution_capacity=0.9
+                device_id="device_1", cpu_cores=8, ram_mb=16384, trust_score=0.9, evolution_capacity=0.9
             ),
             available_memory_mb=12288,  # 75% of 16GB
             compute_score=10.0,
             network_latency_ms=10.0,
-            reliability_score=0.9
+            reliability_score=0.9,
         ),
         DeviceProfile(
             device_id="device_2",
             capabilities=PeerCapabilities(
-                device_id="device_2",
-                cpu_cores=4,
-                ram_mb=8192,
-                trust_score=0.8,
-                evolution_capacity=0.7
+                device_id="device_2", cpu_cores=4, ram_mb=8192, trust_score=0.8, evolution_capacity=0.7
             ),
-            available_memory_mb=6144,   # 75% of 8GB
+            available_memory_mb=6144,  # 75% of 8GB
             compute_score=6.0,
             network_latency_ms=20.0,
-            reliability_score=0.8
+            reliability_score=0.8,
         ),
         DeviceProfile(
             device_id="device_3",
             capabilities=PeerCapabilities(
-                device_id="device_3",
-                cpu_cores=2,
-                ram_mb=4096,
-                trust_score=0.7,
-                evolution_capacity=0.6
+                device_id="device_3", cpu_cores=2, ram_mb=4096, trust_score=0.7, evolution_capacity=0.6
             ),
-            available_memory_mb=3072,   # 75% of 4GB
+            available_memory_mb=3072,  # 75% of 4GB
             compute_score=3.0,
             network_latency_ms=50.0,
-            reliability_score=0.7
-        )
+            reliability_score=0.7,
+        ),
     ]
 
 
@@ -136,8 +119,9 @@ class TestModelShardingEngine:
         model_path = temp_model_dir
 
         # Mock model configuration
-        with patch("transformers.AutoTokenizer.from_pretrained") as mock_tokenizer, \
-             patch("transformers.AutoModelForCausalLM.from_pretrained") as mock_model:
+        with patch("transformers.AutoTokenizer.from_pretrained") as mock_tokenizer, patch(
+            "transformers.AutoModelForCausalLM.from_pretrained"
+        ) as mock_model:
 
             # Mock tokenizer
             mock_tokenizer.return_value = MagicMock()
@@ -173,14 +157,14 @@ class TestModelShardingEngine:
         sharding_engine.p2p_node.peer_registry = {
             "device_1": device_profiles[0].capabilities,
             "device_2": device_profiles[1].capabilities,
-            "device_3": device_profiles[2].capabilities
+            "device_3": device_profiles[2].capabilities,
         }
 
         # Mock local capabilities
         sharding_engine.p2p_node.local_capabilities = device_profiles[0].capabilities
         sharding_engine.p2p_node.get_suitable_evolution_peers.return_value = [
             device_profiles[1].capabilities,
-            device_profiles[2].capabilities
+            device_profiles[2].capabilities,
         ]
 
         profiles = await sharding_engine._get_device_profiles()
@@ -198,7 +182,7 @@ class TestModelShardingEngine:
             "num_layers": 12,
             "layer_memory_mb": 100.0,  # 100MB per layer
             "layer_compute_score": 1.0,
-            "total_memory_mb": 1200.0
+            "total_memory_mb": 1200.0,
         }
 
         with patch.object(sharding_engine, "_analyze_model", return_value=mock_analysis):
@@ -225,7 +209,7 @@ class TestModelShardingEngine:
             "num_layers": 12,
             "layer_memory_mb": 80.0,
             "layer_compute_score": 1.0,
-            "total_memory_mb": 960.0
+            "total_memory_mb": 960.0,
         }
 
         with patch.object(sharding_engine, "_analyze_model", return_value=mock_analysis):
@@ -245,7 +229,7 @@ class TestModelShardingEngine:
             # Should have relatively balanced loads
             load_values = list(device_loads.values())
             if len(load_values) > 1:
-                load_variance = sum((x - sum(load_values)/len(load_values))**2 for x in load_values)
+                load_variance = sum((x - sum(load_values) / len(load_values)) ** 2 for x in load_values)
                 assert load_variance < 2.0  # Reasonable variance threshold
 
     @pytest.mark.asyncio
@@ -258,7 +242,7 @@ class TestModelShardingEngine:
             layer_indices=[0, 1, 2, 3, 4],
             parameters_count=1000000,
             memory_mb=5000.0,  # More than device_3 can handle (3072MB available)
-            compute_requirement=5.0
+            compute_requirement=5.0,
         )
 
         initial_plan = ShardingPlan(
@@ -267,7 +251,7 @@ class TestModelShardingEngine:
             shards=[problematic_shard],
             activation_routing={"problem_shard": []},
             memory_efficiency=0.8,
-            compute_balance_score=0.7
+            compute_balance_score=0.7,
         )
 
         optimized_plan = await sharding_engine._optimize_sharding_plan(initial_plan, device_profiles)
@@ -285,7 +269,7 @@ class TestModelShardingEngine:
             "num_layers": 8,
             "layer_memory_mb": 150.0,
             "layer_compute_score": 1.5,
-            "total_memory_mb": 1200.0
+            "total_memory_mb": 1200.0,
         }
 
         with patch.object(sharding_engine, "_analyze_model", return_value=mock_analysis):
@@ -303,8 +287,9 @@ class TestModelShardingEngine:
     async def test_full_sharding_workflow(self, sharding_engine, device_profiles, temp_model_dir):
         """Test complete sharding workflow"""
         # Mock dependencies
-        with patch.object(sharding_engine, "_analyze_model") as mock_analyze, \
-             patch.object(sharding_engine, "_get_device_profiles", return_value=device_profiles):
+        with patch.object(sharding_engine, "_analyze_model") as mock_analyze, patch.object(
+            sharding_engine, "_get_device_profiles", return_value=device_profiles
+        ):
 
             mock_analyze.return_value = {
                 "model_path": temp_model_dir,
@@ -313,14 +298,11 @@ class TestModelShardingEngine:
                 "layer_compute_score": 2.0,
                 "total_memory_mb": 1200.0,
                 "can_split_attention": True,
-                "optimal_shard_count": 3
+                "optimal_shard_count": 3,
             }
 
             # Execute sharding
-            plan = await sharding_engine.shard_model(
-                temp_model_dir,
-                strategy=ShardingStrategy.HYBRID
-            )
+            plan = await sharding_engine.shard_model(temp_model_dir, strategy=ShardingStrategy.HYBRID)
 
             # Verify results
             assert sharding_engine.current_sharding_plan == plan
@@ -335,15 +317,16 @@ class TestModelShardingEngine:
     async def test_device_failure_handling(self, sharding_engine, device_profiles, temp_model_dir):
         """Test handling of device failures during sharding"""
         # Create initial sharding plan
-        with patch.object(sharding_engine, "_analyze_model") as mock_analyze, \
-             patch.object(sharding_engine, "_get_device_profiles", return_value=device_profiles):
+        with patch.object(sharding_engine, "_analyze_model") as mock_analyze, patch.object(
+            sharding_engine, "_get_device_profiles", return_value=device_profiles
+        ):
 
             mock_analyze.return_value = {
                 "model_path": temp_model_dir,
                 "num_layers": 3,
                 "layer_memory_mb": 100.0,
                 "layer_compute_score": 1.0,
-                "total_memory_mb": 300.0
+                "total_memory_mb": 300.0,
             }
 
             plan = await sharding_engine.shard_model(temp_model_dir)
@@ -354,9 +337,7 @@ class TestModelShardingEngine:
 
             # Test resharding with failed device
             with patch.object(sharding_engine, "_get_device_profiles", return_value=remaining_devices):
-                new_plan = await sharding_engine._create_memory_aware_plan(
-                    mock_analyze.return_value, remaining_devices
-                )
+                new_plan = await sharding_engine._create_memory_aware_plan(mock_analyze.return_value, remaining_devices)
 
                 # Should not assign shards to failed device
                 assert all(shard.device_id != failed_device_id for shard in new_plan.shards)
@@ -371,7 +352,7 @@ class TestModelShardingEngine:
             layer_indices=[0, 1, 2],
             parameters_count=5000000,
             memory_mb=4000.0,  # Exceeds available memory
-            compute_requirement=3.0
+            compute_requirement=3.0,
         )
 
         plan = ShardingPlan(
@@ -380,7 +361,7 @@ class TestModelShardingEngine:
             shards=[oversized_shard],
             activation_routing={"oversized": []},
             memory_efficiency=0.5,
-            compute_balance_score=0.5
+            compute_balance_score=0.5,
         )
 
         # Optimization should handle the constraint violation
@@ -399,7 +380,7 @@ class TestModelShardingEngine:
             "num_layers": 6,
             "layer_memory_mb": 100.0,
             "layer_compute_score": 1.0,
-            "total_memory_mb": 600.0
+            "total_memory_mb": 600.0,
         }
 
         with patch.object(sharding_engine, "_analyze_model", return_value=mock_analysis):
@@ -415,7 +396,7 @@ class TestModelShardingEngine:
             # Other shards should depend on previous shard
             for i in range(1, len(plan.shards)):
                 current_shard = plan.shards[i]
-                previous_shard = plan.shards[i-1]
+                previous_shard = plan.shards[i - 1]
                 assert plan.activation_routing[current_shard.shard_id] == [previous_shard.shard_id]
 
     def test_memory_efficiency_calculation(self, sharding_engine, device_profiles):
@@ -423,7 +404,7 @@ class TestModelShardingEngine:
         shards = [
             ModelShard("shard1", "device_1", [0, 1], 1000, 100.0, 1.0),
             ModelShard("shard2", "device_2", [2, 3], 1000, 200.0, 1.0),
-            ModelShard("shard3", "device_3", [4, 5], 1000, 150.0, 1.0)
+            ModelShard("shard3", "device_3", [4, 5], 1000, 150.0, 1.0),
         ]
 
         efficiency = sharding_engine._calculate_memory_efficiency(shards, device_profiles)
@@ -439,7 +420,7 @@ class TestModelShardingEngine:
         shards = [
             ModelShard("shard1", "device_1", [0, 1], 1000, 100.0, 2.0),
             ModelShard("shard2", "device_2", [2, 3], 1000, 100.0, 1.0),
-            ModelShard("shard3", "device_3", [4, 5], 1000, 100.0, 0.5)
+            ModelShard("shard3", "device_3", [4, 5], 1000, 100.0, 0.5),
         ]
 
         balance_score = sharding_engine._calculate_compute_balance(shards, device_profiles)
@@ -451,7 +432,7 @@ class TestModelShardingEngine:
         balanced_shards = [
             ModelShard("shard1", "device_1", [0, 1], 1000, 100.0, 3.0),  # Matches device compute
             ModelShard("shard2", "device_2", [2, 3], 1000, 100.0, 2.0),  # Proportional
-            ModelShard("shard3", "device_3", [4, 5], 1000, 100.0, 1.0)   # Proportional
+            ModelShard("shard3", "device_3", [4, 5], 1000, 100.0, 1.0),  # Proportional
         ]
 
         balanced_score = sharding_engine._calculate_compute_balance(balanced_shards, device_profiles)
@@ -466,11 +447,11 @@ class TestModelShardingEngine:
             total_shards=2,
             shards=[
                 ModelShard("shard1", "device_1", [0, 1], 1000, 100.0, 1.0),
-                ModelShard("shard2", "device_2", [2, 3], 1000, 100.0, 1.0)
+                ModelShard("shard2", "device_2", [2, 3], 1000, 100.0, 1.0),
             ],
             activation_routing={"shard1": [], "shard2": ["shard1"]},
             memory_efficiency=0.8,
-            compute_balance_score=0.7
+            compute_balance_score=0.7,
         )
 
         sharding_engine.current_sharding_plan = mock_plan

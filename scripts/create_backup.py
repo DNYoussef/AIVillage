@@ -29,19 +29,17 @@ def create_structure_snapshot():
                 if item.is_dir():
                     structure[item.name] = {
                         "type": "directory",
-                        "contents": scan_directory(item, max_depth, current_depth + 1)
+                        "contents": scan_directory(item, max_depth, current_depth + 1),
                     }
                 else:
-                    structure[item.name] = {
-                        "type": "file",
-                        "size": item.stat().st_size if item.exists() else 0
-                    }
+                    structure[item.name] = {"type": "file", "size": item.stat().st_size if item.exists() else 0}
         except PermissionError:
             structure["_error"] = "Permission denied"
 
         return structure
 
     return scan_directory(base_path)
+
 
 def main():
     print("Creating backup snapshot of current codebase structure...")
@@ -54,17 +52,19 @@ def main():
     # Save snapshot
     snapshot_file = f"structure_snapshot_{timestamp}.json"
     with open(snapshot_file, "w") as f:
-        json.dump({
-            "timestamp": timestamp,
-            "structure": structure
-        }, f, indent=2)
+        json.dump({"timestamp": timestamp, "structure": structure}, f, indent=2)
 
     print(f"Structure snapshot saved to: {snapshot_file}")
 
     # Create a list of all important files
     important_files = [
-        "pyproject.toml", "requirements*.txt", "setup.py",
-        "Dockerfile*", "docker-compose*.yml", "*.md", "LICENSE"
+        "pyproject.toml",
+        "requirements*.txt",
+        "setup.py",
+        "Dockerfile*",
+        "docker-compose*.yml",
+        "*.md",
+        "LICENSE",
     ]
 
     file_list = []
@@ -82,7 +82,7 @@ def main():
         "timestamp": timestamp,
         "important_files": [str(f.relative_to(base_path)) for f in file_list],
         "directory_count": len([k for k, v in structure.items() if v.get("type") == "directory"]),
-        "note": "Backup created before codebase restructuring"
+        "note": "Backup created before codebase restructuring",
     }
 
     backup_file = f"backup_info_{timestamp}.json"
@@ -93,6 +93,7 @@ def main():
     print("Backup complete!")
 
     return backup_info
+
 
 if __name__ == "__main__":
     main()

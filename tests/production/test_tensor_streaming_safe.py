@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from src.infrastructure.p2p.tensor_streaming import TensorStreamer
 

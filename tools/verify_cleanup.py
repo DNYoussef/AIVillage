@@ -14,10 +14,10 @@ The default log file is ``cleanup.log`` and the default metrics file is
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterable
 import json
 import logging
 from pathlib import Path
-from typing import Iterable
 
 
 def parse_args() -> argparse.Namespace:

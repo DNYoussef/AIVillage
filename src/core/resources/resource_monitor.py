@@ -3,11 +3,11 @@ Currently returns None for everything!
 """
 
 import logging
+import socket
 import time
 from typing import Any
 
 import psutil
-import socket
 
 logger = logging.getLogger(__name__)
 

@@ -2,12 +2,11 @@
 """Benchmark the advanced compression pipeline against a simple quantizer."""
 from __future__ import annotations
 
-import time
 from pathlib import Path
 import sys
+import time
 
-import torch
-import torch.nn as nn
+from torch import nn
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 

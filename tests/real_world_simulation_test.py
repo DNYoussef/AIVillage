@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class RealWorldSimulation:
     """Real-world deployment scenario simulation"""
 
@@ -35,7 +36,7 @@ class RealWorldSimulation:
             "success": success,
             "details": details,
             "metrics": metrics or {},
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         status = "✓" if success else "✗"
@@ -85,14 +86,14 @@ class RealWorldSimulation:
                             f"Mobile Device: {device_name}",
                             adapted,
                             f"Memory allocation: {memory_allocation_mb}MB (max: {expected_max:.0f}MB), suitable: {suitable}",
-                            {"specs": specs, "allocation": allocation, "suitable": suitable}
+                            {"specs": specs, "allocation": allocation, "suitable": suitable},
                         )
 
             overall_success = successful_adaptations >= 3  # At least 3/4 should adapt properly
             self.log_scenario(
                 "Mobile Device Adaptation",
                 overall_success,
-                f"Successfully adapted to {successful_adaptations}/4 device types"
+                f"Successfully adapted to {successful_adaptations}/4 device types",
             )
 
         except Exception as e:
@@ -129,21 +130,17 @@ class RealWorldSimulation:
                         f"Network: {scenario_name}",
                         connection_success,
                         "P2P node handled network conditions",
-                        conditions
+                        conditions,
                     )
 
                 except Exception as e:
-                    self.log_scenario(
-                        f"Network: {scenario_name}",
-                        False,
-                        f"Failed: {e!s}"
-                    )
+                    self.log_scenario(f"Network: {scenario_name}", False, f"Failed: {e!s}")
 
             overall_success = successful_connections >= 3
             self.log_scenario(
                 "Network Resilience",
                 overall_success,
-                f"Successfully handled {successful_connections}/4 network conditions"
+                f"Successfully handled {successful_connections}/4 network conditions",
             )
 
         except Exception as e:
@@ -198,21 +195,15 @@ class RealWorldSimulation:
                         f"Evolution Load: {scenario_name}",
                         load_success,
                         f"Registered {tasks_registered}/{concurrent_tasks} concurrent tasks",
-                        {"concurrent_tasks": concurrent_tasks, "registered": tasks_registered}
+                        {"concurrent_tasks": concurrent_tasks, "registered": tasks_registered},
                     )
 
                 except Exception as e:
-                    self.log_scenario(
-                        f"Evolution Load: {scenario_name}",
-                        False,
-                        f"Failed: {e!s}"
-                    )
+                    self.log_scenario(f"Evolution Load: {scenario_name}", False, f"Failed: {e!s}")
 
             overall_success = successful_loads >= 3
             self.log_scenario(
-                "Evolution Load Handling",
-                overall_success,
-                f"Successfully handled {successful_loads}/4 load scenarios"
+                "Evolution Load Handling", overall_success, f"Successfully handled {successful_loads}/4 load scenarios"
             )
 
         except Exception as e:
@@ -225,11 +216,7 @@ class RealWorldSimulation:
         try:
             from unittest.mock import patch
 
-            from src.core.resources import (
-                ConstraintManager,
-                DeviceProfiler,
-                ResourceMonitor,
-            )
+            from src.core.resources import ConstraintManager, DeviceProfiler, ResourceMonitor
 
             profiler = DeviceProfiler()
             monitor = ResourceMonitor(profiler)
@@ -277,21 +264,17 @@ class RealWorldSimulation:
                         f"Resource Starvation: {scenario_name}",
                         recovery_success,
                         f"System detected constraints: {constrained}",
-                        {"resource_type": resource_type, "usage_level": usage_level}
+                        {"resource_type": resource_type, "usage_level": usage_level},
                     )
 
                 except Exception as e:
-                    self.log_scenario(
-                        f"Resource Starvation: {scenario_name}",
-                        False,
-                        f"Failed: {e!s}"
-                    )
+                    self.log_scenario(f"Resource Starvation: {scenario_name}", False, f"Failed: {e!s}")
 
             overall_success = recovered_scenarios >= 2
             self.log_scenario(
                 "Resource Starvation Recovery",
                 overall_success,
-                f"Successfully handled {recovered_scenarios}/3 starvation scenarios"
+                f"Successfully handled {recovered_scenarios}/3 starvation scenarios",
             )
 
         except Exception as e:
@@ -338,7 +321,7 @@ class RealWorldSimulation:
                 "Long-Running Stability",
                 stability_success,
                 f"Stability score: {stability_score:.1%} ({successful_checks}/{stability_checks} checks passed)",
-                {"stability_score": stability_score, "checks_passed": successful_checks}
+                {"stability_score": stability_score, "checks_passed": successful_checks},
             )
 
         except Exception as e:
@@ -366,7 +349,7 @@ class RealWorldSimulation:
             "success_rate": success_rate,
             "results": self.results,
             "deployment_readiness": success_rate >= 0.8,
-            "production_recommendations": self._generate_recommendations()
+            "production_recommendations": self._generate_recommendations(),
         }
 
         logger.info("=" * 80)
@@ -408,6 +391,7 @@ class RealWorldSimulation:
 
         return recommendations
 
+
 async def main():
     """Main entry point"""
     simulation = RealWorldSimulation()
@@ -433,6 +417,7 @@ async def main():
     except Exception as e:
         logger.error(f"Real-world simulation failed: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

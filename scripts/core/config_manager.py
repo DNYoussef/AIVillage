@@ -12,7 +12,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import yaml
 
@@ -21,17 +21,12 @@ logger = logging.getLogger(__name__)
 
 class ConfigurationError(Exception):
     """Raised when configuration loading or validation fails."""
-    pass
 
 
 class ConfigManager:
     """Centralized configuration management for AIVillage scripts."""
 
-    def __init__(
-        self,
-        config_dir: Optional[Path] = None,
-        environment: Optional[str] = None
-    ):
+    def __init__(self, config_dir: Path | None = None, environment: str | None = None):
         """Initialize the configuration manager.
 
         Args:
@@ -40,7 +35,7 @@ class ConfigManager:
         """
         self.config_dir = config_dir or Path(__file__).parent.parent.parent / "config"
         self.environment = environment or os.getenv("AIVILLAGE_ENV", "dev")
-        self.config_cache: Dict[str, Any] = {}
+        self.config_cache: dict[str, Any] = {}
 
         # Default configuration schema
         self.default_config = {
@@ -57,7 +52,7 @@ class ConfigManager:
                     "cpu_percent_high": 80.0,
                     "memory_percent_high": 85.0,
                     "disk_usage_high": 90.0,
-                }
+                },
             },
             "validation": {
                 "strict_mode": False,
@@ -79,12 +74,12 @@ class ConfigManager:
                 "generations": 50,
                 "population_size": 20,
                 "mutation_rate": 0.1,
-            }
+            },
         }
 
         logger.info(f"ConfigManager initialized for environment: {self.environment}")
 
-    def load_config(self, config_name: str, required: bool = False) -> Dict[str, Any]:
+    def load_config(self, config_name: str, required: bool = False) -> dict[str, Any]:
         """Load configuration from file with environment-specific overrides.
 
         Args:
@@ -109,7 +104,7 @@ class ConfigManager:
         base_config_file = self.config_dir / f"{config_name}.yaml"
         if base_config_file.exists():
             try:
-                with open(base_config_file, 'r', encoding='utf-8') as f:
+                with open(base_config_file, encoding="utf-8") as f:
                     base_config = yaml.safe_load(f)
                     if base_config:
                         self._deep_merge(config, base_config)
@@ -123,7 +118,7 @@ class ConfigManager:
         env_config_file = self.config_dir / f"{config_name}.{self.environment}.yaml"
         if env_config_file.exists():
             try:
-                with open(env_config_file, 'r', encoding='utf-8') as f:
+                with open(env_config_file, encoding="utf-8") as f:
                     env_config = yaml.safe_load(f)
                     if env_config:
                         self._deep_merge(config, env_config)
@@ -148,12 +143,7 @@ class ConfigManager:
         logger.info(f"Successfully loaded configuration: {config_name}")
         return config
 
-    def get_config_value(
-        self,
-        config_name: str,
-        key_path: str,
-        default: Any = None
-    ) -> Any:
+    def get_config_value(self, config_name: str, key_path: str, default: Any = None) -> Any:
         """Get a specific configuration value using dot notation.
 
         Args:
@@ -166,7 +156,7 @@ class ConfigManager:
         """
         config = self.load_config(config_name)
 
-        keys = key_path.split('.')
+        keys = key_path.split(".")
         value = config
 
         try:
@@ -190,7 +180,7 @@ class ConfigManager:
             self.load_config(config_name)
 
         config = self.config_cache[cache_key]
-        keys = key_path.split('.')
+        keys = key_path.split(".")
 
         # Navigate to the parent dictionary
         current = config
@@ -203,7 +193,7 @@ class ConfigManager:
         current[keys[-1]] = value
         logger.debug(f"Set configuration value: {key_path} = {value}")
 
-    def reload_config(self, config_name: str) -> Dict[str, Any]:
+    def reload_config(self, config_name: str) -> dict[str, Any]:
         """Reload configuration from disk, clearing cache.
 
         Args:
@@ -218,7 +208,7 @@ class ConfigManager:
 
         return self.load_config(config_name)
 
-    def save_config(self, config_name: str, config: Dict[str, Any]) -> None:
+    def save_config(self, config_name: str, config: dict[str, Any]) -> None:
         """Save configuration to file.
 
         Args:
@@ -231,7 +221,7 @@ class ConfigManager:
             # Ensure config directory exists
             self.config_dir.mkdir(parents=True, exist_ok=True)
 
-            with open(config_file, 'w', encoding='utf-8') as f:
+            with open(config_file, "w", encoding="utf-8") as f:
                 yaml.dump(config, f, default_flow_style=False, sort_keys=True)
 
             logger.info(f"Saved configuration to {config_file}")
@@ -244,7 +234,7 @@ class ConfigManager:
             logger.error(f"Failed to save configuration {config_name}: {e}")
             raise ConfigurationError(f"Failed to save configuration: {e}")
 
-    def list_available_configs(self) -> List[str]:
+    def list_available_configs(self) -> list[str]:
         """List all available configuration files.
 
         Returns:
@@ -257,13 +247,13 @@ class ConfigManager:
         for config_file in self.config_dir.glob("*.yaml"):
             name = config_file.stem
             # Remove environment suffix if present
-            if '.' in name:
-                name = name.split('.')[0]
+            if "." in name:
+                name = name.split(".")[0]
             configs.add(name)
 
         return sorted(list(configs))
 
-    def _deep_merge(self, base: Dict[str, Any], override: Dict[str, Any]) -> None:
+    def _deep_merge(self, base: dict[str, Any], override: dict[str, Any]) -> None:
         """Deep merge override dictionary into base dictionary.
 
         Args:
@@ -276,7 +266,7 @@ class ConfigManager:
             else:
                 base[key] = value
 
-    def _apply_env_overrides(self, config: Dict[str, Any], config_name: str) -> Dict[str, Any]:
+    def _apply_env_overrides(self, config: dict[str, Any], config_name: str) -> dict[str, Any]:
         """Apply environment variable overrides to configuration.
 
         Args:
@@ -291,14 +281,14 @@ class ConfigManager:
         for env_var, value in os.environ.items():
             if env_var.startswith(prefix):
                 # Extract key path from environment variable
-                key_path = env_var[len(prefix):].lower().replace('_', '.')
+                key_path = env_var[len(prefix) :].lower().replace("_", ".")
 
                 # Convert string value to appropriate type
                 converted_value = self._convert_env_value(value)
 
                 # Apply the override
                 try:
-                    keys = key_path.split('.')
+                    keys = key_path.split(".")
                     current = config
                     for key in keys[:-1]:
                         if key not in current:
@@ -322,8 +312,8 @@ class ConfigManager:
             Converted value
         """
         # Try boolean
-        if value.lower() in ('true', 'false'):
-            return value.lower() == 'true'
+        if value.lower() in ("true", "false"):
+            return value.lower() == "true"
 
         # Try integer
         try:
@@ -346,7 +336,7 @@ class ConfigManager:
         # Return as string
         return value
 
-    def _validate_config(self, config: Dict[str, Any], config_name: str) -> None:
+    def _validate_config(self, config: dict[str, Any], config_name: str) -> None:
         """Validate configuration against schema.
 
         Args:
@@ -370,7 +360,7 @@ class ConfigManager:
             "validation": {
                 "timeout": lambda x: isinstance(x, (int, float)) and x > 0,
                 "retry_attempts": lambda x: isinstance(x, int) and x >= 0,
-            }
+            },
         }
 
         # Apply validation rules if they exist for this config
@@ -385,7 +375,7 @@ class ConfigManager:
                     # Key is optional if not in config
                     pass
 
-    def _get_nested_value(self, config: Dict[str, Any], key_path: str) -> Any:
+    def _get_nested_value(self, config: dict[str, Any], key_path: str) -> Any:
         """Get nested value from configuration using dot notation.
 
         Args:
@@ -398,7 +388,7 @@ class ConfigManager:
         Raises:
             KeyError: If key path is not found
         """
-        keys = key_path.split('.')
+        keys = key_path.split(".")
         value = config
 
         for key in keys:

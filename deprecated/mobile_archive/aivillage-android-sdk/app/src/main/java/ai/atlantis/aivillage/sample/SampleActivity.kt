@@ -13,26 +13,26 @@ import ai.atlantis.aivillage.core.FLConfiguration
 import kotlinx.coroutines.*
 
 class SampleActivity : AppCompatActivity() {
-    
+
     private lateinit var aiVillageSDK: AIVillageSDK
     private val activityScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Initialize SDK
         initializeAIVillage()
-        
+
         // Example: Translate text
         translateText("Hello World", "en", "es")
-        
+
         // Example: Monitor mesh network
         monitorMeshNetwork()
-        
+
         // Example: Monitor federated learning
         monitorFederatedLearning()
     }
-    
+
     private fun initializeAIVillage() {
         val config = Configuration.Builder()
             .deviceId(getDeviceId())
@@ -55,15 +55,15 @@ class SampleActivity : AppCompatActivity() {
             )
             .maxMemoryMB(256)
             .build()
-        
+
         aiVillageSDK = AIVillageSDK.initialize(this, config)
     }
-    
+
     private fun translateText(text: String, sourceLang: String, targetLang: String) {
         activityScope.launch {
             val agentManager = aiVillageSDK.getAgentManager()
             val task = TranslationTask(text, sourceLang, targetLang)
-            
+
             when (val result = agentManager.processTask(task)) {
                 is AgentResult.Success -> {
                     val translation = result.data as TranslationResult
@@ -75,7 +75,7 @@ class SampleActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private fun monitorMeshNetwork() {
         activityScope.launch {
             aiVillageSDK.getMeshNetwork().connectedNodes.collect { nodes ->
@@ -86,7 +86,7 @@ class SampleActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private fun monitorFederatedLearning() {
         activityScope.launch {
             aiVillageSDK.getFLClient().flState.collect { state ->
@@ -94,12 +94,12 @@ class SampleActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private fun getDeviceId(): String {
         // Generate or retrieve unique device ID
         return "device_${System.currentTimeMillis()}"
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
         activityScope.cancel()

@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
+"""Final Benchmark Report - Post-Cleanup Performance Summary
 """
-Final Benchmark Report - Post-Cleanup Performance Summary
-"""
+from datetime import datetime
 import json
 import os
-from datetime import datetime
 from pathlib import Path
 
 
@@ -18,7 +17,7 @@ def load_latest_benchmark():
     focused_files = list(results_dir.glob("focused_benchmark_*.json"))
     if focused_files:
         latest_focused = max(focused_files, key=os.path.getctime)
-        with open(latest_focused, 'r') as f:
+        with open(latest_focused) as f:
             return json.load(f)
     return None
 
@@ -42,9 +41,11 @@ def generate_report():
     print(f"Report Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Benchmark Date: {sys_info.get('timestamp', 'Unknown')}")
     print(f"System: {sys_info.get('platform', 'Unknown')} with {sys_info.get('cpu_count', 0)} CPUs")
-    print(f"Memory: {sys_info.get('available_memory_gb',
+    print(
+        f"Memory: {sys_info.get('available_memory_gb',
                                   0):.1f}GB available / {sys_info.get('total_memory_gb',
-                                                                      0):.1f}GB total")
+                                                                      0):.1f}GB total"
+    )
     print(f"Total Benchmark Time: {results.get('total_benchmark_time_seconds', 0):.3f}s")
 
     print("\n" + "=" * 80)
@@ -68,8 +69,9 @@ def generate_report():
                 print(f"  {method}: FAILED - {data.get('error', 'Unknown error')}")
 
         # Calculate averages
-        successful_ratios = [d.get("compression_ratio", 0)
-                             for d in compressions.values() if d.get("status") == "success"]
+        successful_ratios = [
+            d.get("compression_ratio", 0) for d in compressions.values() if d.get("status") == "success"
+        ]
         if successful_ratios:
             avg_ratio = sum(successful_ratios) / len(successful_ratios)
             print(f"\nAVERAGE COMPRESSION RATIO: {avg_ratio:.1f}x")
@@ -92,17 +94,17 @@ def generate_report():
         print(f"Crossover Operations: {evo.get('crossover_time_ms', 0):.3f}ms")
         print(f"Selection Pressure: {evo.get('selection_pressure', 0):.2f}")
 
-        fitness_before = evo.get('avg_fitness_before', 0)
-        fitness_selected = evo.get('avg_fitness_selected', 0)
-        fitness_offspring = evo.get('avg_fitness_offspring', 0)
+        fitness_before = evo.get("avg_fitness_before", 0)
+        fitness_selected = evo.get("avg_fitness_selected", 0)
+        fitness_offspring = evo.get("avg_fitness_offspring", 0)
 
-        print(f"Fitness Evolution:")
+        print("Fitness Evolution:")
         print(f"  Initial Population: {fitness_before:.3f}")
         print(f"  Selected Parents: {fitness_selected:.3f}")
         print(f"  Generated Offspring: {fitness_offspring:.3f}")
         print(f"  Improvement: {fitness_selected - fitness_before:+.3f}")
 
-        performance_ok = evo.get('total_time_seconds', 0) < 1.0
+        performance_ok = evo.get("total_time_seconds", 0) < 1.0
         print(f"Performance Target (<1s): {'PASS' if performance_ok else 'FAIL'}")
 
     else:
@@ -123,10 +125,10 @@ def generate_report():
         print(f"Queries Processed: {rag.get('queries_processed', 0)}")
         print(f"Average Query Time: {rag.get('avg_query_time_ms', 0):.3f}ms")
 
-        query_target_met = rag.get('avg_query_time_ms', 0) < 2000
+        query_target_met = rag.get("avg_query_time_ms", 0) < 2000
         print(f"Query Target (<2000ms): {'PASS' if query_target_met else 'FAIL'}")
 
-        efficiency = rag.get('documents_indexed', 0) / max(rag.get('index_time_ms', 1), 1)
+        efficiency = rag.get("documents_indexed", 0) / max(rag.get("index_time_ms", 1), 1)
         print(f"Indexing Efficiency: {efficiency:.2f} docs/ms")
 
     else:
@@ -145,8 +147,8 @@ def generate_report():
         print(f"Available Memory: {res.get('available_memory_gb', 0):.1f}GB")
         print(f"Free Disk Space: {res.get('disk_free_gb', 0):.1f}GB")
 
-        memory_pressure = res.get('available_memory_gb', 0) < 2.0
-        cpu_efficient = abs(res.get('cpu_increase', 100)) < 50
+        memory_pressure = res.get("available_memory_gb", 0) < 2.0
+        cpu_efficient = abs(res.get("cpu_increase", 100)) < 50
 
         print(f"Memory Pressure: {'HIGH' if memory_pressure else 'NORMAL'}")
         print(f"CPU Efficiency: {'GOOD' if cpu_efficient else 'POOR'}")

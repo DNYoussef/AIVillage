@@ -2,8 +2,8 @@
 """Create comprehensive text summary of 50-generation evolution results."""
 
 import json
-import statistics
 from pathlib import Path
+import statistics
 
 
 def create_comprehensive_summary():
@@ -26,13 +26,10 @@ def create_comprehensive_summary():
     print(
         f"Duration:                  {
             summary['duration_minutes']:.2f} minutes ({
-            summary['duration_seconds']:.1f} seconds)")
-    print(
-        f"Population Size:           {summary['population_size']} individuals per generation"
+            summary['duration_seconds']:.1f} seconds)"
     )
-    print(
-        f"Total Individuals Tested:  {summary['generations_completed'] * summary['population_size']}"
-    )
+    print(f"Population Size:           {summary['population_size']} individuals per generation")
+    print(f"Total Individuals Tested:  {summary['generations_completed'] * summary['population_size']}")
     print(f"Final Diversity Score:     {summary['final_diversity']:.4f}")
     print(f"Stagnation Periods:        {summary['stagnation_periods']}")
 
@@ -69,9 +66,7 @@ def create_comprehensive_summary():
         status = "PASS" if score >= threshold else "FAIL"
         margin = score - threshold
 
-        print(
-            f"  {metric.upper():12s}: {score:.4f} (Target: {threshold:.2f}) [{status}] (+{margin:+.3f})"
-        )
+        print(f"  {metric.upper():12s}: {score:.4f} (Target: {threshold:.2f}) [{status}] (+{margin:+.3f})")
 
     all_pass = all(benchmarks[m] >= thresholds.get(m, 0.5) for m in benchmarks)
     print(f"\nOverall Benchmark Status: {'ALL PASS' if all_pass else 'SOME FAILED'}")
@@ -89,9 +84,7 @@ def create_comprehensive_summary():
     print("Fitness Evolution:")
     print(f"  Initial Best Fitness:    {fitness_progression[0]:.4f}")
     print(f"  Final Best Fitness:      {fitness_progression[-1]:.4f}")
-    print(
-        f"  Total Improvement:       {fitness_progression[-1] - fitness_progression[0]:+.4f}"
-    )
+    print(f"  Total Improvement:       {fitness_progression[-1] - fitness_progression[0]:+.4f}")
     print(
         f"  Average Improvement/Gen: {(fitness_progression[-1] - fitness_progression[0]) / len(fitness_progression):.4f}"
     )
@@ -109,9 +102,7 @@ def create_comprehensive_summary():
     total_individuals = sum(method_totals.values())
 
     print("  Total Method Usage (across all generations):")
-    for method, count in sorted(
-        method_totals.items(), key=lambda x: x[1], reverse=True
-    ):
+    for method, count in sorted(method_totals.items(), key=lambda x: x[1], reverse=True):
         percentage = (count / total_individuals) * 100
         print(f"    {method:15s}: {count:3d} individuals ({percentage:5.1f}%)")
 
@@ -128,9 +119,7 @@ def create_comprehensive_summary():
             milestones.append((i, current_best, gen["population"][0]))
         prev_best = max(prev_best, current_best)
 
-    for gen_num, fitness, individual in milestones[
-        -10:
-    ]:  # Show last 10 major improvements
+    for gen_num, fitness, individual in milestones[-10:]:  # Show last 10 major improvements
         method = individual["merge_method"]
         print(f"  Gen {gen_num:2d}: Fitness {fitness:.4f} ({method})")
 
@@ -164,9 +153,7 @@ def create_comprehensive_summary():
     print(f"  Worst Individual:       {min(final_fitness):.4f}")
 
     print("\n  Method Distribution in Final Population:")
-    for method, count in sorted(
-        final_methods.items(), key=lambda x: x[1], reverse=True
-    ):
+    for method, count in sorted(final_methods.items(), key=lambda x: x[1], reverse=True):
         percentage = (count / len(final_pop)) * 100
         print(f"    {method:15s}: {count} individuals ({percentage:.1f}%)")
 
@@ -192,9 +179,7 @@ def create_comprehensive_summary():
         f"  Improvement:             {best_config['fitness'] - 1.012:+.4f} ({((best_config['fitness'] / 1.012) - 1) * 100:+.1f}%)"
     )
     print(f"  Duration Comparison:     9.0s vs {summary['duration_seconds']:.1f}s")
-    print(
-        f"  Individuals Tested:      60 vs {summary['generations_completed'] * summary['population_size']}"
-    )
+    print(f"  Individuals Tested:      60 vs {summary['generations_completed'] * summary['population_size']}")
 
     print("\n" + "=" * 100)
     print("CONCLUSION: 50-GENERATION EVOLUTION SUCCESSFULLY COMPLETED")

@@ -1,8 +1,8 @@
 """Evolution Metrics Collection and Analysis."""
 
-import logging
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
 from typing import Any
 
 logger = logging.getLogger(__name__)

@@ -5,21 +5,21 @@ coordinates between components, and ensures stable autonomous improvement.
 """
 
 import asyncio
-import json
-import logging
-import signal
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
+import signal
 from typing import Any
 
-import numpy as np
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
+import numpy as np
 
 from .agent_evolution_engine import AgentEvolutionEngine, AgentGenome, AgentKPIs
 from .evolution_dashboard import EvolutionDashboard, PerformanceAnalyzer

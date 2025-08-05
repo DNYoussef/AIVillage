@@ -1,13 +1,13 @@
 """Real-time mobile device resource profiling for Sprint 6."""
 
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import platform
 import queue
 import threading
 import time
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any
 
 # System monitoring
@@ -27,8 +27,8 @@ if platform.system() == "Android":
         ANDROID_AVAILABLE = False
 elif platform.system() == "Darwin":  # iOS/macOS
     try:
-        import objc
         from Foundation import NSBundle, NSProcessInfo
+        import objc
 
         MACOS_AVAILABLE = True
     except ImportError:

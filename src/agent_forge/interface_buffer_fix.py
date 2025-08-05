@@ -8,8 +8,8 @@ Prevents RangeError from large string outputs by implementing:
 4. Memory-safe string handling
 """
 
-import json
 from collections.abc import Iterator
+import json
 from pathlib import Path
 from typing import Any
 

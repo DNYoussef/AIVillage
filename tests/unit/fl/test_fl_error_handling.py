@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Test FL error handling and edge cases."""
 
-import asyncio
-import sys
 from pathlib import Path
+import sys
 
+from implement_federated_learning import FederatedLearningClient, FederatedLearningServer
 import pytest
 import torch
-from implement_federated_learning import FederatedLearningClient, FederatedLearningServer
 
 # Add scripts to path
 sys.path.append(str(Path(__file__).parent.parent.parent / "scripts"))
@@ -46,7 +45,7 @@ class TestFLErrorHandling:
         malformed_config = {
             "model_version": "v1",
             "model_state": {},
-            "round_config": {"learning_rate": 0.01}
+            "round_config": {"learning_rate": 0.01},
             # Missing "round_number" key
         }
 

@@ -4,11 +4,7 @@ from typing import Any
 
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
-from core.error_handling import (
-    AIVillageException,
-    error_handler,
-    safe_execute,
-)
+from core.error_handling import AIVillageException, error_handler, safe_execute
 
 from .knowledge_graph_agent import KnowledgeGraphAgent
 
@@ -16,16 +12,12 @@ logger = logging.getLogger(__name__)
 
 
 class ReasoningAgent:
-    def __init__(
-        self, llm_config: OpenAIGPTConfig, knowledge_graph_agent: KnowledgeGraphAgent
-    ):
+    def __init__(self, llm_config: OpenAIGPTConfig, knowledge_graph_agent: KnowledgeGraphAgent):
         self.llm = llm_config.create()
         self.knowledge_graph_agent = knowledge_graph_agent
 
     @error_handler.handle_error
-    async def perform_reasoning(
-        self, context: dict[str, Any], query: str
-    ) -> dict[str, Any]:
+    async def perform_reasoning(self, context: dict[str, Any], query: str) -> dict[str, Any]:
         """Perform reasoning based on the given context and query.
 
         Args:
@@ -40,9 +32,7 @@ class ReasoningAgent:
         response = await self.llm.complete(prompt)
         return self._parse_reasoning_response(response.text)
 
-    def _create_reasoning_prompt(
-        self, context: dict[str, Any], query: str, kg_query_result: dict[str, Any]
-    ) -> str:
+    def _create_reasoning_prompt(self, context: dict[str, Any], query: str, kg_query_result: dict[str, Any]) -> str:
         return f"""
         Given the following context, query, and knowledge graph query result:
 
@@ -83,9 +73,7 @@ class ReasoningAgent:
             raise AIVillageException("Failed to parse reasoning response")
 
     @error_handler.handle_error
-    async def resolve_conflicts(
-        self, conflicting_info: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    async def resolve_conflicts(self, conflicting_info: list[dict[str, Any]]) -> dict[str, Any]:
         """Resolve conflicts between different pieces of information.
 
         Args:
@@ -98,9 +86,7 @@ class ReasoningAgent:
         response = await self.llm.complete(prompt)
         return self._parse_conflict_resolution_response(response.text)
 
-    def _create_conflict_resolution_prompt(
-        self, conflicting_info: list[dict[str, Any]]
-    ) -> str:
+    def _create_conflict_resolution_prompt(self, conflicting_info: list[dict[str, Any]]) -> str:
         return f"""
         Given the following conflicting pieces of information:
 
@@ -162,9 +148,7 @@ class ReasoningAgent:
         """
 
     @safe_execute
-    async def process_query(
-        self, context: dict[str, Any], query: str
-    ) -> dict[str, Any]:
+    async def process_query(self, context: dict[str, Any], query: str) -> dict[str, Any]:
         """Process a query by performing reasoning, resolving conflicts, and generating an explanation.
 
         Args:
@@ -178,9 +162,7 @@ class ReasoningAgent:
 
         # Check for conflicts in the reasoning result
         if reasoning_result.get("conflicts"):
-            conflict_resolution = await self.resolve_conflicts(
-                reasoning_result["conflicts"]
-            )
+            conflict_resolution = await self.resolve_conflicts(reasoning_result["conflicts"])
             reasoning_result["conflict_resolution"] = conflict_resolution
 
         explanation = await self.generate_explanation(reasoning_result)
@@ -202,9 +184,7 @@ if __name__ == "__main__":
         kg_agent.graph.add_node("Vaccine", type="Medical")
         kg_agent.graph.add_node("Mask Wearing", type="Preventive Measure")
         kg_agent.graph.add_edge("Vaccine", "COVID-19", relationship="prevents")
-        kg_agent.graph.add_edge(
-            "Mask Wearing", "COVID-19", relationship="reduces spread"
-        )
+        kg_agent.graph.add_edge("Mask Wearing", "COVID-19", relationship="reduces spread")
 
         context = {
             "current_situation": "Global pandemic",

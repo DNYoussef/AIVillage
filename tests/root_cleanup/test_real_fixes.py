@@ -16,9 +16,7 @@ import logging
 import sys
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -226,9 +224,7 @@ if __name__ == "__main__":
         print("\n🚀 READY FOR REAL EXECUTION!")
         print("The fixes are working. You can now run:")
         print("1. Real evolution: python scripts/run_50gen_evolution.py")
-        print(
-            "2. Real magi training: python -m agent_forge.training.magi_specialization"
-        )
+        print("2. Real magi training: python -m agent_forge.training.magi_specialization")
         print("3. Real benchmarking: python -m agent_forge.real_benchmark")
     else:
         print("\n⚠️ ISSUES DETECTED!")

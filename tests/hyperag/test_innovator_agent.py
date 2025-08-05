@@ -4,8 +4,8 @@ Unit tests for Enhanced Innovator Repair Agent
 
 import asyncio
 import json
-import sys
 from pathlib import Path
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -16,12 +16,7 @@ from mcp_servers.hyperag.repair.innovator_agent import (
     RepairOperationType,
     RepairProposalSet,
 )
-from mcp_servers.hyperag.repair.llm_driver import (
-    GenerationResponse,
-    LLMDriver,
-    ModelBackend,
-    ModelConfig,
-)
+from mcp_servers.hyperag.repair.llm_driver import GenerationResponse, LLMDriver, ModelBackend, ModelConfig
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -46,9 +41,7 @@ class TestRepairProposalSet:
             ),
         ]
 
-        proposal_set = RepairProposalSet(
-            proposals=operations, violation_id="VIO_001", gdc_rule="test_rule"
-        )
+        proposal_set = RepairProposalSet(proposals=operations, violation_id="VIO_001", gdc_rule="test_rule")
 
         assert proposal_set.violation_id == "VIO_001"
         assert proposal_set.gdc_rule == "test_rule"
@@ -60,11 +53,7 @@ class TestRepairProposalSet:
     def test_proposal_set_validation(self):
         """Test proposal set validation"""
         # Valid proposals
-        valid_ops = [
-            RepairOperation(
-                RepairOperationType.UPDATE_ATTR, "node_1", "Good rationale", 0.8
-            )
-        ]
+        valid_ops = [RepairOperation(RepairOperationType.UPDATE_ATTR, "node_1", "Good rationale", 0.8)]
         valid_set = RepairProposalSet(valid_ops, "VIO_002", "test_rule")
 
         assert valid_set.validate() is True
@@ -88,11 +77,7 @@ class TestRepairProposalSet:
 
     def test_proposal_set_to_json_array(self):
         """Test JSON array serialization"""
-        operations = [
-            RepairOperation(
-                RepairOperationType.DELETE_EDGE, "edge_1", "Delete operation", 0.9
-            )
-        ]
+        operations = [RepairOperation(RepairOperationType.DELETE_EDGE, "edge_1", "Delete operation", 0.9)]
 
         proposal_set = RepairProposalSet(operations, "VIO_004", "test_rule")
         json_str = proposal_set.to_json_array()
@@ -147,9 +132,7 @@ class TestEnhancedLLMDriver:
         """Test rate limiting functionality"""
         mock_config.requests_per_minute = 2  # Very low limit for testing
 
-        with patch(
-            "mcp_servers.hyperag.repair.llm_driver.OllamaBackend"
-        ) as MockBackend:
+        with patch("mcp_servers.hyperag.repair.llm_driver.OllamaBackend") as MockBackend:
             mock_backend = AsyncMock()
             mock_response = GenerationResponse(
                 text="test",
@@ -327,9 +310,7 @@ That's the complete set of operations."""
         assert proposal_set.gdc_rule == "test_rule"
         assert len(proposal_set.proposals) == 1
         assert proposal_set.is_valid is True
-        assert (
-            proposal_set.proposals[0].operation_type == RepairOperationType.DELETE_EDGE
-        )
+        assert proposal_set.proposals[0].operation_type == RepairOperationType.DELETE_EDGE
 
     @pytest.mark.asyncio
     async def test_proposal_set_validation_integration(self, agent, mock_llm_driver):

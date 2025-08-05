@@ -1,9 +1,12 @@
 """Test that compression works on mobile device constraints"""
-import pytest
-import torch
+
 import gc
 import os
+
 import psutil
+import pytest
+import torch
+
 from core.compression import SimpleQuantizer
 
 

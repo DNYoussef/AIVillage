@@ -29,7 +29,7 @@ class RestructureSimulator:
             "source_exists": source_path.exists(),
             "target_exists": target_path.exists(),
             "would_move": False,
-            "reason": ""
+            "reason": "",
         }
 
         if not source_path.exists():
@@ -58,7 +58,7 @@ class RestructureSimulator:
             ("services", "src/services"),
             ("ingestion", "src/ingestion"),
             ("hyperag", "src/hyperag"),
-            ("rag_system", "src/rag_system")
+            ("rag_system", "src/rag_system"),
         ]
 
         for source, target in production_moves:
@@ -78,7 +78,7 @@ class RestructureSimulator:
             ("agent_forge/evaluation", "src/agent_forge/evaluation"),
             ("agent_forge/deployment", "src/agent_forge/deployment"),
             ("agent_forge/utils", "src/agent_forge/utils"),
-            ("agent_forge/orchestration", "src/agent_forge/orchestration")
+            ("agent_forge/orchestration", "src/agent_forge/orchestration"),
         ]
 
         print("Stable components → src/agent_forge/:")
@@ -103,7 +103,7 @@ class RestructureSimulator:
             ("agent_forge/meta", "experimental/agent_forge_experimental/meta"),
             ("agent_forge/training", "experimental/agent_forge_experimental/training"),
             ("agent_forge/evolution", "experimental/agent_forge_experimental/evolution"),
-            ("agent_forge/compression", "experimental/agent_forge_experimental/compression")
+            ("agent_forge/compression", "experimental/agent_forge_experimental/compression"),
         ]
 
         print("\nExperimental components → experimental/agent_forge_experimental/:")
@@ -118,11 +118,7 @@ class RestructureSimulator:
         """Simulate moving tools."""
         print("\n=== Simulating Tools Consolidation ===")
 
-        tools_moves = [
-            ("scripts", "tools/scripts"),
-            ("benchmarks", "tools/benchmarks"),
-            ("examples", "tools/examples")
-        ]
+        tools_moves = [("scripts", "tools/scripts"), ("benchmarks", "tools/benchmarks"), ("examples", "tools/examples")]
 
         for source, target in tools_moves:
             result = self.simulate_move(source, target)
@@ -141,7 +137,7 @@ class RestructureSimulator:
             "total_operations": len(self.moves),
             "ready_to_move": len(moveable),
             "blocked_moves": len(blocked),
-            "moves": self.moves
+            "moves": self.moves,
         }
 
         print("\n=== Simulation Summary ===")
@@ -167,6 +163,7 @@ class RestructureSimulator:
 
         return self.generate_simulation_report()
 
+
 def main():
     """Run the restructuring simulation."""
     simulator = RestructureSimulator(os.getcwd())
@@ -175,12 +172,14 @@ def main():
     # Save simulation report
     with open("restructure_simulation.json", "w") as f:
         import json
+
         json.dump(report, f, indent=2)
 
     print("\nSimulation report saved to: restructure_simulation.json")
     print("\nTo execute actual restructuring, run the full migration script.")
 
     return report
+
 
 if __name__ == "__main__":
     main()

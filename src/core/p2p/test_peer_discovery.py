@@ -39,7 +39,7 @@ def test_discovery_stats_counts() -> None:
     assert stats["discovered_peers_count"] == 1
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_retry_targets() -> None:
     node = DummyNode()
     discovery = PeerDiscovery(node)

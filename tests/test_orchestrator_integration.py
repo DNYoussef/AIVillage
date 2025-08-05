@@ -7,19 +7,13 @@ with their new entry points, and that they return valid PhaseResult objects.
 """
 
 import asyncio
-import sys
 from pathlib import Path
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from agent_forge.forge_orchestrator import (
-    ForgeOrchestrator,
-    OrchestratorConfig,
-    PhaseResult,
-    PhaseStatus,
-    PhaseType,
-)
+from agent_forge.forge_orchestrator import ForgeOrchestrator, OrchestratorConfig, PhaseResult, PhaseStatus, PhaseType
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -68,9 +62,7 @@ class TestOrchestratorIntegration:
             PhaseType.PROMPT_BAKING,
         }
 
-        discovered_types = {
-            phase.phase_type for phase in orchestrator.discovered_phases.values()
-        }
+        discovered_types = {phase.phase_type for phase in orchestrator.discovered_phases.values()}
 
         # At least some expected phases should be discovered
         assert len(expected_phases.intersection(discovered_types)) > 0
@@ -197,9 +189,7 @@ class TestOrchestratorIntegration:
         }
 
         # Mock the compression pipeline
-        with patch(
-            "agent_forge.compression_pipeline.CompressionPipeline"
-        ) as mock_pipeline:
+        with patch("agent_forge.compression_pipeline.CompressionPipeline") as mock_pipeline:
             mock_instance = MagicMock()
             mock_pipeline.return_value = mock_instance
 

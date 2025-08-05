@@ -1,9 +1,9 @@
 """Performance benchmark test configuration."""
 
-import json
-import time
 from dataclasses import asdict, dataclass
+import json
 from pathlib import Path
+import time
 from typing import Any
 
 import pytest
@@ -110,9 +110,7 @@ class PerformanceBenchmark:
 class BenchmarkContext:
     """Context manager for benchmark measurements."""
 
-    def __init__(
-        self, benchmark: PerformanceBenchmark, test_name: str, metadata: dict[str, Any]
-    ):
+    def __init__(self, benchmark: PerformanceBenchmark, test_name: str, metadata: dict[str, Any]):
         self.benchmark = benchmark
         self.test_name = test_name
         self.metadata = metadata
@@ -163,12 +161,8 @@ def performance_config():
 def pytest_configure(config):
     """Configure benchmark markers."""
     config.addinivalue_line("markers", "benchmark: mark test as performance benchmark")
-    config.addinivalue_line(
-        "markers", "slow_benchmark: mark test as slow performance benchmark"
-    )
-    config.addinivalue_line(
-        "markers", "memory_benchmark: mark test as memory performance benchmark"
-    )
+    config.addinivalue_line("markers", "slow_benchmark: mark test as slow performance benchmark")
+    config.addinivalue_line("markers", "memory_benchmark: mark test as memory performance benchmark")
 
 
 def pytest_collection_modifyitems(config, items):

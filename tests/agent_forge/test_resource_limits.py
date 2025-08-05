@@ -1,9 +1,9 @@
+from pathlib import Path
 import platform
 import sys
-from pathlib import Path
+import types
 
 import pytest
-import types
 
 # Ensure the src directory is on the path so that the 'agent_forge' package is importable
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))

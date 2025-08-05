@@ -1,6 +1,6 @@
+from pathlib import Path
 import sys
 import types
-from pathlib import Path
 
 import pytest
 
@@ -83,7 +83,7 @@ def test_load_compressed_success(monkeypatch, tmp_path):
     monkeypatch.setenv("TWIN_MODEL", str(tmp_path / "model.gguf"))
     monkeypatch.setenv("TWIN_HOME", str(tmp_path))
 
-    import twin_runtime.runner as runner
+    from twin_runtime import runner
 
     assert runner.LLM is sentinel
     assert not called
@@ -115,8 +115,7 @@ def test_load_compressed_failure(monkeypatch, tmp_path, caplog):
     monkeypatch.setenv("TWIN_HOME", str(tmp_path))
 
     caplog.set_level("ERROR")
-    import twin_runtime.runner as runner
+    from twin_runtime import runner
 
     assert runner.LLM is sentinel
     assert any("Failed to load compressed model" in rec.message for rec in caplog.records)
-

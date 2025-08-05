@@ -13,16 +13,13 @@ from typing import Any
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 from twilio.twiml.messaging_response import MessagingResponse
-
 import wandb
 
 from .agent_forge.prompt_engineering.ab_testing import prompt_ab_test
 from .agent_forge.prompt_engineering.prompt_baker import prompt_baker
 
 # Import new prompt engineering components
-from .agent_forge.prompt_engineering.tutor_prompts import (
-    tutor_prompt_engineer,
-)
+from .agent_forge.prompt_engineering.tutor_prompts import tutor_prompt_engineer
 
 # Import original components
 from .language_support import SUPPORTED_LANGUAGES, auto_translate_flow, detect_language
@@ -53,12 +50,8 @@ prompt_optimizer = prompt_baker
 
 # Configuration
 ENABLE_ENHANCED_PROMPTS = os.getenv("ENABLE_ENHANCED_PROMPTS", "true").lower() == "true"
-ENABLE_REAL_TIME_OPTIMIZATION = (
-    os.getenv("ENABLE_REAL_TIME_OPTIMIZATION", "true").lower() == "true"
-)
-PROMPT_OPTIMIZATION_THRESHOLD = float(
-    os.getenv("PROMPT_OPTIMIZATION_THRESHOLD", "0.75")
-)
+ENABLE_REAL_TIME_OPTIMIZATION = os.getenv("ENABLE_REAL_TIME_OPTIMIZATION", "true").lower() == "true"
+PROMPT_OPTIMIZATION_THRESHOLD = float(os.getenv("PROMPT_OPTIMIZATION_THRESHOLD", "0.75"))
 
 # Initialize W&B for enhanced tracking
 wandb.init(
@@ -76,9 +69,7 @@ wandb.init(
 
 
 @app.post("/whatsapp/webhook")
-async def enhanced_whatsapp_webhook(
-    request: Request, background_tasks: BackgroundTasks
-):
+async def enhanced_whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     """Enhanced WhatsApp webhook with advanced prompt engineering
     Features: W&B tracking, A/B testing, real-time optimization, multi-language support
     """
@@ -92,9 +83,7 @@ async def enhanced_whatsapp_webhook(
         from_number = form_data.get("From", "")
         message_sid = form_data.get("MessageSid", "")
 
-        logger.info(
-            f"Enhanced webhook received message from {from_number}: {incoming_msg[:50]}..."
-        )
+        logger.info(f"Enhanced webhook received message from {from_number}: {incoming_msg[:50]}...")
 
         # Validate required fields
         if not incoming_msg or not from_number:
@@ -122,9 +111,7 @@ async def enhanced_whatsapp_webhook(
                 "message_length": len(incoming_msg),
                 "enhanced_features_enabled": ENABLE_ENHANCED_PROMPTS,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "from_number_hash": hashlib.sha256(from_number.encode()).hexdigest()[
-                    :8
-                ],
+                "from_number_hash": hashlib.sha256(from_number.encode()).hexdigest()[:8],
             }
         )
 
@@ -140,9 +127,7 @@ async def enhanced_whatsapp_webhook(
                 )
             else:
                 # Fallback to original implementation
-                response = await get_original_tutor_response(
-                    incoming_msg, from_number, session_id, detected_lang
-                )
+                response = await get_original_tutor_response(incoming_msg, from_number, session_id, detected_lang)
 
         except asyncio.TimeoutError:
             logger.warning(f"Timeout for enhanced session {session_id}")
@@ -163,20 +148,14 @@ async def enhanced_whatsapp_webhook(
 
         # Real-time prompt optimization (if enabled)
         if ENABLE_REAL_TIME_OPTIMIZATION:
-            background_tasks.add_task(
-                trigger_real_time_optimization, response, response_time, session_context
-            )
+            background_tasks.add_task(trigger_real_time_optimization, response, response_time, session_context)
 
         # Format and return enhanced Twilio response
         twiml_response = format_enhanced_whatsapp_response(response)
 
-        logger.info(
-            f"Enhanced response sent in {response_time:.2f}s for session {session_id}"
-        )
+        logger.info(f"Enhanced response sent in {response_time:.2f}s for session {session_id}")
 
-        return PlainTextResponse(
-            content=str(twiml_response), media_type="application/xml"
-        )
+        return PlainTextResponse(content=str(twiml_response), media_type="application/xml")
 
     except Exception as e:
         logger.error(f"Error in enhanced WhatsApp webhook: {e!s}")
@@ -194,9 +173,7 @@ async def enhanced_whatsapp_webhook(
 
         # Return enhanced error response
         error_response = get_enhanced_error_response()
-        return PlainTextResponse(
-            content=str(error_response), media_type="application/xml"
-        )
+        return PlainTextResponse(content=str(error_response), media_type="application/xml")
 
 
 async def get_enhanced_tutor_response(
@@ -208,18 +185,14 @@ async def get_enhanced_tutor_response(
 ) -> dict[str, Any]:
     """Generate enhanced tutoring response with advanced prompt engineering"""
     # Analyze message context for better prompt selection
-    message_context = await analyze_message_context(
-        message, detected_lang, session_context
-    )
+    message_context = await analyze_message_context(message, detected_lang, session_context)
 
     # Check if this is a greeting (new conversation)
     is_greeting = is_enhanced_greeting_message(message, detected_lang, message_context)
 
     if is_greeting:
         # Enhanced A/B test greeting responses with context awareness
-        greeting_variant = enhanced_ab_tester.get_user_variant(
-            from_number, "greeting_style"
-        )
+        greeting_variant = enhanced_ab_tester.get_user_variant(from_number, "greeting_style")
 
         # Generate enhanced greeting with personalized prompt engineering
         if greeting_variant:
@@ -227,9 +200,7 @@ async def get_enhanced_tutor_response(
                 greeting_style=greeting_variant.configuration.get("style", "friendly"),
                 hint_complexity="direct",
                 example_type="real-world",
-                encouragement_frequency=greeting_variant.configuration.get(
-                    "enthusiasm_level", 0.3
-                ),
+                encouragement_frequency=greeting_variant.configuration.get("enthusiasm_level", 0.3),
                 subject=message_context.get("subject_hint", "general"),
                 context=message_context,
             )
@@ -238,9 +209,7 @@ async def get_enhanced_tutor_response(
                 variant=greeting_variant.variant_name,
                 language=detected_lang,
                 user_message=message,
-                enhanced_prompt=enhanced_prompt.template_text
-                if enhanced_prompt
-                else None,
+                enhanced_prompt=enhanced_prompt.template_text if enhanced_prompt else None,
             )
         else:
             # Fallback to original greeting
@@ -252,9 +221,7 @@ async def get_enhanced_tutor_response(
         wandb.log(
             {
                 "enhanced_greeting": True,
-                "greeting_variant": greeting_variant.variant_id
-                if greeting_variant
-                else "fallback",
+                "greeting_variant": greeting_variant.variant_id if greeting_variant else "fallback",
                 "context_analysis": message_context,
                 "session_id": session_id,
             }
@@ -264,38 +231,28 @@ async def get_enhanced_tutor_response(
         # Enhanced tutoring response with optimized prompts
 
         # Get optimized prompt based on current performance data
-        tutoring_variant = enhanced_ab_tester.get_user_variant(
-            from_number, "tutoring_approach"
-        )
+        tutoring_variant = enhanced_ab_tester.get_user_variant(from_number, "tutoring_approach")
 
         if tutoring_variant:
             # Generate context-aware prompt template
             optimized_prompt = await enhanced_prompt_engineer.generate_prompt_template(
                 greeting_style="friendly",  # Keep consistent for tutoring
-                hint_complexity=tutoring_variant.configuration.get(
-                    "complexity", "guided"
-                ),
-                example_type=tutoring_variant.configuration.get(
-                    "approach", "real-world"
-                ),
+                hint_complexity=tutoring_variant.configuration.get("complexity", "guided"),
+                example_type=tutoring_variant.configuration.get("approach", "real-world"),
                 encouragement_frequency=0.3,
                 subject=message_context.get("detected_subject", "general"),
                 context={
                     **message_context,
                     "user_message": message,
                     "session_id": session_id,
-                    "tutoring_style": tutoring_variant.configuration.get(
-                        "approach", "guided"
-                    ),
+                    "tutoring_style": tutoring_variant.configuration.get("approach", "guided"),
                 },
             )
 
             # Generate response with enhanced prompt
             response = await ai_tutor.generate_response(
                 user_message=message,
-                prompt_template=optimized_prompt.template_text
-                if optimized_prompt
-                else None,
+                prompt_template=optimized_prompt.template_text if optimized_prompt else None,
                 language=detected_lang,
                 session_id=session_id,
                 enhanced_context=message_context,
@@ -330,9 +287,7 @@ async def get_enhanced_tutor_response(
 
     # Enhanced translation with context preservation
     if detected_lang != "en" and detected_lang in SUPPORTED_LANGUAGES:
-        response = await auto_translate_flow(
-            response, detected_lang, preserve_context=message_context
-        )
+        response = await auto_translate_flow(response, detected_lang, preserve_context=message_context)
 
     return {
         "text": response,
@@ -344,9 +299,7 @@ async def get_enhanced_tutor_response(
     }
 
 
-async def analyze_message_context(
-    message: str, language: str, session_context: dict[str, Any]
-) -> dict[str, Any]:
+async def analyze_message_context(message: str, language: str, session_context: dict[str, Any]) -> dict[str, Any]:
     """Analyze message context for enhanced prompt selection"""
     context = {
         "message_length": len(message),
@@ -405,9 +358,7 @@ async def analyze_message_context(
             detected_subject = subject
 
     context["detected_subject"] = detected_subject
-    context["subject_confidence"] = max_matches / len(
-        subject_keywords.get(detected_subject, [])
-    )
+    context["subject_confidence"] = max_matches / len(subject_keywords.get(detected_subject, []))
 
     # Detect urgency/difficulty level
     urgency_indicators = [
@@ -418,18 +369,13 @@ async def analyze_message_context(
         "no entiendo",
     ]
     context["urgency_level"] = (
-        "high"
-        if any(indicator in message_lower for indicator in urgency_indicators)
-        else "normal"
+        "high" if any(indicator in message_lower for indicator in urgency_indicators) else "normal"
     )
 
     # Question type analysis
     if "?" in message:
         context["question_type"] = "direct_question"
-    elif any(
-        word in message_lower
-        for word in ["explain", "how", "why", "what", "explica", "cómo", "por qué"]
-    ):
+    elif any(word in message_lower for word in ["explain", "how", "why", "what", "explica", "cómo", "por qué"]):
         context["question_type"] = "explanation_request"
     else:
         context["question_type"] = "statement"
@@ -437,9 +383,7 @@ async def analyze_message_context(
     return context
 
 
-def is_enhanced_greeting_message(
-    message: str, language: str, context: dict[str, Any]
-) -> bool:
+def is_enhanced_greeting_message(message: str, language: str, context: dict[str, Any]) -> bool:
     """Enhanced greeting detection with context awareness"""
     # Basic greeting patterns (existing logic)
     greeting_patterns = {
@@ -600,15 +544,9 @@ async def log_enhanced_response_metrics(
     all_metrics["response_quality"] = (
         "excellent"
         if response_time < 2.0
-        else "good"
-        if response_time < 4.0
-        else "acceptable"
-        if response_time < 5.0
-        else "slow"
+        else "good" if response_time < 4.0 else "acceptable" if response_time < 5.0 else "slow"
     )
-    all_metrics["enhancement_impact"] = (
-        "positive" if enhanced_metrics["enhanced_features_used"] else "baseline"
-    )
+    all_metrics["enhancement_impact"] = "positive" if enhanced_metrics["enhanced_features_used"] else "baseline"
 
     # Log to W&B
     wandb.log(all_metrics)
@@ -616,9 +554,7 @@ async def log_enhanced_response_metrics(
     # Update original metrics tracker
     await metrics.update_metrics(base_metrics)
 
-    logger.info(
-        f"Enhanced metrics logged for session {session_id}: {response_time:.2f}s"
-    )
+    logger.info(f"Enhanced metrics logged for session {session_id}: {response_time:.2f}s")
 
 
 async def trigger_real_time_optimization(
@@ -627,17 +563,12 @@ async def trigger_real_time_optimization(
     """Trigger real-time prompt optimization based on performance"""
     try:
         # Only optimize if performance is below threshold
-        if (
-            response_time > PROMPT_OPTIMIZATION_THRESHOLD * 5.0
-        ):  # 5.0 is the target response time
+        if response_time > PROMPT_OPTIMIZATION_THRESHOLD * 5.0:  # 5.0 is the target response time
             # Identify potential optimization opportunities
             optimization_opportunities = {
                 "slow_response_time": response_time > 4.0,
-                "language_complexity": session_context.get("detected_language", "en")
-                != "en",
-                "subject_complexity": session_context.get("context_analysis", {}).get(
-                    "detected_subject"
-                )
+                "language_complexity": session_context.get("detected_language", "en") != "en",
+                "subject_complexity": session_context.get("context_analysis", {}).get("detected_subject")
                 in ["mathematics", "science", "programming"],
                 "enhancement_needed": True,
             }
@@ -654,9 +585,7 @@ async def trigger_real_time_optimization(
             )
 
             # Trigger background optimization (could be expanded to update prompt weights)
-            logger.info(
-                f"Real-time optimization triggered for session {session_context.get('session_id', '')}"
-            )
+            logger.info(f"Real-time optimization triggered for session {session_context.get('session_id', '')}")
 
     except Exception as e:
         logger.error(f"Error in real-time optimization: {e}")
@@ -707,8 +636,7 @@ async def get_enhanced_metrics():
                 for template_id, template in enhanced_prompt_engineer.active_templates.items()
             },
             "ab_test_results": {
-                test_type: len(variants)
-                for test_type, variants in enhanced_ab_tester.active_tests.items()
+                test_type: len(variants) for test_type, variants in enhanced_ab_tester.active_tests.items()
             },
             "total_interactions": enhanced_ab_tester.total_interactions,
             "optimization_enabled": ENABLE_REAL_TIME_OPTIMIZATION,

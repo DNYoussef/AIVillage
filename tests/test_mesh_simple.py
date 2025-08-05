@@ -4,8 +4,9 @@
 import asyncio
 import logging
 
-from communications.message import Message, MessageType, Priority
 from mesh_network_manager import MeshNetworkManager
+
+from communications.message import Message, MessageType, Priority
 
 
 async def test_mesh_simple():
@@ -39,7 +40,7 @@ async def test_mesh_simple():
         sender="agent_001",
         receiver="agent_002",
         content={"test": "mesh_integration", "data": "Hello from mesh!"},
-        priority=Priority.HIGH
+        priority=Priority.HIGH,
     )
 
     await node1.send_message(test_message)
@@ -50,31 +51,24 @@ async def test_mesh_simple():
     stats1 = node1.get_network_statistics()
     stats2 = node2.get_network_statistics()
 
-    print(f"\nNetwork Statistics:")
+    print("\nNetwork Statistics:")
     print(f"  Node 1 - Active peers: {stats1['active_peers']}, Routes: {stats1['routing_entries']}")
     print(f"  Node 2 - Active peers: {stats2['active_peers']}, Routes: {stats2['routing_entries']}")
 
     # Check health
-    health1 = stats1['network_health']
-    print(f"\nHealth Status:")
+    health1 = stats1["network_health"]
+    print("\nHealth Status:")
     print(f"  Success rate: {health1['success_rate']:.1%}")
     print(f"  Average latency: {health1['average_latency_ms']:.1f}ms")
     print(f"  Total messages: {health1['total_messages']}")
 
     # Send multiple message types
-    print(f"\nTesting multiple message types...")
-    message_types = [
-        MessageType.TASK,
-        MessageType.NOTIFICATION,
-        MessageType.RESPONSE
-    ]
+    print("\nTesting multiple message types...")
+    message_types = [MessageType.TASK, MessageType.NOTIFICATION, MessageType.RESPONSE]
 
     for msg_type in message_types:
         message = Message(
-            type=msg_type,
-            sender="agent_001",
-            receiver="agent_002",
-            content={"type": msg_type.value, "test": True}
+            type=msg_type, sender="agent_001", receiver="agent_002", content={"type": msg_type.value, "test": True}
         )
         await node1.send_message(message)
         print(f"  PASS - Sent {msg_type.value} message")
@@ -84,15 +78,15 @@ async def test_mesh_simple():
 
     # Final statistics
     final_stats = node1.get_network_statistics()
-    final_health = final_stats['network_health']
+    final_health = final_stats["network_health"]
 
-    print(f"\nFinal Results:")
+    print("\nFinal Results:")
     print(f"  Total messages processed: {final_health['total_messages']}")
     print(f"  Success rate: {final_health['success_rate']:.1%}")
     print(f"  Network operational: {'YES' if final_health['success_rate'] > 0.8 else 'NO'}")
 
     # Test resilience
-    print(f"\nTesting network resilience...")
+    print("\nTesting network resilience...")
     await node1.remove_peer("agent_002")
     print("  PASS - Peer removal handled gracefully")
 
@@ -104,11 +98,7 @@ async def test_mesh_simple():
     print("MESH NETWORK INTEGRATION TEST COMPLETE")
 
     # Determine overall result
-    success = (
-        stats1['active_peers'] > 0 and
-        final_health['success_rate'] >= 1.0 and
-        final_health['total_messages'] >= 4
-    )
+    success = stats1["active_peers"] > 0 and final_health["success_rate"] >= 1.0 and final_health["total_messages"] >= 4
 
     print(f"OVERALL RESULT: {'SUCCESS' if success else 'FAILED'}")
 
@@ -123,6 +113,7 @@ async def test_mesh_simple():
         print("- Issues detected, review logs")
 
     return success
+
 
 if __name__ == "__main__":
     result = asyncio.run(test_mesh_simple())

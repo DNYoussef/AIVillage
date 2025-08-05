@@ -1,32 +1,28 @@
 #!/usr/bin/env python3
-"""
-Production Deployment Script
+"""Production Deployment Script
 Consolidates deployment, health checks, and production verification.
 """
 
 import argparse
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import subprocess
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
 import traceback
+from typing import Any
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 class ProductionDeployer:
     """Production deployment orchestrator."""
 
-    def __init__(self, environment: str, project_root: Optional[Path] = None):
+    def __init__(self, environment: str, project_root: Path | None = None):
         self.environment = environment
         self.project_root = project_root or Path.cwd()
         self.deploy_dir = self.project_root / "deploy"
@@ -35,7 +31,7 @@ class ProductionDeployer:
         # Environment-specific settings
         self.config = self.load_environment_config()
 
-    def load_environment_config(self) -> Dict[str, Any]:
+    def load_environment_config(self) -> dict[str, Any]:
         """Load environment-specific configuration."""
         config_file = self.deploy_dir / f"{self.environment}.json"
 
@@ -46,10 +42,10 @@ class ProductionDeployer:
             "replicas": 1 if self.environment == "staging" else 3,
             "resource_limits": {
                 "memory": "2Gi" if self.environment == "staging" else "4Gi",
-                "cpu": "1000m" if self.environment == "staging" else "2000m"
+                "cpu": "1000m" if self.environment == "staging" else "2000m",
             },
             "health_check_timeout": 300,
-            "rollback_on_failure": True
+            "rollback_on_failure": True,
         }
 
         if config_file.exists():
@@ -62,17 +58,12 @@ class ProductionDeployer:
 
         return default_config
 
-    def run_command(self, cmd: List[str], check: bool = True, timeout: int = 300) -> Tuple[int, str, str]:
+    def run_command(self, cmd: list[str], check: bool = True, timeout: int = 300) -> tuple[int, str, str]:
         """Run a command with error handling."""
         logger.info(f"Running: {' '.join(cmd)}")
         try:
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=check,
-                timeout=timeout,
-                cwd=self.project_root
+                cmd, capture_output=True, text=True, check=check, timeout=timeout, cwd=self.project_root
             )
             return result.returncode, result.stdout, result.stderr
         except subprocess.CalledProcessError as e:
@@ -82,7 +73,7 @@ class ProductionDeployer:
             if check:
                 raise
             return e.returncode, e.stdout or "", e.stderr or ""
-        except subprocess.TimeoutExpired as e:
+        except subprocess.TimeoutExpired:
             logger.error(f"Command timed out after {timeout} seconds")
             if check:
                 raise
@@ -123,12 +114,7 @@ class ProductionDeployer:
             logger.error("Dockerfile not found")
             return False
 
-        cmd = [
-            "docker", "build",
-            "-t", image_name,
-            "-f", str(dockerfile),
-            str(self.project_root)
-        ]
+        cmd = ["docker", "build", "-t", image_name, "-f", str(dockerfile), str(self.project_root)]
 
         returncode, stdout, stderr = self.run_command(cmd, timeout=600)
         if returncode != 0:
@@ -143,15 +129,11 @@ class ProductionDeployer:
         logger.info(f"📦 Ensuring namespace {self.config['namespace']} exists...")
 
         # Check if namespace exists
-        returncode, _, _ = self.run_command([
-            "kubectl", "get", "namespace", self.config['namespace']
-        ], check=False)
+        returncode, _, _ = self.run_command(["kubectl", "get", "namespace", self.config["namespace"]], check=False)
 
         if returncode != 0:
             # Create namespace
-            returncode, _, _ = self.run_command([
-                "kubectl", "create", "namespace", self.config['namespace']
-            ])
+            returncode, _, _ = self.run_command(["kubectl", "create", "namespace", self.config["namespace"]])
             if returncode != 0:
                 logger.error(f"Failed to create namespace {self.config['namespace']}")
                 return False
@@ -175,25 +157,26 @@ class ProductionDeployer:
         # Prepare Helm values
         values = {
             "environment": self.environment,
-            "image": {
-                "tag": self.config['image_tag']
-            },
-            "replicaCount": self.config['replicas'],
-            "resources": {
-                "limits": self.config['resource_limits']
-            }
+            "image": {"tag": self.config["image_tag"]},
+            "replicaCount": self.config["replicas"],
+            "resources": {"limits": self.config["resource_limits"]},
         }
 
         values_file = self.deploy_dir / f"values-{self.environment}.yaml"
 
         cmd = [
-            "helm", "upgrade", "--install",
+            "helm",
+            "upgrade",
+            "--install",
             release_name,
             str(chart_dir),
-            "--namespace", self.config['namespace'],
-            "--set-json", f"values={json.dumps(values)}",
-            "--timeout", "10m",
-            "--wait"
+            "--namespace",
+            self.config["namespace"],
+            "--set-json",
+            f"values={json.dumps(values)}",
+            "--timeout",
+            "10m",
+            "--wait",
         ]
 
         if values_file.exists():
@@ -211,16 +194,14 @@ class ProductionDeployer:
         """Wait for deployment to be ready."""
         logger.info("⏳ Waiting for deployment to be ready...")
 
-        timeout = self.config['health_check_timeout']
+        timeout = self.config["health_check_timeout"]
         start_time = time.time()
 
         while time.time() - start_time < timeout:
             # Check deployment status
-            returncode, stdout, _ = self.run_command([
-                "kubectl", "get", "deployments",
-                "-n", self.config['namespace'],
-                "-o", "json"
-            ], check=False)
+            returncode, stdout, _ = self.run_command(
+                ["kubectl", "get", "deployments", "-n", self.config["namespace"], "-o", "json"], check=False
+            )
 
             if returncode == 0:
                 try:
@@ -256,9 +237,12 @@ class ProductionDeployer:
         health_script = self.deploy_dir / "scripts" / "health_check.py"
         if health_script.exists():
             cmd = [
-                sys.executable, str(health_script),
-                "--environment", self.environment,
-                "--namespace", self.config['namespace']
+                sys.executable,
+                str(health_script),
+                "--environment",
+                self.environment,
+                "--namespace",
+                self.config["namespace"],
             ]
 
             returncode, stdout, stderr = self.run_command(cmd, check=False)
@@ -270,10 +254,12 @@ class ProductionDeployer:
 
         # Basic connectivity check
         cmd = [
-            "kubectl", "port-forward",
+            "kubectl",
+            "port-forward",
             f"service/aivillage-{self.environment}",
             "8080:80",
-            "-n", self.config['namespace']
+            "-n",
+            self.config["namespace"],
         ]
 
         # This is a simplified check - in production you'd want more robust health checks
@@ -286,11 +272,7 @@ class ProductionDeployer:
 
         release_name = f"aivillage-{self.environment}"
 
-        cmd = [
-            "helm", "rollback",
-            release_name,
-            "--namespace", self.config['namespace']
-        ]
+        cmd = ["helm", "rollback", release_name, "--namespace", self.config["namespace"]]
 
         returncode, _, _ = self.run_command(cmd, check=False)
         if returncode != 0:
@@ -306,10 +288,15 @@ class ProductionDeployer:
 
         # Remove old replica sets
         cmd = [
-            "kubectl", "delete", "rs",
-            "--selector", f"app=aivillage-{self.environment}",
-            "--field-selector", "status.replicas=0",
-            "-n", self.config['namespace']
+            "kubectl",
+            "delete",
+            "rs",
+            "--selector",
+            f"app=aivillage-{self.environment}",
+            "--field-selector",
+            "status.replicas=0",
+            "-n",
+            self.config["namespace"],
         ]
 
         self.run_command(cmd, check=False)
@@ -333,17 +320,17 @@ class ProductionDeployer:
                 return False
 
             if not self.deploy_helm_chart():
-                if self.config['rollback_on_failure']:
+                if self.config["rollback_on_failure"]:
                     self.rollback_deployment()
                 return False
 
             if not self.wait_for_deployment():
-                if self.config['rollback_on_failure']:
+                if self.config["rollback_on_failure"]:
                     self.rollback_deployment()
                 return False
 
             if not self.run_health_checks():
-                if self.config['rollback_on_failure']:
+                if self.config["rollback_on_failure"]:
                     self.rollback_deployment()
                 return False
 
@@ -357,28 +344,26 @@ class ProductionDeployer:
             logger.error(f"Deployment failed with error: {e}")
             traceback.print_exc()
 
-            if self.config['rollback_on_failure']:
+            if self.config["rollback_on_failure"]:
                 self.rollback_deployment()
 
             return False
 
-    def get_deployment_status(self) -> Dict[str, Any]:
+    def get_deployment_status(self) -> dict[str, Any]:
         """Get current deployment status."""
         logger.info("📊 Getting deployment status...")
 
         status = {
             "environment": self.environment,
-            "namespace": self.config['namespace'],
-            "timestamp": datetime.now().isoformat()
+            "namespace": self.config["namespace"],
+            "timestamp": datetime.now().isoformat(),
         }
 
         # Get Helm release info
         release_name = f"aivillage-{self.environment}"
-        returncode, stdout, _ = self.run_command([
-            "helm", "status", release_name,
-            "--namespace", self.config['namespace'],
-            "-o", "json"
-        ], check=False)
+        returncode, stdout, _ = self.run_command(
+            ["helm", "status", release_name, "--namespace", self.config["namespace"], "-o", "json"], check=False
+        )
 
         if returncode == 0:
             try:
@@ -386,25 +371,24 @@ class ProductionDeployer:
                 status["helm"] = {
                     "status": helm_status.get("info", {}).get("status"),
                     "revision": helm_status.get("version"),
-                    "last_deployed": helm_status.get("info", {}).get("last_deployed")
+                    "last_deployed": helm_status.get("info", {}).get("last_deployed"),
                 }
             except json.JSONDecodeError:
                 pass
 
         # Get pod status
-        returncode, stdout, _ = self.run_command([
-            "kubectl", "get", "pods",
-            "-n", self.config['namespace'],
-            "-o", "json"
-        ], check=False)
+        returncode, stdout, _ = self.run_command(
+            ["kubectl", "get", "pods", "-n", self.config["namespace"], "-o", "json"], check=False
+        )
 
         if returncode == 0:
             try:
                 pods = json.loads(stdout)
                 status["pods"] = {
                     "total": len(pods.get("items", [])),
-                    "running": sum(1 for pod in pods.get("items", [])
-                                 if pod.get("status", {}).get("phase") == "Running")
+                    "running": sum(
+                        1 for pod in pods.get("items", []) if pod.get("status", {}).get("phase") == "Running"
+                    ),
                 }
             except json.JSONDecodeError:
                 pass
@@ -416,22 +400,12 @@ def main():
     """Main deployment orchestrator."""
     parser = argparse.ArgumentParser(description="AIVillage Production Deployer")
     parser.add_argument(
-        "--environment",
-        required=True,
-        choices=["staging", "production"],
-        help="Deployment environment"
+        "--environment", required=True, choices=["staging", "production"], help="Deployment environment"
     )
     parser.add_argument(
-        "--action",
-        choices=["deploy", "status", "rollback"],
-        default="deploy",
-        help="Action to perform"
+        "--action", choices=["deploy", "status", "rollback"], default="deploy", help="Action to perform"
     )
-    parser.add_argument(
-        "--project-root",
-        type=Path,
-        help="Project root directory"
-    )
+    parser.add_argument("--project-root", type=Path, help="Project root directory")
 
     args = parser.parse_args()
 
@@ -442,12 +416,12 @@ def main():
             success = deployer.deploy()
             return 0 if success else 1
 
-        elif args.action == "status":
+        if args.action == "status":
             status = deployer.get_deployment_status()
             print(json.dumps(status, indent=2))
             return 0
 
-        elif args.action == "rollback":
+        if args.action == "rollback":
             success = deployer.rollback_deployment()
             return 0 if success else 1
 

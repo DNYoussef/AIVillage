@@ -107,11 +107,7 @@ class TaskInterface:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "TaskInterface":
         """Create task from dictionary representation."""
-        created_at = (
-            datetime.fromisoformat(data["created_at"])
-            if "created_at" in data
-            else datetime.now()
-        )
+        created_at = datetime.fromisoformat(data["created_at"]) if "created_at" in data else datetime.now()
 
         return cls(
             task_id=data["task_id"],
@@ -158,16 +154,8 @@ class MessageInterface:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "MessageInterface":
         """Create message from dictionary representation."""
-        created_at = (
-            datetime.fromisoformat(data["created_at"])
-            if "created_at" in data
-            else datetime.now()
-        )
-        expires_at = (
-            datetime.fromisoformat(data["expires_at"])
-            if data.get("expires_at")
-            else None
-        )
+        created_at = datetime.fromisoformat(data["created_at"]) if "created_at" in data else datetime.now()
+        expires_at = datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None
 
         return cls(
             message_id=data["message_id"],
@@ -309,9 +297,7 @@ class AgentInterface(ABC):
         """
 
     @abstractmethod
-    async def broadcast_message(
-        self, message: MessageInterface, recipients: list[str]
-    ) -> dict[str, bool]:
+    async def broadcast_message(self, message: MessageInterface, recipients: list[str]) -> dict[str, bool]:
         """Broadcast a message to multiple recipients.
 
         Args:
@@ -324,9 +310,7 @@ class AgentInterface(ABC):
 
     # Query Processing Interface (for agents with query capabilities)
 
-    async def process_query(
-        self, query: str, context: dict[str, Any] | None = None
-    ) -> str:
+    async def process_query(self, query: str, context: dict[str, Any] | None = None) -> str:
         """Process a text query and return a response.
 
         Args:
@@ -455,9 +439,11 @@ class AgentInterface(ABC):
                 "uptime_seconds": self.performance_metrics.uptime_seconds,
                 "success_rate": self.performance_metrics.success_rate,
                 "error_rate": self.performance_metrics.error_rate,
-                "last_activity": self.performance_metrics.last_activity.isoformat()
-                if self.performance_metrics.last_activity
-                else None,
+                "last_activity": (
+                    self.performance_metrics.last_activity.isoformat()
+                    if self.performance_metrics.last_activity
+                    else None
+                ),
             },
         }
 

@@ -42,7 +42,7 @@ def move_test_results():
         "agent_forge_pipeline_summary.json",
         "orchestration_test_results.json",
         "openrouter_metrics.json",
-        "smoke_test_results.json"
+        "smoke_test_results.json",
     ]
 
     moved_files = []
@@ -125,11 +125,9 @@ def update_all_references():
         (r"\bconfig/retrieval\.yaml\b", r"configs/retrieval.yaml"),
         (r"\bconfig/gdc_rules\.yaml\b", r"configs/gdc_rules.yaml"),
         (r"\bconfig/scanner_config\.json\b", r"configs/scanner_config.yaml"),
-
         # Generic patterns
         (r"\bconfig/([a-zA-Z0-9_\-]+\.ya?ml)\b", r"configs/\1"),
         (r"\bconfig/([a-zA-Z0-9_\-]+\.json)\b", r"configs/\1"),
-
         # Path patterns
         (r'"config/', r'"configs/'),
         (r"'config/", r"'configs/"),
@@ -144,9 +142,14 @@ def update_all_references():
 
     # Walk through all files
     for file_path in root_dir.rglob("*"):
-        if (file_path.is_file() and
-            any(str(file_path).endswith(ext) for ext in file_extensions) and
-            not any(part in str(file_path) for part in [".git", "__pycache__", "node_modules", ".pytest_cache", "config/", "results/"])):
+        if (
+            file_path.is_file()
+            and any(str(file_path).endswith(ext) for ext in file_extensions)
+            and not any(
+                part in str(file_path)
+                for part in [".git", "__pycache__", "node_modules", ".pytest_cache", "config/", "results/"]
+            )
+        ):
 
             if update_file_references(file_path, patterns):
                 updated_files.append(str(file_path))

@@ -49,10 +49,7 @@ class TestSimpleQuantizer:
         # Create and save test model
         with tempfile.TemporaryDirectory() as temp_dir:
             model_path = create_test_model_file(
-                layers=2,
-                hidden_size=64,
-                size_mb=3.0,
-                save_path=Path(temp_dir) / "test_model.pt"
+                layers=2, hidden_size=64, size_mb=3.0, save_path=Path(temp_dir) / "test_model.pt"
             )
 
             quantizer = SimpleQuantizer(target_compression_ratio=2.5)
@@ -111,19 +108,13 @@ class TestSimpleQuantizer:
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create test model
             model_path = create_test_model_file(
-                layers=4,
-                hidden_size=256,
-                size_mb=8.0,
-                save_path=Path(temp_dir) / "mobile_test_model.pt"
+                layers=4, hidden_size=256, size_mb=8.0, save_path=Path(temp_dir) / "mobile_test_model.pt"
             )
 
             quantizer = SimpleQuantizer(target_compression_ratio=3.8)  # Slightly lower to account for variance
 
             # Run mobile compression pipeline
-            output_path = quantizer.compress_for_mobile(
-                model_path,
-                output_dir=Path(temp_dir) / "mobile_output"
-            )
+            output_path = quantizer.compress_for_mobile(model_path, output_dir=Path(temp_dir) / "mobile_output")
 
             # Verify pipeline results
             assert Path(output_path).exists(), "Mobile model not saved"
@@ -161,7 +152,6 @@ class TestSimpleQuantizer:
     def test_error_handling_missing_pytorch(self, monkeypatch):
         """Test error handling when PyTorch is not available."""
         # This test is disabled due to import mocking complexity
-        pass
 
     def test_error_handling_missing_model_file(self):
         """Test error handling for missing model file."""
@@ -239,10 +229,7 @@ class TestCompressionIntegration:
 
             # Step 2: Compress for mobile
             quantizer = SimpleQuantizer(target_compression_ratio=3.9)
-            mobile_path = quantizer.compress_for_mobile(
-                str(model_path),
-                output_dir=str(temp_path / "mobile")
-            )
+            mobile_path = quantizer.compress_for_mobile(str(model_path), output_dir=str(temp_path / "mobile"))
 
             # Step 3: Verify mobile deployment readiness
             assert Path(mobile_path).exists()
@@ -275,18 +262,16 @@ class TestCompressionIntegration:
                 compressed = quantizer.quantize_model_from_object(model)
                 stats = quantizer.get_compression_stats()
 
-                results.append({
-                    "name": name,
-                    "success": True,
-                    "ratio": stats["compression_ratio"],
-                    "mobile_ready": quantizer.is_mobile_ready()
-                })
+                results.append(
+                    {
+                        "name": name,
+                        "success": True,
+                        "ratio": stats["compression_ratio"],
+                        "mobile_ready": quantizer.is_mobile_ready(),
+                    }
+                )
             except CompressionError as e:
-                results.append({
-                    "name": name,
-                    "success": False,
-                    "error": str(e)
-                })
+                results.append({"name": name, "success": False, "error": str(e)})
 
         # All models should compress successfully
         successful = [r for r in results if r["success"]]

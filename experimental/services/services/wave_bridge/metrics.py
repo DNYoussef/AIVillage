@@ -116,9 +116,7 @@ class ResponseMetrics:
             lang_metrics["total_requests"] += 1
 
             if lang_metrics["response_times"]:
-                lang_metrics["avg_response_time"] = statistics.mean(
-                    lang_metrics["response_times"]
-                )
+                lang_metrics["avg_response_time"] = statistics.mean(lang_metrics["response_times"])
 
             # Track fallback usage
             if is_fallback:
@@ -133,9 +131,7 @@ class ResponseMetrics:
         except Exception as e:
             logger.error(f"Error updating metrics: {e}")
 
-    async def check_performance_alerts(
-        self, response_time: float, language: str, session_id: str
-    ):
+    async def check_performance_alerts(self, response_time: float, language: str, session_id: str):
         """Check for performance issues and generate alerts"""
         current_time = time.time()
 
@@ -233,26 +229,19 @@ class ResponseMetrics:
                         "avg_response_time_10": statistics.mean(recent_times),
                         "median_response_time_10": statistics.median(recent_times),
                         "p95_response_time_10": self.percentile(recent_times, 95),
-                        "target_achievement_rate_10": sum(
-                            1 for t in recent_times if t < self.target_response_time
-                        )
+                        "target_achievement_rate_10": sum(1 for t in recent_times if t < self.target_response_time)
                         / len(recent_times),
                     }
                 )
 
             # Add hourly performance if available
             current_hour = datetime.now().strftime("%Y-%m-%d-%H")
-            if (
-                current_hour in self.hourly_metrics
-                and len(self.hourly_metrics[current_hour]) >= 5
-            ):
+            if current_hour in self.hourly_metrics and len(self.hourly_metrics[current_hour]) >= 5:
                 hourly_times = self.hourly_metrics[current_hour]
                 performance_data.update(
                     {
                         "hourly_avg_response_time": statistics.mean(hourly_times),
-                        "hourly_target_achievement": sum(
-                            1 for t in hourly_times if t < self.target_response_time
-                        )
+                        "hourly_target_achievement": sum(1 for t in hourly_times if t < self.target_response_time)
                         / len(hourly_times),
                         "hourly_request_count": len(hourly_times),
                     }
@@ -287,9 +276,7 @@ class ResponseMetrics:
         lower_index = int(index)
         upper_index = lower_index + 1
         weight = index - lower_index
-        return (
-            sorted_data[lower_index] * (1 - weight) + sorted_data[upper_index] * weight
-        )
+        return sorted_data[lower_index] * (1 - weight) + sorted_data[upper_index] * weight
 
     async def get_summary(self) -> dict[str, Any]:
         """Get comprehensive performance summary"""
@@ -312,18 +299,10 @@ class ResponseMetrics:
                     "max_response_time": max(recent_times),
                     "p95_response_time": self.percentile(recent_times, 95),
                     "p99_response_time": self.percentile(recent_times, 99),
-                    "target_achievement_rate": sum(
-                        1 for t in recent_times if t < self.target_response_time
-                    )
+                    "target_achievement_rate": sum(1 for t in recent_times if t < self.target_response_time)
                     / len(recent_times),
-                    "excellent_rate": sum(
-                        1 for t in recent_times if t <= self.excellent_threshold
-                    )
-                    / len(recent_times),
-                    "warning_rate": sum(
-                        1 for t in recent_times if t > self.warning_threshold
-                    )
-                    / len(recent_times),
+                    "excellent_rate": sum(1 for t in recent_times if t <= self.excellent_threshold) / len(recent_times),
+                    "warning_rate": sum(1 for t in recent_times if t > self.warning_threshold) / len(recent_times),
                 },
                 # Performance targets
                 "targets": {
@@ -341,9 +320,7 @@ class ResponseMetrics:
                     "error_breakdown": dict(self.error_counts),
                     "timeout_count": self.timeout_count,
                     "fallback_usage": self.fallback_usage,
-                    "error_rate": sum(self.error_counts.values()) / len(recent_times)
-                    if recent_times
-                    else 0,
+                    "error_rate": sum(self.error_counts.values()) / len(recent_times) if recent_times else 0,
                 },
                 # Alert summary
                 "alerts": {
@@ -351,13 +328,10 @@ class ResponseMetrics:
                         [
                             a
                             for a in self.alert_history
-                            if datetime.fromisoformat(a["timestamp"])
-                            > datetime.now() - timedelta(hours=24)
+                            if datetime.fromisoformat(a["timestamp"]) > datetime.now() - timedelta(hours=24)
                         ]
                     ),
-                    "total_alert_types": len(
-                        set(a["type"] for a in self.alert_history)
-                    ),
+                    "total_alert_types": len(set(a["type"] for a in self.alert_history)),
                 },
                 "last_updated": datetime.now().isoformat(),
             }
@@ -369,9 +343,7 @@ class ResponseMetrics:
                         "avg_response_time": statistics.mean(metrics["response_times"]),
                         "total_requests": metrics["total_requests"],
                         "target_achievement_rate": sum(
-                            1
-                            for t in metrics["response_times"]
-                            if t < self.target_response_time
+                            1 for t in metrics["response_times"] if t < self.target_response_time
                         )
                         / len(metrics["response_times"]),
                     }
@@ -385,9 +357,7 @@ class ResponseMetrics:
                     summary["hourly_performance"][hour_key] = {
                         "request_count": len(hourly_data),
                         "avg_response_time": statistics.mean(hourly_data),
-                        "target_achievement_rate": sum(
-                            1 for t in hourly_data if t < self.target_response_time
-                        )
+                        "target_achievement_rate": sum(1 for t in hourly_data if t < self.target_response_time)
                         / len(hourly_data),
                     }
 

@@ -2,19 +2,19 @@
 Sprint R-4+AF1: Model Merging and Evolution - Task B.1.
 """
 
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 import gc
 import hashlib
 import json
 import logging
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import torch
-import wandb
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+import wandb
 
 logger = logging.getLogger(__name__)
 

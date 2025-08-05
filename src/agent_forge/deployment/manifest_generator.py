@@ -5,12 +5,12 @@ including SHA256 hashes, size information, evaluation metrics, and
 deployment metadata according to the deployment_manifest_schema.md.
 """
 
+from datetime import datetime
 import hashlib
 import json
 import logging
-import time
-from datetime import datetime
 from pathlib import Path
+import time
 from typing import Any
 
 import torch

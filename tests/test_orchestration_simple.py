@@ -36,9 +36,7 @@ async def test_basic_orchestration():
 
         if questions:
             q = questions[0]
-            logger.info(
-                f"Sample question - Domain: {q.domain}, Difficulty: {q.difficulty}"
-            )
+            logger.info(f"Sample question - Domain: {q.domain}, Difficulty: {q.difficulty}")
             logger.info(f"Text: {q.text[:100]}...")
 
         # Test cost summary

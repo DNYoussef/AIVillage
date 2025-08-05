@@ -13,14 +13,12 @@ Comprehensive setup script that prepares the environment for Agent Forge:
 import argparse
 import json
 import logging
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -202,9 +200,7 @@ def download_models_and_benchmarks():
     # Download models
     try:
         logger.info("Downloading models...")
-        subprocess.run(
-            [sys.executable, "scripts/download_models.py", "--check-space"], check=True
-        )
+        subprocess.run([sys.executable, "scripts/download_models.py", "--check-space"], check=True)
         logger.info("✅ Models downloaded successfully")
     except subprocess.CalledProcessError as e:
         logger.error(f"❌ Model download failed: {e}")
@@ -300,12 +296,8 @@ def main():
         action="store_true",
         help="Skip model and benchmark downloads",
     )
-    parser.add_argument(
-        "--skip-deps", action="store_true", help="Skip dependency installation"
-    )
-    parser.add_argument(
-        "--validate-only", action="store_true", help="Only run validation"
-    )
+    parser.add_argument("--skip-deps", action="store_true", help="Skip dependency installation")
+    parser.add_argument("--validate-only", action="store_true", help="Only run validation")
 
     args = parser.parse_args()
 

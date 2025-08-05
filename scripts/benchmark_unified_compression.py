@@ -2,18 +2,17 @@
 """Benchmark Sprint 9 SimpleQuantizer, Advanced pipeline and Unified compressor."""
 
 import os
+from pathlib import Path
 import sys
 import time
-from pathlib import Path
 
-import torch
-import torch.nn as nn
 import psutil
+from torch import nn
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from core.compression.simple_quantizer import SimpleQuantizer
 from core.compression.advanced_pipeline import AdvancedCompressionPipeline
+from core.compression.simple_quantizer import SimpleQuantizer
 from core.compression.unified_compressor import UnifiedCompressor
 
 
@@ -79,14 +78,16 @@ def benchmark_all_methods():
                 print(f"    Memory used: {mem_used:.1f}MB")
                 if "Unified" in comp_name:
                     print(f"    Method selected: {result['method']}")
-                results.append({
-                    "model": model_name,
-                    "compressor": comp_name,
-                    "ratio": ratio,
-                    "time": elapsed,
-                    "memory": mem_used,
-                    "size_kb": compressed_size / 1024,
-                })
+                results.append(
+                    {
+                        "model": model_name,
+                        "compressor": comp_name,
+                        "ratio": ratio,
+                        "time": elapsed,
+                        "memory": mem_used,
+                        "size_kb": compressed_size / 1024,
+                    }
+                )
             except Exception as e:  # pragma: no cover - diagnostic
                 print(f"    FAILED: {e}")
 
@@ -96,10 +97,7 @@ def benchmark_all_methods():
     print(f"{'Model':<10} {'Compressor':<25} {'Ratio':<10} {'Time(s)':<10} {'Memory(MB)':<12}")
     print("-" * 80)
     for r in results:
-        print(
-            f"{r['model']:<10} {r['compressor']:<25} {r['ratio']:<10.1f} "
-            f"{r['time']:<10.2f} {r['memory']:<12.1f}"
-        )
+        print(f"{r['model']:<10} {r['compressor']:<25} {r['ratio']:<10.1f} " f"{r['time']:<10.2f} {r['memory']:<12.1f}")
 
     print("\n" + "=" * 80)
     print("MOBILE DEPLOYMENT ANALYSIS (2GB limit)")
@@ -113,10 +111,7 @@ def benchmark_all_methods():
                 continue
             final_mb = r["size_kb"] / 1024
             fits = final_mb < 1024
-            print(
-                f"  {r['compressor']:<25} -> {final_mb:>6.1f}MB "
-                f"[{'\u2713 FITS' if fits else '\u2717 TOO BIG'}]"
-            )
+            print(f"  {r['compressor']:<25} -> {final_mb:>6.1f}MB " f"[{'\u2713 FITS' if fits else '\u2717 TOO BIG'}]")
 
 
 if __name__ == "__main__":

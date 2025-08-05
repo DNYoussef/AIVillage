@@ -69,9 +69,7 @@ class SecurityRiskGate:
         # Check dangerous patterns
         danger = self._contains_dangerous_patterns(content)
         if danger:
-            logger.warning(
-                "Dangerous pattern detected: %s in %s", danger, content[:100]
-            )
+            logger.warning("Dangerous pattern detected: %s in %s", danger, content[:100])
             return "deny"
 
         # Check sensitive data

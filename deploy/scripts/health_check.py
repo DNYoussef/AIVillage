@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
-"""
-Comprehensive health check script for AIVillage deployment.
+"""Comprehensive health check script for AIVillage deployment.
 """
 
-import asyncio
-import aiohttp
 import argparse
+import asyncio
 import json
+import logging
+import subprocess
 import sys
 import time
-from typing import Dict, List, Optional, Tuple
-import subprocess
-import psutil
-import logging
+
+import aiohttp
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 class HealthChecker:
     def __init__(self, environment: str):
@@ -25,14 +24,14 @@ class HealthChecker:
         self.results = {}
         self.overall_health = True
 
-    async def check_kubernetes_resources(self) -> Dict:
+    async def check_kubernetes_resources(self) -> dict:
         """Check the health of Kubernetes resources."""
         logger.info("Checking Kubernetes resources...")
 
         try:
             # Get all pods
             cmd = ["kubectl", "get", "pods", "-n", self.namespace, "-o", "json"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             if result.returncode != 0:
                 return {"status": "FAIL", "error": f"Failed to get pods: {result.stderr}"}
@@ -51,7 +50,7 @@ class HealthChecker:
                 pod_health[pod_name] = {
                     "phase": phase,
                     "ready": ready,
-                    "restarts": sum(cs.get("restartCount", 0) for cs in pod["status"].get("containerStatuses", []))
+                    "restarts": sum(cs.get("restartCount", 0) for cs in pod["status"].get("containerStatuses", [])),
                 }
 
                 if phase != "Running" or not ready:
@@ -59,22 +58,24 @@ class HealthChecker:
 
             # Get services
             cmd = ["kubectl", "get", "services", "-n", self.namespace, "-o", "json"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             services_data = json.loads(result.stdout) if result.returncode == 0 else {"items": []}
             service_health = {svc["metadata"]["name"]: {"type": svc["spec"]["type"]} for svc in services_data["items"]}
 
             return {
-                "status": "PASS" if all(p["phase"] == "Running" and p["ready"] for p in pod_health.values()) else "FAIL",
+                "status": (
+                    "PASS" if all(p["phase"] == "Running" and p["ready"] for p in pod_health.values()) else "FAIL"
+                ),
                 "pods": pod_health,
-                "services": service_health
+                "services": service_health,
             }
 
         except Exception as e:
             self.overall_health = False
             return {"status": "FAIL", "error": str(e)}
 
-    async def check_database_health(self) -> Dict:
+    async def check_database_health(self) -> dict:
         """Check the health of all databases."""
         logger.info("Checking database health...")
 
@@ -82,12 +83,23 @@ class HealthChecker:
 
         # PostgreSQL
         try:
-            cmd = ["kubectl", "exec", "-n", self.namespace, "statefulset/aivillage-postgres", "--",
-                   "pg_isready", "-h", "localhost", "-p", "5432"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            cmd = [
+                "kubectl",
+                "exec",
+                "-n",
+                self.namespace,
+                "statefulset/aivillage-postgres",
+                "--",
+                "pg_isready",
+                "-h",
+                "localhost",
+                "-p",
+                "5432",
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
             db_results["postgres"] = {
                 "status": "PASS" if result.returncode == 0 else "FAIL",
-                "details": result.stdout if result.returncode == 0 else result.stderr
+                "details": result.stdout if result.returncode == 0 else result.stderr,
             }
         except Exception as e:
             db_results["postgres"] = {"status": "FAIL", "error": str(e)}
@@ -95,12 +107,11 @@ class HealthChecker:
 
         # Redis
         try:
-            cmd = ["kubectl", "exec", "-n", self.namespace, "statefulset/aivillage-redis", "--",
-                   "redis-cli", "ping"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            cmd = ["kubectl", "exec", "-n", self.namespace, "statefulset/aivillage-redis", "--", "redis-cli", "ping"]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
             db_results["redis"] = {
                 "status": "PASS" if result.returncode == 0 and "PONG" in result.stdout else "FAIL",
-                "details": result.stdout if result.returncode == 0 else result.stderr
+                "details": result.stdout if result.returncode == 0 else result.stderr,
             }
         except Exception as e:
             db_results["redis"] = {"status": "FAIL", "error": str(e)}
@@ -108,12 +119,24 @@ class HealthChecker:
 
         # Neo4j
         try:
-            cmd = ["kubectl", "exec", "-n", self.namespace, "statefulset/aivillage-neo4j", "--",
-                   "cypher-shell", "-u", "neo4j", "-p", "test_password", "RETURN 1"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            cmd = [
+                "kubectl",
+                "exec",
+                "-n",
+                self.namespace,
+                "statefulset/aivillage-neo4j",
+                "--",
+                "cypher-shell",
+                "-u",
+                "neo4j",
+                "-p",
+                "test_password",
+                "RETURN 1",
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
             db_results["neo4j"] = {
                 "status": "PASS" if result.returncode == 0 else "FAIL",
-                "details": result.stdout if result.returncode == 0 else result.stderr
+                "details": result.stdout if result.returncode == 0 else result.stderr,
             }
         except Exception as e:
             db_results["neo4j"] = {"status": "FAIL", "error": str(e)}
@@ -122,8 +145,14 @@ class HealthChecker:
         # Qdrant
         try:
             # Port forward to check Qdrant health
-            port_forward_cmd = ["kubectl", "port-forward", "-n", self.namespace,
-                               "statefulset/aivillage-qdrant", "6333:6333"]
+            port_forward_cmd = [
+                "kubectl",
+                "port-forward",
+                "-n",
+                self.namespace,
+                "statefulset/aivillage-qdrant",
+                "6333:6333",
+            ]
             proc = subprocess.Popen(port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             await asyncio.sleep(2)  # Wait for port forward
@@ -141,12 +170,12 @@ class HealthChecker:
         except Exception as e:
             db_results["qdrant"] = {"status": "FAIL", "error": str(e)}
             self.overall_health = False
-            if 'proc' in locals():
+            if "proc" in locals():
                 proc.terminate()
 
         return db_results
 
-    async def check_service_endpoints(self) -> Dict:
+    async def check_service_endpoints(self) -> dict:
         """Check all service endpoints."""
         logger.info("Checking service endpoints...")
 
@@ -162,8 +191,14 @@ class HealthChecker:
         for service_name, k8s_service, port, path in endpoints:
             try:
                 # Port forward to service
-                port_forward_cmd = ["kubectl", "port-forward", "-n", self.namespace,
-                                   f"service/{k8s_service}", f"{port}:{port}"]
+                port_forward_cmd = [
+                    "kubectl",
+                    "port-forward",
+                    "-n",
+                    self.namespace,
+                    f"service/{k8s_service}",
+                    f"{port}:{port}",
+                ]
                 proc = subprocess.Popen(port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
                 await asyncio.sleep(2)  # Wait for port forward
@@ -179,13 +214,13 @@ class HealthChecker:
                             endpoint_results[service_name] = {
                                 "status": "PASS",
                                 "response_code": response.status,
-                                "response_time_ms": round(response_time, 2)
+                                "response_time_ms": round(response_time, 2),
                             }
                         else:
                             endpoint_results[service_name] = {
                                 "status": "FAIL",
                                 "response_code": response.status,
-                                "response_time_ms": round(response_time, 2)
+                                "response_time_ms": round(response_time, 2),
                             }
                             self.overall_health = False
 
@@ -194,62 +229,52 @@ class HealthChecker:
             except Exception as e:
                 endpoint_results[service_name] = {"status": "FAIL", "error": str(e)}
                 self.overall_health = False
-                if 'proc' in locals():
+                if "proc" in locals():
                     proc.terminate()
 
         return endpoint_results
 
-    async def check_resource_usage(self) -> Dict:
+    async def check_resource_usage(self) -> dict:
         """Check resource usage of the cluster."""
         logger.info("Checking resource usage...")
 
         try:
             # Get node metrics if metrics-server is available
             cmd = ["kubectl", "top", "nodes"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             node_metrics = {}
             if result.returncode == 0:
-                lines = result.stdout.strip().split('\n')[1:]  # Skip header
+                lines = result.stdout.strip().split("\n")[1:]  # Skip header
                 for line in lines:
                     parts = line.split()
                     if len(parts) >= 5:
                         node_name = parts[0]
                         cpu_usage = parts[1]
                         memory_usage = parts[3]
-                        node_metrics[node_name] = {
-                            "cpu_usage": cpu_usage,
-                            "memory_usage": memory_usage
-                        }
+                        node_metrics[node_name] = {"cpu_usage": cpu_usage, "memory_usage": memory_usage}
 
             # Get pod metrics
             cmd = ["kubectl", "top", "pods", "-n", self.namespace]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
 
             pod_metrics = {}
             if result.returncode == 0:
-                lines = result.stdout.strip().split('\n')[1:]  # Skip header
+                lines = result.stdout.strip().split("\n")[1:]  # Skip header
                 for line in lines:
                     parts = line.split()
                     if len(parts) >= 3:
                         pod_name = parts[0]
                         cpu_usage = parts[1]
                         memory_usage = parts[2]
-                        pod_metrics[pod_name] = {
-                            "cpu_usage": cpu_usage,
-                            "memory_usage": memory_usage
-                        }
+                        pod_metrics[pod_name] = {"cpu_usage": cpu_usage, "memory_usage": memory_usage}
 
-            return {
-                "status": "PASS",
-                "node_metrics": node_metrics,
-                "pod_metrics": pod_metrics
-            }
+            return {"status": "PASS", "node_metrics": node_metrics, "pod_metrics": pod_metrics}
 
         except Exception as e:
             return {"status": "FAIL", "error": str(e)}
 
-    async def run_comprehensive_health_check(self) -> Dict:
+    async def run_comprehensive_health_check(self) -> dict:
         """Run all health checks."""
         logger.info(f"Starting comprehensive health check for {self.environment} environment...")
 
@@ -278,7 +303,7 @@ class HealthChecker:
             "kubernetes": k8s_results,
             "databases": db_results,
             "service_endpoints": endpoint_results,
-            "resource_usage": resource_results
+            "resource_usage": resource_results,
         }
 
         return self.results
@@ -324,9 +349,10 @@ class HealthChecker:
 
     def save_results(self, output_file: str):
         """Save results to a JSON file."""
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(self.results, f, indent=2)
         logger.info(f"Health check results saved to {output_file}")
+
 
 async def main():
     parser = argparse.ArgumentParser(description="Run comprehensive health check for AIVillage deployment")
@@ -346,6 +372,7 @@ async def main():
 
     # Exit with appropriate code
     sys.exit(0 if health_checker.overall_health else 1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

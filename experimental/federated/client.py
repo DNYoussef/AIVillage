@@ -8,16 +8,17 @@ This module provides a complete federated learning client that can:
 """
 
 import asyncio
+import json
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
-import json
+from typing import Any
+
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.utils.data import DataLoader
 
-from .core import ClientUpdate, PrivacyEngine, ModelSynchronizer
+from .core import ClientUpdate, ModelSynchronizer, PrivacyEngine
 
 
 class FederatedLearningClient:
@@ -29,8 +30,8 @@ class FederatedLearningClient:
         local_model: nn.Module,
         local_data_loader: DataLoader,
         device: str = "cpu",
-        privacy_engine: Optional[PrivacyEngine] = None,
-        model_synchronizer: Optional[ModelSynchronizer] = None
+        privacy_engine: PrivacyEngine | None = None,
+        model_synchronizer: ModelSynchronizer | None = None,
     ):
         self.client_id = client_id
         self.local_model = local_model
@@ -64,9 +65,7 @@ class FederatedLearningClient:
         self.logger = logging.getLogger(f"FedClient-{client_id[:8]}")
 
     async def participate_in_round(
-        self,
-        round_config: Dict[str, Any],
-        privacy_budget: Optional[Tuple[float, float]] = None
+        self, round_config: dict[str, Any], privacy_budget: tuple[float, float] | None = None
     ) -> ClientUpdate:
         """Participate in a federated learning round."""
         start_time = time.time()
@@ -91,11 +90,7 @@ class FederatedLearningClient:
         self.learning_rate = config.get("learning_rate", 0.01)
 
         # Setup optimizer
-        self.optimizer = torch.optim.SGD(
-            self.local_model.parameters(),
-            lr=self.learning_rate,
-            momentum=0.9
-        )
+        self.optimizer = torch.optim.SGD(self.local_model.parameters(), lr=self.learning_rate, momentum=0.9)
 
         # Save initial model state for gradient calculation
         initial_state = {k: v.clone() for k, v in self.local_model.state_dict().items()}
@@ -115,9 +110,7 @@ class FederatedLearningClient:
         if privacy_budget and self.privacy_engine:
             try:
                 gradients, privacy_cost = self.privacy_engine.add_noise_to_gradients(
-                    gradients,
-                    epsilon=privacy_budget[0],
-                    sensitivity=1.0
+                    gradients, epsilon=privacy_budget[0], sensitivity=1.0
                 )
             except ValueError as e:
                 self.logger.warning(f"Privacy mechanism failed: {e}")
@@ -132,7 +125,7 @@ class FederatedLearningClient:
             metrics=training_metrics,
             computation_time=training_time,
             privacy_spent=privacy_cost,
-            client_metadata=self._get_client_metadata()
+            client_metadata=self._get_client_metadata(),
         )
 
         # Update client state
@@ -148,7 +141,7 @@ class FederatedLearningClient:
 
         return update
 
-    async def _train_local_model(self, epochs: int) -> Dict[str, float]:
+    async def _train_local_model(self, epochs: int) -> dict[str, float]:
         """Train model on local data with efficiency optimizations."""
         self.local_model.train()
 
@@ -215,7 +208,7 @@ class FederatedLearningClient:
         self.energy_consumption.append(energy_used)
 
         # Calculate final metrics
-        avg_loss = total_loss / batch_count if batch_count > 0 else float('inf')
+        avg_loss = total_loss / batch_count if batch_count > 0 else float("inf")
         accuracy = total_correct / total_samples if total_samples > 0 else 0.0
 
         metrics = {
@@ -224,22 +217,15 @@ class FederatedLearningClient:
             "epochs_completed": epochs,
             "batches_processed": batch_count,
             "samples_processed": total_samples,
-            "energy_consumed": energy_used
+            "energy_consumed": energy_used,
         }
 
         # Record training history
-        self.training_history.append({
-            "round": self.current_round,
-            "metrics": metrics,
-            "timestamp": time.time()
-        })
+        self.training_history.append({"round": self.current_round, "metrics": metrics, "timestamp": time.time()})
 
         return metrics
 
-    def _calculate_gradients(
-        self,
-        initial_state: Dict[str, torch.Tensor]
-    ) -> Dict[str, torch.Tensor]:
+    def _calculate_gradients(self, initial_state: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         """Calculate model gradients from initial to final state."""
         gradients = {}
         final_state = self.local_model.state_dict()
@@ -251,7 +237,7 @@ class FederatedLearningClient:
 
         return gradients
 
-    async def _update_local_model(self, round_config: Dict[str, Any]):
+    async def _update_local_model(self, round_config: dict[str, Any]):
         """Update local model with global model state."""
         communication_start = time.time()
 
@@ -272,7 +258,7 @@ class FederatedLearningClient:
             self.logger.error(f"Failed to update local model: {e}")
             raise
 
-    def _validate_round_config(self, round_config: Dict[str, Any]):
+    def _validate_round_config(self, round_config: dict[str, Any]):
         """Validate round configuration."""
         required_fields = ["round_number", "model_version", "model_state", "round_config"]
 
@@ -306,14 +292,14 @@ class FederatedLearningClient:
             return False
 
         # Check if we're taking too long (mobile optimization)
-        if hasattr(self, '_training_start_time'):
+        if hasattr(self, "_training_start_time"):
             elapsed = time.time() - self._training_start_time
             if elapsed > 30.0:  # Max 30 seconds of training
                 return False
 
         return True
 
-    def _get_client_metadata(self) -> Dict[str, Any]:
+    def _get_client_metadata(self) -> dict[str, Any]:
         """Get current client metadata."""
         return {
             "device": self.device,
@@ -324,7 +310,7 @@ class FederatedLearningClient:
             "avg_training_time": np.mean(self.local_training_times) if self.local_training_times else 0,
             "avg_communication_time": np.mean(self.communication_times) if self.communication_times else 0,
             "total_energy_consumed": sum(self.energy_consumption),
-            "rounds_participated": len(self.training_history)
+            "rounds_participated": len(self.training_history),
         }
 
     def _update_client_state(self, training_time: float):
@@ -335,9 +321,7 @@ class FederatedLearningClient:
         self.battery_level = max(0.0, self.battery_level - battery_drain)
 
         # Simulate network quality fluctuation
-        self.network_quality = max(0.1, min(1.0,
-            self.network_quality + np.random.normal(0, 0.05)
-        ))
+        self.network_quality = max(0.1, min(1.0, self.network_quality + np.random.normal(0, 0.05)))
 
         # Simulate compute power (thermal throttling, etc.)
         if training_time > 5.0:  # Long training reduces compute power
@@ -353,11 +337,11 @@ class FederatedLearningClient:
     def _get_memory_usage(self) -> float:
         """Get current memory usage."""
         # In real implementation, query system memory
-        if torch.cuda.is_available() and self.device.startswith('cuda'):
+        if torch.cuda.is_available() and self.device.startswith("cuda"):
             return torch.cuda.memory_allocated(self.device) / 1024**2  # MB
         return 0.0
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """Get client performance statistics."""
         return {
             "client_id": self.client_id,
@@ -369,7 +353,7 @@ class FederatedLearningClient:
             "current_network_quality": self.network_quality,
             "current_compute_power": self.compute_power,
             "training_history": self.training_history[-10:],  # Last 10 rounds
-            "resource_efficiency": self._calculate_efficiency_score()
+            "resource_efficiency": self._calculate_efficiency_score(),
         }
 
     def _calculate_efficiency_score(self) -> float:
@@ -382,10 +366,7 @@ class FederatedLearningClient:
         energy_score = 1.0 / (1.0 + np.mean(self.energy_consumption)) if self.energy_consumption else 0.0
 
         # Accuracy score from recent training
-        recent_accuracies = [
-            h["metrics"].get("accuracy", 0.0)
-            for h in self.training_history[-5:]
-        ]
+        recent_accuracies = [h["metrics"].get("accuracy", 0.0) for h in self.training_history[-5:]]
         accuracy_score = np.mean(recent_accuracies) if recent_accuracies else 0.0
 
         # Combined efficiency score
@@ -393,10 +374,7 @@ class FederatedLearningClient:
         return min(1.0, max(0.0, efficiency))
 
     def simulate_mobile_constraints(
-        self,
-        initial_battery: float = 1.0,
-        network_stability: float = 0.8,
-        compute_variation: float = 0.1
+        self, initial_battery: float = 1.0, network_stability: float = 0.8, compute_variation: float = 0.1
     ):
         """Simulate mobile device constraints for testing."""
         self.battery_level = initial_battery
@@ -431,16 +409,16 @@ class FederatedLearningClient:
             "network_quality": self.network_quality,
             "compute_power": self.compute_power,
             "training_history": self.training_history,
-            "performance_stats": self.get_performance_stats()
+            "performance_stats": self.get_performance_stats(),
         }
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(state, f, indent=2)
 
     def load_state(self, filepath: str):
         """Load client state from persistence."""
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath) as f:
                 state = json.load(f)
 
             self.current_round = state.get("current_round", 0)
@@ -486,7 +464,7 @@ class MobileOptimizedClient(FederatedLearningClient):
     def _can_continue_training(self, epoch: int, batch_idx: int) -> bool:
         """Mobile-specific training continuation check."""
         # Strict time limit for mobile
-        if hasattr(self, '_training_start_time'):
+        if hasattr(self, "_training_start_time"):
             elapsed = time.time() - self._training_start_time
             if elapsed > self.max_training_time:
                 return False
@@ -503,9 +481,7 @@ class MobileOptimizedClient(FederatedLearningClient):
         return np.random.random() > 0.7  # 30% chance of charging
 
     async def adaptive_training(
-        self,
-        round_config: Dict[str, Any],
-        privacy_budget: Optional[Tuple[float, float]] = None
+        self, round_config: dict[str, Any], privacy_budget: tuple[float, float] | None = None
     ) -> ClientUpdate:
         """Adaptive training that adjusts based on device conditions."""
         # Adjust training parameters based on device state
@@ -537,9 +513,7 @@ class EdgeOptimizedClient(FederatedLearningClient):
         self.reliability_threshold = 0.95
 
     async def participate_in_round(
-        self,
-        round_config: Dict[str, Any],
-        privacy_budget: Optional[Tuple[float, float]] = None
+        self, round_config: dict[str, Any], privacy_budget: tuple[float, float] | None = None
     ) -> ClientUpdate:
         """Edge-optimized participation with bandwidth management."""
         # Measure network conditions
@@ -564,7 +538,7 @@ class EdgeOptimizedClient(FederatedLearningClient):
             # Restore original compression ratio
             self.model_synchronizer.compression_ratio = original_compression
 
-    async def _measure_network_conditions(self) -> Dict[str, float]:
+    async def _measure_network_conditions(self) -> dict[str, float]:
         """Measure current network conditions."""
         # Simulate network measurement
         await asyncio.sleep(0.1)
@@ -573,21 +547,18 @@ class EdgeOptimizedClient(FederatedLearningClient):
             "bandwidth": np.random.uniform(0.5, 2.0) * 1024 * 1024,  # MB/s
             "latency": np.random.uniform(20, 200),  # ms
             "reliability": np.random.uniform(0.8, 1.0),
-            "jitter": np.random.uniform(5, 50)  # ms
+            "jitter": np.random.uniform(5, 50),  # ms
         }
 
-    def _network_suitable(self, conditions: Dict[str, float]) -> bool:
+    def _network_suitable(self, conditions: dict[str, float]) -> bool:
         """Check if network conditions are suitable for training."""
         return (
-            conditions["bandwidth"] > self.bandwidth_limit * 0.5 and
-            conditions["latency"] < self.latency_threshold and
-            conditions["reliability"] > self.reliability_threshold
+            conditions["bandwidth"] > self.bandwidth_limit * 0.5
+            and conditions["latency"] < self.latency_threshold
+            and conditions["reliability"] > self.reliability_threshold
         )
 
-    def _compress_gradients(
-        self,
-        gradients: Dict[str, torch.Tensor]
-    ) -> Dict[str, torch.Tensor]:
+    def _compress_gradients(self, gradients: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         """Apply gradient compression for edge transmission."""
         compressed_gradients = {}
 

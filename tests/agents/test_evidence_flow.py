@@ -36,18 +36,12 @@ sys.modules.setdefault(
 orch_mod = types.ModuleType("agents.orchestration")
 orch_mod.main = lambda: None
 sys.modules.setdefault("agents.orchestration", orch_mod)
-sys.modules.setdefault(
-    "agents.king.king_agent", types.ModuleType("agents.king.king_agent")
-)
+sys.modules.setdefault("agents.king.king_agent", types.ModuleType("agents.king.king_agent"))
 sys.modules.setdefault("matplotlib.pyplot", types.ModuleType("matplotlib.pyplot"))
 
 import importlib  # noqa: E402
 
-from core.error_handling import (  # noqa: E402
-    Message,
-    MessageType,
-    StandardCommunicationProtocol,
-)
+from core.error_handling import Message, MessageType, StandardCommunicationProtocol  # noqa: E402
 
 SageAgent = importlib.import_module("agents.sage.sage_agent").SageAgent  # noqa: E402
 UnifiedConfig = importlib.import_module("rag_system.core.config").UnifiedConfig  # noqa: E402
@@ -71,9 +65,7 @@ async def test_sage_emits_evidence_message():
     agent.performance_metrics = {}
     agent.rag_system = MagicMock()
     agent.response_generator = MagicMock()
-    agent.post_process_result = AsyncMock(
-        side_effect=lambda *a, **k: {"rag_result": a[0]}
-    )
+    agent.post_process_result = AsyncMock(side_effect=lambda *a, **k: {"rag_result": a[0]})
     agent.user_intent_interpreter = MagicMock()
     agent.user_intent_interpreter.interpret_intent = AsyncMock(return_value={})
     agent.pre_process_query = AsyncMock(side_effect=lambda q: q)

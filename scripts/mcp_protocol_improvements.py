@@ -15,16 +15,12 @@ logger = logging.getLogger(__name__)
 
 # New implementations for the TODO items in protocol.py
 
+
 class RetrievalImplementation:
     """Actual retrieval implementation to replace TODO in handle_query."""
 
     async def implement_actual_retrieval_and_reasoning(
-        self,
-        protocol_handler,
-        context,
-        query: str,
-        plan: dict,
-        filters: dict[str, Any] | None = None
+        self, protocol_handler, context, query: str, plan: dict, filters: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         """Replace the TODO in handle_query with actual retrieval and reasoning.
 
@@ -41,9 +37,10 @@ class RetrievalImplementation:
             # Initialize retriever if storage backend available
             elif protocol_handler.storage_backend:
                 from .retrieval.hybrid_retriever import HybridRetriever
+
                 protocol_handler._retriever = HybridRetriever(
                     vector_store=getattr(protocol_handler.storage_backend, "vector_store", None),
-                    graph_store=getattr(protocol_handler.storage_backend, "graph_store", None)
+                    graph_store=getattr(protocol_handler.storage_backend, "graph_store", None),
                 )
                 retriever = protocol_handler._retriever
             else:
@@ -56,7 +53,7 @@ class RetrievalImplementation:
                     "query": query,
                     "top_k": filters.get("top_k", 10) if filters else 10,
                     "filters": filters or {},
-                    "include_metadata": True
+                    "include_metadata": True,
                 }
 
                 retrieval_results = await retriever.retrieve(**retrieval_params)
@@ -67,6 +64,7 @@ class RetrievalImplementation:
 
             # Convert retrieval results to Node objects
             from .models import Node
+
             nodes = []
 
             for result in retrieval_results.get("results", []):
@@ -78,9 +76,9 @@ class RetrievalImplementation:
                         "source": result.get("source", "retrieval"),
                         "timestamp": datetime.now().isoformat(),
                         "retrieval_score": result.get("score", 0.0),
-                        **result.get("metadata", {})
+                        **result.get("metadata", {}),
                     },
-                    confidence=result.get("confidence", result.get("score", 0.5))
+                    confidence=result.get("confidence", result.get("score", 0.5)),
                 )
                 nodes.append(node)
 
@@ -98,7 +96,7 @@ class RetrievalImplementation:
                     "processing_time": retrieval_results.get("processing_time", 0.0),
                     "timestamp": datetime.now().isoformat(),
                     "retrieval_method": "hybrid",
-                    "retrieval_params": retrieval_params
+                    "retrieval_params": retrieval_params,
                 },
             }
 
@@ -108,6 +106,7 @@ class RetrievalImplementation:
         except Exception as e:
             logger.error(f"Unexpected error in retrieval: {e}")
             from .protocol import MCPError
+
             raise MCPError("RETRIEVAL_ERROR", f"Failed to retrieve information: {e}")
 
     def _create_fallback_response(self, query: str, plan: dict, error_msg: str = None) -> dict[str, Any]:
@@ -128,9 +127,9 @@ class RetrievalImplementation:
             metadata={
                 "source": "fallback_analysis",
                 "timestamp": datetime.now().isoformat(),
-                "fallback_reason": error_msg or "retrieval_unavailable"
+                "fallback_reason": error_msg or "retrieval_unavailable",
             },
-            confidence=0.3  # Low confidence for fallback
+            confidence=0.3,  # Low confidence for fallback
         )
 
         return {
@@ -142,7 +141,7 @@ class RetrievalImplementation:
                 "processing_time": 0.01,
                 "timestamp": datetime.now().isoformat(),
                 "retrieval_method": "fallback",
-                "warning": "Using fallback response - retrieval system unavailable"
+                "warning": "Using fallback response - retrieval system unavailable",
             },
         }
 
@@ -157,9 +156,9 @@ class RetrievalImplementation:
             metadata={
                 "source": "search_analysis",
                 "timestamp": datetime.now().isoformat(),
-                "suggestion": "Try rephrasing the query or using more general terms"
+                "suggestion": "Try rephrasing the query or using more general terms",
             },
-            confidence=0.1
+            confidence=0.1,
         )
 
         return {
@@ -171,7 +170,7 @@ class RetrievalImplementation:
                 "processing_time": 0.01,
                 "timestamp": datetime.now().isoformat(),
                 "retrieval_method": "no_results",
-                "suggestion": "Query may need refinement"
+                "suggestion": "Query may need refinement",
             },
         }
 
@@ -198,10 +197,9 @@ class StorageImplementation:
         context,
         content: str,
         content_type: str = "text",
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Replace TODO in handle_add_knowledge with actual storage implementation.
-        """
+        """Replace TODO in handle_add_knowledge with actual storage implementation."""
         node_id = str(uuid.uuid4())
         timestamp = datetime.now().isoformat()
 
@@ -215,27 +213,22 @@ class StorageImplementation:
                     "created_at": timestamp,
                     "created_by": context.user_id,
                     "agent_id": context.agent_id,
-                    **(metadata or {})
+                    **(metadata or {}),
                 },
                 "embedding": None,  # Will be computed by storage backend
-                "indexed": False
+                "indexed": False,
             }
 
             # Try to use storage backend
             if protocol_handler.storage_backend:
-                storage_result = await self._store_with_backend(
-                    protocol_handler.storage_backend, node_data
-                )
+                storage_result = await self._store_with_backend(protocol_handler.storage_backend, node_data)
 
                 return {
                     "node_id": node_id,
                     "status": "success",
                     "message": "Knowledge added successfully",
                     "storage_details": storage_result,
-                    "metadata": {
-                        "timestamp": timestamp,
-                        "storage_method": "backend"
-                    }
+                    "metadata": {"timestamp": timestamp, "storage_method": "backend"},
                 }
             # Fallback to in-memory storage
             return await self._store_in_memory(protocol_handler, node_data)
@@ -246,7 +239,7 @@ class StorageImplementation:
                 "node_id": node_id,
                 "status": "error",
                 "message": f"Failed to add knowledge: {e}",
-                "error_details": str(e)
+                "error_details": str(e),
             }
 
     async def _store_with_backend(self, storage_backend, node_data: dict[str, Any]) -> dict[str, Any]:
@@ -255,22 +248,17 @@ class StorageImplementation:
             # Add to vector store if available
             if hasattr(storage_backend, "vector_store") and storage_backend.vector_store:
                 vector_result = await storage_backend.vector_store.add_document(
-                    doc_id=node_data["id"],
-                    content=node_data["content"],
-                    metadata=node_data["metadata"]
+                    doc_id=node_data["id"], content=node_data["content"], metadata=node_data["metadata"]
                 )
 
             # Add to graph store if available
             if hasattr(storage_backend, "graph_store") and storage_backend.graph_store:
-                graph_result = await storage_backend.graph_store.add_node(
-                    node_id=node_data["id"],
-                    properties=node_data
-                )
+                graph_result = await storage_backend.graph_store.add_node(node_id=node_data["id"], properties=node_data)
 
             return {
                 "vector_stored": hasattr(storage_backend, "vector_store"),
                 "graph_stored": hasattr(storage_backend, "graph_store"),
-                "indexed": True
+                "indexed": True,
             }
 
         except Exception as e:
@@ -293,8 +281,8 @@ class StorageImplementation:
             "metadata": {
                 "timestamp": node_data["metadata"]["created_at"],
                 "storage_method": "memory_fallback",
-                "warning": "Data stored in memory only - will be lost on restart"
-            }
+                "warning": "Data stored in memory only - will be lost on restart",
+            },
         }
 
     async def implement_actual_update(
@@ -303,19 +291,14 @@ class StorageImplementation:
         context,
         node_id: str,
         content: str | None = None,
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Replace TODO in handle_update_knowledge with actual update implementation.
-        """
+        """Replace TODO in handle_update_knowledge with actual update implementation."""
         timestamp = datetime.now().isoformat()
 
         try:
             # Prepare update data
-            update_data = {
-                "updated_at": timestamp,
-                "updated_by": context.user_id,
-                "agent_id": context.agent_id
-            }
+            update_data = {"updated_at": timestamp, "updated_by": context.user_id, "agent_id": context.agent_id}
 
             if content is not None:
                 update_data["content"] = content
@@ -324,19 +307,14 @@ class StorageImplementation:
 
             # Try backend update
             if protocol_handler.storage_backend:
-                update_result = await self._update_with_backend(
-                    protocol_handler.storage_backend, node_id, update_data
-                )
+                update_result = await self._update_with_backend(protocol_handler.storage_backend, node_id, update_data)
 
                 return {
                     "node_id": node_id,
                     "status": "success",
                     "message": "Knowledge updated successfully",
                     "update_details": update_result,
-                    "metadata": {
-                        "timestamp": timestamp,
-                        "update_method": "backend"
-                    }
+                    "metadata": {"timestamp": timestamp, "update_method": "backend"},
                 }
             # Fallback update
             return await self._update_in_memory(protocol_handler, node_id, update_data)
@@ -347,7 +325,7 @@ class StorageImplementation:
                 "node_id": node_id,
                 "status": "error",
                 "message": f"Failed to update knowledge: {e}",
-                "error_details": str(e)
+                "error_details": str(e),
             }
 
     async def _update_with_backend(self, storage_backend, node_id: str, update_data: dict[str, Any]) -> dict[str, Any]:
@@ -359,18 +337,13 @@ class StorageImplementation:
             if hasattr(storage_backend, "vector_store") and storage_backend.vector_store:
                 if "content" in update_data:
                     await storage_backend.vector_store.update_document(
-                        doc_id=node_id,
-                        content=update_data["content"],
-                        metadata=update_data.get("metadata", {})
+                        doc_id=node_id, content=update_data["content"], metadata=update_data.get("metadata", {})
                     )
                     results["vector_updated"] = True
 
             # Update in graph store
             if hasattr(storage_backend, "graph_store") and storage_backend.graph_store:
-                await storage_backend.graph_store.update_node(
-                    node_id=node_id,
-                    properties=update_data
-                )
+                await storage_backend.graph_store.update_node(node_id=node_id, properties=update_data)
                 results["graph_updated"] = True
 
             return results
@@ -396,39 +369,24 @@ class StorageImplementation:
             "node_id": node_id,
             "status": status,
             "message": message,
-            "metadata": {
-                "timestamp": update_data.get("updated_at"),
-                "update_method": "memory_fallback"
-            }
+            "metadata": {"timestamp": update_data.get("updated_at"), "update_method": "memory_fallback"},
         }
 
-    async def implement_actual_deletion(
-        self,
-        protocol_handler,
-        context,
-        node_id: str
-    ) -> dict[str, Any]:
-        """Replace TODO in handle_delete_knowledge with actual deletion implementation.
-        """
+    async def implement_actual_deletion(self, protocol_handler, context, node_id: str) -> dict[str, Any]:
+        """Replace TODO in handle_delete_knowledge with actual deletion implementation."""
         timestamp = datetime.now().isoformat()
 
         try:
             # Try backend deletion
             if protocol_handler.storage_backend:
-                deletion_result = await self._delete_with_backend(
-                    protocol_handler.storage_backend, node_id
-                )
+                deletion_result = await self._delete_with_backend(protocol_handler.storage_backend, node_id)
 
                 return {
                     "node_id": node_id,
                     "status": "success",
                     "message": "Knowledge deleted successfully",
                     "deletion_details": deletion_result,
-                    "metadata": {
-                        "timestamp": timestamp,
-                        "deleted_by": context.user_id,
-                        "deletion_method": "backend"
-                    }
+                    "metadata": {"timestamp": timestamp, "deleted_by": context.user_id, "deletion_method": "backend"},
                 }
             # Fallback deletion
             return await self._delete_in_memory(protocol_handler, node_id, timestamp, context.user_id)
@@ -439,7 +397,7 @@ class StorageImplementation:
                 "node_id": node_id,
                 "status": "error",
                 "message": f"Failed to delete knowledge: {e}",
-                "error_details": str(e)
+                "error_details": str(e),
             }
 
     async def _delete_with_backend(self, storage_backend, node_id: str) -> dict[str, Any]:
@@ -480,11 +438,7 @@ class StorageImplementation:
             "node_id": node_id,
             "status": status,
             "message": message,
-            "metadata": {
-                "timestamp": timestamp,
-                "deleted_by": user_id,
-                "deletion_method": "memory_fallback"
-            }
+            "metadata": {"timestamp": timestamp, "deleted_by": user_id, "deletion_method": "memory_fallback"},
         }
 
 
@@ -492,14 +446,9 @@ class ModelRegistrationImplementation:
     """Implementation for model registration TODO."""
 
     async def implement_actual_model_registration(
-        self,
-        protocol_handler,
-        context,
-        agent_id: str,
-        model_config: dict[str, Any]
+        self, protocol_handler, context, agent_id: str, model_config: dict[str, Any]
     ) -> dict[str, Any]:
-        """Replace TODO in handle_register_model with actual model registration.
-        """
+        """Replace TODO in handle_register_model with actual model registration."""
         timestamp = datetime.now().isoformat()
         registration_id = str(uuid.uuid4())
 
@@ -511,15 +460,13 @@ class ModelRegistrationImplementation:
                     "agent_id": agent_id,
                     "status": "error",
                     "message": f"Invalid model configuration: {validation_result['error']}",
-                    "registration_id": registration_id
+                    "registration_id": registration_id,
                 }
 
             # Register with model registry
             if protocol_handler.model_registry:
                 registration_result = await protocol_handler.model_registry.register_model(
-                    agent_id=agent_id,
-                    config=model_config,
-                    registration_id=registration_id
+                    agent_id=agent_id, config=model_config, registration_id=registration_id
                 )
 
                 return {
@@ -528,13 +475,12 @@ class ModelRegistrationImplementation:
                     "message": "Model registered successfully",
                     "registration_id": registration_id,
                     "model_details": registration_result,
-                    "metadata": {
-                        "timestamp": timestamp,
-                        "registered_by": context.user_id
-                    }
+                    "metadata": {"timestamp": timestamp, "registered_by": context.user_id},
                 }
             # Fallback registration
-            return await self._register_in_memory(protocol_handler, agent_id, model_config, registration_id, timestamp, context.user_id)
+            return await self._register_in_memory(
+                protocol_handler, agent_id, model_config, registration_id, timestamp, context.user_id
+            )
 
         except Exception as e:
             logger.error(f"Model registration failed: {e}")
@@ -543,7 +489,7 @@ class ModelRegistrationImplementation:
                 "status": "error",
                 "message": f"Model registration failed: {e}",
                 "registration_id": registration_id,
-                "error_details": str(e)
+                "error_details": str(e),
             }
 
     async def _validate_model_config(self, model_config: Dictionary[str, Any]) -> dict[str, Any]:
@@ -564,7 +510,7 @@ class ModelRegistrationImplementation:
         model_config: dict[str, Any],
         registration_id: str,
         timestamp: str,
-        user_id: str
+        user_id: str,
     ) -> dict[str, Any]:
         """Fallback in-memory model registration."""
         if not hasattr(protocol_handler, "_registered_models"):
@@ -575,7 +521,7 @@ class ModelRegistrationImplementation:
             "registration_id": registration_id,
             "registered_at": timestamp,
             "registered_by": user_id,
-            "status": "active"
+            "status": "active",
         }
 
         return {
@@ -587,8 +533,8 @@ class ModelRegistrationImplementation:
                 "timestamp": timestamp,
                 "registered_by": user_id,
                 "registration_method": "memory_fallback",
-                "warning": "Registration stored in memory only"
-            }
+                "warning": "Registration stored in memory only",
+            },
         }
 
 

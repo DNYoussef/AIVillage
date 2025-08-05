@@ -9,9 +9,7 @@ def test_simple_roundtrip():
     assert result["method"] == "simple"
     restored = pipeline.decompress(result)
     assert isinstance(restored, torch.nn.Module)
-    assert sum(p.numel() for p in restored.parameters()) == sum(
-        p.numel() for p in model.parameters()
-    )
+    assert sum(p.numel() for p in restored.parameters()) == sum(p.numel() for p in model.parameters())
 
 
 def test_advanced_roundtrip():

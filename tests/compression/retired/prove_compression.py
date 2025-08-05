@@ -17,14 +17,13 @@ try:
     from torch import nn
 
     from src.compression.simple_quantizer import CompressionError, SimpleQuantizer
-    from src.compression.test_model_generator import (
-        create_mixed_model,
-        create_test_model,
-    )
+    from src.compression.test_model_generator import create_mixed_model, create_test_model
+
     print("[OK] All imports successful - PyTorch available")
 except ImportError as e:
     print(f"[FAIL] Import failed: {e}")
     exit(1)
+
 
 def create_real_resnet_like_model():
     """Create a real ResNet-like model to prove this works with complex architectures."""
@@ -36,7 +35,6 @@ def create_real_resnet_like_model():
         nn.BatchNorm2d(64),
         nn.ReLU(),
         nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
-
         # Residual-like blocks
         nn.Conv2d(64, 128, kernel_size=3, padding=1),
         nn.BatchNorm2d(128),
@@ -44,14 +42,12 @@ def create_real_resnet_like_model():
         nn.Conv2d(128, 128, kernel_size=3, padding=1),
         nn.BatchNorm2d(128),
         nn.ReLU(),
-
         nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1),
         nn.BatchNorm2d(256),
         nn.ReLU(),
         nn.Conv2d(256, 256, kernel_size=3, padding=1),
         nn.BatchNorm2d(256),
         nn.ReLU(),
-
         # Global average pooling and classifier
         nn.AdaptiveAvgPool2d((1, 1)),
         nn.Flatten(),
@@ -69,6 +65,7 @@ def create_real_resnet_like_model():
     print(f"   Estimated size: {model_size_mb:.2f} MB")
 
     return model
+
 
 def test_real_inference():
     """Prove the compressed model actually works by running inference."""
@@ -92,7 +89,9 @@ def test_real_inference():
     compressed_bytes = quantizer.quantize_model_from_object(model)
     stats = quantizer.get_compression_stats()
 
-    print(f"   Compression: {stats['original_size_mb']:.2f}MB → {stats['compressed_size_mb']:.2f}MB ({stats['compression_ratio']:.2f}x)")
+    print(
+        f"   Compression: {stats['original_size_mb']:.2f}MB → {stats['compressed_size_mb']:.2f}MB ({stats['compression_ratio']:.2f}x)"
+    )
 
     # Load compressed model
     compressed_model = SimpleQuantizer.load_quantized_model(compressed_bytes)
@@ -114,6 +113,7 @@ def test_real_inference():
     print("   [OK] Inference test passed - compressed model works!")
     return True
 
+
 def save_and_load_test():
     """Prove we can save and load compressed models from disk."""
     print("\n[DISK] Testing Save/Load from Disk...")
@@ -131,10 +131,7 @@ def save_and_load_test():
 
         # Compress model
         quantizer = SimpleQuantizer(target_compression_ratio=3.5)
-        compressed_path = quantizer.compress_for_mobile(
-            str(original_path),
-            output_dir=str(temp_path)
-        )
+        compressed_path = quantizer.compress_for_mobile(str(original_path), output_dir=str(temp_path))
 
         compressed_size = Path(compressed_path).stat().st_size
         actual_ratio = original_size / compressed_size
@@ -150,6 +147,7 @@ def save_and_load_test():
         print(f"   Model has {len(list(loaded_model.parameters()))} parameter tensors")
 
         return True
+
 
 def memory_usage_test():
     """Prove compression actually reduces memory usage."""
@@ -181,16 +179,13 @@ def memory_usage_test():
 
     return True
 
+
 def prove_quantization_actually_happens():
     """Prove that actual quantization is happening, not just file compression."""
     print("\n[SCIENCE] Proving Real Quantization Occurs...")
 
     # Create simple model
-    model = nn.Sequential(
-        nn.Linear(10, 20),
-        nn.ReLU(),
-        nn.Linear(20, 1)
-    )
+    model = nn.Sequential(nn.Linear(10, 20), nn.ReLU(), nn.Linear(20, 1))
 
     # Check original parameter types
     original_weight = model[0].weight.clone()
@@ -227,6 +222,7 @@ def prove_quantization_actually_happens():
     print("   [OK] Real quantization verified!")
     return True
 
+
 def main():
     """Run all proof tests."""
     print("[TARGET] RUNNING COMPREHENSIVE PROOF TESTS\n")
@@ -252,6 +248,7 @@ def main():
         except Exception as e:
             print(f"   [FAIL] {test_name} FAILED: {e}")
             import traceback
+
             traceback.print_exc()
 
     print("\n" + "=" * 60)
@@ -276,6 +273,7 @@ def main():
         print("\n[TARGET] PROVEN: Our compression feature ACTUALLY WORKS!")
     else:
         print("\n[FAIL] Some tests failed - compression needs fixes")
+
 
 if __name__ == "__main__":
     main()

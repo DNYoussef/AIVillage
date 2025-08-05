@@ -1,9 +1,9 @@
 """Nightly Evolution Orchestrator - Incremental agent improvements."""
 
+from dataclasses import dataclass
 import logging
 import random
 import time
-from dataclasses import dataclass
 from typing import Any
 
 from .base import EvolvableAgent

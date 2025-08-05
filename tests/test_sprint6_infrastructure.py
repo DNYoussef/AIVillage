@@ -1,16 +1,15 @@
 """Comprehensive tests for Sprint 6 infrastructure components"""
 
 import asyncio
-import time
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 # Import the components we're testing
-from src.core.p2p.p2p_node import P2PNode, PeerCapabilities
-from src.core.resources.adaptive_loader import AdaptiveLoader, LoadingStrategy
-from src.core.resources.constraint_manager import ConstraintManager, ResourceConstraints
-from src.core.resources.device_profiler import DeviceProfiler, DeviceType, ResourceSnapshot
+from src.core.p2p.p2p_node import P2PNode
+from src.core.resources.adaptive_loader import AdaptiveLoader
+from src.core.resources.constraint_manager import ConstraintManager
+from src.core.resources.device_profiler import DeviceProfiler, DeviceType
 from src.core.resources.resource_monitor import MonitoringMode, ResourceMonitor
 from src.production.agent_forge.evolution.infrastructure_aware_evolution import InfrastructureAwareEvolution
 from src.production.agent_forge.evolution.resource_constrained_evolution import ResourceConstrainedEvolution
@@ -28,11 +27,9 @@ def mock_device_profiler():
     profiler.profile.performance_tier = "medium"
     profiler.profile.max_evolution_memory_mb = 4096  # 4GB
     profiler.profile.max_evolution_cpu_percent = 70.0
-    profiler.profile.get_evolution_constraints = Mock(return_value={
-        'max_memory_mb': 4096,
-        'max_cpu_percent': 70.0,
-        'max_duration_minutes': 120
-    })
+    profiler.profile.get_evolution_constraints = Mock(
+        return_value={"max_memory_mb": 4096, "max_cpu_percent": 70.0, "max_duration_minutes": 120}
+    )
 
     # Mock current snapshot
     snapshot = Mock()
@@ -44,7 +41,7 @@ def mock_device_profiler():
     snapshot.thermal_state.value = "normal"
     snapshot.evolution_suitability_score = 0.75
     snapshot.memory_available = 3200 * 1024 * 1024  # 3.2GB available
-    snapshot.memory_used = 4800 * 1024 * 1024       # 4.8GB used
+    snapshot.memory_used = 4800 * 1024 * 1024  # 4.8GB used
     snapshot.cpu_temp = 65.0
     snapshot.is_resource_constrained = False
     snapshot.memory_total = 16 * 1024 * 1024 * 1024  # 16GB total
@@ -58,12 +55,7 @@ def mock_device_profiler():
     def mock_get_allocation():
         if not profiler.current_snapshot:
             return {}
-        return {
-            'memory_mb': 1600,
-            'cpu_percent': 60.0,
-            'device_tier': 'medium',
-            'evolution_capable': True
-        }
+        return {"memory_mb": 1600, "cpu_percent": 60.0, "device_tier": "medium", "evolution_capable": True}
 
     profiler.get_evolution_resource_allocation = Mock(side_effect=mock_get_allocation)
     profiler.is_suitable_for_evolution = Mock(return_value=True)
@@ -87,12 +79,9 @@ def mock_p2p_node():
     node.send_to_peer = AsyncMock()
     node.register_handler = Mock()
     node.get_suitable_evolution_peers = Mock(return_value=[])
-    node.get_network_status = Mock(return_value={
-        'node_id': 'test_node_123',
-        'status': 'active',
-        'connected_peers': 0,
-        'known_peers': 0
-    })
+    node.get_network_status = Mock(
+        return_value={"node_id": "test_node_123", "status": "active", "connected_peers": 0, "known_peers": 0}
+    )
 
     return node
 
@@ -106,10 +95,10 @@ class TestP2PNodeIntegration:
         node = P2PNode(node_id="test_node")
 
         # Mock the server startup to avoid actual network binding
-        with patch('asyncio.start_server') as mock_server:
+        with patch("asyncio.start_server") as mock_server:
             mock_server_obj = AsyncMock()
             mock_server_obj.sockets = [Mock()]
-            mock_server_obj.sockets[0].getsockname.return_value = ('localhost', 9000)
+            mock_server_obj.sockets[0].getsockname.return_value = ("localhost", 9000)
             mock_server_obj.wait_closed = AsyncMock()
             mock_server.return_value = mock_server_obj
 
@@ -218,16 +207,16 @@ class TestConstraintManager:
         manager = ConstraintManager(mock_device_profiler)
 
         # Should have templates for different evolution types
-        assert 'nightly' in manager.constraint_templates
-        assert 'breakthrough' in manager.constraint_templates
-        assert 'emergency' in manager.constraint_templates
+        assert "nightly" in manager.constraint_templates
+        assert "breakthrough" in manager.constraint_templates
+        assert "emergency" in manager.constraint_templates
 
     def test_resource_availability_check(self, mock_device_profiler):
         """Test resource availability checking"""
         manager = ConstraintManager(mock_device_profiler)
 
         # Test with nightly constraints
-        constraints = manager.constraint_templates['nightly']
+        constraints = manager.constraint_templates["nightly"]
         available = manager._check_resource_availability(constraints)
 
         # Should be available with our mock data
@@ -252,8 +241,8 @@ class TestAdaptiveLoader:
         loader = AdaptiveLoader(mock_device_profiler, constraint_manager)
 
         # Should have some built-in variants
-        assert 'base_evolution_model' in loader.model_variants
-        variants = loader.model_variants['base_evolution_model']
+        assert "base_evolution_model" in loader.model_variants
+        variants = loader.model_variants["base_evolution_model"]
         assert len(variants) > 0
 
     def test_strategy_scoring(self, mock_device_profiler):
@@ -262,17 +251,18 @@ class TestAdaptiveLoader:
         loader = AdaptiveLoader(mock_device_profiler, constraint_manager)
 
         # Get a variant to test
-        variants = loader.model_variants['base_evolution_model']
+        variants = loader.model_variants["base_evolution_model"]
         variant = variants[0]
 
         # Create mock context
         from src.core.resources.adaptive_loader import LoadingContext
+
         context = LoadingContext(
             task_type="nightly",
             priority_level=2,
             max_loading_time_seconds=120.0,
             quality_preference=0.7,
-            resource_constraints=constraint_manager.default_constraints
+            resource_constraints=constraint_manager.default_constraints,
         )
 
         # Test scoring
@@ -291,14 +281,13 @@ class TestInfrastructureAwareEvolution:
 
         config = InfrastructureConfig(
             enable_p2p=False,  # Disable P2P for testing
-            enable_resource_monitoring=False  # Disable monitoring for testing
+            enable_resource_monitoring=False,  # Disable monitoring for testing
         )
 
         system = InfrastructureAwareEvolution(config)
 
         # Test initialization without actual hardware dependencies
-        with patch.object(system, 'device_profiler'), \
-                patch.object(system, 'dual_evolution'):
+        with patch.object(system, "device_profiler"), patch.object(system, "dual_evolution"):
 
             # Mock the initialization
             system.system_initialized = True
@@ -306,9 +295,9 @@ class TestInfrastructureAwareEvolution:
 
             status = system.get_infrastructure_status()
 
-            assert status['system_initialized'] is True
-            assert status['infrastructure_status'] == "active"
-            assert 'config' in status
+            assert status["system_initialized"] is True
+            assert status["infrastructure_status"] == "active"
+            assert "config" in status
 
     def test_evolution_mode_determination(self):
         """Test evolution mode determination logic"""
@@ -335,11 +324,7 @@ class TestResourceConstrainedEvolution:
         constraint_manager = ConstraintManager(mock_device_profiler)
 
         # Initialize system
-        system = ResourceConstrainedEvolution(
-            mock_device_profiler,
-            resource_monitor,
-            constraint_manager
-        )
+        system = ResourceConstrainedEvolution(mock_device_profiler, resource_monitor, constraint_manager)
 
         assert system.device_profiler == mock_device_profiler
         assert system.resource_monitor == resource_monitor
@@ -352,11 +337,7 @@ class TestResourceConstrainedEvolution:
         resource_monitor = ResourceMonitor(mock_device_profiler)
         constraint_manager = ConstraintManager(mock_device_profiler)
 
-        system = ResourceConstrainedEvolution(
-            mock_device_profiler,
-            resource_monitor,
-            constraint_manager
-        )
+        system = ResourceConstrainedEvolution(mock_device_profiler, resource_monitor, constraint_manager)
 
         # Mock agent
         mock_agent = Mock()
@@ -373,11 +354,7 @@ class TestResourceConstrainedEvolution:
         resource_monitor = ResourceMonitor(mock_device_profiler)
         constraint_manager = ConstraintManager(mock_device_profiler)
 
-        system = ResourceConstrainedEvolution(
-            mock_device_profiler,
-            resource_monitor,
-            constraint_manager
-        )
+        system = ResourceConstrainedEvolution(mock_device_profiler, resource_monitor, constraint_manager)
 
         # Test resource state update
         asyncio.run(system._update_resource_state())
@@ -406,7 +383,7 @@ class TestIntegrationScenarios:
             enable_p2p=False,  # Disable for testing
             enable_resource_monitoring=True,
             enable_resource_constraints=True,
-            enable_adaptive_loading=True
+            enable_adaptive_loading=True,
         )
 
         system = InfrastructureAwareEvolution(config)
@@ -420,9 +397,9 @@ class TestIntegrationScenarios:
         # Test status retrieval
         status = system.get_infrastructure_status()
 
-        assert 'components' in status
-        assert 'stats' in status
-        assert status['system_initialized'] is False  # Not actually initialized
+        assert "components" in status
+        assert "stats" in status
+        assert status["system_initialized"] is False  # Not actually initialized
 
     def test_resource_constraint_workflow(self, mock_device_profiler):
         """Test resource constraint workflow"""
@@ -440,6 +417,7 @@ class TestIntegrationScenarios:
         constraint_manager.unregister_task("test_task")
         active_tasks = constraint_manager.get_active_tasks()
         assert "test_task" not in active_tasks
+
 
 # Integration test for the complete Sprint 6 system
 
@@ -469,7 +447,7 @@ async def test_sprint6_complete_integration():
         enable_p2p=False,  # Disable P2P for testing
         enable_resource_monitoring=True,
         enable_resource_constraints=True,
-        enable_adaptive_loading=True
+        enable_adaptive_loading=True,
     )
 
     evolution_system = InfrastructureAwareEvolution(config)
@@ -485,19 +463,20 @@ async def test_sprint6_complete_integration():
     # 4. Test system status
     status = evolution_system.get_infrastructure_status()
 
-    assert status['system_initialized'] is True
-    assert status['infrastructure_status'] == "active"
-    assert 'components' in status
-    assert 'stats' in status
+    assert status["system_initialized"] is True
+    assert status["infrastructure_status"] == "active"
+    assert "components" in status
+    assert "stats" in status
 
     # 5. Test resource allocation
     allocation = profiler.get_evolution_resource_allocation()
 
-    assert 'memory_mb' in allocation
-    assert 'cpu_percent' in allocation
-    assert allocation['evolution_capable'] is True
+    assert "memory_mb" in allocation
+    assert "cpu_percent" in allocation
+    assert allocation["evolution_capable"] is True
 
     print("✓ Sprint 6 integration test passed - all components work together")
+
 
 if __name__ == "__main__":
     # Run basic integration test

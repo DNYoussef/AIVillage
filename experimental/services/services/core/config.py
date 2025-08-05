@@ -12,12 +12,7 @@ from typing import Any
 
 import yaml
 
-from core.error_handling import (
-    AIVillageException,
-    ErrorCategory,
-    ErrorSeverity,
-    get_component_logger,
-)
+from core.error_handling import AIVillageException, ErrorCategory, ErrorSeverity, get_component_logger
 
 
 class Environment(Enum):
@@ -111,12 +106,8 @@ class UnifiedConfig:
     debug: bool = False
 
     # Service configurations
-    gateway: ServiceConfig = field(
-        default_factory=lambda: ServiceConfig("gateway", port=8000)
-    )
-    twin: ServiceConfig = field(
-        default_factory=lambda: ServiceConfig("twin", port=8001)
-    )
+    gateway: ServiceConfig = field(default_factory=lambda: ServiceConfig("gateway", port=8000))
+    twin: ServiceConfig = field(default_factory=lambda: ServiceConfig("twin", port=8001))
 
     # Infrastructure
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
@@ -178,9 +169,7 @@ class ConfigManager:
                 category=ErrorCategory.CONFIGURATION,
                 severity=ErrorSeverity.CRITICAL,
                 operation="load_config",
-                context={
-                    "config_path": str(self.config_path) if self.config_path else None
-                },
+                context={"config_path": str(self.config_path) if self.config_path else None},
             )
 
     def _load_from_yaml(self, path: Path) -> dict[str, Any]:
@@ -272,18 +261,12 @@ class ConfigManager:
 
         return config
 
-    def _merge_configs(
-        self, base: dict[str, Any], override: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _merge_configs(self, base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
         """Merge configuration dictionaries."""
         result = base.copy()
 
         for key, value in override.items():
-            if (
-                key in result
-                and isinstance(result[key], dict)
-                and isinstance(value, dict)
-            ):
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
                 result[key] = self._merge_configs(result[key], value)
             else:
                 result[key] = value
@@ -298,9 +281,7 @@ class ConfigManager:
             try:
                 environment = Environment(env_str.lower())
             except ValueError:
-                self.logger.warning(
-                    f"Invalid environment: {env_str}, using development"
-                )
+                self.logger.warning(f"Invalid environment: {env_str}, using development")
 
         # Create service configs
         gateway_data = config_data.get("gateway", {})
@@ -317,19 +298,13 @@ class ConfigManager:
 
         # Create other configs
         db_data = config_data.get("database", {})
-        database_config = DatabaseConfig(
-            **{k: v for k, v in db_data.items() if hasattr(DatabaseConfig, k)}
-        )
+        database_config = DatabaseConfig(**{k: v for k, v in db_data.items() if hasattr(DatabaseConfig, k)})
 
         redis_data = config_data.get("redis", {})
-        redis_config = RedisConfig(
-            **{k: v for k, v in redis_data.items() if hasattr(RedisConfig, k)}
-        )
+        redis_config = RedisConfig(**{k: v for k, v in redis_data.items() if hasattr(RedisConfig, k)})
 
         security_data = config_data.get("security", {})
-        security_config = SecurityConfig(
-            **{k: v for k, v in security_data.items() if hasattr(SecurityConfig, k)}
-        )
+        security_config = SecurityConfig(**{k: v for k, v in security_data.items() if hasattr(SecurityConfig, k)})
 
         monitoring_data = config_data.get("monitoring", {})
         monitoring_config = MonitoringConfig(
@@ -337,9 +312,7 @@ class ConfigManager:
         )
 
         ai_data = config_data.get("ai", {})
-        ai_config = AIConfig(
-            **{k: v for k, v in ai_data.items() if hasattr(AIConfig, k)}
-        )
+        ai_config = AIConfig(**{k: v for k, v in ai_data.items() if hasattr(AIConfig, k)})
 
         return UnifiedConfig(
             environment=environment,

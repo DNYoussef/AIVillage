@@ -1,16 +1,15 @@
 """Edge case tests for Sprint 6 infrastructure components"""
 
-import asyncio
 import time
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 from src.core.p2p.p2p_node import P2PNode, PeerCapabilities
-from src.core.resources.adaptive_loader import AdaptiveLoader, LoadingStrategy
-from src.core.resources.constraint_manager import ConstraintManager, ResourceConstraints
-from src.core.resources.device_profiler import DeviceProfiler, DeviceType, PowerState, ResourceSnapshot, ThermalState
-from src.core.resources.resource_monitor import MonitoringMode, ResourceMonitor
+from src.core.resources.adaptive_loader import AdaptiveLoader
+from src.core.resources.constraint_manager import ConstraintManager
+from src.core.resources.device_profiler import DeviceProfiler, DeviceType, ThermalState
+from src.core.resources.resource_monitor import ResourceMonitor
 
 
 class TestEdgeCases:
@@ -21,7 +20,7 @@ class TestEdgeCases:
         profiler = DeviceProfiler()
 
         # Mock a low-memory device (like old phone with 1GB RAM)
-        with patch.object(profiler, '_get_memory_info') as mock_memory:
+        with patch.object(profiler, "_get_memory_info") as mock_memory:
             mock_memory.return_value = (1.0, 0.8, 0.2)  # 1GB total, 0.8GB used, 0.2GB available
 
             snapshot = profiler.take_snapshot()
@@ -35,10 +34,11 @@ class TestEdgeCases:
         profiler = DeviceProfiler()
 
         # Mock thermal throttling conditions
-        with patch.object(profiler, '_get_cpu_temperature') as mock_temp, \
-                patch.object(profiler, '_get_cpu_percent') as mock_cpu:
+        with patch.object(profiler, "_get_cpu_temperature") as mock_temp, patch.object(
+            profiler, "_get_cpu_percent"
+        ) as mock_cpu:
             mock_temp.return_value = 88.0  # Critical temperature
-            mock_cpu.return_value = 95.0   # High CPU usage
+            mock_cpu.return_value = 95.0  # High CPU usage
 
             snapshot = profiler.take_snapshot()
 
@@ -58,7 +58,7 @@ class TestEdgeCases:
         # Mock current snapshot showing high resource usage
         snapshot = Mock()
         snapshot.memory_percent = 95.0  # Very high memory usage
-        snapshot.cpu_percent = 90.0     # Very high CPU usage
+        snapshot.cpu_percent = 90.0  # Very high CPU usage
         snapshot.memory_available = 100 * 1024 * 1024  # Only 100MB available
         snapshot.is_resource_constrained = True
 
@@ -72,7 +72,7 @@ class TestEdgeCases:
         assert success is False
 
         # Should report resource unavailability
-        constraints = manager.constraint_templates['nightly']
+        constraints = manager.constraint_templates["nightly"]
         available = manager._check_resource_availability(constraints)
         assert available is False
 
@@ -82,7 +82,7 @@ class TestEdgeCases:
         node = P2PNode(node_id="test_node")
 
         # Mock server startup failure
-        with patch('asyncio.start_server') as mock_server:
+        with patch("asyncio.start_server") as mock_server:
             mock_server.side_effect = OSError("Address already in use")
 
             with pytest.raises(OSError):
@@ -115,7 +115,7 @@ class TestEdgeCases:
             await monitor._process_snapshot_update(snapshot)
 
         # Should detect high volatility
-        cpu_history = monitor.resource_history.get('cpu_percent', [])
+        cpu_history = monitor.resource_history.get("cpu_percent", [])
         assert len(cpu_history) > 0
 
     def test_adaptive_loader_no_suitable_variants(self):
@@ -141,12 +141,13 @@ class TestEdgeCases:
 
         # Create loading context with very strict constraints
         from src.core.resources.adaptive_loader import LoadingContext
+
         context = LoadingContext(
             task_type="nightly",
             priority_level=1,
             max_loading_time_seconds=30.0,  # Very short time
-            quality_preference=0.9,         # High quality required
-            resource_constraints=constraint_manager.constraint_templates['emergency']
+            quality_preference=0.9,  # High quality required
+            resource_constraints=constraint_manager.constraint_templates["emergency"],
         )
 
         # Should not find any suitable variants
@@ -164,7 +165,7 @@ class TestEdgeCases:
             cpu_cores=1,
             ram_mb=512,  # 512MB RAM
             evolution_capacity=0.1,
-            available_for_evolution=True
+            available_for_evolution=True,
         )
 
         assert low_spec.is_suitable_for_evolution() is False
@@ -176,7 +177,7 @@ class TestEdgeCases:
             cpu_cores=16,
             ram_mb=32768,  # 32GB RAM
             evolution_capacity=0.95,
-            available_for_evolution=False  # Not available despite high specs
+            available_for_evolution=False,  # Not available despite high specs
         )
 
         assert high_spec_busy.is_suitable_for_evolution() is False
@@ -187,7 +188,7 @@ class TestEdgeCases:
             cpu_cores=4,
             ram_mb=4096,  # 4GB RAM
             evolution_capacity=0.49,  # Just below 50% threshold
-            available_for_evolution=True
+            available_for_evolution=True,
         )
 
         # Should be barely suitable
@@ -314,11 +315,7 @@ class TestCriticalPaths:
         start_time = time.time()
 
         for i in range(10):
-            await node._handle_message({
-                "type": "test_message",
-                "id": f"msg_{i}",
-                "data": {"test": True}
-            }, "test_peer")
+            await node._handle_message({"type": "test_message", "id": f"msg_{i}", "data": {"test": True}}, "test_peer")
 
         processing_time = time.time() - start_time
 

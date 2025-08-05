@@ -13,12 +13,10 @@ import shutil
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("restructure.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("restructure.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
+
 
 class AIVillageRestructurer:
     def __init__(self, base_path: str):
@@ -43,7 +41,7 @@ class AIVillageRestructurer:
             "tools/scripts",
             "tools/benchmarks",
             "tools/examples",
-            "mobile"
+            "mobile",
         ]
 
         for dir_path in new_dirs:
@@ -101,7 +99,7 @@ class AIVillageRestructurer:
             "core": "src/core",
             "services": "src/services",
             "ingestion": "src/ingestion",
-            "hyperag": "src/hyperag"
+            "hyperag": "src/hyperag",
         }
 
         for source_name, target_path in production_dirs.items():
@@ -121,9 +119,7 @@ class AIVillageRestructurer:
             return
 
         # Stable components go to src/agent_forge/
-        stable_components = [
-            "core", "evaluation", "deployment", "utils", "orchestration"
-        ]
+        stable_components = ["core", "evaluation", "deployment", "utils", "orchestration"]
 
         # Create src/agent_forge structure
         src_agent_forge = self.base_path / "src" / "agent_forge"
@@ -138,9 +134,19 @@ class AIVillageRestructurer:
 
         # Experimental components go to experimental/
         experimental_components = [
-            "self_awareness", "bakedquietiot", "sleepdream", "foundation",
-            "prompt_baking_legacy", "tool_baking", "adas", "optim",
-            "svf", "meta", "training", "evolution", "compression"
+            "self_awareness",
+            "bakedquietiot",
+            "sleepdream",
+            "foundation",
+            "prompt_baking_legacy",
+            "tool_baking",
+            "adas",
+            "optim",
+            "svf",
+            "meta",
+            "training",
+            "evolution",
+            "compression",
         ]
 
         exp_agent_forge = self.base_path / "experimental" / "agent_forge_experimental"
@@ -174,11 +180,7 @@ class AIVillageRestructurer:
         """Move tools, scripts, benchmarks, examples."""
         logger.info("Restructuring tools...")
 
-        tools_mapping = {
-            "scripts": "tools/scripts",
-            "benchmarks": "tools/benchmarks",
-            "examples": "tools/examples"
-        }
+        tools_mapping = {"scripts": "tools/scripts", "benchmarks": "tools/benchmarks", "examples": "tools/examples"}
 
         for source_name, target_path in tools_mapping.items():
             source = self.base_path / source_name
@@ -221,8 +223,14 @@ class AIVillageRestructurer:
 
         # Try to remove potentially empty directories
         empty_candidates = [
-            "agent_forge", "experimental", "scripts", "benchmarks",
-            "examples", "production", "digital_twin", "mcp_servers"
+            "agent_forge",
+            "experimental",
+            "scripts",
+            "benchmarks",
+            "examples",
+            "production",
+            "digital_twin",
+            "mcp_servers",
         ]
 
         for candidate in empty_candidates:
@@ -234,10 +242,7 @@ class AIVillageRestructurer:
         """Generate restructuring report."""
         report = {
             "timestamp": datetime.now().isoformat(),
-            "summary": {
-                "items_moved": len(self.moved_items),
-                "errors": len(self.errors)
-            },
+            "summary": {"items_moved": len(self.moved_items), "errors": len(self.errors)},
             "moved_items": self.moved_items,
             "errors": self.errors,
             "new_structure": {
@@ -245,8 +250,8 @@ class AIVillageRestructurer:
                 "experimental/": "Experimental and prototype code",
                 "tools/": "Scripts, benchmarks, and examples",
                 "tests/": "Test suites",
-                "mobile/": "Mobile projects (placeholder)"
-            }
+                "mobile/": "Mobile projects (placeholder)",
+            },
         }
 
         report_file = self.base_path / "restructure_report.json"
@@ -303,6 +308,7 @@ class AIVillageRestructurer:
             logger.error(f"Critical error during restructuring: {e!s}")
             raise
 
+
 def main():
     print("=== AIVillage Codebase Restructuring ===")
 
@@ -329,6 +335,7 @@ def main():
     print("Restructuring complete!")
 
     return report
+
 
 if __name__ == "__main__":
     main()

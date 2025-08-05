@@ -14,14 +14,13 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 try:
     from src.compression.simple_quantizer import CompressionError, SimpleQuantizer
-    from src.compression.test_model_generator import (
-        create_mixed_model,
-        create_test_model,
-    )
+    from src.compression.test_model_generator import create_mixed_model, create_test_model
+
     print("[SUCCESS] Compression modules imported successfully")
 except ImportError as e:
     print(f"[ERROR] Import error: {e}")
     exit(1)
+
 
 def demo_basic_compression():
     """Demo basic model compression."""
@@ -53,6 +52,7 @@ def demo_basic_compression():
     except CompressionError as e:
         print(f"[ERROR] Compression failed: {e}")
 
+
 def demo_mobile_pipeline():
     """Demo complete mobile deployment pipeline."""
     print("\n[MOBILE] Demo 2: Mobile Deployment Pipeline")
@@ -68,6 +68,7 @@ def demo_mobile_pipeline():
         # Save as "training" model
         model_path = temp_path / "trained_model.pt"
         import torch
+
         torch.save(model, model_path)
         original_size_mb = model_path.stat().st_size / 1024 / 1024
         print(f"Saved training model: {original_size_mb:.2f} MB")
@@ -77,10 +78,7 @@ def demo_mobile_pipeline():
         quantizer = SimpleQuantizer(target_compression_ratio=3.5)
 
         try:
-            mobile_path = quantizer.compress_for_mobile(
-                str(model_path),
-                output_dir=str(temp_path / "mobile_deploy")
-            )
+            mobile_path = quantizer.compress_for_mobile(str(model_path), output_dir=str(temp_path / "mobile_deploy"))
 
             mobile_size_mb = Path(mobile_path).stat().st_size / 1024 / 1024
             actual_ratio = original_size_mb / mobile_size_mb
@@ -97,6 +95,7 @@ def demo_mobile_pipeline():
 
         except CompressionError as e:
             print(f"[ERROR] Mobile pipeline failed: {e}")
+
 
 def demo_compression_limits():
     """Demo compression limitations and error handling."""
@@ -120,6 +119,7 @@ def demo_compression_limits():
     stats = quantizer_realistic.get_compression_stats()
     print(f"   Realistic compression achieved: {stats['compression_ratio']:.2f}x")
 
+
 def main():
     """Run all compression demos."""
     print("[FIRE] Real PyTorch Model Compression Demo")
@@ -142,7 +142,9 @@ def main():
     except Exception as e:
         print(f"\n[CRASH] Demo failed with error: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

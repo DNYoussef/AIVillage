@@ -1,9 +1,6 @@
 """Comprehensive tests for P2P communication infrastructure."""
 
-import asyncio
 import time
-from typing import Any, Dict
-from unittest.mock import AsyncMock, Mock, patch
 
 import numpy as np
 import pytest
@@ -12,7 +9,7 @@ import pytest
 from src.production.communications.p2p import DeviceMesh, P2PNode, TensorStreaming
 from src.production.communications.p2p.device_mesh import ConnectionType, MeshProtocol
 from src.production.communications.p2p.p2p_node import MessageType, NodeStatus, P2PMessage, PeerInfo
-from src.production.communications.p2p.tensor_streaming import CompressionType, StreamingConfig, TensorFormat
+from src.production.communications.p2p.tensor_streaming import CompressionType, StreamingConfig
 from src.production.communications.p2p_protocol import P2PCapabilities, P2PCommunicationProtocol
 
 
@@ -56,7 +53,7 @@ class TestP2PNode:
             message_type=MessageType.HEARTBEAT,
             sender_id="sender",
             receiver_id="receiver",
-            payload={"test": "data", "timestamp": time.time()}
+            payload={"test": "data", "timestamp": time.time()},
         )
 
         # Test message structure
@@ -75,12 +72,7 @@ class TestP2PNode:
         assert "127.0.0.1:8005" in node.known_addresses
 
         # Test peer info
-        peer_info = PeerInfo(
-            peer_id="peer-1",
-            address="127.0.0.1",
-            port=8005,
-            status=NodeStatus.CONNECTED
-        )
+        peer_info = PeerInfo(peer_id="peer-1", address="127.0.0.1", port=8005, status=NodeStatus.CONNECTED)
 
         node.peers["peer-1"] = peer_info
 
@@ -193,9 +185,7 @@ class TestTensorStreaming:
         # Test numpy array serialization
         test_array = np.random.rand(10, 10).astype(np.float32)
 
-        serialized_data, metadata = await streaming._serialize_tensor(
-            test_array, "test-tensor", "test_tensor", {}
-        )
+        serialized_data, metadata = await streaming._serialize_tensor(test_array, "test-tensor", "test_tensor", {})
 
         assert isinstance(serialized_data, bytes)
         assert metadata.name == "test_tensor"
@@ -368,24 +358,16 @@ class TestIntegration:
     async def test_mesh_network_formation(self):
         """Test mesh network formation (simulated)."""
         # Create nodes
-        nodes = [
-            P2PNode(node_id=f"mesh-node-{i}", port=8050 + i)
-            for i in range(3)
-        ]
+        nodes = [P2PNode(node_id=f"mesh-node-{i}", port=8050 + i) for i in range(3)]
 
         # Create mesh networks
-        meshes = [
-            DeviceMesh(node=node, protocol=MeshProtocol.OPTIMIZED_LINK_STATE)
-            for node in nodes
-        ]
+        meshes = [DeviceMesh(node=node, protocol=MeshProtocol.OPTIMIZED_LINK_STATE) for node in nodes]
 
         # Simulate mesh connections
         for i, mesh in enumerate(meshes):
             for j, other_node in enumerate(nodes):
                 if i != j:
-                    mesh.add_mesh_peer(
-                        other_node.node_id, ConnectionType.TCP_IP
-                    )
+                    mesh.add_mesh_peer(other_node.node_id, ConnectionType.TCP_IP)
 
         # Verify mesh state
         for mesh in meshes:
@@ -418,7 +400,7 @@ class TestIntegration:
         try:
             await protocol.send_message(message)
             # Message should be queued in standard protocol
-        except Exception as e:
+        except Exception:
             # May fail due to missing setup, but structure should be correct
             assert "Message" in str(type(message))
 
@@ -467,9 +449,7 @@ class TestErrorHandling:
 
         try:
             # This should handle the error gracefully
-            result = await streaming._serialize_tensor(
-                UnsupportedType(), "test", "unsupported", {}
-            )
+            result = await streaming._serialize_tensor(UnsupportedType(), "test", "unsupported", {})
             # Should fallback to pickle
             assert result is not None
         except Exception as e:
@@ -530,7 +510,7 @@ class TestPerformance:
                 message_type=MessageType.DATA,
                 sender_id="sender",
                 receiver_id="receiver",
-                payload={"index": i, "data": f"message-{i}"}
+                payload={"index": i, "data": f"message-{i}"},
             )
             messages.append(message)
 

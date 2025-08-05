@@ -1,7 +1,7 @@
 import math
 
-import torch
 from scipy.optimize import minimize
+import torch
 
 
 def fit_hyperfunc(values: torch.Tensor):

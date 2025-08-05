@@ -95,9 +95,7 @@ class SageQueryProcessor(QueryProcessor):
         reasoning_result = self._handle_component_result(
             reasoning_result, "advanced reasoning", "No reasoning insights available"
         )
-        rag_result = self._handle_component_result(
-            rag_result, "RAG system", "No RAG results available"
-        )
+        rag_result = self._handle_component_result(rag_result, "RAG system", "No RAG results available")
 
         # Construct enhanced response
         enhanced_query = f"""
@@ -116,9 +114,7 @@ Synthesis: {self._synthesize_results(query, activated_knowledge, cognitive_conte
 
         return enhanced_query.strip()
 
-    def _handle_component_result(
-        self, result: Any, component_name: str, fallback: str
-    ) -> str:
+    def _handle_component_result(self, result: Any, component_name: str, fallback: str) -> str:
         """Handle individual component results with error checking."""
         if isinstance(result, Exception):
             self.logger.warning(f"{component_name} failed: {result}")
@@ -170,9 +166,7 @@ Synthesis: {self._synthesize_results(query, activated_knowledge, cognitive_conte
             embeddings, entities, relations = features
 
             # Activate latent space with all features
-            result = await self.latent_space_activation.activate(
-                content, embeddings, entities, relations
-            )
+            result = await self.latent_space_activation.activate(content, embeddings, entities, relations)
 
             return result or "Latent space activated successfully"
 
@@ -242,35 +236,25 @@ Synthesis: {self._synthesize_results(query, activated_knowledge, cognitive_conte
     # Async wrapper methods for synchronous operations
     async def _async_encode(self, content: str):
         """Async wrapper for embedding encoding."""
-        return await asyncio.get_event_loop().run_in_executor(
-            None, self.embedding_model.encode, content
-        )
+        return await asyncio.get_event_loop().run_in_executor(None, self.embedding_model.encode, content)
 
     async def _async_recognize_entities(self, content: str):
         """Async wrapper for entity recognition."""
-        return await asyncio.get_event_loop().run_in_executor(
-            None, self.named_entity_recognizer.recognize, content
-        )
+        return await asyncio.get_event_loop().run_in_executor(None, self.named_entity_recognizer.recognize, content)
 
     async def _async_extract_relations(self, content: str):
         """Async wrapper for relation extraction."""
-        return await asyncio.get_event_loop().run_in_executor(
-            None, self.relation_extractor.extract, content
-        )
+        return await asyncio.get_event_loop().run_in_executor(None, self.relation_extractor.extract, content)
 
     async def _async_chain_of_thought(self, content: str):
         """Async wrapper for chain of thought processing."""
-        return await asyncio.get_event_loop().run_in_executor(
-            None, self.chain_of_thought.process, content
-        )
+        return await asyncio.get_event_loop().run_in_executor(None, self.chain_of_thought.process, content)
 
     async def _async_tree_of_thoughts(self, task: dict[str, Any]):
         """Async wrapper for tree of thoughts processing."""
         if asyncio.iscoroutinefunction(self.tree_of_thoughts.process):
             return await self.tree_of_thoughts.process(task)
-        return await asyncio.get_event_loop().run_in_executor(
-            None, self.tree_of_thoughts.process, task
-        )
+        return await asyncio.get_event_loop().run_in_executor(None, self.tree_of_thoughts.process, task)
 
 
 # Backward compatibility wrapper
@@ -282,9 +266,7 @@ class QueryProcessor:
     """
 
     def __init__(self, rag_system, latent_space_activation, cognitive_nexus):
-        self._standardized_processor = SageQueryProcessor(
-            rag_system, latent_space_activation, cognitive_nexus
-        )
+        self._standardized_processor = SageQueryProcessor(rag_system, latent_space_activation, cognitive_nexus)
 
     async def process_query(self, query: str) -> str:
         """Backward compatible process_query method."""
@@ -342,9 +324,7 @@ if __name__ == "__main__":
                 return f"Cognitive insights for: {content[:50]}..."
 
         # Create processor with mocks
-        processor = SageQueryProcessor(
-            MockRAGSystem(), MockLatentSpace(), MockCognitiveNexus()
-        )
+        processor = SageQueryProcessor(MockRAGSystem(), MockLatentSpace(), MockCognitiveNexus())
 
         # Test processing
         test_query = "What are the implications of artificial general intelligence?"
@@ -358,9 +338,7 @@ if __name__ == "__main__":
         # Test metrics
         print("\nMetrics:")
         print(f"Success Rate: {processor.success_rate:.1f}%")
-        print(
-            f"Average Processing Time: {processor.metrics.get('avg_processing_time', 0):.2f}ms"
-        )
+        print(f"Average Processing Time: {processor.metrics.get('avg_processing_time', 0):.2f}ms")
 
     # Run test
     asyncio.run(test_standardized_processor())

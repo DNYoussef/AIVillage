@@ -4,12 +4,12 @@ This module implements intelligent model partitioning across heterogeneous devic
 building on Sprint 6's P2P communication and resource management systems.
 """
 
-import logging
-import time
-import uuid
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import time
 from typing import Any
+import uuid
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 

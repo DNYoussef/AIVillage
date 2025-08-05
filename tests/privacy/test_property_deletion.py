@@ -1,10 +1,10 @@
 import os
 import uuid
 
-import pytest
-import requests
 from hypothesis import given
 from hypothesis import strategies as st
+import pytest
+import requests
 
 GW = os.getenv("GW_URL", "http://localhost:8000")
 
@@ -25,7 +25,5 @@ def test_any_message_is_erasable(msg):
     resp = requests.delete(f"{GW.replace(':8000', ':8001')}/v1/user/{uid}")
     assert resp.ok
     assert resp.json()["deleted_conversations"] >= 1
-    new = requests.post(
-        f"{GW}/v1/chat", json={"message": "hello", "user_id": uid}
-    ).json()
+    new = requests.post(f"{GW}/v1/chat", json={"message": "hello", "user_id": uid}).json()
     assert new["conversation_id"] != r.json()["conversation_id"]

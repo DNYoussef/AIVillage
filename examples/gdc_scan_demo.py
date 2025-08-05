@@ -61,9 +61,7 @@ async def demo_gdc_scanning():
     try:
         # This would normally connect to Neo4j
         print("# Example: Connect to Neo4j and scan for violations")
-        print(
-            "async with GDCExtractorContext('bolt://localhost:7687', ('neo4j', 'password')) as extractor:"
-        )
+        print("async with GDCExtractorContext('bolt://localhost:7687', ('neo4j', 'password')) as extractor:")
         print("    violations = await extractor.scan_all(limit=50)")
         print("    print(f'Found {len(violations)} violations')")
         print("")

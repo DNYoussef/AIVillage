@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""
-Demonstration of the documentation cleanup process
+"""Demonstration of the documentation cleanup process
 This script shows the key steps that would be executed
 """
 
-import os
-import shutil
 from pathlib import Path
+
 
 def demonstrate_cleanup():
     base_path = Path.cwd()
@@ -29,7 +27,7 @@ def demonstrate_cleanup():
         "docs/components/",
         "docs/development/",
         "docs/reference/",
-        "deprecated/old_reports/"
+        "deprecated/old_reports/",
     ]
 
     for directory in dirs_created:
@@ -42,34 +40,26 @@ def demonstrate_cleanup():
     master_index = base_path / "docs" / "README.md"
     index_exists = "✅" if master_index.exists() else "⏳"
     print(f"3. MASTER DOCUMENTATION INDEX: {index_exists}")
-    print(f"   Location: docs/README.md")
-    print(f"   Content: Navigation structure with categorical organization\n")
+    print("   Location: docs/README.md")
+    print("   Content: Navigation structure with categorical organization\n")
 
     # Step 4: Show categorization strategy
     print("4. FILE CATEGORIZATION STRATEGY:")
     categories = {
         "Archive (deprecated/old_reports/)": [
-            "*_REPORT.md", "*_SUMMARY.md", "*_COMPLETE.md",
-            "*_STATUS.md", "*_PLAN.md", "*_CHECKLIST.md"
+            "*_REPORT.md",
+            "*_SUMMARY.md",
+            "*_COMPLETE.md",
+            "*_STATUS.md",
+            "*_PLAN.md",
+            "*_CHECKLIST.md",
         ],
-        "Architecture (docs/architecture/)": [
-            "architecture*.md", "system_overview.md", "design/*"
-        ],
-        "Guides (docs/guides/)": [
-            "onboarding.md", "*_GUIDE.md", "usage_examples.md"
-        ],
-        "Components (docs/components/)": [
-            "mesh/*", "rag/*", "agent_forge*.md"
-        ],
-        "Development (docs/development/)": [
-            "testing*.md", "BRANCHING_STRATEGY.md"
-        ],
-        "Reference (docs/reference/)": [
-            "roadmap.md", "TODO_1.md"
-        ],
-        "Root Docs (docs/)": [
-            "feature_matrix.md"
-        ]
+        "Architecture (docs/architecture/)": ["architecture*.md", "system_overview.md", "design/*"],
+        "Guides (docs/guides/)": ["onboarding.md", "*_GUIDE.md", "usage_examples.md"],
+        "Components (docs/components/)": ["mesh/*", "rag/*", "agent_forge*.md"],
+        "Development (docs/development/)": ["testing*.md", "BRANCHING_STRATEGY.md"],
+        "Reference (docs/reference/)": ["roadmap.md", "TODO_1.md"],
+        "Root Docs (docs/)": ["feature_matrix.md"],
     }
 
     for category, patterns in categories.items():
@@ -90,10 +80,10 @@ def demonstrate_cleanup():
     total_archive = len(report_files) + len(summary_files) + len(status_files) + len(plan_files)
 
     print(f"   📁 Archive {total_archive} report/summary files")
-    print(f"   🗂️  Organize ~80 docs/ files into categories")
-    print(f"   🗑️  Remove 5+ duplicate README variants")
-    print(f"   🧹 Clean 5 hidden directories")
-    print(f"   🔗 Update cross-references and links\n")
+    print("   🗂️  Organize ~80 docs/ files into categories")
+    print("   🗑️  Remove 5+ duplicate README variants")
+    print("   🧹 Clean 5 hidden directories")
+    print("   🔗 Update cross-references and links\n")
 
     # Step 6: Show benefits
     print("6. BENEFITS ACHIEVED:")
@@ -102,7 +92,7 @@ def demonstrate_cleanup():
         "Clear navigation with categorical structure",
         "Historical documentation preserved in archive",
         "Improved discoverability and maintainability",
-        "Consistent documentation standards"
+        "Consistent documentation standards",
     ]
 
     for benefit in benefits:
@@ -121,6 +111,7 @@ def demonstrate_cleanup():
     print("\n=== TO COMPLETE CLEANUP ===")
     print("Run: python cleanup_documentation.py")
     print("This will execute all file moves and cleanup operations.")
+
 
 if __name__ == "__main__":
     demonstrate_cleanup()

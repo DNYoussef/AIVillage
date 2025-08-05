@@ -29,6 +29,7 @@ def update_file(file_path, replacements):
         print(f"Error updating {file_path}: {e}")
         return False
 
+
 def main():
     """Update all config/ references"""
     # Define replacements
@@ -42,7 +43,7 @@ def main():
         "'config/": "'configs/",
         "`config/": "`configs/",
         "./config/": "./configs/",
-        "Check config/": "Check configs/"
+        "Check config/": "Check configs/",
     }
 
     # Files to update
@@ -86,6 +87,7 @@ def main():
             print(f"File not found: {file_path}")
 
     print(f"\nUpdated {updated_count} files with config path references")
+
 
 if __name__ == "__main__":
     main()
