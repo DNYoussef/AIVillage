@@ -176,29 +176,29 @@ jobs:
         else
           echo "No unit tests found, creating basic validation test"
           cat > compression_validation.py << 'EOF'
-import sys
-import importlib.util
+          import sys
+          import importlib.util
 
-print('=== Compression Module Validation ===')
+          print('=== Compression Module Validation ===')
 
-# Try to import compression modules
-modules_to_check = [
-    'agent_forge.compression',
-    'agent_forge.compression.stage1_config',
-    'compression'
-]
+          # Try to import compression modules
+          modules_to_check = [
+              'agent_forge.compression',
+              'agent_forge.compression.stage1_config',
+              'compression'
+          ]
 
-for module_name in modules_to_check:
-    try:
-        module = importlib.import_module(module_name)
-        print(f'✅ {module_name}: imported successfully')
-    except ImportError as e:
-        print(f'❌ {module_name}: {e}')
-    except Exception as e:
-        print(f'⚠️  {module_name}: {e}')
+          for module_name in modules_to_check:
+              try:
+                  module = importlib.import_module(module_name)
+                  print(f'✅ {module_name}: imported successfully')
+              except ImportError as e:
+                  print(f'❌ {module_name}: {e}')
+              except Exception as e:
+                  print(f'⚠️  {module_name}: {e}')
 
-print('Validation complete')
-EOF
+          print('Validation complete')
+          EOF
           python compression_validation.py
         fi
 
@@ -227,32 +227,32 @@ EOF
             || echo "Some integration tests failed"
         else
           echo "No integration tests found, running basic compression workflow test"
-          python -c "
-import sys
-print('=== Basic Compression Workflow Test ===')
+            python -c "
+            import sys
+            print('=== Basic Compression Workflow Test ===')
 
-try:
-    # Test basic imports
-    import torch
-    print('✅ PyTorch available')
+            try:
+                # Test basic imports
+                import torch
+                print('✅ PyTorch available')
 
-    import numpy as np
-    print('✅ NumPy available')
+                import numpy as np
+                print('✅ NumPy available')
 
-    # Test basic tensor operations
-    x = torch.randn(10, 20)
-    print(f'✅ Created test tensor: {x.shape}')
+                # Test basic tensor operations
+                x = torch.randn(10, 20)
+                print(f'✅ Created test tensor: {x.shape}')
 
-    # Test numpy conversion
-    x_np = x.numpy()
-    print(f'✅ Converted to numpy: {x_np.shape}')
+                # Test numpy conversion
+                x_np = x.numpy()
+                print(f'✅ Converted to numpy: {x_np.shape}')
 
-    print('✅ Basic compression environment is working')
+                print('✅ Basic compression environment is working')
 
-except Exception as e:
-    print(f'❌ Basic workflow failed: {e}')
-    sys.exit(1)
-"
+            except Exception as e:
+                print(f'❌ Basic workflow failed: {e}')
+                sys.exit(1)
+            "
         fi
 
     - name: Upload test coverage
@@ -306,53 +306,54 @@ except Exception as e:
 
     - name: Run basic benchmark
       run: |
-        python -c "
-import torch
-import numpy as np
-import time
-import json
+        cat > basic_benchmark.py <<'PY'
+        import torch
+        import numpy as np
+        import time
+        import json
 
-print('=== Simple Compression Benchmark ===')
+        print('=== Simple Compression Benchmark ===')
 
-# Create test data
-test_sizes = [(32, 64), (64, 128)]
-results = []
+        # Create test data
+        test_sizes = [(32, 64), (64, 128)]
+        results = []
 
-for rows, cols in test_sizes:
-    print(f'Testing {rows}x{cols} tensor...')
+        for rows, cols in test_sizes:
+            print(f'Testing {rows}x{cols} tensor...')
 
-    # Create random tensor
-    x = torch.randn(rows, cols, dtype=torch.float32)
+            # Create random tensor
+            x = torch.randn(rows, cols, dtype=torch.float32)
 
-    # Time basic operations
-    start_time = time.time()
+            # Time basic operations
+            start_time = time.time()
 
-    # Simulate compression (quantization)
-    x_int8 = (x * 127).clamp(-128, 127).to(torch.int8)
-    x_restored = x_int8.float() / 127
+            # Simulate compression (quantization)
+            x_int8 = (x * 127).clamp(-128, 127).to(torch.int8)
+            x_restored = x_int8.float() / 127
 
-    end_time = time.time()
+            end_time = time.time()
 
-    # Calculate metrics
-    compression_time = end_time - start_time
-    error = torch.mean((x - x_restored) ** 2).item()
+            # Calculate metrics
+            compression_time = end_time - start_time
+            error = torch.mean((x - x_restored) ** 2).item()
 
-    result = {
-        'size': f'{rows}x{cols}',
-        'compression_time': compression_time,
-        'mse_error': error,
-        'success': True
-    }
+            result = {
+                'size': f'{rows}x{cols}',
+                'compression_time': compression_time,
+                'mse_error': error,
+                'success': True
+            }
 
-    results.append(result)
-    print(f'  Time: {compression_time:.4f}s, MSE: {error:.6f}')
+            results.append(result)
+            print(f'  Time: {compression_time:.4f}s, MSE: {error:.6f}')
 
-# Save results
-with open('benchmark_results.json', 'w') as f:
-    json.dump(results, f, indent=2)
+        # Save results
+        with open('benchmark_results.json', 'w') as f:
+            json.dump(results, f, indent=2)
 
-print(f'✅ Completed {len(results)} benchmark tests')
-"
+        print(f'✅ Completed {len(results)} benchmark tests')
+        PY
+        python basic_benchmark.py
 
     - name: Upload benchmark results
       uses: actions/upload-artifact@v3

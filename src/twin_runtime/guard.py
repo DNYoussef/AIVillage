@@ -32,6 +32,7 @@ class SecurityRiskGate:
             (r"__import__", "python_import"),
             (r"os\.system", "os_system"),
             (r"subprocess", "subprocess"),
+            (r"\.\./", "path_traversal"),
         ]
 
         # Sensitive data patterns

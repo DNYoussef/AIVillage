@@ -1,0 +1,18 @@
+src/ingestion/connectors/amazon_orders.py:# from chromadb import PersistentClient  # TODO: Fix attrs dependency issue
+src/monitoring/system_health_dashboard.py:            "TODO",
+src/monitoring/system_health_dashboard.py:            "# TODO",
+src/monitoring/system_health_dashboard.py:            "TODO",
+src/monitoring/system_health_dashboard.py:            "# TODO",
+src/monitoring/system_health_dashboard.py:            "return None  # TODO",
+src/monitoring/system_health_dashboard.py:            "return []  # TODO",
+src/monitoring/system_health_dashboard.py:            "return {}  # TODO",
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:                    memory_usage_mb=0.0,  # TODO: Calculate actual usage
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:                    last_consolidation=None,  # TODO: Track consolidation
+src/mcp_servers/hyperag/protocol.py:        # TODO: Implement actual model registration
+src/agent_forge/adas/migrate_to_secure.py:    create_migration_summary(backup_path, 0)  # TODO: track actual files updated
+src/agent_forge/evolution/__init__.py:# TODO: Re-enable when evolution modules are implemented
+src/agent_forge/forge_orchestrator.py:            "TODO",
+src/agent_forge/forge_orchestrator.py:            "FIXME",
+src/agent_forge/forge_orchestrator.py:        # Collect all TODOs and warnings
+src/agent_forge/forge_orchestrator.py:            logger.info("Implementation TODOs (%d):", len(report["todos"]))
+src/agent_forge/forge_orchestrator.py:                print(f"    TODOs: {len(result.todos)}")

@@ -1,0 +1,364 @@
+src/
+├── __init__.py
+├── agent_forge
+│   ├── __init__.py
+│   ├── adas
+│   │   ├── __init__.py
+│   │   ├── adas.py
+│   │   ├── adas_secure.py
+│   │   ├── migrate_to_secure.py
+│   │   ├── system.py
+│   │   ├── tech_pool.py
+│   │   └── technique_archive.py
+│   ├── adas_self_opt.py
+│   ├── automated_reporting.py
+│   ├── bakedquietiot
+│   │   ├── __init__.py
+│   │   ├── deepbaking.py
+│   │   └── quiet_star.py
+│   ├── benchmark_runner.py
+│   ├── benchmark_suite.py
+│   ├── cli.py
+│   ├── compression
+│   │   ├── __init__.py
+│   │   ├── bitnet.py
+│   │   ├── hyperfn.py
+│   │   ├── seedlm.py
+│   │   └── vptq.py
+│   ├── core
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   └── model.py
+│   ├── deploy_agent.py
+│   ├── deployment
+│   │   ├── __init__.py
+│   │   └── manifest_generator.py
+│   ├── enhanced_orchestrator.py
+│   ├── evaluation
+│   │   ├── __init__.py
+│   │   └── evaluator.py
+│   ├── evolution
+│   │   ├── __init__.py
+│   │   ├── agent_evolution_engine.py
+│   │   ├── evolution_dashboard.py
+│   │   ├── evolution_orchestrator.py
+│   │   ├── meta_learning_engine.py
+│   │   └── safe_code_modifier.py
+│   ├── forge_orchestrator.py
+│   ├── foundation
+│   │   ├── __init__.py
+│   │   ├── bitnet.py
+│   │   └── quiet_star.py
+│   ├── interface_buffer_fix.py
+│   ├── main.py
+│   ├── mastery_loop.py
+│   ├── mcp_refiner.py
+│   ├── meta
+│   │   ├── __init__.py
+│   │   └── geo2z_policy.py
+│   ├── optim
+│   │   ├── __init__.py
+│   │   ├── augmented_adam.py
+│   │   └── grokfast_opt.py
+│   ├── orchestration
+│   │   ├── __init__.py
+│   │   ├── config.py
+│   │   ├── curriculum_integration.py
+│   │   ├── model_config.py
+│   │   ├── openrouter_client.py
+│   │   └── task_router.py
+│   ├── prompt_baking.py
+│   ├── prompt_baking_legacy
+│   │   ├── __init__.py
+│   │   ├── baker.py
+│   │   ├── loader.py
+│   │   └── prompts
+│   ├── quietstar_baker.py
+│   ├── rag_integration.py
+│   ├── requirements.txt
+│   ├── requirements_evomerge.txt
+│   ├── results_analyzer.py
+│   ├── self_awareness
+│   │   ├── __init__.py
+│   │   ├── metacognaitve_eval.py
+│   │   ├── self_guided_metacognative_baking.py
+│   │   └── text_generation.py
+│   ├── self_evolution_engine.py
+│   ├── sleepdream
+│   │   ├── __init__.py
+│   │   └── sleep_dream.py
+│   ├── svf
+│   │   ├── __init__.py
+│   │   ├── ops.py
+│   │   └── svf_ops.py
+│   ├── tool_baking
+│   │   ├── __init__.py
+│   │   ├── communication_prompt_baker.py
+│   │   └── rag_prompt_baker.py
+│   ├── tool_baking.py
+│   ├── training
+│   │   ├── __init__.py
+│   │   └── training.py
+│   ├── unified_pipeline.py
+│   ├── utils
+│   │   ├── __init__.py
+│   │   ├── adas.py
+│   │   ├── expert_vector.py
+│   │   ├── grokfast.py
+│   │   ├── hypercomp.py
+│   │   ├── prompt_baking.py
+│   │   ├── quiet_star.py
+│   │   ├── seedlm.py
+│   │   ├── self_model.py
+│   │   ├── svf.py
+│   │   ├── tool_message.py
+│   │   └── vptq.py
+│   └── version.py
+├── calibration
+│   ├── __init__.py
+│   ├── calibrate.py
+│   ├── conformal.py
+│   └── dataset.py
+├── communications
+│   ├── Dockerfile.credits-api
+│   ├── Dockerfile.credits-worker
+│   ├── __init__.py
+│   ├── a2a_protocol.py
+│   ├── alembic
+│   │   ├── __init__.py
+│   │   ├── env.py
+│   │   ├── script.py.mako
+│   │   └── versions
+│   ├── alembic.ini
+│   ├── community_hub.py
+│   ├── credit_manager.py
+│   ├── credits.py
+│   ├── credits_api.py
+│   ├── credits_ledger.py
+│   ├── earn_shells_worker.py
+│   ├── mcp_client.py
+│   ├── message.py
+│   ├── message_queue.py
+│   ├── prompt_baking.py
+│   ├── protocol.py
+│   ├── requirements.txt
+│   ├── sharder.py
+│   └── test_credits_standalone.py
+├── compression
+│   ├── __init__.py
+│   ├── pipeline.py
+│   ├── simple_quantizer.py
+│   └── test_model_generator.py
+├── core
+│   ├── __init__.py
+│   ├── chat_engine.py
+│   ├── cli.py
+│   ├── communication.py
+│   ├── compression
+│   │   ├── __init__.py
+│   │   ├── advanced_pipeline.py
+│   │   ├── cascade_compressor.py
+│   │   ├── integrated_pipeline.py
+│   │   ├── simple_quantizer.py
+│   │   └── unified_compressor.py
+│   ├── error_handling.py
+│   ├── evidence.py
+│   ├── logging_config.py
+│   ├── p2p
+│   │   ├── __init__.py
+│   │   ├── encryption_layer.py
+│   │   ├── message_protocol.py
+│   │   ├── p2p_node.py
+│   │   ├── peer_discovery.py
+│   │   ├── test_encryption_layer.py
+│   │   ├── test_message_protocol.py
+│   │   └── test_peer_discovery.py
+│   └── resources
+│       ├── __init__.py
+│       ├── adaptive_loader.py
+│       ├── constraint_manager.py
+│       ├── device_profiler.py
+│       └── resource_monitor.py
+├── deployment
+│   ├── __init__.py
+│   └── mobile_compressor.py
+├── digital_twin
+│   ├── __init__.py
+│   ├── core
+│   │   ├── __init__.py
+│   │   └── digital_twin.py
+│   ├── deployment
+│   │   ├── __init__.py
+│   │   └── edge_manager.py
+│   ├── engine
+│   │   ├── __init__.py
+│   │   └── personalized_tutor.py
+│   ├── monitoring
+│   │   ├── __init__.py
+│   │   └── parent_tracker.py
+│   └── security
+│       ├── __init__.py
+│       ├── preference_vault.py
+│       └── shield_validator.py
+├── federated
+│   ├── __init__.py
+│   └── twin_trainer.py
+├── hyperag
+│   ├── __init__.py
+│   └── education
+│       ├── __init__.py
+│       ├── curriculum_graph.py
+│       └── eli5_chain.py
+├── infrastructure
+│   ├── __init__.py
+│   └── p2p
+│       ├── __init__.py
+│       ├── device_mesh.py
+│       ├── p2p_node.py
+│       └── tensor_streaming.py
+├── ingestion
+│   ├── __init__.py
+│   ├── connectors
+│   │   ├── __init__.py
+│   │   ├── amazon_orders.py
+│   │   ├── gmail.py
+│   │   └── whatsapp.py
+│   └── vector_ds.py
+├── mcp_servers
+│   ├── __init__.py
+│   └── hyperag
+│       ├── __init__.py
+│       ├── auth.py
+│       ├── gdc
+│       ├── guardian
+│       ├── lora
+│       ├── mcp_server.py
+│       ├── memory
+│       ├── models.py
+│       ├── planning
+│       ├── protocol.py
+│       ├── repair
+│       ├── requirements.txt
+│       ├── retrieval
+│       ├── secure_database.py
+│       ├── server.py
+│       ├── storage
+│       └── test_server.py
+├── migration
+│   ├── __init__.py
+│   ├── example_bootstrap_config.json
+│   ├── hyperedge_extractor.py
+│   ├── knowledge_graph_bootstrapper.py
+│   └── vector_converter.py
+├── monitoring
+│   ├── __init__.py
+│   ├── alert_config.yaml
+│   ├── alert_manager.py
+│   ├── alerts.yml
+│   ├── canary_monitor.py
+│   ├── dashboard.py
+│   ├── grafana
+│   │   ├── dashboards
+│   │   └── provisioning
+│   ├── prometheus.yml
+│   ├── security_monitor.py
+│   ├── sprint6_monitor.py
+│   ├── system_health_dashboard.py
+│   ├── templates
+│   │   └── dashboard.md.j2
+│   ├── test_monitor.py
+│   └── trend_analyzer.py
+├── nlp
+│   ├── __init__.py
+│   └── named_entity_recognition.py
+├── production
+│   ├── __init__.py
+│   ├── agent_forge
+│   │   ├── __init__.py
+│   │   ├── agent_factory.py
+│   │   ├── evolution
+│   │   ├── templates
+│   │   └── validate_all_agents.py
+│   ├── benchmarking
+│   │   ├── __init__.py
+│   │   └── real_benchmark.py
+│   ├── communications
+│   │   ├── __init__.py
+│   │   ├── p2p
+│   │   └── p2p_protocol.py
+│   ├── compression
+│   │   ├── README.md
+│   │   ├── __init__.py
+│   │   ├── compression
+│   │   ├── compression_pipeline.py
+│   │   ├── hyper_compression.py
+│   │   ├── model_compression
+│   │   ├── test_pipeline.py
+│   │   └── unified_compressor.py
+│   ├── distributed_agents
+│   │   ├── __init__.py
+│   │   ├── agent_migration_manager.py
+│   │   ├── agent_registry.py
+│   │   └── distributed_agent_orchestrator.py
+│   ├── distributed_inference
+│   │   ├── __init__.py
+│   │   ├── adaptive_resharding.py
+│   │   ├── compression_integration.py
+│   │   ├── model_sharding_engine.py
+│   │   ├── test_adaptive_resharding.py
+│   │   ├── test_memory_partitioning.py
+│   │   └── test_model_sharding.py
+│   ├── evolution
+│   │   ├── __init__.py
+│   │   ├── evolution
+│   │   ├── evomerge
+│   │   ├── evomerge_pipeline.py
+│   │   └── test_evoMerge.py
+│   ├── federated_learning
+│   │   ├── __init__.py
+│   │   ├── federated_coordinator.py
+│   │   ├── test_fl_coordinator.py
+│   │   ├── test_hierarchical_aggregation.py
+│   │   └── test_privacy_preservation.py
+│   ├── geometry
+│   │   ├── __init__.py
+│   │   ├── geometry
+│   │   └── geometry_feedback.py
+│   ├── memory
+│   │   ├── __init__.py
+│   │   ├── memory_manager.py
+│   │   └── wandb_manager.py
+│   ├── monitoring
+│   │   └── mobile
+│   ├── pytest.ini
+│   ├── rag
+│   │   ├── __init__.py
+│   │   ├── rag_system
+│   │   └── test_pipeline.py
+│   └── tests
+│       ├── benchmarking
+│       ├── compression
+│       ├── conftest.py
+│       ├── evolution
+│       ├── geometry
+│       ├── integration
+│       ├── memory
+│       └── rag
+├── rag_system
+│   ├── __init__.py
+│   └── utils
+│       ├── __init__.py
+│       └── logging.py
+├── security
+│   ├── __init__.py
+│   └── verify_fixes.py
+├── services
+│   └── __init__.py
+└── twin_runtime
+    ├── __init__.py
+    ├── compressed_loader.py
+    ├── fine_tune.py
+    ├── guard.py
+    └── runner.py
+
+97 directories, 265 files

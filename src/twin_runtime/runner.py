@@ -6,7 +6,12 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import torch
+try:  # pragma: no cover - import is environment dependent
+    import torch
+    from torch import nn
+except Exception:  # pragma: no cover - fallback when torch missing
+    torch = None  # type: ignore
+    nn = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -18,15 +23,20 @@ class TwinRuntimeChat:
 
     def __init__(self) -> None:
         # Annotate to clarify runtime expectations
-        self.model: torch.nn.Module | None = None
+        self.model: "nn.Module | None" = None
         self.context: list[dict[str, str]] = []
         self.max_context = 2048
 
-        # Try to load a compressed model
-        self._load_model()
+        # Try to load a compressed model if torch is available
+        if torch is not None:
+            self._load_model()
 
     def _load_model(self) -> None:
         """Load the most compressed model available."""
+        if torch is None:
+            logger.warning("Torch not available; using keyword responses only")
+            return
+
         try:
             # Try our compression pipeline first
             from core.compression.unified_compressor import UnifiedCompressor
@@ -48,7 +58,10 @@ class TwinRuntimeChat:
 
     def _create_fallback_model(self) -> None:
         """Create minimal working model."""
-        from torch import nn
+        if nn is None:
+            logger.warning("Torch not available; cannot create fallback model")
+            self.model = None
+            return
 
         class SimpleChatModel(nn.Module):
             def __init__(self, vocab_size=50000, hidden=256) -> None:
@@ -102,7 +115,7 @@ class TwinRuntimeChat:
 
     def _generate_response(self, prompt: str, temperature: float = 0.7, max_length: int = 100) -> str:
         """Generate response using model."""
-        if self.model is None:
+        if self.model is None or torch is None:
             return self._keyword_response(prompt)
 
         # Simple tokenization (real implementation would use proper tokenizer)
