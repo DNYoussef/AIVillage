@@ -1,0 +1,2318 @@
+src/ingestion/__init__.py:import importlib
+src/ingestion/__init__.py:import re
+src/ingestion/connectors/amazon_orders.py:import logging
+src/ingestion/connectors/amazon_orders.py:import os
+src/ingestion/connectors/amazon_orders.py:import random
+src/ingestion/connectors/amazon_orders.py:import time
+src/ingestion/connectors/amazon_orders.py:import requests
+src/ingestion/connectors/whatsapp.py:import logging
+src/ingestion/connectors/whatsapp.py:import os
+src/ingestion/connectors/whatsapp.py:import random
+src/ingestion/connectors/whatsapp.py:import time
+src/ingestion/connectors/whatsapp.py:import requests
+src/ingestion/connectors/gmail.py:import mailbox
+src/ingestion/connectors/gmail.py:import os
+src/ingestion/vector_ds.py:import os
+src/monitoring/canary_monitor.py:import json
+src/monitoring/canary_monitor.py:import logging
+src/monitoring/trend_analyzer.py:import json
+src/monitoring/trend_analyzer.py:import statistics
+src/monitoring/dashboard.py:import json
+src/monitoring/dashboard.py:import logging
+src/monitoring/dashboard.py:import time
+src/monitoring/dashboard.py:import pandas as pd
+src/monitoring/dashboard.py:import plotly.express as px
+src/monitoring/dashboard.py:import plotly.graph_objects as go
+src/monitoring/dashboard.py:import psutil
+src/monitoring/dashboard.py:import streamlit as st
+src/monitoring/dashboard.py:import wandb
+src/monitoring/system_health_dashboard.py:import asyncio
+src/monitoring/system_health_dashboard.py:import json
+src/monitoring/system_health_dashboard.py:import logging
+src/monitoring/system_health_dashboard.py:import sys
+src/monitoring/test_monitor.py:import argparse
+src/monitoring/test_monitor.py:import asyncio
+src/monitoring/test_monitor.py:import json
+src/monitoring/test_monitor.py:import logging
+src/monitoring/alert_manager.py:import asyncio
+src/monitoring/alert_manager.py:import json
+src/monitoring/alert_manager.py:import logging
+src/monitoring/alert_manager.py:import os
+src/monitoring/alert_manager.py:import smtplib
+src/monitoring/alert_manager.py:import aiohttp
+src/monitoring/alert_manager.py:import yaml
+src/monitoring/security_monitor.py:import asyncio
+src/monitoring/security_monitor.py:import logging
+src/monitoring/security_monitor.py:import os
+src/monitoring/security_monitor.py:import re
+src/monitoring/security_monitor.py:import time
+src/monitoring/sprint6_monitor.py:import asyncio
+src/monitoring/sprint6_monitor.py:import json
+src/monitoring/sprint6_monitor.py:import logging
+src/monitoring/sprint6_monitor.py:import subprocess
+src/monitoring/sprint6_monitor.py:import sys
+src/digital_twin/monitoring/parent_tracker.py:import asyncio
+src/digital_twin/monitoring/parent_tracker.py:import hashlib
+src/digital_twin/monitoring/parent_tracker.py:import json
+src/digital_twin/monitoring/parent_tracker.py:import logging
+src/digital_twin/monitoring/parent_tracker.py:import sqlite3
+src/digital_twin/monitoring/parent_tracker.py:import numpy as np
+src/digital_twin/monitoring/parent_tracker.py:import wandb
+src/digital_twin/deployment/edge_manager.py:import asyncio
+src/digital_twin/deployment/edge_manager.py:import json
+src/digital_twin/deployment/edge_manager.py:import logging
+src/digital_twin/deployment/edge_manager.py:import platform
+src/digital_twin/deployment/edge_manager.py:import sqlite3
+src/digital_twin/deployment/edge_manager.py:import zipfile
+src/digital_twin/deployment/edge_manager.py:import numpy as np
+src/digital_twin/deployment/edge_manager.py:import psutil
+src/digital_twin/deployment/edge_manager.py:import torch
+src/digital_twin/deployment/edge_manager.py:import wandb
+src/digital_twin/core/digital_twin.py:import asyncio
+src/digital_twin/core/digital_twin.py:import json
+src/digital_twin/core/digital_twin.py:import logging
+src/digital_twin/core/digital_twin.py:import sqlite3
+src/digital_twin/core/digital_twin.py:import uuid
+src/digital_twin/core/digital_twin.py:import numpy as np
+src/digital_twin/core/digital_twin.py:import wandb
+src/digital_twin/security/preference_vault.py:import asyncio
+src/digital_twin/security/preference_vault.py:import hashlib
+src/digital_twin/security/preference_vault.py:import json
+src/digital_twin/security/preference_vault.py:import logging
+src/digital_twin/security/preference_vault.py:import os
+src/digital_twin/security/preference_vault.py:import secrets
+src/digital_twin/security/preference_vault.py:import sqlite3
+src/digital_twin/security/preference_vault.py:import wandb
+src/digital_twin/security/shield_validator.py:import asyncio
+src/digital_twin/security/shield_validator.py:import hashlib
+src/digital_twin/security/shield_validator.py:import json
+src/digital_twin/security/shield_validator.py:import logging
+src/digital_twin/security/shield_validator.py:import re
+src/digital_twin/security/shield_validator.py:import sqlite3
+src/digital_twin/security/shield_validator.py:import numpy as np
+src/digital_twin/security/shield_validator.py:import torch
+src/digital_twin/security/shield_validator.py:import wandb
+src/digital_twin/engine/personalized_tutor.py:import asyncio
+src/digital_twin/engine/personalized_tutor.py:import logging
+src/digital_twin/engine/personalized_tutor.py:import random
+src/digital_twin/engine/personalized_tutor.py:import numpy as np
+src/digital_twin/engine/personalized_tutor.py:import wandb
+src/federated/twin_trainer.py:import torch
+src/twin_runtime/fine_tune.py:import os
+src/twin_runtime/fine_tune.py:import torch
+src/twin_runtime/runner.py:import logging
+src/twin_runtime/runner.py:import torch
+src/twin_runtime/guard.py:import logging
+src/twin_runtime/guard.py:import re
+src/twin_runtime/compressed_loader.py:import torch
+src/production/monitoring/mobile/device_profiler.py:import logging
+src/production/monitoring/mobile/device_profiler.py:import platform
+src/production/monitoring/mobile/device_profiler.py:import queue
+src/production/monitoring/mobile/device_profiler.py:import threading
+src/production/monitoring/mobile/device_profiler.py:import time
+src/production/monitoring/mobile/device_profiler.py:import psutil
+src/production/monitoring/mobile/resource_allocator.py:import logging
+src/production/monitoring/mobile/resource_allocator.py:import os
+src/production/monitoring/mobile/resource_allocator.py:import platform
+src/production/monitoring/mobile/resource_allocator.py:import resource as sys_resource
+src/production/monitoring/mobile/mobile_metrics.py:import logging
+src/production/monitoring/mobile/mobile_metrics.py:import threading
+src/production/monitoring/mobile/mobile_metrics.py:import time
+src/production/distributed_inference/test_adaptive_resharding.py:import argparse
+src/production/distributed_inference/test_adaptive_resharding.py:import asyncio
+src/production/distributed_inference/test_adaptive_resharding.py:import importlib.util
+src/production/distributed_inference/test_adaptive_resharding.py:import json
+src/production/distributed_inference/test_adaptive_resharding.py:import sys
+src/production/distributed_inference/test_adaptive_resharding.py:import types
+src/production/distributed_inference/compression_integration.py:import asyncio
+src/production/distributed_inference/compression_integration.py:import logging
+src/production/distributed_inference/compression_integration.py:import time
+src/production/distributed_inference/compression_integration.py:import torch
+src/production/distributed_inference/adaptive_resharding.py:import asyncio
+src/production/distributed_inference/adaptive_resharding.py:import contextlib
+src/production/distributed_inference/adaptive_resharding.py:import logging
+src/production/distributed_inference/adaptive_resharding.py:import time
+src/production/distributed_inference/adaptive_resharding.py:import uuid
+src/production/distributed_inference/model_sharding_engine.py:import logging
+src/production/distributed_inference/model_sharding_engine.py:import time
+src/production/distributed_inference/model_sharding_engine.py:import uuid
+src/production/distributed_inference/test_model_sharding.py:import argparse
+src/production/distributed_inference/test_model_sharding.py:import asyncio
+src/production/distributed_inference/test_model_sharding.py:import importlib.util
+src/production/distributed_inference/test_model_sharding.py:import json
+src/production/distributed_inference/test_model_sharding.py:import sys
+src/production/distributed_inference/test_model_sharding.py:import time
+src/production/distributed_inference/test_model_sharding.py:import types
+src/production/distributed_inference/test_memory_partitioning.py:import argparse
+src/production/distributed_inference/test_memory_partitioning.py:import asyncio
+src/production/distributed_inference/test_memory_partitioning.py:import importlib.util
+src/production/distributed_inference/test_memory_partitioning.py:import json
+src/production/distributed_inference/test_memory_partitioning.py:import sys
+src/production/distributed_inference/test_memory_partitioning.py:import types
+src/production/__init__.py:import sys
+src/production/__init__.py:import warnings
+src/production/rag/test_pipeline.py:import argparse
+src/production/rag/test_pipeline.py:import json
+src/production/rag/rag_system/graph_explain.py:import functools
+src/production/rag/rag_system/graph_explain.py:import itertools
+src/production/rag/rag_system/graph_explain.py:import logging
+src/production/rag/rag_system/graph_explain.py:import os
+src/production/rag/rag_system/graph_explain.py:import time
+src/production/rag/rag_system/graph_explain.py:import networkx as nx
+src/production/rag/rag_system/vector_store.py:import logging
+src/production/rag/rag_system/vector_store.py:import os
+src/production/rag/rag_system/vector_store.py:import time
+src/production/rag/rag_system/vector_store.py:import numpy as np
+src/production/rag/rag_system/faiss_backend.py:import os
+src/production/rag/rag_system/faiss_backend.py:import faiss
+src/production/rag/rag_system/faiss_backend.py:import numpy as np
+src/production/rag/rag_system/retrieval/vector_store.py:import os
+src/production/rag/rag_system/retrieval/vector_store.py:import faiss
+src/production/rag/rag_system/retrieval/vector_store.py:import numpy as np
+src/production/rag/rag_system/retrieval/vector_store.py:import base64
+src/production/rag/rag_system/retrieval/vector_store.py:import json
+src/production/rag/rag_system/retrieval/vector_store.py:import os
+src/production/rag/rag_system/retrieval/vector_store.py:import uuid
+src/production/rag/rag_system/retrieval/hybrid_retriever.py:import re
+src/production/rag/rag_system/retrieval/graph_store.py:import math
+src/production/rag/rag_system/retrieval/graph_store.py:import random
+src/production/rag/rag_system/agents/user_intent_interpreter.py:import re
+src/production/rag/rag_system/hypergraph/migrations.py:import logging
+src/production/rag/rag_system/hypergraph/models.py:import uuid
+src/production/rag/rag_system/hypergraph/models.py:import numpy as np
+src/production/rag/rag_system/utils/named_entity_recognition.py:import logging
+src/production/rag/rag_system/utils/named_entity_recognition.py:import re
+src/production/rag/rag_system/utils/embedding.py:import hashlib
+src/production/rag/rag_system/utils/embedding.py:import torch
+src/production/rag/rag_system/utils/logging.py:import logging
+src/production/rag/rag_system/utils/error_handling.py:import logging
+src/production/rag/rag_system/utils/advanced_analytics.py:import io
+src/production/rag/rag_system/utils/advanced_analytics.py:import logging
+src/production/rag/rag_system/utils/advanced_analytics.py:import matplotlib.pyplot as plt
+src/production/rag/rag_system/utils/advanced_analytics.py:import networkx as nx
+src/production/rag/rag_system/utils/advanced_analytics.py:import numpy as np
+src/production/rag/rag_system/utils/advanced_analytics.py:import pandas as pd
+src/production/rag/rag_system/utils/advanced_analytics.py:import seaborn as sns
+src/production/rag/rag_system/utils/relation_extraction.py:import logging
+src/production/rag/rag_system/utils/relation_extraction.py:import re
+src/production/rag/rag_system/main.py:import argparse
+src/production/rag/rag_system/main.py:import asyncio
+src/production/rag/rag_system/main.py:import sys
+src/production/rag/rag_system/error_handling/utils.py:import numpy as np
+src/production/rag/rag_system/error_handling/error_handling.py:import asyncio
+src/production/rag/rag_system/error_handling/error_handling.py:import logging
+src/production/rag/rag_system/error_handling/error_handling.py:import traceback
+src/production/rag/rag_system/error_handling/error_handler.py:import logging
+src/production/rag/rag_system/error_handling/error_handler.py:import traceback
+src/production/rag/rag_system/error_handling/ltt_controller.py:import numpy as np
+src/production/rag/rag_system/processing/reasoning_engine.py:import networkx as nx
+src/production/rag/rag_system/processing/reasoning_engine.py:import numpy as np
+src/production/rag/rag_system/processing/advanced_nlp.py:import numpy as np
+src/production/rag/rag_system/processing/advanced_nlp.py:import torch
+src/production/rag/rag_system/core/config.py:import yaml
+src/production/rag/rag_system/core/exploration_mode.py:import logging
+src/production/rag/rag_system/core/exploration_mode.py:import random
+src/production/rag/rag_system/core/exploration_mode.py:import networkx as nx
+src/production/rag/rag_system/tracking/knowledge_evolution_tracker.py:import asyncio
+src/production/rag/rag_system/evaluation/evaluation_framework.py:import logging
+src/production/rag/rag_system/evaluation/evaluation_framework.py:import numpy as np
+src/production/rag/rag_system/evaluation/evaluation_framework.py:import pandas as pd
+src/production/federated_learning/test_fl_coordinator.py:import argparse
+src/production/federated_learning/test_fl_coordinator.py:import asyncio
+src/production/federated_learning/test_fl_coordinator.py:import json
+src/production/federated_learning/test_fl_coordinator.py:import logging
+src/production/federated_learning/test_fl_coordinator.py:import sys
+src/production/federated_learning/test_fl_coordinator.py:import time
+src/production/federated_learning/test_fl_coordinator.py:import types
+src/production/federated_learning/test_fl_coordinator.py:import torch
+src/production/federated_learning/test_hierarchical_aggregation.py:import argparse
+src/production/federated_learning/test_hierarchical_aggregation.py:import asyncio
+src/production/federated_learning/test_hierarchical_aggregation.py:import json
+src/production/federated_learning/test_hierarchical_aggregation.py:import logging
+src/production/federated_learning/test_hierarchical_aggregation.py:import sys
+src/production/federated_learning/test_hierarchical_aggregation.py:import time
+src/production/federated_learning/test_hierarchical_aggregation.py:import types
+src/production/federated_learning/test_hierarchical_aggregation.py:import torch
+src/production/federated_learning/test_privacy_preservation.py:import argparse
+src/production/federated_learning/test_privacy_preservation.py:import asyncio
+src/production/federated_learning/test_privacy_preservation.py:import json
+src/production/federated_learning/test_privacy_preservation.py:import logging
+src/production/federated_learning/test_privacy_preservation.py:import sys
+src/production/federated_learning/test_privacy_preservation.py:import time
+src/production/federated_learning/test_privacy_preservation.py:import types
+src/production/federated_learning/test_privacy_preservation.py:import torch
+src/production/federated_learning/federated_coordinator.py:import asyncio
+src/production/federated_learning/federated_coordinator.py:import logging
+src/production/federated_learning/federated_coordinator.py:import random
+src/production/federated_learning/federated_coordinator.py:import time
+src/production/federated_learning/federated_coordinator.py:import uuid
+src/production/federated_learning/federated_coordinator.py:import numpy as np
+src/production/federated_learning/federated_coordinator.py:import torch
+src/production/compression/test_pipeline.py:import argparse
+src/production/compression/test_pipeline.py:import json
+src/production/compression/hyper_compression.py:import zlib
+src/production/compression/compression/stage1.py:import argparse
+src/production/compression/compression/stage1.py:import json
+src/production/compression/compression/stage1.py:import logging
+src/production/compression/compression/stage1.py:import os
+src/production/compression/compression/stage1.py:import sys
+src/production/compression/compression/stage1.py:import torch
+src/production/compression/compression/__init__.py:import bitsandbytes as bnb
+src/production/compression/compression/__init__.py:import torch
+src/production/compression/compression/__init__.py:import torch
+src/production/compression/compression/seedlm.py:import hashlib
+src/production/compression/compression/seedlm.py:import logging
+src/production/compression/compression/seedlm.py:import math
+src/production/compression/compression/seedlm.py:import time
+src/production/compression/compression/seedlm.py:import numpy as np
+src/production/compression/compression/seedlm.py:import torch
+src/production/compression/compression/vptq.py:import logging
+src/production/compression/compression/vptq.py:import torch
+src/production/compression/compression/hyperfn.py:import logging
+src/production/compression/compression/hyperfn.py:import math
+src/production/compression/compression/hyperfn.py:import torch
+src/production/compression/compression/stage2.py:import logging
+src/production/compression/compression/stage2.py:import os
+src/production/compression/compression/stage2.py:import sys
+src/production/compression/compression/stage2.py:import time
+src/production/compression/compression/stage2.py:import torch
+src/production/compression/compression/stage1_config.py:import torch
+src/production/compression/compression/stage1_bitnet.py:import bitsandbytes as bnb
+src/production/compression/compression/stage1_bitnet.py:import torch
+src/production/compression/compression/stage1_bitnet.py:import torch.nn.functional as F
+src/production/compression/compression/eval_utils.py:import json
+src/production/compression/compression/eval_utils.py:import os
+src/production/compression/compression/eval_utils.py:import tempfile
+src/production/compression/compression/eval_utils.py:import time
+src/production/compression/compression/eval_utils.py:import torch
+src/production/compression/model_compression/model_compression.py:import numpy as np
+src/production/compression/model_compression/model_compression.py:import torch
+src/production/compression/model_compression/model_compression.py:import torch.nn.functional as F
+src/production/compression/model_compression/model_compression.py:import logging
+src/production/compression/compression_pipeline.py:import asyncio
+src/production/compression/compression_pipeline.py:import json
+src/production/compression/compression_pipeline.py:import logging
+src/production/compression/compression_pipeline.py:import time
+src/production/compression/compression_pipeline.py:import click
+src/production/compression/compression_pipeline.py:import torch
+src/production/compression/compression_pipeline.py:import wandb
+src/production/compression/README.md:import logging
+src/production/compression/unified_compressor.py:import asyncio
+src/production/compression/unified_compressor.py:import logging
+src/production/compression/unified_compressor.py:import time
+src/production/compression/unified_compressor.py:import torch
+src/production/memory/wandb_manager.py:import json
+src/production/memory/wandb_manager.py:import logging
+src/production/memory/wandb_manager.py:import os
+src/production/memory/wandb_manager.py:import time
+src/production/memory/memory_manager.py:import gc
+src/production/memory/memory_manager.py:import logging
+src/production/memory/memory_manager.py:import psutil
+src/production/memory/memory_manager.py:import torch
+src/production/distributed_agents/agent_migration_manager.py:import asyncio
+src/production/distributed_agents/agent_migration_manager.py:import logging
+src/production/distributed_agents/agent_migration_manager.py:import pickle
+src/production/distributed_agents/agent_migration_manager.py:import time
+src/production/distributed_agents/agent_migration_manager.py:import uuid
+src/production/distributed_agents/distributed_agent_orchestrator.py:import asyncio
+src/production/distributed_agents/distributed_agent_orchestrator.py:import logging
+src/production/distributed_agents/distributed_agent_orchestrator.py:import time
+src/production/distributed_agents/distributed_agent_orchestrator.py:import uuid
+src/production/evolution/evomerge/task_vector.py:import torch
+src/production/evolution/evomerge/utils.py:import logging
+src/production/evolution/evomerge/utils.py:import os
+src/production/evolution/evomerge/utils.py:import shutil
+src/production/evolution/evomerge/utils.py:import psutil
+src/production/evolution/evomerge/utils.py:import torch
+src/production/evolution/evomerge/evaluation.py:import logging
+src/production/evolution/evomerge/evaluation.py:import torch
+src/production/evolution/evomerge/cross_domain.py:import types
+src/production/evolution/evomerge/cross_domain.py:import torch
+src/production/evolution/evomerge/model_tracker.py:import json
+src/production/evolution/evomerge/model_tracker.py:import os
+src/production/evolution/evomerge/logging_config.py:import logging
+src/production/evolution/evomerge/config.py:import os
+src/production/evolution/evomerge/merger.py:import logging
+src/production/evolution/evomerge/merger.py:import os
+src/production/evolution/evomerge/merger.py:import torch
+src/production/evolution/evomerge/gguf_utils.py:import logging
+src/production/evolution/evomerge/gguf_utils.py:import struct
+src/production/evolution/evomerge/gguf_utils.py:import numpy as np
+src/production/evolution/evomerge/visualization.py:import matplotlib.pyplot as plt
+src/production/evolution/evomerge/visualization.py:import numpy as np
+src/production/evolution/evomerge/visualization.py:import pandas as pd
+src/production/evolution/evomerge/visualization.py:import seaborn as sns
+src/production/evolution/evomerge/benchmarks.py:import time
+src/production/evolution/evomerge/benchmarks.py:import psutil
+src/production/evolution/evomerge/benchmarks.py:import torch
+src/production/evolution/evomerge/instruction_tuning.py:import logging
+src/production/evolution/evomerge/instruction_tuning.py:import torch
+src/production/evolution/evomerge/integration_tests.py:import time
+src/production/evolution/evomerge/integration_tests.py:import unittest
+src/production/evolution/evomerge/evolutionary_tournament.py:import argparse
+src/production/evolution/evomerge/evolutionary_tournament.py:import json
+src/production/evolution/evomerge/evolutionary_tournament.py:import logging
+src/production/evolution/evomerge/evolutionary_tournament.py:import os
+src/production/evolution/evomerge/evolutionary_tournament.py:import random
+src/production/evolution/evomerge/evolutionary_tournament.py:import torch
+src/production/evolution/evomerge/tests/conftest.py:import importlib
+src/production/evolution/evomerge/tests/conftest.py:import pytest
+src/production/evolution/evomerge/cli.py:import argparse
+src/production/evolution/evomerge/cli.py:import logging
+src/production/evolution/evomerge/test_evomerge.py:import importlib.util
+src/production/evolution/evomerge/test_evomerge.py:import unittest
+src/production/evolution/evomerge/test_evomerge.py:import pytest
+src/production/evolution/evomerge/test_evomerge.py:import torch
+src/production/evolution/evomerge/merging/merger.py:import logging
+src/production/evolution/evomerge/merging/merger.py:import os
+src/production/evolution/evomerge/merging/merger.py:import torch
+src/production/evolution/evomerge/merging/merge_techniques.py:import logging
+src/production/evolution/evomerge/merging/merge_techniques.py:import tempfile
+src/production/evolution/evomerge/merging/merge_techniques.py:import torch
+src/production/evolution/evomerge/model_loading.py:import logging
+src/production/evolution/evomerge/model_loading.py:import os
+src/production/evolution/evomerge/model_loading.py:import shutil
+src/production/evolution/evomerge/model_loading.py:import psutil
+src/production/evolution/evomerge/model_loading.py:import torch
+src/production/evolution/evomerge/mask_weights_utils.py:import torch
+src/production/evolution/evolution/deploy_winner.py:import asyncio
+src/production/evolution/evolution/deploy_winner.py:import hashlib
+src/production/evolution/evolution/deploy_winner.py:import json
+src/production/evolution/evolution/deploy_winner.py:import logging
+src/production/evolution/evolution/deploy_winner.py:import numpy as np
+src/production/evolution/evolution/deploy_winner.py:import torch
+src/production/evolution/evolution/deploy_winner.py:import wandb
+src/production/evolution/evolution/merge_operators.py:import asyncio
+src/production/evolution/evolution/merge_operators.py:import copy
+src/production/evolution/evolution/merge_operators.py:import logging
+src/production/evolution/evolution/merge_operators.py:import numpy as np
+src/production/evolution/evolution/merge_operators.py:import torch
+src/production/evolution/evolution/merge_operators.py:import torch.nn.functional as F
+src/production/evolution/evolution/merge_operators.py:import wandb
+src/production/evolution/evolution/math_tutor_evolution.py:import gc
+src/production/evolution/evolution/math_tutor_evolution.py:import hashlib
+src/production/evolution/evolution/math_tutor_evolution.py:import json
+src/production/evolution/evolution/math_tutor_evolution.py:import logging
+src/production/evolution/evolution/math_tutor_evolution.py:import numpy as np
+src/production/evolution/evolution/math_tutor_evolution.py:import torch
+src/production/evolution/evolution/math_tutor_evolution.py:import wandb
+src/production/evolution/evolution/math_fitness.py:import asyncio
+src/production/evolution/evolution/math_fitness.py:import logging
+src/production/evolution/evolution/math_fitness.py:import re
+src/production/evolution/evolution/math_fitness.py:import statistics
+src/production/evolution/evolution/math_fitness.py:import torch
+src/production/evolution/evolution/math_fitness.py:import wandb
+src/production/evolution/evomerge_pipeline.py:import asyncio
+src/production/evolution/evomerge_pipeline.py:import json
+src/production/evolution/evomerge_pipeline.py:import logging
+src/production/evolution/evomerge_pipeline.py:import random
+src/production/evolution/evomerge_pipeline.py:import sys
+src/production/evolution/evomerge_pipeline.py:import time
+src/production/evolution/evomerge_pipeline.py:import traceback
+src/production/evolution/evomerge_pipeline.py:import click
+src/production/evolution/evomerge_pipeline.py:import numpy as np
+src/production/evolution/evomerge_pipeline.py:import torch
+src/production/evolution/evomerge_pipeline.py:import wandb
+src/production/evolution/test_evoMerge.py:import argparse
+src/production/evolution/test_evoMerge.py:import json
+src/production/tests/integration/test_production_integration.py:import pytest
+src/production/tests/integration/test_production_integration.py:import torch
+src/production/tests/rag/test_rag_comprehensive.py:import pytest
+src/production/tests/compression/test_compression_comprehensive.py:import time
+src/production/tests/compression/test_compression_comprehensive.py:import psutil
+src/production/tests/compression/test_compression_comprehensive.py:import pytest
+src/production/tests/compression/test_compression_comprehensive.py:import torch
+src/production/tests/memory/test_memory_comprehensive.py:import psutil
+src/production/tests/memory/test_memory_comprehensive.py:import pytest
+src/production/tests/conftest.py:import sys
+src/production/tests/conftest.py:import pytest
+src/production/tests/evolution/test_evolution_comprehensive.py:import numpy as np
+src/production/tests/evolution/test_evolution_comprehensive.py:import pytest
+src/production/tests/evolution/test_evolution_comprehensive.py:import torch
+src/production/tests/benchmarking/test_benchmark_comprehensive.py:import pytest
+src/production/tests/geometry/test_geometry_comprehensive.py:import pytest
+src/production/tests/geometry/test_geometry_comprehensive.py:import torch
+src/production/communications/p2p/p2p_node.py:import asyncio
+src/production/communications/p2p/p2p_node.py:import json
+src/production/communications/p2p/p2p_node.py:import logging
+src/production/communications/p2p/p2p_node.py:import time
+src/production/communications/p2p/p2p_node.py:import uuid
+src/production/communications/p2p/tensor_streaming.py:import asyncio
+src/production/communications/p2p/tensor_streaming.py:import hashlib
+src/production/communications/p2p/tensor_streaming.py:import io
+src/production/communications/p2p/tensor_streaming.py:import json
+src/production/communications/p2p/tensor_streaming.py:import logging
+src/production/communications/p2p/tensor_streaming.py:import time
+src/production/communications/p2p/tensor_streaming.py:import uuid
+src/production/communications/p2p/tensor_streaming.py:import zlib
+src/production/communications/p2p/tensor_streaming.py:import lz4.frame
+src/production/communications/p2p/tensor_streaming.py:import numpy as np
+src/production/communications/p2p/device_mesh.py:import asyncio
+src/production/communications/p2p/device_mesh.py:import logging
+src/production/communications/p2p/device_mesh.py:import platform
+src/production/communications/p2p/device_mesh.py:import socket
+src/production/communications/p2p/device_mesh.py:import time
+src/production/communications/p2p/device_mesh.py:import uuid
+src/production/communications/p2p/device_mesh.py:import psutil
+src/production/communications/p2p_protocol.py:import asyncio
+src/production/communications/p2p_protocol.py:import logging
+src/production/benchmarking/real_benchmark.py:import logging
+src/production/benchmarking/real_benchmark.py:import re
+src/production/benchmarking/real_benchmark.py:import time
+src/production/benchmarking/real_benchmark.py:import numpy as np
+src/production/benchmarking/real_benchmark.py:import torch
+src/production/geometry/geometry_feedback.py:import json
+src/production/geometry/geometry_feedback.py:import logging
+src/production/geometry/geometry_feedback.py:import math
+src/production/geometry/geometry_feedback.py:import time
+src/production/geometry/geometry_feedback.py:import matplotlib.pyplot as plt
+src/production/geometry/geometry_feedback.py:import numpy as np
+src/production/geometry/geometry_feedback.py:import seaborn as sns
+src/production/geometry/geometry_feedback.py:import torch
+src/production/geometry/geometry_feedback.py:import wandb
+src/production/geometry/geometry/snapshot.py:import torch
+src/production/geometry/geometry/id_twonn.py:import torch
+src/production/agent_forge/validate_all_agents.py:import argparse
+src/production/agent_forge/validate_all_agents.py:import asyncio
+src/production/agent_forge/evolution/evolution_metrics.py:import logging
+src/production/agent_forge/evolution/dual_evolution_system.py:import asyncio
+src/production/agent_forge/evolution/dual_evolution_system.py:import contextlib
+src/production/agent_forge/evolution/dual_evolution_system.py:import json
+src/production/agent_forge/evolution/dual_evolution_system.py:import logging
+src/production/agent_forge/evolution/dual_evolution_system.py:import time
+src/production/agent_forge/evolution/infrastructure_aware_evolution.py:import logging
+src/production/agent_forge/evolution/infrastructure_aware_evolution.py:import time
+src/production/agent_forge/evolution/kpi_evolution_engine.py:import asyncio
+src/production/agent_forge/evolution/kpi_evolution_engine.py:import json
+src/production/agent_forge/evolution/kpi_evolution_engine.py:import logging
+src/production/agent_forge/evolution/kpi_evolution_engine.py:import threading
+src/production/agent_forge/evolution/kpi_evolution_engine.py:import time
+src/production/agent_forge/evolution/base.py:import logging
+src/production/agent_forge/evolution/base.py:import pickle
+src/production/agent_forge/evolution/base.py:import time
+src/production/agent_forge/evolution/base.py:import uuid
+src/production/agent_forge/evolution/resource_constrained_evolution.py:import asyncio
+src/production/agent_forge/evolution/resource_constrained_evolution.py:import logging
+src/production/agent_forge/evolution/resource_constrained_evolution.py:import time
+src/production/agent_forge/evolution/evolution_coordination_protocol.py:import asyncio
+src/production/agent_forge/evolution/evolution_coordination_protocol.py:import logging
+src/production/agent_forge/evolution/evolution_coordination_protocol.py:import time
+src/production/agent_forge/evolution/evolution_coordination_protocol.py:import uuid
+src/production/agent_forge/evolution/nightly_evolution_orchestrator.py:import logging
+src/production/agent_forge/evolution/nightly_evolution_orchestrator.py:import random
+src/production/agent_forge/evolution/nightly_evolution_orchestrator.py:import time
+src/production/agent_forge/evolution/magi_architectural_evolution.py:import logging
+src/production/agent_forge/evolution/magi_architectural_evolution.py:import random
+src/production/agent_forge/evolution/magi_architectural_evolution.py:import time
+src/production/agent_forge/agent_factory.py:import json
+src/production/agent_forge/agent_factory.py:import os
+src/production/agent_forge/agent_factory.py:import sys
+src/hyperag/education/curriculum_graph.py:import asyncio
+src/hyperag/education/curriculum_graph.py:import hashlib
+src/hyperag/education/curriculum_graph.py:import logging
+src/hyperag/education/curriculum_graph.py:import wandb
+src/hyperag/education/eli5_chain.py:import asyncio
+src/hyperag/education/eli5_chain.py:import logging
+src/hyperag/education/eli5_chain.py:import random
+src/hyperag/education/eli5_chain.py:import wandb
+src/services/__init__.py:import warnings
+src/compression/test_model_generator.py:import logging
+src/compression/test_model_generator.py:import tempfile
+src/deployment/mobile_compressor.py:import logging
+src/deployment/mobile_compressor.py:import torch
+src/migration/hyperedge_extractor.py:import argparse
+src/migration/hyperedge_extractor.py:import json
+src/migration/hyperedge_extractor.py:import logging
+src/migration/hyperedge_extractor.py:import re
+src/migration/hyperedge_extractor.py:import sys
+src/migration/hyperedge_extractor.py:import numpy as np
+src/migration/knowledge_graph_bootstrapper.py:import argparse
+src/migration/knowledge_graph_bootstrapper.py:import json
+src/migration/knowledge_graph_bootstrapper.py:import logging
+src/migration/knowledge_graph_bootstrapper.py:import sys
+src/migration/knowledge_graph_bootstrapper.py:import numpy as np
+src/migration/vector_converter.py:import argparse
+src/migration/vector_converter.py:import json
+src/migration/vector_converter.py:import logging
+src/migration/vector_converter.py:import pickle
+src/migration/vector_converter.py:import sys
+src/migration/vector_converter.py:import numpy as np
+src/core/p2p/message_protocol.py:import asyncio
+src/core/p2p/message_protocol.py:import json
+src/core/p2p/message_protocol.py:import logging
+src/core/p2p/message_protocol.py:import struct
+src/core/p2p/message_protocol.py:import time
+src/core/p2p/message_protocol.py:import uuid
+src/core/p2p/test_encryption_layer.py:import pytest
+src/core/p2p/encryption_layer.py:import asyncio
+src/core/p2p/encryption_layer.py:import base64
+src/core/p2p/encryption_layer.py:import contextlib
+src/core/p2p/encryption_layer.py:import hashlib
+src/core/p2p/encryption_layer.py:import hmac
+src/core/p2p/encryption_layer.py:import logging
+src/core/p2p/encryption_layer.py:import os
+src/core/p2p/encryption_layer.py:import secrets
+src/core/p2p/encryption_layer.py:import time
+src/core/p2p/p2p_node.py:import asyncio
+src/core/p2p/p2p_node.py:import json
+src/core/p2p/p2p_node.py:import logging
+src/core/p2p/p2p_node.py:import ssl
+src/core/p2p/p2p_node.py:import time
+src/core/p2p/p2p_node.py:import uuid
+src/core/p2p/peer_discovery.py:import asyncio
+src/core/p2p/peer_discovery.py:import contextlib
+src/core/p2p/peer_discovery.py:import ipaddress
+src/core/p2p/peer_discovery.py:import json
+src/core/p2p/peer_discovery.py:import logging
+src/core/p2p/peer_discovery.py:import queue
+src/core/p2p/peer_discovery.py:import socket
+src/core/p2p/peer_discovery.py:import threading
+src/core/p2p/peer_discovery.py:import time
+src/core/p2p/test_message_protocol.py:import asyncio
+src/core/p2p/test_message_protocol.py:import time
+src/core/p2p/test_message_protocol.py:import pytest
+src/core/p2p/test_peer_discovery.py:import json
+src/core/p2p/test_peer_discovery.py:import socket
+src/core/p2p/test_peer_discovery.py:import threading
+src/core/p2p/test_peer_discovery.py:import time
+src/core/p2p/test_peer_discovery.py:import pytest
+src/core/logging_config.py:import json
+src/core/logging_config.py:import logging
+src/core/logging_config.py:import logging.config
+src/core/chat_engine.py:import logging
+src/core/chat_engine.py:import os
+src/core/chat_engine.py:import time
+src/core/chat_engine.py:import requests
+src/core/resources/constraint_manager.py:import asyncio
+src/core/resources/constraint_manager.py:import contextlib
+src/core/resources/constraint_manager.py:import logging
+src/core/resources/constraint_manager.py:import time
+src/core/resources/device_profiler.py:import contextlib
+src/core/resources/device_profiler.py:import logging
+src/core/resources/device_profiler.py:import platform
+src/core/resources/device_profiler.py:import queue
+src/core/resources/device_profiler.py:import threading
+src/core/resources/device_profiler.py:import time
+src/core/resources/device_profiler.py:import uuid
+src/core/resources/device_profiler.py:import psutil
+src/core/resources/adaptive_loader.py:import asyncio
+src/core/resources/adaptive_loader.py:import logging
+src/core/resources/adaptive_loader.py:import time
+src/core/resources/resource_monitor.py:import logging
+src/core/resources/resource_monitor.py:import socket
+src/core/resources/resource_monitor.py:import time
+src/core/resources/resource_monitor.py:import psutil
+src/core/compression/advanced_pipeline.py:import logging
+src/core/compression/advanced_pipeline.py:import lzma
+src/core/compression/advanced_pipeline.py:import pickle
+src/core/compression/advanced_pipeline.py:import struct
+src/core/compression/advanced_pipeline.py:import torch
+src/core/compression/integrated_pipeline.py:import gzip
+src/core/compression/integrated_pipeline.py:import logging
+src/core/compression/integrated_pipeline.py:import struct
+src/core/compression/integrated_pipeline.py:import torch
+src/core/compression/simple_quantizer.py:import io
+src/core/compression/simple_quantizer.py:import logging
+src/core/compression/simple_quantizer.py:import torch
+src/core/compression/simple_quantizer.py:import torch.quantization
+src/core/compression/cascade_compressor.py:import lzma
+src/core/compression/cascade_compressor.py:import torch
+src/core/compression/unified_compressor.py:import logging
+src/core/compression/unified_compressor.py:import torch
+src/core/error_handling.py:import asyncio
+src/core/error_handling.py:import functools
+src/core/error_handling.py:import logging
+src/core/error_handling.py:import traceback
+src/core/cli.py:import argparse
+src/core/cli.py:import json
+src/security/verify_fixes.py:import ssl
+src/security/verify_fixes.py:import yaml
+src/communications/earn_shells_worker.py:import argparse
+src/communications/earn_shells_worker.py:import logging
+src/communications/earn_shells_worker.py:import sys
+src/communications/earn_shells_worker.py:import time
+src/communications/earn_shells_worker.py:import requests
+src/communications/credits_ledger.py:import logging
+src/communications/credits_ledger.py:import os
+src/communications/a2a_protocol.py:import json
+src/communications/a2a_protocol.py:import requests
+src/communications/message.py:import uuid
+src/communications/mcp_client.py:import os
+src/communications/mcp_client.py:import uuid
+src/communications/mcp_client.py:import requests
+src/communications/credits_api.py:import logging
+src/communications/community_hub.py:import logging
+src/communications/sharder.py:import pulp
+src/communications/prompt_baking.py:import json
+src/communications/prompt_baking.py:import torch
+src/communications/test_credits_standalone.py:import os
+src/communications/test_credits_standalone.py:import sys
+src/communications/test_credits_standalone.py:import tempfile
+src/communications/protocol.py:import asyncio
+src/communications/protocol.py:import hashlib
+src/communications/protocol.py:import json
+src/communications/protocol.py:import logging
+src/communications/protocol.py:import os
+src/communications/protocol.py:import ssl
+src/communications/protocol.py:import time
+src/communications/protocol.py:import websockets
+src/communications/alembic/script.py.mako:import sqlalchemy as sa
+src/communications/alembic/env.py:import os
+src/communications/alembic/versions/001_initial_credits_schema.py:import sqlalchemy as sa
+src/infrastructure/p2p/p2p_node.py:import asyncio
+src/infrastructure/p2p/p2p_node.py:import json
+src/infrastructure/p2p/p2p_node.py:import logging
+src/infrastructure/p2p/p2p_node.py:import socket
+src/infrastructure/p2p/p2p_node.py:import time
+src/infrastructure/p2p/p2p_node.py:import uuid
+src/infrastructure/p2p/tensor_streaming.py:import asyncio
+src/infrastructure/p2p/tensor_streaming.py:import base64
+src/infrastructure/p2p/tensor_streaming.py:import hashlib
+src/infrastructure/p2p/tensor_streaming.py:import io
+src/infrastructure/p2p/tensor_streaming.py:import json
+src/infrastructure/p2p/tensor_streaming.py:import logging
+src/infrastructure/p2p/tensor_streaming.py:import time
+src/infrastructure/p2p/tensor_streaming.py:import lz4.frame
+src/infrastructure/p2p/device_mesh.py:import json
+src/infrastructure/p2p/device_mesh.py:import logging
+src/infrastructure/p2p/device_mesh.py:import socket
+src/infrastructure/p2p/device_mesh.py:import threading
+src/infrastructure/p2p/device_mesh.py:import time
+src/rag_system/__init__.py:import warnings
+src/rag_system/utils/logging.py:import logging
+src/rag_system/utils/logging.py:import warnings
+src/mcp_servers/hyperag/guardian/gate.py:import asyncio
+src/mcp_servers/hyperag/guardian/gate.py:import copy
+src/mcp_servers/hyperag/guardian/gate.py:import datetime
+src/mcp_servers/hyperag/guardian/gate.py:import hashlib
+src/mcp_servers/hyperag/guardian/gate.py:import json
+src/mcp_servers/hyperag/guardian/gate.py:import pathlib
+src/mcp_servers/hyperag/guardian/gate.py:import time
+src/mcp_servers/hyperag/guardian/gate.py:import uuid
+src/mcp_servers/hyperag/guardian/gate.py:import yaml
+src/mcp_servers/hyperag/guardian/audit.py:import datetime
+src/mcp_servers/hyperag/guardian/audit.py:import json
+src/mcp_servers/hyperag/guardian/audit.py:import pathlib
+src/mcp_servers/hyperag/guardian/audit.py:import uuid
+src/mcp_servers/hyperag/guardian/metrics.py:import logging
+src/mcp_servers/hyperag/auth.py:import logging
+src/mcp_servers/hyperag/auth.py:import time
+src/mcp_servers/hyperag/auth.py:import jwt
+src/mcp_servers/hyperag/retrieval/hybrid_retriever.py:import logging
+src/mcp_servers/hyperag/retrieval/hybrid_retriever.py:import time
+src/mcp_servers/hyperag/retrieval/importance_flow.py:import logging
+src/mcp_servers/hyperag/retrieval/importance_flow.py:import numpy as np
+src/mcp_servers/hyperag/retrieval/ppr_retriever.py:import json
+src/mcp_servers/hyperag/retrieval/ppr_retriever.py:import logging
+src/mcp_servers/hyperag/retrieval/ppr_retriever.py:import time
+src/mcp_servers/hyperag/retrieval/ppr_retriever.py:import yaml
+src/mcp_servers/hyperag/retrieval/divergent_retriever.py:import logging
+src/mcp_servers/hyperag/retrieval/divergent_retriever.py:import random
+src/mcp_servers/hyperag/retrieval/divergent_retriever.py:import time
+src/mcp_servers/hyperag/gdc/registry.py:import logging
+src/mcp_servers/hyperag/gdc/registry.py:import pathlib
+src/mcp_servers/hyperag/gdc/registry.py:import yaml
+src/mcp_servers/hyperag/gdc/extractor.py:import asyncio
+src/mcp_servers/hyperag/gdc/extractor.py:import logging
+src/mcp_servers/hyperag/lora/registry.py:import hashlib
+src/mcp_servers/hyperag/lora/registry.py:import json
+src/mcp_servers/hyperag/lora/registry.py:import logging
+src/mcp_servers/hyperag/lora/registry.py:import yaml
+src/mcp_servers/hyperag/lora/generate_data.py:import argparse
+src/mcp_servers/hyperag/lora/generate_data.py:import json
+src/mcp_servers/hyperag/lora/generate_data.py:import logging
+src/mcp_servers/hyperag/lora/generate_data.py:import random
+src/mcp_servers/hyperag/lora/train_adapter.py:import argparse
+src/mcp_servers/hyperag/lora/train_adapter.py:import hashlib
+src/mcp_servers/hyperag/lora/train_adapter.py:import json
+src/mcp_servers/hyperag/lora/train_adapter.py:import logging
+src/mcp_servers/hyperag/lora/train_adapter.py:import numpy as np
+src/mcp_servers/hyperag/lora/train_adapter.py:import torch
+src/mcp_servers/hyperag/lora/adapter_loader.py:import hashlib
+src/mcp_servers/hyperag/lora/adapter_loader.py:import hmac
+src/mcp_servers/hyperag/lora/adapter_loader.py:import json
+src/mcp_servers/hyperag/lora/adapter_loader.py:import logging
+src/mcp_servers/hyperag/planning/learning.py:import logging
+src/mcp_servers/hyperag/planning/learning.py:import numpy as np
+src/mcp_servers/hyperag/planning/strategy_selector.py:import logging
+src/mcp_servers/hyperag/planning/plan_structures.py:import uuid
+src/mcp_servers/hyperag/planning/plan_structures.py:import numpy as np
+src/mcp_servers/hyperag/planning/query_classifier.py:import logging
+src/mcp_servers/hyperag/planning/query_classifier.py:import re
+src/mcp_servers/hyperag/planning/query_planner.py:import logging
+src/mcp_servers/hyperag/planning/query_planner.py:import time
+src/mcp_servers/hyperag/planning/strategies.py:import logging
+src/mcp_servers/hyperag/memory/hippo_index.py:import json
+src/mcp_servers/hyperag/memory/hippo_index.py:import logging
+src/mcp_servers/hyperag/memory/hippo_index.py:import os
+src/mcp_servers/hyperag/memory/hippo_index.py:import time
+src/mcp_servers/hyperag/memory/hippo_index.py:import uuid
+src/mcp_servers/hyperag/memory/hippo_index.py:import duckdb
+src/mcp_servers/hyperag/memory/hippo_index.py:import numpy as np
+src/mcp_servers/hyperag/memory/hippo_index.py:import redis.asyncio as redis
+src/mcp_servers/hyperag/memory/schemas.py:import logging
+src/mcp_servers/hyperag/memory/consolidator.py:import asyncio
+src/mcp_servers/hyperag/memory/consolidator.py:import logging
+src/mcp_servers/hyperag/memory/consolidator.py:import time
+src/mcp_servers/hyperag/memory/consolidator.py:import numpy as np
+src/mcp_servers/hyperag/memory/base.py:import uuid
+src/mcp_servers/hyperag/memory/base.py:import numpy as np
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:import json
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:import logging
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:import uuid
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:import numpy as np
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:import redis.asyncio as redis
+src/mcp_servers/hyperag/server.py:import asyncio
+src/mcp_servers/hyperag/server.py:import json
+src/mcp_servers/hyperag/server.py:import logging
+src/mcp_servers/hyperag/server.py:import signal
+src/mcp_servers/hyperag/server.py:import sys
+src/mcp_servers/hyperag/server.py:import time
+src/mcp_servers/hyperag/server.py:import websockets
+src/mcp_servers/hyperag/server.py:import yaml
+src/mcp_servers/hyperag/secure_database.py:import asyncio
+src/mcp_servers/hyperag/secure_database.py:import hashlib
+src/mcp_servers/hyperag/secure_database.py:import json
+src/mcp_servers/hyperag/secure_database.py:import logging
+src/mcp_servers/hyperag/secure_database.py:import sqlite3
+src/mcp_servers/hyperag/test_server.py:import asyncio
+src/mcp_servers/hyperag/test_server.py:import json
+src/mcp_servers/hyperag/test_server.py:import logging
+src/mcp_servers/hyperag/test_server.py:import websockets
+src/mcp_servers/hyperag/storage/sqlite_storage.py:import asyncio
+src/mcp_servers/hyperag/storage/sqlite_storage.py:import json
+src/mcp_servers/hyperag/storage/sqlite_storage.py:import sqlite3
+src/mcp_servers/hyperag/mcp_server.py:import asyncio
+src/mcp_servers/hyperag/mcp_server.py:import json
+src/mcp_servers/hyperag/mcp_server.py:import logging
+src/mcp_servers/hyperag/mcp_server.py:import os
+src/mcp_servers/hyperag/mcp_server.py:import sys
+src/mcp_servers/hyperag/protocol.py:import logging
+src/mcp_servers/hyperag/protocol.py:import time
+src/mcp_servers/hyperag/protocol.py:import uuid
+src/mcp_servers/hyperag/models.py:import asyncio
+src/mcp_servers/hyperag/models.py:import hashlib
+src/mcp_servers/hyperag/models.py:import logging
+src/mcp_servers/hyperag/models.py:import time
+src/mcp_servers/hyperag/models.py:import uuid
+src/mcp_servers/hyperag/repair/llm_driver.py:import asyncio
+src/mcp_servers/hyperag/repair/llm_driver.py:import json
+src/mcp_servers/hyperag/repair/llm_driver.py:import logging
+src/mcp_servers/hyperag/repair/llm_driver.py:import re
+src/mcp_servers/hyperag/repair/llm_driver.py:import time
+src/mcp_servers/hyperag/repair/templates.py:import json
+src/mcp_servers/hyperag/repair/innovator_agent.py:import asyncio
+src/mcp_servers/hyperag/repair/innovator_agent.py:import json
+src/mcp_servers/hyperag/repair/innovator_agent.py:import logging
+src/mcp_servers/hyperag/repair/innovator_agent.py:import re
+src/mcp_servers/hyperag/repair/innovator_agent.py:import uuid
+src/agent_forge/svf/ops.py:import torch
+src/agent_forge/svf/svf_ops.py:import torch
+src/agent_forge/prompt_baking_legacy/baker.py:import datetime as dt
+src/agent_forge/prompt_baking_legacy/baker.py:import json
+src/agent_forge/prompt_baking_legacy/baker.py:import logging
+src/agent_forge/prompt_baking_legacy/baker.py:import pathlib
+src/agent_forge/prompt_baking_legacy/baker.py:import torch
+src/agent_forge/prompt_baking_legacy/prompts/__init__.py:import pathlib
+src/agent_forge/prompt_baking_legacy/loader.py:import torch
+src/agent_forge/meta/geo2z_policy.py:import random
+src/agent_forge/unified_pipeline.py:import asyncio
+src/agent_forge/unified_pipeline.py:import json
+src/agent_forge/unified_pipeline.py:import logging
+src/agent_forge/unified_pipeline.py:import click
+src/agent_forge/unified_pipeline.py:import wandb
+src/agent_forge/quietstar_baker.py:import asyncio
+src/agent_forge/quietstar_baker.py:import json
+src/agent_forge/quietstar_baker.py:import logging
+src/agent_forge/quietstar_baker.py:import time
+src/agent_forge/quietstar_baker.py:import click
+src/agent_forge/quietstar_baker.py:import numpy as np
+src/agent_forge/quietstar_baker.py:import torch
+src/agent_forge/quietstar_baker.py:import torch.nn.functional as F
+src/agent_forge/quietstar_baker.py:import wandb
+src/agent_forge/utils/svf.py:import torch
+src/agent_forge/utils/hypercomp.py:import math
+src/agent_forge/utils/hypercomp.py:import torch
+src/agent_forge/utils/seedlm.py:import torch
+src/agent_forge/utils/vptq.py:import torch
+src/agent_forge/utils/expert_vector.py:import torch
+src/agent_forge/utils/adas.py:import random
+src/agent_forge/utils/grokfast.py:import torch
+src/agent_forge/compression/seedlm.py:import logging
+src/agent_forge/compression/seedlm.py:import numpy as np
+src/agent_forge/compression/seedlm.py:import torch
+src/agent_forge/compression/vptq.py:import logging
+src/agent_forge/compression/vptq.py:import torch
+src/agent_forge/compression/bitnet.py:import logging
+src/agent_forge/compression/bitnet.py:import numpy as np
+src/agent_forge/compression/bitnet.py:import torch
+src/agent_forge/interface_buffer_fix.py:import json
+src/agent_forge/benchmark_runner.py:import asyncio
+src/agent_forge/benchmark_runner.py:import json
+src/agent_forge/benchmark_runner.py:import logging
+src/agent_forge/benchmark_runner.py:import sys
+src/agent_forge/benchmark_runner.py:import torch
+src/agent_forge/tool_baking.py:import warnings
+src/agent_forge/deploy_agent.py:import asyncio
+src/agent_forge/deploy_agent.py:import json
+src/agent_forge/deploy_agent.py:import logging
+src/agent_forge/deploy_agent.py:import shutil
+src/agent_forge/deploy_agent.py:import time
+src/agent_forge/deploy_agent.py:import docker
+src/agent_forge/deploy_agent.py:import requests
+src/agent_forge/deploy_agent.py:import asyncio
+src/agent_forge/deploy_agent.py:import logging
+src/agent_forge/deploy_agent.py:import os
+src/agent_forge/deploy_agent.py:import time
+src/agent_forge/deploy_agent.py:import psutil
+src/agent_forge/deploy_agent.py:import json
+src/agent_forge/deploy_agent.py:import torch
+src/agent_forge/deploy_agent.py:import uvicorn
+src/agent_forge/main.py:import argparse
+src/agent_forge/main.py:import sys
+src/agent_forge/deployment/manifest_generator.py:import hashlib
+src/agent_forge/deployment/manifest_generator.py:import json
+src/agent_forge/deployment/manifest_generator.py:import logging
+src/agent_forge/deployment/manifest_generator.py:import time
+src/agent_forge/deployment/manifest_generator.py:import torch
+src/agent_forge/adas/adas_secure.py:import ast
+src/agent_forge/adas/adas_secure.py:import json
+src/agent_forge/adas/adas_secure.py:import os
+src/agent_forge/adas/adas_secure.py:import signal
+src/agent_forge/adas/adas_secure.py:import subprocess
+src/agent_forge/adas/adas_secure.py:import sys
+src/agent_forge/adas/adas_secure.py:import tempfile
+src/agent_forge/adas/adas_secure.py:import sys
+src/agent_forge/adas/adas_secure.py:import json
+src/agent_forge/adas/adas_secure.py:import resource
+src/agent_forge/adas/adas_secure.py:import os
+src/agent_forge/adas/migrate_to_secure.py:import shutil
+src/agent_forge/adas/migrate_to_secure.py:import subprocess
+src/agent_forge/adas/migrate_to_secure.py:import sys
+src/agent_forge/adas/system.py:import json
+src/agent_forge/adas/system.py:import os
+src/agent_forge/adas/system.py:import random
+src/agent_forge/adas/system.py:import shutil
+src/agent_forge/adas/tech_pool.py:import math
+src/agent_forge/adas/tech_pool.py:import random
+src/agent_forge/adas/tech_pool.py:import torch
+src/agent_forge/adas/tech_pool.py:import transformers
+src/agent_forge/adas/adas.py:import ast
+src/agent_forge/adas/adas.py:import json
+src/agent_forge/adas/adas.py:import os
+src/agent_forge/adas/adas.py:import platform
+src/agent_forge/adas/adas.py:import signal
+src/agent_forge/adas/adas.py:import subprocess
+src/agent_forge/adas/adas.py:import sys
+src/agent_forge/adas/adas.py:import tempfile
+src/agent_forge/adas/technique_archive.py:import ast
+src/agent_forge/adas/technique_archive.py:import importlib.util
+src/agent_forge/adas/technique_archive.py:import os
+src/agent_forge/adas/technique_archive.py:import tempfile
+src/agent_forge/adas/technique_archive.py:import types
+src/agent_forge/results_analyzer.py:import asyncio
+src/agent_forge/results_analyzer.py:import json
+src/agent_forge/results_analyzer.py:import logging
+src/agent_forge/results_analyzer.py:import numpy as np
+src/agent_forge/results_analyzer.py:import pandas as pd
+src/agent_forge/results_analyzer.py:import wandb
+src/agent_forge/benchmark_suite.py:import asyncio
+src/agent_forge/benchmark_suite.py:import json
+src/agent_forge/benchmark_suite.py:import logging
+src/agent_forge/benchmark_suite.py:import re
+src/agent_forge/benchmark_suite.py:import time
+src/agent_forge/benchmark_suite.py:import numpy as np
+src/agent_forge/benchmark_suite.py:import pandas as pd
+src/agent_forge/benchmark_suite.py:import torch
+src/agent_forge/benchmark_suite.py:import wandb
+src/agent_forge/self_awareness/metacognaitve_eval.py:import re
+src/agent_forge/self_awareness/metacognaitve_eval.py:import numpy as np
+src/agent_forge/self_awareness/metacognaitve_eval.py:import torch
+src/agent_forge/self_awareness/self_guided_metacognative_baking.py:import logging
+src/agent_forge/self_awareness/self_guided_metacognative_baking.py:import random
+src/agent_forge/self_awareness/self_guided_metacognative_baking.py:import traceback
+src/agent_forge/self_awareness/self_guided_metacognative_baking.py:import nltk
+src/agent_forge/self_awareness/self_guided_metacognative_baking.py:import torch
+src/agent_forge/self_awareness/self_guided_metacognative_baking.py:import torch.nn.functional as F
+src/agent_forge/self_awareness/text_generation.py:import random
+src/agent_forge/enhanced_orchestrator.py:import asyncio
+src/agent_forge/enhanced_orchestrator.py:import json
+src/agent_forge/enhanced_orchestrator.py:import logging
+src/agent_forge/enhanced_orchestrator.py:import torch
+src/agent_forge/core/main.py:import click
+src/agent_forge/core/main.py:import yaml
+src/agent_forge/core/model.py:import torch
+src/agent_forge/core/model.py:import torch.nn.functional as F
+src/agent_forge/tool_baking/communication_prompt_baker.py:import torch
+src/agent_forge/tool_baking/rag_prompt_baker.py:import torch
+src/agent_forge/mcp_refiner.py:import asyncio
+src/agent_forge/mcp_refiner.py:import json
+src/agent_forge/mcp_refiner.py:import logging
+src/agent_forge/mcp_refiner.py:import re
+src/agent_forge/mcp_refiner.py:import time
+src/agent_forge/mcp_refiner.py:import numpy as np
+src/agent_forge/mcp_refiner.py:import torch
+src/agent_forge/mcp_refiner.py:import wandb
+src/agent_forge/evolution/__init__.py:import logging
+src/agent_forge/evolution/evolution_dashboard.py:import asyncio
+src/agent_forge/evolution/evolution_dashboard.py:import json
+src/agent_forge/evolution/evolution_dashboard.py:import logging
+src/agent_forge/evolution/evolution_dashboard.py:import time
+src/agent_forge/evolution/evolution_dashboard.py:import matplotlib as mpl
+src/agent_forge/evolution/evolution_dashboard.py:import numpy as np
+src/agent_forge/evolution/evolution_dashboard.py:import plotly.express as px
+src/agent_forge/evolution/evolution_dashboard.py:import plotly.graph_objs as go
+src/agent_forge/evolution/safe_code_modifier.py:import ast
+src/agent_forge/evolution/safe_code_modifier.py:import asyncio
+src/agent_forge/evolution/safe_code_modifier.py:import hashlib
+src/agent_forge/evolution/safe_code_modifier.py:import json
+src/agent_forge/evolution/safe_code_modifier.py:import logging
+src/agent_forge/evolution/safe_code_modifier.py:import re
+src/agent_forge/evolution/safe_code_modifier.py:import shutil
+src/agent_forge/evolution/safe_code_modifier.py:import subprocess
+src/agent_forge/evolution/safe_code_modifier.py:import sys
+src/agent_forge/evolution/safe_code_modifier.py:import time
+src/agent_forge/evolution/safe_code_modifier.py:import black
+src/agent_forge/evolution/safe_code_modifier.py:import isort
+src/agent_forge/evolution/safe_code_modifier.py:import sys
+src/agent_forge/evolution/safe_code_modifier.py:import traceback
+src/agent_forge/evolution/safe_code_modifier.py:import time
+src/agent_forge/evolution/safe_code_modifier.py:import resource
+src/agent_forge/evolution/evolution_orchestrator.py:import asyncio
+src/agent_forge/evolution/evolution_orchestrator.py:import json
+src/agent_forge/evolution/evolution_orchestrator.py:import logging
+src/agent_forge/evolution/evolution_orchestrator.py:import signal
+src/agent_forge/evolution/evolution_orchestrator.py:import numpy as np
+src/agent_forge/evolution/meta_learning_engine.py:import asyncio
+src/agent_forge/evolution/meta_learning_engine.py:import json
+src/agent_forge/evolution/meta_learning_engine.py:import logging
+src/agent_forge/evolution/meta_learning_engine.py:import pickle
+src/agent_forge/evolution/meta_learning_engine.py:import time
+src/agent_forge/evolution/meta_learning_engine.py:import numpy as np
+src/agent_forge/evolution/meta_learning_engine.py:import torch
+src/agent_forge/evolution/agent_evolution_engine.py:import asyncio
+src/agent_forge/evolution/agent_evolution_engine.py:import json
+src/agent_forge/evolution/agent_evolution_engine.py:import logging
+src/agent_forge/evolution/agent_evolution_engine.py:import time
+src/agent_forge/evolution/agent_evolution_engine.py:import numpy as np
+src/agent_forge/training/__init__.py:import warnings
+src/agent_forge/training/training.py:import warnings
+src/agent_forge/bakedquietiot/deepbaking.py:import torch
+src/agent_forge/bakedquietiot/deepbaking.py:import torch.nn.functional as F
+src/agent_forge/bakedquietiot/quiet_star.py:import torch
+src/agent_forge/prompt_baking.py:import asyncio
+src/agent_forge/prompt_baking.py:import json
+src/agent_forge/prompt_baking.py:import logging
+src/agent_forge/prompt_baking.py:import time
+src/agent_forge/prompt_baking.py:import traceback
+src/agent_forge/prompt_baking.py:import torch
+src/agent_forge/prompt_baking.py:import wandb
+src/agent_forge/orchestration/openrouter_client.py:import asyncio
+src/agent_forge/orchestration/openrouter_client.py:import json
+src/agent_forge/orchestration/openrouter_client.py:import logging
+src/agent_forge/orchestration/openrouter_client.py:import os
+src/agent_forge/orchestration/openrouter_client.py:import time
+src/agent_forge/orchestration/openrouter_client.py:import aiohttp
+src/agent_forge/orchestration/task_router.py:import logging
+src/agent_forge/orchestration/config.py:import json
+src/agent_forge/orchestration/config.py:import os
+src/agent_forge/orchestration/config.py:import yaml
+src/agent_forge/orchestration/curriculum_integration.py:import asyncio
+src/agent_forge/orchestration/curriculum_integration.py:import logging
+src/agent_forge/orchestration/curriculum_integration.py:import torch
+src/agent_forge/foundation/__init__.py:import torch
+src/agent_forge/foundation/bitnet.py:import torch
+src/agent_forge/forge_orchestrator.py:import asyncio
+src/agent_forge/forge_orchestrator.py:import importlib
+src/agent_forge/forge_orchestrator.py:import json
+src/agent_forge/forge_orchestrator.py:import logging
+src/agent_forge/forge_orchestrator.py:import time
+src/agent_forge/forge_orchestrator.py:import traceback
+src/agent_forge/forge_orchestrator.py:import wandb
+src/agent_forge/mastery_loop.py:import asyncio
+src/agent_forge/mastery_loop.py:import contextlib
+src/agent_forge/mastery_loop.py:import json
+src/agent_forge/mastery_loop.py:import logging
+src/agent_forge/mastery_loop.py:import random
+src/agent_forge/mastery_loop.py:import sys
+src/agent_forge/mastery_loop.py:import time
+src/agent_forge/mastery_loop.py:import torch
+src/agent_forge/mastery_loop.py:import wandb
+src/agent_forge/self_evolution_engine.py:import ast
+src/agent_forge/self_evolution_engine.py:import asyncio
+src/agent_forge/self_evolution_engine.py:import json
+src/agent_forge/self_evolution_engine.py:import logging
+src/agent_forge/self_evolution_engine.py:import os
+src/agent_forge/self_evolution_engine.py:import random
+src/agent_forge/self_evolution_engine.py:import asyncio
+src/agent_forge/self_evolution_engine.py:import logging
+src/agent_forge/adas_self_opt.py:import asyncio
+src/agent_forge/adas_self_opt.py:import json
+src/agent_forge/adas_self_opt.py:import logging
+src/agent_forge/adas_self_opt.py:import random
+src/agent_forge/adas_self_opt.py:import time
+src/agent_forge/adas_self_opt.py:import numpy as np
+src/agent_forge/adas_self_opt.py:import torch
+src/agent_forge/adas_self_opt.py:import wandb
+src/agent_forge/cli.py:import logging
+src/agent_forge/cli.py:import subprocess
+src/agent_forge/cli.py:import sys
+src/agent_forge/cli.py:import click
+src/agent_forge/cli.py:import torch
+src/agent_forge/sleepdream/sleep_dream.py:import torch
+src/agent_forge/automated_reporting.py:import asyncio
+src/agent_forge/automated_reporting.py:import json
+src/agent_forge/automated_reporting.py:import logging
+src/agent_forge/automated_reporting.py:import os
+src/agent_forge/automated_reporting.py:import subprocess
+src/agent_forge/automated_reporting.py:import sys
+src/agent_forge/automated_reporting.py:import time
+src/agent_forge/automated_reporting.py:import matplotlib.pyplot as plt
+src/agent_forge/automated_reporting.py:import pandas as pd
+src/agent_forge/automated_reporting.py:import seaborn as sns
+src/agent_forge/optim/augmented_adam.py:import torch
+src/agent_forge/optim/grokfast_opt.py:import torch
+src/agent_forge/rag_integration.py:import asyncio
+src/agent_forge/rag_integration.py:import json
+src/agent_forge/rag_integration.py:import logging
+src/agent_forge/rag_integration.py:import sys
+src/agent_forge/rag_integration.py:import time
+src/agent_forge/rag_integration.py:import faiss
+src/agent_forge/rag_integration.py:import numpy as np
+src/agent_forge/rag_integration.py:import torch
+src/agent_forge/rag_integration.py:import wandb
+src/agent_forge/evaluation/evaluator.py:import re
+src/agent_forge/evaluation/evaluator.py:import torch
+src/ingestion/__init__.py:from pathlib import Path
+src/ingestion/connectors/amazon_orders.py:from datetime import datetime, timedelta
+src/ingestion/connectors/amazon_orders.py:from typing import Any
+src/ingestion/connectors/amazon_orders.py:from AIVillage.src.ingestion import add_text
+src/ingestion/connectors/whatsapp.py:from datetime import datetime, timedelta
+src/ingestion/connectors/whatsapp.py:from typing import Any
+src/ingestion/connectors/gmail.py:from chromadb import PersistentClient
+src/ingestion/connectors/gmail.py:from langdetect import detect
+src/ingestion/connectors/gmail.py:from ingestion import add_text
+src/ingestion/vector_ds.py:from chromadb import PersistentClient
+src/ingestion/vector_ds.py:from torch.utils.data import Dataset
+src/monitoring/canary_monitor.py:from dataclasses import dataclass
+src/monitoring/canary_monitor.py:from datetime import datetime, timezone
+src/monitoring/canary_monitor.py:from pathlib import Path
+src/monitoring/canary_monitor.py:from typing import Any
+src/monitoring/trend_analyzer.py:from collections import defaultdict
+src/monitoring/trend_analyzer.py:from dataclasses import dataclass
+src/monitoring/trend_analyzer.py:from datetime import datetime, timedelta, timezone
+src/monitoring/trend_analyzer.py:from pathlib import Path
+src/monitoring/trend_analyzer.py:from typing import Any
+src/monitoring/dashboard.py:from datetime import datetime, timedelta
+src/monitoring/dashboard.py:from pathlib import Path
+src/monitoring/system_health_dashboard.py:from datetime import datetime
+src/monitoring/system_health_dashboard.py:from pathlib import Path
+src/monitoring/system_health_dashboard.py:from typing import Any
+src/monitoring/test_monitor.py:from dataclasses import asdict, dataclass
+src/monitoring/test_monitor.py:from datetime import datetime, timezone
+src/monitoring/test_monitor.py:from pathlib import Path
+src/monitoring/test_monitor.py:from typing import Any
+src/monitoring/alert_manager.py:from dataclasses import asdict, dataclass
+src/monitoring/alert_manager.py:from datetime import datetime, timezone
+src/monitoring/alert_manager.py:from email.mime.text import MIMEMultipart, MIMEText
+src/monitoring/alert_manager.py:from pathlib import Path
+src/monitoring/alert_manager.py:from typing import Any
+src/monitoring/security_monitor.py:from collections import defaultdict, deque
+src/monitoring/security_monitor.py:from dataclasses import dataclass
+src/monitoring/security_monitor.py:from datetime import datetime
+src/monitoring/security_monitor.py:from typing import Any
+src/monitoring/sprint6_monitor.py:from dataclasses import asdict, dataclass
+src/monitoring/sprint6_monitor.py:from datetime import datetime
+src/monitoring/sprint6_monitor.py:from pathlib import Path
+src/monitoring/sprint6_monitor.py:from typing import Any
+src/digital_twin/monitoring/parent_tracker.py:from collections import defaultdict, deque
+src/digital_twin/monitoring/parent_tracker.py:from dataclasses import asdict, dataclass
+src/digital_twin/monitoring/parent_tracker.py:from datetime import datetime, timedelta, timezone
+src/digital_twin/monitoring/parent_tracker.py:from email.mime.multipart import MIMEMultipart
+src/digital_twin/monitoring/parent_tracker.py:from email.mime.text import MIMEText
+src/digital_twin/monitoring/parent_tracker.py:from enum import Enum
+src/digital_twin/monitoring/parent_tracker.py:from typing import Any
+src/digital_twin/deployment/edge_manager.py:from collections import defaultdict
+src/digital_twin/deployment/edge_manager.py:from concurrent.futures import ThreadPoolExecutor
+src/digital_twin/deployment/edge_manager.py:from dataclasses import asdict, dataclass
+src/digital_twin/deployment/edge_manager.py:from datetime import datetime, timedelta, timezone
+src/digital_twin/deployment/edge_manager.py:from enum import Enum
+src/digital_twin/deployment/edge_manager.py:from pathlib import Path
+src/digital_twin/deployment/edge_manager.py:from typing import Any
+src/digital_twin/core/digital_twin.py:from collections import defaultdict
+src/digital_twin/core/digital_twin.py:from concurrent.futures import ThreadPoolExecutor
+src/digital_twin/core/digital_twin.py:from dataclasses import asdict, dataclass
+src/digital_twin/core/digital_twin.py:from datetime import datetime, timezone
+src/digital_twin/core/digital_twin.py:from typing import Any
+src/digital_twin/core/digital_twin.py:from cryptography.fernet import Fernet
+src/digital_twin/security/preference_vault.py:from concurrent.futures import ThreadPoolExecutor
+src/digital_twin/security/preference_vault.py:from dataclasses import dataclass
+src/digital_twin/security/preference_vault.py:from datetime import datetime, timedelta, timezone
+src/digital_twin/security/preference_vault.py:from pathlib import Path
+src/digital_twin/security/preference_vault.py:from typing import Any
+src/digital_twin/security/preference_vault.py:from cryptography.fernet import Fernet
+src/digital_twin/security/preference_vault.py:from cryptography.hazmat.backends import default_backend
+src/digital_twin/security/preference_vault.py:from cryptography.hazmat.primitives import hashes, serialization
+src/digital_twin/security/preference_vault.py:from cryptography.hazmat.primitives.asymmetric import padding, rsa
+src/digital_twin/security/shield_validator.py:from collections import defaultdict
+src/digital_twin/security/shield_validator.py:from dataclasses import asdict, dataclass
+src/digital_twin/security/shield_validator.py:from datetime import datetime, timedelta, timezone
+src/digital_twin/security/shield_validator.py:from enum import Enum
+src/digital_twin/security/shield_validator.py:from typing import Any
+src/digital_twin/security/shield_validator.py:from transformers import pipeline
+src/digital_twin/engine/personalized_tutor.py:from collections import defaultdict
+src/digital_twin/engine/personalized_tutor.py:from dataclasses import asdict, dataclass
+src/digital_twin/engine/personalized_tutor.py:from datetime import datetime, timezone
+src/digital_twin/engine/personalized_tutor.py:from enum import Enum
+src/digital_twin/engine/personalized_tutor.py:from typing import Any
+src/federated/twin_trainer.py:from communications.federated_client import FederatedClient
+src/federated/twin_trainer.py:from ingestion.vector_ds import personal_ds
+src/federated/twin_trainer.py:from twin_runtime.fine_tune import run_nightly
+src/federated/twin_trainer.py:from twin_runtime.runner import LLM
+src/twin_runtime/fine_tune.py:from pathlib import Path
+src/twin_runtime/fine_tune.py:from llama_cpp import Llama
+src/twin_runtime/fine_tune.py:from peft import LoraConfig, get_peft_model
+src/twin_runtime/fine_tune.py:from transformers import AutoTokenizer
+src/twin_runtime/fine_tune.py:from ingestion.vector_ds import personal_ds
+src/twin_runtime/runner.py:from pathlib import Path
+src/twin_runtime/runner.py:from typing import Any
+src/twin_runtime/guard.py:from typing import Any, Literal
+src/twin_runtime/compressed_loader.py:from agent_forge.compression import CompressionConfig, TwoStageCompressor
+src/production/monitoring/mobile/device_profiler.py:from collections.abc import Callable
+src/production/monitoring/mobile/device_profiler.py:from dataclasses import dataclass, field
+src/production/monitoring/mobile/device_profiler.py:from enum import Enum
+src/production/monitoring/mobile/device_profiler.py:from typing import Any
+src/production/monitoring/mobile/__init__.py:from .device_profiler import DeviceProfile, DeviceProfiler, ResourceSnapshot
+src/production/monitoring/mobile/__init__.py:from .mobile_metrics import MetricsCollector, MobileMetrics
+src/production/monitoring/mobile/__init__.py:from .resource_allocator import AllocationStrategy, ResourceAllocator, ResourcePool
+src/production/monitoring/mobile/resource_allocator.py:from dataclasses import dataclass
+src/production/monitoring/mobile/resource_allocator.py:from typing import Any
+src/production/monitoring/mobile/resource_allocator.py:from .device_profiler import DeviceProfile
+src/production/monitoring/mobile/mobile_metrics.py:from collections import defaultdict, deque
+src/production/monitoring/mobile/mobile_metrics.py:from dataclasses import dataclass, field
+src/production/monitoring/mobile/mobile_metrics.py:from typing import Any
+src/production/monitoring/mobile/mobile_metrics.py:from prometheus_client import (
+src/production/monitoring/mobile/mobile_metrics.py:from .device_profiler import DeviceProfiler
+src/production/monitoring/mobile/mobile_metrics.py:from .resource_allocator import ResourceAllocator
+src/production/distributed_inference/test_adaptive_resharding.py:from pathlib import Path
+src/production/distributed_inference/test_adaptive_resharding.py:from src.core.p2p.p2p_node import PeerCapabilities
+src/production/distributed_inference/__init__.py:from .adaptive_resharding import AdaptiveReshardingManager
+src/production/distributed_inference/__init__.py:from .compression_integration import DistributedCompressionManager
+src/production/distributed_inference/__init__.py:from .model_sharding_engine import ModelShardingEngine, ShardingStrategy
+src/production/distributed_inference/compression_integration.py:from dataclasses import dataclass, field
+src/production/distributed_inference/compression_integration.py:from pathlib import Path
+src/production/distributed_inference/compression_integration.py:from typing import Any
+src/production/distributed_inference/compression_integration.py:from torch import nn
+src/production/distributed_inference/compression_integration.py:from AIVillage.src.production.compression.compression_pipeline import CompressionConfig, CompressionPipeline
+src/production/distributed_inference/compression_integration.py:from .model_sharding_engine import ModelShard, ModelShardingEngine, ShardingPlan
+src/production/distributed_inference/adaptive_resharding.py:from collections.abc import Callable
+src/production/distributed_inference/adaptive_resharding.py:from dataclasses import dataclass, field
+src/production/distributed_inference/adaptive_resharding.py:from enum import Enum
+src/production/distributed_inference/adaptive_resharding.py:from typing import Any
+src/production/distributed_inference/adaptive_resharding.py:from AIVillage.src.core.p2p.p2p_node import P2PNode
+src/production/distributed_inference/adaptive_resharding.py:from .model_sharding_engine import ModelShard, ModelShardingEngine, ShardingPlan
+src/production/distributed_inference/model_sharding_engine.py:from dataclasses import dataclass, field
+src/production/distributed_inference/model_sharding_engine.py:from enum import Enum
+src/production/distributed_inference/model_sharding_engine.py:from typing import Any
+src/production/distributed_inference/model_sharding_engine.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/production/distributed_inference/model_sharding_engine.py:from AIVillage.src.core.p2p.p2p_node import P2PNode, PeerCapabilities
+src/production/distributed_inference/model_sharding_engine.py:from AIVillage.src.core.resources.device_profiler import DeviceProfiler
+src/production/distributed_inference/model_sharding_engine.py:from AIVillage.src.core.resources.resource_monitor import ResourceMonitor
+src/production/distributed_inference/test_model_sharding.py:from pathlib import Path
+src/production/distributed_inference/test_model_sharding.py:from src.core.p2p.p2p_node import PeerCapabilities
+src/production/distributed_inference/test_memory_partitioning.py:from pathlib import Path
+src/production/distributed_inference/test_memory_partitioning.py:from src.core.p2p.p2p_node import PeerCapabilities
+src/production/rag/test_pipeline.py:from __future__ import annotations
+src/production/rag/rag_system/graph_explain.py:from typing import Any
+src/production/rag/rag_system/graph_explain.py:from .retrieval.graph_store import GraphStore
+src/production/rag/rag_system/vector_store.py:from typing import Any
+src/production/rag/rag_system/vector_store.py:from qdrant_client import QdrantClient
+src/production/rag/rag_system/vector_store.py:from .faiss_backend import FaissAdapter
+src/production/rag/rag_system/faiss_backend.py:from __future__ import annotations
+src/production/rag/rag_system/faiss_backend.py:from typing import TYPE_CHECKING, Any
+src/production/rag/rag_system/faiss_backend.py:from rag_system.core.config import UnifiedConfig
+src/production/rag/rag_system/faiss_backend.py:from rag_system.retrieval.vector_store import VectorStore as PickledStore
+src/production/rag/rag_system/__init__.py:from .confidence import ConfidenceTier, assign_tier, score_evidence
+src/production/rag/rag_system/retrieval/vector_store.py:from datetime import datetime
+src/production/rag/rag_system/retrieval/vector_store.py:from typing import Any
+src/production/rag/rag_system/retrieval/vector_store.py:from AIVillage.src.production.rag.rag_system.core.config import UnifiedConfig
+src/production/rag/rag_system/retrieval/vector_store.py:from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
+src/production/rag/rag_system/retrieval/hybrid_retriever.py:from collections import Counter
+src/production/rag/rag_system/retrieval/hybrid_retriever.py:from datetime import datetime
+src/production/rag/rag_system/retrieval/hybrid_retriever.py:from typing import Any
+src/production/rag/rag_system/retrieval/hybrid_retriever.py:from rag_system.core.config import UnifiedConfig
+src/production/rag/rag_system/retrieval/hybrid_retriever.py:from rag_system.core.structures import RetrievalPlan, RetrievalResult
+src/production/rag/rag_system/retrieval/hybrid_retriever.py:from rag_system.retrieval.graph_store import GraphStore
+src/production/rag/rag_system/retrieval/hybrid_retriever.py:from rag_system.retrieval.vector_store import VectorStore
+src/production/rag/rag_system/retrieval/hybrid_retriever.py:from rag_system.utils.graph_utils import distance_sensitive_linearization
+src/production/rag/rag_system/retrieval/graph_store.py:from datetime import datetime
+src/production/rag/rag_system/retrieval/graph_store.py:from typing import Any
+src/production/rag/rag_system/retrieval/graph_store.py:from AIVillage.src.production.rag.rag_system.core.config import UnifiedConfig
+src/production/rag/rag_system/retrieval/graph_store.py:from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
+src/production/rag/rag_system/retrieval/bayes_net.py:from collections import defaultdict
+src/production/rag/rag_system/retrieval/bayes_net.py:from typing import Any
+src/production/rag/rag_system/agents/task_planning_agent.py:from typing import Any
+src/production/rag/rag_system/agents/task_planning_agent.py:from rag_system.agents.key_concept_extractor import KeyConceptExtractorAgent
+src/production/rag/rag_system/agents/task_planning_agent.py:from rag_system.agents.user_intent_interpreter import UserIntentInterpreterAgent
+src/production/rag/rag_system/agents/task_planning_agent.py:from rag_system.core.agent_interface import AgentInterface
+src/production/rag/rag_system/agents/key_concept_extractor.py:from nlp.named_entity_recognition import NamedEntityRecognizer
+src/production/rag/rag_system/agents/key_concept_extractor.py:from rag_system.core.agent_interface import AgentInterface
+src/production/rag/rag_system/agents/key_concept_extractor.py:from rag_system.utils.embedding import BERTEmbeddingModel
+src/production/rag/rag_system/agents/dynamic_knowledge_integration_agent.py:from typing import Any
+src/production/rag/rag_system/agents/dynamic_knowledge_integration_agent.py:from rag_system.core.agent_interface import AgentInterface
+src/production/rag/rag_system/agents/dynamic_knowledge_integration_agent.py:from rag_system.retrieval.graph_store import GraphStore
+src/production/rag/rag_system/agents/latent_space_agent.py:from typing import Any
+src/production/rag/rag_system/agents/latent_space_agent.py:from some_embedding_library import get_embedding  # Replace with actual embedding library
+src/production/rag/rag_system/agents/latent_space_agent.py:from some_llm_library import LLMModel  # Replace with actual LLM library
+src/production/rag/rag_system/agents/latent_space_agent.py:from AIVillage.src.production.rag.rag_system.core.agent_interface import AgentInterface
+src/production/rag/rag_system/agents/user_intent_interpreter.py:from typing import Any
+src/production/rag/rag_system/hypergraph/migrations.py:from typing import Any
+src/production/rag/rag_system/hypergraph/migrations.py:from neo4j import AsyncSession, Driver, Session
+src/production/rag/rag_system/hypergraph/__init__.py:from .migrations import run_cypher_migrations
+src/production/rag/rag_system/hypergraph/__init__.py:from .models import HippoNode, Hyperedge
+src/production/rag/rag_system/hypergraph/models.py:from datetime import datetime, timezone
+src/production/rag/rag_system/hypergraph/models.py:from typing import Any
+src/production/rag/rag_system/hypergraph/models.py:from pydantic import BaseModel, Field, validator
+src/production/rag/rag_system/utils/named_entity_recognition.py:from __future__ import annotations
+src/production/rag/rag_system/utils/tokenizer.py:from pathlib import Path
+src/production/rag/rag_system/utils/tokenizer.py:from tiktoken import Encoding
+src/production/rag/rag_system/utils/tokenizer.py:from tiktoken.load import load_tiktoken_bpe
+src/production/rag/rag_system/utils/standardized_formats.py:from enum import Enum
+src/production/rag/rag_system/utils/standardized_formats.py:from typing import Any
+src/production/rag/rag_system/utils/standardized_formats.py:from pydantic import BaseModel, Field
+src/production/rag/rag_system/utils/hippo_cache.py:from datetime import datetime
+src/production/rag/rag_system/utils/hippo_cache.py:from typing import Any
+src/production/rag/rag_system/utils/error_handling.py:from collections.abc import Callable
+src/production/rag/rag_system/utils/error_handling.py:from functools import wraps
+src/production/rag/rag_system/utils/error_handling.py:from typing import Any
+src/production/rag/rag_system/utils/advanced_analytics.py:from typing import Any
+src/production/rag/rag_system/utils/relation_extraction.py:from typing import Any
+src/production/rag/rag_system/confidence.py:from __future__ import annotations
+src/production/rag/rag_system/confidence.py:from core.evidence import ConfidenceTier, EvidencePack
+src/production/rag/rag_system/error_handling/adaptive_controller.py:from typing import Any
+src/production/rag/rag_system/error_handling/adaptive_controller.py:from .base_controller import BaseErrorController
+src/production/rag/rag_system/error_handling/error_control.py:from typing import Any
+src/production/rag/rag_system/error_handling/error_control.py:from rag_system.utils.logging import setup_logger
+src/production/rag/rag_system/error_handling/error_handling.py:from collections.abc import Callable
+src/production/rag/rag_system/error_handling/error_handling.py:from functools import wraps
+src/production/rag/rag_system/error_handling/error_handling.py:from typing import Any, NoReturn
+src/production/rag/rag_system/error_handling/error_handler.py:from functools import wraps
+src/production/rag/rag_system/error_handling/error_handler.py:from typing import Any
+src/production/rag/rag_system/error_handling/hybrid_controller.py:from .adaptive_controller import AdaptiveErrorRateController
+src/production/rag/rag_system/error_handling/hybrid_controller.py:from .ltt_controller import LTTErrorController
+src/production/rag/rag_system/error_handling/base_controller.py:from abc import ABC, abstractmethod
+src/production/rag/rag_system/error_handling/base_controller.py:from typing import Any
+src/production/rag/rag_system/error_handling/ltt_controller.py:from scipy.stats import binom
+src/production/rag/rag_system/error_handling/ltt_controller.py:from .base_controller import ErrorRateController
+src/production/rag/rag_system/processing/veracity_extrapolator.py:from .batch_processor import BatchProcessor
+src/production/rag/rag_system/processing/veracity_extrapolator.py:from .confidence_estimator import estimate_confidence
+src/production/rag/rag_system/processing/veracity_extrapolator.py:from .prompt_constructor import construct_extrapolation_prompt
+src/production/rag/rag_system/processing/reasoning_engine.py:from datetime import datetime
+src/production/rag/rag_system/processing/reasoning_engine.py:from typing import Any
+src/production/rag/rag_system/processing/reasoning_engine.py:from AIVillage.production.rag.rag_system.core.config import UnifiedConfig
+src/production/rag/rag_system/processing/reasoning_engine.py:from AIVillage.production.rag.rag_system.core.structures import RetrievalResult
+src/production/rag/rag_system/processing/self_referential_query_processor.py:from AIVillage.src.production.rag.rag_system.core.pipeline import EnhancedRAGPipeline
+src/production/rag/rag_system/processing/advanced_nlp.py:from typing import Any
+src/production/rag/rag_system/processing/advanced_nlp.py:from sklearn.metrics.pairwise import cosine_similarity
+src/production/rag/rag_system/processing/advanced_nlp.py:from transformers import BertForQuestionAnswering, BertForSequenceClassification, BertModel, BertTokenizer
+src/production/rag/rag_system/processing/knowledge_constructor.py:from datetime import datetime
+src/production/rag/rag_system/processing/knowledge_constructor.py:from typing import Any
+src/production/rag/rag_system/processing/knowledge_constructor.py:from AIVillage.src.production.rag.rag_system.core.config import RAGConfig
+src/production/rag/rag_system/processing/knowledge_constructor.py:from AIVillage.src.production.rag.rag_system.core.structures import RetrievalResult
+src/production/rag/rag_system/processing/cognitive_nexus.py:from typing import Any
+src/production/rag/rag_system/processing/cognitive_nexus.py:from AIVillage.src.production.rag.rag_system.core.agent_interface import AgentInterface
+src/production/rag/rag_system/processing/cognitive_nexus.py:from AIVillage.src.production.rag.rag_system.core.interface import ReasoningEngine
+src/production/rag/rag_system/processing/cognitive_nexus.py:from AIVillage.src.production.rag.rag_system.processing.self_referential_query_processor import (
+src/production/rag/rag_system/processing/confidence_estimator.py:from typing import Any
+src/production/rag/rag_system/processing/batch_processor.py:from .confidence_estimator import estimate_confidence
+src/production/rag/rag_system/processing/batch_processor.py:from .prompt_constructor import construct_extrapolation_prompt
+src/production/rag/rag_system/processing/prompt_constructor.py:from typing import Any
+src/production/rag/rag_system/core/base_component.py:from abc import ABC, abstractmethod
+src/production/rag/rag_system/core/base_component.py:from typing import Any
+src/production/rag/rag_system/core/pipeline.py:from typing import Any
+src/production/rag/rag_system/core/pipeline.py:from rag_system.core.base_component import BaseComponent
+src/production/rag/rag_system/core/pipeline.py:from rag_system.core.cognitive_nexus import CognitiveNexus
+src/production/rag/rag_system/core/pipeline.py:from rag_system.core.config import UnifiedConfig
+src/production/rag/rag_system/core/pipeline.py:from rag_system.core.latent_space_activation import LatentSpaceActivation
+src/production/rag/rag_system/core/pipeline.py:from rag_system.processing.reasoning_engine import UncertaintyAwareReasoningEngine
+src/production/rag/rag_system/core/pipeline.py:from rag_system.retrieval.bayes_net import BayesNet
+src/production/rag/rag_system/core/pipeline.py:from rag_system.retrieval.hybrid_retriever import HybridRetriever
+src/production/rag/rag_system/core/pipeline.py:from rag_system.tracking.unified_knowledge_tracker import UnifiedKnowledgeTracker
+src/production/rag/rag_system/core/pipeline.py:from rag_system.utils.error_handling import log_and_handle_errors
+src/production/rag/rag_system/core/interface.py:from abc import ABC, abstractmethod
+src/production/rag/rag_system/core/interface.py:from typing import Any
+src/production/rag/rag_system/core/config.py:from datetime import timedelta
+src/production/rag/rag_system/core/config.py:from pathlib import Path
+src/production/rag/rag_system/core/config.py:from typing import Any
+src/production/rag/rag_system/core/config.py:from pydantic import BaseModel, Field
+src/production/rag/rag_system/core/agent_interface.py:from abc import ABC, abstractmethod
+src/production/rag/rag_system/core/agent_interface.py:from typing import Any
+src/production/rag/rag_system/core/exploration_mode.py:from typing import Any
+src/production/rag/rag_system/core/exploration_mode.py:from agents.language_models.openai_gpt import OpenAIGPTConfig
+src/production/rag/rag_system/core/exploration_mode.py:from rag_system.processing.advanced_nlp import AdvancedNLP
+src/production/rag/rag_system/core/exploration_mode.py:from rag_system.retrieval.graph_store import GraphStore
+src/production/rag/rag_system/core/structures.py:from dataclasses import dataclass
+src/production/rag/rag_system/core/structures.py:from datetime import datetime
+src/production/rag/rag_system/core/structures.py:from typing import Any
+src/production/rag/rag_system/tracking/unified_knowledge_tracker.py:from dataclasses import dataclass
+src/production/rag/rag_system/tracking/unified_knowledge_tracker.py:from datetime import datetime
+src/production/rag/rag_system/tracking/unified_knowledge_tracker.py:from typing import TYPE_CHECKING, Any
+src/production/rag/rag_system/tracking/knowledge_evolution_tracker.py:from datetime import datetime
+src/production/rag/rag_system/tracking/knowledge_evolution_tracker.py:from typing import Any
+src/production/rag/rag_system/tracking/knowledge_evolution_tracker.py:from AIVillage.src.production.rag.rag_system.retrieval.graph_store import GraphStore
+src/production/rag/rag_system/tracking/knowledge_evolution_tracker.py:from AIVillage.src.production.rag.rag_system.retrieval.vector_store import VectorStore
+src/production/rag/rag_system/tracking/knowledge_tracker.py:from dataclasses import dataclass
+src/production/rag/rag_system/tracking/knowledge_tracker.py:from datetime import datetime
+src/production/rag/rag_system/evaluation/evaluation_framework.py:from datetime import datetime
+src/production/rag/rag_system/evaluation/evaluation_framework.py:from typing import Any
+src/production/rag/rag_system/evaluation/evaluation_framework.py:from rag_system.utils.advanced_analytics import AdvancedAnalytics
+src/production/federated_learning/test_fl_coordinator.py:from __future__ import annotations
+src/production/federated_learning/test_fl_coordinator.py:from dataclasses import dataclass
+src/production/federated_learning/test_fl_coordinator.py:from pathlib import Path
+src/production/federated_learning/test_fl_coordinator.py:from typing import Any
+src/production/federated_learning/test_fl_coordinator.py:from src.production.federated_learning.federated_coordinator import (
+src/production/federated_learning/test_hierarchical_aggregation.py:from __future__ import annotations
+src/production/federated_learning/test_hierarchical_aggregation.py:from dataclasses import dataclass
+src/production/federated_learning/test_hierarchical_aggregation.py:from pathlib import Path
+src/production/federated_learning/test_hierarchical_aggregation.py:from typing import Any
+src/production/federated_learning/test_hierarchical_aggregation.py:from src.production.federated_learning.federated_coordinator import (
+src/production/federated_learning/__init__.py:from .federated_coordinator import DistributedFederatedLearning, FederatedTrainingRound
+src/production/federated_learning/__init__.py:from .hierarchical_aggregation import AggregationTier, HierarchicalAggregator
+src/production/federated_learning/__init__.py:from .secure_aggregation import PrivacyConfig, SecureAggregationProtocol
+src/production/federated_learning/test_privacy_preservation.py:from __future__ import annotations
+src/production/federated_learning/test_privacy_preservation.py:from dataclasses import dataclass
+src/production/federated_learning/test_privacy_preservation.py:from pathlib import Path
+src/production/federated_learning/test_privacy_preservation.py:from typing import Any
+src/production/federated_learning/test_privacy_preservation.py:from src.production.federated_learning.federated_coordinator import (
+src/production/federated_learning/federated_coordinator.py:from dataclasses import dataclass, field
+src/production/federated_learning/federated_coordinator.py:from enum import Enum
+src/production/federated_learning/federated_coordinator.py:from typing import Any
+src/production/federated_learning/federated_coordinator.py:from torch import nn
+src/production/federated_learning/federated_coordinator.py:from torch.utils.data import DataLoader, Dataset
+src/production/federated_learning/federated_coordinator.py:from AIVillage.src.core.p2p.p2p_node import P2PNode, PeerCapabilities
+src/production/federated_learning/federated_coordinator.py:from AIVillage.src.production.evolution.infrastructure_aware_evolution import InfrastructureAwareEvolution
+src/production/compression/test_pipeline.py:from __future__ import annotations
+src/production/compression/hyper_compression.py:from __future__ import annotations
+src/production/compression/hyper_compression.py:from typing import TYPE_CHECKING
+src/production/compression/compression/stage1.py:from typing import Any
+src/production/compression/compression/stage1.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/production/compression/compression/stage1.py:from .eval_utils import CompressionEvaluator
+src/production/compression/compression/stage1.py:from .seedlm import SeedLMCompressor
+src/production/compression/compression/stage1.py:from .stage1_bitnet import convert_to_bitnet
+src/production/compression/compression/stage1.py:from .stage1_config import DEFAULT_STAGE1_CONFIG, Stage1Config
+src/production/compression/compression/__init__.py:from dataclasses import dataclass
+src/production/compression/compression/__init__.py:from torch import nn
+src/production/compression/compression/__init__.py:from .hyperfn import HyperCompressionEncoder
+src/production/compression/compression/__init__.py:from .seedlm import ProgressiveSeedLMEncoder, SeedLMCompressor, SeedLMConfig
+src/production/compression/compression/__init__.py:from .stage1_bitnet import convert_to_bitnet
+src/production/compression/compression/__init__.py:from .vptq import VPTQQuantizer
+src/production/compression/compression/seedlm.py:from dataclasses import dataclass
+src/production/compression/compression/seedlm.py:from typing import Any
+src/production/compression/compression/stage2.py:from pathlib import Path
+src/production/compression/compression/stage2.py:from typing import Any
+src/production/compression/compression/stage2.py:from .hyperfn import HyperCompressionEncoder
+src/production/compression/compression/stage2.py:from .seedlm import SeedLMCompressor
+src/production/compression/compression/stage2.py:from .vptq import VPTQQuantizer
+src/production/compression/compression/stage1_config.py:from dataclasses import dataclass
+src/production/compression/compression/stage1_bitnet.py:from torch import nn
+src/production/compression/compression/stage1_bitnet.py:from transformers import Trainer, TrainerCallback, TrainingArguments
+src/production/compression/compression/eval_utils.py:from dataclasses import dataclass
+src/production/compression/model_compression/__init__.py:from .bitlinearization import convert_to_bitnet, quantize_activations, quantize_weights
+src/production/compression/model_compression/__init__.py:from .model_compression import HyperCompressor, ModelCompressionTask
+src/production/compression/model_compression/bitlinearization.py:from typing import NoReturn
+src/production/compression/model_compression/bitlinearization.py:from agent_forge.compression.stage1_bitnet import convert_to_bitnet
+src/production/compression/model_compression/model_compression.py:from numba import jit
+src/production/compression/model_compression/model_compression.py:from torch import nn
+src/production/compression/model_compression/model_compression.py:from typing import Any
+src/production/compression/model_compression/model_compression.py:from langroid import ChatAgent, ChatAgentConfig, Task
+src/production/compression/compression_pipeline.py:from datetime import datetime
+src/production/compression/compression_pipeline.py:from pathlib import Path
+src/production/compression/compression_pipeline.py:from typing import Any
+src/production/compression/compression_pipeline.py:from datasets import load_dataset
+src/production/compression/compression_pipeline.py:from pydantic import BaseModel, Field, validator
+src/production/compression/compression_pipeline.py:from torch import nn
+src/production/compression/compression_pipeline.py:from tqdm import tqdm
+src/production/compression/compression_pipeline.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/production/compression/compression_pipeline.py:from .compression.stage1_bitnet import BitNetLinear, apply_hf_bitnet_finetune, convert_to_bitnet
+src/production/compression/README.md:from src.production.compression import UnifiedCompressor, CompressionStrategy
+src/production/compression/README.md:from src.production.compression import compress_simple
+src/production/compression/README.md:from src.production.compression import compress_mobile
+src/production/compression/README.md:from src.production.compression import UnifiedCompressor, CompressionStrategy
+src/production/compression/README.md:from src.agent_forge.compression import bitnet_compress
+src/production/compression/README.md:from src.production.compression import UnifiedCompressor
+src/production/compression/README.md:from src.twin_runtime.compressed_loader import CompressedLoader
+src/production/compression/README.md:from src.production.compression import CompressionPipeline
+src/production/compression/unified_compressor.py:from dataclasses import dataclass
+src/production/compression/unified_compressor.py:from enum import Enum
+src/production/compression/unified_compressor.py:from pathlib import Path
+src/production/compression/unified_compressor.py:from typing import Any
+src/production/compression/unified_compressor.py:from torch import nn
+src/production/compression/unified_compressor.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/production/compression/unified_compressor.py:from agent_forge.compression import BITNETCompressor, SEEDLMCompressor, VPTQCompressor, bitnet_compress, seedlm_compress
+src/production/compression/unified_compressor.py:from .compression_pipeline import CompressionConfig, CompressionPipeline
+src/production/memory/wandb_manager.py:from pathlib import Path
+src/production/memory/wandb_manager.py:from typing import Any
+src/production/memory/memory_manager.py:from collections.abc import Callable
+src/production/memory/memory_manager.py:from contextlib import contextmanager
+src/production/memory/memory_manager.py:from functools import wraps
+src/production/distributed_agents/__init__.py:from .agent_migration_manager import AgentMigrationManager, MigrationReason
+src/production/distributed_agents/__init__.py:from .agent_registry import AgentLocation, DistributedAgentRegistry
+src/production/distributed_agents/__init__.py:from .distributed_agent_orchestrator import AgentDeploymentPlan, DistributedAgentOrchestrator
+src/production/distributed_agents/agent_migration_manager.py:from dataclasses import dataclass, field
+src/production/distributed_agents/agent_migration_manager.py:from enum import Enum
+src/production/distributed_agents/agent_migration_manager.py:from typing import Any
+src/production/distributed_agents/agent_migration_manager.py:from AIVillage.src.core.p2p.p2p_node import P2PNode
+src/production/distributed_agents/agent_migration_manager.py:from .distributed_agent_orchestrator import AgentInstance, AgentType, DeviceProfile
+src/production/distributed_agents/agent_registry.py:from dataclasses import dataclass, field
+src/production/distributed_agents/agent_registry.py:from typing import Any
+src/production/distributed_agents/distributed_agent_orchestrator.py:from dataclasses import dataclass, field
+src/production/distributed_agents/distributed_agent_orchestrator.py:from enum import Enum
+src/production/distributed_agents/distributed_agent_orchestrator.py:from typing import Any
+src/production/distributed_agents/distributed_agent_orchestrator.py:from AIVillage.src.core.p2p.p2p_node import P2PNode
+src/production/distributed_agents/distributed_agent_orchestrator.py:from AIVillage.src.core.resources.resource_monitor import ResourceMonitor
+src/production/distributed_agents/distributed_agent_orchestrator.py:from AIVillage.src.production.distributed_inference.model_sharding_engine import DeviceProfile, ModelShardingEngine
+src/production/evolution/evomerge/task_vector.py:from torch import nn
+src/production/evolution/evomerge/utils.py:from concurrent.futures import ProcessPoolExecutor
+src/production/evolution/evomerge/utils.py:from pydantic import BaseModel
+src/production/evolution/evomerge/utils.py:from tqdm import tqdm
+src/production/evolution/evomerge/utils.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/production/evolution/evomerge/utils.py:from .mask_weights_utils import mask_input_with_mask_rate
+src/production/evolution/evomerge/utils.py:from .task_vector import TaskVector
+src/production/evolution/evomerge/evaluation.py:from concurrent.futures import ProcessPoolExecutor
+src/production/evolution/evomerge/evaluation.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/production/evolution/evomerge/evaluation.py:from .utils import EvoMergeException
+src/production/evolution/evomerge/cross_domain.py:from transformers import AutoTokenizer
+src/production/evolution/evomerge/cross_domain.py:from .config import MergeSettings, ModelDomain
+src/production/evolution/evomerge/cross_domain.py:from .evaluation import (
+src/production/evolution/evomerge/__init__.py:from .config import Configuration, EvolutionSettings, MergeSettings, ModelReference, create_default_config
+src/production/evolution/evomerge/__init__.py:from .evolutionary_tournament import EvolutionaryTournament, run_evolutionary_tournament
+src/production/evolution/evomerge/__init__.py:from .logging_config import setup_logging
+src/production/evolution/evomerge/__init__.py:from .merging.merge_techniques import MERGE_TECHNIQUES
+src/production/evolution/evomerge/__init__.py:from .merging.merger import AdvancedModelMerger
+src/production/evolution/evomerge/__init__.py:from .utils import (
+src/production/evolution/evomerge/__init__.py:from .visualization import (
+src/production/evolution/evomerge/model_tracker.py:from datetime import datetime
+src/production/evolution/evomerge/model_tracker.py:from typing import Any
+src/production/evolution/evomerge/logging_config.py:from logging.handlers import RotatingFileHandler
+src/production/evolution/evomerge/config.py:from pydantic import BaseModel, Field, validator
+src/production/evolution/evomerge/merger.py:from transformers import AutoTokenizer
+src/production/evolution/evomerge/merger.py:from .config import Configuration
+src/production/evolution/evomerge/merger.py:from .cross_domain import merge_cross_domain_models
+src/production/evolution/evomerge/merger.py:from .instruction_tuning import is_instruction_tuned_model, merge_instruction_tuned_models
+src/production/evolution/evomerge/merger.py:from .merging.merge_techniques import MERGE_TECHNIQUES
+src/production/evolution/evomerge/merger.py:from .model_tracker import model_tracker
+src/production/evolution/evomerge/merger.py:from .utils import (
+src/production/evolution/evomerge/benchmarks.py:from .config import create_default_config
+src/production/evolution/evomerge/benchmarks.py:from .evolutionary_tournament import run_evolutionary_tournament
+src/production/evolution/evomerge/benchmarks.py:from .merger import AdvancedModelMerger
+src/production/evolution/evomerge/benchmarks.py:from .utils import evaluate_model, load_models
+src/production/evolution/evomerge/benchmarks.py:from .visualization import generate_html_report, plot_benchmark_comparison
+src/production/evolution/evomerge/instruction_tuning.py:from torch.utils.data import DataLoader
+src/production/evolution/evomerge/instruction_tuning.py:from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, DataCollatorForLanguageModeling, TextDataset
+src/production/evolution/evomerge/instruction_tuning.py:from .config import MergeSettings
+src/production/evolution/evomerge/instruction_tuning.py:from .merging.merge_techniques import MERGE_TECHNIQUES
+src/production/evolution/evomerge/instruction_tuning.py:from .utils import EvoMergeException
+src/production/evolution/evomerge/integration_tests.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/production/evolution/evomerge/integration_tests.py:from .config import create_default_config
+src/production/evolution/evomerge/integration_tests.py:from .evaluation import evaluate_model
+src/production/evolution/evomerge/integration_tests.py:from .evolutionary_tournament import run_evolutionary_tournament
+src/production/evolution/evomerge/integration_tests.py:from .utils import clean_up_models, generate_text
+src/production/evolution/evomerge/evolutionary_tournament.py:from datetime import datetime
+src/production/evolution/evomerge/evolutionary_tournament.py:from tqdm import tqdm
+src/production/evolution/evomerge/evolutionary_tournament.py:from transformers import AutoModelForCausalLM
+src/production/evolution/evomerge/evolutionary_tournament.py:from .config import Configuration, ModelReference
+src/production/evolution/evomerge/evolutionary_tournament.py:from .evaluation import evaluate_model
+src/production/evolution/evomerge/evolutionary_tournament.py:from .merging.merger import AdvancedModelMerger
+src/production/evolution/evomerge/evolutionary_tournament.py:from .model_tracker import model_tracker
+src/production/evolution/evomerge/evolutionary_tournament.py:from .multi_objective import calculate_pareto_front, nsga2_select
+src/production/evolution/evomerge/evolutionary_tournament.py:from .utils import EvoMergeException, clean_up_models, parallel_evaluate_models
+src/production/evolution/evomerge/evolutionary_tournament.py:from .visualization import plot_evolution_progress, plot_fitness_over_generations, plot_pareto_front
+src/production/evolution/evomerge/cli.py:from .config import ModelReference, create_default_config
+src/production/evolution/evomerge/cli.py:from .logging_config import setup_logging
+src/production/evolution/evomerge/cli.py:from .merging.merger import AdvancedModelMerger
+src/production/evolution/evomerge/cli.py:from .utils import EvoMergeException, check_system_resources, load_models
+src/production/evolution/evomerge/test_evomerge.py:from .config import Configuration, EvolutionSettings, MergeSettings, ModelReference
+src/production/evolution/evomerge/test_evomerge.py:from .evolutionary_tournament import EvolutionaryTournament, run_evolutionary_tournament
+src/production/evolution/evomerge/test_evomerge.py:from .merging.merge_techniques import MERGE_TECHNIQUES
+src/production/evolution/evomerge/test_evomerge.py:from .merging.merger import AdvancedModelMerger
+src/production/evolution/evomerge/test_evomerge.py:from .model_loading import load_models
+src/production/evolution/evomerge/test_evomerge.py:from .utils import clean_up_models, mask_model_weights
+src/production/evolution/evomerge/merging/__init__.py:from .merge_techniques import MERGE_TECHNIQUES
+src/production/evolution/evomerge/merging/__init__.py:from .merger import AdvancedModelMerger
+src/production/evolution/evomerge/merging/merger.py:from transformers import AutoTokenizer
+src/production/evolution/evomerge/merging/merger.py:from AIVillage.src.production.evolution.evomerge.config import Configuration
+src/production/evolution/evomerge/merging/merger.py:from AIVillage.src.production.evolution.evomerge.cross_domain import merge_cross_domain_models
+src/production/evolution/evomerge/merging/merger.py:from AIVillage.src.production.evolution.evomerge.instruction_tuning import (
+src/production/evolution/evomerge/merging/merger.py:from AIVillage.src.production.evolution.evomerge.model_tracker import model_tracker
+src/production/evolution/evomerge/merging/merger.py:from AIVillage.src.production.evolution.evomerge.utils import (
+src/production/evolution/evomerge/merging/merger.py:from .merge_techniques import MERGE_TECHNIQUES
+src/production/evolution/evomerge/model_loading.py:from pydantic import BaseModel
+src/production/evolution/evomerge/model_loading.py:from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+src/production/evolution/evolution/deploy_winner.py:from dataclasses import asdict, dataclass
+src/production/evolution/evolution/deploy_winner.py:from datetime import datetime, timezone
+src/production/evolution/evolution/deploy_winner.py:from pathlib import Path
+src/production/evolution/evolution/deploy_winner.py:from typing import Any
+src/production/evolution/evolution/deploy_winner.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/production/evolution/evolution/merge_operators.py:from dataclasses import asdict, dataclass
+src/production/evolution/evolution/merge_operators.py:from datetime import datetime, timezone
+src/production/evolution/evolution/merge_operators.py:from typing import Any
+src/production/evolution/evolution/math_tutor_evolution.py:from dataclasses import asdict, dataclass
+src/production/evolution/evolution/math_tutor_evolution.py:from datetime import datetime, timezone
+src/production/evolution/evolution/math_tutor_evolution.py:from pathlib import Path
+src/production/evolution/evolution/math_tutor_evolution.py:from typing import Any
+src/production/evolution/evolution/math_tutor_evolution.py:from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+src/production/evolution/evolution/math_fitness.py:from dataclasses import dataclass
+src/production/evolution/evolution/math_fitness.py:from datetime import datetime, timezone
+src/production/evolution/evolution/math_fitness.py:from typing import Any
+src/production/evolution/evomerge_pipeline.py:from datetime import datetime
+src/production/evolution/evomerge_pipeline.py:from pathlib import Path
+src/production/evolution/evomerge_pipeline.py:from typing import Any
+src/production/evolution/evomerge_pipeline.py:from uuid import uuid4
+src/production/evolution/evomerge_pipeline.py:from pydantic import BaseModel, Field, validator
+src/production/evolution/evomerge_pipeline.py:from tqdm import tqdm
+src/production/evolution/evomerge_pipeline.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/production/evolution/test_evoMerge.py:from __future__ import annotations
+src/production/tests/memory/test_memory_comprehensive.py:from unittest.mock import Mock, patch
+src/production/tests/conftest.py:from pathlib import Path
+src/production/communications/p2p/__init__.py:from .device_mesh import ConnectionType, DeviceMesh, MeshProtocol
+src/production/communications/p2p/__init__.py:from .p2p_node import NodeStatus, P2PNode, PeerInfo
+src/production/communications/p2p/__init__.py:from .tensor_streaming import StreamingConfig, TensorChunk, TensorStreaming
+src/production/communications/p2p/p2p_node.py:from collections.abc import Callable
+src/production/communications/p2p/p2p_node.py:from dataclasses import dataclass, field
+src/production/communications/p2p/p2p_node.py:from enum import Enum
+src/production/communications/p2p/p2p_node.py:from typing import Any
+src/production/communications/p2p/p2p_node.py:from cryptography.fernet import Fernet
+src/production/communications/p2p/tensor_streaming.py:from dataclasses import dataclass, field
+src/production/communications/p2p/tensor_streaming.py:from enum import Enum
+src/production/communications/p2p/tensor_streaming.py:from typing import Any
+src/production/communications/p2p/tensor_streaming.py:from .p2p_node import MessageType, P2PMessage, P2PNode
+src/production/communications/p2p/device_mesh.py:from dataclasses import dataclass, field
+src/production/communications/p2p/device_mesh.py:from enum import Enum
+src/production/communications/p2p/device_mesh.py:from typing import Any
+src/production/communications/p2p/device_mesh.py:from .p2p_node import MessageType, P2PMessage, P2PNode
+src/production/communications/__init__.py:from .p2p import DeviceMesh, P2PNode, TensorStreaming
+src/production/communications/__init__.py:from .p2p_protocol import P2PCapabilities, P2PCommunicationProtocol
+src/production/communications/p2p_protocol.py:from collections.abc import Callable, Coroutine
+src/production/communications/p2p_protocol.py:from dataclasses import dataclass
+src/production/communications/p2p_protocol.py:from enum import Enum
+src/production/communications/p2p_protocol.py:from typing import Any
+src/production/communications/p2p_protocol.py:from src.communications.message import Message, MessageType, Priority
+src/production/communications/p2p_protocol.py:from src.communications.protocol import CommunicationProtocol, StandardCommunicationProtocol
+src/production/communications/p2p_protocol.py:from .p2p import DeviceMesh, P2PNode, StreamingConfig, TensorStreaming
+src/production/communications/p2p_protocol.py:from .p2p.device_mesh import MeshProtocol
+src/production/communications/p2p_protocol.py:from .p2p.tensor_streaming import TensorMetadata
+src/production/benchmarking/real_benchmark.py:from datetime import datetime
+src/production/benchmarking/real_benchmark.py:from typing import Any
+src/production/benchmarking/real_benchmark.py:from datasets import load_dataset
+src/production/benchmarking/real_benchmark.py:from tqdm import tqdm
+src/production/benchmarking/real_benchmark.py:from .memory_manager import memory_efficient_operation, memory_manager, safe_model_loader
+src/production/benchmarking/real_benchmark.py:from .wandb_manager import log_metrics
+src/production/geometry/geometry_feedback.py:from dataclasses import asdict, dataclass
+src/production/geometry/geometry_feedback.py:from pathlib import Path
+src/production/geometry/geometry_feedback.py:from typing import Any
+src/production/geometry/geometry_feedback.py:from scipy.stats import entropy
+src/production/geometry/geometry_feedback.py:from torch import nn
+src/production/geometry/geometry_feedback.py:from agent_forge.geometry.id_twonn import twonn
+src/production/geometry/geometry/snapshot.py:from __future__ import annotations
+src/production/geometry/geometry/snapshot.py:from torch import Tensor
+src/production/agent_forge/validate_all_agents.py:from __future__ import annotations
+src/production/agent_forge/validate_all_agents.py:from datetime import datetime
+src/production/agent_forge/validate_all_agents.py:from pathlib import Path
+src/production/agent_forge/validate_all_agents.py:from typing import Any
+src/production/agent_forge/validate_all_agents.py:from src.communications.message import Message, MessageType
+src/production/agent_forge/validate_all_agents.py:from src.communications.protocol import StandardCommunicationProtocol
+src/production/agent_forge/validate_all_agents.py:from .agent_factory import AgentFactory
+src/production/agent_forge/evolution/evolution_metrics.py:from dataclasses import dataclass, field
+src/production/agent_forge/evolution/evolution_metrics.py:from enum import Enum
+src/production/agent_forge/evolution/evolution_metrics.py:from typing import Any
+src/production/agent_forge/evolution/__init__.py:from .base import EvolvableAgent
+src/production/agent_forge/evolution/__init__.py:from .dual_evolution_system import DualEvolutionSystem
+src/production/agent_forge/evolution/__init__.py:from .evolution_metrics import EvolutionMetrics
+src/production/agent_forge/evolution/__init__.py:from .evolution_scheduler import EvolutionScheduler
+src/production/agent_forge/evolution/__init__.py:from .magi_architectural_evolution import MagiArchitecturalEvolution
+src/production/agent_forge/evolution/__init__.py:from .nightly_evolution_orchestrator import NightlyEvolutionOrchestrator
+src/production/agent_forge/evolution/dual_evolution_system.py:from dataclasses import dataclass, field
+src/production/agent_forge/evolution/dual_evolution_system.py:from datetime import datetime, timedelta
+src/production/agent_forge/evolution/dual_evolution_system.py:from typing import Any
+src/production/agent_forge/evolution/dual_evolution_system.py:from .base import EvolvableAgent
+src/production/agent_forge/evolution/dual_evolution_system.py:from .evolution_metrics import EvolutionMetricsCollector
+src/production/agent_forge/evolution/dual_evolution_system.py:from .evolution_scheduler import EvolutionScheduler, SchedulerConfig
+src/production/agent_forge/evolution/dual_evolution_system.py:from .magi_architectural_evolution import MagiArchitecturalEvolution
+src/production/agent_forge/evolution/dual_evolution_system.py:from .nightly_evolution_orchestrator import NightlyEvolutionOrchestrator
+src/production/agent_forge/evolution/infrastructure_aware_evolution.py:from dataclasses import dataclass, field
+src/production/agent_forge/evolution/infrastructure_aware_evolution.py:from enum import Enum
+src/production/agent_forge/evolution/infrastructure_aware_evolution.py:from typing import Any
+src/production/agent_forge/evolution/infrastructure_aware_evolution.py:from AIVillage.src.core.p2p import P2PNode
+src/production/agent_forge/evolution/infrastructure_aware_evolution.py:from AIVillage.src.core.resources import AdaptiveLoader, ConstraintManager, DeviceProfiler, ResourceMonitor
+src/production/agent_forge/evolution/infrastructure_aware_evolution.py:from .base import EvolvableAgent
+src/production/agent_forge/evolution/infrastructure_aware_evolution.py:from .dual_evolution_system import DualEvolutionSystem
+src/production/agent_forge/evolution/kpi_evolution_engine.py:from collections import defaultdict
+src/production/agent_forge/evolution/kpi_evolution_engine.py:from collections.abc import Callable
+src/production/agent_forge/evolution/kpi_evolution_engine.py:from dataclasses import dataclass, field
+src/production/agent_forge/evolution/kpi_evolution_engine.py:from enum import Enum
+src/production/agent_forge/evolution/kpi_evolution_engine.py:from pathlib import Path
+src/production/agent_forge/evolution/kpi_evolution_engine.py:from typing import Any
+src/production/agent_forge/evolution/evolution_scheduler.py:from dataclasses import dataclass
+src/production/agent_forge/evolution/evolution_scheduler.py:from .base import EvolvableAgent
+src/production/agent_forge/evolution/base.py:from dataclasses import dataclass, field
+src/production/agent_forge/evolution/base.py:from datetime import datetime
+src/production/agent_forge/evolution/base.py:from typing import Any
+src/production/agent_forge/evolution/resource_constrained_evolution.py:from collections.abc import Callable
+src/production/agent_forge/evolution/resource_constrained_evolution.py:from dataclasses import dataclass, field
+src/production/agent_forge/evolution/resource_constrained_evolution.py:from enum import Enum
+src/production/agent_forge/evolution/resource_constrained_evolution.py:from typing import Any
+src/production/agent_forge/evolution/resource_constrained_evolution.py:from AIVillage.src.core.resources import AdaptiveLoader, ConstraintManager, DeviceProfiler, ResourceMonitor
+src/production/agent_forge/evolution/resource_constrained_evolution.py:from AIVillage.src.core.resources.constraint_manager import ConstraintSeverity, ConstraintViolation
+src/production/agent_forge/evolution/resource_constrained_evolution.py:from .base import EvolvableAgent
+src/production/agent_forge/evolution/resource_constrained_evolution.py:from .dual_evolution_system import DualEvolutionSystem
+src/production/agent_forge/evolution/evolution_coordination_protocol.py:from dataclasses import dataclass, field
+src/production/agent_forge/evolution/evolution_coordination_protocol.py:from enum import Enum
+src/production/agent_forge/evolution/evolution_coordination_protocol.py:from typing import Any
+src/production/agent_forge/evolution/evolution_coordination_protocol.py:from AIVillage.src.core.p2p import P2PNode
+src/production/agent_forge/evolution/evolution_coordination_protocol.py:from AIVillage.src.core.p2p.message_protocol import EvolutionMessage, MessagePriority, MessageType
+src/production/agent_forge/evolution/nightly_evolution_orchestrator.py:from dataclasses import dataclass
+src/production/agent_forge/evolution/nightly_evolution_orchestrator.py:from typing import Any
+src/production/agent_forge/evolution/nightly_evolution_orchestrator.py:from .base import EvolvableAgent
+src/production/agent_forge/evolution/magi_architectural_evolution.py:from dataclasses import dataclass, field
+src/production/agent_forge/evolution/magi_architectural_evolution.py:from enum import Enum
+src/production/agent_forge/evolution/magi_architectural_evolution.py:from typing import Any
+src/production/agent_forge/evolution/magi_architectural_evolution.py:from .base import EvolvableAgent
+src/production/agent_forge/agent_factory.py:from pathlib import Path
+src/production/agent_forge/agent_factory.py:from typing import Any
+src/production/agent_forge/agent_factory.py:from scripts.refactor_agent_forge import AgentRole, AgentSpecialization, BaseMetaAgent
+src/hyperag/education/curriculum_graph.py:from collections import defaultdict, deque
+src/hyperag/education/curriculum_graph.py:from dataclasses import dataclass
+src/hyperag/education/curriculum_graph.py:from datetime import datetime, timezone
+src/hyperag/education/curriculum_graph.py:from typing import Any
+src/hyperag/education/curriculum_graph.py:from AIVillage.src.hyperag.core.hypergraph_kg import Hyperedge, HypergraphKG, Node
+src/hyperag/education/eli5_chain.py:from collections import defaultdict
+src/hyperag/education/eli5_chain.py:from dataclasses import dataclass
+src/hyperag/education/eli5_chain.py:from datetime import datetime, timezone
+src/hyperag/education/eli5_chain.py:from typing import Any
+src/hyperag/education/eli5_chain.py:from anthropic import AsyncAnthropic
+src/hyperag/education/eli5_chain.py:from openai import AsyncOpenAI
+src/nlp/named_entity_recognition.py:from rag_system.utils.named_entity_recognition import NamedEntityRecognizer
+src/compression/test_model_generator.py:from pathlib import Path
+src/compression/test_model_generator.py:from typing import Any
+src/compression/pipeline.py:from __future__ import annotations
+src/compression/pipeline.py:from typing import TYPE_CHECKING
+src/compression/pipeline.py:from src.core.compression.unified_compressor import UnifiedCompressor
+src/compression/__init__.py:from src.core.compression.unified_compressor import UnifiedCompressor
+src/compression/__init__.py:from .pipeline import compress, decompress
+src/compression/__init__.py:from .simple_quantizer import CompressionError, SimpleQuantizer
+src/compression/__init__.py:from .test_model_generator import create_test_model
+src/compression/simple_quantizer.py:from src.core.compression.simple_quantizer import CompressionError, SimpleQuantizer
+src/deployment/mobile_compressor.py:from __future__ import annotations
+src/deployment/mobile_compressor.py:from pathlib import Path
+src/deployment/mobile_compressor.py:from core.compression.unified_compressor import UnifiedCompressor
+src/migration/hyperedge_extractor.py:from collections import Counter, defaultdict
+src/migration/hyperedge_extractor.py:from dataclasses import asdict, dataclass
+src/migration/hyperedge_extractor.py:from datetime import datetime, timezone
+src/migration/hyperedge_extractor.py:from pathlib import Path
+src/migration/hyperedge_extractor.py:from typing import Any
+src/migration/hyperedge_extractor.py:from mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
+src/migration/knowledge_graph_bootstrapper.py:from collections import defaultdict
+src/migration/knowledge_graph_bootstrapper.py:from dataclasses import asdict, dataclass
+src/migration/knowledge_graph_bootstrapper.py:from datetime import datetime, timezone
+src/migration/knowledge_graph_bootstrapper.py:from pathlib import Path
+src/migration/knowledge_graph_bootstrapper.py:from typing import Any
+src/migration/knowledge_graph_bootstrapper.py:from mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
+src/migration/knowledge_graph_bootstrapper.py:from migration.hyperedge_extractor import Hyperedge
+src/migration/knowledge_graph_bootstrapper.py:from migration.vector_converter import EntityExtractor
+src/migration/vector_converter.py:from dataclasses import dataclass
+src/migration/vector_converter.py:from datetime import datetime, timezone
+src/migration/vector_converter.py:from pathlib import Path
+src/migration/vector_converter.py:from typing import Any
+src/migration/vector_converter.py:from mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
+src/core/p2p/message_protocol.py:from dataclasses import dataclass
+src/core/p2p/message_protocol.py:from enum import Enum
+src/core/p2p/message_protocol.py:from typing import Any
+src/core/p2p/test_encryption_layer.py:from .encryption_layer import EncryptionLayer
+src/core/p2p/encryption_layer.py:from dataclasses import dataclass
+src/core/p2p/encryption_layer.py:from typing import Any
+src/core/p2p/encryption_layer.py:from cryptography.hazmat.backends import default_backend
+src/core/p2p/encryption_layer.py:from cryptography.hazmat.primitives import hashes, serialization
+src/core/p2p/encryption_layer.py:from cryptography.hazmat.primitives.asymmetric import padding, rsa
+src/core/p2p/encryption_layer.py:from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+src/core/p2p/encryption_layer.py:from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+src/core/p2p/__init__.py:from .encryption_layer import EncryptionLayer
+src/core/p2p/__init__.py:from .message_protocol import EvolutionMessage, MessageProtocol
+src/core/p2p/__init__.py:from .p2p_node import P2PNode, PeerCapabilities
+src/core/p2p/__init__.py:from .peer_discovery import PeerDiscovery
+src/core/p2p/p2p_node.py:from collections.abc import Callable
+src/core/p2p/p2p_node.py:from dataclasses import dataclass, field
+src/core/p2p/p2p_node.py:from enum import Enum
+src/core/p2p/p2p_node.py:from typing import Any
+src/core/p2p/p2p_node.py:from .encryption_layer import EncryptionLayer
+src/core/p2p/p2p_node.py:from .message_protocol import MessageProtocol
+src/core/p2p/p2p_node.py:from .peer_discovery import PeerDiscovery
+src/core/p2p/peer_discovery.py:from dataclasses import dataclass
+src/core/p2p/peer_discovery.py:from typing import Any
+src/core/p2p/test_message_protocol.py:from .message_protocol import EvolutionMessage, MessageProtocol, MessageType
+src/core/p2p/test_peer_discovery.py:from .peer_discovery import PeerDiscovery
+src/core/evidence.py:from __future__ import annotations
+src/core/evidence.py:from datetime import datetime, timezone
+src/core/evidence.py:from enum import Enum
+src/core/evidence.py:from typing import Any
+src/core/evidence.py:from uuid import UUID, uuid4
+src/core/evidence.py:from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
+src/core/__init__.py:from .communication import AgentCommunicationProtocol, AgentMessage, AgentMessageType, Priority
+src/core/__init__.py:from .error_handling import (
+src/core/logging_config.py:from datetime import datetime
+src/core/logging_config.py:from pathlib import Path
+src/core/logging_config.py:from typing import Any
+src/core/chat_engine.py:from __future__ import annotations
+src/core/chat_engine.py:from datetime import datetime, timezone
+src/core/chat_engine.py:from typing import Any
+src/core/resources/constraint_manager.py:from collections.abc import Callable
+src/core/resources/constraint_manager.py:from dataclasses import dataclass, field
+src/core/resources/constraint_manager.py:from enum import Enum
+src/core/resources/constraint_manager.py:from typing import Any
+src/core/resources/constraint_manager.py:from .device_profiler import DeviceProfiler, DeviceType, ResourceSnapshot, ThermalState
+src/core/resources/device_profiler.py:from collections.abc import Callable
+src/core/resources/device_profiler.py:from dataclasses import dataclass, field
+src/core/resources/device_profiler.py:from enum import Enum
+src/core/resources/device_profiler.py:from typing import Any
+src/core/resources/__init__.py:from .adaptive_loader import AdaptiveLoader, LoadingStrategy
+src/core/resources/__init__.py:from .constraint_manager import ConstraintManager, ResourceConstraints
+src/core/resources/__init__.py:from .device_profiler import DeviceProfile, DeviceProfiler, ResourceSnapshot
+src/core/resources/__init__.py:from .resource_monitor import ResourceMonitor
+src/core/resources/adaptive_loader.py:from dataclasses import dataclass
+src/core/resources/adaptive_loader.py:from enum import Enum
+src/core/resources/adaptive_loader.py:from typing import Any
+src/core/resources/adaptive_loader.py:from .constraint_manager import ConstraintManager, ResourceConstraints
+src/core/resources/adaptive_loader.py:from .device_profiler import DeviceProfiler, DeviceType, ResourceSnapshot
+src/core/resources/resource_monitor.py:from typing import Any
+src/core/compression/advanced_pipeline.py:from __future__ import annotations
+src/core/compression/advanced_pipeline.py:from pathlib import Path
+src/core/compression/__init__.py:from .advanced_pipeline import AdvancedCompressionPipeline
+src/core/compression/__init__.py:from .cascade_compressor import CascadeCompressor
+src/core/compression/__init__.py:from .integrated_pipeline import IntegratedCompressionPipeline
+src/core/compression/__init__.py:from .simple_quantizer import CompressionError, SimpleQuantizer
+src/core/compression/integrated_pipeline.py:from __future__ import annotations
+src/core/compression/integrated_pipeline.py:from typing import TYPE_CHECKING
+src/core/compression/simple_quantizer.py:from pathlib import Path
+src/core/compression/cascade_compressor.py:from __future__ import annotations
+src/core/compression/cascade_compressor.py:from collections import Counter
+src/core/compression/cascade_compressor.py:from typing import Any
+src/core/compression/unified_compressor.py:from __future__ import annotations
+src/core/compression/unified_compressor.py:from pathlib import Path
+src/core/compression/unified_compressor.py:from .advanced_pipeline import AdvancedCompressionPipeline
+src/core/compression/unified_compressor.py:from .simple_quantizer import SimpleQuantizer
+src/core/communication.py:from dataclasses import dataclass, field
+src/core/communication.py:from datetime import datetime
+src/core/communication.py:from enum import Enum
+src/core/communication.py:from typing import Any
+src/core/communication.py:from uuid import uuid4
+src/core/error_handling.py:from collections.abc import Callable
+src/core/error_handling.py:from dataclasses import dataclass, field
+src/core/error_handling.py:from datetime import datetime, timezone
+src/core/error_handling.py:from enum import Enum
+src/core/error_handling.py:from typing import Any, TypeVar, cast
+src/security/verify_fixes.py:from __future__ import annotations
+src/communications/earn_shells_worker.py:from datetime import datetime, timezone
+src/communications/earn_shells_worker.py:from urllib.parse import urljoin
+src/communications/earn_shells_worker.py:from credits_ledger import CreditsConfig, CreditsLedger
+src/communications/credits_ledger.py:from dataclasses import dataclass
+src/communications/credits_ledger.py:from datetime import datetime, timezone
+src/communications/credits_ledger.py:from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, UniqueConstraint, create_engine
+src/communications/credits_ledger.py:from sqlalchemy.exc import IntegrityError
+src/communications/credits_ledger.py:from sqlalchemy.ext.declarative import declarative_base
+src/communications/credits_ledger.py:from sqlalchemy.orm import Session, relationship, sessionmaker
+src/communications/__init__.py:from .message import Message, MessageType, Priority
+src/communications/__init__.py:from .message_queue import MessageQueue
+src/communications/__init__.py:from .protocol import StandardCommunicationProtocol
+src/communications/a2a_protocol.py:from cryptography import x509
+src/communications/a2a_protocol.py:from jwcrypto import jwe, jwk, jws
+src/communications/credit_manager.py:from bittensor_wallet import Network, Wallet  # pip install bittensor-wallet
+src/communications/message.py:from dataclasses import dataclass, field
+src/communications/message.py:from datetime import datetime
+src/communications/message.py:from enum import Enum
+src/communications/message.py:from typing import Any
+src/communications/mcp_client.py:from jose import jwt
+src/communications/credits_api.py:from datetime import datetime, timezone
+src/communications/credits_api.py:from fastapi import Depends, FastAPI, HTTPException, Query
+src/communications/credits_api.py:from fastapi.responses import JSONResponse
+src/communications/credits_api.py:from prometheus_client import Counter, Histogram, generate_latest
+src/communications/credits_api.py:from pydantic import BaseModel, Field
+src/communications/credits_api.py:from .credits_ledger import CreditsConfig, CreditsLedger
+src/communications/community_hub.py:from typing import Any
+src/communications/community_hub.py:from core.error_handling import StandardCommunicationProtocol
+src/communications/prompt_baking.py:from torch import nn
+src/communications/prompt_baking.py:from transformers import AutoTokenizer
+src/communications/test_credits_standalone.py:from datetime import datetime, timezone
+src/communications/test_credits_standalone.py:from credits_ledger import CreditsConfig, CreditsLedger
+src/communications/protocol.py:from collections.abc import Callable
+src/communications/protocol.py:from typing import Any
+src/communications/protocol.py:from cryptography.fernet import Fernet
+src/communications/protocol.py:from .message import Message
+src/communications/credits.py:from collections import defaultdict
+src/communications/alembic/script.py.mako:from alembic import op
+src/communications/alembic/env.py:from logging.config import fileConfig
+src/communications/alembic/env.py:from alembic import context
+src/communications/alembic/env.py:from credits_ledger import Base
+src/communications/alembic/env.py:from sqlalchemy import engine_from_config, pool
+src/communications/alembic/versions/001_initial_credits_schema.py:from alembic import op
+src/communications/message_queue.py:from collections import deque
+src/communications/message_queue.py:from .message import Message, Priority
+src/infrastructure/p2p/__init__.py:from .device_mesh import DeviceMesh
+src/infrastructure/p2p/__init__.py:from .p2p_node import P2PNode, PeerCapabilities
+src/infrastructure/p2p/__init__.py:from .tensor_streaming import TensorStreamer
+src/infrastructure/p2p/p2p_node.py:from collections.abc import Callable
+src/infrastructure/p2p/p2p_node.py:from dataclasses import dataclass, field
+src/infrastructure/p2p/p2p_node.py:from enum import Enum
+src/infrastructure/p2p/p2p_node.py:from typing import Any
+src/infrastructure/p2p/tensor_streaming.py:from collections.abc import Iterator
+src/infrastructure/p2p/tensor_streaming.py:from typing import Any
+src/infrastructure/p2p/device_mesh.py:from pathlib import Path
+src/infrastructure/p2p/device_mesh.py:from typing import Any
+src/rag_system/utils/__init__.py:from .logging import get_logger, setup_logger
+src/mcp_servers/hyperag/guardian/__init__.py:from . import audit
+src/mcp_servers/hyperag/guardian/__init__.py:from .gate import CreativeBridge, Decision, GuardianGate
+src/mcp_servers/hyperag/guardian/gate.py:from dataclasses import dataclass
+src/mcp_servers/hyperag/guardian/gate.py:from typing import Any, Literal
+src/mcp_servers/hyperag/guardian/gate.py:from . import audit
+src/mcp_servers/hyperag/guardian/gate.py:from .metrics import get_guardian_metrics
+src/mcp_servers/hyperag/guardian/audit.py:from typing import Any
+src/mcp_servers/hyperag/guardian/metrics.py:from typing import Any
+src/mcp_servers/hyperag/auth.py:from abc import ABC, abstractmethod
+src/mcp_servers/hyperag/auth.py:from dataclasses import dataclass
+src/mcp_servers/hyperag/auth.py:from datetime import datetime, timedelta
+src/mcp_servers/hyperag/auth.py:from typing import Any
+src/mcp_servers/hyperag/retrieval/__init__.py:from .hybrid_retriever import HybridRetriever
+src/mcp_servers/hyperag/retrieval/__init__.py:from .importance_flow import ImportanceFlow
+src/mcp_servers/hyperag/retrieval/__init__.py:from .ppr_retriever import AlphaProfileStore, PersonalizedPageRank, PPRResults
+src/mcp_servers/hyperag/retrieval/hybrid_retriever.py:from dataclasses import dataclass, field
+src/mcp_servers/hyperag/retrieval/hybrid_retriever.py:from typing import Any
+src/mcp_servers/hyperag/retrieval/hybrid_retriever.py:from AIVillage.src.mcp_servers.hyperag.memory.hippo_index import HippoIndex
+src/mcp_servers/hyperag/retrieval/hybrid_retriever.py:from AIVillage.src.mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
+src/mcp_servers/hyperag/retrieval/hybrid_retriever.py:from AIVillage.src.mcp_servers.hyperag.models import QueryPlan
+src/mcp_servers/hyperag/retrieval/hybrid_retriever.py:from .ppr_retriever import AlphaProfileStore, PersonalizedPageRank, PPRResults
+src/mcp_servers/hyperag/retrieval/importance_flow.py:from scipy.sparse import csr_matrix
+src/mcp_servers/hyperag/retrieval/importance_flow.py:from scipy.sparse.linalg import norm
+src/mcp_servers/hyperag/retrieval/ppr_retriever.py:from dataclasses import dataclass, field
+src/mcp_servers/hyperag/retrieval/ppr_retriever.py:from datetime import datetime
+src/mcp_servers/hyperag/retrieval/ppr_retriever.py:from pathlib import Path
+src/mcp_servers/hyperag/retrieval/ppr_retriever.py:from typing import Any
+src/mcp_servers/hyperag/retrieval/ppr_retriever.py:from AIVillage.src.mcp_servers.hyperag.memory.hippo_index import HippoIndex
+src/mcp_servers/hyperag/retrieval/ppr_retriever.py:from AIVillage.src.mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
+src/mcp_servers/hyperag/retrieval/ppr_retriever.py:from AIVillage.src.mcp_servers.hyperag.models import QueryPlan
+src/mcp_servers/hyperag/retrieval/divergent_retriever.py:from dataclasses import dataclass, field
+src/mcp_servers/hyperag/retrieval/divergent_retriever.py:from datetime import datetime
+src/mcp_servers/hyperag/retrieval/divergent_retriever.py:from typing import Any
+src/mcp_servers/hyperag/retrieval/divergent_retriever.py:from AIVillage.src.mcp_servers.hyperag.memory.hypergraph_kg import HypergraphKG
+src/mcp_servers/hyperag/retrieval/divergent_retriever.py:from AIVillage.src.mcp_servers.hyperag.models import QueryPlan
+src/mcp_servers/hyperag/gdc/registry.py:from .specs import GDCSpec
+src/mcp_servers/hyperag/gdc/__init__.py:from .extractor import GDCExtractor
+src/mcp_servers/hyperag/gdc/__init__.py:from .registry import GDC_REGISTRY, load_gdc_registry
+src/mcp_servers/hyperag/gdc/__init__.py:from .specs import GDCSpec, Violation
+src/mcp_servers/hyperag/gdc/specs.py:from dataclasses import dataclass, field
+src/mcp_servers/hyperag/gdc/specs.py:from datetime import datetime
+src/mcp_servers/hyperag/gdc/specs.py:from typing import Any
+src/mcp_servers/hyperag/gdc/specs.py:from uuid import uuid4
+src/mcp_servers/hyperag/gdc/extractor.py:from typing import Any
+src/mcp_servers/hyperag/gdc/extractor.py:from neo4j import AsyncDriver, AsyncGraphDatabase, AsyncSession
+src/mcp_servers/hyperag/gdc/extractor.py:from neo4j.exceptions import Neo4jError
+src/mcp_servers/hyperag/gdc/extractor.py:from .registry import GDC_REGISTRY, get_enabled_gdcs
+src/mcp_servers/hyperag/gdc/extractor.py:from .specs import GDCSpec, Violation
+src/mcp_servers/hyperag/lora/registry.py:from dataclasses import asdict, dataclass
+src/mcp_servers/hyperag/lora/registry.py:from datetime import datetime, timezone
+src/mcp_servers/hyperag/lora/registry.py:from pathlib import Path
+src/mcp_servers/hyperag/lora/registry.py:from typing import Any
+src/mcp_servers/hyperag/lora/generate_data.py:from datetime import datetime, timezone
+src/mcp_servers/hyperag/lora/generate_data.py:from pathlib import Path
+src/mcp_servers/hyperag/lora/generate_data.py:from typing import Any
+src/mcp_servers/hyperag/lora/train_adapter.py:from datetime import datetime, timezone
+src/mcp_servers/hyperag/lora/train_adapter.py:from pathlib import Path
+src/mcp_servers/hyperag/lora/train_adapter.py:from typing import Any
+src/mcp_servers/hyperag/lora/train_adapter.py:from peft import LoraConfig, TaskType, get_peft_model
+src/mcp_servers/hyperag/lora/train_adapter.py:from sklearn.metrics import accuracy_score
+src/mcp_servers/hyperag/lora/train_adapter.py:from torch.utils.data import DataLoader, Dataset
+src/mcp_servers/hyperag/lora/train_adapter.py:from transformers import (
+src/mcp_servers/hyperag/lora/adapter_loader.py:from dataclasses import dataclass
+src/mcp_servers/hyperag/lora/adapter_loader.py:from datetime import datetime, timedelta
+src/mcp_servers/hyperag/lora/adapter_loader.py:from pathlib import Path
+src/mcp_servers/hyperag/lora/adapter_loader.py:from typing import Any
+src/mcp_servers/hyperag/lora/adapter_loader.py:from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
+src/mcp_servers/hyperag/planning/learning.py:from dataclasses import dataclass, field
+src/mcp_servers/hyperag/planning/learning.py:from datetime import datetime, timedelta, timezone
+src/mcp_servers/hyperag/planning/learning.py:from typing import Any
+src/mcp_servers/hyperag/planning/learning.py:from .plan_structures import QueryPlan, QueryType, ReasoningStrategy
+src/mcp_servers/hyperag/planning/__init__.py:from .learning import PlanLearner, StrategyFeedback
+src/mcp_servers/hyperag/planning/__init__.py:from .plan_structures import ExecutionStep, PlanCheckpoint, QueryPlan
+src/mcp_servers/hyperag/planning/__init__.py:from .query_classifier import QueryClassifier, QueryType
+src/mcp_servers/hyperag/planning/__init__.py:from .query_planner import QueryPlanner
+src/mcp_servers/hyperag/planning/__init__.py:from .strategies import CausalStrategy, ComparativeStrategy, MetaQueryStrategy, SimpleFactStrategy, TemporalStrategy
+src/mcp_servers/hyperag/planning/__init__.py:from .strategy_selector import ReasoningStrategy, StrategySelector
+src/mcp_servers/hyperag/planning/strategy_selector.py:from .plan_structures import QueryType, ReasoningStrategy, RetrievalConstraints
+src/mcp_servers/hyperag/planning/plan_structures.py:from dataclasses import dataclass, field
+src/mcp_servers/hyperag/planning/plan_structures.py:from datetime import datetime, timezone
+src/mcp_servers/hyperag/planning/plan_structures.py:from enum import Enum
+src/mcp_servers/hyperag/planning/plan_structures.py:from typing import Any
+src/mcp_servers/hyperag/planning/query_classifier.py:from typing import Any
+src/mcp_servers/hyperag/planning/query_classifier.py:from .plan_structures import QueryType, ReasoningStrategy
+src/mcp_servers/hyperag/planning/query_planner.py:from typing import Any
+src/mcp_servers/hyperag/planning/query_planner.py:from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
+src/mcp_servers/hyperag/planning/query_planner.py:from .plan_structures import ExecutionStatus, QueryPlan, QueryType, ReasoningStrategy, RetrievalConstraints
+src/mcp_servers/hyperag/planning/query_planner.py:from .query_classifier import QueryClassifier
+src/mcp_servers/hyperag/planning/query_planner.py:from .strategy_selector import StrategySelector
+src/mcp_servers/hyperag/planning/strategies.py:from abc import ABC, abstractmethod
+src/mcp_servers/hyperag/planning/strategies.py:from typing import Any
+src/mcp_servers/hyperag/planning/strategies.py:from .plan_structures import ExecutionStep, QueryPlan, QueryType, ReasoningStrategy, RetrievalConstraints
+src/mcp_servers/hyperag/memory/__init__.py:from .base import Document, Edge, MemoryBackend, Node
+src/mcp_servers/hyperag/memory/__init__.py:from .consolidator import ConsolidationConfig, MemoryConsolidator
+src/mcp_servers/hyperag/memory/__init__.py:from .hippo_index import EpisodicDocument, HippoIndex, HippoNode
+src/mcp_servers/hyperag/memory/__init__.py:from .hypergraph_kg import Hyperedge, HypergraphKG, SemanticNode, Subgraph
+src/mcp_servers/hyperag/memory/__init__.py:from .schemas import HippoSchema, HypergraphSchema
+src/mcp_servers/hyperag/memory/hippo_index.py:from datetime import datetime, timedelta
+src/mcp_servers/hyperag/memory/hippo_index.py:from typing import TYPE_CHECKING, Any
+src/mcp_servers/hyperag/memory/hippo_index.py:from qdrant_client import QdrantClient
+src/mcp_servers/hyperag/memory/hippo_index.py:from qdrant_client.models import Distance, PointStruct, VectorParams
+src/mcp_servers/hyperag/memory/hippo_index.py:from .base import (
+src/mcp_servers/hyperag/memory/hippo_index.py:from .schemas import HippoSchema, QdrantSchema, RedisSchema
+src/mcp_servers/hyperag/memory/schemas.py:from typing import Any
+src/mcp_servers/hyperag/memory/consolidator.py:from dataclasses import dataclass, field
+src/mcp_servers/hyperag/memory/consolidator.py:from datetime import datetime, timedelta
+src/mcp_servers/hyperag/memory/consolidator.py:from typing import Any
+src/mcp_servers/hyperag/memory/consolidator.py:from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
+src/mcp_servers/hyperag/memory/consolidator.py:from .base import ConsolidationBatch, Edge, Node
+src/mcp_servers/hyperag/memory/consolidator.py:from .hippo_index import HippoIndex
+src/mcp_servers/hyperag/memory/consolidator.py:from .hypergraph_kg import HypergraphKG, create_hyperedge, create_semantic_node
+src/mcp_servers/hyperag/memory/base.py:from abc import ABC, abstractmethod
+src/mcp_servers/hyperag/memory/base.py:from dataclasses import dataclass, field
+src/mcp_servers/hyperag/memory/base.py:from datetime import datetime
+src/mcp_servers/hyperag/memory/base.py:from enum import Enum
+src/mcp_servers/hyperag/memory/base.py:from typing import Any
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:from datetime import datetime
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:from typing import Any
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:from neo4j import AsyncGraphDatabase
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:from qdrant_client import QdrantClient
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:from qdrant_client.models import Distance, PointStruct, VectorParams
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:from .base import ConfidenceType, Edge, EmbeddingManager, MemoryBackend, MemoryStats, MemoryType, Node
+src/mcp_servers/hyperag/memory/hypergraph_kg.py:from .schemas import HypergraphSchema, QdrantSchema, RedisSchema
+src/mcp_servers/hyperag/server.py:from pathlib import Path
+src/mcp_servers/hyperag/server.py:from typing import Any
+src/mcp_servers/hyperag/server.py:from websockets.server import WebSocketServerProtocol
+src/mcp_servers/hyperag/server.py:from .auth import AuthContext, AuthenticationError, PermissionManager
+src/mcp_servers/hyperag/server.py:from .models import ModelRegistry
+src/mcp_servers/hyperag/server.py:from .protocol import MCPProtocolHandler, MCPRequest
+src/mcp_servers/hyperag/server.py:from .storage import SQLiteStorage
+src/mcp_servers/hyperag/secure_database.py:from datetime import datetime
+src/mcp_servers/hyperag/secure_database.py:from typing import Any
+src/mcp_servers/hyperag/test_server.py:from typing import Any
+src/mcp_servers/hyperag/storage/sqlite_storage.py:from __future__ import annotations
+src/mcp_servers/hyperag/storage/sqlite_storage.py:from typing import Any
+src/mcp_servers/hyperag/storage/__init__.py:from .sqlite_storage import SQLiteStorage
+src/mcp_servers/hyperag/mcp_server.py:from typing import Any
+src/mcp_servers/hyperag/mcp_server.py:from mcp_servers.hyperag.auth import AuthContext, PermissionManager
+src/mcp_servers/hyperag/mcp_server.py:from mcp_servers.hyperag.models import ModelRegistry
+src/mcp_servers/hyperag/mcp_server.py:from mcp_servers.hyperag.protocol import MCPProtocolHandler
+src/mcp_servers/hyperag/protocol.py:from dataclasses import asdict
+src/mcp_servers/hyperag/protocol.py:from datetime import datetime
+src/mcp_servers/hyperag/protocol.py:from typing import Any
+src/mcp_servers/hyperag/protocol.py:from .auth import AuthContext, HypeRAGPermissions, PermissionManager, audit_operation, require_permission
+src/mcp_servers/hyperag/protocol.py:from .models import ModelRegistry, Node
+src/mcp_servers/hyperag/models.py:from abc import ABC, abstractmethod
+src/mcp_servers/hyperag/models.py:from dataclasses import dataclass, field
+src/mcp_servers/hyperag/models.py:from enum import Enum
+src/mcp_servers/hyperag/models.py:from typing import Any
+src/mcp_servers/hyperag/repair/llm_driver.py:from abc import ABC, abstractmethod
+src/mcp_servers/hyperag/repair/llm_driver.py:from collections.abc import AsyncIterator
+src/mcp_servers/hyperag/repair/llm_driver.py:from dataclasses import dataclass, field
+src/mcp_servers/hyperag/repair/llm_driver.py:from datetime import datetime
+src/mcp_servers/hyperag/repair/llm_driver.py:from enum import Enum
+src/mcp_servers/hyperag/repair/llm_driver.py:from typing import Any
+src/mcp_servers/hyperag/repair/__init__.py:from .innovator_agent import InnovatorAgent, RepairOperation, RepairProposal, RepairProposalSet
+src/mcp_servers/hyperag/repair/__init__.py:from .llm_driver import LLMDriver, ModelConfig
+src/mcp_servers/hyperag/repair/__init__.py:from .templates import TemplateEncoder, ViolationTemplate
+src/mcp_servers/hyperag/repair/templates.py:from dataclasses import dataclass
+src/mcp_servers/hyperag/repair/templates.py:from enum import Enum
+src/mcp_servers/hyperag/repair/templates.py:from typing import Any
+src/mcp_servers/hyperag/repair/innovator_agent.py:from dataclasses import dataclass, field
+src/mcp_servers/hyperag/repair/innovator_agent.py:from datetime import datetime
+src/mcp_servers/hyperag/repair/innovator_agent.py:from enum import Enum
+src/mcp_servers/hyperag/repair/innovator_agent.py:from pathlib import Path
+src/mcp_servers/hyperag/repair/innovator_agent.py:from typing import Any
+src/mcp_servers/hyperag/repair/innovator_agent.py:from AIVillage.src.mcp_servers.hyperag.guardian.gate import GuardianGate
+src/mcp_servers/hyperag/repair/innovator_agent.py:from .llm_driver import LLMDriver, ModelConfig
+src/mcp_servers/hyperag/repair/innovator_agent.py:from .templates import TemplateEncoder, ViolationTemplate
+src/calibration/calibrate.py:from __future__ import annotations
+src/calibration/calibrate.py:from typing import TYPE_CHECKING
+src/calibration/dataset.py:from __future__ import annotations
+src/calibration/dataset.py:from dataclasses import dataclass
+src/calibration/conformal.py:from __future__ import annotations
+src/calibration/conformal.py:from dataclasses import dataclass
+src/agent_forge/svf/__init__.py:from .svf_ops import apply_svf
+src/agent_forge/svf/svf_ops.py:from __future__ import annotations
+src/agent_forge/svf/svf_ops.py:from torch import Tensor, nn
+src/agent_forge/svf/svf_ops.py:from .ops import batched_svd
+src/agent_forge/prompt_baking_legacy/baker.py:from __future__ import annotations
+src/agent_forge/prompt_baking_legacy/baker.py:from datetime import timezone
+src/agent_forge/prompt_baking_legacy/baker.py:from typing import TYPE_CHECKING
+src/agent_forge/prompt_baking_legacy/__init__.py:from .baker import bake
+src/agent_forge/prompt_baking_legacy/__init__.py:from .loader import inject_morality
+src/agent_forge/prompt_baking_legacy/loader.py:from __future__ import annotations
+src/agent_forge/meta/geo2z_policy.py:from torch import nn
+src/agent_forge/unified_pipeline.py:from datetime import datetime
+src/agent_forge/unified_pipeline.py:from pathlib import Path
+src/agent_forge/unified_pipeline.py:from typing import Any
+src/agent_forge/unified_pipeline.py:from compression_pipeline import CompressionConfig, CompressionPipeline
+src/agent_forge/unified_pipeline.py:from evomerge_pipeline import EvolutionConfig, EvoMergePipeline
+src/agent_forge/unified_pipeline.py:from pydantic import BaseModel, Field
+src/agent_forge/unified_pipeline.py:from quietstar_baker import QuietSTaRBaker, QuietSTaRConfig
+src/agent_forge/quietstar_baker.py:from pathlib import Path
+src/agent_forge/quietstar_baker.py:from typing import Any
+src/agent_forge/quietstar_baker.py:from datasets import load_dataset
+src/agent_forge/quietstar_baker.py:from pydantic import BaseModel, Field, validator
+src/agent_forge/quietstar_baker.py:from torch import nn
+src/agent_forge/quietstar_baker.py:from torch.utils.data import DataLoader, Dataset
+src/agent_forge/quietstar_baker.py:from tqdm import tqdm
+src/agent_forge/quietstar_baker.py:from transformers import (
+src/agent_forge/utils/svf.py:from torch import nn
+src/agent_forge/utils/__init__.py:from .adas import mutate_config, select_best
+src/agent_forge/utils/__init__.py:from .expert_vector import ExpertVector
+src/agent_forge/utils/__init__.py:from .grokfast import AugmentedAdam
+src/agent_forge/utils/__init__.py:from .hypercomp import fit_hyperfunc, reconstruct
+src/agent_forge/utils/__init__.py:from .prompt_baking import PromptBank, bake_prompts
+src/agent_forge/utils/__init__.py:from .quiet_star import QuietSTAR
+src/agent_forge/utils/__init__.py:from .seedlm import find_best_seed, regenerate_block
+src/agent_forge/utils/__init__.py:from .self_model import HiddenPredictor
+src/agent_forge/utils/__init__.py:from .svf import SVFLinear, replace_linear_with_svf
+src/agent_forge/utils/__init__.py:from .vptq import VPTQQuantizer
+src/agent_forge/utils/hypercomp.py:from scipy.optimize import minimize
+src/agent_forge/utils/self_model.py:from torch import nn
+src/agent_forge/utils/grokfast.py:from torch.optim import Adam
+src/agent_forge/utils/prompt_baking.py:from torch import nn
+src/agent_forge/utils/tool_message.py:from pydantic import BaseModel
+src/agent_forge/utils/quiet_star.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/compression/__init__.py:from .bitnet import BITNETCompressor
+src/agent_forge/compression/__init__.py:from .bitnet import compress as bitnet_compress
+src/agent_forge/compression/__init__.py:from .seedlm import SEEDLMCompressor
+src/agent_forge/compression/__init__.py:from .seedlm import compress as seedlm_compress
+src/agent_forge/compression/__init__.py:from .vptq import VPTQCompressor
+src/agent_forge/compression/__init__.py:from .vptq import compress as vptq_compress
+src/agent_forge/compression/seedlm.py:from __future__ import annotations
+src/agent_forge/compression/vptq.py:from __future__ import annotations
+src/agent_forge/compression/hyperfn.py:from production.compression.compression.hyperfn import HyperCompressionEncoder
+src/agent_forge/compression/bitnet.py:from __future__ import annotations
+src/agent_forge/interface_buffer_fix.py:from collections.abc import Iterator
+src/agent_forge/interface_buffer_fix.py:from pathlib import Path
+src/agent_forge/interface_buffer_fix.py:from typing import Any
+src/agent_forge/benchmark_runner.py:from datetime import datetime
+src/agent_forge/benchmark_runner.py:from pathlib import Path
+src/agent_forge/benchmark_runner.py:from typing import Any
+src/agent_forge/benchmark_runner.py:from agent_forge.benchmark_suite import BenchmarkConfig, ComparisonReport, ComprehensiveBenchmark
+src/agent_forge/deploy_agent.py:from dataclasses import asdict, dataclass
+src/agent_forge/deploy_agent.py:from pathlib import Path
+src/agent_forge/deploy_agent.py:from typing import Any
+src/agent_forge/deploy_agent.py:from kubernetes import client
+src/agent_forge/deploy_agent.py:from kubernetes import config as k8s_config
+src/agent_forge/deploy_agent.py:from typing import Dict, List, Optional, Any
+src/agent_forge/deploy_agent.py:from transformers import AutoTokenizer, AutoModelForCausalLM
+src/agent_forge/deploy_agent.py:from fastapi import FastAPI, HTTPException
+src/agent_forge/deploy_agent.py:from fastapi.middleware.cors import CORSMiddleware
+src/agent_forge/deploy_agent.py:from pydantic import BaseModel
+src/agent_forge/deploy_agent.py:from prometheus_client import Counter, Histogram, Gauge, generate_latest
+src/agent_forge/deployment/__init__.py:from .manifest_generator import DeploymentManifestGenerator
+src/agent_forge/deployment/manifest_generator.py:from datetime import datetime
+src/agent_forge/deployment/manifest_generator.py:from pathlib import Path
+src/agent_forge/deployment/manifest_generator.py:from typing import Any
+src/agent_forge/deployment/manifest_generator.py:from AIVillage.src.agent_forge.compression.eval_utils import CompressionEvaluator
+src/agent_forge/deployment/manifest_generator.py:from AIVillage.src.agent_forge.version import __version__
+src/agent_forge/deployment/manifest_generator.py:from agent_forge import AgentForgeModel
+src/agent_forge/deployment/manifest_generator.py:from transformers import AutoTokenizer
+src/agent_forge/deployment/manifest_generator.py:from agent_forge.compression import load_compressed_model
+src/agent_forge/deployment/manifest_generator.py:from agent_forge import AgentForgeModel
+src/agent_forge/deployment/manifest_generator.py:from agent_forge import AgentForgeModel
+src/agent_forge/adas/adas_secure.py:from __future__ import annotations
+src/agent_forge/adas/adas_secure.py:from contextlib import contextmanager
+src/agent_forge/adas/adas_secure.py:from typing import Any, NoReturn
+src/agent_forge/adas/adas_secure.py:from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
+src/agent_forge/adas/adas_secure.py:from langroid.agent.task import Task
+src/agent_forge/adas/adas_secure.py:from langroid.agent.tool_message import ToolMessage
+src/agent_forge/adas/adas_secure.py:from langroid.language_models.openai_gpt import OpenAIGPTConfig
+src/agent_forge/adas/adas_secure.py:from rag_system.utils.logging import setup_logger as get_logger
+src/agent_forge/adas/adas_secure.py:from .technique_archive import PROMPT_TECHNIQUE_ARCHIVE
+src/agent_forge/adas/__init__.py:from .adas import ADASTask
+src/agent_forge/adas/__init__.py:from .system import ADASystem, adaptive_search
+src/agent_forge/adas/migrate_to_secure.py:from datetime import datetime
+src/agent_forge/adas/migrate_to_secure.py:from pathlib import Path
+src/agent_forge/adas/system.py:from collections.abc import Callable
+src/agent_forge/adas/system.py:from typing import Any
+src/agent_forge/adas/system.py:from rag_system.utils.logging import setup_logger as get_logger
+src/agent_forge/adas/tech_pool.py:from __future__ import annotations
+src/agent_forge/adas/tech_pool.py:from typing import Any
+src/agent_forge/adas/tech_pool.py:from .adas import AgentTechnique
+src/agent_forge/adas/adas.py:from __future__ import annotations
+src/agent_forge/adas/adas.py:from contextlib import contextmanager
+src/agent_forge/adas/adas.py:from typing import Any, NoReturn
+src/agent_forge/adas/adas.py:from langroid.agent.chat_agent import ChatAgent, ChatAgentConfig
+src/agent_forge/adas/adas.py:from langroid.agent.task import Task
+src/agent_forge/adas/adas.py:from langroid.agent.tool_message import ToolMessage
+src/agent_forge/adas/adas.py:from langroid.language_models.openai_gpt import OpenAIGPTConfig
+src/agent_forge/adas/adas.py:from rag_system.utils.logging import setup_logger as get_logger
+src/agent_forge/adas/adas.py:from .technique_archive import PROMPT_TECHNIQUE_ARCHIVE
+src/agent_forge/adas/technique_archive.py:from typing import Any
+src/agent_forge/adas/technique_archive.py:from agent_forge.utils.tool_message import ToolMessage
+src/agent_forge/results_analyzer.py:from collections import defaultdict
+src/agent_forge/results_analyzer.py:from dataclasses import dataclass
+src/agent_forge/results_analyzer.py:from datetime import datetime
+src/agent_forge/results_analyzer.py:from pathlib import Path
+src/agent_forge/results_analyzer.py:from typing import Any
+src/agent_forge/benchmark_suite.py:from dataclasses import asdict, dataclass
+src/agent_forge/benchmark_suite.py:from pathlib import Path
+src/agent_forge/benchmark_suite.py:from typing import Any
+src/agent_forge/benchmark_suite.py:from datasets import load_dataset
+src/agent_forge/benchmark_suite.py:from scipy import stats
+src/agent_forge/benchmark_suite.py:from tqdm import tqdm
+src/agent_forge/benchmark_suite.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/self_awareness/metacognaitve_eval.py:from langroid import ChatAgent, ChatAgentConfig, Task
+src/agent_forge/self_awareness/metacognaitve_eval.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/self_awareness/self_guided_metacognative_baking.py:from langroid import ChatAgent, ChatAgentConfig, Task
+src/agent_forge/self_awareness/self_guided_metacognative_baking.py:from nltk.tokenize import sent_tokenize
+src/agent_forge/self_awareness/self_guided_metacognative_baking.py:from nltk.translate.bleu_score import sentence_bleu
+src/agent_forge/self_awareness/self_guided_metacognative_baking.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/self_awareness/self_guided_metacognative_baking.py:from agent_forge.self_awareness.metacognaitve_eval import MetacognitiveEvaluatorTask
+src/agent_forge/self_awareness/text_generation.py:from langroid import ChatAgent, ChatAgentConfig, Task
+src/agent_forge/enhanced_orchestrator.py:from datetime import datetime
+src/agent_forge/enhanced_orchestrator.py:from pathlib import Path
+src/agent_forge/enhanced_orchestrator.py:from forge_orchestrator import ForgeOrchestrator, OrchestratorConfig, PhaseArtifact, PhaseResult, PhaseStatus, PhaseType
+src/agent_forge/enhanced_orchestrator.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/core/main.py:from agent_forge.mergekit.config import MergeKitConfig
+src/agent_forge/core/main.py:from agent_forge.mergekit.merger import MergeKitMerger
+src/agent_forge/core/main.py:from agent_forge.mergekit.utils import load_models, save_model
+src/agent_forge/core/model.py:from torch import nn
+src/agent_forge/core/model.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/tool_baking/__init__.py:from .rag_prompt_baker import RAGPromptBaker
+src/agent_forge/tool_baking/communication_prompt_baker.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/tool_baking/rag_prompt_baker.py:from tqdm import tqdm
+src/agent_forge/tool_baking/rag_prompt_baker.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/mcp_refiner.py:from collections import Counter, defaultdict
+src/agent_forge/mcp_refiner.py:from dataclasses import dataclass
+src/agent_forge/mcp_refiner.py:from pathlib import Path
+src/agent_forge/mcp_refiner.py:from typing import Any
+src/agent_forge/mcp_refiner.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/mcp_refiner.py:from agent_forge.geometry_feedback import GeometryTracker
+src/agent_forge/evolution/evolution_dashboard.py:from datetime import datetime, timedelta
+src/agent_forge/evolution/evolution_dashboard.py:from pathlib import Path
+src/agent_forge/evolution/evolution_dashboard.py:from typing import Any
+src/agent_forge/evolution/evolution_dashboard.py:from flask import Flask, jsonify, render_template, request
+src/agent_forge/evolution/evolution_dashboard.py:from plotly.utils import PlotlyJSONEncoder
+src/agent_forge/evolution/evolution_dashboard.py:from .agent_evolution_engine import AgentEvolutionEngine
+src/agent_forge/evolution/safe_code_modifier.py:from collections.abc import Callable
+src/agent_forge/evolution/safe_code_modifier.py:from dataclasses import dataclass
+src/agent_forge/evolution/safe_code_modifier.py:from datetime import datetime, timedelta
+src/agent_forge/evolution/safe_code_modifier.py:from pathlib import Path
+src/agent_forge/evolution/safe_code_modifier.py:from typing import Any
+src/agent_forge/evolution/safe_code_modifier.py:from pathlib import Path
+src/agent_forge/evolution/evolution_orchestrator.py:from collections.abc import Callable
+src/agent_forge/evolution/evolution_orchestrator.py:from concurrent.futures import ThreadPoolExecutor
+src/agent_forge/evolution/evolution_orchestrator.py:from contextlib import asynccontextmanager
+src/agent_forge/evolution/evolution_orchestrator.py:from dataclasses import asdict, dataclass
+src/agent_forge/evolution/evolution_orchestrator.py:from datetime import datetime
+src/agent_forge/evolution/evolution_orchestrator.py:from pathlib import Path
+src/agent_forge/evolution/evolution_orchestrator.py:from typing import Any
+src/agent_forge/evolution/evolution_orchestrator.py:from apscheduler.schedulers.asyncio import AsyncIOScheduler
+src/agent_forge/evolution/evolution_orchestrator.py:from apscheduler.triggers.cron import CronTrigger
+src/agent_forge/evolution/evolution_orchestrator.py:from apscheduler.triggers.interval import IntervalTrigger
+src/agent_forge/evolution/evolution_orchestrator.py:from .agent_evolution_engine import AgentEvolutionEngine, AgentGenome, AgentKPIs
+src/agent_forge/evolution/evolution_orchestrator.py:from .evolution_dashboard import EvolutionDashboard, PerformanceAnalyzer
+src/agent_forge/evolution/evolution_orchestrator.py:from .meta_learning_engine import MetaLearningEngine
+src/agent_forge/evolution/evolution_orchestrator.py:from .safe_code_modifier import CodeModification, SafeCodeModifier
+src/agent_forge/evolution/meta_learning_engine.py:from collections import defaultdict, deque
+src/agent_forge/evolution/meta_learning_engine.py:from dataclasses import asdict, dataclass
+src/agent_forge/evolution/meta_learning_engine.py:from datetime import datetime
+src/agent_forge/evolution/meta_learning_engine.py:from pathlib import Path
+src/agent_forge/evolution/meta_learning_engine.py:from typing import Any
+src/agent_forge/evolution/meta_learning_engine.py:from torch import nn, optim
+src/agent_forge/evolution/agent_evolution_engine.py:from collections.abc import Callable
+src/agent_forge/evolution/agent_evolution_engine.py:from dataclasses import asdict, dataclass
+src/agent_forge/evolution/agent_evolution_engine.py:from datetime import datetime, timedelta
+src/agent_forge/evolution/agent_evolution_engine.py:from pathlib import Path
+src/agent_forge/evolution/agent_evolution_engine.py:from typing import Any
+src/agent_forge/bakedquietiot/deepbaking.py:from langroid import ChatAgent, ChatAgentConfig, Task
+src/agent_forge/bakedquietiot/deepbaking.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/bakedquietiot/quiet_star.py:from langroid import ChatAgent, ChatAgentConfig, Task
+src/agent_forge/bakedquietiot/quiet_star.py:from torch import nn
+src/agent_forge/bakedquietiot/quiet_star.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/prompt_baking.py:from datetime import datetime
+src/agent_forge/prompt_baking.py:from pathlib import Path
+src/agent_forge/prompt_baking.py:from typing import Any
+src/agent_forge/prompt_baking.py:from pydantic import BaseModel, Field, validator
+src/agent_forge/prompt_baking.py:from torch import nn
+src/agent_forge/prompt_baking.py:from tqdm import tqdm
+src/agent_forge/prompt_baking.py:from transformers import AdamW, AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/orchestration/__init__.py:from .model_config import MODEL_ROUTING_CONFIG
+src/agent_forge/orchestration/__init__.py:from .openrouter_client import OpenRouterClient
+src/agent_forge/orchestration/__init__.py:from .task_router import TaskRouter, TaskType
+src/agent_forge/orchestration/openrouter_client.py:from dataclasses import dataclass
+src/agent_forge/orchestration/openrouter_client.py:from typing import Any
+src/agent_forge/orchestration/openrouter_client.py:from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+src/agent_forge/orchestration/openrouter_client.py:from .model_config import MODEL_ROUTING_CONFIG, RATE_LIMITS, TaskType
+src/agent_forge/orchestration/task_router.py:from dataclasses import dataclass
+src/agent_forge/orchestration/task_router.py:from typing import Any
+src/agent_forge/orchestration/task_router.py:from .model_config import MODEL_ROUTING_CONFIG, TaskType
+src/agent_forge/orchestration/task_router.py:from .openrouter_client import APIResponse, OpenRouterClient
+src/agent_forge/orchestration/config.py:from pathlib import Path
+src/agent_forge/orchestration/config.py:from typing import Any
+src/agent_forge/orchestration/config.py:from .model_config import TaskType
+src/agent_forge/orchestration/model_config.py:from enum import Enum
+src/agent_forge/orchestration/model_config.py:from typing import Any
+src/agent_forge/orchestration/curriculum_integration.py:from typing import Any
+src/agent_forge/orchestration/curriculum_integration.py:from AIVillage.src.agent_forge.training.curriculum import CurriculumGenerator, Question
+src/agent_forge/orchestration/curriculum_integration.py:from AIVillage.src.agent_forge.training.magi_specialization import FrontierQuestionGenerator, MagiConfig
+src/agent_forge/orchestration/curriculum_integration.py:from .openrouter_client import OpenRouterClient
+src/agent_forge/orchestration/curriculum_integration.py:from .task_router import TaskContext, TaskRouter
+src/agent_forge/foundation/__init__.py:from .bitnet import q_bitnet
+src/agent_forge/foundation/__init__.py:from .quiet_star import END_TOK, START_TOK
+src/agent_forge/forge_orchestrator.py:from datetime import datetime
+src/agent_forge/forge_orchestrator.py:from enum import Enum
+src/agent_forge/forge_orchestrator.py:from pathlib import Path
+src/agent_forge/forge_orchestrator.py:from typing import Any
+src/agent_forge/forge_orchestrator.py:from uuid import uuid4
+src/agent_forge/forge_orchestrator.py:from pydantic import BaseModel, Field, validator
+src/agent_forge/mastery_loop.py:from dataclasses import dataclass
+src/agent_forge/mastery_loop.py:from pathlib import Path
+src/agent_forge/mastery_loop.py:from typing import Any
+src/agent_forge/mastery_loop.py:from langroid import ChatAgent, ChatAgentConfig
+src/agent_forge/mastery_loop.py:from langroid.language_models.openai_gpt import OpenAIGPTConfig
+src/agent_forge/mastery_loop.py:from tqdm import tqdm
+src/agent_forge/mastery_loop.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/mastery_loop.py:from agent_forge.geometry.id_twonn import twonn
+src/agent_forge/mastery_loop.py:from agent_forge.training.grokfast import GrokFastTask
+src/agent_forge/mastery_loop.py:from agent_forge.training.self_modeling import SelfModelingTask
+src/agent_forge/mastery_loop.py:from agent_forge.training.sleep_and_dream import SleepAndDreamTask
+src/agent_forge/self_evolution_engine.py:from dataclasses import dataclass, field
+src/agent_forge/self_evolution_engine.py:from datetime import datetime
+src/agent_forge/self_evolution_engine.py:from typing import Any
+src/agent_forge/self_evolution_engine.py:from typing import Any, Dict, List, Optional
+src/agent_forge/self_evolution_engine.py:from datetime import datetime
+src/agent_forge/adas_self_opt.py:from dataclasses import asdict, dataclass
+src/agent_forge/adas_self_opt.py:from pathlib import Path
+src/agent_forge/adas_self_opt.py:from typing import Any
+src/agent_forge/adas_self_opt.py:from scipy.optimize import minimize
+src/agent_forge/adas_self_opt.py:from sklearn.gaussian_process import GaussianProcessRegressor
+src/agent_forge/adas_self_opt.py:from sklearn.gaussian_process.kernels import Matern
+src/agent_forge/adas_self_opt.py:from torch import nn
+src/agent_forge/adas_self_opt.py:from transformers import AutoConfig, AutoModelForCausalLM
+src/agent_forge/adas_self_opt.py:from agent_forge.geometry_feedback import GeometryTracker
+src/agent_forge/cli.py:from pathlib import Path
+src/agent_forge/sleepdream/__init__.py:from .sleep_dream import apply_delta
+src/agent_forge/automated_reporting.py:from dataclasses import dataclass
+src/agent_forge/automated_reporting.py:from datetime import datetime
+src/agent_forge/automated_reporting.py:from pathlib import Path
+src/agent_forge/automated_reporting.py:from typing import Any
+src/agent_forge/automated_reporting.py:from jinja2 import Template
+src/agent_forge/automated_reporting.py:from agent_forge.results_analyzer import ResultsAnalyzer
+src/agent_forge/optim/__init__.py:from .augmented_adam import AugmentedAdam
+src/agent_forge/optim/__init__.py:from .grokfast_opt import GrokfastAdam as Adam
+src/agent_forge/optim/augmented_adam.py:from torch.optim import Adam
+src/agent_forge/optim/grokfast_opt.py:from torch.optim import Adam
+src/agent_forge/rag_integration.py:from dataclasses import asdict, dataclass
+src/agent_forge/rag_integration.py:from pathlib import Path
+src/agent_forge/rag_integration.py:from typing import Any
+src/agent_forge/rag_integration.py:from sentence_transformers import SentenceTransformer
+src/agent_forge/rag_integration.py:from transformers import AutoModelForCausalLM, AutoTokenizer
+src/agent_forge/rag_integration.py:from agent_forge.results_analyzer import ResultsAnalyzer
+src/agent_forge/evaluation/evaluator.py:from sklearn.feature_extraction.text import TfidfVectorizer
+src/agent_forge/evaluation/evaluator.py:from sklearn.metrics.pairwise import cosine_similarity
