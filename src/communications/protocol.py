@@ -103,6 +103,9 @@ class CommunicationsProtocol:
                 return True
             except Exception as e:
                 logger.exception(f"Error disconnecting from {agent_id}: {e}")
+                # Still remove from connections dict even if close failed
+                if agent_id in self.connections:
+                    del self.connections[agent_id]
                 return False
         return False
 
