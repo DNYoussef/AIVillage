@@ -1,56 +1,36 @@
-.PHONY: help install lint test docs clean dev-setup validate-all fix-all
+.PHONY: help install test lint format clean build all
 
-help:  ## Show this help message
-	@echo "Available commands:"
-	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+help:
+@echo "Available commands:"
+@echo "  make install  - Install dependencies"
+@echo "  make test     - Run tests"
+@echo "  make lint     - Run linters"
+@echo "  make format   - Format code"
+@echo "  make clean    - Clean generated files"
+@echo "  make build    - Build package"
+@echo "  make all      - Run everything"
 
-install:  ## Install dependencies for development
-	python -m pip install --upgrade pip
-	pip install -e ".[dev,test,docs,security]"
+install:
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+pre-commit install
 
-dev-setup:  ## Set up complete development environment
-	$(MAKE) install
-	pre-commit install
-	@echo "✅ Development environment ready!"
+test:
+pytest tests/ -v
 
-lint:  ## Run all linters and code quality checks
-	@echo "Running code quality checks..."
-	black src/ tests/ --check --verbose
-	ruff check src/ tests/ --output-format=github
-	isort src/ tests/ --check-only --diff --profile black
-	mypy src/ --ignore-missing-imports --show-error-codes
+lint:
+pre-commit run --all-files
 
-security:  ## Run security scans
-	@echo "Running security scans..."
-	bandit -r src/ -f txt
-	safety check
-	pip-audit
+format:
+black src/ tests/
+isort src/ tests/
 
-test:  ## Run all tests
-	@echo "Running tests..."
-	pytest tests/ -v --cov=src --cov-report=term-missing --cov-report=html
+clean:
+find . -type d -name __pycache__ -exec rm -rf {} +
+find . -type f -name "*.pyc" -delete
+rm -rf .pytest_cache .coverage htmlcov/ dist/ build/
 
-test-unit:  ## Run unit tests only
-	pytest tests/unit -v --cov=src --cov-report=term-missing
+build:
+python -m build
 
-test-integration:  ## Run integration tests only
-	pytest tests/integration -v --timeout=300
-
-fix:  ## Auto-fix code style and formatting issues
-	@echo "Auto-fixing code issues..."
-	black src/ tests/
-	ruff check src/ tests/ --fix --unsafe-fixes
-	isort src/ tests/ --profile black
-
-validate-all: lint security test  ## Run comprehensive validation
-	@echo "🎉 All validations passed!"
-
-clean:  ## Clean build artifacts and caches
-	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
-	find . -type f -name "*.pyc" -delete 2>/dev/null || true
-	rm -rf build/ dist/ *.egg-info htmlcov/ .coverage 2>/dev/null || true
-
-build:  ## Build the package
-	python -m build
-	twine check dist/*
+all: clean install lint test build
