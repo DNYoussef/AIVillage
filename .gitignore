@@ -17,6 +17,7 @@ venv/
 
 # Environment variables
 .env
+.roo
 
 # IDE-related
 .idea/
