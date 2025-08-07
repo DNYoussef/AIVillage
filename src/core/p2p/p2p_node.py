@@ -213,13 +213,26 @@ class P2PNode:
     async def _handle_connection(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
     ) -> None:
-        """Handle incoming peer connection with encryption."""
+        """Handle incoming peer connection with protocol auto-detection."""
         peer_addr = writer.get_extra_info("peername")
         peer_id = None
 
         try:
             while True:
-                # Read encrypted message
+                # Read message with protocol detection
+                try:
+                    # First, try to read as discovery protocol (plain JSON)
+                    message_data = await self._read_discovery_message(reader)
+                    if message_data:
+                        # Handle discovery message (plain JSON)
+                        message = json.loads(message_data)
+                        await self._handle_discovery_message(message, writer)
+                        continue
+                except Exception:
+                    # Not a discovery message, try encrypted protocol
+                    pass
+
+                # Try encrypted P2P protocol
                 encrypted_data = await self.message_protocol.read_message(reader)
                 if not encrypted_data:
                     break
@@ -406,6 +419,73 @@ class P2PNode:
 
         # Store shared metrics for analysis
         # This enables distributed performance tracking
+
+    async def _read_discovery_message(self, reader: asyncio.StreamReader) -> str | None:
+        """Read discovery protocol message (length-prefixed JSON)."""
+        try:
+            # Read 4-byte length prefix
+            length_data = await reader.readexactly(4)
+            length = int.from_bytes(length_data, "big")
+
+            # Read message data
+            message_data = await reader.readexactly(length)
+            return message_data.decode("utf-8")
+
+        except (asyncio.IncompleteReadError, OSError):
+            return None
+
+    async def _handle_discovery_message(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
+        """Handle discovery protocol messages and respond appropriately."""
+        msg_type = message.get("type")
+
+        if msg_type == "PEER_DISCOVERY":
+            # This is a discovery request - respond with our capabilities
+            response = {
+                "type": "PEER_DISCOVERY_RESPONSE",
+                "node_id": self.node_id,
+                "listen_port": self.listen_port,
+                "capabilities": (
+                    self.local_capabilities.__dict__ if self.local_capabilities else {}
+                ),
+                "status": self.status.value,
+                "protocol_version": "1.0",
+            }
+
+            # Send response using discovery protocol format
+            response_data = json.dumps(response).encode("utf-8")
+            length_data = len(response_data).to_bytes(4, "big")
+            writer.write(length_data + response_data)
+            await writer.drain()
+
+            # Update peer registry with discovered peer
+            sender_id = message.get(
+                "sender_id"
+            )  # Discovery uses "sender_id" not "node_id"
+            if sender_id and sender_id != self.node_id:
+                # Extract capabilities from discovery message
+                capabilities_data = message.get("capabilities", {})
+                capabilities = PeerCapabilities(
+                    device_id=sender_id,
+                    cpu_cores=capabilities_data.get("cpu_cores", 1),
+                    ram_mb=capabilities_data.get("ram_mb", 1024),
+                    battery_percent=capabilities_data.get("battery_percent"),
+                    network_type=capabilities_data.get("network_type", "unknown"),
+                    device_type=capabilities_data.get("device_type", "unknown"),
+                    performance_tier=capabilities_data.get(
+                        "performance_tier", "medium"
+                    ),
+                    thermal_state=capabilities_data.get("thermal_state", "normal"),
+                    can_evolve=capabilities_data.get("can_evolve", True),
+                    evolution_capacity=capabilities_data.get("evolution_capacity", 1.0),
+                    available_for_evolution=capabilities_data.get(
+                        "available_for_evolution", True
+                    ),
+                )
+
+                self.peer_registry[sender_id] = capabilities
+                logger.info(f"Discovered peer {sender_id} via discovery protocol")
 
     async def _update_local_capabilities(self) -> None:
         """Update local device capabilities."""
