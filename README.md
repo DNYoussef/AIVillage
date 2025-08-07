@@ -22,7 +22,7 @@ AIVillage is a sophisticated multi-agent AI system with self-evolution capabilit
 - ✅ **Evolution Framework**: Prototype KPI-based evolution engine with retirement and improvement strategies
 - ✅ **Testing Infrastructure**: Behavioral and integration tests available in [tests/](tests/)
 
-### Development Infrastructure  
+### Development Infrastructure
 - ✅ **CI/CD Pipeline**: GitHub Actions workflow with automated testing and quality checks
 - ✅ **Code Quality Tools**: Pre-commit hooks, linting automation, and comprehensive analysis tools
 - ✅ **Documentation**: API documentation structure and development guides
@@ -81,7 +81,7 @@ AIVillage is a sophisticated multi-agent AI system with self-evolution capabilit
 - ✅ **Real Behavioral Tests**: Created comprehensive integration tests that verify actual functionality
 - ✅ **Evolution API Validation**: Added proper request validation and timeout handling
 
-### Development Infrastructure  
+### Development Infrastructure
 - ✅ **Automated Linting**: Created comprehensive linting analysis tool with auto-fixes (235 issues resolved)
 - ✅ **Enhanced CI/CD**: Improved GitHub Actions workflow with better error reporting
 - ✅ **Better Documentation**: Updated README with honest status assessment
@@ -172,6 +172,15 @@ See [docs/COMPRESSION_EVOLUTION.md](docs/COMPRESSION_EVOLUTION.md) for details.
 - **[Honest Status Report](docs/HONEST_STATUS.md)**: Detailed implementation status
 - **[Hidden Gems](docs/hidden_gems.md)**: Undocumented but working features
 
+## Development Setup
+
+```bash
+./scripts/setup.sh
+make ci
+```
+
+The `ci` target formats code, runs Ruff linting, and executes the test suite.
+
 ## Development Status Transparency
 
 This project practices **honest documentation**. We clearly distinguish between:
@@ -256,6 +265,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Last Updated**: August 1, 2025  
-**Trust Score**: 60% (honest assessment based on actual implementation)  
+**Last Updated**: August 1, 2025
+**Trust Score**: 60% (honest assessment based on actual implementation)
 **Next Milestone**: P2P Infrastructure Foundation (Sprint 6)

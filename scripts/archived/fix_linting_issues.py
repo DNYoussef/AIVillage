@@ -34,7 +34,9 @@ class LintingReport:
     total_files_scanned: int = 0
     total_issues: int = 0
     issues_by_type: dict[str, int] = field(default_factory=dict)
-    issues_by_file: dict[str, list[LintingIssue]] = field(default_factory=lambda: defaultdict(list))
+    issues_by_file: dict[str, list[LintingIssue]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
     auto_fixable_count: int = 0
     critical_issues: list[LintingIssue] = field(default_factory=list)
 
@@ -137,8 +139,12 @@ class LintingAnalyzer:
 
         try:
             # Run flake8 with JSON output if available, otherwise parse text
-            cmd = ["flake8", "--format=%(path)s:%(row)d:%(col)d:%(code)s:%(text)s"] + [str(f) for f in files]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=False)
+            cmd = ["flake8", "--format=%(path)s:%(row)d:%(col)d:%(code)s:%(text)s"] + [
+                str(f) for f in files
+            ]
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=60, check=False
+            )
 
             for line in result.stdout.strip().split("\n"):
                 if not line:
@@ -178,15 +184,24 @@ class LintingAnalyzer:
         try:
             # Run mypy on each file individually to avoid overwhelming output
             for file_path in files[:10]:  # Limit to first 10 files to avoid timeout
-                cmd = ["mypy", "--ignore-missing-imports", "--no-error-summary", str(file_path)]
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
+                cmd = [
+                    "mypy",
+                    "--ignore-missing-imports",
+                    "--no-error-summary",
+                    str(file_path),
+                ]
+                result = subprocess.run(
+                    cmd, capture_output=True, text=True, timeout=30, check=False
+                )
 
                 for line in result.stdout.strip().split("\n"):
                     if not line or "Success:" in line:
                         continue
 
                     # Parse mypy output: file.py:line: level: message
-                    match = re.match(r"^(.+?):(\d+):\s*(error|warning|note):\s*(.+)$", line)
+                    match = re.match(
+                        r"^(.+?):(\d+):\s*(error|warning|note):\s*(.+)$", line
+                    )
                     if match:
                         file_name, line_num, level, message = match.groups()
 
@@ -215,7 +230,9 @@ class LintingAnalyzer:
 
         try:
             cmd = ["bandit", "-f", "json", "-q"] + [str(f) for f in files]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=False)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=60, check=False
+            )
 
             if result.stdout:
                 data = json.loads(result.stdout)
@@ -272,7 +289,9 @@ class LintingAnalyzer:
                             file_modified = True
 
                         except Exception as e:
-                            print(f"Failed to fix {issue.error_code} in {file_path}:{issue.line_number} - {e}")
+                            print(
+                                f"Failed to fix {issue.error_code} in {file_path}:{issue.line_number} - {e}"
+                            )
 
                 # Write back if modified
                 if file_modified:
@@ -286,13 +305,17 @@ class LintingAnalyzer:
 
         return dict(fixes_applied)
 
-    def _fix_no_newline_at_end(self, lines: list[str], issue: LintingIssue) -> list[str]:
+    def _fix_no_newline_at_end(
+        self, lines: list[str], issue: LintingIssue
+    ) -> list[str]:
         """Fix missing newline at end of file."""
         if lines and not lines[-1].endswith("\n"):
             lines[-1] += "\n"
         return lines
 
-    def _fix_too_many_blank_lines(self, lines: list[str], issue: LintingIssue) -> list[str]:
+    def _fix_too_many_blank_lines(
+        self, lines: list[str], issue: LintingIssue
+    ) -> list[str]:
         """Fix too many blank lines."""
         line_idx = issue.line_number - 1
 
@@ -307,7 +330,9 @@ class LintingAnalyzer:
 
         return lines
 
-    def _fix_expected_2_blank_lines(self, lines: list[str], issue: LintingIssue) -> list[str]:
+    def _fix_expected_2_blank_lines(
+        self, lines: list[str], issue: LintingIssue
+    ) -> list[str]:
         """Add expected blank lines before class/function definitions."""
         line_idx = issue.line_number - 1
 
@@ -330,7 +355,9 @@ class LintingAnalyzer:
 
         return lines
 
-    def _fix_inline_comment_spacing(self, lines: list[str], issue: LintingIssue) -> list[str]:
+    def _fix_inline_comment_spacing(
+        self, lines: list[str], issue: LintingIssue
+    ) -> list[str]:
         """Fix inline comment spacing."""
         line_idx = issue.line_number - 1
 
@@ -341,7 +368,9 @@ class LintingAnalyzer:
 
         return lines
 
-    def _fix_inline_comment_no_space(self, lines: list[str], issue: LintingIssue) -> list[str]:
+    def _fix_inline_comment_no_space(
+        self, lines: list[str], issue: LintingIssue
+    ) -> list[str]:
         """Fix missing space after # in comments."""
         line_idx = issue.line_number - 1
 
@@ -351,7 +380,9 @@ class LintingAnalyzer:
 
         return lines
 
-    def _fix_trailing_whitespace(self, lines: list[str], issue: LintingIssue) -> list[str]:
+    def _fix_trailing_whitespace(
+        self, lines: list[str], issue: LintingIssue
+    ) -> list[str]:
         """Remove trailing whitespace."""
         line_idx = issue.line_number - 1
 
@@ -360,7 +391,9 @@ class LintingAnalyzer:
 
         return lines
 
-    def _fix_missing_whitespace_after_comma(self, lines: list[str], issue: LintingIssue) -> list[str]:
+    def _fix_missing_whitespace_after_comma(
+        self, lines: list[str], issue: LintingIssue
+    ) -> list[str]:
         """Add whitespace after commas."""
         line_idx = issue.line_number - 1
 
@@ -370,7 +403,9 @@ class LintingAnalyzer:
 
         return lines
 
-    def _fix_missing_whitespace_around_operator(self, lines: list[str], issue: LintingIssue) -> list[str]:
+    def _fix_missing_whitespace_around_operator(
+        self, lines: list[str], issue: LintingIssue
+    ) -> list[str]:
         """Add whitespace around operators."""
         line_idx = issue.line_number - 1
 
@@ -386,7 +421,9 @@ class LintingAnalyzer:
 
         return lines
 
-    def generate_report(self, report: LintingReport, fixes_applied: dict[str, int] = None) -> str:
+    def generate_report(
+        self, report: LintingReport, fixes_applied: dict[str, int] = None
+    ) -> str:
         """Generate a comprehensive linting report."""
         report_lines = [
             "# Linting Analysis Report",
@@ -410,10 +447,18 @@ class LintingAnalyzer:
         if report.issues_by_type:
             report_lines.extend(["## Issues by Type", ""])
 
-            for error_code, count in sorted(report.issues_by_type.items(), key=lambda x: -x[1]):
-                severity = "[CRITICAL]" if error_code in self.critical_issues else "[WARNING]"
-                fixable = "[AUTO-FIXABLE]" if error_code in self.auto_fixable_issues else ""
-                report_lines.append(f"- **{error_code}**: {count} occurrences {severity} {fixable}")
+            for error_code, count in sorted(
+                report.issues_by_type.items(), key=lambda x: -x[1]
+            ):
+                severity = (
+                    "[CRITICAL]" if error_code in self.critical_issues else "[WARNING]"
+                )
+                fixable = (
+                    "[AUTO-FIXABLE]" if error_code in self.auto_fixable_issues else ""
+                )
+                report_lines.append(
+                    f"- **{error_code}**: {count} occurrences {severity} {fixable}"
+                )
 
             report_lines.append("")
 
@@ -435,7 +480,10 @@ class LintingAnalyzer:
         if report.issues_by_file:
             report_lines.extend(["## Most Problematic Files", ""])
 
-            file_issues = [(file_path, len(issues)) for file_path, issues in report.issues_by_file.items()]
+            file_issues = [
+                (file_path, len(issues))
+                for file_path, issues in report.issues_by_file.items()
+            ]
             file_issues.sort(key=lambda x: -x[1])
 
             for file_path, issue_count in file_issues[:10]:
@@ -458,10 +506,14 @@ class LintingAnalyzer:
             )
 
         if report.auto_fixable_count > 0:
-            report_lines.append(f"2. **Run auto-fixes**: {report.auto_fixable_count} issues can be automatically fixed")
+            report_lines.append(
+                f"2. **Run auto-fixes**: {report.auto_fixable_count} issues can be automatically fixed"
+            )
 
         if report.total_issues > 50:
-            report_lines.append("3. **Consider incremental fixes**: Large number of issues - fix incrementally")
+            report_lines.append(
+                "3. **Consider incremental fixes**: Large number of issues - fix incrementally"
+            )
 
         report_lines.extend(
             [
@@ -483,10 +535,17 @@ def main():
 
     parser = argparse.ArgumentParser(description="Analyze and fix linting issues")
     parser.add_argument(
-        "--source-dirs", nargs="+", default=["src", "tests", "scripts"], help="Source directories to analyze"
+        "--source-dirs",
+        nargs="+",
+        default=["src", "tests", "scripts"],
+        help="Source directories to analyze",
     )
     parser.add_argument("--fix", action="store_true", help="Apply automatic fixes")
-    parser.add_argument("--report-file", default="linting_analysis_report.md", help="Output file for the report")
+    parser.add_argument(
+        "--report-file",
+        default="linting_analysis_report.md",
+        help="Output file for the report",
+    )
     parser.add_argument("--export-json", help="Export detailed results as JSON")
 
     args = parser.parse_args()
@@ -561,7 +620,9 @@ def main():
 
     # Exit with error code if critical issues exist
     if report.critical_issues:
-        print(f"\n{len(report.critical_issues)} critical issues require manual attention")
+        print(
+            f"\n{len(report.critical_issues)} critical issues require manual attention"
+        )
         sys.exit(1)
     else:
         print("\nNo critical issues found")

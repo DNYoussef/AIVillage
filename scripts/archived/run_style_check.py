@@ -9,7 +9,9 @@ import subprocess
 import sys
 
 
-def run_style_check(script_name: str = None, fix: bool = False, verbose: bool = False) -> int:
+def run_style_check(
+    script_name: str = None, fix: bool = False, verbose: bool = False
+) -> int:
     """Run style check on automation scripts"""
     cmd = [sys.executable, "scripts/enforce_style_guide.py"]
 
@@ -31,10 +33,16 @@ def run_style_check(script_name: str = None, fix: bool = False, verbose: bool = 
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run style checks on automation scripts")
+    parser = argparse.ArgumentParser(
+        description="Run style checks on automation scripts"
+    )
     parser.add_argument("script", nargs="?", help="Specific script to check (optional)")
-    parser.add_argument("--fix", action="store_true", help="Auto-fix issues where possible")
-    parser.add_argument("--verbose", action="store_true", help="Generate detailed report")
+    parser.add_argument(
+        "--fix", action="store_true", help="Auto-fix issues where possible"
+    )
+    parser.add_argument(
+        "--verbose", action="store_true", help="Generate detailed report"
+    )
 
     args = parser.parse_args()
 
