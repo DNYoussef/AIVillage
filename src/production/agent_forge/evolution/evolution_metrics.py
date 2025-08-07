@@ -1,9 +1,14 @@
-"""Evolution Metrics Collection and Analysis."""
+"""Utilities for tracking evolution metrics."""
 
+# ruff: noqa: I001
+
+import logging
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-import logging
 from typing import Any
+
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +74,12 @@ class EvolutionMetricsCollector:
     """Collector for evolution metrics."""
 
     def __init__(self, config: dict | None = None) -> None:
+        """Initialize the metrics collector."""
         self.config = config or {}
         self.metrics_history: list[EvolutionMetrics] = []
         self.active_collections: dict[str, dict[str, Any]] = {}
+        self.system_events: list[dict[str, Any]] = []
+        self.system_metrics_history: list[dict[str, Any]] = []
 
     async def start(self) -> None:
         """Start metrics collection."""
@@ -81,14 +89,71 @@ class EvolutionMetricsCollector:
         """Stop metrics collection."""
         logger.info("Evolution metrics collector stopped")
 
-    async def record_evolution_start(self, evolution_event) -> None:
+    async def record_evolution_start(self, evolution_event: Any) -> None:
         """Record evolution start."""
+        evolution_id = f"{evolution_event.agent_id}-{int(evolution_event.timestamp)}"
+        process = psutil.Process()
+        self.active_collections[evolution_id] = {
+            "start_time": evolution_event.timestamp,
+            "cpu_start": process.cpu_percent(interval=None),
+            "mem_start": process.memory_info().rss / (1024**2),
+            "pre_kpis": evolution_event.pre_evolution_kpis,
+        }
+        logger.info(
+            "Evolution started for agent %s (id=%s)",
+            evolution_event.agent_id,
+            evolution_id,
+        )
 
-    async def record_evolution_completion(self, evolution_event) -> None:
+    async def record_evolution_completion(self, evolution_event: Any) -> None:
         """Record evolution completion."""
+        evolution_id = f"{evolution_event.agent_id}-{int(evolution_event.timestamp)}"
+        process = psutil.Process()
+        start_info = self.active_collections.pop(evolution_id, {})
+
+        pre_perf = start_info.get("pre_kpis", {}).get(
+            "performance", evolution_event.pre_evolution_kpis.get("performance", 0.0)
+        )
+        post_kpis = evolution_event.post_evolution_kpis or {}
+        performance_score = post_kpis.get("performance", pre_perf)
+        quality_score = post_kpis.get("quality", 0.0)
+
+        metrics = EvolutionMetrics(
+            timestamp=evolution_event.timestamp,
+            agent_id=evolution_event.agent_id,
+            evolution_type=evolution_event.evolution_type,
+            evolution_id=evolution_id,
+            performance_score=performance_score,
+            improvement_delta=performance_score - pre_perf,
+            quality_score=quality_score,
+            memory_used_mb=int(process.memory_info().rss / (1024**2)),
+            cpu_percent_avg=process.cpu_percent(interval=None),
+            duration_minutes=evolution_event.duration_seconds / 60,
+            success=evolution_event.success,
+            error_count=sum(1 for msg in evolution_event.insights if msg.lower().startswith("error")),
+            warning_count=sum(1 for msg in evolution_event.insights if msg.lower().startswith("warn")),
+            metadata={
+                "trigger_reason": evolution_event.trigger_reason,
+                "generation_change": evolution_event.generation_change,
+                "insights": evolution_event.insights,
+            },
+        )
+
+        self.metrics_history.append(metrics)
+        logger.info(
+            "Evolution completed for agent %s (success=%s)",
+            evolution_event.agent_id,
+            evolution_event.success,
+        )
 
     async def record_system_event(self, event_type: str, data: dict[str, Any]) -> None:
         """Record system event."""
+        event = {"type": event_type, "timestamp": time.time(), "data": data}
+        self.system_events.append(event)
+        logger.info("System event recorded: %s", event_type)
 
     async def record_system_metrics(self, metrics: dict[str, Any]) -> None:
         """Record system metrics."""
+        metrics_entry = {"timestamp": time.time(), **metrics}
+        self.system_metrics_history.append(metrics_entry)
+        logger.debug("System metrics recorded: %s", metrics_entry)
