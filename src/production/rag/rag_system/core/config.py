@@ -1,6 +1,6 @@
-from datetime import timedelta
 from pathlib import Path
 from typing import Any
+from datetime import timedelta
 
 from pydantic import BaseModel, Field
 import yaml
@@ -32,6 +32,12 @@ class UnifiedConfig(BaseModel):
     top_k: int = 5
     chunk_size: int = 1000
     chunk_overlap: int = 200
+
+    # Cache configuration
+    cache_enabled: bool = True
+    cache_max_size: int = 1000
+    cache_ttl_hours: int = 24
+    cache_similarity: float = 0.95
 
     # Extensible configuration dictionary for additional parameters
     extra_params: dict[str, Any] = Field(default_factory=dict)

@@ -2,9 +2,12 @@
 
 # ruff: noqa: I001
 
+import asyncio
 import logging
+import sqlite3
 import time
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from typing import Any
 
@@ -92,12 +95,47 @@ class EvolutionMetricsCollector:
             self.config.get("metrics_file", "evolution_metrics.json")
         )
 
+        self.db_path = self.config.get("db_path", "evolution_metrics.db")
+        self._conn: sqlite3.Connection | None = None
+        self._flush_task: asyncio.Task | None = None
+        self._round_id: int | None = None
+
     async def start(self) -> None:
         """Start metrics collection."""
+        self._conn = sqlite3.connect(self.db_path)
+        self._conn.execute(
+            "PRAGMA journal_mode=WAL"
+        )  # better durability for frequent writes
+        self._create_tables()
+        cur = self._conn.cursor()
+        cur.execute(
+            "INSERT INTO evolution_rounds (start_time, status) VALUES (?, ?)",
+            (time.time(), "running"),
+        )
+        self._round_id = int(cur.lastrowid)
+        self._conn.commit()
+        self._flush_task = asyncio.create_task(self._periodic_flush())
         logger.info("Evolution metrics collector started")
 
     async def stop(self) -> None:
         """Stop metrics collection."""
+        if self._flush_task:
+            self._flush_task.cancel()
+            try:
+                await self._flush_task
+            except Exception:  # pragma: no cover - cancellation
+                pass
+        await self._flush_metrics()
+        if self._conn and self._round_id is not None:
+            cur = self._conn.cursor()
+            cur.execute(
+                "UPDATE evolution_rounds SET end_time=?, status=? WHERE id=?",
+                (time.time(), "completed", self._round_id),
+            )
+            self._conn.commit()
+            self._conn.close()
+            self._conn = None
+            self._round_id = None
         logger.info("Evolution metrics collector stopped")
 
     async def record_evolution_start(self, evolution_event: Any) -> None:
@@ -170,6 +208,7 @@ class EvolutionMetricsCollector:
                 "trigger_reason": evolution_event.trigger_reason,
                 "generation_change": evolution_event.generation_change,
                 "insights": evolution_event.insights,
+                "mutation_id": start_info.get("mutation_id"),
             },
         )
 
@@ -197,6 +236,108 @@ class EvolutionMetricsCollector:
         event = {"type": event_type, "timestamp": time.time(), "data": data}
         self.system_events.append(event)
         logger.info("System event recorded: %s", event_type)
+
+    # ------------------------------------------------------------------
+    def _create_tables(self) -> None:
+        assert self._conn is not None
+        cur = self._conn.cursor()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS evolution_rounds (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                start_time REAL,
+                end_time REAL,
+                status TEXT
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS fitness_metrics (
+                round_id INTEGER,
+                agent_id TEXT,
+                fitness_score REAL,
+                timestamp REAL,
+                FOREIGN KEY(round_id) REFERENCES evolution_rounds(id)
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS resource_metrics (
+                round_id INTEGER,
+                cpu_usage REAL,
+                memory_mb REAL,
+                energy_estimate REAL,
+                FOREIGN KEY(round_id) REFERENCES evolution_rounds(id)
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS selection_outcomes (
+                round_id INTEGER,
+                mutation_id TEXT,
+                selected INTEGER,
+                reason TEXT,
+                FOREIGN KEY(round_id) REFERENCES evolution_rounds(id)
+            )
+            """
+        )
+        self._conn.commit()
+
+    async def _periodic_flush(self) -> None:
+        while True:
+            await asyncio.sleep(30)
+            await self._flush_metrics()
+
+    async def _flush_metrics(self) -> None:
+        if not self.metrics_history or self._conn is None or self._round_id is None:
+            return
+        cur = self._conn.cursor()
+        for m in self.metrics_history:
+            cur.execute(
+                "INSERT INTO fitness_metrics (round_id, agent_id, fitness_score, timestamp) VALUES (?, ?, ?, ?)",
+                (self._round_id, m.agent_id, m.performance_score, m.timestamp),
+            )
+            cur.execute(
+                "INSERT INTO resource_metrics (round_id, cpu_usage, memory_mb, energy_estimate) VALUES (?, ?, ?, ?)",
+                (
+                    self._round_id,
+                    m.cpu_percent_avg,
+                    m.memory_used_mb,
+                    m.metadata.get("energy_estimate", 0.0),
+                ),
+            )
+            cur.execute(
+                "INSERT INTO selection_outcomes (round_id, mutation_id, selected, reason) VALUES (?, ?, ?, ?)",
+                (
+                    self._round_id,
+                    m.metadata.get("mutation_id"),
+                    int(m.success),
+                    m.metadata.get("trigger_reason", ""),
+                ),
+            )
+        self._conn.commit()
+        self.metrics_history.clear()
+
+    # Query helpers --------------------------------------------------
+    def get_rounds(self) -> list[tuple[int, float, float, str]]:
+        if self._conn is None:
+            self._conn = sqlite3.connect(self.db_path)
+        cur = self._conn.cursor()
+        cur.execute("SELECT id, start_time, end_time, status FROM evolution_rounds")
+        return cur.fetchall()
+
+    def get_fitness_metrics(self, round_id: int) -> list[tuple[str, float, float]]:
+        if self._conn is None:
+            self._conn = sqlite3.connect(self.db_path)
+        cur = self._conn.cursor()
+        cur.execute(
+            "SELECT agent_id, fitness_score, timestamp FROM fitness_metrics WHERE round_id=?",
+            (round_id,),
+        )
+        return cur.fetchall()
 
     async def record_system_metrics(self, metrics: dict[str, Any]) -> None:
         """Record system metrics."""
