@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Debug the AgentFactory template loading."""
 
-import sys
 from pathlib import Path
+import sys
 
 sys.path.insert(0, str(Path.cwd()))
 
@@ -25,7 +25,9 @@ def debug_agent_factory():
 
         # Try with absolute path
         print("\n2. Testing with absolute path...")
-        abs_template_path = Path.cwd() / "src" / "production" / "agent_forge" / "templates"
+        abs_template_path = (
+            Path.cwd() / "src" / "production" / "agent_forge" / "templates"
+        )
         print(f"   Trying absolute path: {abs_template_path}")
         print(f"   Path exists: {abs_template_path.exists()}")
 

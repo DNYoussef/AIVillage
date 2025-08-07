@@ -68,7 +68,9 @@ class EvaluationFramework:
         plt.close(fig)
         return buf.getvalue()
 
-    async def evaluate_response(self, response: dict[str, Any], user_feedback: dict[str, Any]) -> dict[str, float]:
+    async def evaluate_response(
+        self, response: dict[str, Any], user_feedback: dict[str, Any]
+    ) -> dict[str, float]:
         """Evaluate the response based on various metrics."""
         evaluation = {}
 
@@ -85,7 +87,9 @@ class EvaluationFramework:
         evaluation["eudaimonia_score"] = response.get("eudaimonia_score", 0.0)
 
         # Knowledge integration rate (assuming response contains 'new_knowledge_integrated')
-        evaluation["knowledge_integration_rate"] = 1.0 if response.get("new_knowledge_integrated", False) else 0.0
+        evaluation["knowledge_integration_rate"] = (
+            1.0 if response.get("new_knowledge_integrated", False) else 0.0
+        )
 
         # Decision quality (assuming response contains a 'decision_confidence' score)
         evaluation["decision_quality"] = response.get("decision_confidence", 0.0)
@@ -114,7 +118,9 @@ class EvaluationFramework:
                 insights.append(f"{metric_name} is declining and may need attention.")
 
         if report["user_satisfaction"]["average"] < 0.7:
-            insights.append("User satisfaction is below target. Consider reviewing and improving response quality.")
+            insights.append(
+                "User satisfaction is below target. Consider reviewing and improving response quality."
+            )
 
         if report["rag_relevance"]["average"] < 0.8:
             insights.append(

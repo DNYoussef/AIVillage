@@ -78,7 +78,9 @@ class P2PNode:
         """Initialize node with discovery."""
         try:
             # Start TCP server
-            self.server = await asyncio.start_server(self._handle_connection, "0.0.0.0", self.listen_port)
+            self.server = await asyncio.start_server(
+                self._handle_connection, "0.0.0.0", self.listen_port
+            )
 
             # Get actual port if random was assigned
             self.listen_port = self.server.sockets[0].getsockname()[1]
@@ -113,7 +115,9 @@ class P2PNode:
 
         self.status = NodeStatus.DISCONNECTED
 
-    async def _handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def _handle_connection(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle incoming peer connection."""
         peer_addr = writer.get_extra_info("peername")
         peer_id = None
@@ -158,7 +162,9 @@ class P2PNode:
             writer.close()
             await writer.wait_closed()
 
-    async def _handle_message(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_message(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Process incoming message."""
         msg_type = message.get("type", "UNKNOWN")
 
@@ -200,7 +206,9 @@ class P2PNode:
             self.response_futures[msg_id].set_result(message)
             del self.response_futures[msg_id]
 
-    async def _handle_capability_update(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_capability_update(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle peer capability update."""
         sender_id = message.get("sender_id")
         if sender_id and "capabilities" in message:
@@ -220,13 +228,16 @@ class P2PNode:
             self.peer_registry[sender_id] = capabilities
             logger.debug(f"Updated capabilities for peer {sender_id}")
 
-    async def _handle_discovery_request(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_discovery_request(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle peer discovery request."""
         response = {
             "type": "DISCOVERY_RESPONSE",
             "sender_id": self.node_id,
             "peers": [
-                {"peer_id": peer_id, "capabilities": caps.__dict__} for peer_id, caps in self.peer_registry.items()
+                {"peer_id": peer_id, "capabilities": caps.__dict__}
+                for peer_id, caps in self.peer_registry.items()
             ],
             "node_info": {
                 "node_id": self.node_id,
@@ -236,7 +247,9 @@ class P2PNode:
         }
         await self._send_message(response, writer)
 
-    async def _handle_discovery_response(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_discovery_response(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle discovery response."""
         if "peers" in message:
             for peer_info in message["peers"]:
@@ -254,7 +267,9 @@ class P2PNode:
                     )
                     self.peer_registry[peer_id] = capabilities
 
-    async def _handle_tensor_chunk(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_tensor_chunk(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle incoming tensor chunk."""
         # This will be implemented when we add tensor streaming
         chunk_id = message.get("chunk_id", 0)
@@ -340,7 +355,9 @@ class P2PNode:
             logger.exception(f"Failed to connect to {host}:{port}: {e}")
             return False
 
-    async def _handle_peer_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def _handle_peer_connection(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle outgoing peer connection."""
         await self._handle_connection(reader, writer)
 
@@ -413,7 +430,9 @@ class P2PNode:
     async def _try_discover_peer(self, host: str, port: int) -> None:
         """Try to discover a single peer."""
         try:
-            reader, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=2.0)
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection(host, port), timeout=2.0
+            )
 
             # Send discovery request
             discovery_msg = {"type": "DISCOVERY_REQUEST", "sender_id": self.node_id}
@@ -460,7 +479,9 @@ class P2PNode:
         while self.status == NodeStatus.ACTIVE:
             try:
                 capabilities = self._get_local_capabilities()
-                await self.broadcast_to_peers("CAPABILITY_UPDATE", {"capabilities": capabilities.__dict__})
+                await self.broadcast_to_peers(
+                    "CAPABILITY_UPDATE", {"capabilities": capabilities.__dict__}
+                )
                 await asyncio.sleep(self.discovery_interval)
             except Exception as e:
                 logger.exception(f"Capability broadcast error: {e}")
@@ -470,7 +491,9 @@ class P2PNode:
         """Register message handler."""
         self.message_handlers[msg_type] = handler
 
-    async def wait_for_message(self, msg_type: str, timeout: float = 10.0) -> dict | None:
+    async def wait_for_message(
+        self, msg_type: str, timeout: float = 10.0
+    ) -> dict | None:
         """Wait for specific message type."""
         msg_id = str(uuid.uuid4())
         future = asyncio.Future()

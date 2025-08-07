@@ -6,7 +6,7 @@ A consolidated compression system that combines the best implementations from ac
 
 The unified compression system provides:
 - **Simple Quantization** (4x) for models <100M parameters
-- **Mobile Optimization** (8-16x) with automatic size targeting  
+- **Mobile Optimization** (8-16x) with automatic size targeting
 - **Advanced Pipeline** (100x+) for large models with 4-stage compression
 - **Automatic Strategy Selection** based on model size and requirements
 - **Comprehensive Benchmarking** with accuracy retention metrics
@@ -50,7 +50,7 @@ Mobile-optimized compression targeting specific file sizes:
 ### ADVANCED
 Full 4-stage pipeline for maximum compression:
 - Stage 1: BitNet quantization (16x)
-- Stage 2: SeedLM LFSR compression (8x)  
+- Stage 2: SeedLM LFSR compression (8x)
 - Stage 3: VPTQ vector quantization (2x)
 - Stage 4: HyperCompression ergodic encoding (2x)
 - **Total: 100x+ compression ratio**
@@ -169,14 +169,14 @@ UnifiedCompressor
 - **Ratio**: ~4x compression
 - **Quality**: Minimal accuracy loss for most models
 
-### SeedLM Compression  
+### SeedLM Compression
 - **Source**: `src/agent_forge/compression/seedlm.py`
 - **Method**: LFSR-based pseudo-random compression
 - **Ratio**: 2-8x additional compression
 - **Features**: Progressive encoding, streaming support
 
 ### VPTQ Vector Quantization
-- **Source**: `src/agent_forge/compression/vptq.py`  
+- **Source**: `src/agent_forge/compression/vptq.py`
 - **Method**: K-means clustering of weight vectors
 - **Ratio**: ~2x additional compression
 - **Quality**: Good preservation of model structure
@@ -292,7 +292,7 @@ result = await compressor.compress_model(model)
 
 ### Current Status ✅
 - [x] Unified compression interface
-- [x] Automatic strategy selection  
+- [x] Automatic strategy selection
 - [x] Comprehensive test suite
 - [x] CLI interface
 - [x] Error handling and fallback

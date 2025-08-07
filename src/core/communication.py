@@ -121,7 +121,9 @@ class AgentCommunicationProtocol:
             handler = self.subscribers[message.receiver]
             await handler(message)
 
-    async def broadcast(self, message: AgentMessage, exclude: list[str] | None = None) -> None:
+    async def broadcast(
+        self, message: AgentMessage, exclude: list[str] | None = None
+    ) -> None:
         """Broadcast a message to all subscribed agents.
 
         Args:
@@ -169,7 +171,9 @@ class AgentCommunicationProtocol:
         # For now, return a placeholder response
         return {"status": "query_sent", "query_id": query_message.id}
 
-    def get_message_history(self, agent_name: str | None = None, limit: int = 100) -> list[AgentMessage]:
+    def get_message_history(
+        self, agent_name: str | None = None, limit: int = 100
+    ) -> list[AgentMessage]:
         """Get message history for an agent or all messages.
 
         Args:
@@ -180,7 +184,11 @@ class AgentCommunicationProtocol:
             List of messages
         """
         if agent_name:
-            messages = [msg for msg in self.message_history if agent_name in (msg.sender, msg.receiver)]
+            messages = [
+                msg
+                for msg in self.message_history
+                if agent_name in (msg.sender, msg.receiver)
+            ]
         else:
             messages = self.message_history
 
@@ -193,6 +201,10 @@ class AgentCommunicationProtocol:
             agent_name: Optional agent name to clear only their messages
         """
         if agent_name:
-            self.message_history = [msg for msg in self.message_history if agent_name not in (msg.sender, msg.receiver)]
+            self.message_history = [
+                msg
+                for msg in self.message_history
+                if agent_name not in (msg.sender, msg.receiver)
+            ]
         else:
             self.message_history.clear()

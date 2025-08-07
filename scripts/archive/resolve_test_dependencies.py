@@ -166,7 +166,9 @@ pytest_plugins = ['pytest_asyncio']
         print("\nUpdating test import paths...")
 
         # Common import mappings based on reorganization
-        import_mappings = {"from communications.queue": "from communications.message_queue"}
+        import_mappings = {
+            "from communications.queue": "from communications.message_queue"
+        }
 
         for test_file in Path("tests").rglob("*.py"):
             try:

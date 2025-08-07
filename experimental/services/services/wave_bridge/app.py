@@ -57,7 +57,9 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         from_number = form_data.get("From", "")
         message_sid = form_data.get("MessageSid", "")
 
-        logger.info(f"Received WhatsApp message from {from_number}: {incoming_msg[:50]}...")
+        logger.info(
+            f"Received WhatsApp message from {from_number}: {incoming_msg[:50]}..."
+        )
 
         # Validate required fields
         if not incoming_msg or not from_number:
@@ -77,14 +79,18 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
                 "language_detected": detected_lang,
                 "message_length": len(incoming_msg),
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "from_number_hash": hashlib.sha256(from_number.encode()).hexdigest()[:8],
+                "from_number_hash": hashlib.sha256(from_number.encode()).hexdigest()[
+                    :8
+                ],
             }
         )
 
         # Route to prompt-engineered tutor with timeout
         try:
             response = await asyncio.wait_for(
-                get_tutor_response(incoming_msg, from_number, session_id, detected_lang),
+                get_tutor_response(
+                    incoming_msg, from_number, session_id, detected_lang
+                ),
                 timeout=4.5,  # Leave 0.5s buffer for response formatting
             )
         except asyncio.TimeoutError:
@@ -95,14 +101,18 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         response_time = time.time() - start_time
 
         # Track response metrics in background
-        background_tasks.add_task(log_response_metrics, response, response_time, session_id, detected_lang)
+        background_tasks.add_task(
+            log_response_metrics, response, response_time, session_id, detected_lang
+        )
 
         # Format and return Twilio response
         twiml_response = format_whatsapp_response(response)
 
         logger.info(f"Response sent in {response_time:.2f}s for session {session_id}")
 
-        return PlainTextResponse(content=str(twiml_response), media_type="application/xml")
+        return PlainTextResponse(
+            content=str(twiml_response), media_type="application/xml"
+        )
 
     except Exception as e:
         logger.error(f"Error processing WhatsApp webhook: {e!s}")
@@ -118,10 +128,14 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
 
         # Return fallback response
         error_response = get_error_response()
-        return PlainTextResponse(content=str(error_response), media_type="application/xml")
+        return PlainTextResponse(
+            content=str(error_response), media_type="application/xml"
+        )
 
 
-async def get_tutor_response(message: str, from_number: str, session_id: str, detected_lang: str) -> dict[str, Any]:
+async def get_tutor_response(
+    message: str, from_number: str, session_id: str, detected_lang: str
+) -> dict[str, Any]:
     """Generate tutoring response with W&B prompt optimization"""
     # Check if this is a greeting (new conversation)
     is_greeting = is_greeting_message(message, detected_lang)
@@ -224,11 +238,15 @@ def get_error_response() -> str:
     """Error response for system failures"""
     response = MessagingResponse()
     message = response.message()
-    message.body("Sorry, I'm having technical difficulties. Please try again in a moment.")
+    message.body(
+        "Sorry, I'm having technical difficulties. Please try again in a moment."
+    )
     return str(response)
 
 
-async def log_response_metrics(response: dict[str, Any], response_time: float, session_id: str, language: str):
+async def log_response_metrics(
+    response: dict[str, Any], response_time: float, session_id: str, language: str
+):
     """Log detailed response metrics to W&B"""
     # Core metrics
     metrics_data = {
@@ -244,7 +262,9 @@ async def log_response_metrics(response: dict[str, Any], response_time: float, s
     # Performance flags
     metrics_data["performance_target_met"] = response_time < 5.0
     metrics_data["response_quality"] = (
-        "good" if response_time < 3.0 else "acceptable" if response_time < 5.0 else "slow"
+        "good"
+        if response_time < 3.0
+        else "acceptable" if response_time < 5.0 else "slow"
     )
 
     # Log to W&B

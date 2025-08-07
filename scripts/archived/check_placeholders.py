@@ -265,10 +265,10 @@ class PlaceholderDetector:
         """Check if function is an abstract method."""
         for decorator in func_node.decorator_list:
             if (
-                isinstance(decorator, ast.Name)
-                and decorator.id == "abstractmethod"
-                or isinstance(decorator, ast.Attribute)
-                and decorator.attr == "abstractmethod"
+                (isinstance(decorator, ast.Name)
+                and decorator.id == "abstractmethod")
+                or (isinstance(decorator, ast.Attribute)
+                and decorator.attr == "abstractmethod")
             ):
                 return True
         return False

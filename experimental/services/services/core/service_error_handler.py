@@ -16,7 +16,12 @@ from fastapi import HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from core.error_handling import AIVillageException, ErrorCategory, ErrorContext, ErrorSeverity
+from core.error_handling import (
+    AIVillageException,
+    ErrorCategory,
+    ErrorContext,
+    ErrorSeverity,
+)
 
 # Service-specific error codes
 SERVICE_ERROR_CODES = {
@@ -104,9 +109,9 @@ class ServiceErrorHandler:
         """Create standardized error response."""
         if isinstance(exception, AIVillageException):
             error_info = exception.to_dict()
-            status_code = SERVICE_ERROR_CODES.get(exception.category, SERVICE_ERROR_CODES[ErrorCategory.UNKNOWN])[
-                exception.severity
-            ]
+            status_code = SERVICE_ERROR_CODES.get(
+                exception.category, SERVICE_ERROR_CODES[ErrorCategory.UNKNOWN]
+            )[exception.severity]
         else:
             # Convert generic exception to AIVillageException
             av_exception = AIVillageException(
@@ -184,9 +189,9 @@ class ServiceErrorHandler:
         status_code = 500
 
         if isinstance(exc, AIVillageException):
-            status_code = SERVICE_ERROR_CODES.get(exc.category, SERVICE_ERROR_CODES[ErrorCategory.UNKNOWN])[
-                exc.severity
-            ]
+            status_code = SERVICE_ERROR_CODES.get(
+                exc.category, SERVICE_ERROR_CODES[ErrorCategory.UNKNOWN]
+            )[exc.severity]
         elif isinstance(exc, HTTPException):
             status_code = exc.status_code
 
@@ -195,7 +200,9 @@ class ServiceErrorHandler:
             content=error_response,
         )
 
-    def _handle_validation_error(self, request: Request, exc: RequestValidationError) -> JSONResponse:
+    def _handle_validation_error(
+        self, request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
         """Handle FastAPI validation errors with standardized format."""
         # Create standardized validation error
         validation_errors = []
@@ -304,12 +311,16 @@ def create_service_error(
         message=message,
         category=category,
         severity=severity,
-        context=ErrorContext(component="service", operation=operation, details=details or {}),
+        context=ErrorContext(
+            component="service", operation=operation, details=details or {}
+        ),
     )
 
 
 # Common service error factories
-def validation_error(message: str, details: dict[str, Any] | None = None) -> AIVillageException:
+def validation_error(
+    message: str, details: dict[str, Any] | None = None
+) -> AIVillageException:
     """Create validation error."""
     return create_service_error(
         message=message,
@@ -320,7 +331,9 @@ def validation_error(message: str, details: dict[str, Any] | None = None) -> AIV
     )
 
 
-def network_error(message: str, details: dict[str, Any] | None = None) -> AIVillageException:
+def network_error(
+    message: str, details: dict[str, Any] | None = None
+) -> AIVillageException:
     """Create network error."""
     return create_service_error(
         message=message,
@@ -331,7 +344,9 @@ def network_error(message: str, details: dict[str, Any] | None = None) -> AIVill
     )
 
 
-def database_error(message: str, details: dict[str, Any] | None = None) -> AIVillageException:
+def database_error(
+    message: str, details: dict[str, Any] | None = None
+) -> AIVillageException:
     """Create database error."""
     return create_service_error(
         message=message,
@@ -342,7 +357,9 @@ def database_error(message: str, details: dict[str, Any] | None = None) -> AIVil
     )
 
 
-def security_error(message: str, details: dict[str, Any] | None = None) -> AIVillageException:
+def security_error(
+    message: str, details: dict[str, Any] | None = None
+) -> AIVillageException:
     """Create security error."""
     return create_service_error(
         message=message,
@@ -353,7 +370,9 @@ def security_error(message: str, details: dict[str, Any] | None = None) -> AIVil
     )
 
 
-def external_service_error(message: str, details: dict[str, Any] | None = None) -> AIVillageException:
+def external_service_error(
+    message: str, details: dict[str, Any] | None = None
+) -> AIVillageException:
     """Create external service error."""
     return create_service_error(
         message=message,
@@ -364,7 +383,9 @@ def external_service_error(message: str, details: dict[str, Any] | None = None) 
     )
 
 
-def resource_error(message: str, details: dict[str, Any] | None = None) -> AIVillageException:
+def resource_error(
+    message: str, details: dict[str, Any] | None = None
+) -> AIVillageException:
     """Create resource error."""
     return create_service_error(
         message=message,
@@ -375,7 +396,9 @@ def resource_error(message: str, details: dict[str, Any] | None = None) -> AIVil
     )
 
 
-def rate_limit_error(message: str, details: dict[str, Any] | None = None) -> AIVillageException:
+def rate_limit_error(
+    message: str, details: dict[str, Any] | None = None
+) -> AIVillageException:
     """Create rate limit error."""
     return create_service_error(
         message=message,

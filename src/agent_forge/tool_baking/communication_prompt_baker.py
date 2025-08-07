@@ -12,7 +12,9 @@ class CommunicationPromptBaker:
         self.model = AutoModelForCausalLM.from_pretrained(model_name).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    def bake_prompts(self, prompts: list[str], num_iterations: int = 1000, lr: float = 1e-5) -> None:
+    def bake_prompts(
+        self, prompts: list[str], num_iterations: int = 1000, lr: float = 1e-5
+    ) -> None:
         optimizer = torch.optim.AdamW(self.model.parameters(), lr=lr)
 
         for iteration in range(num_iterations):
@@ -29,7 +31,9 @@ class CommunicationPromptBaker:
             optimizer.zero_grad()
 
             if iteration % 100 == 0:
-                print(f"Iteration {iteration}, Average Loss: {total_loss / len(prompts)}")
+                print(
+                    f"Iteration {iteration}, Average Loss: {total_loss / len(prompts)}"
+                )
 
         print("Prompt baking completed.")
 

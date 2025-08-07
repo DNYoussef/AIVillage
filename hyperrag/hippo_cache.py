@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import asyncio
 from collections import OrderedDict
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 import threading
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Callable
+from typing import Any
 
 import numpy as np
 
@@ -15,9 +16,9 @@ import numpy as np
 @dataclass
 class CacheEntry:
     query_embedding: np.ndarray
-    retrieved_docs: List[Any]
-    relevance_scores: List[float]
-    citation_metadata: Dict[str, Any]
+    retrieved_docs: list[Any]
+    relevance_scores: list[float]
+    citation_metadata: dict[str, Any]
     timestamp: datetime
     access_count: int = 0
 
@@ -36,10 +37,10 @@ class HippoCache:
         self.similarity_threshold = similarity_threshold
 
         self._lock = threading.RLock()
-        self._cache: "OrderedDict[str, CacheEntry]" = OrderedDict()
-        self._embeddings: List[np.ndarray] = []
-        self._keys: List[str] = []
-        self._matrix: Optional[np.ndarray] = None
+        self._cache: OrderedDict[str, CacheEntry] = OrderedDict()
+        self._embeddings: list[np.ndarray] = []
+        self._keys: list[str] = []
+        self._matrix: np.ndarray | None = None
 
         # Metrics
         self._hits = 0
@@ -73,7 +74,7 @@ class HippoCache:
                 self._update_matrix()
 
     # ------------------------------------------------------------------
-    def get(self, query_embedding: np.ndarray) -> Optional[CacheEntry]:
+    def get(self, query_embedding: np.ndarray) -> CacheEntry | None:
         start = datetime.utcnow()
         with self._lock:
             if self._matrix is None:
@@ -114,7 +115,7 @@ class HippoCache:
             self._update_matrix()
             self._evict_if_needed()
 
-    async def warm_cache(self, items: Iterable[Tuple[str, CacheEntry]]) -> None:
+    async def warm_cache(self, items: Iterable[tuple[str, CacheEntry]]) -> None:
         for key, entry in items:
             self.set(key, entry)
             await asyncio.sleep(0)
@@ -123,7 +124,7 @@ class HippoCache:
         self,
         key: str,
         query_embedding: np.ndarray,
-        retrieval_fn: Callable[[], Tuple[List[Any], List[float], Dict[str, Any]]],
+        retrieval_fn: Callable[[], tuple[list[Any], list[float], dict[str, Any]]],
     ) -> CacheEntry:
         start = datetime.utcnow()
         entry = self.get(query_embedding)
@@ -142,8 +143,12 @@ class HippoCache:
         self._latency_total_ms += (datetime.utcnow() - start).total_seconds() * 1000
         return entry
 
-    def metrics(self) -> Dict[str, float]:
+    def metrics(self) -> dict[str, float]:
         total = self._hits + self._misses
         hit_rate = self._hits / total if total else 0.0
         avg_latency = self._latency_total_ms / total if total else 0.0
-        return {"hit_rate": hit_rate, "avg_latency_ms": avg_latency, "size": len(self._cache)}
+        return {
+            "hit_rate": hit_rate,
+            "avg_latency_ms": avg_latency,
+            "size": len(self._cache),
+        }

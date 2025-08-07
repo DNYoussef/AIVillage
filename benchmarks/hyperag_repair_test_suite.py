@@ -146,28 +146,52 @@ class ViolationInjector:
         """Create a medical domain test graph."""
         nodes = [
             # Patients
-            TestGraphNode("P001", "Patient", {"name": "John Doe", "age": 45, "gender": "M"}),
-            TestGraphNode("P002", "Patient", {"name": "Jane Smith", "age": 32, "gender": "F"}),
-            TestGraphNode("P003", "Patient", {"name": "Bob Johnson", "age": 67, "gender": "M"}),
+            TestGraphNode(
+                "P001", "Patient", {"name": "John Doe", "age": 45, "gender": "M"}
+            ),
+            TestGraphNode(
+                "P002", "Patient", {"name": "Jane Smith", "age": 32, "gender": "F"}
+            ),
+            TestGraphNode(
+                "P003", "Patient", {"name": "Bob Johnson", "age": 67, "gender": "M"}
+            ),
             # Drugs
             TestGraphNode("D001", "Drug", {"name": "Aspirin", "class": "NSAID"}),
-            TestGraphNode("D002", "Drug", {"name": "Penicillin", "class": "Antibiotic"}),
-            TestGraphNode("D003", "Drug", {"name": "Warfarin", "class": "Anticoagulant"}),
+            TestGraphNode(
+                "D002", "Drug", {"name": "Penicillin", "class": "Antibiotic"}
+            ),
+            TestGraphNode(
+                "D003", "Drug", {"name": "Warfarin", "class": "Anticoagulant"}
+            ),
             TestGraphNode("D004", "Drug", {"name": "Ibuprofen", "class": "NSAID"}),
             # Conditions
-            TestGraphNode("C001", "Condition", {"name": "Hypertension", "severity": "moderate"}),
+            TestGraphNode(
+                "C001", "Condition", {"name": "Hypertension", "severity": "moderate"}
+            ),
             TestGraphNode("C002", "Condition", {"name": "Diabetes", "type": "Type 2"}),
-            TestGraphNode("C003", "Condition", {"name": "Pneumonia", "severity": "severe"}),
+            TestGraphNode(
+                "C003", "Condition", {"name": "Pneumonia", "severity": "severe"}
+            ),
             # Allergies
-            TestGraphNode("A001", "Allergy", {"allergen": "Penicillin", "severity": "severe"}),
-            TestGraphNode("A002", "Allergy", {"allergen": "NSAIDs", "severity": "moderate"}),
+            TestGraphNode(
+                "A001", "Allergy", {"allergen": "Penicillin", "severity": "severe"}
+            ),
+            TestGraphNode(
+                "A002", "Allergy", {"allergen": "NSAIDs", "severity": "moderate"}
+            ),
         ]
 
         edges = [
             # Normal relationships
-            TestGraphEdge("E001", "P001", "C001", "DIAGNOSED_WITH", {"date": "2024-01-15"}),
-            TestGraphEdge("E002", "P002", "C002", "DIAGNOSED_WITH", {"date": "2024-02-10"}),
-            TestGraphEdge("E003", "P003", "C003", "DIAGNOSED_WITH", {"date": "2024-03-05"}),
+            TestGraphEdge(
+                "E001", "P001", "C001", "DIAGNOSED_WITH", {"date": "2024-01-15"}
+            ),
+            TestGraphEdge(
+                "E002", "P002", "C002", "DIAGNOSED_WITH", {"date": "2024-02-10"}
+            ),
+            TestGraphEdge(
+                "E003", "P003", "C003", "DIAGNOSED_WITH", {"date": "2024-03-05"}
+            ),
             # Prescriptions (some will be made problematic)
             TestGraphEdge(
                 "E004",
@@ -184,13 +208,19 @@ class ViolationInjector:
                 {"date": "2024-02-11", "dosage": "5mg daily"},
             ),
             # Allergies
-            TestGraphEdge("E006", "P001", "A002", "ALLERGIC_TO", {"discovered": "2024-01-10"}),
-            TestGraphEdge("E007", "P003", "A001", "ALLERGIC_TO", {"discovered": "2023-12-01"}),
+            TestGraphEdge(
+                "E006", "P001", "A002", "ALLERGIC_TO", {"discovered": "2024-01-10"}
+            ),
+            TestGraphEdge(
+                "E007", "P003", "A001", "ALLERGIC_TO", {"discovered": "2023-12-01"}
+            ),
         ]
 
         return nodes, edges
 
-    def inject_allergy_conflict(self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]) -> InjectedViolation:
+    def inject_allergy_conflict(
+        self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]
+    ) -> InjectedViolation:
         """Inject an allergy conflict violation."""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
@@ -211,7 +241,9 @@ class ViolationInjector:
             # Create allergy relationship if none exists
             allergic_patient = "P001"
             allergen = "Penicillin"
-            allergy_node = TestGraphNode("A999", "Allergy", {"allergen": allergen, "severity": "severe"})
+            allergy_node = TestGraphNode(
+                "A999", "Allergy", {"allergen": allergen, "severity": "severe"}
+            )
             allergy_edge = TestGraphEdge(
                 "E999",
                 allergic_patient,
@@ -226,7 +258,8 @@ class ViolationInjector:
         problematic_drug = None
         for node in nodes:
             if node.type == "Drug" and (
-                node.properties.get("name") == allergen or node.properties.get("class") == allergen
+                node.properties.get("name") == allergen
+                or node.properties.get("class") == allergen
             ):
                 problematic_drug = node.id
                 break
@@ -234,7 +267,9 @@ class ViolationInjector:
         if not problematic_drug:
             # Create the problematic drug
             problematic_drug = "D999"
-            drug_node = TestGraphNode(problematic_drug, "Drug", {"name": allergen, "class": "Antibiotic"})
+            drug_node = TestGraphNode(
+                problematic_drug, "Drug", {"name": allergen, "class": "Antibiotic"}
+            )
             nodes.append(drug_node)
 
         # Inject the problematic prescription
@@ -263,7 +298,9 @@ class ViolationInjector:
             },
         )
 
-    def inject_duplicate_identity(self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]) -> InjectedViolation:
+    def inject_duplicate_identity(
+        self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]
+    ) -> InjectedViolation:
         """Inject a duplicate identity violation."""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
@@ -401,7 +438,9 @@ class ViolationInjector:
             },
         )
 
-    def inject_orphaned_relationship(self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]) -> InjectedViolation:
+    def inject_orphaned_relationship(
+        self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]
+    ) -> InjectedViolation:
         """Inject an orphaned relationship violation."""
         violation_id = f"violation_{uuid.uuid4().hex[:8]}"
 
@@ -475,7 +514,9 @@ class RepairTestSuite:
             # Run multiple tests for each violation type
             for test_num in range(3):  # 3 tests per violation type
                 try:
-                    test_result = await self._run_single_violation_test(violation_type, test_num)
+                    test_result = await self._run_single_violation_test(
+                        violation_type, test_num
+                    )
                     self.test_results.append(test_result)
 
                     all_violations.extend(test_result["injected_violations"])
@@ -488,7 +529,9 @@ class RepairTestSuite:
                     continue
 
         # Calculate metrics
-        metrics = self._calculate_repair_metrics(all_violations, all_detections, all_proposals, all_guardian_decisions)
+        metrics = self._calculate_repair_metrics(
+            all_violations, all_detections, all_proposals, all_guardian_decisions
+        )
 
         # Save results
         await self._save_test_results(metrics)
@@ -496,7 +539,9 @@ class RepairTestSuite:
         logger.info("Repair test suite completed successfully")
         return metrics
 
-    async def _run_single_violation_test(self, violation_type: str, test_num: int) -> dict[str, Any]:
+    async def _run_single_violation_test(
+        self, violation_type: str, test_num: int
+    ) -> dict[str, Any]:
         """Run a single violation test."""
         test_id = f"{violation_type}_{test_num}"
         logger.debug(f"Running test {test_id}")
@@ -513,13 +558,19 @@ class RepairTestSuite:
             violation = self.violation_injector.inject_duplicate_identity(nodes, edges)
             injected_violations.append(violation)
         elif violation_type == "temporal_inconsistency":
-            violation = self.violation_injector.inject_temporal_inconsistency(nodes, edges)
+            violation = self.violation_injector.inject_temporal_inconsistency(
+                nodes, edges
+            )
             injected_violations.append(violation)
         elif violation_type == "missing_critical_property":
-            violation = self.violation_injector.inject_missing_critical_property(nodes, edges)
+            violation = self.violation_injector.inject_missing_critical_property(
+                nodes, edges
+            )
             injected_violations.append(violation)
         elif violation_type == "orphaned_relationship":
-            violation = self.violation_injector.inject_orphaned_relationship(nodes, edges)
+            violation = self.violation_injector.inject_orphaned_relationship(
+                nodes, edges
+            )
             injected_violations.append(violation)
 
         # Convert to graph format for processing
@@ -542,7 +593,9 @@ class RepairTestSuite:
 
         # Step 4: Apply repairs and check residuals
         applied_repairs = [d for d in guardian_decisions if d["decision"] == "APPLY"]
-        residual_violations = await self._check_residual_violations(test_graph, applied_repairs)
+        residual_violations = await self._check_residual_violations(
+            test_graph, applied_repairs
+        )
 
         return {
             "test_id": test_id,
@@ -556,10 +609,14 @@ class RepairTestSuite:
             "test_graph": test_graph,
         }
 
-    def _convert_to_graph_format(self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]) -> dict[str, Any]:
+    def _convert_to_graph_format(
+        self, nodes: list[TestGraphNode], edges: list[TestGraphEdge]
+    ) -> dict[str, Any]:
         """Convert test nodes/edges to graph format."""
         return {
-            "nodes": [{"id": n.id, "type": n.type, "properties": n.properties} for n in nodes],
+            "nodes": [
+                {"id": n.id, "type": n.type, "properties": n.properties} for n in nodes
+            ],
             "edges": [
                 {
                     "id": e.id,
@@ -598,7 +655,10 @@ class RepairTestSuite:
                 if source_node:
                     # Check if patient has allergies that conflict with prescription
                     for other_edge in graph["edges"]:
-                        if other_edge["source"] == edge["source"] and other_edge["type"] == "ALLERGIC_TO":
+                        if (
+                            other_edge["source"] == edge["source"]
+                            and other_edge["type"] == "ALLERGIC_TO"
+                        ):
                             detected.append(
                                 {
                                     "violation_id": f"detected_allergy_{edge['id']}",
@@ -624,7 +684,9 @@ class RepairTestSuite:
             # Check for temporal inconsistencies
             if "date" in edge["properties"]:
                 try:
-                    edge_date = datetime.strptime(edge["properties"]["date"], "%Y-%m-%d")
+                    edge_date = datetime.strptime(
+                        edge["properties"]["date"], "%Y-%m-%d"
+                    )
                     if edge_date > datetime.now():
                         detected.append(
                             {
@@ -803,7 +865,9 @@ class RepairTestSuite:
         # Detection Recall: What fraction of injected violations were detected?
         expected_detections = sum(1 for v in violations if v.expected_detection)
         actual_detections = len(detections)
-        detection_recall = actual_detections / expected_detections if expected_detections > 0 else 0.0
+        detection_recall = (
+            actual_detections / expected_detections if expected_detections > 0 else 0.0
+        )
 
         # Proposal Validity: What fraction of proposals are valid operations?
         valid_proposals = 0
@@ -821,7 +885,9 @@ class RepairTestSuite:
 
         # Guardian Reject Rate: What fraction of proposals did Guardian reject?
         rejections = sum(1 for d in guardian_decisions if d["decision"] == "REJECT")
-        guardian_reject_rate = rejections / len(guardian_decisions) if guardian_decisions else 0.0
+        guardian_reject_rate = (
+            rejections / len(guardian_decisions) if guardian_decisions else 0.0
+        )
 
         # Residual Violation Rate: Simplified calculation
         total_original_violations = len(violations)
@@ -829,7 +895,9 @@ class RepairTestSuite:
         estimated_resolved = min(applied_repairs, total_original_violations)
         residual_violations = max(0, total_original_violations - estimated_resolved)
         residual_violation_rate = (
-            residual_violations / total_original_violations if total_original_violations > 0 else 0.0
+            residual_violations / total_original_violations
+            if total_original_violations > 0
+            else 0.0
         )
 
         return RepairTestMetrics(

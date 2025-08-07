@@ -30,7 +30,7 @@ class NATInfo:
     nat_type: NATType
 
 
-__all__ = ["NATTraversal", "NATInfo", "NATType"]
+__all__ = ["NATInfo", "NATTraversal", "NATType"]
 
 
 class NATTraversal:

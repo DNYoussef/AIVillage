@@ -80,7 +80,9 @@ class LoadingContext:
 class AdaptiveLoader:
     """Adaptive model loader that selects optimal loading strategy based on device resources."""
 
-    def __init__(self, device_profiler: DeviceProfiler, constraint_manager: ConstraintManager) -> None:
+    def __init__(
+        self, device_profiler: DeviceProfiler, constraint_manager: ConstraintManager
+    ) -> None:
         self.device_profiler = device_profiler
         self.constraint_manager = constraint_manager
 
@@ -210,12 +212,16 @@ class AdaptiveLoader:
             ],
         )
 
-    def register_model_variants(self, model_name: str, variants: list[ModelVariant]) -> None:
+    def register_model_variants(
+        self, model_name: str, variants: list[ModelVariant]
+    ) -> None:
         """Register model variants for a model."""
         self.model_variants[model_name] = variants
         logger.info(f"Registered {len(variants)} variants for model {model_name}")
 
-    async def load_model_adaptive(self, model_name: str, context: LoadingContext) -> tuple[Any | None, dict[str, Any]]:
+    async def load_model_adaptive(
+        self, model_name: str, context: LoadingContext
+    ) -> tuple[Any | None, dict[str, Any]]:
         """Adaptively load model based on current resource availability."""
         start_time = time.time()
 
@@ -227,7 +233,9 @@ class AdaptiveLoader:
                     "strategy": "cached",
                     "loading_time": 0.0,
                     "from_cache": True,
-                    "variant_used": self.model_metadata.get(model_name, {}).get("variant_name", "unknown"),
+                    "variant_used": self.model_metadata.get(model_name, {}).get(
+                        "variant_name", "unknown"
+                    ),
                 }
                 return self.loaded_models[model_name], loading_info
 
@@ -241,7 +249,9 @@ class AdaptiveLoader:
                 return None, {"error": "No suitable variant found"}
 
             # Load model using selected variant
-            model, loading_info = await self._load_model_variant(model_name, variant, context)
+            model, loading_info = await self._load_model_variant(
+                model_name, variant, context
+            )
 
             if model is not None:
                 # Cache model if successful
@@ -263,7 +273,9 @@ class AdaptiveLoader:
                 self.stats["loading_time_total"] += loading_time
                 loading_info["loading_time"] = loading_time
 
-                logger.info(f"Successfully loaded {model_name} using {variant.strategy.value} strategy")
+                logger.info(
+                    f"Successfully loaded {model_name} using {variant.strategy.value} strategy"
+                )
 
             else:
                 self.stats["loading_failures"] += 1
@@ -275,7 +287,9 @@ class AdaptiveLoader:
             self.stats["loading_failures"] += 1
             return None, {"error": str(e)}
 
-    async def _select_optimal_variant(self, model_name: str, context: LoadingContext) -> ModelVariant | None:
+    async def _select_optimal_variant(
+        self, model_name: str, context: LoadingContext
+    ) -> ModelVariant | None:
         """Select optimal model variant based on current resources and context."""
         if model_name not in self.model_variants:
             logger.warning(f"No variants registered for model {model_name}")
@@ -302,7 +316,8 @@ class AdaptiveLoader:
             if (
                 variant.memory_requirement_mb <= usable_memory_mb
                 and variant.cpu_requirement_percent <= usable_cpu_percent
-                and variant.loading_time_estimate_seconds <= context.max_loading_time_seconds
+                and variant.loading_time_estimate_seconds
+                <= context.max_loading_time_seconds
             ):
                 suitable_variants.append(variant)
 
@@ -323,7 +338,9 @@ class AdaptiveLoader:
                         suitable_variants.append(variant)
 
         if not suitable_variants:
-            logger.warning(f"No suitable variants found for {model_name} with current resources")
+            logger.warning(
+                f"No suitable variants found for {model_name} with current resources"
+            )
             return None
 
         # Score variants based on context preferences
@@ -338,7 +355,9 @@ class AdaptiveLoader:
         selected_variant = scored_variants[0][1]
         self.stats["strategy_adaptations"] += 1
 
-        logger.debug(f"Selected variant {selected_variant.name} with score {scored_variants[0][0]:.2f}")
+        logger.debug(
+            f"Selected variant {selected_variant.name} with score {scored_variants[0][0]:.2f}"
+        )
 
         return selected_variant
 
@@ -361,7 +380,9 @@ class AdaptiveLoader:
         score += time_score * 30  # Speed worth up to 30 points
 
         # Resource efficiency
-        memory_ratio = variant.memory_requirement_mb / (snapshot.memory_available / (1024 * 1024))
+        memory_ratio = variant.memory_requirement_mb / (
+            snapshot.memory_available / (1024 * 1024)
+        )
         cpu_ratio = variant.cpu_requirement_percent / max(100 - snapshot.cpu_percent, 1)
 
         resource_efficiency = 1.0 - (memory_ratio + cpu_ratio) / 2
@@ -373,7 +394,9 @@ class AdaptiveLoader:
 
         if variant.strategy in preferred_strategies:
             strategy_index = preferred_strategies.index(variant.strategy)
-            strategy_bonus = (len(preferred_strategies) - strategy_index) / len(preferred_strategies)
+            strategy_bonus = (len(preferred_strategies) - strategy_index) / len(
+                preferred_strategies
+            )
             score += strategy_bonus * 10  # Strategy preference worth up to 10 points
 
         return score
@@ -410,14 +433,18 @@ class AdaptiveLoader:
             return model, loading_info
 
         except Exception as e:
-            logger.exception(f"Failed to load model {model_name} with strategy {variant.strategy}: {e}")
+            logger.exception(
+                f"Failed to load model {model_name} with strategy {variant.strategy}: {e}"
+            )
             loading_info["error"] = str(e)
             return None, loading_info
 
     async def _load_full_model(self, model_name: str, variant: ModelVariant) -> Any:
         """Load full model."""
         # Simulate model loading
-        await asyncio.sleep(variant.loading_time_estimate_seconds * 0.1)  # Simulated loading
+        await asyncio.sleep(
+            variant.loading_time_estimate_seconds * 0.1
+        )  # Simulated loading
 
         # In real implementation, this would load the actual model
         # For now, return a mock model object
@@ -429,7 +456,9 @@ class AdaptiveLoader:
             "quality_score": variant.quality_score,
         }
 
-    async def _load_compressed_model(self, model_name: str, variant: ModelVariant) -> Any:
+    async def _load_compressed_model(
+        self, model_name: str, variant: ModelVariant
+    ) -> Any:
         """Load compressed model."""
         await asyncio.sleep(variant.loading_time_estimate_seconds * 0.1)
 
@@ -442,7 +471,9 @@ class AdaptiveLoader:
             "compression_ratio": 0.6,  # Example compression ratio
         }
 
-    async def _load_quantized_model(self, model_name: str, variant: ModelVariant) -> Any:
+    async def _load_quantized_model(
+        self, model_name: str, variant: ModelVariant
+    ) -> Any:
         """Load quantized model."""
         await asyncio.sleep(variant.loading_time_estimate_seconds * 0.1)
 
@@ -468,7 +499,9 @@ class AdaptiveLoader:
             "layers_loaded": 12,  # Example layer count
         }
 
-    async def _load_streaming_model(self, model_name: str, variant: ModelVariant) -> Any:
+    async def _load_streaming_model(
+        self, model_name: str, variant: ModelVariant
+    ) -> Any:
         """Load streaming model."""
         await asyncio.sleep(variant.loading_time_estimate_seconds * 0.1)
 
@@ -530,12 +563,15 @@ class AdaptiveLoader:
             "models_cached": model_count,
             "total_size_mb": total_size_mb,
             "cache_hit_rate": (
-                self.stats["cache_hits"] / max(self.stats["cache_hits"] + self.stats["cache_misses"], 1)
+                self.stats["cache_hits"]
+                / max(self.stats["cache_hits"] + self.stats["cache_misses"], 1)
             ),
             "models": list(self.model_metadata.keys()),
         }
 
-    def get_optimal_strategy_for_context(self, model_name: str, context: LoadingContext) -> LoadingStrategy | None:
+    def get_optimal_strategy_for_context(
+        self, model_name: str, context: LoadingContext
+    ) -> LoadingStrategy | None:
         """Get optimal loading strategy for given context without actually loading."""
         if model_name not in self.model_variants:
             return None
@@ -551,7 +587,9 @@ class AdaptiveLoader:
 
         return [variant.to_dict() for variant in self.model_variants[model_name]]
 
-    def estimate_loading_resources(self, model_name: str, strategy: LoadingStrategy) -> dict[str, Any] | None:
+    def estimate_loading_resources(
+        self, model_name: str, strategy: LoadingStrategy
+    ) -> dict[str, Any] | None:
         """Estimate resource requirements for loading a model with specific strategy."""
         if model_name not in self.model_variants:
             return None
@@ -574,8 +612,12 @@ class AdaptiveLoader:
 
     def get_loading_stats(self) -> dict[str, Any]:
         """Get loading statistics."""
-        total_loads = max(self.stats["models_loaded"] + self.stats["loading_failures"], 1)
-        avg_loading_time = self.stats["loading_time_total"] / max(self.stats["models_loaded"], 1)
+        total_loads = max(
+            self.stats["models_loaded"] + self.stats["loading_failures"], 1
+        )
+        avg_loading_time = self.stats["loading_time_total"] / max(
+            self.stats["models_loaded"], 1
+        )
 
         return {
             **self.stats,
@@ -583,5 +625,7 @@ class AdaptiveLoader:
             "average_loading_time": avg_loading_time,
             "cache_usage": self.get_cache_usage(),
             "registered_models": len(self.model_variants),
-            "total_variants": sum(len(variants) for variants in self.model_variants.values()),
+            "total_variants": sum(
+                len(variants) for variants in self.model_variants.values()
+            ),
         }

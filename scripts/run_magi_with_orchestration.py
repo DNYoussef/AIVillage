@@ -13,7 +13,9 @@ from agent_forge.orchestration.curriculum_integration import MultiModelOrchestra
 from agent_forge.training.magi_specialization import MagiConfig
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -42,7 +44,9 @@ async def run_magi_with_orchestration():
     )
 
     # Initialize orchestrator
-    orchestrator = MultiModelOrchestrator(config, enable_openrouter=openrouter_available)
+    orchestrator = MultiModelOrchestrator(
+        config, enable_openrouter=openrouter_available
+    )
 
     try:
         # Phase 1: Generate Enhanced Curriculum
@@ -50,7 +54,9 @@ async def run_magi_with_orchestration():
         logger.info("-" * 50)
 
         questions = orchestrator.question_generator.generate_curriculum_questions()
-        logger.info(f"Generated {len(questions)} total questions across {config.curriculum_levels} levels")
+        logger.info(
+            f"Generated {len(questions)} total questions across {config.curriculum_levels} levels"
+        )
 
         # Show sample questions
         for i, question in enumerate(questions[:3]):
@@ -67,7 +73,9 @@ async def run_magi_with_orchestration():
         sample_question = questions[0]
         test_answer = "This is a sample answer demonstrating the evaluation system."
 
-        evaluation = await orchestrator.evaluate_answer_with_explanation(sample_question, test_answer)
+        evaluation = await orchestrator.evaluate_answer_with_explanation(
+            sample_question, test_answer
+        )
 
         logger.info("Evaluation Results:")
         logger.info(f"Result: {str(evaluation)[:300]}...")
@@ -137,7 +145,9 @@ def main():
     if success:
         print("\n🎭 Multi-Model Orchestration Demo: SUCCESS! ✅")
         print("\nNext steps:")
-        print("1. Run full Magi specialization: python -m agent_forge.training.magi_specialization")
+        print(
+            "1. Run full Magi specialization: python -m agent_forge.training.magi_specialization"
+        )
         print("2. Monitor costs with the orchestration dashboard")
         print("3. Adjust model routing based on performance metrics")
     else:

@@ -126,7 +126,9 @@ class P2PNode:
             logger.info(f"Starting P2P node {self.node_id} on port {self.port}")
 
             # Start TCP server
-            self.server = await asyncio.start_server(self._handle_connection, "0.0.0.0", self.port)
+            self.server = await asyncio.start_server(
+                self._handle_connection, "0.0.0.0", self.port
+            )
 
             # Start background tasks
             self.discovery_task = asyncio.create_task(self._discovery_loop())
@@ -215,7 +217,9 @@ class P2PNode:
             logger.exception(f"Failed to connect to peer {address}:{port}: {e}")
             return False
 
-    async def send_message(self, peer_id: str, message_type: MessageType, payload: dict[str, Any]) -> bool:
+    async def send_message(
+        self, peer_id: str, message_type: MessageType, payload: dict[str, Any]
+    ) -> bool:
         """Send a message to a specific peer."""
         if peer_id not in self.peers:
             logger.warning(f"Peer {peer_id} not found")
@@ -313,7 +317,9 @@ class P2PNode:
         """Add a known peer address for discovery."""
         self.known_addresses.add(f"{address}:{port}")
 
-    def register_handler(self, message_type: MessageType, handler: Callable[[P2PMessage], Any]) -> None:
+    def register_handler(
+        self, message_type: MessageType, handler: Callable[[P2PMessage], Any]
+    ) -> None:
         """Register a custom message handler."""
         self.message_handlers[message_type] = handler
 
@@ -323,7 +329,9 @@ class P2PNode:
 
     def get_connected_peers(self) -> list[PeerInfo]:
         """Get list of all connected peers."""
-        return [peer for peer in self.peers.values() if peer.status == NodeStatus.CONNECTED]
+        return [
+            peer for peer in self.peers.values() if peer.status == NodeStatus.CONNECTED
+        ]
 
     def get_stats(self) -> dict[str, Any]:
         """Get node statistics."""
@@ -336,7 +344,9 @@ class P2PNode:
             "uptime": time.time() - self.stats.get("start_time", time.time()),
         }
 
-    async def _handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def _handle_connection(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle incoming connection."""
         peer_address = writer.get_extra_info("peername")
         logger.debug(f"Incoming connection from {peer_address}")
@@ -353,7 +363,9 @@ class P2PNode:
             writer.close()
             await writer.wait_closed()
 
-    async def _send_message_to_writer(self, writer: asyncio.StreamWriter, message: P2PMessage) -> None:
+    async def _send_message_to_writer(
+        self, writer: asyncio.StreamWriter, message: P2PMessage
+    ) -> None:
         """Send a message through a writer."""
         # Serialize and encrypt message
         message_data = json.dumps(
@@ -377,7 +389,9 @@ class P2PNode:
 
         self.stats["bytes_sent"] += 4 + length
 
-    async def _receive_message_from_reader(self, reader: asyncio.StreamReader) -> P2PMessage | None:
+    async def _receive_message_from_reader(
+        self, reader: asyncio.StreamReader
+    ) -> P2PMessage | None:
         """Receive a message from a reader."""
         try:
             # Read length prefix
@@ -411,9 +425,13 @@ class P2PNode:
             logger.exception(f"Failed to receive message: {e}")
             return None
 
-    async def _process_message(self, message: P2PMessage, writer: asyncio.StreamWriter | None = None) -> None:
+    async def _process_message(
+        self, message: P2PMessage, writer: asyncio.StreamWriter | None = None
+    ) -> None:
         """Process an incoming message."""
-        logger.debug(f"Processing {message.message_type.value} from {message.sender_id}")
+        logger.debug(
+            f"Processing {message.message_type.value} from {message.sender_id}"
+        )
 
         # Handle response to pending query
         if message.payload.get("response_to"):
@@ -428,11 +446,15 @@ class P2PNode:
             try:
                 await handler(message, writer)
             except Exception as e:
-                logger.exception(f"Error in handler for {message.message_type.value}: {e}")
+                logger.exception(
+                    f"Error in handler for {message.message_type.value}: {e}"
+                )
         else:
             logger.warning(f"No handler for message type {message.message_type.value}")
 
-    async def _handle_handshake(self, message: P2PMessage, writer: asyncio.StreamWriter | None = None) -> None:
+    async def _handle_handshake(
+        self, message: P2PMessage, writer: asyncio.StreamWriter | None = None
+    ) -> None:
         """Handle handshake message."""
         sender_id = message.payload.get("node_id")
 
@@ -463,7 +485,9 @@ class P2PNode:
 
             logger.info(f"Handshake completed with peer {sender_id}")
 
-    async def _handle_heartbeat(self, message: P2PMessage, writer: asyncio.StreamWriter | None = None) -> None:
+    async def _handle_heartbeat(
+        self, message: P2PMessage, writer: asyncio.StreamWriter | None = None
+    ) -> None:
         """Handle heartbeat message."""
         sender_id = message.sender_id
 
@@ -471,7 +495,9 @@ class P2PNode:
             self.peers[sender_id].last_seen = time.time()
             self.peers[sender_id].status = NodeStatus.CONNECTED
 
-    async def _handle_discovery(self, message: P2PMessage, writer: asyncio.StreamWriter | None = None) -> None:
+    async def _handle_discovery(
+        self, message: P2PMessage, writer: asyncio.StreamWriter | None = None
+    ) -> None:
         """Handle peer discovery message."""
         peer_list = message.payload.get("peers", [])
 
@@ -495,7 +521,10 @@ class P2PNode:
                     port = int(port)
 
                     # Skip if already connected
-                    if any(p.address == address and p.port == port for p in self.peers.values()):
+                    if any(
+                        p.address == address and p.port == port
+                        for p in self.peers.values()
+                    ):
                         continue
 
                     await self.connect_to_peer(address, port)
@@ -526,7 +555,10 @@ class P2PNode:
                 stale_peers = []
 
                 for peer_id, peer in self.peers.items():
-                    if current_time - peer.last_seen > self.config["heartbeat_interval"] * 3:
+                    if (
+                        current_time - peer.last_seen
+                        > self.config["heartbeat_interval"] * 3
+                    ):
                         stale_peers.append(peer_id)
 
                 # Remove stale peers

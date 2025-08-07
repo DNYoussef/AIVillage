@@ -4,14 +4,14 @@ Drop-in replacement for Adam that exposes ``.slow_power()``.
 """
 
 import torch
+
 try:
     from grokfast import AugmentedAdam  # type: ignore[import]
-except ImportError as e:  # pragma: no cover - optional dependency
+except ImportError:  # pragma: no cover - optional dependency
+
     class AugmentedAdam(torch.optim.Adam):  # type: ignore[misc]
         def __init__(self, *args, **kwargs):
-            msg = (
-                "grokfast is required to use GrokfastAdam. Install it from the grokfast repository."
-            )
+            msg = "grokfast is required to use GrokfastAdam. Install it from the grokfast repository."
             raise ImportError(msg) from e
 
 

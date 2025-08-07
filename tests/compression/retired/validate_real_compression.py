@@ -47,7 +47,9 @@ def test_real_individual_stages():
 
     # Verify decompression works
     bitnet_decompressed = bitnet.decompress(bitnet_compressed)
-    bitnet_error = torch.norm(test_weights - bitnet_decompressed) / torch.norm(test_weights)
+    bitnet_error = torch.norm(test_weights - bitnet_decompressed) / torch.norm(
+        test_weights
+    )
     print(f"Reconstruction error: {bitnet_error:.4f}")
 
     # Test SeedLM - REAL measurements
@@ -75,7 +77,9 @@ def test_real_individual_stages():
 
         # Verify decompression
         seedlm_decompressed = seedlm.decompress(seedlm_compressed)
-        seedlm_error = torch.norm(test_weights - seedlm_decompressed) / torch.norm(test_weights)
+        seedlm_error = torch.norm(test_weights - seedlm_decompressed) / torch.norm(
+            test_weights
+        )
         print(f"Reconstruction error: {seedlm_error:.4f}")
 
     except Exception as e:
@@ -97,7 +101,9 @@ def test_real_individual_stages():
     vptq_size = codebook_bytes + indices_bytes + 32
     vptq_ratio = original_size / vptq_size
 
-    print(f"Codebook: {vptq_compressed['codebook'].numel()} values x 4 bytes = {codebook_bytes}")
+    print(
+        f"Codebook: {vptq_compressed['codebook'].numel()} values x 4 bytes = {codebook_bytes}"
+    )
     print(f"Indices: {len(vptq_compressed['indices'])} bytes")
     print(f"Total compressed size: {vptq_size:,} bytes")
     print(f"REAL compression ratio: {vptq_ratio:.1f}x")
@@ -108,7 +114,12 @@ def test_real_individual_stages():
     vptq_error = torch.norm(test_weights - vptq_decompressed) / torch.norm(test_weights)
     print(f"Reconstruction error: {vptq_error:.4f}")
 
-    return {"bitnet": bitnet_ratio, "seedlm": seedlm_ratio, "vptq": vptq_ratio, "original_size": original_size}
+    return {
+        "bitnet": bitnet_ratio,
+        "seedlm": seedlm_ratio,
+        "vptq": vptq_ratio,
+        "original_size": original_size,
+    }
 
 
 def test_real_pipeline_simulation():
@@ -121,7 +132,13 @@ def test_real_pipeline_simulation():
     stage_results = test_real_individual_stages()
 
     # Create realistic test model
-    model = nn.Sequential(nn.Linear(1024, 512), nn.ReLU(), nn.Linear(512, 256), nn.ReLU(), nn.Linear(256, 128))
+    model = nn.Sequential(
+        nn.Linear(1024, 512),
+        nn.ReLU(),
+        nn.Linear(512, 256),
+        nn.ReLU(),
+        nn.Linear(256, 128),
+    )
 
     param_count = sum(p.numel() for p in model.parameters())
     original_size = param_count * 4
@@ -272,9 +289,14 @@ def test_real_mobile_deployment():
         for device_name, limit_mb in device_limits:
             fits = compressed_mb < limit_mb
             fits_devices.append(fits)
-            print(f"    {device_name}: {'FITS' if fits else 'TOO LARGE'} ({compressed_mb:.0f}MB < {limit_mb}MB)")
+            print(
+                f"    {device_name}: {'FITS' if fits else 'TOO LARGE'} ({compressed_mb:.0f}MB < {limit_mb}MB)"
+            )
 
-        deployment_results[model_name] = {"compressed_mb": compressed_mb, "fits_all": all(fits_devices)}
+        deployment_results[model_name] = {
+            "compressed_mb": compressed_mb,
+            "fits_all": all(fits_devices),
+        }
 
     # Kenya deployment assessment with REAL numbers
     kenya_7b_mb = deployment_results["7B parameter model"]["compressed_mb"]

@@ -13,7 +13,9 @@ if torch_spec is None:
 
 def test_loader_roundtrip(tmp_path):
     model = torch.nn.Linear(4, 2)
-    compressed = stream_compress_model(model, CompressionConfig(bitnet_finetune=False, use_hyper=False))
+    compressed = stream_compress_model(
+        model, CompressionConfig(bitnet_finetune=False, use_hyper=False)
+    )
     file = tmp_path / "cmp.pth"
     torch.save(compressed, file)
 

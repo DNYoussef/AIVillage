@@ -19,7 +19,9 @@ sns.set_palette("husl")
 class EvolutionVisualizer:
     """Visualize Agent Forge evolution results as evolutionary tree."""
 
-    def __init__(self, results_file: str = "D:/AgentForge/results/evolution_results.json"):
+    def __init__(
+        self, results_file: str = "D:/AgentForge/results/evolution_results.json"
+    ):
         self.results_file = Path(results_file)
         self.data = self.load_results()
         self.colors = {
@@ -179,7 +181,9 @@ class EvolutionVisualizer:
                 x1, y1 = positions[best_current_id]
 
                 # Connect to elite individuals in next generation
-                elite_next = sorted(next_gen, key=lambda x: x["fitness"], reverse=True)[:2]
+                elite_next = sorted(next_gen, key=lambda x: x["fitness"], reverse=True)[
+                    :2
+                ]
 
                 for elite in elite_next:
                     elite_id = elite["id"]
@@ -199,7 +203,9 @@ class EvolutionVisualizer:
 
         # Customize axes
         ax.set_xlabel("Generation", fontsize=14, fontweight="bold", color="white")
-        ax.set_ylabel("Population Diversity", fontsize=14, fontweight="bold", color="white")
+        ax.set_ylabel(
+            "Population Diversity", fontsize=14, fontweight="bold", color="white"
+        )
         ax.set_title(
             "🌳 Evolutionary Tree - Model Evolution Across Generations",
             fontsize=16,
@@ -225,9 +231,15 @@ class EvolutionVisualizer:
         legend_elements = []
         for method, color in self.colors.items():
             if method not in ["elite", "best"]:
-                legend_elements.append(plt.scatter([], [], c=color, s=100, label=method.replace("_", " ").title()))
+                legend_elements.append(
+                    plt.scatter(
+                        [], [], c=color, s=100, label=method.replace("_", " ").title()
+                    )
+                )
 
-        legend_elements.append(plt.scatter([], [], c="gold", s=150, marker="*", label="Best in Generation"))
+        legend_elements.append(
+            plt.scatter([], [], c="gold", s=150, marker="*", label="Best in Generation")
+        )
 
         ax.legend(
             handles=legend_elements,
@@ -272,7 +284,9 @@ class EvolutionVisualizer:
             label="Average Fitness",
         )
 
-        ax.fill_between(gen_numbers, best_fitness, avg_fitness, alpha=0.3, color="#4ECDC4")
+        ax.fill_between(
+            gen_numbers, best_fitness, avg_fitness, alpha=0.3, color="#4ECDC4"
+        )
 
         ax.set_xlabel("Generation", fontweight="bold", color="white")
         ax.set_ylabel("Fitness Score", fontweight="bold", color="white")
@@ -294,7 +308,9 @@ class EvolutionVisualizer:
         counts = list(method_counts.values())
         colors = [self.colors.get(method, "#CCCCCC") for method in methods]
 
-        wedges, texts, autotexts = ax.pie(counts, labels=methods, colors=colors, autopct="%1.1f%%", startangle=90)
+        wedges, texts, autotexts = ax.pie(
+            counts, labels=methods, colors=colors, autopct="%1.1f%%", startangle=90
+        )
 
         for autotext in autotexts:
             autotext.set_color("white")

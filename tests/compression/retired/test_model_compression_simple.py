@@ -74,7 +74,9 @@ def test_bitnet_compression(model):
             total_compressed += layer_compressed
 
             ratio = original_size / layer_compressed
-            print(f"    {original_size:,} -> {layer_compressed:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]")
+            print(
+                f"    {original_size:,} -> {layer_compressed:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]"
+            )
 
             del compressed
 
@@ -88,7 +90,9 @@ def test_bitnet_compression(model):
 
     print("\nBitNet Results:")
     print(f"  Original: {total_original:,} bytes ({total_original/(1024**2):.1f} MB)")
-    print(f"  Compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)")
+    print(
+        f"  Compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)"
+    )
     print(f"  Compression: {stage1_ratio:.1f}x")
 
     return stage1_ratio, total_compressed
@@ -107,7 +111,9 @@ def test_seedlm_compression(model):
     total_compressed = 0
     compatible_layers = 0
 
-    print(f"SeedLM config: {compressor.bits_per_weight} bits, block size: {compressor.C}")
+    print(
+        f"SeedLM config: {compressor.bits_per_weight} bits, block size: {compressor.C}"
+    )
 
     for name, param in model.named_parameters():
         original_size = param.numel() * 4
@@ -132,7 +138,9 @@ def test_seedlm_compression(model):
                 total_compressed += layer_compressed
 
                 ratio = original_size / layer_compressed
-                print(f"    {original_size:,} -> {layer_compressed:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]")
+                print(
+                    f"    {original_size:,} -> {layer_compressed:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]"
+                )
 
                 del compressed
 
@@ -140,7 +148,9 @@ def test_seedlm_compression(model):
                 print(f"    FAILED: {e}")
                 total_compressed += original_size
         else:
-            print(f"    INCOMPATIBLE (size {param.numel()} not divisible by {compressor.C})")
+            print(
+                f"    INCOMPATIBLE (size {param.numel()} not divisible by {compressor.C})"
+            )
             # Use BitNet estimate for incompatible layers
             total_compressed += original_size // 16
 
@@ -151,7 +161,9 @@ def test_seedlm_compression(model):
     print("\nSeedLM Results:")
     print(f"  Compatible layers: {compatible_layers}")
     print(f"  Original: {total_original:,} bytes")
-    print(f"  Compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)")
+    print(
+        f"  Compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)"
+    )
     print(f"  Compression: {stage2_ratio:.1f}x")
 
     return stage2_ratio, total_compressed
@@ -190,7 +202,9 @@ def test_vptq_compression(model):
             total_compressed += layer_compressed
 
             ratio = original_size / layer_compressed
-            print(f"    {original_size:,} -> {layer_compressed:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]")
+            print(
+                f"    {original_size:,} -> {layer_compressed:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]"
+            )
 
             del compressed
 
@@ -204,7 +218,9 @@ def test_vptq_compression(model):
 
     print("\nVPTQ Results:")
     print(f"  Original: {total_original:,} bytes")
-    print(f"  Compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)")
+    print(
+        f"  Compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)"
+    )
     print(f"  Compression: {stage3_ratio:.1f}x")
 
     return stage3_ratio, total_compressed
@@ -332,7 +348,9 @@ def main():
     print(f"  Overall: {test_overall_ratio:.1f}x")
 
     # Extrapolate to 1.5B
-    overall_1_5b, final_1_5b_mb, mobile_viable = extrapolate_to_1_5b(total_params, results)
+    overall_1_5b, final_1_5b_mb, mobile_viable = extrapolate_to_1_5b(
+        total_params, results
+    )
 
     # Final assessment
     print("\n" + "=" * 60)
@@ -365,7 +383,9 @@ def main():
 
     if success:
         print("\nPROVEN: All 4 compression stages work on large models!")
-        print(f"1.5B models can be compressed to {final_1_5b_mb:.1f} MB for mobile deployment.")
+        print(
+            f"1.5B models can be compressed to {final_1_5b_mb:.1f} MB for mobile deployment."
+        )
 
     return success
 

@@ -7,7 +7,9 @@ import logging
 import time
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Import the P2P components
@@ -112,7 +114,10 @@ async def test_two_nodes_discovery():
             logger.info("Attempting to send message...")
             success = await node1.send_to_peer(
                 node2.node_id,
-                {"type": "TEST_MESSAGE", "data": {"message": "Hello from node 1!", "timestamp": time.time()}},
+                {
+                    "type": "TEST_MESSAGE",
+                    "data": {"message": "Hello from node 1!", "timestamp": time.time()},
+                },
             )
             logger.info(f"Message send result: {success}")
         else:
@@ -172,7 +177,9 @@ async def test_evolution_messaging():
 
         await asyncio.sleep(1)
 
-        await node.broadcast_evolution_event("COMPLETE", {"success": True, "results": {"test_result": "passed"}})
+        await node.broadcast_evolution_event(
+            "COMPLETE", {"success": True, "results": {"test_result": "passed"}}
+        )
 
         # Check stats
         stats = node.get_network_status()

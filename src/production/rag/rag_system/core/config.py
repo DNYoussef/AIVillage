@@ -19,7 +19,9 @@ class UnifiedConfig(BaseModel):
 
     # SageAgent configuration
     agent_name: str = "SageAgent"
-    agent_description: str = "A research and analysis agent equipped with advanced reasoning and NLP capabilities."
+    agent_description: str = (
+        "A research and analysis agent equipped with advanced reasoning and NLP capabilities."
+    )
 
     # Retrieval configuration
     MAX_RESULTS: int = 10

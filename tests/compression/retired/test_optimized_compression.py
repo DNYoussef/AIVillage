@@ -24,7 +24,13 @@ def test_optimized_advanced_pipeline():
     from src.core.compression.advanced_pipeline import AdvancedCompressionPipeline
 
     # Create test model
-    model = nn.Sequential(nn.Linear(1024, 512), nn.ReLU(), nn.Linear(512, 256), nn.ReLU(), nn.Linear(256, 128))
+    model = nn.Sequential(
+        nn.Linear(1024, 512),
+        nn.ReLU(),
+        nn.Linear(512, 256),
+        nn.ReLU(),
+        nn.Linear(256, 128),
+    )
 
     param_count = sum(p.numel() for p in model.parameters())
     original_size = param_count * 4
@@ -260,7 +266,9 @@ def main():
             status = "NEEDS WORK - No improvement"
 
         print(f"\nOverall Status: {status}")
-        print(f"Ready for mobile deployment: {'YES' if ratio >= 50 else 'PARTIAL' if ratio >= 30 else 'NO'}")
+        print(
+            f"Ready for mobile deployment: {'YES' if ratio >= 50 else 'PARTIAL' if ratio >= 30 else 'NO'}"
+        )
 
         return ratio >= 30  # Success if we get 30x or better
 

@@ -157,8 +157,14 @@ class ConversationalMagi(SafeMagiInterface):
         """Display Magi capabilities in a clean format."""
         print("\nMAGI SPECIALIZED CAPABILITIES:")
         print("=" * 50)
-        for cap, score in sorted(self.capabilities.items(), key=lambda x: x[1], reverse=True):
-            level = "MASTERY" if score >= 0.90 else "EXPERT" if score >= 0.75 else "ADVANCED"
+        for cap, score in sorted(
+            self.capabilities.items(), key=lambda x: x[1], reverse=True
+        ):
+            level = (
+                "MASTERY"
+                if score >= 0.90
+                else "EXPERT" if score >= 0.75 else "ADVANCED"
+            )
             cap_name = cap.replace("_", " ").title()
             print(f"  {cap_name:<25} {score:.3f}  [{level}]")
         print(f"\nOverall Specialization Score: {self.specialization_score:.3f}")
@@ -190,7 +196,9 @@ class ConversationalMagi(SafeMagiInterface):
                     continue
 
                 if user_input.lower() in ["quit", "exit", "bye"]:
-                    print("\nMAGI: Thank you for our conversation. My capabilities remain at your service!")
+                    print(
+                        "\nMAGI: Thank you for our conversation. My capabilities remain at your service!"
+                    )
                     break
 
                 if user_input.lower() == "capabilities":
@@ -199,9 +207,13 @@ class ConversationalMagi(SafeMagiInterface):
 
                 if user_input.lower() == "history":
                     if self.conversation_history:
-                        print(f"\nRECENT TOPICS ({len(self.conversation_history)} exchanges):")
+                        print(
+                            f"\nRECENT TOPICS ({len(self.conversation_history)} exchanges):"
+                        )
                         for i, item in enumerate(self.conversation_history[-5:], 1):
-                            print(f"  {i}. {item['capability']} (score: {item['score']:.3f})")
+                            print(
+                                f"  {i}. {item['capability']} (score: {item['score']:.3f})"
+                            )
                     else:
                         print("\nNo conversation history yet.")
                     continue

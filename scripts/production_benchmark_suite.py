@@ -29,7 +29,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("benchmark_suite.log")],
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler("benchmark_suite.log"),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -88,15 +91,26 @@ class CompressionBenchmark:
             # Create test data (simulated model weights)
             import torch
 
-            from agent_forge.compression import BitNetCompressor, SeedLMCompressor, VPTQCompressor
+            from agent_forge.compression import (
+                BitNetCompressor,
+                SeedLMCompressor,
+                VPTQCompressor,
+            )
 
             test_tensor = torch.randn(1000, 1000)  # 4MB test tensor
             original_size = test_tensor.numel() * 4  # 4 bytes per float32
 
-            results = {"original_size_mb": round(original_size / (1024 * 1024), 2), "compressions": {}}
+            results = {
+                "original_size_mb": round(original_size / (1024 * 1024), 2),
+                "compressions": {},
+            }
 
             # Test each compression method
-            compressors = [("BitNet", BitNetCompressor()), ("SeedLM", SeedLMCompressor()), ("VPTQ", VPTQCompressor())]
+            compressors = [
+                ("BitNet", BitNetCompressor()),
+                ("SeedLM", SeedLMCompressor()),
+                ("VPTQ", VPTQCompressor()),
+            ]
 
             for name, compressor in compressors:
                 try:
@@ -105,7 +119,11 @@ class CompressionBenchmark:
                     compression_time = time.time() - start_time
 
                     # Calculate compression ratio
-                    compressed_size = len(compressed) if isinstance(compressed, bytes) else compressed.numel() * 4
+                    compressed_size = (
+                        len(compressed)
+                        if isinstance(compressed, bytes)
+                        else compressed.numel() * 4
+                    )
                     ratio = original_size / compressed_size
 
                     results["compressions"][name] = {
@@ -115,7 +133,9 @@ class CompressionBenchmark:
                         "status": "success",
                     }
 
-                    logger.info(f"{name}: {ratio:.1f}x compression in {compression_time:.3f}s")
+                    logger.info(
+                        f"{name}: {ratio:.1f}x compression in {compression_time:.3f}s"
+                    )
 
                 except Exception as e:
                     results["compressions"][name] = {"status": "error", "error": str(e)}
@@ -131,7 +151,11 @@ class CompressionBenchmark:
             return {"status": "error", "error": f"Import failed: {e}"}
         except Exception as e:
             logger.error(f"Compression benchmark failed: {e}")
-            return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
+            return {
+                "status": "error",
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            }
 
 
 class EvolutionBenchmark:
@@ -148,7 +172,10 @@ class EvolutionBenchmark:
 
         try:
             # Import evolution modules
-            from agent_forge.evolution import AgentEvolutionEngine, EvolutionOrchestrator
+            from agent_forge.evolution import (
+                AgentEvolutionEngine,
+                EvolutionOrchestrator,
+            )
 
             # Create minimal evolution test
             orchestrator = EvolutionOrchestrator()
@@ -174,7 +201,9 @@ class EvolutionBenchmark:
                 "population_size": config["population_size"],
                 "generations": config["generations"],
                 "final_fitness": result.get("best_fitness", 0) if result else 0,
-                "convergence_generation": result.get("convergence_gen", -1) if result else -1,
+                "convergence_generation": (
+                    result.get("convergence_gen", -1) if result else -1
+                ),
                 "performance": monitor.get_metrics(),
                 "status": "success" if result else "failed",
             }
@@ -187,7 +216,11 @@ class EvolutionBenchmark:
             return {"status": "error", "error": f"Import failed: {e}"}
         except Exception as e:
             logger.error(f"Evolution benchmark failed: {e}")
-            return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
+            return {
+                "status": "error",
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            }
 
 
 class RAGBenchmark:
@@ -226,7 +259,11 @@ class RAGBenchmark:
             monitor.update_peak_memory()
 
             # Test queries
-            test_queries = ["What is machine learning?", "How does deep learning work?", "What is computer vision?"]
+            test_queries = [
+                "What is machine learning?",
+                "How does deep learning work?",
+                "What is computer vision?",
+            ]
 
             query_results = []
             total_query_time = 0
@@ -260,7 +297,9 @@ class RAGBenchmark:
                 "status": "success",
             }
 
-            logger.info(f"RAG indexing: {index_time:.3f}s, avg query: {avg_query_time:.3f}s")
+            logger.info(
+                f"RAG indexing: {index_time:.3f}s, avg query: {avg_query_time:.3f}s"
+            )
             return results
 
         except ImportError as e:
@@ -268,7 +307,11 @@ class RAGBenchmark:
             return {"status": "error", "error": f"Import failed: {e}"}
         except Exception as e:
             logger.error(f"RAG benchmark failed: {e}")
-            return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
+            return {
+                "status": "error",
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            }
 
 
 class ProductionBenchmarkSuite:
@@ -334,11 +377,16 @@ class ProductionBenchmarkSuite:
     def compare_with_baseline(self, results: dict[str, Any]) -> dict[str, Any]:
         """Compare current results with baseline if available"""
         try:
-            baseline_path = Path(__file__).parent / "benchmark_results" / "baseline.json"
+            baseline_path = (
+                Path(__file__).parent / "benchmark_results" / "baseline.json"
+            )
 
             if not baseline_path.exists():
                 logger.info("No baseline found, current results will serve as baseline")
-                return {"status": "no_baseline", "message": "First run - establishing baseline"}
+                return {
+                    "status": "no_baseline",
+                    "message": "First run - establishing baseline",
+                }
 
             with open(baseline_path) as f:
                 baseline = json.load(f)
@@ -346,7 +394,9 @@ class ProductionBenchmarkSuite:
             comparison = {"status": "comparison_available", "changes": {}}
 
             # Compare compression ratios
-            if "compression" in results["benchmarks"] and "compression" in baseline.get("benchmarks", {}):
+            if "compression" in results["benchmarks"] and "compression" in baseline.get(
+                "benchmarks", {}
+            ):
 
                 current_comp = results["benchmarks"]["compression"]
                 baseline_comp = baseline["benchmarks"]["compression"]
@@ -354,11 +404,17 @@ class ProductionBenchmarkSuite:
                 if "compressions" in current_comp and "compressions" in baseline_comp:
                     for method in current_comp["compressions"]:
                         if method in baseline_comp["compressions"]:
-                            current_ratio = current_comp["compressions"][method].get("compression_ratio", 0)
-                            baseline_ratio = baseline_comp["compressions"][method].get("compression_ratio", 0)
+                            current_ratio = current_comp["compressions"][method].get(
+                                "compression_ratio", 0
+                            )
+                            baseline_ratio = baseline_comp["compressions"][method].get(
+                                "compression_ratio", 0
+                            )
 
                             if baseline_ratio > 0:
-                                change_pct = ((current_ratio - baseline_ratio) / baseline_ratio) * 100
+                                change_pct = (
+                                    (current_ratio - baseline_ratio) / baseline_ratio
+                                ) * 100
                                 comparison["changes"][f"compression_{method}_ratio"] = {
                                     "current": current_ratio,
                                     "baseline": baseline_ratio,
@@ -407,11 +463,17 @@ def main():
                         ratio = data.get("compression_ratio", 0)
                         time_taken = data.get("compression_time_seconds", 0)
                         status = "✅ PASS" if ratio >= 4.0 else "⚠️  BELOW TARGET"
-                        print(f"  {method}: {ratio:.1f}x compression ({time_taken:.3f}s) {status}")
+                        print(
+                            f"  {method}: {ratio:.1f}x compression ({time_taken:.3f}s) {status}"
+                        )
                     else:
-                        print(f"  {method}: ❌ FAILED - {data.get('error', 'Unknown error')}")
+                        print(
+                            f"  {method}: ❌ FAILED - {data.get('error', 'Unknown error')}"
+                        )
         else:
-            print(f"\n📦 COMPRESSION PIPELINE: ❌ FAILED - {comp_results.get('error', 'Unknown error')}")
+            print(
+                f"\n📦 COMPRESSION PIPELINE: ❌ FAILED - {comp_results.get('error', 'Unknown error')}"
+            )
 
         # Evolution results
         evo_results = results["benchmarks"].get("evolution", {})
@@ -423,7 +485,9 @@ def main():
             print(f"  Evolution time: {evo_time:.3f}s {status}")
             print(f"  Final fitness: {fitness:.3f}")
         else:
-            print(f"\n🧬 EVOLUTION SYSTEM: ❌ FAILED - {evo_results.get('error', 'Unknown error')}")
+            print(
+                f"\n🧬 EVOLUTION SYSTEM: ❌ FAILED - {evo_results.get('error', 'Unknown error')}"
+            )
 
         # RAG results
         rag_results = results["benchmarks"].get("rag", {})
@@ -435,7 +499,9 @@ def main():
             print(f"  Indexing time: {index_time:.3f}s")
             print(f"  Avg query time: {query_time:.3f}s {query_status}")
         else:
-            print(f"\n🔍 RAG PIPELINE: ❌ FAILED - {rag_results.get('error', 'Unknown error')}")
+            print(
+                f"\n🔍 RAG PIPELINE: ❌ FAILED - {rag_results.get('error', 'Unknown error')}"
+            )
 
         # Overall performance
         total_time = results.get("total_benchmark_time_seconds", 0)
@@ -448,7 +514,9 @@ def main():
             if changes:
                 for metric, data in changes.items():
                     change_pct = data.get("change_percent", 0)
-                    direction = "📈" if change_pct > 0 else "📉" if change_pct < 0 else "➡️"
+                    direction = (
+                        "📈" if change_pct > 0 else "📉" if change_pct < 0 else "➡️"
+                    )
                     print(
                         f"  {metric}: {
                             data['current']:.2f} vs {

@@ -19,7 +19,11 @@ def linear_merge(
             merged_chunks = []
 
             # Check for meta tensors
-            meta_tensors = [model.state_dict()[key] for model in models if model.state_dict()[key].is_meta]
+            meta_tensors = [
+                model.state_dict()[key]
+                for model in models
+                if model.state_dict()[key].is_meta
+            ]
             if meta_tensors:
                 # If meta tensors are found, create an empty tensor of the correct shape
                 param_shape = models[0].state_dict()[key].shape
@@ -30,10 +34,16 @@ def linear_merge(
                 for i in range(0, numel, chunk_size):
                     chunk_params = []
                     for model in models:
-                        chunk_param = model.state_dict()[key].flatten()[i : i + chunk_size].to(device)
+                        chunk_param = (
+                            model.state_dict()[key]
+                            .flatten()[i : i + chunk_size]
+                            .to(device)
+                        )
                         chunk_params.append(chunk_param)
 
-                    merged_chunk = sum(w * t for w, t in zip(weights, chunk_params, strict=False))
+                    merged_chunk = sum(
+                        w * t for w, t in zip(weights, chunk_params, strict=False)
+                    )
                     merged_chunks.append(merged_chunk.cpu())
 
                     del merged_chunk, chunk_params
@@ -60,17 +70,37 @@ def slerp_merge(
             merged_chunks = []
 
             # Check for meta tensors before chunking
-            meta_tensors = [model.state_dict()[key] for model in models if model.state_dict()[key].is_meta]
+            meta_tensors = [
+                model.state_dict()[key]
+                for model in models
+                if model.state_dict()[key].is_meta
+            ]
             if not meta_tensors:
                 numel = models[0].state_dict()[key].numel()
-                param_shape = models[0].state_dict()[key].shape  # Correctly assign param_shape
+                param_shape = (
+                    models[0].state_dict()[key].shape
+                )  # Correctly assign param_shape
                 for i in range(0, numel, chunk_size):
-                    w1 = models[0].state_dict()[key].flatten()[i : i + chunk_size].to(device)
-                    w2 = models[1].state_dict()[key].flatten()[i : i + chunk_size].to(device)
+                    w1 = (
+                        models[0]
+                        .state_dict()[key]
+                        .flatten()[i : i + chunk_size]
+                        .to(device)
+                    )
+                    w2 = (
+                        models[1]
+                        .state_dict()[key]
+                        .flatten()[i : i + chunk_size]
+                        .to(device)
+                    )
 
-                    omega = torch.arccos(torch.clamp(torch.dot(w1, w2) / (w1.norm() * w2.norm()), -1, 1))
+                    omega = torch.arccos(
+                        torch.clamp(torch.dot(w1, w2) / (w1.norm() * w2.norm()), -1, 1)
+                    )
                     so = torch.sin(omega)
-                    merged_chunk = (torch.sin((1.0 - t) * omega) / so) * w1 + (torch.sin(t * omega) / so) * w2
+                    merged_chunk = (torch.sin((1.0 - t) * omega) / so) * w1 + (
+                        torch.sin(t * omega) / so
+                    ) * w2
                     merged_chunks.append(merged_chunk.cpu())
 
                     del merged_chunk, w1, w2
@@ -90,7 +120,9 @@ def disk_based_ties_merge(
     merged_state_dict: dict[str, torch.Tensor], models: list[torch.nn.Module], **kwargs
 ) -> dict[str, torch.Tensor]:
     threshold = kwargs.get("threshold", 0.1)
-    device = torch.device("cpu")  # Use CPU to handle larger tensors without GPU memory issues
+    device = torch.device(
+        "cpu"
+    )  # Use CPU to handle larger tensors without GPU memory issues
     chunk_size = kwargs.get("chunk_size", 1000000)
 
     with tempfile.TemporaryDirectory():
@@ -103,12 +135,20 @@ def disk_based_ties_merge(
             numel = models[0].state_dict()[key].numel()
 
             # Check for meta tensors before chunking
-            meta_tensors = [model.state_dict()[key] for model in models if model.state_dict()[key].is_meta]
+            meta_tensors = [
+                model.state_dict()[key]
+                for model in models
+                if model.state_dict()[key].is_meta
+            ]
             if not meta_tensors:
                 for i in range(0, numel, chunk_size):
                     chunks = []
                     for model in models:
-                        chunk = model.state_dict()[key].flatten()[i : i + chunk_size].to(device)
+                        chunk = (
+                            model.state_dict()[key]
+                            .flatten()[i : i + chunk_size]
+                            .to(device)
+                        )
                         chunks.append(chunk)
 
                     stacked_chunks = torch.stack(chunks)
@@ -163,12 +203,20 @@ def dare_merge(
             param_shape = models[0].state_dict()[key].shape
             numel = models[0].state_dict()[key].numel()
 
-            meta_tensors = [model.state_dict()[key] for model in models if model.state_dict()[key].is_meta]
+            meta_tensors = [
+                model.state_dict()[key]
+                for model in models
+                if model.state_dict()[key].is_meta
+            ]
             if not meta_tensors:
                 for i in range(0, numel, chunk_size):
                     chunks = []
                     for model in models:
-                        chunk = model.state_dict()[key].flatten()[i : i + chunk_size].to(device)
+                        chunk = (
+                            model.state_dict()[key]
+                            .flatten()[i : i + chunk_size]
+                            .to(device)
+                        )
                         chunks.append(chunk)
 
                     chunk_tensor = torch.stack(chunks)
@@ -217,15 +265,21 @@ def task_arithmetic_merge(
             numel = base_weights[key].numel()
 
             meta_tensors = [base_weights[key]] + [
-                task_weight[key] for task_weight in task_weights if task_weight[key].is_meta
+                task_weight[key]
+                for task_weight in task_weights
+                if task_weight[key].is_meta
             ]
             if not meta_tensors:
                 for i in range(0, numel, chunk_size):
-                    base_chunk = base_weights[key].flatten()[i : i + chunk_size].to(device)
+                    base_chunk = (
+                        base_weights[key].flatten()[i : i + chunk_size].to(device)
+                    )
 
                     task_chunks = []
                     for task_weight in task_weights:
-                        task_chunk = task_weight[key].flatten()[i : i + chunk_size].to(device)
+                        task_chunk = (
+                            task_weight[key].flatten()[i : i + chunk_size].to(device)
+                        )
                         task_chunks.append(task_chunk - base_chunk)
 
                     combined_task_chunk = sum(task_chunks)
@@ -255,23 +309,35 @@ def dfs_merge(
     with tempfile.TemporaryDirectory():
         layer_index = 0
         for name, tensor in models[0].state_dict().items():
-            if any(layer_type in name for layer_type in ["layer", "block", "transformer"]):
+            if any(
+                layer_type in name for layer_type in ["layer", "block", "transformer"]
+            ):
                 if I[layer_index] > 0:
                     merged_chunks = []
 
                     param_shape = tensor.shape
                     numel = tensor.numel()
 
-                    meta_tensors = [model.state_dict()[name] for model in models if model.state_dict()[name].is_meta]
+                    meta_tensors = [
+                        model.state_dict()[name]
+                        for model in models
+                        if model.state_dict()[name].is_meta
+                    ]
                     if not meta_tensors:
                         for i in range(0, numel, chunk_size):
                             chunks = []
                             for model in models:
-                                chunk = model.state_dict()[name].flatten()[i : i + chunk_size].to(device)
+                                chunk = (
+                                    model.state_dict()[name]
+                                    .flatten()[i : i + chunk_size]
+                                    .to(device)
+                                )
                                 chunks.append(chunk)
 
                             chunk_tensor = torch.stack(chunks)
-                            merged_chunk = torch.sum(chunk_tensor * W[layer_index].unsqueeze(1), dim=0)
+                            merged_chunk = torch.sum(
+                                chunk_tensor * W[layer_index].unsqueeze(1), dim=0
+                            )
                             merged_chunks.append(merged_chunk.cpu())
 
                             del merged_chunk, chunks, chunk_tensor
@@ -299,7 +365,9 @@ def frankenmerge(merged_model, models, **kwargs):
         merged_state_dict[name] = merged_param.view(param_shape)
 
     # Create a new state dict with only the compatible parameters
-    compatible_state_dict = {k: v for k, v in merged_state_dict.items() if k in merged_model.state_dict()}
+    compatible_state_dict = {
+        k: v for k, v in merged_state_dict.items() if k in merged_model.state_dict()
+    }
 
     # Load the compatible state dict into the model
     merged_model.load_state_dict(compatible_state_dict, strict=False)

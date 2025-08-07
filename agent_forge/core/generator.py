@@ -11,26 +11,27 @@ The generated agents provide a minimal interface used in tests:
 from __future__ import annotations
 
 import time
+from typing import Any
 import uuid
-from typing import Any, Dict, Type
 
 # ---------------------------------------------------------------------------
 # Base agent
 # ---------------------------------------------------------------------------
 
+
 class BaseGeneratedAgent:
     """Lightweight base class for generated agents."""
 
     # registry of live agent instances for message passing
-    instances: Dict[str, "BaseGeneratedAgent"] = {}
+    instances: dict[str, BaseGeneratedAgent] = {}
 
     def __init__(self, name: str, sandboxed: bool = False) -> None:
         self.name = name
         self.role = getattr(self, "ROLE", name)
         self.agent_id = str(uuid.uuid4())
         self.sandboxed = sandboxed
-        self.state: Dict[str, Any] = {"status": "initialized"}
-        self.metrics: Dict[str, Any] = {"heartbeats": 0}
+        self.state: dict[str, Any] = {"status": "initialized"}
+        self.metrics: dict[str, Any] = {"heartbeats": 0}
         self.messages: list[tuple[str, Any]] = []
         # register instance for simple message passing
         BaseGeneratedAgent.instances[name] = self
@@ -73,7 +74,8 @@ class BaseGeneratedAgent:
 # Generator
 # ---------------------------------------------------------------------------
 
-def create_agent_class(agent_name: str, role: str) -> Type[BaseGeneratedAgent]:
+
+def create_agent_class(agent_name: str, role: str) -> type[BaseGeneratedAgent]:
     """Dynamically create a new agent class with the given role."""
 
     class GeneratedAgent(BaseGeneratedAgent):
@@ -88,7 +90,7 @@ def create_agent_class(agent_name: str, role: str) -> Type[BaseGeneratedAgent]:
 
 
 # registry mapping agent names to classes
-AGENT_REGISTRY: Dict[str, Type[BaseGeneratedAgent]] = {}
+AGENT_REGISTRY: dict[str, type[BaseGeneratedAgent]] = {}
 
 # ---------------------------------------------------------------------------
 # Generate the ten missing agents

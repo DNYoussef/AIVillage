@@ -237,12 +237,16 @@ class TestQueryClassifier:
         """Test generation of reasoning hints"""
 
         # Test temporal hints
-        hints = classifier.get_reasoning_hints("When did this happen?", QueryType.TEMPORAL_ANALYSIS)
+        hints = classifier.get_reasoning_hints(
+            "When did this happen?", QueryType.TEMPORAL_ANALYSIS
+        )
         assert len(hints) > 0
         assert any("temporal" in hint.lower() for hint in hints)
 
         # Test causal hints
-        hints = classifier.get_reasoning_hints("Why did this happen?", QueryType.CAUSAL_CHAIN)
+        hints = classifier.get_reasoning_hints(
+            "Why did this happen?", QueryType.CAUSAL_CHAIN
+        )
         assert len(hints) > 0
         assert any("causal" in hint.lower() for hint in hints)
 
@@ -289,13 +293,17 @@ class TestQueryClassifier:
         first_result = results[0]
         for result in results[1:]:
             assert result[0] == first_result[0]  # Same query type
-            assert abs(result[1] - first_result[1]) < 0.01  # Same confidence (allowing for floating point)
+            assert (
+                abs(result[1] - first_result[1]) < 0.01
+            )  # Same confidence (allowing for floating point)
 
     def test_mixed_query_types(self, classifier):
         """Test queries that could match multiple types"""
 
         # Query with both temporal and causal elements
-        mixed_query = "Why did the stock market crash happen in 1929 and what were the causes?"
+        mixed_query = (
+            "Why did the stock market crash happen in 1929 and what were the causes?"
+        )
         query_type, confidence, analysis = classifier.classify_query(mixed_query)
 
         # Should identify multiple patterns

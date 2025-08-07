@@ -1,4 +1,10 @@
-from .config import Configuration, EvolutionSettings, MergeSettings, ModelReference, create_default_config
+from .config import (
+    Configuration,
+    EvolutionSettings,
+    MergeSettings,
+    ModelReference,
+    create_default_config,
+)
 from .evolutionary_tournament import EvolutionaryTournament, run_evolutionary_tournament
 from .logging_config import setup_logging
 from .merging.merge_techniques import MERGE_TECHNIQUES

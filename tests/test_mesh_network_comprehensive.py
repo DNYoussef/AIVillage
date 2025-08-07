@@ -56,17 +56,23 @@ class MeshNetworkTester:
             start_time = time.time()
 
             try:
-                simulator = MeshNetworkSimulator(num_nodes=config["nodes"], connectivity=config["connectivity"])
+                simulator = MeshNetworkSimulator(
+                    num_nodes=config["nodes"], connectivity=config["connectivity"]
+                )
                 await simulator.create_network()
 
                 # Verify network formation
                 nodes_created = len(simulator.nodes)
-                total_connections = sum(len(node.neighbors) for node in simulator.nodes.values())
+                total_connections = sum(
+                    len(node.neighbors) for node in simulator.nodes.values()
+                )
 
                 # Calculate network connectivity metrics
                 max_possible_connections = config["nodes"] * (config["nodes"] - 1)
                 actual_connectivity = (
-                    total_connections / max_possible_connections if max_possible_connections > 0 else 0
+                    total_connections / max_possible_connections
+                    if max_possible_connections > 0
+                    else 0
                 )
 
                 formation_time = time.time() - start_time
@@ -77,17 +83,25 @@ class MeshNetworkTester:
                     "total_connections": total_connections,
                     "actual_connectivity": actual_connectivity,
                     "formation_time": formation_time,
-                    "success": nodes_created == config["nodes"] and total_connections > 0,
+                    "success": nodes_created == config["nodes"]
+                    and total_connections > 0,
                 }
 
                 formation_results.append(result)
 
                 status = "✅ PASS" if result["success"] else "❌ FAIL"
-                print(f"    {status} - {nodes_created} nodes, {total_connections} connections ({formation_time:.2f}s)")
+                print(
+                    f"    {status} - {nodes_created} nodes, {total_connections} connections ({formation_time:.2f}s)"
+                )
 
             except Exception as e:
                 formation_results.append(
-                    {"config": config, "error": str(e), "success": False, "formation_time": time.time() - start_time}
+                    {
+                        "config": config,
+                        "error": str(e),
+                        "success": False,
+                        "formation_time": time.time() - start_time,
+                    }
                 )
                 print(f"    ❌ FAIL - Error: {e}")
 
@@ -95,7 +109,10 @@ class MeshNetworkTester:
             {
                 "test_name": "Basic Network Formation",
                 "results": formation_results,
-                "success_rate": sum(1 for r in formation_results if r.get("success", False)) / len(formation_results),
+                "success_rate": sum(
+                    1 for r in formation_results if r.get("success", False)
+                )
+                / len(formation_results),
             }
         )
 
@@ -144,7 +161,10 @@ class MeshNetworkTester:
 
                     # Send message
                     await source_node.send_message(
-                        msg_type, {"test_id": i, "timestamp": start_time}, recipient_id=dest_node.node_id, priority=5
+                        msg_type,
+                        {"test_id": i, "timestamp": start_time},
+                        recipient_id=dest_node.node_id,
+                        priority=5,
                     )
 
                     # Wait for delivery
@@ -160,7 +180,9 @@ class MeshNetworkTester:
                 except Exception as e:
                     print(f"    Error in message {i}: {e}")
 
-            delivery_rate = successful_deliveries / total_messages if total_messages > 0 else 0
+            delivery_rate = (
+                successful_deliveries / total_messages if total_messages > 0 else 0
+            )
             avg_delivery_time = statistics.mean(delivery_times) if delivery_times else 0
 
             result = {
@@ -175,13 +197,17 @@ class MeshNetworkTester:
             routing_results.append(result)
 
             status = "✅ PASS" if result["success"] else "❌ FAIL"
-            print(f"    {status} - {delivery_rate:.1%} delivery rate, {avg_delivery_time:.3f}s avg time")
+            print(
+                f"    {status} - {delivery_rate:.1%} delivery rate, {avg_delivery_time:.3f}s avg time"
+            )
 
         self.results["tests_run"].append(
             {
                 "test_name": "Message Routing Reliability",
                 "results": routing_results,
-                "overall_delivery_rate": statistics.mean([r["delivery_rate"] for r in routing_results]),
+                "overall_delivery_rate": statistics.mean(
+                    [r["delivery_rate"] for r in routing_results]
+                ),
             }
         )
 
@@ -206,15 +232,21 @@ class MeshNetworkTester:
 
             try:
                 # Create network
-                simulator = MeshNetworkSimulator(num_nodes=scenario["nodes"], connectivity=0.4)
+                simulator = MeshNetworkSimulator(
+                    num_nodes=scenario["nodes"], connectivity=0.4
+                )
                 await simulator.create_network()
 
                 # Baseline: measure initial connectivity
                 initial_nodes = len(simulator.nodes)
-                initial_connections = sum(len(node.neighbors) for node in simulator.nodes.values())
+                initial_connections = sum(
+                    len(node.neighbors) for node in simulator.nodes.values()
+                )
 
                 # Start background traffic simulation
-                traffic_task = asyncio.create_task(simulator.simulate_traffic(duration=8))
+                traffic_task = asyncio.create_task(
+                    simulator.simulate_traffic(duration=8)
+                )
 
                 # Wait a bit for traffic to start
                 await asyncio.sleep(1)
@@ -250,14 +282,22 @@ class MeshNetworkTester:
                     if node_id not in failed_nodes and len(node.neighbors) > 0
                 ]
 
-                remaining_connections = sum(len(node.neighbors) for node in active_nodes)
+                remaining_connections = sum(
+                    len(node.neighbors) for node in active_nodes
+                )
 
                 # Calculate resilience metrics
-                node_survival_rate = len(active_nodes) / (initial_nodes - scenario["failures"])
-                connection_retention = remaining_connections / max(1, initial_connections - scenario["failures"] * 2)
+                node_survival_rate = len(active_nodes) / (
+                    initial_nodes - scenario["failures"]
+                )
+                connection_retention = remaining_connections / max(
+                    1, initial_connections - scenario["failures"] * 2
+                )
 
                 # Check if network is still functional (can route messages)
-                network_functional = len(active_nodes) >= 2 and remaining_connections > 0
+                network_functional = (
+                    len(active_nodes) >= 2 and remaining_connections > 0
+                )
 
                 result = {
                     "scenario": scenario["name"],
@@ -273,10 +313,14 @@ class MeshNetworkTester:
                 resilience_results.append(result)
 
                 status = "✅ PASS" if result["success"] else "❌ FAIL"
-                print(f"    {status} - {len(active_nodes)} nodes active, {node_survival_rate:.1%} survival rate")
+                print(
+                    f"    {status} - {len(active_nodes)} nodes active, {node_survival_rate:.1%} survival rate"
+                )
 
             except Exception as e:
-                resilience_results.append({"scenario": scenario["name"], "error": str(e), "success": False})
+                resilience_results.append(
+                    {"scenario": scenario["name"], "error": str(e), "success": False}
+                )
                 print(f"    ❌ FAIL - Error: {e}")
 
         self.results["resilience_results"] = resilience_results
@@ -284,7 +328,10 @@ class MeshNetworkTester:
             {
                 "test_name": "Network Resilience",
                 "results": resilience_results,
-                "success_rate": sum(1 for r in resilience_results if r.get("success", False)) / len(resilience_results),
+                "success_rate": sum(
+                    1 for r in resilience_results if r.get("success", False)
+                )
+                / len(resilience_results),
             }
         )
 
@@ -312,7 +359,9 @@ class MeshNetworkTester:
                 formation_time = time.time() - start_time
 
                 # Measure baseline metrics
-                total_connections = sum(len(node.neighbors) for node in simulator.nodes.values())
+                total_connections = sum(
+                    len(node.neighbors) for node in simulator.nodes.values()
+                )
                 avg_connections_per_node = total_connections / size if size > 0 else 0
 
                 # Performance test: measure message throughput
@@ -329,7 +378,9 @@ class MeshNetworkTester:
                     if source_node.node_id != dest_node.node_id:
                         task = asyncio.create_task(
                             source_node.send_message(
-                                MessageType.PARAMETER_UPDATE, {"test_message": i}, recipient_id=dest_node.node_id
+                                MessageType.PARAMETER_UPDATE,
+                                {"test_message": i},
+                                recipient_id=dest_node.node_id,
                             )
                         )
                         message_tasks.append(task)
@@ -341,7 +392,9 @@ class MeshNetworkTester:
                 throughput = num_messages / messaging_time if messaging_time > 0 else 0
 
                 # Memory and resource estimation
-                estimated_memory_mb = size * 0.1 + total_connections * 0.01  # Rough estimate
+                estimated_memory_mb = (
+                    size * 0.1 + total_connections * 0.01
+                )  # Rough estimate
 
                 result = {
                     "network_size": size,
@@ -350,7 +403,8 @@ class MeshNetworkTester:
                     "avg_connections_per_node": avg_connections_per_node,
                     "message_throughput": throughput,
                     "estimated_memory_mb": estimated_memory_mb,
-                    "success": formation_time < 5.0 and throughput > 10,  # Performance thresholds
+                    "success": formation_time < 5.0
+                    and throughput > 10,  # Performance thresholds
                 }
 
                 scalability_results.append(result)
@@ -361,7 +415,9 @@ class MeshNetworkTester:
                 )
 
             except Exception as e:
-                scalability_results.append({"network_size": size, "error": str(e), "success": False})
+                scalability_results.append(
+                    {"network_size": size, "error": str(e), "success": False}
+                )
                 print(f"    ❌ FAIL - Error: {e}")
 
         self.results["scalability_results"] = scalability_results
@@ -370,7 +426,9 @@ class MeshNetworkTester:
                 "test_name": "Scalability Performance",
                 "results": scalability_results,
                 "max_tested_size": max(network_sizes),
-                "performance_degradation": self._analyze_performance_degradation(scalability_results),
+                "performance_degradation": self._analyze_performance_degradation(
+                    scalability_results
+                ),
             }
         )
 
@@ -389,7 +447,9 @@ class MeshNetworkTester:
         small_net = successful_results[0]
         large_net = successful_results[-1]
 
-        throughput_ratio = large_net["message_throughput"] / small_net["message_throughput"]
+        throughput_ratio = (
+            large_net["message_throughput"] / small_net["message_throughput"]
+        )
         size_ratio = large_net["network_size"] / small_net["network_size"]
 
         if throughput_ratio > 0.8:
@@ -419,7 +479,9 @@ class MeshNetworkTester:
 
             try:
                 # Create network
-                simulator = MeshNetworkSimulator(num_nodes=topology["nodes"], connectivity=topology["connectivity"])
+                simulator = MeshNetworkSimulator(
+                    num_nodes=topology["nodes"], connectivity=topology["connectivity"]
+                )
                 await simulator.create_network()
 
                 # Test routing efficiency
@@ -440,7 +502,11 @@ class MeshNetworkTester:
                     start_time = time.time()
 
                     # Send test message
-                    await source.send_message(MessageType.DISCOVERY, {"route_test": i}, recipient_id=dest.node_id)
+                    await source.send_message(
+                        MessageType.DISCOVERY,
+                        {"route_test": i},
+                        recipient_id=dest.node_id,
+                    )
 
                     # Give time for routing
                     await asyncio.sleep(0.2)
@@ -453,18 +519,32 @@ class MeshNetworkTester:
                     if route_found:
                         route_length = source.routing_table[dest.node_id][1]  # Distance
                         routing_tests.append(
-                            {"route_found": True, "route_length": route_length, "routing_time": routing_time}
+                            {
+                                "route_found": True,
+                                "route_length": route_length,
+                                "routing_time": routing_time,
+                            }
                         )
                     else:
-                        routing_tests.append({"route_found": False, "routing_time": routing_time})
+                        routing_tests.append(
+                            {"route_found": False, "routing_time": routing_time}
+                        )
 
                 # Analyze routing effectiveness
                 successful_routes = [t for t in routing_tests if t["route_found"]]
-                route_success_rate = len(successful_routes) / len(routing_tests) if routing_tests else 0
-                avg_route_length = (
-                    statistics.mean([t["route_length"] for t in successful_routes]) if successful_routes else 0
+                route_success_rate = (
+                    len(successful_routes) / len(routing_tests) if routing_tests else 0
                 )
-                avg_routing_time = statistics.mean([t["routing_time"] for t in routing_tests]) if routing_tests else 0
+                avg_route_length = (
+                    statistics.mean([t["route_length"] for t in successful_routes])
+                    if successful_routes
+                    else 0
+                )
+                avg_routing_time = (
+                    statistics.mean([t["routing_time"] for t in routing_tests])
+                    if routing_tests
+                    else 0
+                )
 
                 result = {
                     "topology": topology["name"],
@@ -480,17 +560,24 @@ class MeshNetworkTester:
                 routing_results.append(result)
 
                 status = "✅ PASS" if result["success"] else "❌ FAIL"
-                print(f"    {status} - {route_success_rate:.1%} success, {avg_route_length:.1f} hops avg")
+                print(
+                    f"    {status} - {route_success_rate:.1%} success, {avg_route_length:.1f} hops avg"
+                )
 
             except Exception as e:
-                routing_results.append({"topology": topology["name"], "error": str(e), "success": False})
+                routing_results.append(
+                    {"topology": topology["name"], "error": str(e), "success": False}
+                )
                 print(f"    ❌ FAIL - Error: {e}")
 
         self.results["tests_run"].append(
             {
                 "test_name": "Routing Algorithms",
                 "results": routing_results,
-                "success_rate": sum(1 for r in routing_results if r.get("success", False)) / len(routing_results),
+                "success_rate": sum(
+                    1 for r in routing_results if r.get("success", False)
+                )
+                / len(routing_results),
             }
         )
 
@@ -561,10 +648,13 @@ class MeshNetworkTester:
             security_test_result = {
                 "test_type": "Message Integrity & Anti-Replay",
                 "valid_message_success_rate": (
-                    valid_messages_processed / valid_messages_sent if valid_messages_sent > 0 else 0
+                    valid_messages_processed / valid_messages_sent
+                    if valid_messages_sent > 0
+                    else 0
                 ),
                 "duplicate_message_blocked": duplicate_blocked,
-                "success": (valid_messages_processed / valid_messages_sent >= 0.8) and duplicate_blocked,
+                "success": (valid_messages_processed / valid_messages_sent >= 0.8)
+                and duplicate_blocked,
             }
 
             security_results.append(security_test_result)
@@ -575,7 +665,13 @@ class MeshNetworkTester:
             )
 
         except Exception as e:
-            security_results.append({"test_type": "Message Integrity & Anti-Replay", "error": str(e), "success": False})
+            security_results.append(
+                {
+                    "test_type": "Message Integrity & Anti-Replay",
+                    "error": str(e),
+                    "success": False,
+                }
+            )
             print(f"    ❌ FAIL - Error: {e}")
 
         # Test 3: TTL (Time To Live) enforcement
@@ -602,7 +698,9 @@ class MeshNetworkTester:
             # Count initial forwards
             initial_forwards = sum(node.stats["messages_forwarded"] for node in nodes)
 
-            await source.send_message(MessageType.DISCOVERY, {"ttl_test": "low"}, priority=3)
+            await source.send_message(
+                MessageType.DISCOVERY, {"ttl_test": "low"}, priority=3
+            )
 
             await asyncio.sleep(0.5)
 
@@ -622,7 +720,9 @@ class MeshNetworkTester:
             print(f"    {status} - TTL limited propagation: {limited_propagation}")
 
         except Exception as e:
-            security_results.append({"test_type": "TTL Enforcement", "error": str(e), "success": False})
+            security_results.append(
+                {"test_type": "TTL Enforcement", "error": str(e), "success": False}
+            )
             print(f"    ❌ FAIL - Error: {e}")
 
         self.results["security_results"] = security_results
@@ -630,7 +730,10 @@ class MeshNetworkTester:
             {
                 "test_name": "Security Features",
                 "results": security_results,
-                "success_rate": sum(1 for r in security_results if r.get("success", False)) / len(security_results),
+                "success_rate": sum(
+                    1 for r in security_results if r.get("success", False)
+                )
+                / len(security_results),
             }
         )
 
@@ -644,12 +747,18 @@ class MeshNetworkTester:
 
         # Calculate overall metrics
         total_tests = len(self.results["tests_run"])
-        successful_tests = sum(1 for test in self.results["tests_run"] if test.get("success_rate", 0) >= 0.6)
+        successful_tests = sum(
+            1
+            for test in self.results["tests_run"]
+            if test.get("success_rate", 0) >= 0.6
+        )
 
         overall_success_rate = successful_tests / total_tests if total_tests > 0 else 0
 
         print("\n📊 EXECUTIVE SUMMARY")
-        print(f"   Test Suite: {successful_tests}/{total_tests} test categories passed ({overall_success_rate:.1%})")
+        print(
+            f"   Test Suite: {successful_tests}/{total_tests} test categories passed ({overall_success_rate:.1%})"
+        )
         print(f"   Generated: {self.results['test_start']}")
         print(
             f"   Status: {
@@ -660,8 +769,12 @@ class MeshNetworkTester:
         print("\n🔍 TEST CATEGORY RESULTS")
         for test in self.results["tests_run"]:
             success_rate = test.get("success_rate", 0)
-            status_emoji = "✅" if success_rate >= 0.7 else "⚠️" if success_rate >= 0.5 else "❌"
-            print(f"   {status_emoji} {test['test_name']:<25} {success_rate:.1%} success rate")
+            status_emoji = (
+                "✅" if success_rate >= 0.7 else "⚠️" if success_rate >= 0.5 else "❌"
+            )
+            print(
+                f"   {status_emoji} {test['test_name']:<25} {success_rate:.1%} success rate"
+            )
 
         # Performance highlights
         if "scalability_results" in self.results:
@@ -670,13 +783,19 @@ class MeshNetworkTester:
 
             if successful_scalability:
                 max_size = max(r["network_size"] for r in successful_scalability)
-                best_throughput = max(r["message_throughput"] for r in successful_scalability)
+                best_throughput = max(
+                    r["message_throughput"] for r in successful_scalability
+                )
 
                 print("\n⚡ PERFORMANCE HIGHLIGHTS")
                 print(f"   Maximum tested network size: {max_size} nodes")
-                print(f"   Peak message throughput: {best_throughput:.1f} messages/second")
+                print(
+                    f"   Peak message throughput: {best_throughput:.1f} messages/second"
+                )
 
-                degradation = self.results["tests_run"][-2].get("performance_degradation", "Unknown")
+                degradation = self.results["tests_run"][-2].get(
+                    "performance_degradation", "Unknown"
+                )
                 print(f"   Performance scaling: {degradation}")
 
         # Resilience highlights
@@ -685,11 +804,15 @@ class MeshNetworkTester:
             successful_resilience = [r for r in resilience if r.get("success", False)]
 
             if successful_resilience:
-                avg_survival_rate = statistics.mean([r["node_survival_rate"] for r in successful_resilience])
+                avg_survival_rate = statistics.mean(
+                    [r["node_survival_rate"] for r in successful_resilience]
+                )
 
                 print("\n🛡️ RESILIENCE HIGHLIGHTS")
                 print(f"   Average node survival rate: {avg_survival_rate:.1%}")
-                print(f"   Network remains functional after failures: {'Yes' if avg_survival_rate > 0.5 else 'No'}")
+                print(
+                    f"   Network remains functional after failures: {'Yes' if avg_survival_rate > 0.5 else 'No'}"
+                )
 
         # Security assessment
         if "security_results" in self.results:
@@ -723,7 +846,9 @@ class MeshNetworkTester:
         # Specific recommendations based on results
         for test in self.results["tests_run"]:
             if test.get("success_rate", 0) < 0.6:
-                print(f"   🔧 Priority fix: {test['test_name']} - {test.get('success_rate', 0):.1%} success rate")
+                print(
+                    f"   🔧 Priority fix: {test['test_name']} - {test.get('success_rate', 0):.1%} success rate"
+                )
 
         print("\n" + "=" * 80)
 

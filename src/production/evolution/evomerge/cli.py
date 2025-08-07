@@ -22,7 +22,10 @@ def download_and_merge_models(
     logger.info(f"Attempting to download and merge models: {model_paths}")
 
     config = create_default_config()
-    config.models = [ModelReference(name=f"model{i + 1}", path=path) for i, path in enumerate(model_paths)]
+    config.models = [
+        ModelReference(name=f"model{i + 1}", path=path)
+        for i, path in enumerate(model_paths)
+    ]
 
     # Update merge settings
     config.merge_settings.ps_techniques = merge_techniques[:2]
@@ -59,16 +62,24 @@ def download_and_merge_models(
             logger.info(f"Successfully created merged model: {merged_model_path}")
             break
         except Exception as e:
-            logger.exception(f"Attempt {attempt + 1} failed to create merged model: {e!s}")
+            logger.exception(
+                f"Attempt {attempt + 1} failed to create merged model: {e!s}"
+            )
             if attempt == max_retries - 1:
-                logger.exception(f"Failed to create merged model after {max_retries} attempts")
+                logger.exception(
+                    f"Failed to create merged model after {max_retries} attempts"
+                )
 
-    logger.info(f"Finished downloading and merging models. Created {len(merged_models)} merged models.")
+    logger.info(
+        f"Finished downloading and merging models. Created {len(merged_models)} merged models."
+    )
     return merged_models
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="EvoMerge: Evolutionary Model Merging System")
+    parser = argparse.ArgumentParser(
+        description="EvoMerge: Evolutionary Model Merging System"
+    )
     parser.add_argument(
         "--download-and-merge",
         action="store_true",
@@ -86,7 +97,9 @@ def main() -> None:
         required=True,
         help="Hugging Face model ID for the second model",
     )
-    parser.add_argument("--model3", type=str, help="Hugging Face model ID for the third model")
+    parser.add_argument(
+        "--model3", type=str, help="Hugging Face model ID for the third model"
+    )
     parser.add_argument(
         "--ps-technique1",
         type=str,
@@ -114,7 +127,9 @@ def main() -> None:
         default=0.0,
         help="Weight mask rate (0.0 to 1.0)",
     )
-    parser.add_argument("--use-weight-rescale", action="store_true", help="Use weight rescaling")
+    parser.add_argument(
+        "--use-weight-rescale", action="store_true", help="Use weight rescaling"
+    )
     parser.add_argument(
         "--mask-strategy",
         type=str,
@@ -133,7 +148,9 @@ def main() -> None:
         default=1000000,
         help="Chunk size for disk-based operations",
     )
-    parser.add_argument("--use-cli", action="store_true", help="Use Hugging Face CLI to download models")
+    parser.add_argument(
+        "--use-cli", action="store_true", help="Use Hugging Face CLI to download models"
+    )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
 
@@ -172,7 +189,9 @@ def main() -> None:
         for model_path in merged_models:
             logger.info(model_path)
     else:
-        logger.info("No action specified. Use --download-and-merge to download models and create merged models.")
+        logger.info(
+            "No action specified. Use --download-and-merge to download models and create merged models."
+        )
         parser.print_help()
 
     logger.info("EvoMerge CLI completed successfully")

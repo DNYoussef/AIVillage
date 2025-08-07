@@ -375,7 +375,9 @@ class PersonalizationApproach:
         """Retrieve personalized results for a query."""
         raise NotImplementedError
 
-    def calculate_token_cost(self, query_length: int, context_size: int, retrieved_items: int) -> int:
+    def calculate_token_cost(
+        self, query_length: int, context_size: int, retrieved_items: int
+    ) -> int:
         """Calculate token cost for the approach."""
         raise NotImplementedError
 
@@ -418,12 +420,16 @@ class BasePPRApproach(PersonalizationApproach):
         self.retrieval_times.append(retrieval_time)
 
         # Calculate token cost
-        token_cost = self.calculate_token_cost(len(query.query_text.split()), 0, len(results))
+        token_cost = self.calculate_token_cost(
+            len(query.query_text.split()), 0, len(results)
+        )
         self.token_costs.append(token_cost)
 
         return results
 
-    def calculate_token_cost(self, query_length: int, context_size: int, retrieved_items: int) -> int:
+    def calculate_token_cost(
+        self, query_length: int, context_size: int, retrieved_items: int
+    ) -> int:
         """Base PPR has minimal token cost."""
         return query_length + retrieved_items * 2  # Query + item representations
 
@@ -443,7 +449,9 @@ class AlphaRescoredPPRApproach(PersonalizationApproach):
 
         # Step 1: Get base PPR results
         base_ppr_approach = BasePPRApproach()
-        base_results = await base_ppr_approach.retrieve(query, context, top_k * 2)  # Get more for rescoring
+        base_results = await base_ppr_approach.retrieve(
+            query, context, top_k * 2
+        )  # Get more for rescoring
 
         # Step 2: Apply α rescoring based on user preferences
         rescored_items = []
@@ -452,7 +460,9 @@ class AlphaRescoredPPRApproach(PersonalizationApproach):
             alpha_factor = self._calculate_alpha_factor(item_id, context)
 
             # Combine base PPR score with α rescoring
-            final_score = base_score * (1 - self.alpha_weight) + alpha_factor * self.alpha_weight
+            final_score = (
+                base_score * (1 - self.alpha_weight) + alpha_factor * self.alpha_weight
+            )
             rescored_items.append((item_id, final_score))
 
         # Sort by final score and take top-k
@@ -464,12 +474,16 @@ class AlphaRescoredPPRApproach(PersonalizationApproach):
         self.retrieval_times.append(retrieval_time)
 
         # Calculate token cost (higher due to α rescoring)
-        token_cost = self.calculate_token_cost(len(query.query_text.split()), len(context.preferences), len(results))
+        token_cost = self.calculate_token_cost(
+            len(query.query_text.split()), len(context.preferences), len(results)
+        )
         self.token_costs.append(token_cost)
 
         return results
 
-    def _calculate_alpha_factor(self, item_id: str, context: PersonalizationContext) -> float:
+    def _calculate_alpha_factor(
+        self, item_id: str, context: PersonalizationContext
+    ) -> float:
         """Calculate α rescoring factor based on user preferences."""
         # Mock α calculation based on user preferences
         alpha_score = 0.5
@@ -498,10 +512,14 @@ class AlphaRescoredPPRApproach(PersonalizationApproach):
 
         return min(max(alpha_score, 0.0), 1.0)
 
-    def calculate_token_cost(self, query_length: int, context_size: int, retrieved_items: int) -> int:
+    def calculate_token_cost(
+        self, query_length: int, context_size: int, retrieved_items: int
+    ) -> int:
         """α rescoring adds computational overhead."""
         base_cost = query_length + retrieved_items * 2
-        alpha_cost = context_size * 5 + retrieved_items * 3  # Preference processing + rescoring
+        alpha_cost = (
+            context_size * 5 + retrieved_items * 3
+        )  # Preference processing + rescoring
         return base_cost + alpha_cost
 
 
@@ -530,7 +548,9 @@ class ICLEnhancedApproach(PersonalizationApproach):
             icl_factor = self._calculate_icl_factor(query, item_id, context)
 
             # Combine α score with ICL enhancement
-            final_score = alpha_score * (1 - self.icl_weight) + icl_factor * self.icl_weight
+            final_score = (
+                alpha_score * (1 - self.icl_weight) + icl_factor * self.icl_weight
+            )
             icl_enhanced_items.append((item_id, final_score))
 
         # Sort by final score and take top-k
@@ -542,12 +562,16 @@ class ICLEnhancedApproach(PersonalizationApproach):
         self.retrieval_times.append(retrieval_time)
 
         # Calculate token cost (highest due to ICL processing)
-        token_cost = self.calculate_token_cost(len(query.query_text.split()), len(context.preferences), len(results))
+        token_cost = self.calculate_token_cost(
+            len(query.query_text.split()), len(context.preferences), len(results)
+        )
         self.token_costs.append(token_cost)
 
         return results
 
-    def _calculate_icl_factor(self, query: UserQuery, item_id: str, context: PersonalizationContext) -> float:
+    def _calculate_icl_factor(
+        self, query: UserQuery, item_id: str, context: PersonalizationContext
+    ) -> float:
         """Calculate ICL enhancement factor using single triple context."""
         # Mock ICL calculation - in reality would use language models
         icl_score = 0.5
@@ -590,7 +614,9 @@ class ICLEnhancedApproach(PersonalizationApproach):
 
         return min(max(icl_score, 0.0), 1.0)
 
-    def calculate_token_cost(self, query_length: int, context_size: int, retrieved_items: int) -> int:
+    def calculate_token_cost(
+        self, query_length: int, context_size: int, retrieved_items: int
+    ) -> int:
         """ICL adds significant token cost for context processing."""
         base_cost = query_length + retrieved_items * 2
         alpha_cost = context_size * 5 + retrieved_items * 3
@@ -631,7 +657,9 @@ class PersonalizationBenchmark:
         for approach in self.approaches:
             logger.info(f"Evaluating {approach.name}...")
 
-            approach_results = await self._evaluate_approach(approach, all_queries, contexts)
+            approach_results = await self._evaluate_approach(
+                approach, all_queries, contexts
+            )
             results[approach.name] = approach_results
 
             logger.info(
@@ -675,18 +703,24 @@ class PersonalizationBenchmark:
             all_recall_scores.append(recall_score)
 
         # Calculate token cost delta (compared to base approach)
-        avg_token_cost = statistics.mean(approach.token_costs) if approach.token_costs else 0
+        avg_token_cost = (
+            statistics.mean(approach.token_costs) if approach.token_costs else 0
+        )
         base_token_cost = 50  # Baseline token cost
         token_cost_delta = (avg_token_cost - base_token_cost) / base_token_cost
 
         # Calculate average retrieval time
-        avg_retrieval_time = statistics.mean(approach.retrieval_times) if approach.retrieval_times else 0
+        avg_retrieval_time = (
+            statistics.mean(approach.retrieval_times) if approach.retrieval_times else 0
+        )
 
         return PersonalizationMetrics(
             approach_name=approach.name,
             map_score=statistics.mean(all_map_scores) if all_map_scores else 0.0,
             ndcg_at_10=statistics.mean(all_ndcg_scores) if all_ndcg_scores else 0.0,
-            recall_at_20=statistics.mean(all_recall_scores) if all_recall_scores else 0.0,
+            recall_at_20=(
+                statistics.mean(all_recall_scores) if all_recall_scores else 0.0
+            ),
             token_cost_delta=token_cost_delta,
             total_queries=len(queries),
             avg_retrieval_time=avg_retrieval_time,
@@ -694,7 +728,9 @@ class PersonalizationBenchmark:
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
-    def _calculate_map(self, query: UserQuery, retrieved_items: list[tuple[str, float]]) -> float:
+    def _calculate_map(
+        self, query: UserQuery, retrieved_items: list[tuple[str, float]]
+    ) -> float:
         """Calculate Mean Average Precision."""
         relevant_items = set(query.relevant_items)
 
@@ -715,7 +751,9 @@ class PersonalizationBenchmark:
 
         return precision_sum / len(relevant_items)
 
-    def _calculate_ndcg_at_k(self, query: UserQuery, retrieved_items: list[tuple[str, float]], k: int) -> float:
+    def _calculate_ndcg_at_k(
+        self, query: UserQuery, retrieved_items: list[tuple[str, float]], k: int
+    ) -> float:
         """Calculate Normalized Discounted Cumulative Gain at k."""
 
         def dcg_at_k(relevance_scores: list[float], k: int) -> float:
@@ -743,7 +781,9 @@ class PersonalizationBenchmark:
 
         return dcg / idcg
 
-    def _calculate_recall_at_k(self, query: UserQuery, retrieved_items: list[tuple[str, float]], k: int) -> float:
+    def _calculate_recall_at_k(
+        self, query: UserQuery, retrieved_items: list[tuple[str, float]], k: int
+    ) -> float:
         """Calculate Recall at k."""
         relevant_items = set(query.relevant_items)
         retrieved_relevant = set()
@@ -757,7 +797,9 @@ class PersonalizationBenchmark:
 
         return len(retrieved_relevant) / len(relevant_items)
 
-    async def _save_benchmark_results(self, results: dict[str, PersonalizationMetrics]) -> None:
+    async def _save_benchmark_results(
+        self, results: dict[str, PersonalizationMetrics]
+    ) -> None:
         """Save benchmark results to files."""
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
@@ -788,7 +830,9 @@ class PersonalizationBenchmark:
         logger.info(f"Results saved to {results_file}")
         logger.info(f"Metrics saved to {metrics_file}")
 
-    def _generate_comparison_analysis(self, results: dict[str, PersonalizationMetrics]) -> dict[str, Any]:
+    def _generate_comparison_analysis(
+        self, results: dict[str, PersonalizationMetrics]
+    ) -> dict[str, Any]:
         """Generate comparative analysis of approaches."""
         base_result = results.get("Base PPR")
         if not base_result:
@@ -807,9 +851,15 @@ class PersonalizationBenchmark:
                 continue
 
             # Calculate improvements over base
-            map_improvement = (metrics.map_score - base_result.map_score) / base_result.map_score
-            ndcg_improvement = (metrics.ndcg_at_10 - base_result.ndcg_at_10) / base_result.ndcg_at_10
-            recall_improvement = (metrics.recall_at_20 - base_result.recall_at_20) / base_result.recall_at_20
+            map_improvement = (
+                metrics.map_score - base_result.map_score
+            ) / base_result.map_score
+            ndcg_improvement = (
+                metrics.ndcg_at_10 - base_result.ndcg_at_10
+            ) / base_result.ndcg_at_10
+            recall_improvement = (
+                metrics.recall_at_20 - base_result.recall_at_20
+            ) / base_result.recall_at_20
 
             analysis["map_improvements"][name] = map_improvement
             analysis["ndcg_improvements"][name] = ndcg_improvement
@@ -818,7 +868,9 @@ class PersonalizationBenchmark:
 
             # Generate recommendations
             if map_improvement > 0.1 and metrics.token_cost_delta < 2.0:
-                analysis["recommendations"].append(f"{name}: Good balance of performance and cost")
+                analysis["recommendations"].append(
+                    f"{name}: Good balance of performance and cost"
+                )
             elif map_improvement > 0.2:
                 analysis["recommendations"].append(
                     f"{name}: High performance improvement, consider for high-value queries"
@@ -877,9 +929,15 @@ async def main() -> None:
                 if name == "Base PPR":
                     continue
 
-                map_imp = (metrics.map_score - base_result.map_score) / base_result.map_score
-                ndcg_imp = (metrics.ndcg_at_10 - base_result.ndcg_at_10) / base_result.ndcg_at_10
-                recall_imp = (metrics.recall_at_20 - base_result.recall_at_20) / base_result.recall_at_20
+                map_imp = (
+                    metrics.map_score - base_result.map_score
+                ) / base_result.map_score
+                ndcg_imp = (
+                    metrics.ndcg_at_10 - base_result.ndcg_at_10
+                ) / base_result.ndcg_at_10
+                recall_imp = (
+                    metrics.recall_at_20 - base_result.recall_at_20
+                ) / base_result.recall_at_20
 
                 print(f"\n{name}:")
                 print(f"  MAP Improvement:    {map_imp:+.1%}")

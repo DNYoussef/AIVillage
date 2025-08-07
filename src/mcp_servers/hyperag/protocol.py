@@ -10,7 +10,13 @@ import time
 from typing import Any
 import uuid
 
-from .auth import AuthContext, HypeRAGPermissions, PermissionManager, audit_operation, require_permission
+from .auth import (
+    AuthContext,
+    HypeRAGPermissions,
+    PermissionManager,
+    audit_operation,
+    require_permission,
+)
 from .models import ModelRegistry, Node
 
 logger = logging.getLogger(__name__)
@@ -19,7 +25,9 @@ logger = logging.getLogger(__name__)
 class MCPError(Exception):
     """Base class for MCP protocol errors."""
 
-    def __init__(self, code: str, message: str, data: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, code: str, message: str, data: dict[str, Any] | None = None
+    ) -> None:
         self.code = code
         self.message = message
         self.data = data or {}
@@ -64,7 +72,9 @@ class InternalError(MCPError):
 class MCPRequest:
     """MCP request wrapper."""
 
-    def __init__(self, method: str, params: dict[str, Any], request_id: str | None = None) -> None:
+    def __init__(
+        self, method: str, params: dict[str, Any], request_id: str | None = None
+    ) -> None:
         self.method = method
         self.params = params
         self.request_id = request_id or str(uuid.uuid4())
@@ -74,7 +84,12 @@ class MCPRequest:
 class MCPResponse:
     """MCP response wrapper."""
 
-    def __init__(self, result: Any = None, error: MCPError | None = None, request_id: str | None = None) -> None:
+    def __init__(
+        self,
+        result: Any = None,
+        error: MCPError | None = None,
+        request_id: str | None = None,
+    ) -> None:
         self.result = result
         self.error = error
         self.request_id = request_id
@@ -137,7 +152,9 @@ class MCPProtocolHandler:
             "hyperag/model/stats": self.handle_model_stats,
         }
 
-    async def handle_request(self, request: MCPRequest, context: AuthContext | None = None) -> MCPResponse:
+    async def handle_request(
+        self, request: MCPRequest, context: AuthContext | None = None
+    ) -> MCPResponse:
         """Handle an MCP request."""
         try:
             # Validate request
@@ -166,7 +183,9 @@ class MCPProtocolHandler:
             processing_time = time.time() - start_time
             if isinstance(result, dict):
                 result["metadata"] = result.get("metadata", {})
-                result["metadata"]["processing_time_ms"] = round(processing_time * 1000, 2)
+                result["metadata"]["processing_time_ms"] = round(
+                    processing_time * 1000, 2
+                )
 
             return MCPResponse(result=result, request_id=request.request_id)
 
@@ -207,14 +226,18 @@ class MCPProtocolHandler:
         if plan_hints:
             plan_context.update(plan_hints)
 
-        plan = await self.model_registry.process_with_model(context.agent_id, agent_type, "plan", query, plan_context)
+        plan = await self.model_registry.process_with_model(
+            context.agent_id, agent_type, "plan", query, plan_context
+        )
         if not self.storage_backend:
             msg = "Storage backend not configured"
             raise InternalError(msg)
 
         # Retrieve relevant knowledge items
         retrieval_limit = getattr(plan, "max_depth", 10)
-        raw_results = await self.storage_backend.search_knowledge(query, limit=retrieval_limit)
+        raw_results = await self.storage_backend.search_knowledge(
+            query, limit=retrieval_limit
+        )
 
         retrieved_nodes = [
             Node(
@@ -244,7 +267,9 @@ class MCPProtocolHandler:
             "result": {
                 "answer": reasoning_result.answer,
                 "confidence": reasoning_result.confidence,
-                "reasoning_path": [asdict(step) for step in reasoning_result.reasoning_steps],
+                "reasoning_path": [
+                    asdict(step) for step in reasoning_result.reasoning_steps
+                ],
                 "sources": [asdict(node) for node in reasoning_result.sources],
             },
             "guardian_decision": {
@@ -347,7 +372,9 @@ class MCPProtocolHandler:
             msg = "Storage backend not configured"
             raise InternalError(msg)
 
-        await self.storage_backend.add_knowledge(node_id, content, content_type, metadata)
+        await self.storage_backend.add_knowledge(
+            node_id, content, content_type, metadata
+        )
 
         return {
             "node_id": node_id,
@@ -393,7 +420,9 @@ class MCPProtocolHandler:
             msg = "Storage backend not configured"
             raise InternalError(msg)
 
-        await self.storage_backend.update_knowledge(node_id, content=content, metadata=metadata)
+        await self.storage_backend.update_knowledge(
+            node_id, content=content, metadata=metadata
+        )
 
         return {
             "node_id": node_id,
@@ -403,7 +432,9 @@ class MCPProtocolHandler:
 
     @require_permission(HypeRAGPermissions.WRITE)
     @audit_operation("delete_knowledge")
-    async def handle_delete_knowledge(self, context: AuthContext, node_id: str, **kwargs) -> dict[str, Any]:
+    async def handle_delete_knowledge(
+        self, context: AuthContext, node_id: str, **kwargs
+    ) -> dict[str, Any]:
         """Handle delete knowledge request."""
         if not self.storage_backend:
             msg = "Storage backend not configured"
@@ -448,7 +479,9 @@ class MCPProtocolHandler:
 
     @require_permission(HypeRAGPermissions.ADAPTER_USE)
     @audit_operation("list_adapters")
-    async def handle_list_adapters(self, context: AuthContext, domain: str | None = None, **kwargs) -> dict[str, Any]:
+    async def handle_list_adapters(
+        self, context: AuthContext, domain: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """Handle list adapters request."""
         # Mock adapter list
         adapters = [
@@ -473,7 +506,9 @@ class MCPProtocolHandler:
 
     @require_permission(HypeRAGPermissions.ADAPTER_USE)
     @audit_operation("activate_adapter")
-    async def handle_activate_adapter(self, context: AuthContext, adapter_id: str, **kwargs) -> dict[str, Any]:
+    async def handle_activate_adapter(
+        self, context: AuthContext, adapter_id: str, **kwargs
+    ) -> dict[str, Any]:
         """Handle activate adapter request."""
         return {
             "adapter_id": adapter_id,
@@ -483,7 +518,9 @@ class MCPProtocolHandler:
 
     @require_permission(HypeRAGPermissions.ADAPTER_USE)
     @audit_operation("deactivate_adapter")
-    async def handle_deactivate_adapter(self, context: AuthContext, adapter_id: str, **kwargs) -> dict[str, Any]:
+    async def handle_deactivate_adapter(
+        self, context: AuthContext, adapter_id: str, **kwargs
+    ) -> dict[str, Any]:
         """Handle deactivate adapter request."""
         return {
             "adapter_id": adapter_id,
@@ -542,7 +579,9 @@ class MCPProtocolHandler:
             "components": {
                 "permission_manager": "healthy",
                 "model_registry": "healthy",
-                "storage_backend": "healthy" if self.storage_backend else "not_configured",
+                "storage_backend": (
+                    "healthy" if self.storage_backend else "not_configured"
+                ),
             },
         }
 
@@ -556,7 +595,9 @@ class MCPProtocolHandler:
             "timestamp": datetime.now().isoformat(),
             "models": model_stats,
             "active_sessions": len(await self.permission_manager.get_active_sessions()),
-            "system_info": {"uptime_seconds": time.time() - getattr(self, "start_time", time.time())},
+            "system_info": {
+                "uptime_seconds": time.time() - getattr(self, "start_time", time.time())
+            },
         }
 
     @require_permission(HypeRAGPermissions.MONITOR)
@@ -597,7 +638,9 @@ class MCPProtocolHandler:
 
     @require_permission(HypeRAGPermissions.MONITOR)
     @audit_operation("model_stats")
-    async def handle_model_stats(self, context: AuthContext, agent_id: str | None = None, **kwargs) -> dict[str, Any]:
+    async def handle_model_stats(
+        self, context: AuthContext, agent_id: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """Handle model statistics request."""
         stats = self.model_registry.get_model_stats()
 

@@ -9,7 +9,9 @@ except Exception:  # pragma: no cover - handled by fallback logic
     nx = None  # type: ignore
 
 try:  # embedding dependencies are optional
-    from AIVillage.src.production.rag.rag_system.utils.embedding import BERTEmbeddingModel
+    from AIVillage.src.production.rag.rag_system.utils.embedding import (
+        BERTEmbeddingModel,
+    )
 except Exception:  # pragma: no cover - missing torch/transformers
     BERTEmbeddingModel = None  # type: ignore
 
@@ -18,7 +20,9 @@ from AIVillage.src.production.rag.rag_system.core.structures import RetrievalRes
 
 
 class GraphStore:
-    def __init__(self, config: UnifiedConfig | None = None, embedding_model: Any | None = None) -> None:
+    def __init__(
+        self, config: UnifiedConfig | None = None, embedding_model: Any | None = None
+    ) -> None:
         """Create a GraphStore.
 
         Similar to :class:`VectorStore`, older code instantiated ``GraphStore``
@@ -88,7 +92,9 @@ class GraphStore:
                 if hasattr(self.graph, "add_edge"):
                     self.graph.add_edge(doc["id"], other["id"], weight=sim)
 
-    async def retrieve(self, query: str, k: int, timestamp: datetime | None = None) -> list[RetrievalResult]:
+    async def retrieve(
+        self, query: str, k: int, timestamp: datetime | None = None
+    ) -> list[RetrievalResult]:
         """Return nodes that match ``query``.
 
         When ``self.driver`` is provided it should be an instance of
@@ -168,11 +174,15 @@ class GraphStore:
             for record in result
         ]
 
-    def update_causal_strength(self, source: str, target: str, observed_probability: float) -> None:
+    def update_causal_strength(
+        self, source: str, target: str, observed_probability: float
+    ) -> None:
         edge = self.causal_edges.get((source, target))
         if edge:
             learning_rate = 0.1
-            edge.strength = (1 - learning_rate) * edge.strength + learning_rate * observed_probability
+            edge.strength = (
+                1 - learning_rate
+            ) * edge.strength + learning_rate * observed_probability
 
     def close(self) -> None:
         if self.driver:
@@ -206,7 +216,9 @@ class GraphStore:
             "edges": list(snapshot.edges(data=True)),
         }
 
-    async def beam_search(self, query: str, beam_width: int, max_depth: int) -> list[tuple[list[str], float]]:
+    async def beam_search(
+        self, query: str, beam_width: int, max_depth: int
+    ) -> list[tuple[list[str], float]]:
         initial_entities = await self.get_initial_entities(query)
         beams = [[entity] for entity in initial_entities]
 

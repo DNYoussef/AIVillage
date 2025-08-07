@@ -124,7 +124,9 @@ class TestFrontierQuestionGenerator:
         # Check distribution across levels
         level_counts = {}
         for question in questions:
-            level_counts[question.difficulty] = level_counts.get(question.difficulty, 0) + 1
+            level_counts[question.difficulty] = (
+                level_counts.get(question.difficulty, 0) + 1
+            )
 
         assert len(level_counts) == test_config.curriculum_levels
 
@@ -198,7 +200,9 @@ class TestGeometricSelfAwareness:
         grokking_loss = [1.0] * 80 + [0.5] * 20  # Sudden drop
         grokking_accuracy = [0.5] * 80 + [0.8] * 20  # Sudden jump
 
-        result = geo_awareness.detect_grokking_signature(grokking_loss, grokking_accuracy)
+        result = geo_awareness.detect_grokking_signature(
+            grokking_loss, grokking_accuracy
+        )
         if result is not None:  # May not detect with simple pattern
             assert "grokking_detected" in result
             assert "loss_drop" in result
@@ -366,7 +370,9 @@ class TestMagiSpecializationPipeline:
             }
         }
 
-        results_file = Path(test_config.optimal_model_path) / "evolution_50gen_results.json"
+        results_file = (
+            Path(test_config.optimal_model_path) / "evolution_50gen_results.json"
+        )
         results_file.parent.mkdir(parents=True, exist_ok=True)
 
         with open(results_file, "w") as f:
@@ -385,7 +391,9 @@ class TestMagiSpecializationPipeline:
 
         from agent_forge.training.curriculum import Question
 
-        question = Question(text="What is 2 + 2?", answer="4", difficulty=1, domain="mathematics")
+        question = Question(
+            text="What is 2 + 2?", answer="4", difficulty=1, domain="mathematics"
+        )
 
         # Mock tokenizer behavior
         mock_tokenizer.return_tensors = "pt"
@@ -413,7 +421,9 @@ class TestMagiSpecializationPipeline:
         )
 
         # Test correct answer
-        good_answer = "The capital of France is Paris, which is located in the northern part."
+        good_answer = (
+            "The capital of France is Paris, which is located in the northern part."
+        )
         assert pipeline.evaluate_answer(question, good_answer) is True
 
         # Test incorrect answer
@@ -467,14 +477,22 @@ async def test_full_pipeline_smoke_test(test_config):
     # to ensure all components work together
 
     with (
-        patch("agent_forge.training.magi_specialization.AutoModelForCausalLM") as mock_model_class,
-        patch("agent_forge.training.magi_specialization.AutoTokenizer") as mock_tokenizer_class,
-        patch("agent_forge.training.magi_specialization.QuietSTaRBaker") as mock_quietstar_class,
+        patch(
+            "agent_forge.training.magi_specialization.AutoModelForCausalLM"
+        ) as mock_model_class,
+        patch(
+            "agent_forge.training.magi_specialization.AutoTokenizer"
+        ) as mock_tokenizer_class,
+        patch(
+            "agent_forge.training.magi_specialization.QuietSTaRBaker"
+        ) as mock_quietstar_class,
         patch("wandb.init") as mock_wandb,
     ):
         # Setup mocks
         mock_model = Mock()
-        mock_model.named_parameters.return_value = [("layer1.weight", torch.randn(10, 5, requires_grad=True))]
+        mock_model.named_parameters.return_value = [
+            ("layer1.weight", torch.randn(10, 5, requires_grad=True))
+        ]
         mock_model.parameters.return_value = [torch.randn(10, 5, requires_grad=True)]
         mock_model.save_pretrained = Mock()
         mock_model.generate.return_value = torch.tensor([[1, 2, 3, 4, 5]])
@@ -513,7 +531,9 @@ async def test_full_pipeline_smoke_test(test_config):
             }
         }
 
-        results_file = Path(test_config.optimal_model_path) / "evolution_50gen_results.json"
+        results_file = (
+            Path(test_config.optimal_model_path) / "evolution_50gen_results.json"
+        )
         results_file.parent.mkdir(parents=True, exist_ok=True)
 
         with open(results_file, "w") as f:

@@ -1,6 +1,7 @@
 """Namespace package redirecting to src modules.
 This allows imports using the `AIVillage` prefix without requiring an install.
 """
+
 from pathlib import Path
 import sys
 
@@ -13,6 +14,7 @@ __path__ = [str(_src)]
 
 # Support legacy imports like `AIVillage.src.*`
 import types
+
 _legacy = types.ModuleType("AIVillage.src")
 _legacy.__path__ = [str(_src)]
 sys.modules[__name__ + ".src"] = _legacy

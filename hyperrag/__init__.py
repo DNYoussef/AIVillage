@@ -1,5 +1,5 @@
 """HyperRAG caching package."""
 
-from .hippo_cache import HippoCache, CacheEntry
+from .hippo_cache import CacheEntry, HippoCache
 
-__all__ = ["HippoCache", "CacheEntry"]
+__all__ = ["CacheEntry", "HippoCache"]

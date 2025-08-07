@@ -97,7 +97,9 @@ class ExperimentalValidator:
             issues.append(f"High nesting complexity: {max_nesting} levels")
 
         # Determine stability
-        is_stable = len(issues) <= 2 and not any("EXPERIMENTAL" in str(issue) for issue in issues)
+        is_stable = len(issues) <= 2 and not any(
+            "EXPERIMENTAL" in str(issue) for issue in issues
+        )
 
         return {
             "stable": is_stable,
@@ -150,7 +152,11 @@ class ExperimentalValidator:
         return {
             "stable": is_directory_stable,
             "files": file_results,
-            "summary": {"total_files": total_files, "stable_files": stable_files, "stability_ratio": stability_ratio},
+            "summary": {
+                "total_files": total_files,
+                "stable_files": stable_files,
+                "stability_ratio": stability_ratio,
+            },
         }
 
     def validate_component_for_production(self, component_path: str) -> bool:
@@ -168,7 +174,9 @@ class ExperimentalValidator:
             logger.info(f"✓ Component '{component_path}' is stable for production")
             return True
         logger.warning(f"✗ Component '{component_path}' is not stable for production")
-        logger.warning(f"  Stability ratio: {validation_result['summary']['stability_ratio']:.2%}")
+        logger.warning(
+            f"  Stability ratio: {validation_result['summary']['stability_ratio']:.2%}"
+        )
         return False
 
     def get_production_ready_components(self) -> tuple[list[str], list[str]]:
@@ -226,29 +234,47 @@ class ExperimentalValidator:
 
                 # Generate specific recommendations based on common issues
                 if any("docstring" in issue for issue in issues):
-                    recommendations.append(f"{component}: Add comprehensive docstrings to public APIs")
+                    recommendations.append(
+                        f"{component}: Add comprehensive docstrings to public APIs"
+                    )
 
                 if any("type hint" in issue for issue in issues):
-                    recommendations.append(f"{component}: Add type hints to function signatures")
+                    recommendations.append(
+                        f"{component}: Add type hints to function signatures"
+                    )
 
                 if any("EXPERIMENTAL" in issue for issue in issues):
-                    recommendations.append(f"{component}: Remove experimental markers and implement TODOs")
+                    recommendations.append(
+                        f"{component}: Remove experimental markers and implement TODOs"
+                    )
 
                 if any("complexity" in issue for issue in issues):
-                    recommendations.append(f"{component}: Refactor complex functions to reduce nesting")
+                    recommendations.append(
+                        f"{component}: Refactor complex functions to reduce nesting"
+                    )
 
                 # Add graduation pipeline recommendations
                 recommendations.append(f"{component}: Implement performance benchmarks")
-                recommendations.append(f"{component}: Add integration tests with existing production components")
-                recommendations.append(f"{component}: Ensure API stability for minimum 4 weeks")
-                recommendations.append(f"{component}: Add operational monitoring and alerting")
+                recommendations.append(
+                    f"{component}: Add integration tests with existing production components"
+                )
+                recommendations.append(
+                    f"{component}: Ensure API stability for minimum 4 weeks"
+                )
+                recommendations.append(
+                    f"{component}: Add operational monitoring and alerting"
+                )
 
         return recommendations
 
     def get_graduation_readiness(self, component_path: str) -> dict:
         """Assess graduation readiness with detailed scoring."""
         if not self.validate_component_for_production(component_path):
-            return {"ready": False, "score": 0, "blockers": ["Basic stability requirements not met"]}
+            return {
+                "ready": False,
+                "score": 0,
+                "blockers": ["Basic stability requirements not met"],
+            }
 
         # Advanced readiness checks
         readiness_score = 0
@@ -256,14 +282,18 @@ class ExperimentalValidator:
         blockers = []
 
         # Check for performance benchmarks (20 points)
-        benchmark_files = list((self.base_path / component_path).rglob("*benchmark*.py"))
+        benchmark_files = list(
+            (self.base_path / component_path).rglob("*benchmark*.py")
+        )
         if benchmark_files:
             readiness_score += 20
         else:
             blockers.append("Missing performance benchmarks")
 
         # Check for integration tests (25 points)
-        integration_test_files = list((self.base_path / component_path).rglob("*integration*test*.py"))
+        integration_test_files = list(
+            (self.base_path / component_path).rglob("*integration*test*.py")
+        )
         if integration_test_files:
             readiness_score += 25
         else:
@@ -306,8 +336,13 @@ class ExperimentalValidator:
                     content = py_file.read_text(encoding="utf-8")
 
                     # Check for experimental imports
-                    if "from experimental" in content or "import experimental" in content:
-                        leakage_found.append(f"{py_file}: Contains experimental imports")
+                    if (
+                        "from experimental" in content
+                        or "import experimental" in content
+                    ):
+                        leakage_found.append(
+                            f"{py_file}: Contains experimental imports"
+                        )
 
                 except Exception as e:
                     logger.warning(f"Could not read {py_file}: {e}")
@@ -335,18 +370,26 @@ if __name__ == "__main__":
 
     # Check import leakage
     leakage_check = validator.check_import_leakage()
-    print(f"\nImport Leakage Check: {'CLEAN' if leakage_check['clean'] else 'VIOLATIONS FOUND'}")
+    print(
+        f"\nImport Leakage Check: {'CLEAN' if leakage_check['clean'] else 'VIOLATIONS FOUND'}"
+    )
     if not leakage_check["clean"]:
         for violation in leakage_check["violations"]:
             print(f"  - {violation}")
 
     # Show graduation readiness for experimental components
     print("\n=== Graduation Readiness Assessment ===")
-    experimental_components = ["experimental/agents", "experimental/federated", "experimental/mesh"]
+    experimental_components = [
+        "experimental/agents",
+        "experimental/federated",
+        "experimental/mesh",
+    ]
     for component in experimental_components:
         readiness = validator.get_graduation_readiness(component)
         status = "READY" if readiness["ready"] else "NOT READY"
-        print(f"{component}: {status} (Score: {readiness['score']}/{readiness['max_score']})")
+        print(
+            f"{component}: {status} (Score: {readiness['score']}/{readiness['max_score']})"
+        )
         if readiness["blockers"]:
             for blocker in readiness["blockers"]:
                 print(f"  - {blocker}")

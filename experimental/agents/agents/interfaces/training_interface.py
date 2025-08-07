@@ -367,7 +367,9 @@ class TrainingInterface(ABC):
 
                 # Checkpointing
                 if epoch % self.config.save_frequency == 0:
-                    checkpoint_path = f"{self.config.output_path}/checkpoint_epoch_{epoch}.pt"
+                    checkpoint_path = (
+                        f"{self.config.output_path}/checkpoint_epoch_{epoch}.pt"
+                    )
                     await self.save_checkpoint(checkpoint_path)
 
                 # Early stopping
@@ -494,7 +496,9 @@ class TrainingInterface(ABC):
 # Utility functions
 
 
-def create_training_config(model_id: str, dataset_path: str, output_path: str, **config_kwargs) -> TrainingConfig:
+def create_training_config(
+    model_id: str, dataset_path: str, output_path: str, **config_kwargs
+) -> TrainingConfig:
     """Create training configuration with auto-generated ID.
 
     Args:
@@ -517,7 +521,9 @@ def create_training_config(model_id: str, dataset_path: str, output_path: str, *
     )
 
 
-def create_model_metadata(name: str, model_type: str, architecture: str, **metadata_kwargs) -> ModelMetadata:
+def create_model_metadata(
+    name: str, model_type: str, architecture: str, **metadata_kwargs
+) -> ModelMetadata:
     """Create model metadata with auto-generated ID.
 
     Args:

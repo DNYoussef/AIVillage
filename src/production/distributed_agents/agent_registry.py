@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-
 # Known agents in the AIVillage ecosystem. The registry recognises
 # all 18 specialised agents including those generated at runtime.
 ALL_AGENT_TYPES = [
@@ -43,5 +42,6 @@ class DistributedAgentRegistry:
     def __init__(self) -> None:
         # Pre-populate registry with all known agent types
         self.registry: dict[Any, AgentLocation] = {
-            name: AgentLocation(agent_type=name, device_id="") for name in ALL_AGENT_TYPES
+            name: AgentLocation(agent_type=name, device_id="")
+            for name in ALL_AGENT_TYPES
         }

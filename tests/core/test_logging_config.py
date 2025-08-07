@@ -162,7 +162,9 @@ class TestEdgeCases:
         assert isinstance(logger, AIVillageLoggerAdapter)
         assert logger.name == "AIVillage.test-component_2.0"
 
-    @patch("core.logging_config.Path.mkdir", side_effect=PermissionError("No permission"))
+    @patch(
+        "core.logging_config.Path.mkdir", side_effect=PermissionError("No permission")
+    )
     def test_setup_handles_permission_error(self, mock_mkdir):
         """Test that setup handles permission errors gracefully."""
         # Should handle permission error and fall back to console logging only

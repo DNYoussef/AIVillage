@@ -12,7 +12,9 @@ import sys
 import time
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -24,11 +26,15 @@ class AIVillageDeploymentOrchestrator:
         self.helm_chart_path = Path(__file__).parent.parent / "helm" / "aivillage"
         self.k8s_manifests_path = Path(__file__).parent.parent / "k8s"
 
-    def run_command(self, cmd: list[str], timeout: int = 300) -> subprocess.CompletedProcess:
+    def run_command(
+        self, cmd: list[str], timeout: int = 300
+    ) -> subprocess.CompletedProcess:
         """Run a command with error handling."""
         logger.info(f"Running: {' '.join(cmd)}")
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=True)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=timeout, check=True
+            )
             if result.stdout:
                 logger.debug(f"stdout: {result.stdout}")
             return result
@@ -51,7 +57,11 @@ class AIVillageDeploymentOrchestrator:
             try:
                 self.run_command([tool, "version"], timeout=30)
                 logger.info(f"✅ {tool} is available")
-            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+            except (
+                subprocess.CalledProcessError,
+                subprocess.TimeoutExpired,
+                FileNotFoundError,
+            ):
                 missing_tools.append(tool)
                 logger.error(f"❌ {tool} is not available")
 
@@ -94,13 +104,27 @@ class AIVillageDeploymentOrchestrator:
         """Deploy database services."""
         logger.info("🗄️ Deploying database services...")
 
-        database_manifests = ["postgres.yaml", "redis.yaml", "neo4j.yaml", "qdrant.yaml"]
+        database_manifests = [
+            "postgres.yaml",
+            "redis.yaml",
+            "neo4j.yaml",
+            "qdrant.yaml",
+        ]
 
         try:
             for manifest in database_manifests:
                 manifest_file = self.k8s_manifests_path / manifest
                 if manifest_file.exists():
-                    self.run_command(["kubectl", "apply", "-f", str(manifest_file), "-n", self.namespace])
+                    self.run_command(
+                        [
+                            "kubectl",
+                            "apply",
+                            "-f",
+                            str(manifest_file),
+                            "-n",
+                            self.namespace,
+                        ]
+                    )
                     logger.info(f"✅ Applied {manifest}")
                 else:
                     logger.warning(f"⚠️ Manifest {manifest} not found")
@@ -223,7 +247,15 @@ class AIVillageDeploymentOrchestrator:
         try:
             # Check pod status
             result = self.run_command(
-                ["kubectl", "get", "pods", "-n", self.namespace, "-o", "jsonpath={.items[*].status.phase}"]
+                [
+                    "kubectl",
+                    "get",
+                    "pods",
+                    "-n",
+                    self.namespace,
+                    "-o",
+                    "jsonpath={.items[*].status.phase}",
+                ]
             )
 
             phases = result.stdout.strip().split()
@@ -233,14 +265,22 @@ class AIVillageDeploymentOrchestrator:
             if running_pods == total_pods and total_pods > 0:
                 logger.info(f"✅ All pods are running ({running_pods}/{total_pods})")
             else:
-                logger.error(f"❌ Not all pods are running ({running_pods}/{total_pods})")
+                logger.error(
+                    f"❌ Not all pods are running ({running_pods}/{total_pods})"
+                )
                 return False
 
             # Run basic health checks
             health_script = Path(__file__).parent / "health_check.py"
             if health_script.exists():
                 result = subprocess.run(
-                    ["python", str(health_script), "--environment", self.environment.lower(), "--quiet"],
+                    [
+                        "python",
+                        str(health_script),
+                        "--environment",
+                        self.environment.lower(),
+                        "--quiet",
+                    ],
                     capture_output=True,
                     text=True,
                     check=False,
@@ -280,7 +320,13 @@ class AIVillageDeploymentOrchestrator:
         logger.info("🔄 Rolling back deployment...")
 
         try:
-            helm_cmd = ["helm", "rollback", f"aivillage-{self.environment.lower()}", "--namespace", self.namespace]
+            helm_cmd = [
+                "helm",
+                "rollback",
+                f"aivillage-{self.environment.lower()}",
+                "--namespace",
+                self.namespace,
+            ]
 
             if revision:
                 helm_cmd.append(str(revision))
@@ -326,13 +372,23 @@ class AIVillageDeploymentOrchestrator:
         try:
             # Get Helm release info
             result = self.run_command(
-                ["helm", "status", f"aivillage-{self.environment.lower()}", "--namespace", self.namespace, "-o", "json"]
+                [
+                    "helm",
+                    "status",
+                    f"aivillage-{self.environment.lower()}",
+                    "--namespace",
+                    self.namespace,
+                    "-o",
+                    "json",
+                ]
             )
 
             helm_status = json.loads(result.stdout)
 
             # Get pod status
-            result = self.run_command(["kubectl", "get", "pods", "-n", self.namespace, "-o", "json"])
+            result = self.run_command(
+                ["kubectl", "get", "pods", "-n", self.namespace, "-o", "json"]
+            )
 
             pods_data = json.loads(result.stdout)
 
@@ -341,8 +397,13 @@ class AIVillageDeploymentOrchestrator:
                 pod_name = pod["metadata"]["name"]
                 pod_status[pod_name] = {
                     "phase": pod["status"]["phase"],
-                    "ready": all(cs["ready"] for cs in pod["status"].get("containerStatuses", [])),
-                    "restarts": sum(cs.get("restartCount", 0) for cs in pod["status"].get("containerStatuses", [])),
+                    "ready": all(
+                        cs["ready"] for cs in pod["status"].get("containerStatuses", [])
+                    ),
+                    "restarts": sum(
+                        cs.get("restartCount", 0)
+                        for cs in pod["status"].get("containerStatuses", [])
+                    ),
                 }
 
             return {
@@ -361,19 +422,33 @@ class AIVillageDeploymentOrchestrator:
 def main():
     parser = argparse.ArgumentParser(description="AIVillage Deployment Orchestrator")
     parser.add_argument(
-        "--environment", required=True, choices=["staging", "production"], help="Deployment environment"
+        "--environment",
+        required=True,
+        choices=["staging", "production"],
+        help="Deployment environment",
     )
-    parser.add_argument("--image-tag", default="latest", help="Docker image tag to deploy")
     parser.add_argument(
-        "--action", default="deploy", choices=["deploy", "rollback", "status"], help="Action to perform"
+        "--image-tag", default="latest", help="Docker image tag to deploy"
+    )
+    parser.add_argument(
+        "--action",
+        default="deploy",
+        choices=["deploy", "rollback", "status"],
+        help="Action to perform",
     )
     parser.add_argument("--rollback-revision", type=int, help="Revision to rollback to")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would be done without executing")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be done without executing",
+    )
 
     args = parser.parse_args()
 
     namespace = f"aivillage-{args.environment}"
-    orchestrator = AIVillageDeploymentOrchestrator(args.environment, namespace, args.image_tag)
+    orchestrator = AIVillageDeploymentOrchestrator(
+        args.environment, namespace, args.image_tag
+    )
 
     if args.dry_run:
         logger.info("🏃 Dry run mode - showing what would be done")

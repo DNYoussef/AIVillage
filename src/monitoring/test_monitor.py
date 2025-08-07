@@ -73,7 +73,9 @@ class MonitorStats:
         for module_stats in modules.values():
             total_module = module_stats["total"]
             passed_module = module_stats["passed"]
-            module_stats["success_rate"] = (passed_module / total_module * 100) if total_module > 0 else 0
+            module_stats["success_rate"] = (
+                (passed_module / total_module * 100) if total_module > 0 else 0
+            )
 
         return cls(
             timestamp=datetime.now(timezone.utc).isoformat(),
@@ -140,7 +142,9 @@ class HealthMonitor:
 
             self._save_history()
 
-            logger.info(f"Captured test results: {stats.success_rate:.1f}% success rate")
+            logger.info(
+                f"Captured test results: {stats.success_rate:.1f}% success rate"
+            )
 
             # Update dashboard and check alerts
             await self.update_dashboard()
@@ -216,7 +220,10 @@ class HealthMonitor:
         # Check for trend degradation
         if len(self.history) >= 3:
             recent_rates = [run.success_rate for run in self.history[-3:]]
-            if all(recent_rates[i] > recent_rates[i + 1] for i in range(len(recent_rates) - 1)):
+            if all(
+                recent_rates[i] > recent_rates[i + 1]
+                for i in range(len(recent_rates) - 1)
+            ):
                 issues.append(
                     {
                         "module": "Overall",
@@ -274,9 +281,7 @@ Trend: {trend_arrow} {trend_description}
         hot_issues = self.identify_hot_issues()
         if hot_issues:
             for issue in hot_issues:
-                dashboard_content += (
-                    f"- **{issue['module']}**: {issue['description']} ({issue['failure_rate']:.1f}% failure rate)\n"
-                )
+                dashboard_content += f"- **{issue['module']}**: {issue['description']} ({issue['failure_rate']:.1f}% failure rate)\n"
         else:
             dashboard_content += "✅ No major issues detected\n"
 
@@ -296,7 +301,11 @@ Trend: {trend_arrow} {trend_description}
 
         for module_name, module_stats in sorted_modules:
             success_rate_mod = module_stats.get("success_rate", 0)
-            status = "✅" if success_rate_mod >= 95 else "⚠️" if success_rate_mod >= 80 else "❌"
+            status = (
+                "✅"
+                if success_rate_mod >= 95
+                else "⚠️" if success_rate_mod >= 80 else "❌"
+            )
 
             dashboard_content += f"| {module_name} | {module_stats['total']} | {module_stats['passed']} | {module_stats['failed']} | {module_stats['skipped']} | {success_rate_mod:.1f}% | {status} |\n"
 
@@ -312,7 +321,9 @@ Trend: {trend_arrow} {trend_description}
 
         if len(self.history) >= 3:
             for _i, run in enumerate(self.history[-3:], 1):
-                time_str = datetime.fromisoformat(run.timestamp.replace("Z", "+00:00")).strftime("%m-%d %H:%M")
+                time_str = datetime.fromisoformat(
+                    run.timestamp.replace("Z", "+00:00")
+                ).strftime("%m-%d %H:%M")
                 dashboard_content += f"- {time_str}: {run.success_rate:.1f}% success rate ({run.total_tests} tests)\n"
 
         dashboard_content += """
@@ -323,7 +334,9 @@ Trend: {trend_arrow} {trend_description}
         alerts = await self._check_alert_conditions_internal()
         if alerts:
             for alert in alerts:
-                dashboard_content += f"> ⚠️ **{alert['severity']}**: {alert['message']}\n"
+                dashboard_content += (
+                    f"> ⚠️ **{alert['severity']}**: {alert['message']}\n"
+                )
         else:
             dashboard_content += "✅ No active alerts\n"
 
@@ -392,8 +405,12 @@ async def main() -> None:
     """Main CLI interface."""
     parser = argparse.ArgumentParser(description="Test Health Monitor")
     parser.add_argument("--capture", help="Capture results from pytest JSON report")
-    parser.add_argument("--update-dashboard", action="store_true", help="Update dashboard")
-    parser.add_argument("--check-thresholds", action="store_true", help="Check alert thresholds")
+    parser.add_argument(
+        "--update-dashboard", action="store_true", help="Update dashboard"
+    )
+    parser.add_argument(
+        "--check-thresholds", action="store_true", help="Check alert thresholds"
+    )
 
     args = parser.parse_args()
 
@@ -411,7 +428,9 @@ async def main() -> None:
         if test_results.exists():
             await monitor.capture_test_results(str(test_results))
         else:
-            logger.info("No test results found. Use --capture <report.json> to specify report file.")
+            logger.info(
+                "No test results found. Use --capture <report.json> to specify report file."
+            )
 
 
 if __name__ == "__main__":

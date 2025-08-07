@@ -104,7 +104,11 @@ class DeviceProfile:
             "storage": {
                 "available_gb": self.storage_available_gb,
                 "total_gb": self.storage_total_gb,
-                "usage_percent": ((self.storage_total_gb - self.storage_available_gb) / self.storage_total_gb) * 100,
+                "usage_percent": (
+                    (self.storage_total_gb - self.storage_available_gb)
+                    / self.storage_total_gb
+                )
+                * 100,
             },
             "gpu": {"available": self.gpu_available, "memory_mb": self.gpu_memory_mb},
             "system": {
@@ -233,7 +237,12 @@ class ResourceSnapshot:
             power_score = 1.0 if self.power_plugged else self.battery_percent / 100
 
         # Weighted average
-        return memory_score * 0.4 + cpu_score * 0.3 + storage_score * 0.2 + power_score * 0.1
+        return (
+            memory_score * 0.4
+            + cpu_score * 0.3
+            + storage_score * 0.2
+            + power_score * 0.1
+        )
 
 
 @dataclass
@@ -336,7 +345,9 @@ class DeviceProfiler:
 
         # Callbacks
         self.alert_callbacks: list[Callable[[str, ResourceSnapshot], None]] = []
-        self.threshold_callbacks: dict[str, list[Callable[[ResourceSnapshot], None]]] = {}
+        self.threshold_callbacks: dict[
+            str, list[Callable[[ResourceSnapshot], None]]
+        ] = {}
 
         # Thresholds for alerts
         self.thresholds = {
@@ -358,7 +369,9 @@ class DeviceProfiler:
             "last_alert_time": None,
         }
 
-        logger.info(f"Device profiler initialized for {self.profile.device_type.value} device")
+        logger.info(
+            f"Device profiler initialized for {self.profile.device_type.value} device"
+        )
 
     def _generate_device_id(self) -> str:
         """Generate unique device ID."""
@@ -410,7 +423,11 @@ class DeviceProfiler:
             return DeviceType.PHONE if memory_gb < 6 else DeviceType.TABLET
         if system == "darwin":
             if platform.machine().startswith("iP"):
-                return DeviceType.PHONE if "iPhone" in platform.machine() else DeviceType.TABLET
+                return (
+                    DeviceType.PHONE
+                    if "iPhone" in platform.machine()
+                    else DeviceType.TABLET
+                )
             return DeviceType.LAPTOP if memory_gb < 16 else DeviceType.DESKTOP
         if system in ["linux", "windows"]:
             if memory_gb < 4:
@@ -427,7 +444,12 @@ class DeviceProfiler:
             if platform.system() == "Windows":
                 import subprocess
 
-                result = subprocess.run(["wmic", "cpu", "get", "name"], check=False, capture_output=True, text=True)
+                result = subprocess.run(
+                    ["wmic", "cpu", "get", "name"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
                 if result.returncode == 0:
                     lines = result.stdout.strip().split("\n")
                     if len(lines) > 1:
@@ -448,7 +470,9 @@ class DeviceProfiler:
             # Try to detect NVIDIA GPU
             import subprocess
 
-            result = subprocess.run(["nvidia-smi", "-L"], check=False, capture_output=True, text=True)
+            result = subprocess.run(
+                ["nvidia-smi", "-L"], check=False, capture_output=True, text=True
+            )
             return result.returncode == 0
         except:
             pass
@@ -601,7 +625,9 @@ class DeviceProfiler:
         self.monitoring_active = True
 
         if self.enable_background_monitoring:
-            self.monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
+            self.monitoring_thread = threading.Thread(
+                target=self._monitoring_loop, daemon=True
+            )
             self.monitoring_thread.start()
 
         logger.info("Device monitoring started")
@@ -668,7 +694,9 @@ class DeviceProfiler:
         self.stats["alerts_triggered"] += 1
         self.stats["last_alert_time"] = time.time()
 
-        logger.warning(f"Resource alert: {alert_type} - {self._format_alert_message(alert_type, snapshot)}")
+        logger.warning(
+            f"Resource alert: {alert_type} - {self._format_alert_message(alert_type, snapshot)}"
+        )
 
         # Call registered callbacks
         for callback in self.alert_callbacks:
@@ -696,11 +724,15 @@ class DeviceProfiler:
             return f"CPU temperature: {snapshot.cpu_temp:.1f}°C"
         return f"Resource threshold exceeded: {alert_type}"
 
-    def register_alert_callback(self, callback: Callable[[str, ResourceSnapshot], None]) -> None:
+    def register_alert_callback(
+        self, callback: Callable[[str, ResourceSnapshot], None]
+    ) -> None:
         """Register callback for all alerts."""
         self.alert_callbacks.append(callback)
 
-    def register_threshold_callback(self, threshold: str, callback: Callable[[ResourceSnapshot], None]) -> None:
+    def register_threshold_callback(
+        self, threshold: str, callback: Callable[[ResourceSnapshot], None]
+    ) -> None:
         """Register callback for specific threshold."""
         if threshold not in self.threshold_callbacks:
             self.threshold_callbacks[threshold] = []
@@ -800,7 +832,9 @@ class DeviceProfiler:
                 "avg": sum(memory_values) / len(memory_values),
                 "min": min(memory_values),
                 "max": max(memory_values),
-                "trend": "increasing" if memory_values[-5:] > memory_values[:5] else "stable",
+                "trend": (
+                    "increasing" if memory_values[-5:] > memory_values[:5] else "stable"
+                ),
             },
             "cpu": {
                 "avg": sum(cpu_values) / len(cpu_values),
@@ -812,7 +846,11 @@ class DeviceProfiler:
                 "avg": sum(performance_scores) / len(performance_scores),
                 "min": min(performance_scores),
                 "max": max(performance_scores),
-                "trend": "improving" if performance_scores[-5:] > performance_scores[:5] else "stable",
+                "trend": (
+                    "improving"
+                    if performance_scores[-5:] > performance_scores[:5]
+                    else "stable"
+                ),
             },
             "analysis_period": f"{len(recent_snapshots)} snapshots",
         }

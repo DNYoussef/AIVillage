@@ -19,7 +19,9 @@ import sys
 
 from datasets import load_dataset
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 BENCHMARKS = {
@@ -242,7 +244,9 @@ if __name__ == "__main__":
 
 def main():
     """Main download function"""
-    parser = argparse.ArgumentParser(description="Download Agent Forge benchmark datasets")
+    parser = argparse.ArgumentParser(
+        description="Download Agent Forge benchmark datasets"
+    )
     parser.add_argument(
         "--benchmarks-dir",
         default="./benchmarks",
@@ -268,7 +272,9 @@ def main():
     else:
         benchmarks_to_download = args.benchmarks
 
-    logger.info(f"Planning to download {len(benchmarks_to_download)} benchmark datasets")
+    logger.info(
+        f"Planning to download {len(benchmarks_to_download)} benchmark datasets"
+    )
 
     # Download benchmarks
     downloaded_benchmarks = []
@@ -279,7 +285,9 @@ def main():
             logger.warning(f"Unknown benchmark: {benchmark_key}")
             continue
 
-        success = download_benchmark(benchmark_key, BENCHMARKS[benchmark_key], base_path)
+        success = download_benchmark(
+            benchmark_key, BENCHMARKS[benchmark_key], base_path
+        )
         if success:
             downloaded_benchmarks.append(benchmark_key)
         else:

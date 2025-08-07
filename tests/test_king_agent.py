@@ -33,7 +33,9 @@ class TestKingAgent(unittest.TestCase):
         self.communication_protocol = StandardCommunicationProtocol()
         self.rag_config = RAGConfig()
         self.vector_store = MagicMock(spec=VectorStore)
-        self.king_agent = KingAgent(self.config, self.communication_protocol, self.vector_store)
+        self.king_agent = KingAgent(
+            self.config, self.communication_protocol, self.vector_store
+        )
 
     @patch("agents.unified_base_agent.DecisionMakingLayer._get_preferences")
     @patch("agents.utils.mcts.MonteCarloTreeSearch.search")
@@ -57,8 +59,12 @@ class TestKingAgent(unittest.TestCase):
     @patch("agents.king.task_planning_agent.TaskPlanningAgent.generate_task_plan")
     @patch("agents.king.knowledge_graph_agent.KnowledgeGraphAgent.query_graph")
     @patch("agents.king.reasoning_agent.ReasoningAgent.perform_reasoning")
-    @patch("agents.king.response_generation_agent.ResponseGenerationAgent.generate_response")
-    @patch("agents.king.dynamic_knowledge_integration_agent.DynamicKnowledgeIntegrationAgent.integrate_new_knowledge")
+    @patch(
+        "agents.king.response_generation_agent.ResponseGenerationAgent.generate_response"
+    )
+    @patch(
+        "agents.king.dynamic_knowledge_integration_agent.DynamicKnowledgeIntegrationAgent.integrate_new_knowledge"
+    )
     async def test_process_user_input(
         self,
         mock_integrate,

@@ -79,7 +79,9 @@ class RelationExtractor:
                                         "subject": subject,
                                         "predicate": relation_type,
                                         "object": obj,
-                                        "confidence": self._calculate_confidence(match, text),
+                                        "confidence": self._calculate_confidence(
+                                            match, text
+                                        ),
                                         "source_text": match.group(0),
                                         "position": match.span(),
                                     }
@@ -112,7 +114,9 @@ class RelationExtractor:
 
         return max(0.1, min(1.0, base_confidence + length_bonus))
 
-    def _deduplicate_relations(self, relations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _deduplicate_relations(
+        self, relations: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Remove duplicate relations based on subject-predicate-object triples."""
         seen = set()
         deduplicated = []

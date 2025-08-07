@@ -4,7 +4,10 @@
 from pathlib import Path
 import sys
 
-from implement_federated_learning import FederatedLearningClient, FederatedLearningServer
+from implement_federated_learning import (
+    FederatedLearningClient,
+    FederatedLearningServer,
+)
 import pytest
 import torch
 
@@ -32,7 +35,9 @@ class TestFLErrorHandling:
         # Client should handle this gracefully
         client = FederatedLearningClient("test_client", model, None)
 
-        with pytest.raises(ValueError, match="Server rejected round: insufficient clients"):
+        with pytest.raises(
+            ValueError, match="Server rejected round: insufficient clients"
+        ):
             await client.participate_in_round(round_config)
 
     @pytest.mark.asyncio
@@ -49,7 +54,9 @@ class TestFLErrorHandling:
             # Missing "round_number" key
         }
 
-        with pytest.raises(ValueError, match="Invalid round config: missing 'round_number'"):
+        with pytest.raises(
+            ValueError, match="Invalid round config: missing 'round_number'"
+        ):
             await client.participate_in_round(malformed_config)
 
     @pytest.mark.asyncio

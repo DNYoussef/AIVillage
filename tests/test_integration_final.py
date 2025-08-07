@@ -16,7 +16,9 @@ async def test_full_integration():
     monitor = get_monitor_instance()
     metrics = get_all_metrics()
     print(f"   CPU Usage: {metrics['cpu_percent']:.1f}%")
-    print(f"   Memory: {metrics['memory']['percent']:.1f}% ({metrics['memory']['available_gb']:.1f} GB available)")
+    print(
+        f"   Memory: {metrics['memory']['percent']:.1f}% ({metrics['memory']['available_gb']:.1f} GB available)"
+    )
     print(f"   Can allocate 1GB: {monitor.can_allocate(1.0)}")
 
     # 2. P2P Discovery finds peers
@@ -44,7 +46,10 @@ async def test_full_integration():
     print("\n4. Security Gate - Validating Messages:")
 
     # Test safe message
-    safe_msg = {"content": "Hello, this is a safe message for integration testing", "type": "text"}
+    safe_msg = {
+        "content": "Hello, this is a safe message for integration testing",
+        "type": "text",
+    }
     safe_result = risk_gate(safe_msg)
     print(f"   Safe message: {safe_result}")
 
@@ -65,7 +70,9 @@ async def test_full_integration():
         if gate_result == "deny":
             print(f"   [BLOCKED] Dangerous message from {agent_id}")
         else:
-            print(f"   [ALLOWED] Safe message from {agent_id}: {message.get('content', '')}")
+            print(
+                f"   [ALLOWED] Safe message from {agent_id}: {message.get('content', '')}"
+            )
             messages_received.append(message)
 
     comm_server.register_handler("integration_test", secure_message_handler)
@@ -73,12 +80,18 @@ async def test_full_integration():
     # Check resources before sending
     if monitor.can_allocate(0.1):  # Need 100MB for message processing
         # Send safe message
-        safe_test_msg = {"type": "integration_test", "content": "This is a safe integration test message"}
+        safe_test_msg = {
+            "type": "integration_test",
+            "content": "This is a safe integration test message",
+        }
         await comm_client.send_message("integration_server", safe_test_msg)
         await asyncio.sleep(0.5)
 
         # Try to send dangerous message
-        danger_test_msg = {"type": "integration_test", "content": "DELETE FROM users; DROP TABLE accounts;"}
+        danger_test_msg = {
+            "type": "integration_test",
+            "content": "DELETE FROM users; DROP TABLE accounts;",
+        }
         await comm_client.send_message("integration_server", danger_test_msg)
         await asyncio.sleep(0.5)
     else:
@@ -86,7 +99,9 @@ async def test_full_integration():
 
     # 6. Summary
     print("\n=== INTEGRATION TEST SUMMARY ===")
-    print(f"✓ Resource Monitor: Real metrics reported (CPU: {metrics['cpu_percent']:.1f}%)")
+    print(
+        f"✓ Resource Monitor: Real metrics reported (CPU: {metrics['cpu_percent']:.1f}%)"
+    )
     print(f"✓ P2P Discovery: Found {len(peers)} peers")
     print("✓ WebSocket: Connected and encrypted")
     print("✓ Security Gate: Blocked dangerous content")

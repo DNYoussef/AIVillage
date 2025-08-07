@@ -62,7 +62,10 @@ class PrivacyBudget:
 
     def consume(self, eps: float, delta: float) -> bool:
         """Consume privacy budget. Returns True if budget allows."""
-        if self.consumed_epsilon + eps <= self.epsilon and self.consumed_delta + delta <= self.delta:
+        if (
+            self.consumed_epsilon + eps <= self.epsilon
+            and self.consumed_delta + delta <= self.delta
+        ):
             self.consumed_epsilon += eps
             self.consumed_delta += delta
             return True
@@ -111,7 +114,10 @@ class PrivacyEngine:
         self.logger = logging.getLogger("PrivacyEngine")
 
     def add_noise_to_gradients(
-        self, gradients: dict[str, torch.Tensor], sensitivity: float = 1.0, epsilon: float = 0.1
+        self,
+        gradients: dict[str, torch.Tensor],
+        sensitivity: float = 1.0,
+        epsilon: float = 0.1,
     ) -> tuple[dict[str, torch.Tensor], tuple[float, float]]:
         """Add differential privacy noise to gradients."""
         if self.mechanism != PrivacyMechanism.DIFFERENTIAL_PRIVACY:
@@ -138,7 +144,10 @@ class PrivacyEngine:
         self, gradients: dict[str, torch.Tensor], client_id: str, round_number: int
     ) -> dict[str, torch.Tensor]:
         """Apply secure aggregation masking (simplified implementation)."""
-        if self.mechanism not in [PrivacyMechanism.SECURE_AGGREGATION, PrivacyMechanism.COMBINED]:
+        if self.mechanism not in [
+            PrivacyMechanism.SECURE_AGGREGATION,
+            PrivacyMechanism.COMBINED,
+        ]:
             return gradients
 
         # Generate deterministic mask based on client_id and round
@@ -149,7 +158,10 @@ class PrivacyEngine:
         masked_gradients = {}
         for param_name, gradient in gradients.items():
             # Generate mask with same shape
-            mask = torch.randn(gradient.shape, generator=rng, device=gradient.device) * 0.01
+            mask = (
+                torch.randn(gradient.shape, generator=rng, device=gradient.device)
+                * 0.01
+            )
             masked_gradients[param_name] = gradient + mask
 
         return masked_gradients
@@ -165,7 +177,8 @@ class PrivacyEngine:
             "epsilon_remaining": self.privacy_budget.remaining_epsilon,
             "delta_remaining": self.privacy_budget.remaining_delta,
             "budget_exhausted": (
-                self.privacy_budget.remaining_epsilon <= 0 or self.privacy_budget.remaining_delta <= 0
+                self.privacy_budget.remaining_epsilon <= 0
+                or self.privacy_budget.remaining_delta <= 0
             ),
         }
 
@@ -173,7 +186,11 @@ class PrivacyEngine:
 class SecureAggregator:
     """Secure gradient aggregation with Byzantine fault tolerance."""
 
-    def __init__(self, strategy: AggregationStrategy = AggregationStrategy.FEDAVG, byzantine_threshold: float = 0.3):
+    def __init__(
+        self,
+        strategy: AggregationStrategy = AggregationStrategy.FEDAVG,
+        byzantine_threshold: float = 0.3,
+    ):
         self.strategy = strategy
         self.byzantine_threshold = byzantine_threshold
         self.logger = logging.getLogger("SecureAggregator")
@@ -194,13 +211,21 @@ class SecureAggregator:
 
         # Choose aggregation strategy
         if self.strategy == AggregationStrategy.FEDAVG:
-            aggregated_state = self._federated_averaging(filtered_updates, global_model_state)
+            aggregated_state = self._federated_averaging(
+                filtered_updates, global_model_state
+            )
         elif self.strategy == AggregationStrategy.FEDPROX:
-            aggregated_state = self._fedprox_aggregation(filtered_updates, global_model_state)
+            aggregated_state = self._fedprox_aggregation(
+                filtered_updates, global_model_state
+            )
         elif self.strategy == AggregationStrategy.SCAFFOLD:
-            aggregated_state = self._scaffold_aggregation(filtered_updates, global_model_state)
+            aggregated_state = self._scaffold_aggregation(
+                filtered_updates, global_model_state
+            )
         else:
-            aggregated_state = self._federated_averaging(filtered_updates, global_model_state)
+            aggregated_state = self._federated_averaging(
+                filtered_updates, global_model_state
+            )
 
         metrics = {
             "total_updates": len(updates),
@@ -211,7 +236,9 @@ class SecureAggregator:
 
         return aggregated_state, metrics
 
-    def _detect_and_filter_byzantine(self, updates: list[ClientUpdate]) -> list[ClientUpdate]:
+    def _detect_and_filter_byzantine(
+        self, updates: list[ClientUpdate]
+    ) -> list[ClientUpdate]:
         """Detect and filter Byzantine updates using statistical methods."""
         if len(updates) <= 2:
             return updates  # Can't detect Byzantine with too few updates
@@ -257,7 +284,9 @@ class SecureAggregator:
                 if param_name in update.gradients:
                     weight = update.num_samples / total_samples
                     # Apply gradient to get updated parameter
-                    updated_param = global_model_state[param_name] + update.gradients[param_name]
+                    updated_param = (
+                        global_model_state[param_name] + update.gradients[param_name]
+                    )
                     weighted_sum += weight * updated_param
 
             aggregated_state[param_name] = weighted_sum
@@ -274,9 +303,9 @@ class SecureAggregator:
         # Add proximal regularization
         mu = 0.01  # Proximal term coefficient
         for param_name in aggregated_state:
-            aggregated_state[param_name] = (aggregated_state[param_name] + mu * global_model_state[param_name]) / (
-                1 + mu
-            )
+            aggregated_state[param_name] = (
+                aggregated_state[param_name] + mu * global_model_state[param_name]
+            ) / (1 + mu)
 
         return aggregated_state
 
@@ -316,7 +345,9 @@ class ModelSynchronizer:
         self.model_versions[version] = {k: v.clone() for k, v in model_state.items()}
         return version
 
-    def compress_model_state(self, model_state: dict[str, torch.Tensor]) -> dict[str, Any]:
+    def compress_model_state(
+        self, model_state: dict[str, torch.Tensor]
+    ) -> dict[str, Any]:
         """Compress model state for efficient transmission."""
         compressed = {}
 
@@ -342,7 +373,9 @@ class ModelSynchronizer:
 
         return compressed
 
-    def decompress_model_state(self, compressed_state: dict[str, Any]) -> dict[str, torch.Tensor]:
+    def decompress_model_state(
+        self, compressed_state: dict[str, Any]
+    ) -> dict[str, torch.Tensor]:
         """Decompress model state from compressed format."""
         decompressed = {}
 
@@ -353,7 +386,9 @@ class ModelSynchronizer:
 
             if dtype == "float16":
                 # Decompress quantized tensor
-                tensor = torch.frombuffer(data_bytes, dtype=torch.float16).reshape(shape)
+                tensor = torch.frombuffer(data_bytes, dtype=torch.float16).reshape(
+                    shape
+                )
                 decompressed[key] = tensor.float()  # Convert back to float32
             else:
                 # Handle other dtypes
@@ -430,12 +465,16 @@ class TrainingMonitor:
                     }
                 )
 
-    def record_client_performance(self, client_id: str, round_number: int, metrics: dict[str, Any]):
+    def record_client_performance(
+        self, client_id: str, round_number: int, metrics: dict[str, Any]
+    ):
         """Record client performance metrics."""
         if client_id not in self.client_performance:
             self.client_performance[client_id] = []
 
-        self.client_performance[client_id].append({"round": round_number, "timestamp": time.time(), **metrics})
+        self.client_performance[client_id].append(
+            {"round": round_number, "timestamp": time.time(), **metrics}
+        )
 
     def get_training_health(self) -> dict[str, Any]:
         """Get overall training health assessment."""
@@ -451,21 +490,35 @@ class TrainingMonitor:
                 total_clients.add(client_id)
                 participating_clients.add(client_id)
 
-        participation_rate = len(participating_clients) / len(total_clients) if total_clients else 0.0
+        participation_rate = (
+            len(participating_clients) / len(total_clients) if total_clients else 0.0
+        )
 
         # Calculate convergence stability
         convergence_score = 0.0
-        if "loss" in self.convergence_metrics and len(self.convergence_metrics["loss"]) >= 3:
+        if (
+            "loss" in self.convergence_metrics
+            and len(self.convergence_metrics["loss"]) >= 3
+        ):
             recent_losses = [m["value"] for m in self.convergence_metrics["loss"][-3:]]
             convergence_score = (
-                1.0 if all(recent_losses[i] >= recent_losses[i + 1] for i in range(len(recent_losses) - 1)) else 0.5
+                1.0
+                if all(
+                    recent_losses[i] >= recent_losses[i + 1]
+                    for i in range(len(recent_losses) - 1)
+                )
+                else 0.5
             )
 
         # Calculate health score
         health_score = (participation_rate + convergence_score) / 2.0
 
         return {
-            "status": "healthy" if health_score > 0.7 else "degraded" if health_score > 0.4 else "unhealthy",
+            "status": (
+                "healthy"
+                if health_score > 0.7
+                else "degraded" if health_score > 0.4 else "unhealthy"
+            ),
             "health_score": health_score,
             "participation_rate": participation_rate,
             "convergence_score": convergence_score,
@@ -503,7 +556,9 @@ class TrainingMonitor:
                     "rate_of_change": rate_of_change,
                     "current_value": values[-1],
                     "best_value": min(values) if metric_name == "loss" else max(values),
-                    "stability": np.std(values[-5:]) if len(values) >= 5 else float("inf"),
+                    "stability": (
+                        np.std(values[-5:]) if len(values) >= 5 else float("inf")
+                    ),
                 }
 
         return analysis
@@ -557,7 +612,9 @@ class FederatedTrainingCoordinator:
         self.current_round = 0
         self.registered_clients = {}
         self.client_updates = {}
-        self.current_model_version = self.synchronizer.create_model_version(self.model.state_dict())
+        self.current_model_version = self.synchronizer.create_model_version(
+            self.model.state_dict()
+        )
 
         # Configuration
         self.client_selection_fraction = 0.3
@@ -588,8 +645,12 @@ class FederatedTrainingCoordinator:
 
         # Generate final results
         training_results["final_metrics"] = self.monitor.get_training_health()
-        training_results["convergence_analysis"] = self.monitor.get_convergence_analysis()
-        training_results["privacy_report"] = self.privacy_engine.validate_privacy_guarantees()
+        training_results["convergence_analysis"] = (
+            self.monitor.get_convergence_analysis()
+        )
+        training_results["privacy_report"] = (
+            self.privacy_engine.validate_privacy_guarantees()
+        )
 
         return training_results
 
@@ -665,8 +726,10 @@ class FederatedTrainingCoordinator:
         # Apply privacy mechanisms
         if self.privacy_engine.mechanism != PrivacyMechanism.NONE:
             try:
-                noisy_gradients, privacy_cost = self.privacy_engine.add_noise_to_gradients(
-                    update.gradients, epsilon=0.01
+                noisy_gradients, privacy_cost = (
+                    self.privacy_engine.add_noise_to_gradients(
+                        update.gradients, epsilon=0.01
+                    )
                 )
                 update.gradients = noisy_gradients
                 update.privacy_spent = privacy_cost
@@ -701,11 +764,15 @@ class FederatedTrainingCoordinator:
             return
 
         # Secure aggregation
-        aggregated_state, aggregation_metrics = self.aggregator.aggregate_gradients(updates, self.model.state_dict())
+        aggregated_state, aggregation_metrics = self.aggregator.aggregate_gradients(
+            updates, self.model.state_dict()
+        )
 
         # Update global model
         self.model.load_state_dict(aggregated_state)
-        self.current_model_version = self.synchronizer.create_model_version(aggregated_state)
+        self.current_model_version = self.synchronizer.create_model_version(
+            aggregated_state
+        )
 
         # Calculate aggregated metrics
         round_metrics = self._aggregate_client_metrics(updates)
@@ -716,7 +783,10 @@ class FederatedTrainingCoordinator:
         total_delta = sum(u.privacy_spent[1] for u in updates)
         round_info.privacy_consumed = (total_eps, total_delta)
 
-        self.logger.info(f"Aggregated {len(updates)} updates, " f"privacy cost: ε={total_eps:.3f}, δ={total_delta:.6f}")
+        self.logger.info(
+            f"Aggregated {len(updates)} updates, "
+            f"privacy cost: ε={total_eps:.3f}, δ={total_delta:.6f}"
+        )
 
     def _select_clients(self) -> list[dict[str, Any]]:
         """Select clients for participation in current round."""
@@ -724,14 +794,18 @@ class FederatedTrainingCoordinator:
         eligible_clients = [
             client_info
             for client_info in self.registered_clients.values()
-            if client_info.get("active", False) and client_info.get("battery_level", 0) > 0.2
+            if client_info.get("active", False)
+            and client_info.get("battery_level", 0) > 0.2
         ]
 
         if len(eligible_clients) <= self.min_clients:
             return eligible_clients
 
         # Select based on fraction and capabilities
-        num_to_select = max(self.min_clients, int(len(eligible_clients) * self.client_selection_fraction))
+        num_to_select = max(
+            self.min_clients,
+            int(len(eligible_clients) * self.client_selection_fraction),
+        )
 
         # Weight-based selection
         weights = []
@@ -752,14 +826,23 @@ class FederatedTrainingCoordinator:
 
         # Random selection with weights
         rng = np.random.default_rng()
-        indices = rng.choice(len(eligible_clients), size=num_to_select, replace=False, p=weights)
+        indices = rng.choice(
+            len(eligible_clients), size=num_to_select, replace=False, p=weights
+        )
 
         return [eligible_clients[i] for i in indices]
 
     def _validate_update(self, update: ClientUpdate) -> bool:
         """Validate client update for integrity and correctness."""
         # Check required fields
-        if not all([update.client_id, update.gradients, update.num_samples > 0, update.computation_time > 0]):
+        if not all(
+            [
+                update.client_id,
+                update.gradients,
+                update.num_samples > 0,
+                update.computation_time > 0,
+            ]
+        ):
             return False
 
         # Check gradient shapes match model
@@ -777,7 +860,9 @@ class FederatedTrainingCoordinator:
 
         return True
 
-    def _aggregate_client_metrics(self, updates: list[ClientUpdate]) -> dict[str, float]:
+    def _aggregate_client_metrics(
+        self, updates: list[ClientUpdate]
+    ) -> dict[str, float]:
         """Aggregate metrics from client updates."""
         if not updates:
             return {}
@@ -816,7 +901,9 @@ class FederatedTrainingCoordinator:
             and abs(loss_analysis.get("rate_of_change", float("inf"))) < 0.001
         )
 
-    async def _simulate_client_training(self, client_id: str, round_info: FederatedRound) -> ClientUpdate | None:
+    async def _simulate_client_training(
+        self, client_id: str, round_info: FederatedRound
+    ) -> ClientUpdate | None:
         """Simulate client training (for testing purposes)."""
         # This is a placeholder - in real implementation,
         # clients would train independently and send updates
@@ -840,9 +927,15 @@ class FederatedTrainingCoordinator:
             model_version=round_info.global_model_version,
             gradients=fake_gradients,
             num_samples=np.random.randint(50, 200),
-            metrics={"loss": np.random.uniform(0.1, 1.0), "accuracy": np.random.uniform(0.7, 0.95)},
+            metrics={
+                "loss": np.random.uniform(0.1, 1.0),
+                "accuracy": np.random.uniform(0.7, 0.95),
+            },
             computation_time=np.random.uniform(1.0, 5.0),
-            client_metadata={"device": "mobile", "battery_level": np.random.uniform(0.3, 1.0)},
+            client_metadata={
+                "device": "mobile",
+                "battery_level": np.random.uniform(0.3, 1.0),
+            },
         )
 
         return update
@@ -867,7 +960,9 @@ class FederatedTrainingCoordinator:
             "current_round": self.current_round,
             "max_rounds": self.max_rounds,
             "registered_clients": len(self.registered_clients),
-            "active_clients": sum(1 for c in self.registered_clients.values() if c.get("active", False)),
+            "active_clients": sum(
+                1 for c in self.registered_clients.values() if c.get("active", False)
+            ),
             "current_model_version": self.current_model_version,
             "training_health": self.monitor.get_training_health(),
             "privacy_status": self.privacy_engine.validate_privacy_guarantees(),

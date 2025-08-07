@@ -2,8 +2,8 @@
 """Test actual inter-agent coordination capabilities."""
 
 import asyncio
-import sys
 from pathlib import Path
+import sys
 
 sys.path.insert(0, str(Path.cwd()))
 
@@ -73,7 +73,9 @@ async def test_multi_agent_coordination():
                 {
                     "timestamp": "2024-01-01T12:00:00",
                     "success": True,
-                    "metrics": {f"{agent_type}_score": 0.8 + (hash(agent_type) % 20) / 100},
+                    "metrics": {
+                        f"{agent_type}_score": 0.8 + (hash(agent_type) % 20) / 100
+                    },
                 }
             )
 
@@ -92,13 +94,17 @@ async def test_multi_agent_coordination():
         for agent_type, agent in agents.items():
             result = agent.process(coordination_task)
             coordination_results[agent_type] = result
-            print(f"  {agent_type} contribution: {result.get('result', 'no contribution')}")
+            print(
+                f"  {agent_type} contribution: {result.get('result', 'no contribution')}"
+            )
 
         # Assessment
         print(f"\n{'='*20} COORDINATION ASSESSMENT {'='*20}")
 
         can_differentiate = differentiated
-        can_track_performance = all(agent.performance_history for agent in agents.values())
+        can_track_performance = all(
+            agent.performance_history for agent in agents.values()
+        )
         can_handle_tasks = len(role_responses) == len(role_tasks)
         can_collaborate = len(coordination_results) == len(agents)
 
@@ -107,7 +113,14 @@ async def test_multi_agent_coordination():
         print(f"Can handle specific tasks: {can_handle_tasks}")
         print(f"Can participate in collaboration: {can_collaborate}")
 
-        coordination_score = sum([can_differentiate, can_track_performance, can_handle_tasks, can_collaborate])
+        coordination_score = sum(
+            [
+                can_differentiate,
+                can_track_performance,
+                can_handle_tasks,
+                can_collaborate,
+            ]
+        )
 
         print(f"\nCoordination capability: {coordination_score}/4")
 
@@ -178,9 +191,21 @@ async def test_communication_chain():
 
         # Test chain: King -> Sage -> Strategist
         chain_messages = [
-            {"from": "king", "to": "sage", "content": {"task": "analyze", "data": "market"}},
-            {"from": "sage", "to": "strategist", "content": {"task": "plan", "data": "expansion"}},
-            {"from": "strategist", "to": "king", "content": {"task": "report", "data": "strategy"}},
+            {
+                "from": "king",
+                "to": "sage",
+                "content": {"task": "analyze", "data": "market"},
+            },
+            {
+                "from": "sage",
+                "to": "strategist",
+                "content": {"task": "plan", "data": "expansion"},
+            },
+            {
+                "from": "strategist",
+                "to": "king",
+                "content": {"task": "report", "data": "strategy"},
+            },
         ]
 
         print("\nTesting communication chain...")
@@ -190,7 +215,9 @@ async def test_communication_chain():
 
             # Simulate message passing
             response = receiver.process(msg["content"])
-            print(f"{msg['from']} -> {msg['to']}: {response.get('result', 'no response')}")
+            print(
+                f"{msg['from']} -> {msg['to']}: {response.get('result', 'no response')}"
+            )
 
         print("\nCommunication chain test: SUCCESS")
         return True

@@ -161,7 +161,9 @@ class PipelineValidationTest:
             logger.info("Simulating 10-generation evolution merge...")
 
             # Check if we have existing evolution results to use
-            evolution_results_path = Path("D:/AgentForge/results_50gen/evolution_50gen_results.json")
+            evolution_results_path = Path(
+                "D:/AgentForge/results_50gen/evolution_50gen_results.json"
+            )
 
             if evolution_results_path.exists():
                 logger.info("Using existing evolution results for validation")
@@ -207,7 +209,9 @@ class PipelineValidationTest:
                     "output_path": str(optimal_model_path),
                 }
 
-                logger.info("✅ Evolution merge validation completed in %.2fs", stage_time)
+                logger.info(
+                    "✅ Evolution merge validation completed in %.2fs", stage_time
+                )
 
             else:
                 # Run a minimal evolution merge for validation
@@ -257,7 +261,9 @@ class PipelineValidationTest:
             # Check if evolution stage completed
             evolution_result = self.results["stages"].get("evolution")
             if not evolution_result or evolution_result["status"] != "success":
-                raise Exception("Evolution stage must complete successfully before Quiet-STaR")
+                raise Exception(
+                    "Evolution stage must complete successfully before Quiet-STaR"
+                )
 
             input_model_path = evolution_result["output_path"]
             output_path = self.stage_paths["quietstar"] / "baked_model.pt"
@@ -318,7 +324,9 @@ class PipelineValidationTest:
             # Check if Quiet-STaR stage completed
             quietstar_result = self.results["stages"].get("quietstar")
             if not quietstar_result or quietstar_result["status"] != "success":
-                raise Exception("Quiet-STaR stage must complete successfully before compression")
+                raise Exception(
+                    "Quiet-STaR stage must complete successfully before compression"
+                )
 
             input_model_path = quietstar_result["output_path"]
             output_path = self.stage_paths["stage1_compressed"] / "model.stage1.pt"
@@ -336,8 +344,12 @@ class PipelineValidationTest:
             compressed_model.update(
                 {
                     "stage1_compressed": True,
-                    "bitnet_applied": self.config["compression_stage1"]["bitnet_enabled"],
-                    "seedlm_applied": self.config["compression_stage1"]["seedlm_enabled"],
+                    "bitnet_applied": self.config["compression_stage1"][
+                        "bitnet_enabled"
+                    ],
+                    "seedlm_applied": self.config["compression_stage1"][
+                        "seedlm_enabled"
+                    ],
                     "compression_ratio": 0.23,  # Mock 77% size reduction
                     "performance_retention": 0.94,  # Mock 94% performance retention
                     "compression_timestamp": datetime.now().isoformat(),
@@ -389,7 +401,9 @@ class PipelineValidationTest:
             openrouter_available = bool(os.getenv("OPENROUTER_API_KEY"))
 
             if not openrouter_available:
-                logger.warning("OpenRouter API key not found - simulating orchestration")
+                logger.warning(
+                    "OpenRouter API key not found - simulating orchestration"
+                )
 
             input_model_path = stage1_result["output_path"]
             output_path = self.stage_paths["curriculum"] / "trained_model.pt"
@@ -406,23 +420,31 @@ class PipelineValidationTest:
                 logger.info("Testing actual orchestration system...")
 
                 # Import orchestration components
-                from agent_forge.orchestration.curriculum_integration import MultiModelOrchestrator
+                from agent_forge.orchestration.curriculum_integration import (
+                    MultiModelOrchestrator,
+                )
                 from agent_forge.training.magi_specialization import MagiConfig
 
                 # Create test configuration
                 test_config = MagiConfig(
                     curriculum_levels=self.config["curriculum_learning"]["levels"],
-                    questions_per_level=self.config["curriculum_learning"]["questions_per_level"],
+                    questions_per_level=self.config["curriculum_learning"][
+                        "questions_per_level"
+                    ],
                     total_questions=self.config["curriculum_learning"]["levels"]
                     * self.config["curriculum_learning"]["questions_per_level"],
                 )
 
                 # Initialize orchestrator
-                orchestrator = MultiModelOrchestrator(test_config, enable_openrouter=True)
+                orchestrator = MultiModelOrchestrator(
+                    test_config, enable_openrouter=True
+                )
 
                 # Test question generation
                 logger.info("Testing question generation...")
-                questions = orchestrator.question_generator.generate_curriculum_questions()
+                questions = (
+                    orchestrator.question_generator.generate_curriculum_questions()
+                )
 
                 # Test cost tracking
                 cost_summary = orchestrator.get_cost_summary()
@@ -502,7 +524,9 @@ class PipelineValidationTest:
             # Check if training completed
             training_result = self.results["stages"].get("orchestrated_training")
             if not training_result or training_result["status"] != "success":
-                raise Exception("Training stage must complete before geometric awareness validation")
+                raise Exception(
+                    "Training stage must complete before geometric awareness validation"
+                )
 
             logger.info("Validating geometric self-awareness capabilities...")
 
@@ -535,7 +559,9 @@ class PipelineValidationTest:
             }
 
             logger.info("✅ Geometric self-awareness validated in %.2fs", stage_time)
-            logger.info("   Intrinsic dimension: %.1f", geometry_metrics["intrinsic_dimension"])
+            logger.info(
+                "   Intrinsic dimension: %.1f", geometry_metrics["intrinsic_dimension"]
+            )
             logger.info(
                 "   Geometric complexity: %.1f",
                 geometry_metrics["geometric_complexity"],
@@ -581,7 +607,9 @@ class PipelineValidationTest:
                 {
                     "stage2_compressed": True,
                     "vptq_applied": self.config["final_compression"]["vptq_enabled"],
-                    "hyperfn_applied": self.config["final_compression"]["hyperfn_enabled"],
+                    "hyperfn_applied": self.config["final_compression"][
+                        "hyperfn_enabled"
+                    ],
                     "final_compression_ratio": 0.08,  # Mock 92% total size reduction
                     "final_performance_retention": 0.91,  # Mock 91% performance retention
                     "final_compression_timestamp": datetime.now().isoformat(),
@@ -637,7 +665,9 @@ class PipelineValidationTest:
             for stage in required_stages:
                 result = self.results["stages"].get(stage)
                 if not result or result["status"] != "success":
-                    raise Exception(f"Stage {stage} must complete successfully for pipeline verification")
+                    raise Exception(
+                        f"Stage {stage} must complete successfully for pipeline verification"
+                    )
 
             # Load final model
             stage2_result = self.results["stages"]["stage2_compression"]
@@ -660,12 +690,15 @@ class PipelineValidationTest:
             # Calculate total improvements
             total_compression = (
                 self.results["stages"]["stage1_compression"]["compression_ratio"]
-                * self.results["stages"]["stage2_compression"]["final_compression_ratio"]
+                * self.results["stages"]["stage2_compression"][
+                    "final_compression_ratio"
+                ]
             )
 
             # Performance analysis
             capabilities_enhanced = (
-                final_model.get("training_improvement", 0) > 10 and final_model.get("ab_test_improvement", 0) > 0
+                final_model.get("training_improvement", 0) > 10
+                and final_model.get("ab_test_improvement", 0) > 0
             )
 
             stage_time = time.time() - stage_start
@@ -682,7 +715,8 @@ class PipelineValidationTest:
 
             # Calculate total pipeline metrics
             total_time = sum(
-                stage_result.get("duration_seconds", 0) for stage_result in self.results["stages"].values()
+                stage_result.get("duration_seconds", 0)
+                for stage_result in self.results["stages"].values()
             )
 
             self.results["performance_metrics"] = {
@@ -690,10 +724,13 @@ class PipelineValidationTest:
                 "total_pipeline_duration_minutes": total_time / 60,
                 "total_compression_achieved": f"{(1 - total_compression) * 100:.1f}%",
                 "pipeline_success_rate": "100%" if all_markers_present else "Partial",
-                "readiness_for_full_scale": all_markers_present and capabilities_enhanced,
+                "readiness_for_full_scale": all_markers_present
+                and capabilities_enhanced,
             }
 
-            logger.info("✅ Complete pipeline verification successful in %.2fs", stage_time)
+            logger.info(
+                "✅ Complete pipeline verification successful in %.2fs", stage_time
+            )
             logger.info("   Total pipeline time: %.1f minutes", total_time / 60)
             logger.info("   Total compression: %.1f%%", (1 - total_compression) * 100)
             logger.info("   All markers verified: %s", all_markers_present)
@@ -721,35 +758,55 @@ class PipelineValidationTest:
         with open(report_path, "w") as f:
             f.write("# 🚀 Agent Forge Pipeline Validation Report\n\n")
             f.write(f"**Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"**Status**: {'✅ SUCCESS' if self.results['success'] else '❌ FAILED'}\n\n")
+            f.write(
+                f"**Status**: {'✅ SUCCESS' if self.results['success'] else '❌ FAILED'}\n\n"
+            )
 
             f.write("## 📊 Pipeline Stages Results\n\n")
             for stage_name, stage_result in self.results["stages"].items():
                 status_emoji = "✅" if stage_result["status"] == "success" else "❌"
                 f.write(f"### {status_emoji} {stage_name.replace('_', ' ').title()}\n")
                 f.write(f"- **Status**: {stage_result['status']}\n")
-                f.write(f"- **Duration**: {stage_result.get('duration_seconds', 0):.2f}s\n")
+                f.write(
+                    f"- **Duration**: {stage_result.get('duration_seconds', 0):.2f}s\n"
+                )
 
                 if stage_result["status"] == "success":
                     # Add stage-specific metrics
                     if "fitness_achieved" in stage_result:
-                        f.write(f"- **Fitness**: {stage_result['fitness_achieved']:.4f}\n")
+                        f.write(
+                            f"- **Fitness**: {stage_result['fitness_achieved']:.4f}\n"
+                        )
                     if "compression_ratio" in stage_result:
-                        f.write(f"- **Compression**: {stage_result['compression_ratio']:.2%}\n")
+                        f.write(
+                            f"- **Compression**: {stage_result['compression_ratio']:.2%}\n"
+                        )
                     if "questions_completed" in stage_result:
-                        f.write(f"- **Questions**: {stage_result['questions_completed']}\n")
+                        f.write(
+                            f"- **Questions**: {stage_result['questions_completed']}\n"
+                        )
                 else:
-                    f.write(f"- **Error**: {stage_result.get('error', 'Unknown error')}\n")
+                    f.write(
+                        f"- **Error**: {stage_result.get('error', 'Unknown error')}\n"
+                    )
 
                 f.write("\n")
 
             f.write("## 📈 Performance Metrics\n\n")
             if "performance_metrics" in self.results:
                 metrics = self.results["performance_metrics"]
-                f.write(f"- **Total Duration**: {metrics.get('total_pipeline_duration_minutes', 0):.1f} minutes\n")
-                f.write(f"- **Total Compression**: {metrics.get('total_compression_achieved', 'N/A')}\n")
-                f.write(f"- **Success Rate**: {metrics.get('pipeline_success_rate', 'N/A')}\n")
-                f.write(f"- **Ready for Full Scale**: {metrics.get('readiness_for_full_scale', False)}\n\n")
+                f.write(
+                    f"- **Total Duration**: {metrics.get('total_pipeline_duration_minutes', 0):.1f} minutes\n"
+                )
+                f.write(
+                    f"- **Total Compression**: {metrics.get('total_compression_achieved', 'N/A')}\n"
+                )
+                f.write(
+                    f"- **Success Rate**: {metrics.get('pipeline_success_rate', 'N/A')}\n"
+                )
+                f.write(
+                    f"- **Ready for Full Scale**: {metrics.get('readiness_for_full_scale', False)}\n\n"
+                )
 
             f.write("## 🎯 Validation Conclusions\n\n")
             if self.results["success"]:
@@ -759,7 +816,9 @@ class PipelineValidationTest:
                 f.write("✅ **System ready for full-scale deployment**\n\n")
 
                 f.write("### Recommended Next Steps:\n")
-                f.write("1. Configure full-scale parameters (50 generations, 10 levels, 1000 questions)\n")
+                f.write(
+                    "1. Configure full-scale parameters (50 generations, 10 levels, 1000 questions)\n"
+                )
                 f.write("2. Run complete Magi specialization training\n")
                 f.write("3. Deploy specialized Magi agent to AI Village\n")
             else:

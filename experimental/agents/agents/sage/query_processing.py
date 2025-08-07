@@ -29,7 +29,9 @@ class QueryProcessor:
                 self.apply_advanced_reasoning({"content": query}),
                 self.query_rag(query),
             )
-            activated_knowledge, cognitive_context, reasoning_result, rag_result = results
+            activated_knowledge, cognitive_context, reasoning_result, rag_result = (
+                results
+            )
 
             enhanced_query = f"""
             Original Query: {query}
@@ -49,7 +51,9 @@ class QueryProcessor:
             embeddings = self.embedding_model.encode(content)
             entities = self.named_entity_recognizer.recognize(content)
             relations = self.relation_extractor.extract(content)
-            return await self.latent_space_activation.activate(content, embeddings, entities, relations)
+            return await self.latent_space_activation.activate(
+                content, embeddings, entities, relations
+            )
         except Exception as e:
             logger.error(f"Error activating latent space: {e!s}")
             return ""
@@ -66,7 +70,9 @@ class QueryProcessor:
     async def apply_advanced_reasoning(self, task: dict[str, Any]) -> str:
         try:
             chain_of_thought_result = self.chain_of_thought.process(task["content"])
-            tree_of_thoughts_result = await self.tree_of_thoughts.process(task["content"])
+            tree_of_thoughts_result = await self.tree_of_thoughts.process(
+                task["content"]
+            )
 
             combined_reasoning = f"Chain of Thought: {chain_of_thought_result}\n"
             combined_reasoning += f"Tree of Thoughts: {tree_of_thoughts_result}"

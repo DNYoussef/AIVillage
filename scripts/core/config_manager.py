@@ -124,7 +124,9 @@ class ConfigManager:
                         self._deep_merge(config, env_config)
                 logger.debug(f"Loaded environment config from {env_config_file}")
             except Exception as e:
-                logger.warning(f"Failed to load environment config {env_config_file}: {e}")
+                logger.warning(
+                    f"Failed to load environment config {env_config_file}: {e}"
+                )
 
         # Apply environment variable overrides
         config = self._apply_env_overrides(config, config_name)
@@ -143,7 +145,9 @@ class ConfigManager:
         logger.info(f"Successfully loaded configuration: {config_name}")
         return config
 
-    def get_config_value(self, config_name: str, key_path: str, default: Any = None) -> Any:
+    def get_config_value(
+        self, config_name: str, key_path: str, default: Any = None
+    ) -> Any:
         """Get a specific configuration value using dot notation.
 
         Args:
@@ -164,7 +168,9 @@ class ConfigManager:
                 value = value[key]
             return value
         except (KeyError, TypeError):
-            logger.debug(f"Configuration key not found: {key_path}, using default: {default}")
+            logger.debug(
+                f"Configuration key not found: {key_path}, using default: {default}"
+            )
             return default
 
     def set_config_value(self, config_name: str, key_path: str, value: Any) -> None:
@@ -266,7 +272,9 @@ class ConfigManager:
             else:
                 base[key] = value
 
-    def _apply_env_overrides(self, config: dict[str, Any], config_name: str) -> dict[str, Any]:
+    def _apply_env_overrides(
+        self, config: dict[str, Any], config_name: str
+    ) -> dict[str, Any]:
         """Apply environment variable overrides to configuration.
 
         Args:
@@ -296,9 +304,13 @@ class ConfigManager:
                         current = current[key]
                     current[keys[-1]] = converted_value
 
-                    logger.debug(f"Applied environment override: {key_path} = {converted_value}")
+                    logger.debug(
+                        f"Applied environment override: {key_path} = {converted_value}"
+                    )
                 except Exception as e:
-                    logger.warning(f"Failed to apply environment override {env_var}: {e}")
+                    logger.warning(
+                        f"Failed to apply environment override {env_var}: {e}"
+                    )
 
         return config
 
@@ -349,13 +361,16 @@ class ConfigManager:
         # Basic validation rules
         validation_rules = {
             "logging": {
-                "level": lambda x: x in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+                "level": lambda x: x
+                in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
                 "format": lambda x: isinstance(x, str) and len(x) > 0,
             },
             "monitoring": {
                 "interval": lambda x: isinstance(x, (int, float)) and x > 0,
-                "thresholds.cpu_percent_high": lambda x: isinstance(x, (int, float)) and 0 <= x <= 100,
-                "thresholds.memory_percent_high": lambda x: isinstance(x, (int, float)) and 0 <= x <= 100,
+                "thresholds.cpu_percent_high": lambda x: isinstance(x, (int, float))
+                and 0 <= x <= 100,
+                "thresholds.memory_percent_high": lambda x: isinstance(x, (int, float))
+                and 0 <= x <= 100,
             },
             "validation": {
                 "timeout": lambda x: isinstance(x, (int, float)) and x > 0,
@@ -370,7 +385,9 @@ class ConfigManager:
                 try:
                     value = self._get_nested_value(config, key_path)
                     if not validator(value):
-                        raise ConfigurationError(f"Invalid value for {key_path}: {value}")
+                        raise ConfigurationError(
+                            f"Invalid value for {key_path}: {value}"
+                        )
                 except KeyError:
                     # Key is optional if not in config
                     pass

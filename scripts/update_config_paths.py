@@ -48,9 +48,14 @@ def main():
 
     # Walk through all files
     for file_path in root_dir.rglob("*"):
-        if file_path.is_file() and any(str(file_path).endswith(ext) for ext in file_extensions):
+        if file_path.is_file() and any(
+            str(file_path).endswith(ext) for ext in file_extensions
+        ):
             # Skip files in certain directories
-            if any(part in str(file_path) for part in [".git", "__pycache__", "node_modules", ".pytest_cache"]):
+            if any(
+                part in str(file_path)
+                for part in [".git", "__pycache__", "node_modules", ".pytest_cache"]
+            ):
                 continue
 
             if update_file(file_path, patterns):

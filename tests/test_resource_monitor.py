@@ -2,7 +2,12 @@
 
 import time
 
-from src.core.resources.resource_monitor import get_all_metrics, get_cpu_usage, get_memory_usage, get_monitor_instance
+from src.core.resources.resource_monitor import (
+    get_all_metrics,
+    get_cpu_usage,
+    get_memory_usage,
+    get_monitor_instance,
+)
 
 print("=== Testing Individual Metrics ===")
 
@@ -24,7 +29,9 @@ print(f"   Total: {mem['total_gb']:.2f} GB")
 print(f"   Available: {mem['available_gb']:.2f} GB")
 print(f"   Used: {mem['used_gb']:.2f} GB")
 print(f"   Percent: {mem['percent']:.1f}%")
-print(f"   All values are numeric: {all(isinstance(v, (int, float)) for v in mem.values())}")
+print(
+    f"   All values are numeric: {all(isinstance(v, (int, float)) for v in mem.values())}"
+)
 
 # Test disk usage
 print("\n3. Disk Usage:")
@@ -61,7 +68,9 @@ metrics_list = []
 for i in range(5):
     metrics = get_all_metrics()
     metrics_list.append(metrics)
-    print(f"   Run {i+1}: CPU={metrics['cpu_percent']:.1f}%, Memory={metrics['memory']['percent']:.1f}%")
+    print(
+        f"   Run {i+1}: CPU={metrics['cpu_percent']:.1f}%, Memory={metrics['memory']['percent']:.1f}%"
+    )
     time.sleep(1)
 
 # Check if values are changing
@@ -90,6 +99,8 @@ print(f"CPU history length: {len(monitor.cpu_history)}")
 print(f"Memory history length: {len(monitor.memory_history)}")
 print(f"Full metrics history length: {len(monitor.history)}")
 if monitor.cpu_history:
-    print(f"Average CPU over time: {sum(monitor.cpu_history)/len(monitor.cpu_history):.1f}%")
+    print(
+        f"Average CPU over time: {sum(monitor.cpu_history)/len(monitor.cpu_history):.1f}%"
+    )
 
 print("\n✅ Resource Monitor Test Complete!")

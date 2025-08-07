@@ -22,7 +22,11 @@ class ContinuousLearner(BaseAnalytics):
         self.learning_rate = learning_rate
 
     async def update_embeddings(self, task: LangroidTask, result: dict[str, Any]):
-        task_embedding = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(task.content)
+        task_embedding = (
+            self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(
+                task.content
+            )
+        )
         performance = result.get("performance", 0.5)
 
         # Update empathy vector
@@ -31,7 +35,9 @@ class ContinuousLearner(BaseAnalytics):
             self.quality_assurance_layer.eudaimonia_triangulator.empathy_vector,
             performance,
         )
-        self.quality_assurance_layer.eudaimonia_triangulator.empathy_vector += self.learning_rate * empathy_gradient
+        self.quality_assurance_layer.eudaimonia_triangulator.empathy_vector += (
+            self.learning_rate * empathy_gradient
+        )
 
         # Update harmony vector
         harmony_gradient = self.calculate_gradient(
@@ -39,7 +45,9 @@ class ContinuousLearner(BaseAnalytics):
             self.quality_assurance_layer.eudaimonia_triangulator.harmony_vector,
             performance,
         )
-        self.quality_assurance_layer.eudaimonia_triangulator.harmony_vector += self.learning_rate * harmony_gradient
+        self.quality_assurance_layer.eudaimonia_triangulator.harmony_vector += (
+            self.learning_rate * harmony_gradient
+        )
 
         # Update self-awareness vector
         self_awareness_gradient = self.calculate_gradient(
@@ -52,9 +60,15 @@ class ContinuousLearner(BaseAnalytics):
         )
 
         # Update rule embeddings
-        for i, rule_embedding in enumerate(self.quality_assurance_layer.rule_embeddings):
-            rule_gradient = self.calculate_gradient(task_embedding, rule_embedding, performance)
-            self.quality_assurance_layer.rule_embeddings[i] += self.learning_rate * rule_gradient
+        for i, rule_embedding in enumerate(
+            self.quality_assurance_layer.rule_embeddings
+        ):
+            rule_gradient = self.calculate_gradient(
+                task_embedding, rule_embedding, performance
+            )
+            self.quality_assurance_layer.rule_embeddings[i] += (
+                self.learning_rate * rule_gradient
+            )
 
         logger.info(f"Updated embeddings based on task: {task.content[:50]}...")
 
@@ -83,7 +97,9 @@ class ContinuousLearner(BaseAnalytics):
             self.learning_rate *= 0.9  # Decrease learning rate if performing well
         elif recent_performance < 0.6:
             self.learning_rate *= 1.1  # Increase learning rate if performing poorly
-        self.learning_rate = max(0.001, min(0.1, self.learning_rate))  # Keep learning rate within reasonable bounds
+        self.learning_rate = max(
+            0.001, min(0.1, self.learning_rate)
+        )  # Keep learning rate within reasonable bounds
 
         logger.info(f"Adjusted learning rate to {self.learning_rate}")
 

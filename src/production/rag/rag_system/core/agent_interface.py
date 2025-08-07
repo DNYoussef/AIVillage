@@ -12,7 +12,9 @@ class AgentInterface(ABC):
         pass
 
     @abstractmethod
-    async def rerank(self, query: str, results: list[dict[str, Any]], k: int) -> list[dict[str, Any]]:
+    async def rerank(
+        self, query: str, results: list[dict[str, Any]], k: int
+    ) -> list[dict[str, Any]]:
         pass
 
     @abstractmethod

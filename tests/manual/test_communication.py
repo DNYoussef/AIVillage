@@ -2,8 +2,8 @@
 """Test inter-agent communication system."""
 
 import asyncio
-import sys
 from pathlib import Path
+import sys
 
 sys.path.insert(0, str(Path.cwd()))
 
@@ -107,7 +107,10 @@ def test_agent_specialization():
                         "class": agent.__class__.__name__,
                     }
                 else:
-                    specializations[agent_type] = {"role": "no specialization", "class": agent.__class__.__name__}
+                    specializations[agent_type] = {
+                        "role": "no specialization",
+                        "class": agent.__class__.__name__,
+                    }
 
                 print(f"{agent_type}: {specializations[agent_type]}")
 
@@ -154,7 +157,13 @@ def test_kpi_system():
         print(f"Initial KPI: {initial_kpi}")
 
         # Update performance
-        agent.update_performance({"timestamp": "2024-01-01T12:00:00", "success": True, "metrics": {"test_score": 0.8}})
+        agent.update_performance(
+            {
+                "timestamp": "2024-01-01T12:00:00",
+                "success": True,
+                "metrics": {"test_score": 0.8},
+            }
+        )
 
         # Test updated KPI
         updated_kpi = agent.evaluate_kpi()

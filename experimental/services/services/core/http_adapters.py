@@ -75,7 +75,9 @@ class QueryHTTPAdapter(HTTPAdapter):
         super().__init__("QueryService")
         self.query_service = query_service
 
-    async def handle_query_request(self, query_request: dict[str, Any]) -> dict[str, Any]:
+    async def handle_query_request(
+        self, query_request: dict[str, Any]
+    ) -> dict[str, Any]:
         """Convert HTTP query request to service request and process."""
         # Convert HTTP request to service request
         service_request = ServiceQueryRequest(

@@ -91,7 +91,9 @@ def test_compression_stage(model, stage_name, compress_func):
             total_compressed += compressed_size
             successful_layers += 1
 
-            print(f"    {original_size:,} → {compressed_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]")
+            print(
+                f"    {original_size:,} → {compressed_size:,} bytes ({ratio:.1f}x) [{compress_time:.3f}s]"
+            )
 
         except Exception as e:
             print(f"    ❌ Failed: {e}")
@@ -106,8 +108,12 @@ def test_compression_stage(model, stage_name, compress_func):
         print(f"\n{stage_name} Results:")
         print(f"  Layers tested: {layer_count}")
         print(f"  Successful: {successful_layers} ({success_rate:.1f}%)")
-        print(f"  Original: {total_original:,} bytes ({total_original/(1024**2):.1f} MB)")
-        print(f"  Compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)")
+        print(
+            f"  Original: {total_original:,} bytes ({total_original/(1024**2):.1f} MB)"
+        )
+        print(
+            f"  Compressed: {total_compressed:,} bytes ({total_compressed/(1024**2):.1f} MB)"
+        )
         print(f"  Compression ratio: {overall_ratio:.1f}x")
 
         return overall_ratio, total_compressed
@@ -137,7 +143,9 @@ def seedlm_compress(tensor):
 
     # Check compatibility
     if tensor.numel() % compressor.C != 0:
-        raise ValueError(f"Tensor size {tensor.numel()} not divisible by block size {compressor.C}")
+        raise ValueError(
+            f"Tensor size {tensor.numel()} not divisible by block size {compressor.C}"
+        )
 
     compressed = compressor.compress(tensor)
 

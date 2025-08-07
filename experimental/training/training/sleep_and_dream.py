@@ -35,7 +35,9 @@ class CustomQuantizedLinear(nn.Linear):
 
 
 def quantize_activations(x):
-    scale = 127.0 / torch.max(torch.abs(x), dim=-1, keepdim=True).values.clamp_(min=1e-5)
+    scale = 127.0 / torch.max(torch.abs(x), dim=-1, keepdim=True).values.clamp_(
+        min=1e-5
+    )
     return torch.round(torch.clamp(x * scale, -127, 127)) / scale
 
 
@@ -72,7 +74,9 @@ class FrozenAutoencoder(nn.Module):
 class SleepBlock(nn.Module):
     def __init__(self, in_features, out_features, encoder):
         super().__init__()
-        self.chain_block = nn.Sequential(CustomQuantizedLinear(in_features, out_features), nn.ReLU())
+        self.chain_block = nn.Sequential(
+            CustomQuantizedLinear(in_features, out_features), nn.ReLU()
+        )
         self.encoder = encoder
 
     def forward(self, x):
@@ -84,7 +88,9 @@ class SleepBlock(nn.Module):
 class DreamBlock(nn.Module):
     def __init__(self, in_features, out_features, autoencoder):
         super().__init__()
-        self.chain_block = nn.Sequential(CustomQuantizedLinear(in_features, out_features), nn.ReLU())
+        self.chain_block = nn.Sequential(
+            CustomQuantizedLinear(in_features, out_features), nn.ReLU()
+        )
         self.autoencoder = autoencoder
 
     def forward(self, x):
@@ -115,9 +121,13 @@ class SleepNet(nn.Module):
 
         if pretrained:
             if "vit" in model_type:
-                self.pretrained_encoder = AutoModel.from_pretrained(f"google/{model_type}-patch16-224")
+                self.pretrained_encoder = AutoModel.from_pretrained(
+                    f"google/{model_type}-patch16-224"
+                )
             elif "roberta" in model_type:
-                self.pretrained_encoder = AutoModel.from_pretrained(f"roberta-{model_type.split('-')[1]}")
+                self.pretrained_encoder = AutoModel.from_pretrained(
+                    f"roberta-{model_type.split('-')[1]}"
+                )
             else:
                 raise ValueError(f"Unsupported model type: {model_type}")
             if freeze_encoder:
@@ -126,7 +136,10 @@ class SleepNet(nn.Module):
             self.pretrained_encoder = nn.Identity()
 
         self.sleep_blocks = nn.ModuleList(
-            [SleepBlock(input_size, input_size, self.pretrained_encoder) for _ in range(num_sleep_blocks)]
+            [
+                SleepBlock(input_size, input_size, self.pretrained_encoder)
+                for _ in range(num_sleep_blocks)
+            ]
         )
         self.output_layer = CustomQuantizedLinear(input_size, output_size)
 
@@ -153,18 +166,27 @@ class DreamNet(nn.Module):
 
         if pretrained:
             if "mae" in model_type:
-                self.pretrained_autoencoder = AutoModelForMaskedLM.from_pretrained(f"facebook/{model_type}")
+                self.pretrained_autoencoder = AutoModelForMaskedLM.from_pretrained(
+                    f"facebook/{model_type}"
+                )
             elif "xlnet" in model_type:
-                self.pretrained_autoencoder = AutoModelForCausalLM.from_pretrained(f"xlnet-{model_type.split('-')[1]}")
+                self.pretrained_autoencoder = AutoModelForCausalLM.from_pretrained(
+                    f"xlnet-{model_type.split('-')[1]}"
+                )
             else:
                 raise ValueError(f"Unsupported model type: {model_type}")
             if freeze_autoencoder:
-                self.pretrained_autoencoder = FrozenAutoencoder(self.pretrained_autoencoder)
+                self.pretrained_autoencoder = FrozenAutoencoder(
+                    self.pretrained_autoencoder
+                )
         else:
             self.pretrained_autoencoder = nn.Identity()
 
         self.dream_blocks = nn.ModuleList(
-            [DreamBlock(input_size, input_size, self.pretrained_autoencoder) for _ in range(num_dream_blocks)]
+            [
+                DreamBlock(input_size, input_size, self.pretrained_autoencoder)
+                for _ in range(num_dream_blocks)
+            ]
         )
         self.output_layer = CustomQuantizedLinear(input_size, output_size)
 
@@ -187,8 +209,12 @@ class SleepAndDreamTask(Task):
         pretrained: bool = False,
     ):
         super().__init__(agent)
-        self.sleep_net = SleepNet(input_size, output_size, num_sleep_blocks, pretrained=pretrained)
-        self.dream_net = DreamNet(input_size, output_size, num_dream_blocks, pretrained=pretrained)
+        self.sleep_net = SleepNet(
+            input_size, output_size, num_sleep_blocks, pretrained=pretrained
+        )
+        self.dream_net = DreamNet(
+            input_size, output_size, num_dream_blocks, pretrained=pretrained
+        )
 
     async def run(self, input_data: torch.Tensor) -> torch.Tensor:
         sleep_output = self.sleep_net(input_data)

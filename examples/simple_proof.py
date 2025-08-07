@@ -48,7 +48,9 @@ with torch.no_grad():
 
 print(f"   Original output shape: {original_output.shape}")
 print(f"   Compressed output shape: {compressed_output.shape}")
-print(f"   Output difference: {torch.abs(original_output - compressed_output).mean().item():.6f}")
+print(
+    f"   Output difference: {torch.abs(original_output - compressed_output).mean().item():.6f}"
+)
 
 print("\n5. File system test...")
 with tempfile.TemporaryDirectory() as temp_dir:

@@ -127,7 +127,9 @@ class TestVPTQQuantizer:
 
         for method in methods:
             quantizer = VPTQQuantizer(bits_per_vector=2.0, vector_length=4)
-            result = quantizer.quantize_weight_matrix(weight_matrix, hessian_method=method)
+            result = quantizer.quantize_weight_matrix(
+                weight_matrix, hessian_method=method
+            )
             results[method] = result
 
             # Verify all methods produce valid results
@@ -274,7 +276,9 @@ class TestHyperCompressionEncoder:
         weight_matrix = torch.randn(4, 8)
 
         # Test auto trajectory selection
-        compressed_data = encoder.compress_weight_matrix(weight_matrix, trajectory_type="auto")
+        compressed_data = encoder.compress_weight_matrix(
+            weight_matrix, trajectory_type="auto"
+        )
 
         # Verify trajectory types were selected
         assert "trajectory_types_used" in compressed_data
@@ -291,7 +295,9 @@ class TestStage2Compressor:
 
     def test_stage2_compressor_init(self):
         """Test Stage 2 compressor initialization"""
-        compressor = Stage2Compressor(vptq_bits=2.0, vptq_vector_length=16, use_hyperfn=True, hyperfn_clusters=8)
+        compressor = Stage2Compressor(
+            vptq_bits=2.0, vptq_vector_length=16, use_hyperfn=True, hyperfn_clusters=8
+        )
 
         assert compressor.vptq.bits_per_vector == 2.0
         assert compressor.vptq.vector_length == 16
@@ -301,7 +307,9 @@ class TestStage2Compressor:
 
     def test_stage2_compressor_no_hyperfn(self):
         """Test Stage 2 compressor without hyper-function"""
-        compressor = Stage2Compressor(vptq_bits=2.0, vptq_vector_length=16, use_hyperfn=False)
+        compressor = Stage2Compressor(
+            vptq_bits=2.0, vptq_vector_length=16, use_hyperfn=False
+        )
 
         assert compressor.use_hyperfn == False
         assert compressor.hyperfn is None
@@ -371,10 +379,14 @@ class TestStage2Compressor:
         # Verify quantization was applied to 2D tensors
         assert "layer1.weight" in result["compression_stats"]
         assert "layer2.weight" in result["compression_stats"]
-        assert "layer1.bias" not in result["compression_stats"]  # 1D tensor, not quantized
+        assert (
+            "layer1.bias" not in result["compression_stats"]
+        )  # 1D tensor, not quantized
 
         # Verify bias is preserved
-        assert torch.allclose(result["vptq_data"]["layer1.bias"], weights["layer1.bias"])
+        assert torch.allclose(
+            result["vptq_data"]["layer1.bias"], weights["layer1.bias"]
+        )
 
     def test_hyperfn_compression(self):
         """Test hyper-function compression step"""
@@ -406,7 +418,9 @@ class TestStage2Compressor:
         assert "original_codebook_shape" in result["hyperfn_data"]["layer1.weight"]
 
         # Verify bias is preserved
-        assert torch.allclose(result["hyperfn_data"]["layer1.bias"], vptq_data["layer1.bias"])
+        assert torch.allclose(
+            result["hyperfn_data"]["layer1.bias"], vptq_data["layer1.bias"]
+        )
 
     def test_compression_evaluation(self):
         """Test compression evaluation"""
@@ -421,7 +435,9 @@ class TestStage2Compressor:
         compressed_data = {
             "layer1.weight": {"compression_ratio": 5.0, "reconstruction_error": 0.1},
             "layer1.bias": torch.randn(16),
-            "compression_stats": {"layer1.weight": {"compression_ratio": 5.0, "reconstruction_error": 0.1}},
+            "compression_stats": {
+                "layer1.weight": {"compression_ratio": 5.0, "reconstruction_error": 0.1}
+            },
         }
 
         # Evaluate compression
@@ -533,7 +549,9 @@ class TestStage2Integration:
             torch.save(stage1_data, stage1_path)
 
             # Create Stage 2 compressor without hyper-function
-            compressor = Stage2Compressor(vptq_bits=2.0, vptq_vector_length=4, use_hyperfn=False)
+            compressor = Stage2Compressor(
+                vptq_bits=2.0, vptq_vector_length=4, use_hyperfn=False
+            )
 
             # Run Stage 2 pipeline
             try:

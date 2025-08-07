@@ -89,7 +89,9 @@ class AgentForgeDashboard:
                 # Memory usage
                 memory_allocated = torch.cuda.memory_allocated(current_device)
                 memory_cached = torch.cuda.memory_reserved(current_device)
-                memory_total = torch.cuda.get_device_properties(current_device).total_memory
+                memory_total = torch.cuda.get_device_properties(
+                    current_device
+                ).total_memory
 
                 memory_allocated_gb = memory_allocated / (1024**3)
                 memory_cached_gb = memory_cached / (1024**3)
@@ -128,11 +130,15 @@ class AgentForgeDashboard:
 
         try:
             # Check for checkpoint files
-            checkpoint_files = list(self.checkpoint_dir.glob("orchestrator_checkpoint_*.json"))
+            checkpoint_files = list(
+                self.checkpoint_dir.glob("orchestrator_checkpoint_*.json")
+            )
 
             if checkpoint_files:
                 # Get latest checkpoint
-                latest_checkpoint = max(checkpoint_files, key=lambda p: p.stat().st_mtime)
+                latest_checkpoint = max(
+                    checkpoint_files, key=lambda p: p.stat().st_mtime
+                )
 
                 with open(latest_checkpoint) as f:
                     checkpoint_data = json.load(f)
@@ -161,7 +167,9 @@ class AgentForgeDashboard:
                         report_data = json.load(f)
 
                     run_summary = report_data.get("run_summary", {})
-                    if run_summary.get("phases_completed", 0) == run_summary.get("phases_attempted", 0):
+                    if run_summary.get("phases_completed", 0) == run_summary.get(
+                        "phases_attempted", 0
+                    ):
                         status["completed_runs"] += 1
                     elif run_summary.get("phases_failed", 0) > 0:
                         status["failed_runs"] += 1
@@ -191,7 +199,9 @@ class AgentForgeDashboard:
             latest_metrics = {
                 "name": latest_run.name,
                 "state": latest_run.state,
-                "created_at": latest_run.created_at.isoformat() if latest_run.created_at else None,
+                "created_at": (
+                    latest_run.created_at.isoformat() if latest_run.created_at else None
+                ),
                 "duration": latest_run.summary.get("pipeline_duration_seconds", 0),
                 "success_rate": latest_run.summary.get("success_rate", 0),
                 "phases_completed": latest_run.summary.get("phases_completed", 0),
@@ -294,9 +304,13 @@ def main() -> None:
                 # Current Phase Progress
                 if pipeline_status["current_phase"]:
                     st.subheader(f"Current Phase: {pipeline_status['current_phase']}")
-                    progress = len(pipeline_status["phases_completed"]) / 5  # 5 total phases
+                    progress = (
+                        len(pipeline_status["phases_completed"]) / 5
+                    )  # 5 total phases
                     st.progress(progress)
-                    st.write(f"Completed phases: {', '.join(pipeline_status['phases_completed'])}")
+                    st.write(
+                        f"Completed phases: {', '.join(pipeline_status['phases_completed'])}"
+                    )
 
                 # Latest Run Information
                 if pipeline_status["latest_run"]:
@@ -411,7 +425,9 @@ def main() -> None:
                             )
 
                     if "project_url" in wandb_metrics:
-                        st.markdown(f"[View Full W&B Dashboard]({wandb_metrics['project_url']})")
+                        st.markdown(
+                            f"[View Full W&B Dashboard]({wandb_metrics['project_url']})"
+                        )
                 else:
                     st.warning("W&B integration not available")
 

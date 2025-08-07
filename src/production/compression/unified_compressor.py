@@ -25,7 +25,13 @@ from torch import nn
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Import best implementations from agent_forge
-from agent_forge.compression import BITNETCompressor, SEEDLMCompressor, VPTQCompressor, bitnet_compress, seedlm_compress
+from agent_forge.compression import (
+    BITNETCompressor,
+    SEEDLMCompressor,
+    VPTQCompressor,
+    bitnet_compress,
+    seedlm_compress,
+)
 
 # Import production pipeline components
 from .compression_pipeline import CompressionConfig, CompressionPipeline
@@ -149,7 +155,9 @@ class UnifiedCompressor:
             elif selected_strategy == CompressionStrategy.MOBILE:
                 compressed_model = await self._apply_mobile_compression(model)
             elif selected_strategy == CompressionStrategy.ADVANCED:
-                compressed_model = await self._apply_advanced_compression(model, tokenizer)
+                compressed_model = await self._apply_advanced_compression(
+                    model, tokenizer
+                )
             else:
                 msg = f"Unsupported strategy: {selected_strategy}"
                 raise ValueError(msg)
@@ -177,7 +185,9 @@ class UnifiedCompressor:
         benchmark_metrics = None
         model_accuracy = None
         if self.enable_benchmarking:
-            benchmark_metrics = await self._run_benchmarks(model, compressed_model, tokenizer)
+            benchmark_metrics = await self._run_benchmarks(
+                model, compressed_model, tokenizer
+            )
             model_accuracy = benchmark_metrics.get("accuracy_retained", None)
 
         result = CompressionResult(
@@ -191,7 +201,9 @@ class UnifiedCompressor:
             benchmark_metrics=benchmark_metrics,
         )
 
-        logger.info(f"Compression complete: {compression_ratio:.2f}x ratio in {compression_time:.2f}s")
+        logger.info(
+            f"Compression complete: {compression_ratio:.2f}x ratio in {compression_time:.2f}s"
+        )
         return result
 
     async def _apply_simple_compression(self, model: nn.Module) -> nn.Module:
@@ -212,7 +224,9 @@ class UnifiedCompressor:
 
         return compressed
 
-    async def _apply_advanced_compression(self, model: nn.Module, tokenizer: Any) -> nn.Module:
+    async def _apply_advanced_compression(
+        self, model: nn.Module, tokenizer: Any
+    ) -> nn.Module:
         """Apply full 4-stage advanced compression pipeline."""
         logger.info("Applying advanced 4-stage compression...")
 
@@ -241,18 +255,26 @@ class UnifiedCompressor:
                 # Test original model
                 with torch.no_grad():
                     inputs = tokenizer(test_prompt, return_tensors="pt")
-                    original_outputs = original_model.generate(**inputs, max_new_tokens=20)
-                    original_text = tokenizer.decode(original_outputs[0], skip_special_tokens=True)
+                    original_outputs = original_model.generate(
+                        **inputs, max_new_tokens=20
+                    )
+                    original_text = tokenizer.decode(
+                        original_outputs[0], skip_special_tokens=True
+                    )
 
                 # Test compressed model
                 with torch.no_grad():
-                    compressed_outputs = compressed_model.generate(**inputs, max_new_tokens=20)
-                    compressed_text = tokenizer.decode(compressed_outputs[0], skip_special_tokens=True)
+                    compressed_outputs = compressed_model.generate(
+                        **inputs, max_new_tokens=20
+                    )
+                    compressed_text = tokenizer.decode(
+                        compressed_outputs[0], skip_special_tokens=True
+                    )
 
                 # Simple similarity check (could be improved)
-                similarity = len(set(original_text.split()) & set(compressed_text.split())) / len(
-                    set(original_text.split())
-                )
+                similarity = len(
+                    set(original_text.split()) & set(compressed_text.split())
+                ) / len(set(original_text.split()))
                 benchmarks["text_similarity"] = similarity
                 benchmarks["accuracy_retained"] = similarity  # Rough approximation
 
@@ -311,7 +333,9 @@ if __name__ == "__main__":
         default="auto",
         help="Compression strategy",
     )
-    parser.add_argument("--target-mb", type=int, default=100, help="Target size for mobile deployment")
+    parser.add_argument(
+        "--target-mb", type=int, default=100, help="Target size for mobile deployment"
+    )
     parser.add_argument("--no-benchmark", action="store_true", help="Skip benchmarking")
 
     args = parser.parse_args()
@@ -323,7 +347,9 @@ if __name__ == "__main__":
             enable_benchmarking=not args.no_benchmark,
         )
 
-        result = await compressor.compress_model(args.model_path, output_path=args.output)
+        result = await compressor.compress_model(
+            args.model_path, output_path=args.output
+        )
 
         print("Compression Result:")
         print(f"  Original size: {result.original_size_mb:.2f} MB")

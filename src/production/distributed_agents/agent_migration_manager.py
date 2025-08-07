@@ -106,7 +106,9 @@ class AgentMigrationManager:
         self.migration_history: list[MigrationEvent] = []
 
         # Migration queues by priority
-        self.migration_queues: dict[int, list[MigrationRequest]] = {i: [] for i in range(1, 11)}
+        self.migration_queues: dict[int, list[MigrationRequest]] = {
+            i: [] for i in range(1, 11)
+        }
 
         # Agent checkpoints
         self.agent_checkpoints: dict[str, AgentCheckpoint] = {}
@@ -182,7 +184,9 @@ class AgentMigrationManager:
 
         self.stats["migrations_requested"] += 1
 
-        logger.info(f"Migration requested: {agent_instance_id} ({reason.value}) priority {priority}")
+        logger.info(
+            f"Migration requested: {agent_instance_id} ({reason.value}) priority {priority}"
+        )
         return request.request_id
 
     async def _migration_processor(self) -> None:
@@ -190,7 +194,10 @@ class AgentMigrationManager:
         while True:
             try:
                 # Check if we can process more migrations
-                if len(self.active_migrations) >= self.config["max_concurrent_migrations"]:
+                if (
+                    len(self.active_migrations)
+                    >= self.config["max_concurrent_migrations"]
+                ):
                     await asyncio.sleep(5.0)
                     continue
 
@@ -227,7 +234,9 @@ class AgentMigrationManager:
                 target_device_id = await self._find_best_target_device(request)
 
                 if target_device_id is None:
-                    logger.warning(f"No suitable target device found for migration {request.request_id}")
+                    logger.warning(
+                        f"No suitable target device found for migration {request.request_id}"
+                    )
                     return
 
             # Create migration event
@@ -254,13 +263,16 @@ class AgentMigrationManager:
             # Complete migration event
             migration_event.end_time = time.time()
             migration_event.success = success
-            migration_event.migration_duration = migration_event.end_time - migration_event.start_time
+            migration_event.migration_duration = (
+                migration_event.end_time - migration_event.start_time
+            )
 
             # Update statistics
             if success:
                 self.stats["migrations_completed"] += 1
                 self.stats["avg_migration_time"] = (
-                    self.stats["avg_migration_time"] + migration_event.migration_duration
+                    self.stats["avg_migration_time"]
+                    + migration_event.migration_duration
                 ) / 2
             else:
                 self.stats["migrations_failed"] += 1
@@ -270,7 +282,9 @@ class AgentMigrationManager:
             if migration_event.event_id in self.active_migrations:
                 del self.active_migrations[migration_event.event_id]
 
-            logger.info(f"Migration {request.request_id} completed: {'success' if success else 'failed'}")
+            logger.info(
+                f"Migration {request.request_id} completed: {'success' if success else 'failed'}"
+            )
 
         except Exception as e:
             logger.exception(f"Migration processing failed: {e}")
@@ -281,13 +295,20 @@ class AgentMigrationManager:
 
     async def _find_best_target_device(self, request: MigrationRequest) -> str | None:
         """Find best target device for migration."""
-        agent_instance = self.agent_orchestrator.active_agents[request.agent_instance_id]
+        agent_instance = self.agent_orchestrator.active_agents[
+            request.agent_instance_id
+        ]
         agent_spec = agent_instance.agent_spec
 
         # Get available devices
         try:
-            if hasattr(self.agent_orchestrator, "sharding_engine") and self.agent_orchestrator.sharding_engine:
-                device_profiles = await self.agent_orchestrator.sharding_engine._get_device_profiles()
+            if (
+                hasattr(self.agent_orchestrator, "sharding_engine")
+                and self.agent_orchestrator.sharding_engine
+            ):
+                device_profiles = (
+                    await self.agent_orchestrator.sharding_engine._get_device_profiles()
+                )
             else:
                 # Fallback to simple device discovery
                 device_profiles = await self.agent_orchestrator._get_available_devices()
@@ -314,7 +335,9 @@ class AgentMigrationManager:
         best_score = -1.0
 
         for device in candidate_devices:
-            score = self._calculate_migration_suitability_score(device, agent_spec, request.reason)
+            score = self._calculate_migration_suitability_score(
+                device, agent_spec, request.reason
+            )
 
             if score > best_score:
                 best_score = score
@@ -322,7 +345,9 @@ class AgentMigrationManager:
 
         return best_device.device_id if best_device else None
 
-    def _is_device_suitable_for_migration(self, device: DeviceProfile, agent_spec) -> bool:
+    def _is_device_suitable_for_migration(
+        self, device: DeviceProfile, agent_spec
+    ) -> bool:
         """Check if device is suitable for agent migration."""
         # Basic resource requirements
         if device.available_memory_mb < agent_spec.memory_requirement_mb:
@@ -332,7 +357,9 @@ class AgentMigrationManager:
             return False
 
         # Minimum available resources (don't overload target device)
-        memory_utilization = agent_spec.memory_requirement_mb / device.available_memory_mb
+        memory_utilization = (
+            agent_spec.memory_requirement_mb / device.available_memory_mb
+        )
         if memory_utilization > (1.0 - self.config["min_target_device_resources"]):
             return False
 
@@ -375,7 +402,9 @@ class AgentMigrationManager:
 
         return score
 
-    async def _execute_immediate_migration(self, migration_event: MigrationEvent) -> bool:
+    async def _execute_immediate_migration(
+        self, migration_event: MigrationEvent
+    ) -> bool:
         """Execute immediate migration (for emergencies)."""
         logger.info(f"Executing immediate migration {migration_event.event_id}")
 
@@ -391,15 +420,21 @@ class AgentMigrationManager:
             await self._stop_agent(agent_instance_id, migration_event.source_device_id)
 
             # Transfer checkpoint to target device
-            transfer_success = await self._transfer_checkpoint(checkpoint, migration_event.target_device_id)
+            transfer_success = await self._transfer_checkpoint(
+                checkpoint, migration_event.target_device_id
+            )
 
             if not transfer_success:
                 # Rollback - restart agent on source device
-                await self._restart_agent(agent_instance_id, migration_event.source_device_id)
+                await self._restart_agent(
+                    agent_instance_id, migration_event.source_device_id
+                )
                 return False
 
             # Start agent on target device
-            start_success = await self._start_agent_from_checkpoint(checkpoint, migration_event.target_device_id)
+            start_success = await self._start_agent_from_checkpoint(
+                checkpoint, migration_event.target_device_id
+            )
 
             downtime_end = time.time()
             migration_event.downtime_duration = downtime_end - downtime_start
@@ -410,11 +445,15 @@ class AgentMigrationManager:
                 agent_instance.migration_count += 1
 
                 # Update orchestrator state
-                await self._update_orchestrator_state(agent_instance_id, migration_event.target_device_id)
+                await self._update_orchestrator_state(
+                    agent_instance_id, migration_event.target_device_id
+                )
 
                 return True
             # Rollback
-            await self._restart_agent(agent_instance_id, migration_event.source_device_id)
+            await self._restart_agent(
+                agent_instance_id, migration_event.source_device_id
+            )
             return False
 
         except Exception as e:
@@ -422,7 +461,9 @@ class AgentMigrationManager:
             migration_event.error_message = str(e)
             return False
 
-    async def _execute_graceful_migration(self, migration_event: MigrationEvent) -> bool:
+    async def _execute_graceful_migration(
+        self, migration_event: MigrationEvent
+    ) -> bool:
         """Execute graceful migration with minimal disruption."""
         logger.info(f"Executing graceful migration {migration_event.event_id}")
 
@@ -434,13 +475,19 @@ class AgentMigrationManager:
             await self._wait_for_migration_window(agent_instance)
 
             # Pre-warm target device
-            await self._prepare_target_device(migration_event.target_device_id, agent_instance.agent_spec)
+            await self._prepare_target_device(
+                migration_event.target_device_id, agent_instance.agent_spec
+            )
 
             # Create comprehensive checkpoint
-            checkpoint = await self._create_agent_checkpoint(agent_instance, comprehensive=True)
+            checkpoint = await self._create_agent_checkpoint(
+                agent_instance, comprehensive=True
+            )
 
             # Transfer checkpoint while agent is still running
-            transfer_success = await self._transfer_checkpoint(checkpoint, migration_event.target_device_id)
+            transfer_success = await self._transfer_checkpoint(
+                checkpoint, migration_event.target_device_id
+            )
 
             if not transfer_success:
                 return False
@@ -452,7 +499,9 @@ class AgentMigrationManager:
             await self._stop_agent(agent_instance_id, migration_event.source_device_id)
 
             # Start agent on target
-            start_success = await self._start_agent_from_checkpoint(checkpoint, migration_event.target_device_id)
+            start_success = await self._start_agent_from_checkpoint(
+                checkpoint, migration_event.target_device_id
+            )
 
             downtime_end = time.time()
             migration_event.downtime_duration = downtime_end - downtime_start
@@ -461,14 +510,20 @@ class AgentMigrationManager:
                 # Update state
                 agent_instance.device_id = migration_event.target_device_id
                 agent_instance.migration_count += 1
-                await self._update_orchestrator_state(agent_instance_id, migration_event.target_device_id)
+                await self._update_orchestrator_state(
+                    agent_instance_id, migration_event.target_device_id
+                )
 
                 # Cleanup source device
-                await self._cleanup_source_device(migration_event.source_device_id, agent_instance_id)
+                await self._cleanup_source_device(
+                    migration_event.source_device_id, agent_instance_id
+                )
 
                 return True
             # Rollback
-            await self._restart_agent(agent_instance_id, migration_event.source_device_id)
+            await self._restart_agent(
+                agent_instance_id, migration_event.source_device_id
+            )
             return False
 
         except Exception as e:
@@ -476,13 +531,17 @@ class AgentMigrationManager:
             migration_event.error_message = str(e)
             return False
 
-    async def _execute_scheduled_migration(self, migration_event: MigrationEvent) -> bool:
+    async def _execute_scheduled_migration(
+        self, migration_event: MigrationEvent
+    ) -> bool:
         """Execute scheduled migration at optimal time."""
         # For now, execute as graceful migration
         # Future implementation could add scheduling logic
         return await self._execute_graceful_migration(migration_event)
 
-    async def _execute_opportunistic_migration(self, migration_event: MigrationEvent) -> bool:
+    async def _execute_opportunistic_migration(
+        self, migration_event: MigrationEvent
+    ) -> bool:
         """Execute opportunistic migration when conditions are optimal."""
         # Wait for optimal conditions
         max_wait_time = 300.0  # 5 minutes max wait
@@ -533,7 +592,9 @@ class AgentMigrationManager:
         logger.debug(f"Checkpoint created: {checkpoint.size_mb:.2f}MB")
         return checkpoint
 
-    async def _transfer_checkpoint(self, checkpoint: AgentCheckpoint, target_device_id: str) -> bool:
+    async def _transfer_checkpoint(
+        self, checkpoint: AgentCheckpoint, target_device_id: str
+    ) -> bool:
         """Transfer checkpoint to target device."""
         logger.debug(f"Transferring checkpoint to {target_device_id}")
 
@@ -551,7 +612,9 @@ class AgentMigrationManager:
             }
 
             # Send to target device
-            success = await self.p2p_node.send_to_peer(target_device_id, transfer_message)
+            success = await self.p2p_node.send_to_peer(
+                target_device_id, transfer_message
+            )
 
             if success:
                 # Update statistics
@@ -580,9 +643,13 @@ class AgentMigrationManager:
             # Remote stop
             await self.p2p_node.send_to_peer(device_id, stop_message)
 
-    async def _start_agent_from_checkpoint(self, checkpoint: AgentCheckpoint, target_device_id: str) -> bool:
+    async def _start_agent_from_checkpoint(
+        self, checkpoint: AgentCheckpoint, target_device_id: str
+    ) -> bool:
         """Start agent from checkpoint on target device."""
-        logger.debug(f"Starting agent {checkpoint.instance_id} from checkpoint on {target_device_id}")
+        logger.debug(
+            f"Starting agent {checkpoint.instance_id} from checkpoint on {target_device_id}"
+        )
 
         start_message = {
             "type": "START_AGENT_FROM_CHECKPOINT",
@@ -608,7 +675,9 @@ class AgentMigrationManager:
             agent_instance.status = "stopped"
             logger.debug(f"Agent {agent_instance_id} stopped locally")
 
-    async def _start_agent_locally_from_checkpoint(self, checkpoint: AgentCheckpoint) -> bool:
+    async def _start_agent_locally_from_checkpoint(
+        self, checkpoint: AgentCheckpoint
+    ) -> bool:
         """Start agent locally from checkpoint."""
         try:
             # Deserialize state
@@ -616,11 +685,15 @@ class AgentMigrationManager:
 
             # Simulate agent restart with state
             if checkpoint.instance_id in self.agent_orchestrator.active_agents:
-                agent_instance = self.agent_orchestrator.active_agents[checkpoint.instance_id]
+                agent_instance = self.agent_orchestrator.active_agents[
+                    checkpoint.instance_id
+                ]
                 agent_instance.status = "running"
                 agent_instance.device_id = self.p2p_node.node_id
 
-                logger.debug(f"Agent {checkpoint.instance_id} started locally from checkpoint")
+                logger.debug(
+                    f"Agent {checkpoint.instance_id} started locally from checkpoint"
+                )
                 return True
 
             return False
@@ -637,12 +710,16 @@ class AgentMigrationManager:
 
         if device_id == self.p2p_node.node_id:
             if agent_instance_id in self.agent_orchestrator.active_agents:
-                agent_instance = self.agent_orchestrator.active_agents[agent_instance_id]
+                agent_instance = self.agent_orchestrator.active_agents[
+                    agent_instance_id
+                ]
                 agent_instance.status = "running"
         else:
             await self.p2p_node.send_to_peer(device_id, restart_message)
 
-    async def _update_orchestrator_state(self, agent_instance_id: str, new_device_id: str) -> None:
+    async def _update_orchestrator_state(
+        self, agent_instance_id: str, new_device_id: str
+    ) -> None:
         """Update orchestrator state after migration."""
         if agent_instance_id in self.agent_orchestrator.active_agents:
             agent_instance = self.agent_orchestrator.active_agents[agent_instance_id]
@@ -650,18 +727,27 @@ class AgentMigrationManager:
 
             # Update device assignments
             if old_device_id in self.agent_orchestrator.device_agent_assignments:
-                if agent_instance_id in self.agent_orchestrator.device_agent_assignments[old_device_id]:
-                    self.agent_orchestrator.device_agent_assignments[old_device_id].remove(agent_instance_id)
+                if (
+                    agent_instance_id
+                    in self.agent_orchestrator.device_agent_assignments[old_device_id]
+                ):
+                    self.agent_orchestrator.device_agent_assignments[
+                        old_device_id
+                    ].remove(agent_instance_id)
 
             if new_device_id not in self.agent_orchestrator.device_agent_assignments:
                 self.agent_orchestrator.device_agent_assignments[new_device_id] = []
-            self.agent_orchestrator.device_agent_assignments[new_device_id].append(agent_instance_id)
+            self.agent_orchestrator.device_agent_assignments[new_device_id].append(
+                agent_instance_id
+            )
 
             # Update instance
             agent_instance.device_id = new_device_id
             agent_instance.last_heartbeat = time.time()
 
-            logger.info(f"Updated orchestrator state: agent {agent_instance_id} moved to {new_device_id}")
+            logger.info(
+                f"Updated orchestrator state: agent {agent_instance_id} moved to {new_device_id}"
+            )
 
     async def _wait_for_migration_window(self, agent_instance: AgentInstance) -> None:
         """Wait for optimal migration window."""
@@ -681,7 +767,9 @@ class AgentMigrationManager:
         if target_device_id != self.p2p_node.node_id:
             await self.p2p_node.send_to_peer(target_device_id, prep_message)
 
-    async def _cleanup_source_device(self, source_device_id: str, agent_instance_id: str) -> None:
+    async def _cleanup_source_device(
+        self, source_device_id: str, agent_instance_id: str
+    ) -> None:
         """Cleanup source device after successful migration."""
         cleanup_message = {
             "type": "CLEANUP_AFTER_MIGRATION",
@@ -691,7 +779,9 @@ class AgentMigrationManager:
         if source_device_id != self.p2p_node.node_id:
             await self.p2p_node.send_to_peer(source_device_id, cleanup_message)
 
-    async def _are_conditions_optimal_for_migration(self, migration_event: MigrationEvent) -> bool:
+    async def _are_conditions_optimal_for_migration(
+        self, migration_event: MigrationEvent
+    ) -> bool:
         """Check if conditions are optimal for migration."""
         # Simple heuristic - check network load and device availability
         # In real implementation, this would be more sophisticated
@@ -728,8 +818,13 @@ class AgentMigrationManager:
                         continue
 
                     # Check health score
-                    if agent_instance.health_score < self.config["performance_threshold"]:
-                        logger.info(f"Performance degradation detected for agent {instance_id}")
+                    if (
+                        agent_instance.health_score
+                        < self.config["performance_threshold"]
+                    ):
+                        logger.info(
+                            f"Performance degradation detected for agent {instance_id}"
+                        )
                         await self.request_migration(
                             instance_id,
                             MigrationReason.PERFORMANCE_DEGRADATION,
@@ -784,7 +879,9 @@ class AgentMigrationManager:
                         try:
                             await self._create_agent_checkpoint(agent_instance)
                         except Exception as e:
-                            logger.exception(f"Failed to create checkpoint for {instance_id}: {e}")
+                            logger.exception(
+                                f"Failed to create checkpoint for {instance_id}: {e}"
+                            )
 
                 # Cleanup old checkpoints (keep only latest)
                 current_instances = set(self.agent_orchestrator.active_agents.keys())
@@ -805,7 +902,9 @@ class AgentMigrationManager:
             "active_migrations": len(self.active_migrations),
             "completed_migrations": len(self.migration_history),
             "migration_queue_sizes": {
-                priority: len(requests) for priority, requests in self.migration_queues.items() if requests
+                priority: len(requests)
+                for priority, requests in self.migration_queues.items()
+                if requests
             },
             "checkpoints_stored": len(self.agent_checkpoints),
             "statistics": self.stats.copy(),

@@ -35,7 +35,9 @@ def execute_cleanup():
         original_exists = original_path.exists()
 
         # Check file age
-        file_age_days = (datetime.now() - datetime.fromtimestamp(file_path.stat().st_mtime)).days
+        file_age_days = (
+            datetime.now() - datetime.fromtimestamp(file_path.stat().st_mtime)
+        ).days
 
         # Check if it's a safe removal (original exists and backup is old enough)
         safe_to_remove = original_exists and file_age_days > 7
@@ -53,7 +55,9 @@ def execute_cleanup():
                 )
                 cleanup_summary["total_space_freed"] += file_size
             except Exception as e:
-                cleanup_summary["files_skipped"].append({"file": str(file_path), "reason": f"Error removing: {e!s}"})
+                cleanup_summary["files_skipped"].append(
+                    {"file": str(file_path), "reason": f"Error removing: {e!s}"}
+                )
         else:
             reason = []
             if not original_exists:
@@ -61,7 +65,9 @@ def execute_cleanup():
             if file_age_days <= 7:
                 reason.append(f"Backup too recent ({file_age_days} days)")
 
-            cleanup_summary["files_skipped"].append({"file": str(file_path), "reason": ", ".join(reason)})
+            cleanup_summary["files_skipped"].append(
+                {"file": str(file_path), "reason": ", ".join(reason)}
+            )
 
     # Save cleanup summary
     with open("cleanup_summary.json", "w") as f:

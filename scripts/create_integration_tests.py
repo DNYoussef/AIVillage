@@ -35,21 +35,29 @@ class TestMeshNetworking:
         await simulator.create_network()
 
         # Verify network formed
-        assert len(simulator.nodes) == 5, f"Expected 5 nodes, got {len(simulator.nodes)}"
+        assert (
+            len(simulator.nodes) == 5
+        ), f"Expected 5 nodes, got {len(simulator.nodes)}"
 
         # Check connectivity
-        total_connections = sum(len(node.neighbors) for node in simulator.nodes.values())
+        total_connections = sum(
+            len(node.neighbors) for node in simulator.nodes.values()
+        )
         assert total_connections > 0, "No connections found in mesh network"
 
         # Test message propagation
         first_node = next(iter(simulator.nodes.values()))
-        await first_node.send_message(MessageType.DISCOVERY, {"test": "data"}, priority=5)
+        await first_node.send_message(
+            MessageType.DISCOVERY, {"test": "data"}, priority=5
+        )
 
         # Give time for propagation
         await asyncio.sleep(1)
 
         # Check message reached other nodes
-        messages_received = sum(node.stats["messages_received"] for node in simulator.nodes.values())
+        messages_received = sum(
+            node.stats["messages_received"] for node in simulator.nodes.values()
+        )
 
         print(f"  - Network formed with {len(simulator.nodes)} nodes")
         print(f"  - Total connections: {total_connections}")
@@ -78,7 +86,9 @@ class TestMeshNetworking:
 
         # Check network still functioning
         active_nodes = [
-            node for node_id, node in simulator.nodes.items() if node_id != failed_node_id and len(node.neighbors) > 0
+            node
+            for node_id, node in simulator.nodes.items()
+            if node_id != failed_node_id and len(node.neighbors) > 0
         ]
 
         assert len(active_nodes) >= 5, f"Too few active nodes: {len(active_nodes)}"
@@ -100,10 +110,14 @@ class TestFederatedLearning:
         print("Testing federated learning round...")
 
         # Create simple model
-        model = torch.nn.Sequential(torch.nn.Linear(10, 20), torch.nn.ReLU(), torch.nn.Linear(20, 2))
+        model = torch.nn.Sequential(
+            torch.nn.Linear(10, 20), torch.nn.ReLU(), torch.nn.Linear(20, 2)
+        )
 
         # Create server
-        server = FederatedLearningServer(model, aggregation_strategy=AggregationStrategy.FEDAVG, min_clients=2)
+        server = FederatedLearningServer(
+            model, aggregation_strategy=AggregationStrategy.FEDAVG, min_clients=2
+        )
 
         # Register clients
         for i in range(3):
@@ -144,7 +158,9 @@ class TestFederatedLearning:
         # Check round completed
         history = server.get_round_history()
         assert len(history) >= 1, "No rounds in history"
-        assert history[0]["num_clients"] >= 2, f"Expected >= 2 clients, got {history[0]['num_clients']}"
+        assert (
+            history[0]["num_clients"] >= 2
+        ), f"Expected >= 2 clients, got {history[0]['num_clients']}"
 
         print(f"  - Round completed with {history[0]['num_clients']} clients")
         print(f"  - Duration: {history[0]['duration']:.1f}s")
@@ -160,7 +176,9 @@ class TestFederatedLearning:
         y = (x_data.sum(dim=1) > 0).long()
 
         # Create model
-        model = torch.nn.Sequential(torch.nn.Linear(10, 20), torch.nn.ReLU(), torch.nn.Linear(20, 2))
+        model = torch.nn.Sequential(
+            torch.nn.Linear(10, 20), torch.nn.ReLU(), torch.nn.Linear(20, 2)
+        )
 
         # Get initial performance
         with torch.no_grad():
@@ -176,17 +194,23 @@ class TestFederatedLearning:
             # Split data among clients
             start_idx = i * 300
             end_idx = min((i + 1) * 300, len(x_data))
-            client_data = torch.utils.data.TensorDataset(x_data[start_idx:end_idx], y[start_idx:end_idx])
+            client_data = torch.utils.data.TensorDataset(
+                x_data[start_idx:end_idx], y[start_idx:end_idx]
+            )
             dataloader = torch.utils.data.DataLoader(client_data, batch_size=32)
 
             client = FederatedLearningClient(
                 f"client_{i}",
-                torch.nn.Sequential(torch.nn.Linear(10, 20), torch.nn.ReLU(), torch.nn.Linear(20, 2)),
+                torch.nn.Sequential(
+                    torch.nn.Linear(10, 20), torch.nn.ReLU(), torch.nn.Linear(20, 2)
+                ),
                 dataloader,
             )
             clients.append(client)
 
-            server.register_client(f"client_{i}", {"active": True, "battery_level": 0.8})
+            server.register_client(
+                f"client_{i}", {"active": True, "battery_level": 0.8}
+            )
 
         # Run 3 rounds
         for _round_num in range(3):
@@ -210,7 +234,9 @@ class TestFederatedLearning:
         print(f"  - Improvement: {(initial_loss - final_loss):.4f}")
 
         # Verify improvement (or at least no degradation)
-        assert final_loss <= initial_loss + 0.1, f"Model degraded: {final_loss} > {initial_loss + 0.1}"
+        assert (
+            final_loss <= initial_loss + 0.1
+        ), f"Model degraded: {final_loss} > {initial_loss + 0.1}"
 
         return True
 
@@ -235,12 +261,18 @@ class TestEndToEndIntegration:
         fl_clients = []
         for i, _node in enumerate(list(mesh_sim.nodes.values())[1:3]):
             # Mock dataset
-            dataset = torch.utils.data.TensorDataset(torch.randn(50, 10), torch.randint(0, 2, (50,)))
+            dataset = torch.utils.data.TensorDataset(
+                torch.randn(50, 10), torch.randint(0, 2, (50,))
+            )
             dataloader = torch.utils.data.DataLoader(dataset, batch_size=10)
 
-            client = FederatedLearningClient(f"client_{i}", torch.nn.Linear(10, 2), dataloader)
+            client = FederatedLearningClient(
+                f"client_{i}", torch.nn.Linear(10, 2), dataloader
+            )
             fl_clients.append(client)
-            fl_server.register_client(f"client_{i}", {"active": True, "battery_level": 0.8})
+            fl_server.register_client(
+                f"client_{i}", {"active": True, "battery_level": 0.8}
+            )
 
         # Simulate FL round over mesh
         round_config = await fl_server.start_round()
@@ -292,7 +324,9 @@ class TestEndToEndIntegration:
         await mesh_sim.create_network()
 
         # Simulate varying conditions
-        for _i, (node, profile) in enumerate(zip(mesh_sim.nodes.values(), device_profiles, strict=False)):
+        for _i, (node, profile) in enumerate(
+            zip(mesh_sim.nodes.values(), device_profiles, strict=False)
+        ):
             # Adjust node based on profile
             if profile["battery"] < 0.5:
                 # Low battery - reduce activity

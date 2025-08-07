@@ -2,8 +2,8 @@
 """Direct test of agent templates and implementations."""
 
 import json
-import sys
 from pathlib import Path
+import sys
 
 
 def check_agent_templates():
@@ -76,9 +76,14 @@ def check_experimental_implementations():
 
                     # Count imports and classes
                     imports = sum(
-                        1 for line in lines if line.strip().startswith("import") or line.strip().startswith("from")
+                        1
+                        for line in lines
+                        if line.strip().startswith("import")
+                        or line.strip().startswith("from")
                     )
-                    classes = sum(1 for line in lines if line.strip().startswith("class"))
+                    classes = sum(
+                        1 for line in lines if line.strip().startswith("class")
+                    )
 
                     print(f"  Initial imports: {imports}")
                     print(f"  Classes defined: {classes}")
@@ -198,12 +203,16 @@ def main():
         for t in templates:
             print(f"  - {t['id']}: {t['name']}")
 
-    print(f"\nExperimental Implementations: {len([i for i in implementations.values() if i.get('has_file')])}")
+    print(
+        f"\nExperimental Implementations: {len([i for i in implementations.values() if i.get('has_file')])}"
+    )
     for agent, impl in implementations.items():
         status = "HAS FILE" if impl.get("has_file") else "NO FILE"
         print(f"  - {agent}: {status}")
 
-    print(f"\nDirect Imports: {len([i for i in imports.values() if i.get('imported')])}")
+    print(
+        f"\nDirect Imports: {len([i for i in imports.values() if i.get('imported')])}"
+    )
     for class_name, result in imports.items():
         status = "SUCCESS" if result.get("imported") else "FAILED"
         print(f"  - {class_name}: {status}")

@@ -88,7 +88,10 @@ class TestPerformanceBenchmarks:
             with patch("asyncio.start_server") as mock_server:
                 mock_server_obj = Mock()
                 mock_server_obj.sockets = [Mock()]
-                mock_server_obj.sockets[0].getsockname.return_value = ("localhost", 9000)
+                mock_server_obj.sockets[0].getsockname.return_value = (
+                    "localhost",
+                    9000,
+                )
                 mock_server.return_value = mock_server_obj
 
                 start_time = time.time()
@@ -216,7 +219,9 @@ class TestScalabilityTests:
             task_id = f"scale_test_task_{i}"
 
             start_time = time.time()
-            success = manager.register_task(task_id, "lightweight")  # Use lightweight constraints
+            success = manager.register_task(
+                task_id, "lightweight"
+            )  # Use lightweight constraints
             reg_time = time.time() - start_time
 
             registration_times.append(reg_time)
@@ -266,7 +271,11 @@ class TestScalabilityTests:
         # Send messages concurrently
         tasks = []
         for i in range(message_count):
-            message = {"type": "benchmark_message", "id": f"msg_{i}", "data": {"index": i, "timestamp": time.time()}}
+            message = {
+                "type": "benchmark_message",
+                "id": f"msg_{i}",
+                "data": {"index": i, "timestamp": time.time()},
+            }
 
             task = asyncio.create_task(node._handle_message(message, "benchmark_peer"))
             tasks.append(task)
@@ -308,7 +317,9 @@ class TestScalabilityTests:
             snapshot = Mock()
             snapshot.memory_percent = 40.0
             snapshot.cpu_percent = 30.0
-            snapshot.memory_available = int(total_memory * 1024 * 1024 * 1024 * 0.6)  # 60% available
+            snapshot.memory_available = int(
+                total_memory * 1024 * 1024 * 1024 * 0.6
+            )  # 60% available
             snapshot.is_resource_constrained = False
 
             profiler.current_snapshot = snapshot

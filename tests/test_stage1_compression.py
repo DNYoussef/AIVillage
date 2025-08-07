@@ -97,14 +97,20 @@ class TestBitNetQuantization:
     def test_convert_to_bitnet(self):
         """Test conversion of model to BitNet"""
         # Create simple model
-        model = torch.nn.Sequential(torch.nn.Linear(10, 5), torch.nn.ReLU(), torch.nn.Linear(5, 2))
+        model = torch.nn.Sequential(
+            torch.nn.Linear(10, 5), torch.nn.ReLU(), torch.nn.Linear(5, 2)
+        )
 
         # Convert to BitNet
         bitnet_model = convert_to_bitnet(model)
 
         # Check that linear layers were converted
-        linear_layers = [m for m in bitnet_model.modules() if isinstance(m, torch.nn.Linear)]
-        bitnet_layers = [m for m in bitnet_model.modules() if isinstance(m, BitNetLinear)]
+        linear_layers = [
+            m for m in bitnet_model.modules() if isinstance(m, torch.nn.Linear)
+        ]
+        bitnet_layers = [
+            m for m in bitnet_model.modules() if isinstance(m, BitNetLinear)
+        ]
 
         # Should have converted linear layers to BitNet
         assert len(bitnet_layers) >= len(linear_layers)
@@ -173,7 +179,9 @@ class TestStage1Compressor:
 
     def test_stage1_compressor_init(self):
         """Test Stage 1 compressor initialization"""
-        config = Stage1Config(bitnet_enabled=True, seedlm_enabled=True, target_compression_ratio=10.0)
+        config = Stage1Config(
+            bitnet_enabled=True, seedlm_enabled=True, target_compression_ratio=10.0
+        )
 
         compressor = Stage1Compressor(config)
 
@@ -283,7 +291,9 @@ class TestStage1Integration:
             output_path = os.path.join(temp_dir, "compressed_model.stage1.pt")
 
             # Create test model
-            test_model = torch.nn.Sequential(torch.nn.Linear(32, 16), torch.nn.ReLU(), torch.nn.Linear(16, 8))
+            test_model = torch.nn.Sequential(
+                torch.nn.Linear(32, 16), torch.nn.ReLU(), torch.nn.Linear(16, 8)
+            )
 
             # Save test model
             torch.save(
@@ -323,7 +333,9 @@ class TestStage1Integration:
 
                     # Note: Due to metadata overhead, compressed size might be larger
                     # In real scenarios with larger models, compression would be effective
-                    print(f"Original size: {original_size}, Compressed size: {compressed_size}")
+                    print(
+                        f"Original size: {original_size}, Compressed size: {compressed_size}"
+                    )
 
             except Exception as e:
                 pytest.skip(f"End-to-end test skipped due to: {e}")

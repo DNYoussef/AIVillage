@@ -18,7 +18,9 @@ class DummyNode:
         self.use_tls = False
         self.ssl_context = None
 
-    async def send_to_peer(self, peer_id, message) -> None:  # pragma: no cover - placeholder
+    async def send_to_peer(
+        self, peer_id, message
+    ) -> None:  # pragma: no cover - placeholder
         pass
 
 
@@ -83,7 +85,9 @@ def test_discovery_delivery_rate_and_latency() -> None:
     host, port = server_sock.getsockname()
     server_sock.close()
 
-    server_thread = threading.Thread(target=_start_discovery_server, args=(host, port, stop_event), daemon=True)
+    server_thread = threading.Thread(
+        target=_start_discovery_server, args=(host, port, stop_event), daemon=True
+    )
     server_thread.start()
     time.sleep(0.1)
 

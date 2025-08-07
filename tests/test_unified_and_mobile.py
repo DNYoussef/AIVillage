@@ -88,7 +88,13 @@ def test_mobile_compressor_profiles():
         from src.deployment.mobile_compressor import MobileCompressor
 
         # Create test model file
-        test_model = nn.Sequential(nn.Linear(1024, 512), nn.ReLU(), nn.Linear(512, 256), nn.ReLU(), nn.Linear(256, 128))
+        test_model = nn.Sequential(
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+        )
 
         model_path = Path("test_mobile_model.pth")
         torch.save(test_model, model_path)
@@ -137,7 +143,9 @@ def test_mobile_compressor_profiles():
         print(f"Compression scales with device capability: {low_ratio >= high_ratio}")
 
         # All should fit in their target devices
-        all_fit = all(r["compressed_size_mb"] < 1500 for r in results.values())  # Conservative threshold
+        all_fit = all(
+            r["compressed_size_mb"] < 1500 for r in results.values()
+        )  # Conservative threshold
         print(f"All models fit in target devices: {all_fit}")
 
         # Sprint 9 compatibility should be consistent
@@ -178,8 +186,13 @@ def test_fallback_mechanism():
         print(f"Fallback available: {result['fallback_available']}")
 
         # Even with extreme requirements, should work (either advanced or fallback to simple)
-        assert result["method"] in ["simple", "advanced"], f"Unexpected method: {result['method']}"
-        assert result["fallback_available"] == True, "Fallback should always be available"
+        assert result["method"] in [
+            "simple",
+            "advanced",
+        ], f"Unexpected method: {result['method']}"
+        assert (
+            result["fallback_available"] == True
+        ), "Fallback should always be available"
 
         print("PASS: Fallback mechanism WORKING")
         return True
@@ -236,7 +249,9 @@ def main():
         print("FAIL: Fallback mechanism issues")
 
     print("\nSystem Integration Status:")
-    print(f"  Intelligent method selection: {'Working' if unified_success else 'Failed'}")
+    print(
+        f"  Intelligent method selection: {'Working' if unified_success else 'Failed'}"
+    )
     print(f"  Mobile device compatibility: {'Working' if mobile_success else 'Failed'}")
     print(f"  Graceful error handling: {'Working' if fallback_success else 'Failed'}")
     print(f"  Production ready: {'YES' if success else 'NO'}")

@@ -25,7 +25,13 @@ def test_optimized_compression_simulation():
     from src.agent_forge.compression.vptq import VPTQCompressor
 
     # Create test model
-    model = nn.Sequential(nn.Linear(1024, 512), nn.ReLU(), nn.Linear(512, 256), nn.ReLU(), nn.Linear(256, 128))
+    model = nn.Sequential(
+        nn.Linear(1024, 512),
+        nn.ReLU(),
+        nn.Linear(512, 256),
+        nn.ReLU(),
+        nn.Linear(256, 128),
+    )
 
     param_count = sum(p.numel() for p in model.parameters())
     original_size = param_count * 4
@@ -99,7 +105,9 @@ def test_optimized_compression_simulation():
         s3_size = len(s3_bytes)
         s4_size = len(s4_bytes)
 
-        print(f"    Stage 1 (BitNet): {original_param_size/s1_size:.1f}x ({s1_time:.3f}s)")
+        print(
+            f"    Stage 1 (BitNet): {original_param_size/s1_size:.1f}x ({s1_time:.3f}s)"
+        )
         print(f"    Stage 2 (SeedLM): {s1_size/s2_size:.1f}x ({s2_time:.3f}s)")
         print(f"    Stage 3 (VPTQ): {s2_size/s3_size:.1f}x ({s3_time:.3f}s)")
         print(
@@ -162,7 +170,9 @@ def test_optimized_packing():
 
     print("Packing Comparison:")
     print(f"  Old method (pickle): {old_size:,} bytes")
-    print(f"  New binary packing: {new_size:,} bytes ({old_size/new_size:.1f}x smaller)")
+    print(
+        f"  New binary packing: {new_size:,} bytes ({old_size/new_size:.1f}x smaller)"
+    )
     print(f"  With LZMA: {lzma_size:,} bytes ({new_size/lzma_size:.1f}x additional)")
     print(f"  Total improvement: {old_size/lzma_size:.1f}x vs pickle")
 
@@ -185,7 +195,11 @@ def simulate_full_optimized_pipeline():
     original_total = sum(
         p.numel() * 4
         for p in nn.Sequential(
-            nn.Linear(1024, 512), nn.ReLU(), nn.Linear(512, 256), nn.ReLU(), nn.Linear(256, 128)
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
         ).parameters()
     )
 
@@ -220,7 +234,9 @@ def simulate_full_optimized_pipeline():
     print("\nEfficiency Analysis:")
     print(f"  Previous efficiency: {previous_efficiency:.1f}%")
     print(f"  New efficiency: {efficiency:.1f}%")
-    print(f"  Efficiency improvement: +{efficiency - previous_efficiency:.1f} percentage points")
+    print(
+        f"  Efficiency improvement: +{efficiency - previous_efficiency:.1f} percentage points"
+    )
 
     return final_ratio, efficiency
 

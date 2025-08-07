@@ -2,8 +2,8 @@
 """Test script to evaluate agent capabilities and inter-agent communication."""
 
 import asyncio
-import sys
 from pathlib import Path
+import sys
 
 # Add the current directory to Python path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -91,7 +91,13 @@ def test_agent_basic_functionality():
                 print(f"  KPI evaluation: {kpi_result}")
 
                 # Test performance update
-                agent.update_performance({"timestamp": "2025-01-01T12:00:00", "success": True, "metrics": {"test": 1}})
+                agent.update_performance(
+                    {
+                        "timestamp": "2025-01-01T12:00:00",
+                        "success": True,
+                        "metrics": {"test": 1},
+                    }
+                )
                 print(f"  Performance history length: {len(agent.performance_history)}")
 
             except Exception as e:
@@ -190,7 +196,11 @@ def main():
     print("\nDetailed Agent Analysis:")
     for agent_id, result in creation_results.items():
         if result.get("created"):
-            status = "✓ REAL IMPLEMENTATION" if result.get("agent_class") != "GenericAgent" else "○ GENERIC STUB"
+            status = (
+                "✓ REAL IMPLEMENTATION"
+                if result.get("agent_class") != "GenericAgent"
+                else "○ GENERIC STUB"
+            )
             print(f"  {agent_id}: {status} ({result.get('agent_class', 'Unknown')})")
         else:
             print(f"  {agent_id}: ✗ FAILED - {result.get('error', 'Unknown error')}")

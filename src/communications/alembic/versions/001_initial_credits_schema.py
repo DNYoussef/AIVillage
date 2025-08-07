@@ -61,9 +61,15 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["to_user_id"], ["users.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("idx_transaction_created", "transactions", ["created_at"], unique=False)
-    op.create_index("idx_transaction_from_user", "transactions", ["from_user_id"], unique=False)
-    op.create_index("idx_transaction_to_user", "transactions", ["to_user_id"], unique=False)
+    op.create_index(
+        "idx_transaction_created", "transactions", ["created_at"], unique=False
+    )
+    op.create_index(
+        "idx_transaction_from_user", "transactions", ["from_user_id"], unique=False
+    )
+    op.create_index(
+        "idx_transaction_to_user", "transactions", ["to_user_id"], unique=False
+    )
 
     # Create earnings table
     op.create_table(
@@ -80,7 +86,9 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("user_id", "scrape_timestamp", name="unique_user_scrape"),
     )
-    op.create_index("idx_earning_scrape", "earnings", ["scrape_timestamp"], unique=False)
+    op.create_index(
+        "idx_earning_scrape", "earnings", ["scrape_timestamp"], unique=False
+    )
     op.create_index("idx_earning_user", "earnings", ["user_id"], unique=False)
 
 

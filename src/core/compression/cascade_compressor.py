@@ -26,7 +26,9 @@ class CascadeCompressor:
         return metadata + entropy_data
 
     # ------------------------------------------------------------------
-    def quantize_cascade(self, weights: torch.Tensor) -> tuple[torch.Tensor, dict[str, Any]]:
+    def quantize_cascade(
+        self, weights: torch.Tensor
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
         levels = 8
         scale = torch.quantile(weights.abs(), 0.99)
         normalised = weights / (scale or 1.0)

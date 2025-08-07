@@ -1,7 +1,9 @@
 from types import SimpleNamespace
 import unittest
 
-from rag_system.processing.self_referential_query_processor import SelfReferentialQueryProcessor
+from rag_system.processing.self_referential_query_processor import (
+    SelfReferentialQueryProcessor,
+)
 
 
 class DummyCountStore:

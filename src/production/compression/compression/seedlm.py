@@ -66,7 +66,9 @@ class MultiScaleLFSRGenerator:
         self.tap_configs = tap_configs
         self.lfsr_generators = {}
 
-    def generate_basis(self, rows: int, cols: int, scale_index: int = 0) -> torch.Tensor:
+    def generate_basis(
+        self, rows: int, cols: int, scale_index: int = 0
+    ) -> torch.Tensor:
         """Generate orthogonal basis matrix at specified scale."""
         key = (rows, cols, scale_index)
         if key not in self.lfsr_generators:
@@ -210,13 +212,17 @@ class ProgressiveSeedLMEncoder:
             block_size = self.block_analyzer.determine_block_size(weight)
 
             # Progressive compression
-            compressed_data = self._progressive_encode(weight, compression_level, block_size)
+            compressed_data = self._progressive_encode(
+                weight, compression_level, block_size
+            )
 
             # Add metadata
             compressed_data["metadata"] = {
                 "original_shape": list(weight.shape),
                 "original_dtype": str(weight.dtype),
-                "requires_grad": weight.requires_grad if hasattr(weight, "requires_grad") else False,
+                "requires_grad": (
+                    weight.requires_grad if hasattr(weight, "requires_grad") else False
+                ),
                 "compression_level": compression_level,
                 "block_size": block_size,
                 "algorithm_version": "2.0",
@@ -247,7 +253,9 @@ class ProgressiveSeedLMEncoder:
             msg = f"Compression failed: {e!s}"
             raise SeedLMCompressionError(msg) from e
 
-    def decode(self, compressed_data: dict[str, Any], verify: bool = False) -> torch.Tensor:
+    def decode(
+        self, compressed_data: dict[str, Any], verify: bool = False
+    ) -> torch.Tensor:
         """Decode compressed data back to tensor."""
         try:
             # Input validation
@@ -270,7 +278,9 @@ class ProgressiveSeedLMEncoder:
             # Restore tensor properties
             metadata = compressed_data["metadata"]
             original_shape = tuple(metadata["original_shape"])
-            original_dtype = getattr(torch, metadata["original_dtype"].replace("torch.", ""))
+            original_dtype = getattr(
+                torch, metadata["original_dtype"].replace("torch.", "")
+            )
 
             reconstructed = reconstructed.reshape(original_shape).to(original_dtype)
 
@@ -338,7 +348,9 @@ class ProgressiveSeedLMEncoder:
             },
         }
 
-    def decode_progressive(self, compressed_data: dict[str, Any], num_layers: int | None = None) -> torch.Tensor:
+    def decode_progressive(
+        self, compressed_data: dict[str, Any], num_layers: int | None = None
+    ) -> torch.Tensor:
         """Decode progressive compression with configurable quality."""
         # Decode base layer
         reconstruction = self.decode(compressed_data["base_layer"])
@@ -355,7 +367,9 @@ class ProgressiveSeedLMEncoder:
 
         return reconstruction
 
-    def get_streaming_data(self, compressed_data: dict[str, Any], max_bytes: int) -> dict[str, Any]:
+    def get_streaming_data(
+        self, compressed_data: dict[str, Any], max_bytes: int
+    ) -> dict[str, Any]:
         """Get compressed data within bandwidth limit."""
         if not compressed_data.get("metadata", {}).get("progressive"):
             # Non-progressive data - return as-is if within limit
@@ -385,14 +399,20 @@ class ProgressiveSeedLMEncoder:
 
         return result
 
-    def _progressive_encode(self, weight: torch.Tensor, compression_level: float, block_size: int) -> dict[str, Any]:
+    def _progressive_encode(
+        self, weight: torch.Tensor, compression_level: float, block_size: int
+    ) -> dict[str, Any]:
         """Internal progressive encoding logic."""
         # Select compression parameters based on level
         level_idx = int(compression_level * (len(self.config.compression_levels) - 1))
         level_idx = max(0, min(level_idx, len(self.config.compression_levels) - 1))
 
-        target_block_size = self.config.block_sizes[min(level_idx, len(self.config.block_sizes) - 1)]
-        target_latent_dim = self.config.latent_dims[min(level_idx, len(self.config.latent_dims) - 1)]
+        target_block_size = self.config.block_sizes[
+            min(level_idx, len(self.config.block_sizes) - 1)
+        ]
+        target_latent_dim = self.config.latent_dims[
+            min(level_idx, len(self.config.latent_dims) - 1)
+        ]
 
         # Use adaptive block size if it's smaller (more precise)
         actual_block_size = min(block_size, target_block_size)
@@ -418,7 +438,9 @@ class ProgressiveSeedLMEncoder:
         # Reconstruct using SeedLMCompressor
         # We need to infer latent_dim from the compressed data structure
         sample_block = (
-            compressed_data["data"]["compressed_blocks"][0] if compressed_data["data"]["compressed_blocks"] else None
+            compressed_data["data"]["compressed_blocks"][0]
+            if compressed_data["data"]["compressed_blocks"]
+            else None
         )
         latent_dim = len(sample_block["coeff"]) if sample_block else 4
 
@@ -430,7 +452,9 @@ class ProgressiveSeedLMEncoder:
 
         return compressor.decompress_weight_matrix(compressed_data["data"])
 
-    def _create_empty_compressed_data(self, weight: torch.Tensor, metadata: dict | None) -> dict[str, Any]:
+    def _create_empty_compressed_data(
+        self, weight: torch.Tensor, metadata: dict | None
+    ) -> dict[str, Any]:
         """Create compressed data for empty tensors."""
         return {
             "data": {
@@ -441,7 +465,9 @@ class ProgressiveSeedLMEncoder:
             "metadata": {
                 "original_shape": list(weight.shape),
                 "original_dtype": str(weight.dtype),
-                "requires_grad": weight.requires_grad if hasattr(weight, "requires_grad") else False,
+                "requires_grad": (
+                    weight.requires_grad if hasattr(weight, "requires_grad") else False
+                ),
                 "compression_level": 0.0,
                 "block_size": 4,
                 "algorithm_version": "2.0",
@@ -460,18 +486,24 @@ class ProgressiveSeedLMEncoder:
 class SeedLMCompressor:
     """Legacy SeedLM compressor with enhanced capabilities."""
 
-    def __init__(self, block_size: int = 8, latent_dim: int = 4, num_seeds: int = 256) -> None:
+    def __init__(
+        self, block_size: int = 8, latent_dim: int = 4, num_seeds: int = 256
+    ) -> None:
         self.block_size = block_size
         self.latent_dim = latent_dim
         self.num_seeds = num_seeds
-        self.multi_scale_generator = MultiScaleLFSRGenerator(seeds=[12345], tap_configs=[[16, 14, 13, 11]])
+        self.multi_scale_generator = MultiScaleLFSRGenerator(
+            seeds=[12345], tap_configs=[[16, 14, 13, 11]]
+        )
 
     def encode(self, weight_matrix: torch.Tensor) -> torch.Tensor:
         """Legacy encode method for backward compatibility."""
         compressed_data = self.compress_weight_matrix(weight_matrix)
         return self._pack_compressed_data(compressed_data)
 
-    def decode(self, packed_tensor: torch.Tensor, original_shape: tuple[int, ...]) -> torch.Tensor:
+    def decode(
+        self, packed_tensor: torch.Tensor, original_shape: tuple[int, ...]
+    ) -> torch.Tensor:
         """Legacy decode method for backward compatibility."""
         blocks = self._unpack_compressed_data(packed_tensor)
         compressed_data = {
@@ -523,7 +555,9 @@ class SeedLMCompressor:
             else:
                 blocks.append(coeff[: self.block_size])
 
-        flat = torch.cat(blocks)[: int(torch.prod(torch.tensor(data["original_shape"])))]
+        flat = torch.cat(blocks)[
+            : int(torch.prod(torch.tensor(data["original_shape"])))
+        ]
         return flat.reshape(data["original_shape"])
 
     def _create_blocks(self, flat: torch.Tensor) -> list[torch.Tensor]:

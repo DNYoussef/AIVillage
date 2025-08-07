@@ -29,7 +29,9 @@ logger = logging.getLogger(__name__)
 class EvolutionDashboard:
     """Real-time dashboard for monitoring agent evolution."""
 
-    def __init__(self, evolution_engine: AgentEvolutionEngine, port: int = 5000) -> None:
+    def __init__(
+        self, evolution_engine: AgentEvolutionEngine, port: int = 5000
+    ) -> None:
         self.evolution_engine = evolution_engine
         self.port = port
         self.app = Flask(__name__)
@@ -103,17 +105,35 @@ class EvolutionDashboard:
                 generations = request.json.get("generations", 1)
 
                 # Validate generations parameter
-                if not isinstance(generations, int) or generations < 1 or generations > 100:
-                    return jsonify({"error": "Invalid generations parameter. Must be integer between 1 and 100"}), 400
+                if (
+                    not isinstance(generations, int)
+                    or generations < 1
+                    or generations > 100
+                ):
+                    return (
+                        jsonify(
+                            {
+                                "error": "Invalid generations parameter. Must be integer between 1 and 100"
+                            }
+                        ),
+                        400,
+                    )
 
                 # Check if evolution engine is available
                 if not self.evolution_engine:
                     return jsonify({"error": "Evolution engine not initialized"}), 500
 
                 # Check if evolution is already running
-                if hasattr(self.evolution_engine, "is_running") and self.evolution_engine.is_running:
+                if (
+                    hasattr(self.evolution_engine, "is_running")
+                    and self.evolution_engine.is_running
+                ):
                     return (
-                        jsonify({"error": "Evolution is already running. Please wait for current cycle to complete."}),
+                        jsonify(
+                            {
+                                "error": "Evolution is already running. Please wait for current cycle to complete."
+                            }
+                        ),
                         409,
                     )
 
@@ -124,7 +144,11 @@ class EvolutionDashboard:
 
                     if total_agents == 0:
                         return (
-                            jsonify({"error": "No agents available for evolution. Initialize population first."}),
+                            jsonify(
+                                {
+                                    "error": "No agents available for evolution. Initialize population first."
+                                }
+                            ),
                             400,
                         )
 
@@ -138,17 +162,25 @@ class EvolutionDashboard:
 
                 try:
                     results = await asyncio.wait_for(
-                        self.evolution_engine.run_evolution_cycle(generations=generations),
+                        self.evolution_engine.run_evolution_cycle(
+                            generations=generations
+                        ),
                         timeout=300.0,  # 5 minute timeout
                     )
                 except asyncio.TimeoutError:
-                    return jsonify({"error": "Evolution cycle timed out after 5 minutes"}), 408
+                    return (
+                        jsonify({"error": "Evolution cycle timed out after 5 minutes"}),
+                        408,
+                    )
 
                 duration = time.time() - start_time
 
                 # Validate results structure
                 if not isinstance(results, dict):
-                    return jsonify({"error": "Evolution cycle returned invalid results"}), 400
+                    return (
+                        jsonify({"error": "Evolution cycle returned invalid results"}),
+                        400,
+                    )
 
                 expected_fields = {
                     "initial_population": int,
@@ -160,11 +192,21 @@ class EvolutionDashboard:
 
                 missing = [f for f in expected_fields if f not in results]
                 if missing:
-                    return jsonify({"error": f"Evolution results missing fields: {', '.join(missing)}"}), 400
+                    return (
+                        jsonify(
+                            {
+                                "error": f"Evolution results missing fields: {', '.join(missing)}"
+                            }
+                        ),
+                        400,
+                    )
 
                 for field, field_type in expected_fields.items():
                     if not isinstance(results[field], field_type):
-                        return jsonify({"error": f"Invalid type for field '{field}'"}), 400
+                        return (
+                            jsonify({"error": f"Invalid type for field '{field}'"}),
+                            400,
+                        )
 
                 generations_run = results["generations_run"]
                 histories = [
@@ -172,13 +214,31 @@ class EvolutionDashboard:
                     results["diversity_history"],
                     results["specialization_distribution"],
                 ]
-                if generations_run < 1 or any(len(hist) != generations_run for hist in histories):
-                    return jsonify({"error": "Evolution results inconsistent with generations run"}), 400
+                if generations_run < 1 or any(
+                    len(hist) != generations_run for hist in histories
+                ):
+                    return (
+                        jsonify(
+                            {
+                                "error": "Evolution results inconsistent with generations run"
+                            }
+                        ),
+                        400,
+                    )
 
                 if results.get("status") == "failed":
-                    return jsonify({"error": f"Evolution failed: {results.get('error', 'Unknown error')}"}), 500
+                    return (
+                        jsonify(
+                            {
+                                "error": f"Evolution failed: {results.get('error', 'Unknown error')}"
+                            }
+                        ),
+                        500,
+                    )
 
-                logger.info(f"Evolution cycle completed successfully in {duration:.2f}s")
+                logger.info(
+                    f"Evolution cycle completed successfully in {duration:.2f}s"
+                )
 
                 return jsonify(
                     {
@@ -195,13 +255,20 @@ class EvolutionDashboard:
                 import traceback
 
                 logger.exception(traceback.format_exc())
-                return jsonify({"error": f"Evolution failed: {e!s}", "type": type(e).__name__}), 500
+                return (
+                    jsonify(
+                        {"error": f"Evolution failed: {e!s}", "type": type(e).__name__}
+                    ),
+                    500,
+                )
 
         @self.app.route("/api/emergency_rollback", methods=["POST"])
         async def emergency_rollback():
             try:
                 generations_back = request.json.get("generations_back", 1)
-                success = await self.evolution_engine.emergency_rollback(generations_back)
+                success = await self.evolution_engine.emergency_rollback(
+                    generations_back
+                )
                 return jsonify({"success": success})
             except Exception as e:
                 logger.exception(f"Failed to rollback: {e}")
@@ -215,7 +282,9 @@ class EvolutionDashboard:
         dashboard_data = await self.evolution_engine.get_evolution_dashboard_data()
 
         status = {
-            "current_generation": dashboard_data["population_stats"]["current_generation"],
+            "current_generation": dashboard_data["population_stats"][
+                "current_generation"
+            ],
             "total_agents": dashboard_data["population_stats"]["total_agents"],
             "avg_fitness": dashboard_data["population_stats"]["avg_fitness"],
             "max_fitness": dashboard_data["population_stats"]["max_fitness"],
@@ -242,7 +311,9 @@ class EvolutionDashboard:
         sorted_agents = sorted(fitness_scores.items(), key=lambda x: x[1], reverse=True)
 
         # Create visualization data
-        agent_names = [agent_id.split("_")[-1] for agent_id, _ in sorted_agents]  # Extract specialization
+        agent_names = [
+            agent_id.split("_")[-1] for agent_id, _ in sorted_agents
+        ]  # Extract specialization
         fitness_values = [fitness for _, fitness in sorted_agents]
 
         # Create Plotly bar chart
@@ -296,13 +367,17 @@ class EvolutionDashboard:
             "chart": chart_json,
             "distribution": spec_dist,
             "total_specializations": len(spec_dist),
-            "most_common": max(spec_dist.items(), key=lambda x: x[1]) if spec_dist else None,
+            "most_common": (
+                max(spec_dist.items(), key=lambda x: x[1]) if spec_dist else None
+            ),
         }
 
         self.cached_data["specialization_distribution"] = data
         return data
 
-    async def get_performance_trends(self, agent_id: str | None = None) -> dict[str, Any]:
+    async def get_performance_trends(
+        self, agent_id: str | None = None
+    ) -> dict[str, Any]:
         """Get performance trends for agents."""
         cache_key = f"performance_trends_{agent_id or 'all'}"
         if self._is_cache_valid(cache_key):
@@ -340,7 +415,10 @@ class EvolutionDashboard:
             data = {
                 "chart": chart_json,
                 "agent_id": agent_id,
-                "latest_scores": {metric: values[-1] if values else 0 for metric, values in trends.items()},
+                "latest_scores": {
+                    metric: values[-1] if values else 0
+                    for metric, values in trends.items()
+                },
             }
 
         else:
@@ -387,7 +465,11 @@ class EvolutionDashboard:
 
         # Load historical diversity data
         diversity_history = []
-        generation_files = list(self.evolution_engine.evolution_data_path.glob("evolution_results_gen_*.json"))
+        generation_files = list(
+            self.evolution_engine.evolution_data_path.glob(
+                "evolution_results_gen_*.json"
+            )
+        )
 
         for file_path in sorted(generation_files):
             try:
@@ -431,7 +513,8 @@ class EvolutionDashboard:
             "current_diversity": current_div_score,
             "diversity_trend": (
                 "increasing"
-                if len(diversity_history) > 1 and diversity_history[-1] > diversity_history[-2]
+                if len(diversity_history) > 1
+                and diversity_history[-1] > diversity_history[-2]
                 else "decreasing"
             ),
             "avg_diversity": np.mean(diversity_history),
@@ -451,7 +534,11 @@ class EvolutionDashboard:
     def _get_last_evolution_time(self) -> str | None:
         """Get timestamp of last evolution run."""
         try:
-            evolution_files = list(self.evolution_engine.evolution_data_path.glob("evolution_results_gen_*.json"))
+            evolution_files = list(
+                self.evolution_engine.evolution_data_path.glob(
+                    "evolution_results_gen_*.json"
+                )
+            )
             if not evolution_files:
                 return None
 
@@ -480,8 +567,12 @@ class PerformanceAnalyzer:
         fitness_scores = dashboard_data["fitness_scores"]
         performance_analysis = {
             "top_performers": self._get_top_performers(fitness_scores),
-            "performance_distribution": self._analyze_performance_distribution(fitness_scores),
-            "improvement_opportunities": self._identify_improvement_opportunities(fitness_scores),
+            "performance_distribution": self._analyze_performance_distribution(
+                fitness_scores
+            ),
+            "improvement_opportunities": self._identify_improvement_opportunities(
+                fitness_scores
+            ),
         }
 
         # Specialization analysis
@@ -501,12 +592,16 @@ class PerformanceAnalyzer:
             "performance_analysis": performance_analysis,
             "specialization_analysis": specialization_analysis,
             "evolution_trends": evolution_trends,
-            "recommendations": self._generate_recommendations(performance_analysis, specialization_analysis),
+            "recommendations": self._generate_recommendations(
+                performance_analysis, specialization_analysis
+            ),
         }
 
         return report
 
-    def _get_top_performers(self, fitness_scores: dict[str, float], top_n: int = 5) -> list[dict[str, Any]]:
+    def _get_top_performers(
+        self, fitness_scores: dict[str, float], top_n: int = 5
+    ) -> list[dict[str, Any]]:
         """Get top performing agents."""
         sorted_agents = sorted(fitness_scores.items(), key=lambda x: x[1], reverse=True)
 
@@ -517,13 +612,17 @@ class PerformanceAnalyzer:
                     "rank": i + 1,
                     "agent_id": agent_id,
                     "fitness": fitness,
-                    "specialization": agent_id.split("_")[-1] if "_" in agent_id else "unknown",
+                    "specialization": (
+                        agent_id.split("_")[-1] if "_" in agent_id else "unknown"
+                    ),
                 }
             )
 
         return top_performers
 
-    def _analyze_performance_distribution(self, fitness_scores: dict[str, float]) -> dict[str, float]:
+    def _analyze_performance_distribution(
+        self, fitness_scores: dict[str, float]
+    ) -> dict[str, float]:
         """Analyze distribution of performance scores."""
         scores = list(fitness_scores.values())
 
@@ -540,7 +639,9 @@ class PerformanceAnalyzer:
             "q75": np.percentile(scores, 75),
         }
 
-    def _identify_improvement_opportunities(self, fitness_scores: dict[str, float]) -> list[dict[str, Any]]:
+    def _identify_improvement_opportunities(
+        self, fitness_scores: dict[str, float]
+    ) -> list[dict[str, Any]]:
         """Identify agents with improvement opportunities."""
         sorted_agents = sorted(fitness_scores.items(), key=lambda x: x[1])
         bottom_quartile = len(sorted_agents) // 4
@@ -561,7 +662,9 @@ class PerformanceAnalyzer:
 
         return opportunities
 
-    def _analyze_specialization_balance(self, spec_dist: dict[str, int]) -> dict[str, Any]:
+    def _analyze_specialization_balance(
+        self, spec_dist: dict[str, int]
+    ) -> dict[str, Any]:
         """Analyze balance of specializations."""
         total_agents = sum(spec_dist.values())
 
@@ -579,10 +682,17 @@ class PerformanceAnalyzer:
         return {
             "total_specializations": len(spec_dist),
             "ideal_per_specialization": ideal_per_spec,
-            "most_overrepresented": max(imbalances, key=imbalances.get) if imbalances else None,
-            "most_underrepresented": min(spec_dist, key=spec_dist.get) if spec_dist else None,
+            "most_overrepresented": (
+                max(imbalances, key=imbalances.get) if imbalances else None
+            ),
+            "most_underrepresented": (
+                min(spec_dist, key=spec_dist.get) if spec_dist else None
+            ),
             "balance_score": (
-                1.0 - (np.std(list(spec_dist.values())) / np.mean(list(spec_dist.values()))) if spec_dist else 0.0
+                1.0
+                - (np.std(list(spec_dist.values())) / np.mean(list(spec_dist.values())))
+                if spec_dist
+                else 0.0
             ),
         }
 
@@ -624,7 +734,11 @@ class PerformanceAnalyzer:
         fitness_history = []
         diversity_history = []
 
-        generation_files = list(self.evolution_engine.evolution_data_path.glob("evolution_results_gen_*.json"))
+        generation_files = list(
+            self.evolution_engine.evolution_data_path.glob(
+                "evolution_results_gen_*.json"
+            )
+        )
 
         for file_path in sorted(generation_files):
             try:
@@ -644,21 +758,28 @@ class PerformanceAnalyzer:
 
         if fitness_history:
             trends["fitness_trend"] = (
-                "improving" if len(fitness_history) > 1 and fitness_history[-1] > fitness_history[0] else "declining"
+                "improving"
+                if len(fitness_history) > 1 and fitness_history[-1] > fitness_history[0]
+                else "declining"
             )
             trends["fitness_growth_rate"] = (
-                (fitness_history[-1] - fitness_history[0]) / len(fitness_history) if len(fitness_history) > 1 else 0
+                (fitness_history[-1] - fitness_history[0]) / len(fitness_history)
+                if len(fitness_history) > 1
+                else 0
             )
             trends["best_fitness_ever"] = max(fitness_history)
 
         if diversity_history:
             trends["diversity_trend"] = (
                 "increasing"
-                if len(diversity_history) > 1 and diversity_history[-1] > diversity_history[0]
+                if len(diversity_history) > 1
+                and diversity_history[-1] > diversity_history[0]
                 else "decreasing"
             )
             trends["diversity_stability"] = (
-                1.0 - (np.std(diversity_history) / np.mean(diversity_history)) if diversity_history else 0
+                1.0 - (np.std(diversity_history) / np.mean(diversity_history))
+                if diversity_history
+                else 0
             )
 
         trends["generations_analyzed"] = len(generation_files)
@@ -674,18 +795,27 @@ class PerformanceAnalyzer:
         recommendations = []
 
         # Performance-based recommendations
-        if performance_analysis.get("performance_distribution", {}).get("mean", 0) < 0.5:
+        if (
+            performance_analysis.get("performance_distribution", {}).get("mean", 0)
+            < 0.5
+        ):
             recommendations.append(
                 "Overall population fitness is low. Consider increasing mutation rate or improving evaluation tasks."
             )
 
         if len(performance_analysis.get("improvement_opportunities", [])) > 5:
-            recommendations.append("Many agents underperforming. Consider targeted optimization or population restart.")
+            recommendations.append(
+                "Many agents underperforming. Consider targeted optimization or population restart."
+            )
 
         # Specialization-based recommendations
-        balance_score = specialization_analysis.get("distribution_balance", {}).get("balance_score", 0)
+        balance_score = specialization_analysis.get("distribution_balance", {}).get(
+            "balance_score", 0
+        )
         if balance_score < 0.7:
-            recommendations.append("Specialization distribution is imbalanced. Consider adjusting selection pressure.")
+            recommendations.append(
+                "Specialization distribution is imbalanced. Consider adjusting selection pressure."
+            )
 
         niche_opportunities = specialization_analysis.get("niche_opportunities", [])
         if len(niche_opportunities) > 3:
@@ -695,7 +825,9 @@ class PerformanceAnalyzer:
 
         # Default recommendation
         if not recommendations:
-            recommendations.append("Population appears healthy. Continue current evolution strategy.")
+            recommendations.append(
+                "Population appears healthy. Continue current evolution strategy."
+            )
 
         return recommendations
 

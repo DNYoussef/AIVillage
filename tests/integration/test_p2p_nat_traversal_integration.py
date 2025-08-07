@@ -1,5 +1,5 @@
-import time
 import socket as real_socket
+import time
 
 from src.infrastructure.p2p.nat_traversal import NATInfo, NATTraversal, NATType
 
@@ -8,7 +8,7 @@ class DummyUDPSocket:
     def __init__(self) -> None:
         self.sent: list[tuple[bytes, tuple[str, int]]] = []
 
-    def settimeout(self, timeout: float) -> None:  # noqa: D401 - simple stub
+    def settimeout(self, timeout: float) -> None:  # - simple stub
         pass
 
     def sendto(self, data: bytes, addr: tuple[str, int]) -> None:
@@ -22,7 +22,7 @@ class DummyTCPSocket:
     def __init__(self) -> None:
         self.connected: list[tuple[str, int]] = []
 
-    def settimeout(self, timeout: float) -> None:  # noqa: D401 - stub
+    def settimeout(self, timeout: float) -> None:  # - stub
         pass
 
     def connect(self, addr: tuple[str, int]) -> None:

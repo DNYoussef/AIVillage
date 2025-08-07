@@ -152,7 +152,7 @@ buildozer==1.5.0  # For packaging
 
 #### iOS
 ```
-# iOS-specific dependencies  
+# iOS-specific dependencies
 pyobjc-core==10.1
 pyobjc-framework-Cocoa==10.1
 ```

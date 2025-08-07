@@ -24,7 +24,12 @@ fake_torch = types.ModuleType("torch")
 fake_nx = types.ModuleType("networkx")
 fake_nx.Graph = lambda *a, **k: object()
 
-with patch.dict(sys.modules, {"faiss": fake_faiss, "torch": fake_torch, "networkx": fake_nx}):
+with patch.dict(
+    sys.modules, {"faiss": fake_faiss, "torch": fake_torch, "networkx": fake_nx}
+):
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).parent.parent / "bin"))
     import server
 
 
@@ -49,7 +54,9 @@ class TestAuthMiddleware(unittest.TestCase):
             assert resp.status_code == 401
 
             # Test with correct API key - should succeed
-            resp = client.post("/query", json={"query": "hi"}, headers={"x-api-key": "secret"})
+            resp = client.post(
+                "/query", json={"query": "hi"}, headers={"x-api-key": "secret"}
+            )
             assert resp.status_code != 401
             # Should be 200 (success) or potentially other non-401 status
             assert resp.status_code in [200, 500]  # 500 might occur due to other issues

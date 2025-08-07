@@ -60,7 +60,9 @@ def create_simple_tree() -> None:
 
                 if "benchmark_results" in individual:
                     benchmarks = individual["benchmark_results"]
-                    bench_str = ", ".join([f"{k}={v:.3f}" for k, v in benchmarks.items()])
+                    bench_str = ", ".join(
+                        [f"{k}={v:.3f}" for k, v in benchmarks.items()]
+                    )
                     print(f"      Benchmarks: {bench_str}")
 
     print("\n" + "-" * 50)
@@ -94,7 +96,9 @@ def create_simple_tree() -> None:
 
         for individual in gen_data["population"]:
             method = individual["merge_method"]
-            method_counts_by_gen[gen_num][method] = method_counts_by_gen[gen_num].get(method, 0) + 1
+            method_counts_by_gen[gen_num][method] = (
+                method_counts_by_gen[gen_num].get(method, 0) + 1
+            )
 
     print("  Gen |  S  |  L  |  T  | Best Method")
     print("  ----|-----|-----|-----|------------")
@@ -110,7 +114,9 @@ def create_simple_tree() -> None:
         best_in_gen = max(gen_data["population"], key=lambda x: x["fitness"])
         best_method = best_in_gen["merge_method"]
 
-        print(f"   {gen_num:2d} | {s_count:3d} | {l_count:3d} | {t_count:3d} | {best_method}")
+        print(
+            f"   {gen_num:2d} | {s_count:3d} | {l_count:3d} | {t_count:3d} | {best_method}"
+        )
 
     print("=" * 80)
 

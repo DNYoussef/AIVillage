@@ -160,8 +160,12 @@ class EvolutionMetricsCollector:
             cpu_percent_avg=cpu_now,
             duration_minutes=evolution_event.duration_seconds / 60,
             success=evolution_event.success,
-            error_count=sum(1 for msg in evolution_event.insights if msg.lower().startswith("error")),
-            warning_count=sum(1 for msg in evolution_event.insights if msg.lower().startswith("warn")),
+            error_count=sum(
+                1 for msg in evolution_event.insights if msg.lower().startswith("error")
+            ),
+            warning_count=sum(
+                1 for msg in evolution_event.insights if msg.lower().startswith("warn")
+            ),
             metadata={
                 "trigger_reason": evolution_event.trigger_reason,
                 "generation_change": evolution_event.generation_change,

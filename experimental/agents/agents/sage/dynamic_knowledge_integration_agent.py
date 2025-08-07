@@ -13,12 +13,16 @@ logger = logging.getLogger(__name__)
 
 
 class DynamicKnowledgeIntegrationAgent:
-    def __init__(self, llm_config: OpenAIGPTConfig, knowledge_graph_agent: KnowledgeGraphAgent):
+    def __init__(
+        self, llm_config: OpenAIGPTConfig, knowledge_graph_agent: KnowledgeGraphAgent
+    ):
         self.llm = llm_config.create()
         self.knowledge_graph_agent = knowledge_graph_agent
 
     @error_handler.handle_error
-    async def integrate_new_knowledge(self, new_information: dict[str, Any]) -> dict[str, Any]:
+    async def integrate_new_knowledge(
+        self, new_information: dict[str, Any]
+    ) -> dict[str, Any]:
         """Integrate new knowledge into the system.
 
         Args:
@@ -31,7 +35,9 @@ class DynamicKnowledgeIntegrationAgent:
         if not validated_info:
             return {"status": "failed", "reason": "Information validation failed"}
 
-        existing_knowledge = await self.knowledge_graph_agent.query_graph(validated_info["main_topic"])
+        existing_knowledge = await self.knowledge_graph_agent.query_graph(
+            validated_info["main_topic"]
+        )
         conflicts = self._identify_conflicts(validated_info, existing_knowledge)
 
         if conflicts:
@@ -39,7 +45,9 @@ class DynamicKnowledgeIntegrationAgent:
         else:
             resolved_info = validated_info
 
-        integration_result = await self.knowledge_graph_agent.update_graph(resolved_info)
+        integration_result = await self.knowledge_graph_agent.update_graph(
+            resolved_info
+        )
 
         if integration_result:
             await self._trigger_system_updates(resolved_info)
@@ -51,7 +59,9 @@ class DynamicKnowledgeIntegrationAgent:
         return {"status": "failed", "reason": "Failed to update knowledge graph"}
 
     @error_handler.handle_error
-    async def _validate_information(self, new_information: dict[str, Any]) -> dict[str, Any]:
+    async def _validate_information(
+        self, new_information: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate the new information for accuracy and relevance.
 
         Args:
@@ -102,7 +112,9 @@ class DynamicKnowledgeIntegrationAgent:
             logger.error(f"Failed to parse validation response: {response}")
             raise AIVillageException("Failed to parse validation response")
 
-    def _identify_conflicts(self, new_info: dict[str, Any], existing_knowledge: dict[str, Any]) -> list[dict[str, Any]]:
+    def _identify_conflicts(
+        self, new_info: dict[str, Any], existing_knowledge: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         conflicts = []
         for key, value in new_info.items():
             if key in existing_knowledge and existing_knowledge[key] != value:
@@ -116,7 +128,9 @@ class DynamicKnowledgeIntegrationAgent:
         return conflicts
 
     @error_handler.handle_error
-    async def _resolve_conflicts(self, new_info: dict[str, Any], conflicts: list[dict[str, Any]]) -> dict[str, Any]:
+    async def _resolve_conflicts(
+        self, new_info: dict[str, Any], conflicts: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Resolve conflicts between new and existing information.
 
         Args:
@@ -131,7 +145,9 @@ class DynamicKnowledgeIntegrationAgent:
         resolved_info = self._parse_conflict_resolution_response(response.text)
         return resolved_info
 
-    def _create_conflict_resolution_prompt(self, new_info: dict[str, Any], conflicts: list[dict[str, Any]]) -> str:
+    def _create_conflict_resolution_prompt(
+        self, new_info: dict[str, Any], conflicts: list[dict[str, Any]]
+    ) -> str:
         return f"""
         Please resolve the following conflicts between new and existing information:
 
@@ -167,12 +183,16 @@ class DynamicKnowledgeIntegrationAgent:
         """
         # This method would typically involve calling update methods on other system components.
         # For demonstration, we'll just log the action.
-        logger.info(f"Triggering system updates based on new information: {integrated_info['main_topic']}")
+        logger.info(
+            f"Triggering system updates based on new information: {integrated_info['main_topic']}"
+        )
         # Example: await self.reasoning_agent.update_knowledge_base(integrated_info)
         # Example: await self.task_planning_agent.reassess_current_plans(integrated_info)
 
     @error_handler.handle_error
-    async def remove_outdated_information(self, time_threshold: str) -> list[dict[str, Any]]:
+    async def remove_outdated_information(
+        self, time_threshold: str
+    ) -> list[dict[str, Any]]:
         """Identify and remove outdated or irrelevant information from the knowledge graph.
 
         Args:
@@ -181,12 +201,16 @@ class DynamicKnowledgeIntegrationAgent:
         Returns:
             List[Dict[str, Any]]: A list of removed information items.
         """
-        outdated_info = await self.knowledge_graph_agent.query_graph(f"last_updated < {time_threshold}")
+        outdated_info = await self.knowledge_graph_agent.query_graph(
+            f"last_updated < {time_threshold}"
+        )
         removed_items = []
 
         for item in outdated_info:
             if await self._should_remove_item(item):
-                removal_result = await self.knowledge_graph_agent.update_graph({"remove": item["id"]})
+                removal_result = await self.knowledge_graph_agent.update_graph(
+                    {"remove": item["id"]}
+                )
                 if removal_result:
                     removed_items.append(item)
                     logger.info(f"Removed outdated information: {item['id']}")
@@ -224,7 +248,9 @@ class DynamicKnowledgeIntegrationAgent:
         return result["should_remove"]
 
     @safe_execute
-    async def process_new_information(self, new_information: dict[str, Any]) -> dict[str, Any]:
+    async def process_new_information(
+        self, new_information: dict[str, Any]
+    ) -> dict[str, Any]:
         """Process new information by integrating it into the knowledge base and triggering necessary updates.
 
         Args:

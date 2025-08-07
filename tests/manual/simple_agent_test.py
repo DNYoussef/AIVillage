@@ -2,8 +2,8 @@
 """Simple script to test agent implementations."""
 
 import os
-import sys
 from pathlib import Path
+import sys
 
 # Set up paths
 sys.path.insert(0, str(Path(__file__).parent))
@@ -130,7 +130,9 @@ def check_experimental_agents():
 
     exp_path = Path("experimental/agents/agents")
     if exp_path.exists():
-        agent_dirs = [d for d in exp_path.iterdir() if d.is_dir() and not d.name.startswith(".")]
+        agent_dirs = [
+            d for d in exp_path.iterdir() if d.is_dir() and not d.name.startswith(".")
+        ]
         print(f"Found {len(agent_dirs)} experimental agent directories:")
 
         for agent_dir in sorted(agent_dirs):

@@ -1,6 +1,7 @@
-import time
-import numpy as np
 from datetime import datetime
+import time
+
+import numpy as np
 
 from hyperrag.hippo_cache import CacheEntry, HippoCache
 

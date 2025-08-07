@@ -29,7 +29,6 @@ class AgentFactory:
             next to this file.  Using an absolute path or a path relative to the
             current working directory is also supported.
         """
-
         if template_dir is None:
             self.template_dir = Path(__file__).resolve().parent / "templates"
         else:
@@ -101,7 +100,9 @@ class AgentFactory:
             agent_classes["sword_shield"] = SwordAndShieldAgent
         except ImportError:
             # Use generic agent if specialized not available
-            agent_classes["sword_shield"] = self._create_generic_agent_class("sword_shield")
+            agent_classes["sword_shield"] = self._create_generic_agent_class(
+                "sword_shield"
+            )
 
         # Legal AI Agent
         try:
@@ -244,9 +245,9 @@ class AgentFactory:
                 if not self.performance_history:
                     return {"performance": 0.7}
 
-                success_rate = sum(1 for p in self.performance_history if p.get("success", False)) / len(
-                    self.performance_history
-                )
+                success_rate = sum(
+                    1 for p in self.performance_history if p.get("success", False)
+                ) / len(self.performance_history)
 
                 return {
                     "success_rate": success_rate,
@@ -255,7 +256,9 @@ class AgentFactory:
 
         return GenericAgent
 
-    def create_agent(self, agent_type: str, config: dict[str, Any] | None = None) -> BaseMetaAgent:
+    def create_agent(
+        self, agent_type: str, config: dict[str, Any] | None = None
+    ) -> BaseMetaAgent:
         """Create an agent of the specified type."""
         if agent_type not in self.templates:
             msg = f"Unknown agent type: {agent_type}. Available: {list(self.templates.keys())}"
@@ -322,12 +325,11 @@ class AgentFactory:
         configuration is missing the method falls back to the templates that are
         already loaded in :attr:`self.templates`.
 
-        Returns
+        Returns:
         -------
         list[str]
             All agent identifiers expected by the system.
         """
-
         config_path = self.template_dir / "master_config.json"
         if config_path.exists():
             with config_path.open() as f:

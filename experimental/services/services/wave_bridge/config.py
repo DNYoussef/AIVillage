@@ -15,7 +15,9 @@ class Config:
     # Twilio Configuration
     TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
     TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-    TWILIO_WHATSAPP_NUMBER = os.getenv("TWILIO_WHATSAPP_NUMBER", "whatsapp:+14155238886")
+    TWILIO_WHATSAPP_NUMBER = os.getenv(
+        "TWILIO_WHATSAPP_NUMBER", "whatsapp:+14155238886"
+    )
 
     # AI Model Configuration
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
@@ -33,7 +35,9 @@ class Config:
 
     # Language Settings
     DEFAULT_LANGUAGE = os.getenv("DEFAULT_LANGUAGE", "en")
-    ENABLE_AUTO_TRANSLATION = os.getenv("ENABLE_AUTO_TRANSLATION", "true").lower() == "true"
+    ENABLE_AUTO_TRANSLATION = (
+        os.getenv("ENABLE_AUTO_TRANSLATION", "true").lower() == "true"
+    )
 
     # A/B Testing Settings
     ENABLE_AB_TESTING = os.getenv("ENABLE_AB_TESTING", "true").lower() == "true"
@@ -61,7 +65,9 @@ class Config:
 
         for setting_name, setting_value in required_settings:
             if not setting_value:
-                validation_results["errors"].append(f"Missing required setting: {setting_name}")
+                validation_results["errors"].append(
+                    f"Missing required setting: {setting_name}"
+                )
                 validation_results["valid"] = False
 
         # AI Model settings (at least one required)
@@ -73,13 +79,19 @@ class Config:
 
         # Warnings for optional but recommended settings
         if not cls.ANTHROPIC_API_KEY:
-            validation_results["warnings"].append("ANTHROPIC_API_KEY not set - will use OpenAI as primary model")
+            validation_results["warnings"].append(
+                "ANTHROPIC_API_KEY not set - will use OpenAI as primary model"
+            )
 
         if not cls.OPENAI_API_KEY:
-            validation_results["warnings"].append("OPENAI_API_KEY not set - no fallback model available")
+            validation_results["warnings"].append(
+                "OPENAI_API_KEY not set - no fallback model available"
+            )
 
         if not cls.WEBHOOK_SECRET:
-            validation_results["warnings"].append("WEBHOOK_SECRET not set - webhooks will not be validated")
+            validation_results["warnings"].append(
+                "WEBHOOK_SECRET not set - webhooks will not be validated"
+            )
 
         return validation_results
 

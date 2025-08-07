@@ -294,7 +294,9 @@ def monitor_resources(log_interval: int = 30) -> Callable[[F], F]:
                 )
 
             monitor.start()
-            logger.info(f"Starting execution of {func.__name__} with resource monitoring")
+            logger.info(
+                f"Starting execution of {func.__name__} with resource monitoring"
+            )
 
             try:
                 # Set up periodic resource logging
@@ -352,14 +354,18 @@ def timeout_handler(timeout_seconds: int) -> Callable[[F], F]:
             logger = logging.getLogger(func.__module__)
 
             def timeout_signal_handler(signum, frame):
-                raise ScriptTimeoutError(f"Function {func.__name__} timed out after {timeout_seconds} seconds")
+                raise ScriptTimeoutError(
+                    f"Function {func.__name__} timed out after {timeout_seconds} seconds"
+                )
 
             # Set up timeout signal
             old_handler = signal.signal(signal.SIGALRM, timeout_signal_handler)
             signal.alarm(timeout_seconds)
 
             try:
-                logger.debug(f"Starting {func.__name__} with {timeout_seconds}s timeout")
+                logger.debug(
+                    f"Starting {func.__name__} with {timeout_seconds}s timeout"
+                )
                 result = func(*args, **kwargs)
                 logger.debug(f"Completed {func.__name__} within timeout")
                 return result
@@ -433,7 +439,7 @@ def format_duration(seconds: float) -> str:
     return f"{hours:.1f}h"
 
 
-def format_bytes(bytes_value: int | float) -> str:
+def format_bytes(bytes_value: float) -> str:
     """Format bytes to human-readable string.
 
     Args:
@@ -470,7 +476,9 @@ def get_system_info() -> dict[str, Any]:
             "disk_total_gb": disk.total / (1024**3),
             "disk_free_gb": disk.free / (1024**3),
             "disk_percent": (disk.used / disk.total) * 100,
-            "load_average": list(os.getloadavg()) if hasattr(os, "getloadavg") else None,
+            "load_average": (
+                list(os.getloadavg()) if hasattr(os, "getloadavg") else None
+            ),
         }
     except Exception as e:
         logging.getLogger(__name__).warning(f"Failed to get system info: {e}")

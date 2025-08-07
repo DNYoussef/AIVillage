@@ -67,7 +67,9 @@ class BufferedOutputHandler:
             summary["specialization_score"] = results["final_specialization_score"]
 
         if "final_capabilities" in results:
-            summary["capabilities"] = {k: round(v, 3) for k, v in results["final_capabilities"].items()}
+            summary["capabilities"] = {
+                k: round(v, 3) for k, v in results["final_capabilities"].items()
+            }
 
         if "level_results" in results:
             summary["levels_completed"] = len(results["level_results"])
@@ -103,7 +105,9 @@ class BufferedOutputHandler:
             else:
                 # Show first chunk only
                 print(output_str[: self.MAX_DISPLAY_LENGTH])
-                print(f"\n... [Truncated {len(output_str) - self.MAX_DISPLAY_LENGTH:,} characters]")
+                print(
+                    f"\n... [Truncated {len(output_str) - self.MAX_DISPLAY_LENGTH:,} characters]"
+                )
 
         print(f"{'=' * 60}\n")
 
@@ -152,7 +156,9 @@ class SafeMagiInterface:
             if "results" in data:
                 results = data["results"]
                 self.capabilities = results.get("final_capabilities", {})
-                self.specialization_score = results.get("final_specialization_score", 0.0)
+                self.specialization_score = results.get(
+                    "final_specialization_score", 0.0
+                )
 
                 # Display summary instead of full data
                 summary = {

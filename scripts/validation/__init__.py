@@ -17,10 +17,10 @@ from .quality_checker import QualityChecker, QualityGate
 from .validation_suite import ValidationConfig, ValidationResult, ValidationSuite
 
 __all__ = [
-    "ValidationSuite",
-    "ValidationConfig",
-    "ValidationResult",
+    "DependencyValidator",
     "QualityChecker",
     "QualityGate",
-    "DependencyValidator",
+    "ValidationConfig",
+    "ValidationResult",
+    "ValidationSuite",
 ]

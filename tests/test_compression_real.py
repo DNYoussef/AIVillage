@@ -30,15 +30,23 @@ class TestSimpleQuantizer:
         # Create small test model (target ~5MB)
         model = create_test_model(layers=3, hidden_size=128, size_mb=5.0)
 
-        quantizer = SimpleQuantizer(target_compression_ratio=3.0)  # Lower target for test
+        quantizer = SimpleQuantizer(
+            target_compression_ratio=3.0
+        )  # Lower target for test
         compressed = quantizer.quantize_model_from_object(model)
 
         # Real assertions about compression
         stats = quantizer.get_compression_stats()
 
-        assert stats["compression_ratio"] >= 3.0, f"Only achieved {stats['compression_ratio']:.2f}x compression"
-        assert len(compressed) < (stats["original_size_bytes"] / 3.0), "Compressed size too large"
-        assert stats["compressed_size_mb"] < stats["original_size_mb"], "No size reduction"
+        assert (
+            stats["compression_ratio"] >= 3.0
+        ), f"Only achieved {stats['compression_ratio']:.2f}x compression"
+        assert len(compressed) < (
+            stats["original_size_bytes"] / 3.0
+        ), "Compressed size too large"
+        assert (
+            stats["compressed_size_mb"] < stats["original_size_mb"]
+        ), "No size reduction"
 
         # Verify we can load it back
         restored = SimpleQuantizer.load_quantized_model(compressed)
@@ -49,7 +57,10 @@ class TestSimpleQuantizer:
         # Create and save test model
         with tempfile.TemporaryDirectory() as temp_dir:
             model_path = create_test_model_file(
-                layers=2, hidden_size=64, size_mb=3.0, save_path=Path(temp_dir) / "test_model.pt"
+                layers=2,
+                hidden_size=64,
+                size_mb=3.0,
+                save_path=Path(temp_dir) / "test_model.pt",
             )
 
             quantizer = SimpleQuantizer(target_compression_ratio=2.5)
@@ -64,7 +75,9 @@ class TestSimpleQuantizer:
         """Test compression of CNN model with Conv2d layers."""
         model = create_simple_cnn_model(input_channels=3, num_classes=10)
 
-        quantizer = SimpleQuantizer(target_compression_ratio=2.5)  # CNN models compress less than linear
+        quantizer = SimpleQuantizer(
+            target_compression_ratio=2.5
+        )  # CNN models compress less than linear
         compressed = quantizer.quantize_model_from_object(model)
 
         # Verify CNN compression
@@ -108,13 +121,20 @@ class TestSimpleQuantizer:
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create test model
             model_path = create_test_model_file(
-                layers=4, hidden_size=256, size_mb=8.0, save_path=Path(temp_dir) / "mobile_test_model.pt"
+                layers=4,
+                hidden_size=256,
+                size_mb=8.0,
+                save_path=Path(temp_dir) / "mobile_test_model.pt",
             )
 
-            quantizer = SimpleQuantizer(target_compression_ratio=3.8)  # Slightly lower to account for variance
+            quantizer = SimpleQuantizer(
+                target_compression_ratio=3.8
+            )  # Slightly lower to account for variance
 
             # Run mobile compression pipeline
-            output_path = quantizer.compress_for_mobile(model_path, output_dir=Path(temp_dir) / "mobile_output")
+            output_path = quantizer.compress_for_mobile(
+                model_path, output_dir=Path(temp_dir) / "mobile_output"
+            )
 
             # Verify pipeline results
             assert Path(output_path).exists(), "Mobile model not saved"
@@ -166,14 +186,18 @@ class TestSimpleQuantizer:
         """Test compression of larger model (target ~20MB)."""
         model = create_test_model(layers=5, hidden_size=512, size_mb=20.0)
 
-        quantizer = SimpleQuantizer(target_compression_ratio=3.9)  # Realistic target for large models
+        quantizer = SimpleQuantizer(
+            target_compression_ratio=3.9
+        )  # Realistic target for large models
         compressed = quantizer.quantize_model_from_object(model)
 
         stats = quantizer.get_compression_stats()
 
         # Should achieve good compression on larger models
         assert stats["compression_ratio"] >= 3.9
-        assert stats["compressed_size_mb"] <= 5.0  # Should be under 5MB after compression
+        assert (
+            stats["compressed_size_mb"] <= 5.0
+        )  # Should be under 5MB after compression
 
     def test_model_functional_after_compression(self):
         """Test that compressed model is functionally equivalent."""
@@ -229,7 +253,9 @@ class TestCompressionIntegration:
 
             # Step 2: Compress for mobile
             quantizer = SimpleQuantizer(target_compression_ratio=3.9)
-            mobile_path = quantizer.compress_for_mobile(str(model_path), output_dir=str(temp_path / "mobile"))
+            mobile_path = quantizer.compress_for_mobile(
+                str(model_path), output_dir=str(temp_path / "mobile")
+            )
 
             # Step 3: Verify mobile deployment readiness
             assert Path(mobile_path).exists()
@@ -244,7 +270,9 @@ class TestCompressionIntegration:
             mobile_size = Path(mobile_path).stat().st_size
             actual_ratio = original_size / mobile_size
 
-            assert actual_ratio >= 3.9, f"Actual compression ratio {actual_ratio:.2f}x insufficient"
+            assert (
+                actual_ratio >= 3.9
+            ), f"Actual compression ratio {actual_ratio:.2f}x insufficient"
 
     def test_multiple_model_types_compression(self):
         """Test compression works across different model architectures."""
@@ -275,7 +303,9 @@ class TestCompressionIntegration:
 
         # All models should compress successfully
         successful = [r for r in results if r["success"]]
-        assert len(successful) == len(models_and_names), f"Some models failed compression: {results}"
+        assert len(successful) == len(
+            models_and_names
+        ), f"Some models failed compression: {results}"
 
         # All should be mobile ready
         mobile_ready = [r for r in successful if r["mobile_ready"]]

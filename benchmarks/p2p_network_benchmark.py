@@ -11,7 +11,9 @@ from pathlib import Path
 import time
 
 
-async def _handle_echo(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+async def _handle_echo(
+    reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+) -> None:
     data = await reader.read(100)
     writer.write(data)
     await writer.drain()
@@ -45,7 +47,9 @@ async def run_benchmark(messages: int = 5) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run a simple P2P networking benchmark and output JSON metrics")
+    parser = argparse.ArgumentParser(
+        description="Run a simple P2P networking benchmark and output JSON metrics"
+    )
     parser.add_argument(
         "--output",
         type=Path,

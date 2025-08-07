@@ -30,9 +30,17 @@ class DummyLoraModel:
 @pytest.fixture(autouse=True)
 def patch_modules(monkeypatch, tmp_path):
     monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "src"))
-    monkeypatch.setitem(sys.modules, "chromadb", types.SimpleNamespace(PersistentClient=DummyPersistentClient))
-    monkeypatch.setitem(sys.modules, "peft", types.SimpleNamespace(LoraModel=DummyLoraModel))
-    monkeypatch.setitem(sys.modules, "llama_cpp", types.SimpleNamespace(Llama=lambda *a, **k: None))
+    monkeypatch.setitem(
+        sys.modules,
+        "chromadb",
+        types.SimpleNamespace(PersistentClient=DummyPersistentClient),
+    )
+    monkeypatch.setitem(
+        sys.modules, "peft", types.SimpleNamespace(LoraModel=DummyLoraModel)
+    )
+    monkeypatch.setitem(
+        sys.modules, "llama_cpp", types.SimpleNamespace(Llama=lambda *a, **k: None)
+    )
 
     class DummyConfig:
         pass
@@ -118,4 +126,6 @@ def test_load_compressed_failure(monkeypatch, tmp_path, caplog):
     from twin_runtime import runner
 
     assert runner.LLM is sentinel
-    assert any("Failed to load compressed model" in rec.message for rec in caplog.records)
+    assert any(
+        "Failed to load compressed model" in rec.message for rec in caplog.records
+    )

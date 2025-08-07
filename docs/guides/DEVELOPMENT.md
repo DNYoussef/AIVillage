@@ -46,7 +46,7 @@ make fix
 # Run all quality checks
 make lint
 
-# Run security scans  
+# Run security scans
 make security
 ```
 
@@ -81,7 +81,7 @@ pre-commit run --all-files
 ```
 AIVillage Architecture
 ├── Agent Layer (18 specialized agents)
-├── Communication Layer (P2P mesh networking)  
+├── Communication Layer (P2P mesh networking)
 ├── Resource Layer (device profiling & constraints)
 ├── AI/ML Layer (compression, evolution, RAG, federated learning)
 └── Infrastructure Layer (monitoring, security, deployment)
@@ -181,7 +181,7 @@ register_algorithm("new_algorithm", NewCompressionAlgorithm)
 ### Network Efficiency
 
 - Compress messages before transmission
-- Implement batching for small messages  
+- Implement batching for small messages
 - Use connection pooling
 - Handle network failures gracefully
 

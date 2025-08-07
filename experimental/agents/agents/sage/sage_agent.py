@@ -54,7 +54,9 @@ class SageAgent(UnifiedBaseAgent):
         self.latent_space_activation = LatentSpaceActivation()
         self.error_controller = AdaptiveErrorController()
         self.confidence_estimator = ConfidenceEstimator()
-        self.query_processor = QueryProcessor(self.rag_system, self.latent_space_activation, self.cognitive_nexus)
+        self.query_processor = QueryProcessor(
+            self.rag_system, self.latent_space_activation, self.cognitive_nexus
+        )
         self.task_executor = TaskExecutor(self)
         self.collaboration_manager = CollaborationManager(self)
         self.research_capabilities_manager = ResearchCapabilities(self)
@@ -91,7 +93,8 @@ class SageAgent(UnifiedBaseAgent):
         finally:
             execution_time = time.time() - start_time
             self.performance_metrics["average_execution_time"] = (
-                self.performance_metrics["average_execution_time"] * (self.performance_metrics["total_tasks"] - 1)
+                self.performance_metrics["average_execution_time"]
+                * (self.performance_metrics["total_tasks"] - 1)
                 + execution_time
             ) / self.performance_metrics["total_tasks"]
 
@@ -100,8 +103,12 @@ class SageAgent(UnifiedBaseAgent):
         processed_query = await self.pre_process_query(query)
         rag_result = await self.rag_system.process_query(processed_query)
         wrap_in_pack(rag_result, processed_query)
-        response = await self.response_generator.generate_response(query, rag_result, intent)
-        final_result = await self.post_process_result(rag_result, query, response, intent)
+        response = await self.response_generator.generate_response(
+            query, rag_result, intent
+        )
+        final_result = await self.post_process_result(
+            rag_result, query, response, intent
+        )
         return final_result
 
     async def pre_process_query(self, query: str) -> str:
@@ -120,7 +127,9 @@ class SageAgent(UnifiedBaseAgent):
             "interpreted_intent": intent,
             "rag_result": rag_result,
             "response": response,
-            "confidence": await self.confidence_estimator.estimate(original_query, rag_result),
+            "confidence": await self.confidence_estimator.estimate(
+                original_query, rag_result
+            ),
         }
         return processed_result
 
@@ -146,7 +155,9 @@ class SageAgent(UnifiedBaseAgent):
 
     async def perform_web_search(self, query: str) -> dict[str, Any]:
         """Perform a simple web search and return snippets."""
-        resp = requests.get("https://duckduckgo.com/html/", params={"q": query}, timeout=10)
+        resp = requests.get(
+            "https://duckduckgo.com/html/", params={"q": query}, timeout=10
+        )
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
         results = []
@@ -237,13 +248,19 @@ class SageAgent(UnifiedBaseAgent):
                 "task_delegation": "Active",
                 "joint_reasoning": "Active",
             },
-            "collaborating_agents": list(self.collaboration_manager.collaborating_agents.keys()),
+            "collaborating_agents": list(
+                self.collaboration_manager.collaborating_agents.keys()
+            ),
             "error_handling": "Adaptive error control with confidence estimation",
             "performance_metrics": self.performance_metrics,
             "continuous_learning": {
-                "recent_learnings_count": len(self.continuous_learning_layer.recent_learnings),
+                "recent_learnings_count": len(
+                    self.continuous_learning_layer.recent_learnings
+                ),
                 "learning_rate": self.continuous_learning_layer.learning_rate,
-                "performance_history_length": len(self.continuous_learning_layer.performance_history),
+                "performance_history_length": len(
+                    self.continuous_learning_layer.performance_history
+                ),
             },
             "self_evolving_system": {
                 "current_architecture": self.self_evolving_system.current_architecture,

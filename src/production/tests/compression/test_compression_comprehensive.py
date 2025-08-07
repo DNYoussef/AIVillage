@@ -23,13 +23,17 @@ try:
 
     # Also try direct import as backup
     try:
-        from production.compression.compression_pipeline import CompressionPipeline as CP
+        from production.compression.compression_pipeline import (
+            CompressionPipeline as CP,
+        )
     except ImportError:
         CP = CompressionPipeline
 
 except ImportError as e:
     # Handle missing imports gracefully
-    pytest.skip(f"Production compression modules not available: {e}", allow_module_level=True)
+    pytest.skip(
+        f"Production compression modules not available: {e}", allow_module_level=True
+    )
 
 
 class TestCompressionClaims:
@@ -39,7 +43,9 @@ class TestCompressionClaims:
     def sample_models(self):
         """Create models of various sizes for testing."""
         models = {
-            "small": torch.nn.Sequential(torch.nn.Linear(100, 50), torch.nn.ReLU(), torch.nn.Linear(50, 10)),
+            "small": torch.nn.Sequential(
+                torch.nn.Linear(100, 50), torch.nn.ReLU(), torch.nn.Linear(50, 10)
+            ),
             "medium": torch.nn.Sequential(
                 torch.nn.Linear(784, 256),
                 torch.nn.ReLU(),

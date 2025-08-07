@@ -107,7 +107,9 @@ class KPITracker:
     ) -> None:
         """Update metrics for a specific agent."""
         if agent_id not in self.metrics:
-            self.metrics[agent_id] = AgentPerformanceMetrics(agent_id=agent_id, agent_type=agent_type)
+            self.metrics[agent_id] = AgentPerformanceMetrics(
+                agent_id=agent_id, agent_type=agent_type
+            )
 
         metrics = self.metrics[agent_id]
         metrics.total_tasks += 1
@@ -124,14 +126,18 @@ class KPITracker:
 
         # Update response time (exponential moving average)
         alpha = 0.3
-        metrics.average_response_time = alpha * response_time + (1 - alpha) * metrics.average_response_time
+        metrics.average_response_time = (
+            alpha * response_time + (1 - alpha) * metrics.average_response_time
+        )
 
         # Update quality score
         if quality_score > 0:
             metrics.quality_score = 0.3 * quality_score + 0.7 * metrics.quality_score
 
         # Calculate efficiency (inverse of response time, normalized)
-        metrics.efficiency_score = min(1.0, 10.0 / (metrics.average_response_time + 1.0))
+        metrics.efficiency_score = min(
+            1.0, 10.0 / (metrics.average_response_time + 1.0)
+        )
 
         metrics.last_updated = datetime.now()
 
@@ -170,7 +176,9 @@ class KPITracker:
 
         return fitness
 
-    def get_top_performers(self, agent_type: str | None = None, limit: int = 5) -> list[str]:
+    def get_top_performers(
+        self, agent_type: str | None = None, limit: int = 5
+    ) -> list[str]:
         """Get top performing agents."""
         candidates = self.metrics.values()
 
@@ -180,7 +188,9 @@ class KPITracker:
         # Sort by overall performance
         sorted_agents = sorted(
             candidates,
-            key=lambda m: (m.success_rate * 0.4 + m.efficiency_score * 0.3 + m.quality_score * 0.3),
+            key=lambda m: (
+                m.success_rate * 0.4 + m.efficiency_score * 0.3 + m.quality_score * 0.3
+            ),
             reverse=True,
         )
 
@@ -242,7 +252,9 @@ class GeneticOptimizer:
                 genotype = AgentGenotype(
                     agent_id=f"{agent_config['type']}_{random.randint(1000, 9999)}",
                     agent_type=agent_config["type"],
-                    parameters=self._mutate_parameters(agent_config.get("parameters", {})),
+                    parameters=self._mutate_parameters(
+                        agent_config.get("parameters", {})
+                    ),
                     code_fragments=agent_config.get("code_fragments", {}),
                     architecture=agent_config.get("architecture", {}),
                     specialization_config=agent_config.get("specialization", {}),
@@ -257,7 +269,10 @@ class GeneticOptimizer:
         mutated = parameters.copy()
 
         for key, value in mutated.items():
-            if isinstance(value, int | float) and random.random() < self.params.mutation_rate:
+            if (
+                isinstance(value, int | float)
+                and random.random() < self.params.mutation_rate
+            ):
                 if isinstance(value, int):
                     mutated[key] = max(1, value + random.randint(-2, 2))
                 else:
@@ -265,12 +280,16 @@ class GeneticOptimizer:
 
         return mutated
 
-    def select_parents(self, fitness_scores: dict[str, float]) -> tuple[AgentGenotype, AgentGenotype]:
+    def select_parents(
+        self, fitness_scores: dict[str, float]
+    ) -> tuple[AgentGenotype, AgentGenotype]:
         """Tournament selection for parent agents."""
         tournament_size = 3
 
         def tournament():
-            candidates = random.sample(self.population, min(tournament_size, len(self.population)))
+            candidates = random.sample(
+                self.population, min(tournament_size, len(self.population))
+            )
             return max(candidates, key=lambda x: fitness_scores.get(x.agent_id, 0.0))
 
         parent1 = tournament()
@@ -278,7 +297,9 @@ class GeneticOptimizer:
 
         return parent1, parent2
 
-    def crossover(self, parent1: AgentGenotype, parent2: AgentGenotype) -> AgentGenotype:
+    def crossover(
+        self, parent1: AgentGenotype, parent2: AgentGenotype
+    ) -> AgentGenotype:
         """Create offspring through crossover."""
         if random.random() > self.params.crossover_rate:
             return parent1  # No crossover
@@ -343,7 +364,9 @@ class GeneticOptimizer:
 
         return mutated
 
-    def evolve_generation(self, fitness_scores: dict[str, float]) -> list[AgentGenotype]:
+    def evolve_generation(
+        self, fitness_scores: dict[str, float]
+    ) -> list[AgentGenotype]:
         """Evolve one generation."""
         self.generation += 1
 
@@ -366,7 +389,9 @@ class GeneticOptimizer:
             new_population.append(child)
 
         self.population = new_population
-        logger.info(f"Evolved generation {self.generation} with {len(self.population)} agents")
+        logger.info(
+            f"Evolved generation {self.generation} with {len(self.population)} agents"
+        )
 
         return self.population
 
@@ -419,7 +444,9 @@ class CodeMutator:
         except SyntaxError:
             return False
 
-    def mutate_function(self, function_code: str, mutation_type: str = "parameter") -> str:
+    def mutate_function(
+        self, function_code: str, mutation_type: str = "parameter"
+    ) -> str:
         """Safely mutate a function."""
         if not self.validate_code_safety(function_code):
             return function_code
@@ -433,7 +460,9 @@ class CodeMutator:
                     if isinstance(node, ast.FunctionDef):
                         # Add or modify default values
                         for arg in node.args.defaults:
-                            if isinstance(arg, ast.Constant) and isinstance(arg.value, int | float):
+                            if isinstance(arg, ast.Constant) and isinstance(
+                                arg.value, int | float
+                            ):
                                 if isinstance(arg.value, int):
                                     arg.value += random.randint(-1, 1)
                                 else:
@@ -509,7 +538,9 @@ class MetaLearner:
 
             # Keep only recent performance data
             if len(self.strategy_performance[strategy_name]) > 100:
-                self.strategy_performance[strategy_name] = self.strategy_performance[strategy_name][-100:]
+                self.strategy_performance[strategy_name] = self.strategy_performance[
+                    strategy_name
+                ][-100:]
 
     def get_best_strategy(self, agent_type: str) -> dict[str, Any]:
         """Get the best performing learning strategy for an agent type."""
@@ -518,14 +549,18 @@ class MetaLearner:
 
         for strategy_name, performance_history in self.strategy_performance.items():
             if performance_history:
-                avg_performance = sum(performance_history[-10:]) / len(performance_history[-10:])
+                avg_performance = sum(performance_history[-10:]) / len(
+                    performance_history[-10:]
+                )
                 if avg_performance > best_score:
                     best_score = avg_performance
                     best_strategy = self.learning_strategies[strategy_name]
 
         return best_strategy or {}
 
-    def optimize_learning_rate(self, agent_id: str, current_performance: float) -> float:
+    def optimize_learning_rate(
+        self, agent_id: str, current_performance: float
+    ) -> float:
         """Optimize learning rate based on performance trends."""
         # Simple adaptive learning rate
         if current_performance > 0.8:
@@ -542,7 +577,9 @@ class SpecializationManager:
         self.agent_specializations: dict[str, dict[str, float]] = {}
         self.task_requirements: dict[str, dict[str, float]] = {}
 
-    def update_agent_specialization(self, agent_id: str, task_type: str, performance: float) -> None:
+    def update_agent_specialization(
+        self, agent_id: str, task_type: str, performance: float
+    ) -> None:
         """Update agent specialization based on task performance."""
         if agent_id not in self.agent_specializations:
             self.agent_specializations[agent_id] = {}
@@ -550,7 +587,9 @@ class SpecializationManager:
         # Exponential moving average
         alpha = 0.3
         current = self.agent_specializations[agent_id].get(task_type, 0.5)
-        self.agent_specializations[agent_id][task_type] = alpha * performance + (1 - alpha) * current
+        self.agent_specializations[agent_id][task_type] = (
+            alpha * performance + (1 - alpha) * current
+        )
 
     def get_best_agent_for_task(self, task_type: str) -> str | None:
         """Get the best specialized agent for a specific task type."""
@@ -573,7 +612,9 @@ class SpecializationManager:
         specializations = self.agent_specializations[agent_id]
 
         # Sort by performance and recommend top areas
-        sorted_specializations = sorted(specializations.items(), key=lambda x: x[1], reverse=True)
+        sorted_specializations = sorted(
+            specializations.items(), key=lambda x: x[1], reverse=True
+        )
 
         return [spec[0] for spec in sorted_specializations[:3]]
 
@@ -697,12 +738,16 @@ class AgentEvolutionEngine:
 
     async def _run_evolution_generation(self) -> None:
         """Run one generation of evolution."""
-        logger.info(f"Running evolution generation {self.genetic_optimizer.generation + 1}")
+        logger.info(
+            f"Running evolution generation {self.genetic_optimizer.generation + 1}"
+        )
 
         # Evaluate current population
         fitness_scores = {}
         for agent in self.genetic_optimizer.population:
-            fitness = self.kpi_tracker.get_agent_fitness(agent.agent_id, self.genetic_optimizer.params.fitness_weights)
+            fitness = self.kpi_tracker.get_agent_fitness(
+                agent.agent_id, self.genetic_optimizer.params.fitness_weights
+            )
             fitness_scores[agent.agent_id] = fitness
 
         # Evolve population
@@ -716,7 +761,11 @@ class AgentEvolutionEngine:
             "generation": self.genetic_optimizer.generation,
             "population_size": len(new_population),
             "best_fitness": max(fitness_scores.values()) if fitness_scores else 0.0,
-            "average_fitness": sum(fitness_scores.values()) / len(fitness_scores) if fitness_scores else 0.0,
+            "average_fitness": (
+                sum(fitness_scores.values()) / len(fitness_scores)
+                if fitness_scores
+                else 0.0
+            ),
             "timestamp": datetime.now().isoformat(),
         }
 
@@ -738,7 +787,9 @@ class AgentEvolutionEngine:
                 agent_code = await self._generate_agent_implementation(agent)
 
                 # Save to file system
-                agent_path = f"agent_forge/evolved/{agent.agent_type}_{agent.agent_id}.py"
+                agent_path = (
+                    f"agent_forge/evolved/{agent.agent_type}_{agent.agent_id}.py"
+                )
                 os.makedirs(os.path.dirname(agent_path), exist_ok=True)
 
                 with open(agent_path, "w") as f:
@@ -918,7 +969,9 @@ def create_evolved_agent() -> Evolved{agent.agent_type.replace("-", "_").title()
         }
 
         for agent in self.genetic_optimizer.population:
-            population_stats["types"][agent.agent_type] = population_stats["types"].get(agent.agent_type, 0) + 1
+            population_stats["types"][agent.agent_type] = (
+                population_stats["types"].get(agent.agent_type, 0) + 1
+            )
             population_stats["avg_generation"] += agent.generation
 
         if population_stats["size"] > 0:
@@ -934,7 +987,9 @@ def create_evolved_agent() -> Evolved{agent.agent_type.replace("-", "_").title()
             "evolution_history": recent_history,
             "top_performers": self.kpi_tracker.get_top_performers(limit=10),
             "is_running": self.is_running,
-            "total_agents_evolved": sum(len(gen.get("population", [])) for gen in self.evolution_history),
+            "total_agents_evolved": sum(
+                len(gen.get("population", [])) for gen in self.evolution_history
+            ),
         }
 
     async def stop_evolution(self) -> None:
@@ -957,7 +1012,9 @@ async def main() -> None:
         response_time = random.uniform(0.5, 3.0)
         quality = random.uniform(0.6, 0.95)
 
-        engine.kpi_tracker.update_agent_metrics(agent_id, agent_type, success, response_time, quality)
+        engine.kpi_tracker.update_agent_metrics(
+            agent_id, agent_type, success, response_time, quality
+        )
 
     # Get dashboard
     dashboard = engine.get_evolution_dashboard()

@@ -180,7 +180,11 @@ def pytest_collection_modifyitems(config, items):
     skip_marker = pytest.mark.skip(reason=f"Missing dependencies: {', '.join(missing)}")
     for item in items:
         path = str(item.fspath)
-        if "agent_forge/evomerge" in path or "agents/king/tests" in path or path.endswith("test_king_agent.py"):
+        if (
+            "agent_forge/evomerge" in path
+            or "agents/king/tests" in path
+            or path.endswith("test_king_agent.py")
+        ):
             item.add_marker(skip_marker)
 
 

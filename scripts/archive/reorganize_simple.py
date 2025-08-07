@@ -99,7 +99,9 @@ class SimpleReorganizer:
             if not dir_path.endswith("tests") and not dir_path.startswith("deprecated"):
                 init_file = Path(dir_path) / "__init__.py"
                 if not init_file.exists():
-                    init_file.write_text('"""Production/experimental code organized by Sprint 2."""\n')
+                    init_file.write_text(
+                        '"""Production/experimental code organized by Sprint 2."""\n'
+                    )
 
         print("Created directory structure")
 

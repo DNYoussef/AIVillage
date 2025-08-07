@@ -279,7 +279,9 @@ class AgentTechnique(ToolMessage):
                 break
 
         if not has_run_function:
-            self.logger.error("Code must define a run(model_path, work_dir, params) function")
+            self.logger.error(
+                "Code must define a run(model_path, work_dir, params) function"
+            )
             return False
 
         # No obvious malicious patterns
@@ -297,7 +299,9 @@ class AgentTechnique(ToolMessage):
 
         for pattern in dangerous_patterns:
             if pattern in code:
-                self.logger.error(f"Code contains potentially dangerous pattern: {pattern}")
+                self.logger.error(
+                    f"Code contains potentially dangerous pattern: {pattern}"
+                )
                 return False
 
         return True
@@ -313,8 +317,12 @@ class AgentTechnique(ToolMessage):
             return 0.0
 
         try:
-            score = self.runner.run_code_sandbox(self.code, model_path, params, timeout=30, memory_limit_mb=512)
-            self.logger.info("ADAS | %s completed with score %.4f", self.technique_name, score)
+            score = self.runner.run_code_sandbox(
+                self.code, model_path, params, timeout=30, memory_limit_mb=512
+            )
+            self.logger.info(
+                "ADAS | %s completed with score %.4f", self.technique_name, score
+            )
             return score
         except Exception as e:
             self.logger.exception(f"Failed to run technique {self.technique_name}: {e}")
@@ -323,7 +331,9 @@ class AgentTechnique(ToolMessage):
 
 # Example usage
 if __name__ == "__main__":
-    task_description = "Design an agent that can solve abstract reasoning tasks in the ARC challenge."
+    task_description = (
+        "Design an agent that can solve abstract reasoning tasks in the ARC challenge."
+    )
     adas_task = ADASTask(task_description)
     best_agent = adas_task.run()
 

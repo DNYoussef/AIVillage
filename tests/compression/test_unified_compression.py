@@ -95,7 +95,9 @@ class TestUnifiedCompressor:
 
         # Custom initialization
         compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.SIMPLE, mobile_target_mb=50, accuracy_threshold=0.90
+            strategy=CompressionStrategy.SIMPLE,
+            mobile_target_mb=50,
+            accuracy_threshold=0.90,
         )
         assert compressor.strategy == CompressionStrategy.SIMPLE
         assert compressor.mobile_target_mb == 50
@@ -129,7 +131,9 @@ class TestUnifiedCompressor:
     @pytest.mark.asyncio
     async def test_simple_compression(self, tiny_model):
         """Test simple compression pipeline."""
-        compressor = UnifiedCompressor(strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False)
+        compressor = UnifiedCompressor(
+            strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False
+        )
 
         result = await compressor.compress_model(tiny_model)
 
@@ -142,7 +146,9 @@ class TestUnifiedCompressor:
     @pytest.mark.asyncio
     async def test_mobile_compression(self, tiny_model):
         """Test mobile compression pipeline."""
-        compressor = UnifiedCompressor(strategy=CompressionStrategy.MOBILE, enable_benchmarking=False)
+        compressor = UnifiedCompressor(
+            strategy=CompressionStrategy.MOBILE, enable_benchmarking=False
+        )
 
         result = await compressor.compress_model(tiny_model)
 
@@ -153,7 +159,9 @@ class TestUnifiedCompressor:
     @pytest.mark.asyncio
     async def test_compression_with_output_path(self, tiny_model, temp_dir):
         """Test compression with file output."""
-        compressor = UnifiedCompressor(strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False)
+        compressor = UnifiedCompressor(
+            strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False
+        )
 
         output_path = temp_dir / "compressed_model"
         result = await compressor.compress_model(tiny_model, output_path=output_path)
@@ -165,10 +173,16 @@ class TestUnifiedCompressor:
     @pytest.mark.asyncio
     async def test_compression_with_benchmarking(self, tiny_model, mock_tokenizer):
         """Test compression with benchmarking enabled."""
-        compressor = UnifiedCompressor(strategy=CompressionStrategy.SIMPLE, enable_benchmarking=True)
+        compressor = UnifiedCompressor(
+            strategy=CompressionStrategy.SIMPLE, enable_benchmarking=True
+        )
 
-        with patch.object(tiny_model, "generate", return_value=torch.tensor([[1, 2, 3]])):
-            result = await compressor.compress_model(tiny_model, tokenizer=mock_tokenizer)
+        with patch.object(
+            tiny_model, "generate", return_value=torch.tensor([[1, 2, 3]])
+        ):
+            result = await compressor.compress_model(
+                tiny_model, tokenizer=mock_tokenizer
+            )
 
         assert result.benchmark_metrics is not None
         assert isinstance(result.benchmark_metrics, dict)
@@ -179,7 +193,11 @@ class TestUnifiedCompressor:
         compressor = UnifiedCompressor(strategy=CompressionStrategy.ADVANCED)
 
         # Mock the advanced compression to fail
-        with patch.object(compressor, "_apply_advanced_compression", side_effect=Exception("Test error")):
+        with patch.object(
+            compressor,
+            "_apply_advanced_compression",
+            side_effect=Exception("Test error"),
+        ):
             result = await compressor.compress_model(tiny_model)
 
         # Should fallback to simple compression
@@ -224,7 +242,10 @@ class TestConvenienceFunctions:
 
         assert isinstance(result, CompressionResult)
         # Could be advanced or simple (if fallback occurred)
-        assert result.strategy_used in [CompressionStrategy.ADVANCED, CompressionStrategy.SIMPLE]
+        assert result.strategy_used in [
+            CompressionStrategy.ADVANCED,
+            CompressionStrategy.SIMPLE,
+        ]
 
 
 class TestCompressionResult:
@@ -309,7 +330,10 @@ class TestErrorHandling:
         compressor = UnifiedCompressor()
 
         # Mock missing dependencies
-        with patch("src.production.compression.unified_compressor.bitnet_compress", side_effect=ImportError):
+        with patch(
+            "src.production.compression.unified_compressor.bitnet_compress",
+            side_effect=ImportError,
+        ):
             with pytest.raises(ImportError):
                 await compressor._apply_simple_compression(tiny_model)
 
@@ -321,7 +345,9 @@ class TestIntegration:
     async def test_end_to_end_compression_pipeline(self, tiny_model, temp_dir):
         """Test complete compression pipeline."""
         compressor = UnifiedCompressor(
-            strategy=CompressionStrategy.AUTO, mobile_target_mb=50, enable_benchmarking=False
+            strategy=CompressionStrategy.AUTO,
+            mobile_target_mb=50,
+            enable_benchmarking=False,
         )
 
         output_path = temp_dir / "integrated_test"
@@ -329,7 +355,9 @@ class TestIntegration:
 
         # Verify results
         assert result.compression_ratio > 1.0
-        assert result.strategy_used == CompressionStrategy.SIMPLE  # Auto-selected for tiny model
+        assert (
+            result.strategy_used == CompressionStrategy.SIMPLE
+        )  # Auto-selected for tiny model
         assert output_path.exists()
 
         # Verify compression info
@@ -346,7 +374,9 @@ class TestPerformance:
     @pytest.mark.asyncio
     async def test_compression_performance_simple(self, tiny_model):
         """Test performance of simple compression."""
-        compressor = UnifiedCompressor(strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False)
+        compressor = UnifiedCompressor(
+            strategy=CompressionStrategy.SIMPLE, enable_benchmarking=False
+        )
 
         # Measure compression time
         import time

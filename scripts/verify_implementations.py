@@ -53,7 +53,9 @@ async def test_communications_protocol():
 
         # Test 4: Can send messages
         if connected:
-            message_sent = await agent1.send_message("test_agent_2", {"type": "test", "content": "Hello from agent 1"})
+            message_sent = await agent1.send_message(
+                "test_agent_2", {"type": "test", "content": "Hello from agent 1"}
+            )
             if message_sent:
                 test_passed("Send message")
             else:
@@ -118,7 +120,9 @@ async def test_whatsapp_connector():
         # Test 6: Analyze conversation patterns
         analysis = connector.analyze_conversation_patterns()
         if "total_messages" in analysis and analysis["total_messages"] > 0:
-            test_passed(f"Analyze patterns: {analysis['total_messages']} messages analyzed")
+            test_passed(
+                f"Analyze patterns: {analysis['total_messages']} messages analyzed"
+            )
         else:
             test_failed("Analyze patterns", "No analysis data")
 
@@ -159,7 +163,9 @@ async def test_amazon_connector():
 
             # Test 5: Verify order has realistic data
             if order["price"] > 0 and len(order["title"]) > 0:
-                test_passed(f"Order data realistic: {order['title']} - ${order['price']}")
+                test_passed(
+                    f"Order data realistic: {order['title']} - ${order['price']}"
+                )
             else:
                 test_failed("Order data", "Invalid price or title")
         else:
@@ -168,7 +174,9 @@ async def test_amazon_connector():
         # Test 6: Analyze purchase patterns
         analysis = connector.analyze_purchase_patterns()
         if "total_orders" in analysis and analysis["total_orders"] > 0:
-            test_passed(f"Analyze patterns: ${analysis.get('total_spent', 0):.2f} spent")
+            test_passed(
+                f"Analyze patterns: ${analysis.get('total_spent', 0):.2f} spent"
+            )
         else:
             test_failed("Analyze patterns", "No analysis data")
 
@@ -181,7 +189,10 @@ async def test_ppr_retriever():
     print("\n=== TESTING PPR RETRIEVER ===")
 
     try:
-        from mcp_servers.hyperag.retrieval.ppr_retriever import PersonalizedPageRank, PPRResults
+        from mcp_servers.hyperag.retrieval.ppr_retriever import (
+            PersonalizedPageRank,
+            PPRResults,
+        )
 
         # Test 1: Can import and create PPR retriever
         # Create mock dependencies
@@ -198,14 +209,18 @@ async def test_ppr_retriever():
         hippo = MockHippoIndex()
         hypergraph = MockHypergraphKG()
 
-        ppr = PersonalizedPageRank(hippo_index=hippo, hypergraph=hypergraph, damping=0.85)
+        ppr = PersonalizedPageRank(
+            hippo_index=hippo, hypergraph=hypergraph, damping=0.85
+        )
         test_passed("Create PPR retriever")
 
         # Test 2: Can run retrieval
         query_seeds = ["node1", "node2", "node3"]
         plan = MockQueryPlan()
 
-        results = await ppr.retrieve(query_seeds=query_seeds, user_id="test_user", plan=plan, creative_mode=False)
+        results = await ppr.retrieve(
+            query_seeds=query_seeds, user_id="test_user", plan=plan, creative_mode=False
+        )
 
         if isinstance(results, PPRResults):
             test_passed("PPR retrieval returns results")
@@ -250,10 +265,14 @@ async def test_divergent_retriever():
         query_seeds = ["creativity", "innovation", "art"]
         plan = MockQueryPlan()
 
-        results = await divergent.retrieve_creative(query_seeds=query_seeds, user_id="test_user", plan=plan)
+        results = await divergent.retrieve_creative(
+            query_seeds=query_seeds, user_id="test_user", plan=plan
+        )
 
         if results and hasattr(results, "creativity_score"):
-            test_passed(f"Divergent retrieval: creativity={results.creativity_score:.2f}")
+            test_passed(
+                f"Divergent retrieval: creativity={results.creativity_score:.2f}"
+            )
         else:
             test_failed("Divergent retrieval", "No creativity score")
 
@@ -266,7 +285,9 @@ async def test_divergent_retriever():
             if "type" in node and "creativity_factor" in node:
                 test_passed(f"Creative node type: {node['type']}")
             else:
-                test_failed("Creative node structure", "Missing type or creativity_factor")
+                test_failed(
+                    "Creative node structure", "Missing type or creativity_factor"
+                )
         else:
             test_failed("Creative nodes", "No nodes generated")
 
@@ -285,7 +306,10 @@ async def test_system_health_dashboard():
     print("\n=== TESTING SYSTEM HEALTH DASHBOARD ===")
 
     try:
-        from monitoring.system_health_dashboard import ComponentHealthChecker, SystemHealthDashboard
+        from monitoring.system_health_dashboard import (
+            ComponentHealthChecker,
+            SystemHealthDashboard,
+        )
 
         # Test 1: Can create dashboard
         dashboard = SystemHealthDashboard()
@@ -308,7 +332,9 @@ async def test_system_health_dashboard():
         dashboard_data = await dashboard.generate_dashboard()
         if "overall_health" in dashboard_data:
             overall = dashboard_data["overall_health"]
-            test_passed(f"Generate dashboard: {overall['completion_percentage']:.1f}% complete")
+            test_passed(
+                f"Generate dashboard: {overall['completion_percentage']:.1f}% complete"
+            )
         else:
             test_failed("Generate dashboard", "No overall health data")
 
@@ -346,8 +372,12 @@ async def main():
     print("VERIFICATION COMPLETE")
     print("=" * 60)
     print(f"Total Tests: {total_tests}")
-    print(f"Passed: {test_results['passed']} ({test_results['passed']/total_tests*100:.1f}%)")
-    print(f"Failed: {test_results['failed']} ({test_results['failed']/total_tests*100:.1f}%)")
+    print(
+        f"Passed: {test_results['passed']} ({test_results['passed']/total_tests*100:.1f}%)"
+    )
+    print(
+        f"Failed: {test_results['failed']} ({test_results['failed']/total_tests*100:.1f}%)"
+    )
     print(f"Time: {elapsed:.2f} seconds")
 
     if test_results["failed"] > 0:

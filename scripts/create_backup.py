@@ -32,7 +32,10 @@ def create_structure_snapshot():
                         "contents": scan_directory(item, max_depth, current_depth + 1),
                     }
                 else:
-                    structure[item.name] = {"type": "file", "size": item.stat().st_size if item.exists() else 0}
+                    structure[item.name] = {
+                        "type": "file",
+                        "size": item.stat().st_size if item.exists() else 0,
+                    }
         except PermissionError:
             structure["_error"] = "Permission denied"
 
@@ -81,7 +84,9 @@ def main():
     backup_info = {
         "timestamp": timestamp,
         "important_files": [str(f.relative_to(base_path)) for f in file_list],
-        "directory_count": len([k for k, v in structure.items() if v.get("type") == "directory"]),
+        "directory_count": len(
+            [k for k, v in structure.items() if v.get("type") == "directory"]
+        ),
         "note": "Backup created before codebase restructuring",
     }
 

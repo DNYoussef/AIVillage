@@ -34,9 +34,13 @@ class UnifiedAnalytics:
             "max": np.max(values),
         }
 
-    def record_task_completion(self, task_id: str, completion_time: float, success: bool):
+    def record_task_completion(
+        self, task_id: str, completion_time: float, success: bool
+    ):
         self.record_metric("task_completion_time", completion_time)
-        self.task_history.append({"task_id": task_id, "completion_time": completion_time, "success": success})
+        self.task_history.append(
+            {"task_id": task_id, "completion_time": completion_time, "success": success}
+        )
 
     def update_performance_history(self, performance: float):
         self.performance_history.append(performance)

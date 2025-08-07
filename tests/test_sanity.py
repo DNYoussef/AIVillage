@@ -33,7 +33,9 @@ def test_imports_work():
 def test_no_syntax_errors():
     """Verify all Python files have valid syntax"""
     root = Path(__file__).parent.parent / "src"
-    paths = list((root / "core").rglob("*.py")) + list((root / "compression").rglob("*.py"))
+    paths = list((root / "core").rglob("*.py")) + list(
+        (root / "compression").rglob("*.py")
+    )
     errors = []
     for py_file in paths:
         try:

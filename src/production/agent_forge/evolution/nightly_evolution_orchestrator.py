@@ -35,9 +35,13 @@ class NightlyEvolutionOrchestrator:
 
         # Configuration
         self.max_evolution_time_minutes = self.config.get("max_evolution_time", 30)
-        self.success_threshold = self.config.get("success_threshold", 0.05)  # 5% improvement
+        self.success_threshold = self.config.get(
+            "success_threshold", 0.05
+        )  # 5% improvement
         self.rollback_on_failure = self.config.get("rollback_on_failure", True)
-        self.learning_rate_adjustment = self.config.get("learning_rate_adjustment", True)
+        self.learning_rate_adjustment = self.config.get(
+            "learning_rate_adjustment", True
+        )
 
         # Evolution state
         self.evolution_results: dict[str, list[dict]] = {}
@@ -119,7 +123,9 @@ class NightlyEvolutionOrchestrator:
             # Select best evolution strategy
             strategy = await self._select_evolution_strategy(agent)
             if not strategy:
-                logger.warning(f"No suitable evolution strategy found for agent {agent_id}")
+                logger.warning(
+                    f"No suitable evolution strategy found for agent {agent_id}"
+                )
                 return False
 
             logger.info(f"Selected strategy '{strategy.name}' for agent {agent_id}")
@@ -137,7 +143,9 @@ class NightlyEvolutionOrchestrator:
             post_evolution_kpis = agent.evaluate_kpi()
 
             # Validate improvement
-            improvement = self._calculate_improvement(pre_evolution_kpis, post_evolution_kpis)
+            improvement = self._calculate_improvement(
+                pre_evolution_kpis, post_evolution_kpis
+            )
 
             if improvement >= self.success_threshold:
                 # Success - record results
@@ -153,7 +161,10 @@ class NightlyEvolutionOrchestrator:
                 # Update strategy effectiveness
                 self._update_strategy_effectiveness(strategy.name, True, improvement)
 
-                logger.info(f"Nightly evolution successful for agent {agent_id} " f"(improvement: {improvement:.1%})")
+                logger.info(
+                    f"Nightly evolution successful for agent {agent_id} "
+                    f"(improvement: {improvement:.1%})"
+                )
                 return True
             # Insufficient improvement
             logger.warning(
@@ -168,14 +179,20 @@ class NightlyEvolutionOrchestrator:
             return False
 
         except Exception as e:
-            logger.exception(f"Error during nightly evolution for agent {agent_id}: {e}")
+            logger.exception(
+                f"Error during nightly evolution for agent {agent_id}: {e}"
+            )
             return False
 
         finally:
             duration = time.time() - start_time
-            logger.info(f"Nightly evolution completed for agent {agent_id} in {duration:.1f}s")
+            logger.info(
+                f"Nightly evolution completed for agent {agent_id} in {duration:.1f}s"
+            )
 
-    async def _select_evolution_strategy(self, agent: EvolvableAgent) -> EvolutionStrategy | None:
+    async def _select_evolution_strategy(
+        self, agent: EvolvableAgent
+    ) -> EvolutionStrategy | None:
         """Select the best evolution strategy for an agent."""
         # Get agent data
         performance_history = agent.performance_history
@@ -196,10 +213,14 @@ class NightlyEvolutionOrchestrator:
         viable_strategies.sort(key=lambda x: x[1], reverse=True)
         selected_strategy, score = viable_strategies[0]
 
-        logger.debug(f"Selected strategy {selected_strategy.name} with score {score:.2f}")
+        logger.debug(
+            f"Selected strategy {selected_strategy.name} with score {score:.2f}"
+        )
         return selected_strategy
 
-    async def _calculate_strategy_score(self, agent: EvolvableAgent, strategy: EvolutionStrategy) -> float:
+    async def _calculate_strategy_score(
+        self, agent: EvolvableAgent, strategy: EvolutionStrategy
+    ) -> float:
         """Calculate score for a strategy based on agent state and strategy effectiveness."""
         # Base score from strategy characteristics
         base_score = strategy.success_probability * strategy.target_performance_gain
@@ -207,19 +228,34 @@ class NightlyEvolutionOrchestrator:
         # Adjust based on historical effectiveness
         historical_effectiveness = self.strategy_effectiveness.get(strategy.name, 0.5)
         effectiveness_weight = 0.3
-        score = base_score * (1 - effectiveness_weight) + historical_effectiveness * effectiveness_weight
+        score = (
+            base_score * (1 - effectiveness_weight)
+            + historical_effectiveness * effectiveness_weight
+        )
 
         # Adjust based on agent characteristics
         current_kpis = agent.evaluate_kpi()
 
         # Prefer strategies that target agent's weak areas
-        if strategy.name == "parameter_tuning" and current_kpis.get("efficiency", 0.5) < 0.6:
+        if (
+            strategy.name == "parameter_tuning"
+            and current_kpis.get("efficiency", 0.5) < 0.6
+        ):
             score *= 1.2
-        elif strategy.name == "prompt_optimization" and current_kpis.get("accuracy", 0.7) < 0.7:
+        elif (
+            strategy.name == "prompt_optimization"
+            and current_kpis.get("accuracy", 0.7) < 0.7
+        ):
             score *= 1.3
-        elif strategy.name == "confidence_threshold_tuning" and current_kpis.get("confidence", 0.5) < 0.5:
+        elif (
+            strategy.name == "confidence_threshold_tuning"
+            and current_kpis.get("confidence", 0.5) < 0.5
+        ):
             score *= 1.1
-        elif strategy.name == "specialization_enhancement" and agent.specialization_domain == "general":
+        elif (
+            strategy.name == "specialization_enhancement"
+            and agent.specialization_domain == "general"
+        ):
             score *= 1.15
 
         # Risk adjustment based on agent stability
@@ -231,7 +267,9 @@ class NightlyEvolutionOrchestrator:
 
         return max(0.0, score)
 
-    async def _apply_evolution_strategy(self, agent: EvolvableAgent, strategy: EvolutionStrategy) -> dict[str, Any]:
+    async def _apply_evolution_strategy(
+        self, agent: EvolvableAgent, strategy: EvolutionStrategy
+    ) -> dict[str, Any]:
         """Apply specific evolution strategy to agent."""
         strategy_name = strategy.name
 
@@ -250,7 +288,9 @@ class NightlyEvolutionOrchestrator:
         logger.error(f"Unknown evolution strategy: {strategy_name}")
         return {"success": False, "error": f"Unknown strategy: {strategy_name}"}
 
-    async def _apply_parameter_tuning(self, agent: EvolvableAgent, strategy: EvolutionStrategy) -> dict[str, Any]:
+    async def _apply_parameter_tuning(
+        self, agent: EvolvableAgent, strategy: EvolutionStrategy
+    ) -> dict[str, Any]:
         """Apply parameter tuning evolution strategy."""
         try:
             # Analyze performance vs parameters
@@ -294,7 +334,9 @@ class NightlyEvolutionOrchestrator:
             logger.exception(f"Parameter tuning failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def _apply_prompt_optimization(self, agent: EvolvableAgent, strategy: EvolutionStrategy) -> dict[str, Any]:
+    async def _apply_prompt_optimization(
+        self, agent: EvolvableAgent, strategy: EvolutionStrategy
+    ) -> dict[str, Any]:
         """Apply prompt optimization evolution strategy."""
         try:
             # Analyze prompt effectiveness
@@ -342,7 +384,9 @@ class NightlyEvolutionOrchestrator:
             elif reliability < 0.6:  # Too unstable
                 learning_rate_factor = 0.8  # Decrease learning rate
             else:
-                learning_rate_factor = 1.0 + random.uniform(-0.1, 0.1)  # Small random adjustment
+                learning_rate_factor = 1.0 + random.uniform(
+                    -0.1, 0.1
+                )  # Small random adjustment
 
             # Apply learning rate changes
             changes = {}
@@ -432,7 +476,11 @@ class NightlyEvolutionOrchestrator:
 
             # Find best performing task types
             best_tasks = sorted(
-                [(task, info["success_rate"]) for task, info in task_preferences.items() if info["confidence"] > 0.7],
+                [
+                    (task, info["success_rate"])
+                    for task, info in task_preferences.items()
+                    if info["confidence"] > 0.7
+                ],
                 key=lambda x: x[1],
                 reverse=True,
             )
@@ -506,14 +554,18 @@ class NightlyEvolutionOrchestrator:
                 "strategy": "context_pattern_learning",
                 "changes": changes,
                 "strong_patterns": len(strong_patterns),
-                "weak_spots_addressed": len([w for w in weak_spots if w["area"] in changes]),
+                "weak_spots_addressed": len(
+                    [w for w in weak_spots if w["area"] in changes]
+                ),
             }
 
         except Exception as e:
             logger.exception(f"Context pattern learning failed: {e}")
             return {"success": False, "error": str(e)}
 
-    async def _analyze_parameter_performance(self, agent: EvolvableAgent) -> dict[str, Any]:
+    async def _analyze_parameter_performance(
+        self, agent: EvolvableAgent
+    ) -> dict[str, Any]:
         """Analyze how parameters correlate with performance."""
         # This is a simplified analysis - in production would be more sophisticated
         analysis = {
@@ -524,11 +576,15 @@ class NightlyEvolutionOrchestrator:
 
         if len(agent.performance_history) > 10:
             recent_performance = [r.success for r in agent.performance_history[-50:]]
-            analysis["recent_success_rate"] = sum(recent_performance) / len(recent_performance)
+            analysis["recent_success_rate"] = sum(recent_performance) / len(
+                recent_performance
+            )
 
         return analysis
 
-    def _calculate_improvement(self, pre_kpis: dict[str, float], post_kpis: dict[str, float]) -> float:
+    def _calculate_improvement(
+        self, pre_kpis: dict[str, float], post_kpis: dict[str, float]
+    ) -> float:
         """Calculate overall improvement from KPI changes."""
         # Weight different KPIs
         weights = {
@@ -550,7 +606,9 @@ class NightlyEvolutionOrchestrator:
 
         return total_improvement / total_weight if total_weight > 0 else 0.0
 
-    async def _rollback_evolution(self, agent: EvolvableAgent, pre_evolution_state: dict[str, Any]) -> None:
+    async def _rollback_evolution(
+        self, agent: EvolvableAgent, pre_evolution_state: dict[str, Any]
+    ) -> None:
         """Rollback agent to pre-evolution state."""
         try:
             # Restore agent state
@@ -562,7 +620,9 @@ class NightlyEvolutionOrchestrator:
             logger.info(f"Rolled back evolution for agent {agent.agent_id}")
 
         except Exception as e:
-            logger.exception(f"Failed to rollback evolution for agent {agent.agent_id}: {e}")
+            logger.exception(
+                f"Failed to rollback evolution for agent {agent.agent_id}: {e}"
+            )
 
     async def _record_evolution_success(
         self,
@@ -593,7 +653,9 @@ class NightlyEvolutionOrchestrator:
         if len(self.evolution_results[agent_id]) > 100:
             self.evolution_results[agent_id] = self.evolution_results[agent_id][-100:]
 
-    def _update_strategy_effectiveness(self, strategy_name: str, success: bool, improvement: float) -> None:
+    def _update_strategy_effectiveness(
+        self, strategy_name: str, success: bool, improvement: float
+    ) -> None:
         """Update effectiveness tracking for evolution strategy."""
         if strategy_name not in self.strategy_effectiveness:
             self.strategy_effectiveness[strategy_name] = 0.5  # Start neutral
@@ -611,20 +673,27 @@ class NightlyEvolutionOrchestrator:
 
         self.strategy_effectiveness[strategy_name] = new_effectiveness
 
-        logger.debug(f"Updated {strategy_name} effectiveness: {current_effectiveness:.2f} -> {new_effectiveness:.2f}")
+        logger.debug(
+            f"Updated {strategy_name} effectiveness: {current_effectiveness:.2f} -> {new_effectiveness:.2f}"
+        )
 
     def get_evolution_statistics(self) -> dict[str, Any]:
         """Get evolution statistics."""
-        total_evolutions = sum(len(results) for results in self.evolution_results.values())
+        total_evolutions = sum(
+            len(results) for results in self.evolution_results.values()
+        )
         successful_evolutions = sum(
-            sum(1 for r in results if r["success"]) for results in self.evolution_results.values()
+            sum(1 for r in results if r["success"])
+            for results in self.evolution_results.values()
         )
 
         return {
             "total_agents": len(self.evolution_results),
             "total_evolutions": total_evolutions,
             "successful_evolutions": successful_evolutions,
-            "success_rate": successful_evolutions / total_evolutions if total_evolutions > 0 else 0,
+            "success_rate": (
+                successful_evolutions / total_evolutions if total_evolutions > 0 else 0
+            ),
             "strategy_effectiveness": self.strategy_effectiveness.copy(),
             "available_strategies": list(self.strategies.keys()),
         }

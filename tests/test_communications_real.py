@@ -18,7 +18,9 @@ from src.communications.message import Message, MessageType, Priority
 from src.communications.protocol import CommunicationsProtocol
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +35,9 @@ class TestResults:
     def add_result(self, test_name: str, passed: bool, details: str = ""):
         self.tests[test_name] = passed
         self.details[test_name] = details
-        logger.info(f"Test '{test_name}': {'PASSED' if passed else 'FAILED'} - {details}")
+        logger.info(
+            f"Test '{test_name}': {'PASSED' if passed else 'FAILED'} - {details}"
+        )
 
     def print_summary(self):
         print("\n" + "=" * 80)
@@ -72,7 +76,11 @@ async def test_connection_establishment(results: TestResults):
         success = await client.connect("ws://localhost:8888", "server_agent")
 
         if success and server.is_connected("client_agent"):
-            results.add_result("connection_establishment", True, "Client connected and handshake completed")
+            results.add_result(
+                "connection_establishment",
+                True,
+                "Client connected and handshake completed",
+            )
         else:
             results.add_result(
                 "connection_establishment",
@@ -138,7 +146,9 @@ async def test_message_delivery(results: TestResults):
             "timestamp": time.time(),
         }
 
-        server_send_success = await server.send_message("client_agent", response_message)
+        server_send_success = await server.send_message(
+            "client_agent", response_message
+        )
         await asyncio.sleep(0.5)  # Wait for message processing
 
         # Verify messages were received
@@ -216,7 +226,11 @@ async def test_reconnection_logic(results: TestResults):
         reconnected = server.is_connected("client_agent")
 
         if not is_still_connected and reconnected:
-            results.add_result("reconnection_logic", True, "Client detected disconnect and successfully reconnected")
+            results.add_result(
+                "reconnection_logic",
+                True,
+                "Client detected disconnect and successfully reconnected",
+            )
         else:
             results.add_result(
                 "reconnection_logic",
@@ -245,7 +259,9 @@ async def test_message_queuing(results: TestResults):
         # Set up message handler
         def message_handler(agent_id: str, message: dict):
             received_messages.append(message)
-            logger.info(f"Received queued message: {message.get('content', {}).get('message_id')}")
+            logger.info(
+                f"Received queued message: {message.get('content', {}).get('message_id')}"
+            )
 
         # Start client only (no server yet)
         client = CommunicationsProtocol("client_agent", port=8889)
@@ -277,7 +293,11 @@ async def test_message_queuing(results: TestResults):
         connection_success = await client.connect("ws://localhost:8888", "server_agent")
 
         if not connection_success:
-            results.add_result("message_queuing", False, "Failed to establish connection for queue test")
+            results.add_result(
+                "message_queuing",
+                False,
+                "Failed to establish connection for queue test",
+            )
             return
 
         # Wait for queued messages to be delivered
@@ -297,7 +317,9 @@ async def test_message_queuing(results: TestResults):
 
         if delivered_count >= 5 and messages_in_order:
             results.add_result(
-                "message_queuing", True, f"All {delivered_count} queued messages delivered in correct order"
+                "message_queuing",
+                True,
+                f"All {delivered_count} queued messages delivered in correct order",
             )
         else:
             results.add_result(
@@ -331,10 +353,16 @@ async def test_tls_ssl_support(results: TestResults):
 
         # Test SSL connection support in client
         client_source = inspect.getsource(server.connect)
-        has_ssl_client_support = "ssl_context" in client_source and "wss" in client_source
+        has_ssl_client_support = (
+            "ssl_context" in client_source and "wss" in client_source
+        )
 
         if has_ssl_context and has_ssl_client_support:
-            results.add_result("tls_ssl_support", True, "SSL/TLS support implemented in both server and client")
+            results.add_result(
+                "tls_ssl_support",
+                True,
+                "SSL/TLS support implemented in both server and client",
+            )
         else:
             results.add_result(
                 "tls_ssl_support",
@@ -362,7 +390,11 @@ async def test_message_encryption(results: TestResults):
         keys_match = server_key._signing_key == client_key._signing_key
 
         # Test message encryption/decryption
-        test_message = {"type": "test", "content": "secret message", "timestamp": time.time()}
+        test_message = {
+            "type": "test",
+            "content": "secret message",
+            "timestamp": time.time(),
+        }
 
         encrypted = server._encrypt_message("client_agent", test_message)
         decrypted = client._decrypt_message("server_agent", encrypted)
@@ -371,7 +403,9 @@ async def test_message_encryption(results: TestResults):
 
         if keys_match and encryption_works:
             results.add_result(
-                "message_encryption", True, "Encryption keys match and message encryption/decryption works"
+                "message_encryption",
+                True,
+                "Encryption keys match and message encryption/decryption works",
             )
         else:
             results.add_result(

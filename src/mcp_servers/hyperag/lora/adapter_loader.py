@@ -57,7 +57,9 @@ class AdapterRegistry:
     """Registry of verified LoRA adapters with Guardian signatures."""
 
     def __init__(self, registry_path: str | None = None) -> None:
-        self.registry_path = Path(registry_path) if registry_path else Path("lora_registry.json")
+        self.registry_path = (
+            Path(registry_path) if registry_path else Path("lora_registry.json")
+        )
         self.registry: dict[str, AdapterSignature] = {}
         self.guardian_gate = GuardianGate()
         self._load_registry()
@@ -83,7 +85,10 @@ class AdapterRegistry:
             registry_data = {
                 "version": "1.0",
                 "last_updated": datetime.now().isoformat(),
-                "adapters": {adapter_id: sig.to_dict() for adapter_id, sig in self.registry.items()},
+                "adapters": {
+                    adapter_id: sig.to_dict()
+                    for adapter_id, sig in self.registry.items()
+                },
             }
 
             with open(self.registry_path, "w") as f:
@@ -133,7 +138,9 @@ class AdapterRegistry:
 
             # Generate Guardian signature
             payload_bytes = json.dumps(payload, sort_keys=True).encode("utf-8")
-            signature = hmac.new(guardian_key.encode("utf-8"), payload_bytes, hashlib.sha256).hexdigest()
+            signature = hmac.new(
+                guardian_key.encode("utf-8"), payload_bytes, hashlib.sha256
+            ).hexdigest()
 
             # Create adapter signature
             adapter_sig = AdapterSignature(
@@ -142,7 +149,9 @@ class AdapterRegistry:
                 metrics=metrics,
                 signed_at=datetime.now(),
                 guardian_signature=signature,
-                verification_key=guardian_key[:8] + "..." + guardian_key[-8:],  # Truncated for logging
+                verification_key=guardian_key[:8]
+                + "..."
+                + guardian_key[-8:],  # Truncated for logging
             )
 
             # Generate adapter ID
@@ -152,7 +161,9 @@ class AdapterRegistry:
             self.registry[adapter_id] = adapter_sig
             self._save_registry()
 
-            logger.info(f"Registered adapter {adapter_id} for domain '{domain}' with metrics {metrics}")
+            logger.info(
+                f"Registered adapter {adapter_id} for domain '{domain}' with metrics {metrics}"
+            )
             return adapter_id
 
         except Exception as e:
@@ -219,7 +230,9 @@ class AdapterRegistry:
             logger.exception(error_msg)
             return False, error_msg
 
-    def list_verified_adapters(self, domain: str | None = None) -> dict[str, dict[str, Any]]:
+    def list_verified_adapters(
+        self, domain: str | None = None
+    ) -> dict[str, dict[str, Any]]:
         """List all verified adapters, optionally filtered by domain.
 
         Args:

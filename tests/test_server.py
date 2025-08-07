@@ -23,6 +23,7 @@ fake_faiss.IndexFlatL2 = lambda *args, **kwargs: object()
 fake_torch = types.ModuleType("torch")
 
 with patch.dict(sys.modules, {"faiss": fake_faiss, "torch": fake_torch}):
+    sys.path.insert(0, str(Path(__file__).parent.parent / "bin"))
     import server
 
 
@@ -78,7 +79,9 @@ class TestServer(unittest.TestCase):
                 resp1 = await server.upload_endpoint(file)
                 file = UploadFile(filename="test.txt", file=BytesIO(b"hello"))
                 resp2 = await server.upload_endpoint(file)
-                query_resp = await server.query_endpoint(server.SecureQueryRequest(query="hi"))
+                query_resp = await server.query_endpoint(
+                    server.SecureQueryRequest(query="hi")
+                )
                 await server.shutdown_event()
                 return resp1, resp2, query_resp
 

@@ -45,7 +45,9 @@ async def profile_device_resources(agents: list[str]) -> list[dict[str, int]]:
     ]
 
 
-async def distribute_model(devices: list[dict[str, int]], model_size: int) -> dict[str, int]:
+async def distribute_model(
+    devices: list[dict[str, int]], model_size: int
+) -> dict[str, int]:
     """Distribute model shards across devices based on RAM capacity."""
 
     await asyncio.sleep(0.01)

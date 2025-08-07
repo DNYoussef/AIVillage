@@ -39,12 +39,20 @@ async def validate_sprint6():
 
         # Test Peer Capabilities
         capabilities = PeerCapabilities(
-            device_id="test_device", cpu_cores=4, ram_mb=8192, evolution_capacity=0.8, available_for_evolution=True
+            device_id="test_device",
+            cpu_cores=4,
+            ram_mb=8192,
+            evolution_capacity=0.8,
+            available_for_evolution=True,
         )
 
         suitable = capabilities.is_suitable_for_evolution()
         priority = capabilities.get_evolution_priority()
-        print_check("Peer capabilities evaluation", True, f"Suitable: {suitable}, Priority: {priority:.2f}")
+        print_check(
+            "Peer capabilities evaluation",
+            True,
+            f"Suitable: {suitable}, Priority: {priority:.2f}",
+        )
 
     except Exception as e:
         print_check("P2P Communication Layer", False, str(e))
@@ -54,9 +62,16 @@ async def validate_sprint6():
     print_section("Phase 2: Resource Management System")
 
     try:
-        from src.core.resources import AdaptiveLoader, ConstraintManager, DeviceProfiler, ResourceMonitor
+        from src.core.resources import (
+            AdaptiveLoader,
+            ConstraintManager,
+            DeviceProfiler,
+            ResourceMonitor,
+        )
 
-        print_check("Resource management imports", True, "All resource components available")
+        print_check(
+            "Resource management imports", True, "All resource components available"
+        )
 
         # Test Device Profiler
         profiler = DeviceProfiler()
@@ -81,17 +96,29 @@ async def validate_sprint6():
         suitability = snapshot.evolution_suitability_score
         constrained = snapshot.is_resource_constrained
 
-        print_check("Resource monitoring", True, f"Suitability: {suitability:.2f}, Constrained: {constrained}")
+        print_check(
+            "Resource monitoring",
+            True,
+            f"Suitability: {suitability:.2f}, Constrained: {constrained}",
+        )
 
         # Test Constraint Manager
         constraint_manager = ConstraintManager(profiler)
         templates = list(constraint_manager.constraint_templates.keys())
-        print_check("Constraint management", True, f"Templates available: {', '.join(templates)}")
+        print_check(
+            "Constraint management",
+            True,
+            f"Templates available: {', '.join(templates)}",
+        )
 
         # Test Adaptive Loader
         adaptive_loader = AdaptiveLoader(profiler, constraint_manager)
         model_variants = list(adaptive_loader.model_variants.keys())
-        print_check("Adaptive model loading", True, f"Model variants: {', '.join(model_variants)}")
+        print_check(
+            "Adaptive model loading",
+            True,
+            f"Model variants: {', '.join(model_variants)}",
+        )
 
     except Exception as e:
         print_check("Resource Management System", False, str(e))
@@ -117,11 +144,19 @@ async def validate_sprint6():
         )
 
         evolution_system = InfrastructureAwareEvolution(config)
-        print_check("Evolution system creation", True, f"Default mode: {config.default_evolution_mode.value}")
+        print_check(
+            "Evolution system creation",
+            True,
+            f"Default mode: {config.default_evolution_mode.value}",
+        )
 
         # Test status (without full initialization)
         status = evolution_system.get_infrastructure_status()
-        print_check("System status reporting", True, f"Components tracked: {len(status.get('components', {}))}")
+        print_check(
+            "System status reporting",
+            True,
+            f"Components tracked: {len(status.get('components', {}))}",
+        )
 
     except Exception as e:
         print_check("Infrastructure-Aware Evolution", False, str(e))
@@ -131,7 +166,9 @@ async def validate_sprint6():
     print_section("Phase 4: Resource-Constrained Evolution")
 
     try:
-        from src.production.agent_forge.evolution.resource_constrained_evolution import ResourceConstrainedConfig
+        from src.production.agent_forge.evolution.resource_constrained_evolution import (
+            ResourceConstrainedConfig,
+        )
 
         print_check("Resource-constrained evolution import", True)
 
@@ -145,7 +182,8 @@ async def validate_sprint6():
         print_check(
             "Resource constraints configuration",
             True,
-            f"Memory limit: {config.memory_limit_multiplier*100}%, " f"CPU limit: {config.cpu_limit_multiplier*100}%",
+            f"Memory limit: {config.memory_limit_multiplier*100}%, "
+            f"CPU limit: {config.cpu_limit_multiplier*100}%",
         )
 
     except Exception as e:
@@ -156,7 +194,9 @@ async def validate_sprint6():
     print_section("Phase 5: Evolution Coordination Protocol")
 
     try:
-        from src.production.agent_forge.evolution.evolution_coordination_protocol import EvolutionProposal
+        from src.production.agent_forge.evolution.evolution_coordination_protocol import (
+            EvolutionProposal,
+        )
 
         print_check("Evolution coordination protocol import", True)
 
@@ -180,7 +220,8 @@ async def validate_sprint6():
         print_check(
             "Coordination proposal creation",
             True,
-            f"Proposal ID: {proposal.proposal_id}, " f"Consensus: {proposal.consensus_type.value}",
+            f"Proposal ID: {proposal.proposal_id}, "
+            f"Consensus: {proposal.consensus_type.value}",
         )
 
     except Exception as e:
@@ -205,7 +246,9 @@ async def validate_sprint6():
         print_check(
             "Resource allocation flow",
             True,
-            f"Memory: {allocation['memory_mb']}MB, " f"CPU: {allocation['cpu_percent']}%, " f"Suitable: {suitable}",
+            f"Memory: {allocation['memory_mb']}MB, "
+            f"CPU: {allocation['cpu_percent']}%, "
+            f"Suitable: {suitable}",
         )
 
         # Test constraint checking
@@ -213,9 +256,15 @@ async def validate_sprint6():
         if can_register:
             constraints.unregister_task("test_integration")
 
-        print_check("Constraint management flow", can_register, "Task registration and constraint checking")
+        print_check(
+            "Constraint management flow",
+            can_register,
+            "Task registration and constraint checking",
+        )
 
-        print_check("End-to-end integration", True, "All components integrated successfully")
+        print_check(
+            "End-to-end integration", True, "All components integrated successfully"
+        )
 
     except Exception as e:
         print_check("End-to-End Integration", False, str(e))
@@ -226,10 +275,16 @@ async def validate_sprint6():
 
     criteria = [
         ("P2P communication working with 5+ nodes", "Architecture ready"),
-        ("Resource management on 2-4GB devices", "Profiles and constraints implemented"),
+        (
+            "Resource management on 2-4GB devices",
+            "Profiles and constraints implemented",
+        ),
         ("Evolution respects resource constraints", "Constraint manager operational"),
         ("Monitoring shows system health", "Device profiler and monitoring active"),
-        ("Nightly evolution runs within resources", "Resource-constrained evolution ready"),
+        (
+            "Nightly evolution runs within resources",
+            "Resource-constrained evolution ready",
+        ),
         ("Basic breakthrough detection working", "Dual evolution system foundation"),
         ("Agent KPIs improve 5% over sprint", "Evolution metrics framework ready"),
         ("Knowledge preservation demonstrated", "Coordination protocol foundations"),

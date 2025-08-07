@@ -4,7 +4,11 @@ def calculate_pareto_front(objectives: list[list[float]]) -> list[int]:
     """
     pareto_front = []
     for i, obj in enumerate(objectives):
-        if all(not dominates(other_obj, obj) for j, other_obj in enumerate(objectives) if i != j):
+        if all(
+            not dominates(other_obj, obj)
+            for j, other_obj in enumerate(objectives)
+            if i != j
+        ):
             pareto_front.append(i)
     return pareto_front
 
@@ -33,13 +37,16 @@ def calculate_crowding_distance(objectives: list[list[float]]) -> list[float]:
 
         for i in range(1, n_solutions - 1):
             crowding_distances[sorted_indices[i]] += (
-                objectives[sorted_indices[i + 1]][m] - objectives[sorted_indices[i - 1]][m]
+                objectives[sorted_indices[i + 1]][m]
+                - objectives[sorted_indices[i - 1]][m]
             ) / obj_range
 
     return crowding_distances
 
 
-def nsga2_select(population: list, objectives: list[list[float]], n_select: int) -> tuple[list, list[list[float]]]:
+def nsga2_select(
+    population: list, objectives: list[list[float]], n_select: int
+) -> tuple[list, list[list[float]]]:
     """Perform NSGA-II selection."""
     fronts = non_dominated_sort(objectives)
     selected = []
@@ -50,11 +57,17 @@ def nsga2_select(population: list, objectives: list[list[float]], n_select: int)
             selected.extend([population[i] for i in front])
             selected_objectives.extend([objectives[i] for i in front])
         else:
-            crowding_distances = calculate_crowding_distance([objectives[i] for i in front])
-            sorted_front = sorted(front, key=lambda i: crowding_distances[front.index(i)], reverse=True)
+            crowding_distances = calculate_crowding_distance(
+                [objectives[i] for i in front]
+            )
+            sorted_front = sorted(
+                front, key=lambda i: crowding_distances[front.index(i)], reverse=True
+            )
             n_remaining = n_select - len(selected)
             selected.extend([population[i] for i in sorted_front[:n_remaining]])
-            selected_objectives.extend([objectives[i] for i in sorted_front[:n_remaining]])
+            selected_objectives.extend(
+                [objectives[i] for i in sorted_front[:n_remaining]]
+            )
             break
 
     return selected, selected_objectives

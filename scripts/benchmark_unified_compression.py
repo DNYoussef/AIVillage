@@ -94,10 +94,15 @@ def benchmark_all_methods():
     print("\n" + "=" * 80)
     print("SUMMARY TABLE")
     print("=" * 80)
-    print(f"{'Model':<10} {'Compressor':<25} {'Ratio':<10} {'Time(s)':<10} {'Memory(MB)':<12}")
+    print(
+        f"{'Model':<10} {'Compressor':<25} {'Ratio':<10} {'Time(s)':<10} {'Memory(MB)':<12}"
+    )
     print("-" * 80)
     for r in results:
-        print(f"{r['model']:<10} {r['compressor']:<25} {r['ratio']:<10.1f} " f"{r['time']:<10.2f} {r['memory']:<12.1f}")
+        print(
+            f"{r['model']:<10} {r['compressor']:<25} {r['ratio']:<10.1f} "
+            f"{r['time']:<10.2f} {r['memory']:<12.1f}"
+        )
 
     print("\n" + "=" * 80)
     print("MOBILE DEPLOYMENT ANALYSIS (2GB limit)")
@@ -111,7 +116,10 @@ def benchmark_all_methods():
                 continue
             final_mb = r["size_kb"] / 1024
             fits = final_mb < 1024
-            print(f"  {r['compressor']:<25} -> {final_mb:>6.1f}MB " f"[{'\u2713 FITS' if fits else '\u2717 TOO BIG'}]")
+            print(
+                f"  {r['compressor']:<25} -> {final_mb:>6.1f}MB "
+                f"[{'\u2713 FITS' if fits else '\u2717 TOO BIG'}]"
+            )
 
 
 if __name__ == "__main__":

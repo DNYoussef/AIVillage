@@ -1,9 +1,7 @@
-import pytest
-
 from agent_forge.core.generator import (
     AGENT_REGISTRY,
-    ScribeAgent,
     HeraldAgent,
+    ScribeAgent,
 )
 
 

@@ -6,7 +6,7 @@ This folder contains the historical requirements files that have been consolidat
 
 - `requirements_base.txt` - Original base requirements from pyproject.toml
 - `requirements-dev.txt` - Development dependencies
-- `requirements-test.txt` - Testing dependencies  
+- `requirements-test.txt` - Testing dependencies
 - `requirements-production.txt` - Production-specific dependencies
 - `requirements-security.txt` - Security-related dependencies
 - `requirements-experimental.txt` - Experimental features dependencies
@@ -20,7 +20,7 @@ All requirements have been consolidated into the root `requirements.txt` file wh
 
 The consolidated file is organized into clear sections:
 - Core Dependencies
-- AI/ML Dependencies  
+- AI/ML Dependencies
 - Visualization & Monitoring
 - Security Dependencies
 - P2P & Mesh Networking

@@ -177,7 +177,9 @@ class P2PNode:
 
             self.status = NodeStatus.ACTIVE
 
-            logger.info(f"Evolution-aware P2P Node {self.node_id} started on port {self.listen_port}")
+            logger.info(
+                f"Evolution-aware P2P Node {self.node_id} started on port {self.listen_port}"
+            )
 
         except Exception as e:
             logger.exception(f"Failed to start P2P node: {e}")
@@ -189,7 +191,9 @@ class P2PNode:
         logger.info(f"Stopping P2P Node {self.node_id}")
 
         # Notify peers of shutdown
-        await self.broadcast_evolution_event("PEER_SHUTDOWN", {"reason": "graceful_shutdown", "timestamp": time.time()})
+        await self.broadcast_evolution_event(
+            "PEER_SHUTDOWN", {"reason": "graceful_shutdown", "timestamp": time.time()}
+        )
 
         # Stop discovery
         await self.peer_discovery.stop_discovery()
@@ -206,7 +210,9 @@ class P2PNode:
 
         self.status = NodeStatus.DISCONNECTED
 
-    async def _handle_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def _handle_connection(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle incoming peer connection with encryption."""
         peer_addr = writer.get_extra_info("peername")
         peer_id = None
@@ -235,7 +241,9 @@ class P2PNode:
                     await self._handle_message(message, writer)
 
                 except Exception as e:
-                    logger.exception(f"Failed to decrypt/parse message from {peer_addr}: {e}")
+                    logger.exception(
+                        f"Failed to decrypt/parse message from {peer_addr}: {e}"
+                    )
 
         except asyncio.IncompleteReadError:
             pass
@@ -247,7 +255,9 @@ class P2PNode:
             writer.close()
             await writer.wait_closed()
 
-    async def _handle_message(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_message(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Enhanced message handling with evolution support."""
         msg_type = message.get("type", "UNKNOWN")
 
@@ -278,7 +288,9 @@ class P2PNode:
             }
         )
 
-    async def _handle_evolution_start(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_evolution_start(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle evolution start notification."""
         sender_id = message.get("sender_id")
         evolution_type = message.get("evolution_type", "unknown")
@@ -297,7 +309,9 @@ class P2PNode:
             "progress": 0.0,
         }
 
-    async def _handle_evolution_progress(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_evolution_progress(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle evolution progress update."""
         sender_id = message.get("sender_id")
         progress = message.get("progress", 0.0)
@@ -308,13 +322,17 @@ class P2PNode:
         if sender_id in self.peer_registry:
             self.peer_registry[sender_id].current_evolution_load = progress
 
-    async def _handle_evolution_complete(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_evolution_complete(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle evolution completion."""
         sender_id = message.get("sender_id")
         success = message.get("success", False)
         results = message.get("results", {})
 
-        logger.info(f"Peer {sender_id} completed evolution: {'success' if success else 'failed'}")
+        logger.info(
+            f"Peer {sender_id} completed evolution: {'success' if success else 'failed'}"
+        )
 
         # Update peer status
         if sender_id in self.peer_registry:
@@ -332,7 +350,9 @@ class P2PNode:
         if sender_id in self.active_evolutions:
             del self.active_evolutions[sender_id]
 
-    async def _handle_evolution_request_help(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_evolution_request_help(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle request for evolution assistance."""
         sender_id = message.get("sender_id")
         help_type = message.get("help_type", "general")
@@ -354,7 +374,9 @@ class P2PNode:
 
             await self.send_to_peer(sender_id, response)
 
-    async def _handle_evolution_offer_help(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_evolution_offer_help(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle offer of evolution assistance."""
         sender_id = message.get("sender_id")
         message.get("capabilities", {})
@@ -364,7 +386,9 @@ class P2PNode:
         # Store help offer for potential use
         # This would be used by evolution systems to coordinate distributed work
 
-    async def _handle_evolution_consensus(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_evolution_consensus(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle evolution consensus voting."""
         message.get("sender_id")
         message.get("proposal", {})
@@ -373,7 +397,9 @@ class P2PNode:
         # This implements distributed consensus for evolution decisions
         # Would be used for coordinating breakthrough discoveries across peers
 
-    async def _handle_evolution_metrics_share(self, message: dict, writer: asyncio.StreamWriter) -> None:
+    async def _handle_evolution_metrics_share(
+        self, message: dict, writer: asyncio.StreamWriter
+    ) -> None:
         """Handle shared evolution metrics."""
         message.get("sender_id")
         message.get("metrics", {})
@@ -460,7 +486,11 @@ class P2PNode:
 
                 # Send heartbeat with capabilities
                 heartbeat_data = {
-                    "capabilities": self.local_capabilities.__dict__ if self.local_capabilities else {},
+                    "capabilities": (
+                        self.local_capabilities.__dict__
+                        if self.local_capabilities
+                        else {}
+                    ),
                     "status": self.status.value,
                     "active_evolutions": len(self.active_evolutions),
                     "network_stats": self.network_stats.copy(),
@@ -536,7 +566,9 @@ class P2PNode:
             encrypted_data = await self.encryption.encrypt_message(message_data)
 
             # Send via protocol
-            await self.message_protocol.send_message(encrypted_data, self.connections[peer_id])
+            await self.message_protocol.send_message(
+                encrypted_data, self.connections[peer_id]
+            )
 
             self.network_stats["messages_sent"] += 1
             self.network_stats["bytes_sent"] += len(message_data)
@@ -564,10 +596,14 @@ class P2PNode:
 
         return success_count
 
-    def get_suitable_evolution_peers(self, min_count: int = 1) -> list[PeerCapabilities]:
+    def get_suitable_evolution_peers(
+        self, min_count: int = 1
+    ) -> list[PeerCapabilities]:
         """Get peers suitable for evolution tasks."""
         suitable_peers = [
-            capabilities for capabilities in self.peer_registry.values() if capabilities.is_suitable_for_evolution()
+            capabilities
+            for capabilities in self.peer_registry.values()
+            if capabilities.is_suitable_for_evolution()
         ]
 
         # Sort by evolution priority
@@ -586,7 +622,9 @@ class P2PNode:
             "connected_peers": len(self.connections),
             "known_peers": len(self.peer_registry),
             "active_evolutions": len(self.active_evolutions),
-            "local_capabilities": self.local_capabilities.__dict__ if self.local_capabilities else None,
+            "local_capabilities": (
+                self.local_capabilities.__dict__ if self.local_capabilities else None
+            ),
             "network_stats": self.network_stats.copy(),
             "suitable_evolution_peers": len(self.get_suitable_evolution_peers()),
         }

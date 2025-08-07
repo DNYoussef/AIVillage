@@ -207,7 +207,9 @@ class PromptEvolver:
 
         self.model = AutoModelForCausalLM.from_pretrained(
             self.config.model_path,
-            torch_dtype=torch.float16 if self.config.device == "cuda" else torch.float32,
+            torch_dtype=(
+                torch.float16 if self.config.device == "cuda" else torch.float32
+            ),
             device_map="auto" if self.config.device == "cuda" else None,
         )
 
@@ -370,7 +372,9 @@ class PromptEvolver:
 
         return prompt
 
-    def crossover_prompts(self, parent1: PromptCandidate, parent2: PromptCandidate) -> str:
+    def crossover_prompts(
+        self, parent1: PromptCandidate, parent2: PromptCandidate
+    ) -> str:
         """Create offspring prompt by crossing over two parents."""
         lines1 = parent1.prompt_text.split("\n")
         lines2 = parent2.prompt_text.split("\n")
@@ -392,7 +396,9 @@ class PromptEvolver:
 
         return "\n".join(offspring_lines)
 
-    async def evaluate_prompt(self, candidate: PromptCandidate, test_scenarios: list[dict[str, Any]]) -> float:
+    async def evaluate_prompt(
+        self, candidate: PromptCandidate, test_scenarios: list[dict[str, Any]]
+    ) -> float:
         """Evaluate a prompt candidate on test scenarios."""
         if not test_scenarios:
             return 0.5
@@ -416,7 +422,9 @@ class PromptEvolver:
         # Update geometry tracking
         if self.geometry_tracker and self.model:
             # Get hidden states from model
-            inputs = self.tokenizer.encode(candidate.prompt_text, return_tensors="pt").to(self.config.device)
+            inputs = self.tokenizer.encode(
+                candidate.prompt_text, return_tensors="pt"
+            ).to(self.config.device)
             with torch.no_grad():
                 outputs = self.model(inputs, output_hidden_states=True)
                 if hasattr(outputs, "hidden_states"):
@@ -428,10 +436,14 @@ class PromptEvolver:
 
         return avg_score
 
-    async def _evaluate_single_scenario(self, candidate: PromptCandidate, scenario: dict[str, Any]) -> float:
+    async def _evaluate_single_scenario(
+        self, candidate: PromptCandidate, scenario: dict[str, Any]
+    ) -> float:
         """Evaluate prompt on a single test scenario."""
         # Simulate prompt evaluation
-        prompt_with_scenario = f"{candidate.prompt_text}\n\nScenario: {scenario.get('description', '')}"
+        prompt_with_scenario = (
+            f"{candidate.prompt_text}\n\nScenario: {scenario.get('description', '')}"
+        )
 
         # Tokenize and check length
         tokens = self.tokenizer.encode(prompt_with_scenario)
@@ -451,7 +463,9 @@ class PromptEvolver:
 
         # Penalty for too much complexity
         complex_words = ["utilize", "facilitate", "implement", "demonstrate"]
-        complexity_penalty = sum(0.02 for word in complex_words if word in candidate.prompt_text.lower())
+        complexity_penalty = sum(
+            0.02 for word in complex_words if word in candidate.prompt_text.lower()
+        )
         base_score -= complexity_penalty
 
         return max(0.0, min(1.0, base_score + np.random.normal(0, 0.1)))
@@ -515,7 +529,9 @@ class MCPRefiner:
                 test_scenarios = self._generate_test_scenarios(tool_def, pattern)
 
                 # Evolve prompts
-                best_prompt = await self._evolve_prompt(base_prompt, tool_name, pattern, test_scenarios)
+                best_prompt = await self._evolve_prompt(
+                    base_prompt, tool_name, pattern, test_scenarios
+                )
 
                 refined_prompts[tool_name] = best_prompt
 
@@ -531,7 +547,9 @@ class MCPRefiner:
 
             except Exception as e:
                 logger.exception(f"Failed to refine prompts for {tool_name}: {e}")
-                refined_prompts[tool_name] = tool_def.get("description", f"Use the {tool_name} tool.")
+                refined_prompts[tool_name] = tool_def.get(
+                    "description", f"Use the {tool_name} tool."
+                )
 
         # Save results
         await self._save_refinement_results(refined_prompts)
@@ -539,7 +557,9 @@ class MCPRefiner:
         logger.info("MCP refinement completed successfully")
         return refined_prompts
 
-    def _generate_test_scenarios(self, tool_def: dict[str, Any], pattern: ToolUsagePattern) -> list[dict[str, Any]]:
+    def _generate_test_scenarios(
+        self, tool_def: dict[str, Any], pattern: ToolUsagePattern
+    ) -> list[dict[str, Any]]:
         """Generate test scenarios for prompt evaluation."""
         scenarios = []
 
@@ -595,17 +615,23 @@ class MCPRefiner:
     ) -> str:
         """Evolve a prompt using genetic algorithm."""
         # Initialize population
-        population = self.prompt_evolver.generate_initial_population(base_prompt, tool_name, pattern)
+        population = self.prompt_evolver.generate_initial_population(
+            base_prompt, tool_name, pattern
+        )
 
         best_candidate = None
         best_score = 0.0
 
         for generation in range(self.config.num_optimization_rounds):
-            logger.info(f"Generation {generation + 1}/{self.config.num_optimization_rounds} for {tool_name}")
+            logger.info(
+                f"Generation {generation + 1}/{self.config.num_optimization_rounds} for {tool_name}"
+            )
 
             # Evaluate population
             for candidate in population:
-                score = await self.prompt_evolver.evaluate_prompt(candidate, test_scenarios)
+                score = await self.prompt_evolver.evaluate_prompt(
+                    candidate, test_scenarios
+                )
                 candidate.performance_score = score
 
                 if score > best_score:
@@ -628,7 +654,9 @@ class MCPRefiner:
 
         return best_candidate.prompt_text if best_candidate else base_prompt
 
-    def _evolve_population(self, population: list[PromptCandidate], pattern: ToolUsagePattern) -> list[PromptCandidate]:
+    def _evolve_population(
+        self, population: list[PromptCandidate], pattern: ToolUsagePattern
+    ) -> list[PromptCandidate]:
         """Evolve population for next generation."""
         # Sort by performance
         sorted_pop = sorted(population, key=lambda x: x.performance_score, reverse=True)
@@ -651,7 +679,9 @@ class MCPRefiner:
 
             # Mutation
             if np.random.random() < self.config.mutation_rate:
-                offspring_text = self.prompt_evolver._mutate_prompt(offspring_text, pattern)
+                offspring_text = self.prompt_evolver._mutate_prompt(
+                    offspring_text, pattern
+                )
 
             # Create new candidate
             offspring = PromptCandidate(
@@ -670,9 +700,13 @@ class MCPRefiner:
 
         return new_population
 
-    def _tournament_selection(self, population: list[PromptCandidate], tournament_size: int = 3) -> PromptCandidate:
+    def _tournament_selection(
+        self, population: list[PromptCandidate], tournament_size: int = 3
+    ) -> PromptCandidate:
         """Tournament selection for parent selection."""
-        tournament = np.random.choice(population, size=min(tournament_size, len(population)), replace=False)
+        tournament = np.random.choice(
+            population, size=min(tournament_size, len(population)), replace=False
+        )
         return max(tournament, key=lambda x: x.performance_score)
 
     async def _save_refinement_results(self, refined_prompts: dict[str, str]) -> None:
@@ -729,7 +763,9 @@ async def main() -> None:
     parser = argparse.ArgumentParser(description="MCP Tool Prompt Refinement")
     parser.add_argument("--model-path", required=True, help="Path to model")
     parser.add_argument("--output-dir", required=True, help="Output directory")
-    parser.add_argument("--tool-definitions", required=True, help="Path to tool definitions JSON")
+    parser.add_argument(
+        "--tool-definitions", required=True, help="Path to tool definitions JSON"
+    )
     parser.add_argument("--usage-logs", help="Path to usage logs JSON")
     parser.add_argument("--rounds", type=int, default=30, help="Optimization rounds")
     parser.add_argument("--population", type=int, default=15, help="Population size")
@@ -770,7 +806,9 @@ async def main() -> None:
     print(f"Underperforming tools: {len(summary['underperforming_tools'])}")
     print(f"Usage events processed: {summary['total_usage_events']}")
 
-    print(f"\nRefined prompts for {len(refined_prompts)} tools saved to {args.output_dir}")
+    print(
+        f"\nRefined prompts for {len(refined_prompts)} tools saved to {args.output_dir}"
+    )
 
 
 if __name__ == "__main__":

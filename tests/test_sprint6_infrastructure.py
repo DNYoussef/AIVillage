@@ -11,8 +11,12 @@ from src.core.resources.adaptive_loader import AdaptiveLoader
 from src.core.resources.constraint_manager import ConstraintManager
 from src.core.resources.device_profiler import DeviceProfiler, DeviceType
 from src.core.resources.resource_monitor import MonitoringMode, ResourceMonitor
-from src.production.agent_forge.evolution.infrastructure_aware_evolution import InfrastructureAwareEvolution
-from src.production.agent_forge.evolution.resource_constrained_evolution import ResourceConstrainedEvolution
+from src.production.agent_forge.evolution.infrastructure_aware_evolution import (
+    InfrastructureAwareEvolution,
+)
+from src.production.agent_forge.evolution.resource_constrained_evolution import (
+    ResourceConstrainedEvolution,
+)
 
 
 @pytest.fixture
@@ -28,7 +32,11 @@ def mock_device_profiler():
     profiler.profile.max_evolution_memory_mb = 4096  # 4GB
     profiler.profile.max_evolution_cpu_percent = 70.0
     profiler.profile.get_evolution_constraints = Mock(
-        return_value={"max_memory_mb": 4096, "max_cpu_percent": 70.0, "max_duration_minutes": 120}
+        return_value={
+            "max_memory_mb": 4096,
+            "max_cpu_percent": 70.0,
+            "max_duration_minutes": 120,
+        }
     )
 
     # Mock current snapshot
@@ -55,7 +63,12 @@ def mock_device_profiler():
     def mock_get_allocation():
         if not profiler.current_snapshot:
             return {}
-        return {"memory_mb": 1600, "cpu_percent": 60.0, "device_tier": "medium", "evolution_capable": True}
+        return {
+            "memory_mb": 1600,
+            "cpu_percent": 60.0,
+            "device_tier": "medium",
+            "evolution_capable": True,
+        }
 
     profiler.get_evolution_resource_allocation = Mock(side_effect=mock_get_allocation)
     profiler.is_suitable_for_evolution = Mock(return_value=True)
@@ -80,7 +93,12 @@ def mock_p2p_node():
     node.register_handler = Mock()
     node.get_suitable_evolution_peers = Mock(return_value=[])
     node.get_network_status = Mock(
-        return_value={"node_id": "test_node_123", "status": "active", "connected_peers": 0, "known_peers": 0}
+        return_value={
+            "node_id": "test_node_123",
+            "status": "active",
+            "connected_peers": 0,
+            "known_peers": 0,
+        }
     )
 
     return node
@@ -129,7 +147,11 @@ class TestDeviceProfiler:
         device_type = profiler._detect_device_type()
 
         # Should detect some valid device type
-        assert device_type in [DeviceType.LAPTOP, DeviceType.DESKTOP, DeviceType.EMBEDDED]
+        assert device_type in [
+            DeviceType.LAPTOP,
+            DeviceType.DESKTOP,
+            DeviceType.EMBEDDED,
+        ]
 
     def test_performance_tier_calculation(self):
         """Test performance tier calculation"""
@@ -266,7 +288,9 @@ class TestAdaptiveLoader:
         )
 
         # Test scoring
-        score = loader._calculate_variant_score(variant, context, mock_device_profiler.current_snapshot)
+        score = loader._calculate_variant_score(
+            variant, context, mock_device_profiler.current_snapshot
+        )
         assert isinstance(score, float)
         assert score >= 0
 
@@ -277,7 +301,9 @@ class TestInfrastructureAwareEvolution:
     @pytest.mark.asyncio
     async def test_infrastructure_initialization(self):
         """Test infrastructure system can initialize"""
-        from src.production.agent_forge.evolution.infrastructure_aware_evolution import InfrastructureConfig
+        from src.production.agent_forge.evolution.infrastructure_aware_evolution import (
+            InfrastructureConfig,
+        )
 
         config = InfrastructureConfig(
             enable_p2p=False,  # Disable P2P for testing
@@ -287,7 +313,10 @@ class TestInfrastructureAwareEvolution:
         system = InfrastructureAwareEvolution(config)
 
         # Test initialization without actual hardware dependencies
-        with patch.object(system, "device_profiler"), patch.object(system, "dual_evolution"):
+        with (
+            patch.object(system, "device_profiler"),
+            patch.object(system, "dual_evolution"),
+        ):
 
             # Mock the initialization
             system.system_initialized = True
@@ -324,7 +353,9 @@ class TestResourceConstrainedEvolution:
         constraint_manager = ConstraintManager(mock_device_profiler)
 
         # Initialize system
-        system = ResourceConstrainedEvolution(mock_device_profiler, resource_monitor, constraint_manager)
+        system = ResourceConstrainedEvolution(
+            mock_device_profiler, resource_monitor, constraint_manager
+        )
 
         assert system.device_profiler == mock_device_profiler
         assert system.resource_monitor == resource_monitor
@@ -337,7 +368,9 @@ class TestResourceConstrainedEvolution:
         resource_monitor = ResourceMonitor(mock_device_profiler)
         constraint_manager = ConstraintManager(mock_device_profiler)
 
-        system = ResourceConstrainedEvolution(mock_device_profiler, resource_monitor, constraint_manager)
+        system = ResourceConstrainedEvolution(
+            mock_device_profiler, resource_monitor, constraint_manager
+        )
 
         # Mock agent
         mock_agent = Mock()
@@ -354,7 +387,9 @@ class TestResourceConstrainedEvolution:
         resource_monitor = ResourceMonitor(mock_device_profiler)
         constraint_manager = ConstraintManager(mock_device_profiler)
 
-        system = ResourceConstrainedEvolution(mock_device_profiler, resource_monitor, constraint_manager)
+        system = ResourceConstrainedEvolution(
+            mock_device_profiler, resource_monitor, constraint_manager
+        )
 
         # Test resource state update
         asyncio.run(system._update_resource_state())
@@ -377,7 +412,9 @@ class TestIntegrationScenarios:
         adaptive_loader = AdaptiveLoader(mock_device_profiler, constraint_manager)
 
         # Create infrastructure-aware system with mocked P2P
-        from src.production.agent_forge.evolution.infrastructure_aware_evolution import InfrastructureConfig
+        from src.production.agent_forge.evolution.infrastructure_aware_evolution import (
+            InfrastructureConfig,
+        )
 
         config = InfrastructureConfig(
             enable_p2p=False,  # Disable for testing
@@ -441,7 +478,9 @@ async def test_sprint6_complete_integration():
     loader = AdaptiveLoader(profiler, constraints)
 
     # 3. Create infrastructure-aware evolution
-    from src.production.agent_forge.evolution.infrastructure_aware_evolution import InfrastructureConfig
+    from src.production.agent_forge.evolution.infrastructure_aware_evolution import (
+        InfrastructureConfig,
+    )
 
     config = InfrastructureConfig(
         enable_p2p=False,  # Disable P2P for testing

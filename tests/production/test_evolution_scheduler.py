@@ -2,7 +2,11 @@ from uuid import uuid4
 
 import pytest
 
-from src.production.agent_forge.evolution import DualEvolutionSystem, EvolutionScheduler, EvolvableAgent
+from src.production.agent_forge.evolution import (
+    DualEvolutionSystem,
+    EvolutionScheduler,
+    EvolvableAgent,
+)
 
 
 class DummyAgent(EvolvableAgent):

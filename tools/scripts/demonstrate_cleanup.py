@@ -54,7 +54,11 @@ def demonstrate_cleanup():
             "*_PLAN.md",
             "*_CHECKLIST.md",
         ],
-        "Architecture (docs/architecture/)": ["architecture*.md", "system_overview.md", "design/*"],
+        "Architecture (docs/architecture/)": [
+            "architecture*.md",
+            "system_overview.md",
+            "design/*",
+        ],
         "Guides (docs/guides/)": ["onboarding.md", "*_GUIDE.md", "usage_examples.md"],
         "Components (docs/components/)": ["mesh/*", "rag/*", "agent_forge*.md"],
         "Development (docs/development/)": ["testing*.md", "BRANCHING_STRATEGY.md"],
@@ -77,7 +81,9 @@ def demonstrate_cleanup():
     status_files = [f for f in base_path.glob("*STATUS*.md")]
     plan_files = [f for f in base_path.glob("*PLAN*.md")]
 
-    total_archive = len(report_files) + len(summary_files) + len(status_files) + len(plan_files)
+    total_archive = (
+        len(report_files) + len(summary_files) + len(status_files) + len(plan_files)
+    )
 
     print(f"   📁 Archive {total_archive} report/summary files")
     print("   🗂️  Organize ~80 docs/ files into categories")

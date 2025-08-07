@@ -41,13 +41,17 @@ class Violation:
     gdc_id: str = ""  # GDC rule that was violated
     nodes: list[dict[str, Any]] = field(default_factory=list)  # Violating nodes
     edges: list[dict[str, Any]] = field(default_factory=list)  # Violating edges
-    relationships: list[dict[str, Any]] = field(default_factory=list)  # Relationship data
+    relationships: list[dict[str, Any]] = field(
+        default_factory=list
+    )  # Relationship data
     severity: str = "medium"  # Inherited from GDCSpec
     detected_at: datetime = field(default_factory=datetime.utcnow)
     metadata: dict[str, Any] = field(default_factory=dict)  # Additional context
     suggested_repair: str = ""  # Repair action identifier
     confidence_score: float = 1.0  # Detection confidence [0,1]
-    graph_context: dict[str, Any] = field(default_factory=dict)  # Surrounding graph info
+    graph_context: dict[str, Any] = field(
+        default_factory=dict
+    )  # Surrounding graph info
 
     def __post_init__(self):
         """Validate violation data."""

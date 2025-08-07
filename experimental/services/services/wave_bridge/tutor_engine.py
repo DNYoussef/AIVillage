@@ -25,7 +25,9 @@ class AITutor:
 
     def __init__(self):
         # Initialize AI clients
-        self.anthropic_client = anthropic.Anthropic() if hasattr(anthropic, "Anthropic") else None
+        self.anthropic_client = (
+            anthropic.Anthropic() if hasattr(anthropic, "Anthropic") else None
+        )
         self.openai_client = openai.OpenAI() if hasattr(openai, "OpenAI") else None
 
         # Agent Forge model integration
@@ -81,11 +83,15 @@ class AITutor:
             # Load model
             self.agent_forge_tokenizer = AutoTokenizer.from_pretrained(model_path)
             if self.agent_forge_tokenizer.pad_token is None:
-                self.agent_forge_tokenizer.pad_token = self.agent_forge_tokenizer.eos_token
+                self.agent_forge_tokenizer.pad_token = (
+                    self.agent_forge_tokenizer.eos_token
+                )
 
             self.agent_forge_model = AutoModelForCausalLM.from_pretrained(
                 model_path,
-                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                torch_dtype=(
+                    torch.float16 if torch.cuda.is_available() else torch.float32
+                ),
                 device_map="auto" if torch.cuda.is_available() else None,
                 trust_remote_code=True,
             )
@@ -96,7 +102,9 @@ class AITutor:
             self.agent_forge_model.eval()
             self.agent_forge_available = True
 
-            logger.info(f"✅ Agent Forge model loaded successfully: {selection['selected_phase']}")
+            logger.info(
+                f"✅ Agent Forge model loaded successfully: {selection['selected_phase']}"
+            )
 
         except Exception as e:
             logger.warning(f"Failed to load Agent Forge model: {e}")
@@ -191,7 +199,9 @@ class AITutor:
 
         return experts
 
-    async def generate_greeting(self, variant: str, language: str, user_message: str) -> str:
+    async def generate_greeting(
+        self, variant: str, language: str, user_message: str
+    ) -> str:
         """Generate personalized greeting based on A/B test variant"""
         start_time = time.time()
 
@@ -213,9 +223,7 @@ class AITutor:
             if user_message:
                 subject = self.detect_subject_interest(user_message)
                 if subject != "general":
-                    greeting += (
-                        f"\n\nI see you're interested in {subject}! That's one of my favorite subjects to teach. ✨"
-                    )
+                    greeting += f"\n\nI see you're interested in {subject}! That's one of my favorite subjects to teach. ✨"
 
             response_time = time.time() - start_time
 
@@ -237,7 +245,9 @@ class AITutor:
             logger.error(f"Error generating greeting: {e}")
             return get_language_greeting(language)
 
-    async def generate_response(self, user_message: str, prompt_template: str, language: str, session_id: str) -> str:
+    async def generate_response(
+        self, user_message: str, prompt_template: str, language: str, session_id: str
+    ) -> str:
         """Generate tutoring response with model fallback chain"""
         start_time = time.time()
 
@@ -261,10 +271,14 @@ class AITutor:
 
             # Detect subject and customize approach
             subject = self.detect_subject_interest(user_message)
-            expert_config = self.subject_experts.get(subject, self.subject_experts["general"])
+            expert_config = self.subject_experts.get(
+                subject, self.subject_experts["general"]
+            )
 
             # Enhance prompt with subject-specific guidance
-            enhanced_prompt = self.enhance_prompt_for_subject(prompt_template, expert_config, user_message)
+            enhanced_prompt = self.enhance_prompt_for_subject(
+                prompt_template, expert_config, user_message
+            )
 
             # Try models in order of preference (speed + quality)
             response = None
@@ -284,7 +298,9 @@ class AITutor:
             # Try Anthropic as fallback (good balance of speed and quality)
             if not response and self.anthropic_client:
                 try:
-                    response = await self.generate_with_anthropic(enhanced_prompt, user_message, language)
+                    response = await self.generate_with_anthropic(
+                        enhanced_prompt, user_message, language
+                    )
 
                     if response:
                         self.update_model_performance("anthropic", start_time, True)
@@ -296,7 +312,9 @@ class AITutor:
             # Fallback to OpenAI
             if not response and self.openai_client:
                 try:
-                    response = await self.generate_with_openai(enhanced_prompt, user_message, language)
+                    response = await self.generate_with_openai(
+                        enhanced_prompt, user_message, language
+                    )
 
                     if response:
                         self.update_model_performance("openai", start_time, True)
@@ -307,7 +325,9 @@ class AITutor:
 
             # Final fallback to rule-based response
             if not response:
-                response = self.generate_fallback_response(user_message, subject, language)
+                response = self.generate_fallback_response(
+                    user_message, subject, language
+                )
                 self.update_model_performance("fallback", start_time, True)
 
             # Cache successful response
@@ -334,7 +354,8 @@ class AITutor:
             )
 
             return (
-                response or "I'm having trouble generating a response right now. Please try rephrasing your question."
+                response
+                or "I'm having trouble generating a response right now. Please try rephrasing your question."
             )
 
         except Exception as e:
@@ -364,13 +385,17 @@ class AITutor:
 
         return "general"
 
-    def enhance_prompt_for_subject(self, base_prompt: str, expert_config: dict[str, Any], user_message: str) -> str:
+    def enhance_prompt_for_subject(
+        self, base_prompt: str, expert_config: dict[str, Any], user_message: str
+    ) -> str:
         """Enhance prompt template with subject-specific guidance"""
         # Add subject-specific instruction
         enhanced_prompt = base_prompt
 
         if expert_config["prompt_suffix"]:
-            enhanced_prompt += f"\n\nSpecial instruction: {expert_config['prompt_suffix']}"
+            enhanced_prompt += (
+                f"\n\nSpecial instruction: {expert_config['prompt_suffix']}"
+            )
 
         # Add approach-specific guidance
         approach_guides = {
@@ -387,10 +412,14 @@ class AITutor:
 
         return enhanced_prompt
 
-    async def generate_with_anthropic(self, prompt: str, user_message: str, language: str) -> str | None:
+    async def generate_with_anthropic(
+        self, prompt: str, user_message: str, language: str
+    ) -> str | None:
         """Generate response using Anthropic Claude"""
         try:
-            messages = [{"role": "user", "content": prompt.format(user_message=user_message)}]
+            messages = [
+                {"role": "user", "content": prompt.format(user_message=user_message)}
+            ]
 
             response = await self.anthropic_client.messages.create(
                 model="claude-3-haiku-20240307",  # Fast model for sub-5s response
@@ -427,7 +456,9 @@ Guidelines:
 Response:"""
 
             # Tokenize input
-            inputs = self.agent_forge_tokenizer.encode(educational_prompt, return_tensors="pt")
+            inputs = self.agent_forge_tokenizer.encode(
+                educational_prompt, return_tensors="pt"
+            )
 
             # Move to appropriate device
             device = next(self.agent_forge_model.parameters()).device
@@ -446,7 +477,9 @@ Response:"""
                 )
 
             # Decode response
-            full_response = self.agent_forge_tokenizer.decode(outputs[0], skip_special_tokens=True)
+            full_response = self.agent_forge_tokenizer.decode(
+                outputs[0], skip_special_tokens=True
+            )
             response = full_response[len(educational_prompt) :].strip()
 
             # Clean up response
@@ -472,7 +505,9 @@ Response:"""
             self.model_performance["agent_forge"]["calls"] += 1  # Track failed attempts
             return None
 
-    async def generate_with_openai(self, prompt: str, user_message: str, language: str) -> str | None:
+    async def generate_with_openai(
+        self, prompt: str, user_message: str, language: str
+    ) -> str | None:
         """Generate response using OpenAI GPT"""
         try:
             response = await self.openai_client.chat.completions.create(
@@ -494,7 +529,9 @@ Response:"""
             logger.error(f"OpenAI generation error: {e}")
             return None
 
-    def generate_fallback_response(self, user_message: str, subject: str, language: str) -> str:
+    def generate_fallback_response(
+        self, user_message: str, subject: str, language: str
+    ) -> str:
         """Generate rule-based fallback response"""
         # Subject-specific fallback templates
         fallback_templates = {
@@ -600,12 +637,18 @@ Response:"""
                 if perf["calls"] == 1:
                     perf["avg_time"] = response_time
                 else:
-                    perf["avg_time"] = (perf["avg_time"] * (perf["calls"] - 1) + response_time) / perf["calls"]
+                    perf["avg_time"] = (
+                        perf["avg_time"] * (perf["calls"] - 1) + response_time
+                    ) / perf["calls"]
 
                 # Update success rate
-                perf["success_rate"] = (perf["success_rate"] * (perf["calls"] - 1) + 1) / perf["calls"]
+                perf["success_rate"] = (
+                    perf["success_rate"] * (perf["calls"] - 1) + 1
+                ) / perf["calls"]
             else:
-                perf["success_rate"] = (perf["success_rate"] * (perf["calls"] - 1)) / perf["calls"]
+                perf["success_rate"] = (
+                    perf["success_rate"] * (perf["calls"] - 1)
+                ) / perf["calls"]
 
         # Log performance update
         wandb.log(
@@ -626,7 +669,9 @@ Response:"""
             "model_performance": self.model_performance,
             "cache_size": len(self.response_cache),
             "avg_response_time": (
-                sum(self.response_times[-100:]) / len(self.response_times[-100:]) if self.response_times else 0
+                sum(self.response_times[-100:]) / len(self.response_times[-100:])
+                if self.response_times
+                else 0
             ),
             "subjects_supported": list(self.subject_experts.keys()),
         }

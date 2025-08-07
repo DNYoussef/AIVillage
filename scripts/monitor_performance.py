@@ -162,7 +162,11 @@ class PerformanceMonitor:
                 "passed": passed,
                 "failed": failed,
                 "errors": errors,
-                "success_rate": ((passed / (passed + failed + errors)) if (passed + failed + errors) > 0 else 0),
+                "success_rate": (
+                    (passed / (passed + failed + errors))
+                    if (passed + failed + errors) > 0
+                    else 0
+                ),
             }
 
         total_time = time.time() - start_time
@@ -176,7 +180,10 @@ class PerformanceMonitor:
                 "total_passed": sum(r["passed"] for r in test_results.values()),
                 "total_failed": sum(r["failed"] for r in test_results.values()),
                 "total_errors": sum(r["errors"] for r in test_results.values()),
-                "avg_execution_time": sum(r["execution_time"] for r in test_results.values()) / len(test_results),
+                "avg_execution_time": sum(
+                    r["execution_time"] for r in test_results.values()
+                )
+                / len(test_results),
             },
         }
 
@@ -215,7 +222,9 @@ class PerformanceMonitor:
         overall = summary["overall_metrics"]
         print("Overall Metrics:")
         print("-" * 40)
-        print(f"Total Tests: {overall['total_passed'] + overall['total_failed'] + overall['total_errors']}")
+        print(
+            f"Total Tests: {overall['total_passed'] + overall['total_failed'] + overall['total_errors']}"
+        )
         print(f"Passed: {overall['total_passed']}")
         print(f"Failed: {overall['total_failed']}")
         print(f"Errors: {overall['total_errors']}")
@@ -223,7 +232,11 @@ class PerformanceMonitor:
 
         overall_success = (
             overall["total_passed"]
-            / (overall["total_passed"] + overall["total_failed"] + overall["total_errors"])
+            / (
+                overall["total_passed"]
+                + overall["total_failed"]
+                + overall["total_errors"]
+            )
             * 100
         )
         print(f"Overall Success Rate: {overall_success:.1f}%")

@@ -27,9 +27,17 @@ class ProblemAnalyzer:
         self.enhanced_plan_generator = SEALEnhancedPlanGenerator()
         self.quality_assurance_layer = quality_assurance_layer
 
-    async def analyze(self, content: str, rag_info: dict[str, Any], rule_compliance: float) -> dict[str, Any]:
-        task_vector = self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(content)
-        eudaimonia_score = self.quality_assurance_layer.eudaimonia_triangulator.triangulate(task_vector)
+    async def analyze(
+        self, content: str, rag_info: dict[str, Any], rule_compliance: float
+    ) -> dict[str, Any]:
+        task_vector = (
+            self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(content)
+        )
+        eudaimonia_score = (
+            self.quality_assurance_layer.eudaimonia_triangulator.triangulate(
+                task_vector
+            )
+        )
 
         analysis_prompt = f"""
         Problem: {content}
@@ -52,7 +60,9 @@ class ProblemAnalyzer:
         critiqued_analyses = await self._collect_critiqued_analyses(initial_analyses)
         revised_analyses = await self._collect_revised_analyses(critiqued_analyses)
 
-        consolidated_analysis = await self._consolidate_analyses(revised_analyses, response.text)
+        consolidated_analysis = await self._consolidate_analyses(
+            revised_analyses, response.text
+        )
 
         return {
             "analysis": consolidated_analysis,
@@ -76,7 +86,9 @@ class ProblemAnalyzer:
         logger.debug(f"Collected {len(analyses)} agent analyses")
         return analyses
 
-    async def _collect_critiqued_analyses(self, initial_analyses: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    async def _collect_critiqued_analyses(
+        self, initial_analyses: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         critiqued_analyses = []
         agents = [analysis["agent"] for analysis in initial_analyses]
         for i, analysis in enumerate(initial_analyses):
@@ -92,7 +104,9 @@ class ProblemAnalyzer:
                             "action": "critique_analysis",
                         },
                     )
-                    response = await self.communication_protocol.send_and_wait(critique_request)
+                    response = await self.communication_protocol.send_and_wait(
+                        critique_request
+                    )
                     critiques.append(
                         {
                             "critic": critic_agent,
@@ -103,7 +117,9 @@ class ProblemAnalyzer:
         logger.debug(f"Collected critiques for {len(critiqued_analyses)} analyses")
         return critiqued_analyses
 
-    async def _collect_revised_analyses(self, critiqued_analyses: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    async def _collect_revised_analyses(
+        self, critiqued_analyses: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         revised_analyses = []
         for analysis in critiqued_analyses:
             revision_request = Message(
@@ -117,11 +133,15 @@ class ProblemAnalyzer:
                 },
             )
             response = await self.communication_protocol.send_and_wait(revision_request)
-            revised_analyses.append({**analysis, "revised_analysis": response.content["revised_analysis"]})
+            revised_analyses.append(
+                {**analysis, "revised_analysis": response.content["revised_analysis"]}
+            )
         logger.debug(f"Collected {len(revised_analyses)} revised analyses")
         return revised_analyses
 
-    async def _consolidate_analyses(self, revised_analyses: list[dict[str, Any]], king_analysis: str) -> str:
+    async def _consolidate_analyses(
+        self, revised_analyses: list[dict[str, Any]], king_analysis: str
+    ) -> str:
         consolidation_prompt = f"""
         King's Analysis: {king_analysis}
 
@@ -155,8 +175,12 @@ class ProblemAnalyzer:
         try:
             logger.info(f"Saving problem analyzer models to {path}")
             os.makedirs(path, exist_ok=True)
-            self.enhanced_plan_generator.save(os.path.join(path, "enhanced_plan_generator.pt"))
-            self.quality_assurance_layer.save(os.path.join(path, "quality_assurance_layer.json"))
+            self.enhanced_plan_generator.save(
+                os.path.join(path, "enhanced_plan_generator.pt")
+            )
+            self.quality_assurance_layer.save(
+                os.path.join(path, "quality_assurance_layer.json")
+            )
 
             # Save other necessary data
             data = {"llm_config": self.llm.config.dict()}
@@ -171,7 +195,9 @@ class ProblemAnalyzer:
     async def load_models(self, path: str):
         try:
             logger.info(f"Loading problem analyzer models from {path}")
-            self.enhanced_plan_generator.load(os.path.join(path, "enhanced_plan_generator.pt"))
+            self.enhanced_plan_generator.load(
+                os.path.join(path, "enhanced_plan_generator.pt")
+            )
             self.quality_assurance_layer = QualityAssuranceLayer.load(
                 os.path.join(path, "quality_assurance_layer.json")
             )

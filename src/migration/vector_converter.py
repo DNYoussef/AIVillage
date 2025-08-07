@@ -103,7 +103,9 @@ class VectorStoreLoader:
             return documents
 
         except ImportError:
-            logger.exception("FAISS not installed. Please install with: pip install faiss-cpu")
+            logger.exception(
+                "FAISS not installed. Please install with: pip install faiss-cpu"
+            )
             raise
         except Exception as e:
             logger.exception(f"Error loading FAISS store: {e}")
@@ -160,7 +162,9 @@ class VectorStoreLoader:
             return documents
 
         except ImportError:
-            logger.exception("Qdrant client not installed. Please install with: pip install qdrant-client")
+            logger.exception(
+                "Qdrant client not installed. Please install with: pip install qdrant-client"
+            )
             raise
         except Exception as e:
             logger.exception(f"Error loading Qdrant store: {e}")
@@ -258,7 +262,9 @@ class EntityExtractor:
 
         return entities
 
-    def extract_relationships(self, text: str, entities: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def extract_relationships(
+        self, text: str, entities: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Extract relationships between entities."""
         relationships = []
 
@@ -269,7 +275,9 @@ class EntityExtractor:
         for i, entity1 in enumerate(entities):
             for _j, entity2 in enumerate(entities[i + 1 :], i + 1):
                 # Check if entities are in the same sentence
-                if abs(entity1["start"] - entity2["start"]) < 200:  # Within 200 characters
+                if (
+                    abs(entity1["start"] - entity2["start"]) < 200
+                ):  # Within 200 characters
                     # Extract text between entities
                     start = min(entity1["end"], entity2["end"])
                     end = max(entity1["start"], entity2["start"])
@@ -279,16 +287,25 @@ class EntityExtractor:
                     relationship_type = "RELATED_TO"  # Default
                     confidence = 0.5
 
-                    if any(word in between_text for word in ["is", "are", "was", "were"]):
+                    if any(
+                        word in between_text for word in ["is", "are", "was", "were"]
+                    ):
                         relationship_type = "IS_A"
                         confidence = 0.7
-                    elif any(word in between_text for word in ["has", "have", "contains"]):
+                    elif any(
+                        word in between_text for word in ["has", "have", "contains"]
+                    ):
                         relationship_type = "HAS"
                         confidence = 0.7
-                    elif any(word in between_text for word in ["in", "at", "on", "located"]):
+                    elif any(
+                        word in between_text for word in ["in", "at", "on", "located"]
+                    ):
                         relationship_type = "LOCATED_IN"
                         confidence = 0.6
-                    elif any(word in between_text for word in ["created", "made", "developed"]):
+                    elif any(
+                        word in between_text
+                        for word in ["created", "made", "developed"]
+                    ):
                         relationship_type = "CREATED_BY"
                         confidence = 0.6
 
@@ -338,12 +355,20 @@ class VectorToHypergraphConverter:
                 doc_entity_id,
                 {
                     "type": "document",
-                    "title": document.metadata.get("title", f"Document {document.doc_id}"),
+                    "title": document.metadata.get(
+                        "title", f"Document {document.doc_id}"
+                    ),
                     "source": document.source,
                     "content_preview": (
-                        document.content[:200] + "..." if len(document.content) > 200 else document.content
+                        document.content[:200] + "..."
+                        if len(document.content) > 200
+                        else document.content
                     ),
-                    "embedding": document.embedding.tolist() if document.embedding is not None else None,
+                    "embedding": (
+                        document.embedding.tolist()
+                        if document.embedding is not None
+                        else None
+                    ),
                     "original_doc_id": document.doc_id,
                     "migrated_at": datetime.now(timezone.utc).isoformat(),
                     "confidence": 0.9,
@@ -382,17 +407,25 @@ class VectorToHypergraphConverter:
                         {
                             "position": entity["start"],
                             "confidence": entity["confidence"],
-                            "context": document.content[max(0, entity["start"] - 50) : entity["end"] + 50],
+                            "context": document.content[
+                                max(0, entity["start"] - 50) : entity["end"] + 50
+                            ],
                         },
                     )
                     self.metrics.total_relationships_created += 1
 
                 # Extract relationships between entities
-                relationships = self.entity_extractor.extract_relationships(document.content, entities)
+                relationships = self.entity_extractor.extract_relationships(
+                    document.content, entities
+                )
 
                 for relationship in relationships:
-                    source_id = f"entity_{relationship['source'].replace(' ', '_').lower()}"
-                    target_id = f"entity_{relationship['target'].replace(' ', '_').lower()}"
+                    source_id = (
+                        f"entity_{relationship['source'].replace(' ', '_').lower()}"
+                    )
+                    target_id = (
+                        f"entity_{relationship['target'].replace(' ', '_').lower()}"
+                    )
 
                     if self.kg.has_node(source_id) and self.kg.has_node(target_id):
                         self.kg.add_edge(
@@ -411,7 +444,9 @@ class VectorToHypergraphConverter:
             for key, value in document.metadata.items():
                 if key in ["author", "category", "domain", "tags"]:
                     if isinstance(value, str) and value.strip():
-                        metadata_entity_id = f"metadata_{key}_{value.replace(' ', '_').lower()}"
+                        metadata_entity_id = (
+                            f"metadata_{key}_{value.replace(' ', '_').lower()}"
+                        )
 
                         if not self.kg.has_node(metadata_entity_id):
                             self.kg.add_node(
@@ -455,13 +490,17 @@ class VectorToHypergraphConverter:
         for i in range(0, len(documents), self.batch_size):
             batch = documents[i : i + self.batch_size]
 
-            logger.info(f"Processing batch {i // self.batch_size + 1}/{(len(documents) - 1) // self.batch_size + 1}")
+            logger.info(
+                f"Processing batch {i // self.batch_size + 1}/{(len(documents) - 1) // self.batch_size + 1}"
+            )
 
             for document in batch:
                 self.convert_document(document)
 
                 if self.metrics.converted_documents % 100 == 0:
-                    logger.info(f"Converted {self.metrics.converted_documents} documents...")
+                    logger.info(
+                        f"Converted {self.metrics.converted_documents} documents..."
+                    )
 
         # Save knowledge graph
         logger.info("Saving knowledge graph...")
@@ -476,7 +515,9 @@ class VectorToHypergraphConverter:
         logger.info(f"Converted documents: {self.metrics.converted_documents}")
         logger.info(f"Failed conversions: {self.metrics.failed_conversions}")
         logger.info(f"Entities created: {self.metrics.total_entities_created}")
-        logger.info(f"Relationships created: {self.metrics.total_relationships_created}")
+        logger.info(
+            f"Relationships created: {self.metrics.total_relationships_created}"
+        )
         logger.info(f"Conversion time: {self.metrics.conversion_time:.2f} seconds")
 
         return self.metrics
@@ -510,15 +551,25 @@ class VectorToHypergraphConverter:
                 ),
             },
             "knowledge_graph_stats": {
-                "total_nodes": len(self.kg.get_all_nodes()) if hasattr(self.kg, "get_all_nodes") else 0,
-                "total_edges": len(self.kg.get_all_edges()) if hasattr(self.kg, "get_all_edges") else 0,
+                "total_nodes": (
+                    len(self.kg.get_all_nodes())
+                    if hasattr(self.kg, "get_all_nodes")
+                    else 0
+                ),
+                "total_edges": (
+                    len(self.kg.get_all_edges())
+                    if hasattr(self.kg, "get_all_edges")
+                    else 0
+                ),
                 "avg_entities_per_document": (
-                    self.metrics.total_entities_created / self.metrics.converted_documents
+                    self.metrics.total_entities_created
+                    / self.metrics.converted_documents
                     if self.metrics.converted_documents > 0
                     else 0
                 ),
                 "avg_relationships_per_document": (
-                    self.metrics.total_relationships_created / self.metrics.converted_documents
+                    self.metrics.total_relationships_created
+                    / self.metrics.converted_documents
                     if self.metrics.converted_documents > 0
                     else 0
                 ),
@@ -532,9 +583,13 @@ class VectorToHypergraphConverter:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Convert vector store to HypeRAG knowledge graph")
+    parser = argparse.ArgumentParser(
+        description="Convert vector store to HypeRAG knowledge graph"
+    )
     parser.add_argument("--input", required=True, help="Path to vector store directory")
-    parser.add_argument("--output", required=True, help="Output path for knowledge graph")
+    parser.add_argument(
+        "--output", required=True, help="Output path for knowledge graph"
+    )
     parser.add_argument(
         "--store-type",
         choices=["faiss", "qdrant", "custom"],
@@ -576,8 +631,12 @@ def main() -> None:
 
         # Print summary
         print("\nConversion Summary:")
-        print(f"  Documents processed: {metrics.converted_documents}/{metrics.total_documents}")
-        print(f"  Success rate: {metrics.converted_documents / metrics.total_documents:.1%}")
+        print(
+            f"  Documents processed: {metrics.converted_documents}/{metrics.total_documents}"
+        )
+        print(
+            f"  Success rate: {metrics.converted_documents / metrics.total_documents:.1%}"
+        )
         print(f"  Entities created: {metrics.total_entities_created}")
         print(f"  Relationships created: {metrics.total_relationships_created}")
         print(f"  Conversion time: {metrics.conversion_time:.2f} seconds")

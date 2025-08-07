@@ -37,10 +37,16 @@ def analyze_backup_files():
         backup_path = Path(file_info["backup"])
 
         # Check if original file exists
-        original_exists = source_path.with_suffix("").exists() if source_path.suffix == ".backup" else False
+        original_exists = (
+            source_path.with_suffix("").exists()
+            if source_path.suffix == ".backup"
+            else False
+        )
 
         # Check file age
-        file_age_days = (datetime.now() - datetime.fromtimestamp(source_path.stat().st_mtime)).days
+        file_age_days = (
+            datetime.now() - datetime.fromtimestamp(source_path.stat().st_mtime)
+        ).days
 
         # Check if it's a duplicate backup
         is_duplicate = False
@@ -55,7 +61,9 @@ def analyze_backup_files():
             "age_days": file_age_days,
             "original_exists": original_exists,
             "is_duplicate": is_duplicate,
-            "recommendation": determine_recommendation(original_exists, is_duplicate, file_age_days),
+            "recommendation": determine_recommendation(
+                original_exists, is_duplicate, file_age_days
+            ),
         }
 
         analysis["recommendations"].append(recommendation)
@@ -89,7 +97,9 @@ def generate_cleanup_plan(analysis):
         elif rec["recommendation"].startswith("KEEP"):
             plan["files_to_keep"].append(rec["file"])
         else:
-            plan["files_to_review"].append({"file": rec["file"], "reason": rec["recommendation"]})
+            plan["files_to_review"].append(
+                {"file": rec["file"], "reason": rec["recommendation"]}
+            )
 
     return plan
 

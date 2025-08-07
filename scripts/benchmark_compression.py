@@ -68,7 +68,9 @@ def benchmark_compression():
             elapsed = time.time() - start
             compressed_size = len(compressed)
             ratio = original_size / compressed_size
-            print(f"{name:<10} {original_size/1024:.1f}KB {compressed_size/1024:.1f}KB {ratio:.2f}x {elapsed:.2f}s")
+            print(
+                f"{name:<10} {original_size/1024:.1f}KB {compressed_size/1024:.1f}KB {ratio:.2f}x {elapsed:.2f}s"
+            )
         except Exception as e:
             print(f"{name:<10} FAILED: {e}")
     print("=" * 60)

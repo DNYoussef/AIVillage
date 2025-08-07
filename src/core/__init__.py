@@ -4,7 +4,12 @@ Provides essential components for error handling, communication, and utilities.
 
 __version__ = "0.1.0"
 
-from .communication import AgentCommunicationProtocol, AgentMessage, AgentMessageType, Priority
+from .communication import (
+    AgentCommunicationProtocol,
+    AgentMessage,
+    AgentMessageType,
+    Priority,
+)
 from .error_handling import (
     AIVillageError,
     AIVillageException,

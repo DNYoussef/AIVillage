@@ -48,7 +48,9 @@ def prove_bitnet_compression():
     scale_size = 4  # float32
     shape_size = 8  # tuple of ints
     threshold_size = 4  # float32
-    total_compressed_size = packed_weights_size + scale_size + shape_size + threshold_size
+    total_compressed_size = (
+        packed_weights_size + scale_size + shape_size + threshold_size
+    )
 
     print(f"  Packed weights: {packed_weights_size} bytes")
     print(f"  Scale: {scale_size} bytes")
@@ -131,7 +133,9 @@ def prove_actual_advanced_pipeline():
                 s1_size = len(s1_compressed["packed_weights"]) + 24
                 s1_ratio = original_param_size / s1_size
 
-                print(f"    BitNet: {original_param_size} → {s1_size} bytes ({s1_ratio:.1f}x)")
+                print(
+                    f"    BitNet: {original_param_size} → {s1_size} bytes ({s1_ratio:.1f}x)"
+                )
 
                 # Stage 2: VPTQ on original (since SeedLM may have issues)
                 vptq = VPTQCompressor(bits=2)
@@ -141,7 +145,9 @@ def prove_actual_advanced_pipeline():
                 s2_size = s2_codebook + s2_indices + 32
                 s2_ratio = original_param_size / s2_size
 
-                print(f"    VPTQ: {original_param_size} → {s2_size} bytes ({s2_ratio:.1f}x)")
+                print(
+                    f"    VPTQ: {original_param_size} → {s2_size} bytes ({s2_ratio:.1f}x)"
+                )
 
                 # Use the better compression
                 best_size = min(s1_size, s2_size)
@@ -346,8 +352,12 @@ def main():
         significant_improvement = final_ratio > 20
 
         print("\nOVERALL PROOF:")
-        print(f"  Mobile deployment viable: {'PROVEN' if mobile_viable else 'NOT PROVEN'}")
-        print(f"  Significant improvement: {'PROVEN' if significant_improvement else 'NOT PROVEN'}")
+        print(
+            f"  Mobile deployment viable: {'PROVEN' if mobile_viable else 'NOT PROVEN'}"
+        )
+        print(
+            f"  Significant improvement: {'PROVEN' if significant_improvement else 'NOT PROVEN'}"
+        )
 
         if mobile_viable and significant_improvement:
             print("\nCONCLUSION: COMPRESSION IMPROVEMENTS PROVEN WITH REAL CODE")

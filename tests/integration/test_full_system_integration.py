@@ -48,7 +48,9 @@ class IntegrationTestRunner:
     def get_summary_report(self) -> dict[str, Any]:
         """Generate summary report of all tests."""
         total_tests = len(self.test_results)
-        passed_tests = sum(1 for result in self.test_results.values() if result["success"])
+        passed_tests = sum(
+            1 for result in self.test_results.values() if result["success"]
+        )
         failed_tests = total_tests - passed_tests
 
         total_duration = time.time() - self.start_time
@@ -201,11 +203,16 @@ class CompressionEvolutionRAGIntegrationTest:
                 query_complexity_boost = 0.05 if len(query.split()) > 3 else 0.02
                 retrieval_quality_boost = 0.03 if retrieval_time < 0.3 else 0.01
                 confidence_score = (
-                    base_confidence + query_complexity_boost + retrieval_quality_boost + np.random.uniform(0.0, 0.08)
+                    base_confidence
+                    + query_complexity_boost
+                    + retrieval_quality_boost
+                    + np.random.uniform(0.0, 0.08)
                 )
                 confidence_score = min(0.95, confidence_score)  # Cap at 95%
 
-                response_length = np.random.randint(150, 400)  # More consistent responses
+                response_length = np.random.randint(
+                    150, 400
+                )  # More consistent responses
 
                 rag_results.append(
                     {
@@ -219,13 +226,19 @@ class CompressionEvolutionRAGIntegrationTest:
                 )
 
             # Enhanced performance validation with better metrics
-            avg_response_time = sum(r["total_time"] for r in rag_results) / len(rag_results)
-            avg_confidence = sum(r["confidence"] for r in rag_results) / len(rag_results)
+            avg_response_time = sum(r["total_time"] for r in rag_results) / len(
+                rag_results
+            )
+            avg_confidence = sum(r["confidence"] for r in rag_results) / len(
+                rag_results
+            )
             min_confidence = min(r["confidence"] for r in rag_results)
 
             # More robust success criteria
             response_time_ok = avg_response_time < 1.8  # Stricter response time
-            confidence_ok = avg_confidence > 0.8 and min_confidence > 0.78  # Ensure all queries meet threshold
+            confidence_ok = (
+                avg_confidence > 0.8 and min_confidence > 0.78
+            )  # Ensure all queries meet threshold
             success = response_time_ok and confidence_ok
 
             self.test_runner.record_test_result(
@@ -262,7 +275,9 @@ class CompressionEvolutionRAGIntegrationTest:
             return False
 
         # Step 2: Evolution (using compressed model)
-        compressed_model = {"parameters": self.mock_model_data["parameters"][:500]}  # Simulate compression
+        compressed_model = {
+            "parameters": self.mock_model_data["parameters"][:500]
+        }  # Simulate compression
         evolution_success = await self.test_evolution_system(compressed_model)
         if not evolution_success:
             return False
@@ -337,7 +352,8 @@ class MCPServerIntegrationTest:
             }
 
             success = (
-                initialize_response["result"]["capabilities"]["tools"] and len(tools_response["result"]["tools"]) >= 2
+                initialize_response["result"]["capabilities"]["tools"]
+                and len(tools_response["result"]["tools"]) >= 2
             )
 
             self.test_runner.record_test_result(
@@ -345,9 +361,13 @@ class MCPServerIntegrationTest:
                 success,
                 duration=time.time() - start_time,
                 details={
-                    "protocol_version": initialize_response["result"]["protocolVersion"],
+                    "protocol_version": initialize_response["result"][
+                        "protocolVersion"
+                    ],
                     "tools_available": len(tools_response["result"]["tools"]),
-                    "capabilities": list(initialize_response["result"]["capabilities"].keys()),
+                    "capabilities": list(
+                        initialize_response["result"]["capabilities"].keys()
+                    ),
                 },
             )
 
@@ -399,7 +419,9 @@ class MCPServerIntegrationTest:
             # Test memory search
             search_results = [mem for mem in stored_memories if "ai" in mem["tags"]]
 
-            success = len(stored_memories) == len(test_memories) and len(search_results) > 0
+            success = (
+                len(stored_memories) == len(test_memories) and len(search_results) > 0
+            )
 
             self.test_runner.record_test_result(
                 "memory_server_integration",
@@ -408,7 +430,9 @@ class MCPServerIntegrationTest:
                 details={
                     "memories_stored": len(stored_memories),
                     "search_results": len(search_results),
-                    "unique_tags": len(set(tag for mem in stored_memories for tag in mem["tags"])),
+                    "unique_tags": len(
+                        set(tag for mem in stored_memories for tag in mem["tags"])
+                    ),
                 },
             )
 
@@ -455,7 +479,11 @@ class MCPServerIntegrationTest:
                 "sources": ["memory_store", "knowledge_graph"],
             }
 
-            success = all_successful and total_duration < 5.0 and workflow_result["confidence"] > 0.8
+            success = (
+                all_successful
+                and total_duration < 5.0
+                and workflow_result["confidence"] > 0.8
+            )
 
             self.test_runner.record_test_result(
                 "multi_tool_workflow",
@@ -465,7 +493,9 @@ class MCPServerIntegrationTest:
                     "workflow_steps": len(workflow_steps),
                     "total_workflow_duration": total_duration,
                     "confidence": workflow_result["confidence"],
-                    "recommendations_generated": len(workflow_result["recommendations"]),
+                    "recommendations_generated": len(
+                        workflow_result["recommendations"]
+                    ),
                 },
             )
 
@@ -531,7 +561,9 @@ class MeshNetworkIntegrationTest:
                 connections[node] = neighbors.tolist()
 
             # Validate network connectivity
-            total_connections = sum(len(neighbors) for neighbors in connections.values())
+            total_connections = sum(
+                len(neighbors) for neighbors in connections.values()
+            )
             avg_connections = total_connections / len(nodes)
 
             # Check if network is reasonably connected
@@ -545,8 +577,12 @@ class MeshNetworkIntegrationTest:
                     "nodes": len(nodes),
                     "total_connections": total_connections,
                     "avg_connections_per_node": avg_connections,
-                    "min_connections": min(len(neighbors) for neighbors in connections.values()),
-                    "max_connections": max(len(neighbors) for neighbors in connections.values()),
+                    "min_connections": min(
+                        len(neighbors) for neighbors in connections.values()
+                    ),
+                    "max_connections": max(
+                        len(neighbors) for neighbors in connections.values()
+                    ),
                 },
             )
 
@@ -588,16 +624,26 @@ class MeshNetworkIntegrationTest:
                         "delivered": delivery_success,
                         "hop_count": hop_count,
                         "latency_ms": latency * 1000,
-                        "route": [msg["from"]] + [f"relay_{i}" for i in range(hop_count - 1)] + [msg["to"]],
+                        "route": [msg["from"]]
+                        + [f"relay_{i}" for i in range(hop_count - 1)]
+                        + [msg["to"]],
                     }
                 )
 
             # Calculate performance metrics
-            delivery_rate = sum(1 for r in routing_results if r["delivered"]) / len(routing_results)
-            avg_latency = sum(r["latency_ms"] for r in routing_results) / len(routing_results)
-            avg_hops = sum(r["hop_count"] for r in routing_results) / len(routing_results)
+            delivery_rate = sum(1 for r in routing_results if r["delivered"]) / len(
+                routing_results
+            )
+            avg_latency = sum(r["latency_ms"] for r in routing_results) / len(
+                routing_results
+            )
+            avg_hops = sum(r["hop_count"] for r in routing_results) / len(
+                routing_results
+            )
 
-            success = delivery_rate >= 0.95 and avg_latency < 500  # 95% delivery, <500ms latency
+            success = (
+                delivery_rate >= 0.95 and avg_latency < 500
+            )  # 95% delivery, <500ms latency
 
             self.test_runner.record_test_result(
                 "mesh_message_routing",
@@ -647,7 +693,11 @@ class MeshNetworkIntegrationTest:
             # Test recovery time
             recovery_time_seconds = 2.5
 
-            success = network_health_after > 0.7 and delivery_rate_after > 0.8 and recovery_time_seconds < 5.0
+            success = (
+                network_health_after > 0.7
+                and delivery_rate_after > 0.8
+                and recovery_time_seconds < 5.0
+            )
 
             self.test_runner.record_test_result(
                 "mesh_fault_tolerance",
@@ -682,7 +732,9 @@ class MeshNetworkIntegrationTest:
         routing_success = await self.test_message_routing()
         fault_tolerance_success = await self.test_fault_tolerance()
 
-        overall_success = formation_success and routing_success and fault_tolerance_success
+        overall_success = (
+            formation_success and routing_success and fault_tolerance_success
+        )
 
         self.test_runner.record_test_result(
             "mesh_network_overall",
@@ -744,7 +796,9 @@ class SecurityIntegrationTest:
                     "services_tested": len(auth_tests),
                     "auth_success_rate": auth_success_rate,
                     "token_validation_rate": token_validation_rate,
-                    "auth_methods": list(set(test["auth_method"] for test in auth_tests)),
+                    "auth_methods": list(
+                        set(test["auth_method"] for test in auth_tests)
+                    ),
                 },
             )
 
@@ -773,8 +827,12 @@ class SecurityIntegrationTest:
             ]
 
             # Validate security properties
-            encrypted_channels = sum(1 for ch in communication_channels if ch["encryption"] != "none")
-            integrity_protected = sum(1 for ch in communication_channels if ch["integrity"])
+            encrypted_channels = sum(
+                1 for ch in communication_channels if ch["encryption"] != "none"
+            )
+            integrity_protected = sum(
+                1 for ch in communication_channels if ch["integrity"]
+            )
 
             encryption_rate = encrypted_channels / len(communication_channels)
             integrity_rate = integrity_protected / len(communication_channels)
@@ -789,7 +847,9 @@ class SecurityIntegrationTest:
                     "channels_tested": len(communication_channels),
                     "encryption_rate": encryption_rate,
                     "integrity_rate": integrity_rate,
-                    "encryption_methods": list(set(ch["encryption"] for ch in communication_channels)),
+                    "encryption_methods": list(
+                        set(ch["encryption"] for ch in communication_channels)
+                    ),
                 },
             )
 
@@ -848,7 +908,9 @@ class SelfEvolutionIntegrationTest:
                 # Enhanced success rate with performance bonuses
                 base_success_rate = 0.82  # Start above minimum
                 task_volume_bonus = 0.05 if tasks_completed > 150 else 0.02
-                success_rate = base_success_rate + task_volume_bonus + np.random.uniform(0.0, 0.08)
+                success_rate = (
+                    base_success_rate + task_volume_bonus + np.random.uniform(0.0, 0.08)
+                )
                 success_rate = min(0.98, success_rate)
 
                 # Optimized response times
@@ -857,12 +919,18 @@ class SelfEvolutionIntegrationTest:
                 # Enhanced quality scores
                 base_quality = 0.75  # Higher baseline
                 consistency_bonus = 0.08 if success_rate > 0.85 else 0.03
-                quality_score = base_quality + consistency_bonus + np.random.uniform(0.0, 0.12)
+                quality_score = (
+                    base_quality + consistency_bonus + np.random.uniform(0.0, 0.12)
+                )
                 quality_score = min(0.95, quality_score)
 
                 # Enhanced fitness calculation with performance weighting
                 response_time_score = max(0.1, (2.0 - avg_response_time) / 2.0)
-                fitness = success_rate * 0.45 + quality_score * 0.35 + response_time_score * 0.2
+                fitness = (
+                    success_rate * 0.45
+                    + quality_score * 0.35
+                    + response_time_score * 0.2
+                )
 
                 kpi_data[agent] = {
                     "tasks_completed": tasks_completed,
@@ -873,7 +941,9 @@ class SelfEvolutionIntegrationTest:
                 }
 
             # Validate KPI tracking
-            avg_fitness = sum(data["fitness"] for data in kpi_data.values()) / len(kpi_data)
+            avg_fitness = sum(data["fitness"] for data in kpi_data.values()) / len(
+                kpi_data
+            )
             best_agent = max(kpi_data.keys(), key=lambda k: kpi_data[k]["fitness"])
 
             success = avg_fitness > 0.7 and len(kpi_data) == len(agents)
@@ -898,7 +968,9 @@ class SelfEvolutionIntegrationTest:
             return success
 
         except Exception as e:
-            self.test_runner.record_test_result("kpi_tracking", False, duration=time.time() - start_time, error=str(e))
+            self.test_runner.record_test_result(
+                "kpi_tracking", False, duration=time.time() - start_time, error=str(e)
+            )
             return False
 
     async def test_evolution_generation(self) -> bool:
@@ -915,10 +987,18 @@ class SelfEvolutionIntegrationTest:
                 generation_fitness = []
                 for individual in range(population_size):
                     # Enhanced fitness simulation with better convergence and improvement
-                    base_fitness = 0.65 + (gen * 0.12)  # Lower start, higher improvement per gen
-                    fitness_variance = max(0.04, 0.08 - (gen * 0.015))  # Reduce variance over time
-                    individual_fitness = base_fitness + np.random.normal(0, fitness_variance)
-                    individual_fitness = max(0.4, min(1.0, individual_fitness))  # Better bounds
+                    base_fitness = 0.65 + (
+                        gen * 0.12
+                    )  # Lower start, higher improvement per gen
+                    fitness_variance = max(
+                        0.04, 0.08 - (gen * 0.015)
+                    )  # Reduce variance over time
+                    individual_fitness = base_fitness + np.random.normal(
+                        0, fitness_variance
+                    )
+                    individual_fitness = max(
+                        0.4, min(1.0, individual_fitness)
+                    )  # Better bounds
                     generation_fitness.append(individual_fitness)
 
                 avg_fitness = sum(generation_fitness) / len(generation_fitness)
@@ -934,9 +1014,15 @@ class SelfEvolutionIntegrationTest:
                 )
 
             # Validate evolution progress
-            fitness_improvement = evolution_results[-1]["best_fitness"] - evolution_results[0]["best_fitness"]
+            fitness_improvement = (
+                evolution_results[-1]["best_fitness"]
+                - evolution_results[0]["best_fitness"]
+            )
 
-            success = fitness_improvement > 0.05 and evolution_results[-1]["best_fitness"] > 0.7
+            success = (
+                fitness_improvement > 0.05
+                and evolution_results[-1]["best_fitness"] > 0.7
+            )
 
             self.test_runner.record_test_result(
                 "evolution_generation",

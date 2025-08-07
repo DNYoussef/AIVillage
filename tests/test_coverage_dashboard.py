@@ -93,7 +93,11 @@ class TestCoverageDashboard:
                 "digital_twin/security/",
                 "mcp_servers/hyperag/guardian/",
             ],
-            "integration_points": ["experimental/services/", "mcp_servers/hyperag/memory/", "hyperag/education/"],
+            "integration_points": [
+                "experimental/services/",
+                "mcp_servers/hyperag/memory/",
+                "hyperag/education/",
+            ],
         }
 
     def run_coverage_analysis(self) -> dict:
@@ -193,7 +197,11 @@ class TestCoverageDashboard:
             }
 
         except subprocess.TimeoutExpired:
-            return {"success": False, "error": "Pytest execution timed out", "execution_time": 600}
+            return {
+                "success": False,
+                "error": "Pytest execution timed out",
+                "execution_time": 600,
+            }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -202,7 +210,12 @@ class TestCoverageDashboard:
         component_metrics = {}
 
         for category, components in self.critical_components.items():
-            category_metrics = {"total_files": 0, "covered_files": 0, "average_coverage": 0.0, "files": {}}
+            category_metrics = {
+                "total_files": 0,
+                "covered_files": 0,
+                "average_coverage": 0.0,
+                "files": {},
+            }
 
             total_coverage = 0
             file_count = 0
@@ -252,7 +265,9 @@ class TestCoverageDashboard:
         try:
             with open(file_path, encoding="utf-8") as f:
                 lines = f.readlines()
-                total_lines = len([l for l in lines if l.strip() and not l.strip().startswith("#")])
+                total_lines = len(
+                    [l for l in lines if l.strip() and not l.strip().startswith("#")]
+                )
         except Exception:
             total_lines = 0
 
@@ -275,7 +290,10 @@ class TestCoverageDashboard:
         # Check for test files
         test_patterns = [
             self.project_root / "tests" / f"test_{file_path.stem}.py",
-            self.project_root / "tests" / file_path.parent.name / f"test_{file_path.stem}.py",
+            self.project_root
+            / "tests"
+            / file_path.parent.name
+            / f"test_{file_path.stem}.py",
             file_path.parent / f"test_{file_path.stem}.py",
         ]
 
@@ -283,7 +301,12 @@ class TestCoverageDashboard:
 
     def _identify_coverage_gaps(self) -> dict:
         """Identify critical coverage gaps."""
-        gaps = {"critical_untested": [], "low_coverage": [], "missing_integration_tests": [], "security_gaps": []}
+        gaps = {
+            "critical_untested": [],
+            "low_coverage": [],
+            "missing_integration_tests": [],
+            "security_gaps": [],
+        }
 
         # Find untested critical files
         for category, components in self.critical_components.items():
@@ -296,7 +319,11 @@ class TestCoverageDashboard:
                             {
                                 "file": str(file_path),
                                 "category": category,
-                                "priority": "high" if "production_critical" in category else "medium",
+                                "priority": (
+                                    "high"
+                                    if "production_critical" in category
+                                    else "medium"
+                                ),
                             }
                         )
 
@@ -314,7 +341,8 @@ class TestCoverageDashboard:
                     "title": "Create tests for production-critical components",
                     "description": f"Found {len(coverage_gaps['critical_untested'])} untested critical files",
                     "action_items": [
-                        f"Create test file for {gap['file']}" for gap in coverage_gaps["critical_untested"][:5]
+                        f"Create test file for {gap['file']}"
+                        for gap in coverage_gaps["critical_untested"][:5]
                     ],
                     "estimated_effort": "2-3 days",
                     "impact": "High - Essential for production reliability",
@@ -399,7 +427,11 @@ class TestCoverageDashboard:
 
         validation_script = self.project_root / "validate_sprint6.py"
         if not validation_script.exists():
-            return {"success": False, "error": "validate_sprint6.py not found", "timestamp": datetime.now().isoformat()}
+            return {
+                "success": False,
+                "error": "validate_sprint6.py not found",
+                "timestamp": datetime.now().isoformat(),
+            }
 
         try:
             start_time = time.time()
@@ -430,7 +462,11 @@ class TestCoverageDashboard:
                 "timestamp": datetime.now().isoformat(),
             }
         except Exception as e:
-            return {"success": False, "error": str(e), "timestamp": datetime.now().isoformat()}
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat(),
+            }
 
     def _run_sprint6_infrastructure_tests(self) -> dict:
         """Run Sprint 6 infrastructure tests."""
@@ -453,14 +489,24 @@ class TestCoverageDashboard:
         for test_file in test_files:
             test_path = self.project_root / test_file
             if not test_path.exists():
-                results["results"][test_file] = {"success": False, "error": "Test file not found"}
+                results["results"][test_file] = {
+                    "success": False,
+                    "error": "Test file not found",
+                }
                 results["failed_files"] += 1
                 continue
 
             try:
                 start_time = time.time()
                 result = subprocess.run(
-                    [sys.executable, "-m", "pytest", str(test_path), "-v", "--tb=short"],
+                    [
+                        sys.executable,
+                        "-m",
+                        "pytest",
+                        str(test_path),
+                        "-v",
+                        "--tb=short",
+                    ],
                     capture_output=True,
                     text=True,
                     timeout=180,
@@ -512,7 +558,15 @@ class TestCoverageDashboard:
         try:
             start_time = time.time()
             result = subprocess.run(
-                [sys.executable, "-m", "pytest", str(test_path), "-v", "--benchmark-only", "--tb=short"],
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    str(test_path),
+                    "-v",
+                    "--benchmark-only",
+                    "--tb=short",
+                ],
                 capture_output=True,
                 text=True,
                 timeout=300,
@@ -538,7 +592,11 @@ class TestCoverageDashboard:
                 "timestamp": datetime.now().isoformat(),
             }
         except Exception as e:
-            return {"success": False, "error": str(e), "timestamp": datetime.now().isoformat()}
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat(),
+            }
 
     def run_sprint6_test_suite(self) -> dict:
         """Run comprehensive Sprint 6 test suite."""
@@ -558,7 +616,8 @@ class TestCoverageDashboard:
         # Determine overall success
         overall_success = (
             validation_results.get("success", False)
-            and infrastructure_results.get("passed_files", 0) == infrastructure_results.get("total_files", 1)
+            and infrastructure_results.get("passed_files", 0)
+            == infrastructure_results.get("total_files", 1)
             and performance_results.get("success", False)
         )
 
@@ -571,8 +630,12 @@ class TestCoverageDashboard:
             "performance": performance_results,
             "summary": {
                 "validation_passed": validation_results.get("success", False),
-                "infrastructure_tests_passed": infrastructure_results.get("passed_files", 0),
-                "infrastructure_tests_failed": infrastructure_results.get("failed_files", 0),
+                "infrastructure_tests_passed": infrastructure_results.get(
+                    "passed_files", 0
+                ),
+                "infrastructure_tests_failed": infrastructure_results.get(
+                    "failed_files", 0
+                ),
                 "performance_tests_passed": performance_results.get("success", False),
             },
         }
@@ -595,9 +658,16 @@ class TestCoverageDashboard:
         sprint6_class = "success"
 
         if "sprint6_validation" in dashboard_data:
-            validation_success = dashboard_data["sprint6_validation"].get("success", False)
-            infrastructure_success = dashboard_data.get("sprint6_infrastructure", {}).get("passed_files", 0) > 0
-            performance_success = dashboard_data.get("sprint6_performance", {}).get("success", False)
+            validation_success = dashboard_data["sprint6_validation"].get(
+                "success", False
+            )
+            infrastructure_success = (
+                dashboard_data.get("sprint6_infrastructure", {}).get("passed_files", 0)
+                > 0
+            )
+            performance_success = dashboard_data.get("sprint6_performance", {}).get(
+                "success", False
+            )
 
             if validation_success and infrastructure_success and performance_success:
                 sprint6_status = "🟢 All Systems Operational"
@@ -689,8 +759,12 @@ class TestCoverageDashboard:
         # Add Sprint 6 test results sections
         if "sprint6_validation" in dashboard_data:
             validation = dashboard_data["sprint6_validation"]
-            validation_status = "✅ Passed" if validation.get("success", False) else "❌ Failed"
-            validation_class = "success" if validation.get("success", False) else "critical"
+            validation_status = (
+                "✅ Passed" if validation.get("success", False) else "❌ Failed"
+            )
+            validation_class = (
+                "success" if validation.get("success", False) else "critical"
+            )
 
             html_content += f"""
         <div class="test-results {validation_class}">
@@ -735,7 +809,11 @@ class TestCoverageDashboard:
 
             for test_file, result in infra.get("results", {}).items():
                 status_icon = "✅" if result.get("success", False) else "❌"
-                status_class = "test-status-pass" if result.get("success", False) else "test-status-fail"
+                status_class = (
+                    "test-status-pass"
+                    if result.get("success", False)
+                    else "test-status-fail"
+                )
                 exec_time = result.get("execution_time", 0)
 
                 html_content += f"""
@@ -791,7 +869,11 @@ class TestCoverageDashboard:
 
         for category, metrics in dashboard_data["component_coverage"].items():
             coverage = metrics["average_coverage"]
-            status = "🟢 Good" if coverage > 80 else "🟡 Medium" if coverage > 50 else "🔴 Needs Work"
+            status = (
+                "🟢 Good"
+                if coverage > 80
+                else "🟡 Medium" if coverage > 50 else "🔴 Needs Work"
+            )
 
             html_content += f"""
             <tr>
@@ -834,7 +916,9 @@ class TestCoverageDashboard:
         <ul>"""
         )
 
-        for category, count in dashboard_data["test_suite_health"]["test_distribution"].items():
+        for category, count in dashboard_data["test_suite_health"][
+            "test_distribution"
+        ].items():
             html_content += f"<li>{category}: {count} files</li>"
 
         html_content += """
@@ -868,7 +952,9 @@ class TestCoverageDashboard:
 
         return html_content
 
-    def save_dashboard(self, dashboard_data: dict, output_dir: Path = None) -> dict[str, str]:
+    def save_dashboard(
+        self, dashboard_data: dict, output_dir: Path = None
+    ) -> dict[str, str]:
         """Save dashboard data and reports."""
         if output_dir is None:
             output_dir = self.project_root / "coverage_reports"
@@ -893,7 +979,11 @@ class TestCoverageDashboard:
         with open(md_file, "w") as f:
             f.write(md_content)
 
-        return {"json_report": str(json_file), "html_dashboard": str(html_file), "markdown_summary": str(md_file)}
+        return {
+            "json_report": str(json_file),
+            "html_dashboard": str(html_file),
+            "markdown_summary": str(md_file),
+        }
 
     def _generate_markdown_summary(self, dashboard_data: dict) -> str:
         """Generate markdown summary report."""
@@ -975,8 +1065,12 @@ def main():
 
     # Print summary
     print("\n📋 Quick Summary:")
-    print(f"   - Critical untested files: {len(dashboard_data['coverage_gaps']['critical_untested'])}")
-    print(f"   - Total test files: {dashboard_data['test_suite_health']['total_test_files']}")
+    print(
+        f"   - Critical untested files: {len(dashboard_data['coverage_gaps']['critical_untested'])}"
+    )
+    print(
+        f"   - Total test files: {dashboard_data['test_suite_health']['total_test_files']}"
+    )
     print(f"   - Priority recommendations: {len(dashboard_data['recommendations'])}")
 
     # Show top priority files

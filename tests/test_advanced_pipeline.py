@@ -104,7 +104,16 @@ def test_model_compression_simulation():
 
     models = [
         ("Small Linear", nn.Linear(256, 128)),
-        ("MLP", nn.Sequential(nn.Linear(512, 256), nn.ReLU(), nn.Linear(256, 128), nn.ReLU(), nn.Linear(128, 64))),
+        (
+            "MLP",
+            nn.Sequential(
+                nn.Linear(512, 256),
+                nn.ReLU(),
+                nn.Linear(256, 128),
+                nn.ReLU(),
+                nn.Linear(128, 64),
+            ),
+        ),
         ("Large Layer", nn.Linear(2048, 2048)),
     ]
 

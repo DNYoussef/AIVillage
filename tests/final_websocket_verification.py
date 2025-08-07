@@ -14,7 +14,9 @@ from src.communications.message import Message, MessageType, Priority
 from src.communications.protocol import CommunicationsProtocol
 
 # Configure logging for demo
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -24,9 +26,16 @@ class VerificationResults:
         self.messages_exchanged: list[dict[str, Any]] = []
 
     def add_test(self, test_name: str, success: bool, details: str, data: Any = None):
-        self.test_results[test_name] = {"success": success, "details": details, "data": data, "timestamp": time.time()}
+        self.test_results[test_name] = {
+            "success": success,
+            "details": details,
+            "data": data,
+            "timestamp": time.time(),
+        }
 
-    def add_message(self, direction: str, message_type: str, content: Any, encrypted: bool = True):
+    def add_message(
+        self, direction: str, message_type: str, content: Any, encrypted: bool = True
+    ):
         self.messages_exchanged.append(
             {
                 "direction": direction,
@@ -46,7 +55,9 @@ class VerificationResults:
         passed = sum(1 for test in self.test_results.values() if test["success"])
         total = len(self.test_results)
 
-        print(f"\nTEST RESULTS: {passed}/{total} tests passed ({passed/total*100:.1f}%)")
+        print(
+            f"\nTEST RESULTS: {passed}/{total} tests passed ({passed/total*100:.1f}%)"
+        )
         print("-" * 60)
 
         for test_name, result in self.test_results.items():
@@ -61,7 +72,9 @@ class VerificationResults:
         for msg in self.messages_exchanged[-10:]:  # Show last 10 messages
             direction_arrow = "→" if msg["direction"] == "sent" else "←"
             encryption_status = "[ENCRYPTED]" if msg["encrypted"] else "[PLAIN]"
-            print(f"{direction_arrow} {msg['type']:20} {encryption_status:12} | {str(msg['content'])[:50]}")
+            print(
+                f"{direction_arrow} {msg['type']:20} {encryption_status:12} | {str(msg['content'])[:50]}"
+            )
 
         print("\n" + "=" * 100)
 
@@ -77,14 +90,20 @@ async def verify_connection_establishment(results: VerificationResults):
 
         # Connect client
         client = CommunicationsProtocol("verification_client", port=8889)
-        connection_success = await client.connect("ws://localhost:8888", "verification_server")
+        connection_success = await client.connect(
+            "ws://localhost:8888", "verification_server"
+        )
 
         # Verify connection
         server_sees_client = server.is_connected("verification_client")
         client_sees_server = client.is_connected("verification_server")
 
         if connection_success and server_sees_client and client_sees_server:
-            results.add_test("connection_establishment", True, "WebSocket connection established with proper handshake")
+            results.add_test(
+                "connection_establishment",
+                True,
+                "WebSocket connection established with proper handshake",
+            )
         else:
             results.add_test(
                 "connection_establishment",
@@ -108,7 +127,9 @@ async def verify_bidirectional_messaging(results: VerificationResults):
 
     def message_handler(agent_id: str, message: dict):
         received_messages.append({"from": agent_id, "message": message})
-        results.add_message("received", message.get("type", "unknown"), message.get("content", {}))
+        results.add_message(
+            "received", message.get("type", "unknown"), message.get("content", {})
+        )
 
     try:
         # Setup server and client
@@ -126,8 +147,14 @@ async def verify_bidirectional_messaging(results: VerificationResults):
 
         # Test messages with different types
         messages_to_send = [
-            {"type": "greeting", "content": {"text": "Hello from client", "priority": "high"}},
-            {"type": "response", "content": {"text": "Hello from server", "status": "acknowledged"}},
+            {
+                "type": "greeting",
+                "content": {"text": "Hello from client", "priority": "high"},
+            },
+            {
+                "type": "response",
+                "content": {"text": "Hello from server", "status": "acknowledged"},
+            },
             Message(
                 type=MessageType.TASK,
                 sender="msg_client",
@@ -170,7 +197,9 @@ async def verify_bidirectional_messaging(results: VerificationResults):
 
         # Verify results
         messages_received = len(received_messages)
-        if successful_sends == len(messages_to_send) and messages_received >= len(messages_to_send):
+        if successful_sends == len(messages_to_send) and messages_received >= len(
+            messages_to_send
+        ):
             results.add_test(
                 "bidirectional_messaging",
                 True,
@@ -201,7 +230,10 @@ async def verify_message_queuing(results: VerificationResults):
         # Queue messages while server is offline
         queued_messages = []
         for i in range(5):
-            msg = {"type": "queued_message", "content": {"id": i, "data": f"Queued message {i}"}}
+            msg = {
+                "type": "queued_message",
+                "content": {"id": i, "data": f"Queued message {i}"},
+            }
             await client.send_message("queue_server", msg)
             queued_messages.append(msg)
             results.add_message("queued", "queued_message", msg["content"])
@@ -272,7 +304,10 @@ async def verify_encryption(results: VerificationResults):
         # Test encryption/decryption
         test_message = {
             "type": "secret",
-            "content": {"secret_data": "This is confidential information", "user_id": 12345},
+            "content": {
+                "secret_data": "This is confidential information",
+                "user_id": 12345,
+            },
             "timestamp": time.time(),
         }
 
@@ -311,7 +346,9 @@ async def verify_reconnection(results: VerificationResults):
 
         # Connect client
         client = CommunicationsProtocol("reconnect_client", port=8889)
-        initial_connection = await client.connect("ws://localhost:8888", "reconnect_server")
+        initial_connection = await client.connect(
+            "ws://localhost:8888", "reconnect_server"
+        )
 
         if not initial_connection:
             results.add_test("reconnection_logic", False, "Initial connection failed")
@@ -338,7 +375,9 @@ async def verify_reconnection(results: VerificationResults):
 
         if not still_connected and reconnected:
             results.add_test(
-                "reconnection_logic", True, "Client detected disconnect and automatically reconnected to server"
+                "reconnection_logic",
+                True,
+                "Client detected disconnect and automatically reconnected to server",
             )
         else:
             results.add_test(
@@ -378,12 +417,16 @@ async def verify_ssl_support(results: VerificationResults):
         )
 
         client_ssl_support = (
-            "ssl_context" in client_source and "wss" in client_source and "ssl.SSLContext" in client_source
+            "ssl_context" in client_source
+            and "wss" in client_source
+            and "ssl.SSLContext" in client_source
         )
 
         if server_ssl_support and client_ssl_support:
             results.add_test(
-                "ssl_tls_support", True, "SSL/TLS support fully implemented for both server and client connections"
+                "ssl_tls_support",
+                True,
+                "SSL/TLS support fully implemented for both server and client connections",
             )
         else:
             results.add_test(

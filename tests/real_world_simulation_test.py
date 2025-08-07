@@ -26,7 +26,9 @@ class RealWorldSimulation:
         self.scenarios_tested = 0
         self.scenarios_passed = 0
 
-    def log_scenario(self, scenario: str, success: bool, details: str, metrics: dict[str, Any] = None):
+    def log_scenario(
+        self, scenario: str, success: bool, details: str, metrics: dict[str, Any] = None
+    ):
         """Log simulation scenario result"""
         self.scenarios_tested += 1
         if success:
@@ -67,7 +69,9 @@ class RealWorldSimulation:
 
                 # Mock device specifications
                 with patch.object(profiler.profile, "cpu_cores", specs["cpu_cores"]):
-                    with patch.object(profiler.profile, "total_memory_gb", specs["memory_gb"]):
+                    with patch.object(
+                        profiler.profile, "total_memory_gb", specs["memory_gb"]
+                    ):
 
                         # Test system adaptation
                         snapshot = profiler.take_snapshot()
@@ -76,7 +80,9 @@ class RealWorldSimulation:
 
                         # Check if system adapts appropriately
                         memory_allocation_mb = allocation["memory_mb"]
-                        expected_max = specs["memory_gb"] * 1024 * 0.7  # 70% of available memory
+                        expected_max = (
+                            specs["memory_gb"] * 1024 * 0.7
+                        )  # 70% of available memory
 
                         adapted = memory_allocation_mb <= expected_max
                         if adapted:
@@ -86,10 +92,16 @@ class RealWorldSimulation:
                             f"Mobile Device: {device_name}",
                             adapted,
                             f"Memory allocation: {memory_allocation_mb}MB (max: {expected_max:.0f}MB), suitable: {suitable}",
-                            {"specs": specs, "allocation": allocation, "suitable": suitable},
+                            {
+                                "specs": specs,
+                                "allocation": allocation,
+                                "suitable": suitable,
+                            },
                         )
 
-            overall_success = successful_adaptations >= 3  # At least 3/4 should adapt properly
+            overall_success = (
+                successful_adaptations >= 3
+            )  # At least 3/4 should adapt properly
             self.log_scenario(
                 "Mobile Device Adaptation",
                 overall_success,
@@ -108,7 +120,10 @@ class RealWorldSimulation:
             from src.core.p2p import P2PNode, PeerDiscovery
 
             network_scenarios = [
-                ("High latency (satellite)", {"latency_ms": 600, "bandwidth_kbps": 1000}),
+                (
+                    "High latency (satellite)",
+                    {"latency_ms": 600, "bandwidth_kbps": 1000},
+                ),
                 ("Low bandwidth (rural)", {"latency_ms": 50, "bandwidth_kbps": 256}),
                 ("Unstable connection", {"latency_ms": 150, "packet_loss": 0.15}),
                 ("Good WiFi", {"latency_ms": 20, "bandwidth_kbps": 50000}),
@@ -118,7 +133,9 @@ class RealWorldSimulation:
 
             for scenario_name, conditions in network_scenarios:
                 try:
-                    node = P2PNode(node_id=f"network_test_{scenario_name.replace(' ', '_')}")
+                    node = P2PNode(
+                        node_id=f"network_test_{scenario_name.replace(' ', '_')}"
+                    )
                     discovery = PeerDiscovery(node)
 
                     # In a real test, we would actually simulate network conditions
@@ -134,7 +151,9 @@ class RealWorldSimulation:
                     )
 
                 except Exception as e:
-                    self.log_scenario(f"Network: {scenario_name}", False, f"Failed: {e!s}")
+                    self.log_scenario(
+                        f"Network: {scenario_name}", False, f"Failed: {e!s}"
+                    )
 
             overall_success = successful_connections >= 3
             self.log_scenario(
@@ -195,15 +214,22 @@ class RealWorldSimulation:
                         f"Evolution Load: {scenario_name}",
                         load_success,
                         f"Registered {tasks_registered}/{concurrent_tasks} concurrent tasks",
-                        {"concurrent_tasks": concurrent_tasks, "registered": tasks_registered},
+                        {
+                            "concurrent_tasks": concurrent_tasks,
+                            "registered": tasks_registered,
+                        },
                     )
 
                 except Exception as e:
-                    self.log_scenario(f"Evolution Load: {scenario_name}", False, f"Failed: {e!s}")
+                    self.log_scenario(
+                        f"Evolution Load: {scenario_name}", False, f"Failed: {e!s}"
+                    )
 
             overall_success = successful_loads >= 3
             self.log_scenario(
-                "Evolution Load Handling", overall_success, f"Successfully handled {successful_loads}/4 load scenarios"
+                "Evolution Load Handling",
+                overall_success,
+                f"Successfully handled {successful_loads}/4 load scenarios",
             )
 
         except Exception as e:
@@ -216,7 +242,11 @@ class RealWorldSimulation:
         try:
             from unittest.mock import patch
 
-            from src.core.resources import ConstraintManager, DeviceProfiler, ResourceMonitor
+            from src.core.resources import (
+                ConstraintManager,
+                DeviceProfiler,
+                ResourceMonitor,
+            )
 
             profiler = DeviceProfiler()
             monitor = ResourceMonitor(profiler)
@@ -268,7 +298,9 @@ class RealWorldSimulation:
                     )
 
                 except Exception as e:
-                    self.log_scenario(f"Resource Starvation: {scenario_name}", False, f"Failed: {e!s}")
+                    self.log_scenario(
+                        f"Resource Starvation: {scenario_name}", False, f"Failed: {e!s}"
+                    )
 
             overall_success = recovered_scenarios >= 2
             self.log_scenario(
@@ -321,7 +353,10 @@ class RealWorldSimulation:
                 "Long-Running Stability",
                 stability_success,
                 f"Stability score: {stability_score:.1%} ({successful_checks}/{stability_checks} checks passed)",
-                {"stability_score": stability_score, "checks_passed": successful_checks},
+                {
+                    "stability_score": stability_score,
+                    "checks_passed": successful_checks,
+                },
             )
 
         except Exception as e:
@@ -340,7 +375,11 @@ class RealWorldSimulation:
         await self.simulate_long_running_stability()
 
         # Calculate overall results
-        success_rate = self.scenarios_passed / self.scenarios_tested if self.scenarios_tested > 0 else 0
+        success_rate = (
+            self.scenarios_passed / self.scenarios_tested
+            if self.scenarios_tested > 0
+            else 0
+        )
 
         summary = {
             "total_scenarios": self.scenarios_tested,
@@ -368,26 +407,36 @@ class RealWorldSimulation:
 
         # Analyze results and generate recommendations
         if self.scenarios_passed < self.scenarios_tested:
-            recommendations.append("Review failed scenarios and implement additional error handling")
+            recommendations.append(
+                "Review failed scenarios and implement additional error handling"
+            )
 
         if self.scenarios_tested > 0:
             success_rate = self.scenarios_passed / self.scenarios_tested
             if success_rate < 0.9:
-                recommendations.append("Increase test coverage and robustness before production deployment")
+                recommendations.append(
+                    "Increase test coverage and robustness before production deployment"
+                )
             if success_rate < 0.8:
-                recommendations.append("Critical issues found - address before any deployment")
+                recommendations.append(
+                    "Critical issues found - address before any deployment"
+                )
 
         # Add specific recommendations based on scenario results
         for scenario, result in self.results.items():
             if not result["success"] and "Mobile Device" in scenario:
-                recommendations.append("Improve mobile device resource adaptation algorithms")
+                recommendations.append(
+                    "Improve mobile device resource adaptation algorithms"
+                )
             elif not result["success"] and "Network" in scenario:
                 recommendations.append("Enhance network resilience and error recovery")
             elif not result["success"] and "Evolution" in scenario:
                 recommendations.append("Optimize evolution system load balancing")
 
         if not recommendations:
-            recommendations.append("System demonstrates good real-world deployment readiness")
+            recommendations.append(
+                "System demonstrates good real-world deployment readiness"
+            )
 
         return recommendations
 

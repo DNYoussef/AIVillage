@@ -175,7 +175,9 @@ def test_actual_optimization_gains():
     print("Optimization measurements:")
     print(f"  Old method (pickle): {old_size:,} bytes")
     print(f"  Binary packing: {binary_size:,} bytes ({binary_improvement:.1f}x better)")
-    print(f"  + LZMA compression: {lzma_size:,} bytes ({lzma_improvement:.1f}x additional)")
+    print(
+        f"  + LZMA compression: {lzma_size:,} bytes ({lzma_improvement:.1f}x additional)"
+    )
     print(f"  TOTAL optimization: {total_improvement:.1f}x improvement")
 
     return total_improvement
@@ -272,7 +274,9 @@ def main():
         success = final_ratio >= 30 and improvement >= 1.5
 
         print("\nValidation result:")
-        print(f"  Compression improvements: {'CONFIRMED' if improvement >= 1.5 else 'LIMITED'}")
+        print(
+            f"  Compression improvements: {'CONFIRMED' if improvement >= 1.5 else 'LIMITED'}"
+        )
         print(f"  Mobile viability: {'ACHIEVED' if kenya_viable else 'PARTIAL'}")
         print(f"  Overall success: {'YES' if success else 'PARTIAL'}")
 

@@ -21,7 +21,9 @@ class ErrorHandler:
             filename="ai_village.log",
         )
 
-    def log_error(self, error: Exception, context: dict[str, Any] | None = None) -> None:
+    def log_error(
+        self, error: Exception, context: dict[str, Any] | None = None
+    ) -> None:
         """Log an error with optional context."""
         error_message = f"Error: {error!s}"
         if context:
@@ -36,7 +38,9 @@ class ErrorHandler:
             try:
                 return await func(*args, **kwargs)
             except Exception as e:
-                self.log_error(e, {"function": func.__name__, "args": args, "kwargs": kwargs})
+                self.log_error(
+                    e, {"function": func.__name__, "args": args, "kwargs": kwargs}
+                )
                 msg = f"Error in {func.__name__}: {e!s}"
                 raise AIVillageException(msg)
 
@@ -54,7 +58,9 @@ def safe_execute(func):
         try:
             return await func(*args, **kwargs)
         except Exception as e:
-            error_handler.log_error(e, {"function": func.__name__, "args": args, "kwargs": kwargs})
+            error_handler.log_error(
+                e, {"function": func.__name__, "args": args, "kwargs": kwargs}
+            )
             return {"error": str(e), "traceback": traceback.format_exc()}
 
     return wrapper

@@ -16,7 +16,7 @@ This directory contains comprehensive API documentation for all AIVillage compon
 - [`core/resources/`](core/resources/) - Resource management and profiling
 - [`infrastructure/`](infrastructure/) - Mesh networking and device coordination
 
-### 🧠 AI/ML Systems  
+### 🧠 AI/ML Systems
 - [`production/compression/`](production/compression/) - Model compression pipeline
 - [`production/evolution/`](production/evolution/) - Agent evolution system
 - [`production/rag/`](production/rag/) - Retrieval-augmented generation
@@ -125,6 +125,6 @@ python -m src.production.rag.rag_system.main query --question "What is RAG?"
 ## Status Legend
 
 - ✅ **Complete**: Production-ready with full documentation
-- 🟡 **Partial**: Working but needs documentation improvements  
+- 🟡 **Partial**: Working but needs documentation improvements
 - 🔴 **Missing**: Planned but not yet implemented
 - 📝 **Draft**: Documentation in progress

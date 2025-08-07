@@ -10,7 +10,9 @@ import subprocess
 import sys
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -19,13 +21,19 @@ class DevEnvironmentSetup:
 
     def __init__(self, project_root: Path | None = None):
         self.project_root = project_root or Path.cwd()
-        self.requirements_files = ["requirements.txt", "requirements-dev.txt", "pyproject.toml"]
+        self.requirements_files = [
+            "requirements.txt",
+            "requirements-dev.txt",
+            "pyproject.toml",
+        ]
 
     def run_command(self, cmd: list[str], check: bool = True) -> tuple[int, str, str]:
         """Run a command and return (returncode, stdout, stderr)."""
         logger.info(f"Running: {' '.join(cmd)}")
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=check, cwd=self.project_root)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, check=check, cwd=self.project_root
+            )
             return result.returncode, result.stdout, result.stderr
         except subprocess.CalledProcessError as e:
             logger.error(f"Command failed: {e}")
@@ -36,7 +44,9 @@ class DevEnvironmentSetup:
         logger.info("Checking Python version...")
         version = sys.version_info
         if version < (3, 10):
-            logger.error(f"Python 3.10+ required, found {version.major}.{version.minor}")
+            logger.error(
+                f"Python 3.10+ required, found {version.major}.{version.minor}"
+            )
             return False
         logger.info(f"Python {version.major}.{version.minor}.{version.micro} - OK")
         return True
@@ -66,7 +76,9 @@ class DevEnvironmentSetup:
 
         # Try poetry first
         if (self.project_root / "pyproject.toml").exists():
-            returncode, _, stderr = self.run_command(["poetry", "install", "--with", "dev"], check=False)
+            returncode, _, stderr = self.run_command(
+                ["poetry", "install", "--with", "dev"], check=False
+            )
             if returncode == 0:
                 logger.info("Dependencies installed via poetry")
                 return True
@@ -77,7 +89,8 @@ class DevEnvironmentSetup:
             req_path = self.project_root / req_file
             if req_path.exists() and req_file.endswith(".txt"):
                 returncode, _, _ = self.run_command(
-                    [sys.executable, "-m", "pip", "install", "-r", str(req_path)], check=False
+                    [sys.executable, "-m", "pip", "install", "-r", str(req_path)],
+                    check=False,
                 )
                 if returncode != 0:
                     logger.error(f"Failed to install {req_file}")
@@ -90,7 +103,15 @@ class DevEnvironmentSetup:
         """Create necessary directory structure."""
         logger.info("Setting up directory structure...")
 
-        directories = ["data", "logs", "models", "outputs", "wandb", "forge_output", "test_output"]
+        directories = [
+            "data",
+            "logs",
+            "models",
+            "outputs",
+            "wandb",
+            "forge_output",
+            "test_output",
+        ]
 
         for dir_name in directories:
             dir_path = self.project_root / dir_name
@@ -155,7 +176,9 @@ OUTPUTS_DIR=./outputs
             return False
 
         # Check if tests can be discovered
-        returncode, stdout, _ = self.run_command([sys.executable, "-m", "pytest", "--collect-only", "-q"], check=False)
+        returncode, stdout, _ = self.run_command(
+            [sys.executable, "-m", "pytest", "--collect-only", "-q"], check=False
+        )
 
         if returncode == 0:
             logger.info("Test discovery successful")
@@ -196,9 +219,15 @@ OUTPUTS_DIR=./outputs
 
 def main():
     """Main setup function."""
-    parser = argparse.ArgumentParser(description="Set up AIVillage development environment")
-    parser.add_argument("--skip-deps", action="store_true", help="Skip dependency installation")
-    parser.add_argument("--skip-validation", action="store_true", help="Skip setup validation")
+    parser = argparse.ArgumentParser(
+        description="Set up AIVillage development environment"
+    )
+    parser.add_argument(
+        "--skip-deps", action="store_true", help="Skip dependency installation"
+    )
+    parser.add_argument(
+        "--skip-validation", action="store_true", help="Skip setup validation"
+    )
     parser.add_argument("--project-root", type=Path, help="Project root directory")
 
     args = parser.parse_args()

@@ -139,7 +139,9 @@ class TestQuietSTaRBaker(unittest.TestCase):
         mock_thought_model.to.return_value = mock_thought_model
         mock_thought_model.eval.return_value = None
         mock_thought_model.model = mock_model
-        mock_thought_model.extract_thoughts.return_value = [["Let me think step by step"]]
+        mock_thought_model.extract_thoughts.return_value = [
+            ["Let me think step by step"]
+        ]
 
         # Mock forward pass
         mock_outputs = MagicMock()
@@ -283,12 +285,16 @@ def main():
     print(f"Integration Test: {'✅ PASSED' if integration_success else '❌ FAILED'}")
 
     overall_success = unit_success and integration_success
-    print(f"\nOverall: {'✅ ALL TESTS PASSED' if overall_success else '❌ SOME TESTS FAILED'}")
+    print(
+        f"\nOverall: {'✅ ALL TESTS PASSED' if overall_success else '❌ SOME TESTS FAILED'}"
+    )
 
     if overall_success:
         print("\n🎉 Quiet-STaR Baker is ready for production!")
         print("\nExample usage:")
-        print("  forge bake-quietstar --model path/to/champion.pt --out path/to/baked.pt")
+        print(
+            "  forge bake-quietstar --model path/to/champion.pt --out path/to/baked.pt"
+        )
 
     return 0 if overall_success else 1
 

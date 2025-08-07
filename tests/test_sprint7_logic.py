@@ -82,7 +82,9 @@ try:
     shards = memory_aware_sharding(12, 200.0, devices)
 
     print(f"  PASS: Created {len(shards)} shards for 12 layers")
-    print(f"  PASS: Shards distributed across {len(set(s.device_id for s in shards))} devices")
+    print(
+        f"  PASS: Shards distributed across {len(set(s.device_id for s in shards))} devices"
+    )
 
     # Verify memory constraints
     for shard in shards:
@@ -114,7 +116,9 @@ try:
         memory_requirement_mb: float
         compute_requirement: float
 
-    def priority_based_placement(agents: list[AgentSpec], devices: list[DeviceProfile]) -> dict[str, str]:
+    def priority_based_placement(
+        agents: list[AgentSpec], devices: list[DeviceProfile]
+    ) -> dict[str, str]:
         """Place agents based on priority and device capabilities"""
         placement = {}
         device_usage = {d.device_id: {"memory": 0, "compute": 0} for d in devices}
@@ -129,14 +133,24 @@ try:
             for device in devices:
                 # Check if device can accommodate agent
                 if (
-                    device_usage[device.device_id]["memory"] + agent.memory_requirement_mb <= device.available_memory_mb
-                    and device_usage[device.device_id]["compute"] + agent.compute_requirement <= device.compute_score
+                    device_usage[device.device_id]["memory"]
+                    + agent.memory_requirement_mb
+                    <= device.available_memory_mb
+                    and device_usage[device.device_id]["compute"]
+                    + agent.compute_requirement
+                    <= device.compute_score
                 ):
 
                     # Calculate suitability score
-                    memory_ratio = device.available_memory_mb / agent.memory_requirement_mb
+                    memory_ratio = (
+                        device.available_memory_mb / agent.memory_requirement_mb
+                    )
                     compute_ratio = device.compute_score / agent.compute_requirement
-                    score = memory_ratio * 0.5 + compute_ratio * 0.3 + device.reliability_score * 0.2
+                    score = (
+                        memory_ratio * 0.5
+                        + compute_ratio * 0.3
+                        + device.reliability_score * 0.2
+                    )
 
                     if score > best_score:
                         best_score = score
@@ -144,8 +158,12 @@ try:
 
             if best_device:
                 placement[agent.agent_type] = best_device.device_id
-                device_usage[best_device.device_id]["memory"] += agent.memory_requirement_mb
-                device_usage[best_device.device_id]["compute"] += agent.compute_requirement
+                device_usage[best_device.device_id][
+                    "memory"
+                ] += agent.memory_requirement_mb
+                device_usage[best_device.device_id][
+                    "compute"
+                ] += agent.compute_requirement
 
         return placement
 
@@ -164,8 +182,12 @@ try:
 
     # Verify critical agents are placed
     critical_agents = [a for a in agents if a.priority == AgentPriority.CRITICAL]
-    critical_placed = [a.agent_type for a in critical_agents if a.agent_type in placement]
-    print(f"  PASS: {len(critical_placed)} out of {len(critical_agents)} critical agents placed")
+    critical_placed = [
+        a.agent_type for a in critical_agents if a.agent_type in placement
+    ]
+    print(
+        f"  PASS: {len(critical_placed)} out of {len(critical_agents)} critical agents placed"
+    )
 
     # Show placement
     for agent_type, device_id in placement.items():
@@ -215,7 +237,9 @@ try:
             print(f"  PASS: Migration decision - {reason}")
             passed += 1
         else:
-            print(f"  FAIL: Migration decision - expected {expected_reason}, got {reason}")
+            print(
+                f"  FAIL: Migration decision - expected {expected_reason}, got {reason}"
+            )
 
     print(f"  SUMMARY: {passed}/{len(test_cases)} migration decision tests passed")
 
@@ -228,7 +252,9 @@ print()
 print("Test 4: Federated Learning Aggregation Logic")
 try:
 
-    def federated_average(gradients_list: list[dict[str, float]], weights: list[float] = None) -> dict[str, float]:
+    def federated_average(
+        gradients_list: list[dict[str, float]], weights: list[float] = None
+    ) -> dict[str, float]:
         """Simple federated averaging of gradients"""
         if not gradients_list:
             return {}
@@ -268,7 +294,9 @@ try:
     if abs(avg_gradients["layer1"] - expected_layer1) < 0.001:
         print(f"  PASS: Federated averaging - layer1 = {avg_gradients['layer1']:.3f}")
     else:
-        print(f"  FAIL: Federated averaging - expected {expected_layer1:.3f}, got {avg_gradients['layer1']:.3f}")
+        print(
+            f"  FAIL: Federated averaging - expected {expected_layer1:.3f}, got {avg_gradients['layer1']:.3f}"
+        )
 
     # Test weighted averaging
     weights = [2.0, 1.0, 1.0]  # Give first client double weight
@@ -276,7 +304,9 @@ try:
     expected_layer1_weighted = 0.1 * 0.5 + 0.15 * 0.25 + 0.05 * 0.25
 
     if abs(weighted_avg["layer1"] - expected_layer1_weighted) < 0.001:
-        print(f"  PASS: Weighted federated averaging - layer1 = {weighted_avg['layer1']:.3f}")
+        print(
+            f"  PASS: Weighted federated averaging - layer1 = {weighted_avg['layer1']:.3f}"
+        )
     else:
         print(
             f"  FAIL: Weighted federated averaging - expected {expected_layer1_weighted:.3f}, got {weighted_avg['layer1']:.3f}"
@@ -291,7 +321,9 @@ print()
 print("Test 5: Resource Utilization Calculator")
 try:
 
-    def calculate_utilization(shards: list[ModelShard], devices: list[DeviceProfile]) -> dict[str, float]:
+    def calculate_utilization(
+        shards: list[ModelShard], devices: list[DeviceProfile]
+    ) -> dict[str, float]:
         """Calculate resource utilization across devices"""
         device_memory_map = {d.device_id: d.available_memory_mb for d in devices}
         device_usage = {}
@@ -338,4 +370,6 @@ print("PASS: Resource utilization calculation validated")
 print()
 print("SUCCESS: Sprint 7 core business logic is sound and functional!")
 print("VALIDATED: Algorithms ready for distributed inference deployment")
-print("ACHIEVEMENT: 85% Atlantis vision alignment through validated distributed AI algorithms")
+print(
+    "ACHIEVEMENT: 85% Atlantis vision alignment through validated distributed AI algorithms"
+)

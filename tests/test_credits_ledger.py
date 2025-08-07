@@ -102,7 +102,11 @@ class TestCreditsLedger:
         """Test successful credit transfer."""
         # Give alice some credits first
         with ledger.get_session() as session:
-            alice_wallet = session.query(Wallet).filter(Wallet.user_id == sample_users["alice"].id).first()
+            alice_wallet = (
+                session.query(Wallet)
+                .filter(Wallet.user_id == sample_users["alice"].id)
+                .first()
+            )
             alice_wallet.balance = 1000
             session.commit()
 
@@ -213,7 +217,11 @@ class TestCreditsLedger:
         """Test getting transaction history."""
         # Set up some transactions
         with ledger.get_session() as session:
-            alice_wallet = session.query(Wallet).filter(Wallet.user_id == sample_users["alice"].id).first()
+            alice_wallet = (
+                session.query(Wallet)
+                .filter(Wallet.user_id == sample_users["alice"].id)
+                .first()
+            )
             alice_wallet.balance = 1000
             session.commit()
 
@@ -256,7 +264,11 @@ class TestCreditsLedger:
     def test_burn_calculation(self, ledger, sample_users):
         """Test that burn calculation is correct."""
         with ledger.get_session() as session:
-            alice_wallet = session.query(Wallet).filter(Wallet.user_id == sample_users["alice"].id).first()
+            alice_wallet = (
+                session.query(Wallet)
+                .filter(Wallet.user_id == sample_users["alice"].id)
+                .first()
+            )
             alice_wallet.balance = 1000
             session.commit()
 
@@ -271,7 +283,11 @@ class TestCreditsLedger:
         for amount, expected_burn, expected_net in test_cases:
             # Reset alice's balance
             with ledger.get_session() as session:
-                alice_wallet = session.query(Wallet).filter(Wallet.user_id == sample_users["alice"].id).first()
+                alice_wallet = (
+                    session.query(Wallet)
+                    .filter(Wallet.user_id == sample_users["alice"].id)
+                    .first()
+                )
                 alice_wallet.balance = amount
                 session.commit()
 
@@ -283,7 +299,11 @@ class TestCreditsLedger:
         """Test handling of concurrent transactions."""
         # Give alice some credits
         with ledger.get_session() as session:
-            alice_wallet = session.query(Wallet).filter(Wallet.user_id == sample_users["alice"].id).first()
+            alice_wallet = (
+                session.query(Wallet)
+                .filter(Wallet.user_id == sample_users["alice"].id)
+                .first()
+            )
             alice_wallet.balance = 1000
             session.commit()
 
@@ -311,7 +331,9 @@ class TestCreditsLedger:
         ledger.earn_credits("testuser", scrape_time, 3600, 1000000000, 1000000000)
 
         # Second earning with same timestamp should be idempotent
-        earning2 = ledger.earn_credits("testuser", scrape_time, 7200, 2000000000, 2000000000)
+        earning2 = ledger.earn_credits(
+            "testuser", scrape_time, 7200, 2000000000, 2000000000
+        )
 
         # Should return the original earning
         assert earning2.uptime_seconds == 3600  # Original value

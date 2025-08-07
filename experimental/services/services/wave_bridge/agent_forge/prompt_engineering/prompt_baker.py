@@ -96,7 +96,9 @@ class PromptBaker:
             directory.mkdir(parents=True, exist_ok=True)
             logger.info(f"Created directory: {directory}")
 
-    async def identify_winners(self, min_interactions: int = None) -> list[WinningPrompt]:
+    async def identify_winners(
+        self, min_interactions: int = None
+    ) -> list[WinningPrompt]:
         """Find best performing prompt templates from W&B data"""
         min_interactions = min_interactions or self.min_interactions
 
@@ -157,7 +159,9 @@ class PromptBaker:
                     performance_score=overall_score,
                     confidence_score=confidence_score,
                     interaction_count=total_interactions,
-                    statistical_significance=run.summary.get("statistical_significance", 0.9),
+                    statistical_significance=run.summary.get(
+                        "statistical_significance", 0.9
+                    ),
                     configuration=dict(config),
                     optimization_history=optimization_history,
                     baked_at=datetime.now(timezone.utc).isoformat(),
@@ -181,8 +185,14 @@ class PromptBaker:
             wandb.log(
                 {
                     "winners_identified": len(winners),
-                    "top_performer_score": winners[0].performance_score if winners else 0,
-                    "avg_confidence": statistics.mean([w.confidence_score for w in winners]) if winners else 0,
+                    "top_performer_score": (
+                        winners[0].performance_score if winners else 0
+                    ),
+                    "avg_confidence": (
+                        statistics.mean([w.confidence_score for w in winners])
+                        if winners
+                        else 0
+                    ),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             )
@@ -195,7 +205,9 @@ class PromptBaker:
             logger.error(f"Error identifying winners: {e}")
             return []
 
-    def calculate_confidence_score(self, sample_size: int, performance_score: float, variance: float) -> float:
+    def calculate_confidence_score(
+        self, sample_size: int, performance_score: float, variance: float
+    ) -> float:
         """Calculate confidence score based on sample size and performance consistency"""
         # Sample size factor (diminishing returns)
         sample_factor = min(1.0, np.log(sample_size) / np.log(1000))
@@ -207,7 +219,9 @@ class PromptBaker:
         consistency_factor = max(0.0, 1.0 - variance)
 
         # Combined confidence score
-        confidence = sample_factor * 0.4 + performance_factor * 0.4 + consistency_factor * 0.2
+        confidence = (
+            sample_factor * 0.4 + performance_factor * 0.4 + consistency_factor * 0.2
+        )
 
         return min(1.0, confidence)
 
@@ -217,7 +231,9 @@ class PromptBaker:
             history = []
 
             # Get run history (limited to key metrics)
-            for row in run.scan_history(keys=["student_engagement", "response_quality", "step"]):
+            for row in run.scan_history(
+                keys=["student_engagement", "response_quality", "step"]
+            ):
                 if row.get("step") is not None:
                     history.append(
                         {
@@ -260,9 +276,7 @@ class PromptBaker:
             artifact.add_file(template_path)
 
             # Save configuration
-            config_path = (
-                f"services/wave_bridge/agent_forge/baked_prompts/configurations/{winning_prompt.variant_id}.json"
-            )
+            config_path = f"services/wave_bridge/agent_forge/baked_prompts/configurations/{winning_prompt.variant_id}.json"
             with open(config_path, "w") as f:
                 json.dump(asdict(winning_prompt), f, indent=2)
 
@@ -277,7 +291,9 @@ class PromptBaker:
         except Exception as e:
             logger.error(f"Error versioning template {winning_prompt.variant_id}: {e}")
 
-    async def optimize_prompt_weights(self, winners: list[WinningPrompt]) -> PromptWeights:
+    async def optimize_prompt_weights(
+        self, winners: list[WinningPrompt]
+    ) -> PromptWeights:
         """Optimize weights based on winning prompt characteristics"""
         if not winners:
             logger.warning("No winners provided for weight optimization")
@@ -317,7 +333,9 @@ class PromptBaker:
         subject_weights = self.calculate_category_weights(subject_specializations)
 
         # Optimal encouragement frequency (weighted average)
-        optimal_encouragement = np.average(encouragement_frequencies, weights=[w.performance_score for w in winners])
+        optimal_encouragement = np.average(
+            encouragement_frequencies, weights=[w.performance_score for w in winners]
+        )
 
         # Calculate overall confidence
         avg_confidence = statistics.mean([w.confidence_score for w in winners])
@@ -352,7 +370,9 @@ class PromptBaker:
 
         return optimized_weights
 
-    def calculate_category_weights(self, category_scores: dict[str, list[float]]) -> dict[str, float]:
+    def calculate_category_weights(
+        self, category_scores: dict[str, list[float]]
+    ) -> dict[str, float]:
         """Calculate normalized weights for a category based on performance scores"""
         if not category_scores:
             return {}
@@ -372,7 +392,10 @@ class PromptBaker:
             # Equal weights if all scores are 0
             return {cat: 1.0 / len(category_averages) for cat in category_averages}
 
-        weights = {category: score / total_score for category, score in category_averages.items()}
+        weights = {
+            category: score / total_score
+            for category, score in category_averages.items()
+        }
 
         return weights
 
@@ -446,12 +469,16 @@ class PromptBaker:
             artifact.add_file(weights_path)
             wandb.log_artifact(artifact)
 
-            logger.info(f"Saved optimized weights with confidence: {weights.confidence_level:.3f}")
+            logger.info(
+                f"Saved optimized weights with confidence: {weights.confidence_level:.3f}"
+            )
 
         except Exception as e:
             logger.error(f"Error saving optimized weights: {e}")
 
-    async def prepare_deployment_package(self, winners: list[WinningPrompt], weights: PromptWeights) -> dict[str, Any]:
+    async def prepare_deployment_package(
+        self, winners: list[WinningPrompt], weights: PromptWeights
+    ) -> dict[str, Any]:
         """Prepare complete deployment package with winning prompts and weights"""
         deployment_package = {
             "version": "1.0.0",
@@ -470,7 +497,9 @@ class PromptBaker:
             "optimized_weights": asdict(weights),
             "deployment_config": {
                 "primary_variant": winners[0].variant_id if winners else None,
-                "fallback_variants": [w.variant_id for w in winners[1:3]] if len(winners) > 1 else [],
+                "fallback_variants": (
+                    [w.variant_id for w in winners[1:3]] if len(winners) > 1 else []
+                ),
                 "weight_update_frequency": "daily",
                 "performance_monitoring": True,
                 "auto_optimization": True,
@@ -495,7 +524,9 @@ class PromptBaker:
             description=f"Complete prompt deployment package with {len(winners)} winning variants",
             metadata={
                 "winners_count": len(winners),
-                "primary_variant": deployment_package["deployment_config"]["primary_variant"],
+                "primary_variant": deployment_package["deployment_config"][
+                    "primary_variant"
+                ],
                 "package_version": deployment_package["version"],
                 "confidence_level": weights.confidence_level,
             },
@@ -509,7 +540,9 @@ class PromptBaker:
             {
                 "deployment_package_ready": True,
                 "winners_included": len(winners),
-                "primary_variant": deployment_package["deployment_config"]["primary_variant"],
+                "primary_variant": deployment_package["deployment_config"][
+                    "primary_variant"
+                ],
                 "confidence_level": weights.confidence_level,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
@@ -519,7 +552,9 @@ class PromptBaker:
 
         return deployment_package
 
-    async def validate_deployment_readiness(self, winners: list[WinningPrompt]) -> dict[str, Any]:
+    async def validate_deployment_readiness(
+        self, winners: list[WinningPrompt]
+    ) -> dict[str, Any]:
         """Validate that winning prompts are ready for production deployment"""
         validation_results = {
             "deployment_ready": True,
@@ -565,10 +600,16 @@ class PromptBaker:
                 variant_validation["checks"]["significance"] = "PASS"
             else:
                 variant_validation["checks"]["significance"] = "WARNING"
-                validation_results["warnings"].append(f"Variant {winner.variant_id} has low statistical significance")
+                validation_results["warnings"].append(
+                    f"Variant {winner.variant_id} has low statistical significance"
+                )
 
             # Add to appropriate list
-            if all(check == "PASS" for check in variant_validation["checks"].values() if check != "WARNING"):
+            if all(
+                check == "PASS"
+                for check in variant_validation["checks"].values()
+                if check != "WARNING"
+            ):
                 validation_results["validation_passed"].append(variant_validation)
             else:
                 validation_results["validation_failed"].append(variant_validation)

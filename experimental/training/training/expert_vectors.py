@@ -100,7 +100,9 @@ class ExpertVectorSystem:
             s = s + scaling * vector.singular_values[pname]
             param.data = (u @ torch.diag(s) @ v).to(param.device)
 
-    def create_moral_experts(self, archetypes: list[MoralArchetype]) -> dict[str, ExpertVector]:
+    def create_moral_experts(
+        self, archetypes: list[MoralArchetype]
+    ) -> dict[str, ExpertVector]:
         """Create a simple expert vector for each archetype."""
         experts = {}
         for arch in archetypes:

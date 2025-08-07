@@ -2,7 +2,7 @@
 
 ## Sprint 8: Emergency Stabilization
 - [ ] CI/CD Configuration exists and valid
-- [ ] At least 1 real test passes  
+- [ ] At least 1 real test passes
 - [ ] Can import core modules
 - [ ] Stubs actually deleted (not just moved)
 - [ ] Git history shows stabilization work
@@ -17,7 +17,7 @@
 
 ## Evidence Quality
 - Git commits found: [NUMBER]
-- Real tests found: [NUMBER]  
+- Real tests found: [NUMBER]
 - Compression ratio achieved: [RATIO]x
 - Memory usage: [PEAK]MB / 2048MB
 

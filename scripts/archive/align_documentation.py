@@ -46,7 +46,9 @@ class DocumentationAligner:
 
 """
             # Insert after title
-            content = re.sub(r"(^# .*\n)", r"\1\n" + warning, content, flags=re.MULTILINE)
+            content = re.sub(
+                r"(^# .*\n)", r"\1\n" + warning, content, flags=re.MULTILINE
+            )
 
         # Replace misleading phrases
         for misleading, honest in self.misleading_phrases.items():
@@ -66,9 +68,19 @@ class DocumentationAligner:
         section += f"*Last updated: {datetime.now().strftime('%Y-%m-%d')}*\n\n"
 
         # Group by status
-        production = [(k, v) for k, v in self.component_status.items() if v["status"] == "production"]
-        experimental = [(k, v) for k, v in self.component_status.items() if v["status"] == "experimental"]
-        planned = [(k, v) for k, v in self.component_status.items() if v["status"] == "planned"]
+        production = [
+            (k, v)
+            for k, v in self.component_status.items()
+            if v["status"] == "production"
+        ]
+        experimental = [
+            (k, v)
+            for k, v in self.component_status.items()
+            if v["status"] == "experimental"
+        ]
+        planned = [
+            (k, v) for k, v in self.component_status.items() if v["status"] == "planned"
+        ]
 
         section += "### Production-Ready Components\n\n"
         for name, info in production:

@@ -136,7 +136,16 @@ def update_all_references():
     ]
 
     # File types to update
-    file_extensions = [".py", ".md", ".yml", ".yaml", ".json", ".sh", ".env.mcp", ".txt"]
+    file_extensions = [
+        ".py",
+        ".md",
+        ".yml",
+        ".yaml",
+        ".json",
+        ".sh",
+        ".env.mcp",
+        ".txt",
+    ]
 
     updated_files = []
 
@@ -147,7 +156,14 @@ def update_all_references():
             and any(str(file_path).endswith(ext) for ext in file_extensions)
             and not any(
                 part in str(file_path)
-                for part in [".git", "__pycache__", "node_modules", ".pytest_cache", "config/", "results/"]
+                for part in [
+                    ".git",
+                    "__pycache__",
+                    "node_modules",
+                    ".pytest_cache",
+                    "config/",
+                    "results/",
+                ]
             )
         ):
 

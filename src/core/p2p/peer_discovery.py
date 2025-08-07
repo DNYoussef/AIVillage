@@ -45,7 +45,9 @@ class PeerDiscovery:
 
         # Discovered peers
         self.discovered_peers: set[tuple[str, int]] = set()
-        self.failed_peers: dict[tuple[str, int], float] = {}  # peer -> last_failure_time
+        self.failed_peers: dict[tuple[str, int], float] = (
+            {}
+        )  # peer -> last_failure_time
         self.peer_response_times: dict[tuple[str, int], float] = {}
 
         # Statistics
@@ -74,7 +76,9 @@ class PeerDiscovery:
 
         # Start background discovery threads
         for i in range(3):  # 3 discovery threads
-            thread = threading.Thread(target=self._discovery_worker, daemon=True, name=f"PeerDiscovery-{i}")
+            thread = threading.Thread(
+                target=self._discovery_worker, daemon=True, name=f"PeerDiscovery-{i}"
+            )
             thread.start()
             self.discovery_threads.append(thread)
 
@@ -132,7 +136,9 @@ class PeerDiscovery:
         self.stats["last_discovery_time"] = time.time()
 
         cycle_time = time.time() - start_time
-        logger.debug(f"Discovery cycle completed in {cycle_time:.2f}s, queued {len(discovery_tasks)} tasks")
+        logger.debug(
+            f"Discovery cycle completed in {cycle_time:.2f}s, queued {len(discovery_tasks)} tasks"
+        )
 
     def _discovery_worker(self) -> None:
         """Background worker for peer discovery."""
@@ -180,7 +186,9 @@ class PeerDiscovery:
                     "sender_port": self.p2p_node.listen_port,
                     "timestamp": time.time(),
                     "capabilities": (
-                        self.p2p_node.local_capabilities.__dict__ if self.p2p_node.local_capabilities else {}
+                        self.p2p_node.local_capabilities.__dict__
+                        if self.p2p_node.local_capabilities
+                        else {}
                     ),
                 }
 
@@ -201,7 +209,9 @@ class PeerDiscovery:
 
                         # Process discovery response
                         response_time = time.time() - start_time
-                        self._process_discovery_response(host, port, response, response_time)
+                        self._process_discovery_response(
+                            host, port, response, response_time
+                        )
 
                         # Update stats
                         self.stats["peers_discovered"] += 1
@@ -211,7 +221,9 @@ class PeerDiscovery:
                         if peer_addr in self.failed_peers:
                             del self.failed_peers[peer_addr]
 
-                        logger.debug(f"Discovered peer at {host}:{port} (response: {response_time:.3f}s)")
+                        logger.debug(
+                            f"Discovered peer at {host}:{port} (response: {response_time:.3f}s)"
+                        )
 
             finally:
                 sock.close()
@@ -222,7 +234,9 @@ class PeerDiscovery:
             self.stats["discovery_failures"] += 1
             logger.debug(f"Discovery failed for {host}:{port}: {e}")
 
-    def _process_discovery_response(self, host: str, port: int, response: dict, response_time: float) -> None:
+    def _process_discovery_response(
+        self, host: str, port: int, response: dict, response_time: float
+    ) -> None:
         """Process discovery response from peer."""
         try:
             peer_id = response.get("sender_id")
@@ -244,7 +258,9 @@ class PeerDiscovery:
                 device_type=capabilities_data.get("device_type", "unknown"),
                 performance_tier=capabilities_data.get("performance_tier", "medium"),
                 evolution_capacity=capabilities_data.get("evolution_capacity", 0.5),
-                available_for_evolution=capabilities_data.get("available_for_evolution", True),
+                available_for_evolution=capabilities_data.get(
+                    "available_for_evolution", True
+                ),
                 latency_ms=response_time * 1000,
                 last_seen=time.time(),
             )
@@ -255,16 +271,24 @@ class PeerDiscovery:
 
             # Initiate connection if not already connected
             if peer_id not in self.p2p_node.connections:
-                asyncio.create_task(self._connect_to_discovered_peer(host, port, peer_id))
+                asyncio.create_task(
+                    self._connect_to_discovered_peer(host, port, peer_id)
+                )
 
         except Exception as e:
-            logger.exception(f"Error processing discovery response from {host}:{port}: {e}")
+            logger.exception(
+                f"Error processing discovery response from {host}:{port}: {e}"
+            )
 
-    async def _connect_to_discovered_peer(self, host: str, port: int, peer_id: str) -> None:
+    async def _connect_to_discovered_peer(
+        self, host: str, port: int, peer_id: str
+    ) -> None:
         """Connect to discovered peer."""
         try:
             if self.p2p_node.use_tls and self.p2p_node.ssl_context:
-                reader, writer = await asyncio.open_connection(host, port, ssl=self.p2p_node.ssl_context)
+                reader, writer = await asyncio.open_connection(
+                    host, port, ssl=self.p2p_node.ssl_context
+                )
             else:
                 reader, writer = await asyncio.open_connection(host, port)
 
@@ -272,7 +296,11 @@ class PeerDiscovery:
             intro_message = {
                 "type": "PEER_INTRODUCTION",
                 "sender_id": self.p2p_node.node_id,
-                "capabilities": (self.p2p_node.local_capabilities.__dict__ if self.p2p_node.local_capabilities else {}),
+                "capabilities": (
+                    self.p2p_node.local_capabilities.__dict__
+                    if self.p2p_node.local_capabilities
+                    else {}
+                ),
             }
 
             # Use the P2P node's message sending method
@@ -418,7 +446,9 @@ class PeerDiscovery:
         """Get discovery statistics."""
         # Calculate average response time
         response_times = list(self.peer_response_times.values())
-        avg_response_time = sum(response_times) / len(response_times) if response_times else 0.0
+        avg_response_time = (
+            sum(response_times) / len(response_times) if response_times else 0.0
+        )
 
         return {
             **self.stats,

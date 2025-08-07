@@ -60,7 +60,9 @@ def mock_vector_store():
     """Mock vector store."""
     store = Mock()
     store.add_texts = AsyncMock()
-    store.similarity_search = AsyncMock(return_value=[{"text": "Similar text", "metadata": {}}])
+    store.similarity_search = AsyncMock(
+        return_value=[{"text": "Similar text", "metadata": {}}]
+    )
     return store
 
 
@@ -95,7 +97,9 @@ def test_config():
 
 
 @pytest.fixture
-def mock_business_logic_factory(mock_chat_engine, mock_rag_pipeline, mock_vector_store, test_config):
+def mock_business_logic_factory(
+    mock_chat_engine, mock_rag_pipeline, mock_vector_store, test_config
+):
     """Mock business logic factory with all dependencies."""
     factory = ServiceBusinessLogicFactory(
         {
@@ -180,7 +184,9 @@ def mock_upload_service():
     async def mock_validate_file(filename: str, content: bytes) -> ServiceResponse:
         if filename.endswith(".txt"):
             return ServiceResponse(success=True)
-        return ServiceResponse(success=False, error={"message": "Unsupported file type"})
+        return ServiceResponse(
+            success=False, error={"message": "Unsupported file type"}
+        )
 
     service.process_upload = AsyncMock(side_effect=mock_process_upload)
     service.validate_file = AsyncMock(side_effect=mock_validate_file)
@@ -208,7 +214,9 @@ def mock_health_service():
 
 
 @pytest.fixture
-def mock_http_adapter_factory(mock_chat_service, mock_query_service, mock_upload_service, mock_health_service):
+def mock_http_adapter_factory(
+    mock_chat_service, mock_query_service, mock_upload_service, mock_health_service
+):
     """Mock HTTP adapter factory."""
     factory = Mock(spec=HTTPAdapterFactory)
 
@@ -222,7 +230,9 @@ def mock_http_adapter_factory(mock_chat_service, mock_query_service, mock_upload
         }
     )
     chat_adapter.handle_delete_conversation = AsyncMock(return_value={"deleted": True})
-    chat_adapter.handle_delete_user_data = AsyncMock(return_value={"deleted_conversations": 2})
+    chat_adapter.handle_delete_user_data = AsyncMock(
+        return_value={"deleted_conversations": 2}
+    )
 
     query_adapter = Mock()
     query_adapter.handle_query_request = AsyncMock(

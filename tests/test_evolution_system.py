@@ -58,7 +58,8 @@ class TestAgentEvolutionEngine(unittest.TestCase):
         """Setup test environment"""
         self.test_dir = tempfile.mkdtemp()
         self.engine = AgentEvolutionEngine(
-            evolution_data_path=self.test_dir, population_size=6  # Small population for testing
+            evolution_data_path=self.test_dir,
+            population_size=6,  # Small population for testing
         )
 
     def tearDown(self):
@@ -78,7 +79,9 @@ class TestAgentEvolutionEngine(unittest.TestCase):
             spec = agent.agent_id.split("_")[-1]
             specializations.add(spec)
 
-        self.assertGreater(len(specializations), 1, "Agents should have diverse specializations")
+        self.assertGreater(
+            len(specializations), 1, "Agents should have diverse specializations"
+        )
 
     async def test_fitness_evaluation(self):
         """Test fitness evaluation of agent population"""
@@ -109,7 +112,9 @@ class TestAgentEvolutionEngine(unittest.TestCase):
 
         self.assertNotEqual(child1.agent_id, parent1.agent_id)
         self.assertNotEqual(child2.agent_id, parent2.agent_id)
-        self.assertEqual(child1.generation, max(parent1.generation, parent2.generation) + 1)
+        self.assertEqual(
+            child1.generation, max(parent1.generation, parent2.generation) + 1
+        )
 
         # Test mutation
         mutated = self.engine.genetic_optimizer.mutate(child1)
@@ -151,7 +156,9 @@ class TestAgentEvolutionEngine(unittest.TestCase):
 
         evaluation_tasks = [mock_evaluation_task]
 
-        results = await self.engine.run_evolution_cycle(generations=2, evaluation_tasks=evaluation_tasks)
+        results = await self.engine.run_evolution_cycle(
+            generations=2, evaluation_tasks=evaluation_tasks
+        )
 
         self.assertTrue(results["generations_run"] == 2)
         self.assertEqual(len(results["best_fitness_history"]), 2)
@@ -193,7 +200,9 @@ class TestAgent:
         """Test proposing code modifications"""
 
         def hyperparameter_transformer(code):
-            return CodeTransformations.optimize_hyperparameters(code, {"learning_rate": 0.001, "batch_size": 32})
+            return CodeTransformations.optimize_hyperparameters(
+                code, {"learning_rate": 0.001, "batch_size": 32}
+            )
 
         modification = await self.modifier.propose_modification(
             agent_id="test_agent",
@@ -221,7 +230,9 @@ def safe_function():
         modification.modified_code = valid_code
         modification.modification_id = "test_mod"
 
-        validation_results = await self.modifier.validator.validate_modification(modification)
+        validation_results = await self.modifier.validator.validate_modification(
+            modification
+        )
 
         self.assertTrue(validation_results["syntax_valid"])
         self.assertTrue(validation_results["security_safe"])
@@ -234,7 +245,9 @@ os.system("rm -rf /")
 """
 
         modification.modified_code = unsafe_code
-        validation_results = await self.modifier.validator.validate_modification(modification)
+        validation_results = await self.modifier.validator.validate_modification(
+            modification
+        )
 
         self.assertFalse(validation_results["security_safe"])
         self.assertLess(validation_results["safety_score"], 0.5)
@@ -256,7 +269,9 @@ os.system("rm -rf /")
 
         # Test in sandbox
         if modification.safety_score >= 0.8:
-            test_results = await self.modifier.test_modification(modification.modification_id)
+            test_results = await self.modifier.test_modification(
+                modification.modification_id
+            )
 
             # Should succeed for simple comment addition
             self.assertIn("success", test_results)
@@ -278,12 +293,16 @@ class ExampleClass:
         self.assertIn('"""', improved_code)
 
         # Test error handling addition
-        error_handled_code = CodeTransformations.add_error_handling(test_code, ["example_function"])
+        error_handled_code = CodeTransformations.add_error_handling(
+            test_code, ["example_function"]
+        )
         # Should contain try-except block (implementation may vary)
         self.assertIn("try", error_handled_code.lower())
 
         # Test hyperparameter optimization
-        optimized_code = CodeTransformations.optimize_hyperparameters("learning_rate = 0.01", {"learning_rate": 0.001})
+        optimized_code = CodeTransformations.optimize_hyperparameters(
+            "learning_rate = 0.01", {"learning_rate": 0.001}
+        )
         self.assertIn("0.001", optimized_code)
 
 
@@ -293,7 +312,9 @@ class TestMetaLearningEngine(unittest.TestCase):
     def setUp(self):
         """Setup test environment"""
         self.test_dir = tempfile.mkdtemp()
-        self.meta_engine = MetaLearningEngine(storage_path=f"{self.test_dir}/meta_learning")
+        self.meta_engine = MetaLearningEngine(
+            storage_path=f"{self.test_dir}/meta_learning"
+        )
 
     def tearDown(self):
         """Cleanup test environment"""
@@ -313,7 +334,9 @@ class TestMetaLearningEngine(unittest.TestCase):
             )
 
         # Optimize learning rate
-        optimal_lr = self.meta_engine.lr_optimizer.optimize_learning_rate(agent_id="test_agent", task_difficulty=0.5)
+        optimal_lr = self.meta_engine.lr_optimizer.optimize_learning_rate(
+            agent_id="test_agent", task_difficulty=0.5
+        )
 
         self.assertGreater(optimal_lr, 0.0)
         self.assertLess(optimal_lr, 0.1)
@@ -321,7 +344,11 @@ class TestMetaLearningEngine(unittest.TestCase):
     async def test_strategy_optimization(self):
         """Test learning strategy optimization"""
 
-        task_characteristics = {"difficulty": 0.7, "data_size": 1000, "task_complexity": "high"}
+        task_characteristics = {
+            "difficulty": 0.7,
+            "data_size": 1000,
+            "task_complexity": "high",
+        }
 
         learning_config = await self.meta_engine.optimize_agent_learning(
             agent_id="test_agent",
@@ -343,7 +370,9 @@ class TestMetaLearningEngine(unittest.TestCase):
 
         # Create prototypes
         prototypes = self.meta_engine.few_shot_learner.create_prototype(
-            task_id="test_task", support_examples=support_examples, support_labels=support_labels
+            task_id="test_task",
+            support_examples=support_examples,
+            support_labels=support_labels,
         )
 
         self.assertIn(0, prototypes)
@@ -361,7 +390,11 @@ class TestMetaLearningEngine(unittest.TestCase):
     async def test_learning_outcome_recording(self):
         """Test recording and analyzing learning outcomes"""
 
-        learning_config = {"learning_rate": 0.001, "strategy": "conservative_lr", "meta_features": {"difficulty": 0.5}}
+        learning_config = {
+            "learning_rate": 0.001,
+            "strategy": "conservative_lr",
+            "meta_features": {"difficulty": 0.5},
+        }
 
         await self.meta_engine.record_learning_outcome(
             agent_id="test_agent",
@@ -399,7 +432,9 @@ class TestEvolutionOrchestrator(unittest.TestCase):
             max_population_size=6,
         )
 
-        self.orchestrator = EvolutionOrchestrator(config=config, storage_path=self.test_dir)
+        self.orchestrator = EvolutionOrchestrator(
+            config=config, storage_path=self.test_dir
+        )
 
     def tearDown(self):
         """Cleanup test environment"""
@@ -453,7 +488,9 @@ class TestEvolutionOrchestrator(unittest.TestCase):
 
         try:
             # Trigger evolution
-            results = await self.orchestrator.trigger_evolution(generations=1, force=True)
+            results = await self.orchestrator.trigger_evolution(
+                generations=1, force=True
+            )
 
             self.assertTrue(results["success"])
             self.assertIn("results", results)
@@ -478,7 +515,10 @@ class TestIntegrationScenarios(unittest.TestCase):
         """Test complete system initialization"""
 
         orchestrator = await initialize_evolution_system(
-            evolution_data_path=self.test_dir, population_size=6, auto_evolution=False, safety_mode=True
+            evolution_data_path=self.test_dir,
+            population_size=6,
+            auto_evolution=False,
+            safety_mode=True,
         )
 
         self.assertIsNotNone(orchestrator)
@@ -508,10 +548,14 @@ class TestIntegrationScenarios(unittest.TestCase):
     async def test_dashboard_integration(self, mock_flask):
         """Test dashboard integration (mocked)"""
 
-        orchestrator = await initialize_evolution_system(evolution_data_path=self.test_dir, population_size=4)
+        orchestrator = await initialize_evolution_system(
+            evolution_data_path=self.test_dir, population_size=4
+        )
 
         # Test dashboard data generation
-        dashboard_data = await orchestrator.evolution_engine.get_evolution_dashboard_data()
+        dashboard_data = (
+            await orchestrator.evolution_engine.get_evolution_dashboard_data()
+        )
 
         self.assertIn("population_stats", dashboard_data)
         self.assertIn("fitness_scores", dashboard_data)
@@ -532,7 +576,9 @@ class TestPerformanceAndScalability(unittest.TestCase):
     async def test_large_population_evolution(self):
         """Test evolution with larger population"""
 
-        engine = AgentEvolutionEngine(evolution_data_path=self.test_dir, population_size=18)  # Full population
+        engine = AgentEvolutionEngine(
+            evolution_data_path=self.test_dir, population_size=18
+        )  # Full population
 
         start_time = time.time()
 
@@ -542,13 +588,17 @@ class TestPerformanceAndScalability(unittest.TestCase):
         async def fast_eval_task(genome):
             return np.random.uniform(0.4, 0.9)
 
-        results = await engine.run_evolution_cycle(generations=1, evaluation_tasks=[fast_eval_task])
+        results = await engine.run_evolution_cycle(
+            generations=1, evaluation_tasks=[fast_eval_task]
+        )
 
         end_time = time.time()
         execution_time = end_time - start_time
 
         # Should complete within reasonable time (adjust threshold as needed)
-        self.assertLess(execution_time, 60.0, "Evolution should complete within 60 seconds")
+        self.assertLess(
+            execution_time, 60.0, "Evolution should complete within 60 seconds"
+        )
         self.assertTrue(results["generations_run"] == 1)
 
     async def test_concurrent_modifications(self):
@@ -572,7 +622,8 @@ class TestPerformanceAndScalability(unittest.TestCase):
                 file_path=str(test_file),
                 modification_type="documentation",
                 description=f"Add docs to agent {i}",
-                code_transformer=lambda code, i=i: code + f"\n# Agent {i} documentation\n",
+                code_transformer=lambda code, i=i: code
+                + f"\n# Agent {i} documentation\n",
             )
             tasks.append(task)
 
@@ -614,7 +665,9 @@ async def run_comprehensive_test_suite():
         print(f"\n--- Testing {test_class.__name__} ---")
 
         test_instance = test_class()
-        test_methods = [method for method in dir(test_instance) if method.startswith("test_")]
+        test_methods = [
+            method for method in dir(test_instance) if method.startswith("test_")
+        ]
 
         for test_method in test_methods:
             total_tests += 1
@@ -671,11 +724,16 @@ async def test_evolution_demo():
     # Initialize system
     print("Initializing evolution system...")
     orchestrator = await initialize_evolution_system(
-        evolution_data_path="demo_evolution_data", population_size=6, auto_evolution=False, safety_mode=True
+        evolution_data_path="demo_evolution_data",
+        population_size=6,
+        auto_evolution=False,
+        safety_mode=True,
     )
 
     async with orchestrator.orchestration_context():
-        print(f"✅ System initialized with {len(orchestrator.evolution_engine.agent_population)} agents")
+        print(
+            f"✅ System initialized with {len(orchestrator.evolution_engine.agent_population)} agents"
+        )
 
         # Show initial status
         status = await orchestrator.get_orchestration_status()
@@ -695,7 +753,9 @@ async def test_evolution_demo():
                 diversity = results["results"]["diversity_history"][-1]
                 print(f"   Population diversity: {diversity:.3f}")
             else:
-                print(f"   ❌ Evolution failed: {results.get('error', 'Unknown error')}")
+                print(
+                    f"   ❌ Evolution failed: {results.get('error', 'Unknown error')}"
+                )
 
         # Final status
         final_status = await orchestrator.get_orchestration_status()
@@ -712,7 +772,9 @@ class TestEvolutionDashboard(unittest.TestCase):
     def setUp(self):
         self.engine = Mock()
         self.engine.is_running = False
-        self.engine.get_evolution_dashboard_data = AsyncMock(return_value={"population_stats": {"total_agents": 1}})
+        self.engine.get_evolution_dashboard_data = AsyncMock(
+            return_value={"population_stats": {"total_agents": 1}}
+        )
         self.dashboard = EvolutionDashboard(self.engine)
 
     def test_trigger_evolution_success(self):
@@ -747,7 +809,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Evolution System Testing")
     parser.add_argument("--demo", action="store_true", help="Run interactive demo")
-    parser.add_argument("--comprehensive", action="store_true", help="Run comprehensive test suite")
+    parser.add_argument(
+        "--comprehensive", action="store_true", help="Run comprehensive test suite"
+    )
     args = parser.parse_args()
 
     if args.demo:
@@ -761,7 +825,9 @@ if __name__ == "__main__":
 
         async def basic_test():
             orchestrator = await initialize_evolution_system(
-                evolution_data_path="test_evolution_data", population_size=4, auto_evolution=False
+                evolution_data_path="test_evolution_data",
+                population_size=4,
+                auto_evolution=False,
             )
 
             async with orchestrator.orchestration_context():

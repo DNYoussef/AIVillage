@@ -89,10 +89,14 @@ class AgentForgeBenchmarkOrchestrator:
                 # Check if it's a proper model directory
                 if path.is_dir():
                     has_config = (path / "config.json").exists()
-                    has_model = any(path.glob("*.bin")) or any(path.glob("*.safetensors"))
+                    has_model = any(path.glob("*.bin")) or any(
+                        path.glob("*.safetensors")
+                    )
 
                     if not (has_config and has_model):
-                        logger.warning(f"⚠️  {model_name}: Directory exists but missing model files")
+                        logger.warning(
+                            f"⚠️  {model_name}: Directory exists but missing model files"
+                        )
                         validation_results[model_name] = False
 
             else:
@@ -114,7 +118,11 @@ class AgentForgeBenchmarkOrchestrator:
 
         # Validate models first
         validation_results = await self.validate_models()
-        available_models = {name: path for name, path in self.model_paths.items() if validation_results[name]}
+        available_models = {
+            name: path
+            for name, path in self.model_paths.items()
+            if validation_results[name]
+        }
 
         if not available_models:
             logger.error("No valid models found for evaluation")
@@ -163,9 +171,15 @@ class AgentForgeBenchmarkOrchestrator:
                     wandb.log(
                         {
                             f"{model_name}/average_score": performance["average_score"],
-                            f"{model_name}/total_benchmarks": performance["total_benchmarks"],
-                            f"{model_name}/wins_vs_baseline": performance.get("wins_vs_baseline", 0),
-                            f"{model_name}/wins_vs_frontier": performance.get("wins_vs_frontier", 0),
+                            f"{model_name}/total_benchmarks": performance[
+                                "total_benchmarks"
+                            ],
+                            f"{model_name}/wins_vs_baseline": performance.get(
+                                "wins_vs_baseline", 0
+                            ),
+                            f"{model_name}/wins_vs_frontier": performance.get(
+                                "wins_vs_frontier", 0
+                            ),
                         }
                     )
 
@@ -174,7 +188,9 @@ class AgentForgeBenchmarkOrchestrator:
                         wandb.log({f"{model_name}/{benchmark}_score": score})
 
                 else:
-                    logger.error(f"❌ {model_name} evaluation failed: {result.get('error', 'Unknown error')}")
+                    logger.error(
+                        f"❌ {model_name} evaluation failed: {result.get('error', 'Unknown error')}"
+                    )
 
             except Exception as e:
                 logger.error(f"❌ Exception during {model_name} evaluation: {e}")
@@ -189,19 +205,25 @@ class AgentForgeBenchmarkOrchestrator:
         return {
             "status": "completed",
             "models_evaluated": len(available_models),
-            "successful_evaluations": len([r for r in evaluation_results.values() if r.get("status") == "success"]),
+            "successful_evaluations": len(
+                [r for r in evaluation_results.values() if r.get("status") == "success"]
+            ),
             "evaluation_results": evaluation_results,
             "executive_summary": executive_summary,
             "results_directory": str(self.results_dir),
         }
 
-    async def _generate_comprehensive_comparison(self, evaluation_results: dict[str, Any]):
+    async def _generate_comprehensive_comparison(
+        self, evaluation_results: dict[str, Any]
+    ):
         """Generate comprehensive comparison across all Agent Forge models."""
         logger.info("Generating comprehensive model comparison")
 
         # Extract successful results
         successful_results = {
-            name: result for name, result in evaluation_results.items() if result.get("status") == "success"
+            name: result
+            for name, result in evaluation_results.items()
+            if result.get("status") == "success"
         }
 
         if len(successful_results) < 2:
@@ -288,7 +310,9 @@ class AgentForgeBenchmarkOrchestrator:
 
         logger.info(f"Comprehensive comparison saved: {comparison_file}")
 
-    async def _create_detailed_comparison_report(self, comparison_summary: dict[str, Any], comparison_df: pd.DataFrame):
+    async def _create_detailed_comparison_report(
+        self, comparison_summary: dict[str, Any], comparison_df: pd.DataFrame
+    ):
         """Create detailed comparison report."""
         best_model = comparison_summary["best_model"]
         best_score = comparison_summary["best_average_score"]
@@ -397,10 +421,14 @@ This report compares the performance of all Agent Forge pipeline models across s
 
         logger.info(f"Detailed comparison report saved: {report_file}")
 
-    async def _create_executive_summary(self, evaluation_results: dict[str, Any]) -> dict[str, Any]:
+    async def _create_executive_summary(
+        self, evaluation_results: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create executive summary of all evaluations."""
         successful_results = {
-            name: result for name, result in evaluation_results.items() if result.get("status") == "success"
+            name: result
+            for name, result in evaluation_results.items()
+            if result.get("status") == "success"
         }
 
         if not successful_results:
@@ -414,7 +442,9 @@ This report compares the performance of all Agent Forge pipeline models across s
 
         for model_name, result in successful_results.items():
             if "comparison_report" in result:
-                avg_score = result["comparison_report"].performance_summary["average_score"]
+                avg_score = result["comparison_report"].performance_summary[
+                    "average_score"
+                ]
                 model_performances[model_name] = avg_score
 
                 if avg_score > best_score:
@@ -429,7 +459,9 @@ This report compares the performance of all Agent Forge pipeline models across s
             "models_evaluated": len(successful_results),
             "best_model": best_model,
             "best_score": best_score,
-            "average_score_across_models": (sum(all_scores) / len(all_scores) if all_scores else 0.0),
+            "average_score_across_models": (
+                sum(all_scores) / len(all_scores) if all_scores else 0.0
+            ),
             "score_range": {
                 "min": min(all_scores) if all_scores else 0.0,
                 "max": max(all_scores) if all_scores else 0.0,
@@ -466,7 +498,9 @@ This report compares the performance of all Agent Forge pipeline models across s
 
 """
 
-        for model, score in sorted(model_performances.items(), key=lambda x: x[1], reverse=True):
+        for model, score in sorted(
+            model_performances.items(), key=lambda x: x[1], reverse=True
+        ):
             md_content += f"- **{model}**: {score:.3f}\n"
 
         md_content += f"""
@@ -508,15 +542,25 @@ Examples:
     )
 
     # Run modes
-    parser.add_argument("--full", action="store_true", help="Run full comprehensive evaluation")
-    parser.add_argument("--quick", action="store_true", help="Quick evaluation with limited samples")
+    parser.add_argument(
+        "--full", action="store_true", help="Run full comprehensive evaluation"
+    )
+    parser.add_argument(
+        "--quick", action="store_true", help="Quick evaluation with limited samples"
+    )
 
     # Comparison options
-    parser.add_argument("--skip-baselines", action="store_true", help="Skip baseline model comparisons")
-    parser.add_argument("--skip-frontier", action="store_true", help="Skip frontier model comparisons")
+    parser.add_argument(
+        "--skip-baselines", action="store_true", help="Skip baseline model comparisons"
+    )
+    parser.add_argument(
+        "--skip-frontier", action="store_true", help="Skip frontier model comparisons"
+    )
 
     # Output options
-    parser.add_argument("--results-dir", default="./benchmark_results", help="Results output directory")
+    parser.add_argument(
+        "--results-dir", default="./benchmark_results", help="Results output directory"
+    )
 
     # Model validation
     parser.add_argument(
@@ -549,7 +593,9 @@ Examples:
 
         valid_count = sum(validation_results.values())
         total_count = len(validation_results)
-        print(f"\nSummary: {valid_count}/{total_count} models available for benchmarking")
+        print(
+            f"\nSummary: {valid_count}/{total_count} models available for benchmarking"
+        )
 
         return 0 if valid_count > 0 else 1
 
@@ -572,18 +618,26 @@ Examples:
         print(f"{'=' * 80}")
 
         if results["status"] == "completed":
-            print(f"✅ Evaluation completed successfully in {execution_time:.1f} seconds")
+            print(
+                f"✅ Evaluation completed successfully in {execution_time:.1f} seconds"
+            )
             print(f"📊 Models evaluated: {results['models_evaluated']}")
             print(f"✅ Successful evaluations: {results['successful_evaluations']}")
 
             if results.get("executive_summary"):
                 summary = results["executive_summary"]
                 if "best_model" in summary:
-                    print(f"🏆 Best performing model: {summary['best_model']} ({summary['best_score']:.3f})")
-                    print(f"📈 Average performance: {summary['average_score_across_models']:.3f}")
+                    print(
+                        f"🏆 Best performing model: {summary['best_model']} ({summary['best_score']:.3f})"
+                    )
+                    print(
+                        f"📈 Average performance: {summary['average_score_across_models']:.3f}"
+                    )
 
             print(f"\n📁 Detailed results: {results['results_directory']}")
-            print("📊 W&B Dashboard: https://wandb.ai/agent-forge/agent-forge-comprehensive-benchmark")
+            print(
+                "📊 W&B Dashboard: https://wandb.ai/agent-forge/agent-forge-comprehensive-benchmark"
+            )
 
         else:
             print(f"❌ Evaluation failed: {results.get('reason', 'Unknown error')}")

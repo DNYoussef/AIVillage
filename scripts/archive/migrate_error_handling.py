@@ -80,7 +80,9 @@ PRIORITY_FILES = [
 class ErrorHandlingMigrator:
     """Handles migration of error handling patterns across the codebase."""
 
-    def __init__(self, dry_run: bool = False, backup: bool = False, verbose: bool = False):
+    def __init__(
+        self, dry_run: bool = False, backup: bool = False, verbose: bool = False
+    ):
         self.dry_run = dry_run
         self.backup = backup
         self.verbose = verbose
@@ -175,7 +177,10 @@ class ErrorHandlingMigrator:
                 original_content = f.read()
 
             # Skip if no legacy patterns found
-            has_legacy = any(pattern in original_content for pattern in LEGACY_PATTERNS["exception_classes"])
+            has_legacy = any(
+                pattern in original_content
+                for pattern in LEGACY_PATTERNS["exception_classes"]
+            )
 
             if not has_legacy:
                 # Check regex patterns
@@ -207,7 +212,9 @@ class ErrorHandlingMigrator:
                 self.stats["imports_updated"] += import_count
                 self.stats["exceptions_updated"] += usage_count
 
-                self.log(f"Updated {file_path}: {import_count} imports, {usage_count} usages")
+                self.log(
+                    f"Updated {file_path}: {import_count} imports, {usage_count} usages"
+                )
 
             return total_changes > 0
 
@@ -252,15 +259,27 @@ Migration completed successfully!
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Migrate error handling to new unified system")
-    parser.add_argument("--dry-run", action="store_true", help="Preview changes without making them")
-    parser.add_argument("--backup", action="store_true", help="Create backup files before modification")
-    parser.add_argument("--verbose", action="store_true", help="Show detailed progress information")
-    parser.add_argument("--root", type=str, default=".", help="Root directory to process")
+    parser = argparse.ArgumentParser(
+        description="Migrate error handling to new unified system"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Preview changes without making them"
+    )
+    parser.add_argument(
+        "--backup", action="store_true", help="Create backup files before modification"
+    )
+    parser.add_argument(
+        "--verbose", action="store_true", help="Show detailed progress information"
+    )
+    parser.add_argument(
+        "--root", type=str, default=".", help="Root directory to process"
+    )
 
     args = parser.parse_args()
 
-    migrator = ErrorHandlingMigrator(dry_run=args.dry_run, backup=args.backup, verbose=args.verbose)
+    migrator = ErrorHandlingMigrator(
+        dry_run=args.dry_run, backup=args.backup, verbose=args.verbose
+    )
 
     root_dir = Path(args.root).resolve()
 
@@ -277,7 +296,9 @@ def main():
     print(migrator.generate_report())
 
     if args.dry_run:
-        print("\nDRY RUN COMPLETE - Review changes above and run without --dry-run to apply")
+        print(
+            "\nDRY RUN COMPLETE - Review changes above and run without --dry-run to apply"
+        )
 
 
 if __name__ == "__main__":

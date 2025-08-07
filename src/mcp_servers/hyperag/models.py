@@ -121,7 +121,9 @@ class ReasoningResult:
 class AgentReasoningModel(ABC):
     """Abstract base class for agent-specific reasoning models."""
 
-    def __init__(self, agent_id: str, model_name: str, config: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, agent_id: str, model_name: str, config: dict[str, Any] | None = None
+    ) -> None:
         self.agent_id = agent_id
         self.model_name = model_name
         self.config = config or {}
@@ -135,7 +137,9 @@ class AgentReasoningModel(ABC):
         }
 
     @abstractmethod
-    async def plan_query(self, query: str, context: dict[str, Any] | None = None) -> QueryPlan:
+    async def plan_query(
+        self, query: str, context: dict[str, Any] | None = None
+    ) -> QueryPlan:
         """Agent-specific query planning.
 
         Args:
@@ -202,14 +206,17 @@ class AgentReasoningModel(ABC):
         else:
             alpha = 0.1  # Smoothing factor
             self.usage_stats["average_confidence"] = (
-                alpha * confidence + (1 - alpha) * self.usage_stats["average_confidence"]
+                alpha * confidence
+                + (1 - alpha) * self.usage_stats["average_confidence"]
             )
 
 
 class DefaultAgentModel(AgentReasoningModel):
     """Default implementation for agents without custom models."""
 
-    async def plan_query(self, query: str, context: dict[str, Any] | None = None) -> QueryPlan:
+    async def plan_query(
+        self, query: str, context: dict[str, Any] | None = None
+    ) -> QueryPlan:
         """Simple default planning."""
         return QueryPlan(
             query_id=str(uuid.uuid4()),
@@ -261,7 +268,9 @@ class DefaultAgentModel(AgentReasoningModel):
     ) -> ReasoningResult:
         """Simple reasoning implementation."""
         # Simple reasoning: combine top nodes by confidence
-        sorted_nodes = sorted(knowledge.nodes.values(), key=lambda n: n.confidence, reverse=True)
+        sorted_nodes = sorted(
+            knowledge.nodes.values(), key=lambda n: n.confidence, reverse=True
+        )
         top_nodes = sorted_nodes[:3]
 
         # Generate simple answer
@@ -317,7 +326,9 @@ class DefaultAgentModel(AgentReasoningModel):
 class KingAgentModel(AgentReasoningModel):
     """King agent reasoning model with comprehensive planning."""
 
-    async def plan_query(self, query: str, context: dict[str, Any] | None = None) -> QueryPlan:
+    async def plan_query(
+        self, query: str, context: dict[str, Any] | None = None
+    ) -> QueryPlan:
         """King-specific comprehensive planning."""
         # King agent prefers comprehensive analysis
         plan = QueryPlan(
@@ -343,7 +354,9 @@ class KingAgentModel(AgentReasoningModel):
 class SageAgentModel(AgentReasoningModel):
     """Sage agent reasoning model with strategic analysis."""
 
-    async def plan_query(self, query: str, context: dict[str, Any] | None = None) -> QueryPlan:
+    async def plan_query(
+        self, query: str, context: dict[str, Any] | None = None
+    ) -> QueryPlan:
         """Sage-specific strategic planning."""
         plan = QueryPlan(
             query_id=str(uuid.uuid4()),
@@ -357,7 +370,10 @@ class SageAgentModel(AgentReasoningModel):
         )
 
         # Sage prefers analytical approaches
-        if any(word in query.lower() for word in ["analyze", "strategy", "approach", "method"]):
+        if any(
+            word in query.lower()
+            for word in ["analyze", "strategy", "approach", "method"]
+        ):
             plan.search_strategies.append("analytical")
             plan.constraints["prefer_analysis"] = True
 
@@ -367,7 +383,9 @@ class SageAgentModel(AgentReasoningModel):
 class MagiAgentModel(AgentReasoningModel):
     """Magi agent reasoning model focused on technical/development queries."""
 
-    async def plan_query(self, query: str, context: dict[str, Any] | None = None) -> QueryPlan:
+    async def plan_query(
+        self, query: str, context: dict[str, Any] | None = None
+    ) -> QueryPlan:
         """Magi-specific technical planning."""
         plan = QueryPlan(
             query_id=str(uuid.uuid4()),
@@ -409,12 +427,16 @@ class ModelRegistry:
         self.locks[agent_id] = asyncio.Lock()
         logger.info(f"Registered model {model.model_name} for agent {agent_id}")
 
-    async def register_model_class(self, agent_type: str, model_class: type[AgentReasoningModel]) -> None:
+    async def register_model_class(
+        self, agent_type: str, model_class: type[AgentReasoningModel]
+    ) -> None:
         """Register a model class for an agent type."""
         self.model_classes[agent_type] = model_class
         logger.info(f"Registered model class for agent type {agent_type}")
 
-    async def get_model(self, agent_id: str, agent_type: str = "default") -> AgentReasoningModel:
+    async def get_model(
+        self, agent_id: str, agent_type: str = "default"
+    ) -> AgentReasoningModel:
         """Get model for an agent, creating if necessary."""
         if agent_id not in self.models:
             # Create model based on agent type
@@ -434,7 +456,9 @@ class ModelRegistry:
                 del self.locks[agent_id]
             logger.info(f"Removed model for agent {agent_id}")
 
-    async def process_with_model(self, agent_id: str, agent_type: str, operation: str, *args, **kwargs) -> Any:
+    async def process_with_model(
+        self, agent_id: str, agent_type: str, operation: str, *args, **kwargs
+    ) -> Any:
         """Process operation with agent's model under lock."""
         model = await self.get_model(agent_id, agent_type)
 
@@ -463,7 +487,9 @@ class ModelRegistry:
 
             except Exception as e:
                 processing_time = time.time() - start_time
-                logger.exception(f"Model operation {operation} failed for {agent_id}: {e!s}")
+                logger.exception(
+                    f"Model operation {operation} failed for {agent_id}: {e!s}"
+                )
                 raise
 
     def get_model_stats(self) -> dict[str, dict[str, Any]]:

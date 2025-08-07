@@ -12,7 +12,9 @@ print("\n1. Basic Network Discovery:")
 peers = discover_network_peers()
 print(f"   Found {len(peers)} peers")
 for i, peer in enumerate(peers):
-    print(f"   Peer {i+1}: {peer.get('hostname')} at {peer.get('ip')}:{peer.get('port')}")
+    print(
+        f"   Peer {i+1}: {peer.get('hostname')} at {peer.get('ip')}:{peer.get('port')}"
+    )
     print(
         f"           Platform: {peer.get('platform')}, CPUs: {peer.get('cpu_count')}, Memory: {peer.get('memory_gb', 0):.1f} GB"
     )
@@ -66,7 +68,11 @@ print(f"   Memory: {local_info['memory_gb']:.1f} GB")
 # Test 7: Health checking simulation
 print("\n7. Testing Health Check (simulated):")
 print("   Adding fake peer for health check test")
-mesh.peers["192.168.1.99:8765"] = {"hostname": "fake-peer", "ip": "192.168.1.99", "port": 8765}
+mesh.peers["192.168.1.99:8765"] = {
+    "hostname": "fake-peer",
+    "ip": "192.168.1.99",
+    "port": 8765,
+}
 mesh.peer_failures["192.168.1.99:8765"] = 2  # Already failed twice
 print(f"   Current peers: {list(mesh.peers.keys())}")
 print("   Simulating health check failure...")

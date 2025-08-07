@@ -146,7 +146,9 @@ class QueryPlan:
     # Plan structure
     execution_steps: list[ExecutionStep] = field(default_factory=list)
     checkpoints: list[PlanCheckpoint] = field(default_factory=list)
-    retrieval_constraints: RetrievalConstraints = field(default_factory=RetrievalConstraints)
+    retrieval_constraints: RetrievalConstraints = field(
+        default_factory=RetrievalConstraints
+    )
 
     # Execution state
     current_step_index: int = 0
@@ -175,7 +177,9 @@ class QueryPlan:
         self.execution_steps.append(step)
         self.expected_steps = len(self.execution_steps)
 
-    def create_checkpoint(self, completed_steps: set[str], intermediate_results: dict[str, Any]) -> PlanCheckpoint:
+    def create_checkpoint(
+        self, completed_steps: set[str], intermediate_results: dict[str, Any]
+    ) -> PlanCheckpoint:
         """Create checkpoint at current execution state."""
         checkpoint = PlanCheckpoint(
             step_index=self.current_step_index,
@@ -190,7 +194,9 @@ class QueryPlan:
     def get_next_ready_step(self, completed_steps: set[str]) -> ExecutionStep | None:
         """Get next step that's ready to execute."""
         for step in self.execution_steps:
-            if step.status == ExecutionStatus.PENDING and step.is_ready_to_execute(completed_steps):
+            if step.status == ExecutionStatus.PENDING and step.is_ready_to_execute(
+                completed_steps
+            ):
                 return step
         return None
 
@@ -203,19 +209,31 @@ class QueryPlan:
 
     def is_complete(self) -> bool:
         """Check if all steps are completed."""
-        return all(step.status == ExecutionStatus.COMPLETED for step in self.execution_steps)
+        return all(
+            step.status == ExecutionStatus.COMPLETED for step in self.execution_steps
+        )
 
     def has_failed_steps(self) -> bool:
         """Check if any steps have failed."""
-        return any(step.status == ExecutionStatus.FAILED for step in self.execution_steps)
+        return any(
+            step.status == ExecutionStatus.FAILED for step in self.execution_steps
+        )
 
     def get_completed_steps(self) -> set[str]:
         """Get IDs of completed steps."""
-        return {step.step_id for step in self.execution_steps if step.status == ExecutionStatus.COMPLETED}
+        return {
+            step.step_id
+            for step in self.execution_steps
+            if step.status == ExecutionStatus.COMPLETED
+        }
 
     def calculate_overall_confidence(self) -> float:
         """Calculate aggregate confidence from completed steps."""
-        completed = [step for step in self.execution_steps if step.status == ExecutionStatus.COMPLETED]
+        completed = [
+            step
+            for step in self.execution_steps
+            if step.status == ExecutionStatus.COMPLETED
+        ]
 
         if not completed:
             return 0.0
@@ -334,7 +352,9 @@ class PlanDSL:
         lines = dsl_text.strip().split("\n")
 
         # Extract basic info
-        plan_id = lines[0].split()[1] if lines[0].startswith("PLAN") else str(uuid.uuid4())
+        plan_id = (
+            lines[0].split()[1] if lines[0].startswith("PLAN") else str(uuid.uuid4())
+        )
         query = lines[1].split("QUERY: ")[1] if "QUERY:" in lines[1] else ""
 
         plan = QueryPlan(plan_id=plan_id, original_query=query)

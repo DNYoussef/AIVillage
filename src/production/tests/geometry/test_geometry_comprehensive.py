@@ -40,7 +40,9 @@ class TestGeometryFeedback:
         flat1 = weights1.flatten()
         flat2 = weights2.flatten()
 
-        cos_sim = torch.nn.functional.cosine_similarity(flat1.unsqueeze(0), flat2.unsqueeze(0)).item()
+        cos_sim = torch.nn.functional.cosine_similarity(
+            flat1.unsqueeze(0), flat2.unsqueeze(0)
+        ).item()
 
         assert -1 <= cos_sim <= 1
 

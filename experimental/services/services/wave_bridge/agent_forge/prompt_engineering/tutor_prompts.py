@@ -93,12 +93,20 @@ class TutorPromptEngineer:
             "method": "bayes",
             "metric": {"name": "student_engagement", "goal": "maximize"},
             "parameters": {
-                "greeting_style": {"values": ["formal", "friendly", "encouraging", "playful"]},
+                "greeting_style": {
+                    "values": ["formal", "friendly", "encouraging", "playful"]
+                },
                 "hint_complexity": {"values": ["direct", "guided", "socratic"]},
-                "example_type": {"values": ["abstract", "real-world", "visual", "story-based"]},
+                "example_type": {
+                    "values": ["abstract", "real-world", "visual", "story-based"]
+                },
                 "encouragement_frequency": {"min": 0.1, "max": 0.5},
-                "response_length_target": {"values": ["concise", "moderate", "detailed"]},
-                "personalization_level": {"values": ["generic", "adaptive", "highly_personalized"]},
+                "response_length_target": {
+                    "values": ["concise", "moderate", "detailed"]
+                },
+                "personalization_level": {
+                    "values": ["generic", "adaptive", "highly_personalized"]
+                },
                 "subject_expertise": {
                     "values": [
                         "mathematics",
@@ -173,11 +181,17 @@ class TutorPromptEngineer:
 
         # Encouragement integration
         if encouragement_frequency > 0.3:
-            template_parts.append("ENCOURAGEMENT: Frequently praise effort and progress. Use positive reinforcement.")
+            template_parts.append(
+                "ENCOURAGEMENT: Frequently praise effort and progress. Use positive reinforcement."
+            )
         elif encouragement_frequency > 0.1:
-            template_parts.append("ENCOURAGEMENT: Provide moderate encouragement and celebrate breakthroughs.")
+            template_parts.append(
+                "ENCOURAGEMENT: Provide moderate encouragement and celebrate breakthroughs."
+            )
         else:
-            template_parts.append("ENCOURAGEMENT: Focus on content with minimal emotional support.")
+            template_parts.append(
+                "ENCOURAGEMENT: Focus on content with minimal emotional support."
+            )
 
         # Response guidelines
         template_parts.append("GUIDELINES:")
@@ -231,13 +245,17 @@ class TutorPromptEngineer:
         """Evaluate prompt performance across multiple metrics"""
         try:
             # Calculate engagement score
-            engagement_score = await self._calculate_engagement_score(response_text, user_engagement_signals)
+            engagement_score = await self._calculate_engagement_score(
+                response_text, user_engagement_signals
+            )
 
             # Calculate clarity score
             clarity_score = await self._calculate_clarity_score(response_text)
 
             # Calculate encouragement score
-            encouragement_score = await self._calculate_encouragement_score(response_text)
+            encouragement_score = await self._calculate_encouragement_score(
+                response_text
+            )
 
             # Calculate efficiency score (response time factor)
             efficiency_score = max(0.0, min(1.0, (5.0 - response_time) / 5.0))
@@ -249,7 +267,10 @@ class TutorPromptEngineer:
                 "encouragement_score": encouragement_score,
                 "response_efficiency": efficiency_score,
                 "overall_performance": (
-                    engagement_score * 0.4 + clarity_score * 0.3 + encouragement_score * 0.2 + efficiency_score * 0.1
+                    engagement_score * 0.4
+                    + clarity_score * 0.3
+                    + encouragement_score * 0.2
+                    + efficiency_score * 0.1
                 ),
             }
 
@@ -277,7 +298,9 @@ class TutorPromptEngineer:
             logger.error(f"Error evaluating prompt performance: {e}")
             return {"overall_performance": 0.0}
 
-    async def _calculate_engagement_score(self, response_text: str, signals: dict[str, Any]) -> float:
+    async def _calculate_engagement_score(
+        self, response_text: str, signals: dict[str, Any]
+    ) -> float:
         """Calculate student engagement score based on response content and signals"""
         score = 0.0
 
@@ -312,7 +335,10 @@ class TutorPromptEngineer:
             score += 0.1
 
         # Examples provided
-        if any(word in response_text.lower() for word in ["example", "for instance", "imagine", "picture"]):
+        if any(
+            word in response_text.lower()
+            for word in ["example", "for instance", "imagine", "picture"]
+        ):
             score += 0.2
 
         return min(1.0, score)
@@ -347,7 +373,9 @@ class TutorPromptEngineer:
             score += 0.3
 
         # Concrete examples
-        if any(word in response_text.lower() for word in ["example", "like", "such as"]):
+        if any(
+            word in response_text.lower() for word in ["example", "like", "such as"]
+        ):
             score += 0.2
 
         return min(1.0, score)
@@ -391,7 +419,9 @@ class TutorPromptEngineer:
         score += min(0.5, positive_count * 0.1)
 
         # Count encouraging phrases
-        encouraging_count = sum(1 for phrase in encouraging_phrases if phrase in text_lower)
+        encouraging_count = sum(
+            1 for phrase in encouraging_phrases if phrase in text_lower
+        )
         score += min(0.3, encouraging_count * 0.15)
 
         # Presence of emoji (indicates friendly tone)
@@ -406,11 +436,15 @@ class TutorPromptEngineer:
         """Get the best performing template for a given subject"""
         # Filter templates by interaction count
         qualified_templates = [
-            template for template in self.active_templates.values() if template.interaction_count >= min_interactions
+            template
+            for template in self.active_templates.values()
+            if template.interaction_count >= min_interactions
         ]
 
         if not qualified_templates:
-            logger.warning(f"No templates with minimum {min_interactions} interactions found")
+            logger.warning(
+                f"No templates with minimum {min_interactions} interactions found"
+            )
             return None
 
         # Sort by performance score
@@ -496,7 +530,9 @@ class TutorPromptEngineer:
                     )
 
                     # Save template content
-                    with artifact.new_file(f"template_{template.variant_id}.txt", mode="w") as f:
+                    with artifact.new_file(
+                        f"template_{template.variant_id}.txt", mode="w"
+                    ) as f:
                         f.write(template.template_text)
 
                     # Log artifact

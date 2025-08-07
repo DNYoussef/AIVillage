@@ -119,7 +119,13 @@ class AIVillageRestructurer:
             return
 
         # Stable components go to src/agent_forge/
-        stable_components = ["core", "evaluation", "deployment", "utils", "orchestration"]
+        stable_components = [
+            "core",
+            "evaluation",
+            "deployment",
+            "utils",
+            "orchestration",
+        ]
 
         # Create src/agent_forge structure
         src_agent_forge = self.base_path / "src" / "agent_forge"
@@ -180,7 +186,11 @@ class AIVillageRestructurer:
         """Move tools, scripts, benchmarks, examples."""
         logger.info("Restructuring tools...")
 
-        tools_mapping = {"scripts": "tools/scripts", "benchmarks": "tools/benchmarks", "examples": "tools/examples"}
+        tools_mapping = {
+            "scripts": "tools/scripts",
+            "benchmarks": "tools/benchmarks",
+            "examples": "tools/examples",
+        }
 
         for source_name, target_path in tools_mapping.items():
             source = self.base_path / source_name
@@ -242,7 +252,10 @@ class AIVillageRestructurer:
         """Generate restructuring report."""
         report = {
             "timestamp": datetime.now().isoformat(),
-            "summary": {"items_moved": len(self.moved_items), "errors": len(self.errors)},
+            "summary": {
+                "items_moved": len(self.moved_items),
+                "errors": len(self.errors),
+            },
             "moved_items": self.moved_items,
             "errors": self.errors,
             "new_structure": {

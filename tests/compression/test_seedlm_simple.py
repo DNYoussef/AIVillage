@@ -36,7 +36,9 @@ def test_basic_functionality():
         reconstructed = encoder.decode(compressed)
 
         # Verify shape preservation
-        assert reconstructed.shape == weight.shape, f"Shape mismatch: {reconstructed.shape} vs {weight.shape}"
+        assert (
+            reconstructed.shape == weight.shape
+        ), f"Shape mismatch: {reconstructed.shape} vs {weight.shape}"
 
         # Check compression ratio
         compression_ratio = compressed["data"].get("compression_ratio", 0)
@@ -44,7 +46,9 @@ def test_basic_functionality():
 
         # Check reconstruction error
         max_error = torch.max(torch.abs(reconstructed - weight)).item()
-        relative_error = (torch.norm(reconstructed - weight) / torch.norm(weight)).item()
+        relative_error = (
+            torch.norm(reconstructed - weight) / torch.norm(weight)
+        ).item()
 
         print(f"  Max error: {max_error:.6f}")
         print(f"  Relative error: {relative_error:.6f}")
@@ -78,7 +82,9 @@ def test_progressive_encoding():
         reconstructed = encoder.decode_progressive(progressive_data, num_layers)
         assert reconstructed.shape == weight.shape
 
-        relative_error = (torch.norm(reconstructed - weight) / torch.norm(weight)).item()
+        relative_error = (
+            torch.norm(reconstructed - weight) / torch.norm(weight)
+        ).item()
         print(f"  {num_layers} layers - Relative error: {relative_error:.6f}")
 
     print("  ✓ Progressive encoding tests passed!")
@@ -137,7 +143,9 @@ def test_adaptive_block_sizing():
 def test_multi_scale_lfsr():
     print("\nTesting multi-scale LFSR generation...")
 
-    generator = MultiScaleLFSRGenerator(seeds=[12345, 67890], tap_configs=[[16, 14, 13, 11], [16, 15, 13, 4]])
+    generator = MultiScaleLFSRGenerator(
+        seeds=[12345, 67890], tap_configs=[[16, 14, 13, 11], [16, 15, 13, 4]]
+    )
 
     # Test basis generation
     for scale in [4, 8, 16]:

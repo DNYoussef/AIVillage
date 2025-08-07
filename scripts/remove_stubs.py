@@ -20,12 +20,18 @@ def remove_not_implemented(file_path: Path) -> bool:
         if "is_" in func_name or "has_" in func_name:
             return match.group(0).replace("raise NotImplementedError", "return False")
         if "set_" in func_name or "update_" in func_name:
-            return match.group(0).replace("raise NotImplementedError", "pass  # TODO: Implement setter")
-        return match.group(0).replace("raise NotImplementedError", "return None  # TODO: Implement")
+            return match.group(0).replace(
+                "raise NotImplementedError", "pass  # TODO: Implement setter"
+            )
+        return match.group(0).replace(
+            "raise NotImplementedError", "return None  # TODO: Implement"
+        )
 
     content = re.sub(pattern, replacer, content, flags=re.MULTILINE | re.DOTALL)
 
-    content = re.sub(r"raise\s+NotImplementedError.*\n", "pass  # TODO: Implement\n", content)
+    content = re.sub(
+        r"raise\s+NotImplementedError.*\n", "pass  # TODO: Implement\n", content
+    )
 
     if content != original:
         with open(file_path, "w") as f:

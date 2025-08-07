@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict, dataclass
 import json
+from pathlib import Path
 import threading
 import time
+from typing import Any
 import uuid
-from dataclasses import asdict, dataclass, field
-from pathlib import Path
-from typing import Any, Dict, List
 
 # Optional dependencies -----------------------------------------------------
 try:  # pragma: no cover - import guard
@@ -21,10 +21,12 @@ except Exception:  # pragma: no cover - import guard
     class _DummyMetric:
         """Fallback metric when prometheus_client isn't installed."""
 
-        def __init__(self, *args: Any, **kwargs: Any) -> None:  # pragma: no cover - trivial
+        def __init__(
+            self, *args: Any, **kwargs: Any
+        ) -> None:  # pragma: no cover - trivial
             pass
 
-        def labels(self, **_labels: Any) -> "_DummyMetric":  # type: ignore[override]
+        def labels(self, **_labels: Any) -> _DummyMetric:  # type: ignore[override]
             return self
 
         def inc(self, amount: float = 1.0) -> None:  # pragma: no cover - no-op
@@ -92,8 +94,8 @@ class EvolutionMetricsRecorder:
     def __init__(self, storage_path: str | Path = "evolution_metrics.json") -> None:
         self.storage_path = Path(storage_path)
         self.lock = threading.Lock()
-        self.active: Dict[str, MutationMetrics] = {}
-        self.completed: List[MutationMetrics] = []
+        self.active: dict[str, MutationMetrics] = {}
+        self.completed: list[MutationMetrics] = []
 
         # Load existing metrics if available
         if self.storage_path.exists():  # pragma: no cover - simple IO
@@ -114,7 +116,6 @@ class EvolutionMetricsRecorder:
         Returns a mutation identifier that should be used for subsequent
         fitness and completion recording.
         """
-
         mutation_id = str(uuid.uuid4())
         start_time = time.time()
         cpu_percent = psutil.cpu_percent(interval=None) if PSUTIL_AVAILABLE else 0.0
@@ -132,9 +133,7 @@ class EvolutionMetricsRecorder:
                 memory_mb=mem_mb,
             )
 
-        EVOLUTION_ROUNDS.labels(
-            mutation_type=mutation_type, node_type=node_type
-        ).inc()
+        EVOLUTION_ROUNDS.labels(mutation_type=mutation_type, node_type=node_type).inc()
         return mutation_id
 
     def record_fitness(self, mutation_id: str, fitness: float) -> None:
@@ -180,19 +179,17 @@ class EvolutionMetricsRecorder:
             self._persist()  # Persist after each completion
 
     # ------------------------------------------------------------------
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """Return simple aggregate statistics for persisted metrics."""
         with self.lock:
             total = len(self.completed)
             if total == 0:
                 return {"total_rounds": 0, "avg_fitness": 0.0, "avg_efficiency": 0.0}
 
-            avg_fitness = sum(
-                m.fitness_score or 0.0 for m in self.completed
-            ) / total
-            avg_eff = sum(
-                m.resource_efficiency() or 0.0 for m in self.completed
-            ) / total
+            avg_fitness = sum(m.fitness_score or 0.0 for m in self.completed) / total
+            avg_eff = (
+                sum(m.resource_efficiency() or 0.0 for m in self.completed) / total
+            )
             return {
                 "total_rounds": total,
                 "avg_fitness": avg_fitness,

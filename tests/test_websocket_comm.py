@@ -51,7 +51,11 @@ async def test_websocket_communication():
     # Test 5: Send message from server to client
     print("\n5. Testing Server -> Client Message:")
     if "client" in server.connections:
-        message2 = {"type": "response", "content": "Hello from server!", "data": {"response": True}}
+        message2 = {
+            "type": "response",
+            "content": "Hello from server!",
+            "data": {"response": True},
+        }
         sent = await server.send_message("client", message2)
         print(f"   Response sent: {sent}")
     await asyncio.sleep(0.5)

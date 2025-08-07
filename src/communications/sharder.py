@@ -5,7 +5,9 @@ import pulp
 
 
 class ShardPlanner:
-    def __init__(self, layer_flops: dict[int, float], node_speeds: dict[str, float]) -> None:
+    def __init__(
+        self, layer_flops: dict[int, float], node_speeds: dict[str, float]
+    ) -> None:
         """layer_flops: {layer_idx: flops_required}
         node_speeds: {peer_id: flops_per_sec}.
         """
@@ -18,7 +20,11 @@ class ShardPlanner:
         nodes = list(self.node_speeds)
 
         # vars x[l,n] ∈ {0,1}
-        x = {(l, n): pulp.LpVariable(f"x_{l}_{n}", cat="Binary") for l in layers for n in nodes}
+        x = {
+            (l, n): pulp.LpVariable(f"x_{l}_{n}", cat="Binary")
+            for l in layers
+            for n in nodes
+        }
 
         T = pulp.LpVariable("Makespan", lowBound=0)
 
@@ -31,7 +37,13 @@ class ShardPlanner:
 
         # per-node load constraint
         for n in nodes:
-            prob += pulp.lpSum(self.layer_flops[l] / self.node_speeds[n] * x[(l, n)] for l in layers) <= T
+            prob += (
+                pulp.lpSum(
+                    self.layer_flops[l] / self.node_speeds[n] * x[(l, n)]
+                    for l in layers
+                )
+                <= T
+            )
 
         prob.solve(pulp.PULP_CBC_CMD(msg=False))
 

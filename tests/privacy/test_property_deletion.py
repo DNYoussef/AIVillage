@@ -25,5 +25,7 @@ def test_any_message_is_erasable(msg):
     resp = requests.delete(f"{GW.replace(':8000', ':8001')}/v1/user/{uid}")
     assert resp.ok
     assert resp.json()["deleted_conversations"] >= 1
-    new = requests.post(f"{GW}/v1/chat", json={"message": "hello", "user_id": uid}).json()
+    new = requests.post(
+        f"{GW}/v1/chat", json={"message": "hello", "user_id": uid}
+    ).json()
     assert new["conversation_id"] != r.json()["conversation_id"]

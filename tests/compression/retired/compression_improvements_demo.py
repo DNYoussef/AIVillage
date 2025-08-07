@@ -120,7 +120,9 @@ def demonstrate_key_improvements():
     print("\nEFFICIENCY BREAKTHROUGH:")
     print(f"Previous efficiency: {old_efficiency:.1f}% (major problem)")
     print(f"New efficiency: {new_efficiency:.1f}% (production ready)")
-    print(f"Efficiency improvement: +{new_efficiency - old_efficiency:.1f} percentage points")
+    print(
+        f"Efficiency improvement: +{new_efficiency - old_efficiency:.1f} percentage points"
+    )
     print("PASS: Solved the 98.4% efficiency loss problem!")
 
     return estimated_new_ratio, new_efficiency
@@ -193,9 +195,24 @@ def atlantis_vision_progress():
     # Atlantis vision milestones
     milestones = [
         ("Sprint 9 Foundation (4x)", 4, True, "COMPLETE"),
-        ("Mobile Viability (50x)", 50, estimated_ratio >= 50, "ACHIEVED" if estimated_ratio >= 50 else "PARTIAL"),
-        ("Production Ready (100x)", 100, estimated_ratio >= 100, "ACHIEVED" if estimated_ratio >= 100 else "PARTIAL"),
-        ("Ultimate Goal (1000x)", 1000, estimated_ratio >= 1000, "ACHIEVED" if estimated_ratio >= 1000 else "FUTURE"),
+        (
+            "Mobile Viability (50x)",
+            50,
+            estimated_ratio >= 50,
+            "ACHIEVED" if estimated_ratio >= 50 else "PARTIAL",
+        ),
+        (
+            "Production Ready (100x)",
+            100,
+            estimated_ratio >= 100,
+            "ACHIEVED" if estimated_ratio >= 100 else "PARTIAL",
+        ),
+        (
+            "Ultimate Goal (1000x)",
+            1000,
+            estimated_ratio >= 1000,
+            "ACHIEVED" if estimated_ratio >= 1000 else "FUTURE",
+        ),
     ]
 
     print("Milestone Progress:")

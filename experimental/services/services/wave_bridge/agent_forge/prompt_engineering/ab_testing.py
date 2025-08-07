@@ -201,7 +201,9 @@ class PromptABTest:
             {
                 "ab_tests_initialized": True,
                 "test_types": list(self.active_tests.keys()),
-                "total_variants": sum(len(variants) for variants in self.active_tests.values()),
+                "total_variants": sum(
+                    len(variants) for variants in self.active_tests.values()
+                ),
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         )
@@ -212,7 +214,9 @@ class PromptABTest:
         user_key = f"{user_id}_{test_type}"
         if user_key in self.user_assignments:
             variant_id = self.user_assignments[user_key]
-            return next(v for v in self.active_tests[test_type] if v.variant_id == variant_id)
+            return next(
+                v for v in self.active_tests[test_type] if v.variant_id == variant_id
+            )
 
         # UCB1 algorithm for variant selection
         variants = self.active_tests.get(test_type, [])
@@ -236,12 +240,19 @@ class PromptABTest:
                 score = float("inf")
             else:
                 # Calculate average reward (engagement score)
-                avg_reward = statistics.mean([r.performance_metrics.get("student_engagement", 0) for r in variant_data])
+                avg_reward = statistics.mean(
+                    [
+                        r.performance_metrics.get("student_engagement", 0)
+                        for r in variant_data
+                    ]
+                )
 
                 # Calculate confidence bound
                 n_variant = len(variant_data)
                 confidence_bound = np.sqrt(
-                    self.exploration_constant * np.log(max(1, self.total_interactions)) / n_variant
+                    self.exploration_constant
+                    * np.log(max(1, self.total_interactions))
+                    / n_variant
                 )
 
                 score = avg_reward + confidence_bound
@@ -288,15 +299,21 @@ class PromptABTest:
                 return None
 
             # Generate response with variant
-            response = await self.generate_with_prompt(student_msg, variant.prompt_template, context)
+            response = await self.generate_with_prompt(
+                student_msg, variant.prompt_template, context
+            )
 
             response_time = time.time() - start_time
 
             # Analyze engagement signals
-            engagement_signals = await self.analyze_engagement_signals(student_msg, response, context)
+            engagement_signals = await self.analyze_engagement_signals(
+                student_msg, response, context
+            )
 
             # Calculate performance metrics
-            performance_metrics = await self.calculate_performance_metrics(response, response_time, engagement_signals)
+            performance_metrics = await self.calculate_performance_metrics(
+                response, response_time, engagement_signals
+            )
 
             # Create interaction result
             interaction_result = InteractionResult(
@@ -322,7 +339,9 @@ class PromptABTest:
             # Update daily/hourly metrics
             await self.update_time_based_metrics(interaction_result)
 
-            logger.info(f"A/B test interaction completed: {variant.variant_id} in {response_time:.2f}s")
+            logger.info(
+                f"A/B test interaction completed: {variant.variant_id} in {response_time:.2f}s"
+            )
 
             return interaction_result
 
@@ -330,7 +349,9 @@ class PromptABTest:
             logger.error(f"Error in A/B test interaction: {e}")
             return None
 
-    async def generate_with_prompt(self, student_msg: str, prompt_template: str, context: dict[str, Any]) -> str:
+    async def generate_with_prompt(
+        self, student_msg: str, prompt_template: str, context: dict[str, Any]
+    ) -> str:
         """Generate response using the specified prompt template"""
         # This is a simplified version - in production, this would integrate with
         # the actual AI models (Anthropic/OpenAI)
@@ -356,13 +377,9 @@ class PromptABTest:
         elif "socratic" in prompt_template.lower():
             response = f"Interesting question! What do you think might happen if we consider {student_msg[:20]}...?"
         elif "direct" in prompt_template.lower():
-            response = (
-                f"Here's the key concept for your question about {student_msg[:30]}... Let me explain step by step."
-            )
+            response = f"Here's the key concept for your question about {student_msg[:30]}... Let me explain step by step."
         else:
-            response = (
-                f"Thanks for your question about {student_msg[:30]}... I'm here to help you understand this concept."
-            )
+            response = f"Thanks for your question about {student_msg[:30]}... I'm here to help you understand this concept."
 
         return response
 
@@ -374,13 +391,20 @@ class PromptABTest:
             "question_asked": "?" in response,
             "emoji_used": any(char in response for char in "😊🚀✨👍🎉💡"),
             "encouragement_present": any(
-                word in response.lower() for word in ["great", "excellent", "good", "well done"]
+                word in response.lower()
+                for word in ["great", "excellent", "good", "well done"]
             ),
             "interactive_element": any(
-                phrase in response.lower() for phrase in ["what do you think", "can you", "try this"]
+                phrase in response.lower()
+                for phrase in ["what do you think", "can you", "try this"]
             ),
-            "example_provided": any(word in response.lower() for word in ["example", "for instance", "imagine"]),
-            "response_relevance": len(set(student_msg.lower().split()) & set(response.lower().split()))
+            "example_provided": any(
+                word in response.lower()
+                for word in ["example", "for instance", "imagine"]
+            ),
+            "response_relevance": len(
+                set(student_msg.lower().split()) & set(response.lower().split())
+            )
             / max(1, len(student_msg.split())),
             "response_length_appropriate": 50 <= len(response.split()) <= 200,
             "follow_up_potential": "?" in response or "what" in response.lower(),
@@ -421,15 +445,23 @@ class PromptABTest:
             "student_engagement": engagement_score,
             "response_quality": quality_score,
             "response_efficiency": efficiency_score,
-            "overall_performance": (engagement_score * 0.5 + quality_score * 0.3 + efficiency_score * 0.2),
-            "contains_encouragement": float(engagement_signals.get("encouragement_present", False)),
+            "overall_performance": (
+                engagement_score * 0.5 + quality_score * 0.3 + efficiency_score * 0.2
+            ),
+            "contains_encouragement": float(
+                engagement_signals.get("encouragement_present", False)
+            ),
             "math_symbols_used": float(any(symbol in response for symbol in "+=÷×∑∫√")),
-            "interactive_elements": float(engagement_signals.get("interactive_element", False)),
+            "interactive_elements": float(
+                engagement_signals.get("interactive_element", False)
+            ),
         }
 
         return performance_metrics
 
-    async def log_interaction_to_wandb(self, interaction: InteractionResult, variant: TestVariant):
+    async def log_interaction_to_wandb(
+        self, interaction: InteractionResult, variant: TestVariant
+    ):
         """Log detailed interaction data to W&B"""
         log_data = {
             "prompt_variant": variant.variant_id,
@@ -461,7 +493,9 @@ class PromptABTest:
             interaction.performance_metrics["overall_performance"]
         )
 
-    async def analyze_test_results(self, test_type: str, min_interactions: int = None) -> list[TestResults]:
+    async def analyze_test_results(
+        self, test_type: str, min_interactions: int = None
+    ) -> list[TestResults]:
         """Analyze A/B test results with statistical significance"""
         min_interactions = min_interactions or self.min_sample_size
         variants = self.active_tests.get(test_type, [])
@@ -478,7 +512,9 @@ class PromptABTest:
                 continue
 
             # Calculate statistics
-            engagement_scores = [r.performance_metrics.get("student_engagement", 0) for r in variant_data]
+            engagement_scores = [
+                r.performance_metrics.get("student_engagement", 0) for r in variant_data
+            ]
             response_times = [r.response_time for r in variant_data]
 
             avg_engagement = statistics.mean(engagement_scores)
@@ -489,7 +525,9 @@ class PromptABTest:
             conversion_rate = high_engagement_count / len(engagement_scores)
 
             # Calculate confidence interval
-            std_err = statistics.stdev(engagement_scores) / np.sqrt(len(engagement_scores))
+            std_err = statistics.stdev(engagement_scores) / np.sqrt(
+                len(engagement_scores)
+            )
             margin_error = 1.96 * std_err  # 95% confidence
             confidence_interval = (
                 avg_engagement - margin_error,
@@ -580,7 +618,9 @@ class PromptABTest:
                         daily_summary[variant_id] = {
                             "interactions": len(scores),
                             "avg_performance": statistics.mean(scores),
-                            "performance_trend": "up" if statistics.mean(scores) > 0.7 else "down",
+                            "performance_trend": (
+                                "up" if statistics.mean(scores) > 0.7 else "down"
+                            ),
                         }
 
                 report["daily_breakdown"][date_key] = daily_summary
@@ -589,17 +629,24 @@ class PromptABTest:
         all_variant_scores = {}
         for variant_id, interactions in self.variant_performance.items():
             if len(interactions) >= 20:  # Minimum threshold
-                scores = [i.performance_metrics.get("overall_performance", 0) for i in interactions]
+                scores = [
+                    i.performance_metrics.get("overall_performance", 0)
+                    for i in interactions
+                ]
                 all_variant_scores[variant_id] = {
                     "avg_score": statistics.mean(scores),
                     "interaction_count": len(interactions),
                     "latest_performance": (
-                        statistics.mean(scores[-10:]) if len(scores) >= 10 else statistics.mean(scores)
+                        statistics.mean(scores[-10:])
+                        if len(scores) >= 10
+                        else statistics.mean(scores)
                     ),
                 }
 
         # Sort and get top 3
-        top_variants = sorted(all_variant_scores.items(), key=lambda x: x[1]["avg_score"], reverse=True)[:3]
+        top_variants = sorted(
+            all_variant_scores.items(), key=lambda x: x[1]["avg_score"], reverse=True
+        )[:3]
 
         report["top_performers"] = [
             {
@@ -612,10 +659,14 @@ class PromptABTest:
 
         # Generate recommendations
         if len(top_variants) > 0 and top_variants[0][1]["avg_score"] > 0.8:
-            report["recommendations"].append(f"Deploy {top_variants[0][0]} - consistently high performance")
+            report["recommendations"].append(
+                f"Deploy {top_variants[0][0]} - consistently high performance"
+            )
 
         if self.total_interactions < 1000:
-            report["recommendations"].append("Increase test volume - need more data for statistical confidence")
+            report["recommendations"].append(
+                "Increase test volume - need more data for statistical confidence"
+            )
 
         # Log report to W&B
         wandb.log(
@@ -623,7 +674,11 @@ class PromptABTest:
                 "daily_report_generated": True,
                 "report_summary": {
                     "total_interactions": report["total_interactions"],
-                    "top_performer": report["top_performers"][0]["variant_id"] if report["top_performers"] else None,
+                    "top_performer": (
+                        report["top_performers"][0]["variant_id"]
+                        if report["top_performers"]
+                        else None
+                    ),
                     "recommendations_count": len(report["recommendations"]),
                 },
                 "timestamp": datetime.now(timezone.utc).isoformat(),

@@ -21,7 +21,11 @@ class TestEdgeCases:
 
         # Mock a low-memory device (like old phone with 1GB RAM)
         with patch.object(profiler, "_get_memory_info") as mock_memory:
-            mock_memory.return_value = (1.0, 0.8, 0.2)  # 1GB total, 0.8GB used, 0.2GB available
+            mock_memory.return_value = (
+                1.0,
+                0.8,
+                0.2,
+            )  # 1GB total, 0.8GB used, 0.2GB available
 
             snapshot = profiler.take_snapshot()
 
@@ -34,9 +38,10 @@ class TestEdgeCases:
         profiler = DeviceProfiler()
 
         # Mock thermal throttling conditions
-        with patch.object(profiler, "_get_cpu_temperature") as mock_temp, patch.object(
-            profiler, "_get_cpu_percent"
-        ) as mock_cpu:
+        with (
+            patch.object(profiler, "_get_cpu_temperature") as mock_temp,
+            patch.object(profiler, "_get_cpu_percent") as mock_cpu,
+        ):
             mock_temp.return_value = 88.0  # Critical temperature
             mock_cpu.return_value = 95.0  # High CPU usage
 
@@ -192,7 +197,9 @@ class TestEdgeCases:
         )
 
         # Should be barely suitable
-        assert medium_at_limit.is_suitable_for_evolution() is False  # Below 50% threshold
+        assert (
+            medium_at_limit.is_suitable_for_evolution() is False
+        )  # Below 50% threshold
 
     @pytest.mark.asyncio
     async def test_resource_monitor_error_recovery(self):
@@ -253,7 +260,9 @@ class TestEdgeCases:
 
         # Should have registered some tasks but eventually hit limits
         assert len(registered_tasks) > 0
-        assert len(registered_tasks) < 10  # Shouldn't register all due to resource limits
+        assert (
+            len(registered_tasks) < 10
+        )  # Shouldn't register all due to resource limits
 
         # Clean up
         for task_id in registered_tasks:
@@ -315,7 +324,10 @@ class TestCriticalPaths:
         start_time = time.time()
 
         for i in range(10):
-            await node._handle_message({"type": "test_message", "id": f"msg_{i}", "data": {"test": True}}, "test_peer")
+            await node._handle_message(
+                {"type": "test_message", "id": f"msg_{i}", "data": {"test": True}},
+                "test_peer",
+            )
 
         processing_time = time.time() - start_time
 

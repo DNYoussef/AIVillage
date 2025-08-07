@@ -81,7 +81,9 @@ def test_individual_components():
     try:
 
         class SimpleSeedLMCompressor:
-            def __init__(self, block_size: int = 8, latent_dim: int = 4, num_seeds: int = 256):
+            def __init__(
+                self, block_size: int = 8, latent_dim: int = 4, num_seeds: int = 256
+            ):
                 self.block_size = block_size
                 self.latent_dim = latent_dim
                 self.num_seeds = num_seeds
@@ -131,8 +133,12 @@ def test_individual_components():
 
                 # Calculate compression ratio
                 original_bits = weight_matrix.numel() * 32
-                compressed_bits = len(compressed_blocks) * (16 + 4 + self.latent_dim * 4)
-                compression_ratio = original_bits / compressed_bits if compressed_bits > 0 else 0
+                compressed_bits = len(compressed_blocks) * (
+                    16 + 4 + self.latent_dim * 4
+                )
+                compression_ratio = (
+                    original_bits / compressed_bits if compressed_bits > 0 else 0
+                )
 
                 return {
                     "compressed_blocks": compressed_blocks,
@@ -192,7 +198,9 @@ def test_individual_components():
 
             def _reshape_vectors(self, weight_matrix: torch.Tensor) -> torch.Tensor:
                 flat = weight_matrix.flatten()
-                pad = (self.vector_length - flat.numel() % self.vector_length) % self.vector_length
+                pad = (
+                    self.vector_length - flat.numel() % self.vector_length
+                ) % self.vector_length
                 if pad:
                     flat = torch.cat([flat, torch.zeros(pad)])
                 return flat.reshape(-1, self.vector_length)
@@ -207,7 +215,9 @@ def test_individual_components():
                 codebook = vectors[: min(self.codebook_size, num_vectors)]
                 if codebook.shape[0] < self.codebook_size:
                     # Pad codebook
-                    padding = torch.zeros(self.codebook_size - codebook.shape[0], self.vector_length)
+                    padding = torch.zeros(
+                        self.codebook_size - codebook.shape[0], self.vector_length
+                    )
                     codebook = torch.cat([codebook, padding])
 
                 # Simple assignment (just assign to nearest)
@@ -218,8 +228,12 @@ def test_individual_components():
 
                 # Calculate compression ratio
                 original_bits = weight_matrix.numel() * 32
-                compressed_bits = codebook.numel() * 32 + assignments.numel() * self.bits_per_vector
-                compression_ratio = original_bits / compressed_bits if compressed_bits > 0 else 0
+                compressed_bits = (
+                    codebook.numel() * 32 + assignments.numel() * self.bits_per_vector
+                )
+                compression_ratio = (
+                    original_bits / compressed_bits if compressed_bits > 0 else 0
+                )
 
                 return {
                     "original_shape": weight_matrix.shape,
@@ -385,7 +399,10 @@ def test_model_handoff():
 
         # Verify Stage 1 metadata is preserved
         assert stage2_output["stage1_metadata"]["config"] == stage1_output["config"]
-        assert stage2_output["stage1_metadata"]["model_info"] == stage1_output["model_info"]
+        assert (
+            stage2_output["stage1_metadata"]["model_info"]
+            == stage1_output["model_info"]
+        )
         print("[PASS] Stage 1 metadata preserved: OK")
 
         # Verify compression pipeline information
@@ -539,7 +556,9 @@ def test_end_to_end_simulation():
 
         # Create a test model
         print("\n1. Creating test model...")
-        model = nn.Sequential(nn.Linear(50, 25), nn.ReLU(), nn.Linear(25, 10), nn.ReLU(), nn.Linear(10, 5))
+        model = nn.Sequential(
+            nn.Linear(50, 25), nn.ReLU(), nn.Linear(25, 10), nn.ReLU(), nn.Linear(10, 5)
+        )
 
         original_params = sum(p.numel() for p in model.parameters())
         print(f"  Original model parameters: {original_params}")
@@ -576,7 +595,11 @@ def test_end_to_end_simulation():
                 stage1_compressed[name] = param.data
                 print(f"  Kept {name} uncompressed")
 
-        avg_stage1_ratio = total_compression_ratio / compressed_params if compressed_params > 0 else 1.0
+        avg_stage1_ratio = (
+            total_compression_ratio / compressed_params
+            if compressed_params > 0
+            else 1.0
+        )
         print(f"  Average Stage 1 compression: {avg_stage1_ratio:.1f}x")
         print("[PASS] Stage 1 simulation: OK")
 
@@ -605,7 +628,9 @@ def test_end_to_end_simulation():
                 stage2_compressed[name] = data
                 print(f"  Kept {name} from Stage 1")
 
-        avg_stage2_ratio = stage2_ratio / compressed_params if compressed_params > 0 else 1.0
+        avg_stage2_ratio = (
+            stage2_ratio / compressed_params if compressed_params > 0 else 1.0
+        )
         print(f"  Average total compression: {avg_stage2_ratio:.1f}x")
         print("[PASS] Stage 2 simulation: OK")
 
@@ -629,7 +654,8 @@ def test_end_to_end_simulation():
             "final_stats": {
                 "total_compression_ratio": avg_stage2_ratio,
                 "compressed_parameters": compressed_params,
-                "uncompressed_parameters": len(list(model.parameters())) - compressed_params,
+                "uncompressed_parameters": len(list(model.parameters()))
+                - compressed_params,
             },
             "timestamp": 1234567890,
         }
@@ -649,8 +675,13 @@ def test_end_to_end_simulation():
 
         # Load and verify
         loaded_output = torch.load(temp_path)
-        assert loaded_output["compression_pipeline"] == final_output["compression_pipeline"]
-        assert loaded_output["final_stats"]["total_compression_ratio"] == avg_stage2_ratio
+        assert (
+            loaded_output["compression_pipeline"]
+            == final_output["compression_pipeline"]
+        )
+        assert (
+            loaded_output["final_stats"]["total_compression_ratio"] == avg_stage2_ratio
+        )
 
         # Clean up
         os.unlink(temp_path)

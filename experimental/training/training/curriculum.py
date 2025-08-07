@@ -29,7 +29,9 @@ class CurriculumGenerator:
     def __init__(self, frontier_model: str, domain: str):
         self.domain = domain
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.frontier_model = AutoModelForCausalLM.from_pretrained(frontier_model).to(self.device)
+        self.frontier_model = AutoModelForCausalLM.from_pretrained(frontier_model).to(
+            self.device
+        )
         self.tokenizer = AutoTokenizer.from_pretrained(frontier_model)
 
     def _generate(self, prompt: str, max_length: int = 200) -> str:
@@ -58,7 +60,9 @@ class CurriculumGenerator:
     def find_model_baseline(self, model, questions: list[Question]) -> int:
         failures = []
         for q in questions:
-            input_ids = self.tokenizer.encode(q.text, return_tensors="pt").to(self.device)
+            input_ids = self.tokenizer.encode(q.text, return_tensors="pt").to(
+                self.device
+            )
             with torch.no_grad():
                 out = model.generate(input_ids, max_length=200)
             ans = self.tokenizer.decode(out[0], skip_special_tokens=True)

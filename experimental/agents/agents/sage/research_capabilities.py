@@ -14,12 +14,15 @@ class ResearchCapabilities:
         self.named_entity_recognizer = NamedEntityRecognizer()
         self.relation_extractor = RelationExtractor()
         self.capability_metrics: dict[str, dict[str, int]] = {
-            cap: {"success": 0, "fail": 0} for cap in getattr(agent, "research_capabilities", [])
+            cap: {"success": 0, "fail": 0}
+            for cap in getattr(agent, "research_capabilities", [])
         }
 
     def record_result(self, capability: str, success: bool) -> None:
         """Record the outcome of a capability usage."""
-        stats = self.capability_metrics.setdefault(capability, {"success": 0, "fail": 0})
+        stats = self.capability_metrics.setdefault(
+            capability, {"success": 0, "fail": 0}
+        )
         if success:
             stats["success"] += 1
         else:
@@ -72,7 +75,9 @@ class ResearchCapabilities:
     async def handle_exploration_mode(self, task):
         query = task["content"]
         processed_query = await self.agent.query_processor.process_query(query)
-        exploration_results = await self.agent.exploration_mode.discover_new_relations(processed_query)
+        exploration_results = await self.agent.exploration_mode.discover_new_relations(
+            processed_query
+        )
         return {
             "query": query,
             "processed_query": processed_query,
@@ -102,7 +107,10 @@ class ResearchCapabilities:
                     capability,
                     success_rate,
                 )
-            elif success_rate > 0.8 and capability not in self.agent.research_capabilities:
+            elif (
+                success_rate > 0.8
+                and capability not in self.agent.research_capabilities
+            ):
                 self.agent.research_capabilities.append(capability)
                 logger.info(
                     "Enabled capability %s due to high success rate %.2f",

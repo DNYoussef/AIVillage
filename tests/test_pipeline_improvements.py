@@ -53,7 +53,10 @@ def test_key_improvements():
     print("-" * 40)
 
     # Test old vs new packing format
-    test_params = {"layer.weight": ((512, 256), sample_data), "layer.bias": ((256,), sample_data[:256])}
+    test_params = {
+        "layer.weight": ((512, 256), sample_data),
+        "layer.bias": ((256,), sample_data[:256]),
+    }
 
     # Old method (pickle)
     old_packed = pickle.dumps(test_params)
@@ -136,7 +139,9 @@ def test_key_improvements():
     print("\nEFFICIENCY ANALYSIS:")
     print(f"  Previous efficiency: {old_efficiency:.1f}% (was 1.6%)")
     print(f"  Estimated new efficiency: {new_efficiency:.1f}%")
-    print(f"  Efficiency improvement: +{new_efficiency - old_efficiency:.1f} percentage points")
+    print(
+        f"  Efficiency improvement: +{new_efficiency - old_efficiency:.1f} percentage points"
+    )
 
     return estimated_new_ratio, new_efficiency
 
@@ -236,7 +241,9 @@ def main():
         success = estimated_ratio >= 30 and efficiency >= 5 and mobile_ready
 
         print(f"\nOptimization Status: {'SUCCESS' if success else 'PARTIAL'}")
-        print(f"Recommended action: {'Deploy to mobile' if success else 'Continue optimization'}")
+        print(
+            f"Recommended action: {'Deploy to mobile' if success else 'Continue optimization'}"
+        )
 
         return success
 

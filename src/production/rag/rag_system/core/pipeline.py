@@ -42,15 +42,21 @@ class EnhancedRAGPipeline(BaseComponent):
         activated_knowledge = await self.latent_space_activation.activate(query)
 
         # Retrieval
-        retrieved_info = await self.hybrid_retriever.retrieve(query, activated_knowledge)
+        retrieved_info = await self.hybrid_retriever.retrieve(
+            query, activated_knowledge
+        )
         if self.knowledge_tracker is not None:
             self.knowledge_tracker.record_retrieval(query, retrieved_info)
 
         # Reasoning
-        reasoning_result = await self.reasoning_engine.reason(query, retrieved_info, activated_knowledge)
+        reasoning_result = await self.reasoning_engine.reason(
+            query, retrieved_info, activated_knowledge
+        )
 
         # Cognitive integration
-        integrated_result = await self.cognitive_nexus.integrate(query, reasoning_result, activated_knowledge)
+        integrated_result = await self.cognitive_nexus.integrate(
+            query, reasoning_result, activated_knowledge
+        )
 
         return {
             "query": query,

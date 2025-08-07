@@ -357,7 +357,9 @@ class RAGInterface(ABC):
         """
 
     @abstractmethod
-    async def add_documents(self, documents: list[DocumentInterface]) -> dict[str, bool]:
+    async def add_documents(
+        self, documents: list[DocumentInterface]
+    ) -> dict[str, bool]:
         """Add multiple documents to the RAG system.
 
         Args:
@@ -401,7 +403,9 @@ class RAGInterface(ABC):
         """
 
     @abstractmethod
-    async def generate_response(self, query: str, context_documents: list[DocumentInterface]) -> str:
+    async def generate_response(
+        self, query: str, context_documents: list[DocumentInterface]
+    ) -> str:
         """Generate response based on query and context documents.
 
         Args:
@@ -414,7 +418,9 @@ class RAGInterface(ABC):
 
     # Optional advanced methods
 
-    async def explain_retrieval(self, query: QueryInterface, result: RetrievalResult) -> str:
+    async def explain_retrieval(
+        self, query: QueryInterface, result: RetrievalResult
+    ) -> str:
         """Provide explanation for why a document was retrieved.
 
         Args:
@@ -424,11 +430,11 @@ class RAGInterface(ABC):
         Returns:
             Human-readable explanation
         """
-        return (
-            f"Document '{result.document.metadata.title}' retrieved with relevance score {result.relevance_score:.3f}"
-        )
+        return f"Document '{result.document.metadata.title}' retrieved with relevance score {result.relevance_score:.3f}"
 
-    async def get_similar_documents(self, document_id: str, max_results: int = 10) -> list[RetrievalResult]:
+    async def get_similar_documents(
+        self, document_id: str, max_results: int = 10
+    ) -> list[RetrievalResult]:
         """Find documents similar to the given document.
 
         Args:

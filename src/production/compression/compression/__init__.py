@@ -50,12 +50,16 @@ class TwoStageCompressor:
             self.use_progressive = False
 
         self.vptq = VPTQQuantizer(config.vptq_bits, config.vptq_vector_length)
-        self.hyper = HyperCompressionEncoder(config.hyper_clusters) if config.use_hyper else None
+        self.hyper = (
+            HyperCompressionEncoder(config.hyper_clusters) if config.use_hyper else None
+        )
 
     def compress_layer(self, weight: torch.Tensor) -> dict:
         if self.use_progressive:
             # Use progressive SeedLM encoder
-            compressed = self.seedlm.encode(weight, compression_level=self.config.seedlm_compression_level)
+            compressed = self.seedlm.encode(
+                weight, compression_level=self.config.seedlm_compression_level
+            )
             # Extract data portion for pipeline compatibility
             seed_data = compressed.get("data", compressed)
             decompressed = self.seedlm.decode(compressed)
@@ -98,7 +102,9 @@ class TwoStageCompressor:
 import torch
 
 
-def run_stage1(input_path: str, output_path: str, config_path: str | None = None) -> dict:
+def run_stage1(
+    input_path: str, output_path: str, config_path: str | None = None
+) -> dict:
     """Wrapper function for Stage-1 compression pipeline.
 
     Args:
@@ -126,7 +132,9 @@ def run_stage1(input_path: str, output_path: str, config_path: str | None = None
     return run_stage1_compression(input_path, output_path, config)
 
 
-def stream_compress_model(model: nn.Module, config: CompressionConfig | None = None) -> dict[str, dict]:
+def stream_compress_model(
+    model: nn.Module, config: CompressionConfig | None = None
+) -> dict[str, dict]:
     cfg = config or CompressionConfig()
     compressor = TwoStageCompressor(cfg)
     handled = set()

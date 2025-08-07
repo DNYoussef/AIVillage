@@ -71,7 +71,9 @@ class HyperRAGIntegration:
         self.performance_history = []
 
         # Initialize W&B tracking
-        wandb.init(project="agent-forge-rag", config=asdict(config), job_type="rag_integration")
+        wandb.init(
+            project="agent-forge-rag", config=asdict(config), job_type="rag_integration"
+        )
 
     async def initialize(self) -> None:
         """Initialize all RAG components."""
@@ -99,7 +101,9 @@ class HyperRAGIntegration:
 
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.config.model_path,
-                torch_dtype=torch.float16 if self.config.device == "cuda" else torch.float32,
+                torch_dtype=(
+                    torch.float16 if self.config.device == "cuda" else torch.float32
+                ),
                 device_map="auto" if self.config.device == "cuda" else None,
                 trust_remote_code=True,
             )
@@ -254,7 +258,11 @@ class HyperRAGIntegration:
             retrieval_latency = time.time() - start_time
 
             # Calculate retrieval accuracy (simplified metric)
-            avg_similarity = float(np.mean(similarities[0][similarities[0] > 0])) if len(similarities[0]) > 0 else 0.0
+            avg_similarity = (
+                float(np.mean(similarities[0][similarities[0] > 0]))
+                if len(similarities[0]) > 0
+                else 0.0
+            )
 
             return relevant_chunks, retrieval_latency, avg_similarity
 
@@ -262,7 +270,9 @@ class HyperRAGIntegration:
             logger.exception(f"Retrieval failed: {e}")
             return [], time.time() - start_time, 0.0
 
-    async def generate_response(self, query: str, context: list[str]) -> tuple[str, float]:
+    async def generate_response(
+        self, query: str, context: list[str]
+    ) -> tuple[str, float]:
         """Generate response using Agent Forge model with retrieved context."""
         start_time = time.time()
 
@@ -280,7 +290,9 @@ Question: {query}
 Answer:"""
 
             # Tokenize input
-            inputs = self.tokenizer.encode(prompt, return_tensors="pt").to(self.config.device)
+            inputs = self.tokenizer.encode(prompt, return_tensors="pt").to(
+                self.config.device
+            )
 
             # Check input length
             if inputs.size(1) > self.config.max_context_length:
@@ -291,7 +303,8 @@ Answer:"""
             with torch.no_grad():
                 outputs = self.model.generate(
                     inputs,
-                    max_length=inputs.size(1) + 150,  # Allow for reasonable response length
+                    max_length=inputs.size(1)
+                    + 150,  # Allow for reasonable response length
                     temperature=self.config.temperature,
                     do_sample=True,
                     pad_token_id=self.tokenizer.eos_token_id,
@@ -300,7 +313,9 @@ Answer:"""
 
             # Decode response
             full_response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-            response = full_response[len(self.tokenizer.decode(inputs[0], skip_special_tokens=True)) :].strip()
+            response = full_response[
+                len(self.tokenizer.decode(inputs[0], skip_special_tokens=True)) :
+            ].strip()
 
             generation_latency = time.time() - start_time
 
@@ -327,7 +342,9 @@ Answer:"""
         ) = await self.retrieve_relevant_context(query)
 
         # Generate response
-        response, generation_latency = await self.generate_response(query, context_chunks)
+        response, generation_latency = await self.generate_response(
+            query, context_chunks
+        )
 
         total_latency = time.time() - total_start_time
 
@@ -441,7 +458,9 @@ Answer:"""
                 results["latency_distribution"].append(metrics.total_latency)
                 results["quality_distribution"].append(metrics.answer_quality)
 
-                results["detailed_results"].append({"query": query, "response": response, "metrics": asdict(metrics)})
+                results["detailed_results"].append(
+                    {"query": query, "response": response, "metrics": asdict(metrics)}
+                )
 
                 logger.info(
                     f"Query {i + 1}/{len(test_queries)}: {
@@ -473,7 +492,8 @@ Answer:"""
         wandb.log(
             {
                 "validation/total_queries": results["total_queries"],
-                "validation/success_rate": results["successful_queries"] / results["total_queries"],
+                "validation/success_rate": results["successful_queries"]
+                / results["total_queries"],
                 "validation/average_latency": results["average_latency"],
                 "validation/average_quality": results["average_quality"],
                 "validation/latency_p95": results.get("latency_p95", 0),
@@ -481,7 +501,9 @@ Answer:"""
             }
         )
 
-        logger.info(f"Validation complete: {results['successful_queries']}/{results['total_queries']} successful")
+        logger.info(
+            f"Validation complete: {results['successful_queries']}/{results['total_queries']} successful"
+        )
 
         return results
 
@@ -525,7 +547,9 @@ class AgentForgeRAGSelector:
 
             # Validate model exists
             if not Path(model_path).exists():
-                logger.warning(f"Best model path not found: {model_path}, falling back to available models")
+                logger.warning(
+                    f"Best model path not found: {model_path}, falling back to available models"
+                )
 
                 # Find first available model
                 for phase, path in model_paths.items():
@@ -549,7 +573,9 @@ class AgentForgeRAGSelector:
                     "benchmark_consistency": True,
                     "model_availability": True,
                 },
-                "recommendation": insights.get("deployment_recommendation", "Deploy with monitoring"),
+                "recommendation": insights.get(
+                    "deployment_recommendation", "Deploy with monitoring"
+                ),
             }
 
             logger.info(f"Selected model: {best_phase} at {model_path}")
@@ -595,11 +621,15 @@ async def main() -> int:
         default="./benchmark_results",
         help="Benchmark results directory",
     )
-    parser.add_argument("--auto-select", action="store_true", help="Automatically select best model")
+    parser.add_argument(
+        "--auto-select", action="store_true", help="Automatically select best model"
+    )
     parser.add_argument("--model-path", help="Specific model path to use")
     parser.add_argument("--model-name", help="Model name for tracking")
     parser.add_argument("--validate", action="store_true", help="Run validation tests")
-    parser.add_argument("--interactive", action="store_true", help="Interactive Q&A mode")
+    parser.add_argument(
+        "--interactive", action="store_true", help="Interactive Q&A mode"
+    )
 
     args = parser.parse_args()
 
@@ -625,7 +655,9 @@ async def main() -> int:
         model_name = args.model_name
 
     else:
-        print("Error: Must specify either --auto-select or both --model-path and --model-name")
+        print(
+            "Error: Must specify either --auto-select or both --model-path and --model-name"
+        )
         return 1
 
     # Initialize RAG system
@@ -640,7 +672,9 @@ async def main() -> int:
     if args.validate:
         # Run validation tests
         print(f"\nRunning validation on {len(SAMPLE_TEST_QUERIES)} test queries...")
-        validation_results = await rag_system.validate_rag_performance(SAMPLE_TEST_QUERIES)
+        validation_results = await rag_system.validate_rag_performance(
+            SAMPLE_TEST_QUERIES
+        )
 
         print(f"\n{'=' * 60}")
         print("RAG VALIDATION RESULTS")

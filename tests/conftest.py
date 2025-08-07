@@ -26,7 +26,9 @@ def sample_model():
     """Provide a sample model for testing."""
     import torch
 
-    return torch.nn.Sequential(torch.nn.Linear(10, 20), torch.nn.ReLU(), torch.nn.Linear(20, 10))
+    return torch.nn.Sequential(
+        torch.nn.Linear(10, 20), torch.nn.ReLU(), torch.nn.Linear(20, 10)
+    )
 
 
 @pytest.fixture

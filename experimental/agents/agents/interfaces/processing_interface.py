@@ -223,7 +223,9 @@ class ProcessingInterface(ABC, Generic[T, U]):
                     if isinstance(result, Exception):
                         from agents.base import ProcessStatus
 
-                        failed_result = ProcessResult(status=ProcessStatus.FAILED, error=str(result))
+                        failed_result = ProcessResult(
+                            status=ProcessStatus.FAILED, error=str(result)
+                        )
                         batch_results[j] = failed_result
 
                 results.extend(batch_results)
@@ -249,7 +251,9 @@ class ProcessingInterface(ABC, Generic[T, U]):
         await self.processing_queue.put(request)
         return request.request_id
 
-    async def get_result(self, request_id: str, timeout_seconds: float | None = None) -> ProcessingResponse | None:
+    async def get_result(
+        self, request_id: str, timeout_seconds: float | None = None
+    ) -> ProcessingResponse | None:
         """Get processing result by request ID.
 
         Args:
@@ -283,7 +287,9 @@ class ProcessingInterface(ABC, Generic[T, U]):
         while self.status != ProcessorStatus.SHUTTING_DOWN:
             try:
                 # Get next request with timeout
-                request = await asyncio.wait_for(self.processing_queue.get(), timeout=1.0)
+                request = await asyncio.wait_for(
+                    self.processing_queue.get(), timeout=1.0
+                )
 
                 # Create processing task
                 task = asyncio.create_task(self._process_request(request))
@@ -339,7 +345,9 @@ class ProcessingInterface(ABC, Generic[T, U]):
 
     # Caching
 
-    async def cache_result(self, key: str, result: Any, ttl_seconds: float | None = None) -> None:
+    async def cache_result(
+        self, key: str, result: Any, ttl_seconds: float | None = None
+    ) -> None:
         """Cache processing result."""
         if self.has_capability(ProcessorCapability.CACHING):
             self._cache[key] = {
@@ -420,8 +428,12 @@ class ProcessingInterface(ABC, Generic[T, U]):
                 self.metrics.average_processing_time_ms * (n - 1) + processing_time_ms
             ) / n
 
-        self.metrics.min_processing_time_ms = min(self.metrics.min_processing_time_ms, processing_time_ms)
-        self.metrics.max_processing_time_ms = max(self.metrics.max_processing_time_ms, processing_time_ms)
+        self.metrics.min_processing_time_ms = min(
+            self.metrics.min_processing_time_ms, processing_time_ms
+        )
+        self.metrics.max_processing_time_ms = max(
+            self.metrics.max_processing_time_ms, processing_time_ms
+        )
 
         self.metrics.last_activity = datetime.now()
 
@@ -462,7 +474,9 @@ class ProcessingInterface(ABC, Generic[T, U]):
 # Utility functions
 
 
-def create_processing_request(input_data: Any, processing_type: str, **kwargs) -> ProcessingRequest:
+def create_processing_request(
+    input_data: Any, processing_type: str, **kwargs
+) -> ProcessingRequest:
     """Create processing request with auto-generated ID.
 
     Args:

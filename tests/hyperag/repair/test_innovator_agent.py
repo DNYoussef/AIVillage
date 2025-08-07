@@ -122,7 +122,9 @@ class TestRepairProposal:
             ),
         ]
 
-        proposal = RepairProposal(violation_id="VIO_001", gdc_rule="test_rule", operations=operations)
+        proposal = RepairProposal(
+            violation_id="VIO_001", gdc_rule="test_rule", operations=operations
+        )
 
         assert proposal.violation_id == "VIO_001"
         assert proposal.gdc_rule == "test_rule"
@@ -141,7 +143,9 @@ class TestRepairProposal:
             )
         ]
 
-        proposal = RepairProposal(violation_id="VIO_002", gdc_rule="attr_rule", operations=operations)
+        proposal = RepairProposal(
+            violation_id="VIO_002", gdc_rule="attr_rule", operations=operations
+        )
 
         jsonl = proposal.to_jsonl()
         lines = jsonl.strip().split("\n")
@@ -170,7 +174,9 @@ class TestRepairProposal:
             ),
         ]
 
-        proposal = RepairProposal(violation_id="VIO_003", gdc_rule="quality_rule", operations=operations)
+        proposal = RepairProposal(
+            violation_id="VIO_003", gdc_rule="quality_rule", operations=operations
+        )
 
         assert proposal.overall_confidence == 0.85
         assert proposal.safety_score == 0.5  # 1 - (1 safety critical / 2 total)
@@ -400,7 +406,9 @@ Final explanatory text."""
         )
 
         # Not safety critical: general update
-        op3 = RepairOperation(RepairOperationType.UPDATE_ATTR, "node_2", "Update contact information", 0.7)
+        op3 = RepairOperation(
+            RepairOperationType.UPDATE_ATTR, "node_2", "Update contact information", 0.7
+        )
 
         assert agent._is_safety_critical(op1)
         assert agent._is_safety_critical(op2)
@@ -429,7 +437,11 @@ Final explanatory text."""
     async def test_validate_proposal(self, agent):
         """Test proposal validation"""
         # Valid proposal
-        operations = [RepairOperation(RepairOperationType.UPDATE_ATTR, "node_1", "Good rationale", 0.8)]
+        operations = [
+            RepairOperation(
+                RepairOperationType.UPDATE_ATTR, "node_1", "Good rationale", 0.8
+            )
+        ]
         proposal = RepairProposal("VIO_009", "test_rule", operations)
 
         validation = await agent.validate_proposal(proposal)

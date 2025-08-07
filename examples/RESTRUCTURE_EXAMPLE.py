@@ -91,19 +91,43 @@ class RestructureSimulator:
 
         # Experimental components to experimental/
         experimental_moves = [
-            ("agent_forge/self_awareness", "experimental/agent_forge_experimental/self_awareness"),
-            ("agent_forge/bakedquietiot", "experimental/agent_forge_experimental/bakedquietiot"),
-            ("agent_forge/sleepdream", "experimental/agent_forge_experimental/sleepdream"),
-            ("agent_forge/foundation", "experimental/agent_forge_experimental/foundation"),
-            ("agent_forge/prompt_baking_legacy", "experimental/agent_forge_experimental/prompt_baking_legacy"),
-            ("agent_forge/tool_baking", "experimental/agent_forge_experimental/tool_baking"),
+            (
+                "agent_forge/self_awareness",
+                "experimental/agent_forge_experimental/self_awareness",
+            ),
+            (
+                "agent_forge/bakedquietiot",
+                "experimental/agent_forge_experimental/bakedquietiot",
+            ),
+            (
+                "agent_forge/sleepdream",
+                "experimental/agent_forge_experimental/sleepdream",
+            ),
+            (
+                "agent_forge/foundation",
+                "experimental/agent_forge_experimental/foundation",
+            ),
+            (
+                "agent_forge/prompt_baking_legacy",
+                "experimental/agent_forge_experimental/prompt_baking_legacy",
+            ),
+            (
+                "agent_forge/tool_baking",
+                "experimental/agent_forge_experimental/tool_baking",
+            ),
             ("agent_forge/adas", "experimental/agent_forge_experimental/adas"),
             ("agent_forge/optim", "experimental/agent_forge_experimental/optim"),
             ("agent_forge/svf", "experimental/agent_forge_experimental/svf"),
             ("agent_forge/meta", "experimental/agent_forge_experimental/meta"),
             ("agent_forge/training", "experimental/agent_forge_experimental/training"),
-            ("agent_forge/evolution", "experimental/agent_forge_experimental/evolution"),
-            ("agent_forge/compression", "experimental/agent_forge_experimental/compression"),
+            (
+                "agent_forge/evolution",
+                "experimental/agent_forge_experimental/evolution",
+            ),
+            (
+                "agent_forge/compression",
+                "experimental/agent_forge_experimental/compression",
+            ),
         ]
 
         print("\nExperimental components → experimental/agent_forge_experimental/:")
@@ -118,7 +142,11 @@ class RestructureSimulator:
         """Simulate moving tools."""
         print("\n=== Simulating Tools Consolidation ===")
 
-        tools_moves = [("scripts", "tools/scripts"), ("benchmarks", "tools/benchmarks"), ("examples", "tools/examples")]
+        tools_moves = [
+            ("scripts", "tools/scripts"),
+            ("benchmarks", "tools/benchmarks"),
+            ("examples", "tools/examples"),
+        ]
 
         for source, target in tools_moves:
             result = self.simulate_move(source, target)

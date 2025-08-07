@@ -14,7 +14,9 @@ import time
 import aiohttp
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -34,10 +36,13 @@ class ProductionReadinessValidator:
         self.results = []
         self.all_passed = True
 
-    async def test_service_availability(self, service_name: str, port: int, path: str = "/health") -> bool:
+    async def test_service_availability(
+        self, service_name: str, port: int, path: str = "/health"
+    ) -> bool:
         """Test service availability and response time."""
         test = ReadinessTest(
-            name=f"{service_name}_availability", description=f"Check {service_name} service availability"
+            name=f"{service_name}_availability",
+            description=f"Check {service_name} service availability",
         )
 
         try:
@@ -51,7 +56,9 @@ class ProductionReadinessValidator:
                 f"{port}:{port}",
             ]
 
-            proc = subprocess.Popen(port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc = subprocess.Popen(
+                port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
             await asyncio.sleep(3)  # Wait for port forward
 
             start_time = time.time()
@@ -66,7 +73,8 @@ class ProductionReadinessValidator:
                     try:
                         request_start = time.time()
                         async with session.get(
-                            f"http://localhost:{port}{path}", timeout=aiohttp.ClientTimeout(total=10)
+                            f"http://localhost:{port}{path}",
+                            timeout=aiohttp.ClientTimeout(total=10),
                         ) as response:
                             request_time = (time.time() - request_start) * 1000
                             response_times.append(request_time)
@@ -84,10 +92,14 @@ class ProductionReadinessValidator:
 
             # Calculate metrics
             success_rate = (success_count / total_requests) * 100
-            avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+            avg_response_time = (
+                sum(response_times) / len(response_times) if response_times else 0
+            )
 
             # Define success criteria
-            success = success_rate >= 80 and avg_response_time < 5000  # 80% success rate, <5s response time
+            success = (
+                success_rate >= 80 and avg_response_time < 5000
+            )  # 80% success rate, <5s response time
 
             result = {
                 "test": test.name,
@@ -121,7 +133,10 @@ class ProductionReadinessValidator:
 
     async def test_database_performance(self, db_type: str, service_name: str) -> bool:
         """Test database performance and connectivity."""
-        test = ReadinessTest(name=f"{db_type}_performance", description=f"Check {db_type} database performance")
+        test = ReadinessTest(
+            name=f"{db_type}_performance",
+            description=f"Check {db_type} database performance",
+        )
 
         try:
             start_time = time.time()
@@ -176,10 +191,14 @@ class ProductionReadinessValidator:
             else:
                 raise ValueError(f"Unknown database type: {db_type}")
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=30, check=False
+            )
             execution_time = (time.time() - start_time) * 1000
 
-            success = result.returncode == 0 and execution_time < 10000  # Less than 10 seconds
+            success = (
+                result.returncode == 0 and execution_time < 10000
+            )  # Less than 10 seconds
 
             test_result = {
                 "test": test.name,
@@ -190,9 +209,13 @@ class ProductionReadinessValidator:
             }
 
             if success:
-                logger.info(f"✅ {db_type} performance test passed ({execution_time:.2f}ms)")
+                logger.info(
+                    f"✅ {db_type} performance test passed ({execution_time:.2f}ms)"
+                )
             else:
-                logger.error(f"❌ {db_type} performance test failed ({execution_time:.2f}ms)")
+                logger.error(
+                    f"❌ {db_type} performance test failed ({execution_time:.2f}ms)"
+                )
                 self.all_passed = False
 
             self.results.append(test_result)
@@ -206,12 +229,16 @@ class ProductionReadinessValidator:
 
     async def test_resource_limits(self) -> bool:
         """Test that pods are within resource limits."""
-        test = ReadinessTest(name="resource_limits", description="Check pod resource usage within limits")
+        test = ReadinessTest(
+            name="resource_limits", description="Check pod resource usage within limits"
+        )
 
         try:
             # Get pod metrics
             cmd = ["kubectl", "top", "pods", "-n", self.namespace, "--no-headers"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=30, check=False
+            )
 
             if result.returncode != 0:
                 raise Exception(f"Failed to get pod metrics: {result.stderr}")
@@ -231,7 +258,11 @@ class ProductionReadinessValidator:
                     # Check if this pod belongs to our deployment slot
                     if self.slot in pod_name:
                         # Parse CPU usage (remove 'm' suffix)
-                        cpu_value = int(cpu_usage.replace("m", "")) if "m" in cpu_usage else int(cpu_usage) * 1000
+                        cpu_value = (
+                            int(cpu_usage.replace("m", ""))
+                            if "m" in cpu_usage
+                            else int(cpu_usage) * 1000
+                        )
 
                         # Parse memory usage (convert to Mi)
                         memory_value = int(memory_usage.replace("Mi", ""))
@@ -241,10 +272,14 @@ class ProductionReadinessValidator:
                         memory_limit = 4096  # 4Gi = 4096Mi
 
                         if cpu_value > cpu_limit * 0.8:  # Alert at 80% of limit
-                            resource_violations.append(f"{pod_name}: CPU usage {cpu_usage} near limit")
+                            resource_violations.append(
+                                f"{pod_name}: CPU usage {cpu_usage} near limit"
+                            )
 
                         if memory_value > memory_limit * 0.8:  # Alert at 80% of limit
-                            resource_violations.append(f"{pod_name}: Memory usage {memory_usage} near limit")
+                            resource_violations.append(
+                                f"{pod_name}: Memory usage {memory_usage} near limit"
+                            )
 
             success = len(resource_violations) == 0
 
@@ -271,12 +306,17 @@ class ProductionReadinessValidator:
 
     async def test_load_balancer_configuration(self) -> bool:
         """Test load balancer and ingress configuration."""
-        test = ReadinessTest(name="load_balancer_config", description="Check load balancer and ingress setup")
+        test = ReadinessTest(
+            name="load_balancer_config",
+            description="Check load balancer and ingress setup",
+        )
 
         try:
             # Check if ingress is properly configured
             cmd = ["kubectl", "get", "ingress", "-n", self.namespace, "-o", "json"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=30, check=False
+            )
 
             if result.returncode != 0:
                 raise Exception(f"Failed to get ingress: {result.stderr}")
@@ -319,12 +359,16 @@ class ProductionReadinessValidator:
 
     async def test_security_configuration(self) -> bool:
         """Test security configurations."""
-        test = ReadinessTest(name="security_config", description="Check security configurations")
+        test = ReadinessTest(
+            name="security_config", description="Check security configurations"
+        )
 
         try:
             # Check if pods are running as non-root
             cmd = ["kubectl", "get", "pods", "-n", self.namespace, "-o", "json"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=30, check=False
+            )
 
             if result.returncode != 0:
                 raise Exception(f"Failed to get pods: {result.stderr}")
@@ -342,17 +386,23 @@ class ProductionReadinessValidator:
 
                     # Check if running as non-root
                     if not security_context.get("runAsNonRoot", False):
-                        security_violations.append(f"{pod_name}: Not configured to run as non-root")
+                        security_violations.append(
+                            f"{pod_name}: Not configured to run as non-root"
+                        )
 
                     # Check containers
                     for container in spec.get("containers", []):
                         container_security = container.get("securityContext", {})
 
                         if container_security.get("allowPrivilegeEscalation", True):
-                            security_violations.append(f"{pod_name}: Privilege escalation allowed")
+                            security_violations.append(
+                                f"{pod_name}: Privilege escalation allowed"
+                            )
 
                         if not container_security.get("readOnlyRootFilesystem", False):
-                            security_violations.append(f"{pod_name}: Root filesystem not read-only")
+                            security_violations.append(
+                                f"{pod_name}: Root filesystem not read-only"
+                            )
 
             success = len(security_violations) == 0
 
@@ -365,7 +415,9 @@ class ProductionReadinessValidator:
             if success:
                 logger.info("✅ Security configuration test passed")
             else:
-                logger.error(f"❌ Security configuration test failed: {security_violations}")
+                logger.error(
+                    f"❌ Security configuration test failed: {security_violations}"
+                )
                 self.all_passed = False
 
             self.results.append(test_result)
@@ -379,7 +431,9 @@ class ProductionReadinessValidator:
 
     async def run_all_readiness_tests(self) -> bool:
         """Run all production readiness tests."""
-        logger.info(f"🚀 Starting production readiness tests for {self.environment} environment (slot: {self.slot})")
+        logger.info(
+            f"🚀 Starting production readiness tests for {self.environment} environment (slot: {self.slot})"
+        )
 
         start_time = time.time()
 
@@ -415,13 +469,19 @@ class ProductionReadinessValidator:
         passed_count = len([r for r in self.results if r.get("status") == "PASS"])
         total_count = len(self.results)
 
-        logger.info(f"\n📊 Production readiness summary: {passed_count}/{total_count} tests passed")
+        logger.info(
+            f"\n📊 Production readiness summary: {passed_count}/{total_count} tests passed"
+        )
         logger.info(f"⏱️  Execution time: {execution_time:.2f} seconds")
 
         if self.all_passed:
-            logger.info("🎉 All production readiness tests passed! Deployment is ready for traffic.")
+            logger.info(
+                "🎉 All production readiness tests passed! Deployment is ready for traffic."
+            )
         else:
-            logger.error("💥 Some production readiness tests failed! Review issues before proceeding.")
+            logger.error(
+                "💥 Some production readiness tests failed! Review issues before proceeding."
+            )
 
         return self.all_passed
 
@@ -443,15 +503,30 @@ class ProductionReadinessValidator:
 
 
 async def main():
-    parser = argparse.ArgumentParser(description="Run production readiness tests for AIVillage deployment")
-    parser.add_argument("--environment", required=True, choices=["staging", "production"], help="Environment to test")
+    parser = argparse.ArgumentParser(
+        description="Run production readiness tests for AIVillage deployment"
+    )
+    parser.add_argument(
+        "--environment",
+        required=True,
+        choices=["staging", "production"],
+        help="Environment to test",
+    )
     parser.add_argument("--namespace", required=True, help="Kubernetes namespace")
-    parser.add_argument("--slot", required=True, choices=["blue", "green"], help="Deployment slot")
-    parser.add_argument("--output", default="readiness_test_results.json", help="Output file for results")
+    parser.add_argument(
+        "--slot", required=True, choices=["blue", "green"], help="Deployment slot"
+    )
+    parser.add_argument(
+        "--output",
+        default="readiness_test_results.json",
+        help="Output file for results",
+    )
 
     args = parser.parse_args()
 
-    validator = ProductionReadinessValidator(args.environment, args.namespace, args.slot)
+    validator = ProductionReadinessValidator(
+        args.environment, args.namespace, args.slot
+    )
     success = await validator.run_all_readiness_tests()
 
     validator.save_results(args.output)

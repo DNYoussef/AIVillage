@@ -68,7 +68,9 @@ class EvolutionMemory:
                 # Decompress existing, add new, recompress
                 if self.long_term_compressed:
                     try:
-                        existing = pickle.loads(lz4.frame.decompress(self.long_term_compressed))
+                        existing = pickle.loads(
+                            lz4.frame.decompress(self.long_term_compressed)
+                        )
                     except:
                         existing = []
                 else:
@@ -180,7 +182,9 @@ class EvolvableAgent:
         self.specialization_domain = agent_config.get("specialization", "general")
         self.expertise_areas: list[str] = agent_config.get("expertise", [])
 
-        logger.info(f"Created evolvable agent {self.agent_id} of type {self.agent_type}")
+        logger.info(
+            f"Created evolvable agent {self.agent_id} of type {self.agent_type}"
+        )
 
     def record_performance(
         self,
@@ -236,18 +240,28 @@ class EvolvableAgent:
 
         # Accuracy (if available)
         accuracy_records = [r.accuracy for r in recent if r.accuracy is not None]
-        avg_accuracy = sum(accuracy_records) / len(accuracy_records) if accuracy_records else 0.7
+        avg_accuracy = (
+            sum(accuracy_records) / len(accuracy_records) if accuracy_records else 0.7
+        )
 
         # Confidence/Uncertainty
-        uncertainty = np.mean(list(self.uncertainty_metrics.values())) if self.uncertainty_metrics else 0.5
+        uncertainty = (
+            np.mean(list(self.uncertainty_metrics.values()))
+            if self.uncertainty_metrics
+            else 0.5
+        )
         confidence = 1 - uncertainty
 
         # Reliability (consistency over time)
         if len(recent) >= 10:
             # Calculate variance in success rate over time windows
             windows = [recent[i : i + 10] for i in range(0, len(recent) - 9, 10)]
-            window_success_rates = [sum(1 for r in w if r.success) / len(w) for w in windows]
-            reliability = 1 - (np.std(window_success_rates) if len(window_success_rates) > 1 else 0)
+            window_success_rates = [
+                sum(1 for r in w if r.success) / len(w) for w in windows
+            ]
+            reliability = 1 - (
+                np.std(window_success_rates) if len(window_success_rates) > 1 else 0
+            )
         else:
             reliability = success_rate
 
@@ -260,7 +274,11 @@ class EvolvableAgent:
 
         # Composite performance score
         performance = (
-            success_rate * 0.3 + avg_accuracy * 0.25 + time_efficiency * 0.2 + confidence * 0.15 + reliability * 0.1
+            success_rate * 0.3
+            + avg_accuracy * 0.25
+            + time_efficiency * 0.2
+            + confidence * 0.15
+            + reliability * 0.1
         )
 
         kpis = {
@@ -314,7 +332,8 @@ class EvolvableAgent:
             "record_count": len(daily_records),
             "success_count": sum(1 for r in daily_records if r.success),
             "failure_count": sum(1 for r in daily_records if not r.success),
-            "avg_execution_time": sum(r.execution_time_ms for r in daily_records) / len(daily_records),
+            "avg_execution_time": sum(r.execution_time_ms for r in daily_records)
+            / len(daily_records),
             "task_types": list({r.task_type for r in daily_records}),
             "peak_performance_hour": self._find_peak_performance_time(daily_records),
             "resource_usage": self._aggregate_resource_usage(daily_records),
@@ -332,20 +351,30 @@ class EvolvableAgent:
             if success_rate < 0.5:
                 insights.append("Performance below threshold - need intervention")
             elif success_rate > 0.9:
-                insights.append("Excellent performance - good candidate for knowledge transfer")
+                insights.append(
+                    "Excellent performance - good candidate for knowledge transfer"
+                )
 
             if daily_stats.get("avg_execution_time", 0) > 3000:  # 3 seconds
                 insights.append("Slow execution times - optimization needed")
 
             # Task-specific insights
             for task_type in daily_stats.get("task_types", []):
-                task_records = [r for r in self.performance_history[-1000:] if r.task_type == task_type]
+                task_records = [
+                    r
+                    for r in self.performance_history[-1000:]
+                    if r.task_type == task_type
+                ]
                 if len(task_records) >= 10:
-                    task_success_rate = sum(1 for r in task_records if r.success) / len(task_records)
+                    task_success_rate = sum(1 for r in task_records if r.success) / len(
+                        task_records
+                    )
                     if task_success_rate < 0.6:
                         insights.append(f"Struggling with {task_type} tasks")
                     elif task_success_rate > 0.85:
-                        insights.append(f"Expert level performance on {task_type} tasks")
+                        insights.append(
+                            f"Expert level performance on {task_type} tasks"
+                        )
 
         return insights
 
@@ -406,7 +435,11 @@ class EvolvableAgent:
                         common_keys.update(context.keys())
 
                 for key in common_keys:
-                    values = [ctx.get(key) for ctx in contexts if isinstance(ctx, dict) and key in ctx]
+                    values = [
+                        ctx.get(key)
+                        for ctx in contexts
+                        if isinstance(ctx, dict) and key in ctx
+                    ]
                     if len(values) >= 5:
                         strong_patterns.append(
                             {
@@ -442,7 +475,10 @@ class EvolvableAgent:
                             "type": "failure_pattern_analysis",
                             "task_type": task_type,
                             "failure_count": len(failures),
-                            "avg_execution_time": sum(f.execution_time_ms for f in failures) / len(failures),
+                            "avg_execution_time": sum(
+                                f.execution_time_ms for f in failures
+                            )
+                            / len(failures),
                             "priority": "high",
                         }
                     )
@@ -494,13 +530,21 @@ class EvolvableAgent:
         failure_records = [r for r in self.performance_history if not r.success]
 
         # Edge cases (high uncertainty but successful)
-        edge_cases = [r for r in successful_records if r.confidence is not None and r.confidence < 0.6][:100]
+        edge_cases = [
+            r
+            for r in successful_records
+            if r.confidence is not None and r.confidence < 0.6
+        ][:100]
 
         return {
             "high_performance": [self._serialize_record(r) for r in successful_records],
-            "failure_analysis": [self._serialize_record(r) for r in failure_records[-200:]],
+            "failure_analysis": [
+                self._serialize_record(r) for r in failure_records[-200:]
+            ],
             "edge_cases": [self._serialize_record(r) for r in edge_cases],
-            "learning_examples": [self._serialize_record(r) for r in self.performance_history[-500:]],
+            "learning_examples": [
+                self._serialize_record(r) for r in self.performance_history[-500:]
+            ],
         }
 
     def _serialize_record(self, record: PerformanceRecord) -> dict[str, Any]:
@@ -543,11 +587,15 @@ class EvolvableAgent:
         for prompt_name in self.prompts:
             # Find records that used this prompt (from context)
             relevant_records = [
-                r for r in self.performance_history[-1000:] if r.context and r.context.get("prompt_used") == prompt_name
+                r
+                for r in self.performance_history[-1000:]
+                if r.context and r.context.get("prompt_used") == prompt_name
             ]
 
             if relevant_records:
-                success_rate = sum(1 for r in relevant_records if r.success) / len(relevant_records)
+                success_rate = sum(1 for r in relevant_records if r.success) / len(
+                    relevant_records
+                )
                 effectiveness[prompt_name] = success_rate
             else:
                 effectiveness[prompt_name] = 0.5  # Default
@@ -599,7 +647,11 @@ class EvolvableAgent:
         strategies = []
 
         # Analyze high-performance periods
-        high_perf_records = [r for r in self.performance_history[-2000:] if r.success and (r.accuracy or 0.7) > 0.8]
+        high_perf_records = [
+            r
+            for r in self.performance_history[-2000:]
+            if r.success and (r.accuracy or 0.7) > 0.8
+        ]
 
         if len(high_perf_records) >= 10:
             # Group by task type
@@ -614,8 +666,10 @@ class EvolvableAgent:
                     strategy = {
                         "task_type": task_type,
                         "success_count": len(records),
-                        "avg_execution_time": sum(r.execution_time_ms for r in records) / len(records),
-                        "avg_accuracy": sum(r.accuracy or 0.7 for r in records) / len(records),
+                        "avg_execution_time": sum(r.execution_time_ms for r in records)
+                        / len(records),
+                        "avg_accuracy": sum(r.accuracy or 0.7 for r in records)
+                        / len(records),
                         "common_contexts": self._find_common_context_features(records),
                     }
                     strategies.append(strategy)
@@ -641,7 +695,8 @@ class EvolvableAgent:
                     pattern = {
                         "task_type": task_type,
                         "failure_count": len(records),
-                        "avg_execution_time": sum(r.execution_time_ms for r in records) / len(records),
+                        "avg_execution_time": sum(r.execution_time_ms for r in records)
+                        / len(records),
                         "common_contexts": self._find_common_context_features(records),
                         "avoidance_strategy": f"Avoid {task_type} tasks with these contexts",
                     }
@@ -688,7 +743,9 @@ class EvolvableAgent:
 
         return domain_knowledge
 
-    def _find_common_context_features(self, records: list[PerformanceRecord]) -> dict[str, Any]:
+    def _find_common_context_features(
+        self, records: list[PerformanceRecord]
+    ) -> dict[str, Any]:
         """Find common features in record contexts."""
         common_features = {}
 
@@ -716,7 +773,9 @@ class EvolvableAgent:
 
         return common_features
 
-    def _find_peak_performance_time(self, records: list[PerformanceRecord]) -> int | None:
+    def _find_peak_performance_time(
+        self, records: list[PerformanceRecord]
+    ) -> int | None:
         """Find hour of day with best performance."""
         if not records:
             return None
@@ -738,7 +797,9 @@ class EvolvableAgent:
 
         return best_hour
 
-    def _aggregate_resource_usage(self, records: list[PerformanceRecord]) -> dict[str, float]:
+    def _aggregate_resource_usage(
+        self, records: list[PerformanceRecord]
+    ) -> dict[str, float]:
         """Aggregate resource usage from records."""
         usage_records = [r.resource_usage for r in records if r.resource_usage]
 
@@ -788,11 +849,15 @@ class EvolvableAgent:
         kpis = self.evaluate_kpi()
 
         # Factors that indicate readiness for evolution
-        performance_gap = max(0, self.evolution_threshold - kpis.get("performance", 0.5))
+        performance_gap = max(
+            0, self.evolution_threshold - kpis.get("performance", 0.5)
+        )
         data_sufficiency = min(1.0, len(self.performance_history) / 1000)
         stability = kpis.get("reliability", 0.5)
 
-        readiness = performance_gap * 0.5 + data_sufficiency * 0.3 + (1 - stability) * 0.2
+        readiness = (
+            performance_gap * 0.5 + data_sufficiency * 0.3 + (1 - stability) * 0.2
+        )
 
         return min(1.0, readiness)
 
@@ -829,6 +894,8 @@ class EvolvableAgent:
         memory_state = state.get("evolution_memory", {})
         agent.evolution_memory.generation = memory_state.get("generation", 0)
         agent.evolution_memory.parent_lineage = memory_state.get("parent_lineage", [])
-        agent.evolution_memory.distilled_wisdom = memory_state.get("distilled_wisdom", {})
+        agent.evolution_memory.distilled_wisdom = memory_state.get(
+            "distilled_wisdom", {}
+        )
 
         return agent

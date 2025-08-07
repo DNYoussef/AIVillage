@@ -38,7 +38,9 @@ class Stage2Compressor:
         hyperfn_clusters: int = 16,
     ) -> None:
         self.vptq = VPTQQuantizer(vptq_bits, vptq_vector_length)
-        self.hyperfn = HyperCompressionEncoder(hyperfn_clusters) if use_hyperfn else None
+        self.hyperfn = (
+            HyperCompressionEncoder(hyperfn_clusters) if use_hyperfn else None
+        )
         self.use_hyperfn = use_hyperfn
 
         # Setup logging
@@ -70,7 +72,9 @@ class Stage2Compressor:
             logger.exception(f"Failed to load Stage 1 model: {e}")
             raise
 
-    def decompress_stage1_weights(self, compressed_weights: dict) -> dict[str, torch.Tensor]:
+    def decompress_stage1_weights(
+        self, compressed_weights: dict
+    ) -> dict[str, torch.Tensor]:
         """Decompress Stage 1 weights for Stage 2 processing."""
         logger.info("Decompressing Stage 1 weights")
 
@@ -80,14 +84,18 @@ class Stage2Compressor:
         for name, weight_data in compressed_weights.items():
             if isinstance(weight_data, dict) and "compressed_blocks" in weight_data:
                 # This is SeedLM compressed data
-                decompressed_weights[name] = seedlm.decompress_weight_matrix(weight_data)
+                decompressed_weights[name] = seedlm.decompress_weight_matrix(
+                    weight_data
+                )
             else:
                 # This is uncompressed data (biases, etc.)
                 decompressed_weights[name] = weight_data
 
         return decompressed_weights
 
-    def apply_vptq_quantization(self, weights: dict[str, torch.Tensor]) -> dict[str, Any]:
+    def apply_vptq_quantization(
+        self, weights: dict[str, torch.Tensor]
+    ) -> dict[str, Any]:
         """Apply VPTQ quantization to decompressed weights."""
         logger.info("Applying VPTQ quantization")
 
@@ -98,7 +106,9 @@ class Stage2Compressor:
             if weight.dim() >= 2:  # Only quantize 2D+ tensors
                 logger.debug(f"Quantizing parameter: {name}")
 
-                quantized_data = self.vptq.quantize_weight_matrix(weight, hessian_method="fisher")
+                quantized_data = self.vptq.quantize_weight_matrix(
+                    weight, hessian_method="fisher"
+                )
                 vptq_data[name] = quantized_data
 
                 compression_stats[name] = {
@@ -110,10 +120,14 @@ class Stage2Compressor:
                 vptq_data[name] = weight
 
         # Calculate overall compression statistics
-        total_ratio = sum(stats["compression_ratio"] for stats in compression_stats.values())
+        total_ratio = sum(
+            stats["compression_ratio"] for stats in compression_stats.values()
+        )
         avg_ratio = total_ratio / len(compression_stats) if compression_stats else 0
 
-        total_error = sum(stats["reconstruction_error"] for stats in compression_stats.values())
+        total_error = sum(
+            stats["reconstruction_error"] for stats in compression_stats.values()
+        )
 
         logger.info(f"VPTQ compression completed. Average ratio: {avg_ratio:.2f}x")
 
@@ -160,13 +174,19 @@ class Stage2Compressor:
 
         # Calculate overall compression statistics
         if compression_stats:
-            avg_ratio = sum(stats["compression_ratio"] for stats in compression_stats.values()) / len(compression_stats)
-            total_error = sum(stats["reconstruction_error"] for stats in compression_stats.values())
+            avg_ratio = sum(
+                stats["compression_ratio"] for stats in compression_stats.values()
+            ) / len(compression_stats)
+            total_error = sum(
+                stats["reconstruction_error"] for stats in compression_stats.values()
+            )
         else:
             avg_ratio = 0
             total_error = 0
 
-        logger.info(f"Hyper-function compression completed. Average ratio: {avg_ratio:.2f}x")
+        logger.info(
+            f"Hyper-function compression completed. Average ratio: {avg_ratio:.2f}x"
+        )
 
         return {
             "hyperfn_data": hyperfn_data,
@@ -175,7 +195,9 @@ class Stage2Compressor:
             "total_reconstruction_error": total_error,
         }
 
-    def save_stage2_model(self, compressed_data: dict, metadata: dict, output_path: str) -> None:
+    def save_stage2_model(
+        self, compressed_data: dict, metadata: dict, output_path: str
+    ) -> None:
         """Save Stage 2 compressed model."""
         logger.info(f"Saving Stage 2 model to {output_path}")
 
@@ -201,12 +223,16 @@ class Stage2Compressor:
 
         logger.info("Stage 2 model saved successfully")
 
-    def evaluate_compression(self, original_weights: dict, compressed_data: dict) -> dict:
+    def evaluate_compression(
+        self, original_weights: dict, compressed_data: dict
+    ) -> dict:
         """Evaluate Stage 2 compression quality."""
         logger.info("Evaluating Stage 2 compression")
 
         # Calculate overall compression statistics
-        total_original_size = sum(w.numel() * 4 for w in original_weights.values())  # 4 bytes per float32
+        total_original_size = sum(
+            w.numel() * 4 for w in original_weights.values()
+        )  # 4 bytes per float32
 
         # Estimate compressed size (simplified)
         total_compressed_size = 0
@@ -215,9 +241,15 @@ class Stage2Compressor:
                 # Rough estimate of compressed size
                 total_compressed_size += len(str(data)) * 4  # Very rough estimate
             else:
-                total_compressed_size += data.numel() * 4 if hasattr(data, "numel") else 1000
+                total_compressed_size += (
+                    data.numel() * 4 if hasattr(data, "numel") else 1000
+                )
 
-        overall_ratio = total_original_size / total_compressed_size if total_compressed_size > 0 else 0
+        overall_ratio = (
+            total_original_size / total_compressed_size
+            if total_compressed_size > 0
+            else 0
+        )
 
         # Calculate reconstruction error (simplified)
         total_error = 0
@@ -250,16 +282,22 @@ class Stage2Compressor:
             hyperfn_result = self.apply_hyperfn_compression(vptq_result["vptq_data"])
 
             # Step 5: Evaluate compression
-            eval_result = self.evaluate_compression(decompressed_weights, hyperfn_result["hyperfn_data"])
+            eval_result = self.evaluate_compression(
+                decompressed_weights, hyperfn_result["hyperfn_data"]
+            )
 
             # Step 6: Save compressed model
-            self.save_stage2_model(hyperfn_result["hyperfn_data"], metadata, output_path)
+            self.save_stage2_model(
+                hyperfn_result["hyperfn_data"], metadata, output_path
+            )
 
             # Compile results
             results = {
                 "success": True,
                 "vptq_compression_ratio": vptq_result["average_compression_ratio"],
-                "hyperfn_compression_ratio": hyperfn_result["average_compression_ratio"],
+                "hyperfn_compression_ratio": hyperfn_result[
+                    "average_compression_ratio"
+                ],
                 "overall_compression_ratio": eval_result["overall_compression_ratio"],
                 "total_reconstruction_error": eval_result["total_reconstruction_error"],
                 "compressed_size_mb": eval_result["compressed_size_mb"],
@@ -267,8 +305,12 @@ class Stage2Compressor:
                 "output_path": output_path,
             }
 
-            logger.info(f"Stage 2 compression completed successfully in {results['total_time_seconds']:.2f}s")
-            logger.info(f"Overall compression ratio: {results['overall_compression_ratio']:.2f}x")
+            logger.info(
+                f"Stage 2 compression completed successfully in {results['total_time_seconds']:.2f}s"
+            )
+            logger.info(
+                f"Overall compression ratio: {results['overall_compression_ratio']:.2f}x"
+            )
 
             return results
 
@@ -285,11 +327,21 @@ def main() -> None:
     """CLI entry point for Stage 2 compression."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Stage 2 Compression Pipeline (VPTQ + HyperFn)")
-    parser.add_argument("--input", required=True, help="Input Stage 1 compressed model path")
-    parser.add_argument("--output", required=True, help="Output Stage 2 compressed model path")
-    parser.add_argument("--vptq-bits", type=float, default=2.0, help="VPTQ bits per vector")
-    parser.add_argument("--vptq-vector-length", type=int, default=32, help="VPTQ vector length")
+    parser = argparse.ArgumentParser(
+        description="Stage 2 Compression Pipeline (VPTQ + HyperFn)"
+    )
+    parser.add_argument(
+        "--input", required=True, help="Input Stage 1 compressed model path"
+    )
+    parser.add_argument(
+        "--output", required=True, help="Output Stage 2 compressed model path"
+    )
+    parser.add_argument(
+        "--vptq-bits", type=float, default=2.0, help="VPTQ bits per vector"
+    )
+    parser.add_argument(
+        "--vptq-vector-length", type=int, default=32, help="VPTQ vector length"
+    )
     parser.add_argument(
         "--disable-hyperfn",
         action="store_true",
@@ -301,7 +353,9 @@ def main() -> None:
         default=16,
         help="Number of hyper-function clusters",
     )
-    parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
+    parser.add_argument(
+        "--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"]
+    )
 
     args = parser.parse_args()
 
@@ -327,10 +381,14 @@ def main() -> None:
     # Print results
     if results["success"]:
         print("✅ Stage 2 compression completed successfully!")
-        print(f"📊 Overall compression ratio: {results['overall_compression_ratio']:.2f}x")
+        print(
+            f"📊 Overall compression ratio: {results['overall_compression_ratio']:.2f}x"
+        )
         print(f"🔧 VPTQ compression ratio: {results['vptq_compression_ratio']:.2f}x")
         if not args.disable_hyperfn:
-            print(f"🌀 HyperFn compression ratio: {results['hyperfn_compression_ratio']:.2f}x")
+            print(
+                f"🌀 HyperFn compression ratio: {results['hyperfn_compression_ratio']:.2f}x"
+            )
         print(f"💾 Compressed size: {results['compressed_size_mb']:.2f} MB")
         print(f"⏱️ Total time: {results['total_time_seconds']:.2f}s")
         print(f"📁 Output: {results['output_path']}")

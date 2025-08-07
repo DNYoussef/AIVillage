@@ -4,7 +4,11 @@ from typing import Any
 from agents.king.king_agent import KingAgent
 from agents.magi.magi_agent import MagiAgent
 from agents.sage.sage_agent import SageAgent
-from agents.unified_base_agent import SelfEvolvingSystem, UnifiedAgentConfig, UnifiedBaseAgent
+from agents.unified_base_agent import (
+    SelfEvolvingSystem,
+    UnifiedAgentConfig,
+    UnifiedBaseAgent,
+)
 from agents.utils.task import Task as LangroidTask
 from core.error_handling import StandardCommunicationProtocol
 from rag_system.core.config import UnifiedConfig
@@ -111,7 +115,9 @@ async def run_task(
     return combined_result
 
 
-async def orchestrate_agents(agents: list[UnifiedBaseAgent], task: dict[str, Any]) -> dict[str, Any]:
+async def orchestrate_agents(
+    agents: list[UnifiedBaseAgent], task: dict[str, Any]
+) -> dict[str, Any]:
     king_agent = next(agent for agent in agents if isinstance(agent, KingAgent))
     langroid_task = LangroidTask(
         king_agent,
@@ -138,7 +144,9 @@ async def main():
 
     # Add some initial tasks to the queue
     await task_queue.add_task({"content": "Analyze market trends", "type": "research"})
-    await task_queue.add_task({"content": "Debug login functionality", "type": "coding"})
+    await task_queue.add_task(
+        {"content": "Debug login functionality", "type": "coding"}
+    )
     await task_queue.add_task(
         {
             "type": "research",

@@ -9,7 +9,12 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 import pytest
 
-from core.error_handling import AIVillageException, ErrorCategory, ErrorContext, ErrorSeverity
+from core.error_handling import (
+    AIVillageException,
+    ErrorCategory,
+    ErrorContext,
+    ErrorSeverity,
+)
 from services.core.service_error_handler import (
     ServiceErrorHandler,
     create_service_error,
@@ -70,7 +75,9 @@ class TestServiceErrorHandler:
             message="Test error",
             category=ErrorCategory.NETWORK,
             severity=ErrorSeverity.ERROR,
-            context=ErrorContext(component="test-service", operation="test_operation", details={}),
+            context=ErrorContext(
+                component="test-service", operation="test_operation", details={}
+            ),
         )
 
         # Mock request
@@ -78,7 +85,9 @@ class TestServiceErrorHandler:
         mock_request.url.path = "/test/path"
         mock_request.state.request_id = "test-123"
 
-        response = handler.create_error_response(exception, request=mock_request, include_stacktrace=True)
+        response = handler.create_error_response(
+            exception, request=mock_request, include_stacktrace=True
+        )
 
         assert response["error"]["path"] == "/test/path"
         assert response["error"]["request_id"] == "test-123"
@@ -166,7 +175,9 @@ class TestServiceIntegration:
         client = TestClient(app)
 
         # Test empty message validation
-        response = client.post("/v1/chat", json={"message": "", "conversation_id": "test"})
+        response = client.post(
+            "/v1/chat", json={"message": "", "conversation_id": "test"}
+        )
 
         assert response.status_code == 422
         # Check standardized error format
@@ -227,7 +238,9 @@ class TestServiceIntegration:
 
         # Test file size limit - FastAPI will handle this with 413
         large_content = b"x" * (11 * 1024 * 1024)  # 11MB
-        response = client.post("/v1/upload", files={"file": ("test.txt", large_content)})
+        response = client.post(
+            "/v1/upload", files={"file": ("test.txt", large_content)}
+        )
 
         assert response.status_code == 413  # Request Entity Too Large
 
@@ -279,13 +292,20 @@ class TestServiceErrorHandlingWithFixtures:
     async def test_chat_service_error_handling(self, mock_chat_service):
         """Test error handling in chat service."""
         # Make the service raise an exception
-        from core.error_handling import AIVillageException, ErrorCategory, ErrorContext, ErrorSeverity
+        from core.error_handling import (
+            AIVillageException,
+            ErrorCategory,
+            ErrorContext,
+            ErrorSeverity,
+        )
 
         test_exception = AIVillageException(
             message="Chat processing failed",
             category=ErrorCategory.CONFIGURATION,
             severity=ErrorSeverity.ERROR,
-            context=ErrorContext(component="chat-service", operation="process_chat", details={}),
+            context=ErrorContext(
+                component="chat-service", operation="process_chat", details={}
+            ),
         )
 
         mock_chat_service.process_chat.side_effect = test_exception
@@ -303,13 +323,20 @@ class TestServiceErrorHandlingWithFixtures:
     @pytest.mark.asyncio
     async def test_query_service_error_handling(self, mock_query_service):
         """Test error handling in query service."""
-        from core.error_handling import AIVillageException, ErrorCategory, ErrorContext, ErrorSeverity
+        from core.error_handling import (
+            AIVillageException,
+            ErrorCategory,
+            ErrorContext,
+            ErrorSeverity,
+        )
 
         test_exception = AIVillageException(
             message="Query execution failed",
             category=ErrorCategory.ACCESS,
             severity=ErrorSeverity.INFO,
-            context=ErrorContext(component="query-service", operation="execute_query", details={}),
+            context=ErrorContext(
+                component="query-service", operation="execute_query", details={}
+            ),
         )
 
         mock_query_service.execute_query.side_effect = test_exception

@@ -5,7 +5,9 @@ import torch
 from transformers import AutoTokenizer
 
 from AIVillage.src.production.evolution.evomerge.config import Configuration
-from AIVillage.src.production.evolution.evomerge.cross_domain import merge_cross_domain_models
+from AIVillage.src.production.evolution.evomerge.cross_domain import (
+    merge_cross_domain_models,
+)
 from AIVillage.src.production.evolution.evomerge.instruction_tuning import (
     is_instruction_tuned_model,
     merge_instruction_tuned_models,
@@ -45,18 +47,28 @@ class AdvancedModelMerger:
                 is_instruction_tuned_model(model, tokenizer)
                 for model, tokenizer in zip(self.models, self.tokenizers, strict=False)
             ):
-                logger.info("All models are instruction-tuned. Using instruction-tuned merge method.")
+                logger.info(
+                    "All models are instruction-tuned. Using instruction-tuned merge method."
+                )
                 merged_model, merged_tokenizer = merge_instruction_tuned_models(
                     self.models, self.tokenizers, self.config.merge_settings
                 )
             elif self._models_are_compatible(self.models):
                 logger.info("Models are compatible. Using standard merge method.")
                 merged_model = self._merge_compatible_models(self.models)
-                merged_tokenizer = self.tokenizers[0]  # Use the first tokenizer as the base
+                merged_tokenizer = self.tokenizers[
+                    0
+                ]  # Use the first tokenizer as the base
             else:
-                logger.info("Models are not compatible. Using cross-domain merge method.")
-                merged_model = merge_cross_domain_models(self.models, self.config.merge_settings)
-                merged_tokenizer = self.tokenizers[0]  # Use the first tokenizer as the base
+                logger.info(
+                    "Models are not compatible. Using cross-domain merge method."
+                )
+                merged_model = merge_cross_domain_models(
+                    self.models, self.config.merge_settings
+                )
+                merged_tokenizer = self.tokenizers[
+                    0
+                ]  # Use the first tokenizer as the base
 
             if merged_model is None:
                 msg = "Merge process failed to produce a valid model"
@@ -71,7 +83,9 @@ class AdvancedModelMerger:
             del self.tokenizers
             torch.cuda.empty_cache()
 
-            logger.info(f"Model merging completed successfully. Saved to: {merged_model_path}")
+            logger.info(
+                f"Model merging completed successfully. Saved to: {merged_model_path}"
+            )
             return merged_model_path
         except Exception as e:
             logger.exception(f"Error during merge process: {e!s}")
@@ -80,7 +94,9 @@ class AdvancedModelMerger:
 
     def _prepare_merge_directory(self) -> None:
         if not os.path.exists(self.config.merge_settings.custom_dir):
-            logger.warning(f"Custom directory does not exist: {self.config.merge_settings.custom_dir}")
+            logger.warning(
+                f"Custom directory does not exist: {self.config.merge_settings.custom_dir}"
+            )
             logger.info("Creating custom directory")
             os.makedirs(self.config.merge_settings.custom_dir, exist_ok=True)
 
@@ -93,7 +109,9 @@ class AdvancedModelMerger:
         base_architecture = type(models[0])
         return all(isinstance(model, base_architecture) for model in models)
 
-    def _merge_compatible_models(self, models: list[torch.nn.Module]) -> torch.nn.Module:
+    def _merge_compatible_models(
+        self, models: list[torch.nn.Module]
+    ) -> torch.nn.Module:
         logger.info(f"Performing {self.config.merge_settings.merge_method} merge")
         if self.config.merge_settings.merge_method == "ps":
             merged_model = self._ps_merge(models)
@@ -121,7 +139,10 @@ class AdvancedModelMerger:
             for name, _ in models[0].named_parameters():
                 merged_param = None
                 for i in range(0, models[0].state_dict()[name].numel(), chunk_size):
-                    chunk_params = [model.state_dict()[name].flatten()[i : i + chunk_size] for model in models]
+                    chunk_params = [
+                        model.state_dict()[name].flatten()[i : i + chunk_size]
+                        for model in models
+                    ]
                     merged_chunk = MERGE_TECHNIQUES[technique](
                         chunk_params,
                         **self.config.merge_settings.parameters.get(technique, {}),
@@ -131,7 +152,9 @@ class AdvancedModelMerger:
                     else:
                         merged_param = torch.cat([merged_param, merged_chunk])
 
-                merged_state_dict[name] = merged_param.reshape(models[0].state_dict()[name].shape)
+                merged_state_dict[name] = merged_param.reshape(
+                    models[0].state_dict()[name].shape
+                )
 
         merged_model = type(models[0])(**models[0].config.to_dict())
         merged_model.load_state_dict(merged_state_dict)
@@ -152,10 +175,14 @@ class AdvancedModelMerger:
         return merged_model
 
     def _apply_weight_masking(self, model: torch.nn.Module) -> torch.nn.Module:
-        logger.info(f"Applying weight masking with rate {self.config.merge_settings.weight_mask_rate}")
+        logger.info(
+            f"Applying weight masking with rate {self.config.merge_settings.weight_mask_rate}"
+        )
         masked_state_dict = mask_model_weights(
             finetuned_model=model,
-            pretrained_model=self.models[0],  # Use the first model as the pretrained model
+            pretrained_model=self.models[
+                0
+            ],  # Use the first model as the pretrained model
             exclude_param_names_regex=[],  # No exclusions for now
             weight_format="finetuned_weight",
             weight_mask_rate=self.config.merge_settings.weight_mask_rate,
@@ -165,18 +192,23 @@ class AdvancedModelMerger:
         model.load_state_dict(masked_state_dict)
         return model
 
-    def _save_merged_model(self, model: torch.nn.Module, tokenizer: AutoTokenizer) -> str:
-        merged_model_name = (
-            f"merged_{self.config.merge_settings.merge_method}_{'_'.join([m.name for m in self.config.models])}"
+    def _save_merged_model(
+        self, model: torch.nn.Module, tokenizer: AutoTokenizer
+    ) -> str:
+        merged_model_name = f"merged_{self.config.merge_settings.merge_method}_{'_'.join([m.name for m in self.config.models])}"
+        merged_model_path = os.path.join(
+            self.config.merge_settings.custom_dir, merged_model_name
         )
-        merged_model_path = os.path.join(self.config.merge_settings.custom_dir, merged_model_name)
         save_model(model, merged_model_path)
         tokenizer.save_pretrained(merged_model_path)
         return merged_model_path
 
     def _track_merged_model(self, merged_model_path: str) -> None:
         parent_models = [model.path for model in self.config.models]
-        merge_techniques = self.config.merge_settings.ps_techniques + self.config.merge_settings.dfs_techniques
+        merge_techniques = (
+            self.config.merge_settings.ps_techniques
+            + self.config.merge_settings.dfs_techniques
+        )
         score = evaluate_model(merged_model_path)["overall_score"]
         model_tracker.add_model(
             model_path=merged_model_path,
@@ -187,7 +219,9 @@ class AdvancedModelMerger:
         )
 
     def _cleanup(self) -> None:
-        clean_up_models([model.path for model in self.config.models if os.path.exists(model.path)])
+        clean_up_models(
+            [model.path for model in self.config.models if os.path.exists(model.path)]
+        )
 
 
 if __name__ == "__main__":

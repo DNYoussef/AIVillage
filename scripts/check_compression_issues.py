@@ -35,7 +35,11 @@ def check_overhead_accumulation():
     import pickle
 
     # Simulate multi-stage compression metadata
-    stage1_output = {"data": b"x" * 1000, "method": "bitnet", "metadata": {"scale": 1.0, "threshold": 0.7}}
+    stage1_output = {
+        "data": b"x" * 1000,
+        "method": "bitnet",
+        "metadata": {"scale": 1.0, "threshold": 0.7},
+    }
 
     stage2_output = {
         "stage1": stage1_output,

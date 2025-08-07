@@ -88,8 +88,8 @@ class MeshMessage:
 
         header = data[:header_size]
 
-        msg_id, msg_type, sender, recipient, payload_len, ttl_priority, timestamp = struct.unpack(
-            "!16s B 16s 16s H B f", header
+        msg_id, msg_type, sender, recipient, payload_len, ttl_priority, timestamp = (
+            struct.unpack("!16s B 16s 16s H B f", header)
         )
 
         ttl = ttl_priority >> 4
@@ -125,13 +125,17 @@ class MeshProtocol:
         """Initialize mesh protocol with node ID."""
         self.node_id = node_id
         self.neighbors: dict[str, MeshNode] = {}
-        self.routing_table: dict[str, tuple[str, int]] = {}  # destination -> (next_hop, distance)
+        self.routing_table: dict[str, tuple[str, int]] = (
+            {}
+        )  # destination -> (next_hop, distance)
         self.message_cache: set[str] = set()  # Prevent duplicate forwarding
         self.pending_messages: asyncio.Queue = asyncio.Queue()
         self.received_messages: asyncio.Queue = asyncio.Queue()
 
         # Callbacks
-        self.message_handlers: dict[MessageType, list[Callable]] = {msg_type: [] for msg_type in MessageType}
+        self.message_handlers: dict[MessageType, list[Callable]] = {
+            msg_type: [] for msg_type in MessageType
+        }
 
         # Network statistics
         self.stats = {
@@ -176,7 +180,9 @@ class MeshProtocol:
 
         # Create message
         message = MeshMessage(
-            message_id=hashlib.sha256(f"{self.node_id}{time.time()}{len(payload_bytes)}".encode()).hexdigest()[:32],
+            message_id=hashlib.sha256(
+                f"{self.node_id}{time.time()}{len(payload_bytes)}".encode()
+            ).hexdigest()[:32],
             message_type=message_type,
             sender_id=self.node_id,
             recipient_id=recipient_id,
@@ -215,7 +221,9 @@ class MeshProtocol:
         """Broadcast message to all neighbors."""
         for neighbor_id, neighbor in self.neighbors.items():
             connection_threshold = 0.3
-            if neighbor.connection_quality > connection_threshold:  # Only send if connection is decent
+            if (
+                neighbor.connection_quality > connection_threshold
+            ):  # Only send if connection is decent
                 await self._send_to_neighbor(neighbor_id, message)
 
     async def _route_message(self, message: MeshMessage) -> None:
@@ -238,15 +246,22 @@ class MeshProtocol:
         # In real implementation, this would use Bluetooth API
         # For now, simulate with some packet loss
         packet_loss_factor = 0.3
-        if rng.random() > self.neighbors[neighbor_id].connection_quality * packet_loss_factor:
+        if (
+            rng.random()
+            > self.neighbors[neighbor_id].connection_quality * packet_loss_factor
+        ):
             # Simulate successful transmission
-            self.logger.debug("Sent %s to %s", message.message_type.name, neighbor_id[:8])
+            self.logger.debug(
+                "Sent %s to %s", message.message_type.name, neighbor_id[:8]
+            )
         else:
             # Simulate packet loss
             # Update packet loss rate with exponential smoothing
             smoothing_factor = 0.9
             loss_increment = 0.1
-            self.stats["packet_loss_rate"] = self.stats["packet_loss_rate"] * smoothing_factor + loss_increment
+            self.stats["packet_loss_rate"] = (
+                self.stats["packet_loss_rate"] * smoothing_factor + loss_increment
+            )
 
     async def receive_message(self, data: bytes, sender_id: str = "") -> None:
         """Receive a message from the mesh network."""
@@ -317,7 +332,9 @@ class MeshProtocol:
                 ],
             }
 
-            await self.send_message(MessageType.ROUTING_UPDATE, routing_update, priority=4)
+            await self.send_message(
+                MessageType.ROUTING_UPDATE, routing_update, priority=4
+            )
 
     async def _neighbor_discovery(self) -> None:
         """Discover nearby mesh nodes."""
@@ -389,7 +406,9 @@ class MeshNetworkSimulator:
                     neighbor = MeshNode(
                         node_id=other_id,
                         device_capabilities={"simulated": True},
-                        location_hash=hashlib.sha256(f"loc_{j}".encode()).hexdigest()[:16],
+                        location_hash=hashlib.sha256(f"loc_{j}".encode()).hexdigest()[
+                            :16
+                        ],
                         agent_roles=["test"],
                         connection_quality=rng.uniform(0.5, 1.0),
                     )
@@ -483,7 +502,10 @@ async def test_mesh_network() -> bool:
 
     print("\n=== Per-Node Stats ===")
     for node_id, node_stats in stats["node_stats"].items():
-        print(f"Node {node_id}: {node_stats['neighbors']} neighbors, " f"{node_stats['messages_sent']} messages sent")
+        print(
+            f"Node {node_id}: {node_stats['neighbors']} neighbors, "
+            f"{node_stats['messages_sent']} messages sent"
+        )
 
     print("\n✅ Mesh network testing complete!")
     return True

@@ -209,7 +209,11 @@ def test_high_level_interfaces():
 
         print("   - Status: WORKING")
 
-        results["unified_compressor"] = {"working": True, "method": method, "decompression_works": decompression_works}
+        results["unified_compressor"] = {
+            "working": True,
+            "method": method,
+            "decompression_works": decompression_works,
+        }
 
     except Exception as e:
         print(f"   - Status: FAILED - {e}")
@@ -228,8 +232,12 @@ def run_comprehensive_tests():
     print("=" * 50)
 
     # Count working components
-    working_components = sum(1 for r in component_results.values() if r.get("working", False))
-    working_interfaces = sum(1 for r in interface_results.values() if r.get("working", False))
+    working_components = sum(
+        1 for r in component_results.values() if r.get("working", False)
+    )
+    working_interfaces = sum(
+        1 for r in interface_results.values() if r.get("working", False)
+    )
 
     print(f"\nWorking low-level components: {working_components}/3")
     print(f"Working high-level interfaces: {working_interfaces}/2")

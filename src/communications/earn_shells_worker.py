@@ -4,10 +4,10 @@
 import argparse
 from datetime import datetime, timezone
 import logging
+from pathlib import Path
 import sys
 import time
 from urllib.parse import urljoin
-from pathlib import Path
 
 try:
     from .credits_ledger import CreditsConfig, CreditsLedger
@@ -62,7 +62,9 @@ class PrometheusClient:
             uptime_query = f'up{{instance="{node_id}"}}'
             uptime_result = self.query(uptime_query, timestamp)
             if uptime_result["status"] == "success" and uptime_result["data"]["result"]:
-                metrics["uptime_seconds"] = int(float(uptime_result["data"]["result"][0]["value"][1]))
+                metrics["uptime_seconds"] = int(
+                    float(uptime_result["data"]["result"][0]["value"][1])
+                )
             else:
                 metrics["uptime_seconds"] = 0
         except Exception as e:
@@ -74,7 +76,9 @@ class PrometheusClient:
             flops_query = f'rate(twin_chat_latency_seconds_count{{instance="{node_id}"}}[5m]) * 1000000'
             flops_result = self.query(flops_query, timestamp)
             if flops_result["status"] == "success" and flops_result["data"]["result"]:
-                metrics["flops"] = int(float(flops_result["data"]["result"][0]["value"][1]))
+                metrics["flops"] = int(
+                    float(flops_result["data"]["result"][0]["value"][1])
+                )
             else:
                 metrics["flops"] = 0
         except Exception as e:
@@ -83,10 +87,17 @@ class PrometheusClient:
 
         # Bandwidth (bytes)
         try:
-            bandwidth_query = f'rate(gw_requests_total{{instance="{node_id}"}}[5m]) * 1024'
+            bandwidth_query = (
+                f'rate(gw_requests_total{{instance="{node_id}"}}[5m]) * 1024'
+            )
             bandwidth_result = self.query(bandwidth_query, timestamp)
-            if bandwidth_result["status"] == "success" and bandwidth_result["data"]["result"]:
-                metrics["bandwidth_bytes"] = int(float(bandwidth_result["data"]["result"][0]["value"][1]))
+            if (
+                bandwidth_result["status"] == "success"
+                and bandwidth_result["data"]["result"]
+            ):
+                metrics["bandwidth_bytes"] = int(
+                    float(bandwidth_result["data"]["result"][0]["value"][1])
+                )
             else:
                 metrics["bandwidth_bytes"] = 0
         except Exception as e:
@@ -147,7 +158,9 @@ class EarnShellsWorker:
                 if create_response.status_code == 201:
                     logger.info("Created user %s with node_id %s", username, node_id)
                     return True
-                logger.error("Failed to create user %s: %s", username, create_response.text)
+                logger.error(
+                    "Failed to create user %s: %s", username, create_response.text
+                )
                 return False
             logger.error("Failed to check user %s: %s", username, response.text)
             return False
@@ -178,7 +191,9 @@ class EarnShellsWorker:
                 "bandwidth_bytes": metrics["bandwidth_bytes"],
             }
 
-            response = self.session.post(f"{self.credits_api_url}/earn", json=earn_request)
+            response = self.session.post(
+                f"{self.credits_api_url}/earn", json=earn_request
+            )
 
             if response.status_code == 200:
                 earning_data = response.json()
@@ -228,7 +243,9 @@ class EarnShellsWorker:
 
     def run_continuous(self, interval_seconds: int = 300) -> None:
         """Run worker continuously with specified interval."""
-        logger.info("Starting continuous earning worker with %ds interval", interval_seconds)
+        logger.info(
+            "Starting continuous earning worker with %ds interval", interval_seconds
+        )
 
         while True:
             try:
@@ -258,14 +275,18 @@ def main() -> None:
         default="http://localhost:9090",
         help="Prometheus server URL",
     )
-    parser.add_argument("--credits-api-url", default="http://localhost:8002", help="Credits API URL")
+    parser.add_argument(
+        "--credits-api-url", default="http://localhost:8002", help="Credits API URL"
+    )
     parser.add_argument(
         "--interval",
         type=int,
         default=300,
         help="Interval between earning cycles in seconds",
     )
-    parser.add_argument("--once", action="store_true", help="Run once and exit (useful for cron jobs)")
+    parser.add_argument(
+        "--once", action="store_true", help="Run once and exit (useful for cron jobs)"
+    )
     parser.add_argument("--verbose", action="store_true", help="Enable debug logging")
 
     args = parser.parse_args()

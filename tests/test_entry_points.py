@@ -13,7 +13,9 @@ import sys
 def run_command(cmd, cwd=None):
     """Run a command and return the result"""
     try:
-        result = subprocess.run(cmd, check=False, shell=True, capture_output=True, text=True, cwd=cwd)
+        result = subprocess.run(
+            cmd, check=False, shell=True, capture_output=True, text=True, cwd=cwd
+        )
         return result.returncode, result.stdout, result.stderr
     except Exception as e:
         return -1, "", str(e)

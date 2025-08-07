@@ -72,8 +72,12 @@ class DeploymentManifestGenerator:
                 # Extract compression ratios
                 if "compression_stats" in model_data:
                     stats = model_data["compression_stats"]
-                    compression_info["compression_ratio"] = stats.get("average_compression_ratio", 0)
-                    compression_info["reconstruction_error"] = stats.get("total_reconstruction_error", 0)
+                    compression_info["compression_ratio"] = stats.get(
+                        "average_compression_ratio", 0
+                    )
+                    compression_info["reconstruction_error"] = stats.get(
+                        "total_reconstruction_error", 0
+                    )
 
             elif "compressed_state" in model_data:
                 compression_info["pipeline"] = "BitNet -> SeedLM"
@@ -82,8 +86,14 @@ class DeploymentManifestGenerator:
                 # Extract Stage 1 compression stats
                 if "compression_stats" in model_data:
                     stats = model_data["compression_stats"]
-                    ratios = [s["compression_ratio"] for s in stats.values() if "compression_ratio" in s]
-                    compression_info["compression_ratio"] = sum(ratios) / len(ratios) if ratios else 0
+                    ratios = [
+                        s["compression_ratio"]
+                        for s in stats.values()
+                        if "compression_ratio" in s
+                    ]
+                    compression_info["compression_ratio"] = (
+                        sum(ratios) / len(ratios) if ratios else 0
+                    )
 
             else:
                 compression_info["pipeline"] = "none"
@@ -96,14 +106,20 @@ class DeploymentManifestGenerator:
                 config = model_data["config"]
                 training_info["bitnet_enabled"] = config.get("bitnet_enabled", False)
                 training_info["seedlm_enabled"] = config.get("seedlm_enabled", False)
-                training_info["max_sequence_length"] = config.get("max_sequence_length", 512)
+                training_info["max_sequence_length"] = config.get(
+                    "max_sequence_length", 512
+                )
 
             # Extract model architecture info
             architecture_info = {}
             if "model_info" in model_data:
                 model_info = model_data["model_info"]
-                architecture_info["base_model"] = model_info.get("model_path", "unknown")
-                architecture_info["tokenizer_config"] = model_info.get("tokenizer_config", {})
+                architecture_info["base_model"] = model_info.get(
+                    "model_path", "unknown"
+                )
+                architecture_info["tokenizer_config"] = model_info.get(
+                    "tokenizer_config", {}
+                )
 
             return {
                 "compression": compression_info,
@@ -147,7 +163,9 @@ class DeploymentManifestGenerator:
                 "throughput_tokens_per_sec": 35.2,  # Placeholder
             }
 
-            logger.info(f"Evaluation completed: accuracy={evaluation_results['accuracy']:.3f}")
+            logger.info(
+                f"Evaluation completed: accuracy={evaluation_results['accuracy']:.3f}"
+            )
             return evaluation_results
 
         except Exception as e:
@@ -359,7 +377,9 @@ for inp, resp in zip(inputs, responses):
                 "format": self.model_path.suffix.lstrip("."),
                 "compression_pipeline": model_metadata["compression"]["pipeline"],
                 "compression_stage": model_metadata["compression"]["stage"],
-                "compression_ratio": model_metadata["compression"].get("compression_ratio", 1.0),
+                "compression_ratio": model_metadata["compression"].get(
+                    "compression_ratio", 1.0
+                ),
             },
             "evaluation_metrics": evaluation_results,
             "deployment_requirements": deployment_requirements,
@@ -430,7 +450,9 @@ for inp, resp in zip(inputs, responses):
         # Create requirements.txt
         requirements_path = version_dir / "requirements.txt"
         with open(requirements_path, "w") as f:
-            requirements = manifest["deployment_requirements"]["software_requirements"]["additional_dependencies"]
+            requirements = manifest["deployment_requirements"]["software_requirements"][
+                "additional_dependencies"
+            ]
             for req in requirements:
                 f.write(f"{req}\n")
 
@@ -503,11 +525,17 @@ def main() -> None:
     """CLI entry point for manifest generation."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Generate deployment manifest for Agent Forge model")
+    parser = argparse.ArgumentParser(
+        description="Generate deployment manifest for Agent Forge model"
+    )
     parser.add_argument("--model", required=True, help="Path to model file")
     parser.add_argument("--output", default="releases", help="Output directory")
-    parser.add_argument("--version", help="Version string (auto-generated if not provided)")
-    parser.add_argument("--create-bundle", action="store_true", help="Create complete release bundle")
+    parser.add_argument(
+        "--version", help="Version string (auto-generated if not provided)"
+    )
+    parser.add_argument(
+        "--create-bundle", action="store_true", help="Create complete release bundle"
+    )
 
     args = parser.parse_args()
 
@@ -535,7 +563,9 @@ def main() -> None:
     print(f"📦 Size: {manifest['model_info']['file_size_mb']:.2f} MB")
     print(f"🗜️ Compression: {manifest['model_info']['compression_ratio']:.2f}x")
     print(f"🎯 Accuracy: {manifest['evaluation_metrics']['accuracy']:.3f}")
-    print(f"🚀 Deployment Tier: {manifest['deployment_requirements']['deployment_tier']}")
+    print(
+        f"🚀 Deployment Tier: {manifest['deployment_requirements']['deployment_tier']}"
+    )
 
 
 if __name__ == "__main__":

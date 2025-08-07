@@ -1,4 +1,6 @@
-from rag_system.agents.task_planning_agent import TaskPlanningAgent as _BaseTaskPlanningAgent
+from rag_system.agents.task_planning_agent import (
+    TaskPlanningAgent as _BaseTaskPlanningAgent,
+)
 
 
 class TaskPlanningAgent(_BaseTaskPlanningAgent):

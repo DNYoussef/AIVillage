@@ -18,7 +18,9 @@ class SmokeTestRunner:
         self.namespace = namespace
         self.results = []
 
-    async def test_service_health(self, service_name: str, port: int, health_path: str = "/health") -> bool:
+    async def test_service_health(
+        self, service_name: str, port: int, health_path: str = "/health"
+    ) -> bool:
         """Test if a service is responding to health checks."""
         try:
             # Get service endpoint using kubectl port-forward
@@ -31,20 +33,34 @@ class SmokeTestRunner:
             ]
 
             # Start port forwarding in background
-            proc = subprocess.Popen(port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc = subprocess.Popen(
+                port_forward_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
 
             # Wait a moment for port forward to establish
             await asyncio.sleep(2)
 
             async with aiohttp.ClientSession() as session:
                 url = f"http://localhost:{port}{health_path}"
-                async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                async with session.get(
+                    url, timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
                     if response.status == 200:
-                        result = {"service": service_name, "status": "PASS", "response_code": response.status}
+                        result = {
+                            "service": service_name,
+                            "status": "PASS",
+                            "response_code": response.status,
+                        }
                         print(f"✅ {service_name} health check passed")
                     else:
-                        result = {"service": service_name, "status": "FAIL", "response_code": response.status}
-                        print(f"❌ {service_name} health check failed with status {response.status}")
+                        result = {
+                            "service": service_name,
+                            "status": "FAIL",
+                            "response_code": response.status,
+                        }
+                        print(
+                            f"❌ {service_name} health check failed with status {response.status}"
+                        )
 
                     self.results.append(result)
                     proc.terminate()
@@ -58,7 +74,9 @@ class SmokeTestRunner:
                 proc.terminate()
             return False
 
-    async def test_database_connectivity(self, db_type: str, service_name: str, port: int) -> bool:
+    async def test_database_connectivity(
+        self, db_type: str, service_name: str, port: int
+    ) -> bool:
         """Test database connectivity."""
         try:
             # Test database connection using kubectl exec
@@ -105,19 +123,37 @@ class SmokeTestRunner:
             else:
                 raise ValueError(f"Unknown database type: {db_type}")
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=30, check=False
+            )
 
             if result.returncode == 0:
                 print(f"✅ {db_type} database connectivity test passed")
-                self.results.append({"service": service_name, "db_type": db_type, "status": "PASS"})
+                self.results.append(
+                    {"service": service_name, "db_type": db_type, "status": "PASS"}
+                )
                 return True
             print(f"❌ {db_type} database connectivity test failed: {result.stderr}")
-            self.results.append({"service": service_name, "db_type": db_type, "status": "FAIL", "error": result.stderr})
+            self.results.append(
+                {
+                    "service": service_name,
+                    "db_type": db_type,
+                    "status": "FAIL",
+                    "error": result.stderr,
+                }
+            )
             return False
 
         except Exception as e:
             print(f"❌ {db_type} database test failed: {e}")
-            self.results.append({"service": service_name, "db_type": db_type, "status": "FAIL", "error": str(e)})
+            self.results.append(
+                {
+                    "service": service_name,
+                    "db_type": db_type,
+                    "status": "FAIL",
+                    "error": str(e),
+                }
+            )
             return False
 
     async def test_service_integration(self) -> bool:
@@ -131,22 +167,36 @@ class SmokeTestRunner:
 
             # For now, just verify all services are running
             cmd = ["kubectl", "get", "pods", "-n", self.namespace, "-o", "json"]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=30, check=False
+            )
 
             if result.returncode == 0:
                 pods_data = json.loads(result.stdout)
-                running_pods = [pod for pod in pods_data["items"] if pod["status"]["phase"] == "Running"]
+                running_pods = [
+                    pod
+                    for pod in pods_data["items"]
+                    if pod["status"]["phase"] == "Running"
+                ]
 
                 total_pods = len(pods_data["items"])
                 running_count = len(running_pods)
 
                 if running_count == total_pods and total_pods > 0:
-                    print(f"✅ Service integration test passed ({running_count}/{total_pods} pods running)")
+                    print(
+                        f"✅ Service integration test passed ({running_count}/{total_pods} pods running)"
+                    )
                     self.results.append(
-                        {"test": "service_integration", "status": "PASS", "pods_running": running_count}
+                        {
+                            "test": "service_integration",
+                            "status": "PASS",
+                            "pods_running": running_count,
+                        }
                     )
                     return True
-                print(f"❌ Service integration test failed ({running_count}/{total_pods} pods running)")
+                print(
+                    f"❌ Service integration test failed ({running_count}/{total_pods} pods running)"
+                )
                 self.results.append(
                     {
                         "test": "service_integration",
@@ -161,12 +211,16 @@ class SmokeTestRunner:
 
         except Exception as e:
             print(f"❌ Service integration test failed: {e}")
-            self.results.append({"test": "service_integration", "status": "FAIL", "error": str(e)})
+            self.results.append(
+                {"test": "service_integration", "status": "FAIL", "error": str(e)}
+            )
             return False
 
     async def run_all_tests(self) -> bool:
         """Run all smoke tests."""
-        print(f"🚀 Starting smoke tests for {self.environment} environment in namespace {self.namespace}")
+        print(
+            f"🚀 Starting smoke tests for {self.environment} environment in namespace {self.namespace}"
+        )
 
         all_passed = True
 
@@ -227,9 +281,16 @@ class SmokeTestRunner:
 
 async def main():
     parser = argparse.ArgumentParser(description="Run AIVillage smoke tests")
-    parser.add_argument("--environment", required=True, choices=["staging", "production"], help="Environment to test")
+    parser.add_argument(
+        "--environment",
+        required=True,
+        choices=["staging", "production"],
+        help="Environment to test",
+    )
     parser.add_argument("--namespace", required=True, help="Kubernetes namespace")
-    parser.add_argument("--output", default="smoke_test_results.json", help="Output file for results")
+    parser.add_argument(
+        "--output", default="smoke_test_results.json", help="Output file for results"
+    )
 
     args = parser.parse_args()
 
