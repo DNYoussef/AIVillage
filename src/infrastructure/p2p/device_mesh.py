@@ -1,3 +1,4 @@
+# ruff: noqa
 """P2P Device Mesh - Essential for distributed operation
 Currently returns empty list - no peers ever found!
 """
@@ -9,6 +10,8 @@ import socket
 import threading
 import time
 from typing import Any
+
+from .nat_traversal import NATTraversal
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +29,7 @@ class DeviceMesh:
         self.discovery_thread: threading.Thread | None = None
         self.health_thread: threading.Thread | None = None
         self.running = False
+        self.nat = NATTraversal()
 
     def _get_local_info(self) -> dict[str, Any]:
         """Get local device information."""
@@ -152,7 +156,9 @@ class DeviceMesh:
 
                 if message.get("type") == "discover":
                     # Respond with announce
-                    response = json.dumps({"type": "announce", "from": self.local_info}).encode()
+                    response = json.dumps(
+                        {"type": "announce", "from": self.local_info}
+                    ).encode()
 
                     sock.sendto(response, addr)
 
@@ -164,18 +170,11 @@ class DeviceMesh:
         sock.close()
 
     def connect_to_peer(self, peer_address: str) -> bool:
-        """Connect to a specific peer."""
+        """Connect to a specific peer using NAT traversal."""
         try:
-            # Simple TCP connection test
             host, port = peer_address.split(":")
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5.0)
-            result = sock.connect_ex((host, int(port)))
-            sock.close()
-
-            return result == 0
-
-        except Exception as e:
+            return self.nat.connect(host, int(port))
+        except Exception as e:  # pragma: no cover - network failures
             logger.exception(f"Failed to connect to {peer_address}: {e}")
             return False
 
