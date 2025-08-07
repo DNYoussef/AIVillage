@@ -1,113 +1,18 @@
-# Contributing to AI Village
+# Contributing to AIVillage
 
-We're excited that you're interested in contributing to AI Village! This document outlines the process for contributing to the project and provides guidelines for submitting pull requests.
+## Development Setup
+1. Clone the repository and create a virtual environment.
+2. Run `./scripts/setup.sh` to install dependencies and set up pre-commit hooks.
 
-## Table of Contents
+## Local Workflow
+- `make format` – format code with Black
+- `make lint` – run Ruff linting
+- `make test` – run the pytest suite
+- `make ci` – run formatting, linting, and tests
 
-1. [Setting Up the Development Environment](#setting-up-the-development-environment)
-2. [Running Tests](#running-tests)
-3. [Continuous Learning Features](#continuous-learning-features)
-4. [Submitting Changes](#submitting-changes)
-5. [Code Style Guidelines](#code-style-guidelines)
-6. [Reporting Issues](#reporting-issues)
+## Continuous Integration
+GitHub Actions runs `make ci` on pushes and pull requests using Python 3.10.
 
-## Setting Up the Development Environment
-
-1. Fork the repository on GitHub.
-2. Clone your fork locally:
-   ```
-   git clone https://github.com/your-username/ai-village.git
-   cd ai-village
-   ```
-3. Create a virtual environment and activate it:
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-   ```
-4. Install the required dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-
-## Running Tests
-
-We use pytest for our testing framework. To run all tests:
-
-```
-pytest
-```
-
-To run specific test categories:
-
-```
-pytest tests/unit/              # Unit tests
-pytest tests/integration/       # Integration tests
-pytest tests/performance/       # Performance benchmarks
-pytest tests/mobile/            # Mobile compatibility tests
-```
-
-For detailed output and coverage:
-
-```
-pytest -v                       # Verbose output
-pytest --cov=src               # With coverage report
-pytest --cov=src --cov-report=html  # HTML coverage report
-```
-
-Make sure all tests pass before submitting a pull request.
-
-## Refreshing wheels
-
-The CI pipeline installs dev dependencies from `vendor/wheels` without
-internet access. Refresh the cache whenever `requirements-dev.txt` changes:
-
-1. Edit `requirements-dev.txt` as needed.
-2. Run `python scripts/fetch_wheels.py` to download wheels and update
-   `docs/build_artifacts/wheel-manifest.txt`.
-3. Commit **only** `vendor/wheels/.gitkeep` and the manifest file.
-4. **Do not** commit any `.whl` artifacts.
-
-If CI reports a wheel cache change, rerun the script and commit the updated
-manifest.
-
-## Continuous Learning Features
-
-AI Village incorporates continuous learning capabilities. When working with these features:
-
-1. Ensure that the `ContinuousLearner` class is properly integrated with the agent you're working on.
-2. Test the learning process by providing diverse feedback and monitoring the agent's performance over time.
-3. Verify that the learning rate adjusts appropriately based on the agent's performance.
-
-## Submitting Changes
-
-1. Create a new `feature/<description>` branch from `main`:
-   ```
-   git checkout -b feature/your-feature-name main
-   ```
-2. Make your changes and commit them with a clear commit message.
-3. Push your branch to your fork:
-   ```
-   git push origin feature/your-feature-name
-   ```
-4. Open a pull request targeting the `main` branch.
-5. Ensure that your pull request includes:
-   - A clear description of the changes and related issue numbers
-   - Passing test results
-   - Updates to documentation if necessary
-
-## Code Style Guidelines
-
-- Follow PEP 8 guidelines for Python code style.
-- Use type hints for function arguments and return values.
-- Write clear, concise comments and docstrings.
-- Use meaningful variable and function names.
-
-## Reporting Issues
-
-If you encounter a bug or have a suggestion for improvement:
-
-1. Check if the issue already exists in the GitHub issue tracker.
-2. If not, create a new issue with a clear title and description.
-3. Include steps to reproduce the issue and any relevant error messages.
-
-Thank you for contributing to AI Village! Your efforts help make this project better for everyone.
+## Common Issues
+- Missing dependencies: rerun `./scripts/setup.sh`
+- Pre-commit failures: run `pre-commit run --all-files` locally and commit fixes
