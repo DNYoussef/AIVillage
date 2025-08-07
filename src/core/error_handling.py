@@ -12,6 +12,11 @@ import logging
 import traceback
 from typing import Any, TypeVar, cast
 
+from src.communications.protocol import (
+    StandardCommunicationProtocol as BaseCommProtocol,
+)
+from src.communications.message import Priority
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -61,6 +66,7 @@ class MessageType(Enum):
     """Types of messages for communication protocol."""
 
     REQUEST = "request"
+    QUERY = "query"
     RESPONSE = "response"
     ERROR = "error"
     NOTIFICATION = "notification"
@@ -74,14 +80,14 @@ class Message:
     type: MessageType
     content: Any
     sender: str
-    recipient: str
+    receiver: str
     timestamp: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
-    message_id: str = field(
-        default_factory=lambda: str(datetime.now(timezone.utc).timestamp())
-    )
+    id: str = field(default_factory=lambda: str(datetime.now(timezone.utc).timestamp()))
     metadata: dict[str, Any] = field(default_factory=dict)
+    priority: Priority = Priority.MEDIUM
+    parent_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert message to dictionary format."""
@@ -89,10 +95,12 @@ class Message:
             "type": self.type.value,
             "content": self.content,
             "sender": self.sender,
-            "recipient": self.recipient,
+            "receiver": self.receiver,
             "timestamp": self.timestamp,
-            "message_id": self.message_id,
+            "id": self.id,
             "metadata": self.metadata,
+            "priority": self.priority.value,
+            "parent_id": self.parent_id,
         }
 
     @classmethod
@@ -102,17 +110,26 @@ class Message:
             type=MessageType(data["type"]),
             content=data["content"],
             sender=data["sender"],
-            recipient=data["recipient"],
+            receiver=data["receiver"],
             timestamp=data.get("timestamp", datetime.now(timezone.utc).isoformat()),
-            message_id=data.get(
-                "message_id", str(datetime.now(timezone.utc).timestamp())
-            ),
+            id=data.get("id", str(datetime.now(timezone.utc).timestamp())),
             metadata=data.get("metadata", {}),
+            priority=Priority(data.get("priority", Priority.MEDIUM.value)),
+            parent_id=data.get("parent_id"),
         )
 
 
-class StandardCommunicationProtocol:
-    """Standard protocol for communication between components."""
+class StandardCommunicationProtocol(BaseCommProtocol):
+    """Standard protocol for communication between components.
+
+    This class extends the full implementation from :mod:`src.communications` and
+    adds convenience helpers for creating structured messages.
+    """
+
+    def __init__(self, agent_id: str = "anon", port: int = 8888) -> None:  # pragma: no cover - simple wrapper
+        super().__init__(agent_id=agent_id, port=port)
+        self.inboxes: dict[str, asyncio.PriorityQueue[tuple[int, Message]]] = {}
+        self._running = True
 
     @staticmethod
     def create_request(
@@ -158,6 +175,64 @@ class StandardCommunicationProtocol:
             recipient=recipient,
             metadata=metadata or {},
         )
+
+    # Compatibility wrappers -------------------------------------------------
+    def subscribe(self, agent_id: str, handler: Callable[[Message], Any]) -> None:
+        self.message_handlers[agent_id] = handler
+
+    def unsubscribe(self, agent_id: str, handler: Callable[[Message], Any]) -> None:
+        self.message_handlers.pop(agent_id, None)
+
+    async def send_message(self, message: Message) -> None:
+        self._store_message(message.sender, message.to_dict(), "sent")
+        self._store_message(message.receiver, message.to_dict(), "received")
+        queue = self.inboxes.setdefault(message.receiver, asyncio.PriorityQueue())
+        await queue.put((-message.priority.value, message))
+        handler = self.message_handlers.get(message.receiver)
+        if handler is not None:
+            await handler(message)
+
+    async def receive_message(self, agent_id: str) -> Message:
+        queue = self.inboxes.setdefault(agent_id, asyncio.PriorityQueue())
+        _p, msg = await queue.get()
+        return msg
+
+    async def send_and_wait(self, message: Message, timeout: float = 1.0) -> Message:
+        await self.send_message(message)
+        return await asyncio.wait_for(self.receive_message(message.sender), timeout)
+
+    async def broadcast(
+        self, sender: str, message_type: MessageType, content: dict[str, Any]
+    ) -> None:
+        for agent_id in list(self.message_handlers.keys()):
+            msg = Message(
+                type=message_type,
+                sender=sender,
+                receiver=agent_id,
+                content=content,
+            )
+            await self.send_message(msg)
+
+    async def process_messages(self, handler: Callable[[Message], Any]) -> None:
+        while self._running:
+            for queue in list(self.inboxes.values()):
+                if not queue.empty():
+                    _p, msg = await queue.get()
+                    await handler(msg)
+            await asyncio.sleep(0.01)
+
+    def get_message_history(
+        self, agent_id: str, message_type: MessageType | None = None
+    ) -> list[Message]:
+        history = self.message_history.get(agent_id, [])
+        msgs = [
+            Message.from_dict(entry["message"])
+            for entry in history
+            if isinstance(entry, dict) and "message" in entry
+        ]
+        if message_type is not None:
+            msgs = [m for m in msgs if m.type == message_type]
+        return msgs
 
 
 @dataclass

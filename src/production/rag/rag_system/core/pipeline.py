@@ -1,4 +1,9 @@
+import hashlib
+from datetime import datetime
 from typing import Any
+
+import numpy as np
+from hyperrag.hippo_cache import CacheEntry, HippoCache
 
 from rag_system.core.base_component import BaseComponent
 from rag_system.core.cognitive_nexus import CognitiveNexus
@@ -29,6 +34,15 @@ class EnhancedRAGPipeline(BaseComponent):
         self.bayes_net = shared_bayes_net
         self.knowledge_tracker = knowledge_tracker
 
+        if self.config.cache_enabled:
+            self.cache = HippoCache(
+                max_size=self.config.cache_max_size,
+                ttl_hours=self.config.cache_ttl_hours,
+                similarity_threshold=self.config.cache_similarity,
+            )
+        else:
+            self.cache = None
+
     @log_and_handle_errors
     async def initialize(self) -> None:
         await self.latent_space_activation.initialize()
@@ -38,6 +52,23 @@ class EnhancedRAGPipeline(BaseComponent):
 
     @log_and_handle_errors
     async def process(self, query: str) -> dict[str, Any]:
+        embedding = np.frombuffer(
+            hashlib.sha256(query.encode()).digest(), dtype=np.uint8
+        ).astype("float32")
+        if embedding.size < 768:
+            embedding = np.pad(embedding, (0, 768 - embedding.size))
+        else:
+            embedding = embedding[:768]
+        key = hashlib.sha256(embedding.tobytes()).hexdigest()
+
+        if self.cache:
+            entry = self.cache.get(embedding)
+            if entry is not None:
+                cached = entry.citation_metadata.get("pipeline_result")
+                if cached:
+                    cached["cache_hit"] = True
+                    return cached
+
         # Latent space activation
         activated_knowledge = await self.latent_space_activation.activate(query)
 
@@ -58,13 +89,26 @@ class EnhancedRAGPipeline(BaseComponent):
             query, reasoning_result, activated_knowledge
         )
 
-        return {
+        result = {
             "query": query,
             "activated_knowledge": activated_knowledge,
             "retrieved_info": retrieved_info,
             "reasoning_result": reasoning_result,
             "integrated_result": integrated_result,
+            "cache_hit": False,
         }
+
+        if self.cache:
+            entry = CacheEntry(
+                query_embedding=embedding,
+                retrieved_docs=retrieved_info,
+                relevance_scores=[1.0 for _ in retrieved_info],
+                citation_metadata={"pipeline_result": result},
+                timestamp=datetime.utcnow(),
+            )
+            self.cache.set(key, entry)
+
+        return result
 
     # Compatibility wrapper for legacy calls
     async def process_query(self, query: str) -> dict[str, Any]:
@@ -108,3 +152,9 @@ class EnhancedRAGPipeline(BaseComponent):
     def get_bayes_net_snapshot(self) -> dict[str, dict[str, Any]]:
         """Return a snapshot of the current BayesNet."""
         return self.bayes_net.all_nodes()
+
+    def cache_metrics(self) -> dict[str, float]:
+        """Return cache statistics if caching is enabled."""
+        if self.cache:
+            return self.cache.metrics()
+        return {"hit_rate": 0.0, "avg_latency_ms": 0.0, "size": 0}
