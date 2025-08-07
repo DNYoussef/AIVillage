@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class EudaimoniaTriangulator:
-    def __init__(self, model_name="distilbert-base-uncased"):
+    def __init__(self, model_name="distilbert-base-uncased") -> None:
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_name,
@@ -66,7 +66,7 @@ class EudaimoniaTriangulator:
 
 
 class QualityAssuranceLayer:
-    def __init__(self, upo_threshold: float = 0.7, num_samples: int = 100):
+    def __init__(self, upo_threshold: float = 0.7, num_samples: int = 100) -> None:
         self.upo_threshold = upo_threshold
         self.num_samples = num_samples
         self.task_history: list[dict[str, Any]] = []
@@ -149,7 +149,7 @@ class QualityAssuranceLayer:
         prioritized = sorted(scored_entities, key=lambda x: x[1] * x[2], reverse=True)
         return [(entity, score) for entity, _, score in prioritized]
 
-    async def evolve(self):
+    async def evolve(self) -> None:
         if len(self.task_history) > 100:
             recent_tasks = self.task_history[-100:]
             recent_uncertainties = [task["uncertainty"] for task in recent_tasks]
@@ -170,7 +170,7 @@ class QualityAssuranceLayer:
 
     def update_task_history(
         self, task: LangroidTask, outcome: float, uncertainty: float
-    ):
+    ) -> None:
         task_embedding = self.eudaimonia_triangulator.get_embedding(task.content)
         self.task_history.append(
             {
@@ -183,7 +183,7 @@ class QualityAssuranceLayer:
         if len(self.task_history) > 1000:
             self.task_history = self.task_history[-1000:]
 
-    def save(self, path: str):
+    def save(self, path: str) -> None:
         data = {
             "upo_threshold": self.upo_threshold,
             "num_samples": self.num_samples,

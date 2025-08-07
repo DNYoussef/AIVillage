@@ -38,7 +38,7 @@ class KingAgent(UnifiedBaseAgent):
         communication_protocol: StandardCommunicationProtocol,
         vector_store: VectorStore,
         knowledge_tracker: UnifiedKnowledgeTracker | None = None,
-    ):
+    ) -> None:
         super().__init__(config, communication_protocol, knowledge_tracker)
         self.vector_store = vector_store
         self.rag_pipeline = EnhancedRAGPipeline(
@@ -139,7 +139,7 @@ class KingAgent(UnifiedBaseAgent):
         return result
 
     @log_and_handle_errors
-    async def evolve(self):
+    async def evolve(self) -> None:
         await super().evolve()
         await run_evolution_and_optimization(self)
         await self.coordinator.evolve()
@@ -200,7 +200,7 @@ class KingAgent(UnifiedBaseAgent):
         return nn.Sequential(*layers)
 
     @log_and_handle_errors
-    async def update_model_architecture(self, architecture: dict[str, Any]):
+    async def update_model_architecture(self, architecture: dict[str, Any]) -> None:
         self.logger.info(f"Updating model architecture: {architecture}")
         try:
             new_model = self.create_model_from_architecture(architecture)
@@ -209,11 +209,11 @@ class KingAgent(UnifiedBaseAgent):
             self.current_architecture = architecture
             self.logger.info("Model architecture updated successfully")
         except Exception as e:
-            self.logger.error(f"Failed to update model architecture: {e!s}")
+            self.logger.exception(f"Failed to update model architecture: {e!s}")
             raise
 
     @log_and_handle_errors
-    async def update_hyperparameters(self, hyperparameters: dict[str, Any]):
+    async def update_hyperparameters(self, hyperparameters: dict[str, Any]) -> None:
         self.logger.info(f"Updating hyperparameters: {hyperparameters}")
         try:
             await self.unified_planning_and_management.update_hyperparameters(
@@ -223,7 +223,7 @@ class KingAgent(UnifiedBaseAgent):
             self.current_hyperparameters = hyperparameters
             self.logger.info("Hyperparameters updated successfully")
         except Exception as e:
-            self.logger.error(f"Failed to update hyperparameters: {e!s}")
+            self.logger.exception(f"Failed to update hyperparameters: {e!s}")
             raise
 
     # ... (rest of the code remains the same)

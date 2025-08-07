@@ -30,7 +30,8 @@ def __getattr__(name):
         from . import tool_baking
 
         return tool_baking
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    msg = f"module '{__name__}' has no attribute '{name}'"
+    raise AttributeError(msg)
 
 
 class AgentForge:
@@ -57,9 +58,8 @@ class AgentForge:
 
                 self._config = evomerge.create_default_config()
             except ImportError:
-                raise ImportError(
-                    "evomerge module not available - install heavy dependencies"
-                )
+                msg = "evomerge module not available - install heavy dependencies"
+                raise ImportError(msg)
         return self._config
 
     @property
@@ -73,9 +73,8 @@ class AgentForge:
                     self.config
                 )
             except ImportError:
-                raise ImportError(
-                    "evomerge module not available - install heavy dependencies"
-                )
+                msg = "evomerge module not available - install heavy dependencies"
+                raise ImportError(msg)
         return self._evolution_tournament
 
     @property

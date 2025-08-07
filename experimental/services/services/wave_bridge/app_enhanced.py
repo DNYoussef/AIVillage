@@ -1,5 +1,5 @@
 """Enhanced WhatsApp Wave Bridge with Advanced Prompt Engineering
-Part B: Agent Forge Phase 4 - Full Integration
+Part B: Agent Forge Phase 4 - Full Integration.
 """
 
 import asyncio
@@ -77,7 +77,7 @@ async def enhanced_whatsapp_webhook(
     request: Request, background_tasks: BackgroundTasks
 ):
     """Enhanced WhatsApp webhook with advanced prompt engineering
-    Features: W&B tracking, A/B testing, real-time optimization, multi-language support
+    Features: W&B tracking, A/B testing, real-time optimization, multi-language support.
     """
     start_time = time.time()
     session_context = {}
@@ -176,7 +176,7 @@ async def enhanced_whatsapp_webhook(
         )
 
     except Exception as e:
-        logger.error(f"Error in enhanced WhatsApp webhook: {e!s}")
+        logger.exception(f"Error in enhanced WhatsApp webhook: {e!s}")
 
         # Enhanced error logging to W&B
         wandb.log(
@@ -203,7 +203,7 @@ async def get_enhanced_tutor_response(
     detected_lang: str,
     session_context: dict[str, Any],
 ) -> dict[str, Any]:
-    """Generate enhanced tutoring response with advanced prompt engineering"""
+    """Generate enhanced tutoring response with advanced prompt engineering."""
     # Analyze message context for better prompt selection
     message_context = await analyze_message_context(
         message, detected_lang, session_context
@@ -344,7 +344,7 @@ async def get_enhanced_tutor_response(
 async def analyze_message_context(
     message: str, language: str, session_context: dict[str, Any]
 ) -> dict[str, Any]:
-    """Analyze message context for enhanced prompt selection"""
+    """Analyze message context for enhanced prompt selection."""
     context = {
         "message_length": len(message),
         "word_count": len(message.split()),
@@ -437,7 +437,7 @@ async def analyze_message_context(
 def is_enhanced_greeting_message(
     message: str, language: str, context: dict[str, Any]
 ) -> bool:
-    """Enhanced greeting detection with context awareness"""
+    """Enhanced greeting detection with context awareness."""
     # Basic greeting patterns (existing logic)
     greeting_patterns = {
         "en": ["hello", "hi", "hey", "start", "help"],
@@ -475,7 +475,7 @@ def is_enhanced_greeting_message(
 async def get_original_tutor_response(
     message: str, from_number: str, session_id: str, detected_lang: str
 ) -> dict[str, Any]:
-    """Fallback to original tutor response implementation"""
+    """Fallback to original tutor response implementation."""
     # This maintains compatibility with the original implementation
     is_greeting = is_enhanced_greeting_message(message, detected_lang, {})
 
@@ -511,14 +511,14 @@ async def get_original_tutor_response(
 
 
 def generate_enhanced_session_id(from_number: str, message_sid: str) -> str:
-    """Generate enhanced session ID with additional entropy"""
+    """Generate enhanced session ID with additional entropy."""
     timestamp = int(time.time() * 1000)  # Millisecond precision
     combined = f"{from_number}_{message_sid}_{timestamp}_{ENABLE_ENHANCED_PROMPTS}"
     return hashlib.sha256(combined.encode()).hexdigest()[:16]
 
 
 def format_enhanced_whatsapp_response(response_data: dict[str, Any]) -> str:
-    """Format enhanced response for Twilio WhatsApp"""
+    """Format enhanced response for Twilio WhatsApp."""
     response = MessagingResponse()
     message = response.message()
 
@@ -533,7 +533,7 @@ def format_enhanced_whatsapp_response(response_data: dict[str, Any]) -> str:
 
 
 def get_enhanced_fallback_response(language: str) -> dict[str, Any]:
-    """Enhanced fallback response with better language support"""
+    """Enhanced fallback response with better language support."""
     fallback_messages = {
         "en": "I'm processing your message with advanced AI. Please wait a moment... 🤔",
         "es": "Estoy procesando tu mensaje con IA avanzada. Por favor espera un momento... 🤔",
@@ -553,7 +553,7 @@ def get_enhanced_fallback_response(language: str) -> dict[str, Any]:
 
 
 def get_enhanced_error_response() -> str:
-    """Enhanced error response with better user experience"""
+    """Enhanced error response with better user experience."""
     response = MessagingResponse()
     message = response.message()
     message.body(
@@ -568,8 +568,8 @@ async def log_enhanced_response_metrics(
     session_id: str,
     language: str,
     session_context: dict[str, Any],
-):
-    """Enhanced metrics logging with additional context"""
+) -> None:
+    """Enhanced metrics logging with additional context."""
     # Core metrics (original)
     base_metrics = {
         "response_time": response_time,
@@ -620,8 +620,8 @@ async def log_enhanced_response_metrics(
 
 async def trigger_real_time_optimization(
     response: dict[str, Any], response_time: float, session_context: dict[str, Any]
-):
-    """Trigger real-time prompt optimization based on performance"""
+) -> None:
+    """Trigger real-time prompt optimization based on performance."""
     try:
         # Only optimize if performance is below threshold
         if (
@@ -656,7 +656,7 @@ async def trigger_real_time_optimization(
             )
 
     except Exception as e:
-        logger.error(f"Error in real-time optimization: {e}")
+        logger.exception(f"Error in real-time optimization: {e}")
 
 
 # Enhanced API endpoints
@@ -664,7 +664,7 @@ async def trigger_real_time_optimization(
 
 @app.get("/health/enhanced")
 async def enhanced_health_check():
-    """Enhanced health check with prompt engineering status"""
+    """Enhanced health check with prompt engineering status."""
     return {
         "status": "healthy",
         "service": "whatsapp-wave-bridge-enhanced",
@@ -687,7 +687,7 @@ async def enhanced_health_check():
 
 @app.get("/metrics/enhanced")
 async def get_enhanced_metrics():
-    """Get enhanced performance metrics including prompt engineering data"""
+    """Get enhanced performance metrics including prompt engineering data."""
     # Get base metrics
     base_metrics = await metrics.get_summary()
 
@@ -718,7 +718,7 @@ async def get_enhanced_metrics():
 
 @app.post("/admin/optimize-prompts")
 async def trigger_prompt_optimization():
-    """Admin endpoint to trigger prompt optimization"""
+    """Admin endpoint to trigger prompt optimization."""
     try:
         # Generate optimization report
         report = await prompt_optimizer.generate_baking_report()
@@ -730,7 +730,7 @@ async def trigger_prompt_optimization():
         }
 
     except Exception as e:
-        logger.error(f"Error triggering prompt optimization: {e}")
+        logger.exception(f"Error triggering prompt optimization: {e}")
         return {
             "optimization_triggered": False,
             "error": str(e),
@@ -740,11 +740,11 @@ async def trigger_prompt_optimization():
 
 @app.get("/admin/ab-test-results")
 async def get_ab_test_results():
-    """Get detailed A/B test results"""
+    """Get detailed A/B test results."""
     try:
         results = {}
 
-        for test_type in enhanced_ab_tester.active_tests.keys():
+        for test_type in enhanced_ab_tester.active_tests:
             test_results = await enhanced_ab_tester.analyze_test_results(test_type)
             results[test_type] = [
                 {
@@ -763,14 +763,14 @@ async def get_ab_test_results():
         }
 
     except Exception as e:
-        logger.error(f"Error getting A/B test results: {e}")
+        logger.exception(f"Error getting A/B test results: {e}")
         return {"error": str(e)}
 
 
 # Original endpoints for backward compatibility
 @app.get("/health")
 async def health_check():
-    """Original health check endpoint"""
+    """Original health check endpoint."""
     return {
         "status": "healthy",
         "service": "whatsapp-wave-bridge",
@@ -781,7 +781,7 @@ async def health_check():
 
 @app.get("/metrics")
 async def get_metrics():
-    """Original metrics endpoint"""
+    """Original metrics endpoint."""
     return await metrics.get_summary()
 
 

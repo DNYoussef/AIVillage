@@ -108,7 +108,7 @@ class PrivacyEngine:
         self,
         mechanism: PrivacyMechanism = PrivacyMechanism.DIFFERENTIAL_PRIVACY,
         privacy_budget: PrivacyBudget | None = None,
-    ):
+    ) -> None:
         self.mechanism = mechanism
         self.privacy_budget = privacy_budget or PrivacyBudget()
         self.logger = logging.getLogger("PrivacyEngine")
@@ -129,7 +129,8 @@ class PrivacyEngine:
 
         # Check privacy budget
         if not self.privacy_budget.consume(epsilon, delta):
-            raise ValueError("Insufficient privacy budget")
+            msg = "Insufficient privacy budget"
+            raise ValueError(msg)
 
         noisy_gradients = {}
         for param_name, gradient in gradients.items():
@@ -190,7 +191,7 @@ class SecureAggregator:
         self,
         strategy: AggregationStrategy = AggregationStrategy.FEDAVG,
         byzantine_threshold: float = 0.3,
-    ):
+    ) -> None:
         self.strategy = strategy
         self.byzantine_threshold = byzantine_threshold
         self.logger = logging.getLogger("SecureAggregator")
@@ -247,7 +248,7 @@ class SecureAggregator:
         gradient_norms = []
         for update in updates:
             total_norm = 0.0
-            for param_name, gradient in update.gradients.items():
+            for gradient in update.gradients.values():
                 total_norm += torch.norm(gradient).item() ** 2
             gradient_norms.append(np.sqrt(total_norm))
 
@@ -329,7 +330,7 @@ class SecureAggregator:
 class ModelSynchronizer:
     """Manages model synchronization across distributed nodes."""
 
-    def __init__(self, compression_ratio: float = 0.5):
+    def __init__(self, compression_ratio: float = 0.5) -> None:
         self.compression_ratio = compression_ratio
         self.model_versions = {}
         self.logger = logging.getLogger("ModelSynchronizer")
@@ -428,14 +429,14 @@ class ModelSynchronizer:
 class TrainingMonitor:
     """Monitors federated training progress and health."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.round_history = []
         self.client_performance = {}
         self.privacy_metrics = {}
         self.convergence_metrics = {}
         self.logger = logging.getLogger("TrainingMonitor")
 
-    def record_round(self, round_info: FederatedRound):
+    def record_round(self, round_info: FederatedRound) -> None:
         """Record information about a completed round."""
         self.round_history.append(round_info)
 
@@ -467,7 +468,7 @@ class TrainingMonitor:
 
     def record_client_performance(
         self, client_id: str, round_number: int, metrics: dict[str, Any]
-    ):
+    ) -> None:
         """Record client performance metrics."""
         if client_id not in self.client_performance:
             self.client_performance[client_id] = []
@@ -597,7 +598,7 @@ class FederatedTrainingCoordinator:
         min_clients: int = 3,
         max_rounds: int = 100,
         round_timeout: int = 300,
-    ):
+    ) -> None:
         self.model = model
         self.privacy_engine = privacy_engine or PrivacyEngine()
         self.aggregator = aggregator or SecureAggregator()
@@ -734,7 +735,7 @@ class FederatedTrainingCoordinator:
                 update.gradients = noisy_gradients
                 update.privacy_spent = privacy_cost
             except ValueError as e:
-                self.logger.error(f"Privacy budget exceeded: {e}")
+                self.logger.exception(f"Privacy budget exceeded: {e}")
                 return {"status": "privacy_budget_exceeded"}
 
         # Store update
@@ -755,7 +756,7 @@ class FederatedTrainingCoordinator:
         self.logger.info(f"Received update from {update.client_id}")
         return {"status": "accepted"}
 
-    async def _aggregate_round_updates(self, round_info: FederatedRound):
+    async def _aggregate_round_updates(self, round_info: FederatedRound) -> None:
         """Aggregate all updates for the current round."""
         updates = self.client_updates[self.current_round]
 
@@ -940,7 +941,7 @@ class FederatedTrainingCoordinator:
 
         return update
 
-    def register_client(self, client_id: str, client_info: dict[str, Any]):
+    def register_client(self, client_id: str, client_info: dict[str, Any]) -> None:
         """Register a new client for federated learning."""
         self.registered_clients[client_id] = {
             "client_id": client_id,

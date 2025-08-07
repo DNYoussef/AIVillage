@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""⚠️ DEVELOPMENT SERVER ONLY ⚠️
+"""⚠️ DEVELOPMENT SERVER ONLY ⚠️.
 
 This server is for development and testing purposes only.
 - Set AIVILLAGE_DEV_MODE=true to suppress warnings
@@ -60,7 +60,7 @@ if not API_KEY:
 class RateLimiter:
     """Simple in-memory rate limiter - use Redis for production."""
 
-    def __init__(self, max_requests: int = 100, window_seconds: int = 60):
+    def __init__(self, max_requests: int = 100, window_seconds: int = 60) -> None:
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self.requests = defaultdict(list)
@@ -161,7 +161,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 status_code=400, content={"detail": "Invalid request format"}
             )
         except Exception as e:
-            logger.error(f"Server error from {client_id}: {e}")
+            logger.exception(f"Server error from {client_id}: {e}")
             return JSONResponse(
                 status_code=500, content={"detail": "Internal server error"}
             )
@@ -187,13 +187,15 @@ class SecureQueryRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=5000)
 
     @validator("query")
-    def validate_query(cls, v):
+    def validate_query(self, v):
         if not isinstance(v, str):
-            raise ValueError("Query must be a string")
+            msg = "Query must be a string"
+            raise ValueError(msg)
         v = html.escape(v.strip())
         v = "".join(char for char in v if ord(char) >= 32 or char in "\n\t")
         if len(v.strip()) == 0:
-            raise ValueError("Query cannot be empty after sanitization")
+            msg = "Query cannot be empty after sanitization"
+            raise ValueError(msg)
         dangerous_patterns = [
             r"<script[^>]*>.*?</script>",
             r"javascript:",
@@ -203,7 +205,8 @@ class SecureQueryRequest(BaseModel):
         v_lower = v.lower()
         for pattern in dangerous_patterns:
             if re.search(pattern, v_lower, re.IGNORECASE | re.DOTALL):
-                raise ValueError("Query contains potentially dangerous content")
+                msg = "Query contains potentially dangerous content"
+                raise ValueError(msg)
         return v
 
 
@@ -215,29 +218,34 @@ class SecureUploadFile(BaseModel):
     size: int
 
     @validator("filename")
-    def validate_filename(cls, v):
+    def validate_filename(self, v):
         if not v or ".." in v or "/" in v or "\\" in v:
-            raise ValueError("Invalid filename")
+            msg = "Invalid filename"
+            raise ValueError(msg)
         ext = Path(v).suffix.lower()
         if ext not in ALLOWED_EXTENSIONS:
-            raise ValueError(f"File type {ext} not allowed")
+            msg = f"File type {ext} not allowed"
+            raise ValueError(msg)
         return v
 
     @validator("size")
-    def validate_size(cls, v):
+    def validate_size(self, v):
         if v > MAX_FILE_SIZE:
-            raise ValueError(f"File too large: {v} bytes (max {MAX_FILE_SIZE})")
+            msg = f"File too large: {v} bytes (max {MAX_FILE_SIZE})"
+            raise ValueError(msg)
         return v
 
 
 async def stream_file_safely(file: UploadFile) -> str:
     """Stream file upload safely with size checking."""
     if not file.filename:
-        raise ValueError("No filename provided")
+        msg = "No filename provided"
+        raise ValueError(msg)
 
     content_type = file.content_type or mimetypes.guess_type(file.filename)[0]
     if not content_type or not content_type.startswith(("text/", "application/")):
-        raise ValueError(f"Content type {content_type} not allowed")
+        msg = f"Content type {content_type} not allowed"
+        raise ValueError(msg)
 
     total_size = 0
     spooled = tempfile.SpooledTemporaryFile(max_size=MAX_FILE_SIZE)
@@ -250,7 +258,8 @@ async def stream_file_safely(file: UploadFile) -> str:
 
             total_size += len(chunk)
             if total_size > MAX_FILE_SIZE:
-                raise ValueError(f"File too large: exceeds {MAX_FILE_SIZE} bytes")
+                msg = f"File too large: exceeds {MAX_FILE_SIZE} bytes"
+                raise ValueError(msg)
 
             spooled.write(chunk)
 
@@ -258,21 +267,23 @@ async def stream_file_safely(file: UploadFile) -> str:
         content = spooled.read()
         text = content.decode("utf-8", errors="replace")
         if len(text.strip()) == 0:
-            raise ValueError("File appears to be empty")
+            msg = "File appears to be empty"
+            raise ValueError(msg)
         return text
 
     except Exception as e:
-        logger.error(f"File upload failed: {e}")
-        raise ValueError(f"Failed to process file: {e}")
+        logger.exception(f"File upload failed: {e}")
+        msg = f"Failed to process file: {e}"
+        raise ValueError(msg)
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     await rag_pipeline.initialize()
 
 
 @app.on_event("shutdown")
-async def shutdown_event():
+async def shutdown_event() -> None:
     await rag_pipeline.shutdown()
 
 
@@ -282,7 +293,7 @@ async def query_endpoint(request: SecureQueryRequest):
         result = await rag_pipeline.process(request.query)
         return result
     except Exception as e:
-        logger.error(f"Query processing failed: {e}")
+        logger.exception(f"Query processing failed: {e}")
         return JSONResponse(
             status_code=500, content={"detail": "Query processing failed"}
         )
@@ -309,7 +320,7 @@ async def upload_endpoint(file: UploadFile = File(...)):
     except ValueError as e:
         return JSONResponse(status_code=400, content={"detail": str(e)})
     except Exception as e:
-        logger.error(f"Upload endpoint error: {e}")
+        logger.exception(f"Upload endpoint error: {e}")
         return JSONResponse(
             status_code=500, content={"detail": "Internal server error"}
         )
@@ -338,7 +349,7 @@ async def healthz_endpoint():
             "details": status,
         }
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
+        logger.exception(f"Health check failed: {e}")
         return JSONResponse(
             status_code=503, content={"status": "unhealthy", "error": str(e)}
         )
@@ -382,7 +393,7 @@ async def v1_explanation_endpoint(chat_id: str):
         ]
         return [pack.dict() for pack in placeholder_packs]
     except Exception as e:
-        logger.error(f"Error retrieving evidence for chat {chat_id}: {e}")
+        logger.exception(f"Error retrieving evidence for chat {chat_id}: {e}")
         return []
 
 

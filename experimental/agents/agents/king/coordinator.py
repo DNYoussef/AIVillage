@@ -1,8 +1,9 @@
 from asyncio.log import logger
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from agents.unified_base_agent import UnifiedBaseAgent
 from agents.utils.task import Task as LangroidTask
+from AIVillage.experimental.agents.agents.magi.magi_agent import MagiAgent
+from AIVillage.experimental.agents.agents.sage.sage_agent import SageAgent
 from core.error_handling import (
     AIVillageException,
     Message,
@@ -12,9 +13,10 @@ from core.error_handling import (
 )
 from rag_system.core.config import UnifiedConfig
 
-from ..magi.magi_agent import MagiAgent
-from ..sage.sage_agent import SageAgent
 from .analytics.unified_analytics import UnifiedAnalytics
+
+if TYPE_CHECKING:
+    from agents.unified_base_agent import UnifiedBaseAgent
 
 
 class KingCoordinator:
@@ -22,7 +24,7 @@ class KingCoordinator:
         self,
         config: UnifiedConfig,
         communication_protocol: StandardCommunicationProtocol,
-    ):
+    ) -> None:
         self.config = config
         self.communication_protocol = communication_protocol
         self.agents: dict[str, UnifiedBaseAgent] = {}
@@ -85,9 +87,10 @@ class KingCoordinator:
         if self.agents:
             return await next(iter(self.agents.values())).execute_task(task)
 
-        raise ValueError("No suitable agent found for the task")
+        msg = "No suitable agent found for the task"
+        raise ValueError(msg)
 
-    async def handle_message(self, message: Message):
+    async def handle_message(self, message: Message) -> None:
         if message.type == MessageType.TASK:
             result = await self.coordinate_task(message.content)
             response = Message(
@@ -104,9 +107,10 @@ class KingCoordinator:
         else:
             # Handle other message types if needed
             logger.warning(f"Unhandled message type: {message.type}")
-            raise NotImplementedError(f"Message type {message.type} not supported")
+            msg = f"Message type {message.type} not supported"
+            raise NotImplementedError(msg)
 
-    async def _implement_decision(self, decision_result: dict[str, Any]):
+    async def _implement_decision(self, decision_result: dict[str, Any]) -> None:
         try:
             chosen_alternative = decision_result["chosen_alternative"]
             plan = decision_result["plan"]
@@ -127,9 +131,10 @@ class KingCoordinator:
 
         except Exception as e:
             logger.error(f"Error implementing decision: {e!s}")
-            raise AIVillageException(f"Error implementing decision: {e!s}")
+            msg = f"Error implementing decision: {e!s}"
+            raise AIVillageException(msg)
 
-    async def process_task_completion(self, task: dict[str, Any], result: Any):
+    async def process_task_completion(self, task: dict[str, Any], result: Any) -> None:
         try:
             # Update router
             await self.router.train_model(
@@ -167,9 +172,10 @@ class KingCoordinator:
 
         except Exception as e:
             logger.error(f"Error processing task completion: {e!s}")
-            raise AIVillageException(f"Error processing task completion: {e!s}")
+            msg = f"Error processing task completion: {e!s}"
+            raise AIVillageException(msg)
 
-    async def save_models(self, path: str):
+    async def save_models(self, path: str) -> None:
         try:
             self.router.save(f"{path}/agent_router.pt")
             await self.decision_maker.save_models(f"{path}/decision_maker")
@@ -178,9 +184,10 @@ class KingCoordinator:
             logger.info(f"Models saved to {path}")
         except Exception as e:
             logger.error(f"Error saving models: {e!s}")
-            raise AIVillageException(f"Error saving models: {e!s}")
+            msg = f"Error saving models: {e!s}"
+            raise AIVillageException(msg)
 
-    async def load_models(self, path: str):
+    async def load_models(self, path: str) -> None:
         try:
             self.router.load(f"{path}/agent_router.pt")
             await self.decision_maker.load_models(f"{path}/decision_maker")
@@ -189,7 +196,8 @@ class KingCoordinator:
             logger.info(f"Models loaded from {path}")
         except Exception as e:
             logger.error(f"Error loading models: {e!s}")
-            raise AIVillageException(f"Error loading models: {e!s}")
+            msg = f"Error loading models: {e!s}"
+            raise AIVillageException(msg)
 
     async def create_final_analysis(
         self, revised_analyses: list[dict[str, Any]], rag_info: dict[str, Any]
@@ -205,19 +213,20 @@ class KingCoordinator:
             return {"final_analysis": final_analysis}
         except Exception as e:
             logger.error(f"Error creating final analysis: {e!s}")
-            raise AIVillageException(f"Error creating final analysis: {e!s}")
+            msg = f"Error creating final analysis: {e!s}"
+            raise AIVillageException(msg)
 
-    def update_agent_list(self):
+    def update_agent_list(self) -> None:
         agent_list = list(self.agents.keys())
         self.router.update_agent_list(agent_list)
         logger.info(f"Updated agent list: {agent_list}")
 
-    async def add_agent(self, agent_name: str, agent_instance):
+    async def add_agent(self, agent_name: str, agent_instance) -> None:
         self.agents[agent_name] = agent_instance
         self.update_agent_list()
         logger.info(f"Added new agent: {agent_name}")
 
-    async def remove_agent(self, agent_name: str):
+    async def remove_agent(self, agent_name: str) -> None:
         if agent_name in self.agents:
             del self.agents[agent_name]
             self.update_agent_list()

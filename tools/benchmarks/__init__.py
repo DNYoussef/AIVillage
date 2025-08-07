@@ -1,4 +1,4 @@
-"""AIVillage Tools - Benchmarks
+"""AIVillage Tools - Benchmarks.
 
 Benchmark suites moved from root/benchmarks/:
 - Performance benchmarks

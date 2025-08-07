@@ -41,7 +41,7 @@ class TestSuiteMetrics:
 class TestCoverageDashboard:
     """Comprehensive test coverage dashboard."""
 
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: str | None = None):
         self.project_root = Path(project_root or os.getcwd())
         self.coverage_data = {}
         self.test_metrics = {}
@@ -953,7 +953,7 @@ class TestCoverageDashboard:
         return html_content
 
     def save_dashboard(
-        self, dashboard_data: dict, output_dir: Path = None
+        self, dashboard_data: dict, output_dir: Path | None = None
     ) -> dict[str, str]:
         """Save dashboard data and reports."""
         if output_dir is None:

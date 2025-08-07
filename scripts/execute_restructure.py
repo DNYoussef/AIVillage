@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Execute the AIVillage codebase restructuring
-"""
+"""Execute the AIVillage codebase restructuring."""
 
 from datetime import datetime
 import json
@@ -19,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 class AIVillageRestructurer:
-    def __init__(self, base_path: str):
+    def __init__(self, base_path: str) -> None:
         self.base_path = Path(base_path)
         self.moved_items = []
         self.errors = []
 
-    def create_directory_structure(self):
+    def create_directory_structure(self) -> None:
         """Create the new directory structure."""
         logger.info("Creating new directory structure...")
 
@@ -79,11 +78,11 @@ class AIVillageRestructurer:
 
         except Exception as e:
             error_msg = f"Error moving {source} to {target}: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.errors.append(error_msg)
             return False
 
-    def restructure_production_components(self):
+    def restructure_production_components(self) -> None:
         """Move production-ready components to src/."""
         logger.info("Restructuring production components...")
 
@@ -109,7 +108,7 @@ class AIVillageRestructurer:
             if source.exists():
                 self.move_item(source, target)
 
-    def restructure_agent_forge(self):
+    def restructure_agent_forge(self) -> None:
         """Split agent_forge between stable (src/) and experimental."""
         logger.info("Restructuring agent_forge...")
 
@@ -173,7 +172,7 @@ class AIVillageRestructurer:
                     target = exp_agent_forge / item.name
                 self.move_item(item, target)
 
-    def restructure_experimental(self):
+    def restructure_experimental(self) -> None:
         """Move existing experimental code."""
         logger.info("Restructuring experimental components...")
 
@@ -182,7 +181,7 @@ class AIVillageRestructurer:
             # Experimental directory already exists, just ensure it's properly organized
             logger.info("Experimental directory already exists and organized")
 
-    def restructure_tools(self):
+    def restructure_tools(self) -> None:
         """Move tools, scripts, benchmarks, examples."""
         logger.info("Restructuring tools...")
 
@@ -199,7 +198,7 @@ class AIVillageRestructurer:
             if source.exists():
                 self.move_item(source, target)
 
-    def restructure_rag_system(self):
+    def restructure_rag_system(self) -> None:
         """Move rag_system to src/."""
         logger.info("Restructuring RAG system...")
 
@@ -208,7 +207,7 @@ class AIVillageRestructurer:
             target = self.base_path / "src" / "rag_system"
             self.move_item(rag_source, target)
 
-    def restructure_tests(self):
+    def restructure_tests(self) -> None:
         """Move tests to proper location."""
         logger.info("Restructuring tests...")
 
@@ -217,11 +216,11 @@ class AIVillageRestructurer:
         if tests_source.exists():
             logger.info("Tests directory left at root level")
 
-    def cleanup_empty_directories(self):
+    def cleanup_empty_directories(self) -> None:
         """Remove empty directories after restructuring."""
         logger.info("Cleaning up empty directories...")
 
-        def remove_empty_dir(path: Path):
+        def remove_empty_dir(path: Path) -> bool:
             try:
                 if path.is_dir() and not any(path.iterdir()):
                     path.rmdir()
@@ -318,7 +317,7 @@ class AIVillageRestructurer:
             return report
 
         except Exception as e:
-            logger.error(f"Critical error during restructuring: {e!s}")
+            logger.exception(f"Critical error during restructuring: {e!s}")
             raise
 
 
@@ -327,7 +326,7 @@ def main():
 
     # Create backup first
     print("Creating backup snapshot...")
-    backup_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # Execute restructuring
     restructurer = AIVillageRestructurer(os.getcwd())

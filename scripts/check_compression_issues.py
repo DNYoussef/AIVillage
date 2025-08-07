@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Check for hidden issues in compression implementation"""
+"""Check for hidden issues in compression implementation."""
 
 
-def check_stage_4_hyper():
-    """Check if HyperCompression stage 4 is actually working"""
+def check_stage_4_hyper() -> None:
+    """Check if HyperCompression stage 4 is actually working."""
     print("\n=== CHECKING HYPERCOMPRESSION (STAGE 4) ===")
 
     try:
@@ -28,8 +28,8 @@ def check_stage_4_hyper():
         print("This explains why total compression is low!")
 
 
-def check_overhead_accumulation():
-    """Check how much overhead accumulates through stages"""
+def check_overhead_accumulation() -> None:
+    """Check how much overhead accumulates through stages."""
     print("\n=== METADATA OVERHEAD ANALYSIS ===")
 
     import pickle
@@ -66,8 +66,8 @@ def check_overhead_accumulation():
     print("This overhead compounds and reduces effective compression!")
 
 
-def check_decompression_quality():
-    """Check if quality degrades through stages"""
+def check_decompression_quality() -> None:
+    """Check if quality degrades through stages."""
     print("\n=== QUALITY DEGRADATION CHECK ===")
 
     import torch
@@ -98,8 +98,8 @@ def check_decompression_quality():
     print("\nConclusion: Errors compound through stages!")
 
 
-def verify_claude_math():
-    """Check Claude's reported numbers"""
+def verify_claude_math() -> None:
+    """Check Claude's reported numbers."""
     print("\n=== VERIFYING CLAUDE'S MATH ===")
 
     print("Claude claims:")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Production Magi Agent Deployment - Historic First Creation
+"""Production Magi Agent Deployment - Historic First Creation.
 
 This script creates the first AI agent with geometric self-awareness and
 self-modification capabilities using the complete Agent Forge pipeline.
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class HistoricMagiDeployment:
     """Production deployment orchestrator for first Magi agent creation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.start_time = datetime.now()
         self.deployment_id = (
             f"magi_production_{self.start_time.strftime('%Y%m%d_%H%M%S')}"
@@ -53,13 +53,13 @@ class HistoricMagiDeployment:
         self.questions_completed = 0
         self.stages_completed = []
 
-    def log_historic_milestone(self, message):
+    def log_historic_milestone(self, message) -> None:
         """Log historic milestones with special formatting."""
         logger.info("=" * 80)
         logger.info(f"HISTORIC MILESTONE: {message}")
         logger.info("=" * 80)
 
-    async def initialize_deployment(self):
+    async def initialize_deployment(self) -> None:
         """Initialize the historic deployment."""
         self.log_historic_milestone("INITIALIZING FIRST MAGI AGENT CREATION")
 
@@ -87,7 +87,7 @@ class HistoricMagiDeployment:
 
         logger.info("Historic deployment initialized successfully")
 
-    async def execute_stage_simulation(self, stage_name, duration_minutes=5):
+    async def execute_stage_simulation(self, stage_name, duration_minutes=5) -> None:
         """Simulate a training stage with proper monitoring."""
         logger.info(f"Starting Stage: {stage_name}")
         stage_start = time.time()
@@ -114,7 +114,7 @@ class HistoricMagiDeployment:
             f"SUCCESS: {stage_name} completed in {stage_duration / 60:.1f} minutes"
         )
 
-    async def run_historic_deployment(self):
+    async def run_historic_deployment(self) -> None:
         """Execute the complete historic Magi agent deployment."""
         try:
             await self.initialize_deployment()
@@ -175,7 +175,7 @@ class HistoricMagiDeployment:
             await self.complete_historic_deployment()
 
         except Exception as e:
-            logger.error(f"Historic deployment failed: {e}")
+            logger.exception(f"Historic deployment failed: {e}")
             await self.handle_deployment_failure(e)
 
     async def complete_historic_deployment(self):
@@ -223,7 +223,7 @@ class HistoricMagiDeployment:
 
         return completion_report
 
-    async def handle_deployment_failure(self, error):
+    async def handle_deployment_failure(self, error) -> None:
         """Handle deployment failures gracefully."""
         logger.error(f"Deployment failed: {error}")
 

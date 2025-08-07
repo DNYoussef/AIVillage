@@ -311,7 +311,7 @@ class TestStage2Compressor:
             vptq_bits=2.0, vptq_vector_length=16, use_hyperfn=False
         )
 
-        assert compressor.use_hyperfn == False
+        assert not compressor.use_hyperfn
         assert compressor.hyperfn is None
 
     def test_stage1_data_loading(self):

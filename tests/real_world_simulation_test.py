@@ -27,7 +27,11 @@ class RealWorldSimulation:
         self.scenarios_passed = 0
 
     def log_scenario(
-        self, scenario: str, success: bool, details: str, metrics: dict[str, Any] = None
+        self,
+        scenario: str,
+        success: bool,
+        details: str,
+        metrics: dict[str, Any] | None = None,
     ):
         """Log simulation scenario result"""
         self.scenarios_tested += 1
@@ -65,7 +69,7 @@ class RealWorldSimulation:
 
             for device_name, specs in device_scenarios:
                 profiler = DeviceProfiler()
-                constraint_manager = ConstraintManager(profiler)
+                ConstraintManager(profiler)
 
                 # Mock device specifications
                 with patch.object(profiler.profile, "cpu_cores", specs["cpu_cores"]):
@@ -74,7 +78,7 @@ class RealWorldSimulation:
                     ):
 
                         # Test system adaptation
-                        snapshot = profiler.take_snapshot()
+                        profiler.take_snapshot()
                         suitable = profiler.is_suitable_for_evolution("nightly")
                         allocation = profiler.get_evolution_resource_allocation()
 
@@ -136,7 +140,7 @@ class RealWorldSimulation:
                     node = P2PNode(
                         node_id=f"network_test_{scenario_name.replace(' ', '_')}"
                     )
-                    discovery = PeerDiscovery(node)
+                    PeerDiscovery(node)
 
                     # In a real test, we would actually simulate network conditions
                     # For now, we test that the components initialize properly
@@ -192,7 +196,7 @@ class RealWorldSimulation:
                     constraint_manager = ConstraintManager(profiler)
 
                     config = InfrastructureConfig(enable_p2p=False)
-                    evolution_system = InfrastructureAwareEvolution(config)
+                    InfrastructureAwareEvolution(config)
 
                     # Simulate concurrent evolution tasks
                     tasks_registered = 0
@@ -249,8 +253,8 @@ class RealWorldSimulation:
             )
 
             profiler = DeviceProfiler()
-            monitor = ResourceMonitor(profiler)
-            constraint_manager = ConstraintManager(profiler)
+            ResourceMonitor(profiler)
+            ConstraintManager(profiler)
 
             # Simulate resource starvation scenarios
             starvation_scenarios = [
@@ -320,7 +324,7 @@ class RealWorldSimulation:
             from src.core.resources import DeviceProfiler, ResourceMonitor
 
             profiler = DeviceProfiler()
-            monitor = ResourceMonitor(profiler)
+            ResourceMonitor(profiler)
 
             # Simulate extended operation
             stability_checks = 10
@@ -464,7 +468,7 @@ async def main():
         sys.exit(0 if summary["deployment_readiness"] else 1)
 
     except Exception as e:
-        logger.error(f"Real-world simulation failed: {e}")
+        logger.exception(f"Real-world simulation failed: {e}")
         sys.exit(1)
 
 

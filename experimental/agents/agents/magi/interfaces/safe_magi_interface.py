@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Safe Magi Interface with Buffer Overflow Protection
+"""Safe Magi Interface with Buffer Overflow Protection.
 
 This interface allows conversation with the specialized Magi agent
 while preventing buffer overflow issues from large outputs.
@@ -11,7 +11,7 @@ from agent_forge.interface_buffer_fix import SafeMagiInterface
 class ConversationalMagi(SafeMagiInterface):
     """Enhanced Magi interface with conversation capabilities."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.conversation_history = []
         self.max_history = 10  # Limit history to prevent memory issues
@@ -153,7 +153,7 @@ class ConversationalMagi(SafeMagiInterface):
 
         return "\n".join(response_parts)
 
-    def show_capabilities(self):
+    def show_capabilities(self) -> None:
         """Display Magi capabilities in a clean format."""
         print("\nMAGI SPECIALIZED CAPABILITIES:")
         print("=" * 50)
@@ -170,7 +170,7 @@ class ConversationalMagi(SafeMagiInterface):
         print(f"\nOverall Specialization Score: {self.specialization_score:.3f}")
         print("=" * 50)
 
-    def run(self):
+    def run(self) -> None:
         """Run the interactive Magi session."""
         print("\n" + "=" * 60)
         print("MAGI AI AGENT - SPECIALIZED TECHNICAL ASSISTANT")
@@ -230,7 +230,7 @@ class ConversationalMagi(SafeMagiInterface):
                 print("Let me try to continue...")
 
 
-def main():
+def main() -> None:
     """Launch the safe Magi interface."""
     print("Initializing Safe Magi Interface...")
     magi = ConversationalMagi()

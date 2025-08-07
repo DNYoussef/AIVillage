@@ -103,7 +103,8 @@ def test_load_compressed_failure(monkeypatch, tmp_path, caplog):
 
     class DummyLoader:
         def __init__(self, *_, **__):
-            raise RuntimeError("boom")
+            msg = "boom"
+            raise RuntimeError(msg)
 
     monkeypatch.setitem(
         sys.modules,

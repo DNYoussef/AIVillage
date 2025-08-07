@@ -71,7 +71,7 @@ class ExperimentalValidator:
         # Check for docstrings on public functions/classes
         missing_docstrings = []
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+            if isinstance(node, ast.FunctionDef | ast.ClassDef):
                 if not node.name.startswith("_"):  # Public function/class
                     if not ast.get_docstring(node):
                         missing_docstrings.append(f"{node.name} ({node.lineno})")
@@ -117,7 +117,7 @@ class ExperimentalValidator:
             max_depth = max(max_depth, depth)
 
             # Count nested structures
-            if isinstance(node, (ast.If, ast.For, ast.While, ast.With, ast.Try)):
+            if isinstance(node, ast.If | ast.For | ast.While | ast.With | ast.Try):
                 depth += 1
 
             for child in ast.iter_child_nodes(node):
@@ -229,7 +229,7 @@ class ExperimentalValidator:
                 result = self.validation_results[component]
                 issues = []
 
-                for file_path, file_result in result["files"].items():
+                for file_result in result["files"].values():
                     issues.extend(file_result["issues"])
 
                 # Generate specific recommendations based on common issues

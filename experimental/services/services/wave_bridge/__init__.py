@@ -1,5 +1,5 @@
 """WhatsApp Wave Bridge for AI Village
-Sprint R-3+AF4: WhatsApp Integration with W&B Prompt Tuning
+Sprint R-3+AF4: WhatsApp Integration with W&B Prompt Tuning.
 
 A high-performance WhatsApp tutoring service with:
 - Sub-5 second response times

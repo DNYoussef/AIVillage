@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 
 class ResponseGenerator:
-    def __init__(self):
+    def __init__(self) -> None:
         """Set up placeholders for future NLP models."""
         self.model = None
         logger.debug("ResponseGenerator initialized")

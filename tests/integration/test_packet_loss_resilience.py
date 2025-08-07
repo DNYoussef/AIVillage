@@ -85,17 +85,17 @@ class PacketLossMeshSimulator(MeshNetworkSimulator):
                         packet_simulator.get_actual_loss_rate()
                     )
                     return result
-                except Exception as e:
+                except Exception:
                     # Even successful packets might fail for other reasons
                     target_node.stats["packet_loss_rate"] = (
                         packet_simulator.get_actual_loss_rate()
                     )
-                    raise e
+                    raise
 
             return send_with_loss
 
         # Apply wrapper to all nodes
-        for _node_id, node in self.nodes.items():
+        for node in self.nodes.values():
             original_send = node.send_message
             node.send_message = create_packet_loss_wrapper(
                 original_send, node, self.packet_loss_simulator
@@ -168,8 +168,6 @@ async def test_mesh_fl_handshake_70_percent_packet_loss():
     # Attempt FL round with packet loss - retry mechanism for resilience
     max_attempts = 8  # Increase attempts to demonstrate resilience
     successful_round = False
-    total_participation_attempts = 0
-    successful_handshakes = 0
 
     for attempt in range(max_attempts):
         try:

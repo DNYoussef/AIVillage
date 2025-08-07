@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Configuration Consolidation Script
+"""Configuration Consolidation Script.
 
 This script consolidates the configuration directories and updates all references:
 1. Merges config/ and configs/ into a single configs/ directory
@@ -17,7 +17,7 @@ import yaml
 
 
 def convert_json_to_yaml(json_file: Path, yaml_file: Path) -> bool:
-    """Convert a JSON file to YAML format"""
+    """Convert a JSON file to YAML format."""
     try:
         with open(json_file, encoding="utf-8") as f:
             data = json.load(f)
@@ -33,7 +33,7 @@ def convert_json_to_yaml(json_file: Path, yaml_file: Path) -> bool:
 
 
 def move_test_results():
-    """Move test result files from configs/ to results/"""
+    """Move test result files from configs/ to results/."""
     configs_dir = Path("configs")
     results_dir = Path("results")
     results_dir.mkdir(exist_ok=True)
@@ -59,7 +59,7 @@ def move_test_results():
 
 
 def merge_config_directories():
-    """Merge config/ directory into configs/"""
+    """Merge config/ directory into configs/."""
     config_dir = Path("config")
     configs_dir = Path("configs")
 
@@ -94,7 +94,7 @@ def merge_config_directories():
 
 
 def update_file_references(file_path: Path, patterns: list[tuple[str, str]]) -> bool:
-    """Update file with pattern replacements"""
+    """Update file with pattern replacements."""
     try:
         with open(file_path, encoding="utf-8") as f:
             content = f.read()
@@ -114,7 +114,7 @@ def update_file_references(file_path: Path, patterns: list[tuple[str, str]]) -> 
 
 
 def update_all_references():
-    """Update all config/ references to configs/"""
+    """Update all config/ references to configs/."""
     root_dir = Path()
 
     # Patterns to replace
@@ -165,17 +165,15 @@ def update_all_references():
                     "results/",
                 ]
             )
-        ):
-
-            if update_file_references(file_path, patterns):
-                updated_files.append(str(file_path))
-                print(f"✓ Updated references in {file_path}")
+        ) and update_file_references(file_path, patterns):
+            updated_files.append(str(file_path))
+            print(f"✓ Updated references in {file_path}")
 
     return updated_files
 
 
-def cleanup_old_directories():
-    """Remove the old config/ directory after successful merge"""
+def cleanup_old_directories() -> bool:
+    """Remove the old config/ directory after successful merge."""
     config_dir = Path("config")
 
     if config_dir.exists():
@@ -189,8 +187,8 @@ def cleanup_old_directories():
     return True
 
 
-def main():
-    """Main consolidation function"""
+def main() -> None:
+    """Main consolidation function."""
     print("🔧 Starting configuration consolidation...")
     print()
 

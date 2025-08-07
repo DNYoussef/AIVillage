@@ -1,5 +1,5 @@
 """Prompt Baker - Prepare winning prompts for weight integration
-Part B: Agent Forge Phase 4 - Prompt Engineering
+Part B: Agent Forge Phase 4 - Prompt Engineering.
 """
 
 from collections import defaultdict
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class WinningPrompt:
-    """A high-performing prompt template ready for deployment"""
+    """A high-performing prompt template ready for deployment."""
 
     variant_id: str
     template_text: str
@@ -35,7 +35,7 @@ class WinningPrompt:
 
 @dataclass
 class PromptWeights:
-    """Optimized weights for prompt parameters"""
+    """Optimized weights for prompt parameters."""
 
     greeting_style_weights: dict[str, float]
     hint_complexity_weights: dict[str, float]
@@ -47,9 +47,9 @@ class PromptWeights:
 
 
 class PromptBaker:
-    """Prepare winning prompts for weight integration and production deployment"""
+    """Prepare winning prompts for weight integration and production deployment."""
 
-    def __init__(self, project_name: str = "aivillage-tutoring"):
+    def __init__(self, project_name: str = "aivillage-tutoring") -> None:
         self.project_name = project_name
         self.winning_prompts = {}
         self.baked_artifacts = []
@@ -72,17 +72,17 @@ class PromptBaker:
         # Create directories for baked prompts
         self.setup_prompt_directories()
 
-    def initialize_wandb_api(self):
-        """Initialize W&B API for data querying"""
+    def initialize_wandb_api(self) -> None:
+        """Initialize W&B API for data querying."""
         try:
             self.wandb_api = wandb.Api()
             logger.info("W&B API initialized for prompt baking")
         except Exception as e:
-            logger.error(f"Failed to initialize W&B API: {e}")
+            logger.exception(f"Failed to initialize W&B API: {e}")
             self.wandb_api = None
 
-    def setup_prompt_directories(self):
-        """Create directory structure for baked prompt artifacts"""
+    def setup_prompt_directories(self) -> None:
+        """Create directory structure for baked prompt artifacts."""
         base_path = Path("services/wave_bridge/agent_forge/baked_prompts")
 
         directories = [
@@ -97,9 +97,9 @@ class PromptBaker:
             logger.info(f"Created directory: {directory}")
 
     async def identify_winners(
-        self, min_interactions: int = None
+        self, min_interactions: int | None = None
     ) -> list[WinningPrompt]:
-        """Find best performing prompt templates from W&B data"""
+        """Find best performing prompt templates from W&B data."""
         min_interactions = min_interactions or self.min_interactions
 
         if not self.wandb_api:
@@ -202,13 +202,13 @@ class PromptBaker:
             return winners
 
         except Exception as e:
-            logger.error(f"Error identifying winners: {e}")
+            logger.exception(f"Error identifying winners: {e}")
             return []
 
     def calculate_confidence_score(
         self, sample_size: int, performance_score: float, variance: float
     ) -> float:
-        """Calculate confidence score based on sample size and performance consistency"""
+        """Calculate confidence score based on sample size and performance consistency."""
         # Sample size factor (diminishing returns)
         sample_factor = min(1.0, np.log(sample_size) / np.log(1000))
 
@@ -226,7 +226,7 @@ class PromptBaker:
         return min(1.0, confidence)
 
     async def extract_optimization_history(self, run) -> list[dict[str, Any]]:
-        """Extract optimization history from W&B run"""
+        """Extract optimization history from W&B run."""
         try:
             history = []
 
@@ -247,11 +247,11 @@ class PromptBaker:
             return history[-100:]  # Keep last 100 steps
 
         except Exception as e:
-            logger.error(f"Error extracting optimization history: {e}")
+            logger.exception(f"Error extracting optimization history: {e}")
             return []
 
-    async def version_winning_template(self, winning_prompt: WinningPrompt):
-        """Version winning template as W&B artifact"""
+    async def version_winning_template(self, winning_prompt: WinningPrompt) -> None:
+        """Version winning template as W&B artifact."""
         try:
             # Create artifact
             artifact = wandb.Artifact(
@@ -289,12 +289,14 @@ class PromptBaker:
             logger.info(f"Versioned winning template: {winning_prompt.variant_id}")
 
         except Exception as e:
-            logger.error(f"Error versioning template {winning_prompt.variant_id}: {e}")
+            logger.exception(
+                f"Error versioning template {winning_prompt.variant_id}: {e}"
+            )
 
     async def optimize_prompt_weights(
         self, winners: list[WinningPrompt]
     ) -> PromptWeights:
-        """Optimize weights based on winning prompt characteristics"""
+        """Optimize weights based on winning prompt characteristics."""
         if not winners:
             logger.warning("No winners provided for weight optimization")
             return self.get_default_weights()
@@ -373,7 +375,7 @@ class PromptBaker:
     def calculate_category_weights(
         self, category_scores: dict[str, list[float]]
     ) -> dict[str, float]:
-        """Calculate normalized weights for a category based on performance scores"""
+        """Calculate normalized weights for a category based on performance scores."""
         if not category_scores:
             return {}
 
@@ -400,7 +402,7 @@ class PromptBaker:
         return weights
 
     def calculate_entropy(self, weights: dict[str, float]) -> float:
-        """Calculate entropy of weight distribution (higher = more diverse)"""
+        """Calculate entropy of weight distribution (higher = more diverse)."""
         if not weights:
             return 0.0
 
@@ -418,7 +420,7 @@ class PromptBaker:
         return entropy
 
     def get_default_weights(self) -> PromptWeights:
-        """Get default weights when no winners are available"""
+        """Get default weights when no winners are available."""
         return PromptWeights(
             greeting_style_weights={
                 "friendly": 0.4,
@@ -446,8 +448,8 @@ class PromptBaker:
             confidence_level=0.5,
         )
 
-    async def save_optimized_weights(self, weights: PromptWeights):
-        """Save optimized weights to file and W&B artifact"""
+    async def save_optimized_weights(self, weights: PromptWeights) -> None:
+        """Save optimized weights to file and W&B artifact."""
         try:
             # Save to local file
             weights_path = "services/wave_bridge/agent_forge/baked_prompts/weights/optimized_weights.json"
@@ -474,12 +476,12 @@ class PromptBaker:
             )
 
         except Exception as e:
-            logger.error(f"Error saving optimized weights: {e}")
+            logger.exception(f"Error saving optimized weights: {e}")
 
     async def prepare_deployment_package(
         self, winners: list[WinningPrompt], weights: PromptWeights
     ) -> dict[str, Any]:
-        """Prepare complete deployment package with winning prompts and weights"""
+        """Prepare complete deployment package with winning prompts and weights."""
         deployment_package = {
             "version": "1.0.0",
             "created_at": datetime.now(timezone.utc).isoformat(),
@@ -555,7 +557,7 @@ class PromptBaker:
     async def validate_deployment_readiness(
         self, winners: list[WinningPrompt]
     ) -> dict[str, Any]:
-        """Validate that winning prompts are ready for production deployment"""
+        """Validate that winning prompts are ready for production deployment."""
         validation_results = {
             "deployment_ready": True,
             "validation_passed": [],
@@ -633,7 +635,7 @@ class PromptBaker:
         return validation_results
 
     async def generate_baking_report(self) -> str:
-        """Generate comprehensive prompt baking report"""
+        """Generate comprehensive prompt baking report."""
         # Identify winners
         winners = await self.identify_winners()
 

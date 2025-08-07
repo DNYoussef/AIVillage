@@ -6,7 +6,7 @@ from pathlib import Path
 import time
 
 
-def monitor_progress():
+def monitor_progress() -> None:
     """Monitor evolution progress in real-time."""
     results_dir = Path("D:/AgentForge/results_50gen")
 

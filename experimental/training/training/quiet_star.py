@@ -6,7 +6,7 @@ from transformers import AutoModelForCausalLM
 class QuietSTaRModel(nn.Module):
     """Simplified Quiet-STaR architecture with thought token generation."""
 
-    def __init__(self, base_model: AutoModelForCausalLM):
+    def __init__(self, base_model: AutoModelForCausalLM) -> None:
         super().__init__()
         self.base_model = base_model
         hidden_size = base_model.config.hidden_size

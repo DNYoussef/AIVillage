@@ -40,7 +40,7 @@ def speed_benchmark():
 
             # Time decompression
             start = time.time()
-            decompressed = compressor.decompress(compressed)
+            compressor.decompress(compressed)
             decompress_time = time.time() - start
 
             # Calculate throughput

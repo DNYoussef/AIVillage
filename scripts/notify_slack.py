@@ -8,10 +8,15 @@ import requests
 WEBHOOK = os.getenv("SLACK_WEBHOOK")
 CHANNEL = os.getenv("SLACK_CHANNEL", "#atlantis-dev")
 if not WEBHOOK:
-    raise SystemExit("$SLACK_WEBHOOK not set")
+    msg = "$SLACK_WEBHOOK not set"
+    raise SystemExit(msg)
+
 
 # Grab commit info
-_git = lambda *args: subprocess.check_output(["git", *args], text=True).strip()
+def _git(*args):
+    return subprocess.check_output(["git", *args], text=True).strip()
+
+
 sha = _git("rev-parse", "--short", "HEAD")
 msg = _git("log", "-1", "--pretty=%s")
 author = _git("log", "-1", "--pretty=%an")

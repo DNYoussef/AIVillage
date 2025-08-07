@@ -1,5 +1,5 @@
 """W&B Prompt Template Tracking for AI Tutoring
-Part B: Agent Forge Phase 4 - Prompt Engineering
+Part B: Agent Forge Phase 4 - Prompt Engineering.
 """
 
 import asyncio
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PromptTemplate:
-    """Structured prompt template for tutoring interactions"""
+    """Structured prompt template for tutoring interactions."""
 
     variant_id: str
     greeting_style: str
@@ -30,9 +30,9 @@ class PromptTemplate:
 
 
 class TutorPromptEngineer:
-    """W&B-tracked prompt optimization for tutoring"""
+    """W&B-tracked prompt optimization for tutoring."""
 
-    def __init__(self, project_name: str = "aivillage-tutoring"):
+    def __init__(self, project_name: str = "aivillage-tutoring") -> None:
         self.project_name = project_name
         self.prompt_artifacts = []
         self.active_templates = {}
@@ -62,8 +62,8 @@ class TutorPromptEngineer:
         # Initialize W&B run
         self.initialize_wandb_tracking()
 
-    def initialize_wandb_tracking(self):
-        """Initialize W&B tracking for prompt engineering"""
+    def initialize_wandb_tracking(self) -> None:
+        """Initialize W&B tracking for prompt engineering."""
         try:
             wandb.init(
                 project=self.project_name,
@@ -85,10 +85,10 @@ class TutorPromptEngineer:
             logger.info("W&B tracking initialized for prompt engineering")
 
         except Exception as e:
-            logger.error(f"Failed to initialize W&B: {e}")
+            logger.exception(f"Failed to initialize W&B: {e}")
 
     async def create_prompt_sweep(self) -> str:
-        """Define W&B sweep for tutoring prompts optimization"""
+        """Define W&B sweep for tutoring prompts optimization."""
         sweep_config = {
             "method": "bayes",
             "metric": {"name": "student_engagement", "goal": "maximize"},
@@ -139,7 +139,7 @@ class TutorPromptEngineer:
             return sweep_id
 
         except Exception as e:
-            logger.error(f"Failed to create prompt sweep: {e}")
+            logger.exception(f"Failed to create prompt sweep: {e}")
             return ""
 
     async def generate_prompt_template(
@@ -149,9 +149,9 @@ class TutorPromptEngineer:
         example_type: str,
         encouragement_frequency: float,
         subject: str = "general",
-        context: dict[str, Any] = None,
+        context: dict[str, Any] | None = None,
     ) -> PromptTemplate:
-        """Generate a complete prompt template with specified parameters"""
+        """Generate a complete prompt template with specified parameters."""
         context = context or {}
 
         # Create variant ID for tracking
@@ -242,7 +242,7 @@ class TutorPromptEngineer:
         response_time: float,
         user_engagement_signals: dict[str, Any],
     ) -> dict[str, float]:
-        """Evaluate prompt performance across multiple metrics"""
+        """Evaluate prompt performance across multiple metrics."""
         try:
             # Calculate engagement score
             engagement_score = await self._calculate_engagement_score(
@@ -295,13 +295,13 @@ class TutorPromptEngineer:
             return performance_metrics
 
         except Exception as e:
-            logger.error(f"Error evaluating prompt performance: {e}")
+            logger.exception(f"Error evaluating prompt performance: {e}")
             return {"overall_performance": 0.0}
 
     async def _calculate_engagement_score(
         self, response_text: str, signals: dict[str, Any]
     ) -> float:
-        """Calculate student engagement score based on response content and signals"""
+        """Calculate student engagement score based on response content and signals."""
         score = 0.0
 
         # Question asking (encourages interaction)
@@ -344,7 +344,7 @@ class TutorPromptEngineer:
         return min(1.0, score)
 
     async def _calculate_clarity_score(self, response_text: str) -> float:
-        """Calculate response clarity score"""
+        """Calculate response clarity score."""
         score = 0.0
         words = response_text.split()
 
@@ -381,7 +381,7 @@ class TutorPromptEngineer:
         return min(1.0, score)
 
     async def _calculate_encouragement_score(self, response_text: str) -> float:
-        """Calculate encouragement/positivity score"""
+        """Calculate encouragement/positivity score."""
         positive_words = [
             "great",
             "excellent",
@@ -433,7 +433,7 @@ class TutorPromptEngineer:
     async def get_best_performing_template(
         self, subject: str = "general", min_interactions: int = 10
     ) -> PromptTemplate | None:
-        """Get the best performing template for a given subject"""
+        """Get the best performing template for a given subject."""
         # Filter templates by interaction count
         qualified_templates = [
             template
@@ -465,10 +465,10 @@ class TutorPromptEngineer:
         return best_template
 
     async def run_sweep_agent(self):
-        """Run W&B sweep agent for continuous optimization"""
+        """Run W&B sweep agent for continuous optimization."""
 
-        def train_prompt():
-            """Single sweep run for prompt optimization"""
+        def train_prompt() -> None:
+            """Single sweep run for prompt optimization."""
             # Initialize run with sweep parameters
             run = wandb.init()
             config = wandb.config
@@ -500,8 +500,8 @@ class TutorPromptEngineer:
 
         return train_prompt
 
-    async def save_prompt_artifacts(self):
-        """Save successful prompt templates as W&B artifacts"""
+    async def save_prompt_artifacts(self) -> None:
+        """Save successful prompt templates as W&B artifacts."""
         try:
             # Get top performing templates
             top_templates = sorted(
@@ -542,7 +542,7 @@ class TutorPromptEngineer:
             logger.info(f"Saved {len(self.prompt_artifacts)} prompt artifacts to W&B")
 
         except Exception as e:
-            logger.error(f"Error saving prompt artifacts: {e}")
+            logger.exception(f"Error saving prompt artifacts: {e}")
 
 
 # Global instance for easy access

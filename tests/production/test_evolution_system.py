@@ -322,7 +322,7 @@ class TestFitnessEvaluator:
 
                 score = fitness_evaluator.evaluate_math_performance(mock_model)
 
-                assert isinstance(score, (int, float))
+                assert isinstance(score, int | float)
                 assert 0 <= score <= 1
 
     def test_fitness_aggregation(self, fitness_evaluator, mock_model):
@@ -334,7 +334,7 @@ class TestFitnessEvaluator:
             with patch.object(fitness_evaluator, "load_model", return_value=mock_model):
                 fitness_score = fitness_evaluator.evaluate(individual)
 
-                assert isinstance(fitness_score, (int, float))
+                assert isinstance(fitness_score, int | float)
                 assert 0 <= fitness_score <= 1
 
     def test_batch_evaluation(self, fitness_evaluator):
@@ -345,7 +345,7 @@ class TestFitnessEvaluator:
             scores = fitness_evaluator.evaluate_batch(population)
 
             assert len(scores) == len(population)
-            assert all(isinstance(score, (int, float)) for score in scores)
+            assert all(isinstance(score, int | float) for score in scores)
             assert all(0 <= score <= 1 for score in scores)
 
 
@@ -381,7 +381,7 @@ class TestMergeOperator:
                 parent_models[0], parent_models[1], weight=0.5
             )
 
-            assert isinstance(merged, (ModelIndividual, str))
+            assert isinstance(merged, ModelIndividual | str)
             # If returns ModelIndividual, check properties
             if isinstance(merged, ModelIndividual):
                 assert merged.parent_ids == ["parent_1", "parent_2"]

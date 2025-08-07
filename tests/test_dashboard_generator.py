@@ -78,9 +78,9 @@ class TestDashboard:
 
         # Parse Sprint 4 results
         if "Passed:" in result["stdout"]:
-            passed_line = [
+            passed_line = next(
                 line for line in result["stdout"].split("\n") if "Passed:" in line
-            ][0]
+            )
             try:
                 # Parse "Passed: 3/6 tests"
                 parts = passed_line.split("Passed: ")[1].split("/")
@@ -262,7 +262,7 @@ class TestDashboard:
 
         # Detailed results
         print("\n🔍 DETAILED RESULTS")
-        for _name, suite in self.results["test_suites"].items():
+        for suite in self.results["test_suites"].values():
             status_emoji = (
                 "✅"
                 if suite["status"] == "PASSED"

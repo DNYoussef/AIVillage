@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test script for HypeRAG Hidden-Link Scanner
+"""Test script for HypeRAG Hidden-Link Scanner.
 
 Validates scanner components with mock data to ensure functionality.
 """
@@ -18,7 +18,7 @@ from hyperag_scan_hidden_links import (
 )
 
 
-def create_mock_hippo_logs(log_dir: Path):
+def create_mock_hippo_logs(log_dir: Path) -> None:
     """Create mock Hippo-Index log files for testing."""
     log_dir.mkdir(parents=True, exist_ok=True)
 
@@ -42,7 +42,7 @@ def create_mock_hippo_logs(log_dir: Path):
     print(f"Created mock log file: {log_file}")
 
 
-async def test_hippo_analyzer():
+async def test_hippo_analyzer() -> None:
     """Test HippoIndexAnalyzer with mock data."""
     print("Testing HippoIndexAnalyzer...")
 
@@ -65,7 +65,7 @@ async def test_hippo_analyzer():
         print("+ HippoIndexAnalyzer test passed")
 
 
-async def test_divergent_scanner():
+async def test_divergent_scanner() -> None:
     """Test DivergentRetrieverScanner with mock pairs."""
     print("Testing DivergentRetrieverScanner...")
 
@@ -92,7 +92,7 @@ async def test_divergent_scanner():
     print("+ DivergentRetrieverScanner test passed")
 
 
-async def test_full_scanner():
+async def test_full_scanner() -> None:
     """Test complete HiddenLinkScanner pipeline."""
     print("Testing complete HiddenLinkScanner pipeline...")
 
@@ -127,7 +127,7 @@ async def test_full_scanner():
         print("+ Complete scanner test passed")
 
 
-async def test_config_loading():
+async def test_config_loading() -> None:
     """Test configuration loading."""
     print("Testing configuration loading...")
 
@@ -148,7 +148,7 @@ async def test_config_loading():
     print("+ Configuration loading test passed")
 
 
-async def main():
+async def main() -> None:
     """Run all tests."""
     print("Running HypeRAG Hidden-Link Scanner tests...\n")
 

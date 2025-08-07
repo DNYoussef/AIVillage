@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class ProductionDeployer:
     """Production deployment orchestrator."""
 
-    def __init__(self, environment: str, project_root: Path | None = None):
+    def __init__(self, environment: str, project_root: Path | None = None) -> None:
         self.environment = environment
         self.project_root = project_root or Path.cwd()
         self.deploy_dir = self.project_root / "deploy"
@@ -76,14 +76,14 @@ class ProductionDeployer:
             )
             return result.returncode, result.stdout, result.stderr
         except subprocess.CalledProcessError as e:
-            logger.error(f"Command failed with return code {e.returncode}")
-            logger.error(f"stdout: {e.stdout}")
-            logger.error(f"stderr: {e.stderr}")
+            logger.exception(f"Command failed with return code {e.returncode}")
+            logger.exception(f"stdout: {e.stdout}")
+            logger.exception(f"stderr: {e.stderr}")
             if check:
                 raise
             return e.returncode, e.stdout or "", e.stderr or ""
         except subprocess.TimeoutExpired:
-            logger.error(f"Command timed out after {timeout} seconds")
+            logger.exception(f"Command timed out after {timeout} seconds")
             if check:
                 raise
             return -1, "", f"Timeout after {timeout} seconds"
@@ -379,7 +379,7 @@ class ProductionDeployer:
             return True
 
         except Exception as e:
-            logger.error(f"Deployment failed with error: {e}")
+            logger.exception(f"Deployment failed with error: {e}")
             traceback.print_exc()
 
             if self.config["rollback_on_failure"]:
@@ -446,7 +446,7 @@ class ProductionDeployer:
         return status
 
 
-def main():
+def main() -> int | None:
     """Main deployment orchestrator."""
     parser = argparse.ArgumentParser(description="AIVillage Production Deployer")
     parser.add_argument(
@@ -485,7 +485,7 @@ def main():
         logger.warning("Deployment interrupted by user")
         return 130
     except Exception as e:
-        logger.error(f"Deployment failed: {e}")
+        logger.exception(f"Deployment failed: {e}")
         traceback.print_exc()
         return 1
 

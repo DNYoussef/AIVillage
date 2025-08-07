@@ -2,7 +2,10 @@
 
 from torch import nn
 
-from ..compression import CompressionConfig, stream_compress_model
+from AIVillage.experimental.training.compression import (
+    CompressionConfig,
+    stream_compress_model,
+)
 
 
 def final_package(model: nn.Module, out_path: str) -> dict:

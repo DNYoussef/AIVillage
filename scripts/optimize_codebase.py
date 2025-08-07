@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 class CodeQualityAnalyzer:
     """Analyze and improve code quality."""
 
-    def __init__(self, root_path: Path, fix_issues: bool = False):
+    def __init__(self, root_path: Path, fix_issues: bool = False) -> None:
         """Initialize the analyzer.
 
         Args:
@@ -98,10 +98,9 @@ class CodeQualityAnalyzer:
                 if isinstance(node, ast.Import):
                     for alias in node.names:
                         imports.append(alias.name)
-                elif isinstance(node, ast.ImportFrom):
-                    if node.module:
-                        for alias in node.names:
-                            imports.append(f"{node.module}.{alias.name}")
+                elif isinstance(node, ast.ImportFrom) and node.module:
+                    for alias in node.names:
+                        imports.append(f"{node.module}.{alias.name}")
 
             # Check for unused imports (basic check)
             for imp in imports:
@@ -304,7 +303,7 @@ class CodeQualityAnalyzer:
             try:
                 self.analyze_file(file_path)
             except Exception as e:
-                logger.error(f"Failed to analyze {file_path}: {e}")
+                logger.exception(f"Failed to analyze {file_path}: {e}")
 
         # Generate and save report
         report = self.generate_report()
@@ -402,7 +401,7 @@ Examples:
         logger.info("Optimization interrupted by user")
         return 130
     except Exception as e:
-        logger.error(f"Optimization failed: {e}")
+        logger.exception(f"Optimization failed: {e}")
         return 1
 
 

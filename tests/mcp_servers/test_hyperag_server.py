@@ -3,6 +3,7 @@ Comprehensive tests for HypeRAG MCP Server.
 """
 
 import asyncio
+import contextlib
 import json
 from pathlib import Path
 import tempfile
@@ -54,10 +55,8 @@ class TestHypeRAGMCPServer:
         """Create server instance for testing."""
         server = HypeRAGMCPServer(config_path=temp_config_file)
         yield server
-        try:
+        with contextlib.suppress(Exception):
             await server.shutdown()
-        except Exception:
-            pass
         # Cleanup config file
         Path(temp_config_file).unlink(missing_ok=True)
 
@@ -198,10 +197,8 @@ class TestHypeRAGMCPServer:
         # Cleanup
         for task in tasks:
             task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await task
-            except asyncio.CancelledError:
-                pass
 
     @pytest.mark.asyncio
     async def test_memory_system_integration(self, server):
@@ -273,7 +270,6 @@ class TestHypeRAGMCPServerIntegration:
 
         # Mock a complete request cycle
         mock_websocket = AsyncMock()
-        mock_request = {"id": "test-123", "method": "ping", "params": {}}
 
         # This would test the full message handling pipeline
         # For now, verify the server can handle the setup

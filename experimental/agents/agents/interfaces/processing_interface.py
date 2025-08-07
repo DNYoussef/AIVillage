@@ -1,4 +1,4 @@
-"""Standardized Processing Interface
+"""Standardized Processing Interface.
 
 This module defines the standard interface for processing operations
 across all AIVillage components, building on the BaseProcessHandler framework.
@@ -133,7 +133,7 @@ class ProcessingInterface(ABC, Generic[T, U]):
     processor-specific functionality for managing processing pipelines.
     """
 
-    def __init__(self, processor_id: str, config: ProcessConfig | None = None):
+    def __init__(self, processor_id: str, config: ProcessConfig | None = None) -> None:
         self.processor_id = processor_id
         self.config = config or ProcessConfig()
         self.status = ProcessorStatus.IDLE
@@ -203,7 +203,8 @@ class ProcessingInterface(ABC, Generic[T, U]):
             List of processing results
         """
         if not self.has_capability(ProcessorCapability.BATCH_PROCESSING):
-            raise NotImplementedError("Processor does not support batch processing")
+            msg = "Processor does not support batch processing"
+            raise NotImplementedError(msg)
 
         if batch_size is None:
             batch_size = len(input_batch)
@@ -520,8 +521,4 @@ def validate_processing_interface(processor: Any) -> bool:
             return False
 
     required_attributes = ["processor_id", "status", "capabilities", "metrics"]
-    for attr in required_attributes:
-        if not hasattr(processor, attr):
-            return False
-
-    return True
+    return all(hasattr(processor, attr) for attr in required_attributes)

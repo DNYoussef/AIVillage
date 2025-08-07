@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 
 class UserIntentInterpreter:
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize interpreter state."""
         self.model = None
         logger.debug("UserIntentInterpreter initialized")

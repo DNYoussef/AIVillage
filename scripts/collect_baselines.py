@@ -123,7 +123,7 @@ def calculate_baselines(results: dict[str, list[float]]) -> dict[str, dict[str, 
     return baselines
 
 
-def save_baselines(baselines: dict[str, dict[str, float]], output_file: Path):
+def save_baselines(baselines: dict[str, dict[str, float]], output_file: Path) -> None:
     """Save baselines to JSON file."""
     # Prepare data for saving
     baseline_data = {
@@ -195,7 +195,7 @@ def compare_with_existing(
         print()
 
 
-def main():
+def main() -> int | None:
     """Main baseline collection process."""
     parser = argparse.ArgumentParser(description="Collect performance baselines")
     parser.add_argument(

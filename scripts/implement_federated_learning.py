@@ -453,12 +453,12 @@ class FederatedLearningClient:
         # Validate round config before proceeding
         if "status" in round_config:
             if round_config["status"] == "insufficient_clients":
-                raise ValueError("Server rejected round: insufficient clients")
+                msg = "Server rejected round: insufficient clients"
+                raise ValueError(msg)
 
         if "round_number" not in round_config:
-            raise ValueError(
-                f"Invalid round config: missing 'round_number'. Got: {list(round_config.keys())}"
-            )
+            msg = f"Invalid round config: missing 'round_number'. Got: {list(round_config.keys())}"
+            raise ValueError(msg)
 
         self.current_round = round_config["round_number"]
 

@@ -136,7 +136,7 @@ class PerformanceMonitor:
                     ]
                 logger.info(f"Loaded {len(self.metrics_history)} historical metrics")
             except Exception as e:
-                logger.error(f"Failed to load metrics history: {e}")
+                logger.exception(f"Failed to load metrics history: {e}")
                 self.metrics_history = []
 
     def save_history(self) -> None:
@@ -151,7 +151,7 @@ class PerformanceMonitor:
 
             logger.debug(f"Saved {len(recent_metrics)} metrics to {self.data_file}")
         except Exception as e:
-            logger.error(f"Failed to save metrics history: {e}")
+            logger.exception(f"Failed to save metrics history: {e}")
 
     def collect_system_metrics(self) -> SystemMetrics:
         """Collect current system metrics.
@@ -218,7 +218,7 @@ class PerformanceMonitor:
             metrics.python_processes = python_processes[:10]  # Top 10 Python processes
 
         except Exception as e:
-            logger.error(f"Failed to collect system metrics: {e}")
+            logger.exception(f"Failed to collect system metrics: {e}")
 
         return metrics
 
@@ -477,7 +477,7 @@ Examples:
         logger.info("Monitoring interrupted by user")
         return 130
     except Exception as e:
-        logger.error(f"Monitoring failed: {e}")
+        logger.exception(f"Monitoring failed: {e}")
         return 1
 
 

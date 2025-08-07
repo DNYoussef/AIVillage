@@ -74,7 +74,7 @@ class TestUncertaintyAwareReasoningEngine:
         if hasattr(reasoning_engine, "calculate_uncertainty"):
             uncertainty = reasoning_engine.calculate_uncertainty(sample_documents)
 
-            assert isinstance(uncertainty, (float, dict))
+            assert isinstance(uncertainty, float | dict)
 
             if isinstance(uncertainty, float):
                 assert 0 <= uncertainty <= 1
@@ -182,7 +182,7 @@ class TestLatentSpaceActivation:
 
             assert "dominant_patterns" in patterns
             assert "activation_strength" in patterns
-            assert isinstance(patterns["activation_strength"], (float, list))
+            assert isinstance(patterns["activation_strength"], float | list)
 
     def test_similarity_computation(self, activation_system, sample_embeddings):
         """Test similarity computation in latent space."""
@@ -379,7 +379,7 @@ class TestRAGSystemIntegration:
 
         # Should handle gracefully
         try:
-            docs = mock_vector_store.search("test query")
+            mock_vector_store.search("test query")
         except Exception as e:
             assert "Vector store error" in str(e)
 
@@ -387,7 +387,7 @@ class TestRAGSystemIntegration:
         mock_llm.generate.side_effect = Exception("LLM error")
 
         try:
-            response = mock_llm.generate("test", [])
+            mock_llm.generate("test", [])
         except Exception as e:
             assert "LLM error" in str(e)
 
@@ -450,7 +450,7 @@ class TestRAGPerformance:
 
             # Simulate reasoning process
             if hasattr(reasoning_engine, "reason_with_confidence"):
-                result = reasoning_engine.reason_with_confidence(
+                reasoning_engine.reason_with_confidence(
                     {"text": "Complex query"}, large_context
                 )
 

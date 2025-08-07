@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HypeRAG Planning Engine Demo
+"""HypeRAG Planning Engine Demo.
 
 Demonstrates the strategic query planning system with various query types
 and reasoning strategies.
@@ -26,8 +26,8 @@ from mcp_servers.hyperag.planning import (
 from mcp_servers.hyperag.planning.query_planner import AgentReasoningModel
 
 
-async def demo_query_classification():
-    """Demonstrate query classification capabilities"""
+async def demo_query_classification() -> None:
+    """Demonstrate query classification capabilities."""
     print("🔍 Query Classification Demo")
     print("=" * 50)
 
@@ -63,8 +63,8 @@ async def demo_query_classification():
         print(f"   Suggested Strategy: {strategy.value}")
 
 
-async def demo_strategic_planning():
-    """Demonstrate strategic plan creation"""
+async def demo_strategic_planning() -> None:
+    """Demonstrate strategic plan creation."""
     print("\n\n🎯 Strategic Planning Demo")
     print("=" * 50)
 
@@ -126,8 +126,8 @@ async def demo_strategic_planning():
             print(f"   ❌ Planning failed: {e}")
 
 
-async def demo_plan_adaptation():
-    """Demonstrate plan adaptation and replanning"""
+async def demo_plan_adaptation() -> None:
+    """Demonstrate plan adaptation and replanning."""
     print("\n\n🔄 Plan Adaptation Demo")
     print("=" * 50)
 
@@ -178,13 +178,12 @@ async def demo_plan_adaptation():
     print(f"   Adaptation Reason: {new_plan.adaptation_reason}")
 
 
-async def demo_strategy_comparison():
-    """Demonstrate different strategies for the same query"""
+async def demo_strategy_comparison() -> None:
+    """Demonstrate different strategies for the same query."""
     print("\n\n⚖️  Strategy Comparison Demo")
     print("=" * 50)
 
     selector = StrategySelector()
-    query = "How do climate patterns affect agricultural productivity over time?"
 
     # Test different complexity levels
     complexity_levels = [0.3, 0.6, 0.9]
@@ -215,8 +214,8 @@ async def demo_strategy_comparison():
             )
 
 
-async def demo_plan_dsl():
-    """Demonstrate Plan DSL serialization"""
+async def demo_plan_dsl() -> None:
+    """Demonstrate Plan DSL serialization."""
     print("\n\n📄 Plan DSL Demo")
     print("=" * 50)
 
@@ -270,8 +269,8 @@ async def demo_plan_dsl():
     print("-" * 40)
 
 
-async def demo_learning_system():
-    """Demonstrate the learning system capabilities"""
+async def demo_learning_system() -> None:
+    """Demonstrate the learning system capabilities."""
     print("\n\n🧠 Learning System Demo")
     print("=" * 50)
 
@@ -361,8 +360,8 @@ async def demo_learning_system():
             )
 
 
-async def main():
-    """Main demo function"""
+async def main() -> None:
+    """Main demo function."""
     print("🚀 HypeRAG Planning Engine Demo")
     print("=" * 60)
 

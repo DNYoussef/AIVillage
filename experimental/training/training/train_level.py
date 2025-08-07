@@ -8,7 +8,7 @@ from .training_loop import run_level
 
 def train_level(
     dataset, self_model_tasks, model, state, *, expert_vector_path: str | None = None
-):
+) -> None:
     """Run one curriculum level with self-model grok gate."""
     run_level(dataset)
     self_model_cycle(model, self_model_tasks, state)

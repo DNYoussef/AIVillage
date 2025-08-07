@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class KnowledgeGraphAgent:
-    def __init__(self, llm_config: OpenAIGPTConfig):
+    def __init__(self, llm_config: OpenAIGPTConfig) -> None:
         self.llm = llm_config.create()
         self.graph = nx.Graph()
 
@@ -53,8 +53,9 @@ class KnowledgeGraphAgent:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse graph query response: {response}")
-            raise AIVillageException("Failed to parse graph query response")
+            logger.exception(f"Failed to parse graph query response: {response}")
+            msg = "Failed to parse graph query response"
+            raise AIVillageException(msg)
 
     @error_handler.handle_error
     async def update_graph(self, new_information: dict[str, Any]) -> bool:
@@ -94,8 +95,9 @@ class KnowledgeGraphAgent:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse graph update response: {response}")
-            raise AIVillageException("Failed to parse graph update response")
+            logger.exception(f"Failed to parse graph update response: {response}")
+            msg = "Failed to parse graph update response"
+            raise AIVillageException(msg)
 
     def _apply_graph_updates(self, update_instructions: dict[str, Any]) -> bool:
         try:
@@ -123,7 +125,7 @@ class KnowledgeGraphAgent:
 
             return True
         except Exception as e:
-            logger.error(f"Error applying graph updates: {e!s}")
+            logger.exception(f"Error applying graph updates: {e!s}")
             return False
 
     @error_handler.handle_error
@@ -163,8 +165,9 @@ class KnowledgeGraphAgent:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse reasoning response: {response}")
-            raise AIVillageException("Failed to parse reasoning response")
+            logger.exception(f"Failed to parse reasoning response: {response}")
+            msg = "Failed to parse reasoning response"
+            raise AIVillageException(msg)
 
     def _get_graph_structure(self) -> str:
         return nx.to_dict_of_dicts(self.graph)
@@ -199,8 +202,8 @@ class KnowledgeGraphAgent:
 
     def visualize_graph(
         self,
-        highlight_nodes: list[str] = None,
-        highlight_edges: list[tuple[str, str]] = None,
+        highlight_nodes: list[str] | None = None,
+        highlight_edges: list[tuple[str, str]] | None = None,
     ) -> bytes:
         """Visualize the knowledge graph and return the image as bytes.
 
@@ -251,7 +254,7 @@ class KnowledgeGraphAgent:
 if __name__ == "__main__":
     import asyncio
 
-    async def main():
+    async def main() -> None:
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
         kg_agent = KnowledgeGraphAgent(llm_config)
 

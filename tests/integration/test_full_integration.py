@@ -108,7 +108,8 @@ async def test_full_integration() -> None:
     assert all(len(peers) == len(agents) - 1 for peers in network.values())
 
     devices = await profile_device_resources(agents)
-    assert len(devices) == 3 and all("ram" in d for d in devices)
+    assert len(devices) == 3
+    assert all("ram" in d for d in devices)
 
     shards = await distribute_model(devices, model_size=24)
     assert sum(shards.values()) == 24

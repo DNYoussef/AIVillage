@@ -20,7 +20,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 class RealWorldTestSuite:
     """Test compression with real-world models and constraints."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.use_cases = {
             "translation": {
                 "description": "Local language translation model",
@@ -64,12 +64,15 @@ class RealWorldTestSuite:
             return self._create_speech_model()
         if config["model_type"] == "embedding":
             return self._create_recommendation_model()
+        return None
 
     def _create_translation_model(self) -> nn.Module:
         """Small transformer for translation."""
 
         class TranslationModel(nn.Module):
-            def __init__(self, vocab_size=10000, d_model=256, nhead=4, num_layers=2):
+            def __init__(
+                self, vocab_size=10000, d_model=256, nhead=4, num_layers=2
+            ) -> None:
                 super().__init__()
                 self.embedding = nn.Embedding(vocab_size, d_model)
                 self.pos_encoding = nn.Parameter(torch.randn(1, 100, d_model))
@@ -93,7 +96,7 @@ class RealWorldTestSuite:
         layers = MobileOptimizedLayers()
 
         class VisionModel(nn.Module):
-            def __init__(self, num_classes=10):
+            def __init__(self, num_classes=10) -> None:
                 super().__init__()
 
                 self.features = nn.Sequential(
@@ -117,7 +120,7 @@ class RealWorldTestSuite:
         """RNN for speech recognition."""
 
         class SpeechModel(nn.Module):
-            def __init__(self, input_dim=80, hidden_dim=128, num_classes=50):
+            def __init__(self, input_dim=80, hidden_dim=128, num_classes=50) -> None:
                 super().__init__()
                 self.feature_extractor = nn.Conv1d(
                     1, input_dim, kernel_size=160, stride=80
@@ -140,7 +143,7 @@ class RealWorldTestSuite:
         """Embedding-based recommendation model."""
 
         class RecommendationModel(nn.Module):
-            def __init__(self, num_users=10000, num_items=5000, embed_dim=64):
+            def __init__(self, num_users=10000, num_items=5000, embed_dim=64) -> None:
                 super().__init__()
                 self.user_embed = nn.Embedding(num_users, embed_dim)
                 self.item_embed = nn.Embedding(num_items, embed_dim)
@@ -261,7 +264,7 @@ class RealWorldTestSuite:
             "target_latency_ms": target_latency_ms,
         }
 
-    def generate_performance_report(self, results: dict[str, dict]):
+    def generate_performance_report(self, results: dict[str, dict]) -> None:
         """Generate detailed performance report."""
         report = """# Real-World Compression Performance Report
 

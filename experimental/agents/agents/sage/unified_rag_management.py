@@ -17,7 +17,7 @@ class UnifiedRAGManagement:
         rag_config: RAGConfig,
         llm_config: OpenAIGPTConfig,
         knowledge_tracker: UnifiedKnowledgeTracker | None = None,
-    ):
+    ) -> None:
         self.rag_system = EnhancedRAGPipeline(rag_config, knowledge_tracker)
         self.llm = llm_config.create()
 
@@ -51,11 +51,14 @@ class UnifiedRAGManagement:
                 **parsed_result,
             }
         except Exception as e:
-            logger.error(f"Error performing health check: {e!s}")
-            raise AIVillageException(f"Error performing health check: {e!s}") from e
+            logger.exception(f"Error performing health check: {e!s}")
+            msg = f"Error performing health check: {e!s}"
+            raise AIVillageException(msg) from e
 
     @error_handler.handle_error
-    async def handle_rag_health_issue(self, health_check_result: dict[str, Any]):
+    async def handle_rag_health_issue(
+        self, health_check_result: dict[str, Any]
+    ) -> None:
         try:
             handling_prompt = f"""
             Given the following health check result: {health_check_result}
@@ -89,10 +92,11 @@ class UnifiedRAGManagement:
 
             await self._notify_administrators(health_check_result, parsed_plan)
         except Exception as e:
-            logger.error(f"Error handling RAG health issue: {e!s}")
-            raise AIVillageException(f"Error handling RAG health issue: {e!s}") from e
+            logger.exception(f"Error handling RAG health issue: {e!s}")
+            msg = f"Error handling RAG health issue: {e!s}"
+            raise AIVillageException(msg) from e
 
-    async def _handle_index_issue(self, plan: dict[str, Any]):
+    async def _handle_index_issue(self, plan: dict[str, Any]) -> None:
         logger.info(f"Handling index issue with plan: {plan}")
         if plan["severity"] == "high":
             await self._rebuild_index()
@@ -100,20 +104,20 @@ class UnifiedRAGManagement:
             await self._repair_index()
         await self._optimize_index()
 
-    async def _handle_performance_issue(self, plan: dict[str, Any]):
+    async def _handle_performance_issue(self, plan: dict[str, Any]) -> None:
         logger.info(f"Handling performance issue with plan: {plan}")
         await self._tune_performance()
         if plan.get("scale_resources", False):
             await self._scale_resources()
 
-    async def _handle_consistency_issue(self, plan: dict[str, Any]):
+    async def _handle_consistency_issue(self, plan: dict[str, Any]) -> None:
         logger.info(f"Handling consistency issue with plan: {plan}")
         await self._reconcile_data()
         await self._validate_data()
 
     async def _notify_administrators(
         self, health_check_result: dict[str, Any], handling_plan: dict[str, Any]
-    ):
+    ) -> None:
         notification_prompt = f"""
         Create a notification for administrators about RAG system issues.
         Health Check Result: {health_check_result}
@@ -132,19 +136,19 @@ class UnifiedRAGManagement:
             f"Notifying administrators about RAG health issues:\n{notification.text}"
         )
 
-    async def _rebuild_index(self):
+    async def _rebuild_index(self) -> None:
         logger.info("Rebuilding RAG index")
         await self.rag_system.rebuild_index()
 
-    async def _repair_index(self):
+    async def _repair_index(self) -> None:
         logger.info("Repairing RAG index")
         await self.rag_system.repair_index()
 
-    async def _optimize_index(self):
+    async def _optimize_index(self) -> None:
         logger.info("Optimizing RAG index")
         await self.rag_system.optimize_index()
 
-    async def _tune_performance(self):
+    async def _tune_performance(self) -> None:
         logger.info("Tuning RAG performance")
         current_params = await self.rag_system.get_performance_params()
         tuning_prompt = f"""
@@ -162,7 +166,7 @@ class UnifiedRAGManagement:
         parsed_params = self._parse_json_response(optimal_params.text)
         await self.rag_system.set_performance_params(parsed_params)
 
-    async def _scale_resources(self):
+    async def _scale_resources(self) -> None:
         logger.info("Scaling RAG system resources")
         current_resources = await self.rag_system.get_resource_allocation()
         scaling_prompt = f"""
@@ -180,7 +184,7 @@ class UnifiedRAGManagement:
         parsed_resources = self._parse_json_response(optimal_resources.text)
         await self.rag_system.set_resource_allocation(parsed_resources)
 
-    async def _reconcile_data(self):
+    async def _reconcile_data(self) -> None:
         logger.info("Reconciling RAG data")
         inconsistencies = await self.rag_system.find_data_inconsistencies()
         if inconsistencies:
@@ -200,7 +204,7 @@ class UnifiedRAGManagement:
             for step in parsed_steps:
                 await self.rag_system.execute_reconciliation_step(step)
 
-    async def _validate_data(self):
+    async def _validate_data(self) -> None:
         logger.info("Validating RAG data")
         validation_results = await self.rag_system.validate_data()
         if not validation_results["all_valid"]:
@@ -226,14 +230,15 @@ class UnifiedRAGManagement:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON response: {response}")
-            raise AIVillageException("Failed to parse JSON response")
+            logger.exception(f"Failed to parse JSON response: {response}")
+            msg = "Failed to parse JSON response"
+            raise AIVillageException(msg)
 
     @safe_execute
     async def process_query(self, query: str) -> dict[str, Any]:
         return await self.rag_system.process_query(query)
 
-    async def update_knowledge_base(self, new_data: dict[str, Any]):
+    async def update_knowledge_base(self, new_data: dict[str, Any]) -> None:
         await self.rag_system.update_knowledge_base(new_data)
 
     async def get_system_stats(self) -> dict[str, Any]:

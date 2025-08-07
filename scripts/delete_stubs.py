@@ -45,7 +45,7 @@ def analyze_file(filepath):
         return [f"Error analyzing file: {e}"]
 
 
-def main():
+def main() -> None:
     """Main function to scan for stub code."""
     src_dir = Path("src")
 

@@ -5,9 +5,11 @@ from typing import Any
 
 from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
+from AIVillage.experimental.agents.agents.king.utils.exceptions import (
+    AIVillageException,
+)
 from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 
-from ..utils.exceptions import AIVillageException
 from .quality_assurance_layer import QualityAssuranceLayer
 from .seal_enhanced_planner import SEALEnhancedPlanGenerator
 
@@ -20,7 +22,7 @@ class ProblemAnalyzer:
         communication_protocol: StandardCommunicationProtocol,
         agent,
         quality_assurance_layer: QualityAssuranceLayer,
-    ):
+    ) -> None:
         self.communication_protocol = communication_protocol
         self.agent = agent
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
@@ -160,7 +162,7 @@ class ProblemAnalyzer:
         response = await self.llm.complete(consolidation_prompt)
         return response.text
 
-    async def update_models(self, task: dict[str, Any], result: Any):
+    async def update_models(self, task: dict[str, Any], result: Any) -> None:
         try:
             logger.info(f"Updating models with task result: {result}")
             await self.enhanced_plan_generator.update(task, result)
@@ -169,9 +171,10 @@ class ProblemAnalyzer:
             )
         except Exception as e:
             logger.error(f"Error updating models: {e!s}", exc_info=True)
-            raise AIVillageException(f"Error updating models: {e!s}")
+            msg = f"Error updating models: {e!s}"
+            raise AIVillageException(msg)
 
-    async def save_models(self, path: str):
+    async def save_models(self, path: str) -> None:
         try:
             logger.info(f"Saving problem analyzer models to {path}")
             os.makedirs(path, exist_ok=True)
@@ -190,9 +193,10 @@ class ProblemAnalyzer:
             logger.info("Problem analyzer models saved successfully")
         except Exception as e:
             logger.error(f"Error saving problem analyzer models: {e!s}", exc_info=True)
-            raise AIVillageException(f"Error saving problem analyzer models: {e!s}")
+            msg = f"Error saving problem analyzer models: {e!s}"
+            raise AIVillageException(msg)
 
-    async def load_models(self, path: str):
+    async def load_models(self, path: str) -> None:
         try:
             logger.info(f"Loading problem analyzer models from {path}")
             self.enhanced_plan_generator.load(
@@ -210,7 +214,8 @@ class ProblemAnalyzer:
             logger.info("Problem analyzer models loaded successfully")
         except Exception as e:
             logger.error(f"Error loading problem analyzer models: {e!s}", exc_info=True)
-            raise AIVillageException(f"Error loading problem analyzer models: {e!s}")
+            msg = f"Error loading problem analyzer models: {e!s}"
+            raise AIVillageException(msg)
 
     async def introspect(self) -> dict[str, Any]:
         return {

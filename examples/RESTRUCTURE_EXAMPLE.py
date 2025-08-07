@@ -13,7 +13,7 @@ from pathlib import Path
 class RestructureSimulator:
     """Simulates the restructuring process without actually moving files."""
 
-    def __init__(self, base_path: str):
+    def __init__(self, base_path: str) -> None:
         self.base_path = Path(base_path)
         self.moves = []
         self.errors = []
@@ -42,7 +42,7 @@ class RestructureSimulator:
 
         return result
 
-    def simulate_production_moves(self):
+    def simulate_production_moves(self) -> None:
         """Simulate moving production components."""
         print("=== Simulating Production Component Moves ===")
 
@@ -68,7 +68,7 @@ class RestructureSimulator:
             status = "✅" if result["would_move"] else "⚠️"
             print(f"{status} {source} → {target} ({result['reason']})")
 
-    def simulate_agent_forge_split(self):
+    def simulate_agent_forge_split(self) -> None:
         """Simulate splitting agent_forge."""
         print("\n=== Simulating Agent Forge Split ===")
 
@@ -138,7 +138,7 @@ class RestructureSimulator:
             status = "✅" if result["would_move"] else "⚠️"
             print(f"  {status} {source} → {target} ({result['reason']})")
 
-    def simulate_tools_moves(self):
+    def simulate_tools_moves(self) -> None:
         """Simulate moving tools."""
         print("\n=== Simulating Tools Consolidation ===")
 

@@ -1,4 +1,4 @@
-"""Standardized Communication Interface
+"""Standardized Communication Interface.
 
 This module defines the standard interface for inter-agent communication
 protocols and message handling systems.
@@ -97,7 +97,7 @@ class MessageProtocol(ABC):
     Defines the standard interface for low-level message transport.
     """
 
-    def __init__(self, config: ProtocolConfig):
+    def __init__(self, config: ProtocolConfig) -> None:
         self.config = config
         self.stats = MessageStats()
         self._handlers: dict[str, Callable] = {}
@@ -238,7 +238,7 @@ class CommunicationInterface(ABC):
     a consistent API for agent communication.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.protocols: dict[str, MessageProtocol] = {}
         self.default_protocol: str | None = None
         self.message_queue: asyncio.Queue = asyncio.Queue()
@@ -497,8 +497,4 @@ def validate_protocol_interface(protocol: Any) -> bool:
             return False
 
     required_attributes = ["config", "stats"]
-    for attr in required_attributes:
-        if not hasattr(protocol, attr):
-            return False
-
-    return True
+    return all(hasattr(protocol, attr) for attr in required_attributes)

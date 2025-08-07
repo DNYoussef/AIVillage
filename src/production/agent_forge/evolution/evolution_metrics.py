@@ -122,10 +122,14 @@ class MetricsBackend:
     async def stop(self) -> None:  # pragma: no cover - interface
         raise NotImplementedError
 
-    async def save_metrics(self, metrics: list[EvolutionMetrics]) -> None:  # pragma: no cover - interface
+    async def save_metrics(
+        self, metrics: list[EvolutionMetrics]
+    ) -> None:  # pragma: no cover - interface
         raise NotImplementedError
 
-    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:  # pragma: no cover - interface
+    async def load_historical_metrics(
+        self, limit: int | None = None
+    ) -> list[dict[str, Any]]:  # pragma: no cover - interface
         raise NotImplementedError
 
 
@@ -164,9 +168,7 @@ class SQLiteMetricsBackend(MetricsBackend):
     def _migrate(self) -> None:
         assert self._conn is not None
         cur = self._conn.cursor()
-        cur.execute(
-            "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER)"
-        )
+        cur.execute("CREATE TABLE IF NOT EXISTS schema_version (version INTEGER)")
         row = cur.execute("SELECT version FROM schema_version").fetchone()
         if row is None:
             cur.execute("INSERT INTO schema_version (version) VALUES (1)")
@@ -247,7 +249,9 @@ class SQLiteMetricsBackend(MetricsBackend):
             )
         self._conn.commit()
 
-    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:
+    async def load_historical_metrics(
+        self, limit: int | None = None
+    ) -> list[dict[str, Any]]:
         conn = self._conn or sqlite3.connect(self.db_path)
         cur = conn.cursor()
         query = "SELECT agent_id, fitness_score, timestamp FROM fitness_metrics ORDER BY timestamp DESC"
@@ -258,9 +262,7 @@ class SQLiteMetricsBackend(MetricsBackend):
             rows = cur.execute(query).fetchall()
         if conn is not self._conn:
             conn.close()
-        return [
-            {"agent_id": a, "fitness_score": f, "timestamp": t} for a, f, t in rows
-        ]
+        return [{"agent_id": a, "fitness_score": f, "timestamp": t} for a, f, t in rows]
 
 
 class FileMetricsBackend(MetricsBackend):
@@ -291,7 +293,10 @@ class FileMetricsBackend(MetricsBackend):
 
     def _compress_current(self) -> None:
         if self._file and Path(self._file).exists():
-            with open(self._file, "rb") as f_in, gzip.open(f"{self._file}.gz", "wb") as f_out:
+            with (
+                open(self._file, "rb") as f_in,
+                gzip.open(f"{self._file}.gz", "wb") as f_out,
+            ):
                 f_out.writelines(f_in)
             os.remove(self._file)
 
@@ -306,14 +311,16 @@ class FileMetricsBackend(MetricsBackend):
             self._compress_current()
             self._open_new_file()
 
-    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:
+    async def load_historical_metrics(
+        self, limit: int | None = None
+    ) -> list[dict[str, Any]]:
         records: list[dict[str, Any]] = []
         files = sorted(self.log_dir.glob("metrics_*.jsonl*"))
         for path in files:
             if path.suffix == ".gz":
                 fh = gzip.open(path, "rt", encoding="utf-8")
             else:
-                fh = open(path, "r", encoding="utf-8")
+                fh = open(path, encoding="utf-8")
             with fh:
                 for line in fh:
                     try:
@@ -337,7 +344,8 @@ class RedisMetricsBackend(MetricsBackend):
 
     async def start(self) -> None:
         if not REDIS_AVAILABLE:
-            raise RuntimeError("redis library not available")
+            msg = "redis library not available"
+            raise RuntimeError(msg)
         self._redis = redis.Redis.from_url(self.redis_url, decode_responses=True)
         await self.sqlite_backend.start()
 
@@ -365,7 +373,9 @@ class RedisMetricsBackend(MetricsBackend):
         # Persist to SQLite for durability
         await self.sqlite_backend.save_metrics(metrics)
 
-    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:
+    async def load_historical_metrics(
+        self, limit: int | None = None
+    ) -> list[dict[str, Any]]:
         return await self.sqlite_backend.load_historical_metrics(limit)
 
 
@@ -522,7 +532,9 @@ class EvolutionMetricsCollector:
         if len(self.metrics_history) >= threshold:
             await self._flush_metrics()
 
-    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:
+    async def load_historical_metrics(
+        self, limit: int | None = None
+    ) -> list[dict[str, Any]]:
         """Load historical metrics from the configured backend."""
         await self._flush_metrics()
         return await self._backend.load_historical_metrics(limit)

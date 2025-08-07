@@ -41,7 +41,7 @@ class SageAgent(UnifiedBaseAgent):
         communication_protocol: StandardCommunicationProtocol,
         vector_store: VectorStore,
         knowledge_tracker: UnifiedKnowledgeTracker | None = None,
-    ):
+    ) -> None:
         super().__init__(config, communication_protocol, knowledge_tracker)
         self.research_capabilities = config.get("research_capabilities", [])
         self.rag_system = EnhancedRAGPipeline(config, knowledge_tracker)
@@ -88,7 +88,7 @@ class SageAgent(UnifiedBaseAgent):
             return result
         except Exception as e:
             self.performance_metrics["failed_tasks"] += 1
-            logger.error(f"Error executing task: {e!s}")
+            logger.exception(f"Error executing task: {e!s}")
             return await self.error_controller.handle_error(e, task)
         finally:
             execution_time = time.time() - start_time
@@ -173,7 +173,7 @@ class SageAgent(UnifiedBaseAgent):
         """Placeholder for information synthesis."""
         return info
 
-    async def handle_message(self, message: Message):
+    async def handle_message(self, message: Message) -> None:
         if message.type == MessageType.TASK:
             task_content = message.content.get("content")
             task_type = message.content.get("task_type", "general")
@@ -208,7 +208,7 @@ class SageAgent(UnifiedBaseAgent):
         else:
             await super().handle_message(message)
 
-    async def evolve(self):
+    async def evolve(self) -> None:
         await self.self_evolving_system.evolve()
         await self.continuous_learning_layer.evolve()
         await self.cognitive_nexus.evolve()

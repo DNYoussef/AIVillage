@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class UserIntentInterpreter:
-    def __init__(self, llm_config: OpenAIGPTConfig):
+    def __init__(self, llm_config: OpenAIGPTConfig) -> None:
         self.llm = llm_config.create()
 
     @error_handler.handle_error
@@ -51,8 +51,9 @@ class UserIntentInterpreter:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse intent response: {response}")
-            raise AIVillageException("Failed to parse intent response")
+            logger.exception(f"Failed to parse intent response: {response}")
+            msg = "Failed to parse intent response"
+            raise AIVillageException(msg)
 
     @error_handler.handle_error
     async def extract_key_concepts(
@@ -90,8 +91,9 @@ class UserIntentInterpreter:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse key concepts response: {response}")
-            raise AIVillageException("Failed to parse key concepts response")
+            logger.exception(f"Failed to parse key concepts response: {response}")
+            msg = "Failed to parse key concepts response"
+            raise AIVillageException(msg)
 
     @safe_execute
     async def process_user_input(self, user_input: str) -> dict[str, Any]:
@@ -113,7 +115,7 @@ class UserIntentInterpreter:
 if __name__ == "__main__":
     import asyncio
 
-    async def main():
+    async def main() -> None:
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
         interpreter = UserIntentInterpreter(llm_config)
 

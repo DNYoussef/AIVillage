@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Execute the documentation cleanup step by step"""
+"""Execute the documentation cleanup step by step."""
 
 import os
 from pathlib import Path

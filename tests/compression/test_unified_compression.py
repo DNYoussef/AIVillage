@@ -164,7 +164,7 @@ class TestUnifiedCompressor:
         )
 
         output_path = temp_dir / "compressed_model"
-        result = await compressor.compress_model(tiny_model, output_path=output_path)
+        await compressor.compress_model(tiny_model, output_path=output_path)
 
         # Check that output directory was created
         assert output_path.exists()
@@ -330,12 +330,14 @@ class TestErrorHandling:
         compressor = UnifiedCompressor()
 
         # Mock missing dependencies
-        with patch(
-            "src.production.compression.unified_compressor.bitnet_compress",
-            side_effect=ImportError,
+        with (
+            patch(
+                "src.production.compression.unified_compressor.bitnet_compress",
+                side_effect=ImportError,
+            ),
+            pytest.raises(ImportError),
         ):
-            with pytest.raises(ImportError):
-                await compressor._apply_simple_compression(tiny_model)
+            await compressor._apply_simple_compression(tiny_model)
 
 
 class TestIntegration:

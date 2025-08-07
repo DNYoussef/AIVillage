@@ -1,5 +1,5 @@
 """Prompt Engineering Module - Advanced AI Tutoring Optimization
-Part B: Agent Forge Phase 4 - Prompt Engineering
+Part B: Agent Forge Phase 4 - Prompt Engineering.
 """
 
 from .ab_testing import PromptABTest, prompt_ab_test

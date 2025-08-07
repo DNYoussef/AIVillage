@@ -1,4 +1,4 @@
-"""AIVillage Tools - Scripts
+"""AIVillage Tools - Scripts.
 
 Development and utility scripts moved from root/scripts/:
 - Performance monitoring

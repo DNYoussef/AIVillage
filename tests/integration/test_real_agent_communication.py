@@ -313,7 +313,8 @@ class TestRealAgentCommunication:
 
                     # Simulate success/failure based on task complexity
                     if task_data.get("complexity", "low") == "impossible":
-                        raise ValueError("Task impossible to complete")
+                        msg = "Task impossible to complete"
+                        raise ValueError(msg)
 
                     # Update metrics on success
                     processing_time = time.time() - start_time
@@ -410,7 +411,7 @@ class TestRealAgentCommunication:
 
     def test_message_queue_behavior_under_load(self, communication_setup):
         """Test message queue behavior under high load conditions."""
-        protocol = communication_setup["protocol"]
+        communication_setup["protocol"]
 
         # Create message queue for testing
         message_queue = []
@@ -455,7 +456,7 @@ class TestRealAgentCommunication:
         # Verify all messages were processed
         assert len(processed_messages) == num_messages
         assert (
-            len(set(msg["message_id"] for msg in processed_messages)) == num_messages
+            len({msg["message_id"] for msg in processed_messages}) == num_messages
         )  # No duplicates
 
         # Verify processing order (should be FIFO)
@@ -471,8 +472,8 @@ class TestRealAgentCommunication:
         assert total_time < 5.0  # Total processing under 5 seconds
 
         # Verify no message loss
-        original_ids = set(msg.id for msg in message_queue)
-        processed_ids = set(msg["message_id"] for msg in processed_messages)
+        original_ids = {msg.id for msg in message_queue}
+        processed_ids = {msg["message_id"] for msg in processed_messages}
         assert original_ids == processed_ids
 
         print(

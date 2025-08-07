@@ -1,5 +1,5 @@
 """A/B Testing Framework for Prompt Performance Tracking
-Part B: Agent Forge Phase 4 - Prompt Engineering
+Part B: Agent Forge Phase 4 - Prompt Engineering.
 """
 
 import asyncio
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TestVariant:
-    """A/B test variant configuration"""
+    """A/B test variant configuration."""
 
     variant_id: str
     variant_name: str
@@ -33,7 +33,7 @@ class TestVariant:
 
 @dataclass
 class InteractionResult:
-    """Result from a single prompt interaction"""
+    """Result from a single prompt interaction."""
 
     session_id: str
     variant_id: str
@@ -48,7 +48,7 @@ class InteractionResult:
 
 @dataclass
 class TestResults:
-    """Statistical results from A/B test analysis"""
+    """Statistical results from A/B test analysis."""
 
     variant_id: str
     total_interactions: int
@@ -61,9 +61,9 @@ class TestResults:
 
 
 class PromptABTest:
-    """Track prompt performance across student interactions with advanced A/B testing"""
+    """Track prompt performance across student interactions with advanced A/B testing."""
 
-    def __init__(self, project_name: str = "aivillage-tutoring"):
+    def __init__(self, project_name: str = "aivillage-tutoring") -> None:
         self.project_name = project_name
         self.variant_performance = defaultdict(list)
         self.active_tests = {}
@@ -89,8 +89,8 @@ class PromptABTest:
         # Set up default test variants
         self.setup_default_tests()
 
-    def initialize_wandb_tracking(self):
-        """Initialize W&B tracking for A/B testing"""
+    def initialize_wandb_tracking(self) -> None:
+        """Initialize W&B tracking for A/B testing."""
         try:
             wandb.init(
                 project=self.project_name,
@@ -107,10 +107,10 @@ class PromptABTest:
             logger.info("W&B A/B testing tracking initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize W&B for A/B testing: {e}")
+            logger.exception(f"Failed to initialize W&B for A/B testing: {e}")
 
-    def setup_default_tests(self):
-        """Set up default A/B test variants"""
+    def setup_default_tests(self) -> None:
+        """Set up default A/B test variants."""
         # Greeting style test
         greeting_variants = [
             TestVariant(
@@ -209,7 +209,7 @@ class PromptABTest:
         )
 
     def get_user_variant(self, user_id: str, test_type: str) -> TestVariant:
-        """Get consistent variant assignment for user using UCB1 algorithm"""
+        """Get consistent variant assignment for user using UCB1 algorithm."""
         # Check if user already has assignment
         user_key = f"{user_id}_{test_type}"
         if user_key in self.user_assignments:
@@ -285,9 +285,9 @@ class PromptABTest:
         user_id: str,
         test_type: str,
         language: str = "en",
-        context: dict[str, Any] = None,
+        context: dict[str, Any] | None = None,
     ) -> InteractionResult:
-        """Test a prompt variant and log results"""
+        """Test a prompt variant and log results."""
         context = context or {}
         start_time = time.time()
 
@@ -346,18 +346,18 @@ class PromptABTest:
             return interaction_result
 
         except Exception as e:
-            logger.error(f"Error in A/B test interaction: {e}")
+            logger.exception(f"Error in A/B test interaction: {e}")
             return None
 
     async def generate_with_prompt(
         self, student_msg: str, prompt_template: str, context: dict[str, Any]
     ) -> str:
-        """Generate response using the specified prompt template"""
+        """Generate response using the specified prompt template."""
         # This is a simplified version - in production, this would integrate with
         # the actual AI models (Anthropic/OpenAI)
 
         # Fill in template variables
-        filled_prompt = prompt_template.format(
+        prompt_template.format(
             user_message=student_msg,
             concept=context.get("concept", "the main idea"),
             steps=context.get(
@@ -386,7 +386,7 @@ class PromptABTest:
     async def analyze_engagement_signals(
         self, student_msg: str, response: str, context: dict[str, Any]
     ) -> dict[str, Any]:
-        """Analyze engagement signals from the interaction"""
+        """Analyze engagement signals from the interaction."""
         signals = {
             "question_asked": "?" in response,
             "emoji_used": any(char in response for char in "😊🚀✨👍🎉💡"),
@@ -415,7 +415,7 @@ class PromptABTest:
     async def calculate_performance_metrics(
         self, response: str, response_time: float, engagement_signals: dict[str, Any]
     ) -> dict[str, float]:
-        """Calculate comprehensive performance metrics"""
+        """Calculate comprehensive performance metrics."""
         # Engagement score based on signals
         engagement_factors = [
             engagement_signals.get("question_asked", False),
@@ -461,8 +461,8 @@ class PromptABTest:
 
     async def log_interaction_to_wandb(
         self, interaction: InteractionResult, variant: TestVariant
-    ):
-        """Log detailed interaction data to W&B"""
+    ) -> None:
+        """Log detailed interaction data to W&B."""
         log_data = {
             "prompt_variant": variant.variant_id,
             "variant_name": variant.variant_name,
@@ -477,8 +477,8 @@ class PromptABTest:
 
         wandb.log(log_data)
 
-    async def update_time_based_metrics(self, interaction: InteractionResult):
-        """Update daily and hourly performance metrics"""
+    async def update_time_based_metrics(self, interaction: InteractionResult) -> None:
+        """Update daily and hourly performance metrics."""
         current_time = datetime.now()
         day_key = current_time.strftime("%Y-%m-%d")
         hour_key = current_time.strftime("%Y-%m-%d-%H")
@@ -494,9 +494,9 @@ class PromptABTest:
         )
 
     async def analyze_test_results(
-        self, test_type: str, min_interactions: int = None
+        self, test_type: str, min_interactions: int | None = None
     ) -> list[TestResults]:
-        """Analyze A/B test results with statistical significance"""
+        """Analyze A/B test results with statistical significance."""
         min_interactions = min_interactions or self.min_sample_size
         variants = self.active_tests.get(test_type, [])
 
@@ -579,7 +579,7 @@ class PromptABTest:
         avg_response_time: float,
         sample_size: int,
     ) -> str:
-        """Generate actionable recommendation based on test results"""
+        """Generate actionable recommendation based on test results."""
         if avg_engagement > 0.8 and conversion_rate > 0.6:
             return "WINNER - Deploy this variant"
         if avg_engagement > 0.7 and avg_response_time < 3.0:
@@ -593,7 +593,7 @@ class PromptABTest:
         return "MODERATE PERFORMER - Monitor closely"
 
     async def get_daily_report(self, days_back: int = 7) -> dict[str, Any]:
-        """Generate daily performance report"""
+        """Generate daily performance report."""
         report = {
             "report_date": datetime.now().strftime("%Y-%m-%d"),
             "period": f"Last {days_back} days",

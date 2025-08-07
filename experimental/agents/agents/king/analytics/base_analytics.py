@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
-from typing import Any
+from typing import Any, NoReturn
 
 import matplotlib.pyplot as plt
 
@@ -8,10 +8,10 @@ logger = logging.getLogger(__name__)
 
 
 class BaseAnalytics(ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         self.metrics: dict[str, list[float]] = {}
 
-    def record_metric(self, metric: str, value: float):
+    def record_metric(self, metric: str, value: float) -> None:
         if metric not in self.metrics:
             self.metrics[metric] = []
         self.metrics[metric].append(value)
@@ -37,12 +37,11 @@ class BaseAnalytics(ABC):
 
         This functionality is part of the Atlantis roadmap.
         """
-        raise NotImplementedError(
-            "'generate_analytics_report' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-generate_analytics_report"
-        )
+        msg = "'generate_analytics_report' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-generate_analytics_report"
+        raise NotImplementedError(msg)
 
-    def save(self, path: str):
+    def save(self, path: str) -> NoReturn:
         raise NotImplementedError
 
-    def load(self, path: str):
+    def load(self, path: str) -> NoReturn:
         raise NotImplementedError

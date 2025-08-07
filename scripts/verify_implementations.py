@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Comprehensive verification of stub elimination sprint
-Tests all implemented components to ensure they actually work
+Tests all implemented components to ensure they actually work.
 """
 import asyncio
 import json
@@ -15,19 +15,19 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 test_results = {"passed": 0, "failed": 0, "errors": []}
 
 
-def test_passed(test_name):
+def test_passed(test_name) -> None:
     test_results["passed"] += 1
     print(f"[PASS] {test_name}")
 
 
-def test_failed(test_name, error):
+def test_failed(test_name, error) -> None:
     test_results["failed"] += 1
     test_results["errors"].append(f"{test_name}: {error}")
     print(f"[FAIL] {test_name}: {error}")
 
 
-async def test_communications_protocol():
-    """Test that communications protocol actually works"""
+async def test_communications_protocol() -> None:
+    """Test that communications protocol actually works."""
     print("\n=== TESTING COMMUNICATIONS PROTOCOL ===")
 
     try:
@@ -77,8 +77,8 @@ async def test_communications_protocol():
         test_failed("Communications protocol", str(e))
 
 
-async def test_whatsapp_connector():
-    """Test WhatsApp connector functionality"""
+async def test_whatsapp_connector() -> None:
+    """Test WhatsApp connector functionality."""
     print("\n=== TESTING WHATSAPP CONNECTOR ===")
 
     try:
@@ -130,8 +130,8 @@ async def test_whatsapp_connector():
         test_failed("WhatsApp connector", str(e))
 
 
-async def test_amazon_connector():
-    """Test Amazon orders connector functionality"""
+async def test_amazon_connector() -> None:
+    """Test Amazon orders connector functionality."""
     print("\n=== TESTING AMAZON ORDERS CONNECTOR ===")
 
     try:
@@ -184,8 +184,8 @@ async def test_amazon_connector():
         test_failed("Amazon connector", str(e))
 
 
-async def test_ppr_retriever():
-    """Test PPR retriever functionality"""
+async def test_ppr_retriever() -> None:
+    """Test PPR retriever functionality."""
     print("\n=== TESTING PPR RETRIEVER ===")
 
     try:
@@ -243,8 +243,8 @@ async def test_ppr_retriever():
         test_failed("PPR retriever", str(e))
 
 
-async def test_divergent_retriever():
-    """Test divergent retriever functionality"""
+async def test_divergent_retriever() -> None:
+    """Test divergent retriever functionality."""
     print("\n=== TESTING DIVERGENT RETRIEVER ===")
 
     try:
@@ -301,8 +301,8 @@ async def test_divergent_retriever():
         test_failed("Divergent retriever", str(e))
 
 
-async def test_system_health_dashboard():
-    """Test system health dashboard functionality"""
+async def test_system_health_dashboard() -> None:
+    """Test system health dashboard functionality."""
     print("\n=== TESTING SYSTEM HEALTH DASHBOARD ===")
 
     try:
@@ -349,7 +349,7 @@ async def test_system_health_dashboard():
 
 
 async def main():
-    """Run all verification tests"""
+    """Run all verification tests."""
     print("=" * 60)
     print("VERIFYING STUB ELIMINATION SPRINT IMPLEMENTATIONS")
     print("=" * 60)

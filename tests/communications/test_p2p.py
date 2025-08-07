@@ -58,7 +58,7 @@ class TestP2PNode:
     @pytest.mark.asyncio
     async def test_message_serialization(self):
         """Test P2P message serialization."""
-        node = P2PNode(node_id="test-node", port=8003)
+        P2PNode(node_id="test-node", port=8003)
 
         message = P2PMessage(
             message_type=MessageType.HEARTBEAT,
@@ -479,7 +479,7 @@ class TestErrorHandling:
             assert result is not None
         except Exception as e:
             # Or raise a proper exception
-            assert isinstance(e, (TypeError, ValueError))
+            assert isinstance(e, TypeError | ValueError)
 
     def test_invalid_configuration(self):
         """Test handling of invalid configurations."""

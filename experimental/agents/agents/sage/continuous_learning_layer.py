@@ -5,13 +5,13 @@ from rag_system.retrieval.vector_store import VectorStore
 
 
 class ContinuousLearningLayer:
-    def __init__(self, vector_store: VectorStore):
+    def __init__(self, vector_store: VectorStore) -> None:
         self.vector_store = vector_store
         self.learning_rate = 0.01
         self.recent_learnings = deque(maxlen=100)
         self.performance_history = deque(maxlen=1000)
 
-    async def update(self, task, result):
+    async def update(self, task, result) -> None:
         learned_info = self.extract_learning(task, result)
         await self.vector_store.add_texts([learned_info])
         self.recent_learnings.append(learned_info)
@@ -25,7 +25,7 @@ class ContinuousLearningLayer:
         summary = str(result)
         return f"{task_text} => {summary[:100]}"
 
-    async def evolve(self):
+    async def evolve(self) -> None:
         if len(self.performance_history) > 100:
             recent_performance = sum(self.performance_history[-100:]) / 100
             if recent_performance > 0.8:
@@ -35,7 +35,7 @@ class ContinuousLearningLayer:
 
         await self._consolidate_learnings()
 
-    async def _consolidate_learnings(self):
+    async def _consolidate_learnings(self) -> None:
         if len(self.recent_learnings) > 50:
             consolidated = self._synthesize_learnings(list(self.recent_learnings))
             await self.vector_store.add_texts([consolidated])

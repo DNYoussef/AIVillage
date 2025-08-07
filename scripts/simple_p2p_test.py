@@ -1,4 +1,4 @@
-"""Simple P2P Protocol Fix Test
+"""Simple P2P Protocol Fix Test.
 
 Test the basic functionality of the P2P protocol compatibility fix.
 """
@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 
-def test_code_changes_present():
+def test_code_changes_present() -> bool:
     """Check if our code changes are in the files."""
     print("[CODE CHECK] Validating P2P protocol fixes...")
 
@@ -58,7 +58,7 @@ def test_code_changes_present():
     return True
 
 
-def test_imports():
+def test_imports() -> bool | None:
     """Test if we can import the P2P modules."""
     print("[IMPORT CHECK] Testing module imports...")
 
@@ -83,7 +83,7 @@ def test_imports():
         return False
 
 
-async def test_basic_p2p_node():
+async def test_basic_p2p_node() -> bool | None:
     """Test basic P2P node functionality."""
     print("[NODE CHECK] Testing P2P node creation...")
 
@@ -146,7 +146,7 @@ async def test_basic_p2p_node():
         return False
 
 
-def main():
+def main() -> bool:
     """Run all validation tests."""
     print("P2P PROTOCOL FIX VALIDATION")
     print("=" * 40)

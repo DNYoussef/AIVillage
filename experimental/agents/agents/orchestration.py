@@ -17,16 +17,16 @@ from rag_system.retrieval.vector_store import VectorStore
 
 
 class TaskQueue:
-    def __init__(self):
+    def __init__(self) -> None:
         self.tasks = asyncio.Queue()
 
-    async def add_task(self, task: dict[str, Any]):
+    async def add_task(self, task: dict[str, Any]) -> None:
         await self.tasks.put(task)
 
     async def get_next_task(self) -> dict[str, Any]:
         return await self.tasks.get()
 
-    def task_done(self):
+    def task_done(self) -> None:
         self.tasks.task_done()
 
 
@@ -37,7 +37,7 @@ async def get_user_input() -> dict[str, Any]:
     return {"content": content, "type": task_type}
 
 
-async def process_result(result: dict[str, Any]):
+async def process_result(result: dict[str, Any]) -> None:
     """Handle the result of a task execution."""
     print(f"Processing result: {result}")
 
@@ -130,7 +130,7 @@ async def orchestrate_agents(
     return result
 
 
-async def main():
+async def main() -> None:
     """Main execution loop for the orchestration system."""
     config = UnifiedConfig()
     communication_protocol = StandardCommunicationProtocol()

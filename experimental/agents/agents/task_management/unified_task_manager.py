@@ -6,6 +6,14 @@ import logging
 from typing import Any
 import uuid
 
+from AIVillage.experimental.agents.agents.analytics.unified_analytics import (
+    UnifiedAnalytics,
+)
+
+# Decision making utilities were moved under the `planning` package.
+from AIVillage.experimental.agents.agents.planning.unified_decision_maker import (
+    UnifiedDecisionMaker,
+)
 from core.error_handling import (
     AIVillageException,
     Message,
@@ -14,10 +22,6 @@ from core.error_handling import (
     StandardCommunicationProtocol,
 )
 
-from ..analytics.unified_analytics import UnifiedAnalytics
-
-# Decision making utilities were moved under the `planning` package.
-from ..planning.unified_decision_maker import UnifiedDecisionMaker
 from .incentive_model import IncentiveModel
 from .subgoal_generator import SubGoalGenerator
 from .task import Task, TaskStatus
@@ -43,7 +47,7 @@ class UnifiedManagement:
         decision_maker: UnifiedDecisionMaker,
         num_agents: int,
         num_actions: int,
-    ):
+    ) -> None:
         self.communication_protocol = communication_protocol
         self.decision_maker = decision_maker
         self.pending_tasks: deque[Task] = deque()
@@ -83,7 +87,8 @@ class UnifiedManagement:
             return task
         except Exception as e:
             logger.exception("Error creating task: %s", e)
-            raise AIVillageException(f"Error creating task: {e!s}")
+            msg = f"Error creating task: {e!s}"
+            raise AIVillageException(msg)
 
     async def create_complex_task(
         self, description: str, context: dict[str, Any]
@@ -100,7 +105,8 @@ class UnifiedManagement:
             return tasks
         except Exception as e:
             logger.exception("Error creating complex task: %s", e)
-            raise AIVillageException(f"Error creating complex task: {e!s}")
+            msg = f"Error creating complex task: {e!s}"
+            raise AIVillageException(msg)
 
     async def _select_best_agent_for_task(self, task_description: str) -> str:
         try:
@@ -114,9 +120,10 @@ class UnifiedManagement:
             )
         except Exception as e:
             logger.exception("Error selecting best agent for task: %s", e)
-            raise AIVillageException(f"Error selecting best agent for task: {e!s}")
+            msg = f"Error selecting best agent for task: {e!s}"
+            raise AIVillageException(msg)
 
-    async def assign_task(self, task: Task):
+    async def assign_task(self, task: Task) -> None:
         try:
             self.ongoing_tasks[task.id] = task.update_status(TaskStatus.IN_PROGRESS)
             agent = task.assigned_agents[0]
@@ -126,11 +133,12 @@ class UnifiedManagement:
             await self.notify_agent_with_incentive(agent, task, incentive["incentive"])
         except Exception as e:
             logger.exception("Error assigning task: %s", e)
-            raise AIVillageException(f"Error assigning task: {e!s}")
+            msg = f"Error assigning task: {e!s}"
+            raise AIVillageException(msg)
 
     async def notify_agent_with_incentive(
         self, agent: str, task: Task, incentive: float
-    ):
+    ) -> None:
         try:
             message = Message(
                 type=MessageType.TASK,
@@ -146,12 +154,14 @@ class UnifiedManagement:
             await self.communication_protocol.send_message(message)
         except Exception as e:
             logger.exception("Error notifying agent with incentive: %s", e)
-            raise AIVillageException(f"Error notifying agent with incentive: {e!s}")
+            msg = f"Error notifying agent with incentive: {e!s}"
+            raise AIVillageException(msg)
 
-    async def complete_task(self, task_id: str, result: Any):
+    async def complete_task(self, task_id: str, result: Any) -> None:
         try:
             if task_id not in self.ongoing_tasks:
-                raise AIVillageException(f"Task {task_id} not found in ongoing tasks")
+                msg = f"Task {task_id} not found in ongoing tasks"
+                raise AIVillageException(msg)
             task = self.ongoing_tasks[task_id]
             updated_task = task.update_status(TaskStatus.COMPLETED).update_result(
                 result
@@ -187,9 +197,10 @@ class UnifiedManagement:
                     break
         except Exception as e:
             logger.exception("Error completing task: %s", e)
-            raise AIVillageException(f"Error completing task: {e!s}")
+            msg = f"Error completing task: {e!s}"
+            raise AIVillageException(msg)
 
-    async def update_dependent_tasks(self, completed_task: Task):
+    async def update_dependent_tasks(self, completed_task: Task) -> None:
         try:
             for task in list(self.pending_tasks):
                 if completed_task.id in task.dependencies:
@@ -199,7 +210,8 @@ class UnifiedManagement:
                         await self.assign_task(task)
         except Exception as e:
             logger.exception("Error updating dependent tasks: %s", e)
-            raise AIVillageException(f"Error updating dependent tasks: {e!s}")
+            msg = f"Error updating dependent tasks: {e!s}"
+            raise AIVillageException(msg)
 
     async def create_project(self, name: str, description: str) -> str:
         try:
@@ -211,7 +223,8 @@ class UnifiedManagement:
             return project_id
         except Exception as e:
             logger.exception("Error creating project: %s", e)
-            raise AIVillageException(f"Error creating project: {e!s}")
+            msg = f"Error creating project: {e!s}"
+            raise AIVillageException(msg)
 
     async def get_all_projects(self) -> dict[str, Project]:
         return self.projects
@@ -219,12 +232,13 @@ class UnifiedManagement:
     async def get_project(self, project_id: str) -> Project:
         project = self.projects.get(project_id)
         if not project:
-            raise AIVillageException(f"Project with ID {project_id} not found")
+            msg = f"Project with ID {project_id} not found"
+            raise AIVillageException(msg)
         return project
 
     async def update_project_status(
-        self, project_id: str, status: str = None, progress: float = None
-    ):
+        self, project_id: str, status: str | None = None, progress: float | None = None
+    ) -> None:
         try:
             project = await self.get_project(project_id)
             if status:
@@ -239,18 +253,20 @@ class UnifiedManagement:
             )
         except Exception as e:
             logger.exception("Error updating project status: %s", e)
-            raise AIVillageException(f"Error updating project status: {e!s}")
+            msg = f"Error updating project status: {e!s}"
+            raise AIVillageException(msg)
 
     async def add_task_to_project(
         self, project_id: str, task_id: str, task_data: dict[str, Any]
-    ):
+    ) -> None:
         try:
             project = await self.get_project(project_id)
             project.tasks[task_id] = Task(id=task_id, **task_data)
             logger.info("Added task %s to project %s", task_id, project_id)
         except Exception as e:
             logger.exception("Error adding task to project: %s", e)
-            raise AIVillageException(f"Error adding task to project: {e!s}")
+            msg = f"Error adding task to project: {e!s}"
+            raise AIVillageException(msg)
 
     async def get_project_tasks(self, project_id: str) -> list[Task]:
         try:
@@ -258,28 +274,31 @@ class UnifiedManagement:
             return list(project.tasks.values())
         except Exception as e:
             logger.exception("Error getting project tasks: %s", e)
-            raise AIVillageException(f"Error getting project tasks: {e!s}")
+            msg = f"Error getting project tasks: {e!s}"
+            raise AIVillageException(msg)
 
     async def add_resources_to_project(
         self, project_id: str, resources: dict[str, Any]
-    ):
+    ) -> None:
         try:
             project = await self.get_project(project_id)
             project.resources.update(resources)
             logger.info("Added resources to project %s", project_id)
         except Exception as e:
             logger.exception("Error adding resources to project: %s", e)
-            raise AIVillageException(f"Error adding resources to project: {e!s}")
+            msg = f"Error adding resources to project: {e!s}"
+            raise AIVillageException(msg)
 
-    def update_agent_list(self, agent_list: list[str]):
+    def update_agent_list(self, agent_list: list[str]) -> None:
         try:
             self.available_agents = agent_list
             logger.info("Updated available agents: %s", self.available_agents)
         except Exception as e:
             logger.exception("Error updating agent list: %s", e)
-            raise AIVillageException(f"Error updating agent list: {e!s}")
+            msg = f"Error updating agent list: {e!s}"
+            raise AIVillageException(msg)
 
-    async def process_task_batch(self):
+    async def process_task_batch(self) -> None:
         try:
             batch = []
             while len(batch) < self.batch_size and self.pending_tasks:
@@ -296,7 +315,8 @@ class UnifiedManagement:
                 await self.complete_task(task.id, result)
         except Exception as e:
             logger.exception("Error processing task batch: %s", e)
-            raise AIVillageException(f"Error processing task batch: {e!s}")
+            msg = f"Error processing task batch: {e!s}"
+            raise AIVillageException(msg)
 
     async def process_single_task(self, task: Task) -> Any:
         try:
@@ -311,24 +331,27 @@ class UnifiedManagement:
             )
         except Exception as e:
             logger.exception("Error processing single task: %s", e)
-            raise AIVillageException(f"Error processing single task: {e!s}")
+            msg = f"Error processing single task: {e!s}"
+            raise AIVillageException(msg)
 
-    async def start_batch_processing(self):
+    async def start_batch_processing(self) -> None:
         try:
             while True:
                 await self.process_task_batch()
                 await asyncio.sleep(1)  # Adjust this delay as needed
         except Exception as e:
             logger.exception("Error in batch processing: %s", e)
-            raise AIVillageException(f"Error in batch processing: {e!s}")
+            msg = f"Error in batch processing: {e!s}"
+            raise AIVillageException(msg)
 
-    def set_batch_size(self, size: int):
+    def set_batch_size(self, size: int) -> None:
         try:
             self.batch_size = size
             logger.info("Set batch size to %d", size)
         except Exception as e:
             logger.exception("Error setting batch size: %s", e)
-            raise AIVillageException(f"Error setting batch size: {e!s}")
+            msg = f"Error setting batch size: {e!s}"
+            raise AIVillageException(msg)
 
     async def get_task_status(self, task_id: str) -> TaskStatus:
         try:
@@ -339,7 +362,8 @@ class UnifiedManagement:
             return TaskStatus.PENDING
         except Exception as e:
             logger.exception("Error getting task status: %s", e)
-            raise AIVillageException(f"Error getting task status: {e!s}")
+            msg = f"Error getting task status: {e!s}"
+            raise AIVillageException(msg)
 
     async def get_project_status(self, project_id: str) -> dict[str, Any]:
         try:
@@ -361,9 +385,10 @@ class UnifiedManagement:
             }
         except Exception as e:
             logger.exception("Error getting project status: %s", e)
-            raise AIVillageException(f"Error getting project status: {e!s}")
+            msg = f"Error getting project status: {e!s}"
+            raise AIVillageException(msg)
 
-    async def save_state(self, filename: str):
+    async def save_state(self, filename: str) -> None:
         try:
             state = {
                 "tasks": [
@@ -383,9 +408,10 @@ class UnifiedManagement:
             logger.info("Saved state to %s", filename)
         except Exception as e:
             logger.exception("Error saving state: %s", e)
-            raise AIVillageException(f"Error saving state: {e!s}")
+            msg = f"Error saving state: {e!s}"
+            raise AIVillageException(msg)
 
-    async def load_state(self, filename: str):
+    async def load_state(self, filename: str) -> None:
         try:
             with open(filename) as f:
                 state = json.load(f)
@@ -412,7 +438,8 @@ class UnifiedManagement:
             logger.info("Loaded state from %s", filename)
         except Exception as e:
             logger.exception("Error loading state: %s", e)
-            raise AIVillageException(f"Error loading state: {e!s}")
+            msg = f"Error loading state: {e!s}"
+            raise AIVillageException(msg)
 
     async def introspect(self) -> dict[str, Any]:
         try:
@@ -428,10 +455,12 @@ class UnifiedManagement:
             }
         except Exception as e:
             logger.exception("Error in introspection: %s", e)
-            raise AIVillageException(f"Error in introspection: {e!s}")
+            msg = f"Error in introspection: {e!s}"
+            raise AIVillageException(msg)
 
 
 if __name__ == "__main__":
-    raise SystemExit("Run 'agents/orchestration.py' to start the task manager.")
+    msg = "Run 'agents/orchestration.py' to start the task manager."
+    raise SystemExit(msg)
 
 UnifiedTaskManager = UnifiedManagement

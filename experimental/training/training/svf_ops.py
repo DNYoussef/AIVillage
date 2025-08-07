@@ -1,4 +1,4 @@
-"""svf_ops.py
+"""svf_ops.py.
 ----------
 Batched Singular-Value Fine-tuning helpers (Transformer² style).
 """
@@ -8,10 +8,10 @@ from __future__ import annotations
 import torch
 from torch import Tensor, nn
 
-from ..svf.ops import batched_svd  # NeurIPS-22 SVF kernel
+from AIVillage.experimental.training.svf.ops import batched_svd  # NeurIPS-22 SVF kernel
 
 
-def apply_svf(model: nn.Module, z: dict[str, Tensor], clamp: float = 0.05):
+def apply_svf(model: nn.Module, z: dict[str, Tensor], clamp: float = 0.05) -> None:
     """In-place Σ scaling for Linear layers listed in ``z``.
 
     Parameters

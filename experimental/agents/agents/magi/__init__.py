@@ -1,4 +1,4 @@
-"""MAGI Agent System
+"""MAGI Agent System.
 
 The MAGI (Machine-learning Artificial General Intelligence) agent system
 provides specialized AI agents with geometric self-awareness, self-modification
@@ -19,10 +19,10 @@ from . import deployment, implementations, interfaces, validation
 from .magi_agent import *
 
 __all__ = [
+    "deployment",
+    "implementations",
     # Core exports
     "interfaces",
-    "implementations",
-    "deployment",
     "validation",
     # Additional exports from magi_agent will be included
 ]

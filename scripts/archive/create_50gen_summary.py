@@ -6,7 +6,7 @@ from pathlib import Path
 import statistics
 
 
-def create_comprehensive_summary():
+def create_comprehensive_summary() -> None:
     """Create comprehensive ASCII summary of 50-generation results."""
     results_file = Path("D:/AgentForge/results_50gen/evolution_50gen_results.json")
     with open(results_file) as f:
@@ -85,7 +85,7 @@ def create_comprehensive_summary():
 
     # Fitness progression
     fitness_progression = [gen["best_fitness"] for gen in generations]
-    avg_fitness_progression = [gen["average_fitness"] for gen in generations]
+    [gen["average_fitness"] for gen in generations]
 
     print("Fitness Evolution:")
     print(f"  Initial Best Fitness:    {fitness_progression[0]:.4f}")

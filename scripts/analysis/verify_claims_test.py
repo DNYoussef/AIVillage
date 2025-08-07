@@ -6,7 +6,7 @@ import time
 import torch
 
 
-def test_extreme_compression_claims():
+def test_extreme_compression_claims() -> None:
     """Test if the claimed 77,907x compression ratio is real or fake."""
     print("TESTING EXTREME COMPRESSION CLAIMS")
     print("=" * 50)
@@ -102,7 +102,7 @@ def test_extreme_compression_claims():
 
     try:
         sparse_compressed = bitnet.compress(sparse_tensor)
-        sparse_bytes = len(sparse_compressed["packed_weights"])
+        len(sparse_compressed["packed_weights"])
         sparse_lzma = lzma.compress(sparse_compressed["packed_weights"], preset=9)
         sparse_lzma_bytes = len(sparse_lzma)
         sparse_total_ratio = original_bytes / sparse_lzma_bytes
@@ -114,7 +114,7 @@ def test_extreme_compression_claims():
         print(f"   Sparse test failed: {e}")
 
 
-def test_realistic_compression():
+def test_realistic_compression() -> None:
     """Test compression on more realistic data."""
     print("\n" + "=" * 50)
     print("REALISTIC COMPRESSION TEST")
@@ -165,7 +165,7 @@ def test_realistic_compression():
         print(f"Realistic compression test failed: {e}")
 
 
-def analyze_claims():
+def analyze_claims() -> None:
     """Analyze the compression claims vs reality."""
     print("\n" + "=" * 50)
     print("CLAIM ANALYSIS")

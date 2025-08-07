@@ -14,7 +14,7 @@ class Workflow:
         return Workflow(
             id=self.id,
             name=self.name,
-            tasks=self.tasks + [task],
+            tasks=[*self.tasks, task],
             dependencies=self.dependencies,
         )
 

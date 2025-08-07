@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Memory-Constrained Real Evolution Runner
+"""Memory-Constrained Real Evolution Runner.
 
 Historic first real execution of Agent Forge evolution system within memory constraints.
 Uses CPU-only processing with model sharding for genuine AI agent evolution.
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 class MemoryConstrainedEvolutionRunner:
     """Memory-constrained real evolution runner for historic first execution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.start_time = datetime.now()
         self.run_id = f"historic_real_run_{self.start_time.strftime('%Y%m%d_%H%M%S')}"
         self.output_dir = Path(f"D:/AgentForge/{self.run_id}")
@@ -153,7 +153,7 @@ class MemoryConstrainedEvolutionRunner:
             return None
 
         except Exception as e:
-            logger.error(f"❌ Evolution failed with error: {e}")
+            logger.exception(f"❌ Evolution failed with error: {e}")
             log_metrics({"evolution_error": 1, "error_message": str(e)})
             return None
 
@@ -190,7 +190,7 @@ async def main():
 
     try:
         # Initialize tracking
-        wandb_success = runner.initialize_wandb_tracking()
+        runner.initialize_wandb_tracking()
 
         # Validate systems
         await runner.validate_real_operations()
@@ -228,7 +228,7 @@ async def main():
         logger.info("⚠️ Execution interrupted by user")
         return None
     except Exception as e:
-        logger.error(f"❌ Execution failed: {e}")
+        logger.exception(f"❌ Execution failed: {e}")
         return None
     finally:
         # Clean up W&B

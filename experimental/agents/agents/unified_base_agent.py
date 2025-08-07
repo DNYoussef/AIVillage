@@ -56,7 +56,7 @@ class UnifiedBaseAgent:
         config: UnifiedAgentConfig,
         communication_protocol: StandardCommunicationProtocol,
         knowledge_tracker: UnifiedKnowledgeTracker | None = None,
-    ):
+    ) -> None:
         self.config = config
         self.logger = get_component_logger(
             "UnifiedBaseAgent", {"agent_name": config.name}
@@ -193,7 +193,8 @@ class UnifiedBaseAgent:
         """Process the task and return the result or a handoff to another agent.
         This method should be implemented by subclasses.
         """
-        raise NotImplementedError("Subclasses must implement _process_task method")
+        msg = "Subclasses must implement _process_task method"
+        raise NotImplementedError(msg)
 
     @with_error_handling(
         retries=1,
@@ -214,7 +215,7 @@ class UnifiedBaseAgent:
     @with_error_handling(
         retries=2, context={"component": "UnifiedBaseAgent", "method": "handle_message"}
     )
-    async def handle_message(self, message: Message):
+    async def handle_message(self, message: Message) -> None:
         if message.type == MessageType.TASK:
             self.logger.info(
                 "Processing task message",
@@ -236,18 +237,18 @@ class UnifiedBaseAgent:
                 extra={"message_type": message.type, "sender": message.sender},
             )
 
-    def add_capability(self, capability: str):
+    def add_capability(self, capability: str) -> None:
         if capability not in self.capabilities:
             self.capabilities.append(capability)
 
-    def remove_capability(self, capability: str):
+    def remove_capability(self, capability: str) -> None:
         if capability in self.capabilities:
             self.capabilities.remove(capability)
 
-    def add_tool(self, name: str, tool: Callable):
+    def add_tool(self, name: str, tool: Callable) -> None:
         self.tools[name] = tool
 
-    def remove_tool(self, name: str):
+    def remove_tool(self, name: str) -> None:
         if name in self.tools:
             del self.tools[name]
 
@@ -427,7 +428,7 @@ class UnifiedBaseAgent:
     @with_error_handling(
         retries=1, context={"component": "UnifiedBaseAgent", "method": "add_document"}
     )
-    async def add_document(self, content: str, filename: str):
+    async def add_document(self, content: str, filename: str) -> None:
         """Add a new document to the RAG system."""
         try:
             await self.rag_pipeline.add_document(content, filename)
@@ -450,7 +451,7 @@ class UnifiedBaseAgent:
     @with_error_handling(
         retries=0, context={"component": "UnifiedBaseAgent", "method": "create_handoff"}
     )
-    def create_handoff(self, target_agent: "UnifiedBaseAgent"):
+    def create_handoff(self, target_agent: "UnifiedBaseAgent") -> None:
         """Create a handoff function to transfer control to another agent."""
         try:
 
@@ -478,7 +479,7 @@ class UnifiedBaseAgent:
         retries=0,
         context={"component": "UnifiedBaseAgent", "method": "update_instructions"},
     )
-    async def update_instructions(self, new_instructions: str):
+    async def update_instructions(self, new_instructions: str) -> None:
         """Update the agent's instructions dynamically."""
         try:
             self.instructions = new_instructions
@@ -500,7 +501,7 @@ class UnifiedBaseAgent:
     @with_error_handling(
         retries=1, context={"component": "UnifiedBaseAgent", "method": "evolve"}
     )
-    async def evolve(self):
+    async def evolve(self) -> None:
         self.logger.info("Starting agent evolution", extra={"agent": self.name})
         try:
             await self.quality_assurance_layer.evolve()
@@ -522,7 +523,7 @@ class UnifiedBaseAgent:
 
 
 class QualityAssuranceLayer:
-    def __init__(self, upo_threshold: float = 0.7):
+    def __init__(self, upo_threshold: float = 0.7) -> None:
         self.upo_threshold = upo_threshold
 
     def check_task_safety(self, task: LangroidTask) -> bool:
@@ -533,7 +534,7 @@ class QualityAssuranceLayer:
         # Implement UPO (Uncertainty-enhanced Preference Optimization)
         return random.random()  # Placeholder implementation
 
-    async def evolve(self):
+    async def evolve(self) -> None:
         self.upo_threshold = max(
             0.5,
             min(
@@ -544,7 +545,7 @@ class QualityAssuranceLayer:
 
 
 class FoundationalLayer:
-    def __init__(self, vector_store: VectorStore):
+    def __init__(self, vector_store: VectorStore) -> None:
         self.vector_store = vector_store
         # strength determines how much baked knowledge is injected into the task
         self.bake_strength: float = 1.0
@@ -562,7 +563,7 @@ class FoundationalLayer:
         # Implement Prompt Baking mechanism
         return f"Baked({self.bake_strength:.2f}): {content}"
 
-    async def evolve(self):
+    async def evolve(self) -> None:
         if self._history:
             avg_len = sum(self._history) / len(self._history)
             if avg_len > 200:
@@ -573,12 +574,12 @@ class FoundationalLayer:
 
 
 class ContinuousLearningLayer:
-    def __init__(self, vector_store: VectorStore):
+    def __init__(self, vector_store: VectorStore) -> None:
         self.vector_store = vector_store
         self.learning_rate: float = 0.05
         self.performance_history: list[float] = []
 
-    async def update(self, task: LangroidTask, result: Any):
+    async def update(self, task: LangroidTask, result: Any) -> None:
         # Implement SELF-PARAM (rapid parameter updating)
         learned_info = self.extract_learning(task, result)
         await self.vector_store.add_texts([learned_info])
@@ -597,7 +598,7 @@ class ContinuousLearningLayer:
     def extract_learning(self, task: LangroidTask, result: Any) -> str:
         return f"Learned: Task '{task.content}' resulted in '{result}'"
 
-    async def evolve(self):
+    async def evolve(self) -> None:
         if self.performance_history:
             recent = self.performance_history[-10:]
             avg_perf = sum(recent) / len(recent)
@@ -610,7 +611,7 @@ class ContinuousLearningLayer:
 
 
 class AgentArchitectureLayer:
-    def __init__(self):
+    def __init__(self) -> None:
         self.llm = OpenAIGPTConfig(model_name="gpt-4").create()
         self.quality_threshold: float = 0.9
         self.evaluation_history: list[float] = []
@@ -652,7 +653,7 @@ class AgentArchitectureLayer:
         revision = await self.llm.complete(revision_prompt)
         return revision.text
 
-    async def evolve(self):
+    async def evolve(self) -> None:
         if self.evaluation_history:
             avg_quality = sum(self.evaluation_history) / len(self.evaluation_history)
             if avg_quality > self.quality_threshold:
@@ -663,7 +664,7 @@ class AgentArchitectureLayer:
 
 
 class DecisionMakingLayer:
-    def __init__(self, config_path: str = "configs/decision_making.yaml"):
+    def __init__(self, config_path: str = "configs/decision_making.yaml") -> None:
         self.llm = OpenAIGPTConfig(chat_model="gpt-4").create()
         cfg_data = {}
         path = Path(config_path)
@@ -799,7 +800,7 @@ class SelfEvolvingSystem:
     system becomes feature complete.
     """
 
-    def __init__(self, agents: list[UnifiedBaseAgent]):
+    def __init__(self, agents: list[UnifiedBaseAgent]) -> None:
         self.logger = get_component_logger("SelfEvolvingSystem")
 
         try:
@@ -863,7 +864,7 @@ class SelfEvolvingSystem:
     @with_error_handling(
         retries=1, context={"component": "SelfEvolvingSystem", "method": "evolve"}
     )
-    async def evolve(self):
+    async def evolve(self) -> None:
         self.logger.info("Starting system-wide evolution")
         try:
             for agent in self.agents:
@@ -890,7 +891,7 @@ class SelfEvolvingSystem:
     @with_error_handling(
         retries=1, context={"component": "SelfEvolvingSystem", "method": "evolve_agent"}
     )
-    async def evolve_agent(self, agent: UnifiedBaseAgent):
+    async def evolve_agent(self, agent: UnifiedBaseAgent) -> None:
         try:
             self.logger.info("Evolving agent", extra={"agent": agent.name})
             performance = await self.analyze_agent_performance(agent)
@@ -985,7 +986,7 @@ class SelfEvolvingSystem:
         retries=1,
         context={"component": "SelfEvolvingSystem", "method": "evolve_decision_maker"},
     )
-    async def evolve_decision_maker(self):
+    async def evolve_decision_maker(self) -> None:
         try:
             self.logger.info("Evolving decision maker")
             evolution_updates = []
@@ -1102,7 +1103,7 @@ class SelfEvolvingSystem:
     @with_error_handling(
         retries=1, context={"component": "SelfEvolvingSystem", "method": "add_decision"}
     )
-    async def add_decision(self, features: np.array, outcome: int):
+    async def add_decision(self, features: np.array, outcome: int) -> None:
         try:
             self.recent_decisions.append((features, outcome))
             if len(self.recent_decisions) > 1000:
@@ -1163,7 +1164,7 @@ def create_agent(
 if __name__ == "__main__":
     import asyncio
 
-    async def main():
+    async def main() -> None:
         try:
             # Minimal usage demonstration
             vector_store = VectorStore()  # Placeholder, implement actual VectorStore
@@ -1181,7 +1182,7 @@ if __name__ == "__main__":
             )
 
             agent = create_agent("ExampleAgent", agent_config, communication_protocol)
-            self_evolving_system = SelfEvolvingSystem([agent])
+            SelfEvolvingSystem([agent])
 
             get_component_logger("main").info("System initialized successfully")
 

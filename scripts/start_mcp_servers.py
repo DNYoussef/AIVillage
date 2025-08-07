@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MCP Server Management Script
+"""MCP Server Management Script.
 
 This script manages the lifecycle of MCP servers for the AIVillage project.
 It can start, stop, and monitor the configured MCP servers.
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class MCPServerManager:
     """Manages MCP servers for the project."""
 
-    def __init__(self, config_path: str = "mcp_config.json"):
+    def __init__(self, config_path: str = "mcp_config.json") -> None:
         self.config_path = config_path
         self.config = {}
         self.processes = {}
@@ -36,7 +36,7 @@ class MCPServerManager:
                 self.config = json.load(f)
             logger.info(f"Loaded configuration from {self.config_path}")
         except Exception as e:
-            logger.error(f"Failed to load configuration: {e}")
+            logger.exception(f"Failed to load configuration: {e}")
             sys.exit(1)
 
     def setup_environment(self) -> None:
@@ -61,7 +61,7 @@ class MCPServerManager:
 
         try:
             # Build command
-            command = [config["command"]] + config.get("args", [])
+            command = [config["command"], *config.get("args", [])]
 
             # Set up environment
             env = os.environ.copy()
@@ -95,7 +95,7 @@ class MCPServerManager:
             return None
 
         except Exception as e:
-            logger.error(f"Error starting MCP server {name}: {e}")
+            logger.exception(f"Error starting MCP server {name}: {e}")
             return None
 
     async def stop_server(self, name: str, process: subprocess.Popen) -> None:
@@ -119,7 +119,7 @@ class MCPServerManager:
                 await asyncio.create_task(self._wait_for_process(process))
 
         except Exception as e:
-            logger.error(f"Error stopping MCP server {name}: {e}")
+            logger.exception(f"Error stopping MCP server {name}: {e}")
 
     async def _wait_for_process(self, process: subprocess.Popen) -> None:
         """Wait for a process to terminate."""
@@ -185,7 +185,7 @@ class MCPServerManager:
         """Main run loop."""
 
         # Set up signal handlers
-        def signal_handler():
+        def signal_handler() -> None:
             logger.info("Received shutdown signal")
             self.shutdown_event.set()
 
@@ -213,7 +213,7 @@ class MCPServerManager:
         except KeyboardInterrupt:
             logger.info("Received keyboard interrupt")
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
+            logger.exception(f"Unexpected error: {e}")
         finally:
             # Clean shutdown
             await self.stop_all_servers()
@@ -240,7 +240,7 @@ class MCPServerManager:
             print(f"{name:20} | {status:20} | {description}")
 
 
-async def main():
+async def main() -> None:
     """Main entry point."""
     import argparse
 

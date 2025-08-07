@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import subprocess
+import sys
 import time
 from typing import Any
 
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 class DeploymentConfig:
     """Deployment configuration management."""
 
-    def __init__(self, config_path: str = "deploy/config.yaml"):
+    def __init__(self, config_path: str = "deploy/config.yaml") -> None:
         self.config_path = config_path
         self.config = self._load_config()
 
@@ -113,7 +114,7 @@ class DeploymentConfig:
 class ContainerBuilder:
     """Builds Docker containers for AIVillage services."""
 
-    def __init__(self, build_dir: str = "build"):
+    def __init__(self, build_dir: str = "build") -> None:
         self.build_dir = build_dir
         os.makedirs(build_dir, exist_ok=True)
 
@@ -216,14 +217,14 @@ CMD ["{cmd}"]
             return False
 
         except Exception as e:
-            logger.error(f"Error building image for {service}: {e}")
+            logger.exception(f"Error building image for {service}: {e}")
             return False
 
 
 class KubernetesDeployer:
     """Handles Kubernetes deployments."""
 
-    def __init__(self, config: DeploymentConfig):
+    def __init__(self, config: DeploymentConfig) -> None:
         self.config = config
         self.manifests_dir = "deploy/k8s"
         os.makedirs(self.manifests_dir, exist_ok=True)
@@ -405,14 +406,14 @@ class KubernetesDeployer:
             return False
 
         except Exception as e:
-            logger.error(f"Error deploying {service} to {environment}: {e}")
+            logger.exception(f"Error deploying {service} to {environment}: {e}")
             return False
 
 
 class HealthChecker:
     """Validates deployment health and readiness."""
 
-    def __init__(self, config: DeploymentConfig):
+    def __init__(self, config: DeploymentConfig) -> None:
         self.config = config
 
     async def check_service_health(
@@ -423,7 +424,7 @@ class HealthChecker:
         health_endpoint = service_config.get("health_endpoint", "/health")
 
         # Get service URL (simplified for this example)
-        service_url = f"http://{service}-{environment}::{service_config.get('port', 8000)}{health_endpoint}"
+        f"http://{service}-{environment}::{service_config.get('port', 8000)}{health_endpoint}"
 
         start_time = time.time()
         while time.time() - start_time < timeout:
@@ -465,7 +466,9 @@ class HealthChecker:
 class BlueGreenDeployer:
     """Implements blue-green deployment strategy."""
 
-    def __init__(self, config: DeploymentConfig, k8s_deployer: KubernetesDeployer):
+    def __init__(
+        self, config: DeploymentConfig, k8s_deployer: KubernetesDeployer
+    ) -> None:
         self.config = config
         self.k8s_deployer = k8s_deployer
         self.health_checker = HealthChecker(config)
@@ -561,7 +564,7 @@ class BlueGreenDeployer:
 class ProductionDeploymentOrchestrator:
     """Main orchestrator for production deployments."""
 
-    def __init__(self, config_path: str = "deploy/config.yaml"):
+    def __init__(self, config_path: str = "deploy/config.yaml") -> None:
         self.config = DeploymentConfig(config_path)
         self.container_builder = ContainerBuilder()
         self.k8s_deployer = KubernetesDeployer(self.config)
@@ -653,7 +656,7 @@ class ProductionDeploymentOrchestrator:
             return True
 
         except Exception as e:
-            logger.error(f"Deployment {deployment_id} failed with error: {e}")
+            logger.exception(f"Deployment {deployment_id} failed with error: {e}")
 
             # Record failed deployment
             deployment_record = {
@@ -692,7 +695,7 @@ class ProductionDeploymentOrchestrator:
             return False
 
         except Exception as e:
-            logger.error(f"Error running pre-deployment tests: {e}")
+            logger.exception(f"Error running pre-deployment tests: {e}")
             return False
 
     async def _build_all_images(self, services: list[str], version: str) -> bool:
@@ -769,7 +772,7 @@ class ProductionDeploymentOrchestrator:
                 json.dump(self.deployment_history, f, indent=2)
 
         except Exception as e:
-            logger.error(f"Failed to save deployment history: {e}")
+            logger.exception(f"Failed to save deployment history: {e}")
 
     def get_deployment_status(self) -> dict[str, Any]:
         """Get current deployment status."""
@@ -790,15 +793,13 @@ class ProductionDeploymentOrchestrator:
             "last_deployment": (
                 self.deployment_history[-1] if self.deployment_history else None
             ),
-            "environments": list(
-                set(d["environment"] for d in self.deployment_history)
-            ),
+            "environments": list({d["environment"] for d in self.deployment_history}),
             "available_services": list(self.config.config["services"].keys()),
         }
 
 
 # CLI Interface
-async def main():
+async def main() -> None:
     """Main CLI interface for deployment."""
     import argparse
 
@@ -828,7 +829,7 @@ async def main():
             print(f"✅ Deployment to {args.environment} successful")
         else:
             print(f"❌ Deployment to {args.environment} failed")
-            exit(1)
+            sys.exit(1)
 
     elif args.action == "status":
         status = orchestrator.get_deployment_status()

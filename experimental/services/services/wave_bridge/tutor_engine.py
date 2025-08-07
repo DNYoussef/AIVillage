@@ -1,5 +1,5 @@
 """AI Tutor Engine for WhatsApp Wave Bridge
-Optimized for educational interactions with response time <5s
+Optimized for educational interactions with response time <5s.
 """
 
 import hashlib
@@ -21,9 +21,9 @@ logger = logging.getLogger(__name__)
 
 
 class AITutor:
-    """Main AI Tutor engine with multi-model support and caching"""
+    """Main AI Tutor engine with multi-model support and caching."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Initialize AI clients
         self.anthropic_client = (
             anthropic.Anthropic() if hasattr(anthropic, "Anthropic") else None
@@ -54,7 +54,7 @@ class AITutor:
         # Initialize subject matter expertise
         self.subject_experts = self.initialize_subject_experts()
 
-    def initialize_agent_forge_model(self):
+    def initialize_agent_forge_model(self) -> None:
         """Initialize Agent Forge model for tutoring."""
         try:
             # Import Agent Forge components
@@ -111,7 +111,7 @@ class AITutor:
             self.agent_forge_available = False
 
     def initialize_subject_experts(self) -> dict[str, dict[str, Any]]:
-        """Initialize subject-specific tutoring approaches"""
+        """Initialize subject-specific tutoring approaches."""
         experts = {
             "mathematics": {
                 "keywords": [
@@ -202,7 +202,7 @@ class AITutor:
     async def generate_greeting(
         self, variant: str, language: str, user_message: str
     ) -> str:
-        """Generate personalized greeting based on A/B test variant"""
+        """Generate personalized greeting based on A/B test variant."""
         start_time = time.time()
 
         try:
@@ -242,13 +242,13 @@ class AITutor:
             return greeting
 
         except Exception as e:
-            logger.error(f"Error generating greeting: {e}")
+            logger.exception(f"Error generating greeting: {e}")
             return get_language_greeting(language)
 
     async def generate_response(
         self, user_message: str, prompt_template: str, language: str, session_id: str
     ) -> str:
-        """Generate tutoring response with model fallback chain"""
+        """Generate tutoring response with model fallback chain."""
         start_time = time.time()
 
         try:
@@ -290,10 +290,9 @@ class AITutor:
                         enhanced_prompt, user_message, language, session_id
                     )
                     if response:
-                        model_used = "agent_forge"
                         logger.info("Used Agent Forge model for response")
                 except Exception as e:
-                    logger.error(f"Agent Forge model failed: {e}")
+                    logger.exception(f"Agent Forge model failed: {e}")
 
             # Try Anthropic as fallback (good balance of speed and quality)
             if not response and self.anthropic_client:
@@ -359,13 +358,13 @@ class AITutor:
             )
 
         except Exception as e:
-            logger.error(f"Error in response generation: {e}")
+            logger.exception(f"Error in response generation: {e}")
 
             # Emergency fallback
             return self.generate_emergency_fallback(language)
 
     def detect_subject_interest(self, message: str) -> str:
-        """Detect subject area from user message"""
+        """Detect subject area from user message."""
         message_lower = message.lower()
 
         # Score each subject based on keyword matches
@@ -388,7 +387,7 @@ class AITutor:
     def enhance_prompt_for_subject(
         self, base_prompt: str, expert_config: dict[str, Any], user_message: str
     ) -> str:
-        """Enhance prompt template with subject-specific guidance"""
+        """Enhance prompt template with subject-specific guidance."""
         # Add subject-specific instruction
         enhanced_prompt = base_prompt
 
@@ -415,7 +414,7 @@ class AITutor:
     async def generate_with_anthropic(
         self, prompt: str, user_message: str, language: str
     ) -> str | None:
-        """Generate response using Anthropic Claude"""
+        """Generate response using Anthropic Claude."""
         try:
             messages = [
                 {"role": "user", "content": prompt.format(user_message=user_message)}
@@ -431,7 +430,7 @@ class AITutor:
             return response.content[0].text.strip()
 
         except Exception as e:
-            logger.error(f"Anthropic generation error: {e}")
+            logger.exception(f"Anthropic generation error: {e}")
             return None
 
     async def generate_agent_forge_response(
@@ -501,14 +500,14 @@ Response:"""
             return None
 
         except Exception as e:
-            logger.error(f"Agent Forge generation error: {e}")
+            logger.exception(f"Agent Forge generation error: {e}")
             self.model_performance["agent_forge"]["calls"] += 1  # Track failed attempts
             return None
 
     async def generate_with_openai(
         self, prompt: str, user_message: str, language: str
     ) -> str | None:
-        """Generate response using OpenAI GPT"""
+        """Generate response using OpenAI GPT."""
         try:
             response = await self.openai_client.chat.completions.create(
                 model="gpt-3.5-turbo",  # Fast and cost-effective
@@ -526,13 +525,13 @@ Response:"""
             return response.choices[0].message.content.strip()
 
         except Exception as e:
-            logger.error(f"OpenAI generation error: {e}")
+            logger.exception(f"OpenAI generation error: {e}")
             return None
 
     def generate_fallback_response(
         self, user_message: str, subject: str, language: str
     ) -> str:
-        """Generate rule-based fallback response"""
+        """Generate rule-based fallback response."""
         # Subject-specific fallback templates
         fallback_templates = {
             "mathematics": "I'd be happy to help with your math question about '{message}'. Let me break this down step by step for you...",
@@ -561,7 +560,7 @@ Response:"""
         return f"{response}\n\n{encouragement}"
 
     def generate_emergency_fallback(self, language: str) -> str:
-        """Emergency fallback when all systems fail"""
+        """Emergency fallback when all systems fail."""
         emergency_responses = {
             "en": "I'm experiencing technical difficulties. Please try asking your question again in a moment.",
             "es": "Estoy experimentando dificultades técnicas. Por favor intenta hacer tu pregunta de nuevo en un momento.",
@@ -575,7 +574,7 @@ Response:"""
         return emergency_responses.get(language, emergency_responses["en"])
 
     def make_enthusiastic(self, base_greeting: str, language: str) -> str:
-        """Add enthusiastic elements to greeting"""
+        """Add enthusiastic elements to greeting."""
         enthusiastic_additions = {
             "en": " 🌟 I'm super excited to learn with you today!",
             "es": " 🌟 ¡Estoy súper emocionado de aprender contigo hoy!",
@@ -590,7 +589,7 @@ Response:"""
         return base_greeting + addition
 
     def make_professional(self, base_greeting: str, language: str) -> str:
-        """Add professional elements to greeting"""
+        """Add professional elements to greeting."""
         professional_additions = {
             "en": " I'm committed to providing you with accurate, comprehensive educational support.",
             "es": " Me comprometo a brindarte apoyo educativo preciso y completo.",
@@ -605,7 +604,7 @@ Response:"""
         return base_greeting + addition
 
     def make_friendly(self, base_greeting: str, language: str) -> str:
-        """Add friendly elements to greeting"""
+        """Add friendly elements to greeting."""
         friendly_additions = {
             "en": " 😊 Think of me as your learning buddy - we're in this together!",
             "es": " 😊 ¡Piensa en mí como tu compañero de aprendizaje - estamos juntos en esto!",
@@ -620,12 +619,14 @@ Response:"""
         return base_greeting + addition
 
     def get_cache_key(self, user_message: str, prompt: str, language: str) -> str:
-        """Generate cache key for response caching"""
+        """Generate cache key for response caching."""
         combined = f"{user_message}_{prompt}_{language}"
         return hashlib.md5(combined.encode()).hexdigest()
 
-    def update_model_performance(self, model: str, start_time: float, success: bool):
-        """Update performance tracking for models"""
+    def update_model_performance(
+        self, model: str, start_time: float, success: bool
+    ) -> None:
+        """Update performance tracking for models."""
         response_time = time.time() - start_time
 
         if model in self.model_performance:
@@ -664,7 +665,7 @@ Response:"""
         )
 
     async def get_performance_summary(self) -> dict[str, Any]:
-        """Get current performance summary"""
+        """Get current performance summary."""
         return {
             "model_performance": self.model_performance,
             "cache_size": len(self.response_cache),

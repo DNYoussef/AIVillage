@@ -158,7 +158,7 @@ class MoralFrameworkBaker:
                     "uncertainty escalates, pause and consult peers or humans."
                 )
 
-            enriched_text = " ".join([rule.text] + additional)
+            enriched_text = " ".join([rule.text, *additional])
             baked_rules.append(
                 Rule(number=rule.number, text=enriched_text, priority=rule.priority)
             )

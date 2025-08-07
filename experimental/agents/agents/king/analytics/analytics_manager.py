@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class AnalyticsManager(BaseAnalytics):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.task_success_rates = {}
         self.system_efficiency_metrics = []
@@ -20,7 +20,7 @@ class AnalyticsManager(BaseAnalytics):
     @error_handler.handle_error
     def record_task_completion(
         self, task_id: str, completion_time: float, success: bool
-    ):
+    ) -> None:
         self.record_metric("task_completion_time", completion_time)
 
         task_type = task_id.split("_")[0]  # Assuming task_id format is "type_uuid"
@@ -29,11 +29,11 @@ class AnalyticsManager(BaseAnalytics):
         self.task_success_rates[task_type].append(int(success))
 
     @error_handler.handle_error
-    def update_agent_performance(self, agent: str, performance: float):
+    def update_agent_performance(self, agent: str, performance: float) -> None:
         self.record_metric(f"{agent}_performance", performance)
 
     @error_handler.handle_error
-    def record_system_efficiency(self, metrics: dict[str, float]):
+    def record_system_efficiency(self, metrics: dict[str, float]) -> None:
         self.system_efficiency_metrics.append(metrics)
 
     @error_handler.handle_error
@@ -98,7 +98,7 @@ class AnalyticsManager(BaseAnalytics):
         }
 
     @safe_execute
-    async def run_analytics(self):
+    async def run_analytics(self) -> None:
         while True:
             report = self.generate_analytics_report()
             logger.info(f"Generated analytics report: {report}")

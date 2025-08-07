@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Direct Interface to Specialized Magi AI Agent
+"""Direct Interface to Specialized Magi AI Agent.
 
 This creates a direct conversational interface to the specialized Magi
 that was created through the Agent Forge pipeline. The Magi has enhanced
@@ -19,11 +19,11 @@ from agent_forge.memory_manager import memory_manager
 class MagiInterface:
     """Direct interface to the specialized Magi AI agent."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.load_magi_capabilities()
         self.conversation_history = []
 
-    def load_magi_capabilities(self):
+    def load_magi_capabilities(self) -> None:
         """Load the specialized capabilities from the Magi training results."""
         results_path = Path(
             "D:/AgentForge/memory_efficient_magi_20250726_033506/memory_efficient_scaled_results.json"
@@ -208,7 +208,7 @@ class MagiInterface:
 
         return response
 
-    def run_interactive_session(self):
+    def run_interactive_session(self) -> None:
         """Run an interactive conversation session with the Magi."""
         print("\n🌟 WELCOME TO THE MAGI AI AGENT INTERFACE")
         print("The Magi has been specialized through 10,000 questions of training.")
@@ -262,7 +262,7 @@ class MagiInterface:
                 continue
 
 
-def main():
+def main() -> None:
     """Main function to start the Magi interface."""
     print("🚀 STARTING MAGI AI AGENT INTERFACE...")
 

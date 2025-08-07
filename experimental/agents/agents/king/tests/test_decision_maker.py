@@ -13,7 +13,7 @@ class DummyTok:
 class DummyModel:
     def __call__(self, *args, **kwargs):
         class Output:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.last_hidden_state = torch.zeros((1, 1, 768))
 
         return Output()
@@ -27,14 +27,15 @@ try:
 except ValueError:
     torch_spec = None
 if torch_spec is None:
-    raise unittest.SkipTest("PyTorch not installed")
+    msg = "PyTorch not installed"
+    raise unittest.SkipTest(msg)
 
 from agents.king.planning.unified_decision_maker import UnifiedDecisionMaker
 from agents.king.quality_assurance_layer import QualityAssuranceLayer
 
 
 class TestUnifiedDecisionMaker(unittest.IsolatedAsyncioTestCase):
-    async def asyncSetUp(self):
+    async def asyncSetUp(self) -> None:
         tok_patch = patch(
             "transformers.AutoTokenizer.from_pretrained", return_value=DummyTok()
         )
@@ -56,7 +57,7 @@ class TestUnifiedDecisionMaker(unittest.IsolatedAsyncioTestCase):
             self.quality_assurance_layer,
         )
 
-    async def test_make_decision(self):
+    async def test_make_decision(self) -> None:
         content = "Test decision content"
         eudaimonia_score = 0.8
         self.rag_system.process_query.return_value = {"rag_info": "Test RAG info"}
@@ -72,14 +73,14 @@ class TestUnifiedDecisionMaker(unittest.IsolatedAsyncioTestCase):
 
         result = await self.decision_maker.make_decision(content, eudaimonia_score)
 
-        self.assertIn("decision", result)
-        self.assertIn("eudaimonia_score", result)
-        self.assertIn("rule_compliance", result)
-        self.assertIn("rag_info", result)
-        self.assertIn("best_alternative", result)
-        self.assertIn("implementation_plan", result)
+        assert "decision" in result
+        assert "eudaimonia_score" in result
+        assert "rule_compliance" in result
+        assert "rag_info" in result
+        assert "best_alternative" in result
+        assert "implementation_plan" in result
 
-    async def test_update_model(self):
+    async def test_update_model(self) -> None:
         task = {"content": "Test task"}
         result = {"performance": 0.7, "uncertainty": 0.3}
         await self.decision_maker.update_model(task, result)
@@ -88,22 +89,22 @@ class TestUnifiedDecisionMaker(unittest.IsolatedAsyncioTestCase):
             task, 0.7, 0.3
         )
 
-    async def test_save_models(self):
+    async def test_save_models(self) -> None:
         path = "test_path"
         await self.decision_maker.save_models(path)
         self.decision_maker.mcts.save.assert_called_once_with(f"{path}/mcts_model.pt")
 
-    async def test_load_models(self):
+    async def test_load_models(self) -> None:
         path = "test_path"
         await self.decision_maker.load_models(path)
         self.decision_maker.mcts.load.assert_called_once_with(f"{path}/mcts_model.pt")
 
-    def test_update_agent_list(self):
+    def test_update_agent_list(self) -> None:
         agent_list = ["Agent1", "Agent2"]
         self.decision_maker.update_agent_list(agent_list)
-        self.assertEqual(self.decision_maker.available_agents, agent_list)
+        assert self.decision_maker.available_agents == agent_list
 
-    async def test_generate_alternatives(self):
+    async def test_generate_alternatives(self) -> None:
         problem_analysis = {"content": "Test problem"}
         self.agent.generate_structured_response.return_value = ["Alt1", "Alt2"]
         self.communication_protocol.send_and_wait.return_value.content = {
@@ -114,11 +115,11 @@ class TestUnifiedDecisionMaker(unittest.IsolatedAsyncioTestCase):
             problem_analysis
         )
 
-        self.assertIn("Alt1", alternatives)
-        self.assertIn("Alt2", alternatives)
-        self.assertIn("Alt3", alternatives)
+        assert "Alt1" in alternatives
+        assert "Alt2" in alternatives
+        assert "Alt3" in alternatives
 
-    async def test_evaluate_alternatives(self):
+    async def test_evaluate_alternatives(self) -> None:
         alternatives = ["Alt1", "Alt2"]
         ranked_criteria = [
             {"criterion": "eudaimonia", "weight": 0.5},
@@ -136,11 +137,11 @@ class TestUnifiedDecisionMaker(unittest.IsolatedAsyncioTestCase):
             alternatives, ranked_criteria
         )
 
-        self.assertEqual(len(evaluated), 2)
-        self.assertIn("alternative", evaluated[0])
-        self.assertIn("score", evaluated[0])
+        assert len(evaluated) == 2
+        assert "alternative" in evaluated[0]
+        assert "score" in evaluated[0]
 
-    async def test_create_implementation_plan(self):
+    async def test_create_implementation_plan(self) -> None:
         plan = {"decision": "Test decision", "best_alternative": "Test alternative"}
         self.agent.generate_structured_response.return_value = {
             "monitoring": ["Step1"],
@@ -151,8 +152,8 @@ class TestUnifiedDecisionMaker(unittest.IsolatedAsyncioTestCase):
             plan
         )
 
-        self.assertIn("monitoring", implementation_plan)
-        self.assertIn("feedback_analysis", implementation_plan)
+        assert "monitoring" in implementation_plan
+        assert "feedback_analysis" in implementation_plan
 
 
 if __name__ == "__main__":

@@ -162,7 +162,7 @@ try:
     total_lines = 0
     total_files = 0
 
-    for root, dirs, files in os.walk("src/production/distributed_inference"):
+    for root, _dirs, files in os.walk("src/production/distributed_inference"):
         for file in files:
             if file.endswith(".py"):
                 file_path = os.path.join(root, file)
@@ -171,7 +171,7 @@ try:
                     total_lines += lines
                     total_files += 1
 
-    for root, dirs, files in os.walk("src/production/distributed_agents"):
+    for root, _dirs, files in os.walk("src/production/distributed_agents"):
         for file in files:
             if file.endswith(".py"):
                 file_path = os.path.join(root, file)
@@ -180,7 +180,7 @@ try:
                     total_lines += lines
                     total_files += 1
 
-    for root, dirs, files in os.walk("src/production/federated_learning"):
+    for root, _dirs, files in os.walk("src/production/federated_learning"):
         for file in files:
             if file.endswith(".py"):
                 file_path = os.path.join(root, file)

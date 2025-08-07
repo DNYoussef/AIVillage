@@ -6,7 +6,7 @@ These tests verify documented claims and establish quality baselines.
 from pathlib import Path
 
 
-def create_test_infrastructure():
+def create_test_infrastructure() -> None:
     """Create complete test infrastructure for production components."""
     # Create test directories
     test_dirs = [

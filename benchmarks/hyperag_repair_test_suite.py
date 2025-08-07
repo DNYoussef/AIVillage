@@ -90,7 +90,7 @@ class TestGraphEdge:
 class ViolationInjector:
     """Injects controlled violations into test knowledge graphs."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.violation_templates = self._create_violation_templates()
 
     def _create_violation_templates(self) -> dict[str, dict]:
@@ -481,7 +481,7 @@ class RepairTestSuite:
         guardian_gate: GuardianGate | None = None,
         innovator_agent: InnovatorAgent | None = None,
         output_dir: Path = Path("./repair_test_results"),
-    ):
+    ) -> None:
         self.guardian_gate = guardian_gate or GuardianGate()
         self.innovator_agent = innovator_agent  # Will be mocked if None
         self.output_dir = output_dir
@@ -525,7 +525,7 @@ class RepairTestSuite:
                     all_guardian_decisions.extend(test_result["guardian_decisions"])
 
                 except Exception as e:
-                    logger.error(f"Error in {violation_type} test {test_num}: {e}")
+                    logger.exception(f"Error in {violation_type} test {test_num}: {e}")
                     continue
 
         # Calculate metrics
@@ -913,7 +913,7 @@ class RepairTestSuite:
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
-    async def _save_test_results(self, metrics: RepairTestMetrics):
+    async def _save_test_results(self, metrics: RepairTestMetrics) -> None:
         """Save test results to files."""
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
@@ -941,7 +941,7 @@ class RepairTestSuite:
         logger.info(f"Metrics saved to {metrics_file}")
 
 
-async def main():
+async def main() -> None:
     parser = argparse.ArgumentParser(description="HypeRAG Graph Repair Test Suite")
     parser.add_argument(
         "--output-dir",
@@ -981,7 +981,7 @@ async def main():
         print("=" * 60)
 
     except Exception as e:
-        logger.error(f"Test suite failed: {e}")
+        logger.exception(f"Test suite failed: {e}")
         raise
 
 

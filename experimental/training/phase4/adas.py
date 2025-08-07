@@ -1,6 +1,6 @@
 """Simple ADAS integration wrapper."""
 
-from ..adas.system import ADASystem
+from AIVillage.experimental.training.adas.system import ADASystem
 
 
 def adas(model_path: str) -> str:

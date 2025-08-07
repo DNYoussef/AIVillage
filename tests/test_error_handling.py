@@ -82,17 +82,21 @@ class TestErrorContextManager:
         """Test context manager with exception."""
         with pytest.raises(ValueError):
             with ErrorContextManager("test", "operation", details={"test": True}):
-                raise ValueError("Test error")
+                msg = "Test error"
+                raise ValueError(msg)
 
     def test_context_manager_custom_category(self):
         """Test context manager with custom error category."""
-        with pytest.raises(RuntimeError):
-            with ErrorContextManager(
+        with (
+            pytest.raises(RuntimeError),
+            ErrorContextManager(
                 "test",
                 "operation",
                 details={"query": "SELECT * FROM test"},
-            ):
-                raise RuntimeError("Database error")
+            ),
+        ):
+            msg = "Database error"
+            raise RuntimeError(msg)
 
 
 class TestWithErrorHandlingDecorator:
@@ -117,7 +121,8 @@ class TestWithErrorHandlingDecorator:
             severity=ErrorSeverity.CRITICAL,
         )
         def error_function():
-            raise ValueError("Test error")
+            msg = "Test error"
+            raise ValueError(msg)
 
         with pytest.raises(AIVillageException):
             error_function()
@@ -137,7 +142,8 @@ class TestWithErrorHandlingDecorator:
 
         @with_error_handling(component="test", operation="async_error")
         async def async_error():
-            raise ValueError("Async error")
+            msg = "Async error"
+            raise ValueError(msg)
 
         with pytest.raises(AIVillageException):
             asyncio.run(async_error())
@@ -148,7 +154,8 @@ class TestWithErrorHandlingDecorator:
         # Note: Current implementation may not support retries
         @with_error_handling(component="test", operation="retry_operation")
         def retry_function():
-            raise ValueError("Need retry")
+            msg = "Need retry"
+            raise ValueError(msg)
 
         with pytest.raises(AIVillageException):
             retry_function()
@@ -163,7 +170,8 @@ class TestWithErrorHandlingDecorator:
         def retry_exhausted():
             nonlocal attempts
             attempts += 1
-            raise ValueError("Always fails")
+            msg = "Always fails"
+            raise ValueError(msg)
 
         with pytest.raises(AIVillageException):
             retry_exhausted()
@@ -188,7 +196,6 @@ class TestMigrateFromLegacyException:
     def test_migration_with_context(self):
         """Test migration with additional context."""
         legacy_exc = RuntimeError("Runtime error")
-        context = {"user_id": 123, "request_id": "abc123"}
 
         new_exc = migrate_from_legacy_exception(legacy_exc)
 

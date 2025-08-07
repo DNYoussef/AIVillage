@@ -17,6 +17,7 @@ import argparse
 import json
 import logging
 import os
+import sys
 import time
 from typing import Any
 
@@ -98,4 +99,4 @@ if __name__ == "__main__":
     report = migrate(args.dry_run, args.delete_existing)
     print(json.dumps(report, indent=2))
     if not args.dry_run and report["migrated"] != report["total"]:
-        exit(1)
+        sys.exit(1)

@@ -83,7 +83,7 @@ try:
 
     print(f"  PASS: Created {len(shards)} shards for 12 layers")
     print(
-        f"  PASS: Shards distributed across {len(set(s.device_id for s in shards))} devices"
+        f"  PASS: Shards distributed across {len({s.device_id for s in shards})} devices"
     )
 
     # Verify memory constraints
@@ -253,7 +253,7 @@ print("Test 4: Federated Learning Aggregation Logic")
 try:
 
     def federated_average(
-        gradients_list: list[dict[str, float]], weights: list[float] = None
+        gradients_list: list[dict[str, float]], weights: list[float] | None = None
     ) -> dict[str, float]:
         """Simple federated averaging of gradients"""
         if not gradients_list:

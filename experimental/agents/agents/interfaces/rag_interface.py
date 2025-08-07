@@ -1,4 +1,4 @@
-"""Standardized RAG (Retrieval-Augmented Generation) Interface
+"""Standardized RAG (Retrieval-Augmented Generation) Interface.
 
 This module defines the standard interface for RAG systems, query processing,
 document management, and embedding operations.
@@ -316,7 +316,7 @@ class RAGInterface(ABC):
     document retrieval with text generation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.document_store: DocumentStore | None = None
         self.embedding_model: EmbeddingInterface | None = None
         self.retrieval_stats = {

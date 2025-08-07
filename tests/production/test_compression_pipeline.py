@@ -362,7 +362,7 @@ class TestCompressionPipeline:
     ):
         """Test model loading in pipeline."""
         try:
-            pipeline = CompressionPipeline(pipeline_config)
+            CompressionPipeline(pipeline_config)
 
             # Mock model and tokenizer loading
             mock_tokenizer.return_value = Mock()
@@ -380,7 +380,7 @@ class TestCompressionPipeline:
     async def test_compression_metrics_collection(self, pipeline_config):
         """Test compression metrics collection."""
         try:
-            pipeline = CompressionPipeline(pipeline_config)
+            CompressionPipeline(pipeline_config)
 
             # Mock metrics would be collected here
             metrics = {

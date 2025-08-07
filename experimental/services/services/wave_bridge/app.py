@@ -1,5 +1,5 @@
 """WhatsApp Wave Bridge for AI Village Tutoring
-Sprint R-3+AF4 Implementation with W&B Prompt Tuning
+Sprint R-3+AF4 Implementation with W&B Prompt Tuning.
 """
 
 import asyncio
@@ -46,7 +46,7 @@ wandb.init(
 @app.post("/whatsapp/webhook")
 async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     """Handle WhatsApp messages with W&B tracking and prompt optimization
-    Target: <5 second response time
+    Target: <5 second response time.
     """
     start_time = time.time()
 
@@ -115,7 +115,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         )
 
     except Exception as e:
-        logger.error(f"Error processing WhatsApp webhook: {e!s}")
+        logger.exception(f"Error processing WhatsApp webhook: {e!s}")
 
         # Log error to W&B
         wandb.log(
@@ -136,7 +136,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
 async def get_tutor_response(
     message: str, from_number: str, session_id: str, detected_lang: str
 ) -> dict[str, Any]:
-    """Generate tutoring response with W&B prompt optimization"""
+    """Generate tutoring response with W&B prompt optimization."""
     # Check if this is a greeting (new conversation)
     is_greeting = is_greeting_message(message, detected_lang)
 
@@ -184,13 +184,13 @@ async def get_tutor_response(
 
 
 def generate_session_id(from_number: str, message_sid: str) -> str:
-    """Generate unique session ID for tracking"""
+    """Generate unique session ID for tracking."""
     combined = f"{from_number}_{message_sid}_{int(time.time())}"
     return hashlib.md5(combined.encode()).hexdigest()[:12]
 
 
 def is_greeting_message(message: str, language: str) -> bool:
-    """Detect if message is a greeting"""
+    """Detect if message is a greeting."""
     greeting_patterns = {
         "en": ["hello", "hi", "hey", "start", "help"],
         "es": ["hola", "buenos", "ayuda"],
@@ -208,7 +208,7 @@ def is_greeting_message(message: str, language: str) -> bool:
 
 
 def format_whatsapp_response(response_data: dict[str, Any]) -> str:
-    """Format response for Twilio WhatsApp"""
+    """Format response for Twilio WhatsApp."""
     response = MessagingResponse()
     message = response.message()
     message.body(response_data["text"])
@@ -216,7 +216,7 @@ def format_whatsapp_response(response_data: dict[str, Any]) -> str:
 
 
 def get_fallback_response(language: str) -> dict[str, Any]:
-    """Fallback response for timeouts"""
+    """Fallback response for timeouts."""
     fallback_messages = {
         "en": "I'm processing your message. Please wait a moment...",
         "es": "Estoy procesando tu mensaje. Por favor espera un momento...",
@@ -235,7 +235,7 @@ def get_fallback_response(language: str) -> dict[str, Any]:
 
 
 def get_error_response() -> str:
-    """Error response for system failures"""
+    """Error response for system failures."""
     response = MessagingResponse()
     message = response.message()
     message.body(
@@ -246,8 +246,8 @@ def get_error_response() -> str:
 
 async def log_response_metrics(
     response: dict[str, Any], response_time: float, session_id: str, language: str
-):
-    """Log detailed response metrics to W&B"""
+) -> None:
+    """Log detailed response metrics to W&B."""
     # Core metrics
     metrics_data = {
         "response_time": response_time,
@@ -278,7 +278,7 @@ async def log_response_metrics(
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint."""
     return {
         "status": "healthy",
         "service": "whatsapp-wave-bridge",
@@ -289,7 +289,7 @@ async def health_check():
 
 @app.get("/metrics")
 async def get_metrics():
-    """Get current performance metrics"""
+    """Get current performance metrics."""
     return await metrics.get_summary()
 
 

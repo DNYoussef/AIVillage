@@ -70,7 +70,7 @@ class TestAgentEvolutionEngine(unittest.TestCase):
         """Test agent population initialization"""
         await self.engine.initialize_population()
 
-        self.assertEqual(len(self.engine.agent_population), 6)
+        assert len(self.engine.agent_population) == 6
 
         # Check that agents have different specializations
         specializations = set()
@@ -79,9 +79,7 @@ class TestAgentEvolutionEngine(unittest.TestCase):
             spec = agent.agent_id.split("_")[-1]
             specializations.add(spec)
 
-        self.assertGreater(
-            len(specializations), 1, "Agents should have diverse specializations"
-        )
+        assert len(specializations) > 1, "Agents should have diverse specializations"
 
     async def test_fitness_evaluation(self):
         """Test fitness evaluation of agent population"""
@@ -95,10 +93,10 @@ class TestAgentEvolutionEngine(unittest.TestCase):
 
         fitness_scores = await self.engine._evaluate_population(evaluation_tasks)
 
-        self.assertEqual(len(fitness_scores), 6)
+        assert len(fitness_scores) == 6
         for score in fitness_scores.values():
-            self.assertGreaterEqual(score, 0.0)
-            self.assertLessEqual(score, 1.0)
+            assert score >= 0.0
+            assert score <= 1.0
 
     async def test_genetic_operations(self):
         """Test genetic crossover and mutation operations"""
@@ -110,16 +108,14 @@ class TestAgentEvolutionEngine(unittest.TestCase):
         # Test crossover
         child1, child2 = self.engine.genetic_optimizer.crossover(parent1, parent2)
 
-        self.assertNotEqual(child1.agent_id, parent1.agent_id)
-        self.assertNotEqual(child2.agent_id, parent2.agent_id)
-        self.assertEqual(
-            child1.generation, max(parent1.generation, parent2.generation) + 1
-        )
+        assert child1.agent_id != parent1.agent_id
+        assert child2.agent_id != parent2.agent_id
+        assert child1.generation == max(parent1.generation, parent2.generation) + 1
 
         # Test mutation
         mutated = self.engine.genetic_optimizer.mutate(child1)
         # Mutation might not always change values, so we just check it doesn't crash
-        self.assertIsInstance(mutated, AgentGenome)
+        assert isinstance(mutated, AgentGenome)
 
     async def test_kpi_tracking(self):
         """Test KPI tracking and fitness scoring"""
@@ -133,14 +129,14 @@ class TestAgentEvolutionEngine(unittest.TestCase):
 
         # Test fitness calculation
         fitness = kpis.fitness_score()
-        self.assertGreaterEqual(fitness, 0.0)
-        self.assertLessEqual(fitness, 1.0)
+        assert fitness >= 0.0
+        assert fitness <= 1.0
 
         # Test KPI recording
         self.engine.kpi_tracker.record_kpis(kpis)
 
         fitness_scores = self.engine.kpi_tracker.get_fitness_scores(["test_agent"])
-        self.assertIn("test_agent", fitness_scores)
+        assert "test_agent" in fitness_scores
 
     async def test_evolution_cycle(self):
         """Test complete evolution cycle"""
@@ -160,9 +156,9 @@ class TestAgentEvolutionEngine(unittest.TestCase):
             generations=2, evaluation_tasks=evaluation_tasks
         )
 
-        self.assertTrue(results["generations_run"] == 2)
-        self.assertEqual(len(results["best_fitness_history"]), 2)
-        self.assertGreater(len(self.engine.agent_population), 0)
+        assert results["generations_run"] == 2
+        assert len(results["best_fitness_history"]) == 2
+        assert len(self.engine.agent_population) > 0
 
 
 class TestSafeCodeModifier(unittest.TestCase):
@@ -212,10 +208,10 @@ class TestAgent:
             code_transformer=hyperparameter_transformer,
         )
 
-        self.assertIsNotNone(modification.modification_id)
-        self.assertEqual(modification.agent_id, "test_agent")
-        self.assertGreater(modification.safety_score, 0.0)
-        self.assertIn("learning_rate = 0.001", modification.modified_code)
+        assert modification.modification_id is not None
+        assert modification.agent_id == "test_agent"
+        assert modification.safety_score > 0.0
+        assert "learning_rate = 0.001" in modification.modified_code
 
     async def test_code_validation(self):
         """Test code validation system"""
@@ -234,9 +230,9 @@ def safe_function():
             modification
         )
 
-        self.assertTrue(validation_results["syntax_valid"])
-        self.assertTrue(validation_results["security_safe"])
-        self.assertGreater(validation_results["safety_score"], 0.5)
+        assert validation_results["syntax_valid"]
+        assert validation_results["security_safe"]
+        assert validation_results["safety_score"] > 0.5
 
         # Test unsafe code
         unsafe_code = """
@@ -249,8 +245,8 @@ os.system("rm -rf /")
             modification
         )
 
-        self.assertFalse(validation_results["security_safe"])
-        self.assertLess(validation_results["safety_score"], 0.5)
+        assert not validation_results["security_safe"]
+        assert validation_results["safety_score"] < 0.5
 
     async def test_sandbox_testing(self):
         """Test sandbox environment for code testing"""
@@ -274,7 +270,7 @@ os.system("rm -rf /")
             )
 
             # Should succeed for simple comment addition
-            self.assertIn("success", test_results)
+            assert "success" in test_results
 
     async def test_code_transformations(self):
         """Test various code transformation utilities"""
@@ -290,20 +286,20 @@ class ExampleClass:
 
         # Test documentation improvement
         improved_code = CodeTransformations.improve_documentation(test_code)
-        self.assertIn('"""', improved_code)
+        assert '"""' in improved_code
 
         # Test error handling addition
         error_handled_code = CodeTransformations.add_error_handling(
             test_code, ["example_function"]
         )
         # Should contain try-except block (implementation may vary)
-        self.assertIn("try", error_handled_code.lower())
+        assert "try" in error_handled_code.lower()
 
         # Test hyperparameter optimization
         optimized_code = CodeTransformations.optimize_hyperparameters(
             "learning_rate = 0.01", {"learning_rate": 0.001}
         )
-        self.assertIn("0.001", optimized_code)
+        assert "0.001" in optimized_code
 
 
 class TestMetaLearningEngine(unittest.TestCase):
@@ -338,8 +334,8 @@ class TestMetaLearningEngine(unittest.TestCase):
             agent_id="test_agent", task_difficulty=0.5
         )
 
-        self.assertGreater(optimal_lr, 0.0)
-        self.assertLess(optimal_lr, 0.1)
+        assert optimal_lr > 0.0
+        assert optimal_lr < 0.1
 
     async def test_strategy_optimization(self):
         """Test learning strategy optimization"""
@@ -357,9 +353,9 @@ class TestMetaLearningEngine(unittest.TestCase):
             current_performance=0.6,
         )
 
-        self.assertIn("learning_rate", learning_config)
-        self.assertIn("strategy", learning_config)
-        self.assertGreater(learning_config["learning_rate"], 0.0)
+        assert "learning_rate" in learning_config
+        assert "strategy" in learning_config
+        assert learning_config["learning_rate"] > 0.0
 
     async def test_few_shot_learning(self):
         """Test few-shot learning capabilities"""
@@ -375,8 +371,8 @@ class TestMetaLearningEngine(unittest.TestCase):
             support_labels=support_labels,
         )
 
-        self.assertIn(0, prototypes)
-        self.assertIn(1, prototypes)
+        assert 0 in prototypes
+        assert 1 in prototypes
 
         # Test prediction
         query_example = [2, 3, 4]
@@ -384,8 +380,8 @@ class TestMetaLearningEngine(unittest.TestCase):
             task_id="test_task", query_example=query_example
         )
 
-        self.assertIn(prediction, [0, 1])
-        self.assertGreater(confidence, 0.0)
+        assert prediction in [0, 1]
+        assert confidence > 0.0
 
     async def test_learning_outcome_recording(self):
         """Test recording and analyzing learning outcomes"""
@@ -407,14 +403,14 @@ class TestMetaLearningEngine(unittest.TestCase):
         )
 
         # Check experience was recorded
-        self.assertGreater(len(self.meta_engine.experiences), 0)
+        assert len(self.meta_engine.experiences) > 0
 
         # Get agent profile
         profile = self.meta_engine.get_agent_learning_profile("test_agent")
 
-        self.assertEqual(profile["agent_id"], "test_agent")
-        self.assertGreater(profile["total_experiences"], 0)
-        self.assertGreater(profile["avg_improvement"], 0.0)
+        assert profile["agent_id"] == "test_agent"
+        assert profile["total_experiences"] > 0
+        assert profile["avg_improvement"] > 0.0
 
 
 class TestEvolutionOrchestrator(unittest.TestCase):
@@ -444,26 +440,26 @@ class TestEvolutionOrchestrator(unittest.TestCase):
         """Test orchestrator initialization"""
 
         # Should initialize without errors
-        self.assertIsNotNone(self.orchestrator.evolution_engine)
-        self.assertIsNotNone(self.orchestrator.code_modifier)
-        self.assertIsNotNone(self.orchestrator.meta_learning_engine)
-        self.assertFalse(self.orchestrator.state.is_running)
+        assert self.orchestrator.evolution_engine is not None
+        assert self.orchestrator.code_modifier is not None
+        assert self.orchestrator.meta_learning_engine is not None
+        assert not self.orchestrator.state.is_running
 
     async def test_orchestrator_lifecycle(self):
         """Test orchestrator start/stop lifecycle"""
 
         # Start orchestrator
         await self.orchestrator.start()
-        self.assertTrue(self.orchestrator.state.is_running)
+        assert self.orchestrator.state.is_running
 
         # Get status
         status = await self.orchestrator.get_orchestration_status()
-        self.assertIn("orchestrator", status)
-        self.assertIn("evolution", status)
+        assert "orchestrator" in status
+        assert "evolution" in status
 
         # Stop orchestrator
         await self.orchestrator.stop()
-        self.assertFalse(self.orchestrator.state.is_running)
+        assert not self.orchestrator.state.is_running
 
     async def test_health_monitoring(self):
         """Test health monitoring system"""
@@ -474,9 +470,9 @@ class TestEvolutionOrchestrator(unittest.TestCase):
             # Run health check
             health_status = await self.orchestrator.health_monitor.check_system_health()
 
-            self.assertIn("overall_healthy", health_status)
-            self.assertIn("metrics", health_status)
-            self.assertIn("alerts", health_status)
+            assert "overall_healthy" in health_status
+            assert "metrics" in health_status
+            assert "alerts" in health_status
 
         finally:
             await self.orchestrator.stop()
@@ -492,9 +488,9 @@ class TestEvolutionOrchestrator(unittest.TestCase):
                 generations=1, force=True
             )
 
-            self.assertTrue(results["success"])
-            self.assertIn("results", results)
-            self.assertGreater(len(results["results"]["best_fitness_history"]), 0)
+            assert results["success"]
+            assert "results" in results
+            assert len(results["results"]["best_fitness_history"]) > 0
 
         finally:
             await self.orchestrator.stop()
@@ -521,8 +517,8 @@ class TestIntegrationScenarios(unittest.TestCase):
             safety_mode=True,
         )
 
-        self.assertIsNotNone(orchestrator)
-        self.assertEqual(len(orchestrator.evolution_engine.agent_population), 6)
+        assert orchestrator is not None
+        assert len(orchestrator.evolution_engine.agent_population) == 6
 
     async def test_evolution_cycle_integration(self):
         """Test complete evolution cycle with all components"""
@@ -535,14 +531,14 @@ class TestIntegrationScenarios(unittest.TestCase):
             # Run evolution cycle
             results = await quick_evolution_cycle(orchestrator, generations=1)
 
-            self.assertTrue(results["success"])
+            assert results["success"]
 
             # Check that meta-learning was engaged
-            self.assertGreater(len(orchestrator.meta_learning_engine.experiences), 0)
+            assert len(orchestrator.meta_learning_engine.experiences) > 0
 
             # Check that KPIs were recorded
             kpi_history = orchestrator.evolution_engine.kpi_tracker.kpi_history
-            self.assertGreater(len(kpi_history), 0)
+            assert len(kpi_history) > 0
 
     @patch("agent_forge.evolution.evolution_dashboard.Flask")
     async def test_dashboard_integration(self, mock_flask):
@@ -557,9 +553,9 @@ class TestIntegrationScenarios(unittest.TestCase):
             await orchestrator.evolution_engine.get_evolution_dashboard_data()
         )
 
-        self.assertIn("population_stats", dashboard_data)
-        self.assertIn("fitness_scores", dashboard_data)
-        self.assertIn("performance_trends", dashboard_data)
+        assert "population_stats" in dashboard_data
+        assert "fitness_scores" in dashboard_data
+        assert "performance_trends" in dashboard_data
 
 
 class TestPerformanceAndScalability(unittest.TestCase):
@@ -596,10 +592,8 @@ class TestPerformanceAndScalability(unittest.TestCase):
         execution_time = end_time - start_time
 
         # Should complete within reasonable time (adjust threshold as needed)
-        self.assertLess(
-            execution_time, 60.0, "Evolution should complete within 60 seconds"
-        )
-        self.assertTrue(results["generations_run"] == 1)
+        assert execution_time < 60.0, "Evolution should complete within 60 seconds"
+        assert results["generations_run"] == 1
 
     async def test_concurrent_modifications(self):
         """Test handling multiple concurrent modifications"""
@@ -630,9 +624,9 @@ class TestPerformanceAndScalability(unittest.TestCase):
         # Run concurrently
         modifications = await asyncio.gather(*tasks)
 
-        self.assertEqual(len(modifications), 3)
+        assert len(modifications) == 3
         for mod in modifications:
-            self.assertIsNotNone(mod.modification_id)
+            assert mod.modification_id is not None
 
 
 # Utility functions for running tests
@@ -692,7 +686,7 @@ async def run_comprehensive_test_suite():
             except Exception as e:
                 print(f"FAILED: {e!s}")
                 failed_tests += 1
-                logger.error(f"Test {test_method} failed: {e}")
+                logger.exception(f"Test {test_method} failed: {e}")
 
             finally:
                 # Cleanup
@@ -789,19 +783,19 @@ class TestEvolutionDashboard(unittest.TestCase):
 
         with self.dashboard.app.test_client() as client:
             response = client.post("/api/trigger_evolution", json={"generations": 1})
-            self.assertEqual(response.status_code, 200)
+            assert response.status_code == 200
             data = response.get_json()
-            self.assertTrue(data["success"])
-            self.assertEqual(data["results"]["generations_run"], 1)
+            assert data["success"]
+            assert data["results"]["generations_run"] == 1
 
     def test_trigger_evolution_invalid_results(self):
         self.engine.run_evolution_cycle = AsyncMock(return_value={"unexpected": "data"})
 
         with self.dashboard.app.test_client() as client:
             response = client.post("/api/trigger_evolution", json={"generations": 1})
-            self.assertEqual(response.status_code, 400)
+            assert response.status_code == 400
             data = response.get_json()
-            self.assertIn("error", data)
+            assert "error" in data
 
 
 if __name__ == "__main__":
@@ -818,7 +812,7 @@ if __name__ == "__main__":
         asyncio.run(test_evolution_demo())
     elif args.comprehensive:
         success = asyncio.run(run_comprehensive_test_suite())
-        exit(0 if success else 1)
+        sys.exit(0 if success else 1)
     else:
         # Run basic functionality test
         print("Running basic evolution system test...")
@@ -840,4 +834,4 @@ if __name__ == "__main__":
                 return False
 
         success = asyncio.run(basic_test())
-        exit(0 if success else 1)
+        sys.exit(0 if success else 1)

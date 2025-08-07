@@ -6,6 +6,7 @@ Simple test to verify OpenRouter connectivity.
 import asyncio
 import logging
 import os
+import sys
 
 from agent_forge.orchestration.model_config import TaskType
 from agent_forge.orchestration.openrouter_client import OpenRouterClient
@@ -52,10 +53,10 @@ async def test_simple_connection():
         return True
 
     except Exception as e:
-        logger.error(f"❌ OpenRouter connection failed: {e}")
+        logger.exception(f"❌ OpenRouter connection failed: {e}")
         return False
 
 
 if __name__ == "__main__":
     success = asyncio.run(test_simple_connection())
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

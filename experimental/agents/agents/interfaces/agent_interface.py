@@ -1,4 +1,4 @@
-"""Standardized Agent Interface
+"""Standardized Agent Interface.
 
 This module defines the core interface that all AIVillage agents must implement
 to ensure consistent behavior, interoperability, and standardized capabilities.
@@ -220,7 +220,7 @@ class AgentInterface(ABC):
     standardized methods for task processing, communication, and monitoring.
     """
 
-    def __init__(self, metadata: AgentMetadata):
+    def __init__(self, metadata: AgentMetadata) -> None:
         self.metadata = metadata
         self.status = AgentStatus.INITIALIZING
         self.performance_metrics = AgentPerformanceMetrics()
@@ -501,11 +501,7 @@ def validate_agent_interface(agent: Any) -> bool:
             return False
 
     required_attributes = ["metadata", "status", "performance_metrics"]
-    for attr in required_attributes:
-        if not hasattr(agent, attr):
-            return False
-
-    return True
+    return all(hasattr(agent, attr) for attr in required_attributes)
 
 
 def create_standard_task(

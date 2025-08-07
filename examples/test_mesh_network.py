@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""LibP2P Mesh Network Test Script
+"""LibP2P Mesh Network Test Script.
 
 Tests the LibP2P mesh network implementation with multiple nodes.
 Verifies peer discovery, message routing, and network resilience.
@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 class MeshNetworkTester:
     """Test harness for LibP2P mesh network."""
 
-    def __init__(self, num_nodes: int = 5):
+    def __init__(self, num_nodes: int = 5) -> None:
         self.num_nodes = num_nodes
         self.nodes: list[LibP2PMeshNetwork] = []
         self.test_results: dict[str, bool] = {}
@@ -76,7 +76,7 @@ class MeshNetworkTester:
                 logger.info(f"Started node {i}: {node.node_id}")
                 await asyncio.sleep(1)  # Stagger startup
             except Exception as e:
-                logger.error(f"Failed to start node {i}: {e}")
+                logger.exception(f"Failed to start node {i}: {e}")
 
     async def register_test_handlers(
         self, node: LibP2PMeshNetwork, node_index: int
@@ -211,7 +211,7 @@ class MeshNetworkTester:
             return True
 
         except Exception as e:
-            logger.error(f"❌ Basic connectivity test failed: {e}")
+            logger.exception(f"❌ Basic connectivity test failed: {e}")
             return False
 
     async def test_message_routing(self) -> bool:
@@ -261,7 +261,7 @@ class MeshNetworkTester:
             return False
 
         except Exception as e:
-            logger.error(f"❌ Message routing test failed: {e}")
+            logger.exception(f"❌ Message routing test failed: {e}")
             return False
 
     async def test_broadcast_messaging(self) -> bool:
@@ -298,7 +298,7 @@ class MeshNetworkTester:
             return False
 
         except Exception as e:
-            logger.error(f"❌ Broadcast messaging test failed: {e}")
+            logger.exception(f"❌ Broadcast messaging test failed: {e}")
             return False
 
     async def test_dht_functionality(self) -> bool:
@@ -355,7 +355,7 @@ class MeshNetworkTester:
             return True
 
         except Exception as e:
-            logger.error(f"❌ DHT functionality test failed: {e}")
+            logger.exception(f"❌ DHT functionality test failed: {e}")
             return False
 
     async def test_network_resilience(self) -> bool:
@@ -383,7 +383,7 @@ class MeshNetworkTester:
             return await self.test_message_routing()
 
         except Exception as e:
-            logger.error(f"❌ Network resilience test failed: {e}")
+            logger.exception(f"❌ Network resilience test failed: {e}")
             return False
 
     async def test_high_load_messaging(self) -> bool:
@@ -436,7 +436,7 @@ class MeshNetworkTester:
             return False
 
         except Exception as e:
-            logger.error(f"❌ High-load messaging test failed: {e}")
+            logger.exception(f"❌ High-load messaging test failed: {e}")
             return False
 
     async def run_all_tests(self) -> dict[str, bool]:
@@ -468,7 +468,7 @@ class MeshNetworkTester:
                 self.test_results[test_name] = result
                 await asyncio.sleep(2)  # Brief pause between tests
             except Exception as e:
-                logger.error(f"Test {test_name} failed with exception: {e}")
+                logger.exception(f"Test {test_name} failed with exception: {e}")
                 self.test_results[test_name] = False
 
         return self.test_results
@@ -522,7 +522,7 @@ class MeshNetworkTester:
         print("=" * 60)
 
 
-async def test_android_bridge():
+async def test_android_bridge() -> None:
     """Test the Android bridge functionality."""
     logger.info("Testing Android bridge...")
 
@@ -546,10 +546,10 @@ async def test_android_bridge():
         bridge.stop_bridge()
 
     except Exception as e:
-        logger.error(f"❌ Android bridge test failed: {e}")
+        logger.exception(f"❌ Android bridge test failed: {e}")
 
 
-def main():
+def main() -> None:
     """Main test function."""
     parser = argparse.ArgumentParser(description="Test LibP2P Mesh Network")
     parser.add_argument("--nodes", type=int, default=5, help="Number of test nodes")
@@ -567,7 +567,7 @@ def main():
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    async def run_tests():
+    async def run_tests() -> None:
         if args.android_bridge:
             await test_android_bridge()
             return
@@ -601,7 +601,7 @@ def main():
         except KeyboardInterrupt:
             logger.info("Test interrupted by user")
         except Exception as e:
-            logger.error(f"Test failed: {e}")
+            logger.exception(f"Test failed: {e}")
         finally:
             await tester.cleanup()
 
@@ -611,7 +611,7 @@ def main():
     except KeyboardInterrupt:
         logger.info("Test interrupted")
     except Exception as e:
-        logger.error(f"Test execution failed: {e}")
+        logger.exception(f"Test execution failed: {e}")
         sys.exit(1)
 
 

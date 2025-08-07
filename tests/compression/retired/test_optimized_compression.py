@@ -108,7 +108,7 @@ def test_hypercompression_effectiveness():
     pipeline = AdvancedCompressionPipeline()
 
     print("Compressing model and monitoring for optimization messages...")
-    compressed = pipeline.compress_model(model)
+    pipeline.compress_model(model)
 
     # Check captured logs
     log_contents = log_capture.getvalue()
@@ -227,7 +227,7 @@ def main():
 
         # Test 4: Efficiency analysis
         old_ratio = 20.8  # Previous result
-        efficiency = efficiency_analysis(old_ratio, ratio)
+        efficiency_analysis(old_ratio, ratio)
 
         # Final assessment
         print(f"\n{'='*60}")

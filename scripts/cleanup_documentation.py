@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Comprehensive Documentation Cleanup Script for AIVillage
+"""Comprehensive Documentation Cleanup Script for AIVillage.
 ========================================================
 
 This script consolidates and organizes scattered markdown files into a clean,
@@ -22,7 +22,7 @@ import shutil
 
 
 class DocumentationCleanup:
-    def __init__(self, base_path=None):
+    def __init__(self, base_path=None) -> None:
         self.base_path = Path(base_path) if base_path else Path.cwd()
         self.moved_files = []
         self.duplicates_removed = []
@@ -110,11 +110,11 @@ class DocumentationCleanup:
             r".*_GUIDE\.md$",
         ]
 
-    def create_directory_structure(self):
-        """Create the target directory structure"""
+    def create_directory_structure(self) -> None:
+        """Create the target directory structure."""
         print("Creating directory structure...")
 
-        for dir_path in self.target_structure.keys():
+        for dir_path in self.target_structure:
             full_path = self.base_path / dir_path
             full_path.mkdir(parents=True, exist_ok=True)
             self.structure_created.append(str(full_path))
@@ -126,15 +126,15 @@ class DocumentationCleanup:
         self.structure_created.append(str(deprecated_path))
         print("  Created: deprecated/old_reports/")
 
-    def is_report_file(self, filename):
-        """Check if a file matches report patterns"""
+    def is_report_file(self, filename) -> bool:
+        """Check if a file matches report patterns."""
         for pattern in self.report_patterns:
             if re.match(pattern, filename, re.IGNORECASE):
                 return True
         return False
 
     def find_markdown_files(self):
-        """Find all markdown files in the project (excluding virtual environments)"""
+        """Find all markdown files in the project (excluding virtual environments)."""
         md_files = []
 
         for root, dirs, files in os.walk(self.base_path):
@@ -153,8 +153,8 @@ class DocumentationCleanup:
 
         return md_files
 
-    def categorize_file(self, file_path, relative_path):
-        """Determine the appropriate category for a file"""
+    def categorize_file(self, file_path, relative_path) -> str | None:
+        """Determine the appropriate category for a file."""
         filename = file_path.name
         path_str = str(relative_path).lower()
 
@@ -217,7 +217,7 @@ class DocumentationCleanup:
             return "reference"
 
     def find_duplicates(self, md_files):
-        """Find duplicate files based on filename"""
+        """Find duplicate files based on filename."""
         filename_groups = defaultdict(list)
 
         for file_path, relative_path in md_files:
@@ -237,7 +237,7 @@ class DocumentationCleanup:
         return duplicates
 
     def move_file(self, source_path, target_dir, new_name=None):
-        """Move a file to target directory"""
+        """Move a file to target directory."""
         target_path = self.base_path / target_dir
         target_path.mkdir(parents=True, exist_ok=True)
 
@@ -261,8 +261,8 @@ class DocumentationCleanup:
             print(f"  Error moving {source_path}: {e}")
             return None
 
-    def cleanup_hidden_directories(self):
-        """Remove hidden cleanup directories"""
+    def cleanup_hidden_directories(self) -> None:
+        """Remove hidden cleanup directories."""
         hidden_dirs = [
             ".claude_analysis",
             ".claude_cleanup",
@@ -280,8 +280,8 @@ class DocumentationCleanup:
                 except Exception as e:
                     print(f"  Error removing {hidden_dir}: {e}")
 
-    def organize_files(self):
-        """Main file organization logic"""
+    def organize_files(self) -> None:
+        """Main file organization logic."""
         print("\nFinding markdown files...")
         md_files = self.find_markdown_files()
         print(f"Found {len(md_files)} markdown files")
@@ -292,7 +292,7 @@ class DocumentationCleanup:
         # Remove duplicates (keep newest)
         for base_name, files in duplicates.items():
             print(f"  Duplicate group '{base_name}': {len(files)} files")
-            keep_file = files[0]  # Newest
+            files[0]  # Newest
             for file_path, relative_path in files[1:]:
                 try:
                     file_path.unlink()
@@ -336,8 +336,8 @@ class DocumentationCleanup:
                     f"    Successfully moved to: {moved_to.relative_to(self.base_path)}"
                 )
 
-    def create_documentation_index(self):
-        """Create a master documentation index"""
+    def create_documentation_index(self) -> None:
+        """Create a master documentation index."""
         print("\nCreating documentation index...")
 
         index_content = """# AIVillage Documentation
@@ -415,8 +415,8 @@ All documentation in this project follows our [Style Guide](../STYLE_GUIDE.md) f
         except Exception as e:
             print(f"  Error creating index: {e}")
 
-    def generate_cleanup_report(self):
-        """Generate a comprehensive cleanup report"""
+    def generate_cleanup_report(self) -> None:
+        """Generate a comprehensive cleanup report."""
         report_content = f"""# Documentation Cleanup Report
 
 ## Summary
@@ -503,8 +503,8 @@ deprecated/
         except Exception as e:
             print(f"Error generating report: {e}")
 
-    def run_cleanup(self):
-        """Execute the complete cleanup process"""
+    def run_cleanup(self) -> None:
+        """Execute the complete cleanup process."""
         print("=" * 60)
         print("AIVillage Documentation Cleanup")
         print("=" * 60)

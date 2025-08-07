@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 class StubAuditor:
-    def __init__(self):
+    def __init__(self) -> None:
         self.stub_patterns = {
             "not_implemented": "Raises NotImplementedError",
             "misleading_log": "Logs action but does nothing",

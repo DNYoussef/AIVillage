@@ -412,7 +412,7 @@ Final explanatory text."""
 
         assert agent._is_safety_critical(op1)
         assert agent._is_safety_critical(op2)
-        assert agent._is_safety_critical(op3) == False
+        assert not agent._is_safety_critical(op3)
 
     def test_estimate_impact(self, agent):
         """Test impact estimation"""
@@ -462,7 +462,7 @@ Final explanatory text."""
 
         bad_validation = await agent.validate_proposal(bad_proposal)
 
-        assert bad_validation["is_valid"] == False
+        assert not bad_validation["is_valid"]
         assert len(bad_validation["errors"]) > 0
 
     def test_performance_stats(self, agent):

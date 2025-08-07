@@ -34,7 +34,8 @@ def load_pyproject_dependencies() -> dict[str, list[str]]:
     pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
 
     if not pyproject_path.exists():
-        raise FileNotFoundError(f"pyproject.toml not found at {pyproject_path}")
+        msg = f"pyproject.toml not found at {pyproject_path}"
+        raise FileNotFoundError(msg)
 
     with open(pyproject_path, encoding="utf-8") as f:
         data = toml.load(f)
@@ -227,9 +228,6 @@ def validate_environment() -> bool:
     print(f"Python executable: {sys.executable}")
 
     # Check Python version
-    if sys.version_info < (3, 10):
-        print("⚠️  Warning: Python 3.10+ recommended")
-        return False
 
     return True
 

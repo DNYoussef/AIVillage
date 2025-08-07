@@ -32,7 +32,7 @@ class FederatedLearningClient:
         device: str = "cpu",
         privacy_engine: PrivacyEngine | None = None,
         model_synchronizer: ModelSynchronizer | None = None,
-    ):
+    ) -> None:
         self.client_id = client_id
         self.local_model = local_model
         self.local_data_loader = local_data_loader
@@ -80,7 +80,8 @@ class FederatedLearningClient:
 
         # Check if client should participate based on resources
         if not self._should_participate():
-            raise ValueError("Client cannot participate due to resource constraints")
+            msg = "Client cannot participate due to resource constraints"
+            raise ValueError(msg)
 
         # Update local model with global model
         await self._update_local_model(round_config)
@@ -88,7 +89,7 @@ class FederatedLearningClient:
         # Extract training configuration
         config = round_config["round_config"]
         local_epochs = config.get("local_epochs", 5)
-        batch_size = config.get("batch_size", 32)
+        config.get("batch_size", 32)
         self.learning_rate = config.get("learning_rate", 0.01)
 
         # Setup optimizer
@@ -251,7 +252,7 @@ class FederatedLearningClient:
 
         return gradients
 
-    async def _update_local_model(self, round_config: dict[str, Any]):
+    async def _update_local_model(self, round_config: dict[str, Any]) -> None:
         """Update local model with global model state."""
         communication_start = time.time()
 
@@ -271,10 +272,10 @@ class FederatedLearningClient:
             self.logger.debug(f"Model updated in {communication_time:.3f}s")
 
         except Exception as e:
-            self.logger.error(f"Failed to update local model: {e}")
+            self.logger.exception(f"Failed to update local model: {e}")
             raise
 
-    def _validate_round_config(self, round_config: dict[str, Any]):
+    def _validate_round_config(self, round_config: dict[str, Any]) -> None:
         """Validate round configuration."""
         required_fields = [
             "round_number",
@@ -285,7 +286,8 @@ class FederatedLearningClient:
 
         for field in required_fields:
             if field not in round_config:
-                raise ValueError(f"Missing required field: {field}")
+                msg = f"Missing required field: {field}"
+                raise ValueError(msg)
 
     def _should_participate(self) -> bool:
         """Determine if client should participate based on current resources."""
@@ -338,7 +340,7 @@ class FederatedLearningClient:
             "rounds_participated": len(self.training_history),
         }
 
-    def _update_client_state(self, training_time: float):
+    def _update_client_state(self, training_time: float) -> None:
         """Update client state based on training performance."""
         # Simulate battery drain
         energy_factor = training_time / 10.0  # Normalize by expected training time
@@ -419,7 +421,7 @@ class FederatedLearningClient:
         initial_battery: float = 1.0,
         network_stability: float = 0.8,
         compute_variation: float = 0.1,
-    ):
+    ) -> None:
         """Simulate mobile device constraints for testing."""
         self.battery_level = initial_battery
         self.network_quality = network_stability
@@ -429,7 +431,7 @@ class FederatedLearningClient:
         self.network_quality += np.random.normal(0, 0.1)
         self.network_quality = max(0.1, min(1.0, self.network_quality))
 
-    async def handle_connection_interruption(self, duration: float = 5.0):
+    async def handle_connection_interruption(self, duration: float = 5.0) -> None:
         """Simulate handling of connection interruption."""
         self.logger.warning(f"Connection interrupted for {duration}s")
 
@@ -444,7 +446,7 @@ class FederatedLearningClient:
         self.network_quality = min(original_quality, 0.8)
         self.logger.info("Connection restored")
 
-    def save_state(self, filepath: str):
+    def save_state(self, filepath: str) -> None:
         """Save client state for persistence."""
         state = {
             "client_id": self.client_id,
@@ -459,7 +461,7 @@ class FederatedLearningClient:
         with open(filepath, "w") as f:
             json.dump(state, f, indent=2)
 
-    def load_state(self, filepath: str):
+    def load_state(self, filepath: str) -> None:
         """Load client state from persistence."""
         try:
             with open(filepath) as f:
@@ -474,13 +476,13 @@ class FederatedLearningClient:
             self.logger.info(f"Loaded state from {filepath}")
 
         except Exception as e:
-            self.logger.error(f"Failed to load state: {e}")
+            self.logger.exception(f"Failed to load state: {e}")
 
 
 class MobileOptimizedClient(FederatedLearningClient):
     """Specialized client optimized for mobile devices."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         # Mobile-specific configurations
@@ -550,7 +552,7 @@ class MobileOptimizedClient(FederatedLearningClient):
 class EdgeOptimizedClient(FederatedLearningClient):
     """Client optimized for edge computing environments."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         # Edge-specific configurations
@@ -568,7 +570,8 @@ class EdgeOptimizedClient(FederatedLearningClient):
         network_conditions = await self._measure_network_conditions()
 
         if not self._network_suitable(network_conditions):
-            raise ValueError("Network conditions unsuitable for participation")
+            msg = "Network conditions unsuitable for participation"
+            raise ValueError(msg)
 
         # Compress model updates more aggressively for edge
         original_compression = self.model_synchronizer.compression_ratio

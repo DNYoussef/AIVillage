@@ -9,7 +9,7 @@ import subprocess
 
 
 class SimpleReorganizer:
-    def __init__(self):
+    def __init__(self) -> None:
         # Based on actual codebase structure
         self.production_moves = [
             # Compression components
@@ -68,7 +68,7 @@ class SimpleReorganizer:
 
         self.moves_performed = []
 
-    def create_directories(self):
+    def create_directories(self) -> None:
         """Create the new directory structure."""
         print("Creating new directory structure...")
 
@@ -145,13 +145,13 @@ class SimpleReorganizer:
             print(f"  Error moving {src} -> {dst}: {e}")
             return False
 
-    def execute_moves(self, moves: list[tuple[str, str]], category: str):
+    def execute_moves(self, moves: list[tuple[str, str]], category: str) -> None:
         """Execute a set of moves."""
         print(f"\nMoving {category} components...")
         for src, dst in moves:
             self.move_component(src, dst)
 
-    def create_experimental_warnings(self):
+    def create_experimental_warnings(self) -> None:
         """Add warning imports to experimental modules."""
         print("\nAdding experimental warnings...")
 
@@ -188,7 +188,7 @@ def warn_experimental(feature_name):
 
         print("Added experimental warnings")
 
-    def generate_report(self):
+    def generate_report(self) -> None:
         """Generate reorganization report."""
         report = f"""# Sprint 2: Code Reorganization Complete
 
@@ -294,7 +294,7 @@ from experimental.mesh import MeshNode
         Path("REORGANIZATION_REPORT.md").write_text(report)
         print("\nGenerated REORGANIZATION_REPORT.md")
 
-    def execute(self):
+    def execute(self) -> None:
         """Execute the full reorganization."""
         print("Starting simplified Sprint 2 reorganization...")
         print("=" * 50)

@@ -6,6 +6,7 @@ We'll create a real model, compress it, and prove it works.
 """
 
 from pathlib import Path
+import sys
 import tempfile
 
 print("[FIRE] PROVING REAL PYTORCH COMPRESSION WORKS")
@@ -25,7 +26,7 @@ try:
     print("[OK] All imports successful - PyTorch available")
 except ImportError as e:
     print(f"[FAIL] Import failed: {e}")
-    exit(1)
+    sys.exit(1)
 
 
 def create_real_resnet_like_model():
@@ -210,14 +211,13 @@ def prove_quantization_actually_happens():
     print(f"   Quantized model type: {type(quantized_model)}")
 
     # Verify it's actually quantized by checking for quantized layers
-    has_quantized_layers = False
     for name, module in quantized_model.named_modules():
         if hasattr(module, "weight") and hasattr(module.weight, "dtype"):
             print(
                 f"   Layer {name}: {type(module)}, weight dtype: {module.weight.dtype}"
             )
             if "int" in str(module.weight.dtype).lower():
-                has_quantized_layers = True
+                pass
 
     # Test with actual input
     test_input = torch.randn(1, 10)
@@ -272,7 +272,7 @@ def main():
         print("\n[IDEA] FINAL PROOF - Create and compress a model right now:")
         model = create_test_model(layers=3, hidden_size=64, size_mb=2.0)
         quantizer = SimpleQuantizer(target_compression_ratio=3.0)
-        compressed = quantizer.quantize_model_from_object(model)
+        quantizer.quantize_model_from_object(model)
         stats = quantizer.get_compression_stats()
 
         print(

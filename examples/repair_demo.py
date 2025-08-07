@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HypeRAG Innovator Repair Agent Demo
+"""HypeRAG Innovator Repair Agent Demo.
 
 Demonstrates the repair proposal system for GDC violations.
 Shows template encoding, LLM integration, and repair operation generation.
@@ -20,8 +20,8 @@ from mcp_servers.hyperag.repair import InnovatorAgent, RepairOperation, Template
 from mcp_servers.hyperag.repair.llm_driver import LLMDriver, ModelBackend, ModelConfig
 
 
-async def demo_template_encoding():
-    """Demonstrate violation template encoding"""
+async def demo_template_encoding() -> None:
+    """Demonstrate violation template encoding."""
     print("🔧 Template Encoding Demo")
     print("=" * 50)
 
@@ -102,8 +102,8 @@ async def demo_template_encoding():
         print(f"  - {conflict['description']}")
 
 
-async def demo_llm_driver():
-    """Demonstrate enhanced LLM driver functionality"""
+async def demo_llm_driver() -> None:
+    """Demonstrate enhanced LLM driver functionality."""
     print("\n\n🤖 Enhanced LLM Driver Demo")
     print("=" * 50)
 
@@ -190,8 +190,8 @@ Respond with a single JSON repair operation:"""
         print("   To install: ollama pull llama3.2:3b")
 
 
-async def demo_repair_proposals():
-    """Demonstrate repair proposal generation"""
+async def demo_repair_proposals() -> None:
+    """Demonstrate repair proposal generation."""
     print("\n\n🔧 Repair Proposal Demo")
     print("=" * 50)
 
@@ -309,8 +309,8 @@ async def demo_repair_proposals():
         traceback.print_exc()
 
 
-async def demo_operation_types():
-    """Demonstrate different repair operation types"""
+async def demo_operation_types() -> None:
+    """Demonstrate different repair operation types."""
     print("\n\n⚙️  Operation Types Demo")
     print("=" * 50)
 
@@ -372,8 +372,8 @@ async def demo_operation_types():
         print(f"   JSON: {op.to_jsonl()}")
 
 
-async def demo_domain_specialization():
-    """Demonstrate domain-specific repair logic"""
+async def demo_domain_specialization() -> None:
+    """Demonstrate domain-specific repair logic."""
     print("\n\n🏥 Domain Specialization Demo")
     print("=" * 50)
 
@@ -440,8 +440,8 @@ async def demo_domain_specialization():
     )
 
 
-async def main():
-    """Main demo function"""
+async def main() -> None:
+    """Main demo function."""
     print("🚀 HypeRAG Innovator Repair Agent Demo")
     print("=" * 60)
 

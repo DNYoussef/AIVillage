@@ -15,7 +15,8 @@ def test_mock_metric_records_calls(monkeypatch):
 
     def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
         if name == "prometheus_client":
-            raise ImportError("prometheus_client not installed")
+            msg = "prometheus_client not installed"
+            raise ImportError(msg)
         return original_import(name, globals, locals, fromlist, level)
 
     monkeypatch.setattr(builtins, "__import__", fake_import)

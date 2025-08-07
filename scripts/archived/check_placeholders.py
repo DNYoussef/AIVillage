@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Placeholder and Stub Detection Script
+"""Placeholder and Stub Detection Script.
 
 This script scans the codebase for placeholder functions, stub implementations,
 and other non-functional code patterns that need to be implemented.
@@ -30,7 +30,7 @@ class PlaceholderIssue:
 class PlaceholderDetector:
     """Detects placeholder functions and stub implementations."""
 
-    def __init__(self, src_dir: str = "src"):
+    def __init__(self, src_dir: str = "src") -> None:
         self.src_dir = Path(src_dir)
         self.issues: list[PlaceholderIssue] = []
 
@@ -84,7 +84,7 @@ class PlaceholderDetector:
         file_str = str(file_path)
         return any(pattern in file_str for pattern in skip_patterns)
 
-    def _scan_file(self, file_path: Path):
+    def _scan_file(self, file_path: Path) -> None:
         """Scan a single Python file for placeholder issues."""
         try:
             with open(file_path, encoding="utf-8") as f:
@@ -105,18 +105,17 @@ class PlaceholderDetector:
         except Exception as e:
             print(f"Error scanning {file_path}: {e}")
 
-    def _analyze_ast(self, tree: ast.AST, file_path: Path, lines: list[str]):
+    def _analyze_ast(self, tree: ast.AST, file_path: Path, lines: list[str]) -> None:
         """Analyze AST for function-level issues."""
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                 self._analyze_function(node, file_path, lines)
 
     def _analyze_function(
         self, func_node: ast.FunctionDef, file_path: Path, lines: list[str]
-    ):
+    ) -> None:
         """Analyze a function for placeholder patterns."""
         func_name = func_node.name
-        start_line = func_node.lineno
 
         # Skip abstract methods and dunder methods
         if (func_name.startswith("__") and func_name.endswith("__")) or any(
@@ -174,7 +173,7 @@ class PlaceholderDetector:
                             self._get_code_snippet(lines, stmt.lineno),
                         )
                 elif (
-                    isinstance(return_value, (ast.Dict, ast.List))
+                    isinstance(return_value, ast.Dict | ast.List)
                     and len(
                         return_value.elts
                         if hasattr(return_value, "elts")
@@ -210,7 +209,7 @@ class PlaceholderDetector:
                         self._get_code_snippet(lines, stmt.lineno),
                     )
 
-    def _analyze_patterns(self, file_path: Path, lines: list[str]):
+    def _analyze_patterns(self, file_path: Path, lines: list[str]) -> None:
         """Analyze file for pattern-based placeholder detection."""
         for i, line in enumerate(lines, 1):
             # Check for TODO/FIXME comments that might indicate incomplete work
@@ -282,7 +281,7 @@ class PlaceholderDetector:
         description: str,
         severity: str,
         code_snippet: str,
-    ):
+    ) -> None:
         """Add a placeholder issue to the list."""
         issue = PlaceholderIssue(
             file_path=str(file_path.relative_to(Path.cwd())),
@@ -350,7 +349,7 @@ class PlaceholderDetector:
         return "\n".join(report)
 
 
-def main():
+def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(
         description="Detect placeholder functions and stubs"

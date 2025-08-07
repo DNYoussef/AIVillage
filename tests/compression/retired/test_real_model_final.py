@@ -54,7 +54,7 @@ def load_and_test_real_compression():
         layer_count = 0
         successful_tests = 0
 
-        for key in f.keys():
+        for key in f:
             tensor = f.get_tensor(key)
 
             # Only test on substantial layers (>1000 params)
@@ -202,7 +202,7 @@ def analyze_results_and_extrapolate(results, successful_tests, total_params):
 
     full_model_params = 0
     with safe_open(weights_file, framework="pt", device="cpu") as f:
-        for key in f.keys():
+        for key in f:
             tensor = f.get_tensor(key)
             full_model_params += tensor.numel()
 

@@ -12,7 +12,8 @@ def load_backup_manifest():
     """Load the backup manifest from the safety backup."""
     backup_dirs = list(Path("safety_archive").glob("*"))
     if not backup_dirs:
-        raise ValueError("No safety backup found")
+        msg = "No safety backup found"
+        raise ValueError(msg)
 
     latest_backup = max(backup_dirs, key=lambda x: x.stat().st_mtime)
     manifest_path = latest_backup / "backup_manifest.json"
@@ -34,7 +35,7 @@ def analyze_backup_files():
 
     for file_info in manifest["backup_log"]:
         source_path = Path(file_info["source"])
-        backup_path = Path(file_info["backup"])
+        Path(file_info["backup"])
 
         # Check if original file exists
         original_exists = (
@@ -71,7 +72,7 @@ def analyze_backup_files():
     return analysis
 
 
-def determine_recommendation(original_exists, is_duplicate, age_days):
+def determine_recommendation(original_exists, is_duplicate, age_days) -> str:
     """Determine what action to take for each backup file."""
     if not original_exists:
         return "KEEP - Original file missing"
@@ -104,7 +105,7 @@ def generate_cleanup_plan(analysis):
     return plan
 
 
-def main():
+def main() -> None:
     """Main execution."""
     print("🔍 Analyzing HIGH risk source code backups...")
 

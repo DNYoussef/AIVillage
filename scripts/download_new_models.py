@@ -9,7 +9,7 @@ from huggingface_hub import snapshot_download
 import torch
 
 
-def check_gpu_availability():
+def check_gpu_availability() -> bool:
     """Check GPU availability and memory."""
     if torch.cuda.is_available():
         gpu_name = torch.cuda.get_device_name(0)
@@ -45,6 +45,7 @@ def download_model_with_retry(model_name, cache_dir, max_retries=3):
             else:
                 print(f"✗ Failed to download {model_name} after {max_retries} attempts")
                 return None
+    return None
 
 
 def main():

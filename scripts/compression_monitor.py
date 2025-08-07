@@ -141,7 +141,7 @@ class CompressionMonitor:
                     ]
                 logger.info(f"Loaded {len(self.metrics_history)} historical metrics")
             except Exception as e:
-                logger.error(f"Failed to load metrics history: {e}")
+                logger.exception(f"Failed to load metrics history: {e}")
                 self.metrics_history = []
 
     def save_history(self) -> None:
@@ -158,7 +158,7 @@ class CompressionMonitor:
                 f"Saved {len(self.metrics_history)} metrics to {self.data_file}"
             )
         except Exception as e:
-            logger.error(f"Failed to save metrics history: {e}")
+            logger.exception(f"Failed to save metrics history: {e}")
 
     def run_benchmark(self, method: str = "SeedLM") -> CompressionMetrics:
         """Run a quick benchmark and return metrics.
@@ -179,9 +179,8 @@ class CompressionMonitor:
             # Safely load and execute SeedLM implementation
             seedlm_path = Path("agent_forge/compression/seedlm.py")
             if not seedlm_path.exists():
-                raise FileNotFoundError(
-                    f"SeedLM implementation not found at {seedlm_path}"
-                )
+                msg = f"SeedLM implementation not found at {seedlm_path}"
+                raise FileNotFoundError(msg)
 
             # Use exec with controlled globals for safety
             seedlm_globals = {}
@@ -193,7 +192,8 @@ class CompressionMonitor:
             ProgressiveSeedLMEncoder = seedlm_globals.get("ProgressiveSeedLMEncoder")
 
             if not SeedLMConfig or not ProgressiveSeedLMEncoder:
-                raise ImportError("Required classes not found in SeedLM implementation")
+                msg = "Required classes not found in SeedLM implementation"
+                raise ImportError(msg)
 
             config = SeedLMConfig()
             encoder = ProgressiveSeedLMEncoder(config)
@@ -242,7 +242,7 @@ class CompressionMonitor:
             return metrics
 
         except Exception as e:
-            logger.error(f"Benchmark failed: {e}")
+            logger.exception(f"Benchmark failed: {e}")
             # Update metrics with error information
             metrics.compression_ratio = 0.0
             metrics.relative_error = float("inf")

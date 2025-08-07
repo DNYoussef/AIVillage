@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class ResearchCapabilities:
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
         self.chain_of_thought = ChainOfThought()
         self.named_entity_recognizer = NamedEntityRecognizer()
@@ -84,7 +84,7 @@ class ResearchCapabilities:
             "exploration_results": exploration_results,
         }
 
-    async def evolve_research_capabilities(self):
+    async def evolve_research_capabilities(self) -> None:
         """Adapt the agent's research capabilities based on past performance.
 
         Success and failure counts for each capability are stored in

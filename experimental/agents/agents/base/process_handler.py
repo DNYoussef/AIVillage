@@ -1,4 +1,4 @@
-"""Base Process Handler for Standardized Processing Operations
+"""Base Process Handler for Standardized Processing Operations.
 
 This module provides standardized base classes and interfaces for all process_*
 methods across the AIVillage codebase to eliminate duplication and ensure
@@ -84,7 +84,7 @@ class BaseProcessHandler(ABC, Generic[T]):
         name: str,
         config: ProcessConfig | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         self.name = name
         self.config = config or ProcessConfig()
         self.logger = logger or logging.getLogger(f"ProcessHandler.{name}")
@@ -135,7 +135,7 @@ class BaseProcessHandler(ABC, Generic[T]):
         except asyncio.TimeoutError:
             processing_time = (time.time() - start_time) * 1000
             error_msg = f"Processing timeout after {self.config.timeout_seconds}s"
-            self.logger.error(error_msg)
+            self.logger.exception(error_msg)
             if self.config.enable_metrics:
                 self._update_metrics(processing_time, False)
 
@@ -148,7 +148,7 @@ class BaseProcessHandler(ABC, Generic[T]):
         except Exception as e:
             processing_time = (time.time() - start_time) * 1000
             error_msg = f"Processing failed: {e!s}"
-            self.logger.error(f"{error_msg}\n{traceback.format_exc()}")
+            self.logger.exception(f"{error_msg}\n{traceback.format_exc()}")
             if self.config.enable_metrics:
                 self._update_metrics(processing_time, False)
 
@@ -179,7 +179,7 @@ class BaseProcessHandler(ABC, Generic[T]):
                     )
                     await asyncio.sleep(self.config.retry_delay_seconds)
                 else:
-                    raise e
+                    raise
 
         # Should never reach here, but for type safety
         raise last_exception or Exception("Unknown error in retry logic")
@@ -201,7 +201,8 @@ class BaseProcessHandler(ABC, Generic[T]):
             ValueError: If input is invalid
         """
         if input_data is None:
-            raise ValueError("Input data cannot be None")
+            msg = "Input data cannot be None"
+            raise ValueError(msg)
 
     def _update_metrics(self, processing_time: float, success: bool) -> None:
         """Update internal performance metrics."""
@@ -300,9 +301,11 @@ class MessageProcessor(BaseProcessHandler[dict[str, Any]]):
             required_fields = ["type", "content"]
             missing = [field for field in required_fields if field not in input_data]
             if missing:
-                raise ValueError(f"Message missing required fields: {missing}")
+                msg = f"Message missing required fields: {missing}"
+                raise ValueError(msg)
         else:
-            raise ValueError("Message input must be Message object or dict")
+            msg = "Message input must be Message object or dict"
+            raise ValueError(msg)
 
     async def _process_impl(self, input_data: ProcessInput, **kwargs) -> dict[str, Any]:
         """Process message input and return structured response."""
@@ -316,7 +319,8 @@ class MessageProcessor(BaseProcessHandler[dict[str, Any]]):
                 receiver=input_data.get("receiver", "unknown"),
             )
         else:
-            raise ValueError("Invalid message input type")
+            msg = "Invalid message input type"
+            raise ValueError(msg)
 
         return await self._process_message(message, **kwargs)
 
@@ -335,7 +339,7 @@ class BatchProcessor(BaseProcessHandler[list[T]]):
         parallel_processing: bool = True,
         config: ProcessConfig | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         super().__init__(name, config, logger)
         self.batch_size = batch_size
         self.parallel_processing = parallel_processing
@@ -343,7 +347,8 @@ class BatchProcessor(BaseProcessHandler[list[T]]):
     async def _process_impl(self, input_data: ProcessInput, **kwargs) -> list[T]:
         """Process batch input with parallel or sequential processing."""
         if not isinstance(input_data, list):
-            raise ValueError("Batch processor requires list input")
+            msg = "Batch processor requires list input"
+            raise ValueError(msg)
 
         items = input_data
         results = []
@@ -440,7 +445,8 @@ def standardized_process(
             elif processor_type == "task":
                 processor = create_task_processor(processor_name, func, config)
             else:
-                raise ValueError(f"Unsupported processor type: {processor_type}")
+                msg = f"Unsupported processor type: {processor_type}"
+                raise ValueError(msg)
 
             result = await processor.process(input_data, **kwargs)
 

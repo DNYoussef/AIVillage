@@ -44,10 +44,9 @@ def test_key_improvements():
 
     if not is_effective:
         print("  Optimization: HyperCompression would be SKIPPED")
-        final_hyper_size = original_size
     else:
         print("  Optimization: HyperCompression would be APPLIED")
-        final_hyper_size = len(hyper_compressed)
+        len(hyper_compressed)
 
     print("\n2. OPTIMIZED BINARY PACKING")
     print("-" * 40)

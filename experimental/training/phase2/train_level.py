@@ -1,18 +1,22 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import torch
 
-from ..geometry import snapshot
-from ..optim import Adam
-from ..svf.svf_ops import apply_svf
+from AIVillage.experimental.training.geometry import snapshot
+from AIVillage.experimental.training.optim import Adam
+from AIVillage.experimental.training.svf.svf_ops import apply_svf
+
 from .pid import EdgePID
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def run_level(model: torch.nn.Module, dataset: Sequence, config, state: dict) -> None:
     opt = Adam(model.parameters(), lr=config.lr)
-    pid = EdgePID()
+    EdgePID()
     geo2z = state.get("geo2z")
     for task in dataset:
         logits, H = model(task.prompt, return_h=True)

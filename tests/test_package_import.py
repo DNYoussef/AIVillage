@@ -2,7 +2,7 @@ import importlib
 
 
 def test_aivillage_package_redirect():
-    pkg = importlib.import_module("AIVillage")
+    importlib.import_module("AIVillage")
     runner = importlib.import_module("AIVillage.twin_runtime.runner")
     legacy = importlib.import_module("AIVillage.src.twin_runtime.runner")
     assert hasattr(runner, "chat")

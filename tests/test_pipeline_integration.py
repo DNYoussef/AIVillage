@@ -84,7 +84,7 @@ class PipelineIntegrationTest:
             return str(model_path)
 
         except Exception as e:
-            logger.error("Failed to create test model: %s", e)
+            logger.exception("Failed to create test model: %s", e)
             raise
 
     def test_stage1_compression(self, input_path: str) -> str:
@@ -145,7 +145,7 @@ class PipelineIntegrationTest:
             return str(output_path)
 
         except Exception as e:
-            logger.error("Stage 1 compression failed: %s", e)
+            logger.exception("Stage 1 compression failed: %s", e)
             self.test_results["stage1"] = {"success": False, "error": str(e)}
             raise
 
@@ -209,7 +209,7 @@ class PipelineIntegrationTest:
             return str(output_path)
 
         except Exception as e:
-            logger.error("Stage 2 compression failed: %s", e)
+            logger.exception("Stage 2 compression failed: %s", e)
             self.test_results["stage2"] = {"success": False, "error": str(e)}
             raise
 
@@ -276,7 +276,7 @@ class PipelineIntegrationTest:
             return curriculum_results
 
         except Exception as e:
-            logger.error("Training pipeline failed: %s", e)
+            logger.exception("Training pipeline failed: %s", e)
             self.test_results["training"] = {"success": False, "error": str(e)}
             raise
 
@@ -340,7 +340,7 @@ class PipelineIntegrationTest:
             return results
 
         except Exception as e:
-            logger.error("Self-modeling failed: %s", e)
+            logger.exception("Self-modeling failed: %s", e)
             self.test_results["self_modeling"] = {"success": False, "error": str(e)}
             raise
 
@@ -404,7 +404,7 @@ class PipelineIntegrationTest:
             return bundle_path
 
         except Exception as e:
-            logger.error("Deployment manifest generation failed: %s", e)
+            logger.exception("Deployment manifest generation failed: %s", e)
             self.test_results["deployment"] = {"success": False, "error": str(e)}
             raise
 
@@ -423,7 +423,7 @@ class PipelineIntegrationTest:
                 stage2_path = self.test_results["stage2"]["output_path"]
 
                 # Load both files
-                stage1_data = torch.load(stage1_path)
+                torch.load(stage1_path)
                 stage2_data = torch.load(stage2_path)
 
                 # Verify Stage 1 metadata is preserved in Stage 2
@@ -488,7 +488,7 @@ class PipelineIntegrationTest:
             return integrity_results
 
         except Exception as e:
-            logger.error("Model handoff integrity test failed: %s", e)
+            logger.exception("Model handoff integrity test failed: %s", e)
             self.test_results["integrity"] = {"success": False, "error": str(e)}
             raise
 
@@ -533,16 +533,16 @@ class PipelineIntegrationTest:
             stage2_path = self.test_stage2_compression(stage1_path)
 
             # Step 4: Test training pipeline
-            training_results = self.test_training_pipeline(original_model_path)
+            self.test_training_pipeline(original_model_path)
 
             # Step 5: Test self-modeling
-            self_modeling_results = self.test_self_modeling(original_model_path)
+            self.test_self_modeling(original_model_path)
 
             # Step 6: Test deployment manifest
-            deployment_bundle = self.test_deployment_manifest(stage2_path)
+            self.test_deployment_manifest(stage2_path)
 
             # Step 7: Test model handoff integrity
-            integrity_results = self.test_model_handoff_integrity()
+            self.test_model_handoff_integrity()
 
             # Step 8: Generate test report
             report_path = self.generate_test_report()
@@ -565,7 +565,7 @@ class PipelineIntegrationTest:
             }
 
         except Exception as e:
-            logger.error("Full pipeline test failed: %s", e)
+            logger.exception("Full pipeline test failed: %s", e)
 
             # Generate partial report
             try:

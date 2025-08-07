@@ -7,7 +7,7 @@ import sys
 import yaml
 
 
-def analyze_workflow(workflow_path):
+def analyze_workflow(workflow_path) -> bool | None:
     """Analyze a single workflow file."""
     print(f"Analyzing {workflow_path}")
 
@@ -57,7 +57,7 @@ def analyze_workflow(workflow_path):
         return False
 
 
-def main():
+def main() -> int:
     """Analyze all workflows."""
     workflows_dir = Path(".github/workflows")
 

@@ -242,7 +242,7 @@ class EvolutionValidator:
                 logger.info("Completed generation %s", merger.generation)
 
         except Exception as e:
-            logger.error("Evolution test failed with error: %s", e)
+            logger.exception("Evolution test failed with error: %s", e)
             test_results["all_tests_passed"] = False
             test_results["error"] = str(e)
 

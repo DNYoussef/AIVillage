@@ -8,11 +8,11 @@ logger = logging.getLogger(__name__)
 
 
 class CollaborationManager:
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
         self.collaborating_agents = {}
 
-    async def handle_collaboration_request(self, message: Message):
+    async def handle_collaboration_request(self, message: Message) -> None:
         try:
             collaboration_type = message.content.get("collaboration_type")
             if collaboration_type == "knowledge_sharing":
@@ -24,9 +24,9 @@ class CollaborationManager:
             else:
                 logger.warning(f"Unknown collaboration type: {collaboration_type}")
         except Exception as e:
-            logger.error(f"Error handling collaboration request: {e!s}")
+            logger.exception(f"Error handling collaboration request: {e!s}")
 
-    async def share_knowledge(self, message: Message):
+    async def share_knowledge(self, message: Message) -> None:
         try:
             query = message.content.get("query")
             relevant_knowledge = await self.agent.query_rag(query)
@@ -39,9 +39,9 @@ class CollaborationManager:
             )
             await self.agent.communication_protocol.send_message(response)
         except Exception as e:
-            logger.error(f"Error sharing knowledge: {e!s}")
+            logger.exception(f"Error sharing knowledge: {e!s}")
 
-    async def delegate_task(self, message: Message):
+    async def delegate_task(self, message: Message) -> None:
         try:
             task_dict = message.content.get("task")
             langroid_task = LangroidTask(
@@ -61,9 +61,9 @@ class CollaborationManager:
             )
             await self.agent.communication_protocol.send_message(response)
         except Exception as e:
-            logger.error(f"Error delegating task: {e!s}")
+            logger.exception(f"Error delegating task: {e!s}")
 
-    async def perform_joint_reasoning(self, message: Message):
+    async def perform_joint_reasoning(self, message: Message) -> None:
         try:
             reasoning_context = message.content.get("reasoning_context")
             our_reasoning = await self.agent.apply_advanced_reasoning(
@@ -78,11 +78,11 @@ class CollaborationManager:
             )
             await self.agent.communication_protocol.send_message(response)
         except Exception as e:
-            logger.error(f"Error performing joint reasoning: {e!s}")
+            logger.exception(f"Error performing joint reasoning: {e!s}")
 
     async def request_collaboration(
         self, agent_name: str, collaboration_type: str, content: Any
-    ):
+    ) -> None:
         try:
             request = Message(
                 type=MessageType.COLLABORATION_REQUEST,
@@ -92,11 +92,11 @@ class CollaborationManager:
             )
             await self.agent.communication_protocol.send_message(request)
         except Exception as e:
-            logger.error(f"Error requesting collaboration: {e!s}")
+            logger.exception(f"Error requesting collaboration: {e!s}")
 
     async def register_collaborating_agent(
         self, agent_name: str, capabilities: list[str]
-    ):
+    ) -> None:
         self.collaborating_agents[agent_name] = capabilities
 
     async def find_best_agent_for_task(self, task: dict[str, Any]) -> str:

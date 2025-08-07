@@ -28,7 +28,7 @@ def find_backup_files():
     return backup_files
 
 
-def categorize_risk(file_path):
+def categorize_risk(file_path) -> str:
     """Categorize backup files by risk level."""
     path_str = str(file_path).lower()
 
@@ -53,7 +53,7 @@ def categorize_risk(file_path):
     return "MEDIUM"
 
 
-def main():
+def main() -> None:
     """Main execution."""
     print("Scanning for backup files...")
     backup_files = find_backup_files()

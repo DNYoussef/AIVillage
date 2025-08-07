@@ -10,7 +10,7 @@ class ExperimentalWarning(UserWarning):
     """Warning for experimental features."""
 
 
-def warn_experimental(feature_name):
+def warn_experimental(feature_name) -> None:
     """Issue experimental warning."""
     warnings.warn(
         f"{feature_name} is experimental and may change without notice.",

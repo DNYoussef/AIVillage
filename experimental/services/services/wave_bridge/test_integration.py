@@ -1,5 +1,5 @@
 """Integration Test Suite for WhatsApp Wave Bridge
-Tests core functionality and performance requirements
+Tests core functionality and performance requirements.
 """
 
 import time
@@ -19,11 +19,11 @@ PERFORMANCE_TARGET = 5.0  # seconds
 
 
 class TestWhatsAppIntegration:
-    """Test WhatsApp webhook integration"""
+    """Test WhatsApp webhook integration."""
 
     @pytest.mark.asyncio
-    async def test_webhook_response_time(self):
-        """Test that webhook responds within target time"""
+    async def test_webhook_response_time(self) -> None:
+        """Test that webhook responds within target time."""
         # Mock Twilio webhook payload
         payload = {
             "Body": "Hello, I need help with math",
@@ -55,8 +55,8 @@ class TestWhatsAppIntegration:
         print(f"✅ Webhook response time: {response_time:.2f}s")
 
     @pytest.mark.asyncio
-    async def test_greeting_variants(self):
-        """Test A/B testing for greeting messages"""
+    async def test_greeting_variants(self) -> None:
+        """Test A/B testing for greeting messages."""
         ab_manager = ABTestManager()
 
         # Test consistent assignment
@@ -70,8 +70,8 @@ class TestWhatsAppIntegration:
         print(f"✅ Greeting variant assignment: {variant1}")
 
     @pytest.mark.asyncio
-    async def test_multi_language_support(self):
-        """Test language detection and translation"""
+    async def test_multi_language_support(self) -> None:
+        """Test language detection and translation."""
         test_cases = [
             ("Hello, how are you?", "en"),
             ("Hola, ¿cómo estás?", "es"),
@@ -98,11 +98,11 @@ class TestWhatsAppIntegration:
 
 
 class TestAITutorEngine:
-    """Test AI Tutor functionality"""
+    """Test AI Tutor functionality."""
 
     @pytest.mark.asyncio
-    async def test_subject_detection(self):
-        """Test subject area detection"""
+    async def test_subject_detection(self) -> None:
+        """Test subject area detection."""
         tutor = AITutor()
 
         test_cases = [
@@ -118,11 +118,11 @@ class TestAITutorEngine:
             print(f"✅ '{message}' -> {detected}")
 
             # Should detect correct subject or general
-            assert detected in tutor.subject_experts.keys()
+            assert detected in tutor.subject_experts
 
     @pytest.mark.asyncio
-    async def test_response_generation_speed(self):
-        """Test that response generation meets speed requirements"""
+    async def test_response_generation_speed(self) -> None:
+        """Test that response generation meets speed requirements."""
         tutor = AITutor()
 
         test_messages = [
@@ -156,11 +156,11 @@ class TestAITutorEngine:
 
 
 class TestPerformanceMonitoring:
-    """Test performance monitoring and metrics"""
+    """Test performance monitoring and metrics."""
 
     @pytest.mark.asyncio
-    async def test_metrics_tracking(self):
-        """Test metrics collection and reporting"""
+    async def test_metrics_tracking(self) -> None:
+        """Test metrics collection and reporting."""
         metrics = ResponseMetrics()
 
         # Simulate multiple responses
@@ -188,8 +188,8 @@ class TestPerformanceMonitoring:
         print(f"✅ Target achievement rate: {target_rate:.1%}")
 
     @pytest.mark.asyncio
-    async def test_performance_alerts(self):
-        """Test performance alerting system"""
+    async def test_performance_alerts(self) -> None:
+        """Test performance alerting system."""
         metrics = ResponseMetrics()
 
         # Simulate slow response that should trigger alert
@@ -215,11 +215,11 @@ class TestPerformanceMonitoring:
 
 
 class TestPromptOptimization:
-    """Test W&B prompt tuning functionality"""
+    """Test W&B prompt tuning functionality."""
 
     @pytest.mark.asyncio
-    async def test_prompt_variant_selection(self):
-        """Test prompt variant selection logic"""
+    async def test_prompt_variant_selection(self) -> None:
+        """Test prompt variant selection logic."""
         tuner = PromptTuner()
 
         # Get optimized prompt
@@ -236,8 +236,8 @@ class TestPromptOptimization:
         print(f"✅ Selected prompt variant (first 50 chars): {prompt[:50]}...")
 
     @pytest.mark.asyncio
-    async def test_performance_recording(self):
-        """Test prompt performance recording"""
+    async def test_performance_recording(self) -> None:
+        """Test prompt performance recording."""
         tuner = PromptTuner()
 
         # Record performance metrics
@@ -262,8 +262,8 @@ class TestPromptOptimization:
 
 # Health check test
 @pytest.mark.asyncio
-async def test_health_endpoint():
-    """Test service health endpoint"""
+async def test_health_endpoint() -> None:
+    """Test service health endpoint."""
     async with httpx.AsyncClient(app=app) as client:
         response = await client.get("/health")
 
@@ -278,8 +278,8 @@ async def test_health_endpoint():
 
 # Metrics endpoint test
 @pytest.mark.asyncio
-async def test_metrics_endpoint():
-    """Test metrics endpoint"""
+async def test_metrics_endpoint() -> None:
+    """Test metrics endpoint."""
     async with httpx.AsyncClient(app=app) as client:
         response = await client.get("/metrics")
 
@@ -292,8 +292,8 @@ async def test_metrics_endpoint():
     print("✅ Metrics endpoint responding correctly")
 
 
-def run_performance_benchmark():
-    """Run comprehensive performance benchmark"""
+def run_performance_benchmark() -> None:
+    """Run comprehensive performance benchmark."""
     print("\n🚀 Running WhatsApp Wave Bridge Performance Benchmark")
     print("=" * 60)
 

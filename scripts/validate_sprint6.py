@@ -1,25 +1,25 @@
-"""Sprint 6 Validation Script - Test Infrastructure Implementation"""
+"""Sprint 6 Validation Script - Test Infrastructure Implementation."""
 
 import asyncio
 import sys
 import time
 
 
-def print_section(title):
+def print_section(title) -> None:
     print(f"\n{'='*60}")
     print(f" {title}")
     print(f"{'='*60}")
 
 
-def print_check(item, status, details=""):
+def print_check(item, status, details="") -> None:
     status_symbol = "[PASS]" if status else "[FAIL]"
     print(f"{status_symbol} {item}")
     if details:
         print(f"  {details}")
 
 
-async def validate_sprint6():
-    """Validate Sprint 6 implementation"""
+async def validate_sprint6() -> bool:
+    """Validate Sprint 6 implementation."""
     print("Sprint 6 Infrastructure Validation")
     print("Building Foundation, Then Evolving - 70% Production Ready")
 
@@ -234,9 +234,9 @@ async def validate_sprint6():
     try:
         # Test that all components can work together
         profiler = DeviceProfiler()
-        monitor = ResourceMonitor(profiler)
+        ResourceMonitor(profiler)
         constraints = ConstraintManager(profiler)
-        loader = AdaptiveLoader(profiler, constraints)
+        AdaptiveLoader(profiler, constraints)
 
         # Test resource allocation flow (need snapshot first)
         snapshot = profiler.take_snapshot()

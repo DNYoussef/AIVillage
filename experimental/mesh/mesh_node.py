@@ -19,7 +19,7 @@ log = logging.getLogger("communications.mesh_node")
 class SecureEnvelope:
     """Encrypt/decrypt payloads via NaCl Box (Noise keypair)."""
 
-    def __init__(self, priv: PrivateKey, peer_pub: PublicKey):
+    def __init__(self, priv: PrivateKey, peer_pub: PublicKey) -> None:
         self.box = Box(priv, peer_pub)
 
     def encode(self, plaintext: bytes) -> bytes:
@@ -34,7 +34,7 @@ class MeshNode:
     """- libp2p FloodSub over Noise
     - automatic peer-key registry via handshake messages
     - on_message hook for subclasses
-    - fallback mcp_call via gRPC+TLS
+    - fallback mcp_call via gRPC+TLS.
     """
 
     HANDSHAKE = "__handshake__"
@@ -44,7 +44,7 @@ class MeshNode:
         listen_addr: str,
         bootstrap: list[str] | None = None,
         on_message: callable | None = None,
-    ):
+    ) -> None:
         self.listen_addr = listen_addr
         self.bootstrap = bootstrap or []
         self.on_message = on_message
@@ -57,7 +57,7 @@ class MeshNode:
         self.node = None
         self.pubsub = None
 
-    async def start(self):
+    async def start(self) -> None:
         # 1) start libp2p host with Noise
         self.node = await new_node(
             transport_opt=[NoiseSecureTransport(self.priv)], muxer_opt=[], sec_opt=[]
@@ -96,7 +96,7 @@ class MeshNode:
             ).encode(),
         )
 
-    async def _broadcast_handshake(self):
+    async def _broadcast_handshake(self) -> None:
         payload = {
             "type": self.HANDSHAKE,
             "peer_id": self.node.get_id().to_base58(),
@@ -104,7 +104,7 @@ class MeshNode:
         }
         await self.pubsub.publish("global-handshake", json.dumps(payload).encode())
 
-    async def _on_pubsub(self, peer_id: str, msg):
+    async def _on_pubsub(self, peer_id: str, msg) -> None:
         try:
             data = msg.data
             # if handshake topic
@@ -124,10 +124,11 @@ class MeshNode:
         except Exception as e:
             log.debug("mesh_node drop malformed: %s", e)
 
-    async def send(self, target_id: str, message: Message):
+    async def send(self, target_id: str, message: Message) -> None:
         """Encrypt & publish to target’s topic. target_id must be in peer_keys."""
         if target_id not in self.peer_keys:
-            raise KeyError(f"unknown peer {target_id}")
+            msg = f"unknown peer {target_id}"
+            raise KeyError(msg)
         enc = SecureEnvelope(self.priv, self.peer_keys[target_id]).encode(
             message.to_json().encode()
         )

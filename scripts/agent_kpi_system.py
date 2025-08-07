@@ -266,7 +266,8 @@ class AgentPerformanceManager:
     ) -> None:
         """Record performance for a completed task."""
         if agent_id not in self.trackers:
-            raise ValueError(f"Agent {agent_id} not registered")
+            msg = f"Agent {agent_id} not registered"
+            raise ValueError(msg)
 
         # Convert performance data to KPI metrics
         metrics = {}

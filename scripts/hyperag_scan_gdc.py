@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HypeRAG Graph-Doctor CLI Scanner
+"""HypeRAG Graph-Doctor CLI Scanner.
 
 Command-line interface for detecting Graph Denial Constraint (GDC) violations
 in Neo4j knowledge graphs.
@@ -29,7 +29,7 @@ sys.path.insert(0, str(project_root))
 
 
 def setup_logging(level: str = "INFO") -> None:
-    """Configure logging for the CLI"""
+    """Configure logging for the CLI."""
     logging.basicConfig(
         level=getattr(logging, level.upper()),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -43,7 +43,7 @@ def setup_logging(level: str = "INFO") -> None:
 
 
 def format_violation_summary(violations: list[Violation]) -> str:
-    """Create a human-readable summary of violations"""
+    """Create a human-readable summary of violations."""
     if not violations:
         return "✅ No violations detected!"
 
@@ -80,7 +80,7 @@ def format_violation_summary(violations: list[Violation]) -> str:
 
 
 def save_violations_json(violations: list[Violation], output_path: Path) -> None:
-    """Save violations to JSON file"""
+    """Save violations to JSON file."""
     data = {
         "scan_timestamp": datetime.now(timezone.utc).isoformat(),
         "total_violations": len(violations),
@@ -94,7 +94,7 @@ def save_violations_json(violations: list[Violation], output_path: Path) -> None
 
 
 def save_violations_csv(violations: list[Violation], output_path: Path) -> None:
-    """Save violations to CSV file"""
+    """Save violations to CSV file."""
     if not violations:
         print("No violations to save")
         return
@@ -137,7 +137,7 @@ def save_violations_csv(violations: list[Violation], output_path: Path) -> None:
 
 
 async def run_scan(args: argparse.Namespace) -> None:
-    """Execute the GDC scan"""
+    """Execute the GDC scan."""
     # Initialize extractor
     async with GDCExtractorContext(
         neo4j_uri=args.neo4j_uri,
@@ -200,7 +200,7 @@ async def run_scan(args: argparse.Namespace) -> None:
 
 
 def validate_gdc_config() -> None:
-    """Validate the GDC configuration"""
+    """Validate the GDC configuration."""
     if not GDC_REGISTRY:
         print("❌ No GDC rules loaded. Check config/gdc_rules.yaml")
         sys.exit(1)
@@ -220,7 +220,7 @@ def validate_gdc_config() -> None:
 
 
 def list_gdcs() -> None:
-    """List all available GDCs"""
+    """List all available GDCs."""
     if not GDC_REGISTRY:
         print("No GDCs configured")
         return
@@ -241,7 +241,7 @@ def list_gdcs() -> None:
 
 
 def main() -> None:
-    """Main CLI entry point"""
+    """Main CLI entry point."""
     parser = argparse.ArgumentParser(
         description="HypeRAG Graph-Doctor GDC Scanner",
         formatter_class=argparse.RawDescriptionHelpFormatter,

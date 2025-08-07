@@ -26,7 +26,7 @@ class ExpertVector:
 class ExpertVectorSystem:
     """Create and apply expert vectors using simple SVF."""
 
-    def __init__(self, model: nn.Module):
+    def __init__(self, model: nn.Module) -> None:
         self.model = model
 
     def train_expert_vector_svf(self, name: str, scale: float = 0.05) -> ExpertVector:

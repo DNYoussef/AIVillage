@@ -30,7 +30,7 @@ def create_test_models():
     }
 
 
-def benchmark_all_methods():
+def benchmark_all_methods() -> None:
     print("Comprehensive Compression Benchmark")
     print("=" * 80)
     print("Comparing: Sprint 9 SimpleQuantizer vs Advanced Pipeline vs Unified")

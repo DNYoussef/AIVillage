@@ -19,7 +19,7 @@ def test_basic_communication():
         from src.communications.protocol import CommunicationsProtocol
 
         # Create a protocol instance
-        protocol = CommunicationsProtocol("test_agent", port=8889)
+        CommunicationsProtocol("test_agent", port=8889)
         print("+ Communication protocol created successfully")
 
         # Test message creation

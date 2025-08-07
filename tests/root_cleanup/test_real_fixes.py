@@ -41,7 +41,7 @@ async def test_memory_management():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Memory management test failed: {e}")
+        logger.exception(f"❌ Memory management test failed: {e}")
         return False
 
 
@@ -68,7 +68,7 @@ async def test_wandb_manager():
         return True
 
     except Exception as e:
-        logger.error(f"❌ W&B manager test failed: {e}")
+        logger.exception(f"❌ W&B manager test failed: {e}")
         return False
 
 
@@ -98,7 +98,7 @@ async def test_real_benchmark():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Real benchmark test failed: {e}")
+        logger.exception(f"❌ Real benchmark test failed: {e}")
         return False
 
 
@@ -129,7 +129,7 @@ async def test_quietstar_fixes():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Quiet-STaR fixes test failed: {e}")
+        logger.exception(f"❌ Quiet-STaR fixes test failed: {e}")
         return False
 
 
@@ -165,7 +165,7 @@ async def test_evolution_fixes():
         return True
 
     except Exception as e:
-        logger.error(f"❌ Evolution fixes test failed: {e}")
+        logger.exception(f"❌ Evolution fixes test failed: {e}")
         return False
 
 
@@ -192,7 +192,7 @@ async def run_comprehensive_test():
             result = await test_func()
             test_results.append((test_name, result))
         except Exception as e:
-            logger.error(f"Test {test_name} crashed: {e}")
+            logger.exception(f"Test {test_name} crashed: {e}")
             test_results.append((test_name, False))
 
     # Summary

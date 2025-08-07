@@ -1,4 +1,4 @@
-"""self_modeling_gate.py
+"""self_modeling_gate.py.
 ---------------------
 Self-model cycle; promotion is blocked until the grok signature
 (slow_grad ↑ & ID_nl ↓) re-appears internally.
@@ -11,12 +11,14 @@ import random
 import torch
 from torch.nn import functional as F
 
-from ..geometry.snapshot import snapshot
+from AIVillage.experimental.training.geometry.snapshot import snapshot
 
 logger = logging.getLogger("AF-SelfGrokk")
 
 
-def self_model_cycle(model, tokenizer, tasks: Sequence[str], opt, thresholds, state):
+def self_model_cycle(
+    model, tokenizer, tasks: Sequence[str], opt, thresholds, state
+) -> None:
     """Runs until internal grok OR max_iter.
 
     thresholds : dict = {slow, id_drop, chaos}
@@ -65,9 +67,14 @@ if __name__ == "__main__":
             return x
 
     model = torch.nn.Linear(5, 5)
-    tok = lambda s, **k: type(
-        "T", (), {"to": lambda self, d: self, "input_ids": torch.randint(0, 10, (1, 3))}
-    )()
+
+    def tok(s, **k):
+        return type(
+            "T",
+            (),
+            {"to": lambda self, d: self, "input_ids": torch.randint(0, 10, (1, 3))},
+        )()
+
     opt = torch.optim.Adam(model.parameters())
     state = {
         "hidden_pred": DummyPred(),

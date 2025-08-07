@@ -268,7 +268,7 @@ class TestPhaseContracts(unittest.TestCase):
         # Metrics validation
         assert "execution_time" in result.metrics, "Metrics must include execution_time"
         assert isinstance(
-            result.metrics["execution_time"], (int, float)
+            result.metrics["execution_time"], int | float
         ), "execution_time must be numeric"
 
         print(f"✓ Phase {phase_name} passed contract validation")

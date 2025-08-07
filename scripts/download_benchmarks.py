@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Benchmark Dataset Download Script for Agent Forge
+"""Benchmark Dataset Download Script for Agent Forge.
 
 Downloads standard math benchmarking datasets for evaluating
 evolutionary model performance:
@@ -53,7 +53,7 @@ BENCHMARKS = {
 
 
 def download_benchmark(benchmark_key: str, config: dict, base_path: Path) -> bool:
-    """Download a single benchmark dataset"""
+    """Download a single benchmark dataset."""
     dataset_id = config["dataset_id"]
     benchmark_path = base_path / benchmark_key
 
@@ -94,7 +94,7 @@ def download_benchmark(benchmark_key: str, config: dict, base_path: Path) -> boo
             "metrics": config["metrics"],
             "difficulty": config["difficulty"],
             "splits_available": list(dataset.keys()),
-            "total_examples": sum(len(dataset[split]) for split in dataset.keys()),
+            "total_examples": sum(len(dataset[split]) for split in dataset),
         }
 
         metadata_path = benchmark_path / "metadata.json"
@@ -105,12 +105,14 @@ def download_benchmark(benchmark_key: str, config: dict, base_path: Path) -> boo
         return True
 
     except Exception as e:
-        logger.error(f"Failed to download {benchmark_key}: {e}")
+        logger.exception(f"Failed to download {benchmark_key}: {e}")
         return False
 
 
-def create_benchmark_manifest(base_path: Path, downloaded_benchmarks: list[str]):
-    """Create manifest file for benchmark datasets"""
+def create_benchmark_manifest(
+    base_path: Path, downloaded_benchmarks: list[str]
+) -> None:
+    """Create manifest file for benchmark datasets."""
     manifest_path = base_path / "benchmark_manifest.json"
 
     from datetime import datetime
@@ -159,8 +161,8 @@ def create_benchmark_manifest(base_path: Path, downloaded_benchmarks: list[str])
     logger.info(f"Created benchmark manifest: {manifest_path}")
 
 
-def create_evaluation_script(base_path: Path):
-    """Create evaluation script template"""
+def create_evaluation_script(base_path: Path) -> None:
+    """Create evaluation script template."""
     eval_script = base_path / "evaluate_model.py"
 
     script_content = '''#!/usr/bin/env python3
@@ -242,8 +244,8 @@ if __name__ == "__main__":
     logger.info(f"Created evaluation script template: {eval_script}")
 
 
-def main():
-    """Main download function"""
+def main() -> int:
+    """Main download function."""
     parser = argparse.ArgumentParser(
         description="Download Agent Forge benchmark datasets"
     )
@@ -255,7 +257,7 @@ def main():
     parser.add_argument(
         "--benchmarks",
         nargs="+",
-        choices=list(BENCHMARKS.keys()) + ["all"],
+        choices=[*list(BENCHMARKS.keys()), "all"],
         default=["all"],
         help="Benchmarks to download",
     )

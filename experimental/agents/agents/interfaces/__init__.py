@@ -1,4 +1,4 @@
-"""Standardized Interfaces for AIVillage Components
+"""Standardized Interfaces for AIVillage Components.
 
 This module defines consistent interfaces that all AIVillage components
 must implement to ensure interoperability and standardization across
@@ -36,28 +36,28 @@ from .training_interface import (
 )
 
 __all__ = [
+    "AgentCapability",
     # Agent interfaces
     "AgentInterface",
-    "AgentCapability",
     "AgentStatus",
-    "TaskInterface",
-    "MessageInterface",
     # Communication interfaces
     "CommunicationInterface",
-    "MessageProtocol",
-    "ProtocolCapability",
-    # RAG interfaces
-    "RAGInterface",
-    "QueryInterface",
     "DocumentInterface",
     "EmbeddingInterface",
+    "MessageInterface",
+    "MessageProtocol",
+    "ModelInterface",
     # Processing interfaces
     "ProcessingInterface",
     "ProcessorCapability",
     "ProcessorStatus",
+    "ProtocolCapability",
+    "QueryInterface",
+    # RAG interfaces
+    "RAGInterface",
+    "TaskInterface",
     # Training interfaces
     "TrainingInterface",
-    "ModelInterface",
-    "TrainingStatus",
     "TrainingMetrics",
+    "TrainingStatus",
 ]

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Focused Production Benchmark
-Tests the actual working components post-cleanup
+Tests the actual working components post-cleanup.
 """
 from datetime import datetime
 import json
@@ -22,14 +22,14 @@ logger = logging.getLogger(__name__)
 
 
 class ProductionBenchmark:
-    """Focused benchmark for working production components"""
+    """Focused benchmark for working production components."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.results = {}
         self.start_time = None
 
     def benchmark_compression_stubs(self) -> dict[str, Any]:
-        """Test the compression stub implementations"""
+        """Test the compression stub implementations."""
         logger.info("Testing compression stub implementations...")
 
         start_time = time.time()
@@ -82,7 +82,7 @@ class ProductionBenchmark:
 
                 except Exception as e:
                     results["compressions"][name] = {"status": "error", "error": str(e)}
-                    logger.error(f"{name} compression test failed: {e}")
+                    logger.exception(f"{name} compression test failed: {e}")
 
             total_time = time.time() - start_time
             results["total_time_seconds"] = round(total_time, 3)
@@ -91,11 +91,11 @@ class ProductionBenchmark:
             return results
 
         except Exception as e:
-            logger.error(f"Compression benchmark failed: {e}")
+            logger.exception(f"Compression benchmark failed: {e}")
             return {"status": "error", "error": str(e)}
 
     def benchmark_basic_evolution(self) -> dict[str, Any]:
-        """Test basic evolution components that don't require heavy dependencies"""
+        """Test basic evolution components that don't require heavy dependencies."""
         logger.info("Testing basic evolution components...")
 
         start_time = time.time()
@@ -159,11 +159,11 @@ class ProductionBenchmark:
             return results
 
         except Exception as e:
-            logger.error(f"Evolution benchmark failed: {e}")
+            logger.exception(f"Evolution benchmark failed: {e}")
             return {"status": "error", "error": str(e)}
 
     def benchmark_basic_rag(self) -> dict[str, Any]:
-        """Test basic RAG components without heavy ML dependencies"""
+        """Test basic RAG components without heavy ML dependencies."""
         logger.info("Testing basic RAG components...")
 
         start_time = time.time()
@@ -247,11 +247,11 @@ class ProductionBenchmark:
             return results
 
         except Exception as e:
-            logger.error(f"RAG benchmark failed: {e}")
+            logger.exception(f"RAG benchmark failed: {e}")
             return {"status": "error", "error": str(e)}
 
     def benchmark_system_resources(self) -> dict[str, Any]:
-        """Benchmark system resource usage during operations"""
+        """Benchmark system resource usage during operations."""
         logger.info("Testing system resource usage...")
 
         try:
@@ -269,7 +269,7 @@ class ProductionBenchmark:
                 result += i * i
 
             # Memory-intensive task
-            large_list = [i for i in range(50000)]
+            list(range(50000))
 
             # Get metrics during workload
             workload_cpu = psutil.cpu_percent(interval=1)
@@ -295,11 +295,11 @@ class ProductionBenchmark:
             }
 
         except Exception as e:
-            logger.error(f"Resource benchmark failed: {e}")
+            logger.exception(f"Resource benchmark failed: {e}")
             return {"status": "error", "error": str(e)}
 
     def run_all_benchmarks(self) -> dict[str, Any]:
-        """Run all available benchmarks"""
+        """Run all available benchmarks."""
         logger.info("Starting focused production benchmarks...")
 
         self.start_time = time.time()
@@ -346,7 +346,7 @@ class ProductionBenchmark:
         return results
 
     def save_results(self, results: dict[str, Any]) -> str:
-        """Save results to file"""
+        """Save results to file."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"focused_benchmark_{timestamp}.json"
 
@@ -361,8 +361,8 @@ class ProductionBenchmark:
         logger.info(f"Results saved to {filepath}")
         return str(filepath)
 
-    def print_summary(self, results: dict[str, Any]):
-        """Print human-readable summary"""
+    def print_summary(self, results: dict[str, Any]) -> None:
+        """Print human-readable summary."""
         print("\n" + "=" * 60)
         print("FOCUSED PRODUCTION BENCHMARK RESULTS")
         print("=" * 60)
@@ -432,8 +432,8 @@ class ProductionBenchmark:
         print("=" * 60)
 
 
-def main():
-    """Run the focused production benchmark"""
+def main() -> int | None:
+    """Run the focused production benchmark."""
     print("AIVillage Focused Production Benchmark")
     print("Testing working components post-cleanup")
     print("-" * 40)
@@ -469,7 +469,7 @@ def main():
         return 0
 
     except Exception as e:
-        logger.error(f"Benchmark failed: {e}")
+        logger.exception(f"Benchmark failed: {e}")
         import traceback
 
         traceback.print_exc()

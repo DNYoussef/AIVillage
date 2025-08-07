@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AIVillage Codebase Restructuring Script
+"""AIVillage Codebase Restructuring Script.
 
 This script reorganizes the codebase into a clean, production-ready structure:
 - src/ for production-ready code
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class CodebaseRestructurer:
-    def __init__(self, base_path: str):
+    def __init__(self, base_path: str) -> None:
         self.base_path = Path(base_path)
         self.moved_files = []
         self.errors = []
@@ -92,7 +92,7 @@ class CodebaseRestructurer:
             return False
         return True
 
-    def create_target_structure(self):
+    def create_target_structure(self) -> None:
         """Create the new directory structure."""
         logger.info("Creating new directory structure...")
 
@@ -142,12 +142,9 @@ class CodebaseRestructurer:
                 return True
 
         # Skip if it's already in the new structure
-        if item_name in ["src", "experimental", "tools", "mobile"]:
-            return True
+        return item_name in ["src", "experimental", "tools", "mobile"]
 
-        return False
-
-    def move_directory_contents(self, source_dir: Path, target_dir: Path):
+    def move_directory_contents(self, source_dir: Path, target_dir: Path) -> None:
         """Move contents of source directory to target directory."""
         if not self.validate_source_exists(source_dir):
             return
@@ -175,10 +172,10 @@ class CodebaseRestructurer:
 
         except Exception as e:
             error_msg = f"Error moving {source_dir} to {target_dir}: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.errors.append(error_msg)
 
-    def restructure_production_components(self):
+    def restructure_production_components(self) -> None:
         """Move production-ready components to src/."""
         logger.info("Restructuring production components...")
 
@@ -212,7 +209,7 @@ class CodebaseRestructurer:
                     prod_source, self.base_path / "src" / prod_dir
                 )
 
-    def restructure_agent_forge(self):
+    def restructure_agent_forge(self) -> None:
         """Split agent_forge between src/ (stable) and experimental/."""
         logger.info("Restructuring agent_forge...")
 
@@ -244,7 +241,7 @@ class CodebaseRestructurer:
                     / component,
                 )
 
-    def restructure_experimental(self):
+    def restructure_experimental(self) -> None:
         """Move experimental code to experimental/."""
         logger.info("Restructuring experimental components...")
 
@@ -258,7 +255,7 @@ class CodebaseRestructurer:
                 if not target_path.exists() and item.is_dir():
                     self.move_directory_contents(item, target_path)
 
-    def restructure_tools(self):
+    def restructure_tools(self) -> None:
         """Consolidate tools, scripts, benchmarks, and examples."""
         logger.info("Restructuring tools...")
 
@@ -283,7 +280,7 @@ class CodebaseRestructurer:
                 examples_source, self.base_path / "tools" / "examples"
             )
 
-    def handle_mobile_projects(self):
+    def handle_mobile_projects(self) -> None:
         """Handle mobile projects - move if maintained, create submodule refs if separate."""
         logger.info("Handling mobile projects...")
 
@@ -298,11 +295,11 @@ class CodebaseRestructurer:
                     mobile_path, self.base_path / "mobile" / mobile_dir
                 )
 
-    def cleanup_empty_directories(self):
+    def cleanup_empty_directories(self) -> None:
         """Remove empty directories after restructuring."""
         logger.info("Cleaning up empty directories...")
 
-        def remove_empty_dirs(path: Path):
+        def remove_empty_dirs(path: Path) -> None:
             """Recursively remove empty directories."""
             if not path.is_dir():
                 return
@@ -337,7 +334,7 @@ class CodebaseRestructurer:
             if candidate_path.exists():
                 remove_empty_dirs(candidate_path)
 
-    def update_import_paths(self):
+    def update_import_paths(self) -> None:
         """Update import paths in Python files to reflect new structure."""
         logger.info("Updating import paths...")
 
@@ -443,7 +440,7 @@ class CodebaseRestructurer:
             return report
 
         except Exception as e:
-            logger.error(f"Critical error during restructuring: {e!s}")
+            logger.exception(f"Critical error during restructuring: {e!s}")
             raise
 
 

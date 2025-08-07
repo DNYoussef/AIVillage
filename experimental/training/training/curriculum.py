@@ -26,7 +26,7 @@ class CurriculumLevel:
 class CurriculumGenerator:
     """Generate curriculum levels by assessing model competence."""
 
-    def __init__(self, frontier_model: str, domain: str):
+    def __init__(self, frontier_model: str, domain: str) -> None:
         self.domain = domain
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.frontier_model = AutoModelForCausalLM.from_pretrained(frontier_model).to(

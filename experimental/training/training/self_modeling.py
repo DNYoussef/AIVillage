@@ -7,7 +7,7 @@ from torch import nn, optim
 from tqdm import tqdm
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
-state = dict(G={"ID_nl": 0.0}, pre_grok=False)
+state = {"G": {"ID_nl": 0.0}, "pre_grok": False}
 try:
     from agent_forge.geometry_feedback import GeometryTracker, UDaimonicCompass
 except ImportError:
@@ -19,23 +19,23 @@ except ImportError:
             beauty_appreciation=0.5,
             goodness_orientation=0.5,
             unity_understanding=0.5,
-        ):
+        ) -> None:
             self.truth_seeking = truth_seeking
             self.beauty_appreciation = beauty_appreciation
             self.goodness_orientation = goodness_orientation
             self.unity_understanding = unity_understanding
 
-        def get_primary_direction(self):
+        def get_primary_direction(self) -> str:
             return "Truth"
 
-        def get_magnitude(self):
+        def get_magnitude(self) -> float:
             return 0.7
 
     class GeometryTracker:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             self.compass = UDaimonicCompass()
 
-        def update(self, *args, **kwargs):
+        def update(self, *args, **kwargs) -> None:
             return None
 
 
@@ -44,14 +44,13 @@ try:
 except ImportError:
 
     class GrokFastTask:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             """__init__ - Planned feature not yet implemented.
 
             This functionality is part of the Atlantis roadmap.
             """
-            raise NotImplementedError(
-                "'__init__' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-__init__"
-            )
+            msg = "'__init__' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-__init__"
+            raise NotImplementedError(msg)
 
         def run(self, *args, **kwargs):
             return {"status": "stub", "message": "GrokFast not available"}
@@ -62,31 +61,29 @@ try:
 except ImportError:
 
     class SleepNet:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             """__init__ - Planned feature not yet implemented.
 
             This functionality is part of the Atlantis roadmap.
             """
-            raise NotImplementedError(
-                "'__init__' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-__init__"
-            )
+            msg = "'__init__' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-__init__"
+            raise NotImplementedError(msg)
 
     class DreamNet:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             """__init__ - Planned feature not yet implemented.
 
             This functionality is part of the Atlantis roadmap.
             """
-            raise NotImplementedError(
-                "'__init__' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-__init__"
-            )
+            msg = "'__init__' is not yet implemented. Track progress: https://github.com/DNYoussef/AIVillage/issues/feature-__init__"
+            raise NotImplementedError(msg)
 
 
 from agent_forge.model_compression.bitlinearization import quantize_weights
 
 
 class CodingTask:
-    def __init__(self, description: str, difficulty: int):
+    def __init__(self, description: str, difficulty: int) -> None:
         self.description = description
         self.difficulty = difficulty
 
@@ -112,7 +109,7 @@ class SelfModelingTask(Task):
         agent: ChatAgent,
         model_name: str,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
-    ):
+    ) -> None:
         super().__init__(agent)
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -142,7 +139,7 @@ class SelfModelingTask(Task):
         ).to(self.device)
         self.beta = 0.1
 
-    def quantize_model(self):
+    def quantize_model(self) -> None:
         with torch.no_grad():
             for param in self.model.parameters():
                 param.data = quantize_weights(param.data)
@@ -228,7 +225,9 @@ class SelfModelingTask(Task):
         accuracy = correct_predictions / len(mask_indices)
         return (loss.item(), accuracy)
 
-    async def self_modeling_cycle(self, curriculum_level: int, num_cycles: int = 100):
+    async def self_modeling_cycle(
+        self, curriculum_level: int, num_cycles: int = 100
+    ) -> None:
         task_generation = CodingTaskGenerationTask(self.agent)
         tasks = await task_generation.generate_coding_tasks(1000, self.avg_difficulty)
         temperature_ranges = [
@@ -287,7 +286,7 @@ class SelfModelingTask(Task):
                                 quantize_weights(update)
                             )
 
-    async def evolve_across_curriculum(self, num_levels: int = 10):
+    async def evolve_across_curriculum(self, num_levels: int = 10) -> None:
         for level in range(1, num_levels + 1):
             print(f"Starting curriculum level {level}")
             await self.self_modeling_cycle(curriculum_level=level)
@@ -333,7 +332,7 @@ class SelfModelingTask(Task):
             eval_data.append((txt, attn, txt))
 
         class EvalWrapper(nn.Module):
-            def __init__(self, model, tokenizer):
+            def __init__(self, model, tokenizer) -> None:
                 super().__init__()
                 self.model = model
                 self.tokenizer = tokenizer
@@ -356,7 +355,7 @@ class SelfModelingTask(Task):
         metrics = evaluator.evaluate_model(wrapped, eval_data)
         return float(metrics["perplexity"])
 
-    async def run(self):
+    async def run(self) -> str:
         await self.evolve_across_curriculum()
         return "Self-modeling completed successfully"
 
@@ -364,7 +363,7 @@ class SelfModelingTask(Task):
 if __name__ == "__main__":
     import asyncio
 
-    async def main():
+    async def main() -> None:
         config = ChatAgentConfig(
             name="SelfModelingAgent", llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo")
         )

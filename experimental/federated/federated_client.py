@@ -12,7 +12,7 @@ class FederatedClient:
         optimizer: torch.optim.Optimizer,
         initial_peers: list[str],
         prefix: str = "aivillage",
-    ):
+    ) -> None:
         self.model = model
         self.optim = optimizer
         # start DHT
@@ -30,5 +30,5 @@ class FederatedClient:
         """Runs a forward pass under DDP."""
         return self.parallel.forward_step(batch)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.dht.shutdown()

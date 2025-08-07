@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""System Validation Script
+"""System Validation Script.
 
 Tests core functionality to ensure the system is working properly.
 """
@@ -56,19 +56,21 @@ def test_configurations():
         try:
             if config_path.endswith(".json"):
                 with open(config_path) as f:
-                    data = json.load(f)
+                    json.load(f)
                 print(f"  PASS: {description} - Valid JSON")
             elif config_path.endswith(".toml"):
                 # Basic existence check for TOML
                 if Path(config_path).exists():
                     print(f"  PASS: {description} - File exists")
                 else:
-                    raise FileNotFoundError(f"{config_path} not found")
+                    msg = f"{config_path} not found"
+                    raise FileNotFoundError(msg)
             elif config_path.endswith(".yaml"):
                 if Path(config_path).exists():
                     print(f"  PASS: {description} - File exists")
                 else:
-                    raise FileNotFoundError(f"{config_path} not found")
+                    msg = f"{config_path} not found"
+                    raise FileNotFoundError(msg)
             passed += 1
         except Exception as e:
             print(f"  FAIL: {description} - {e}")
@@ -96,7 +98,7 @@ def test_agent_templates():
             if template_file.exists():
                 try:
                     with open(template_file) as f:
-                        template_data = json.load(f)
+                        json.load(f)
                     print(f"  PASS: {agent_type} template")
                     passed += 1
                 except Exception as e:
@@ -145,7 +147,7 @@ def test_project_structure():
     return passed, failed
 
 
-def main():
+def main() -> int:
     """Run all validation tests."""
     print("=" * 50)
     print("AIVillage System Validation")

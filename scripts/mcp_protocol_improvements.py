@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MCP Protocol Improvements - Implementation for Critical TODO Items
+"""MCP Protocol Improvements - Implementation for Critical TODO Items.
 
 This script contains the implementations to replace the TODO items in
 mcp_servers/hyperag/protocol.py with actual functionality.
@@ -68,7 +68,7 @@ class RetrievalImplementation:
                 retrieval_results = await retriever.retrieve(**retrieval_params)
 
             except Exception as e:
-                logger.error(f"Retrieval failed: {e}")
+                logger.exception(f"Retrieval failed: {e}")
                 return self._create_fallback_response(query, plan, error_msg=str(e))
 
             # Convert retrieval results to Node objects
@@ -110,18 +110,19 @@ class RetrievalImplementation:
             }
 
         except ImportError as e:
-            logger.error(f"Failed to import retrieval components: {e}")
+            logger.exception(f"Failed to import retrieval components: {e}")
             return self._create_fallback_response(
                 query, plan, error_msg=f"Import error: {e}"
             )
         except Exception as e:
-            logger.error(f"Unexpected error in retrieval: {e}")
+            logger.exception(f"Unexpected error in retrieval: {e}")
             from .protocol import MCPError
 
-            raise MCPError("RETRIEVAL_ERROR", f"Failed to retrieve information: {e}")
+            msg = "RETRIEVAL_ERROR"
+            raise MCPError(msg, f"Failed to retrieve information: {e}")
 
     def _create_fallback_response(
-        self, query: str, plan: dict, error_msg: str = None
+        self, query: str, plan: dict, error_msg: str | None = None
     ) -> dict[str, Any]:
         """Create fallback response when retrieval fails."""
         from .models import Node
@@ -251,7 +252,7 @@ class StorageImplementation:
             return await self._store_in_memory(protocol_handler, node_data)
 
         except Exception as e:
-            logger.error(f"Failed to store knowledge: {e}")
+            logger.exception(f"Failed to store knowledge: {e}")
             return {
                 "node_id": node_id,
                 "status": "error",
@@ -269,7 +270,7 @@ class StorageImplementation:
                 hasattr(storage_backend, "vector_store")
                 and storage_backend.vector_store
             ):
-                vector_result = await storage_backend.vector_store.add_document(
+                await storage_backend.vector_store.add_document(
                     doc_id=node_data["id"],
                     content=node_data["content"],
                     metadata=node_data["metadata"],
@@ -277,7 +278,7 @@ class StorageImplementation:
 
             # Add to graph store if available
             if hasattr(storage_backend, "graph_store") and storage_backend.graph_store:
-                graph_result = await storage_backend.graph_store.add_node(
+                await storage_backend.graph_store.add_node(
                     node_id=node_data["id"], properties=node_data
                 )
 
@@ -288,7 +289,7 @@ class StorageImplementation:
             }
 
         except Exception as e:
-            logger.error(f"Backend storage failed: {e}")
+            logger.exception(f"Backend storage failed: {e}")
             raise
 
     async def _store_in_memory(
@@ -354,7 +355,7 @@ class StorageImplementation:
             return await self._update_in_memory(protocol_handler, node_id, update_data)
 
         except Exception as e:
-            logger.error(f"Failed to update knowledge: {e}")
+            logger.exception(f"Failed to update knowledge: {e}")
             return {
                 "node_id": node_id,
                 "status": "error",
@@ -373,14 +374,13 @@ class StorageImplementation:
             if (
                 hasattr(storage_backend, "vector_store")
                 and storage_backend.vector_store
-            ):
-                if "content" in update_data:
-                    await storage_backend.vector_store.update_document(
-                        doc_id=node_id,
-                        content=update_data["content"],
-                        metadata=update_data.get("metadata", {}),
-                    )
-                    results["vector_updated"] = True
+            ) and "content" in update_data:
+                await storage_backend.vector_store.update_document(
+                    doc_id=node_id,
+                    content=update_data["content"],
+                    metadata=update_data.get("metadata", {}),
+                )
+                results["vector_updated"] = True
 
             # Update in graph store
             if hasattr(storage_backend, "graph_store") and storage_backend.graph_store:
@@ -392,7 +392,7 @@ class StorageImplementation:
             return results
 
         except Exception as e:
-            logger.error(f"Backend update failed: {e}")
+            logger.exception(f"Backend update failed: {e}")
             raise
 
     async def _update_in_memory(
@@ -450,7 +450,7 @@ class StorageImplementation:
             )
 
         except Exception as e:
-            logger.error(f"Failed to delete knowledge: {e}")
+            logger.exception(f"Failed to delete knowledge: {e}")
             return {
                 "node_id": node_id,
                 "status": "error",
@@ -481,7 +481,7 @@ class StorageImplementation:
             return results
 
         except Exception as e:
-            logger.error(f"Backend deletion failed: {e}")
+            logger.exception(f"Backend deletion failed: {e}")
             raise
 
     async def _delete_in_memory(
@@ -564,7 +564,7 @@ class ModelRegistrationImplementation:
             )
 
         except Exception as e:
-            logger.error(f"Model registration failed: {e}")
+            logger.exception(f"Model registration failed: {e}")
             return {
                 "agent_id": agent_id,
                 "status": "error",
@@ -622,7 +622,7 @@ class ModelRegistrationImplementation:
 
 
 # Helper function to apply all improvements
-def apply_protocol_improvements():
+def apply_protocol_improvements() -> None:
     """Instructions for applying these improvements to protocol.py:
 
     1. Replace the TODO in handle_query (line 224) with:

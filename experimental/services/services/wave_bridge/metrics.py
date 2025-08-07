@@ -1,5 +1,5 @@
 """Response Time Monitoring and Metrics for WhatsApp Wave Bridge
-Target: <5 second response time with comprehensive tracking
+Target: <5 second response time with comprehensive tracking.
 """
 
 from collections import defaultdict, deque
@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 
 
 class ResponseMetrics:
-    """Comprehensive response time and performance metrics tracking"""
+    """Comprehensive response time and performance metrics tracking."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Response time tracking
         self.response_times = deque(maxlen=1000)  # Keep last 1000 responses
         self.hourly_metrics = defaultdict(list)
@@ -60,8 +60,8 @@ class ResponseMetrics:
         # Initialize performance dashboard
         self.initialize_dashboard()
 
-    def initialize_dashboard(self):
-        """Initialize W&B dashboard configuration"""
+    def initialize_dashboard(self) -> None:
+        """Initialize W&B dashboard configuration."""
         # Define dashboard metrics
         dashboard_config = {
             "charts": [
@@ -91,8 +91,8 @@ class ResponseMetrics:
 
         wandb.config.update({"dashboard_config": dashboard_config})
 
-    async def update_metrics(self, metrics_data: dict[str, Any]):
-        """Update all metrics with new response data"""
+    async def update_metrics(self, metrics_data: dict[str, Any]) -> None:
+        """Update all metrics with new response data."""
         try:
             response_time = metrics_data.get("response_time", 0.0)
             language = metrics_data.get("language", "en")
@@ -131,12 +131,12 @@ class ResponseMetrics:
             await self.log_to_wandb(metrics_data, response_time)
 
         except Exception as e:
-            logger.error(f"Error updating metrics: {e}")
+            logger.exception(f"Error updating metrics: {e}")
 
     async def check_performance_alerts(
         self, response_time: float, language: str, session_id: str
-    ):
-        """Check for performance issues and generate alerts"""
+    ) -> None:
+        """Check for performance issues and generate alerts."""
         current_time = time.time()
 
         # Check response time alerts
@@ -191,12 +191,12 @@ class ResponseMetrics:
                     )
 
     def should_send_alert(self, alert_type: str, current_time: float) -> bool:
-        """Check if alert should be sent (respects cooldown)"""
+        """Check if alert should be sent (respects cooldown)."""
         last_sent = self.last_alert_time.get(alert_type, 0)
         return (current_time - last_sent) > self.alert_cooldown
 
-    async def send_alert(self, alert_data: dict[str, Any]):
-        """Send performance alert"""
+    async def send_alert(self, alert_data: dict[str, Any]) -> None:
+        """Send performance alert."""
         try:
             # Log alert to W&B
             wandb.log({"performance_alert": alert_data})
@@ -210,10 +210,12 @@ class ResponseMetrics:
             logger.warning(f"Performance alert: {alert_data['type']} - {alert_data}")
 
         except Exception as e:
-            logger.error(f"Error sending alert: {e}")
+            logger.exception(f"Error sending alert: {e}")
 
-    async def log_to_wandb(self, metrics_data: dict[str, Any], response_time: float):
-        """Log comprehensive metrics to W&B"""
+    async def log_to_wandb(
+        self, metrics_data: dict[str, Any], response_time: float
+    ) -> None:
+        """Log comprehensive metrics to W&B."""
         try:
             # Calculate performance indicators
             performance_data = {
@@ -262,10 +264,10 @@ class ResponseMetrics:
             wandb.log(performance_data)
 
         except Exception as e:
-            logger.error(f"Error logging to W&B: {e}")
+            logger.exception(f"Error logging to W&B: {e}")
 
     def get_performance_level(self, response_time: float) -> str:
-        """Categorize performance level based on response time"""
+        """Categorize performance level based on response time."""
         if response_time <= self.excellent_threshold:
             return "excellent"
         if response_time <= self.warning_threshold:
@@ -275,7 +277,7 @@ class ResponseMetrics:
         return "poor"
 
     def percentile(self, data: list[float], percentile: int) -> float:
-        """Calculate percentile of response times"""
+        """Calculate percentile of response times."""
         if not data:
             return 0.0
 
@@ -292,7 +294,7 @@ class ResponseMetrics:
         )
 
     async def get_summary(self) -> dict[str, Any]:
-        """Get comprehensive performance summary"""
+        """Get comprehensive performance summary."""
         try:
             if not self.response_times:
                 return {
@@ -357,9 +359,7 @@ class ResponseMetrics:
                             > datetime.now() - timedelta(hours=24)
                         ]
                     ),
-                    "total_alert_types": len(
-                        set(a["type"] for a in self.alert_history)
-                    ),
+                    "total_alert_types": len({a["type"] for a in self.alert_history}),
                 },
                 "last_updated": datetime.now().isoformat(),
             }
@@ -396,11 +396,11 @@ class ResponseMetrics:
             return summary
 
         except Exception as e:
-            logger.error(f"Error generating summary: {e}")
+            logger.exception(f"Error generating summary: {e}")
             return {"error": str(e)}
 
-    def record_error(self, error_type: str, session_id: str = None):
-        """Record an error occurrence"""
+    def record_error(self, error_type: str, session_id: str | None = None) -> None:
+        """Record an error occurrence."""
         self.error_counts[error_type] += 1
 
         # Log error to W&B
@@ -415,13 +415,13 @@ class ResponseMetrics:
             }
         )
 
-    def record_timeout(self, session_id: str = None):
-        """Record a timeout occurrence"""
+    def record_timeout(self, session_id: str | None = None) -> None:
+        """Record a timeout occurrence."""
         self.timeout_count += 1
         self.record_error("timeout", session_id)
 
     async def generate_performance_report(self) -> str:
-        """Generate human-readable performance report"""
+        """Generate human-readable performance report."""
         summary = await self.get_summary()
 
         if "error" in summary:

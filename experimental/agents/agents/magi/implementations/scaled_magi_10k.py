@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scaled Magi Specialization - 10,000 Questions
+"""Scaled Magi Specialization - 10,000 Questions.
 
 Scale the proven 300-question Magi specialization to full 10,000 questions
 using the exact pipeline that achieved 0.774 specialization score.
@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 class ScaledMagiRunner:
     """Scale the proven Magi specialization from 300 to 10,000 questions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.start_time = datetime.now()
         self.run_id = f"scaled_magi_10k_{self.start_time.strftime('%Y%m%d_%H%M%S')}"
         self.output_dir = Path(f"D:/AgentForge/{self.run_id}")
@@ -236,7 +236,7 @@ class ScaledMagiRunner:
             return None
 
         except Exception as e:
-            logger.error(f"Scaled Magi specialization failed: {e}")
+            logger.exception(f"Scaled Magi specialization failed: {e}")
             log_metrics({"scaled_magi_error": 1, "error_message": str(e)})
             return None
 
@@ -249,7 +249,7 @@ async def main():
 
     try:
         # Initialize tracking
-        wandb_success = runner.initialize_wandb_tracking()
+        runner.initialize_wandb_tracking()
 
         # Execute scaled specialization
         logger.info("LAUNCHING SCALED MAGI TRAINING...")
@@ -300,7 +300,7 @@ async def main():
         return None
 
     except Exception as e:
-        logger.error(f"Scaled execution failed: {e}")
+        logger.exception(f"Scaled execution failed: {e}")
         return None
     finally:
         finish_wandb()

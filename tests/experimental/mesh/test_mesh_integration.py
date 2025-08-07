@@ -162,4 +162,4 @@ def test_mesh_integration_pytest():
 
 if __name__ == "__main__":
     result = asyncio.run(test_mesh_integration())
-    exit(0 if result else 1)
+    sys.exit(0 if result else 1)

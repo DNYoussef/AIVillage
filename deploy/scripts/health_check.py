@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Comprehensive health check script for AIVillage deployment.
-"""
+"""Comprehensive health check script for AIVillage deployment."""
 
 import argparse
 import asyncio
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class HealthChecker:
-    def __init__(self, environment: str):
+    def __init__(self, environment: str) -> None:
         self.environment = environment
         self.namespace = f"aivillage-{environment}"
         self.results = {}
@@ -202,21 +201,23 @@ class HealthChecker:
 
             await asyncio.sleep(2)  # Wait for port forward
 
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(
                     "http://localhost:6333/", timeout=aiohttp.ClientTimeout(total=10)
-                ) as response:
-                    if response.status == 200:
-                        db_results["qdrant"] = {
-                            "status": "PASS",
-                            "response_code": response.status,
-                        }
-                    else:
-                        db_results["qdrant"] = {
-                            "status": "FAIL",
-                            "response_code": response.status,
-                        }
-                        self.overall_health = False
+                ) as response,
+            ):
+                if response.status == 200:
+                    db_results["qdrant"] = {
+                        "status": "PASS",
+                        "response_code": response.status,
+                    }
+                else:
+                    db_results["qdrant"] = {
+                        "status": "FAIL",
+                        "response_code": response.status,
+                    }
+                    self.overall_health = False
 
             proc.terminate()
 
@@ -381,7 +382,7 @@ class HealthChecker:
 
         return self.results
 
-    def print_health_summary(self):
+    def print_health_summary(self) -> None:
         """Print a human-readable health summary."""
         print(f"\n{'='*60}")
         print(f"AIVillage Health Check Summary - {self.environment.upper()}")
@@ -428,14 +429,14 @@ class HealthChecker:
 
         print(f"{'='*60}")
 
-    def save_results(self, output_file: str):
+    def save_results(self, output_file: str) -> None:
         """Save results to a JSON file."""
         with open(output_file, "w") as f:
             json.dump(self.results, f, indent=2)
         logger.info(f"Health check results saved to {output_file}")
 
 
-async def main():
+async def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run comprehensive health check for AIVillage deployment"
     )
@@ -453,7 +454,7 @@ async def main():
     args = parser.parse_args()
 
     health_checker = HealthChecker(args.environment)
-    results = await health_checker.run_comprehensive_health_check()
+    await health_checker.run_comprehensive_health_check()
 
     if not args.quiet:
         health_checker.print_health_summary()

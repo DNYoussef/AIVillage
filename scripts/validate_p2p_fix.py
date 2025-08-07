@@ -1,4 +1,4 @@
-"""Validate P2P Protocol Compatibility Fix
+"""Validate P2P Protocol Compatibility Fix.
 
 This script validates that the P2P integration bug has been fixed by testing:
 1. Protocol mismatch is resolved (discovery + encrypted P2P compatibility)
@@ -31,7 +31,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def test_discovery_protocol_compatibility():
+async def test_discovery_protocol_compatibility() -> bool | None:
     """Test 1: Discovery protocol can communicate with P2P server."""
     print("[TEST 1] Discovery Protocol Compatibility")
 
@@ -117,7 +117,7 @@ async def test_discovery_protocol_compatibility():
         await node.stop()
 
 
-async def test_evolution_peer_limit_removed():
+async def test_evolution_peer_limit_removed() -> bool | None:
     """Test 2: Evolution peer selection no longer limited to 5."""
     print("🔍 Test 2: Evolution Peer Limit Removed")
 
@@ -175,7 +175,7 @@ async def test_evolution_peer_limit_removed():
         await node.stop()
 
 
-async def test_multi_node_network():
+async def test_multi_node_network() -> bool | None:
     """Test 3: Multi-node network can form successfully."""
     print("🔍 Test 3: Multi-Node Network Formation")
 
@@ -253,7 +253,7 @@ async def test_multi_node_network():
                 logger.warning(f"Error stopping node: {e}")
 
 
-async def validate_code_changes():
+async def validate_code_changes() -> bool | None:
     """Test 4: Validate that our code changes are present."""
     print("🔍 Test 4: Code Changes Validation")
 
@@ -304,12 +304,11 @@ def find_free_port(start_port=9400, max_tries=100):
                 return port
         except OSError:
             continue
-    raise RuntimeError(
-        f"Could not find free port in range {start_port}-{start_port + max_tries}"
-    )
+    msg = f"Could not find free port in range {start_port}-{start_port + max_tries}"
+    raise RuntimeError(msg)
 
 
-async def main():
+async def main() -> bool:
     """Run all validation tests."""
     print("🚀 P2P Protocol Fix Validation")
     print("=" * 50)

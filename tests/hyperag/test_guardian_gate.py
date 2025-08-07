@@ -18,9 +18,9 @@ class MockProposal:
         operation_type: str,
         target_id: str,
         confidence: float = 0.8,
-        relationship_type: str = None,
+        relationship_type: str | None = None,
         rationale: str = "Test rationale",
-        edge_type: str = None,
+        edge_type: str | None = None,
     ):
         self.operation_type = operation_type
         self.target_id = target_id
@@ -42,7 +42,7 @@ class MockViolation:
         id: str = "GDC_TEST",
         severity: str = "medium",
         domain: str = "general",
-        subgraph: dict = None,
+        subgraph: dict | None = None,
     ):
         self.id = id
         self.severity = severity
@@ -253,7 +253,7 @@ class TestGuardianGate:
     def test_simulation_node_deletion(self, guardian_gate, medical_subgraph):
         """Test graph simulation for node deletion."""
         original_nodes = len(medical_subgraph["nodes"])
-        original_edges = len(medical_subgraph["edges"])
+        len(medical_subgraph["edges"])
 
         # Simulate deletion of patient1 node
         simulated = medical_subgraph.copy()

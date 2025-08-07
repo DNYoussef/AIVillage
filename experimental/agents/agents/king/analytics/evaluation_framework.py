@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class EvaluationFramework:
-    def __init__(self, metrics_history_length: int = 1000):
+    def __init__(self, metrics_history_length: int = 1000) -> None:
         self.metrics_history_length = metrics_history_length
         self.metrics = {
             "response_time": deque(maxlen=metrics_history_length),
@@ -23,7 +23,7 @@ class EvaluationFramework:
             "rag_relevance": deque(maxlen=metrics_history_length),
         }
 
-    def record_metric(self, metric_name: str, value: float):
+    def record_metric(self, metric_name: str, value: float) -> None:
         if metric_name in self.metrics:
             self.metrics[metric_name].append(value)
         else:
@@ -133,13 +133,13 @@ class EvaluationFramework:
             "visualization": self.visualize_metrics(),
         }
 
-    def reset_metrics(self):
+    def reset_metrics(self) -> None:
         """Reset all metrics to their initial state."""
         for metric in self.metrics:
             self.metrics[metric].clear()
         logger.info("All metrics have been reset.")
 
-    async def save_metrics(self, path: str):
+    async def save_metrics(self, path: str) -> None:
         """Save the current state of metrics to a file."""
         import json
 
@@ -147,7 +147,7 @@ class EvaluationFramework:
             json.dump({k: list(v) for k, v in self.metrics.items()}, f)
         logger.info(f"Metrics saved to {path}")
 
-    async def load_metrics(self, path: str):
+    async def load_metrics(self, path: str) -> None:
         """Load metrics from a file."""
         import json
 

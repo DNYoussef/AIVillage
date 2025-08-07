@@ -228,7 +228,7 @@ class TestSeedLMCore:
 
         # Process large weight
         large_weight = torch.randn(4096, 4096)
-        compressed = encoder.encode(large_weight, streaming=True)
+        encoder.encode(large_weight, streaming=True)
 
         peak_memory = process.memory_info().rss / 1024 / 1024  # MB
         memory_increase = peak_memory - initial_memory
@@ -318,7 +318,7 @@ class TestSeedLMCore:
         def encode_weight():
             return encoder.encode(weight)
 
-        result = benchmark(encode_weight)
+        benchmark(encode_weight)
 
         # Performance assertions
         assert benchmark.stats["mean"] < 0.1, "Encoding should complete in <100ms"
@@ -333,7 +333,7 @@ class TestSeedLMCore:
         def decode_weight():
             return encoder.decode(compressed)
 
-        result = benchmark(decode_weight)
+        benchmark(decode_weight)
 
         # Decoding should be faster than encoding
         assert benchmark.stats["mean"] < 0.05, "Decoding should complete in <50ms"

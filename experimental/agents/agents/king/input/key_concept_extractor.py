@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class KeyConceptExtractor:
-    def __init__(self, llm_config: OpenAIGPTConfig):
+    def __init__(self, llm_config: OpenAIGPTConfig) -> None:
         self.llm = llm_config.create()
 
     @error_handler.handle_error
@@ -60,8 +60,9 @@ class KeyConceptExtractor:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse concept response: {response}")
-            raise AIVillageException("Failed to parse concept response")
+            logger.exception(f"Failed to parse concept response: {response}")
+            msg = "Failed to parse concept response"
+            raise AIVillageException(msg)
 
     def _build_concept_graph(self, concepts: dict[str, Any]) -> nx.Graph:
         G = nx.Graph()
@@ -112,8 +113,9 @@ class KeyConceptExtractor:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse importance response: {response}")
-            raise AIVillageException("Failed to parse importance response")
+            logger.exception(f"Failed to parse importance response: {response}")
+            msg = "Failed to parse importance response"
+            raise AIVillageException(msg)
 
     @safe_execute
     async def process_input(
@@ -183,7 +185,7 @@ class KeyConceptExtractor:
 if __name__ == "__main__":
     import asyncio
 
-    async def main():
+    async def main() -> None:
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
         extractor = KeyConceptExtractor(llm_config)
 

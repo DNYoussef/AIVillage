@@ -1,4 +1,4 @@
-"""Standardized Training Interface
+"""Standardized Training Interface.
 
 This module defines the standard interface for training operations,
 model management, and training pipeline coordination.
@@ -7,6 +7,7 @@ model management, and training pipeline coordination.
 from abc import ABC, abstractmethod
 import asyncio
 from collections.abc import Callable
+import contextlib
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -157,7 +158,7 @@ class TrainingConfig:
 class ModelInterface(ABC):
     """Standard interface for ML models."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, metadata: ModelMetadata) -> None:
         self.metadata = metadata
         self.status = ModelStatus.UNTRAINED
         self._model = None
@@ -242,7 +243,7 @@ class TrainingInterface(ABC):
     within the Agent Forge pipeline and other training systems.
     """
 
-    def __init__(self, config: TrainingConfig):
+    def __init__(self, config: TrainingConfig) -> None:
         self.config = config
         self.status = TrainingStatus.INITIALIZING
         self.metrics = TrainingMetrics()
@@ -340,10 +341,8 @@ class TrainingInterface(ABC):
         """Stop training process."""
         if self._training_task and not self._training_task.done():
             self._training_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._training_task
-            except asyncio.CancelledError:
-                pass
 
         self.set_status(TrainingStatus.CANCELLED)
         return True
@@ -568,11 +567,7 @@ def validate_training_interface(trainer: Any) -> bool:
             return False
 
     required_attributes = ["config", "status", "metrics"]
-    for attr in required_attributes:
-        if not hasattr(trainer, attr):
-            return False
-
-    return True
+    return all(hasattr(trainer, attr) for attr in required_attributes)
 
 
 def validate_model_interface(model: Any) -> bool:
@@ -597,8 +592,4 @@ def validate_model_interface(model: Any) -> bool:
             return False
 
     required_attributes = ["metadata", "status"]
-    for attr in required_attributes:
-        if not hasattr(model, attr):
-            return False
-
-    return True
+    return all(hasattr(model, attr) for attr in required_attributes)

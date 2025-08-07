@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Production readiness tests for AIVillage deployment.
-"""
+"""Production readiness tests for AIVillage deployment."""
 
 import argparse
 import asyncio
@@ -29,7 +28,7 @@ class ReadinessTest:
 
 
 class ProductionReadinessValidator:
-    def __init__(self, environment: str, namespace: str, slot: str):
+    def __init__(self, environment: str, namespace: str, slot: str) -> None:
         self.environment = environment
         self.namespace = namespace
         self.slot = slot
@@ -124,7 +123,7 @@ class ProductionReadinessValidator:
             return success
 
         except Exception as e:
-            logger.error(f"❌ {service_name} availability test failed: {e}")
+            logger.exception(f"❌ {service_name} availability test failed: {e}")
             self.results.append({"test": test.name, "status": "FAIL", "error": str(e)})
             self.all_passed = False
             if "proc" in locals():
@@ -189,7 +188,8 @@ class ProductionReadinessValidator:
                     "MATCH (n) RETURN count(n) LIMIT 1;",
                 ]
             else:
-                raise ValueError(f"Unknown database type: {db_type}")
+                msg = f"Unknown database type: {db_type}"
+                raise ValueError(msg)
 
             result = subprocess.run(
                 cmd, capture_output=True, text=True, timeout=30, check=False
@@ -222,7 +222,7 @@ class ProductionReadinessValidator:
             return success
 
         except Exception as e:
-            logger.error(f"❌ {db_type} performance test failed: {e}")
+            logger.exception(f"❌ {db_type} performance test failed: {e}")
             self.results.append({"test": test.name, "status": "FAIL", "error": str(e)})
             self.all_passed = False
             return False
@@ -241,7 +241,8 @@ class ProductionReadinessValidator:
             )
 
             if result.returncode != 0:
-                raise Exception(f"Failed to get pod metrics: {result.stderr}")
+                msg = f"Failed to get pod metrics: {result.stderr}"
+                raise Exception(msg)
 
             resource_violations = []
 
@@ -299,7 +300,7 @@ class ProductionReadinessValidator:
             return success
 
         except Exception as e:
-            logger.error(f"❌ Resource limits test failed: {e}")
+            logger.exception(f"❌ Resource limits test failed: {e}")
             self.results.append({"test": test.name, "status": "FAIL", "error": str(e)})
             self.all_passed = False
             return False
@@ -319,13 +320,15 @@ class ProductionReadinessValidator:
             )
 
             if result.returncode != 0:
-                raise Exception(f"Failed to get ingress: {result.stderr}")
+                msg = f"Failed to get ingress: {result.stderr}"
+                raise Exception(msg)
 
             ingress_data = json.loads(result.stdout)
             ingress_items = ingress_data.get("items", [])
 
             if not ingress_items:
-                raise Exception("No ingress found")
+                msg = "No ingress found"
+                raise Exception(msg)
 
             # Check ingress status
             ingress = ingress_items[0]
@@ -352,7 +355,7 @@ class ProductionReadinessValidator:
             return success
 
         except Exception as e:
-            logger.error(f"❌ Load balancer configuration test failed: {e}")
+            logger.exception(f"❌ Load balancer configuration test failed: {e}")
             self.results.append({"test": test.name, "status": "FAIL", "error": str(e)})
             self.all_passed = False
             return False
@@ -371,7 +374,8 @@ class ProductionReadinessValidator:
             )
 
             if result.returncode != 0:
-                raise Exception(f"Failed to get pods: {result.stderr}")
+                msg = f"Failed to get pods: {result.stderr}"
+                raise Exception(msg)
 
             pods_data = json.loads(result.stdout)
             security_violations = []
@@ -424,7 +428,7 @@ class ProductionReadinessValidator:
             return success
 
         except Exception as e:
-            logger.error(f"❌ Security configuration test failed: {e}")
+            logger.exception(f"❌ Security configuration test failed: {e}")
             self.results.append({"test": test.name, "status": "FAIL", "error": str(e)})
             self.all_passed = False
             return False
@@ -485,7 +489,7 @@ class ProductionReadinessValidator:
 
         return self.all_passed
 
-    def save_results(self, output_file: str):
+    def save_results(self, output_file: str) -> None:
         """Save test results to a file."""
         with open(output_file, "w") as f:
             json.dump(
@@ -502,7 +506,7 @@ class ProductionReadinessValidator:
             )
 
 
-async def main():
+async def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run production readiness tests for AIVillage deployment"
     )

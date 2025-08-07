@@ -30,7 +30,7 @@ print(f"   Available: {mem['available_gb']:.2f} GB")
 print(f"   Used: {mem['used_gb']:.2f} GB")
 print(f"   Percent: {mem['percent']:.1f}%")
 print(
-    f"   All values are numeric: {all(isinstance(v, (int, float)) for v in mem.values())}"
+    f"   All values are numeric: {all(isinstance(v, int | float) for v in mem.values())}"
 )
 
 # Test disk usage
@@ -74,7 +74,7 @@ for i in range(5):
     time.sleep(1)
 
 # Check if values are changing
-cpu_changing = len(set(m["cpu_percent"] for m in metrics_list)) > 1
+cpu_changing = len({m["cpu_percent"] for m in metrics_list}) > 1
 print(f"\nCPU values changing: {cpu_changing}")
 print(
     f"Timestamps incrementing: {all(metrics_list[i]['timestamp'] < metrics_list[i+1]['timestamp'] for i in range(4))}"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify Sprints 8-9 are actually complete"""
+"""Verify Sprints 8-9 are actually complete."""
 from pathlib import Path
 import subprocess
 import sys
@@ -65,7 +65,7 @@ def verify_sprint_9():
     return passed == len(checks)
 
 
-def main():
+def main() -> int:
     sprint8_done = verify_sprint_8()
     sprint9_done = verify_sprint_9()
     print("\n" + "=" * 50)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unified Entry Point for AIVillage Platform
+"""Unified Entry Point for AIVillage Platform.
 
 This is the main entry point for the AIVillage platform, providing a unified
 CLI interface for all services and modes of operation.
@@ -29,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 
 def create_parser():
-    """Create the unified argument parser"""
+    """Create the unified argument parser."""
     parser = argparse.ArgumentParser(
         description="AIVillage Unified Entry Point",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -86,7 +86,7 @@ Examples:
 
 
 def run_agent_forge_mode(args):
-    """Run Agent Forge mode"""
+    """Run Agent Forge mode."""
     try:
         from agent_forge.main import main as agent_forge_main
 
@@ -108,7 +108,7 @@ def run_agent_forge_mode(args):
 
 
 def run_king_mode(args):
-    """Run KING agent mode"""
+    """Run KING agent mode."""
     try:
         from agents.king.main import main as king_main
 
@@ -132,7 +132,7 @@ def run_king_mode(args):
 
 
 def run_rag_mode(args):
-    """Run RAG system mode"""
+    """Run RAG system mode."""
     try:
         from rag_system.main import main as rag_main
 
@@ -158,7 +158,7 @@ def run_rag_mode(args):
 
 
 def run_core_mode(args):
-    """Run core utilities mode"""
+    """Run core utilities mode."""
     try:
         from agent_forge.core.main import main as core_main
 
@@ -181,7 +181,7 @@ def run_core_mode(args):
 
 
 def main():
-    """Main entry point"""
+    """Main entry point."""
     parser = create_parser()
     args = parser.parse_args()
 

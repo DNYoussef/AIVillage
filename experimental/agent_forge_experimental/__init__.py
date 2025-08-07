@@ -1,4 +1,4 @@
-"""AIVillage Agent Forge - Experimental Components
+"""AIVillage Agent Forge - Experimental Components.
 
 Experimental agent_forge components moved from main agent_forge:
 - self_awareness: Self-awareness experiments

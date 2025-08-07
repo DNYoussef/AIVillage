@@ -19,7 +19,7 @@ from pathlib import Path
 import signal
 import sys
 import time
-from typing import Any, TypeVar
+from typing import Any, NoReturn, TypeVar
 
 import psutil
 
@@ -38,7 +38,7 @@ class ScriptTimeoutError(ScriptError):
 class ResourceMonitor:
     """Monitor system resources during script execution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the resource monitor."""
         self.start_time: float | None = None
         self.peak_memory: float = 0.0
@@ -59,7 +59,8 @@ class ResourceMonitor:
             Dictionary with current resource usage
         """
         if self.start_time is None:
-            raise RuntimeError("Resource monitor not started")
+            msg = "Resource monitor not started"
+            raise RuntimeError(msg)
 
         current_memory = psutil.virtual_memory().used / (1024**3)  # GB
         current_cpu = psutil.cpu_percent(interval=0.1)
@@ -257,7 +258,7 @@ def handle_errors(
                 if log_traceback:
                     logger.exception(f"Error in {func.__name__}: {e}")
                 else:
-                    logger.error(f"Error in {func.__name__}: {e}")
+                    logger.exception(f"Error in {func.__name__}: {e}")
 
                 if exit_on_error:
                     sys.exit(1)
@@ -284,7 +285,7 @@ def monitor_resources(log_interval: int = 30) -> Callable[[F], F]:
             logger = logging.getLogger(func.__module__)
             monitor = ResourceMonitor()
 
-            def log_resources():
+            def log_resources() -> None:
                 stats = monitor.update()
                 logger.info(
                     f"Resource usage - Memory: {stats['current_memory_gb']:.1f}GB "
@@ -302,7 +303,7 @@ def monitor_resources(log_interval: int = 30) -> Callable[[F], F]:
                 # Set up periodic resource logging
                 if log_interval > 0:
 
-                    def signal_handler(signum, frame):
+                    def signal_handler(signum, frame) -> None:
                         log_resources()
                         # Re-schedule the signal
                         signal.alarm(log_interval)
@@ -353,10 +354,9 @@ def timeout_handler(timeout_seconds: int) -> Callable[[F], F]:
         def wrapper(*args, **kwargs):
             logger = logging.getLogger(func.__module__)
 
-            def timeout_signal_handler(signum, frame):
-                raise ScriptTimeoutError(
-                    f"Function {func.__name__} timed out after {timeout_seconds} seconds"
-                )
+            def timeout_signal_handler(signum, frame) -> NoReturn:
+                msg = f"Function {func.__name__} timed out after {timeout_seconds} seconds"
+                raise ScriptTimeoutError(msg)
 
             # Set up timeout signal
             old_handler = signal.signal(signal.SIGALRM, timeout_signal_handler)

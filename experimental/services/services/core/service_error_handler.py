@@ -6,11 +6,10 @@ with consistent logging, error categorization, and API responses.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from functools import wraps
 import logging
 import traceback
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -22,6 +21,9 @@ from core.error_handling import (
     ErrorContext,
     ErrorSeverity,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Service-specific error codes
 SERVICE_ERROR_CODES = {
@@ -96,7 +98,7 @@ SERVICE_ERROR_CODES = {
 class ServiceErrorHandler:
     """Centralized error handler for FastAPI services."""
 
-    def __init__(self, service_name: str, logger: logging.Logger | None = None):
+    def __init__(self, service_name: str, logger: logging.Logger | None = None) -> None:
         self.service_name = service_name
         self.logger = logger or logging.getLogger(service_name)
 
@@ -109,7 +111,7 @@ class ServiceErrorHandler:
         """Create standardized error response."""
         if isinstance(exception, AIVillageException):
             error_info = exception.to_dict()
-            status_code = SERVICE_ERROR_CODES.get(
+            SERVICE_ERROR_CODES.get(
                 exception.category, SERVICE_ERROR_CODES[ErrorCategory.UNKNOWN]
             )[exception.severity]
         else:
@@ -125,7 +127,6 @@ class ServiceErrorHandler:
                 ),
             )
             error_info = av_exception.to_dict()
-            status_code = 500
 
         response = {
             "error": {
@@ -279,7 +280,7 @@ class ServiceErrorHandler:
                         )
 
                     # Log and re-raise
-                    self.logger.error(
+                    self.logger.exception(
                         f"Service operation failed: {exc.message}",
                         extra={
                             "error": exc.to_dict(),
@@ -287,7 +288,7 @@ class ServiceErrorHandler:
                             "service": self.service_name,
                         },
                     )
-                    raise exc
+                    raise
 
             return wrapper
 

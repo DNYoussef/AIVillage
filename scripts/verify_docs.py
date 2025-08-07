@@ -23,7 +23,7 @@ START, END = "<!--feature-matrix-start-->", "<!--feature-matrix-end-->"
 
 
 def current_feature_matrix() -> str:
-    """Load matrix block from README.md"""
+    """Load matrix block from README.md."""
     content = (ROOT / "README.md").read_text().splitlines()
     if START not in content or END not in content:
         sys.exit("Feature matrix tags missing from README.md")

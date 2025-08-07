@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class DevEnvironmentSetup:
     """Development environment setup and validation."""
 
-    def __init__(self, project_root: Path | None = None):
+    def __init__(self, project_root: Path | None = None) -> None:
         self.project_root = project_root or Path.cwd()
         self.requirements_files = [
             "requirements.txt",
@@ -36,7 +36,7 @@ class DevEnvironmentSetup:
             )
             return result.returncode, result.stdout, result.stderr
         except subprocess.CalledProcessError as e:
-            logger.error(f"Command failed: {e}")
+            logger.exception(f"Command failed: {e}")
             return e.returncode, e.stdout or "", e.stderr or ""
 
     def check_python_version(self) -> bool:
@@ -166,7 +166,7 @@ OUTPUTS_DIR=./outputs
 
             logger.info("Core dependencies imported successfully")
         except ImportError as e:
-            logger.error(f"Import error: {e}")
+            logger.exception(f"Import error: {e}")
             return False
 
         # Check project structure
@@ -217,7 +217,7 @@ OUTPUTS_DIR=./outputs
         return True
 
 
-def main():
+def main() -> int:
     """Main setup function."""
     parser = argparse.ArgumentParser(
         description="Set up AIVillage development environment"

@@ -2,7 +2,7 @@
 • Maintains per-user conversation state in-memory (proof-of-concept)
 • Exposes `/v1/chat`, `/v1/embeddings` stub, `/healthz`, `/metrics`
 • Prometheus counters + histograms
-• Pydantic request/response models w/ user_id & conversation_id
+• Pydantic request/response models w/ user_id & conversation_id.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ from services.core.service_error_handler import (
 
 
 class DummyModel:
-    def __init__(self, model_path: str):
+    def __init__(self, model_path: str) -> None:
         self.model_path = model_path
 
     def infer(self, prompt: str) -> str:
@@ -99,7 +99,7 @@ EXPLAIN_LATENCY = Histogram(
 
 
 class TwinAgent:
-    def __init__(self, model_path: str):
+    def __init__(self, model_path: str) -> None:
         self._model = DummyModel(model_path)
         self._conversations: LRUCache = LRUCache(maxsize=1000)
 
@@ -258,21 +258,22 @@ async def explain_endpoint(req: ExplainRequest):
     try:
         # Validate request
         if not req.src or not req.dst:
+            msg = "Source and destination nodes are required"
             raise validation_error(
-                "Source and destination nodes are required",
+                msg,
                 details={"src_provided": bool(req.src), "dst_provided": bool(req.dst)},
             )
 
         if req.src == req.dst:
-            raise validation_error(
-                "Source and destination cannot be the same", details={"node": req.src}
-            )
+            msg = "Source and destination cannot be the same"
+            raise validation_error(msg, details={"node": req.src})
 
         hops = req.hops if req.hops is not None else MAX_HOPS
 
         if hops <= 0 or hops > MAX_HOPS:
+            msg = f"Hops must be between 1 and {MAX_HOPS}"
             raise validation_error(
-                f"Hops must be between 1 and {MAX_HOPS}",
+                msg,
                 details={"hops": hops, "max_hops": MAX_HOPS},
             )
 
@@ -280,8 +281,9 @@ async def explain_endpoint(req: ExplainRequest):
 
         if not data["found"]:
             EXPLAIN_REQS.labels(status="error").inc()
+            msg = "Path not found between nodes"
             raise resource_error(
-                "Path not found between nodes",
+                msg,
                 details={
                     "source": req.src,
                     "destination": req.dst,
@@ -311,7 +313,7 @@ async def explain_endpoint(req: ExplainRequest):
             },
         )
 
-        logger.error(
+        logger.exception(
             "Path explanation failed",
             extra={
                 "error": service_error.to_dict(),

@@ -99,7 +99,7 @@ async def test_core_p2p_cluster(num_nodes: int = 5):
             )
 
     except Exception as e:
-        logger.error(f"Core P2P cluster test failed: {e}")
+        logger.exception(f"Core P2P cluster test failed: {e}")
         raise
     finally:
         # Clean up
@@ -154,7 +154,7 @@ async def test_production_p2p_cluster(num_nodes: int = 5):
             logger.info(f"  Stats: {json.dumps(stats, indent=2)}")
 
     except Exception as e:
-        logger.error(f"Production P2P cluster test failed: {e}")
+        logger.exception(f"Production P2P cluster test failed: {e}")
     finally:
         # Clean up
         for i, node in enumerate(started_nodes if "started_nodes" in locals() else []):
@@ -177,7 +177,7 @@ async def test_mixed_network_simulation():
             await test_core_p2p_cluster(size)
             await asyncio.sleep(2)  # Cool down between tests
         except Exception as e:
-            logger.error(f"Failed with {size} nodes: {e}")
+            logger.exception(f"Failed with {size} nodes: {e}")
 
     logger.info("Mixed network simulation complete")
 
@@ -259,7 +259,7 @@ async def benchmark_p2p_performance():
             )
 
     except Exception as e:
-        logger.error(f"Performance benchmark failed: {e}")
+        logger.exception(f"Performance benchmark failed: {e}")
     finally:
         # Shutdown all nodes
         await asyncio.gather(*[node.stop() for node in nodes], return_exceptions=True)
@@ -291,7 +291,7 @@ async def main():
         logger.info("All P2P cluster tests completed!")
 
     except Exception as e:
-        logger.error(f"P2P cluster testing failed: {e}")
+        logger.exception(f"P2P cluster testing failed: {e}")
 
 
 if __name__ == "__main__":

@@ -194,7 +194,7 @@ class TestAgentForgeTrainingLoop:
 
         # Verify initialization
         assert training_loop.model == model  # Should not be wrapped
-        assert training_loop.enable_quiet_star == False
+        assert not training_loop.enable_quiet_star
         assert training_loop.curriculum.domain == "coding"
 
     def test_generate_curriculum_level(self):
@@ -574,7 +574,7 @@ class TestTrainingIntegration:
 
                 assert results["levels_completed"] >= 1
                 assert len(results["level_metrics"]) >= 1
-                assert results["quiet_star_enabled"] == False
+                assert not results["quiet_star_enabled"]
 
             except Exception as e:
                 pytest.skip(f"Integration test skipped due to: {e}")

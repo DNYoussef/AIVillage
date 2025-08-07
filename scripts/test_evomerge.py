@@ -26,6 +26,7 @@ from evomerge_pipeline import (
     MergeOperators,
     ModelCandidate,
 )
+import pytest
 import torch
 from transformers import AutoConfig, AutoModelForCausalLM
 
@@ -35,7 +36,7 @@ sys.path.append(str(Path(__file__).parent.parent / "agent_forge"))
 class TestEvoMergePipeline(unittest.TestCase):
     """Test suite for EvoMerge pipeline."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment."""
         self.temp_dir = Path(tempfile.mkdtemp())
 
@@ -60,7 +61,7 @@ class TestEvoMergePipeline(unittest.TestCase):
         self.config.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         self.config.models_cache_dir.mkdir(parents=True, exist_ok=True)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Clean up test environment."""
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
@@ -75,19 +76,19 @@ class TestEvoMergePipeline(unittest.TestCase):
         model = AutoModelForCausalLM.from_config(config)
         return model
 
-    def test_config_validation(self):
+    def test_config_validation(self) -> None:
         """Test configuration validation."""
         # Test valid configuration
         config = EvolutionConfig()
-        self.assertEqual(len(config.base_models), 3)
-        self.assertEqual(sum(config.evaluation_weights.values()), 1.0)
+        assert len(config.base_models) == 3
+        assert sum(config.evaluation_weights.values()) == 1.0
 
         # Test invalid base models count
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             EvolutionConfig(base_models=[BaseModelConfig(name="test1", path="gpt2")])
 
         # Test invalid evaluation weights
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             EvolutionConfig(
                 evaluation_weights={
                     "code": 0.5,
@@ -95,7 +96,7 @@ class TestEvoMergePipeline(unittest.TestCase):
                 }
             )
 
-    def test_merge_operators(self):
+    def test_merge_operators(self) -> None:
         """Test merge operators with dummy models."""
         # Create test models
         models = [self.create_dummy_model() for _ in range(3)]
@@ -104,33 +105,33 @@ class TestEvoMergePipeline(unittest.TestCase):
         # Test linear interpolation
         weights = [0.4, 0.3, 0.3]
         merged_linear = merge_ops.linear_interpolation(models, weights)
-        self.assertIsInstance(merged_linear, torch.nn.Module)
+        assert isinstance(merged_linear, torch.nn.Module)
 
         # Test SLERP interpolation
         merged_slerp = merge_ops.slerp_interpolation(models[0], models[1], t=0.5)
-        self.assertIsInstance(merged_slerp, torch.nn.Module)
+        assert isinstance(merged_slerp, torch.nn.Module)
 
         # Test TIES merge
         merged_ties = merge_ops.ties_merge(models, threshold=0.1)
-        self.assertIsInstance(merged_ties, torch.nn.Module)
+        assert isinstance(merged_ties, torch.nn.Module)
 
         # Test DARE merge
         merged_dare = merge_ops.dare_merge(models, threshold=0.1, amplification=2.0)
-        self.assertIsInstance(merged_dare, torch.nn.Module)
+        assert isinstance(merged_dare, torch.nn.Module)
 
         # Test Frankenmerge
         merged_franken = merge_ops.frankenmerge(models, layer_assignment=[0, 1, 2])
-        self.assertIsInstance(merged_franken, torch.nn.Module)
+        assert isinstance(merged_franken, torch.nn.Module)
 
         # Test DFS merge
         merged_dfs = merge_ops.dfs_merge(models, merge_ratio=0.3)
-        self.assertIsInstance(merged_dfs, torch.nn.Module)
+        assert isinstance(merged_dfs, torch.nn.Module)
 
         print("✅ All merge operators working correctly")
 
     @patch("evomerge_pipeline.AutoTokenizer")
     @patch("evomerge_pipeline.AutoModelForCausalLM")
-    async def test_evaluators(self, mock_model_cls, mock_tokenizer_cls):
+    async def test_evaluators(self, mock_model_cls, mock_tokenizer_cls) -> None:
         """Test model evaluators with mocked components."""
         # Mock tokenizer
         mock_tokenizer = MagicMock()
@@ -151,19 +152,19 @@ class TestEvoMergePipeline(unittest.TestCase):
         # Test code evaluator
         code_eval = CodeEvaluator(device="cpu")
         code_score = await code_eval.evaluate("dummy_path")
-        self.assertIsInstance(code_score, float)
-        self.assertGreaterEqual(code_score, 0.0)
-        self.assertLessEqual(code_score, 1.0)
+        assert isinstance(code_score, float)
+        assert code_score >= 0.0
+        assert code_score <= 1.0
 
         # Test math evaluator
         mock_tokenizer.decode.return_value = "The answer is 4"
         math_eval = MathEvaluator(device="cpu")
         math_score = await math_eval.evaluate("dummy_path")
-        self.assertIsInstance(math_score, float)
+        assert isinstance(math_score, float)
 
         print("✅ Evaluators working correctly")
 
-    def test_model_candidate(self):
+    def test_model_candidate(self) -> None:
         """Test ModelCandidate functionality."""
         candidate = ModelCandidate(
             generation=1,
@@ -180,7 +181,7 @@ class TestEvoMergePipeline(unittest.TestCase):
 
         print("✅ ModelCandidate working correctly")
 
-    def test_evolution_state(self):
+    def test_evolution_state(self) -> None:
         """Test EvolutionState functionality."""
         state = EvolutionState()
 
@@ -194,7 +195,7 @@ class TestEvoMergePipeline(unittest.TestCase):
         state.population = candidates
         state.update_best_candidate()
 
-        self.assertEqual(state.best_candidate.overall_fitness, 0.9)
+        assert state.best_candidate.overall_fitness == 0.9
 
         # Test plateau detection
         state.fitness_history = [
@@ -203,13 +204,13 @@ class TestEvoMergePipeline(unittest.TestCase):
             {"best_fitness": 0.505},
         ]
 
-        self.assertTrue(state.check_plateau(threshold=0.02))
-        self.assertFalse(state.check_plateau(threshold=0.001))
+        assert state.check_plateau(threshold=0.02)
+        assert not state.check_plateau(threshold=0.001)
 
         print("✅ EvolutionState working correctly")
 
     @patch("evomerge_pipeline.wandb")
-    def test_pipeline_initialization(self, mock_wandb):
+    def test_pipeline_initialization(self, mock_wandb) -> None:
         """Test pipeline initialization."""
         # Mock W&B
         mock_run = MagicMock()
@@ -221,21 +222,21 @@ class TestEvoMergePipeline(unittest.TestCase):
         pipeline = EvoMergePipeline(self.config)
 
         # Test initialization
-        self.assertEqual(len(pipeline.evaluators), 4)
-        self.assertIn("code", pipeline.evaluators)
-        self.assertIn("math", pipeline.evaluators)
-        self.assertIn("multilingual", pipeline.evaluators)
-        self.assertIn("structured_data", pipeline.evaluators)
+        assert len(pipeline.evaluators) == 4
+        assert "code" in pipeline.evaluators
+        assert "math" in pipeline.evaluators
+        assert "multilingual" in pipeline.evaluators
+        assert "structured_data" in pipeline.evaluators
 
         # Test W&B initialization
         pipeline.initialize_wandb()
-        self.assertIsNotNone(pipeline.wandb_run)
+        assert pipeline.wandb_run is not None
 
         print("✅ Pipeline initialization working correctly")
 
-    def test_seed_generation_logic(self):
+    def test_seed_generation_logic(self) -> None:
         """Test seed candidate generation logic."""
-        pipeline = EvoMergePipeline(self.config)
+        EvoMergePipeline(self.config)
 
         # Test merge combination generation
         merge_combinations = [
@@ -249,14 +250,14 @@ class TestEvoMergePipeline(unittest.TestCase):
             ("slerp", "dare", "dfs"),
         ]
 
-        self.assertEqual(len(merge_combinations), 8)  # 2³ combinations
+        assert len(merge_combinations) == 8  # 2³ combinations
 
         # Test that all combinations are unique
-        self.assertEqual(len(set(merge_combinations)), 8)
+        assert len(set(merge_combinations)) == 8
 
         print("✅ Seed generation logic correct")
 
-    def test_checkpoint_functionality(self):
+    def test_checkpoint_functionality(self) -> None:
         """Test checkpoint save/load."""
         pipeline = EvoMergePipeline(self.config)
 
@@ -275,21 +276,21 @@ class TestEvoMergePipeline(unittest.TestCase):
         checkpoint_files = list(
             self.config.checkpoint_dir.glob("evolution_checkpoint_*.json")
         )
-        self.assertTrue(len(checkpoint_files) > 0)
+        assert len(checkpoint_files) > 0
 
         # Create new pipeline and load checkpoint
         new_pipeline = EvoMergePipeline(self.config)
         success = new_pipeline.load_checkpoint(str(checkpoint_files[0]))
 
-        self.assertTrue(success)
-        self.assertEqual(new_pipeline.state.current_generation, 5)
-        self.assertEqual(len(new_pipeline.state.fitness_history), 2)
+        assert success
+        assert new_pipeline.state.current_generation == 5
+        assert len(new_pipeline.state.fitness_history) == 2
 
         print("✅ Checkpoint functionality working correctly")
 
-    def test_mutation_and_selection(self):
+    def test_mutation_and_selection(self) -> None:
         """Test mutation and selection logic."""
-        pipeline = EvoMergePipeline(self.config)
+        EvoMergePipeline(self.config)
 
         # Create test candidates with different fitness scores
         candidates = []
@@ -318,12 +319,8 @@ class TestEvoMergePipeline(unittest.TestCase):
         candidates.sort(key=lambda x: x.overall_fitness, reverse=True)
 
         # Verify top candidates have highest fitness
-        self.assertGreater(
-            candidates[0].overall_fitness, candidates[-1].overall_fitness
-        )
-        self.assertGreater(
-            candidates[1].overall_fitness, candidates[-2].overall_fitness
-        )
+        assert candidates[0].overall_fitness > candidates[-1].overall_fitness
+        assert candidates[1].overall_fitness > candidates[-2].overall_fitness
 
         print("✅ Selection logic working correctly")
 
@@ -331,20 +328,20 @@ class TestEvoMergePipeline(unittest.TestCase):
 class TestCLIIntegration(unittest.TestCase):
     """Test CLI integration."""
 
-    def test_cli_command_parsing(self):
+    def test_cli_command_parsing(self) -> None:
         """Test CLI command parsing."""
         # Import CLI components
         from evomerge_pipeline import forge
 
         # Test that the CLI group exists
-        self.assertIsNotNone(forge)
-        self.assertTrue(hasattr(forge, "commands"))
-        self.assertIn("evo", forge.commands)
+        assert forge is not None
+        assert hasattr(forge, "commands")
+        assert "evo" in forge.commands
 
         print("✅ CLI integration working correctly")
 
 
-def run_quick_integration_test():
+def run_quick_integration_test() -> None:
     """Run a quick integration test of the full pipeline."""
     print("🧪 Running quick integration test...")
 
@@ -388,7 +385,7 @@ def run_quick_integration_test():
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-async def main():
+async def main() -> int:
     """Main test runner."""
     print("🧪 Starting EvoMerge Pipeline Test Suite")
     print("=" * 60)

@@ -34,7 +34,9 @@ except ImportError as e:
     logging.exception(f"Required dependencies missing: {e}")
     raise
 
-from ..core import BaseScript, ScriptResult
+import contextlib
+
+from AIVillage.scripts.core import BaseScript, ScriptResult
 
 
 class MonitoringSystem(Enum):
@@ -140,7 +142,7 @@ class UnifiedMonitor(BaseScript):
         config: MonitoringConfig | None = None,
         data_dir: Path | None = None,
         **kwargs,
-    ):
+    ) -> None:
         """Initialize the unified monitor.
 
         Args:
@@ -212,7 +214,7 @@ class UnifiedMonitor(BaseScript):
                 )
 
         except Exception as e:
-            self.logger.error(f"Failed to load historical data: {e}")
+            self.logger.exception(f"Failed to load historical data: {e}")
 
     def _save_metrics(self) -> None:
         """Save current metrics to disk."""
@@ -244,7 +246,7 @@ class UnifiedMonitor(BaseScript):
                     )
 
         except Exception as e:
-            self.logger.error(f"Failed to save metrics: {e}")
+            self.logger.exception(f"Failed to save metrics: {e}")
 
     def collect_system_metrics(self) -> SystemMetrics:
         """Collect current system performance metrics.
@@ -303,7 +305,7 @@ class UnifiedMonitor(BaseScript):
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to collect system metrics: {e}")
+            self.logger.exception(f"Failed to collect system metrics: {e}")
             return SystemMetrics(
                 timestamp=datetime.now().isoformat(),
                 cpu_percent=0,
@@ -336,7 +338,7 @@ class UnifiedMonitor(BaseScript):
             original_size = test_weight.numel() * 4  # 4 bytes per float32
 
             # Simulate compression (placeholder implementation)
-            compressed_data = test_weight * 0.5  # Simplified compression
+            test_weight * 0.5  # Simplified compression
             compression_time = time.time() - start_time
 
             # Calculate metrics
@@ -359,7 +361,7 @@ class UnifiedMonitor(BaseScript):
             )
 
         except Exception as e:
-            self.logger.error(f"Compression benchmark failed: {e}")
+            self.logger.exception(f"Compression benchmark failed: {e}")
             return CompressionMetrics(
                 timestamp=datetime.now().isoformat(),
                 method=method,
@@ -393,7 +395,7 @@ class UnifiedMonitor(BaseScript):
                 convergence_rate=0.05,
             )
         except Exception as e:
-            self.logger.error(f"Failed to collect evolution metrics: {e}")
+            self.logger.exception(f"Failed to collect evolution metrics: {e}")
             return None
 
     def check_alerts(self, metrics: dict[str, Any]) -> list[AlertEvent]:
@@ -517,7 +519,7 @@ class UnifiedMonitor(BaseScript):
                 await asyncio.sleep(self.config.monitoring_interval)
 
             except Exception as e:
-                self.logger.error(f"Error in monitoring loop: {e}")
+                self.logger.exception(f"Error in monitoring loop: {e}")
                 await asyncio.sleep(self.config.monitoring_interval)
 
     async def start_monitoring(self, duration: float | None = None) -> None:
@@ -554,10 +556,8 @@ class UnifiedMonitor(BaseScript):
 
         if self.monitoring_task:
             self.monitoring_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.monitoring_task
-            except asyncio.CancelledError:
-                pass
 
         # Save final metrics
         self._save_metrics()

@@ -1,4 +1,4 @@
-"""AIVillage Production Components
+"""AIVillage Production Components.
 
 This package contains production-ready components that have passed Sprint 2 quality gates:
 - Compression: Model compression with 4-8x reduction
@@ -31,12 +31,10 @@ import sys
 import warnings
 
 
-def _check_imports():
+def _check_imports() -> None:
     """Check that no experimental modules are imported."""
     for module_name in sys.modules:
-        if module_name.startswith("experimental.") or module_name.startswith(
-            "deprecated."
-        ):
+        if module_name.startswith(("experimental.", "deprecated.")):
             warnings.warn(
                 f"Production code should not import {module_name}",
                 UserWarning,

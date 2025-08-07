@@ -31,7 +31,7 @@ _ensure_module("faiss", {"IndexFlatL2": lambda *a, **k: object()})
 # Create a more complete torch stub
 class MockTensor:
     def __init__(self, *args, **kwargs):
-        self.shape = (10, 10) if not args else args
+        self.shape = args if args else (10, 10)
 
     def __getattr__(self, name):
         return lambda *a, **k: self
@@ -207,8 +207,7 @@ def pytest_ignore_collect(path, config):
             print(f"Skipping {pstr} due to missing dependencies")
             return True
     for tpath, deps in special_tests.items():
-        if pstr.endswith(tpath):
-            if _deps_missing(*deps):
-                print(f"Skipping {pstr} due to missing dependencies")
-                return True
+        if pstr.endswith(tpath) and _deps_missing(*deps):
+            print(f"Skipping {pstr} due to missing dependencies")
+            return True
     return False

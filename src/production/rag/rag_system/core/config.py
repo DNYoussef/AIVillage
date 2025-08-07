@@ -1,6 +1,6 @@
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
-from datetime import timedelta
 
 from pydantic import BaseModel, Field
 import yaml

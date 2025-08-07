@@ -1,4 +1,4 @@
-"""MAGI Agent Deployment
+"""MAGI Agent Deployment.
 
 This module contains deployment scripts and configurations for MAGI agents
 in production environments.

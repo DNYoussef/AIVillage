@@ -450,7 +450,7 @@ class MeshNetworkTester:
         throughput_ratio = (
             large_net["message_throughput"] / small_net["message_throughput"]
         )
-        size_ratio = large_net["network_size"] / small_net["network_size"]
+        large_net["network_size"] / small_net["network_size"]
 
         if throughput_ratio > 0.8:
             return "Excellent - Minimal degradation"
@@ -685,7 +685,7 @@ class MeshNetworkTester:
             source = nodes[0]
 
             # Send message with very low TTL
-            low_ttl_message = MeshMessage(
+            MeshMessage(
                 message_id="ttl_test_low",
                 sender_id=source.node_id,
                 recipient_id="broadcast",

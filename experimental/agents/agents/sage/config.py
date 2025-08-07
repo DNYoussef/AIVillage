@@ -2,7 +2,7 @@ from rag_system.core.config import UnifiedConfig
 
 
 class SageAgentConfig(UnifiedConfig):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self.research_capabilities: list[str] = kwargs.get(
             "research_capabilities",

@@ -4,7 +4,7 @@ from rag_system.retrieval.vector_store import VectorStore
 
 
 class FoundationalLayer:
-    def __init__(self, vector_store: VectorStore):
+    def __init__(self, vector_store: VectorStore) -> None:
         self.vector_store = vector_store
 
     async def process_task(self, task) -> Any:

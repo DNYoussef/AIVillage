@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Simplified verification focusing on core functionality
-"""
+"""Simplified verification focusing on core functionality."""
 from pathlib import Path
 import sys
 

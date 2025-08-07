@@ -1,4 +1,4 @@
-"""LibP2P Mesh Network Implementation for AIVillage
+"""LibP2P Mesh Network Implementation for AIVillage.
 
 This module provides a LibP2P-based mesh networking solution to replace
 the broken Bluetooth mesh implementation. It supports:
@@ -136,7 +136,7 @@ class MeshConfiguration:
 class LibP2PMeshNetwork:
     """LibP2P-based mesh network implementation."""
 
-    def __init__(self, config: MeshConfiguration | None = None):
+    def __init__(self, config: MeshConfiguration | None = None) -> None:
         self.config = config or MeshConfiguration()
         self.node_id = self.config.node_id or str(uuid.uuid4())
         self.status = NodeStatus.STARTING
@@ -688,7 +688,7 @@ class LibP2PMeshNetwork:
         """Handle mDNS peer discovery events."""
         logger.info(f"mDNS peer {event_type}: {peer_info.peer_id}")
 
-        if event_type == "discovered" or event_type == "updated":
+        if event_type in {"discovered", "updated"}:
             # Try to connect to discovered peer
             for multiaddr_str in peer_info.to_multiaddr():
                 try:

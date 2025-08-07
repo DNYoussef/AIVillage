@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class AdvancedNLP:
-    def __init__(self):
+    def __init__(self) -> None:
         self.tokenizer = BertTokenizer.from_pretrained(
             "bert-base-uncased",
             revision="main",  # Pin to main branch for security
@@ -144,7 +144,7 @@ class AdvancedNLP:
                 "summary": summary,
             }
         except Exception as e:
-            logger.error(f"Error processing text: {e!s}")
+            logger.exception(f"Error processing text: {e!s}")
             raise
 
     async def compare_texts(self, text1: str, text2: str) -> dict[str, Any]:
@@ -168,5 +168,5 @@ class AdvancedNLP:
                 "keywords2": keywords2,
             }
         except Exception as e:
-            logger.error(f"Error comparing texts: {e!s}")
+            logger.exception(f"Error comparing texts: {e!s}")
             raise

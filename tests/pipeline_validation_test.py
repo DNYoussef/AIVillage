@@ -23,6 +23,7 @@ import logging
 import os
 from pathlib import Path
 import shutil
+import sys
 import time
 
 from dotenv import load_dotenv
@@ -136,7 +137,7 @@ class PipelineValidationTest:
             logger.info("=" * 80)
 
         except Exception as e:
-            logger.error("❌ Pipeline validation failed: %s", e)
+            logger.exception("❌ Pipeline validation failed: %s", e)
             self.results["errors"].append(str(e))
             self.results["success"] = False
 
@@ -242,7 +243,7 @@ class PipelineValidationTest:
                 logger.info("✅ Minimal evolution merge completed in %.2fs", stage_time)
 
         except Exception as e:
-            logger.error("❌ Evolution merge validation failed: %s", e)
+            logger.exception("❌ Evolution merge validation failed: %s", e)
             self.results["stages"]["evolution"] = {
                 "status": "failed",
                 "error": str(e),
@@ -261,9 +262,8 @@ class PipelineValidationTest:
             # Check if evolution stage completed
             evolution_result = self.results["stages"].get("evolution")
             if not evolution_result or evolution_result["status"] != "success":
-                raise Exception(
-                    "Evolution stage must complete successfully before Quiet-STaR"
-                )
+                msg = "Evolution stage must complete successfully before Quiet-STaR"
+                raise Exception(msg)
 
             input_model_path = evolution_result["output_path"]
             output_path = self.stage_paths["quietstar"] / "baked_model.pt"
@@ -305,7 +305,7 @@ class PipelineValidationTest:
             logger.info("   Simulated improvement: 5.2%")
 
         except Exception as e:
-            logger.error("❌ Quiet-STaR baking failed: %s", e)
+            logger.exception("❌ Quiet-STaR baking failed: %s", e)
             self.results["stages"]["quietstar"] = {
                 "status": "failed",
                 "error": str(e),
@@ -324,9 +324,8 @@ class PipelineValidationTest:
             # Check if Quiet-STaR stage completed
             quietstar_result = self.results["stages"].get("quietstar")
             if not quietstar_result or quietstar_result["status"] != "success":
-                raise Exception(
-                    "Quiet-STaR stage must complete successfully before compression"
-                )
+                msg = "Quiet-STaR stage must complete successfully before compression"
+                raise Exception(msg)
 
             input_model_path = quietstar_result["output_path"]
             output_path = self.stage_paths["stage1_compressed"] / "model.stage1.pt"
@@ -376,7 +375,7 @@ class PipelineValidationTest:
             logger.info("   Performance retention: 94%")
 
         except Exception as e:
-            logger.error("❌ Stage 1 compression failed: %s", e)
+            logger.exception("❌ Stage 1 compression failed: %s", e)
             self.results["stages"]["stage1_compression"] = {
                 "status": "failed",
                 "error": str(e),
@@ -395,7 +394,8 @@ class PipelineValidationTest:
             # Check if Stage 1 compression completed
             stage1_result = self.results["stages"].get("stage1_compression")
             if not stage1_result or stage1_result["status"] != "success":
-                raise Exception("Stage 1 compression must complete before training")
+                msg = "Stage 1 compression must complete before training"
+                raise Exception(msg)
 
             # Check if OpenRouter API key is available
             openrouter_available = bool(os.getenv("OPENROUTER_API_KEY"))
@@ -505,7 +505,7 @@ class PipelineValidationTest:
             )
 
         except Exception as e:
-            logger.error("❌ Orchestrated training failed: %s", e)
+            logger.exception("❌ Orchestrated training failed: %s", e)
             self.results["stages"]["orchestrated_training"] = {
                 "status": "failed",
                 "error": str(e),
@@ -524,16 +524,17 @@ class PipelineValidationTest:
             # Check if training completed
             training_result = self.results["stages"].get("orchestrated_training")
             if not training_result or training_result["status"] != "success":
-                raise Exception(
+                msg = (
                     "Training stage must complete before geometric awareness validation"
                 )
+                raise Exception(msg)
 
             logger.info("Validating geometric self-awareness capabilities...")
 
             # Test geometry snapshot functionality
 
             # Create mock model state for geometry analysis
-            mock_model_state = torch.randn(100, 50)  # Mock weight matrix
+            torch.randn(100, 50)  # Mock weight matrix
 
             # Test geometric analysis
             logger.info("Testing weight space analysis...")
@@ -569,7 +570,7 @@ class PipelineValidationTest:
             logger.info("   Self-awareness: CONFIRMED")
 
         except Exception as e:
-            logger.error("❌ Geometric awareness validation failed: %s", e)
+            logger.exception("❌ Geometric awareness validation failed: %s", e)
             self.results["stages"]["geometric_awareness"] = {
                 "status": "failed",
                 "error": str(e),
@@ -588,7 +589,8 @@ class PipelineValidationTest:
             # Check if training completed
             training_result = self.results["stages"].get("orchestrated_training")
             if not training_result or training_result["status"] != "success":
-                raise Exception("Training stage must complete before final compression")
+                msg = "Training stage must complete before final compression"
+                raise Exception(msg)
 
             input_model_path = training_result["output_path"]
             output_path = self.stage_paths["stage2_compressed"] / "model.stage2.pt"
@@ -636,7 +638,7 @@ class PipelineValidationTest:
             logger.info("   Performance retention: 91%")
 
         except Exception as e:
-            logger.error("❌ Stage 2 compression failed: %s", e)
+            logger.exception("❌ Stage 2 compression failed: %s", e)
             self.results["stages"]["stage2_compression"] = {
                 "status": "failed",
                 "error": str(e),
@@ -665,9 +667,8 @@ class PipelineValidationTest:
             for stage in required_stages:
                 result = self.results["stages"].get(stage)
                 if not result or result["status"] != "success":
-                    raise Exception(
-                        f"Stage {stage} must complete successfully for pipeline verification"
-                    )
+                    msg = f"Stage {stage} must complete successfully for pipeline verification"
+                    raise Exception(msg)
 
             # Load final model
             stage2_result = self.results["stages"]["stage2_compression"]
@@ -740,7 +741,7 @@ class PipelineValidationTest:
             )
 
         except Exception as e:
-            logger.error("❌ Pipeline verification failed: %s", e)
+            logger.exception("❌ Pipeline verification failed: %s", e)
             self.results["stages"]["pipeline_verification"] = {
                 "status": "failed",
                 "error": str(e),
@@ -852,4 +853,4 @@ if __name__ == "__main__":
         print("\n❌ PIPELINE VALIDATION: FAILED")
         print("⚠️ Check logs for detailed error information")
 
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

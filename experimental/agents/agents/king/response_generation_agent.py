@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class ResponseGenerationAgent:
-    def __init__(self, llm_config: OpenAIGPTConfig):
+    def __init__(self, llm_config: OpenAIGPTConfig) -> None:
         self.llm = llm_config.create()
         self.model = None
 
@@ -94,12 +94,12 @@ class ResponseGenerationAgent:
         return text
 
     @error_handler.handle_error
-    async def update_model(self, new_model: nn.Module):
+    async def update_model(self, new_model: nn.Module) -> None:
         self.model = new_model
         logger.info("Model updated in ResponseGenerationAgent")
 
     @error_handler.handle_error
-    async def update_hyperparameters(self, hyperparameters: dict[str, Any]):
+    async def update_hyperparameters(self, hyperparameters: dict[str, Any]) -> None:
         # Update hyperparameters if needed
         # For example, if using a custom language model:
         # self.llm.update_hyperparameters(hyperparameters)
@@ -208,7 +208,7 @@ class ResponseGenerationAgent:
 if __name__ == "__main__":
     import asyncio
 
-    async def main():
+    async def main() -> None:
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
         response_agent = ResponseGenerationAgent(llm_config)
 

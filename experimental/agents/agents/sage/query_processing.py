@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class QueryProcessor:
-    def __init__(self, rag_system, latent_space_activation, cognitive_nexus):
+    def __init__(self, rag_system, latent_space_activation, cognitive_nexus) -> None:
         self.rag_system = rag_system
         self.latent_space_activation = latent_space_activation
         self.cognitive_nexus = cognitive_nexus
@@ -43,7 +43,7 @@ class QueryProcessor:
 
             return enhanced_query
         except Exception as e:
-            logger.error(f"Error processing query: {e!s}")
+            logger.exception(f"Error processing query: {e!s}")
             return query
 
     async def activate_latent_space(self, content: str) -> str:
@@ -55,7 +55,7 @@ class QueryProcessor:
                 content, embeddings, entities, relations
             )
         except Exception as e:
-            logger.error(f"Error activating latent space: {e!s}")
+            logger.exception(f"Error activating latent space: {e!s}")
             return ""
 
     async def query_cognitive_nexus(self, content: str) -> str:
@@ -64,7 +64,7 @@ class QueryProcessor:
             entities = self.named_entity_recognizer.recognize(content)
             return await self.cognitive_nexus.query(content, embeddings, entities)
         except Exception as e:
-            logger.error(f"Error querying cognitive nexus: {e!s}")
+            logger.exception(f"Error querying cognitive nexus: {e!s}")
             return ""
 
     async def apply_advanced_reasoning(self, task: dict[str, Any]) -> str:
@@ -79,7 +79,7 @@ class QueryProcessor:
 
             return combined_reasoning
         except Exception as e:
-            logger.error(f"Error applying advanced reasoning: {e!s}")
+            logger.exception(f"Error applying advanced reasoning: {e!s}")
             return ""
 
     async def query_rag(self, query: str) -> dict[str, Any]:
@@ -97,5 +97,5 @@ class QueryProcessor:
                 cognitive_context=cognitive_context,
             )
         except Exception as e:
-            logger.error(f"Error querying RAG system: {e!s}")
+            logger.exception(f"Error querying RAG system: {e!s}")
             return {"error": str(e)}

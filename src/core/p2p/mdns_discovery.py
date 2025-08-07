@@ -1,4 +1,4 @@
-"""mDNS Peer Discovery for LibP2P Mesh Network
+"""mDNS Peer Discovery for LibP2P Mesh Network.
 
 Implements multicast DNS-based peer discovery for the AIVillage mesh network.
 This allows nodes to automatically discover each other on the local network
@@ -74,7 +74,7 @@ class mDNSDiscovery:
         listen_port: int,
         capabilities: dict[str, Any] | None = None,
         service_name_prefix: str = "aivillage",
-    ):
+    ) -> None:
         self.node_id = node_id
         self.listen_port = listen_port
         self.capabilities = capabilities or {}
@@ -195,18 +195,18 @@ class mDNSDiscovery:
         """Start browsing for peer services."""
 
         class ServiceListener:
-            def __init__(self, discovery_instance):
+            def __init__(self, discovery_instance) -> None:
                 self.discovery = discovery_instance
 
-            def remove_service(self, zeroconf, service_type, name):
+            def remove_service(self, zeroconf, service_type, name) -> None:
                 asyncio.create_task(self.discovery._on_service_removed(name))
 
-            def add_service(self, zeroconf, service_type, name):
+            def add_service(self, zeroconf, service_type, name) -> None:
                 asyncio.create_task(
                     self.discovery._on_service_discovered(zeroconf, name)
                 )
 
-            def update_service(self, zeroconf, service_type, name):
+            def update_service(self, zeroconf, service_type, name) -> None:
                 asyncio.create_task(self.discovery._on_service_updated(zeroconf, name))
 
         listener = ServiceListener(self)
@@ -350,7 +350,7 @@ class mDNSDiscovery:
         """Clean up expired peers."""
         while self.running:
             try:
-                current_time = time.time()
+                time.time()
                 expired_peers = []
 
                 for peer_id, peer_info in self.discovered_peers.items():

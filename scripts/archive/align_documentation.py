@@ -10,7 +10,7 @@ import re
 
 
 class DocumentationAligner:
-    def __init__(self):
+    def __init__(self) -> None:
         self.misleading_phrases = {
             "self-evolving": "planned self-evolving (not yet implemented)",
             "fully implemented": "partially implemented",
@@ -29,7 +29,7 @@ class DocumentationAligner:
             "mesh": {"status": "experimental", "completion": 20},
         }
 
-    def update_readme(self):
+    def update_readme(self) -> None:
         """Update README.md with honest status."""
         readme_path = Path("README.md")
         if not readme_path.exists():
@@ -96,7 +96,7 @@ class DocumentationAligner:
 
         return section
 
-    def update_feature_matrix(self):
+    def update_feature_matrix(self) -> None:
         """Update feature matrix with accurate status."""
         matrix_path = Path("docs/feature_matrix.md")
         if not matrix_path.exists():
@@ -129,7 +129,7 @@ class DocumentationAligner:
         matrix_path.write_text(content, encoding="utf-8")
         print("Updated feature matrix")
 
-    def create_implementation_status_json(self):
+    def create_implementation_status_json(self) -> None:
         """Create machine-readable status file."""
         status = {
             "generated": datetime.now().isoformat(),

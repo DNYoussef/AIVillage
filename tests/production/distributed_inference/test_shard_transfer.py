@@ -127,10 +127,7 @@ async def test_extract_shard_layers_saves_correct_layers(tmp_path):
     result_dir = await manager._extract_shard_layers(str(model_dir), shard, tmp_path)
 
     shard_state = torch.load(Path(result_dir) / "pytorch_model.bin")
-    assert all(
-        key.startswith("layers.1") or key.startswith("layers.3")
-        for key in shard_state.keys()
-    )
+    assert all(key.startswith(("layers.1", "layers.3")) for key in shard_state)
     # Each linear layer has weight and bias tensors
     assert len(shard_state) == 4
 

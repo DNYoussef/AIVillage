@@ -36,7 +36,7 @@ from services.core.interfaces import (
 class ChatBusinessLogic(ChatServiceInterface):
     """Business logic for chat service."""
 
-    def __init__(self, chat_engine=None, max_message_length: int = 5000):
+    def __init__(self, chat_engine=None, max_message_length: int = 5000) -> None:
         self.logger = get_component_logger("ChatBusinessLogic")
         self.chat_engine = chat_engine
         self.max_message_length = max_message_length
@@ -80,7 +80,7 @@ class ChatBusinessLogic(ChatServiceInterface):
                 result = self.chat_engine.process_chat(request.message, conversation_id)
                 response_text = result.get("response", "I understand your message.")
             except Exception as e:
-                self.logger.error(f"Chat engine error: {e}")
+                self.logger.exception(f"Chat engine error: {e}")
                 response_text = "I'm having trouble processing your request."
         else:
             # Fallback response
@@ -137,7 +137,7 @@ class ChatBusinessLogic(ChatServiceInterface):
 class QueryBusinessLogic(QueryServiceInterface):
     """Business logic for query service."""
 
-    def __init__(self, rag_pipeline=None):
+    def __init__(self, rag_pipeline=None) -> None:
         self.logger = get_component_logger("QueryBusinessLogic")
         self.rag_pipeline = rag_pipeline
 
@@ -164,7 +164,7 @@ class QueryBusinessLogic(QueryServiceInterface):
                 result = await self.rag_pipeline.process_query(request.query)
                 results = result.get("chunks", [])
             except Exception as e:
-                self.logger.error(f"RAG pipeline error: {e}")
+                self.logger.exception(f"RAG pipeline error: {e}")
                 results = []
         else:
             # Fallback results
@@ -187,7 +187,9 @@ class QueryBusinessLogic(QueryServiceInterface):
 class UploadBusinessLogic(UploadServiceInterface):
     """Business logic for upload service."""
 
-    def __init__(self, vector_store=None, max_file_size: int = 10 * 1024 * 1024):
+    def __init__(
+        self, vector_store=None, max_file_size: int = 10 * 1024 * 1024
+    ) -> None:
         self.logger = get_component_logger("UploadBusinessLogic")
         self.vector_store = vector_store
         self.max_file_size = max_file_size
@@ -219,7 +221,7 @@ class UploadBusinessLogic(UploadServiceInterface):
                 # In a real system, we'd process and store the file
                 self.logger.info(f"Storing file {request.filename} with ID {file_id}")
             except Exception as e:
-                self.logger.error(f"Vector store error: {e}")
+                self.logger.exception(f"Vector store error: {e}")
 
         return UploadResponse(
             success=True,
@@ -270,8 +272,11 @@ class HealthCheckLogic(HealthCheckInterface):
     """Business logic for health checks."""
 
     def __init__(
-        self, service_name: str, version: str, dependencies: dict[str, Any] = None
-    ):
+        self,
+        service_name: str,
+        version: str,
+        dependencies: dict[str, Any] | None = None,
+    ) -> None:
         self.logger = get_component_logger("HealthCheckLogic")
         self.service_name = service_name
         self.version = version
@@ -290,7 +295,7 @@ class HealthCheckLogic(HealthCheckInterface):
                 else:
                     services_status[name] = "unknown"
             except Exception as e:
-                self.logger.error(f"Health check failed for {name}: {e}")
+                self.logger.exception(f"Health check failed for {name}: {e}")
                 services_status[name] = "error"
 
         overall_status = (
@@ -313,7 +318,7 @@ class HealthCheckLogic(HealthCheckInterface):
 class ServiceBusinessLogicFactory:
     """Factory for creating business logic instances."""
 
-    def __init__(self, config: dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         self.config = config or {}
         self.chat_engine = None  # Would be injected in real system
         self.rag_pipeline = None  # Would be injected in real system

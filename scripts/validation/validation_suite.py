@@ -29,7 +29,7 @@ try:
 except ImportError:
     toml = None
 
-from ..core import BaseScript, ScriptResult
+from AIVillage.scripts.core import BaseScript, ScriptResult
 
 
 class ValidationSeverity(Enum):
@@ -111,7 +111,7 @@ class ValidationSuite(BaseScript):
         config: ValidationConfig | None = None,
         target_dir: Path | None = None,
         **kwargs,
-    ):
+    ) -> None:
         """Initialize validation suite.
 
         Args:
@@ -193,7 +193,7 @@ class ValidationSuite(BaseScript):
                     optional_deps = data.get("project", {}).get(
                         "optional-dependencies", {}
                     )
-                    for group, deps in optional_deps.items():
+                    for deps in optional_deps.values():
                         for dep in deps:
                             all_dependencies.add(self._parse_requirement(dep))
 
@@ -733,7 +733,7 @@ class ValidationSuite(BaseScript):
                 )
 
             except Exception as e:
-                self.logger.error(f"Validation {validation_type.value} failed: {e}")
+                self.logger.exception(f"Validation {validation_type.value} failed: {e}")
                 results.append(
                     ValidationResult(
                         type=validation_type,

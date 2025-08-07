@@ -1,5 +1,5 @@
 """Enhanced Configuration for WhatsApp Wave Bridge with Prompt Engineering
-Part B: Agent Forge Phase 4 - Configuration Management
+Part B: Agent Forge Phase 4 - Configuration Management.
 """
 
 from dataclasses import dataclass
@@ -9,7 +9,7 @@ from typing import Any
 
 @dataclass
 class PromptEngineeeringConfig:
-    """Configuration for prompt engineering features"""
+    """Configuration for prompt engineering features."""
 
     # Core feature toggles
     enable_enhanced_prompts: bool = True
@@ -72,9 +72,9 @@ class PromptEngineeeringConfig:
 
 
 class EnhancedAppConfig:
-    """Main configuration class for enhanced WhatsApp Wave Bridge"""
+    """Main configuration class for enhanced WhatsApp Wave Bridge."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Load from environment variables
         self.load_from_env()
 
@@ -157,8 +157,8 @@ class EnhancedAppConfig:
             "cache_backend": os.getenv("CACHE_BACKEND", "memory"),  # memory, redis
         }
 
-    def load_from_env(self):
-        """Load configuration from environment variables"""
+    def load_from_env(self) -> None:
+        """Load configuration from environment variables."""
         # Prompt engineering feature flags
         pe_config = {
             "enable_enhanced_prompts": os.getenv(
@@ -194,7 +194,7 @@ class EnhancedAppConfig:
         self.prompt_engineering_env = pe_config
 
     def validate_config(self) -> dict[str, Any]:
-        """Validate configuration and return validation results"""
+        """Validate configuration and return validation results."""
         validation_results = {"valid": True, "errors": [], "warnings": []}
 
         # Validate required API keys
@@ -250,7 +250,7 @@ class EnhancedAppConfig:
         return validation_results
 
     def get_feature_flags(self) -> dict[str, bool]:
-        """Get all feature flags for the application"""
+        """Get all feature flags for the application."""
         return {
             "enhanced_prompts": self.prompt_engineering.enable_enhanced_prompts,
             "real_time_optimization": self.prompt_engineering.enable_real_time_optimization,
@@ -266,7 +266,7 @@ class EnhancedAppConfig:
         }
 
     def export_config(self) -> dict[str, Any]:
-        """Export complete configuration as dictionary"""
+        """Export complete configuration as dictionary."""
         return {
             "app_settings": self.app_settings,
             "api_settings": self.api_settings,

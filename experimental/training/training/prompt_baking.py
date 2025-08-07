@@ -8,7 +8,7 @@ class PromptBakingManager:
 
     def __init__(
         self, model_name: str, expert_vectors: dict[str, ExpertVector] | None = None
-    ):
+    ) -> None:
         self.baker = rag_prompt_baker.RAGPromptBaker(model_name)
         self.expert_vectors = expert_vectors or {}
         self._vectors_applied = False

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class UnifiedInputProcessor:
-    def __init__(self, llm_config: OpenAIGPTConfig):
+    def __init__(self, llm_config: OpenAIGPTConfig) -> None:
         self.llm = llm_config.create()
 
     @error_handler.handle_error
@@ -88,8 +88,9 @@ class UnifiedInputProcessor:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON response: {response}")
-            raise AIVillageException("Failed to parse JSON response")
+            logger.exception(f"Failed to parse JSON response: {response}")
+            msg = "Failed to parse JSON response"
+            raise AIVillageException(msg)
 
     @safe_execute
     async def analyze_input_importance(
@@ -156,7 +157,7 @@ class UnifiedInputProcessor:
 if __name__ == "__main__":
     import asyncio
 
-    async def main():
+    async def main() -> None:
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
         processor = UnifiedInputProcessor(llm_config)
 

@@ -28,7 +28,7 @@ sys.path.append(str(Path(__file__).parent.parent / "agent_forge"))
 class TestQuietSTaRBaker(unittest.TestCase):
     """Test suite for Quiet-STaR components."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment."""
         self.temp_dir = Path(tempfile.mkdtemp())
 
@@ -46,25 +46,25 @@ class TestQuietSTaRBaker(unittest.TestCase):
         # Create output directory
         Path(self.config.output_path).parent.mkdir(parents=True, exist_ok=True)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Clean up test environment."""
         import shutil
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def test_config_validation(self):
+    def test_config_validation(self) -> None:
         """Test configuration validation."""
         # Valid config
         config = QuietSTaRConfig(model_path="test_model", output_path="test_output")
-        self.assertEqual(config.start_thought_token, "<|startofthought|>")
-        self.assertEqual(config.end_thought_token, "<|endofthought|>")
+        assert config.start_thought_token == "<|startofthought|>"
+        assert config.end_thought_token == "<|endofthought|>"
 
         # Test auto device selection
-        self.assertIn(config.device, ["cuda", "cpu"])
+        assert config.device in ["cuda", "cpu"]
 
         print("✅ Configuration validation working")
 
-    def test_thought_injection(self):
+    def test_thought_injection(self) -> None:
         """Test thought token injection."""
         # Create small model and tokenizer
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
@@ -80,22 +80,22 @@ class TestQuietSTaRBaker(unittest.TestCase):
         injector = ThoughtInjector(model, tokenizer, self.config)
 
         # Test special token addition
-        self.assertIn(self.config.start_thought_token, tokenizer.get_vocab())
-        self.assertIn(self.config.end_thought_token, tokenizer.get_vocab())
+        assert self.config.start_thought_token in tokenizer.get_vocab()
+        assert self.config.end_thought_token in tokenizer.get_vocab()
 
         # Test thought injection
         test_text = "This is a test. Another sentence."
         input_ids = tokenizer(test_text, return_tensors="pt")["input_ids"]
-        attention_mask = torch.ones_like(input_ids)
+        torch.ones_like(input_ids)
 
         # Find injection points
         injection_points = injector.find_injection_points(input_ids)
-        self.assertIsInstance(injection_points, list)
-        self.assertIsInstance(injection_points[0], list)
+        assert isinstance(injection_points, list)
+        assert isinstance(injection_points[0], list)
 
         print("✅ Thought injection working")
 
-    def test_reasoning_dataset(self):
+    def test_reasoning_dataset(self) -> None:
         """Test reasoning evaluation dataset."""
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         tokenizer.pad_token = tokenizer.eos_token
@@ -111,20 +111,20 @@ class TestQuietSTaRBaker(unittest.TestCase):
 
             dataset = ReasoningEvalDataset("gsm8k", 2, tokenizer)
 
-            self.assertEqual(len(dataset), 2)
+            assert len(dataset) == 2
 
             # Test dataset item
             item = dataset[0]
-            self.assertIn("input_ids", item)
-            self.assertIn("attention_mask", item)
-            self.assertIn("target", item)
-            self.assertIn("numerical_answer", item)
-            self.assertEqual(item["numerical_answer"], "4")
+            assert "input_ids" in item
+            assert "attention_mask" in item
+            assert "target" in item
+            assert "numerical_answer" in item
+            assert item["numerical_answer"] == "4"
 
         print("✅ Reasoning dataset working")
 
     @patch("quietstar_baker.wandb")
-    async def test_ab_harness(self, mock_wandb):
+    async def test_ab_harness(self, mock_wandb) -> None:
         """Test A/B testing harness."""
         # Create mock models
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
@@ -155,18 +155,18 @@ class TestQuietSTaRBaker(unittest.TestCase):
         harness = ABTestHarness(mock_model, mock_thought_model, tokenizer, self.config)
 
         # Test metric initialization
-        self.assertIn("baseline", harness.metrics)
-        self.assertIn("with_thoughts", harness.metrics)
+        assert "baseline" in harness.metrics
+        assert "with_thoughts" in harness.metrics
 
         # Test answer checking
         generated = "The answer is 42"
         target = "42"
         is_correct = harness.check_answer(generated, target)
-        self.assertTrue(is_correct)
+        assert is_correct
 
         print("✅ A/B testing harness working")
 
-    def test_weight_baker(self):
+    def test_weight_baker(self) -> None:
         """Test weight baking functionality."""
         tokenizer = AutoTokenizer.from_pretrained("gpt2")
         tokenizer.pad_token = tokenizer.eos_token
@@ -182,12 +182,12 @@ class TestQuietSTaRBaker(unittest.TestCase):
         thoughts = ["Let me calculate", "The result is"]
         augmented = baker.insert_thoughts_in_text(text, thoughts)
 
-        self.assertIn(self.config.start_thought_token, augmented)
-        self.assertIn(self.config.end_thought_token, augmented)
+        assert self.config.start_thought_token in augmented
+        assert self.config.end_thought_token in augmented
 
         print("✅ Weight baker working")
 
-    def test_trace_quality_evaluation(self):
+    def test_trace_quality_evaluation(self) -> None:
         """Test thought trace quality evaluation."""
         baker = QuietSTaRBaker(self.config)
 
@@ -201,23 +201,23 @@ class TestQuietSTaRBaker(unittest.TestCase):
         empty_scores = baker.evaluate_trace_quality(empty_traces)
 
         # Good traces should score higher
-        self.assertGreater(good_scores[0], poor_scores[0])
-        self.assertEqual(empty_scores[0], 0.0)
+        assert good_scores[0] > poor_scores[0]
+        assert empty_scores[0] == 0.0
 
         print("✅ Trace quality evaluation working")
 
-    def test_cli_integration(self):
+    def test_cli_integration(self) -> None:
         """Test CLI command integration."""
         from quietstar_baker import forge
 
         # Test that CLI commands exist
-        self.assertIsNotNone(forge)
-        self.assertIn("bake-quietstar", forge.commands)
+        assert forge is not None
+        assert "bake-quietstar" in forge.commands
 
         print("✅ CLI integration working")
 
 
-async def run_integration_test():
+async def run_integration_test() -> None:
     """Run quick integration test."""
     print("\n🧪 Running Quiet-STaR integration test...")
 
@@ -236,7 +236,7 @@ async def run_integration_test():
         )
 
         # Initialize baker
-        baker = QuietSTaRBaker(config)
+        QuietSTaRBaker(config)
 
         print("✅ QuietSTaR baker initialized")
         print("✅ Integration test setup complete")
@@ -256,7 +256,7 @@ async def run_integration_test():
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-def main():
+def main() -> int:
     """Main test runner."""
     print("🧪 Starting Quiet-STaR Baker Test Suite")
     print("=" * 60)
@@ -300,4 +300,4 @@ def main():
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

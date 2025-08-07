@@ -21,13 +21,14 @@ from core import (
 
 
 # Example 1: Basic Exception Usage
-def example_basic_exception():
+def example_basic_exception() -> None:
     """Demonstrate basic exception creation and usage."""
     print("=== Example 1: Basic Exception Usage ===")
 
     try:
+        msg = "Invalid configuration provided"
         raise AIVillageException(
-            "Invalid configuration provided",
+            msg,
             category=ErrorCategory.VALIDATION,
             severity=ErrorSeverity.ERROR,
             context=ErrorContext(
@@ -52,10 +53,12 @@ def example_basic_exception():
 def process_data(data: dict[str, Any]) -> dict[str, Any]:
     """Example function with error handling decorator."""
     if not data:
-        raise ValueError("Empty data provided")
+        msg = "Empty data provided"
+        raise ValueError(msg)
 
     if "critical_field" not in data:
-        raise KeyError("Missing required field: critical_field")
+        msg = "Missing required field: critical_field"
+        raise KeyError(msg)
 
     # Simulate processing
     return {"processed": True, "data": data}
@@ -69,7 +72,8 @@ def process_data(data: dict[str, Any]) -> dict[str, Any]:
 async def fetch_data_async(url: str) -> str:
     """Async example with error handling."""
     if not url.startswith("http"):
-        raise ValueError("Invalid URL format")
+        msg = "Invalid URL format"
+        raise ValueError(msg)
 
     # Simulate async operation
     await asyncio.sleep(0.1)
@@ -77,7 +81,7 @@ async def fetch_data_async(url: str) -> str:
 
 
 # Example 3: Using Context Manager
-def example_context_manager():
+def example_context_manager() -> None:
     """Demonstrate using ErrorContextManager."""
     print("\n=== Example 3: Context Manager Usage ===")
 
@@ -88,7 +92,8 @@ def example_context_manager():
             details={"table": "users", "record_id": 123},
         ):
             # Simulate database operation
-            raise ValueError("Connection timeout")
+            msg = "Connection timeout"
+            raise ValueError(msg)
 
     except AIVillageException as e:
         print(f"Context manager caught: {e}")
@@ -99,15 +104,16 @@ def example_context_manager():
 
 
 # Example 4: Component Logger
-def example_component_logger():
+def example_component_logger() -> None:
     """Demonstrate component-specific logging."""
     print("\n=== Example 4: Component Logging ===")
 
     logger = get_component_logger("MyService")
 
     try:
+        msg = "Service initialization failed"
         raise AIVillageException(
-            "Service initialization failed",
+            msg,
             category=ErrorCategory.INITIALIZATION,
             severity=ErrorSeverity.CRITICAL,
             context=ErrorContext(
@@ -117,11 +123,11 @@ def example_component_logger():
             ),
         )
     except AIVillageException as e:
-        logger.error(f"Service error: {e.message}")
+        logger.exception(f"Service error: {e.message}")
 
 
 # Example 5: Migrating from Legacy Exceptions
-def example_legacy_migration():
+def example_legacy_migration() -> None:
     """Demonstrate migrating from legacy exceptions."""
     print("\n=== Example 5: Legacy Migration ===")
 
@@ -156,7 +162,7 @@ def example_legacy_migration():
 class DataProcessingService:
     """Example service demonstrating comprehensive error handling."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = get_component_logger("DataProcessingService")
 
     @with_error_handling(
@@ -167,8 +173,9 @@ class DataProcessingService:
     def process_batch(self, batch_data: list[dict[str, Any]]) -> dict[str, Any]:
         """Process a batch of data with comprehensive error handling."""
         if not batch_data:
+            msg = "Empty batch provided"
             raise AIVillageException(
-                "Empty batch provided",
+                msg,
                 category=ErrorCategory.VALIDATION,
                 severity=ErrorSeverity.WARNING,
                 context=ErrorContext(
@@ -188,12 +195,13 @@ class DataProcessingService:
                 ):
                     # Simulate processing
                     if item.get("id") == "error_item":
-                        raise ValueError("Simulated processing error")
+                        msg = "Simulated processing error"
+                        raise ValueError(msg)
 
                     results.append({"id": item.get("id"), "status": "processed"})
 
             except AIVillageException as e:
-                self.logger.error(f"Failed to process item {idx}: {e.message}")
+                self.logger.exception(f"Failed to process item {idx}: {e.message}")
                 continue
 
         return {
@@ -207,7 +215,7 @@ class DataProcessingService:
 class AsyncDataService:
     """Example async service with error handling."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = get_component_logger("AsyncDataService")
 
     async def fetch_multiple(self, urls: list[str]) -> dict[str, str]:
@@ -219,14 +227,14 @@ class AsyncDataService:
                 data = await fetch_data_async(url)
                 results[url] = data
             except AIVillageException as e:
-                self.logger.error(f"Failed to fetch {url}: {e.message}")
+                self.logger.exception(f"Failed to fetch {url}: {e.message}")
                 results[url] = f"ERROR: {e.message}"
 
         return results
 
 
 # Main demonstration
-async def main():
+async def main() -> None:
     """Run all examples."""
     print("AIVillage Error Handling Examples")
     print("=" * 50)

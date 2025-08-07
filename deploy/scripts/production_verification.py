@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProductionVerificationSuite:
-    def __init__(self, environment: str, slot: str):
+    def __init__(self, environment: str, slot: str) -> None:
         self.environment = environment
         self.slot = slot
         self.namespace = f"aivillage-{environment}"
@@ -50,7 +50,8 @@ class ProductionVerificationSuite:
             )
 
             if result.returncode != 0:
-                raise Exception(f"Failed to get service info: {result.stderr}")
+                msg = f"Failed to get service info: {result.stderr}"
+                raise Exception(msg)
 
             service_data = json.loads(result.stdout)
 
@@ -77,9 +78,8 @@ class ProductionVerificationSuite:
                     timeout=aiohttp.ClientTimeout(total=10),
                 ) as response:
                     if response.status != 200:
-                        raise Exception(
-                            f"Gateway health check failed: {response.status}"
-                        )
+                        msg = f"Gateway health check failed: {response.status}"
+                        raise Exception(msg)
 
                 # 2. Test basic functionality (adjust based on your API)
                 test_payload = {
@@ -104,10 +104,11 @@ class ProductionVerificationSuite:
                         )
                         proc.terminate()
                         return True
-                    raise Exception(f"API request failed: {response.status}")
+                    msg = f"API request failed: {response.status}"
+                    raise Exception(msg)
 
         except Exception as e:
-            logger.error(f"❌ End-to-end workflow test failed: {e}")
+            logger.exception(f"❌ End-to-end workflow test failed: {e}")
             self.results.append(
                 {"test": "end_to_end_workflow", "status": "FAIL", "error": str(e)}
             )
@@ -146,7 +147,7 @@ class ProductionVerificationSuite:
             error_count = 0
             start_time = time.time()
 
-            async def make_request(session, request_id):
+            async def make_request(session, request_id) -> None:
                 nonlocal success_count, error_count, response_times
 
                 request_start = time.time()
@@ -223,7 +224,7 @@ class ProductionVerificationSuite:
             return success
 
         except Exception as e:
-            logger.error(f"❌ Load performance test failed: {e}")
+            logger.exception(f"❌ Load performance test failed: {e}")
             self.results.append(
                 {"test": "load_performance", "status": "FAIL", "error": str(e)}
             )
@@ -392,11 +393,13 @@ class ProductionVerificationSuite:
                             )
                             proc.terminate()
                             return True
-                        raise Exception("No metrics available")
-                    raise Exception(f"Prometheus API returned {response.status}")
+                        msg = "No metrics available"
+                        raise Exception(msg)
+                    msg = f"Prometheus API returned {response.status}"
+                    raise Exception(msg)
 
         except Exception as e:
-            logger.error(f"❌ Monitoring system test failed: {e}")
+            logger.exception(f"❌ Monitoring system test failed: {e}")
             self.results.append(
                 {"test": "monitoring_system", "status": "FAIL", "error": str(e)}
             )
@@ -480,10 +483,11 @@ class ProductionVerificationSuite:
                     self.results.append(result_data)
                     return success
 
-            raise Exception("Failed to check security configurations")
+            msg = "Failed to check security configurations"
+            raise Exception(msg)
 
         except Exception as e:
-            logger.error(f"❌ Security posture test failed: {e}")
+            logger.exception(f"❌ Security posture test failed: {e}")
             self.results.append(
                 {"test": "security_posture", "status": "FAIL", "error": str(e)}
             )
@@ -532,7 +536,7 @@ class ProductionVerificationSuite:
 
         return self.verification_passed
 
-    def save_results(self, output_file: str):
+    def save_results(self, output_file: str) -> None:
         """Save verification results to a file."""
         with open(output_file, "w") as f:
             json.dump(
@@ -549,7 +553,7 @@ class ProductionVerificationSuite:
             )
 
 
-async def main():
+async def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run production verification for AIVillage deployment"
     )

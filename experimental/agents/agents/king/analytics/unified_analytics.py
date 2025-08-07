@@ -9,13 +9,13 @@ logger = logging.getLogger(__name__)
 
 
 class UnifiedAnalytics:
-    def __init__(self, history_length: int = 100):
+    def __init__(self, history_length: int = 100) -> None:
         self.metrics = {}
         self.task_history = deque(maxlen=history_length)
         self.performance_history = deque(maxlen=history_length)
         self.learning_rate = 0.01
 
-    def record_metric(self, name: str, value: float):
+    def record_metric(self, name: str, value: float) -> None:
         if name not in self.metrics:
             self.metrics[name] = []
         self.metrics[name].append(value)
@@ -36,13 +36,13 @@ class UnifiedAnalytics:
 
     def record_task_completion(
         self, task_id: str, completion_time: float, success: bool
-    ):
+    ) -> None:
         self.record_metric("task_completion_time", completion_time)
         self.task_history.append(
             {"task_id": task_id, "completion_time": completion_time, "success": success}
         )
 
-    def update_performance_history(self, performance: float):
+    def update_performance_history(self, performance: float) -> None:
         self.performance_history.append(performance)
 
     def get_performance_trend(self) -> float:
@@ -67,7 +67,7 @@ class UnifiedAnalytics:
         successful_tasks = sum(1 for task in self.task_history if task["success"])
         return successful_tasks / len(self.task_history)
 
-    async def evolve(self):
+    async def evolve(self) -> None:
         """Adapt internal parameters based on recent history."""
         trend = self.get_performance_trend()
 

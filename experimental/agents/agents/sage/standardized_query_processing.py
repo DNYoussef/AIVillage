@@ -1,4 +1,4 @@
-"""Standardized Query Processing for SAGE Agent
+"""Standardized Query Processing for SAGE Agent.
 
 This is a refactored version of query_processing.py that demonstrates
 the standardized approach using BaseProcessHandler framework.
@@ -22,7 +22,7 @@ class SageQueryProcessor(QueryProcessor):
     performance monitoring, and retry logic.
     """
 
-    def __init__(self, rag_system, latent_space_activation, cognitive_nexus):
+    def __init__(self, rag_system, latent_space_activation, cognitive_nexus) -> None:
         # Configure processing behavior
         config = ProcessConfig(
             timeout_seconds=30.0,  # 30 second timeout for complex queries
@@ -59,10 +59,12 @@ class SageQueryProcessor(QueryProcessor):
 
         # Validate query content
         if not query or not query.strip():
-            raise ValueError("Query cannot be empty")
+            msg = "Query cannot be empty"
+            raise ValueError(msg)
 
         if len(query) > 10000:  # Reasonable limit for query length
-            raise ValueError("Query too long (max 10000 characters)")
+            msg = "Query too long (max 10000 characters)"
+            raise ValueError(msg)
 
     async def _process_query(self, query: str, **kwargs) -> str:
         """Core SAGE query processing with parallel component execution.
@@ -177,7 +179,7 @@ Synthesis: {self._synthesize_results(query, activated_knowledge, cognitive_conte
             return result or "Latent space activated successfully"
 
         except Exception as e:
-            self.logger.error(f"Latent space activation failed: {e}")
+            self.logger.exception(f"Latent space activation failed: {e}")
             raise  # Re-raise for standardized error handling
 
     async def query_cognitive_nexus(self, content: str) -> str:
@@ -193,7 +195,7 @@ Synthesis: {self._synthesize_results(query, activated_knowledge, cognitive_conte
             return result or "Cognitive processing completed"
 
         except Exception as e:
-            self.logger.error(f"Cognitive nexus query failed: {e}")
+            self.logger.exception(f"Cognitive nexus query failed: {e}")
             raise
 
     async def apply_advanced_reasoning(self, task: dict[str, Any]) -> str:
@@ -220,7 +222,7 @@ Synthesis: {self._synthesize_results(query, activated_knowledge, cognitive_conte
             return " | ".join(results) if results else "Advanced reasoning applied"
 
         except Exception as e:
-            self.logger.error(f"Advanced reasoning failed: {e}")
+            self.logger.exception(f"Advanced reasoning failed: {e}")
             raise
 
     async def query_rag(self, query: str) -> str:
@@ -236,7 +238,7 @@ Synthesis: {self._synthesize_results(query, activated_knowledge, cognitive_conte
             return result or "RAG query processed"
 
         except Exception as e:
-            self.logger.error(f"RAG query failed: {e}")
+            self.logger.exception(f"RAG query failed: {e}")
             raise
 
     # Async wrapper methods for synchronous operations
@@ -281,7 +283,7 @@ class QueryProcessor:
     migrating to the standardized approach.
     """
 
-    def __init__(self, rag_system, latent_space_activation, cognitive_nexus):
+    def __init__(self, rag_system, latent_space_activation, cognitive_nexus) -> None:
         self._standardized_processor = SageQueryProcessor(
             rag_system, latent_space_activation, cognitive_nexus
         )
@@ -325,20 +327,20 @@ class QueryProcessor:
 if __name__ == "__main__":
     import asyncio
 
-    async def test_standardized_processor():
+    async def test_standardized_processor() -> None:
         """Test the standardized query processor."""
 
         # Mock components for testing
         class MockRAGSystem:
-            async def process_query(self, query):
+            async def process_query(self, query) -> str:
                 return f"RAG response for: {query}"
 
         class MockLatentSpace:
-            async def activate(self, content, embeddings, entities, relations):
+            async def activate(self, content, embeddings, entities, relations) -> str:
                 return f"Activated latent space for: {content[:50]}..."
 
         class MockCognitiveNexus:
-            async def query(self, content, embeddings, entities):
+            async def query(self, content, embeddings, entities) -> str:
                 return f"Cognitive insights for: {content[:50]}..."
 
         # Create processor with mocks

@@ -25,7 +25,7 @@ class TernaryQuantizer(torch.autograd.Function):
 
 
 class CustomQuantizedLinear(nn.Linear):
-    def __init__(self, in_features, out_features, bias=True):
+    def __init__(self, in_features, out_features, bias=True) -> None:
         super().__init__(in_features, out_features, bias)
         self.register_buffer("weight_scale", torch.ones(1))
 
@@ -42,12 +42,12 @@ def quantize_activations(x):
 
 
 class FrozenEncoder(nn.Module):
-    def __init__(self, encoder):
+    def __init__(self, encoder) -> None:
         super().__init__()
         self.encoder = encoder
         self.freeze_weights()
 
-    def freeze_weights(self):
+    def freeze_weights(self) -> None:
         for param in self.encoder.parameters():
             param.requires_grad = False
 
@@ -57,12 +57,12 @@ class FrozenEncoder(nn.Module):
 
 
 class FrozenAutoencoder(nn.Module):
-    def __init__(self, autoencoder):
+    def __init__(self, autoencoder) -> None:
         super().__init__()
         self.autoencoder = autoencoder
         self.freeze_weights()
 
-    def freeze_weights(self):
+    def freeze_weights(self) -> None:
         for param in self.autoencoder.parameters():
             param.requires_grad = False
 
@@ -72,7 +72,7 @@ class FrozenAutoencoder(nn.Module):
 
 
 class SleepBlock(nn.Module):
-    def __init__(self, in_features, out_features, encoder):
+    def __init__(self, in_features, out_features, encoder) -> None:
         super().__init__()
         self.chain_block = nn.Sequential(
             CustomQuantizedLinear(in_features, out_features), nn.ReLU()
@@ -86,7 +86,7 @@ class SleepBlock(nn.Module):
 
 
 class DreamBlock(nn.Module):
-    def __init__(self, in_features, out_features, autoencoder):
+    def __init__(self, in_features, out_features, autoencoder) -> None:
         super().__init__()
         self.chain_block = nn.Sequential(
             CustomQuantizedLinear(in_features, out_features), nn.ReLU()
@@ -108,7 +108,7 @@ class SleepNet(nn.Module):
         model_type="vit-base",
         freeze_encoder=True,
         pretrained=False,
-    ):
+    ) -> None:
         """Lightweight SleepNet wrapper.
 
         When ``pretrained`` is ``False`` (default) a simple ``nn.Identity`` is
@@ -129,7 +129,8 @@ class SleepNet(nn.Module):
                     f"roberta-{model_type.split('-')[1]}"
                 )
             else:
-                raise ValueError(f"Unsupported model type: {model_type}")
+                msg = f"Unsupported model type: {model_type}"
+                raise ValueError(msg)
             if freeze_encoder:
                 self.pretrained_encoder = FrozenEncoder(self.pretrained_encoder)
         else:
@@ -159,7 +160,7 @@ class DreamNet(nn.Module):
         model_type="mae-base",
         freeze_autoencoder=True,
         pretrained=False,
-    ):
+    ) -> None:
         """Mirror of ``SleepNet`` for the dream phase."""
         super().__init__()
         self.input_layer = CustomQuantizedLinear(input_size, input_size)
@@ -174,7 +175,8 @@ class DreamNet(nn.Module):
                     f"xlnet-{model_type.split('-')[1]}"
                 )
             else:
-                raise ValueError(f"Unsupported model type: {model_type}")
+                msg = f"Unsupported model type: {model_type}"
+                raise ValueError(msg)
             if freeze_autoencoder:
                 self.pretrained_autoencoder = FrozenAutoencoder(
                     self.pretrained_autoencoder
@@ -207,7 +209,7 @@ class SleepAndDreamTask(Task):
         num_dream_blocks: int,
         *,
         pretrained: bool = False,
-    ):
+    ) -> None:
         super().__init__(agent)
         self.sleep_net = SleepNet(
             input_size, output_size, num_sleep_blocks, pretrained=pretrained
@@ -228,7 +230,7 @@ if __name__ == "__main__":
 
     from langroid.language_models.openai_gpt import OpenAIGPTConfig
 
-    async def main():
+    async def main() -> None:
         config = ChatAgentConfig(
             name="SleepAndDreamAgent",
             llm=OpenAIGPTConfig(chat_model="gpt-3.5-turbo"),

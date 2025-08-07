@@ -8,11 +8,15 @@ from langroid.language_models.openai_gpt import OpenAIGPTConfig
 import networkx as nx
 from torch import nn
 
+from AIVillage.experimental.agents.agents.king.quality_assurance_layer import (
+    QualityAssuranceLayer,
+)
+from AIVillage.experimental.agents.agents.king.utils.exceptions import (
+    AIVillageException,
+)
 from core.error_handling import Message, MessageType, StandardCommunicationProtocol
 from rag_system.core.pipeline import EnhancedRAGPipeline
 
-from ..quality_assurance_layer import QualityAssuranceLayer
-from ..utils.exceptions import AIVillageException
 from .optimization import Optimizer
 from .reasoning_engine import ReasoningEngine
 from .routing import Router
@@ -27,7 +31,7 @@ class UnifiedPlanningAndManagement:
         communication_protocol: StandardCommunicationProtocol,
         rag_system: EnhancedRAGPipeline,
         agent,
-    ):
+    ) -> None:
         self.communication_protocol = communication_protocol
         self.rag_system = rag_system
         self.agent = agent
@@ -107,7 +111,8 @@ class UnifiedPlanningAndManagement:
             }
         except Exception as e:
             logger.exception("Error in make_decision: %s", e)
-            raise AIVillageException(f"Error in make_decision: {e!s}")
+            msg = f"Error in make_decision: {e!s}"
+            raise AIVillageException(msg)
 
     async def manage_task(self, task: dict[str, Any]) -> dict[str, Any]:
         try:
@@ -128,7 +133,8 @@ class UnifiedPlanningAndManagement:
             return {**execution_result, "analysis": analysis}
         except Exception as e:
             logger.exception("Error in manage_task: %s", e)
-            raise AIVillageException(f"Error in manage_task: {e!s}")
+            msg = f"Error in manage_task: {e!s}"
+            raise AIVillageException(msg)
 
     async def create_and_execute_workflow(
         self, tasks: list[dict[str, Any]]
@@ -150,7 +156,8 @@ class UnifiedPlanningAndManagement:
             return {"results": results, "analysis": analysis}
         except Exception as e:
             logger.exception("Error in create_and_execute_workflow: %s", e)
-            raise AIVillageException(f"Error in create_and_execute_workflow: {e!s}")
+            msg = f"Error in create_and_execute_workflow: {e!s}"
+            raise AIVillageException(msg)
 
     async def _generate_alternatives(
         self, problem_analysis: dict[str, Any]
@@ -186,7 +193,8 @@ class UnifiedPlanningAndManagement:
             return list(dict.fromkeys(all_alternatives))
         except Exception as e:
             logger.exception("Error in _generate_alternatives: %s", e)
-            raise AIVillageException(f"Error in _generate_alternatives: {e!s}")
+            msg = f"Error in _generate_alternatives: {e!s}"
+            raise AIVillageException(msg)
 
     async def _evaluate_alternatives(
         self, alternatives: list[str], ranked_criteria: list[dict[str, Any]]
@@ -227,7 +235,8 @@ class UnifiedPlanningAndManagement:
             )
         except Exception as e:
             logger.exception("Error in _evaluate_alternatives: %s", e)
-            raise AIVillageException(f"Error in _evaluate_alternatives: {e!s}")
+            msg = f"Error in _evaluate_alternatives: {e!s}"
+            raise AIVillageException(msg)
 
     async def _create_implementation_plan(self, plan: dict[str, Any]) -> dict[str, Any]:
         try:
@@ -249,7 +258,8 @@ class UnifiedPlanningAndManagement:
             return implementation_plan
         except Exception as e:
             logger.exception("Error creating implementation plan: %s", e)
-            raise AIVillageException(f"Error creating implementation plan: {e!s}")
+            msg = f"Error creating implementation plan: {e!s}"
+            raise AIVillageException(msg)
 
     async def _create_execution_plan(self, workflow: dict[str, Any]) -> dict[str, Any]:
         try:
@@ -282,7 +292,8 @@ class UnifiedPlanningAndManagement:
             return {"parallel_groups": parallel_groups, "graph": G}
         except Exception as e:
             logger.exception("Error in _create_execution_plan: %s", e)
-            raise AIVillageException(f"Error in _create_execution_plan: {e!s}")
+            msg = f"Error in _create_execution_plan: {e!s}"
+            raise AIVillageException(msg)
 
     async def _execute_workflow_in_parallel(
         self, execution_plan: dict[str, Any]
@@ -301,7 +312,8 @@ class UnifiedPlanningAndManagement:
             return results
         except Exception as e:
             logger.exception("Error in _execute_workflow_in_parallel: %s", e)
-            raise AIVillageException(f"Error in _execute_workflow_in_parallel: {e!s}")
+            msg = f"Error in _execute_workflow_in_parallel: {e!s}"
+            raise AIVillageException(msg)
 
     async def _analyze_execution_result(
         self, execution_result: dict[str, Any], optimized_plan: dict[str, Any]
@@ -325,7 +337,8 @@ class UnifiedPlanningAndManagement:
             return analysis
         except Exception as e:
             logger.exception("Error in _analyze_execution_result: %s", e)
-            raise AIVillageException(f"Error in _analyze_execution_result: {e!s}")
+            msg = f"Error in _analyze_execution_result: {e!s}"
+            raise AIVillageException(msg)
 
     async def _analyze_workflow_execution(
         self, results: list[dict[str, Any]], optimized_workflow: dict[str, Any]
@@ -350,14 +363,15 @@ class UnifiedPlanningAndManagement:
             return analysis
         except Exception as e:
             logger.exception("Error in _analyze_workflow_execution: %s", e)
-            raise AIVillageException(f"Error in _analyze_workflow_execution: {e!s}")
+            msg = f"Error in _analyze_workflow_execution: {e!s}"
+            raise AIVillageException(msg)
 
     async def _update_models(
         self,
         task: dict[str, Any],
         execution_result: dict[str, Any],
         analysis: dict[str, Any],
-    ):
+    ) -> None:
         try:
             await self.reasoning_engine.update_model(task, execution_result, analysis)
             await self.optimizer.update_model(task, execution_result, analysis)
@@ -370,22 +384,24 @@ class UnifiedPlanningAndManagement:
             )
         except Exception as e:
             logger.exception("Error in _update_models: %s", e)
-            raise AIVillageException(f"Error in _update_models: {e!s}")
+            msg = f"Error in _update_models: {e!s}"
+            raise AIVillageException(msg)
 
     async def _update_models_from_workflow(
         self,
         tasks: list[dict[str, Any]],
         results: list[dict[str, Any]],
         analysis: dict[str, Any],
-    ):
+    ) -> None:
         try:
             for task, result in zip(tasks, results, strict=False):
                 await self._update_models(task, result, analysis)
         except Exception as e:
             logger.exception("Error in _update_models_from_workflow: %s", e)
-            raise AIVillageException(f"Error in _update_models_from_workflow: {e!s}")
+            msg = f"Error in _update_models_from_workflow: {e!s}"
+            raise AIVillageException(msg)
 
-    async def update_model(self, new_model: nn.Module):
+    async def update_model(self, new_model: nn.Module) -> None:
         try:
             self.model = new_model
             # Update the model in other components that might be using it
@@ -398,9 +414,10 @@ class UnifiedPlanningAndManagement:
             )
         except Exception as e:
             logger.exception("Error in update_model: %s", e)
-            raise AIVillageException(f"Error in update_model: {e!s}")
+            msg = f"Error in update_model: {e!s}"
+            raise AIVillageException(msg)
 
-    async def update_hyperparameters(self, hyperparameters: dict[str, Any]):
+    async def update_hyperparameters(self, hyperparameters: dict[str, Any]) -> None:
         try:
             # Update hyperparameters in relevant components
             await self.optimizer.update_hyperparameters(hyperparameters)
@@ -412,9 +429,10 @@ class UnifiedPlanningAndManagement:
             )
         except Exception as e:
             logger.exception("Error in update_hyperparameters: %s", e)
-            raise AIVillageException(f"Error in update_hyperparameters: {e!s}")
+            msg = f"Error in update_hyperparameters: {e!s}"
+            raise AIVillageException(msg)
 
-    async def save_models(self, path: str):
+    async def save_models(self, path: str) -> None:
         try:
             logger.info("Saving unified planning and management models to %s", path)
             os.makedirs(path, exist_ok=True)
@@ -440,11 +458,10 @@ class UnifiedPlanningAndManagement:
             logger.exception(
                 "Error saving unified planning and management models: %s", e
             )
-            raise AIVillageException(
-                f"Error saving unified planning and management models: {e!s}"
-            )
+            msg = f"Error saving unified planning and management models: {e!s}"
+            raise AIVillageException(msg)
 
-    async def load_models(self, path: str):
+    async def load_models(self, path: str) -> None:
         try:
             logger.info("Loading unified planning and management models from %s", path)
             await self.optimizer.load_models(os.path.join(path, "optimizer"))
@@ -469,18 +486,18 @@ class UnifiedPlanningAndManagement:
             logger.exception(
                 "Error loading unified planning and management models: %s", e
             )
-            raise AIVillageException(
-                f"Error loading unified planning and management models: {e!s}"
-            )
+            msg = f"Error loading unified planning and management models: {e!s}"
+            raise AIVillageException(msg)
 
-    def update_agent_list(self, agent_list: list[str]):
+    def update_agent_list(self, agent_list: list[str]) -> None:
         try:
             self.available_agents = agent_list
             self.router.update_agent_list(agent_list)
             logger.info("Updated available agents: %s", self.available_agents)
         except Exception as e:
             logger.exception("Error in update_agent_list: %s", e)
-            raise AIVillageException(f"Error in update_agent_list: {e!s}")
+            msg = f"Error in update_agent_list: {e!s}"
+            raise AIVillageException(msg)
 
     async def introspect(self) -> dict[str, Any]:
         try:
@@ -496,8 +513,10 @@ class UnifiedPlanningAndManagement:
             }
         except Exception as e:
             logger.exception("Error in introspect: %s", e)
-            raise AIVillageException(f"Error in introspect: {e!s}")
+            msg = f"Error in introspect: {e!s}"
+            raise AIVillageException(msg)
 
 
 if __name__ == "__main__":
-    raise SystemExit("Run 'agents/orchestration.py' to start the planning subsystem.")
+    msg = "Run 'agents/orchestration.py' to start the planning subsystem."
+    raise SystemExit(msg)

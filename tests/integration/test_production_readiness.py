@@ -48,7 +48,6 @@ class ProductionReadinessTestSuite:
         try:
             # Simulate concurrent load
             concurrent_requests = 50
-            request_duration = []
             memory_usage = []
             cpu_usage = []
 
@@ -377,7 +376,7 @@ class ProductionReadinessTestSuite:
             try:
                 await test_method()
             except Exception as e:
-                logger.error(f"Test {test_method.__name__} failed with error: {e}")
+                logger.exception(f"Test {test_method.__name__} failed with error: {e}")
 
         # Generate summary report
         return self.get_production_summary()

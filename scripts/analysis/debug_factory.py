@@ -59,7 +59,7 @@ def debug_agent_factory():
         return None
 
 
-def test_working_factory(factory):
+def test_working_factory(factory) -> None:
     """Test a working factory."""
     if not factory:
         print("No factory to test")
@@ -91,7 +91,7 @@ def test_working_factory(factory):
             print(f"  Error: {e}")
 
 
-def main():
+def main() -> None:
     """Run factory debugging."""
     print("AgentFactory Debug Analysis")
 

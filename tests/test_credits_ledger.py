@@ -324,7 +324,7 @@ class TestCreditsLedger:
             ledger.create_user("testuser", "node_002")
 
         # Test unique user_id constraint in earnings
-        user = ledger.get_user("testuser")
+        ledger.get_user("testuser")
         scrape_time = datetime.now(timezone.utc)
 
         # First earning should work
@@ -341,7 +341,7 @@ class TestCreditsLedger:
     def test_edge_cases(self, ledger):
         """Test edge cases and boundary conditions."""
         # Test with zero values
-        user = ledger.create_user("edge_user", "node_edge")
+        ledger.create_user("edge_user", "node_edge")
         scrape_time = datetime.now(timezone.utc)
 
         earning = ledger.earn_credits("edge_user", scrape_time, 0, 0, 0)

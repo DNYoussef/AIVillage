@@ -1,5 +1,5 @@
 """Multi-language Support for WhatsApp Wave Bridge
-Optimized for edge translation with fallback options
+Optimized for edge translation with fallback options.
 """
 
 from datetime import datetime
@@ -42,14 +42,14 @@ TRANSLATION_MODELS = {
 
 
 class LanguageDetector:
-    """Fast language detection with caching"""
+    """Fast language detection with caching."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.cache = {}
         self.confidence_threshold = 0.8
 
     async def detect_language(self, text: str) -> str:
-        """Detect language with confidence scoring"""
+        """Detect language with confidence scoring."""
         # Check cache first
         text_hash = hash(text.lower().strip())
         if text_hash in self.cache:
@@ -89,7 +89,7 @@ class LanguageDetector:
             return "en"  # Default to English
 
     def find_closest_supported(self, lang_code: str) -> str:
-        """Map unsupported languages to closest supported ones"""
+        """Map unsupported languages to closest supported ones."""
         language_families = {
             "ro": "fr",  # Romanian -> French
             "ca": "es",  # Catalan -> Spanish
@@ -136,19 +136,19 @@ language_detector = LanguageDetector()
 
 
 async def detect_language(text: str) -> str:
-    """Detect language of input text"""
+    """Detect language of input text."""
     return await language_detector.detect_language(text)
 
 
 def edge_model_available(language: str) -> bool:
-    """Check if edge translation model is available for language"""
+    """Check if edge translation model is available for language."""
     return language in EDGE_SUPPORTED
 
 
 class TranslationEngine:
-    """Multi-tier translation engine with fallback cascade"""
+    """Multi-tier translation engine with fallback cascade."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.google_translator = Translator()
         self.anthropic_client = (
             anthropic.Anthropic() if hasattr(anthropic, "Anthropic") else None
@@ -158,7 +158,7 @@ class TranslationEngine:
     async def edge_translate(
         self, text: str, target_lang: str, source_lang: str = "en"
     ) -> str:
-        """Fast edge translation using Google Translate"""
+        """Fast edge translation using Google Translate."""
         try:
             # Use Google Translate for edge cases
             result = self.google_translator.translate(
@@ -183,7 +183,7 @@ class TranslationEngine:
     async def cloud_translate(
         self, text: str, target_lang: str, source_lang: str = "en"
     ) -> str:
-        """High-quality cloud translation using AI models"""
+        """High-quality cloud translation using AI models."""
         # Try Anthropic first for quality
         if self.anthropic_client:
             try:
@@ -261,7 +261,7 @@ translation_engine = TranslationEngine()
 async def auto_translate_flow(
     message: str, target_lang: str, source_lang: str = "en"
 ) -> str:
-    """Translate with fallback options prioritizing speed and quality"""
+    """Translate with fallback options prioritizing speed and quality."""
     # Skip translation if same language
     if source_lang == target_lang:
         return message
@@ -307,7 +307,7 @@ async def auto_translate_flow(
         return result
 
     except Exception as e:
-        logger.error(f"All translation methods failed: {e}")
+        logger.exception(f"All translation methods failed: {e}")
 
         wandb.log(
             {
@@ -324,7 +324,7 @@ async def auto_translate_flow(
 
 
 def get_language_greeting(language: str) -> str:
-    """Get culturally appropriate greeting for language"""
+    """Get culturally appropriate greeting for language."""
     greetings = {
         "en": "Hello! I'm your AI tutor. How can I help you learn today?",
         "es": "¡Hola! Soy tu tutor de IA. ¿Cómo puedo ayudarte a aprender hoy?",
@@ -342,7 +342,7 @@ def get_language_greeting(language: str) -> str:
 
 
 def get_supported_languages_list(user_language: str = "en") -> str:
-    """Get formatted list of supported languages"""
+    """Get formatted list of supported languages."""
     if user_language == "en":
         return "I support: " + ", ".join(
             [
@@ -371,7 +371,7 @@ async def validate_translation_quality(
     original: str, translated: str, target_lang: str
 ) -> float:
     """Validate translation quality using back-translation
-    Returns confidence score 0-1
+    Returns confidence score 0-1.
     """
     try:
         # Back-translate to English

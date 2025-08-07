@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import sys
 
 from mesh_network_manager import MeshNetworkManager
 
@@ -130,4 +131,4 @@ async def test_mesh_simple():
 
 if __name__ == "__main__":
     result = asyncio.run(test_mesh_simple())
-    exit(0 if result else 1)
+    sys.exit(0 if result else 1)

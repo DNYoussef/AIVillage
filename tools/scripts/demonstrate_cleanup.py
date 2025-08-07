@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Demonstration of the documentation cleanup process
-This script shows the key steps that would be executed
+This script shows the key steps that would be executed.
 """
 
 from pathlib import Path
 
 
-def demonstrate_cleanup():
+def demonstrate_cleanup() -> None:
     base_path = Path.cwd()
 
     print("=== AIVillage Documentation Cleanup Demonstration ===\n")
@@ -76,10 +76,10 @@ def demonstrate_cleanup():
     print("5. CLEANUP ACTIONS TO EXECUTE:")
 
     # Count files that would be moved
-    report_files = [f for f in base_path.glob("*REPORT*.md")]
-    summary_files = [f for f in base_path.glob("*SUMMARY*.md")]
-    status_files = [f for f in base_path.glob("*STATUS*.md")]
-    plan_files = [f for f in base_path.glob("*PLAN*.md")]
+    report_files = list(base_path.glob("*REPORT*.md"))
+    summary_files = list(base_path.glob("*SUMMARY*.md"))
+    status_files = list(base_path.glob("*STATUS*.md"))
+    plan_files = list(base_path.glob("*PLAN*.md"))
 
     total_archive = (
         len(report_files) + len(summary_files) + len(status_files) + len(plan_files)

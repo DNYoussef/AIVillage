@@ -13,7 +13,8 @@ class Shield:
     def inspect(self, payload: bytes) -> None:
         if b"CRASH" in payload:
             self.blocked.append(payload)
-            raise ValueError("violation blocked")
+            msg = "violation blocked"
+            raise ValueError(msg)
 
 
 @dataclass

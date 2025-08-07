@@ -11,7 +11,7 @@ import sys
 
 
 class QualityGateChecker:
-    def __init__(self):
+    def __init__(self) -> None:
         self.root_dir = Path.cwd()
         self.production_dir = self.root_dir / "production"
         self.experimental_dir = self.root_dir / "experimental"
@@ -20,21 +20,21 @@ class QualityGateChecker:
         self.issues = []
         self.warnings = []
 
-    def log_issue(self, issue: str):
+    def log_issue(self, issue: str) -> None:
         """Log a quality gate issue."""
         self.issues.append(issue)
         print(f"ERROR: {issue}")
 
-    def log_warning(self, warning: str):
+    def log_warning(self, warning: str) -> None:
         """Log a quality gate warning."""
         self.warnings.append(warning)
         print(f"WARNING: {warning}")
 
-    def log_success(self, message: str):
+    def log_success(self, message: str) -> None:
         """Log a success message."""
         print(f"SUCCESS: {message}")
 
-    def check_import_separation(self):
+    def check_import_separation(self) -> None:
         """Check that production doesn't import experimental/deprecated."""
         print("\n=== Checking Import Separation ===")
 
@@ -72,7 +72,7 @@ class QualityGateChecker:
         else:
             self.log_success("No forbidden imports found in production code")
 
-    def check_todos_in_production(self):
+    def check_todos_in_production(self) -> None:
         """Check that production code doesn't contain TODOs."""
         print("\n=== Checking for TODOs in Production ===")
 
@@ -101,7 +101,7 @@ class QualityGateChecker:
         else:
             self.log_success("No TODOs found in production code")
 
-    def check_experimental_warnings(self):
+    def check_experimental_warnings(self) -> None:
         """Check that experimental code has appropriate warnings."""
         print("\n=== Checking Experimental Warnings ===")
 
@@ -142,7 +142,7 @@ class QualityGateChecker:
 
         self.log_success(f"Found warnings in {files_with_warnings} experimental files")
 
-    def check_test_coverage(self):
+    def check_test_coverage(self) -> None:
         """Check test coverage for production components."""
         print("\n=== Checking Test Coverage ===")
 
@@ -165,7 +165,7 @@ class QualityGateChecker:
                 f"Found {len(test_files)} test files for {len(production_modules)} production modules"
             )
 
-    def run_tests(self):
+    def run_tests(self) -> None:
         """Run production tests."""
         print("\n=== Running Production Tests ===")
 
@@ -198,7 +198,7 @@ class QualityGateChecker:
         except Exception as e:
             self.log_warning(f"Could not run tests: {e}")
 
-    def check_file_structure(self):
+    def check_file_structure(self) -> None:
         """Check that the file structure follows Sprint 2 conventions."""
         print("\n=== Checking File Structure ===")
 
@@ -218,7 +218,7 @@ class QualityGateChecker:
             else:
                 self.log_warning(f"{dir_name}/__init__.py missing")
 
-    def check_pre_commit_hooks(self):
+    def check_pre_commit_hooks(self) -> None:
         """Check pre-commit configuration."""
         print("\n=== Checking Pre-commit Hooks ===")
 
@@ -249,7 +249,6 @@ class QualityGateChecker:
         print("SPRINT 2 QUALITY GATE REPORT")
         print("=" * 60)
 
-        total_checks = 7  # Number of check methods
         issues_count = len(self.issues)
         warnings_count = len(self.warnings)
 
@@ -303,7 +302,7 @@ class QualityGateChecker:
         return self.generate_report()
 
 
-def main():
+def main() -> None:
     """Main entry point."""
     checker = QualityGateChecker()
     success = checker.run_all_checks()

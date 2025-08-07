@@ -24,7 +24,7 @@ from services.core.service_error_handler import ServiceErrorHandler
 class HTTPAdapter:
     """Base HTTP adapter class."""
 
-    def __init__(self, service_name: str):
+    def __init__(self, service_name: str) -> None:
         self.logger = get_component_logger(f"HTTPAdapter.{service_name}")
         self.error_handler = ServiceErrorHandler(service_name)
 
@@ -32,7 +32,7 @@ class HTTPAdapter:
 class ChatHTTPAdapter(HTTPAdapter):
     """HTTP adapter for chat service."""
 
-    def __init__(self, chat_service: ChatServiceInterface):
+    def __init__(self, chat_service: ChatServiceInterface) -> None:
         super().__init__("ChatService")
         self.chat_service = chat_service
 
@@ -71,7 +71,7 @@ class ChatHTTPAdapter(HTTPAdapter):
 class QueryHTTPAdapter(HTTPAdapter):
     """HTTP adapter for query service."""
 
-    def __init__(self, query_service: QueryServiceInterface):
+    def __init__(self, query_service: QueryServiceInterface) -> None:
         super().__init__("QueryService")
         self.query_service = query_service
 
@@ -100,7 +100,7 @@ class QueryHTTPAdapter(HTTPAdapter):
 class UploadHTTPAdapter(HTTPAdapter):
     """HTTP adapter for upload service."""
 
-    def __init__(self, upload_service: UploadServiceInterface):
+    def __init__(self, upload_service: UploadServiceInterface) -> None:
         super().__init__("UploadService")
         self.upload_service = upload_service
 
@@ -132,7 +132,7 @@ class UploadHTTPAdapter(HTTPAdapter):
 class HealthHTTPAdapter(HTTPAdapter):
     """HTTP adapter for health check service."""
 
-    def __init__(self, health_service: HealthCheckInterface):
+    def __init__(self, health_service: HealthCheckInterface) -> None:
         super().__init__("HealthService")
         self.health_service = health_service
 
@@ -151,7 +151,7 @@ class HealthHTTPAdapter(HTTPAdapter):
 class HTTPAdapterFactory:
     """Factory for creating HTTP adapters."""
 
-    def __init__(self, business_logic_factory):
+    def __init__(self, business_logic_factory) -> None:
         self.business_logic_factory = business_logic_factory
 
     def create_chat_adapter(self) -> ChatHTTPAdapter:

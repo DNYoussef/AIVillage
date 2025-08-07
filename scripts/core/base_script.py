@@ -42,7 +42,7 @@ class ScriptResult:
         metrics: dict[str, Any] | None = None,
         errors: list[str] | None = None,
         warnings: list[str] | None = None,
-    ):
+    ) -> None:
         """Initialize script result.
 
         Args:
@@ -101,7 +101,7 @@ class BaseScript(ABC):
         log_level: int | str = logging.INFO,
         log_file: str | Path | None = None,
         timeout: int | None = None,
-    ):
+    ) -> None:
         """Initialize the base script.
 
         Args:
@@ -300,7 +300,7 @@ class BaseScript(ABC):
             self.result = result
 
         except ScriptTimeoutError as e:
-            self.logger.error(f"Script timed out: {e}")
+            self.logger.exception(f"Script timed out: {e}")
             result = ScriptResult(
                 success=False,
                 message=f"Script timed out after {self.timeout} seconds",
@@ -378,7 +378,7 @@ class SimpleScript(BaseScript):
 
     def __init__(
         self, name: str, execute_func: callable, description: str = "", **kwargs
-    ):
+    ) -> None:
         """Initialize simple script.
 
         Args:

@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path.cwd()))
 class AgentAnalyzer:
     """Comprehensive agent system analyzer."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.results = {}
 
     def analyze_templates(self):
@@ -60,7 +60,7 @@ class AgentAnalyzer:
 
         agent_details = {}
 
-        for template in factory.templates.keys():
+        for template in factory.templates:
             try:
                 agent = factory.create_agent(template)
                 class_name = agent.__class__.__name__
@@ -104,7 +104,7 @@ class AgentAnalyzer:
 
         return factory
 
-    def test_behavioral_differences(self, factory):
+    def test_behavioral_differences(self, factory) -> None:
         """Test if agents show different behaviors."""
         print("\n" + "=" * 60)
         print("BEHAVIORAL ANALYSIS")
@@ -141,7 +141,7 @@ class AgentAnalyzer:
                         print(f"  {agent_id}: ERROR - {str(e)[:30]}")
 
             # Check if responses are different
-            unique_responses = set(str(r) for r in responses.values())
+            unique_responses = {str(r) for r in responses.values()}
             if len(unique_responses) > 1:
                 behavioral_differences += 1
                 print(f"    -> {len(unique_responses)} different responses")
@@ -158,7 +158,7 @@ class AgentAnalyzer:
             "agents_tested": test_agents,
         }
 
-    def test_kpi_system(self, factory):
+    def test_kpi_system(self, factory) -> None:
         """Test KPI tracking system."""
         print("\n" + "=" * 60)
         print("KPI SYSTEM ANALYSIS")
@@ -205,7 +205,7 @@ class AgentAnalyzer:
             print(f"KPI test failed: {e}")
             self.results["kpi"] = {"working": False, "error": str(e)}
 
-    def test_communication_system(self):
+    def test_communication_system(self) -> None:
         """Test communication system."""
         print("\n" + "=" * 60)
         print("COMMUNICATION SYSTEM ANALYSIS")
@@ -216,7 +216,7 @@ class AgentAnalyzer:
             from src.communications.protocol import CommunicationsProtocol
 
             # Test protocol creation
-            protocol = CommunicationsProtocol("test_agent")
+            CommunicationsProtocol("test_agent")
             print("+ Communication protocol created")
 
             # Test message creation
@@ -242,7 +242,7 @@ class AgentAnalyzer:
                 "error": str(e),
             }
 
-    def check_experimental_agents(self):
+    def check_experimental_agents(self) -> None:
         """Check experimental agent implementations."""
         print("\n" + "=" * 60)
         print("EXPERIMENTAL AGENTS ANALYSIS")
@@ -313,7 +313,7 @@ class AgentAnalyzer:
 
         self.results["experimental"] = experimental_agents
 
-    def generate_report(self):
+    def generate_report(self) -> None:
         """Generate comprehensive final report."""
         print("\n" + "=" * 60)
         print("FINAL COMPREHENSIVE REPORT")
@@ -397,7 +397,7 @@ class AgentAnalyzer:
             print(f"ISSUES: {', '.join(issues)}")
 
 
-def main():
+def main() -> None:
     """Run comprehensive agent analysis."""
     print("AIVillage Agent System - COMPREHENSIVE ANALYSIS")
 

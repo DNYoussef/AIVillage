@@ -14,10 +14,13 @@ The default log file is ``cleanup.log`` and the default metrics file is
 from __future__ import annotations
 
 import argparse
-from collections.abc import Iterable
 import json
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def parse_args() -> argparse.Namespace:
@@ -45,7 +48,8 @@ def iter_actions(log_path: Path) -> Iterable[str]:
     Empty lines are ignored. The function is separated for easier testing.
     """
     if not log_path.exists():
-        raise FileNotFoundError(f"Log file not found: {log_path}")
+        msg = f"Log file not found: {log_path}"
+        raise FileNotFoundError(msg)
 
     with log_path.open("r", encoding="utf-8") as f:
         for line in f:

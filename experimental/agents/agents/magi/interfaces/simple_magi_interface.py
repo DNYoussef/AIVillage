@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Simple Direct Interface to Specialized Magi AI Agent
-No Unicode characters - compatible with all terminals
+No Unicode characters - compatible with all terminals.
 """
 
 import json
@@ -10,11 +10,11 @@ from pathlib import Path
 class SimpleMagiInterface:
     """Simple direct interface to the specialized Magi AI agent."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.load_magi_capabilities()
         self.conversation_history = []
 
-    def load_magi_capabilities(self):
+    def load_magi_capabilities(self) -> bool:
         """Load the specialized capabilities from the Magi training results."""
         results_path = Path(
             "D:/AgentForge/memory_efficient_magi_20250726_033506/memory_efficient_scaled_results.json"
@@ -188,7 +188,7 @@ class SimpleMagiInterface:
 
         return capability_name, capability_score
 
-    def run_interactive_session(self):
+    def run_interactive_session(self) -> None:
         """Run an interactive conversation session with the Magi."""
         print()
         print("WELCOME TO THE MAGI AI AGENT INTERFACE")
@@ -263,7 +263,7 @@ class SimpleMagiInterface:
                 continue
 
 
-def main():
+def main() -> None:
     """Main function to start the Magi interface."""
     print("STARTING MAGI AI AGENT INTERFACE...")
 

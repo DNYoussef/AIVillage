@@ -11,7 +11,7 @@ import subprocess
 
 
 class ProductionOrganizer:
-    def __init__(self):
+    def __init__(self) -> None:
         # Based on Sprint 1 analysis and current codebase assessment
         self.component_classifications = {
             "production": {
@@ -79,12 +79,12 @@ class ProductionOrganizer:
                     total_funcs = sum(
                         1
                         for n in ast.walk(tree)
-                        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                        if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)
                     )
                     with_docs = sum(
                         1
                         for n in ast.walk(tree)
-                        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                        if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)
                         and ast.get_docstring(n)
                     )
 
@@ -108,7 +108,7 @@ class ProductionOrganizer:
 
         return metrics
 
-    def create_new_structure(self):
+    def create_new_structure(self) -> None:
         """Create the new directory structure."""
         print("Creating new directory structure...")
 
@@ -157,7 +157,7 @@ class ProductionOrganizer:
 
         try:
             # Use git mv to preserve history
-            result = subprocess.run(
+            subprocess.run(
                 ["git", "mv", str(src_path), str(dst_path)],
                 capture_output=True,
                 text=True,
@@ -201,7 +201,7 @@ class ProductionOrganizer:
                 print(f"Error: Failed to move {src} -> {dst}: {move_error}")
                 return False
 
-    def update_all_imports(self):
+    def update_all_imports(self) -> None:
         """Update imports throughout the codebase."""
         print("\nUpdating imports...")
 
@@ -262,7 +262,7 @@ class ProductionOrganizer:
 
         return False
 
-    def execute_reorganization(self):
+    def execute_reorganization(self) -> None:
         """Execute the full reorganization."""
         print("Starting Sprint 2 code reorganization...")
         print("=" * 60)
@@ -334,7 +334,7 @@ class ProductionOrganizer:
         print(f"Moved {len(self.moves_performed)} components")
         print(f"Updated {len(self.import_mappings)} import mappings")
 
-    def generate_reorganization_report(self):
+    def generate_reorganization_report(self) -> None:
         """Generate detailed report of changes."""
         report = f"""# Sprint 2: Code Reorganization Report
 
@@ -513,8 +513,8 @@ For developers using the old structure:
         print("Generated reorganization_mappings.json")
 
 
-def main():
-    """Execute reorganization"""
+def main() -> None:
+    """Execute reorganization."""
     if __name__ == "__main__":
         organizer = ProductionOrganizer()
         organizer.execute_reorganization()

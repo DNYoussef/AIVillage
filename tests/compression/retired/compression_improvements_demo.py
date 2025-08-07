@@ -32,10 +32,9 @@ def demonstrate_key_improvements():
 
     if is_effective:
         print("PASS: HyperCompression effective - applied")
-        final_hyper_size = len(hyper_compressed)
+        len(hyper_compressed)
     else:
         print("PASS: HyperCompression ineffective - SKIPPED (optimization!)")
-        final_hyper_size = original_size
 
     print("\n2. OPTIMIZED BINARY PACKING")
     print("-" * 40)
@@ -216,7 +215,7 @@ def atlantis_vision_progress():
     ]
 
     print("Milestone Progress:")
-    for milestone, target, achieved, status in milestones:
+    for milestone, _target, _achieved, status in milestones:
         print(f"  {milestone}: {status}")
 
     print("\nCurrent Status:")

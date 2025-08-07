@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Comprehensive deployment orchestration script for AIVillage.
-"""
+"""Comprehensive deployment orchestration script for AIVillage."""
 
 import argparse
 import asyncio
@@ -19,7 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 class AIVillageDeploymentOrchestrator:
-    def __init__(self, environment: str, namespace: str, image_tag: str = "latest"):
+    def __init__(
+        self, environment: str, namespace: str, image_tag: str = "latest"
+    ) -> None:
         self.environment = environment
         self.namespace = namespace
         self.image_tag = image_tag
@@ -39,11 +40,11 @@ class AIVillageDeploymentOrchestrator:
                 logger.debug(f"stdout: {result.stdout}")
             return result
         except subprocess.CalledProcessError as e:
-            logger.error(f"Command failed: {e}")
-            logger.error(f"stderr: {e.stderr}")
+            logger.exception(f"Command failed: {e}")
+            logger.exception(f"stderr: {e.stderr}")
             raise
         except subprocess.TimeoutExpired as e:
-            logger.error(f"Command timed out: {e}")
+            logger.exception(f"Command timed out: {e}")
             raise
 
     def check_prerequisites(self) -> bool:
@@ -63,7 +64,7 @@ class AIVillageDeploymentOrchestrator:
                 FileNotFoundError,
             ):
                 missing_tools.append(tool)
-                logger.error(f"❌ {tool} is not available")
+                logger.exception(f"❌ {tool} is not available")
 
         if missing_tools:
             logger.error(f"Missing required tools: {', '.join(missing_tools)}")
@@ -74,7 +75,7 @@ class AIVillageDeploymentOrchestrator:
             self.run_command(["kubectl", "cluster-info"], timeout=30)
             logger.info("✅ Kubernetes cluster is accessible")
         except Exception as e:
-            logger.error(f"❌ Cannot connect to Kubernetes cluster: {e}")
+            logger.exception(f"❌ Cannot connect to Kubernetes cluster: {e}")
             return False
 
         logger.info("✅ All prerequisites satisfied")
@@ -97,7 +98,7 @@ class AIVillageDeploymentOrchestrator:
                 logger.info(f"✅ Created namespace {self.namespace}")
                 return True
             except Exception as e:
-                logger.error(f"❌ Failed to create namespace: {e}")
+                logger.exception(f"❌ Failed to create namespace: {e}")
                 return False
 
     def deploy_databases(self) -> bool:
@@ -137,7 +138,7 @@ class AIVillageDeploymentOrchestrator:
             return True
 
         except Exception as e:
-            logger.error(f"❌ Failed to deploy databases: {e}")
+            logger.exception(f"❌ Failed to deploy databases: {e}")
             return False
 
     def wait_for_databases(self, timeout: int = 600) -> bool:
@@ -237,7 +238,7 @@ class AIVillageDeploymentOrchestrator:
             return True
 
         except Exception as e:
-            logger.error(f"❌ Helm deployment failed: {e}")
+            logger.exception(f"❌ Helm deployment failed: {e}")
             return False
 
     def verify_deployment(self) -> bool:
@@ -296,7 +297,7 @@ class AIVillageDeploymentOrchestrator:
             return True
 
         except Exception as e:
-            logger.error(f"❌ Deployment verification failed: {e}")
+            logger.exception(f"❌ Deployment verification failed: {e}")
             return False
 
     def cleanup_old_resources(self) -> bool:
@@ -305,14 +306,14 @@ class AIVillageDeploymentOrchestrator:
 
         try:
             # Remove old ConfigMaps and Secrets (keep current ones)
-            cutoff_time = int(time.time()) - 7 * 24 * 3600  # 7 days ago
+            int(time.time()) - 7 * 24 * 3600  # 7 days ago
 
             # This is a placeholder - implement actual cleanup logic based on your needs
             logger.info("✅ Cleanup completed")
             return True
 
         except Exception as e:
-            logger.error(f"❌ Cleanup failed: {e}")
+            logger.exception(f"❌ Cleanup failed: {e}")
             return False
 
     def rollback_deployment(self, revision: int | None = None) -> bool:
@@ -336,7 +337,7 @@ class AIVillageDeploymentOrchestrator:
             return True
 
         except Exception as e:
-            logger.error(f"❌ Rollback failed: {e}")
+            logger.exception(f"❌ Rollback failed: {e}")
             return False
 
     async def full_deployment(self) -> bool:
@@ -361,7 +362,7 @@ class AIVillageDeploymentOrchestrator:
                     return False
                 logger.info(f"✅ Step '{step_name}' completed")
             except Exception as e:
-                logger.error(f"❌ Step '{step_name}' failed with exception: {e}")
+                logger.exception(f"❌ Step '{step_name}' failed with exception: {e}")
                 return False
 
         logger.info("🎉 Full deployment completed successfully!")
@@ -415,11 +416,11 @@ class AIVillageDeploymentOrchestrator:
             }
 
         except Exception as e:
-            logger.error(f"Failed to get deployment status: {e}")
+            logger.exception(f"Failed to get deployment status: {e}")
             return {"error": str(e)}
 
 
-def main():
+def main() -> int | None:
     parser = argparse.ArgumentParser(description="AIVillage Deployment Orchestrator")
     parser.add_argument(
         "--environment",
@@ -477,7 +478,7 @@ def main():
         logger.info("Deployment interrupted by user")
         return 130
     except Exception as e:
-        logger.error(f"Deployment failed: {e}")
+        logger.exception(f"Deployment failed: {e}")
         return 1
 
 

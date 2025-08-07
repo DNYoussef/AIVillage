@@ -27,7 +27,8 @@ def main(check: bool = False) -> None:
     schema = generate_schema()
     if check:
         if not SCHEMA_PATH.exists():
-            raise SystemExit("schema file missing")
+            msg = "schema file missing"
+            raise SystemExit(msg)
         existing = json.loads(SCHEMA_PATH.read_text())
         if existing != schema:
             print("EvidencePack schema out of date. Run scripts/gen_schema.py")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Benchmark compression performance"""
+"""Benchmark compression performance."""
 from pathlib import Path
 import sys
 import time
@@ -49,7 +49,7 @@ def create_test_models():
     return models
 
 
-def benchmark_compression():
+def benchmark_compression() -> None:
     quantizer = SimpleQuantizer()
     models = create_test_models()
 

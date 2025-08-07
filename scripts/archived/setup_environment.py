@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Agent Forge Environment Setup Script
+"""Agent Forge Environment Setup Script.
 
 Comprehensive setup script that prepares the environment for Agent Forge:
 1. Downloads models optimized for RTX 2060 SUPER
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def check_gpu_setup():
-    """Check GPU and CUDA availability"""
+    """Check GPU and CUDA availability."""
     logger.info("Checking GPU setup...")
 
     try:
@@ -58,12 +58,12 @@ def check_gpu_setup():
         return False, {"device": "CPU", "memory_gb": 0}
 
     except ImportError:
-        logger.error("❌ PyTorch not installed")
+        logger.exception("❌ PyTorch not installed")
         return False, {"device": "Unknown", "memory_gb": 0}
 
 
-def install_dependencies():
-    """Install required dependencies"""
+def install_dependencies() -> bool | None:
+    """Install required dependencies."""
     logger.info("Installing dependencies...")
 
     requirements = [
@@ -98,12 +98,12 @@ def install_dependencies():
         return True
 
     except subprocess.CalledProcessError as e:
-        logger.error(f"❌ Dependency installation failed: {e}")
+        logger.exception(f"❌ Dependency installation failed: {e}")
         return False
 
 
 def setup_directory_structure():
-    """Create necessary directory structure"""
+    """Create necessary directory structure."""
     logger.info("Setting up directory structure...")
 
     directories = [
@@ -124,13 +124,13 @@ def setup_directory_structure():
             created_dirs.append(dir_path)
             logger.info(f"✅ Created directory: {dir_path}")
         except Exception as e:
-            logger.error(f"❌ Failed to create {dir_path}: {e}")
+            logger.exception(f"❌ Failed to create {dir_path}: {e}")
 
     return created_dirs
 
 
 def create_config_files():
-    """Create configuration files"""
+    """Create configuration files."""
     logger.info("Creating configuration files...")
 
     # Create environment config
@@ -194,7 +194,7 @@ def create_config_files():
 
 
 def download_models_and_benchmarks():
-    """Download models and benchmarks"""
+    """Download models and benchmarks."""
     logger.info("Downloading models and benchmarks...")
 
     success = True
@@ -207,7 +207,7 @@ def download_models_and_benchmarks():
         )
         logger.info("✅ Models downloaded successfully")
     except subprocess.CalledProcessError as e:
-        logger.error(f"❌ Model download failed: {e}")
+        logger.exception(f"❌ Model download failed: {e}")
         success = False
 
     # Download benchmarks
@@ -216,14 +216,14 @@ def download_models_and_benchmarks():
         subprocess.run([sys.executable, "scripts/download_benchmarks.py"], check=True)
         logger.info("✅ Benchmarks downloaded successfully")
     except subprocess.CalledProcessError as e:
-        logger.error(f"❌ Benchmark download failed: {e}")
+        logger.exception(f"❌ Benchmark download failed: {e}")
         success = False
 
     return success
 
 
 def validate_setup():
-    """Validate the complete setup"""
+    """Validate the complete setup."""
     logger.info("Validating setup...")
 
     validation_results = {
@@ -249,7 +249,7 @@ def validate_setup():
         validation_results["dependencies"] = True
         logger.info("✅ Key dependencies available")
     except ImportError as e:
-        logger.error(f"❌ Missing dependencies: {e}")
+        logger.exception(f"❌ Missing dependencies: {e}")
 
     # Check directories
     required_dirs = ["D:/agent_forge_models", "benchmarks", "forge_output_enhanced"]
@@ -292,8 +292,8 @@ def validate_setup():
     return validation_results
 
 
-def main():
-    """Main setup function"""
+def main() -> int:
+    """Main setup function."""
     parser = argparse.ArgumentParser(description="Set up Agent Forge environment")
     parser.add_argument(
         "--skip-downloads",
@@ -345,10 +345,9 @@ def main():
         logger.warning("GPU setup issues detected, but continuing...")
 
     # Step 2: Install dependencies
-    if not args.skip_deps:
-        if not install_dependencies():
-            setup_success = False
-            logger.error("Dependency installation failed")
+    if not args.skip_deps and not install_dependencies():
+        setup_success = False
+        logger.error("Dependency installation failed")
 
     # Step 3: Setup directories
     created_dirs = setup_directory_structure()
@@ -361,10 +360,9 @@ def main():
         logger.warning("Some configuration files could not be created")
 
     # Step 5: Download models and benchmarks
-    if not args.skip_downloads:
-        if not download_models_and_benchmarks():
-            setup_success = False
-            logger.error("Downloads failed")
+    if not args.skip_downloads and not download_models_and_benchmarks():
+        setup_success = False
+        logger.error("Downloads failed")
 
     # Step 6: Final validation
     validation_results = validate_setup()

@@ -143,9 +143,8 @@ def seedlm_compress(tensor):
 
     # Check compatibility
     if tensor.numel() % compressor.C != 0:
-        raise ValueError(
-            f"Tensor size {tensor.numel()} not divisible by block size {compressor.C}"
-        )
+        msg = f"Tensor size {tensor.numel()} not divisible by block size {compressor.C}"
+        raise ValueError(msg)
 
     compressed = compressor.compress(tensor)
 

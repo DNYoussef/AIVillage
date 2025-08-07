@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class Optimizer:
-    def __init__(self):
+    def __init__(self) -> None:
         self.model = None
         self.hyperparameters = {}
         self.mcts = None  # Initialize MCTS if needed
@@ -44,10 +44,11 @@ class Optimizer:
                     f"Evaluated hyperparameters: {hyperparameters}, fitness: {fitness}"
                 )
             except Exception as e:
-                logger.error(f"Error evaluating hyperparameters: {e!s}")
+                logger.exception(f"Error evaluating hyperparameters: {e!s}")
 
         if best_hyperparameters is None:
-            raise AIVillageException("Failed to find valid hyperparameters")
+            msg = "Failed to find valid hyperparameters"
+            raise AIVillageException(msg)
 
         logger.info(
             f"Best hyperparameters found: {best_hyperparameters}, fitness: {best_fitness}"
@@ -55,23 +56,23 @@ class Optimizer:
         return best_hyperparameters
 
     @log_and_handle_errors
-    async def update_model(self, new_model: nn.Module):
+    async def update_model(self, new_model: nn.Module) -> None:
         self.model = new_model
         logger.info("Model updated in Optimizer")
 
     @log_and_handle_errors
-    async def update_hyperparameters(self, hyperparameters: dict[str, Any]):
+    async def update_hyperparameters(self, hyperparameters: dict[str, Any]) -> None:
         self.hyperparameters.update(hyperparameters)
         logger.info("Hyperparameters updated in Optimizer")
 
     @log_and_handle_errors
-    async def save_models(self, path: str):
+    async def save_models(self, path: str) -> None:
         logger.info(f"Saving optimizer models to {path}")
         if self.mcts:
             self.mcts.save(path)
 
     @log_and_handle_errors
-    async def load_models(self, path: str):
+    async def load_models(self, path: str) -> None:
         logger.info(f"Loading optimizer models from {path}")
         if self.mcts:
             self.mcts.load(path)

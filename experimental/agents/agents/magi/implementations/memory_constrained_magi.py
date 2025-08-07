@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Memory-Constrained Magi Specialization
+"""Memory-Constrained Magi Specialization.
 
 Historic first real Magi agent specialization using the evolved model from real evolution.
 Uses CPU-only processing with aggressive memory optimization.
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 class MemoryConstrainedMagiRunner:
     """Memory-constrained Magi specialization for historic first execution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.start_time = datetime.now()
         self.run_id = f"historic_magi_run_{self.start_time.strftime('%Y%m%d_%H%M%S')}"
         self.output_dir = Path(f"D:/AgentForge/{self.run_id}")
@@ -247,7 +247,7 @@ async def main():
 
     try:
         # Initialize tracking
-        wandb_success = runner.initialize_wandb_tracking()
+        runner.initialize_wandb_tracking()
 
         # Execute Magi specialization
         logger.info("🧙 LAUNCHING MAGI SPECIALIZATION...")
@@ -295,7 +295,7 @@ async def main():
         return None
 
     except Exception as e:
-        logger.error(f"❌ Magi specialization failed: {e}")
+        logger.exception(f"❌ Magi specialization failed: {e}")
         return None
     finally:
         finish_wandb()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Magi Agent Success and Capabilities
+"""Validate Magi Agent Success and Capabilities.
 
 This script validates the successful creation of the Magi agent
 and confirms all achievements from the Agent Forge pipeline.
@@ -149,4 +149,4 @@ def validate_magi_creation():
 
 if __name__ == "__main__":
     success = validate_magi_creation()
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

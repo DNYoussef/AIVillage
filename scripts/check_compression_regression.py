@@ -21,8 +21,8 @@ except ImportError:
     SeedLMCompressor = None
 
 
-def run_performance_benchmark(threshold_percent=40):
-    """Run compression performance benchmark and check against threshold"""
+def run_performance_benchmark(threshold_percent=40) -> bool:
+    """Run compression performance benchmark and check against threshold."""
     if SeedLMCompressor is None:
         print("ERROR: SeedLM compressor not available - skipping regression check")
         return True  # Don't fail CI if module is missing
@@ -139,7 +139,7 @@ def run_performance_benchmark(threshold_percent=40):
     return False
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Check compression performance regression"
     )

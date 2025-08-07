@@ -168,9 +168,9 @@ class TestEnhancedLLMDriver:
             await driver.generate("test2")
 
             # Third request should be rate limited (will wait)
-            start_time = asyncio.get_event_loop().time()
+            asyncio.get_event_loop().time()
             await driver.generate("test3")
-            end_time = asyncio.get_event_loop().time()
+            asyncio.get_event_loop().time()
 
             # Should have been delayed by rate limiting
             assert len(driver._request_times) <= 2

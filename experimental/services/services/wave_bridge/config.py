@@ -1,4 +1,4 @@
-"""Configuration for WhatsApp Wave Bridge"""
+"""Configuration for WhatsApp Wave Bridge."""
 
 import os
 from typing import Any
@@ -10,7 +10,7 @@ load_dotenv()
 
 
 class Config:
-    """Configuration settings for WhatsApp Wave Bridge"""
+    """Configuration settings for WhatsApp Wave Bridge."""
 
     # Twilio Configuration
     TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
@@ -53,7 +53,7 @@ class Config:
 
     @classmethod
     def validate_config(cls) -> dict[str, Any]:
-        """Validate required configuration"""
+        """Validate required configuration."""
         validation_results = {"valid": True, "errors": [], "warnings": []}
 
         # Required settings
@@ -102,7 +102,8 @@ config = Config()
 # Validate configuration on import
 config_validation = config.validate_config()
 if not config_validation["valid"]:
-    raise ValueError(f"Configuration validation failed: {config_validation['errors']}")
+    msg = f"Configuration validation failed: {config_validation['errors']}"
+    raise ValueError(msg)
 
 if config_validation["warnings"]:
     import logging

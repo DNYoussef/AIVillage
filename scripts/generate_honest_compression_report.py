@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate honest compression report"""
+"""Generate honest compression report."""
 
 report = """# Honest Compression Assessment
 

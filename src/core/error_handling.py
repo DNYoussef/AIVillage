@@ -12,10 +12,10 @@ import logging
 import traceback
 from typing import Any, TypeVar, cast
 
+from src.communications.message import Priority
 from src.communications.protocol import (
     StandardCommunicationProtocol as BaseCommProtocol,
 )
-from src.communications.message import Priority
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -126,7 +126,9 @@ class StandardCommunicationProtocol(BaseCommProtocol):
     adds convenience helpers for creating structured messages.
     """
 
-    def __init__(self, agent_id: str = "anon", port: int = 8888) -> None:  # pragma: no cover - simple wrapper
+    def __init__(
+        self, agent_id: str = "anon", port: int = 8888
+    ) -> None:  # pragma: no cover - simple wrapper
         super().__init__(agent_id=agent_id, port=port)
         self.inboxes: dict[str, asyncio.PriorityQueue[tuple[int, Message]]] = {}
         self._running = True

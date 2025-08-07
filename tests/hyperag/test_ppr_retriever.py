@@ -321,7 +321,7 @@ class TestPersonalizedPageRank:
         query_seeds = [f"node_{i}" for i in range(100)]  # Larger query
 
         # Run retrieval
-        result = await ppr_retriever.retrieve(
+        await ppr_retriever.retrieve(
             query_seeds=query_seeds,
             user_id="test_user",
             plan=sample_query_plan,

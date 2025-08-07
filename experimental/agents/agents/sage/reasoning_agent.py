@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class ReasoningAgent:
     def __init__(
         self, llm_config: OpenAIGPTConfig, knowledge_graph_agent: KnowledgeGraphAgent
-    ):
+    ) -> None:
         self.llm = llm_config.create()
         self.knowledge_graph_agent = knowledge_graph_agent
 
@@ -75,8 +75,9 @@ class ReasoningAgent:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse reasoning response: {response}")
-            raise AIVillageException("Failed to parse reasoning response")
+            logger.exception(f"Failed to parse reasoning response: {response}")
+            msg = "Failed to parse reasoning response"
+            raise AIVillageException(msg)
 
     @error_handler.handle_error
     async def resolve_conflicts(
@@ -122,8 +123,11 @@ class ReasoningAgent:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse conflict resolution response: {response}")
-            raise AIVillageException("Failed to parse conflict resolution response")
+            logger.exception(
+                f"Failed to parse conflict resolution response: {response}"
+            )
+            msg = "Failed to parse conflict resolution response"
+            raise AIVillageException(msg)
 
     @error_handler.handle_error
     async def generate_explanation(self, reasoning_result: dict[str, Any]) -> str:
@@ -188,7 +192,7 @@ class ReasoningAgent:
 if __name__ == "__main__":
     import asyncio
 
-    async def main():
+    async def main() -> None:
         llm_config = OpenAIGPTConfig(chat_model="gpt-4")
         kg_agent = KnowledgeGraphAgent(llm_config)
         reasoning_agent = ReasoningAgent(llm_config, kg_agent)

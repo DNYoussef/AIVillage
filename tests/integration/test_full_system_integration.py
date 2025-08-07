@@ -314,16 +314,6 @@ class MCPServerIntegrationTest:
 
         try:
             # Simulate MCP server interaction
-            initialize_request = {
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "initialize",
-                "params": {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {},
-                    "clientInfo": {"name": "integration_test", "version": "1.0.0"},
-                },
-            }
 
             # Mock successful initialization
             initialize_response = {
@@ -431,7 +421,7 @@ class MCPServerIntegrationTest:
                     "memories_stored": len(stored_memories),
                     "search_results": len(search_results),
                     "unique_tags": len(
-                        set(tag for mem in stored_memories for tag in mem["tags"])
+                        {tag for mem in stored_memories for tag in mem["tags"]}
                     ),
                 },
             )
@@ -680,14 +670,12 @@ class MeshNetworkIntegrationTest:
             remaining_nodes = initial_nodes - failed_nodes
 
             # Mock fault tolerance test
-            network_health_before = 1.0
             network_health_after = remaining_nodes / initial_nodes
 
             # Test message delivery after failures
             messages_before_failure = 20
             messages_after_failure = 18  # Some messages lost during failure
 
-            delivery_rate_before = 1.0
             delivery_rate_after = messages_after_failure / messages_before_failure
 
             # Test recovery time
@@ -796,9 +784,7 @@ class SecurityIntegrationTest:
                     "services_tested": len(auth_tests),
                     "auth_success_rate": auth_success_rate,
                     "token_validation_rate": token_validation_rate,
-                    "auth_methods": list(
-                        set(test["auth_method"] for test in auth_tests)
-                    ),
+                    "auth_methods": list({test["auth_method"] for test in auth_tests}),
                 },
             )
 
@@ -848,7 +834,7 @@ class SecurityIntegrationTest:
                     "encryption_rate": encryption_rate,
                     "integrity_rate": integrity_rate,
                     "encryption_methods": list(
-                        set(ch["encryption"] for ch in communication_channels)
+                        {ch["encryption"] for ch in communication_channels}
                     ),
                 },
             )
@@ -985,7 +971,7 @@ class SelfEvolutionIntegrationTest:
             evolution_results = []
             for gen in range(generations):
                 generation_fitness = []
-                for individual in range(population_size):
+                for _individual in range(population_size):
                     # Enhanced fitness simulation with better convergence and improvement
                     base_fitness = 0.65 + (
                         gen * 0.12

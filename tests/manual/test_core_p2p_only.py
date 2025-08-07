@@ -12,6 +12,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import only the core P2P implementation
+import sys
+
 from src.core.p2p import P2PNode
 
 
@@ -213,7 +215,7 @@ async def test_five_node_network():
         return success_criteria
 
     except Exception as e:
-        logger.error(f"5-node network test failed: {e}")
+        logger.exception(f"5-node network test failed: {e}")
         raise
     finally:
         # Clean up all nodes
@@ -251,7 +253,7 @@ async def main():
             logger.info("❌ MAJOR ISSUES - P2P networking has significant problems")
 
     except Exception as e:
-        logger.error(f"P2P network test failed: {e}")
+        logger.exception(f"P2P network test failed: {e}")
         return False
 
     return True
@@ -259,4 +261,4 @@ async def main():
 
 if __name__ == "__main__":
     success = asyncio.run(main())
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

@@ -42,7 +42,7 @@ async def test_multi_agent_coordination():
             print(f"  {agent_type}: {result.get('result', 'no response')}")
 
         # Check if introductions are different
-        unique_intros = set(str(r) for r in introductions.values())
+        unique_intros = {str(r) for r in introductions.values()}
         differentiated = len(unique_intros) > 1
         print(f"  -> Unique responses: {len(unique_intros)}/{len(agents)}")
         print(f"  -> Agents differentiated: {differentiated}")
@@ -210,7 +210,7 @@ async def test_communication_chain():
 
         print("\nTesting communication chain...")
         for msg in chain_messages:
-            sender = agents[msg["from"]]
+            agents[msg["from"]]
             receiver = agents[msg["to"]]
 
             # Simulate message passing

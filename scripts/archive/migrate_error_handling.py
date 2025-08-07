@@ -82,7 +82,7 @@ class ErrorHandlingMigrator:
 
     def __init__(
         self, dry_run: bool = False, backup: bool = False, verbose: bool = False
-    ):
+    ) -> None:
         self.dry_run = dry_run
         self.backup = backup
         self.verbose = verbose
@@ -94,7 +94,7 @@ class ErrorHandlingMigrator:
             "errors": [],
         }
 
-    def log(self, message: str, level: str = "INFO"):
+    def log(self, message: str, level: str = "INFO") -> None:
         """Log message with appropriate level."""
         if self.verbose or level == "ERROR":
             print(f"[{level}] {message}")
@@ -257,7 +257,7 @@ Migration completed successfully!
         return report
 
 
-def main():
+def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(
         description="Migrate error handling to new unified system"
@@ -291,7 +291,7 @@ def main():
     if args.dry_run:
         print("DRY RUN MODE - No files will be modified")
 
-    stats = migrator.run_migration(root_dir)
+    migrator.run_migration(root_dir)
 
     print(migrator.generate_report())
 

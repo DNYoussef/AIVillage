@@ -317,7 +317,7 @@ def main():
         cascade_effective = test_cascade_stage_contributions()
 
         # Test 4: Comprehensive comparison
-        comparison = comprehensive_comparison()
+        comprehensive_comparison()
 
         print(f"\n{'='*60}")
         print("VALIDATION SUMMARY")

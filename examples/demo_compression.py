@@ -7,6 +7,7 @@ No mocks, no fake data - just real compression achieving 4x reduction.
 
 import logging
 from pathlib import Path
+import sys
 import tempfile
 
 # Setup logging to see compression progress
@@ -22,10 +23,10 @@ try:
     print("[SUCCESS] Compression modules imported successfully")
 except ImportError as e:
     print(f"[ERROR] Import error: {e}")
-    exit(1)
+    sys.exit(1)
 
 
-def demo_basic_compression():
+def demo_basic_compression() -> None:
     """Demo basic model compression."""
     print("\n[DEMO] Demo 1: Basic Model Compression")
     print("=" * 50)
@@ -58,7 +59,7 @@ def demo_basic_compression():
         print(f"[ERROR] Compression failed: {e}")
 
 
-def demo_mobile_pipeline():
+def demo_mobile_pipeline() -> None:
     """Demo complete mobile deployment pipeline."""
     print("\n[MOBILE] Demo 2: Mobile Deployment Pipeline")
     print("=" * 50)
@@ -106,7 +107,7 @@ def demo_mobile_pipeline():
             print(f"[ERROR] Mobile pipeline failed: {e}")
 
 
-def demo_compression_limits():
+def demo_compression_limits() -> None:
     """Demo compression limitations and error handling."""
     print("\n[WARNING]  Demo 3: Compression Limits & Error Handling")
     print("=" * 50)
@@ -124,12 +125,12 @@ def demo_compression_limits():
 
     # Show what we actually achieved
     quantizer_realistic = SimpleQuantizer(target_compression_ratio=3.0)
-    compressed = quantizer_realistic.quantize_model_from_object(model)
+    quantizer_realistic.quantize_model_from_object(model)
     stats = quantizer_realistic.get_compression_stats()
     print(f"   Realistic compression achieved: {stats['compression_ratio']:.2f}x")
 
 
-def main():
+def main() -> None:
     """Run all compression demos."""
     print("[FIRE] Real PyTorch Model Compression Demo")
     print("Target: 4x compression for 2GB mobile phones")

@@ -20,7 +20,7 @@ class OpenAIGPTConfig:
 
 
 class OpenAIGPT:
-    def __init__(self, config: OpenAIGPTConfig):
+    def __init__(self, config: OpenAIGPTConfig) -> None:
         self.config = config
         self.tokenizer = get_cl100k_encoding()
         self.client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))

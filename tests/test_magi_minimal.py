@@ -56,7 +56,7 @@ async def test_magi_minimal():
         return success
 
     except Exception as e:
-        logger.error(f"FAILED: Minimal Magi test failed: {e}")
+        logger.exception(f"FAILED: Minimal Magi test failed: {e}")
         return False
 
 

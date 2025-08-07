@@ -16,12 +16,14 @@ class ContinuousLearner(BaseAnalytics):
         self,
         quality_assurance_layer: QualityAssuranceLayer,
         learning_rate: float = 0.01,
-    ):
+    ) -> None:
         super().__init__()
         self.quality_assurance_layer = quality_assurance_layer
         self.learning_rate = learning_rate
 
-    async def update_embeddings(self, task: LangroidTask, result: dict[str, Any]):
+    async def update_embeddings(
+        self, task: LangroidTask, result: dict[str, Any]
+    ) -> None:
         task_embedding = (
             self.quality_assurance_layer.eudaimonia_triangulator.get_embedding(
                 task.content
@@ -82,7 +84,7 @@ class ContinuousLearner(BaseAnalytics):
         direction = task_embedding - target_embedding
         return direction * (performance - 0.5)  # Center performance around 0
 
-    async def learn_from_feedback(self, feedback: list[dict[str, Any]]):
+    async def learn_from_feedback(self, feedback: list[dict[str, Any]]) -> None:
         for item in feedback:
             task = LangroidTask(None, item["task_content"])
             result = {"performance": item["performance"]}
@@ -90,7 +92,7 @@ class ContinuousLearner(BaseAnalytics):
 
         logger.info(f"Learned from {len(feedback)} feedback items")
 
-    def adjust_learning_rate(self, performance_history: list[float]):
+    def adjust_learning_rate(self, performance_history: list[float]) -> None:
         # Adjust learning rate based on recent performance
         recent_performance = np.mean(performance_history[-10:])
         if recent_performance > 0.8:

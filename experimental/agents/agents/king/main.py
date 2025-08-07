@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""KING Agent Service Entry Point
+"""KING Agent Service Entry Point.
 
 This module provides the entry point for the KING agent service,
 handling task execution, planning, and system operations.
@@ -10,7 +10,7 @@ import sys
 
 
 def create_parser():
-    """Create argument parser for KING agent service"""
+    """Create argument parser for KING agent service."""
     parser = argparse.ArgumentParser(description="KING Agent Service")
 
     parser.add_argument(
@@ -34,8 +34,8 @@ def create_parser():
     return parser
 
 
-def run_task(args):
-    """Run a task"""
+def run_task(args) -> int:
+    """Run a task."""
     if not args.task:
         print("Error: --task is required for run action")
         return 1
@@ -45,8 +45,8 @@ def run_task(args):
     return 0
 
 
-def plan_task(args):
-    """Plan a task"""
+def plan_task(args) -> int:
+    """Plan a task."""
     if not args.task:
         print("Error: --task is required for plan action")
         return 1
@@ -56,33 +56,30 @@ def plan_task(args):
     return 0
 
 
-def analyze_data(args):
-    """Analyze data"""
+def analyze_data(args) -> int:
+    """Analyze data."""
     print("Analyzing data...")
     # Implementation would go here
     return 0
 
 
-def get_status(args):
-    """Get service status"""
+def get_status(args) -> int:
+    """Get service status."""
     print("KING agent service status: Running")
     return 0
 
 
-def configure_service(args):
-    """Configure service"""
+def configure_service(args) -> int:
+    """Configure service."""
     print("Configuring KING agent service...")
     # Implementation would go here
     return 0
 
 
 def main(args=None):
-    """Main entry point for KING agent service"""
+    """Main entry point for KING agent service."""
     parser = create_parser()
-    if args is None:
-        args = parser.parse_args()
-    else:
-        args = parser.parse_args(args)
+    args = parser.parse_args() if args is None else parser.parse_args(args)
 
     if args.verbose:
         print(f"KING Agent: {args.action}")

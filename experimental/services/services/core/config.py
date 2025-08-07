@@ -134,7 +134,7 @@ class UnifiedConfig:
 class ConfigManager:
     """Configuration manager with environment and file support."""
 
-    def __init__(self, config_path: str | Path | None = None):
+    def __init__(self, config_path: str | Path | None = None) -> None:
         self.logger = get_component_logger("ConfigManager")
         self.config_path = Path(config_path) if config_path else None
         self._config: UnifiedConfig | None = None
@@ -189,7 +189,7 @@ class ConfigManager:
             with open(path, encoding="utf-8") as f:
                 return yaml.safe_load(f) or {}
         except Exception as e:
-            self.logger.error(f"Failed to load YAML config from {path}: {e}")
+            self.logger.exception(f"Failed to load YAML config from {path}: {e}")
             return {}
 
     def _load_from_environment(self) -> dict[str, Any]:

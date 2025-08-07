@@ -277,7 +277,7 @@ def test_memory_usage():
 
         quantizer = SimpleQuantizer()
 
-        compressed = quantizer.quantize_model(model)
+        quantizer.quantize_model(model)
         after_compression_memory = process.memory_info().rss / 1024 / 1024
         print(f"After compression: {after_compression_memory:.1f} MB")
 

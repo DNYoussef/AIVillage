@@ -8,6 +8,7 @@ This script tests the OpenRouter integration with the Agent Forge curriculum lea
 import asyncio
 import json
 import logging
+import sys
 
 from agent_forge.orchestration import OpenRouterClient, TaskRouter, TaskType
 from agent_forge.orchestration.curriculum_integration import MultiModelOrchestrator
@@ -65,7 +66,7 @@ class OrchestrationTester:
             return True
 
         except Exception as e:
-            logger.error("Client test failed: %s", e)
+            logger.exception("Client test failed: %s", e)
             self.results["client_test"] = {"success": False, "error": str(e)}
             return False
 
@@ -158,7 +159,7 @@ class OrchestrationTester:
             return True
 
         except Exception as e:
-            logger.error("Routing test failed: %s", e)
+            logger.exception("Routing test failed: %s", e)
             self.results["routing_test"] = {"success": False, "error": str(e)}
             return False
 
@@ -185,7 +186,7 @@ class OrchestrationTester:
             return True
 
         except Exception as e:
-            logger.error("Variation test failed: %s", e)
+            logger.exception("Variation test failed: %s", e)
             self.results["variation_test"] = {"success": False, "error": str(e)}
             return False
 
@@ -231,7 +232,7 @@ class OrchestrationTester:
             return True
 
         except Exception as e:
-            logger.error("Integration test failed: %s", e)
+            logger.exception("Integration test failed: %s", e)
             self.results["integration_test"] = {"success": False, "error": str(e)}
             return False
 
@@ -256,7 +257,7 @@ class OrchestrationTester:
             return False
 
         except Exception as e:
-            logger.error("Cost tracking test failed: %s", e)
+            logger.exception("Cost tracking test failed: %s", e)
             self.results["cost_tracking"] = {"success": False, "error": str(e)}
             return False
 
@@ -317,4 +318,4 @@ async def main():
 if __name__ == "__main__":
     # Run the tests
     success = asyncio.run(main())
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

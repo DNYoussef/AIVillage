@@ -21,7 +21,7 @@ class EvolutionVisualizer:
 
     def __init__(
         self, results_file: str = "D:/AgentForge/results/evolution_results.json"
-    ):
+    ) -> None:
         self.results_file = Path(results_file)
         self.data = self.load_results()
         self.colors = {
@@ -41,7 +41,7 @@ class EvolutionVisualizer:
             print(f"Results file not found: {self.results_file}")
             return None
 
-    def create_evolutionary_tree(self):
+    def create_evolutionary_tree(self) -> None:
         """Create the main evolutionary tree visualization."""
         if not self.data:
             return
@@ -92,7 +92,7 @@ class EvolutionVisualizer:
         print(f"Evolutionary tree saved to: {output_file}")
         plt.show()
 
-    def plot_evolutionary_tree(self, ax):
+    def plot_evolutionary_tree(self, ax) -> None:
         """Plot the main evolutionary tree showing parent-child relationships."""
         generations = self.data["generation_history"]
 
@@ -252,7 +252,7 @@ class EvolutionVisualizer:
         ax.grid(True, alpha=0.2)
         ax.set_facecolor("black")
 
-    def plot_fitness_progression(self, ax):
+    def plot_fitness_progression(self, ax) -> None:
         """Plot fitness progression over generations."""
         generations = self.data["generation_history"]
 
@@ -295,7 +295,7 @@ class EvolutionVisualizer:
         ax.grid(True, alpha=0.2)
         ax.set_facecolor("black")
 
-    def plot_method_distribution(self, ax):
+    def plot_method_distribution(self, ax) -> None:
         """Plot distribution of merge methods across generations."""
         method_counts = {}
 
@@ -322,7 +322,7 @@ class EvolutionVisualizer:
 
         ax.set_title("🔧 Merge Method Distribution", fontweight="bold", color="white")
 
-    def plot_best_configuration(self, ax):
+    def plot_best_configuration(self, ax) -> None:
         """Display the best configuration found."""
         best_config = self.data["evolution_summary"]["best_configuration"]
 
@@ -404,7 +404,7 @@ class EvolutionVisualizer:
         ax.axis("off")
         ax.set_facecolor("black")
 
-    def plot_generation_statistics(self, ax):
+    def plot_generation_statistics(self, ax) -> None:
         """Plot statistics for each generation."""
         generations = self.data["generation_history"]
 
@@ -437,7 +437,7 @@ class EvolutionVisualizer:
                 fontsize=8,
             )
 
-    def plot_benchmark_evolution(self, ax):
+    def plot_benchmark_evolution(self, ax) -> None:
         """Plot how benchmark scores evolved over generations."""
         generations = self.data["generation_history"]
 
@@ -493,7 +493,7 @@ class EvolutionVisualizer:
         ax.set_facecolor("black")
 
 
-def main():
+def main() -> None:
     """Create evolutionary tree visualization."""
     print("Creating evolutionary tree visualization...")
 

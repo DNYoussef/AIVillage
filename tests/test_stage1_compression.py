@@ -168,7 +168,7 @@ class TestStage1Config:
             target_compression_ratio=15.0,
         )
 
-        assert config.bitnet_enabled == False
+        assert not config.bitnet_enabled
         assert config.seedlm_block_size == 16
         assert config.seedlm_latent_dim == 8
         assert config.target_compression_ratio == 15.0
@@ -204,7 +204,7 @@ class TestStage1Compressor:
 
         try:
             config = Stage1Config()
-            compressor = Stage1Compressor(config)
+            Stage1Compressor(config)
 
             # This would test metadata extraction if implemented
             # metadata = compressor.extract_model_metadata(temp_path)
@@ -219,13 +219,12 @@ class TestStage1Compressor:
             target_compression_ratio=5.0,  # Lower for testing
         )
 
-        compressor = Stage1Compressor(config)
+        Stage1Compressor(config)
 
         # Create mock compressed data
-        compressed_data = {"compression_ratio": 8.0, "compressed_weights": {}}
 
         # Create mock model
-        model = torch.nn.Linear(10, 5)
+        torch.nn.Linear(10, 5)
 
         # This would test evaluation if fully implemented
         # result = compressor.evaluate_compression(model, compressed_data, None)

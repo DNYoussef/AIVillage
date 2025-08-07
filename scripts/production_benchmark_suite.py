@@ -50,12 +50,12 @@ class PerformanceMonitor:
         self.start_memory: int | None = None
         self.peak_memory: int = 0
 
-    def start(self):
+    def start(self) -> None:
         self.start_time = time.time()
         self.start_memory = psutil.virtual_memory().used
         self.peak_memory = self.start_memory
 
-    def update_peak_memory(self):
+    def update_peak_memory(self) -> None:
         current = psutil.virtual_memory().used
         self.peak_memory = max(self.peak_memory, current)
 
@@ -75,13 +75,13 @@ class PerformanceMonitor:
 
 
 class CompressionBenchmark:
-    """Benchmark compression pipeline performance"""
+    """Benchmark compression pipeline performance."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.results = {}
 
     def run_compression_test(self) -> dict[str, Any]:
-        """Test compression pipeline with sample model"""
+        """Test compression pipeline with sample model."""
         logger.info("Starting compression pipeline benchmark...")
         monitor = PerformanceMonitor()
         monitor.start()
@@ -139,7 +139,7 @@ class CompressionBenchmark:
 
                 except Exception as e:
                     results["compressions"][name] = {"status": "error", "error": str(e)}
-                    logger.error(f"{name} compression failed: {e}")
+                    logger.exception(f"{name} compression failed: {e}")
 
                 monitor.update_peak_memory()
 
@@ -147,10 +147,10 @@ class CompressionBenchmark:
             return results
 
         except ImportError as e:
-            logger.error(f"Compression modules not available: {e}")
+            logger.exception(f"Compression modules not available: {e}")
             return {"status": "error", "error": f"Import failed: {e}"}
         except Exception as e:
-            logger.error(f"Compression benchmark failed: {e}")
+            logger.exception(f"Compression benchmark failed: {e}")
             return {
                 "status": "error",
                 "error": str(e),
@@ -159,13 +159,13 @@ class CompressionBenchmark:
 
 
 class EvolutionBenchmark:
-    """Benchmark evolution system performance"""
+    """Benchmark evolution system performance."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.results = {}
 
     def run_evolution_test(self) -> dict[str, Any]:
-        """Test evolution system with mini tournament"""
+        """Test evolution system with mini tournament."""
         logger.info("Starting evolution system benchmark...")
         monitor = PerformanceMonitor()
         monitor.start()
@@ -212,10 +212,10 @@ class EvolutionBenchmark:
             return results
 
         except ImportError as e:
-            logger.error(f"Evolution modules not available: {e}")
+            logger.exception(f"Evolution modules not available: {e}")
             return {"status": "error", "error": f"Import failed: {e}"}
         except Exception as e:
-            logger.error(f"Evolution benchmark failed: {e}")
+            logger.exception(f"Evolution benchmark failed: {e}")
             return {
                 "status": "error",
                 "error": str(e),
@@ -224,13 +224,13 @@ class EvolutionBenchmark:
 
 
 class RAGBenchmark:
-    """Benchmark RAG pipeline performance"""
+    """Benchmark RAG pipeline performance."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.results = {}
 
     def run_rag_test(self) -> dict[str, Any]:
-        """Test RAG pipeline with sample documents and queries"""
+        """Test RAG pipeline with sample documents and queries."""
         logger.info("Starting RAG pipeline benchmark...")
         monitor = PerformanceMonitor()
         monitor.start()
@@ -253,7 +253,7 @@ class RAGBenchmark:
 
             # Test document indexing
             index_start = time.time()
-            index_result = rag_manager.index_documents(test_docs)
+            rag_manager.index_documents(test_docs)
             index_time = time.time() - index_start
 
             monitor.update_peak_memory()
@@ -303,10 +303,10 @@ class RAGBenchmark:
             return results
 
         except ImportError as e:
-            logger.error(f"RAG modules not available: {e}")
+            logger.exception(f"RAG modules not available: {e}")
             return {"status": "error", "error": f"Import failed: {e}"}
         except Exception as e:
-            logger.error(f"RAG benchmark failed: {e}")
+            logger.exception(f"RAG benchmark failed: {e}")
             return {
                 "status": "error",
                 "error": str(e),
@@ -315,14 +315,14 @@ class RAGBenchmark:
 
 
 class ProductionBenchmarkSuite:
-    """Main benchmark suite orchestrator"""
+    """Main benchmark suite orchestrator."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.results = {}
         self.timestamp = datetime.now().isoformat()
 
     def run_all_benchmarks(self) -> dict[str, Any]:
-        """Run all production system benchmarks"""
+        """Run all production system benchmarks."""
         logger.info("Starting production benchmark suite...")
 
         overall_start = time.time()
@@ -358,7 +358,7 @@ class ProductionBenchmarkSuite:
         return results
 
     def save_results(self, results: dict[str, Any], filename: str | None = None):
-        """Save benchmark results to file"""
+        """Save benchmark results to file."""
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"benchmark_results_{timestamp}.json"
@@ -375,7 +375,7 @@ class ProductionBenchmarkSuite:
         return str(filepath)
 
     def compare_with_baseline(self, results: dict[str, Any]) -> dict[str, Any]:
-        """Compare current results with baseline if available"""
+        """Compare current results with baseline if available."""
         try:
             baseline_path = (
                 Path(__file__).parent / "benchmark_results" / "baseline.json"
@@ -424,12 +424,12 @@ class ProductionBenchmarkSuite:
             return comparison
 
         except Exception as e:
-            logger.error(f"Baseline comparison failed: {e}")
+            logger.exception(f"Baseline comparison failed: {e}")
             return {"status": "comparison_failed", "error": str(e)}
 
 
-def main():
-    """Run the production benchmark suite"""
+def main() -> int | None:
+    """Run the production benchmark suite."""
     print("=" * 60)
     print("AIVillage Production System Benchmark Suite")
     print("Post-cleanup performance validation")
@@ -532,7 +532,7 @@ def main():
         return 0
 
     except Exception as e:
-        logger.error(f"Benchmark suite failed: {e}")
+        logger.exception(f"Benchmark suite failed: {e}")
         traceback.print_exc()
         return 1
 

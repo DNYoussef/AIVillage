@@ -6,6 +6,7 @@ Simple test to verify the orchestration system is working.
 import asyncio
 import logging
 import os
+import sys
 
 from agent_forge.orchestration.curriculum_integration import MultiModelOrchestrator
 from agent_forge.training.magi_specialization import MagiConfig
@@ -49,7 +50,7 @@ async def test_basic_orchestration():
         return True
 
     except Exception as e:
-        logger.error(f"Test failed: {e}")
+        logger.exception(f"Test failed: {e}")
         return False
 
     finally:
@@ -62,4 +63,4 @@ if __name__ == "__main__":
         print("ORCHESTRATION TEST: PASSED")
     else:
         print("ORCHESTRATION TEST: FAILED")
-    exit(0 if success else 1)
+    sys.exit(0 if success else 1)

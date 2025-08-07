@@ -333,10 +333,7 @@ class TestEvolutionErrorHandling:
 
         # Should handle gracefully
         try:
-            if empty_pop:
-                winner = max(empty_pop, key=lambda x: x["fitness"])
-            else:
-                winner = None
+            winner = max(empty_pop, key=lambda x: x["fitness"]) if empty_pop else None
             assert winner is None
         except Exception:
             pytest.fail("Should handle empty population gracefully")

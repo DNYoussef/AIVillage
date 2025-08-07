@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Memory-Efficient Scaled Magi Specialization
+"""Memory-Efficient Scaled Magi Specialization.
 
 Scale the proven 300-question approach to 10,000 questions while maintaining
 the memory efficiency that allowed the original success (1.6GB constraint).
@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 class MemoryEfficientScaledMagi:
     """Memory-efficient scaled Magi specialization within proven constraints."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.start_time = datetime.now()
         self.run_id = (
             f"memory_efficient_magi_{self.start_time.strftime('%Y%m%d_%H%M%S')}"
@@ -304,7 +304,6 @@ class MemoryEfficientScaledMagi:
             level_questions = curriculum[f"level_{level}"]
 
             level_start_time = time.time()
-            level_improvements = {}
 
             # Process questions in batches for memory efficiency
             batch_size = 100
@@ -434,7 +433,7 @@ async def main():
 
     try:
         # Initialize tracking
-        wandb_success = runner.initialize_wandb_tracking()
+        runner.initialize_wandb_tracking()
 
         # Load evolved model configuration
         evolved_config = runner.load_evolved_model_config()
@@ -506,7 +505,7 @@ async def main():
         return None
 
     except Exception as e:
-        logger.error("Memory-efficient scaled execution failed: %s", e)
+        logger.exception("Memory-efficient scaled execution failed: %s", e)
         return None
     finally:
         finish_wandb()

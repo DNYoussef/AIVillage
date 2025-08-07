@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class TaskExecutor:
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
 
     async def execute_task(self, task):
@@ -60,10 +60,10 @@ class TaskExecutor:
             # Return the result
             return result
         except Exception as e:
-            logger.error(f"Error executing task: {e!s}")
+            logger.exception(f"Error executing task: {e!s}")
             return {"error": str(e)}
 
-    async def _is_complex_task(self, task):
+    async def _is_complex_task(self, task) -> bool | None:
         try:
             # Flagged directly as complex
             if task.get("is_complex"):
@@ -82,12 +82,9 @@ class TaskExecutor:
                 "information_synthesis",
                 "exploration_mode",
             }
-            if task_type in complex_types:
-                return True
-
-            return False
+            return task_type in complex_types
         except Exception as e:
-            logger.error(f"Error determining task complexity: {e!s}")
+            logger.exception(f"Error determining task complexity: {e!s}")
             return False
 
     async def _execute_with_subgoals(self, task) -> dict[str, Any]:
@@ -113,7 +110,7 @@ class TaskExecutor:
             final_result = await self.summarize_results(task, subgoals, results)
             return final_result
         except Exception as e:
-            logger.error(f"Error executing task with subgoals: {e!s}")
+            logger.exception(f"Error executing task with subgoals: {e!s}")
             return {"error": str(e)}
 
     async def generate_subgoals(self, content: str) -> list[str]:
@@ -127,7 +124,7 @@ class TaskExecutor:
             subgoals = subgoals_text.strip().split("\n")
             return subgoals
         except Exception as e:
-            logger.error(f"Error generating subgoals: {e!s}")
+            logger.exception(f"Error generating subgoals: {e!s}")
             return []
 
     async def summarize_results(

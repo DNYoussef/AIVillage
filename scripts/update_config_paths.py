@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Script to update all config/ paths to configs/ paths"""
+"""Script to update all config/ paths to configs/ paths."""
 
 from pathlib import Path
 import re
 
 
-def update_file(file_path: Path, patterns_to_replace: list[tuple[str, str]]):
-    """Update file with pattern replacements"""
+def update_file(
+    file_path: Path, patterns_to_replace: list[tuple[str, str]]
+) -> bool | None:
+    """Update file with pattern replacements."""
     try:
         with open(file_path, encoding="utf-8") as f:
             content = f.read()
@@ -26,8 +28,8 @@ def update_file(file_path: Path, patterns_to_replace: list[tuple[str, str]]):
         return False
 
 
-def main():
-    """Main function to update all config paths"""
+def main() -> None:
+    """Main function to update all config paths."""
     root_dir = Path()
 
     # Patterns to replace

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit the compression claims with detailed byte-level analysis"""
+"""Audit the compression claims with detailed byte-level analysis."""
 from pathlib import Path
 import sys
 
@@ -15,29 +15,29 @@ from agent_forge.compression.vptq import VPTQCompressor
 
 
 def create_test_tensor(size=(1000, 1000), seed=42):
-    """Create reproducible test tensor"""
+    """Create reproducible test tensor."""
     torch.manual_seed(seed)
     return torch.randn(size)
 
 
 def calculate_real_compression(original_tensor, compressed_data):
-    """Calculate actual compression ratio with all overhead"""
+    """Calculate actual compression ratio with all overhead."""
     # Original size in bytes (float32 = 4 bytes)
     original_bytes = original_tensor.numel() * 4
 
     # Calculate compressed size including ALL data
     if isinstance(compressed_data, dict):
         compressed_bytes = 0
-        for key, value in compressed_data.items():
+        for value in compressed_data.values():
             if isinstance(value, torch.Tensor):
                 compressed_bytes += value.numel() * value.element_size()
             elif isinstance(value, np.ndarray):
                 compressed_bytes += value.nbytes
             elif isinstance(value, bytes):
                 compressed_bytes += len(value)
-            elif isinstance(value, (list, tuple)):
+            elif isinstance(value, list | tuple):
                 compressed_bytes += sys.getsizeof(value)
-            elif isinstance(value, (int, float)):
+            elif isinstance(value, int | float):
                 compressed_bytes += 8  # Conservative estimate
             else:
                 compressed_bytes += sys.getsizeof(value)
@@ -49,7 +49,7 @@ def calculate_real_compression(original_tensor, compressed_data):
 
 
 def audit_bitnet():
-    """Audit BitNet compression claims"""
+    """Audit BitNet compression claims."""
     print("\n=== BITNET COMPRESSION AUDIT ===")
     compressor = BITNETCompressor()
 
@@ -87,7 +87,7 @@ def audit_bitnet():
 
 
 def audit_seedlm():
-    """Audit SeedLM compression claims"""
+    """Audit SeedLM compression claims."""
     print("\n=== SEEDLM COMPRESSION AUDIT ===")
 
     for bits in [3, 4]:
@@ -129,7 +129,7 @@ def audit_seedlm():
 
 
 def audit_vptq():
-    """Audit VPTQ compression claims"""
+    """Audit VPTQ compression claims."""
     print("\n=== VPTQ COMPRESSION AUDIT ===")
 
     for bits in [2, 3, 4]:
@@ -161,8 +161,8 @@ def audit_vptq():
     return ratio
 
 
-def audit_pipeline_combination():
-    """Audit how stages combine"""
+def audit_pipeline_combination() -> None:
+    """Audit how stages combine."""
     print("\n=== PIPELINE COMBINATION AUDIT ===")
 
     weights = create_test_tensor((512, 512))
@@ -215,8 +215,8 @@ def audit_pipeline_combination():
     print("4. Quantization errors compound")
 
 
-def test_real_model_compression():
-    """Test on actual neural network models"""
+def test_real_model_compression() -> None:
+    """Test on actual neural network models."""
     print("\n=== REAL MODEL COMPRESSION TEST ===")
 
     from core.compression.advanced_pipeline import AdvancedCompressionPipeline
@@ -253,16 +253,16 @@ def test_real_model_compression():
     print(f"Difference: {abs(ratio - 20.8):.1f}x")
 
 
-def main():
-    """Run comprehensive audit"""
+def main() -> None:
+    """Run comprehensive audit."""
     print("=" * 60)
     print("COMPRESSION CLAIMS AUDIT")
     print("=" * 60)
 
     # Audit each stage
-    bitnet_ratio = audit_bitnet()
-    seedlm_ratio = audit_seedlm()
-    vptq_ratio = audit_vptq()
+    audit_bitnet()
+    audit_seedlm()
+    audit_vptq()
 
     # Audit combination
     audit_pipeline_combination()
@@ -291,8 +291,8 @@ if __name__ == "__main__":
     print("4. Quantization errors compound")
 
 
-def test_real_model_compression():
-    """Test on actual neural network models"""
+def test_real_model_compression() -> None:
+    """Test on actual neural network models."""
     print("\n=== REAL MODEL COMPRESSION TEST ===")
 
     from core.compression.advanced_pipeline import AdvancedCompressionPipeline
@@ -329,16 +329,16 @@ def test_real_model_compression():
     print(f"Difference: {abs(ratio - 20.8):.1f}x")
 
 
-def main():
-    """Run comprehensive audit"""
+def main() -> None:
+    """Run comprehensive audit."""
     print("=" * 60)
     print("COMPRESSION CLAIMS AUDIT")
     print("=" * 60)
 
     # Audit each stage
-    bitnet_ratio = audit_bitnet()
-    seedlm_ratio = audit_seedlm()
-    vptq_ratio = audit_vptq()
+    audit_bitnet()
+    audit_seedlm()
+    audit_vptq()
 
     # Audit combination
     audit_pipeline_combination()

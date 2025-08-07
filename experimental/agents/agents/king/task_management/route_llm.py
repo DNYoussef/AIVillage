@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 class AgentRouter(nn.Module):
     def __init__(
         self, model_name="bert-base-uncased", cache_size=1000, confidence_threshold=0.7
-    ):
-        super(AgentRouter, self).__init__()
+    ) -> None:
+        super().__init__()
         self.bert = AutoModel.from_pretrained(
             model_name,
             revision="main",  # Pin to main branch for security
@@ -28,7 +28,7 @@ class AgentRouter(nn.Module):
         self.optimizer = None
         self.classifier = None
 
-    def initialize_classifier(self, num_agents):
+    def initialize_classifier(self, num_agents) -> None:
         self.classifier = nn.Linear(self.bert.config.hidden_size, num_agents)
         self.optimizer = optim.AdamW(self.parameters(), lr=2e-5)
 
@@ -65,7 +65,7 @@ class AgentRouter(nn.Module):
 
     async def train_model(
         self, preference_data: list[dict], num_epochs=3, batch_size=32
-    ):
+    ) -> None:
         self.train()
         train_dataloader = self._create_dataloader(preference_data, batch_size)
         total_steps = len(train_dataloader) * num_epochs
@@ -113,7 +113,7 @@ class AgentRouter(nn.Module):
             list(self.agent_mapping.values()).index(agent)
         ]
 
-    def save(self, path: str):
+    def save(self, path: str) -> None:
         torch.save(
             {
                 "model_state_dict": self.state_dict(),
@@ -127,7 +127,7 @@ class AgentRouter(nn.Module):
         )
         logger.info(f"Model saved to {path}")
 
-    def load(self, path: str):
+    def load(self, path: str) -> None:
         checkpoint = torch.load(path, weights_only=True)
         self.load_state_dict(checkpoint["model_state_dict"])
         self.agent_mapping = checkpoint["agent_mapping"]
@@ -137,7 +137,7 @@ class AgentRouter(nn.Module):
             self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         logger.info(f"Model loaded from {path}")
 
-    async def update_agent_list(self, agent_list: list[str]):
+    async def update_agent_list(self, agent_list: list[str]) -> None:
         for agent in agent_list:
             if agent not in self.agent_mapping.values():
                 new_label = len(self.agent_mapping)
@@ -149,14 +149,17 @@ class AgentRouter(nn.Module):
 import logging
 from typing import Any
 
-from ..utils.exceptions import AIVillageException
+from AIVillage.experimental.agents.agents.king.utils.exceptions import (
+    AIVillageException,
+)
+
 from .route_llm import RouteLLM
 
 logger = logging.getLogger(__name__)
 
 
 class Router:
-    def __init__(self):
+    def __init__(self) -> None:
         self.route_llm = RouteLLM()
 
     async def route_task(self, task: dict[str, Any]) -> dict[str, Any]:
@@ -166,31 +169,35 @@ class Router:
             return routed_task
         except Exception as e:
             logger.error(f"Error routing task: {e!s}", exc_info=True)
-            raise AIVillageException(f"Error routing task: {e!s}")
+            msg = f"Error routing task: {e!s}"
+            raise AIVillageException(msg)
 
-    async def update_model(self, task: dict[str, Any], result: Any):
+    async def update_model(self, task: dict[str, Any], result: Any) -> None:
         try:
             logger.info(f"Updating router model with task result: {result}")
             await self.route_llm.update_model(task, result)
         except Exception as e:
             logger.error(f"Error updating router model: {e!s}", exc_info=True)
-            raise AIVillageException(f"Error updating router model: {e!s}")
+            msg = f"Error updating router model: {e!s}"
+            raise AIVillageException(msg)
 
-    async def save_models(self, path: str):
+    async def save_models(self, path: str) -> None:
         try:
             logger.info(f"Saving router models to {path}")
             await self.route_llm.save_model(path)
         except Exception as e:
             logger.error(f"Error saving router models: {e!s}", exc_info=True)
-            raise AIVillageException(f"Error saving router models: {e!s}")
+            msg = f"Error saving router models: {e!s}"
+            raise AIVillageException(msg)
 
-    async def load_models(self, path: str):
+    async def load_models(self, path: str) -> None:
         try:
             logger.info(f"Loading router models from {path}")
             await self.route_llm.load_model(path)
         except Exception as e:
             logger.error(f"Error loading router models: {e!s}", exc_info=True)
-            raise AIVillageException(f"Error loading router models: {e!s}")
+            msg = f"Error loading router models: {e!s}"
+            raise AIVillageException(msg)
 
     async def introspect(self) -> dict[str, Any]:
         return {

@@ -1,4 +1,4 @@
-from .. import warn_experimental
+from AIVillage.experimental import warn_experimental
 
 warn_experimental(__name__)
 

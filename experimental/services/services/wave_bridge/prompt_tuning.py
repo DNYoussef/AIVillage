@@ -1,5 +1,5 @@
 """W&B Prompt Tuning System for WhatsApp Tutoring
-Implements A/B testing and prompt optimization
+Implements A/B testing and prompt optimization.
 """
 
 from collections import defaultdict, deque
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PromptVariant:
-    """Represents a prompt variant for A/B testing"""
+    """Represents a prompt variant for A/B testing."""
 
     id: str
     template: str
@@ -33,7 +33,7 @@ class PromptVariant:
 
 @dataclass
 class ABTestResult:
-    """Results from A/B testing"""
+    """Results from A/B testing."""
 
     variant_id: str
     user_hash: str
@@ -46,9 +46,9 @@ class ABTestResult:
 
 
 class PromptTuner:
-    """Manages prompt optimization using W&B experiment tracking"""
+    """Manages prompt optimization using W&B experiment tracking."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.variants_cache = {}
         self.performance_history = defaultdict(deque)
         self.optimization_threshold = 0.05  # 5% improvement threshold
@@ -57,8 +57,8 @@ class PromptTuner:
         # Initialize base prompt templates
         self.initialize_base_prompts()
 
-    def initialize_base_prompts(self):
-        """Initialize base prompt templates for different scenarios"""
+    def initialize_base_prompts(self) -> None:
+        """Initialize base prompt templates for different scenarios."""
         base_prompts = {
             "tutoring_en": {
                 "formal": """You are an expert AI tutor helping a student learn. Be encouraging, clear, and educational.
@@ -114,9 +114,12 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
         self.base_prompts = base_prompts
 
     async def get_optimized_prompt(
-        self, message_type: str, language: str = "en", context: dict[str, Any] = None
+        self,
+        message_type: str,
+        language: str = "en",
+        context: dict[str, Any] | None = None,
     ) -> str:
-        """Get the best-performing prompt variant for given context"""
+        """Get the best-performing prompt variant for given context."""
         category_key = f"{message_type}_{language}"
 
         # Get variants for this category
@@ -149,7 +152,7 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
         return formatted_prompt
 
     async def get_active_variants(self, category: str) -> list[PromptVariant]:
-        """Get all active variants for a category"""
+        """Get all active variants for a category."""
         # Check cache first
         cache_key = f"variants_{category}"
         if cache_key in self.variants_cache:
@@ -180,11 +183,11 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
             return variants
 
         except Exception as e:
-            logger.error(f"Error getting variants for {category}: {e}")
+            logger.exception(f"Error getting variants for {category}: {e}")
             return []
 
     async def select_best_variant(self, variants: list[PromptVariant]) -> PromptVariant:
-        """Select best performing variant using multi-armed bandit approach"""
+        """Select best performing variant using multi-armed bandit approach."""
         if len(variants) == 1:
             return variants[0]
 
@@ -235,7 +238,7 @@ I'm your AI tutor, and I love helping students discover new things. What's on yo
         return selected_variant
 
     def get_default_prompt(self, message_type: str, language: str = "en") -> str:
-        """Get default prompt when no variants available"""
+        """Get default prompt when no variants available."""
         defaults = {
             "tutoring": """You are a helpful AI tutor. Answer the student's question clearly and encouragingly.
 
@@ -248,7 +251,7 @@ Your response:""",
         return defaults.get(message_type, defaults["tutoring"])
 
     def format_prompt(self, template: str, context: dict[str, Any]) -> str:
-        """Format prompt template with context variables"""
+        """Format prompt template with context variables."""
         try:
             # Add default context variables
             context.setdefault("user_message", "")
@@ -266,11 +269,11 @@ Your response:""",
             logger.warning(f"Missing context variable for prompt formatting: {e}")
             return template
         except Exception as e:
-            logger.error(f"Error formatting prompt: {e}")
+            logger.exception(f"Error formatting prompt: {e}")
             return template
 
     def generate_guiding_question(self, user_message: str) -> str:
-        """Generate Socratic guiding question"""
+        """Generate Socratic guiding question."""
         # Simple heuristic-based question generation
         question_starters = [
             "What do you think happens when",
@@ -289,8 +292,8 @@ Your response:""",
         session_id: str,
         user_hash: str,
         performance_metrics: dict[str, float],
-    ):
-        """Record performance metrics for a prompt variant"""
+    ) -> None:
+        """Record performance metrics for a prompt variant."""
         try:
             # Create performance record
             result = ABTestResult(
@@ -323,10 +326,10 @@ Your response:""",
             await self.update_variant_metrics(variant_id)
 
         except Exception as e:
-            logger.error(f"Error recording prompt performance: {e}")
+            logger.exception(f"Error recording prompt performance: {e}")
 
-    async def update_variant_metrics(self, variant_id: str):
-        """Update aggregate metrics for a variant"""
+    async def update_variant_metrics(self, variant_id: str) -> None:
+        """Update aggregate metrics for a variant."""
         if variant_id not in self.performance_history:
             return
 
@@ -359,14 +362,14 @@ Your response:""",
 
 
 class ABTestManager:
-    """Manages A/B testing for greeting messages and other interactions"""
+    """Manages A/B testing for greeting messages and other interactions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.test_assignments = {}  # user_hash -> variant mapping
         self.test_configs = self.initialize_test_configs()
 
     def initialize_test_configs(self):
-        """Initialize A/B test configurations"""
+        """Initialize A/B test configurations."""
         configs = {
             "greeting_style": {
                 "variants": ["enthusiastic", "professional", "friendly"],
@@ -388,15 +391,15 @@ class ABTestManager:
         return configs
 
     def get_greeting_variant(self, user_identifier: str) -> str:
-        """Get consistent greeting variant for user"""
+        """Get consistent greeting variant for user."""
         return self.get_test_variant("greeting_style", user_identifier)
 
     def get_tutoring_variant(self, user_identifier: str) -> str:
-        """Get consistent tutoring approach variant for user"""
+        """Get consistent tutoring approach variant for user."""
         return self.get_test_variant("tutoring_approach", user_identifier)
 
     def get_test_variant(self, test_name: str, user_identifier: str) -> str:
-        """Get consistent test variant for user using deterministic assignment"""
+        """Get consistent test variant for user using deterministic assignment."""
         if test_name not in self.test_configs:
             logger.warning(f"Unknown test: {test_name}")
             return "default"
@@ -441,8 +444,8 @@ class ABTestManager:
         user_identifier: str,
         session_id: str,
         success_metrics: dict[str, float],
-    ):
-        """Record A/B test result"""
+    ) -> None:
+        """Record A/B test result."""
         try:
             result_data = {
                 "ab_test_result": {
@@ -461,10 +464,10 @@ class ABTestManager:
             wandb.log(result_data)
 
         except Exception as e:
-            logger.error(f"Error recording A/B test result: {e}")
+            logger.exception(f"Error recording A/B test result: {e}")
 
     async def analyze_test_results(self, test_name: str) -> dict[str, Any]:
-        """Analyze A/B test results to determine winning variant"""
+        """Analyze A/B test results to determine winning variant."""
         try:
             # In production, this would query W&B API for historical results
             # For now, return mock analysis
@@ -494,7 +497,7 @@ class ABTestManager:
             return analysis
 
         except Exception as e:
-            logger.error(f"Error analyzing A/B test results: {e}")
+            logger.exception(f"Error analyzing A/B test results: {e}")
             return {"error": str(e)}
 
 

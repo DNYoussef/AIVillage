@@ -18,7 +18,7 @@ class IncentiveModel:
         num_actions: int,
         learning_rate: float = 0.01,
         history_length: int = 1000,
-    ):
+    ) -> None:
         self.num_agents = num_agents
         self.num_actions = num_actions
         self.learning_rate = learning_rate
@@ -75,7 +75,7 @@ class IncentiveModel:
             "incentive": float(adjusted_incentive),
         }
 
-    def update(self, task: dict[str, Any], result: dict[str, Any]):
+    def update(self, task: dict[str, Any], result: dict[str, Any]) -> None:
         agent_id = self._get_agent_id(task["assigned_agent"])
         action_id = self._map_task_to_action(task)
         reward = self._calculate_reward(result)
@@ -239,7 +239,7 @@ class IncentiveModel:
 
         return {"average": average, "trend": slope}
 
-    def save(self, path: str):
+    def save(self, path: str) -> None:
         torch.save(
             {
                 "incentive_matrix": self.incentive_matrix,
@@ -257,7 +257,7 @@ class IncentiveModel:
         )
         logger.info(f"Incentive model saved to {path}")
 
-    def load(self, path: str):
+    def load(self, path: str) -> None:
         checkpoint = torch.load(path, weights_only=True)
         self.incentive_matrix = checkpoint["incentive_matrix"]
         self.num_agents = checkpoint["num_agents"]
@@ -274,11 +274,11 @@ class IncentiveModel:
     def get_incentive_matrix(self) -> np.ndarray:
         return self.incentive_matrix.copy()
 
-    def update_learning_rate(self, new_learning_rate: float):
+    def update_learning_rate(self, new_learning_rate: float) -> None:
         self.learning_rate = new_learning_rate
         logger.info(f"Learning rate updated to {new_learning_rate}")
 
-    def reset(self):
+    def reset(self) -> None:
         self.incentive_matrix = np.zeros((self.num_agents, self.num_actions))
         self.performance_history = {
             i: deque(maxlen=self.performance_history[0].maxlen)

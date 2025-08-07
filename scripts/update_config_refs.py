@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Simple script to update config/ references to configs/"""
+"""Simple script to update config/ references to configs/."""
 
 from pathlib import Path
 
 
-def update_file(file_path, replacements):
-    """Update a file with replacements"""
+def update_file(file_path, replacements) -> bool | None:
+    """Update a file with replacements."""
     try:
         # Read the file
         with open(file_path, encoding="utf-8", errors="ignore") as f:
@@ -30,8 +30,8 @@ def update_file(file_path, replacements):
         return False
 
 
-def main():
-    """Update all config/ references"""
+def main() -> None:
+    """Update all config/ references."""
     # Define replacements
     replacements = {
         "config/hyperag_mcp.yaml": "configs/hyperag_mcp.yaml",

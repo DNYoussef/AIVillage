@@ -1,6 +1,6 @@
 """Atlantis API-Gateway – v0.2.0
 • Adds simple in-memory IP rate-limit (100 req / 60 s)
-• Health cascade probes Twin
+• Health cascade probes Twin.
 """
 
 from __future__ import annotations
@@ -96,7 +96,7 @@ G_LAT = Histogram(
 )
 
 
-def rate_limit(req: Request):
+def rate_limit(req: Request) -> None:
     ip = "unknown"
     if req.client and req.client.host:
         ip = req.client.host
@@ -104,8 +104,9 @@ def rate_limit(req: Request):
     rl_cache[ip] = hits
     if hits > RATE_LIMIT_REQ:
         G_RL.inc()
+        msg = "Rate limit exceeded"
         raise rate_limit_error(
-            "Rate limit exceeded",
+            msg,
             details={
                 "ip": ip,
                 "limit": RATE_LIMIT_REQ,
@@ -145,7 +146,7 @@ async def health():
         )
 
         # Log the error
-        logger.error(
+        logger.exception(
             "Health check failed",
             extra={
                 "error": network_exc.to_dict(),
@@ -191,8 +192,9 @@ async def proxy_chat(req: Request, _=Depends(rate_limit)):
 
         return JSONResponse(content=json_body, headers=headers)
     except httpx.HTTPStatusError as exc:
+        msg = f"Twin service returned HTTP {exc.response.status_code}"
         raise network_error(
-            f"Twin service returned HTTP {exc.response.status_code}",
+            msg,
             details={
                 "status_code": exc.response.status_code,
                 "response_text": exc.response.text[:200],
@@ -200,8 +202,9 @@ async def proxy_chat(req: Request, _=Depends(rate_limit)):
             },
         )
     except httpx.RequestError as exc:
+        msg = f"Twin service unreachable: {exc}"
         raise network_error(
-            f"Twin service unreachable: {exc}",
+            msg,
             details={
                 "error_type": type(exc).__name__,
                 "twin_url": f"{TWIN_URL}/v1/chat",

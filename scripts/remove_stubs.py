@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Remove all NotImplementedError stubs and replace with minimal working code"""
+"""Remove all NotImplementedError stubs and replace with minimal working code."""
 from pathlib import Path
 import re
 
 
 def remove_not_implemented(file_path: Path) -> bool:
-    """Remove NotImplementedError and replace with minimal implementation"""
+    """Remove NotImplementedError and replace with minimal implementation."""
     with open(file_path) as f:
         content = f.read()
 
@@ -40,8 +40,8 @@ def remove_not_implemented(file_path: Path) -> bool:
     return False
 
 
-def main():
-    """Remove all NotImplementedError from codebase"""
+def main() -> None:
+    """Remove all NotImplementedError from codebase."""
     src_path = Path("src")
     if not src_path.exists():
         print("Error: src/ directory not found")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HypeRAG Hidden-Link Batch Scanner
+"""HypeRAG Hidden-Link Batch Scanner.
 
 Nightly cron job to surface candidate missing edges through co-mention analysis
 and divergent retrieval. Processes high co-mention entity pairs and validates
@@ -147,7 +147,7 @@ class ScanMetrics:
 class HippoIndexAnalyzer:
     """Analyzes Hippo-Index logs for high co-mention entity pairs."""
 
-    def __init__(self, log_path: Path, lookback_hours: int = 24):
+    def __init__(self, log_path: Path, lookback_hours: int = 24) -> None:
         """Initialize analyzer.
 
         Args:
@@ -238,7 +238,7 @@ class HippoIndexAnalyzer:
         co_mention_counts: dict,
         pair_contexts: dict,
         pair_last_seen: dict,
-    ):
+    ) -> None:
         """Process a single log file for co-mentions."""
         with open(log_file, encoding="utf-8") as f:
             for line_num, line in enumerate(f, 1):
@@ -294,7 +294,7 @@ class HippoIndexAnalyzer:
 class DivergentRetrieverScanner:
     """Scanner using DivergentRetriever in scan mode."""
 
-    def __init__(self, retriever: HybridRetriever):
+    def __init__(self, retriever: HybridRetriever) -> None:
         """Initialize scanner.
 
         Args:
@@ -340,7 +340,7 @@ class DivergentRetrieverScanner:
                 )
 
             except Exception as e:
-                self.logger.error(f"Failed to scan pair {pair.pair_key}: {e}")
+                self.logger.exception(f"Failed to scan pair {pair.pair_key}: {e}")
 
         self.logger.info(f"Found {len(candidate_edges)} total candidate edges")
         return candidate_edges
@@ -391,7 +391,7 @@ class DivergentRetrieverScanner:
 class HiddenLinkScanner:
     """Main hidden link scanner orchestrating the full pipeline."""
 
-    def __init__(self, config: dict[str, Any]):
+    def __init__(self, config: dict[str, Any]) -> None:
         """Initialize scanner.
 
         Args:
@@ -444,7 +444,7 @@ class HiddenLinkScanner:
             await self._step4_generate_metrics()
 
         except Exception as e:
-            self.logger.error(f"Scan failed: {e}")
+            self.logger.exception(f"Scan failed: {e}")
             self.metrics.errors.append(str(e))
 
         finally:
@@ -458,7 +458,7 @@ class HiddenLinkScanner:
         )
         return self.metrics
 
-    async def _step1_analyze_logs(self):
+    async def _step1_analyze_logs(self) -> None:
         """Step 1: Query Hippo-Index logs for co-mention pairs."""
         self.logger.info("Step 1: Analyzing Hippo-Index logs")
 
@@ -492,7 +492,7 @@ class HiddenLinkScanner:
 
     async def _step3_pipeline_processing(
         self, candidate_edges: list[CandidateEdge], dry_run: bool
-    ):
+    ) -> None:
         """Step 3: Process candidates through Innovator -> Guardian pipeline."""
         self.logger.info("Step 3: Processing through Innovator -> Guardian pipeline")
 
@@ -526,7 +526,7 @@ class HiddenLinkScanner:
                 )
                 self.metrics.errors.append(str(e))
 
-    async def _step4_generate_metrics(self):
+    async def _step4_generate_metrics(self) -> None:
         """Step 4: Generate metrics and write reports."""
         self.logger.info("Step 4: Generating metrics and reports")
 
@@ -544,7 +544,7 @@ class HiddenLinkScanner:
         # Log summary
         self._log_summary()
 
-    def _log_summary(self):
+    def _log_summary(self) -> None:
         """Log scan summary."""
         summary = f"""
 Hidden Link Scan Summary ({self.metrics.scan_id}):
@@ -608,7 +608,7 @@ def load_config(config_path: str | None = None) -> dict[str, Any]:
     }
 
 
-async def main():
+async def main() -> int:
     """Main entry point for hidden link scanner."""
     parser = argparse.ArgumentParser(description="HypeRAG Hidden-Link Batch Scanner")
     parser.add_argument("--config", help="Configuration file path")

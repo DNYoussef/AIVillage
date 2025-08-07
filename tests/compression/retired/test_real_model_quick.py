@@ -46,7 +46,7 @@ def quick_real_model_test():
     successful_tests = 0
 
     with safe_open(weights_file, framework="pt", device="cpu") as f:
-        for key in f.keys():
+        for key in f:
             tensor = f.get_tensor(key)
 
             # Only test layers between 1K and 50M params (avoid huge embedding layers)

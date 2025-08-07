@@ -94,7 +94,7 @@ class TestSimpleQuantizer:
         model = create_mixed_model()
 
         quantizer = SimpleQuantizer(target_compression_ratio=3.5)
-        compressed = quantizer.quantize_model_from_object(model)
+        quantizer.quantize_model_from_object(model)
 
         # Verify mixed model compression
         stats = quantizer.get_compression_stats()
@@ -189,7 +189,7 @@ class TestSimpleQuantizer:
         quantizer = SimpleQuantizer(
             target_compression_ratio=3.9
         )  # Realistic target for large models
-        compressed = quantizer.quantize_model_from_object(model)
+        quantizer.quantize_model_from_object(model)
 
         stats = quantizer.get_compression_stats()
 
@@ -287,7 +287,7 @@ class TestCompressionIntegration:
         results = []
         for model, name in models_and_names:
             try:
-                compressed = quantizer.quantize_model_from_object(model)
+                quantizer.quantize_model_from_object(model)
                 stats = quantizer.get_compression_stats()
 
                 results.append(

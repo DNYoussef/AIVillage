@@ -75,7 +75,7 @@ class CrossDomainPair:
 class CreativityDatasetGenerator:
     """Generates creativity evaluation datasets."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.remote_association_tasks = self._create_remote_association_tasks()
         self.cross_domain_pairs = self._create_cross_domain_pairs()
 
@@ -273,7 +273,7 @@ class CreativityBenchmark:
         hyperag_client=None,
         guardian_gate: GuardianGate | None = None,
         output_dir: Path = Path("./benchmark_results"),
-    ):
+    ) -> None:
         self.hyperag_client = hyperag_client
         self.guardian_gate = guardian_gate or GuardianGate()
         self.output_dir = output_dir
@@ -288,7 +288,7 @@ class CreativityBenchmark:
         # User evaluation scores (to be loaded from JSON)
         self.user_scores = {}
 
-    def load_user_evaluation_scores(self, scores_path: Path):
+    def load_user_evaluation_scores(self, scores_path: Path) -> None:
         """Load manual user evaluation scores from JSON file."""
         try:
             with open(scores_path) as f:
@@ -298,7 +298,7 @@ class CreativityBenchmark:
             logger.warning(f"User scores file not found: {scores_path}")
             self.user_scores = {}
         except Exception as e:
-            logger.error(f"Error loading user scores: {e}")
+            logger.exception(f"Error loading user scores: {e}")
             self.user_scores = {}
 
     async def evaluate_remote_association_tasks(self) -> dict[str, Any]:
@@ -341,7 +341,7 @@ class CreativityBenchmark:
                 results["creative_bridges"].extend(bridges)
 
             except Exception as e:
-                logger.error(f"Error evaluating task {task.task_id}: {e}")
+                logger.exception(f"Error evaluating task {task.task_id}: {e}")
                 continue
 
         # Calculate summary metrics
@@ -393,7 +393,7 @@ class CreativityBenchmark:
                 results["creative_bridges"].extend(bridges)
 
             except Exception as e:
-                logger.error(f"Error evaluating pair {pair.pair_id}: {e}")
+                logger.exception(f"Error evaluating pair {pair.pair_id}: {e}")
                 continue
 
         # Calculate summary metrics
@@ -495,7 +495,7 @@ class CreativityBenchmark:
             evaluation["user_usefulness"] = self.user_scores.get(bridge.id, 0.0)
 
         except Exception as e:
-            logger.error(f"Error evaluating bridge {bridge.id}: {e}")
+            logger.exception(f"Error evaluating bridge {bridge.id}: {e}")
 
         return evaluation
 
@@ -699,7 +699,7 @@ class CreativityBenchmark:
 
     async def _save_results(
         self, rat_results: dict, cd_results: dict, metrics: CreativityMetrics
-    ):
+    ) -> None:
         """Save benchmark results to files."""
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
@@ -754,7 +754,7 @@ def create_sample_user_scores():
     return sample_scores
 
 
-async def main():
+async def main() -> None:
     parser = argparse.ArgumentParser(description="HypeRAG Creativity Benchmark Suite")
     parser.add_argument(
         "--output-dir",
@@ -811,7 +811,7 @@ async def main():
         print("=" * 60)
 
     except Exception as e:
-        logger.error(f"Benchmark failed: {e}")
+        logger.exception(f"Benchmark failed: {e}")
         raise
 
 

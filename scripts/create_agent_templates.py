@@ -748,7 +748,7 @@ AGENT_SPECIFICATIONS = {
 }
 
 
-def create_agent_template_files():
+def create_agent_template_files() -> None:
     """Create individual template files for each agent."""
     template_dir = Path("production/agent_forge/templates")
     template_dir.mkdir(parents=True, exist_ok=True)
@@ -811,7 +811,7 @@ def create_agent_template_files():
     print(f"Total templates created: {len(AGENT_SPECIFICATIONS)}")
 
 
-def create_agent_factory_code():
+def create_agent_factory_code() -> None:
     """Create factory code for instantiating agents from templates."""
     factory_code = '''#!/usr/bin/env python3
 """
@@ -975,7 +975,7 @@ class AgentFactory:
     print("Created agent factory code")
 
 
-def create_deployment_manifest():
+def create_deployment_manifest() -> None:
     """Create deployment manifest for Atlantis agent ecosystem."""
     manifest = {
         "version": "1.0.0",
@@ -1022,7 +1022,7 @@ def create_deployment_manifest():
     print("Created deployment manifest")
 
 
-def test_agent_templates():
+def test_agent_templates() -> None:
     """Test the agent template system."""
     print("Testing agent template system...")
 

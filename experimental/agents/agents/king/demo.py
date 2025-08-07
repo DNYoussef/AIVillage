@@ -20,7 +20,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-async def run_demo():
+async def run_demo() -> None:
     try:
         # Initialize components
         logger.info("Initializing components...")
@@ -78,7 +78,7 @@ async def run_demo():
                 result = await king_agent.execute_task(task)
                 logger.info(f"Task result: {result}")
             except AIVillageException as e:
-                logger.error(f"Error processing task: {e!s}")
+                logger.exception(f"Error processing task: {e!s}")
             except Exception as e:
                 logger.exception(f"Unexpected error processing task: {e!s}")
 

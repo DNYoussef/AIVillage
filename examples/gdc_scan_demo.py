@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GDC Scanner Demo
+"""GDC Scanner Demo.
 
 Demonstrates how to use the HypeRAG Graph-Doctor constraint detection system.
 """
@@ -16,8 +16,8 @@ sys.path.insert(0, str(project_root))
 from mcp_servers.hyperag.gdc.registry import GDC_REGISTRY
 
 
-async def demo_gdc_scanning():
-    """Demonstrate GDC scanning functionality"""
+async def demo_gdc_scanning() -> None:
+    """Demonstrate GDC scanning functionality."""
     print("🔍 HypeRAG Graph-Doctor Demo")
     print("=" * 50)
 

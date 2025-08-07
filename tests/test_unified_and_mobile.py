@@ -190,9 +190,7 @@ def test_fallback_mechanism():
             "simple",
             "advanced",
         ], f"Unexpected method: {result['method']}"
-        assert (
-            result["fallback_available"] == True
-        ), "Fallback should always be available"
+        assert result["fallback_available"], "Fallback should always be available"
 
         print("PASS: Fallback mechanism WORKING")
         return True

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate checksums for main.py files to identify duplicates"""
+"""Generate checksums for main.py files to identify duplicates."""
 
 import csv
 import hashlib
@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def calculate_sha256(file_path):
-    """Calculate SHA256 checksum of a file"""
+    """Calculate SHA256 checksum of a file."""
     sha256_hash = hashlib.sha256()
     try:
         with open(file_path, "rb") as f:
@@ -21,14 +21,14 @@ def calculate_sha256(file_path):
 
 
 def get_file_size(file_path):
-    """Get file size in bytes"""
+    """Get file size in bytes."""
     try:
         return os.path.getsize(file_path)
     except Exception:
         return 0
 
 
-def main():
+def main() -> None:
     # Read filtered locations
     try:
         with open("main_py_locations_filtered.txt") as f:

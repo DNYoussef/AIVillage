@@ -1,4 +1,4 @@
-"""MAGI Agent Implementations
+"""MAGI Agent Implementations.
 
 This module contains various MAGI agent implementations with different
 capabilities, constraints, and scaling features.

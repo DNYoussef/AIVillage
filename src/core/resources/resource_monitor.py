@@ -150,9 +150,9 @@ class ResourceMonitor:
             return False
         if disk["free_gb"] * 1024 < size_mb * 2:
             return False
-        if battery and battery["percent"] is not None and battery["percent"] < 20:
-            return False
-        return True
+        return not (
+            battery and battery["percent"] is not None and battery["percent"] < 20
+        )
 
 
 # Module-level functions

@@ -397,9 +397,8 @@ class MeshProtocol:
                 if (
                     destination not in self.routing_table
                     or self.routing_table[destination][1] > distance
-                ):
-                    if sender_id in self.neighbors:
-                        self.routing_table[destination] = (sender_id, distance)
+                ) and sender_id in self.neighbors:
+                    self.routing_table[destination] = (sender_id, distance)
 
         except Exception as e:
             self.logger.debug("Error handling routing update: %s", e)
@@ -415,10 +414,9 @@ class MeshProtocol:
                 if (
                     discovered_node_id not in self.routing_table
                     or self.routing_table[discovered_node_id][1] > 2
-                ):
-                    if sender_id in self.neighbors:
-                        distance = 1 if discovered_node_id == sender_id else 2
-                        self.routing_table[discovered_node_id] = (sender_id, distance)
+                ) and sender_id in self.neighbors:
+                    distance = 1 if discovered_node_id == sender_id else 2
+                    self.routing_table[discovered_node_id] = (sender_id, distance)
 
         except Exception as e:
             self.logger.debug("Error handling discovery: %s", e)

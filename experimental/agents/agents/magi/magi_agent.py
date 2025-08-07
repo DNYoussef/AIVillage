@@ -25,7 +25,7 @@ class MagiAgent(UnifiedBaseAgent):
         rag_config: RAGConfig,
         vector_store: VectorStore,
         knowledge_tracker: UnifiedKnowledgeTracker | None = None,
-    ):
+    ) -> None:
         super().__init__(config, communication_protocol, knowledge_tracker)
         self.specialized_knowledge = {}  # Initialize specialized knowledge base
         self.rag_system = EnhancedRAGPipeline(rag_config, knowledge_tracker)
@@ -52,7 +52,7 @@ class MagiAgent(UnifiedBaseAgent):
         )
         return {"review_result": review_result}
 
-    async def handle_message(self, message: Message):
+    async def handle_message(self, message: Message) -> None:
         if message.type == MessageType.TASK:
             task = LangroidTask(self, message.content["content"])
             task.type = message.content.get("task_type", "general")
@@ -72,13 +72,13 @@ class MagiAgent(UnifiedBaseAgent):
         base_info = await super().introspect()
         return {**base_info, "development_capabilities": self.development_capabilities}
 
-    async def evolve(self):
+    async def evolve(self) -> None:
         await self.self_evolving_system.evolve()
 
     async def query_rag(self, query: str) -> dict[str, Any]:
         return await self.rag_system.process_query(query)
 
-    async def add_document(self, content: str, filename: str):
+    async def add_document(self, content: str, filename: str) -> None:
         await self.rag_system.add_document(content, filename)
 
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke tests for AIVillage deployment verification.
-"""
+"""Smoke tests for AIVillage deployment verification."""
 
 import argparse
 import asyncio
@@ -13,7 +12,7 @@ import aiohttp
 
 
 class SmokeTestRunner:
-    def __init__(self, environment: str, namespace: str):
+    def __init__(self, environment: str, namespace: str) -> None:
         self.environment = environment
         self.namespace = namespace
         self.results = []
@@ -121,7 +120,8 @@ class SmokeTestRunner:
                     "RETURN 1",
                 ]
             else:
-                raise ValueError(f"Unknown database type: {db_type}")
+                msg = f"Unknown database type: {db_type}"
+                raise ValueError(msg)
 
             result = subprocess.run(
                 cmd, capture_output=True, text=True, timeout=30, check=False
@@ -264,7 +264,7 @@ class SmokeTestRunner:
 
         return all_passed
 
-    def save_results(self, output_file: str):
+    def save_results(self, output_file: str) -> None:
         """Save test results to a file."""
         with open(output_file, "w") as f:
             json.dump(
@@ -279,7 +279,7 @@ class SmokeTestRunner:
             )
 
 
-async def main():
+async def main() -> None:
     parser = argparse.ArgumentParser(description="Run AIVillage smoke tests")
     parser.add_argument(
         "--environment",

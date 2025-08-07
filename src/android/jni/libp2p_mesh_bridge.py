@@ -1,4 +1,4 @@
-"""Android JNI Bridge for LibP2P Mesh Network
+"""Android JNI Bridge for LibP2P Mesh Network.
 
 This module provides a Python-to-Android bridge using several approaches:
 1. HTTP REST API bridge (primary)
@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
 class LibP2PMeshBridge:
     """Bridge between Python LibP2P implementation and Android."""
 
-    def __init__(self, port: int = 8080, ws_port: int = 8081):
+    def __init__(self, port: int = 8080, ws_port: int = 8081) -> None:
         self.rest_port = port
         self.ws_port = ws_port
         self.mesh_network: LibP2PMeshNetwork | None = None
@@ -93,7 +93,7 @@ class LibP2PMeshBridge:
         """Register REST API endpoints."""
 
         @self.app.post("/mesh/start")
-        async def start_mesh(config: dict[str, Any] = None):
+        async def start_mesh(config: dict[str, Any] | None = None):
             """Start mesh network."""
             try:
                 if self.mesh_network and self.mesh_network.status.value == "active":
@@ -285,7 +285,7 @@ class LibP2PMeshBridge:
         """Register WebSocket handlers for real-time communication."""
 
         @self.app.websocket("/ws")
-        async def websocket_endpoint(websocket: WebSocket):
+        async def websocket_endpoint(websocket: WebSocket) -> None:
             await websocket.accept()
             self.websocket_connections.append(websocket)
 
@@ -412,7 +412,7 @@ class LibP2PMeshBridge:
         logger.info(f"Starting LibP2P Mesh Bridge on port {self.rest_port}")
 
         # Start in background thread to avoid blocking
-        def run_server():
+        def run_server() -> None:
             uvicorn.run(self.app, host="0.0.0.0", port=self.rest_port, log_level="info")
 
         server_thread = Thread(target=run_server, daemon=True)
@@ -521,7 +521,7 @@ if __name__ == "__main__":
     # Test the bridge
     import asyncio
 
-    async def test_bridge():
+    async def test_bridge() -> None:
         bridge = LibP2PMeshBridge()
         await bridge.start_bridge()
 

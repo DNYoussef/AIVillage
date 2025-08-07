@@ -1,4 +1,4 @@
-"""Fallback Transport Layer for LibP2P Mesh Network
+"""Fallback Transport Layer for LibP2P Mesh Network.
 
 Provides fallback communication methods when LibP2P or internet connectivity
 is not available. Supports:
@@ -89,7 +89,7 @@ class TransportMessage:
 class FallbackTransport(ABC):
     """Abstract base class for fallback transports."""
 
-    def __init__(self, transport_type: TransportType, node_id: str):
+    def __init__(self, transport_type: TransportType, node_id: str) -> None:
         self.transport_type = transport_type
         self.node_id = node_id
         self.status = TransportStatus.INACTIVE
@@ -135,7 +135,7 @@ class FallbackTransport(ABC):
 class BluetoothTransport(FallbackTransport):
     """Bluetooth transport implementation."""
 
-    def __init__(self, node_id: str, use_ble: bool = False):
+    def __init__(self, node_id: str, use_ble: bool = False) -> None:
         super().__init__(
             TransportType.BLUETOOTH_LE if use_ble else TransportType.BLUETOOTH_CLASSIC,
             node_id,
@@ -234,7 +234,7 @@ class BluetoothTransport(FallbackTransport):
 class WiFiDirectTransport(FallbackTransport):
     """WiFi Direct transport implementation."""
 
-    def __init__(self, node_id: str):
+    def __init__(self, node_id: str) -> None:
         super().__init__(TransportType.WIFI_DIRECT, node_id)
         self.group_name = f"AIVillage-{node_id[:8]}"
 
@@ -285,7 +285,7 @@ class WiFiDirectTransport(FallbackTransport):
 class FileSystemTransport(FallbackTransport):
     """File system-based transport for local communication."""
 
-    def __init__(self, node_id: str, base_dir: str = "/tmp/aivillage_mesh"):
+    def __init__(self, node_id: str, base_dir: str = "/tmp/aivillage_mesh") -> None:
         super().__init__(TransportType.FILE_SYSTEM, node_id)
         self.base_dir = base_dir
         self.inbox_dir = os.path.join(base_dir, "nodes", node_id, "inbox")
@@ -463,7 +463,7 @@ class FileSystemTransport(FallbackTransport):
 class LocalSocketTransport(FallbackTransport):
     """Local socket-based transport for same-machine communication."""
 
-    def __init__(self, node_id: str, base_port: int = 9000):
+    def __init__(self, node_id: str, base_port: int = 9000) -> None:
         super().__init__(TransportType.LOCAL_SOCKET, node_id)
         self.listen_port = base_port + hash(node_id) % 1000
         self.server: asyncio.Server | None = None
@@ -622,7 +622,7 @@ class LocalSocketTransport(FallbackTransport):
 class FallbackTransportManager:
     """Manages multiple fallback transports."""
 
-    def __init__(self, node_id: str):
+    def __init__(self, node_id: str) -> None:
         self.node_id = node_id
         self.transports: dict[TransportType, FallbackTransport] = {}
         self.active_transports: list[FallbackTransport] = []

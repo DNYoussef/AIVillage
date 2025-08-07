@@ -8,7 +8,7 @@ from huggingface_hub import snapshot_download
 import torch
 
 
-def check_gpu_availability():
+def check_gpu_availability() -> bool:
     """Check GPU availability and memory."""
     if torch.cuda.is_available():
         gpu_name = torch.cuda.get_device_name(0)
@@ -51,11 +51,6 @@ def main():
     os.environ["TRANSFORMERS_CACHE"] = str(cache_dir / "transformers")
 
     # List of 1.5B parameter models optimized for RTX 2060
-    models_to_download = [
-        "microsoft/phi-1_5",  # 1.3B parameters - excellent for coding
-        "stabilityai/stablelm-base-alpha-3b",  # 3B but efficient
-        "microsoft/DialoGPT-medium",  # 355M but very capable for chat
-    ]
 
     # Alternative smaller models that work well together
     efficient_models = [

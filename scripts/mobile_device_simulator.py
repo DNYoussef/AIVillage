@@ -60,7 +60,7 @@ DEVICE_PROFILES = {
 class MobileSimulator:
     """Simulate mobile device constraints during testing."""
 
-    def __init__(self, profile: DeviceProfile):
+    def __init__(self, profile: DeviceProfile) -> None:
         self.profile = profile
         self._original_limits = {}
 
@@ -81,11 +81,11 @@ class MobileSimulator:
             # Restore original limits (Windows compatible)
             pass
 
-    def _store_original_limits(self):
+    def _store_original_limits(self) -> None:
         """Store current resource limits (Windows compatible)."""
         # On Windows, we'll simulate constraints differently
 
-    def _restore_original_limits(self):
+    def _restore_original_limits(self) -> None:
         """Restore original resource limits (Windows compatible)."""
         # On Windows, we'll simulate constraints differently
 
@@ -156,7 +156,7 @@ class MobileSimulator:
             first_layer = None
             for module in model.modules():
                 if isinstance(
-                    module, (torch.nn.Conv2d, torch.nn.Linear, torch.nn.Embedding)
+                    module, torch.nn.Conv2d | torch.nn.Linear | torch.nn.Embedding
                 ):
                     first_layer = module
                     break
@@ -212,7 +212,7 @@ def create_simple_llm():
     """Create a simple LLM model that works with Sequential."""
 
     class SimpleLLM(torch.nn.Module):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__()
             self.embedding = torch.nn.Embedding(1000, 128)
             self.lstm = torch.nn.LSTM(128, 256, batch_first=True)
@@ -263,7 +263,7 @@ def create_mobile_benchmark_suite():
     return results
 
 
-def generate_mobile_optimization_report(results: dict[str, Any]):
+def generate_mobile_optimization_report(results: dict[str, Any]) -> None:
     """Generate detailed report on mobile optimization."""
     report = """# Mobile Device Compression Benchmark Report
 

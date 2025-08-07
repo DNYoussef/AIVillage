@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class ReasoningEngine:
-    def __init__(self):
+    def __init__(self) -> None:
         self.model = None
         self.hyperparameters = {}
 
@@ -72,13 +72,14 @@ class ReasoningEngine:
 
         except Exception as e:
             logger.error(f"Error in analyze_and_reason: {e!s}", exc_info=True)
-            raise AIVillageException(f"Error in analyze_and_reason: {e!s}")
+            msg = f"Error in analyze_and_reason: {e!s}"
+            raise AIVillageException(msg)
 
-    async def update_model(self, new_model: nn.Module):
+    async def update_model(self, new_model: nn.Module) -> None:
         self.model = new_model
         logger.info("Model updated in ReasoningEngine")
 
-    async def update_hyperparameters(self, hyperparameters: dict[str, Any]):
+    async def update_hyperparameters(self, hyperparameters: dict[str, Any]) -> None:
         self.hyperparameters.update(hyperparameters)
         logger.info("Hyperparameters updated in ReasoningEngine")
 

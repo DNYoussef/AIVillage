@@ -1,5 +1,5 @@
 """Agent Forge - Advanced Prompt Engineering for AI Village
-Part B: Agent Forge Phase 4 - Prompt Engineering Package
+Part B: Agent Forge Phase 4 - Prompt Engineering Package.
 """
 
 from .prompt_engineering.ab_testing import PromptABTest, prompt_ab_test

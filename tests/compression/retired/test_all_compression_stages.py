@@ -267,7 +267,7 @@ def test_pipeline_integration():
 
         vptq = VPTQCompressor(bits=2)
         s3_compressed = vptq.compress(current_weights)
-        s3_decompressed = vptq.decompress(s3_compressed)
+        vptq.decompress(s3_compressed)
 
         s3_codebook = s3_compressed["codebook"].numel() * 4
         s3_indices = len(s3_compressed["indices"])

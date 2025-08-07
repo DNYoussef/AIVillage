@@ -33,7 +33,8 @@ class TestUnifiedCompression:
         compressor = UnifiedCompressor(memory_limit_mb=1, target_compression=1000.0)
 
         def failing_compress(*args, **kwargs):  # pragma: no cover - mocked failure
-            raise RuntimeError("Advanced compression failed")
+            msg = "Advanced compression failed"
+            raise RuntimeError(msg)
 
         compressor.advanced.compress_model = failing_compress  # type: ignore
         result = compressor.compress(model)

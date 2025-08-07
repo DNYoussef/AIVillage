@@ -5,7 +5,7 @@ import random
 
 
 class MCTSNode:
-    def __init__(self, state, parent=None):
+    def __init__(self, state, parent=None) -> None:
         self.state = state
         self.parent = parent
         self.children = []
@@ -14,7 +14,7 @@ class MCTSNode:
 
 
 class MCTS:
-    def __init__(self, exploration_weight=1.0, max_depth=10):
+    def __init__(self, exploration_weight=1.0, max_depth=10) -> None:
         self.exploration_weight = exploration_weight
         self.max_depth = max_depth
         self.stats = defaultdict(lambda: {"visits": 0, "value": 0})
@@ -61,7 +61,7 @@ class MCTS:
     async def simulate(self, node, plan_generator):
         return await plan_generator.evaluate(node.state)
 
-    def backpropagate(self, node, result):
+    def backpropagate(self, node, result) -> None:
         while node:
             self.stats[node.state]["visits"] += 1
             self.stats[node.state]["value"] += result
@@ -81,12 +81,12 @@ class MCTS:
     def best_child(self, node):
         return max(node.children, key=lambda c: self.stats[c.state]["visits"])
 
-    async def update(self, task, result):
+    async def update(self, task, result) -> None:
         # Update MCTS statistics based on task execution results
         self.stats[task]["visits"] += 1
         self.stats[task]["value"] += result
 
-    async def prune(self, node, threshold):
+    async def prune(self, node, threshold) -> None:
         node.children = [
             child
             for child in node.children
@@ -101,7 +101,7 @@ class MCTS:
         root = MCTSNode(task)
         semaphore = asyncio.Semaphore(num_workers)
 
-        async def worker():
+        async def worker() -> None:
             async with semaphore:
                 node = self.select(root)
                 if node.visits < 1 or len(node.children) == 0:

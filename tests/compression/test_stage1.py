@@ -196,9 +196,7 @@ class TestConvertToBitNet:
         converted = convert_to_bitnet(model)
 
         # Check that linear layers were converted
-        linear_layers = [
-            m for m in converted.modules() if isinstance(m, (nn.Linear, BitNetLinear))
-        ]
+        [m for m in converted.modules() if isinstance(m, nn.Linear | BitNetLinear)]
         bitnet_layers = [m for m in converted.modules() if isinstance(m, BitNetLinear)]
 
         # Should have converted all linear layers
@@ -290,13 +288,13 @@ class TestStage1Integration:
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             input_path = os.path.join(tmp_dir, "test_model.pt")
-            output_path = os.path.join(tmp_dir, "test_model.stage1.pt")
+            os.path.join(tmp_dir, "test_model.stage1.pt")
 
             # Save test model
             torch.save(model.state_dict(), input_path)
 
             # Create minimal config
-            config = Stage1Config(
+            Stage1Config(
                 bitnet_enabled=False,  # Skip for testing
                 seedlm_enabled=True,
                 seedlm_num_seeds=16,  # Small for testing

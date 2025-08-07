@@ -26,7 +26,9 @@ class ConfigurationError(Exception):
 class ConfigManager:
     """Centralized configuration management for AIVillage scripts."""
 
-    def __init__(self, config_dir: Path | None = None, environment: str | None = None):
+    def __init__(
+        self, config_dir: Path | None = None, environment: str | None = None
+    ) -> None:
         """Initialize the configuration manager.
 
         Args:
@@ -110,9 +112,10 @@ class ConfigManager:
                         self._deep_merge(config, base_config)
                 logger.debug(f"Loaded base config from {base_config_file}")
             except Exception as e:
-                logger.error(f"Failed to load base config {base_config_file}: {e}")
+                logger.exception(f"Failed to load base config {base_config_file}: {e}")
                 if required:
-                    raise ConfigurationError(f"Failed to load required config: {e}")
+                    msg = f"Failed to load required config: {e}"
+                    raise ConfigurationError(msg)
 
         # Load environment-specific overrides
         env_config_file = self.config_dir / f"{config_name}.{self.environment}.yaml"
@@ -135,9 +138,10 @@ class ConfigManager:
         try:
             self._validate_config(config, config_name)
         except Exception as e:
-            logger.error(f"Configuration validation failed for {config_name}: {e}")
+            logger.exception(f"Configuration validation failed for {config_name}: {e}")
             if required:
-                raise ConfigurationError(f"Configuration validation failed: {e}")
+                msg = f"Configuration validation failed: {e}"
+                raise ConfigurationError(msg)
 
         # Cache the configuration
         self.config_cache[cache_key] = config
@@ -237,8 +241,9 @@ class ConfigManager:
             self.config_cache[cache_key] = config
 
         except Exception as e:
-            logger.error(f"Failed to save configuration {config_name}: {e}")
-            raise ConfigurationError(f"Failed to save configuration: {e}")
+            logger.exception(f"Failed to save configuration {config_name}: {e}")
+            msg = f"Failed to save configuration: {e}"
+            raise ConfigurationError(msg)
 
     def list_available_configs(self) -> list[str]:
         """List all available configuration files.
@@ -257,7 +262,7 @@ class ConfigManager:
                 name = name.split(".")[0]
             configs.add(name)
 
-        return sorted(list(configs))
+        return sorted(configs)
 
     def _deep_merge(self, base: dict[str, Any], override: dict[str, Any]) -> None:
         """Deep merge override dictionary into base dictionary.
@@ -366,14 +371,14 @@ class ConfigManager:
                 "format": lambda x: isinstance(x, str) and len(x) > 0,
             },
             "monitoring": {
-                "interval": lambda x: isinstance(x, (int, float)) and x > 0,
-                "thresholds.cpu_percent_high": lambda x: isinstance(x, (int, float))
+                "interval": lambda x: isinstance(x, int | float) and x > 0,
+                "thresholds.cpu_percent_high": lambda x: isinstance(x, int | float)
                 and 0 <= x <= 100,
-                "thresholds.memory_percent_high": lambda x: isinstance(x, (int, float))
+                "thresholds.memory_percent_high": lambda x: isinstance(x, int | float)
                 and 0 <= x <= 100,
             },
             "validation": {
-                "timeout": lambda x: isinstance(x, (int, float)) and x > 0,
+                "timeout": lambda x: isinstance(x, int | float) and x > 0,
                 "retry_attempts": lambda x: isinstance(x, int) and x >= 0,
             },
         }
@@ -385,9 +390,8 @@ class ConfigManager:
                 try:
                     value = self._get_nested_value(config, key_path)
                     if not validator(value):
-                        raise ConfigurationError(
-                            f"Invalid value for {key_path}: {value}"
-                        )
+                        msg = f"Invalid value for {key_path}: {value}"
+                        raise ConfigurationError(msg)
                 except KeyError:
                     # Key is optional if not in config
                     pass

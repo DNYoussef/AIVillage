@@ -57,7 +57,7 @@ async def test_single_node():
         logger.info(f"Discovery stats: {json.dumps(discovery_stats, indent=2)}")
 
     except Exception as e:
-        logger.error(f"Failed to start node: {e}")
+        logger.exception(f"Failed to start node: {e}")
         raise
     finally:
         await node.stop()
@@ -127,7 +127,7 @@ async def test_two_nodes_discovery():
         await asyncio.sleep(2)
 
     except Exception as e:
-        logger.error(f"Two-node test failed: {e}")
+        logger.exception(f"Two-node test failed: {e}")
         raise
     finally:
         await node1.stop()
@@ -186,7 +186,7 @@ async def test_evolution_messaging():
         logger.info(f"Final network stats: {json.dumps(stats, indent=2)}")
 
     except Exception as e:
-        logger.error(f"Evolution messaging test failed: {e}")
+        logger.exception(f"Evolution messaging test failed: {e}")
         raise
     finally:
         await node.stop()
@@ -212,7 +212,7 @@ async def main():
         logger.info("All P2P tests completed successfully!")
 
     except Exception as e:
-        logger.error(f"P2P testing failed: {e}")
+        logger.exception(f"P2P testing failed: {e}")
         raise
 
 
