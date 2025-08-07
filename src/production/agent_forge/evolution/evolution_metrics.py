@@ -3,12 +3,16 @@
 # ruff: noqa: I001
 
 import asyncio
+import gzip
+import json
 import logging
+import os
 import sqlite3
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 try:  # pragma: no cover - optional dependency
@@ -18,6 +22,14 @@ try:  # pragma: no cover - optional dependency
 except Exception:  # pragma: no cover - no psutil available
     psutil = None  # type: ignore
     PSUTIL_AVAILABLE = False
+
+try:  # pragma: no cover - optional dependency
+    import redis
+
+    REDIS_AVAILABLE = True
+except Exception:  # pragma: no cover - no redis available
+    redis = None  # type: ignore
+    REDIS_AVAILABLE = False
 
 from .metrics import EvolutionMetricsRecorder
 
@@ -80,6 +92,282 @@ class EvolutionMetrics:
             "metadata": self.metadata,
         }
 
+    @staticmethod
+    def from_dict(data: dict[str, Any]) -> "EvolutionMetrics":
+        """Create an EvolutionMetrics instance from a dictionary."""
+        return EvolutionMetrics(
+            timestamp=data["timestamp"],
+            agent_id=data["agent_id"],
+            evolution_type=data["evolution_type"],
+            evolution_id=data["evolution_id"],
+            performance_score=data["performance_score"],
+            improvement_delta=data["improvement_delta"],
+            quality_score=data["quality_score"],
+            memory_used_mb=data["memory_used_mb"],
+            cpu_percent_avg=data["cpu_percent_avg"],
+            duration_minutes=data["duration_minutes"],
+            success=data["success"],
+            error_count=data["error_count"],
+            warning_count=data["warning_count"],
+            metadata=data.get("metadata", {}),
+        )
+
+
+class MetricsBackend:
+    """Abstract backend interface for storing evolution metrics."""
+
+    async def start(self) -> None:  # pragma: no cover - interface
+        raise NotImplementedError
+
+    async def stop(self) -> None:  # pragma: no cover - interface
+        raise NotImplementedError
+
+    async def save_metrics(self, metrics: list[EvolutionMetrics]) -> None:  # pragma: no cover - interface
+        raise NotImplementedError
+
+    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:  # pragma: no cover - interface
+        raise NotImplementedError
+
+
+class SQLiteMetricsBackend(MetricsBackend):
+    """SQLite storage backend for evolution metrics."""
+
+    def __init__(self, db_path: str) -> None:
+        self.db_path = db_path
+        self._conn: sqlite3.Connection | None = None
+        self._round_id: int | None = None
+
+    async def start(self) -> None:
+        self._conn = sqlite3.connect(self.db_path)
+        self._conn.execute("PRAGMA journal_mode=WAL")
+        self._migrate()
+        cur = self._conn.cursor()
+        cur.execute(
+            "INSERT INTO evolution_rounds (start_time, status) VALUES (?, ?)",
+            (time.time(), "running"),
+        )
+        self._round_id = int(cur.lastrowid)
+        self._conn.commit()
+
+    async def stop(self) -> None:
+        if self._conn and self._round_id is not None:
+            cur = self._conn.cursor()
+            cur.execute(
+                "UPDATE evolution_rounds SET end_time=?, status=? WHERE id=?",
+                (time.time(), "completed", self._round_id),
+            )
+            self._conn.commit()
+            self._conn.close()
+            self._conn = None
+            self._round_id = None
+
+    def _migrate(self) -> None:
+        assert self._conn is not None
+        cur = self._conn.cursor()
+        cur.execute(
+            "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER)"
+        )
+        row = cur.execute("SELECT version FROM schema_version").fetchone()
+        if row is None:
+            cur.execute("INSERT INTO schema_version (version) VALUES (1)")
+            self._create_tables(cur)
+        self._conn.commit()
+
+    def _create_tables(self, cur: sqlite3.Cursor) -> None:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS evolution_rounds (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                start_time REAL,
+                end_time REAL,
+                status TEXT
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS fitness_metrics (
+                round_id INTEGER,
+                agent_id TEXT,
+                fitness_score REAL,
+                timestamp REAL,
+                FOREIGN KEY(round_id) REFERENCES evolution_rounds(id)
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS resource_metrics (
+                round_id INTEGER,
+                cpu_usage REAL,
+                memory_mb REAL,
+                energy_estimate REAL,
+                FOREIGN KEY(round_id) REFERENCES evolution_rounds(id)
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS selection_outcomes (
+                round_id INTEGER,
+                mutation_id TEXT,
+                selected INTEGER,
+                reason TEXT,
+                FOREIGN KEY(round_id) REFERENCES evolution_rounds(id)
+            )
+            """
+        )
+
+    async def save_metrics(self, metrics: list[EvolutionMetrics]) -> None:
+        if not metrics or self._conn is None or self._round_id is None:
+            return
+        cur = self._conn.cursor()
+        for m in metrics:
+            cur.execute(
+                "INSERT INTO fitness_metrics (round_id, agent_id, fitness_score, timestamp) VALUES (?, ?, ?, ?)",
+                (self._round_id, m.agent_id, m.performance_score, m.timestamp),
+            )
+            cur.execute(
+                "INSERT INTO resource_metrics (round_id, cpu_usage, memory_mb, energy_estimate) VALUES (?, ?, ?, ?)",
+                (
+                    self._round_id,
+                    m.cpu_percent_avg,
+                    m.memory_used_mb,
+                    m.metadata.get("energy_estimate", 0.0),
+                ),
+            )
+            cur.execute(
+                "INSERT INTO selection_outcomes (round_id, mutation_id, selected, reason) VALUES (?, ?, ?, ?)",
+                (
+                    self._round_id,
+                    m.metadata.get("mutation_id"),
+                    int(m.success),
+                    m.metadata.get("trigger_reason", ""),
+                ),
+            )
+        self._conn.commit()
+
+    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:
+        conn = self._conn or sqlite3.connect(self.db_path)
+        cur = conn.cursor()
+        query = "SELECT agent_id, fitness_score, timestamp FROM fitness_metrics ORDER BY timestamp DESC"
+        if limit is not None:
+            query += " LIMIT ?"
+            rows = cur.execute(query, (limit,)).fetchall()
+        else:
+            rows = cur.execute(query).fetchall()
+        if conn is not self._conn:
+            conn.close()
+        return [
+            {"agent_id": a, "fitness_score": f, "timestamp": t} for a, f, t in rows
+        ]
+
+
+class FileMetricsBackend(MetricsBackend):
+    """File based backend using JSONL with rotation and compression."""
+
+    def __init__(self, log_dir: str, rotate_size: int = 5 * 1024 * 1024) -> None:
+        self.log_dir = Path(log_dir)
+        self.rotate_size = rotate_size
+        self._file: os.PathLike | None = None
+        self._fp = None
+
+    async def start(self) -> None:
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+        self._open_new_file()
+
+    def _open_new_file(self) -> None:
+        ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        self._file = self.log_dir / f"metrics_{ts}.jsonl"
+        self._fp = open(self._file, "a", encoding="utf-8")
+
+    async def stop(self) -> None:
+        if self._fp:
+            self._fp.flush()
+            self._fp.close()
+            self._compress_current()
+            self._fp = None
+            self._file = None
+
+    def _compress_current(self) -> None:
+        if self._file and Path(self._file).exists():
+            with open(self._file, "rb") as f_in, gzip.open(f"{self._file}.gz", "wb") as f_out:
+                f_out.writelines(f_in)
+            os.remove(self._file)
+
+    async def save_metrics(self, metrics: list[EvolutionMetrics]) -> None:
+        if not self._fp:
+            return
+        for m in metrics:
+            self._fp.write(json.dumps(m.to_dict()) + "\n")
+        self._fp.flush()
+        if self._file and Path(self._file).stat().st_size > self.rotate_size:
+            self._fp.close()
+            self._compress_current()
+            self._open_new_file()
+
+    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:
+        records: list[dict[str, Any]] = []
+        files = sorted(self.log_dir.glob("metrics_*.jsonl*"))
+        for path in files:
+            if path.suffix == ".gz":
+                fh = gzip.open(path, "rt", encoding="utf-8")
+            else:
+                fh = open(path, "r", encoding="utf-8")
+            with fh:
+                for line in fh:
+                    try:
+                        records.append(json.loads(line))
+                    except Exception:
+                        continue
+        if limit is not None:
+            return records[-limit:]
+        return records
+
+
+class RedisMetricsBackend(MetricsBackend):
+    """Redis based backend with SQLite persistence on shutdown."""
+
+    def __init__(self, redis_url: str, sqlite_path: str) -> None:
+        self.redis_url = redis_url
+        self.redis_key = "evolution:metrics"
+        self.redis_channel = "evolution_metrics"
+        self._redis = None
+        self.sqlite_backend = SQLiteMetricsBackend(sqlite_path)
+
+    async def start(self) -> None:
+        if not REDIS_AVAILABLE:
+            raise RuntimeError("redis library not available")
+        self._redis = redis.Redis.from_url(self.redis_url, decode_responses=True)
+        await self.sqlite_backend.start()
+
+    async def stop(self) -> None:
+        if self._redis is not None:
+            stored = self._redis.lrange(self.redis_key, 0, -1)
+            if stored:
+                metrics = [EvolutionMetrics.from_dict(json.loads(m)) for m in stored]
+                await self.sqlite_backend.save_metrics(metrics)
+            self._redis.delete(self.redis_key)
+            self._redis.close()
+            self._redis = None
+        await self.sqlite_backend.stop()
+
+    async def save_metrics(self, metrics: list[EvolutionMetrics]) -> None:
+        if not metrics:
+            return
+        assert self._redis is not None
+        pipe = self._redis.pipeline()
+        for m in metrics:
+            data = json.dumps(m.to_dict())
+            pipe.rpush(self.redis_key, data)
+            pipe.publish(self.redis_channel, data)
+        pipe.execute()
+        # Persist to SQLite for durability
+        await self.sqlite_backend.save_metrics(metrics)
+
+    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:
+        return await self.sqlite_backend.load_historical_metrics(limit)
+
 
 class EvolutionMetricsCollector:
     """Collector for evolution metrics."""
@@ -96,26 +384,25 @@ class EvolutionMetricsCollector:
         )
 
         self.db_path = self.config.get("db_path", "evolution_metrics.db")
-        self._conn: sqlite3.Connection | None = None
+        backend_type = self.config.get("storage_backend", "sqlite").lower()
+        if backend_type == "redis":
+            redis_url = self.config.get("redis_url", "redis://localhost:6379/0")
+            self._backend: MetricsBackend = RedisMetricsBackend(redis_url, self.db_path)
+        elif backend_type == "file":
+            log_dir = self.config.get("log_dir", "evolution_logs")
+            self._backend = FileMetricsBackend(log_dir)
+        else:
+            self._backend = SQLiteMetricsBackend(self.db_path)
         self._flush_task: asyncio.Task | None = None
-        self._round_id: int | None = None
 
     async def start(self) -> None:
         """Start metrics collection."""
-        self._conn = sqlite3.connect(self.db_path)
-        self._conn.execute(
-            "PRAGMA journal_mode=WAL"
-        )  # better durability for frequent writes
-        self._create_tables()
-        cur = self._conn.cursor()
-        cur.execute(
-            "INSERT INTO evolution_rounds (start_time, status) VALUES (?, ?)",
-            (time.time(), "running"),
-        )
-        self._round_id = int(cur.lastrowid)
-        self._conn.commit()
+        await self._backend.start()
         self._flush_task = asyncio.create_task(self._periodic_flush())
-        logger.info("Evolution metrics collector started")
+        logger.info(
+            "Evolution metrics collector started using %s backend",
+            self.config.get("storage_backend", "sqlite"),
+        )
 
     async def stop(self) -> None:
         """Stop metrics collection."""
@@ -123,19 +410,10 @@ class EvolutionMetricsCollector:
             self._flush_task.cancel()
             try:
                 await self._flush_task
-            except Exception:  # pragma: no cover - cancellation
+            except BaseException:  # pragma: no cover - cancellation
                 pass
         await self._flush_metrics()
-        if self._conn and self._round_id is not None:
-            cur = self._conn.cursor()
-            cur.execute(
-                "UPDATE evolution_rounds SET end_time=?, status=? WHERE id=?",
-                (time.time(), "completed", self._round_id),
-            )
-            self._conn.commit()
-            self._conn.close()
-            self._conn = None
-            self._round_id = None
+        await self._backend.stop()
         logger.info("Evolution metrics collector stopped")
 
     async def record_evolution_start(self, evolution_event: Any) -> None:
@@ -212,7 +490,7 @@ class EvolutionMetricsCollector:
             },
         )
 
-        self.metrics_history.append(metrics)
+        await self.save_metrics(metrics)
         mutation_id = start_info.get("mutation_id")
         if mutation_id is not None:
             self.mutation_recorder.record_fitness(mutation_id, performance_score)
@@ -237,54 +515,23 @@ class EvolutionMetricsCollector:
         self.system_events.append(event)
         logger.info("System event recorded: %s", event_type)
 
-    # ------------------------------------------------------------------
-    def _create_tables(self) -> None:
-        assert self._conn is not None
-        cur = self._conn.cursor()
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS evolution_rounds (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                start_time REAL,
-                end_time REAL,
-                status TEXT
-            )
-            """
-        )
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS fitness_metrics (
-                round_id INTEGER,
-                agent_id TEXT,
-                fitness_score REAL,
-                timestamp REAL,
-                FOREIGN KEY(round_id) REFERENCES evolution_rounds(id)
-            )
-            """
-        )
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS resource_metrics (
-                round_id INTEGER,
-                cpu_usage REAL,
-                memory_mb REAL,
-                energy_estimate REAL,
-                FOREIGN KEY(round_id) REFERENCES evolution_rounds(id)
-            )
-            """
-        )
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS selection_outcomes (
-                round_id INTEGER,
-                mutation_id TEXT,
-                selected INTEGER,
-                reason TEXT,
-                FOREIGN KEY(round_id) REFERENCES evolution_rounds(id)
-            )
-            """
-        )
-        self._conn.commit()
+    async def save_metrics(self, metrics: EvolutionMetrics) -> None:
+        """Queue metrics for persistence."""
+        self.metrics_history.append(metrics)
+        threshold = int(self.config.get("flush_threshold", 50))
+        if len(self.metrics_history) >= threshold:
+            await self._flush_metrics()
+
+    async def load_historical_metrics(self, limit: int | None = None) -> list[dict[str, Any]]:
+        """Load historical metrics from the configured backend."""
+        await self._flush_metrics()
+        return await self._backend.load_historical_metrics(limit)
+
+    async def export_data(self, path: str, limit: int | None = None) -> None:
+        """Export historical metrics to a JSON file."""
+        data = await self.load_historical_metrics(limit)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
 
     async def _periodic_flush(self) -> None:
         while True:
@@ -292,52 +539,30 @@ class EvolutionMetricsCollector:
             await self._flush_metrics()
 
     async def _flush_metrics(self) -> None:
-        if not self.metrics_history or self._conn is None or self._round_id is None:
+        if not self.metrics_history:
             return
-        cur = self._conn.cursor()
-        for m in self.metrics_history:
-            cur.execute(
-                "INSERT INTO fitness_metrics (round_id, agent_id, fitness_score, timestamp) VALUES (?, ?, ?, ?)",
-                (self._round_id, m.agent_id, m.performance_score, m.timestamp),
-            )
-            cur.execute(
-                "INSERT INTO resource_metrics (round_id, cpu_usage, memory_mb, energy_estimate) VALUES (?, ?, ?, ?)",
-                (
-                    self._round_id,
-                    m.cpu_percent_avg,
-                    m.memory_used_mb,
-                    m.metadata.get("energy_estimate", 0.0),
-                ),
-            )
-            cur.execute(
-                "INSERT INTO selection_outcomes (round_id, mutation_id, selected, reason) VALUES (?, ?, ?, ?)",
-                (
-                    self._round_id,
-                    m.metadata.get("mutation_id"),
-                    int(m.success),
-                    m.metadata.get("trigger_reason", ""),
-                ),
-            )
-        self._conn.commit()
+        await self._backend.save_metrics(self.metrics_history)
         self.metrics_history.clear()
 
     # Query helpers --------------------------------------------------
     def get_rounds(self) -> list[tuple[int, float, float, str]]:
-        if self._conn is None:
-            self._conn = sqlite3.connect(self.db_path)
-        cur = self._conn.cursor()
+        conn = sqlite3.connect(self.db_path)
+        cur = conn.cursor()
         cur.execute("SELECT id, start_time, end_time, status FROM evolution_rounds")
-        return cur.fetchall()
+        rows = cur.fetchall()
+        conn.close()
+        return rows
 
     def get_fitness_metrics(self, round_id: int) -> list[tuple[str, float, float]]:
-        if self._conn is None:
-            self._conn = sqlite3.connect(self.db_path)
-        cur = self._conn.cursor()
+        conn = sqlite3.connect(self.db_path)
+        cur = conn.cursor()
         cur.execute(
             "SELECT agent_id, fitness_score, timestamp FROM fitness_metrics WHERE round_id=?",
             (round_id,),
         )
-        return cur.fetchall()
+        rows = cur.fetchall()
+        conn.close()
+        return rows
 
     async def record_system_metrics(self, metrics: dict[str, Any]) -> None:
         """Record system metrics."""
