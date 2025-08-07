@@ -8,7 +8,10 @@ import time
 from typing import Any
 
 # AI/ML imports
-import anthropic
+try:
+    import anthropic
+except ImportError:  # pragma: no cover - optional dependency
+    anthropic = None  # type: ignore[assignment]
 import openai
 import wandb
 

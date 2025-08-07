@@ -129,7 +129,6 @@ dependencies = [
     # Compatibility & Type Support
     "typing-extensions>=4.12.2",
     "packaging>=24.1",
-    "grokfast @ git+https://github.com/ironjr/grokfast@5d6e21c",
 ]
 
 [project.optional-dependencies]
