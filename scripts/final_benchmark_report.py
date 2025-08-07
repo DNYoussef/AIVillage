@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
-"""Final Benchmark Report - Post-Cleanup Performance Summary
-"""
-from datetime import datetime
+"""Generate the final post-cleanup benchmark report."""
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
 
+COMPRESSION_TARGET_RATIO = 4.0
+MAX_QUERY_TIME_MS = 2000
+MEMORY_PRESSURE_THRESHOLD_GB = 2.0
+CPU_EFFICIENCY_THRESHOLD = 50
+GRADE_A_THRESHOLD = 90
+GRADE_B_THRESHOLD = 80
+GRADE_C_THRESHOLD = 70
+GRADE_D_THRESHOLD = 60
 
-def load_latest_benchmark():
-    """Load the most recent benchmark results"""
+
+def load_latest_benchmark() -> dict | None:
+    """Load the most recent benchmark results."""
     results_dir = Path(__file__).parent / "benchmark_results"
     if not results_dir.exists():
         return None
@@ -17,13 +25,13 @@ def load_latest_benchmark():
     focused_files = list(results_dir.glob("focused_benchmark_*.json"))
     if focused_files:
         latest_focused = max(focused_files, key=os.path.getctime)
-        with open(latest_focused) as f:
+        with latest_focused.open() as f:
             return json.load(f)
     return None
 
 
-def generate_report():
-    """Generate final benchmark report"""
+def generate_report() -> None:  # noqa: PLR0912
+    """Generate final benchmark report."""
     results = load_latest_benchmark()
 
     if not results:
@@ -38,15 +46,22 @@ def generate_report():
     sys_info = results.get("system_info", {})
     benchmarks = results.get("benchmarks", {})
 
-    print(f"Report Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Benchmark Date: {sys_info.get('timestamp', 'Unknown')}")
-    print(f"System: {sys_info.get('platform', 'Unknown')} with {sys_info.get('cpu_count', 0)} CPUs")
     print(
-        f"Memory: {sys_info.get('available_memory_gb',
-                                  0):.1f}GB available / {sys_info.get('total_memory_gb',
-                                                                      0):.1f}GB total"
+        "Report Date: "
+        f"{datetime.now(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}"
     )
-    print(f"Total Benchmark Time: {results.get('total_benchmark_time_seconds', 0):.3f}s")
+    print(f"Benchmark Date: {sys_info.get('timestamp', 'Unknown')}")
+    print(
+        f"System: {sys_info.get('platform', 'Unknown')} with "
+        f"{sys_info.get('cpu_count', 0)} CPUs"
+    )
+    print(
+        f"Memory: {sys_info.get('available_memory_gb', 0):.1f}GB available / "
+        f"{sys_info.get('total_memory_gb', 0):.1f}GB total"
+    )
+    print(
+        f"Total Benchmark Time: {results.get('total_benchmark_time_seconds', 0):.3f}s"
+    )
 
     print("\n" + "=" * 80)
     print("1. COMPRESSION PIPELINE PERFORMANCE")
@@ -63,19 +78,30 @@ def generate_report():
             if data.get("status") == "success":
                 ratio = data.get("compression_ratio", 0)
                 time_ms = data.get("class_method_time_ms", 0)
-                target_met = "PASS" if ratio >= 4.0 else "BELOW TARGET"
-                print(f"  {method}: {ratio:.1f}x compression, {time_ms:.3f}ms - {target_met}")
+                target_met = (
+                    "PASS" if ratio >= COMPRESSION_TARGET_RATIO else "BELOW TARGET"
+                )
+                print(
+                    f"  {method}: {ratio:.1f}x compression, "
+                    f"{time_ms:.3f}ms - {target_met}"
+                )
             else:
                 print(f"  {method}: FAILED - {data.get('error', 'Unknown error')}")
 
         # Calculate averages
         successful_ratios = [
-            d.get("compression_ratio", 0) for d in compressions.values() if d.get("status") == "success"
+            d.get("compression_ratio", 0)
+            for d in compressions.values()
+            if d.get("status") == "success"
         ]
         if successful_ratios:
             avg_ratio = sum(successful_ratios) / len(successful_ratios)
             print(f"\nAVERAGE COMPRESSION RATIO: {avg_ratio:.1f}x")
-            print(f"TARGET ACHIEVEMENT: {'PASS' if avg_ratio >= 4.0 else 'FAIL'} (Target: 4-8x)")
+            print(
+                "TARGET ACHIEVEMENT: "
+                f"{'PASS' if avg_ratio >= COMPRESSION_TARGET_RATIO else 'FAIL'} "
+                "(Target: 4-8x)"
+            )
 
     else:
         print("STATUS: FAILED")
@@ -125,10 +151,15 @@ def generate_report():
         print(f"Queries Processed: {rag.get('queries_processed', 0)}")
         print(f"Average Query Time: {rag.get('avg_query_time_ms', 0):.3f}ms")
 
-        query_target_met = rag.get("avg_query_time_ms", 0) < 2000
-        print(f"Query Target (<2000ms): {'PASS' if query_target_met else 'FAIL'}")
+        query_target_met = rag.get("avg_query_time_ms", 0) < MAX_QUERY_TIME_MS
+        print(
+            f"Query Target (<{MAX_QUERY_TIME_MS}ms): "
+            f"{'PASS' if query_target_met else 'FAIL'}"
+        )
 
-        efficiency = rag.get("documents_indexed", 0) / max(rag.get("index_time_ms", 1), 1)
+        efficiency = rag.get("documents_indexed", 0) / max(
+            rag.get("index_time_ms", 1), 1
+        )
         print(f"Indexing Efficiency: {efficiency:.2f} docs/ms")
 
     else:
@@ -147,8 +178,10 @@ def generate_report():
         print(f"Available Memory: {res.get('available_memory_gb', 0):.1f}GB")
         print(f"Free Disk Space: {res.get('disk_free_gb', 0):.1f}GB")
 
-        memory_pressure = res.get("available_memory_gb", 0) < 2.0
-        cpu_efficient = abs(res.get("cpu_increase", 100)) < 50
+        memory_pressure = (
+            res.get("available_memory_gb", 0) < MEMORY_PRESSURE_THRESHOLD_GB
+        )
+        cpu_efficient = abs(res.get("cpu_increase", 100)) < CPU_EFFICIENCY_THRESHOLD
 
         print(f"Memory Pressure: {'HIGH' if memory_pressure else 'NORMAL'}")
         print(f"CPU Efficiency: {'GOOD' if cpu_efficient else 'POOR'}")
@@ -166,7 +199,10 @@ def generate_report():
     if mobile_report.exists():
         print("STATUS: TESTED")
         print("Mobile device simulation completed successfully")
-        print("Devices tested: Xiaomi Redmi Note 10, Samsung Galaxy A22, Generic 2GB Budget Phone")
+        print(
+            "Devices tested: Xiaomi Redmi Note 10, Samsung Galaxy A22, "
+            "Generic 2GB Budget Phone"
+        )
         print("Models tested: CNN, Transformer, LLM architectures")
         print(f"Full report available at: {mobile_report}")
     else:
@@ -181,28 +217,30 @@ def generate_report():
     successful_systems = 0
     total_systems = 0
 
-    for system_name, system_data in benchmarks.items():
+    for system_data in benchmarks.values():
         total_systems += 1
         if system_data.get("status") in ["success", "completed"]:
             successful_systems += 1
 
-    success_rate = (successful_systems / total_systems) * 100 if total_systems > 0 else 0
+    success_rate = (
+        (successful_systems / total_systems) * 100 if total_systems > 0 else 0
+    )
 
     print(f"Systems Tested: {total_systems}")
     print(f"Systems Operational: {successful_systems}")
     print(f"Success Rate: {success_rate:.1f}%")
 
     # Overall grade
-    if success_rate >= 90:
+    if success_rate >= GRADE_A_THRESHOLD:
         grade = "A"
         status = "EXCELLENT"
-    elif success_rate >= 80:
+    elif success_rate >= GRADE_B_THRESHOLD:
         grade = "B"
         status = "GOOD"
-    elif success_rate >= 70:
+    elif success_rate >= GRADE_C_THRESHOLD:
         grade = "C"
         status = "ACCEPTABLE"
-    elif success_rate >= 60:
+    elif success_rate >= GRADE_D_THRESHOLD:
         grade = "D"
         status = "POOR"
     else:
