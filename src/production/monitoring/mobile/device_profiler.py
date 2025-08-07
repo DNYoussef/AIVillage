@@ -14,6 +14,14 @@ from typing import Any
 import psutil
 
 # Platform-specific imports
+ANDROID_AVAILABLE = False
+MACOS_AVAILABLE = False
+
+# Default fallbacks for macOS-specific modules
+NSBundle = None  # type: ignore[assignment]
+NSProcessInfo = None  # type: ignore[assignment]
+objc = None  # type: ignore[assignment]
+
 if platform.system() == "Android":
     try:
         from jnius import autoclass
@@ -24,18 +32,16 @@ if platform.system() == "Android":
         ThermalManager = autoclass("android.os.ThermalManager")
         ANDROID_AVAILABLE = True
     except ImportError:
-        ANDROID_AVAILABLE = False
+        pass
 elif platform.system() == "Darwin":  # iOS/macOS
     try:
-        from Foundation import NSBundle, NSProcessInfo
-        import objc
+        from Foundation import NSBundle, NSProcessInfo  # type: ignore
+        import objc  # type: ignore
 
         MACOS_AVAILABLE = True
     except ImportError:
+        # Fallback when Foundation isn't available (e.g., non-macOS platforms)
         MACOS_AVAILABLE = False
-else:
-    ANDROID_AVAILABLE = False
-    MACOS_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
