@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Final Benchmark Report - Post-Cleanup Performance Summary."""
+"""Generate the final post-cleanup benchmark report."""
 from datetime import datetime, timezone
 import json
 import os
