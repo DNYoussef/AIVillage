@@ -573,7 +573,9 @@ class P2PNode:
         # Sort by evolution priority
         suitable_peers.sort(key=lambda p: p.get_evolution_priority(), reverse=True)
 
-        return suitable_peers[: max(min_count, 5)]  # Return top 5 or min_count
+        # Respect actual network size instead of capping to a fixed number
+        network_size = len(suitable_peers)
+        return suitable_peers[: max(min_count, network_size)]
 
     def get_network_status(self) -> dict[str, Any]:
         """Get comprehensive network status."""
