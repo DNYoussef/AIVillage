@@ -7,17 +7,23 @@ import logging
 import sys
 import time
 from urllib.parse import urljoin
+from pathlib import Path
 
-from credits_ledger import CreditsConfig, CreditsLedger
+try:
+    from .credits_ledger import CreditsConfig, CreditsLedger
+except ImportError:  # pragma: no cover - allow script execution
+    from credits_ledger import CreditsConfig, CreditsLedger  # type: ignore
 import requests
 
 # Configure logging
+log_path = Path.home() / ".aivillage" / "logs" / "earn_shells_worker.log"
+log_path.parent.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("/var/log/earn_shells_worker.log"),
+        logging.FileHandler(log_path),
     ],
 )
 logger = logging.getLogger(__name__)

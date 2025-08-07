@@ -2,11 +2,13 @@
 """Execute the documentation cleanup step by step"""
 
 import os
+from pathlib import Path
 import subprocess
 import sys
 
-# Change to the correct directory
-os.chdir(r"C:\Users\17175\Desktop\AIVillage")
+# Change to the repository root
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+os.chdir(PROJECT_ROOT)
 
 # Execute the main cleanup script
 try:
@@ -14,7 +16,7 @@ try:
         [sys.executable, "cleanup_documentation.py"],
         capture_output=True,
         text=True,
-        cwd=r"C:\Users\17175\Desktop\AIVillage",
+        cwd=PROJECT_ROOT,
         check=False,
     )
 
@@ -32,7 +34,7 @@ except Exception as e:
 
     # If subprocess fails, try importing and running directly
     try:
-        sys.path.insert(0, r"C:\Users\17175\Desktop\AIVillage")
+        sys.path.insert(0, str(PROJECT_ROOT))
         from cleanup_documentation import DocumentationCleanup
 
         print("Running cleanup directly...")

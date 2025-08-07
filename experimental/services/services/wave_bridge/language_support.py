@@ -5,7 +5,10 @@ Optimized for edge translation with fallback options
 from datetime import datetime
 import logging
 
-import anthropic
+try:
+    import anthropic
+except ImportError:  # pragma: no cover - optional dependency
+    anthropic = None  # type: ignore[assignment]
 from googletrans import Translator
 import langdetect
 import openai

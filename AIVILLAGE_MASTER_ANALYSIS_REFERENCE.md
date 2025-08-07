@@ -205,62 +205,40 @@ Critical_Components:
 ---
 
 ## 3. Dependency Analysis
+_Last verified: 2025-02-19_
 
 ### 3.1 Missing Dependencies
 ```yaml
 CONFIRMED_MISSING:
+  grokfast:
+    Required_By: experimental/training/training/grokfast_opt.py
+    Import_Statements: "from grokfast import AugmentedAdam"
+    Status: "Repository lacks packaging; import now guarded"
+
+OPTIONAL_DEPENDENCIES_NOT_INSTALLED:
   bittensor_wallet:
     Required_By: src/communications/credit_manager.py
-    Import_Statements: "from bittensor_wallet import Wallet"
-    Solution: "Add bittensor-wallet to requirements or guard import"
-
-  anthropic:
-    Required_By: experimental/services/services/wave_bridge/tutor_engine.py
-    Import_Statements: "import anthropic"
-    Solution: "Include anthropic in requirements or remove reference"
-
-  grokfast wildcard:
-    Required_By: pyproject.toml
-    Import_Statements: "grokfast.*"
-    Solution: "Pin to specific version or remove"
+    Status: "Import guarded; install bittensor-wallet for full functionality"
 ```
 
 ### 3.2 Import Errors Map
 ```python
 IMPORT_ERRORS = {
-    "src/communications/credit_manager.py": {
-        "line": 4,
-        "import": "from bittensor_wallet import Wallet",
+    "experimental/training/training/grokfast_opt.py": {
+        "line": 6,
+        "import": "from grokfast import AugmentedAdam",
         "error": "ModuleNotFoundError",
-        "fix": "Add bittensor-wallet package or guard import"
-    },
-    "experimental/services/services/wave_bridge/tutor_engine.py": {
-        "line": 11,
-        "import": "import anthropic",
-        "error": "ModuleNotFoundError",
-        "fix": "Add anthropic to requirements"
-    },
-    "src/production/monitoring/mobile/device_profiler.py": {
-        "line": 16,
-        "import": "from Foundation import NSProcessInfo",
-        "error": "ImportError on non-mac platforms",
-        "fix": "Wrap in platform check and provide fallback"
+        "fix": "Guarded with fallback; install grokfast manually",
     }
 }
 ```
 
 ### 3.3 Dependency Fix Guide
 ```bash
-# Step 1: Resolve missing packages
+# Optional packages for full functionality
 pip install bittensor-wallet anthropic
 
-# Step 2: Update requirements.txt
-# Add: bittensor-wallet>=0.1.0
-# Add: anthropic>=0.1.0
-# Pin: grokfast==<version>
-
-# Step 3: Guard platform-specific imports
-# In src/production/monitoring/mobile/device_profiler.py, wrap Foundation imports with try/except
+# grokfast must be installed from source if needed
 ```
 
 ---
