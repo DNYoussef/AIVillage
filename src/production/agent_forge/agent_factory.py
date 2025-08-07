@@ -18,9 +18,22 @@ from scripts.refactor_agent_forge import AgentRole, AgentSpecialization, BaseMet
 class AgentFactory:
     """Factory for creating agents from templates."""
 
-    def __init__(self, template_dir: str = "production/agent_forge/templates") -> None:
-        """Initialize the factory and load templates."""
-        self.template_dir = Path(template_dir)
+    def __init__(self, template_dir: str | Path | None = None) -> None:
+        """Initialize the factory and load templates.
+
+        Parameters
+        ----------
+        template_dir:
+            Optional path to the directory containing agent templates.  When
+            omitted, the factory uses the ``templates`` directory that resides
+            next to this file.  Using an absolute path or a path relative to the
+            current working directory is also supported.
+        """
+
+        if template_dir is None:
+            self.template_dir = Path(__file__).resolve().parent / "templates"
+        else:
+            self.template_dir = Path(template_dir)
         self.templates = self._load_templates()
         self.agent_classes = self._initialize_agent_classes()
 
@@ -299,3 +312,35 @@ class AgentFactory:
             raise ValueError(msg)
 
         return self.templates[agent_type]
+
+    def required_agent_types(self) -> list[str]:
+        """Return the list of agent types defined by the master configuration.
+
+        The project aims to maintain an ecosystem of exactly ``18`` specialised
+        agents.  This helper inspects the :mod:`master_config.json` file shipped
+        with the templates and returns the agent identifiers.  If the
+        configuration is missing the method falls back to the templates that are
+        already loaded in :attr:`self.templates`.
+
+        Returns
+        -------
+        list[str]
+            All agent identifiers expected by the system.
+        """
+
+        config_path = self.template_dir / "master_config.json"
+        if config_path.exists():
+            with config_path.open() as f:
+                data = json.load(f)
+            agent_types = data.get("agent_types", [])
+            expected_total = data.get("total_agents")
+            if expected_total is not None and len(agent_types) != expected_total:
+                msg = (
+                    f"master_config.json declares {expected_total} agents but "
+                    f"{len(agent_types)} types were listed"
+                )
+                raise ValueError(msg)
+            return agent_types
+
+        # Fallback: derive from loaded templates.
+        return sorted(self.templates.keys())
