@@ -106,6 +106,9 @@ bandit>=1.7.7
 bitarray>=3.6.0
 lz4>=4.4.4
 
+# Blockchain & Wallet
+bittensor-wallet>=4.0.0
+
 # Note: Platform-specific P2P dependencies
 # libp2p>=0.2.9  # Uncomment for Linux/Mac
 # bluetooth-mesh>=0.9.1  # Uncomment if Bluetooth mesh needed

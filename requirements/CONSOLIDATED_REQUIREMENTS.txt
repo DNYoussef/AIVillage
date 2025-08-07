@@ -33,6 +33,7 @@ psutil==5.9.8
 # P2P Communication Layer
 bitarray==2.9.2
 lz4==4.3.3
+bittensor-wallet==4.0.0
 asyncio-mqtt==0.16.1
 
 # Evolution System
