@@ -23,5 +23,22 @@ class Ragsystem:
         return {"status": "stub", "module": "rag_system"}
 
 
+from .wikipedia_storm_pipeline import (
+    ContentDatabase,
+    EducationalContentGenerator,
+    Lesson,
+    OfflineOptimizedRAG,
+    Perspective,
+    WikipediaSTORMPipeline,
+)
+
 # Module-level exports
-__all__ = ["Ragsystem"]
+__all__ = [
+    "Ragsystem",
+    "WikipediaSTORMPipeline",
+    "OfflineOptimizedRAG",
+    "EducationalContentGenerator",
+    "ContentDatabase",
+    "Perspective",
+    "Lesson",
+]
