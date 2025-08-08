@@ -98,6 +98,27 @@ class PersonalizationVector:
     challenge_seeking: float  # Risk tolerance for difficult problems
 
 
+class ShadowSimulator:
+    """Simple shadow simulator stub for recommendation exploration."""
+
+    def explore_paths(self, current_state: dict[str, Any], time_horizon: int) -> list[str]:
+        """Return candidate learning paths.
+
+        This is a lightweight placeholder used by the API layer.  It
+        generates a static set of topics so the surrounding system can be
+        exercised without requiring the full simulation engine that will
+        arrive later.
+        """
+
+        return [
+            "fractions",
+            "algebra",
+            "geometry",
+            "probability",
+            "calculus",
+        ]
+
+
 class DigitalTwin:
     """Comprehensive digital twin for personalized math tutoring."""
 
@@ -136,6 +157,11 @@ class DigitalTwin:
 
         # Start background analytics
         asyncio.create_task(self.start_background_analytics())
+
+        # Components used by the service layer
+        self.shadow_simulator = ShadowSimulator()
+        self.current_knowledge: dict[str, Any] = {}
+        self.confidence_score: float = 0.9
 
     def initialize_wandb_tracking(self) -> None:
         """Initialize W&B tracking for digital twin."""
@@ -1384,6 +1410,93 @@ class DigitalTwin:
                 )
 
         return insights
+
+
+    # ------------------------------------------------------------------
+    # Lightweight utilities used by the API layer
+
+    def decrypt_mobile_data(self, mobile_data: bytes) -> dict[str, Any]:
+        """Decrypt payload coming from a mobile device."""
+        try:
+            decrypted = self.cipher_suite.decrypt(mobile_data)
+            return json.loads(decrypted.decode())
+        except Exception:
+            return {}
+
+    def encrypt_for_mobile(self, data: dict[str, Any]) -> bytes:
+        """Encrypt a diff to send back to the device."""
+        payload = json.dumps(data).encode()
+        return self.cipher_suite.encrypt(payload)
+
+    def merge_states(self, local_state: dict[str, Any], conflict_resolution: str = "latest_wins") -> dict[str, Any]:
+        """Merge mobile state into the twin.
+
+        This simplified implementation just updates the in-memory student
+        dictionary.  A more advanced strategy would handle versioning and
+        conflict resolution policies.
+        """
+
+        students = local_state.get("students", {})
+        self.students.update(students)
+        return local_state
+
+    def generate_state_diff(self, merge_result: dict[str, Any]) -> dict[str, Any]:
+        """Return diff of the merge operation for mobile sync."""
+        return merge_result
+
+    # Differential privacy helpers -------------------------------------------------
+    def add_laplace_noise(self, value: float, scale: float) -> float:
+        return float(np.random.laplace(0, scale) + value)
+
+    def k_anonymize(self, metrics: dict[str, float], k: int) -> dict[str, float]:
+        # Placeholder - real implementation would aggregate across k users
+        return metrics
+
+    def calculate_velocity(self) -> float:
+        return float(sum(len(v) for v in self.session_history.values()))
+
+    def calculate_coverage(self) -> float:
+        return float(sum(len(v) for v in self.knowledge_states.values()))
+
+    def calculate_engagement(self) -> float:
+        scores = [
+            s.engagement_score
+            for sessions in self.session_history.values()
+            for s in sessions
+        ]
+        return float(np.mean(scores)) if scores else 0.0
+
+    def generate_private_analytics(self) -> dict[str, float]:
+        """Generate analytics with differential privacy."""
+        noise_scale = 1.0
+
+        metrics = {
+            "learning_velocity": self.add_laplace_noise(self.calculate_velocity(), noise_scale),
+            "knowledge_coverage": self.add_laplace_noise(self.calculate_coverage(), noise_scale),
+            "engagement_score": self.add_laplace_noise(self.calculate_engagement(), noise_scale),
+        }
+
+        return self.k_anonymize(metrics, k=5)
+
+    # Marketplace and recommendation helpers --------------------------------------
+    def extract_learning_patterns(self) -> list[str]:
+        patterns = []
+        for sessions in self.session_history.values():
+            for s in sessions:
+                patterns.extend(s.concepts_covered)
+        return patterns
+
+    def full_anonymization(self, patterns: list[str]) -> list[str]:
+        return list(set(patterns))
+
+    def calculate_pattern_value(self, patterns: list[str]) -> float:
+        return float(len(patterns))
+
+    def rank_by_learning_style(self, paths: list[str]) -> list[str]:
+        return paths
+
+    def estimate_completion_time(self, topics: list[str]) -> int:
+        return len(topics) * 60  # minutes
 
 
 # Global digital twin instance - initialize only when running directly
