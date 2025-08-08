@@ -113,6 +113,16 @@ class EvolutionMetrics:
         )
 
 
+@dataclass
+class EvolutionAnalysis:
+    """Simple container for evolution analysis results."""
+
+    improvement_rate: float
+    successful_mutations: list[str]
+    plateau_detected: bool
+    suggestions: list[str]
+
+
 class MetricsBackend:
     """Abstract backend interface for storing evolution metrics."""
 
@@ -544,6 +554,32 @@ class EvolutionMetricsCollector:
         data = await self.load_historical_metrics(limit)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
+
+    async def analyze_evolution_progress(self) -> EvolutionAnalysis:
+        """Analyze stored metrics for improvement trends."""
+        data = await self.load_historical_metrics()
+        if not data:
+            return EvolutionAnalysis(0.0, [], False, ["no data available"])
+
+        data = sorted(data, key=lambda m: m["timestamp"])
+        first = data[0]
+        last = data[-1]
+        hours = max((last["timestamp"] - first["timestamp"]) / 3600, 1e-9)
+        improvement_rate = (last["fitness_score"] - first["fitness_score"]) / hours
+
+        plateau = abs(improvement_rate) < 0.01
+        suggestions: list[str] = []
+        if plateau:
+            suggestions.append(
+                "Performance plateau detected; consider exploring new mutation strategies."
+            )
+
+        return EvolutionAnalysis(
+            improvement_rate=improvement_rate,
+            successful_mutations=[],
+            plateau_detected=plateau,
+            suggestions=suggestions,
+        )
 
     async def _periodic_flush(self) -> None:
         while True:
