@@ -14,6 +14,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 import json
+import base64
 import logging
 from threading import Thread
 import time
@@ -515,6 +516,30 @@ def get_bridge_status() -> dict[str, Any]:
         return {"running": False, "error": "Bridge not initialized"}
 
     return _bridge_instance.get_bridge_info()
+
+
+def send_message_via_bridge(message_json: str) -> bool:
+    """Send a message through the active mesh network. Used by JNI layer."""
+    global _bridge_instance
+    if not _bridge_instance or not _bridge_instance.mesh_network:
+        return False
+    try:
+        data = json.loads(message_json)
+        payload = base64.b64decode(data.get("payload", ""))
+        message = MeshMessage(
+            type=MeshMessageType(data.get("type", "DATA_MESSAGE")),
+            sender=data.get("sender", ""),
+            recipient=data.get("recipient"),
+            payload=payload,
+            ttl=data.get("ttl", 5),
+        )
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        result = loop.run_until_complete(_bridge_instance.mesh_network.send_message(message))
+        return bool(result)
+    except Exception as e:
+        logger.exception(f"JNI send_message failed: {e}")
+        return False
 
 
 if __name__ == "__main__":
