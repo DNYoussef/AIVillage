@@ -20,7 +20,7 @@ from typing import Any
 
 import click
 from datasets import load_dataset
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import torch
 from torch import nn
 from tqdm import tqdm
@@ -80,11 +80,13 @@ class CompressionConfig(BaseModel):
     wandb_entity: str | None = None
     wandb_tags: list[str] = Field(default_factory=lambda: ["compression", "bitnet"])
 
-    @validator("device")
-    def validate_device(self, v):
-        if v == "auto":
-            return "cuda" if torch.cuda.is_available() else "cpu"
-        return v
+    @field_validator("device", mode="before")
+    @classmethod
+    def validate_device(cls, v: str) -> str:
+        """Resolve ``"auto"`` to an actual device string."""
+        return "cuda" if v == "auto" and torch.cuda.is_available() else (
+            "cpu" if v == "auto" else v
+        )
 
 
 # ============================================================================
