@@ -34,11 +34,11 @@ from .wikipedia_storm_pipeline import (
 
 # Module-level exports
 __all__ = [
+    "ContentDatabase",
+    "EducationalContentGenerator",
+    "Lesson",
+    "OfflineOptimizedRAG",
+    "Perspective",
     "Ragsystem",
     "WikipediaSTORMPipeline",
-    "OfflineOptimizedRAG",
-    "EducationalContentGenerator",
-    "ContentDatabase",
-    "Perspective",
-    "Lesson",
 ]

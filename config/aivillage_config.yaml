@@ -1,0 +1,25 @@
+# CODEX Integration Configuration
+integration:
+  evolution_metrics:
+    enabled: true
+    backend: sqlite
+    db_path: ./data/evolution_metrics.db
+    flush_interval_seconds: 30
+    
+  rag_pipeline:
+    enabled: true
+    embedding_model: paraphrase-MiniLM-L3-v2
+    cache_enabled: true
+    chunk_size: 512
+    
+  p2p_networking:
+    enabled: true
+    transport: libp2p
+    discovery_method: mdns
+    max_peers: 50
+    
+  digital_twin:
+    enabled: true
+    encryption_enabled: true
+    privacy_mode: strict
+    max_profiles: 10000

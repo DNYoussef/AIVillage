@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import base64
+from typing import Any
 import uuid
-from typing import Any, Dict, List
 
-from cryptography.fernet import Fernet
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
@@ -15,7 +14,6 @@ from digital_twin.core.digital_twin import (
     LearningProfile,
     LearningSession,
 )
-
 
 app = FastAPI(title="Digital Twin API")
 
@@ -28,14 +26,14 @@ class UserProfile(BaseModel):
     language: str = "en"
     region: str = ""
     learning_style: str = "visual"
-    strengths: List[str] = []
-    challenges: List[str] = []
-    interests: List[str] = []
+    strengths: list[str] = []
+    challenges: list[str] = []
+    interests: list[str] = []
     attention_span_minutes: int = 0
-    preferred_session_times: List[str] = []
-    parent_constraints: Dict[str, Any] = {}
-    accessibility_needs: List[str] = []
-    motivation_triggers: List[str] = []
+    preferred_session_times: list[str] = []
+    parent_constraints: dict[str, Any] = {}
+    accessibility_needs: list[str] = []
+    motivation_triggers: list[str] = []
     created_at: str | None = None
     last_updated: str | None = None
 
@@ -47,12 +45,12 @@ class LearningSessionModel(BaseModel):
     start_time: str
     end_time: str
     duration_minutes: int
-    concepts_covered: List[str]
+    concepts_covered: list[str]
     questions_asked: int
     questions_correct: int
     engagement_score: float
     difficulty_level: float
-    adaptations_made: List[str]
+    adaptations_made: list[str]
     parent_feedback: str | None = None
     student_mood: str = "neutral"
     session_notes: str = ""
@@ -72,7 +70,7 @@ class DigitalTwinService:
     """Maintain active Digital Twin instances."""
 
     def __init__(self) -> None:
-        self.twins: Dict[str, DigitalTwin] = {}
+        self.twins: dict[str, DigitalTwin] = {}
 
     def _get_twin(self, user_id: str) -> DigitalTwin:
         twin = self.twins.get(user_id)
@@ -85,9 +83,8 @@ service = DigitalTwinService()
 
 
 @app.post("/twin/create")
-async def create_twin(user_id: str, profile: UserProfile) -> Dict[str, Any]:
+async def create_twin(user_id: str, profile: UserProfile) -> dict[str, Any]:
     """Create a new Digital Twin for a user."""
-
     twin = DigitalTwin()
     twin.students[user_id] = LearningProfile(**profile.dict())
     service.twins[user_id] = twin
@@ -95,9 +92,8 @@ async def create_twin(user_id: str, profile: UserProfile) -> Dict[str, Any]:
 
 
 @app.post("/twin/{user_id}/learn")
-async def record_learning(user_id: str, session: LearningSessionModel) -> Dict[str, Any]:
+async def record_learning(user_id: str, session: LearningSessionModel) -> dict[str, Any]:
     """Record a learning session for the specified user."""
-
     twin = service._get_twin(user_id)
     sess = LearningSession(**session.dict())
     twin.session_history[user_id].append(sess)
@@ -107,9 +103,8 @@ async def record_learning(user_id: str, session: LearningSessionModel) -> Dict[s
 
 
 @app.get("/twin/{user_id}/recommendations")
-async def get_recommendations(user_id: str) -> Dict[str, Any]:
+async def get_recommendations(user_id: str) -> dict[str, Any]:
     """Return personalized learning recommendations."""
-
     twin = service._get_twin(user_id)
     simulated_paths = twin.shadow_simulator.explore_paths(
         current_state=twin.current_knowledge, time_horizon=7
@@ -124,9 +119,8 @@ async def get_recommendations(user_id: str) -> Dict[str, Any]:
 
 
 @app.post("/twin/{user_id}/marketplace/share")
-async def share_to_marketplace(user_id: str, share_config: ShareConfig) -> Dict[str, Any]:
+async def share_to_marketplace(user_id: str, share_config: ShareConfig) -> dict[str, Any]:
     """Share anonymized patterns to the marketplace."""
-
     twin = service._get_twin(user_id)
     patterns = twin.extract_learning_patterns()
     anonymized = twin.full_anonymization(patterns)
@@ -136,7 +130,7 @@ async def share_to_marketplace(user_id: str, share_config: ShareConfig) -> Dict[
 
 
 @app.get("/twin/{user_id}/health")
-async def health_check(user_id: str) -> Dict[str, Any]:
+async def health_check(user_id: str) -> dict[str, Any]:
     twin = service._get_twin(user_id)
     last_activity = (
         twin.session_history[user_id][-1].end_time if twin.session_history[user_id] else None
@@ -152,7 +146,7 @@ async def health_check(user_id: str) -> Dict[str, Any]:
 
 
 @app.get("/twin/{user_id}/analytics")
-async def private_analytics(user_id: str) -> Dict[str, Any]:
+async def private_analytics(user_id: str) -> dict[str, Any]:
     twin = service._get_twin(user_id)
     return twin.generate_private_analytics()
 
@@ -161,7 +155,7 @@ class PersistentQueue:
     """Very small stub of a persistent queue used for sync operations."""
 
     def __init__(self) -> None:
-        self.items: List[bytes] = []
+        self.items: list[bytes] = []
 
     def put(self, item: bytes) -> None:
         self.items.append(item)
@@ -182,7 +176,7 @@ class TwinMobileSync:
 
 
 @app.post("/twin/{user_id}/sync")
-async def sync_mobile(user_id: str, req: MobileSyncRequest) -> Dict[str, Any]:
+async def sync_mobile(user_id: str, req: MobileSyncRequest) -> dict[str, Any]:
     twin = service._get_twin(user_id)
     syncer = TwinMobileSync(twin)
     payload = base64.b64decode(req.data)

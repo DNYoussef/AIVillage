@@ -21,13 +21,48 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt -r requirements-dev.txt -r requirements-test.txt
-          pre-commit install-hooks
-      - name: Run pre-commit
-        run: pre-commit run --all-files
+          pip install ruff black isort mypy flake8
+      
+      - name: Run Unified Linter (Check Only)
+        run: python tools/linting/lint.py . --output summary
+        continue-on-error: false
+      
+      - name: Run Security Scan
+        run: ruff check . --select S --quiet | head -20 || echo "Security scan completed"
+        continue-on-error: true
+      
+      - name: Generate Lint Report
+        if: failure()
+        run: python tools/linting/lint.py . --output both --output-file ci_lint_report
+        continue-on-error: true
+      
+      - name: Upload Lint Report
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: lint-report
+          path: |
+            ci_lint_report.json
+            ci_lint_report.txt
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Ruff
+        run: pip install ruff
+      - name: Security Scan (Blocking)
+        run: |
+          echo "Running security scan..."
+          ruff check . --select S101,S102,S103,S105,S106,S107,S108,S110 --quiet
+        continue-on-error: false
 
   test:
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [lint, security]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4

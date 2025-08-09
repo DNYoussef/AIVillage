@@ -131,6 +131,7 @@ bleach>=6.1.0
 requests>=2.32.3
 urllib3>=2.2.2
 
+Babel>=2.15.0
 # Image & Media Processing
 pillow>=10.4.0
 opencv-python>=4.10.0
@@ -170,7 +171,7 @@ coverage>=7.6.1
 ipython>=8.26.0
 jupyter>=1.0.0
 jupyterlab>=4.2.4
-memray>=1.13.4
+memray>=1.13.4; platform_system != 'Windows'
 
 # Documentation
 sphinx>=7.4.7

@@ -4,23 +4,49 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+  
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.3
+    hooks:
+      - id: ruff
+        args: [--fix, --select, E,W,F,I]
+        exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
+      - id: ruff-format
+        exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
+  
   - repo: https://github.com/psf/black
     rev: 24.8.0
     hooks:
       - id: black
         args: [--line-length=88]
-        exclude: ^(scripts/archived/|\.github/workflows/archived/)
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.1
+        exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
+  
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
     hooks:
-      - id: ruff
-        args: [--fix]
-        exclude: ^(scripts/archived/|\.github/workflows/archived/)
+      - id: isort
+        args: [--profile=black, --line-length=88]
+        exclude: ^(scripts/archived/|\.github/workflows/archived/|deprecated/)
+  
   - repo: local
     hooks:
-      - id: mypy
-        name: mypy (non-blocking)
-        entry: bash -c 'mypy . || true'
+      - id: unified-linter
+        name: AIVillage Unified Linter
+        entry: python tools/linting/lint.py
+        args: [--fix, --output, summary]
+        language: system
+        pass_filenames: false
+        types: [python]
+        stages: [pre-push]
+      
+      - id: security-scan
+        name: Security scan (critical issues only)
+        entry: bash -c 'ruff check . --select S --quiet | head -10 || true'
         language: system
         pass_filenames: false
         types: [python]

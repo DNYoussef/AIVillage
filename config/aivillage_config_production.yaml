@@ -1,0 +1,386 @@
+# AIVillage Production Configuration
+# Full security and compliance enabled
+
+# Environment Settings
+environment:
+  type: production
+  debug: false
+  auto_reload: false
+  mock_external_services: false
+
+# Logging Configuration
+logging:
+  level: WARNING
+  format: json
+  file: /var/log/aivillage/aivillage.log
+  console_output: false
+  rotation:
+    size: 100MB
+    retention_days: 90
+  audit_log: /var/log/aivillage/audit.log
+
+# Database Configuration
+database:
+  evolution_metrics:
+    path: /var/lib/aivillage/evolution_metrics.db
+    backend: sqlite
+    wal_mode: true
+    connection_timeout: 60
+    max_connections: 100
+  
+  digital_twin:
+    path: /var/lib/aivillage/digital_twin.db
+    wal_mode: true
+    backup_encryption: true
+    connection_pooling: true
+    
+  rag:
+    faiss_index_path: /var/lib/aivillage/faiss_index
+    chunk_store_path: /var/lib/aivillage/chunk_store
+    bm25_corpus_path: /var/lib/aivillage/bm25_corpus
+
+# API Configuration
+api:
+  authentication:
+    enabled: true
+    jwt_expiry_hours: 2  # Short for security
+    refresh_token_expiry_days: 7
+    require_https: true
+  
+  cors:
+    enabled: true
+    origins: ["https://aivillage.app", "https://api.aivillage.app"]
+    credentials: true
+  
+  rate_limiting:
+    enabled: true
+    per_minute: 60
+    burst_limit: 100
+    storage: redis
+  
+  ports:
+    digital_twin: 8080
+    evolution_metrics: 8081
+    rag_pipeline: 8082
+    p2p_status: 8083
+
+# P2P Networking
+p2p:
+  libp2p:
+    host: 0.0.0.0
+    port: 4001
+    websocket_port: 4002
+    private_key_file: /etc/aivillage/ssl/libp2p_private_key
+  
+  mesh:
+    max_peers: 100  # Higher for production scale
+    heartbeat_interval: 30
+    connection_timeout: 60
+    tls_enabled: true
+    encryption_required: true
+    peer_verification: true
+    
+  transports:
+    tcp_enabled: true
+    websocket_enabled: true
+    bluetooth_enabled: false
+    wifi_direct_enabled: false
+    file_transport_enabled: false  # Disabled for security
+  
+  discovery:
+    mdns:
+      enabled: true
+      service_name: _aivillage._tcp
+      interval: 60
+      ttl: 300
+
+# RAG Pipeline  
+rag:
+  embedding:
+    model: paraphrase-MiniLM-L3-v2
+    device: cpu  # Use GPU if available: cuda
+    batch_size: 32
+    model_cache: /var/cache/aivillage/models
+  
+  retrieval:
+    vector_top_k: 50
+    keyword_top_k: 50
+    final_top_k: 10
+    rerank_enabled: true
+    similarity_threshold: 0.7
+    
+  chunking:
+    size: 512
+    overlap: 50
+    max_chunk_size: 2048
+    
+  cache:
+    enabled: true
+    l1_size: 256
+    l2_enabled: true
+    l2_url: redis://redis.aivillage.internal:6379/1
+    disk_cache_dir: /var/cache/aivillage/rag
+    ttl_hours: 168  # 7 days
+
+# Digital Twin
+digital_twin:
+  encryption:
+    enabled: true
+    key_rotation_days: 30
+    backup_encryption: true
+    
+  vault:
+    path: /var/lib/aivillage/secure/vault
+    permissions: 0600
+    
+  privacy:
+    coppa_compliant: true
+    ferpa_compliant: true
+    gdpr_compliant: true
+    data_retention_days: 2555  # 7 years for FERPA
+    
+  profiles:
+    max_count: 100000
+    ttl_days: 2555  # 7 years
+    encryption_at_rest: true
+    
+  analytics:
+    enabled: true
+    telemetry_enabled: false  # Disabled for privacy
+    audit_log_enabled: true
+
+# Evolution System
+evolution:
+  metrics:
+    flush_threshold: 100
+    flush_interval: 60
+    storage_backend: redis
+    redis_url: redis://redis.aivillage.internal:6379/0
+    sqlite_backup: /var/lib/aivillage/evolution_metrics_backup.db
+    
+  orchestration:
+    nightly_enabled: true
+    schedule: "0 2 * * *"  # 2 AM daily
+    max_concurrent: 10
+    timeout_minutes: 120
+    
+  analysis:
+    plateau_detection: true
+    improvement_tracking: true
+    anomaly_detection: true
+
+# Mobile Configuration
+mobile:
+  p2p:
+    enabled: true
+    port_ranges:
+      android_start: 4000
+      android_end: 4020
+      ios_start: 4020
+      ios_end: 4040
+    connection_limits: 50
+  
+  optimization:
+    battery_aware: true
+    offline_mode: true
+    sync_interval: 1800  # 30 minutes
+    data_compression: true
+
+# External Services
+external_services:
+  redis:
+    enabled: true
+    url: redis://redis.aivillage.internal:6379
+    cluster_mode: true
+    ssl_enabled: true
+    
+  wandb:
+    enabled: true
+    project: aivillage-prod
+    tags: ["production", "v1.0"]
+    
+  openai:
+    enabled: true
+    rate_limit_rpm: 1000
+    
+  monitoring:
+    enabled: true
+    prometheus_endpoint: http://prometheus.aivillage.internal:9090
+    jaeger_endpoint: http://jaeger.aivillage.internal:14268
+
+# Security (Full Security Enabled)
+security:
+  tls:
+    enabled: true
+    cert_file: /etc/aivillage/ssl/aivillage.crt
+    key_file: /etc/aivillage/ssl/aivillage.key
+    ca_file: /etc/aivillage/ssl/ca.crt
+    verify_peer: true
+    min_version: "1.3"
+    
+  headers:
+    hsts_enabled: true
+    hsts_max_age: 31536000  # 1 year
+    csp_enabled: true
+    csp_policy: "default-src 'self'; script-src 'self' 'unsafe-inline'"
+    frame_options: DENY
+    
+  encryption:
+    data_at_rest: true
+    data_in_transit: true
+    key_rotation_enabled: true
+    
+  backup:
+    enabled: true
+    encryption: true
+    compression: true
+    retention_days: 90
+    offsite_storage: true
+
+# Performance Settings
+performance:
+  memory:
+    max_total_mb: 8192  # 8GB
+    max_faiss_mb: 2048  # 2GB
+    max_cache_mb: 1024  # 1GB
+    
+  concurrency:
+    max_queries: 100
+    max_processes: 20
+    connection_pooling: true
+    
+  timeouts:
+    connection: 60
+    read: 120
+    write: 120
+    
+  scaling:
+    auto_scaling: true
+    min_instances: 2
+    max_instances: 10
+    cpu_threshold: 70
+    memory_threshold: 80
+
+# Compliance and Auditing
+compliance:
+  audit_logging: true
+  data_lineage: true
+  access_logging: true
+  privacy_controls: true
+  
+  coppa:
+    age_verification: true
+    parental_consent: true
+    data_minimization: true
+    
+  ferpa:
+    educational_records: true
+    directory_information: false
+    consent_tracking: true
+    
+  gdpr:
+    right_to_erasure: true
+    data_portability: true
+    consent_management: true
+    breach_notification: true
+
+# Monitoring and Alerting
+monitoring:
+  health_checks:
+    enabled: true
+    interval: 30
+    timeout: 10
+    endpoints:
+      - /health/evolution
+      - /health/rag  
+      - /health/p2p
+      - /health/twin
+      
+  metrics:
+    enabled: true
+    collection_interval: 60
+    retention_days: 365
+    
+  alerts:
+    enabled: true
+    error_rate_threshold: 1
+    latency_threshold_ms: 5000
+    disk_usage_threshold: 85
+    memory_usage_threshold: 90
+
+# Backup and Recovery
+backup:
+  enabled: true
+  schedule: "0 3 * * *"  # 3 AM daily
+  retention:
+    daily: 30
+    weekly: 12
+    monthly: 12
+    yearly: 7
+  
+  storage:
+    local_path: /var/backups/aivillage
+    remote_enabled: true
+    encryption: true
+    compression: true
+    verification: true
+    
+  recovery:
+    auto_recovery: true
+    max_retries: 3
+    retry_delay: 300  # 5 minutes
+
+# Feature Flags
+features:
+  advanced_analytics: true
+  multi_tenant: true
+  blockchain_integration: false  # Future feature
+  federated_learning: true
+  real_time_sync: true
+  
+# Network Security
+network:
+  firewall:
+    enabled: true
+    whitelist_only: true
+    allowed_ips: []  # Configure based on deployment
+    
+  ddos_protection:
+    enabled: true
+    rate_limits: true
+    geographical_blocking: false
+    
+  intrusion_detection:
+    enabled: true
+    log_suspicious_activity: true
+    auto_ban_threshold: 10
+
+# Resource Limits (Production Scale)
+limits:
+  max_file_size_mb: 100
+  max_request_size_mb: 50
+  max_concurrent_users: 10000
+  max_documents_per_user: 10000
+  max_queries_per_minute: 1000
+  
+# Data Governance
+data_governance:
+  classification: true
+  retention_policies: true
+  access_controls: true
+  encryption_requirements: true
+  audit_trail: true
+  
+# Disaster Recovery
+disaster_recovery:
+  backup_sites: 2
+  rto_minutes: 30  # Recovery Time Objective
+  rpo_minutes: 15  # Recovery Point Objective
+  failover_testing: monthly
+  
+# Legal and Compliance
+legal:
+  terms_of_service: /etc/aivillage/legal/tos.md
+  privacy_policy: /etc/aivillage/legal/privacy.md
+  cookie_policy: /etc/aivillage/legal/cookies.md
+  acceptable_use: /etc/aivillage/legal/aup.md

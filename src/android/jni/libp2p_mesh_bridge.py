@@ -11,10 +11,10 @@ standardized interfaces that can be called from Kotlin/Java via JNI.
 """
 
 import asyncio
+import base64
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 import json
-import base64
 import logging
 from threading import Thread
 import time

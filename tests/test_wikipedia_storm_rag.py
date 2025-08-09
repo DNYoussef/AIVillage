@@ -1,7 +1,7 @@
 import asyncio
-import numpy as np
-
 import sys
+
+import numpy as np
 
 sys.modules.pop("rag_system", None)
 sys.modules.pop("rag_system.wikipedia_storm_pipeline", None)

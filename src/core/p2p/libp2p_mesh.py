@@ -40,6 +40,14 @@ except ImportError:
     LIBP2P_AVAILABLE = False
     logging.warning("LibP2P not available, using fallback implementation")
 
+    # Define placeholder types for when LibP2P is not available
+    class INetStream:  # type: ignore
+        pass
+    class Pubsub: # type: ignore
+        pass
+    class KadDHT: # type: ignore
+        pass
+
 from .fallback_transports import (
     FallbackTransportManager,
     TransportMessage,

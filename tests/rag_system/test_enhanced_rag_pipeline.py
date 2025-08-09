@@ -1,10 +1,10 @@
 import asyncio
-import time
 from pathlib import Path
 import sys
-import numpy as np
+import time
 import types
 
+import numpy as np
 import pytest
 
 # Stub the heavy ``sentence_transformers`` module with a lightweight dummy

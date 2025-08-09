@@ -109,7 +109,6 @@ class ShadowSimulator:
         exercised without requiring the full simulation engine that will
         arrive later.
         """
-
         return [
             "fractions",
             "algebra",
@@ -1435,7 +1434,6 @@ class DigitalTwin:
         dictionary.  A more advanced strategy would handle versioning and
         conflict resolution policies.
         """
-
         students = local_state.get("students", {})
         self.students.update(students)
         return local_state

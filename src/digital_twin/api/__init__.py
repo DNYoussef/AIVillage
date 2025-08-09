@@ -1,6 +1,2 @@
-"""API layer for the Digital Twin service."""
-
-from .service import app  # Re-export for convenience
-
-__all__ = ["app"]
-
+# This file marks the 'api' directory as a Python package.
+from .service import DigitalTwinService

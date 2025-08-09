@@ -1,0 +1,19 @@
+======================================================================
+AIVillage Linting Report Summary
+======================================================================
+Generated: 2025-08-09T08:45:10.482560
+Duration: 1.35s
+
+[SUMMARY]:
+  Total Issues: 0
+  Tools Completed: 5
+  Tools Failed: 0
+  Tools Skipped: 0
+  Success Rate: 100.0%
+
+[TOOLS] Available Tools:
+  [OK] ruff
+  [OK] black
+  [OK] isort
+  [OK] mypy
+  [OK] flake8

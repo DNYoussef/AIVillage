@@ -10,9 +10,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import logging
 import os
+from pathlib import Path
 
 # Import unified error handling and configuration
 import sys
+
+sys.path.append(str(Path(__file__).resolve().parents[3]))
 import time
 from typing import Any
 import uuid
@@ -24,6 +27,9 @@ from pydantic import BaseModel, Field
 import uvicorn
 
 from core.chat_engine import ChatEngine
+
+# Add the production RAG system to the path
+sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "src" / "production" / "rag"))
 from rag_system.graph_explain import MAX_HOPS, explain_path
 
 from .schemas import ChatRequest, ChatResponse, HealthResponse

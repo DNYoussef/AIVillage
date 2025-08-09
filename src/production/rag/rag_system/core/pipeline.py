@@ -15,19 +15,19 @@ understand and hack on for further experiments.
 
 from __future__ import annotations
 
+from collections import OrderedDict, defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional
-
-import asyncio
 import hashlib
-from collections import defaultdict, OrderedDict
+from typing import Any
 
+from diskcache import Cache as DiskCache  # type: ignore
 import faiss  # type: ignore
 import numpy as np
-import redis  # type: ignore
-from diskcache import Cache as DiskCache  # type: ignore
 from rank_bm25 import BM25Okapi  # type: ignore
+import redis  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
+
 try:  # pragma: no cover - optional dependency
     from sentence_transformers import CrossEncoder  # type: ignore
 except Exception:  # pragma: no cover
@@ -44,7 +44,7 @@ class Document:
 
     id: str
     text: str
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 @dataclass
@@ -69,9 +69,9 @@ class Answer:
     """Final answer returned by :meth:`EnhancedRAGPipeline.generate_answer`."""
 
     text: str
-    citations: List[str]
+    citations: list[str]
     confidence: float
-    source_documents: List[Document]
+    source_documents: list[Document]
 
 
 # ---------------------------------------------------------------------------
@@ -97,7 +97,7 @@ class ThreeTierCache:
         # environment used for these exercises).
         # Redis is optional; in constrained environments we simply disable it.
         try:  # pragma: no cover - optional dependency
-            self.l2_cache: Optional[redis.Redis[Any]] = None
+            self.l2_cache: redis.Redis[Any] | None = None
         except Exception:  # pragma: no cover
             self.l2_cache = None
 
@@ -110,7 +110,7 @@ class ThreeTierCache:
 
     # The cache API is asynchronous to mirror potential network usage.  In the
     # simple test environment the methods execute synchronously.
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         if key in self.l1_cache:
             self.hits += 1
             value = self.l1_cache.pop(key)
@@ -182,7 +182,7 @@ class EnhancedRAGPipeline:
         self.vector_dim = int(self.embedder.get_sentence_embedding_dimension())
         # Cross encoder used for re-ranking.  It is optional because downloading
         # and loading the model can be heavy for the test environment.
-        self.cross_encoder: Optional[CrossEncoder] = None
+        self.cross_encoder: CrossEncoder | None = None
 
         # FAISS index with ID mapping
         self.index: faiss.Index = faiss.IndexIDMap(
@@ -190,14 +190,14 @@ class EnhancedRAGPipeline:
         )
 
         # BM25 keyword store data
-        self.keyword_corpus: List[List[str]] = []
-        self.keyword_ids: List[int] = []
+        self.keyword_corpus: list[list[str]] = []
+        self.keyword_ids: list[int] = []
         # ``keyword_index`` is initialised lazily because ``BM25Okapi`` does not
         # support empty corpora.
-        self.keyword_index: Optional[BM25Okapi] = None
+        self.keyword_index: BM25Okapi | None = None
 
         # Storage for chunk metadata
-        self.chunk_store: Dict[int, Dict[str, Any]] = {}
+        self.chunk_store: dict[int, dict[str, Any]] = {}
 
         # Simple three tier cache for query results
         self.cache = ThreeTierCache()
@@ -209,18 +209,16 @@ class EnhancedRAGPipeline:
     # ------------------------------------------------------------------
     # Utility helpers
 
-    def build_bm25(self) -> Optional[BM25Okapi]:
+    def build_bm25(self) -> BM25Okapi | None:
         """(Re)build the BM25 index for the current corpus."""
-
         return BM25Okapi(self.keyword_corpus) if self.keyword_corpus else None
 
     def intelligent_chunking(
         self, text: str, chunk_size: int = 512, overlap: int = 50
-    ) -> List[Chunk]:
+    ) -> list[Chunk]:
         """Naive token based chunking with overlap."""
-
         words = text.split()
-        chunks: List[Chunk] = []
+        chunks: list[Chunk] = []
         start = 0
         position = 0
         while start < len(words):
@@ -229,25 +227,22 @@ class EnhancedRAGPipeline:
             chunks.append(Chunk(text=chunk_text, position=position))
             position += 1
             start = end - overlap
-            if start < 0:
-                start = 0
+            start = max(start, 0)
         return chunks
 
     @staticmethod
     def generate_chunk_id(doc_id: str, position: int) -> int:
         """Create a deterministic 64 bit chunk id."""
-
         digest = hashlib.md5(f"{doc_id}-{position}".encode()).hexdigest()
         return int(digest[:16], 16)
 
     # ------------------------------------------------------------------
     # Document processing
 
-    def process_documents(self, documents: List[Document]) -> None:
+    def process_documents(self, documents: list[Document]) -> None:
         """Process and index documents with proper chunking."""
-
-        all_chunks: List[Chunk] = []
-        chunk_metas: List[Dict[str, Any]] = []
+        all_chunks: list[Chunk] = []
+        chunk_metas: list[dict[str, Any]] = []
         for doc in documents:
             doc_chunks = self.intelligent_chunking(doc.text, 512, 50)
             for chunk in doc_chunks:
@@ -285,10 +280,9 @@ class EnhancedRAGPipeline:
         vector_results: Iterable[tuple[int, float]],
         keyword_results: Iterable[tuple[int, float]],
         k: int,
-    ) -> List[RetrievalResult]:
+    ) -> list[RetrievalResult]:
         """Combine scores from vector and keyword search using RRF."""
-
-        scores: Dict[int, float] = defaultdict(float)
+        scores: dict[int, float] = defaultdict(float)
         for rank, (cid, _score) in enumerate(vector_results):
             scores[cid] += 1.0 / (60 + rank)
         for rank, (cid, _score) in enumerate(keyword_results):
@@ -303,8 +297,8 @@ class EnhancedRAGPipeline:
         return results
 
     def rerank_with_cross_encoder(
-        self, query: str, results: List[RetrievalResult]
-    ) -> List[RetrievalResult]:
+        self, query: str, results: list[RetrievalResult]
+    ) -> list[RetrievalResult]:
         if not results:
             return []
         if self.cross_encoder is None:
@@ -315,9 +309,8 @@ class EnhancedRAGPipeline:
             r.score = float(s)
         return sorted(results, key=lambda r: r.score, reverse=True)
 
-    async def retrieve(self, query: str, k: int = 10) -> List[RetrievalResult]:
+    async def retrieve(self, query: str, k: int = 10) -> list[RetrievalResult]:
         """Hybrid retrieval with re-ranking."""
-
         cached = await self.cache.get(query)
         if cached is not None:
             return cached
@@ -327,14 +320,14 @@ class EnhancedRAGPipeline:
             vector_scores, vector_ids = self.index.search(
                 np.array([query_embedding]).astype("float32"), k * 2
             )
-            vector_results = list(zip(vector_ids[0], vector_scores[0]))
+            vector_results = list(zip(vector_ids[0], vector_scores[0], strict=False))
         else:  # Empty index
             vector_results = []
 
         tokenized_query = query.split()
         if self.keyword_index is not None:
             scores = self.keyword_index.get_scores(tokenized_query)
-            keyword_results = list(zip(self.keyword_ids, scores))
+            keyword_results = list(zip(self.keyword_ids, scores, strict=False))
             keyword_results.sort(key=lambda x: x[1], reverse=True)
             keyword_results = keyword_results[: k * 2]
         else:
@@ -351,15 +344,15 @@ class EnhancedRAGPipeline:
     # ------------------------------------------------------------------
     # Answer generation
 
-    def create_context(self, retrieved_docs: List[RetrievalResult]) -> str:
+    def create_context(self, retrieved_docs: list[RetrievalResult]) -> str:
         return "\n".join(f"[{i}] {doc.text}" for i, doc in enumerate(retrieved_docs))
 
     def build_prompt(self, query: str, context: str) -> str:
         return f"Context:\n{context}\nQuestion: {query}\nAnswer:"
 
     def extract_citations(
-        self, _answer_text: str, retrieved_docs: List[RetrievalResult]
-    ) -> List[str]:
+        self, _answer_text: str, retrieved_docs: list[RetrievalResult]
+    ) -> list[str]:
         return [str(doc.id) for doc in retrieved_docs]
 
     # Confidence helpers – these are intentionally simple, the goal is to
@@ -372,7 +365,7 @@ class EnhancedRAGPipeline:
             / (np.linalg.norm(q_vec) * np.linalg.norm(a_vec) + 1e-8)
         )
 
-    def measure_source_agreement(self, retrieved_docs: List[RetrievalResult]) -> float:
+    def measure_source_agreement(self, retrieved_docs: list[RetrievalResult]) -> float:
         return 1.0 if retrieved_docs else 0.0
 
     def measure_coherence(self, answer_text: str) -> float:
@@ -390,18 +383,16 @@ class EnhancedRAGPipeline:
         )
 
     class DummyLLM:
-        def generate(self, prompt: str, max_tokens: int = 500) -> str:  # noqa: D401
+        def generate(self, prompt: str, max_tokens: int = 500) -> str:
             """Return a slice of the prompt as a pseudo answer."""
-
             # Simply echo the last line of the prompt.  This is sufficient for
             # unit tests where we only assert that a string is returned.
             return prompt.split("Question:")[-1].split("Answer:")[-1].strip()[:max_tokens]
 
     def generate_answer(
-        self, query: str, retrieved_docs: List[RetrievalResult]
+        self, query: str, retrieved_docs: list[RetrievalResult]
     ) -> Answer:
         """Generate answer with citations and confidence."""
-
         context = self.create_context(retrieved_docs)
         answer_text = self.llm.generate(
             prompt=self.build_prompt(query, context), max_tokens=500
@@ -430,11 +421,11 @@ class EnhancedRAGPipeline:
 
 
 __all__ = [
-    "Document",
-    "Chunk",
-    "RetrievalResult",
     "Answer",
-    "ThreeTierCache",
+    "Chunk",
+    "Document",
     "EnhancedRAGPipeline",
+    "RetrievalResult",
+    "ThreeTierCache",
 ]
 

@@ -15,9 +15,9 @@ handling language coverage, persistence and advanced retrieval strategies.
 
 from __future__ import annotations
 
-import asyncio
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any
 
 import numpy as np
 import torch
@@ -48,7 +48,7 @@ class Perspective:
 
     name: str
     focus: str
-    questions: List[str]
+    questions: list[str]
 
 
 @dataclass
@@ -57,10 +57,10 @@ class Lesson:
 
     topic: str
     grade_level: int
-    content: Dict[str, Any]
-    audio: Optional[bytes]
+    content: dict[str, Any]
+    audio: bytes | None
     estimated_time: int
-    prerequisites: List[str]
+    prerequisites: list[str]
 
 
 @dataclass
@@ -68,7 +68,7 @@ class ContentDatabase:
     """Simple in-memory content database used for offline packaging tests."""
 
     embeddings: np.ndarray
-    metadata: List[Dict[str, Any]]
+    metadata: list[dict[str, Any]]
 
 
 # ---------------------------------------------------------------------------
@@ -79,7 +79,7 @@ class ContentDatabase:
 class EducationalContentFilter:
     """Very small heuristic filter for educational relevance."""
 
-    def is_educational(self, article: Dict[str, str]) -> bool:
+    def is_educational(self, article: dict[str, str]) -> bool:
         text = article.get("text", "").lower()
         return any(k in text for k in ["history", "science", "math", "education"])
 
@@ -121,44 +121,44 @@ class ModelQuantizer:
 class WikipediaSTORMPipeline:
     """Process Wikipedia articles and create STORM-optimised content."""
 
-    def __init__(self, dataset: Optional[Iterable[Dict[str, str]]] = None) -> None:
+    def __init__(self, dataset: Iterable[dict[str, str]] | None = None) -> None:
         # ``dataset`` is an iterable of dictionaries with ``title`` and ``text``.
         # In production, ``load_dataset('wikipedia', '20220301.en')`` would be used.
         self.dataset = list(dataset) if dataset is not None else []
         self.educational_filter = EducationalContentFilter()
         self.storm_processor = STORMProcessor()
-        self.processed_content: Dict[str, Dict[str, Any]] = {}
+        self.processed_content: dict[str, dict[str, Any]] = {}
 
-    def is_educational(self, article: Dict[str, str]) -> bool:
+    def is_educational(self, article: dict[str, str]) -> bool:
         return self.educational_filter.is_educational(article)
 
-    def find_related_articles(self, topic: str, k: int = 5) -> List[str]:
+    def find_related_articles(self, topic: str, k: int = 5) -> list[str]:
         """Return titles of related articles.
 
         The implementation is extremely small: it simply returns the titles of
         the first ``k`` items from the dataset. In a real system this would
-        query a knowledge graph or use embedding similarity."""
-
+        query a knowledge graph or use embedding similarity.
+        """
         return [a["title"] for a in self.dataset[:k]]
 
-    def generate_historical_questions(self, topic: str) -> List[str]:
+    def generate_historical_questions(self, topic: str) -> list[str]:
         return [f"When did {topic} begin?", f"How has {topic} changed over time?"]
 
-    def generate_scientific_questions(self, topic: str) -> List[str]:
+    def generate_scientific_questions(self, topic: str) -> list[str]:
         return [f"What principles govern {topic}?", f"What are key mechanisms of {topic}?"]
 
-    def generate_cultural_questions(self, topic: str) -> List[str]:
+    def generate_cultural_questions(self, topic: str) -> list[str]:
         return [f"How does {topic} influence culture?", f"Are there traditions about {topic}?"]
 
-    def generate_geographical_questions(self, topic: str) -> List[str]:
+    def generate_geographical_questions(self, topic: str) -> list[str]:
         return [
             f"Where is {topic} prevalent?",
             f"Which regions are known for {topic}?",
         ]
 
-    def discover_perspectives(self, topic: str) -> List[Perspective]:
+    def discover_perspectives(self, topic: str) -> list[Perspective]:
         related = self.find_related_articles(topic, k=20)
-        perspectives: List[Perspective] = []
+        perspectives: list[Perspective] = []
         for title in related:
             if "History" in title:
                 perspectives.append(
@@ -195,11 +195,11 @@ class WikipediaSTORMPipeline:
         return perspectives
 
     async def simulate_conversations(
-        self, topic: str, perspectives: List[Perspective], article_content: str
-    ) -> List[List[Dict[str, Any]]]:
-        conversations: List[List[Dict[str, Any]]] = []
+        self, topic: str, perspectives: list[Perspective], article_content: str
+    ) -> list[list[dict[str, Any]]]:
+        conversations: list[list[dict[str, Any]]] = []
         for perspective in perspectives:
-            conversation: List[Dict[str, Any]] = []
+            conversation: list[dict[str, Any]] = []
             context = article_content
             for turn in range(5):
                 question = await self.storm_processor.generate_perspective_question(
@@ -224,14 +224,14 @@ class WikipediaSTORMPipeline:
         return conversations
 
     def generate_educational_outline(
-        self, conversations: List[List[Dict[str, Any]]], grade_levels: List[int]
-    ) -> Dict[str, Any]:
+        self, conversations: list[list[dict[str, Any]]], grade_levels: list[int]
+    ) -> dict[str, Any]:
         return {
             "grade_levels": grade_levels,
             "conversation_summaries": [c[0]["answer"] if c else "" for c in conversations],
         }
 
-    def store_educational_content(self, outline: Dict[str, Any], article: Dict[str, str]) -> None:
+    def store_educational_content(self, outline: dict[str, Any], article: dict[str, str]) -> None:
         self.processed_content[article["title"]] = outline
 
     async def process_wikipedia_for_education(self) -> None:
@@ -248,7 +248,7 @@ class WikipediaSTORMPipeline:
             )
             self.store_educational_content(outline, article)
 
-    def get_processed_content(self, topic: str) -> Optional[Dict[str, Any]]:
+    def get_processed_content(self, topic: str) -> dict[str, Any] | None:
         return self.processed_content.get(topic)
 
 
@@ -264,10 +264,10 @@ class OfflineOptimizedRAG:
         self.max_size = max_size_mb * 1024 * 1024
         self.quantizer = ModelQuantizer()
 
-    def compress_metadata(self, metadata: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def compress_metadata(self, metadata: list[dict[str, Any]]) -> list[dict[str, Any]]:
         return metadata
 
-    def create_minimal_vocabulary(self, content_db: ContentDatabase) -> List[str]:
+    def create_minimal_vocabulary(self, content_db: ContentDatabase) -> list[str]:
         return sorted({w for m in content_db.metadata for w in m.get("title", "").split()})
 
     def calculate_size(self, index: Any, metadata: Any) -> int:
@@ -275,7 +275,7 @@ class OfflineOptimizedRAG:
         meta_size = len(str(metadata).encode("utf-8"))
         return index_size + meta_size
 
-    def prepare_for_mobile(self, content_db: ContentDatabase) -> Dict[str, Any]:
+    def prepare_for_mobile(self, content_db: ContentDatabase) -> dict[str, Any]:
         quantized_embeddings = self.quantizer.quantize_embeddings(
             content_db.embeddings, bits=8
         )
@@ -312,21 +312,21 @@ class EducationalContentGenerator:
     def get_reading_level(self, grade: int) -> int:
         return grade
 
-    def simplify_for_grade(self, content: Dict[str, Any], grade: int, reading_level: int) -> Dict[str, Any]:
+    def simplify_for_grade(self, content: dict[str, Any], grade: int, reading_level: int) -> dict[str, Any]:
         return {"summary": content.get("conversation_summaries", []), "grade": grade}
 
-    def get_local_examples(self, cultural_context: Dict[str, Any], topic: str) -> List[str]:
+    def get_local_examples(self, cultural_context: dict[str, Any], topic: str) -> list[str]:
         return [f"Example of {topic} in {cultural_context.get('region', 'local')} context"]
 
     def add_cultural_context(
-        self, content: Dict[str, Any], culture: Dict[str, Any], local_examples: List[str]
-    ) -> Dict[str, Any]:
+        self, content: dict[str, Any], culture: dict[str, Any], local_examples: list[str]
+    ) -> dict[str, Any]:
         content = dict(content)
         content["local_examples"] = local_examples
         content["culture"] = culture
         return content
 
-    def create_interactions(self, content: Dict[str, Any], interaction_types: List[str]) -> Dict[str, Any]:
+    def create_interactions(self, content: dict[str, Any], interaction_types: list[str]) -> dict[str, Any]:
         content = dict(content)
         content["interactions"] = interaction_types
         content["narration"] = " ".join(content.get("summary", []))
@@ -335,14 +335,14 @@ class EducationalContentGenerator:
     def generate_audio_narration(self, text: str, language: str, voice: str) -> bytes:
         return text.encode("utf-8")
 
-    def estimate_completion_time(self, content: Dict[str, Any]) -> int:
+    def estimate_completion_time(self, content: dict[str, Any]) -> int:
         return 5
 
-    def identify_prerequisites(self, topic: str, grade_level: int) -> List[str]:
+    def identify_prerequisites(self, topic: str, grade_level: int) -> list[str]:
         return [f"Basic understanding of {topic}"]
 
     def generate_lesson(
-        self, topic: str, grade_level: int, cultural_context: Dict[str, Any]
+        self, topic: str, grade_level: int, cultural_context: dict[str, Any]
     ) -> Lesson:
         storm_content = self.storm_rag.get_processed_content(topic) or {}
         simplified = self.simplify_for_grade(
@@ -375,10 +375,10 @@ class EducationalContentGenerator:
 
 
 __all__ = [
-    "Perspective",
-    "Lesson",
     "ContentDatabase",
-    "WikipediaSTORMPipeline",
-    "OfflineOptimizedRAG",
     "EducationalContentGenerator",
+    "Lesson",
+    "OfflineOptimizedRAG",
+    "Perspective",
+    "WikipediaSTORMPipeline",
 ]
