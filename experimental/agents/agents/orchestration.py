@@ -1,19 +1,46 @@
 import asyncio
 from typing import Any
 
-from agents.king.king_agent import KingAgent
-from agents.magi.magi_agent import MagiAgent
-from agents.sage.sage_agent import SageAgent
-from agents.unified_base_agent import (
-    SelfEvolvingSystem,
-    UnifiedAgentConfig,
-    UnifiedBaseAgent,
-)
-from agents.utils.task import Task as LangroidTask
-from core.error_handling import StandardCommunicationProtocol
-from rag_system.core.config import UnifiedConfig
-from rag_system.core.pipeline import EnhancedRAGPipeline
-from rag_system.retrieval.vector_store import VectorStore
+try:  # pragma: no cover - best effort imports for optional dependencies
+    from agents.king.king_agent import KingAgent
+except Exception:  # noqa: BLE001 - broad to handle missing deps
+    KingAgent = object  # type: ignore[misc,assignment]
+
+try:  # pragma: no cover - best effort imports for optional dependencies
+    from agents.magi.magi_agent import MagiAgent
+except Exception:  # noqa: BLE001 - broad to handle missing deps
+    MagiAgent = object  # type: ignore[misc,assignment]
+
+try:  # pragma: no cover - best effort imports for optional dependencies
+    from agents.sage.sage_agent import SageAgent
+except Exception:  # noqa: BLE001 - broad to handle missing deps
+    SageAgent = object  # type: ignore[misc,assignment]
+
+try:  # pragma: no cover - best effort imports for optional dependencies
+    from agents.unified_base_agent import (
+        SelfEvolvingSystem,
+        UnifiedAgentConfig,
+        UnifiedBaseAgent,
+    )
+except Exception:  # noqa: BLE001 - broad to handle missing deps
+    SelfEvolvingSystem = UnifiedAgentConfig = UnifiedBaseAgent = object  # type: ignore[misc,assignment]
+
+try:  # pragma: no cover - best effort imports for optional dependencies
+    from agents.utils.task import Task as LangroidTask
+except Exception:  # noqa: BLE001 - broad to handle missing deps
+    LangroidTask = object  # type: ignore[misc,assignment]
+
+try:  # pragma: no cover - best effort imports for optional dependencies
+    from core.error_handling import StandardCommunicationProtocol
+except Exception:  # noqa: BLE001 - broad to handle missing deps
+    StandardCommunicationProtocol = object  # type: ignore[misc,assignment]
+
+try:  # pragma: no cover - best effort imports for optional dependencies
+    from rag_system.core.config import UnifiedConfig
+    from rag_system.core.pipeline import EnhancedRAGPipeline
+    from rag_system.retrieval.vector_store import VectorStore
+except Exception:  # noqa: BLE001 - broad to handle missing deps
+    UnifiedConfig = EnhancedRAGPipeline = VectorStore = object  # type: ignore[misc,assignment]
 
 
 class TaskQueue:

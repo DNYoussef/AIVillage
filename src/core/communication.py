@@ -78,6 +78,35 @@ class AgentMessage:
             metadata=data.get("metadata", {}),
         )
 
+# ---------------------------------------------------------------------------
+# Backwards compatibility
+# ---------------------------------------------------------------------------
+#
+# Some experimental modules and tests still import ``Message`` and
+# ``MessageType`` from :mod:`core.communication`.  To maintain compatibility
+# while the refactor to more descriptive ``AgentMessage`` names propagates
+# through the codebase, we expose aliases that mirror the old API.  This
+# avoids ``ImportError`` during test collection without altering existing
+# behaviour.
+
+Message = AgentMessage
+MessageType = AgentMessageType
+
+# Re-export the standard protocol for backward compatibility.  The protocol is
+# defined in ``core.error_handling`` but many modules historically imported it
+# from ``core.communication``.  Importing lazily here avoids circular
+# dependencies.
+from .error_handling import StandardCommunicationProtocol  # pragma: no cover
+
+__all__ = [
+    "AgentMessage",
+    "AgentMessageType",
+    "Priority",
+    "Message",
+    "MessageType",
+    "StandardCommunicationProtocol",
+]
+
 
 class AgentCommunicationProtocol:
     """Standard communication protocol for agent messaging.
