@@ -1,187 +1,42 @@
 # AIVillage Entry Points Guide
 
-## Overview
+This document describes how to launch the Retrieval-Augmented Generation (RAG)
+components of the project. Previous versions of this file referred to a
+non‑existent `main.py` wrapper; the actual executables are documented below.
 
-This document describes the new unified entry point structure for the AIVillage platform, providing a consistent CLI interface across all services.
+## RAG API server
 
-## Unified Entry Point
+The production RAG service lives in
+`src/production/rag/rag_api_server.py`. It exposes a FastAPI application with
+query, indexing and health endpoints.
 
-The main entry point is `main.py` in the project root, which provides a unified CLI interface for all services.
-
-### Usage
-
-```bash
-python main.py --mode MODE --action ACTION [OPTIONS]
-```
-
-### Available Modes
-
-| Mode | Description | Example |
-|------|-------------|---------|
-| `agent-forge` | Agent creation and management | `python main.py --mode agent-forge --action train --config config.yaml` |
-| `king` | KING agent system operations | `python main.py --mode king --action run --task "analyze data"` |
-| `rag` | Retrieval-augmented generation | `python main.py --mode rag --action query --question "What is AI?"` |
-| `core` | Core utilities and configuration | `python main.py --mode core --action status` |
-
-### Common Options
-
-- `--config, -c`: Configuration file path
-- `--verbose, -v`: Enable verbose output
-- `--debug`: Enable debug mode
-- `--input`: Input file or directory
-- `--output`: Output file or directory
-
-## Service-Specific Entry Points
-
-Each service also has its own dedicated entry point for direct usage:
-
-### Agent Forge Service
-```bash
-python agent_forge/main.py ACTION [OPTIONS]
-```
-
-**Actions:**
-- `train`: Train an agent
-- `create`: Create a new agent
-- `list`: List all agents
-- `delete`: Delete an agent
-- `status`: Get service status
-
-**Options:**
-- `--agent-type`: Type of agent (king, sage, magi, base)
-- `--name`: Agent name
-- `--config`: Configuration file
-
-### KING Agent Service
-```bash
-python agents/king/main.py ACTION [OPTIONS]
-```
-
-**Actions:**
-- `run`: Run a task
-- `plan`: Plan a task
-- `analyze`: Analyze data
-- `status`: Get service status
-- `config`: Configure service
-
-**Options:**
-- `--task`: Task description
-- `--config`: Configuration file
-
-### RAG System Service
-```bash
-python rag_system/main.py ACTION [OPTIONS]
-```
-
-**Actions:**
-- `query`: Query the system
-- `index`: Index a document
-- `search`: Search documents
-- `status`: Get service status
-- `config`: Configure service
-
-**Options:**
-- `--question`: Question to query
-- `--document`: Document to index
-- `--config`: Configuration file
-
-## Examples
-
-### Using Unified Entry Point
+Run the server directly with Python:
 
 ```bash
-# Train an agent
-python main.py --mode agent-forge --action train --config configs/agent.yaml
-
-# Run a KING agent task
-python main.py --mode king --action run --task "Analyze customer feedback"
-
-# Query the RAG system
-python main.py --mode rag --action query --question "What are the latest trends in AI?"
-
-# Get system status
-python main.py --mode core --action status
+python -m src.production.rag.rag_api_server
 ```
 
-### Using Service-Specific Entry Points
+or via ``uvicorn``:
 
 ```bash
-# Direct Agent Forge usage
-python agent_forge/main.py train --agent-type king --name my_agent
-
-# Direct KING agent usage
-python agents/king/main.py run --task "Process dataset"
-
-# Direct RAG system usage
-python rag_system/main.py query --question "Explain machine learning"
+uvicorn src.production.rag.rag_api_server:app --host 0.0.0.0 --port 8082
 ```
 
-## Migration from Old Structure
+The port defaults to ``8082`` but can be overridden with the ``RAG_API_PORT``
+environment variable.
 
-### Old Usage (Legacy)
-```bash
-# These files are now in legacy_mains/
-python legacy_mains/main.py.agent_forge
-python legacy_mains/main.py.king
-python legacy_mains/main.py.rag
-```
+## Command‑line interface
 
-### New Usage (Recommended)
-```bash
-# Unified interface
-python main.py --mode agent-forge --action train
-python main.py --mode king --action run
-python main.py --mode rag --action query
+For simple CLI interaction there is a thin wrapper script at
+`rag_system/main.py`. It delegates to the production pipeline implementation in
+`src.production.rag.rag_system.main`.
 
-# Or service-specific
-python agent_forge/main.py train
-python agents/king/main.py run
-python rag_system/main.py query
-```
-
-## Testing
-
-Run the entry point tests to verify everything works:
+Example usage:
 
 ```bash
-python tests/test_entry_points.py
+python rag_system/main.py query --question "What is AI?"
 ```
 
-## Configuration
-
-Each service can be configured using YAML configuration files. See the respective service directories for configuration examples.
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Module not found errors**: Ensure you're running from the project root
-2. **Import errors**: Check that all dependencies are installed
-3. **Configuration errors**: Verify configuration file paths
-
-### Debug Mode
-
-Enable debug mode for detailed output:
-```bash
-python main.py --mode MODE --action ACTION --debug
-```
-
-## Development
-
-### Adding New Services
-
-To add a new service mode:
-
-1. Create a new service directory
-2. Add a `main.py` file with the service entry point
-3. Update the unified main.py to include the new mode
-4. Add tests for the new service
-
-### Extending CLI
-
-To add new actions or options:
-
-1. Update the service-specific main.py
-2. Update the unified main.py if needed
-3. Update this documentation
-4. Add tests for new functionality
+Available actions mirror those of the production pipeline (`query`, `index`,
+`search`, `status`, `config`). The CLI is intended for experimentation and
+shares the same code as the production system.
